@@ -24,8 +24,8 @@ impl GilSafetyManager {
         // Set PyBind11 GIL assertion disable
         Self::configure_pybind11_gil_safety()?;
 
-        // Skip torch GIL safety initialization from Rust - let Python initialize it lazily
-        // Self::initialize_torch_gil_safety()?;
+        // Initialize torch GIL safety - will fallback to manual configuration if Python module unavailable
+        Self::initialize_torch_gil_safety()?;
 
         // Configure Python threading
         Self::configure_python_threading()?;

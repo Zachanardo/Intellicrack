@@ -1204,7 +1204,7 @@ class TPMBypassEngine:
                 self.logger.warning("Tbsip_Submit_Command not found in TBS")
                 return False
 
-            def hooked_submit_command(context, locality, priority, command_buf, command_size, result_buf, result_size):
+            def hooked_submit_command(context: object, locality: object, priority: object, command_buf: object, command_size: object, result_buf: object, result_size: object) -> object:
                 """Hooked TBS command submission."""
                 if command_size >= 10:
                     command_data = ctypes.string_at(command_buf, command_size)
@@ -1968,7 +1968,7 @@ class TPMBypassEngine:
 
             self.frida_script = self.frida_session.create_script(script_source)
 
-            def on_message(message, data) -> None:
+            def on_message(message: object, data: object) -> None:
                 if message['type'] == 'send':
                     payload = message.get('payload', '')
                     self.logger.info(f"[Frida] {payload}")
@@ -2017,7 +2017,7 @@ class TPMBypassEngine:
 
             self.frida_script = self.frida_session.create_script(script_source)
 
-            def on_message(message, data) -> None:
+            def on_message(message: object, data: object) -> None:
                 if message['type'] == 'send':
                     payload = message.get('payload', '')
                     self.logger.info(f"[Frida PCR] {payload}")

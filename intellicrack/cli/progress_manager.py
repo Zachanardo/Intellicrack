@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Progress Manager for Intellicrack CLI Provides beautiful progress visualization for long-running operations.
 
 Copyright (C) 2025 Zachary Flint
@@ -17,8 +18,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
-
-#!/usr/bin/env python3
 
 # Standard library imports
 import hashlib

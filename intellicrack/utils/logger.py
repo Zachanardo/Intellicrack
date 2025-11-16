@@ -27,6 +27,7 @@ from typing import Any, TypeVar
 
 # Type variable for decorators
 F = TypeVar("F", bound=Callable[..., Any])
+C = TypeVar("C", bound=type)
 
 # Module logger
 logger = logging.getLogger(__name__)
@@ -71,7 +72,7 @@ def log_function_call(func: F) -> F:
     _local = threading.local()
 
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: object, **kwargs: object) -> object:
         """Wrap function for debug logging."""
         # Check if we're already in a logging call to prevent recursion
         if hasattr(_local, "in_logger") and _local.in_logger:
@@ -91,7 +92,7 @@ def log_function_call(func: F) -> F:
             arg_values = args[: len(arg_names)]
 
             # Safely represent arguments to avoid issues with large objects
-            def safe_repr(obj, max_len=100):
+            def safe_repr(obj: object, max_len: int = 100) -> str:
                 """Safely represent an object as a string."""
                 try:
                     r = repr(obj)
@@ -125,7 +126,7 @@ def log_function_call(func: F) -> F:
     if inspect.iscoroutinefunction(func):
 
         @functools.wraps(func)
-        async def async_wrapper(*args, **kwargs):
+        async def async_wrapper(*args: object, **kwargs: object) -> object:
             # Check if we're already in a logging call to prevent recursion
             if hasattr(_local, "in_logger") and _local.in_logger:
                 return await func(*args, **kwargs)
@@ -142,7 +143,7 @@ def log_function_call(func: F) -> F:
                 arg_values = args[: len(arg_names)]
 
                 # Use the same safe_repr function for async too
-                def safe_repr(obj, max_len=100):
+                def safe_repr(obj: object, max_len: int = 100) -> str:
                     """Safely represent an object as a string."""
                     try:
                         r = repr(obj)
@@ -177,7 +178,7 @@ def log_function_call(func: F) -> F:
     return wrapper
 
 
-def log_all_methods(cls):
+def log_all_methods(cls: C) -> C:
     """Class decorator to apply log_function_call to all methods of a class.
 
     Args:

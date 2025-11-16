@@ -195,7 +195,7 @@ class SecureSubprocess:
         check: bool = False,
         cwd: str | None = None,
         env: dict[str, str] | None = None,
-        **kwargs,
+        **kwargs: object,
     ) -> subprocess.CompletedProcess:
         """Secure subprocess.run wrapper with validation.
 
@@ -244,12 +244,12 @@ class SecureSubprocess:
     def popen(
         command: list[str] | str,
         shell: bool = False,
-        stdout=None,
-        stderr=None,
-        stdin=None,
+        stdout: object = None,
+        stderr: object = None,
+        stdin: object = None,
         cwd: str | None = None,
         env: dict[str, str] | None = None,
-        **kwargs,
+        **kwargs: object,
     ) -> subprocess.Popen:
         """Secure subprocess.Popen wrapper with validation.
 
@@ -295,11 +295,29 @@ class SecureSubprocess:
 
 
 # Convenience functions for drop-in replacement
-def secure_run(*args, **kwargs):
-    """Drop-in replacement for subprocess.run with security validation."""
+def secure_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess:
+    """Drop-in replacement for subprocess.run with security validation.
+
+    Args:
+        *args: Positional arguments passed to SecureSubprocess.run
+        **kwargs: Keyword arguments passed to SecureSubprocess.run
+
+    Returns:
+        CompletedProcess instance from the secure subprocess execution
+
+    """
     return SecureSubprocess.run(*args, **kwargs)
 
 
-def secure_popen(*args, **kwargs):
-    """Drop-in replacement for subprocess.Popen with security validation."""
+def secure_popen(*args: object, **kwargs: object) -> subprocess.Popen:
+    """Drop-in replacement for subprocess.Popen with security validation.
+
+    Args:
+        *args: Positional arguments passed to SecureSubprocess.popen
+        **kwargs: Keyword arguments passed to SecureSubprocess.popen
+
+    Returns:
+        Popen instance from the secure subprocess execution
+
+    """
     return SecureSubprocess.popen(*args, **kwargs)

@@ -89,13 +89,13 @@ class ProtocolToolWindow(QWidget):
     _instance = None
     signals = ProtocolToolSignals()
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args: object, **kwargs: object) -> "ProtocolToolWindow":
         """Ensure a singleton instance of the ProtocolToolWindow."""
         if not cls._instance:
             cls._instance = super().__new__(cls, *args, **kwargs)
         return cls._instance
 
-    def __init__(self, app_instance=None) -> None:
+    def __init__(self, app_instance: object | None = None) -> None:
         """Initialize the Protocol Tool window with a sophisticated UI."""
         # Only initialize UI components once for the singleton instance
         if not hasattr(self, "_initialized"):
@@ -425,7 +425,7 @@ class ProtocolToolWindow(QWidget):
 
         self.output_text_edit.append(f"[TOTAL] {len(available_parsers)} parsers available")
 
-    def closeEvent(self, event) -> None:
+    def closeEvent(self, event: object) -> None:
         """Handle the close event for the window."""
         logger.info("Protocol Tool window closing.")
         ProtocolToolWindow.signals.tool_closed.emit("Protocol Tool closed.")
@@ -434,10 +434,15 @@ class ProtocolToolWindow(QWidget):
         ProtocolToolWindow._instance = None  # Allow new instance to be created next time
 
 
-def launch_protocol_tool(app_instance=None):
+def launch_protocol_tool(app_instance: object | None = None) -> ProtocolToolWindow:
     """Launch the Protocol Tool window.
 
-    Returns the instance of the ProtocolToolWindow.
+    Args:
+        app_instance: Reference to the main application instance for communication.
+
+    Returns:
+        The instance of the ProtocolToolWindow.
+
     """
     app = QApplication.instance()
     if not app:
@@ -449,8 +454,14 @@ def launch_protocol_tool(app_instance=None):
     return window
 
 
-def update_protocol_tool_description(app_instance=None, description="") -> None:
-    """Update the description in the Protocol Tool window."""
+def update_protocol_tool_description(app_instance: object | None = None, description: str = "") -> None:
+    """Update the description in the Protocol Tool window.
+
+    Args:
+        app_instance: Reference to the main application instance for communication.
+        description: The new description text to display in the protocol tool window.
+
+    """
     # Ensure the window is instantiated before trying to update it
     window = ProtocolToolWindow()
     window.update_description(description)

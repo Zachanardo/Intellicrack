@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Configuration Profile System for Intellicrack CLI Allows saving and loading of analysis configurations.
 
 Copyright (C) 2025 Zachary Flint
@@ -20,8 +21,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 PRODUCTION-READY: Uses central configuration system as single source of truth.
 Legacy profile files are migrated on first run, then only central config is used.
 """
-
-#!/usr/bin/env python3
 
 # Standard library imports
 import json

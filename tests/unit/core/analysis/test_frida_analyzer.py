@@ -13,10 +13,7 @@ import subprocess
 import json
 from pathlib import Path
 
-# Add intellicrack to path for testing
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
-
-from intellicrack.core.analysis import frida_analyzer
+import intellicrack.core.analysis.frida_analyzer as frida_analyzer
 
 
 class TestApplicationHarness:

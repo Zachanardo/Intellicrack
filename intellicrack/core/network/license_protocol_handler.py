@@ -1,14 +1,6 @@
-"""License protocol handler for processing license validation requests."""
+#!/usr/bin/env python3
+"""License protocol handler for processing license validation requests.
 
-import logging
-import os
-import secrets
-import threading
-from typing import Any
-
-from intellicrack.utils.logger import logger
-
-"""
 License Protocol Handler Base Class.
 
 Copyright (C) 2025 Zachary Flint
@@ -29,7 +21,14 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-#!/usr/bin/env python3
+import logging
+import os
+import secrets
+import threading
+from typing import Any
+
+from intellicrack.utils.logger import logger
+
 """
 License Protocol Handler Base Class.
 

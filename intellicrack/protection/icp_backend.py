@@ -986,26 +986,32 @@ class ICPBackend:
                     # Calculate file entropy
                     import math
 
-                    with open(file_path, "rb") as f:
-                        data = f.read(1024 * 1024)  # Read first MB for entropy
-                        if data:
-                            # Calculate entropy
-                            byte_counts = [0] * 256
-                            for byte in data:
-                                byte_counts[byte] += 1
+                    def _calc_entropy() -> tuple[float, bool] | None:
+                        with open(file_path, "rb") as f:
+                            data = f.read(1024 * 1024)  # Read first MB for entropy
+                            if data:
+                                # Calculate entropy
+                                byte_counts = [0] * 256
+                                for byte in data:
+                                    byte_counts[byte] += 1
 
-                            entropy = 0.0
-                            data_len = len(data)
-                            for count in byte_counts:
-                                if count > 0:
-                                    probability = count / data_len
-                                    entropy -= probability * math.log2(probability)
+                                entropy = 0.0
+                                data_len = len(data)
+                                for count in byte_counts:
+                                    if count > 0:
+                                        probability = count / data_len
+                                        entropy -= probability * math.log2(probability)
 
-                            # Add entropy to scan result
-                            if not hasattr(scan_result, "metadata"):
-                                scan_result.metadata = {}
-                            scan_result.metadata["entropy"] = round(entropy, 4)
-                            scan_result.metadata["entropy_high"] = entropy > 7.5  # High entropy indicates encryption/compression
+                                return round(entropy, 4), entropy > 7.5
+                        return None
+
+                    entropy_result = await asyncio.to_thread(_calc_entropy)
+                    if entropy_result:
+                        # Add entropy to scan result
+                        if not hasattr(scan_result, "metadata"):
+                            scan_result.metadata = {}
+                        scan_result.metadata["entropy"] = entropy_result[0]
+                        scan_result.metadata["entropy_high"] = entropy_result[1]
                 except Exception as e:
                     logger.debug(f"Could not calculate entropy: {e}")
 

@@ -1568,7 +1568,7 @@ class SandboxDetector(BaseDetector):
 
                             _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
 
-                            def __init__(self, x=0, y=0) -> None:
+                            def __init__(self, x: int = 0, y: int = 0) -> None:
                                 super().__init__()
                                 self.x = x
                                 self.y = y
@@ -1576,13 +1576,13 @@ class SandboxDetector(BaseDetector):
                             def __repr__(self) -> str:
                                 return f"POINT(x={self.x}, y={self.y})"
 
-                            def __eq__(self, other):
+                            def __eq__(self, other: object) -> bool:
                                 return isinstance(other, self.__class__) and self.x == other.x and self.y == other.y
 
-                            def __hash__(self):
+                            def __hash__(self) -> int:
                                 return hash((self.x, self.y))
 
-                            def distance_to(self, other):
+                            def distance_to(self, other: "POINT") -> float:
                                 """Calculate distance to another point."""
                                 return ((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** 0.5
 
@@ -1600,11 +1600,11 @@ class SandboxDetector(BaseDetector):
                                 return f"RECT(left={self.left}, top={self.top}, right={self.right}, bottom={self.bottom})"
 
                             @property
-                            def width(self):
+                            def width(self) -> int:
                                 return self.right - self.left
 
                             @property
-                            def height(self):
+                            def height(self) -> int:
                                 return self.bottom - self.top
 
                         class SYSTEMTIME(ctypes.Structure):
@@ -2927,7 +2927,7 @@ Sleep(30000);  // 30 seconds
 
                     automation_titles = []
 
-                    def enum_callback(hwnd, lParam) -> bool:
+                    def enum_callback(hwnd: int, lParam: int) -> bool:
                         length = user32.GetWindowTextLengthW(hwnd)
                         if length > 0:
                             buffer = ctypes.create_unicode_buffer(length + 1)

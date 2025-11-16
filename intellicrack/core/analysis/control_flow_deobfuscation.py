@@ -31,7 +31,10 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from intellicrack.utils.tools.radare2_utils import Radare2Session
 
 from intellicrack.utils.logger import logger
 
@@ -102,11 +105,17 @@ except ImportError:
 try:
     from intellicrack.handlers.lief_handler import lief
 
+    if TYPE_CHECKING:
+        from lief import Binary, Section
+
     LIEF_AVAILABLE = True
 except ImportError:
     logger.warning("LIEF not available for control flow deobfuscation")
     LIEF_AVAILABLE = False
     lief = None
+    if TYPE_CHECKING:
+        Binary = Any
+        Section = Any
 
 from ...utils.tools.radare2_utils import r2_session
 
@@ -127,7 +136,7 @@ class BasicBlock:
     state_variable_refs: list[int] = None
     complexity_score: float = 0.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize mutable defaults after dataclass creation."""
         if self.state_variable_refs is None:
             self.state_variable_refs = []
@@ -349,7 +358,7 @@ class ControlFlowDeobfuscator:
             self.logger.error(f"Deobfuscation failed: {e}")
             raise
 
-    def _build_control_flow_graph(self, r2, function_address: int) -> nx.DiGraph:
+    def _build_control_flow_graph(self, r2: "Radare2Session", function_address: int) -> nx.DiGraph:
         """Build control flow graph for a function using radare2.
 
         Args:
@@ -413,7 +422,7 @@ class ControlFlowDeobfuscator:
             raise
 
     def _detect_dispatchers(
-        self, r2, cfg: nx.DiGraph, function_address: int,
+        self, r2: "Radare2Session", cfg: nx.DiGraph, function_address: int,
     ) -> list[DispatcherInfo]:
         """Detect control flow flattening dispatchers in the CFG.
 
@@ -499,7 +508,7 @@ class ControlFlowDeobfuscator:
         return (has_comparison or has_jump_table or has_switch) and (out_degree >= 5 or high_loop_back)
 
     def _identify_state_variable(
-        self, r2, basic_block: BasicBlock, function_address: int,
+        self, r2: "Radare2Session", basic_block: BasicBlock, function_address: int,
     ) -> dict[str, Any]:
         """Identify the state variable used by a dispatcher.
 
@@ -579,7 +588,7 @@ class ControlFlowDeobfuscator:
         return list(controlled_extended)
 
     def _extract_switch_cases(
-        self, r2, basic_block: BasicBlock, controlled_blocks: list[int], function_address: int,
+        self, r2: "Radare2Session", basic_block: BasicBlock, controlled_blocks: list[int], function_address: int,
     ) -> dict[int, int]:
         """Extract switch case mappings from dispatcher block.
 
@@ -632,7 +641,7 @@ class ControlFlowDeobfuscator:
         return "Generic"
 
     def _unflatten_control_flow(
-        self, r2, cfg: nx.DiGraph, dispatchers: list[DispatcherInfo], function_address: int,
+        self, r2: "Radare2Session", cfg: nx.DiGraph, dispatchers: list[DispatcherInfo], function_address: int,
     ) -> nx.DiGraph:
         """Unflatten control flow by removing dispatcher blocks and recovering original edges.
 
@@ -670,7 +679,7 @@ class ControlFlowDeobfuscator:
         return deobfuscated
 
     def _recover_original_edges(
-        self, r2, cfg: nx.DiGraph, dispatcher: DispatcherInfo, function_address: int,
+        self, r2: "Radare2Session", cfg: nx.DiGraph, dispatcher: DispatcherInfo, function_address: int,
     ) -> list[tuple[int, int]]:
         """Recover original control flow edges from flattened structure.
 
@@ -738,7 +747,7 @@ class ControlFlowDeobfuscator:
         return None
 
     def _detect_opaque_predicates(
-        self, r2, cfg: nx.DiGraph, function_address: int,
+        self, r2: "Radare2Session", cfg: nx.DiGraph, function_address: int,
     ) -> list[dict[str, Any]]:
         """Detect opaque predicates using advanced analysis techniques.
 
@@ -842,7 +851,7 @@ class ControlFlowDeobfuscator:
         return opaque_predicates
 
     def _remove_opaque_predicates(
-        self, r2, cfg: nx.DiGraph, opaque_predicates: list[dict[str, Any]],
+        self, r2: "Radare2Session", cfg: nx.DiGraph, opaque_predicates: list[dict[str, Any]],
     ) -> nx.DiGraph:
         """Remove opaque predicates and perform comprehensive dead code elimination.
 
@@ -1036,7 +1045,7 @@ class ControlFlowDeobfuscator:
         return simplified
 
     def _detect_bogus_blocks(
-        self, r2, cfg: nx.DiGraph, function_address: int,
+        self, r2: "Radare2Session", cfg: nx.DiGraph, function_address: int,
     ) -> list[int]:
         """Detect bogus/unreachable basic blocks inserted by obfuscators.
 
@@ -1110,7 +1119,7 @@ class ControlFlowDeobfuscator:
 
     def _generate_patch_information(
         self,
-        r2,
+        r2: "Radare2Session",
         original_cfg: nx.DiGraph,
         deobfuscated_cfg: nx.DiGraph,
         dispatchers: list[DispatcherInfo],
@@ -1469,7 +1478,7 @@ class ControlFlowDeobfuscator:
             self.logger.error(f"Failed to apply patches: {e}")
             return False
 
-    def _find_section_for_address(self, binary, address: int):
+    def _find_section_for_address(self, binary: "Binary", address: int) -> "Section | None":
         """Find the section containing a given address.
 
         Args:

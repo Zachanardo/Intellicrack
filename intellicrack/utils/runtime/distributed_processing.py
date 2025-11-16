@@ -25,7 +25,6 @@ import os
 import time
 from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
-from typing import Any
 
 from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, torch
 
@@ -73,7 +72,7 @@ def process_binary_chunks(
     chunk_size: int = 1024 * 1024,
     processor_func: Callable | None = None,
     num_workers: int | None = None,
-) -> dict[str, Any]:
+) -> dict[str, object]:
     """Process a binary file in chunks using multiple workers.
 
     Args:
@@ -179,7 +178,7 @@ def process_binary_chunks(
     return results
 
 
-def process_chunk(binary_path: str, chunk_info: dict[str, Any], processor_func: Callable) -> dict[str, Any]:
+def process_chunk(binary_path: str, chunk_info: dict[str, object], processor_func: Callable) -> dict[str, object]:
     """Process a single chunk of a binary file.
 
     Args:
@@ -214,7 +213,7 @@ def process_chunk(binary_path: str, chunk_info: dict[str, Any], processor_func: 
         }
 
 
-def process_distributed_results(results: list[dict[str, Any]], aggregation_func: Callable | None = None) -> dict[str, Any]:
+def process_distributed_results(results: list[dict[str, object]], aggregation_func: Callable | None = None) -> dict[str, object]:
     """Process and aggregate results from distributed processing.
 
     Args:
@@ -265,8 +264,8 @@ def process_distributed_results(results: list[dict[str, Any]], aggregation_func:
 
 
 def run_distributed_analysis(
-    binary_path: str, analysis_type: str = "comprehensive", config: dict[str, Any] | None = None,
-) -> dict[str, Any]:
+    binary_path: str, analysis_type: str = "comprehensive", config: dict[str, object] | None = None,
+) -> dict[str, object]:
     """Run distributed analysis on a binary.
 
     Args:
@@ -347,7 +346,7 @@ def run_distributed_analysis(
     return results
 
 
-def run_distributed_entropy_analysis(binary_path: str, config: dict[str, Any] | None = None) -> dict[str, Any]:
+def run_distributed_entropy_analysis(binary_path: str, config: dict[str, object] | None = None) -> dict[str, object]:
     """Run distributed entropy analysis on a binary.
 
     Args:
@@ -361,7 +360,7 @@ def run_distributed_entropy_analysis(binary_path: str, config: dict[str, Any] | 
     if config is None:
         config = {"chunk_size": 1024 * 1024, "num_workers": None}
 
-    def entropy_processor(data: bytes, chunk_info: dict[str, Any]) -> dict[str, Any]:
+    def entropy_processor(data: bytes, chunk_info: dict[str, object]) -> dict[str, object]:
         """Calculate entropy for a chunk."""
         if not data:
             return {"entropy": 0.0}
@@ -409,8 +408,8 @@ def run_distributed_entropy_analysis(binary_path: str, config: dict[str, Any] | 
 
 
 def run_distributed_pattern_search(
-    binary_path: str, patterns: list[bytes] | None = None, config: dict[str, Any] | None = None,
-) -> dict[str, Any]:
+    binary_path: str, patterns: list[bytes] | None = None, config: dict[str, object] | None = None,
+) -> dict[str, object]:
     """Run distributed pattern search on a binary.
 
     Args:
@@ -447,7 +446,7 @@ def run_distributed_pattern_search(
     if config is None:
         config = {"chunk_size": 1024 * 1024, "num_workers": None}
 
-    def pattern_processor(data: bytes, chunk_info: dict[str, Any]) -> dict[str, Any]:
+    def pattern_processor(data: bytes, chunk_info: dict[str, object]) -> dict[str, object]:
         """Search for _patterns in a chunk."""
         found_patterns = []
 
@@ -505,7 +504,7 @@ def run_distributed_pattern_search(
     return results
 
 
-def extract_binary_info(binary_path: str) -> dict[str, Any]:
+def extract_binary_info(binary_path: str) -> dict[str, object]:
     """Extract basic information from a binary file.
 
     Args:
@@ -558,7 +557,7 @@ def extract_binary_info(binary_path: str) -> dict[str, Any]:
     return info
 
 
-def extract_binary_features(binary_path: str) -> dict[str, Any]:
+def extract_binary_features(binary_path: str) -> dict[str, object]:
     """Extract features from a binary for analysis.
 
     Args:
@@ -599,7 +598,7 @@ def extract_binary_features(binary_path: str) -> dict[str, Any]:
     return features
 
 
-def run_gpu_accelerator(task_type: str, data: Any, config: dict[str, Any] | None = None) -> dict[str, Any]:
+def run_gpu_accelerator(task_type: str, data: object, config: dict[str, object] | None = None) -> dict[str, object]:
     """Run GPU-accelerated processing for supported tasks.
 
     Args:
@@ -646,7 +645,7 @@ def run_gpu_accelerator(task_type: str, data: Any, config: dict[str, Any] | None
     return results
 
 
-def run_incremental_analysis(binary_path: str, cache_dir: str | None = None, force_full: bool = False) -> dict[str, Any]:
+def run_incremental_analysis(binary_path: str, cache_dir: str | None = None, force_full: bool = False) -> dict[str, object]:
     """Run incremental analysis using cached results when possible.
 
     Args:
@@ -736,7 +735,7 @@ def run_incremental_analysis(binary_path: str, cache_dir: str | None = None, for
     return results
 
 
-def run_memory_optimized_analysis(binary_path: str, max_memory_mb: int = 1024) -> dict[str, Any]:
+def run_memory_optimized_analysis(binary_path: str, max_memory_mb: int = 1024) -> dict[str, object]:
     """Run memory-optimized analysis for large binaries.
 
     Args:
@@ -778,7 +777,7 @@ def run_memory_optimized_analysis(binary_path: str, max_memory_mb: int = 1024) -
     return results
 
 
-def run_pdf_report_generator(analysis_results: dict[str, Any], output_path: str | None = None) -> dict[str, Any]:
+def run_pdf_report_generator(analysis_results: dict[str, object], output_path: str | None = None) -> dict[str, object]:
     """Generate a PDF report from analysis results.
 
     Args:
@@ -832,7 +831,7 @@ def run_pdf_report_generator(analysis_results: dict[str, Any], output_path: str 
 # Helper functions
 
 
-def _default_chunk_processor(data: bytes, chunk_info: dict[str, Any]) -> dict[str, Any]:
+def _default_chunk_processor(data: bytes, chunk_info: dict[str, object]) -> dict[str, object]:
     """Calculate basic statistics for a data chunk.
 
     Args:
@@ -850,7 +849,7 @@ def _default_chunk_processor(data: bytes, chunk_info: dict[str, Any]) -> dict[st
     }
 
 
-def _default_aggregation(results: list[dict[str, Any]]) -> dict[str, Any]:
+def _default_aggregation(results: list[dict[str, object]]) -> dict[str, object]:
     """Aggregate results from multiple chunk processing operations.
 
     Args:
@@ -875,7 +874,7 @@ def _default_aggregation(results: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def _aggregate_chunk_results(chunk_results: list[dict[str, Any]]) -> dict[str, Any]:
+def _aggregate_chunk_results(chunk_results: list[dict[str, object]]) -> dict[str, object]:
     """Aggregate results from chunk processing operations.
 
     Args:
@@ -893,7 +892,7 @@ def _aggregate_chunk_results(chunk_results: list[dict[str, Any]]) -> dict[str, A
     return _default_aggregation(successful)
 
 
-def _distributed_string_extraction(binary_path: str, config: dict[str, Any]) -> dict[str, Any]:
+def _distributed_string_extraction(binary_path: str, config: dict[str, object]) -> dict[str, object]:
     """Extract strings from binary using distributed processing.
 
     Args:
@@ -906,7 +905,7 @@ def _distributed_string_extraction(binary_path: str, config: dict[str, Any]) -> 
     """
     min_length = config.get("min_length", 4)
 
-    def string_processor(data: bytes, chunk_info: dict[str, Any]) -> dict[str, Any]:
+    def string_processor(data: bytes, chunk_info: dict[str, object]) -> dict[str, object]:
         """Extract printable strings from chunk."""
         strings = []
         current = []
@@ -962,7 +961,7 @@ def _distributed_string_extraction(binary_path: str, config: dict[str, Any]) -> 
     return results
 
 
-def _distributed_hash_calculation(binary_path: str, config: dict[str, Any]) -> dict[str, Any]:
+def _distributed_hash_calculation(binary_path: str, config: dict[str, object]) -> dict[str, object]:
     """Calculate multiple hash algorithms using distributed processing.
 
     Args:
@@ -1008,7 +1007,7 @@ def _distributed_hash_calculation(binary_path: str, config: dict[str, Any]) -> d
     return results
 
 
-def _check_gpu_backends() -> dict[str, Any]:
+def _check_gpu_backends() -> dict[str, object]:
     """Check for available GPU acceleration backends.
 
     Returns:
@@ -1052,7 +1051,7 @@ def _check_gpu_backends() -> dict[str, Any]:
     return backends
 
 
-def _run_cpu_fallback(task_type: str, data: Any) -> dict[str, Any]:
+def _run_cpu_fallback(task_type: str, data: object) -> dict[str, object]:
     """Execute CPU fallback processing when GPU is unavailable.
 
     Args:
@@ -1111,7 +1110,7 @@ def _run_cpu_fallback(task_type: str, data: Any) -> dict[str, Any]:
     return result
 
 
-def _gpu_pattern_matching(data: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
+def _gpu_pattern_matching(data: dict[str, object], config: dict[str, object]) -> dict[str, object]:
     """Execute GPU-accelerated pattern matching operations.
 
     Args:
@@ -1200,7 +1199,7 @@ def _gpu_pattern_matching(data: dict[str, Any], config: dict[str, Any]) -> dict[
     }
 
 
-def _gpu_crypto_operations(data: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
+def _gpu_crypto_operations(data: dict[str, object], config: dict[str, object]) -> dict[str, object]:
     """Execute GPU-accelerated cryptographic operations.
 
     Args:
@@ -1255,7 +1254,7 @@ def _gpu_crypto_operations(data: dict[str, Any], config: dict[str, Any]) -> dict
     }
 
 
-def _gpu_ml_inference(data: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
+def _gpu_ml_inference(data: dict[str, object], config: dict[str, object]) -> dict[str, object]:
     """Execute GPU-accelerated machine learning inference.
 
     Args:
@@ -1348,7 +1347,7 @@ def run_dask_distributed_analysis(
     analysis_func: Callable,
     chunk_size: int = 1024 * 1024,
     n_partitions: int | None = None,
-) -> dict[str, Any]:
+) -> dict[str, object]:
     """Run distributed binary analysis using Dask for large-scale processing.
 
     Args:
@@ -1485,7 +1484,7 @@ def run_celery_distributed_analysis(
     task_name: str = "binary_analysis",
     chunk_size: int = 1024 * 1024,
     queue_name: str = "intellicrack",
-) -> dict[str, Any]:
+) -> dict[str, object]:
     """Run distributed binary analysis using Celery task queue.
 
     Args:
@@ -1520,7 +1519,7 @@ def run_celery_distributed_analysis(
 
         # Define task inline
         @app.task(name=f"intellicrack.{task_name}")
-        def analyze_chunk(chunk_data):
+        def analyze_chunk(chunk_data: dict[str, object]) -> dict[str, object]:
             """Analyze a binary chunk."""
             from ..analysis.entropy_utils import calculate_byte_entropy
 
@@ -1594,7 +1593,7 @@ def run_celery_distributed_analysis(
 # Joblib parallel processing implementation
 def run_joblib_parallel_analysis(
     binary_path: str, analysis_funcs: list[Callable], n_jobs: int = -1, backend: str = "threading",
-) -> dict[str, Any]:
+) -> dict[str, object]:
     """Run parallel binary analysis using joblib for multi-core processing.
 
     Args:
@@ -1629,7 +1628,7 @@ def run_joblib_parallel_analysis(
         results["file_size"] = len(binary_data)
 
         # Define analysis tasks
-        def run_analysis(func, data, func_name):
+        def run_analysis(func: Callable, data: bytes, func_name: str) -> dict[str, object]:
             """Run a single analysis function."""
             try:
                 result = func(data)
@@ -1674,7 +1673,7 @@ def run_joblib_parallel_analysis(
 
 
 # Joblib memory-mapped file processing
-def run_joblib_mmap_analysis(binary_path: str, window_size: int = 4096, step_size: int = 1024, n_jobs: int = -1) -> dict[str, Any]:
+def run_joblib_mmap_analysis(binary_path: str, window_size: int = 4096, step_size: int = 1024, n_jobs: int = -1) -> dict[str, object]:
     """Run memory-mapped parallel analysis using joblib for efficient large file processing.
 
     Args:
@@ -1707,7 +1706,7 @@ def run_joblib_mmap_analysis(binary_path: str, window_size: int = 4096, step_siz
         results["file_size"] = file_size
 
         # Define window analysis function
-        def analyze_window(offset, window_size, file_path):
+        def analyze_window(offset: int, window_size: int, file_path: str) -> dict[str, object]:
             """Analyze a window of the file using memory mapping."""
             with open(file_path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped:
                 # Read window data

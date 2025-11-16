@@ -29,11 +29,14 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, Protocol
+
+import lief
+import pefile
 
 from intellicrack.utils.project_paths import get_project_root
 
-from ..core.analysis.frida_script_manager import FridaScriptManager
+from ..core.analysis.frida_script_manager import FridaScriptManager, ScriptResult
 from ..core.logging import AuditEvent, AuditEventType, AuditSeverity, get_audit_logger
 from ..core.resources import get_resource_manager
 from ..utils.logger import get_logger
@@ -41,6 +44,29 @@ from .ai_script_generator import AIScriptGenerator, GeneratedScript, ScriptType
 from .common_types import ExecutionResult
 
 logger = get_logger(__name__)
+
+
+class OrchestratorProtocol(Protocol):
+    """Protocol for orchestrator instances to avoid circular imports."""
+
+    pass
+
+
+class CLIInterfaceProtocol(Protocol):
+    """Protocol for CLI interface instances to avoid circular imports."""
+
+    pass
+
+
+class FridaExecutionResult(Protocol):
+    """Protocol for Frida script execution result with expected attributes."""
+
+    success: bool
+    error: str
+    output: str
+    execution_time_ms: float
+    hooks_triggered: int
+    data_collected: list[dict[str, Any]]
 
 
 class ValidationEnvironment(Enum):
@@ -87,7 +113,11 @@ class AIAgent:
     Similar to Claude Code - takes a request and autonomously completes it.
     """
 
-    def __init__(self, orchestrator: Any | None = None, cli_interface: Any | None = None) -> None:
+    def __init__(
+        self,
+        orchestrator: OrchestratorProtocol | None = None,
+        cli_interface: CLIInterfaceProtocol | None = None,
+    ) -> None:
         """Initialize the AI agent with orchestrator and CLI interface.
 
         Args:
@@ -358,8 +388,16 @@ class AIAgent:
 
         return strings
 
-    def _normalize_strings_data(self, strings_data: Any) -> list[str]:
-        """Normalize strings data from various formats to a list of strings."""
+    def _normalize_strings_data(self, strings_data: dict[str, Any] | list[str]) -> list[str]:
+        """Normalize strings data from various formats to a list of strings.
+
+        Args:
+            strings_data: String data in dict or list format from binary analysis
+
+        Returns:
+            List of normalized string values
+
+        """
         if isinstance(strings_data, dict):
             return strings_data.get('strings', [])
         if isinstance(strings_data, list):
@@ -381,8 +419,16 @@ class AIAgent:
 
         return filtered_strings
 
-    def _extract_string_value(self, string_entry: Any) -> str:
-        """Extract string value from entry (dict or str)."""
+    def _extract_string_value(self, string_entry: dict[str, str] | str) -> str:
+        """Extract string value from entry (dict or str).
+
+        Args:
+            string_entry: String entry as dict with 'value' key or direct string
+
+        Returns:
+            Extracted string value or empty string
+
+        """
         if isinstance(string_entry, dict):
             return string_entry.get('value', '')
         if isinstance(string_entry, str):
@@ -635,8 +681,16 @@ class AIAgent:
                 imports.append(import_string)
         return imports
 
-    def _format_import_entry(self, import_entry: Any) -> str:
-        """Format import entry to string."""
+    def _format_import_entry(self, import_entry: dict[str, str] | str) -> str:
+        """Format import entry to string.
+
+        Args:
+            import_entry: Import entry as dict with 'name' and 'dll' keys or direct string
+
+        Returns:
+            Formatted import string
+
+        """
         if isinstance(import_entry, dict):
             import_name = import_entry.get('name', '')
             dll_name = import_entry.get('dll', '')
@@ -821,23 +875,41 @@ class AIAgent:
             logger.debug(f"Not a PE file or PE analysis failed: {e}")
         return []
 
-    def _extract_dll_imports(self, pe: Any, network_api_patterns: list[str]) -> list[str]:
-        """Extract DLL imports matching network API patterns."""
+    def _extract_dll_imports(self, pe: pefile.PE, network_api_patterns: list[str]) -> list[str]:
+        """Extract DLL imports matching network API patterns.
+
+        Args:
+            pe: Parsed PE file object from pefile library
+            network_api_patterns: List of network API patterns to match
+
+        Returns:
+            List of DLL import strings matching network patterns
+
+        """
         dll_imports = []
         for entry in pe.DIRECTORY_ENTRY_IMPORT:
             dll_name = entry.dll.decode("utf-8").lower()
-            if any(api.lower() in dll_name for api in network_api_patterns[:4]):  # DLL names
+            if any(api.lower() in dll_name for api in network_api_patterns[:4]):
                 dll_imports.append(f"imports:{dll_name}")
         return dll_imports
 
-    def _extract_function_imports(self, pe: Any, network_api_patterns: list[str]) -> list[str]:
-        """Extract function imports matching network API patterns."""
+    def _extract_function_imports(self, pe: pefile.PE, network_api_patterns: list[str]) -> list[str]:
+        """Extract function imports matching network API patterns.
+
+        Args:
+            pe: Parsed PE file object from pefile library
+            network_api_patterns: List of network API patterns to match
+
+        Returns:
+            List of function import strings matching network patterns
+
+        """
         function_imports = []
         for entry in pe.DIRECTORY_ENTRY_IMPORT:
             for func in entry.imports:
                 if func.name:
                     func_name = func.name.decode("utf-8")
-                    if any(api in func_name for api in network_api_patterns[4:]):  # API names
+                    if any(api in func_name for api in network_api_patterns[4:]):
                         function_imports.append(f"api:{func_name}")
         return function_imports
 
@@ -1134,8 +1206,16 @@ class AIAgent:
         except Exception as e:
             logger.debug(f"ELF analysis failed: {e}")
 
-    def _elf_section_indicates_network(self, section: Any) -> bool:
-        """Return True if a section name likely indicates networking functionality."""
+    def _elf_section_indicates_network(self, section: lief.ELF.Section) -> bool:
+        """Return True if a section name likely indicates networking functionality.
+
+        Args:
+            section: ELF section object from lief library
+
+        Returns:
+            True if section name contains network-related keywords
+
+        """
         name = getattr(section, "name", "") or ""
         return "net" in name.lower() or "socket" in name.lower()
 
@@ -2039,8 +2119,21 @@ class AIAgent:
             return False
         return True
 
-    def _process_frida_result(self, result: Any, output_lines: list[str]) -> tuple[bool, list[str]]:
-        """Process Frida script execution result."""
+    def _process_frida_result(
+        self,
+        result: FridaExecutionResult,
+        output_lines: list[str],
+    ) -> tuple[bool, list[str]]:
+        """Process Frida script execution result.
+
+        Args:
+            result: Frida execution result with success status and output
+            output_lines: List of output lines to append to
+
+        Returns:
+            Tuple of (success status, updated output lines)
+
+        """
         if result.success:
             self._append_frida_success_output(result, output_lines)
             logger.info(f"Frida script executed successfully: {result.execution_time_ms}ms")
@@ -2050,8 +2143,18 @@ class AIAgent:
         logger.error(f"Frida script execution failed: {result.error}")
         return False, output_lines
 
-    def _append_frida_success_output(self, result: Any, output_lines: list[str]) -> None:
-        """Append success output from Frida execution."""
+    def _append_frida_success_output(
+        self,
+        result: FridaExecutionResult,
+        output_lines: list[str],
+    ) -> None:
+        """Append success output from Frida execution.
+
+        Args:
+            result: Frida execution result with output and metrics
+            output_lines: List of output lines to append to
+
+        """
         output_lines.append("Frida script execution completed successfully")
         output_lines.append(f"Execution time: {result.execution_time_ms}ms")
 
@@ -2064,8 +2167,18 @@ class AIAgent:
         if result.data_collected:
             output_lines.append(f"Data collected: {len(result.data_collected)} items")
 
-    def _append_frida_failure_output(self, result: Any, output_lines: list[str]) -> None:
-        """Append failure output from Frida execution."""
+    def _append_frida_failure_output(
+        self,
+        result: FridaExecutionResult,
+        output_lines: list[str],
+    ) -> None:
+        """Append failure output from Frida execution.
+
+        Args:
+            result: Frida execution result with error information
+            output_lines: List of output lines to append to
+
+        """
         output_lines.append(f"ERROR: Frida script execution failed: {result.error}")
         if result.output:
             self._append_frida_script_output(result.output, output_lines, max_lines=20, prefix="Partial output:")
@@ -2161,8 +2274,21 @@ class AIAgent:
         output_lines.append(f"Target: {Path(target_binary).name}")
         output_lines.append(f"Mode: {mode}")
 
-    def _process_library_script_result(self, result: Any, output_lines: list[str]) -> tuple[bool, list[str]]:
-        """Process library script execution result."""
+    def _process_library_script_result(
+        self,
+        result: FridaExecutionResult,
+        output_lines: list[str],
+    ) -> tuple[bool, list[str]]:
+        """Process library script execution result.
+
+        Args:
+            result: Frida library script execution result
+            output_lines: List of output lines to append to
+
+        Returns:
+            Tuple of (success status, updated output lines)
+
+        """
         if result.success:
             self._append_library_script_success(result, output_lines)
             return True, output_lines
@@ -2170,8 +2296,18 @@ class AIAgent:
         self._append_library_script_failure(result, output_lines)
         return False, output_lines
 
-    def _append_library_script_success(self, result: Any, output_lines: list[str]) -> None:
-        """Append success output for library script execution."""
+    def _append_library_script_success(
+        self,
+        result: FridaExecutionResult,
+        output_lines: list[str],
+    ) -> None:
+        """Append success output for library script execution.
+
+        Args:
+            result: Successful Frida library script execution result
+            output_lines: List of output lines to append to
+
+        """
         output_lines.append("Execution successful")
         output_lines.append(f"Time: {result.execution_time_ms}ms")
 
@@ -2184,8 +2320,18 @@ class AIAgent:
         if result.data_collected:
             output_lines.append(f"Data collected: {len(result.data_collected)} items")
 
-    def _append_library_script_failure(self, result: Any, output_lines: list[str]) -> None:
-        """Append failure output for library script execution."""
+    def _append_library_script_failure(
+        self,
+        result: FridaExecutionResult,
+        output_lines: list[str],
+    ) -> None:
+        """Append failure output for library script execution.
+
+        Args:
+            result: Failed Frida library script execution result
+            output_lines: List of output lines to append to
+
+        """
         output_lines.append(f"ERROR: Execution failed: {result.error}")
         if result.output:
             self._append_frida_script_output(result.output, output_lines, max_lines=20, prefix="Partial output:")

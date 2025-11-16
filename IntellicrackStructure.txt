@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Sat, Nov 15, 2025 12:33:06 PM
+Generated: Sat, Nov 15, 2025 07:53:23 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -56,6 +56,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── pattern_library.cpython-314.pyc
 │   │   ├── performance_monitor.cpython-314.pyc
 │   │   ├── performance_monitor_simple.cpython-314.pyc
+│   │   ├── performance_optimization_layer.cpython-312.pyc
 │   │   ├── performance_optimization_layer.cpython-314.pyc
 │   │   ├── predictive_intelligence.cpython-314.pyc
 │   │   ├── protection_aware_script_gen.cpython-314.pyc
@@ -633,6 +634,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── logging/
 │   │   ├── __pycache__/
 │   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── audit_logger.cpython-312.pyc
 │   │   │   └── audit_logger.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   └── audit_logger.py
@@ -1617,6 +1619,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── core_utilities.cpython-314.pyc
 │   │   │   ├── dependency_feedback.cpython-314.pyc
 │   │   │   ├── exception_utils.cpython-314.pyc
+│   │   │   ├── final_utilities.cpython-312.pyc
 │   │   │   ├── final_utilities.cpython-314.pyc
 │   │   │   ├── import_checks.cpython-314.pyc
 │   │   │   ├── import_patterns.cpython-314.pyc
@@ -1658,6 +1661,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── __init__.cpython-314.pyc
 │   │   │   ├── patch_generator.cpython-314.pyc
 │   │   │   ├── patch_utils.cpython-314.pyc
+│   │   │   ├── patch_verification.cpython-312.pyc
 │   │   │   └── patch_verification.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── patch_generator.py

@@ -321,8 +321,8 @@ except ImportError as e:
     RemotePluginExecutor = None
 
 # Define package exports
-_plugin_system_exports: list[str] = ([str(item) for item in PLUGIN_SYSTEM_EXPORTS] if isinstance(PLUGIN_SYSTEM_EXPORTS, (list, tuple)) else []) if PLUGIN_SYSTEM_EXPORTS is not None else []
-__all__: list[str] = ["load_plugin", "list_plugins", "get_frida_script", "get_ghidra_script", "CUSTOM_MODULES_DIR", "FRIDA_SCRIPTS_DIR", "GHIDRA_SCRIPTS_DIR", "RemotePluginExecutor"] + _plugin_system_exports  # noqa: RUF005
+_plugin_system_exports = ([str(item) for item in PLUGIN_SYSTEM_EXPORTS] if isinstance(PLUGIN_SYSTEM_EXPORTS, (list, tuple)) else []) if PLUGIN_SYSTEM_EXPORTS is not None else []
+__all__ = ["load_plugin", "list_plugins", "get_frida_script", "get_ghidra_script", "CUSTOM_MODULES_DIR", "FRIDA_SCRIPTS_DIR", "GHIDRA_SCRIPTS_DIR", "RemotePluginExecutor", *_plugin_system_exports]
 
 # Package metadata
 __version__: str = "0.1.0"

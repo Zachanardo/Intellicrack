@@ -117,6 +117,7 @@ MESSAGE TYPES FROM SCRIPTS:
 import logging
 import threading
 import time
+import types
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
@@ -426,7 +427,7 @@ class FridaCertificateHooks:
             else:
                 logger.warning(f"Unknown message type: {msg_type}")
 
-    def _handle_send_message(self, payload: Any, data: bytes | None) -> None:
+    def _handle_send_message(self, payload: object, data: bytes | None) -> None:
         """Process 'send' type messages from Frida scripts.
 
         Parses different message types (log, certificate, bypass_success, etc.)
@@ -515,7 +516,7 @@ class FridaCertificateHooks:
 
         self.errors.append(error_msg)
 
-    def _on_detached(self, reason: str, crash: Any | None) -> None:
+    def _on_detached(self, reason: str, crash: object | None) -> None:
         """Handle detachment from target process.
 
         Called when Frida session is detached, either intentionally or due to crash.
@@ -598,7 +599,7 @@ class FridaCertificateHooks:
         """
         return self.bypassed_connections.copy()
 
-    def call_rpc(self, function_name: str, *args) -> Any:
+    def call_rpc(self, function_name: str, *args: object) -> object:
         """Call an RPC function exported by the injected Frida script.
 
         Args:
@@ -742,11 +743,16 @@ class FridaCertificateHooks:
         """
         return self._script_loaded
 
-    def __enter__(self):
+    def __enter__(self) -> "FridaCertificateHooks":
         """Enter context manager."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> bool:
         """Exit context manager and detach from process."""
         self.detach()
         return False

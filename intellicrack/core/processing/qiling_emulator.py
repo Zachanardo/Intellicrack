@@ -1,20 +1,6 @@
-"""Qiling emulator interface for advanced binary emulation and analysis."""
+#!/usr/bin/env python3
+"""Qiling emulator interface for advanced binary emulation and analysis.
 
-import logging
-import os
-import threading
-import time
-import traceback
-from collections.abc import Callable
-from typing import Any
-
-from intellicrack.utils.logger import logger
-
-from ...config import get_config
-
-# No security module needed - removed per user requirements
-
-"""
 Qiling Binary Emulation Framework Integration.
 
 Copyright (C) 2025 Zachary Flint
@@ -35,7 +21,18 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-#!/usr/bin/env python3
+import logging
+import os
+import threading
+import time
+import traceback
+from collections.abc import Callable
+from typing import Any
+
+from intellicrack.utils.logger import logger
+
+from ...config import get_config
+
 """
 Qiling Binary Emulation Framework Integration.
 

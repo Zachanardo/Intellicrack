@@ -103,6 +103,7 @@ try:
 
     HAS_NUMPY = True
     NUMPY_VERSION = np.__version__
+    numpy = np
 
 except ImportError as e:
     logger.error("NumPy not available, using fallback implementations: %s", e)

@@ -356,8 +356,13 @@ class PatternMatcher:
 class DataFlowAnalyzer:
     """Advanced data flow analysis for tracking license-related data."""
 
-    def __init__(self, cfg_analyzer) -> None:
-        """Initialize data flow analyzer."""
+    def __init__(self, cfg_analyzer: object) -> None:
+        """Initialize data flow analyzer.
+
+        Args:
+            cfg_analyzer: Control flow graph analyzer instance.
+
+        """
         self.cfg_analyzer = cfg_analyzer
         self.reaching_defs = {}
         self.live_vars = {}
@@ -645,8 +650,13 @@ class DataFlowAnalyzer:
 class ControlFlowAnalyzer:
     """Sophisticated control flow analysis for identifying optimal patch points."""
 
-    def __init__(self, disassembler) -> None:
-        """Initialize control flow analyzer."""
+    def __init__(self, disassembler: object) -> None:
+        """Initialize control flow analyzer.
+
+        Args:
+            disassembler: Capstone disassembler instance.
+
+        """
         self.disassembler = disassembler
         self.basic_blocks = {}
         self.cfg_graph = nx.DiGraph() if NETWORKX_AVAILABLE else None
@@ -952,8 +962,14 @@ class ControlFlowAnalyzer:
 class SideEffectAnalyzer:
     """Analyzes side effects of instructions and patch points."""
 
-    def __init__(self, cfg_analyzer, data_flow_analyzer) -> None:
-        """Initialize side effect analyzer."""
+    def __init__(self, cfg_analyzer: object, data_flow_analyzer: object) -> None:
+        """Initialize side effect analyzer.
+
+        Args:
+            cfg_analyzer: Control flow graph analyzer instance.
+            data_flow_analyzer: Data flow analyzer instance.
+
+        """
         self.cfg_analyzer = cfg_analyzer
         self.data_flow_analyzer = data_flow_analyzer
 
@@ -1034,8 +1050,15 @@ class SideEffectAnalyzer:
 class RiskAssessmentEngine:
     """Advanced risk assessment for patch points."""
 
-    def __init__(self, cfg_analyzer, data_flow_analyzer, side_effect_analyzer) -> None:
-        """Initialize risk assessment engine."""
+    def __init__(self, cfg_analyzer: object, data_flow_analyzer: object, side_effect_analyzer: object) -> None:
+        """Initialize risk assessment engine.
+
+        Args:
+            cfg_analyzer: Control flow graph analyzer instance.
+            data_flow_analyzer: Data flow analyzer instance.
+            side_effect_analyzer: Side effect analyzer instance.
+
+        """
         self.cfg_analyzer = cfg_analyzer
         self.data_flow_analyzer = data_flow_analyzer
         self.side_effect_analyzer = side_effect_analyzer
@@ -1121,8 +1144,14 @@ class RiskAssessmentEngine:
 class PatchPointSelector:
     """Select optimal patch points with safety analysis."""
 
-    def __init__(self, cfg_analyzer, disassembler) -> None:
-        """Initialize patch point selector."""
+    def __init__(self, cfg_analyzer: object, disassembler: object) -> None:
+        """Initialize patch point selector.
+
+        Args:
+            cfg_analyzer: Control flow graph analyzer instance.
+            disassembler: Capstone disassembler instance.
+
+        """
         self.cfg_analyzer = cfg_analyzer
         self.disassembler = disassembler
         self.data_flow_analyzer = DataFlowAnalyzer(cfg_analyzer)
@@ -1555,8 +1584,13 @@ class LicenseCheckRemover:
         logger.info(f"Found {len(self.detected_checks)} potential license checks")
         return self.detected_checks
 
-    def _analyze_section(self, section) -> None:
-        """Analyze a code section for license checks."""
+    def _analyze_section(self, section: object) -> None:
+        """Analyze a code section for license checks.
+
+        Args:
+            section: PE section object from pefile library.
+
+        """
         section_data = section.get_data()
         section_va = self.pe.OPTIONAL_HEADER.ImageBase + section.VirtualAddress
 

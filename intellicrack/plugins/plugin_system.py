@@ -1645,7 +1645,7 @@ class PluginSystem:
 
                 # Download the plugin
                 dest_path = os.path.join(dest_dir, filename)
-                urllib.request.urlretrieve(plugin_name, dest_path)
+                urllib.request.urlretrieve(plugin_name, dest_path)  # noqa: S310
 
                 # Verify the downloaded file
                 if os.path.exists(dest_path) and os.path.getsize(dest_path) > 0:
@@ -1946,14 +1946,14 @@ class PluginSystem:
             # Download the plugin with security checks
             try:
                 # Set up request with timeout and size limit
-                req = urllib.request.Request(
+                req = urllib.request.Request(  # noqa: S310
                     plugin_url,
                     headers={
                         "User-Agent": "Intellicrack Plugin System/1.0",
                     },
                 )
 
-                with urllib.request.urlopen(req, timeout=30) as response:
+                with urllib.request.urlopen(req, timeout=30) as response:  # noqa: S310
                     # Check content size (limit to 10MB)
                     content_length = response.headers.get("Content-Length")
                     if content_length and int(content_length) > 10 * 1024 * 1024:
@@ -2251,8 +2251,8 @@ finally:
 try:
     from .plugin_config import PLUGIN_SYSTEM_EXPORTS
 
-    _plugin_system_exports: list[str] = ([str(item) for item in PLUGIN_SYSTEM_EXPORTS] if isinstance(PLUGIN_SYSTEM_EXPORTS, (list, tuple)) else []) if PLUGIN_SYSTEM_EXPORTS is not None else []
-    __all__: list[str] = ["PluginSystem", "create_plugin_template", *_plugin_system_exports]
+    _plugin_system_exports = ([str(item) for item in PLUGIN_SYSTEM_EXPORTS] if isinstance(PLUGIN_SYSTEM_EXPORTS, (list, tuple)) else []) if PLUGIN_SYSTEM_EXPORTS is not None else []
+    __all__ = ["PluginSystem", "create_plugin_template", *_plugin_system_exports]
 except ImportError as e:
     logger.exception(f"Import error in plugin_system, possibly due to missing plugin_config module: {e}")
     # Fallback in case of circular import issues

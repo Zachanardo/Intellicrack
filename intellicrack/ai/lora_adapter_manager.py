@@ -21,9 +21,16 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, TypeVar
 
 from ..utils.logger import get_logger
+
+if TYPE_CHECKING:
+    from peft import PeftConfig as PeftConfigType
+    from peft import PeftModel as PeftModelType
+
+ModelType = TypeVar("ModelType")
+ConfigType = TypeVar("ConfigType")
 
 logger = get_logger(__name__)
 
@@ -122,8 +129,8 @@ class LoRAAdapterManager:
         lora_alpha: int = 32,
         target_modules: list[str] | None = None,
         lora_dropout: float = 0.1,
-        **kwargs,
-    ) -> Any | None:
+        **kwargs: object,
+    ) -> object | None:
         """Create a LoRA configuration.
 
         Args:
@@ -217,10 +224,10 @@ class LoRAAdapterManager:
 
     def apply_lora_to_model(
         self,
-        model: Any,
-        lora_config: Any,
+        model: ModelType,
+        lora_config: object,
         adapter_name: str = "default",
-    ) -> Any | None:
+    ) -> ModelType | None:
         """Apply LoRA adapter to a model.
 
         Args:
@@ -258,11 +265,11 @@ class LoRAAdapterManager:
 
     def load_adapter(
         self,
-        base_model: Any,
+        base_model: ModelType,
         adapter_path: str | Path,
         adapter_name: str = "default",
-        **kwargs,
-    ) -> Any | None:
+        **kwargs: object,
+    ) -> ModelType | None:
         """Load a LoRA adapter from disk.
 
         Args:
@@ -315,7 +322,7 @@ class LoRAAdapterManager:
 
     def save_adapter(
         self,
-        model: Any,
+        model: ModelType,
         save_path: str | Path,
         adapter_name: str = "default",
         save_config: bool = True,
@@ -358,10 +365,10 @@ class LoRAAdapterManager:
 
     def prepare_model_for_qlora(
         self,
-        model: Any,
+        model: ModelType,
         use_gradient_checkpointing: bool = True,
-        gradient_checkpointing_kwargs: dict | None = None,
-    ) -> Any:
+        gradient_checkpointing_kwargs: dict[str, object] | None = None,
+    ) -> ModelType:
         """Prepare a model for QLoRA training.
 
         Args:
@@ -392,7 +399,7 @@ class LoRAAdapterManager:
             logger.error(f"Failed to prepare model for QLoRA: {e}")
             return model
 
-    def list_adapters(self, model: Any) -> list[str]:
+    def list_adapters(self, model: ModelType) -> list[str]:
         """List all adapters loaded in a model.
 
         Args:
@@ -406,7 +413,7 @@ class LoRAAdapterManager:
             return list(model.peft_config.keys())
         return []
 
-    def set_adapter(self, model: Any, adapter_name: str) -> bool:
+    def set_adapter(self, model: ModelType, adapter_name: str) -> bool:
         """Set the active adapter in a multi-adapter model.
 
         Args:
@@ -431,7 +438,7 @@ class LoRAAdapterManager:
 
     def merge_adapters(
         self,
-        model: Any,
+        model: ModelType,
         adapter_names: list[str],
         weights: list[float] | None = None,
         new_adapter_name: str = "merged",
@@ -469,7 +476,11 @@ class LoRAAdapterManager:
             logger.error(f"Failed to merge adapters: {e}")
             return False
 
-    def compare_adapter_configs(self, config1_path: str | Path, config2_path: str | Path) -> dict[str, Any]:
+    def compare_adapter_configs(
+        self,
+        config1_path: str | Path,
+        config2_path: str | Path,
+    ) -> dict[str, object]:
         """Compare two PEFT adapter configurations.
 
         Args:
@@ -588,7 +599,7 @@ class LoRAAdapterManager:
             logger.error(f"Failed to download adapter: {e}")
             return None
 
-    def get_adapter_info(self, adapter_path: str | Path) -> dict[str, Any]:
+    def get_adapter_info(self, adapter_path: str | Path) -> dict[str, object]:
         """Get information about a LoRA adapter.
 
         Args:
@@ -644,7 +655,7 @@ class LoRAAdapterManager:
 
         return info
 
-    def validate_adapter_config(self, config_path: str | Path) -> dict[str, Any]:
+    def validate_adapter_config(self, config_path: str | Path) -> dict[str, object]:
         """Validate a PEFT adapter configuration file.
 
         Args:

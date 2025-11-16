@@ -91,7 +91,7 @@ class ConcolicExecutionEngine:
             self.logger.error("No symbolic execution engine available!")
 
     @property
-    def manticore_available(self):
+    def manticore_available(self) -> bool:
         """Legacy property for backward compatibility."""
         return self.symbolic_engine is not None
 
@@ -107,7 +107,7 @@ class ConcolicExecutionEngine:
 
         return {"error": "Unknown symbolic execution engine"}
 
-    def _explore_paths_angr(self, target_address, avoid_addresses):
+    def _explore_paths_angr(self, target_address: int | None, avoid_addresses: list[int] | None) -> dict[str, Any]:
         """Explore paths using angr."""
         try:
             self.logger.info("Starting angr symbolic execution on %s", self.binary_path)
@@ -163,7 +163,7 @@ class ConcolicExecutionEngine:
             self.logger.error(f"Angr execution failed: {e}")
             return {"error": str(e), "engine": "angr"}
 
-    def _explore_paths_simconcolic(self, target_address, avoid_addresses):
+    def _explore_paths_simconcolic(self, target_address: int | None, avoid_addresses: list[int] | None) -> dict[str, Any]:
         """Fallback simconcolic implementation."""
         if not SIMCONCOLIC_AVAILABLE:
             return {
@@ -205,7 +205,7 @@ class ConcolicExecutionEngine:
             return {"error": "SimConcolic does not support license bypass analysis"}
         return {"error": "No suitable symbolic execution engine for license bypass"}
 
-    def _find_license_bypass_angr(self):
+    def _find_license_bypass_angr(self) -> dict[str, Any]:
         """Find license bypass using angr."""
         try:
             project = angr.Project(self.binary_path, auto_load_libs=False)

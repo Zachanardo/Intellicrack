@@ -21,20 +21,24 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 from threading import Thread
+from typing import TYPE_CHECKING, Any
 
 import frida
 
 from intellicrack.handlers.pyqt6_handler import QInputDialog
+
+if TYPE_CHECKING:
+    from intellicrack.ui.main_app import IntellicrackApp
 
 try:
     from intellicrack.core.analysis.stalker_manager import StalkerSession
 except ImportError:
     StalkerSession = None
 
-active_frida_sessions = {}
-active_stalker_sessions = {}
+active_frida_sessions: dict[str, Any] = {}
+active_stalker_sessions: dict[str, Any] = {}
 
-ANALYSIS_SCRIPTS_WHITELIST = [
+ANALYSIS_SCRIPTS_WHITELIST: list[str] = [
     "registry_monitor.js",
     "telemetry_blocker.js",
     "websocket_interceptor.js",
@@ -52,8 +56,21 @@ ANALYSIS_SCRIPTS_WHITELIST = [
 ]
 
 
-def on_frida_message(main_app, binary_path, message, data) -> None:
-    """Handle messages from Frida scripts."""
+def on_frida_message(
+    main_app: "IntellicrackApp",
+    binary_path: str,
+    message: dict[str, Any],
+    data: object,
+) -> None:
+    """Handle messages from Frida scripts.
+
+    Args:
+        main_app: Main application instance for emitting UI updates.
+        binary_path: Path to the binary being analyzed.
+        message: Message dictionary from Frida script containing type and payload.
+        data: Additional data associated with the message.
+
+    """
     try:
         if message["type"] == "send":
             payload = message.get("payload", "")
@@ -66,8 +83,22 @@ def on_frida_message(main_app, binary_path, message, data) -> None:
         main_app.update_output.emit(f"[Frida Message Error] Failed to process message: {e}")
 
 
-def run_frida_script_thread(main_app, binary_path, script_path) -> None:
-    """Execute Frida script logic in a separate thread."""
+def run_frida_script_thread(
+    main_app: "IntellicrackApp",
+    binary_path: str,
+    script_path: str,
+) -> None:
+    """Execute Frida script logic in a separate thread.
+
+    Spawns a process for the target binary, attaches Frida, loads the analysis
+    script, and monitors execution until the session detaches.
+
+    Args:
+        main_app: Main application instance for emitting UI updates.
+        binary_path: Path to the binary to analyze.
+        script_path: Path to the Frida script file to execute.
+
+    """
     session = None
     try:
         main_app.update_output.emit(
@@ -102,10 +133,16 @@ def run_frida_script_thread(main_app, binary_path, script_path) -> None:
             main_app.analysis_completed.emit("Frida Script Runner")
 
 
-def run_frida_analysis(main_app) -> None:
-    """Present a dialog for the user to select a whitelisted analysis script,.
+def run_frida_analysis(main_app: "IntellicrackApp") -> None:
+    """Present a dialog to select a whitelisted analysis script.
 
-    then run it against the currently loaded binary.
+    Displays a selection dialog allowing the user to choose from approved Frida
+    analysis scripts, then spawns a thread to run the selected script against
+    the currently loaded binary.
+
+    Args:
+        main_app: Main application instance.
+
     """
     if not main_app.current_binary:
         main_app.update_output.emit("[Frida Runner] Error: No binary loaded.")
@@ -145,8 +182,16 @@ def run_frida_analysis(main_app) -> None:
     main_app.update_output.emit("[Frida Runner] Analysis task submitted.")
 
 
-def stop_frida_analysis(main_app) -> None:
-    """Stop running Frida analysis session for the current binary."""
+def stop_frida_analysis(main_app: "IntellicrackApp") -> None:
+    """Stop running Frida analysis session for the current binary.
+
+    Detaches from the active Frida session for the currently loaded binary
+    if one exists.
+
+    Args:
+        main_app: Main application instance.
+
+    """
     if not main_app.current_binary:
         main_app.update_output.emit("[Frida Runner] Error: No binary loaded.")
         return
@@ -161,15 +206,23 @@ def stop_frida_analysis(main_app) -> None:
         main_app.update_output.emit("[Frida Runner] No active analysis found for this binary.")
 
 
-def start_stalker_session(main_app, output_dir: str | None = None) -> bool:
+def start_stalker_session(
+    main_app: "IntellicrackApp",
+    output_dir: str | None = None,
+) -> bool:
     """Start a Stalker tracing session for comprehensive dynamic analysis.
 
+    Initializes and starts a Stalker session for the currently loaded binary,
+    enabling comprehensive instruction tracing and code coverage analysis to
+    identify licensing validation routines.
+
     Args:
-        main_app: Main application instance
-        output_dir: Optional directory for trace output files
+        main_app: Main application instance.
+        output_dir: Optional directory for trace output files. If not provided,
+            uses default location.
 
     Returns:
-        True if session started successfully
+        True if session started successfully, False otherwise.
 
     """
     if StalkerSession is None:
@@ -205,14 +258,18 @@ def start_stalker_session(main_app, output_dir: str | None = None) -> bool:
         return False
 
 
-def stop_stalker_session(main_app) -> bool:
+def stop_stalker_session(main_app: "IntellicrackApp") -> bool:
     """Stop active Stalker session and export results.
 
+    Terminates the active Stalker tracing session, retrieves trace statistics
+    including identified licensing routines and API calls, exports results to
+    a file, and cleans up session resources.
+
     Args:
-        main_app: Main application instance
+        main_app: Main application instance.
 
     Returns:
-        True if session stopped successfully
+        True if session stopped successfully, False otherwise.
 
     """
     if not main_app.current_binary:
@@ -253,16 +310,24 @@ def stop_stalker_session(main_app) -> bool:
         return False
 
 
-def trace_function_stalker(main_app, module_name: str, function_name: str) -> bool:
+def trace_function_stalker(
+    main_app: "IntellicrackApp",
+    module_name: str,
+    function_name: str,
+) -> bool:
     """Trace execution of a specific function using Stalker.
 
+    Initiates instruction-level tracing for a specific function within a loaded
+    module, useful for analyzing licensing validation logic and protection
+    mechanisms.
+
     Args:
-        main_app: Main application instance
-        module_name: Name of module containing function
-        function_name: Name of function to trace
+        main_app: Main application instance.
+        module_name: Name of module containing the function.
+        function_name: Name of function to trace.
 
     Returns:
-        True if trace started successfully
+        True if trace started successfully, False otherwise.
 
     """
     if not main_app.current_binary:
@@ -291,15 +356,22 @@ def trace_function_stalker(main_app, module_name: str, function_name: str) -> bo
         return False
 
 
-def collect_module_coverage_stalker(main_app, module_name: str) -> bool:
+def collect_module_coverage_stalker(
+    main_app: "IntellicrackApp",
+    module_name: str,
+) -> bool:
     """Collect code coverage for a specific module using Stalker.
 
+    Initiates code coverage collection for a module, identifying which code
+    paths are executed and useful for analyzing protection logic and licensing
+    checks during binary execution.
+
     Args:
-        main_app: Main application instance
-        module_name: Name of module to analyze
+        main_app: Main application instance.
+        module_name: Name of module to analyze.
 
     Returns:
-        True if coverage collection started
+        True if coverage collection started successfully, False otherwise.
 
     """
     if not main_app.current_binary:
@@ -328,14 +400,20 @@ def collect_module_coverage_stalker(main_app, module_name: str) -> bool:
         return False
 
 
-def get_stalker_stats(main_app) -> dict | None:
+def get_stalker_stats(main_app: "IntellicrackApp") -> dict[str, Any] | None:
     """Get current Stalker statistics.
 
+    Retrieves comprehensive trace statistics from the active Stalker session,
+    including instruction counts, basic block information, API calls, and
+    identified licensing routines.
+
     Args:
-        main_app: Main application instance
+        main_app: Main application instance.
 
     Returns:
-        Dictionary with statistics or None if no active session
+        Dictionary with trace statistics including total_instructions, unique_blocks,
+        coverage_entries, licensing_routines, api_calls, and trace_duration.
+        Returns None if no active session for the current binary.
 
     """
     if not main_app.current_binary:
@@ -364,14 +442,19 @@ def get_stalker_stats(main_app) -> dict | None:
         return None
 
 
-def get_licensing_routines_stalker(main_app) -> list | None:
+def get_licensing_routines_stalker(main_app: "IntellicrackApp") -> list[str] | None:
     """Get list of identified licensing routines from Stalker.
 
+    Retrieves a list of licensing routines that were identified and analyzed
+    during the Stalker tracing session, useful for understanding protection
+    mechanisms employed by the binary.
+
     Args:
-        main_app: Main application instance
+        main_app: Main application instance.
 
     Returns:
-        List of licensing routine identifiers or None
+        List of licensing routine identifiers identified during tracing, or None
+        if no active session for the current binary.
 
     """
     if not main_app.current_binary:

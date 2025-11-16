@@ -22,6 +22,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+import os
 import shutil
 from typing import Any
 
@@ -174,8 +175,7 @@ class R2PatchIntegrator:
                     clean_orig_hex += "0"
                 original_bytes = bytes.fromhex(clean_orig_hex)
             else:
-                # Create placeholder original bytes of same length
-                original_bytes = b"\x00" * len(patched_bytes)
+                original_bytes = self._read_original_bytes_from_binary(r2_patch.get("binary_path", ""), offset, len(patched_bytes))
 
             # Create description
             description = r2_patch.get("patch_description", f"{patch_category}_patch_at_{hex(offset)}")
@@ -236,14 +236,40 @@ class R2PatchIntegrator:
 
         # Check that original and patched bytes have compatible lengths
         if len(patch.original_bytes) > 0 and len(patch.patched_bytes) > len(patch.original_bytes) * 2:
-            # Patched bytes shouldn't be excessively larger
             return False
 
-        # Check for reasonable patch size (prevent extremely large patches)
-        if len(patch.patched_bytes) > 1024:  # 1KB limit
-            return False
+        return len(patch.patched_bytes) <= 1024
 
-        return True
+    def _read_original_bytes_from_binary(self, binary_path: str, offset: int, length: int) -> bytes:
+        """Read original bytes from binary file at specified offset.
+
+        Args:
+            binary_path: Path to the binary file
+            offset: Offset in the binary
+            length: Number of bytes to read
+
+        Returns:
+            Original bytes from binary, or zeros if unable to read
+
+        """
+        try:
+            if not binary_path or not os.path.exists(binary_path):
+                logger.warning(f"Binary path not available or doesn't exist: {binary_path}")
+                return b"\x00" * length
+
+            with open(binary_path, "rb") as f:
+                f.seek(offset)
+                original_bytes = f.read(length)
+
+                if len(original_bytes) < length:
+                    logger.warning(f"Read only {len(original_bytes)}/{length} bytes from {binary_path} at offset {hex(offset)}")
+                    original_bytes += b"\x00" * (length - len(original_bytes))
+
+                return original_bytes
+
+        except (OSError, ValueError) as e:
+            logger.error(f"Failed to read original bytes from {binary_path} at offset {hex(offset)}: {e}")
+            return b"\x00" * length
 
     def apply_integrated_patches(self, binary_path: str, patches: list[BinaryPatch], output_path: str | None = None) -> dict[str, Any]:
         """Apply integrated patches to a binary file.

@@ -30,11 +30,11 @@ from PIL import Image
 logger = logging.getLogger(__name__)
 
 
-def analyze_pe_imports(pe, target_apis: dict[str, list[str]]) -> dict[str, list[str]]:
+def analyze_pe_imports(pe: object, target_apis: dict[str, list[str]]) -> dict[str, list[str]]:
     """Analyze PE imports for specific API categories.
 
     Args:
-        pe: PE file object
+        pe: pefile.PE object from pefile library representing the PE file
         target_apis: Dictionary mapping categories to API lists
 
     Returns:
@@ -46,11 +46,11 @@ def analyze_pe_imports(pe, target_apis: dict[str, list[str]]) -> dict[str, list[
     return analyze_network_apis(pe, target_apis)
 
 
-def get_pe_sections_info(pe) -> list[dict]:
+def get_pe_sections_info(pe: object) -> list[dict]:
     """Extract PE section information.
 
     Args:
-        pe: PE file object
+        pe: pefile.PE object from pefile library representing the PE file
 
     Returns:
         List of section information dictionaries
@@ -112,14 +112,14 @@ def extract_pe_icon(pe_path: str, output_path: str | None = None) -> Image.Image
         return None
 
 
-def extract_icon_from_resources(pe) -> bytes | None:
+def extract_icon_from_resources(pe: object) -> bytes | None:
     """Extract icon data from PE resources.
 
     Args:
-        pe: pefile.PE object
+        pe: pefile.PE object representing the PE file
 
     Returns:
-        Icon data bytes or None
+        Icon data bytes or None if no icon data found
 
     """
     try:
@@ -323,7 +323,7 @@ def extract_all_pe_icons(pe_path: str, output_dir: str) -> list[str]:
         return saved_icons
 
 
-def get_pe_icon_info(pe_path: str) -> dict[str, any]:
+def get_pe_icon_info(pe_path: str) -> dict[str, object]:
     """Get information about icons in PE file.
 
     Args:
@@ -433,8 +433,16 @@ class PEAnalyzer:
             self.logger.error(f"PE analysis failed for {file_path}: {e}")
             return {"error": str(e)}
 
-    def _extract_imports(self, pe) -> list[dict]:
-        """Extract import information from PE file."""
+    def _extract_imports(self, pe: object) -> list[dict]:
+        """Extract import information from PE file.
+
+        Args:
+            pe: pefile.PE object representing the PE file
+
+        Returns:
+            List of dictionaries containing DLL and function import information
+
+        """
         imports = []
 
         try:
@@ -455,8 +463,16 @@ class PEAnalyzer:
 
         return imports
 
-    def _extract_exports(self, pe) -> list[dict]:
-        """Extract export information from PE file."""
+    def _extract_exports(self, pe: object) -> list[dict]:
+        """Extract export information from PE file.
+
+        Args:
+            pe: pefile.PE object representing the PE file
+
+        Returns:
+            List of dictionaries containing exported function information
+
+        """
         exports = []
 
         try:
@@ -474,8 +490,16 @@ class PEAnalyzer:
 
         return exports
 
-    def _extract_headers(self, pe) -> dict:
-        """Extract PE header information."""
+    def _extract_headers(self, pe: object) -> dict:
+        """Extract PE header information.
+
+        Args:
+            pe: pefile.PE object representing the PE file
+
+        Returns:
+            Dictionary containing DOS, file, and optional header information
+
+        """
         headers = {}
 
         try:
@@ -508,8 +532,16 @@ class PEAnalyzer:
 
         return headers
 
-    def _extract_resources(self, pe) -> dict:
-        """Extract resource information from PE file."""
+    def _extract_resources(self, pe: object) -> dict:
+        """Extract resource information from PE file.
+
+        Args:
+            pe: pefile.PE object representing the PE file
+
+        Returns:
+            Dictionary containing resource information and counts
+
+        """
         resources = {"has_resources": False, "resource_types": [], "total_resources": 0}
 
         try:
@@ -527,8 +559,16 @@ class PEAnalyzer:
 
         return resources
 
-    def _extract_certificates(self, pe) -> dict:
-        """Extract certificate information from PE file."""
+    def _extract_certificates(self, pe: object) -> dict:
+        """Extract certificate information from PE file.
+
+        Args:
+            pe: pefile.PE object representing the PE file
+
+        Returns:
+            Dictionary containing certificate information and counts
+
+        """
         certs = {"has_certificates": False, "certificate_count": 0}
 
         try:
@@ -540,8 +580,16 @@ class PEAnalyzer:
 
         return certs
 
-    def _get_architecture(self, pe) -> str:
-        """Determine PE file architecture."""
+    def _get_architecture(self, pe: object) -> str:
+        """Determine PE file architecture.
+
+        Args:
+            pe: pefile.PE object representing the PE file
+
+        Returns:
+            String representation of the PE file architecture (x86, x64, ARM, ARM64, or Unknown)
+
+        """
         try:
             machine_type = pe.FILE_HEADER.Machine
             architecture_map = {

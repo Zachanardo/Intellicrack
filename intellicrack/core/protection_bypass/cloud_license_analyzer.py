@@ -10,6 +10,7 @@ import os
 import pickle
 import secrets
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -378,7 +379,14 @@ class CloudLicenseAnalyzer:
         """
         )
 
-    def _on_frida_message(self, message, data) -> None:
+    def _on_frida_message(self, message: dict[str, object], data: object) -> None:
+        """Handle Frida script messages from injected proxy hooks.
+
+        Args:
+            message: Message dictionary from Frida script containing type and payload.
+            data: Binary data associated with message, if any.
+
+        """
         if message["type"] == "send":
             payload = message["payload"]
             if payload["type"] == "hooks_installed":
@@ -450,7 +458,7 @@ class CloudLicenseAnalyzer:
 
         return schema
 
-    def _extract_json_schema(self, data: Any, depth: int = 0) -> dict[str, Any]:
+    def _extract_json_schema(self, data: object, depth: int = 0) -> dict[str, object]:
         if depth > 5:
             return {"type": "any"}
 
@@ -567,7 +575,7 @@ class CloudLicenseAnalyzer:
 
         return LicenseToken(token_type=TOKEN_TYPE_BEARER, value=token_value, expires_at=None, refresh_token=None, scope=None)
 
-    def _extract_tokens_from_json(self, data: Any, tokens: list[LicenseToken] = None) -> list[LicenseToken]:
+    def _extract_tokens_from_json(self, data: object, tokens: list[LicenseToken] | None = None) -> list[LicenseToken]:
         if tokens is None:
             tokens = []
 
@@ -621,7 +629,7 @@ class CloudLicenseAnalyzer:
 
         return tokens
 
-    def generate_token(self, token_type: str, **kwargs) -> str:
+    def generate_token(self, token_type: str, **kwargs: object) -> str:
         """Generate valid license token of specified type for bypassing cloud checks."""
         if token_type == TOKEN_TYPE_JWT:
             return self._generate_jwt_token(**kwargs)
@@ -635,10 +643,10 @@ class CloudLicenseAnalyzer:
         self,
         issuer: str = "intellicrack",
         subject: str = "user",
-        audience: str = None,
+        audience: str | None = None,
         expires_in: int = 3600,
-        claims: dict[str, Any] = None,
-        **kwargs,
+        claims: dict[str, object] | None = None,
+        **kwargs: object,
     ) -> str:
         now = datetime.utcnow()
 
@@ -670,12 +678,12 @@ class CloudLicenseAnalyzer:
 
         return jwt.encode(payload, secret, algorithm=algorithm)
 
-    def _generate_api_key(self, prefix: str = "ik", length: int = 32, **kwargs) -> str:
+    def _generate_api_key(self, prefix: str = "ik", length: int = 32, **kwargs: object) -> str:
         random_bytes = os.urandom(length)
         key = base64.urlsafe_b64encode(random_bytes).decode("utf-8")[:length]
         return f"{prefix}_{key}"
 
-    def _generate_license_key(self, format: str = "4-4-4-4", **kwargs) -> str:
+    def _generate_license_key(self, format: str = "4-4-4-4", **kwargs: object) -> str:
         import string
 
         chars = string.ascii_uppercase + string.digits
@@ -695,7 +703,7 @@ class CloudLicenseAnalyzer:
 
         return "-".join(key_parts)
 
-    def _generate_generic_token(self, length: int = 64, **kwargs) -> str:
+    def _generate_generic_token(self, length: int = 64, **kwargs: object) -> str:
         return hashlib.sha256(os.urandom(32)).hexdigest()[:length]
 
     def refresh_token(self, token: LicenseToken) -> LicenseToken | None:
@@ -734,12 +742,12 @@ class CloudLicenseAnalyzer:
 
     def emulate_license_server(self, port: int = 9090) -> None:
         """Start local emulated license server to respond to intercepted requests."""
-        from flask import Flask, jsonify, request
+        from flask import Flask, Response, jsonify, request
 
         app = Flask(__name__)
 
         @app.route("/api/license/verify", methods=["POST"])
-        def verify_license():
+        def verify_license() -> Response:
             data = request.json
             data.get("license_key")
 
@@ -754,7 +762,7 @@ class CloudLicenseAnalyzer:
             return jsonify(response)
 
         @app.route("/api/license/activate", methods=["POST"])
-        def activate_license():
+        def activate_license() -> Response:
             data = request.json
 
             response = {
@@ -767,7 +775,7 @@ class CloudLicenseAnalyzer:
             return jsonify(response)
 
         @app.route("/api/token/refresh", methods=["POST"])
-        def refresh_token():
+        def refresh_token() -> Response:
             new_token = self.generate_token("jwt", expires_in=3600)
 
             response = {

@@ -54,34 +54,34 @@ logger = get_logger(__name__)
 class ScriptInfoWidget(QWidget):
     """Widget to display detailed script information."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the ScriptInfoWidget with default values."""
         super().__init__(parent)
-        self.current_script = None
+        self.current_script: GhidraScript | None = None
         self._init_ui()
 
     def _init_ui(self) -> None:
         """Initialize the UI."""
-        layout = QVBoxLayout()
+        layout: QVBoxLayout = QVBoxLayout()
 
         # Script name label
-        self.name_label = QLabel("Select a script")
-        font = QFont()
+        self.name_label: QLabel = QLabel("Select a script")
+        font: QFont = QFont()
         font.setPointSize(12)
         font.setBold(True)
         self.name_label.setFont(font)
         layout.addWidget(self.name_label)
 
         # Metadata section
-        metadata_group = QGroupBox("Script Information")
-        metadata_layout = QVBoxLayout()
+        metadata_group: QGroupBox = QGroupBox("Script Information")
+        metadata_layout: QVBoxLayout = QVBoxLayout()
 
-        self.author_label = QLabel("Author: -")
-        self.category_label = QLabel("Category: -")
-        self.version_label = QLabel("Version: -")
-        self.type_label = QLabel("Type: -")
-        self.modified_label = QLabel("Last Modified: -")
-        self.size_label = QLabel("Size: -")
+        self.author_label: QLabel = QLabel("Author: -")
+        self.category_label: QLabel = QLabel("Category: -")
+        self.version_label: QLabel = QLabel("Version: -")
+        self.type_label: QLabel = QLabel("Type: -")
+        self.modified_label: QLabel = QLabel("Last Modified: -")
+        self.size_label: QLabel = QLabel("Size: -")
 
         metadata_layout.addWidget(self.author_label)
         metadata_layout.addWidget(self.category_label)
@@ -94,10 +94,10 @@ class ScriptInfoWidget(QWidget):
         layout.addWidget(metadata_group)
 
         # Description section
-        desc_group = QGroupBox("Description")
-        desc_layout = QVBoxLayout()
+        desc_group: QGroupBox = QGroupBox("Description")
+        desc_layout: QVBoxLayout = QVBoxLayout()
 
-        self.description_text = QTextEdit()
+        self.description_text: QTextEdit = QTextEdit()
         self.description_text.setReadOnly(True)
         self.description_text.setMaximumHeight(100)
         desc_layout.addWidget(self.description_text)
@@ -106,11 +106,11 @@ class ScriptInfoWidget(QWidget):
         layout.addWidget(desc_group)
 
         # Validation status
-        self.validation_group = QGroupBox("Validation Status")
-        validation_layout = QVBoxLayout()
+        self.validation_group: QGroupBox = QGroupBox("Validation Status")
+        validation_layout: QVBoxLayout = QVBoxLayout()
 
-        self.validation_label = QLabel("Not validated")
-        self.validation_errors = QTextEdit()
+        self.validation_label: QLabel = QLabel("Not validated")
+        self.validation_errors: QTextEdit = QTextEdit()
         self.validation_errors.setReadOnly(True)
         self.validation_errors.setMaximumHeight(80)
         self.validation_errors.hide()
@@ -122,7 +122,7 @@ class ScriptInfoWidget(QWidget):
         layout.addWidget(self.validation_group)
 
         # Tags
-        self.tags_label = QLabel("Tags: None")
+        self.tags_label: QLabel = QLabel("Tags: None")
         layout.addWidget(self.tags_label)
 
         layout.addStretch()
@@ -189,13 +189,13 @@ class GhidraScriptSelector(QDialog):
     #: Emits script path (type: str)
     script_selected = pyqtSignal(str)
 
-    def __init__(self, parent=None, show_invalid=False) -> None:
+    def __init__(self, parent: QWidget | None = None, show_invalid: bool = False) -> None:
         """Initialize the GhidraScriptSelector with default values."""
         super().__init__(parent)
         self.script_manager = get_script_manager()
-        self.show_invalid = show_invalid
-        self.selected_script_path = None
-        self._search_timer = None
+        self.show_invalid: bool = show_invalid
+        self.selected_script_path: str | None = None
+        self._search_timer: QTimer | None = None
 
         self.setWindowTitle("Select Ghidra Script")
         self.setModal(True)
@@ -206,40 +206,41 @@ class GhidraScriptSelector(QDialog):
 
     def _init_ui(self) -> None:
         """Initialize the UI."""
-        layout = QVBoxLayout()
+        layout: QVBoxLayout = QVBoxLayout()
 
         # Search bar
-        search_layout = QHBoxLayout()
+        search_layout: QHBoxLayout = QHBoxLayout()
         search_layout.addWidget(QLabel("Search:"))
 
-        self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Search scripts by name, description, or tags...")
+        self.search_input: QLineEdit = QLineEdit()
+        hint_text: str = "Search scripts by name, description, or tags..."
+        self.search_input.setToolTip(hint_text)
         self.search_input.textChanged.connect(self._on_search_changed)
         search_layout.addWidget(self.search_input)
 
-        self.refresh_btn = QPushButton("Refresh")
+        self.refresh_btn: QPushButton = QPushButton("Refresh")
         self.refresh_btn.clicked.connect(self._refresh_scripts)
         search_layout.addWidget(self.refresh_btn)
 
         layout.addLayout(search_layout)
 
         # Main content splitter
-        splitter = QSplitter(Qt.Horizontal)
+        splitter: QSplitter = QSplitter(Qt.Horizontal)
 
         # Left side - Script tree
-        left_widget = QWidget()
-        left_layout = QVBoxLayout()
+        left_widget: QWidget = QWidget()
+        left_layout: QVBoxLayout = QVBoxLayout()
 
         # Category filter
-        filter_layout = QHBoxLayout()
+        filter_layout: QHBoxLayout = QHBoxLayout()
         filter_layout.addWidget(QLabel("Category:"))
 
-        self.category_filter = QComboBox()
+        self.category_filter: QComboBox = QComboBox()
         self.category_filter.addItem("All Categories")
         self.category_filter.currentTextChanged.connect(self._on_category_changed)
         filter_layout.addWidget(self.category_filter)
 
-        self.show_invalid_check = QCheckBox("Show invalid scripts")
+        self.show_invalid_check: QCheckBox = QCheckBox("Show invalid scripts")
         self.show_invalid_check.setChecked(self.show_invalid)
         self.show_invalid_check.stateChanged.connect(self._on_show_invalid_changed)
         filter_layout.addWidget(self.show_invalid_check)
@@ -247,20 +248,20 @@ class GhidraScriptSelector(QDialog):
         left_layout.addLayout(filter_layout)
 
         # Script tree
-        self.script_tree = QTreeWidget()
+        self.script_tree: QTreeWidget = QTreeWidget()
         self.script_tree.setHeaderLabels(["Script", "Type", "Status"])
         self.script_tree.itemSelectionChanged.connect(self._on_selection_changed)
         self.script_tree.itemDoubleClicked.connect(self._on_item_double_clicked)
         left_layout.addWidget(self.script_tree)
 
         # Buttons for script management
-        btn_layout = QHBoxLayout()
+        btn_layout: QHBoxLayout = QHBoxLayout()
 
-        self.add_script_btn = QPushButton("Add Script...")
+        self.add_script_btn: QPushButton = QPushButton("Add Script...")
         self.add_script_btn.clicked.connect(self._add_user_script)
         btn_layout.addWidget(self.add_script_btn)
 
-        self.open_folder_btn = QPushButton("Open Scripts Folder")
+        self.open_folder_btn: QPushButton = QPushButton("Open Scripts Folder")
         self.open_folder_btn.clicked.connect(self._open_scripts_folder)
         btn_layout.addWidget(self.open_folder_btn)
 
@@ -270,7 +271,7 @@ class GhidraScriptSelector(QDialog):
         splitter.addWidget(left_widget)
 
         # Right side - Script info
-        self.info_widget = ScriptInfoWidget()
+        self.info_widget: ScriptInfoWidget = ScriptInfoWidget()
         splitter.addWidget(self.info_widget)
 
         splitter.setStretchFactor(0, 2)
@@ -279,17 +280,17 @@ class GhidraScriptSelector(QDialog):
         layout.addWidget(splitter)
 
         # Dialog buttons
-        button_layout = QHBoxLayout()
+        button_layout: QHBoxLayout = QHBoxLayout()
 
-        self.select_btn = QPushButton("Select")
+        self.select_btn: QPushButton = QPushButton("Select")
         self.select_btn.setEnabled(False)
         self.select_btn.clicked.connect(self._on_select_clicked)
 
-        self.cancel_btn = QPushButton("Cancel")
+        self.cancel_btn: QPushButton = QPushButton("Cancel")
         self.cancel_btn.clicked.connect(self.reject)
 
         # Add default script button
-        self.use_default_btn = QPushButton("Use Default Analysis")
+        self.use_default_btn: QPushButton = QPushButton("Use Default Analysis")
         self.use_default_btn.setToolTip("Use the default AdvancedAnalysis.java script")
         self.use_default_btn.clicked.connect(self._use_default_script)
 
@@ -389,7 +390,7 @@ class GhidraScriptSelector(QDialog):
         item = self._create_script_item(script)
         self.script_tree.addTopLevelItem(item)
 
-    def _create_script_item(self, script: GhidraScript):
+    def _create_script_item(self, script: GhidraScript) -> QTreeWidgetItem:
         """Create a tree item for a script."""
         status = "OK Valid" if script.is_valid else "FAIL Invalid"
         item = QTreeWidgetItem([script.name, script.type.upper(), status])
@@ -440,7 +441,7 @@ class GhidraScriptSelector(QDialog):
             self.info_widget.update_script_info(None)
             self.select_btn.setEnabled(False)
 
-    def _on_search_changed(self, text) -> None:
+    def _on_search_changed(self, text: str) -> None:
         """Handle search text change."""
         _ = text
         # Debounce search with timer
@@ -452,17 +453,17 @@ class GhidraScriptSelector(QDialog):
         self._search_timer.setSingleShot(True)
         self._search_timer.start(300)  # 300ms delay
 
-    def _on_category_changed(self, category) -> None:
+    def _on_category_changed(self, category: str) -> None:
         """Handle category filter change."""
         _ = category
         self._populate_tree()
 
-    def _on_show_invalid_changed(self, state) -> None:
+    def _on_show_invalid_changed(self, state: int) -> None:
         """Handle show invalid checkbox change."""
         self.show_invalid = state == Qt.Checked
         self._populate_tree()
 
-    def _on_item_double_clicked(self, item, column) -> None:
+    def _on_item_double_clicked(self, item: QTreeWidgetItem, column: int) -> None:
         """Handle double-click on item."""
         _ = column
         script_path = item.data(0, Qt.UserRole)

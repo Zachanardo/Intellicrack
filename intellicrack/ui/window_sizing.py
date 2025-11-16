@@ -19,17 +19,22 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 from intellicrack.handlers.pyqt6_handler import QApplication
 
 
-def get_default_window_size(width_percentage=0.8, height_percentage=0.8, min_width=800, min_height=600):
+def get_default_window_size(
+    width_percentage: float = 0.8,
+    height_percentage: float = 0.8,
+    min_width: int = 800,
+    min_height: int = 600,
+) -> tuple[int, int]:
     """Calculate appropriate window size based on screen dimensions.
 
     Args:
-        width_percentage: Percentage of screen width to use (0.0-1.0)
-        height_percentage: Percentage of screen height to use (0.0-1.0)
-        min_width: Minimum window width
-        min_height: Minimum window height
+        width_percentage: Percentage of screen width to use (0.0-1.0).
+        height_percentage: Percentage of screen height to use (0.0-1.0).
+        min_width: Minimum window width in pixels.
+        min_height: Minimum window height in pixels.
 
     Returns:
-        tuple: (width, height)
+        Tuple of (width, height) representing the calculated window dimensions.
 
     """
     if QApplication.instance():
@@ -42,11 +47,11 @@ def get_default_window_size(width_percentage=0.8, height_percentage=0.8, min_wid
     return min_width, min_height
 
 
-def center_window_on_screen(window) -> None:
+def center_window_on_screen(window: object) -> None:
     """Center a window on the primary screen.
 
     Args:
-        window: QWidget to center
+        window: QWidget instance to center on the primary screen.
 
     """
     if QApplication.instance():
@@ -59,14 +64,16 @@ def center_window_on_screen(window) -> None:
             window.move(screen_rect.x() + center_x, screen_rect.y() + center_y)
 
 
-def get_dialog_size(dialog_type="standard"):
+def get_dialog_size(dialog_type: str = "standard") -> tuple[int, int, int, int]:
     """Get appropriate dialog size based on type.
 
     Args:
-        dialog_type: Type of dialog ("small", "standard", "large", "full")
+        dialog_type: Type of dialog. Valid values are "small", "standard",
+            "large", or "full". Defaults to "standard".
 
     Returns:
-        tuple: (width, height, min_width, min_height)
+        Tuple of (width, height, min_width, min_height) dimensions in pixels
+        for the specified dialog type.
 
     """
     screen_width, screen_height = get_default_window_size(1.0, 1.0, 1024, 768)
@@ -106,12 +113,13 @@ def get_dialog_size(dialog_type="standard"):
     return width, height, config["min_width"], config["min_height"]
 
 
-def apply_dialog_sizing(dialog, dialog_type="standard") -> None:
+def apply_dialog_sizing(dialog: object, dialog_type: str = "standard") -> None:
     """Apply dynamic sizing to a dialog based on screen size.
 
     Args:
-        dialog: QDialog instance
-        dialog_type: Type of dialog ("small", "standard", "large", "full")
+        dialog: QDialog instance to resize and center on screen.
+        dialog_type: Type of dialog. Valid values are "small", "standard",
+            "large", or "full". Defaults to "standard".
 
     """
     width, height, min_width, min_height = get_dialog_size(dialog_type)

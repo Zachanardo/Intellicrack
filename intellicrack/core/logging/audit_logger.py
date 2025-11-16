@@ -32,17 +32,22 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import TypedDict
 
 from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-_secrets_manager_module: Any = None
+_secrets_manager_module: object = None
 
 
-def _get_secrets_manager() -> Any:  # noqa: ANN401
-    """Lazy import secrets_manager to prevent circular imports."""
+def _get_secrets_manager() -> object:
+    """Lazy import secrets_manager to prevent circular imports.
+
+    Returns:
+        The secrets_manager module object for accessing secret storage operations.
+
+    """
     global _secrets_manager_module
     if _secrets_manager_module is None:
         from ...utils import secrets_manager as _imported_secrets_manager
@@ -50,7 +55,7 @@ def _get_secrets_manager() -> Any:  # noqa: ANN401
     return _secrets_manager_module
 
 
-def get_secret(key: str) -> Any:  # noqa: ANN401
+def get_secret(key: str) -> object:
     """Lazy wrapper for get_secret.
 
     Args:
@@ -63,7 +68,7 @@ def get_secret(key: str) -> Any:  # noqa: ANN401
     return _get_secrets_manager().get_secret(key)
 
 
-def set_secret(key: str, value: Any) -> Any:  # noqa: ANN401
+def set_secret(key: str, value: object) -> object:
     """Lazy wrapper for set_secret.
 
     Args:
@@ -1388,7 +1393,7 @@ class ContextualLogger:
         self.audit_logger = audit_logger
         self.context = {}
 
-    def set_context(self, **kwargs: Any) -> None:  # noqa: ANN401
+    def set_context(self, **kwargs: object) -> None:
         """Set contextual information.
 
         Args:
@@ -1424,7 +1429,7 @@ class ContextualLogger:
             return f"[{context_str}] {message}"
         return message
 
-    def debug(self, message: str, **kwargs: Any) -> None:  # noqa: ANN401
+    def debug(self, message: str, **kwargs: object) -> None:
         """Log debug message with context.
 
         Args:
@@ -1434,7 +1439,7 @@ class ContextualLogger:
         """
         self.logger.debug(self._format_message(message), extra=kwargs)
 
-    def info(self, message: str, **kwargs: Any) -> None:  # noqa: ANN401
+    def info(self, message: str, **kwargs: object) -> None:
         """Log info message with context.
 
         Args:
@@ -1444,7 +1449,7 @@ class ContextualLogger:
         """
         self.logger.info(self._format_message(message), extra=kwargs)
 
-    def warning(self, message: str, **kwargs: Any) -> None:  # noqa: ANN401
+    def warning(self, message: str, **kwargs: object) -> None:
         """Log warning message with context.
 
         Args:
@@ -1454,7 +1459,7 @@ class ContextualLogger:
         """
         self.logger.warning(self._format_message(message), extra=kwargs)
 
-    def error(self, message: str, **kwargs: Any) -> None:  # noqa: ANN401
+    def error(self, message: str, **kwargs: object) -> None:
         """Log error message with context.
 
         Args:
@@ -1479,7 +1484,7 @@ class ContextualLogger:
 
                 logging.getLogger(__name__).debug(f"Audit logging error: {e}")
 
-    def critical(self, message: str, **kwargs: Any) -> None:  # noqa: ANN401
+    def critical(self, message: str, **kwargs: object) -> None:
         """Log critical message with context.
 
         Args:
@@ -1528,7 +1533,7 @@ def get_performance_monitor() -> PerformanceMonitor:
     return telemetry_collector.performance_monitor
 
 
-def create_contextual_logger(name: str, **context: Any) -> ContextualLogger:  # noqa: ANN401
+def create_contextual_logger(name: str, **context: object) -> ContextualLogger:
     """Create a contextual logger with initial context.
 
     Args:
@@ -1599,7 +1604,7 @@ def get_audit_logger() -> AuditLogger:
     return _audit_logger
 
 
-def log_exploit_attempt(target: str, exploit_type: str, **kwargs: Any) -> None:  # noqa: ANN401
+def log_exploit_attempt(target: str, exploit_type: str, **kwargs: object) -> None:
     """Log exploit attempts.
 
     Args:
@@ -1624,7 +1629,7 @@ def log_binary_analysis(file_path: str, file_hash: str, protections: list[str], 
     get_audit_logger().log_binary_analysis(file_path, file_hash, protections, vulnerabilities)
 
 
-def log_vm_operation(operation: str, vm_name: str, **kwargs: Any) -> None:  # noqa: ANN401
+def log_vm_operation(operation: str, vm_name: str, **kwargs: object) -> None:
     """Log VM operations.
 
     Args:
@@ -1636,7 +1641,7 @@ def log_vm_operation(operation: str, vm_name: str, **kwargs: Any) -> None:  # no
     get_audit_logger().log_vm_operation(operation, vm_name, **kwargs)
 
 
-def log_credential_access(credential_type: str, purpose: str, **kwargs: Any) -> None:  # noqa: ANN401
+def log_credential_access(credential_type: str, purpose: str, **kwargs: object) -> None:
     """Log credential access.
 
     Args:
@@ -1648,7 +1653,7 @@ def log_credential_access(credential_type: str, purpose: str, **kwargs: Any) -> 
     get_audit_logger().log_credential_access(credential_type, purpose, **kwargs)
 
 
-def log_tool_execution(tool_name: str, command: str, **kwargs: Any) -> None:  # noqa: ANN401
+def log_tool_execution(tool_name: str, command: str, **kwargs: object) -> None:
     """Log tool execution.
 
     Args:

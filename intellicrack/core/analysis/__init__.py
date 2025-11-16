@@ -46,8 +46,8 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from typing import Any  # noqa: E402
 
-# Import core analysis functions
 try:
     from .core_analysis import (
         analyze_binary_internal,
@@ -106,177 +106,139 @@ except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     MultiFormatBinaryAnalyzer = None
 
-import sys
+_lazy_imports: dict[str, tuple[str, list[str]]] = {
+    "CFGExplorer": (".cfg_explorer", ["CFGExplorer"]),
+    "IncrementalAnalysisManager": (".incremental_manager", ["IncrementalAnalysisManager"]),
+    "SimilaritySearcher": (".similarity_searcher", ["SimilaritySearcher"]),
+    "ControlFlowDeobfuscator": (".control_flow_deobfuscation", ["ControlFlowDeobfuscator"]),
+    "DeobfuscationResult": (".control_flow_deobfuscation", ["DeobfuscationResult"]),
+    "DispatcherInfo": (".control_flow_deobfuscation", ["DispatcherInfo"]),
+    "BasicBlock": (".control_flow_deobfuscation", ["BasicBlock"]),
+    "StalkerSession": (".stalker_manager", ["StalkerSession"]),
+    "StalkerStats": (".stalker_manager", ["StalkerStats"]),
+    "TraceEvent": (".stalker_manager", ["TraceEvent"]),
+    "APICallEvent": (".stalker_manager", ["APICallEvent"]),
+    "CoverageEntry": (".stalker_manager", ["CoverageEntry"]),
+    "StarForceAnalyzer": (".starforce_analyzer", ["StarForceAnalyzer"]),
+    "StarForceAnalysis": (".starforce_analyzer", ["StarForceAnalysis"]),
+    "SecuROMAnalyzer": (".securom_analyzer", ["SecuROMAnalyzer"]),
+    "SecuROMAnalysis": (".securom_analyzer", ["SecuROMAnalysis"]),
+    "ActivationMechanism": (".securom_analyzer", ["ActivationMechanism"]),
+    "TriggerPoint": (".securom_analyzer", ["TriggerPoint"]),
+    "ProductActivationKey": (".securom_analyzer", ["ProductActivationKey"]),
+    "PolymorphicAnalyzer": (".polymorphic_analyzer", ["PolymorphicAnalyzer"]),
+    "PolymorphicAnalysis": (".polymorphic_analyzer", ["PolymorphicAnalysis"]),
+    "MutationType": (".polymorphic_analyzer", ["MutationType"]),
+    "PolymorphicEngine": (".polymorphic_analyzer", ["PolymorphicEngine"]),
+    "BehaviorPattern": (".polymorphic_analyzer", ["BehaviorPattern"]),
+    "InstructionNode": (".polymorphic_analyzer", ["InstructionNode"]),
+    "CodeBlock": (".polymorphic_analyzer", ["CodeBlock"]),
+}
 
-print("[DEBUG analysis/__init__] Importing CFGExplorer...")
-sys.stdout.flush()
-try:
-    from .cfg_explorer import CFGExplorer
-    print("[DEBUG analysis/__init__] CFGExplorer imported OK")
-    sys.stdout.flush()
-except ImportError as e:
-    logger.error("Import error in __init__: %s", e)
-    CFGExplorer = None
+_lazy_loaded: dict[str, Any] = {}
 
-print("[DEBUG analysis/__init__] Importing IncrementalAnalysisManager...")
-sys.stdout.flush()
-try:
-    from .incremental_manager import IncrementalAnalysisManager
-    print("[DEBUG analysis/__init__] IncrementalAnalysisManager imported OK")
-    sys.stdout.flush()
-except ImportError as e:
-    logger.error("Import error in __init__: %s", e)
-    IncrementalAnalysisManager = None
 
-print("[DEBUG analysis/__init__] Importing SimilaritySearcher...")
-sys.stdout.flush()
-try:
-    from .similarity_searcher import SimilaritySearcher
-    print("[DEBUG analysis/__init__] SimilaritySearcher imported OK")
-    sys.stdout.flush()
-except ImportError as e:
-    logger.error("Import error in __init__: %s", e)
-    SimilaritySearcher = None
+def __getattr__(name: str) -> Any:  # noqa: PLR0912
+    """Lazy load heavy analysis modules on demand."""
+    if name in _lazy_loaded:
+        return _lazy_loaded[name]
 
-print("[DEBUG analysis/__init__] Importing control_flow_deobfuscation...")
-sys.stdout.flush()
-try:
-    from .control_flow_deobfuscation import (
-        BasicBlock,
-        ControlFlowDeobfuscator,
-        DeobfuscationResult,
-        DispatcherInfo,
-    )
-    print("[DEBUG analysis/__init__] control_flow_deobfuscation imported OK")
-    sys.stdout.flush()
-except ImportError as e:
-    logger.error("Import error in __init__: %s", e)
-    ControlFlowDeobfuscator = None
-    DeobfuscationResult = None
-    DispatcherInfo = None
-    BasicBlock = None
+    if name in _lazy_imports:
+        module_path, attr_names = _lazy_imports[name]
+        try:
+            if module_path == ".cfg_explorer":
+                from . import cfg_explorer
+                module = cfg_explorer
+            elif module_path == ".incremental_manager":
+                from . import incremental_manager
+                module = incremental_manager
+            elif module_path == ".similarity_searcher":
+                from . import similarity_searcher
+                module = similarity_searcher
+            elif module_path == ".control_flow_deobfuscation":
+                from . import control_flow_deobfuscation
+                module = control_flow_deobfuscation
+            elif module_path == ".stalker_manager":
+                from . import stalker_manager
+                module = stalker_manager
+            elif module_path == ".starforce_analyzer":
+                from . import starforce_analyzer
+                module = starforce_analyzer
+            elif module_path == ".securom_analyzer":
+                from . import securom_analyzer
+                module = securom_analyzer
+            elif module_path == ".polymorphic_analyzer":
+                from . import polymorphic_analyzer
+                module = polymorphic_analyzer
+            else:
+                msg = f"Unknown module path: {module_path}"
+                raise ImportError(msg)
 
-print("[DEBUG analysis/__init__] Importing stalker_manager...")
-sys.stdout.flush()
-try:
-    from .stalker_manager import (
-        APICallEvent,
-        CoverageEntry,
-        StalkerSession,
-        StalkerStats,
-        TraceEvent,
-    )
-    print("[DEBUG analysis/__init__] stalker_manager imported OK")
-    sys.stdout.flush()
-except ImportError as e:
-    logger.error("Import error in __init__: %s", e)
-    StalkerSession = None
-    StalkerStats = None
-    TraceEvent = None
-    APICallEvent = None
-    CoverageEntry = None
+            for attr_name in attr_names:
+                if hasattr(module, attr_name):
+                    _lazy_loaded[attr_name] = getattr(module, attr_name)
+                else:
+                    logger.error(f"Attribute {attr_name} not found in {module_path}")
+                    _lazy_loaded[attr_name] = None
 
-print("[DEBUG analysis/__init__] Importing starforce_analyzer...")
-sys.stdout.flush()
-try:
-    from .starforce_analyzer import StarForceAnalysis, StarForceAnalyzer
-    print("[DEBUG analysis/__init__] starforce_analyzer imported OK")
-    sys.stdout.flush()
-except ImportError as e:
-    logger.error("Import error in __init__: %s", e)
-    StarForceAnalyzer = None
-    StarForceAnalysis = None
+            if name in _lazy_loaded:
+                return _lazy_loaded[name]
+        except ImportError as e:
+            logger.error("Import error in __getattr__ for %s: %s", name, e)
+            _lazy_loaded[name] = None
+            return None
 
-print("[DEBUG analysis/__init__] Importing securom_analyzer...")
-sys.stdout.flush()
-try:
-    from .securom_analyzer import (
-        ActivationMechanism,
-        ProductActivationKey,
-        SecuROMAnalysis,
-        SecuROMAnalyzer,
-        TriggerPoint,
-    )
-    print("[DEBUG analysis/__init__] securom_analyzer imported OK")
-    sys.stdout.flush()
-except ImportError as e:
-    logger.error("Import error in __init__: %s", e)
-    SecuROMAnalyzer = None
-    SecuROMAnalysis = None
-    ActivationMechanism = None
-    TriggerPoint = None
-    ProductActivationKey = None
+    msg = f"module {__name__!r} has no attribute {name!r}"
+    raise AttributeError(msg)
 
-print("[DEBUG analysis/__init__] Importing polymorphic_analyzer...")
-sys.stdout.flush()
-try:
-    from .polymorphic_analyzer import (
-        BehaviorPattern,
-        CodeBlock,
-        InstructionNode,
-        MutationType,
-        PolymorphicAnalysis,
-        PolymorphicAnalyzer,
-        PolymorphicEngine,
-    )
-    print("[DEBUG analysis/__init__] polymorphic_analyzer imported OK")
-    sys.stdout.flush()
-except ImportError as e:
-    logger.error("Import error in __init__: %s", e)
-    PolymorphicAnalyzer = None
-    PolymorphicAnalysis = None
-    MutationType = None
-    PolymorphicEngine = None
-    BehaviorPattern = None
-    InstructionNode = None
-    CodeBlock = None
+
+def __dir__() -> list[str]:
+    """Return list of available attributes including lazy imports."""
+    base_attrs = list(globals().keys())
+    lazy_attrs = list(_lazy_imports.keys())
+    return sorted(set(base_attrs + lazy_attrs))
+
 
 __all__ = [
-    # Core analysis functions
-    "calculate_entropy",
-    "analyze_binary_internal",
-    "enhanced_deep_license_analysis",
-    "detect_packing",
-    # Analysis engines
-    "VulnerabilityEngine",
-    "DynamicAnalyzer",
+    "APICallEvent",
+    "ActivationMechanism",
     "AdvancedDynamicAnalyzer",
-    "SymbolicExecutionEngine",
-    "ConcolicExecutionEngine",
-    "TaintAnalysisEngine",
-    "run_taint_analysis",
-    "ROPChainGenerator",
-    "MultiFormatBinaryAnalyzer",
+    "BasicBlock",
+    "BehaviorPattern",
     "CFGExplorer",
-    "IncrementalAnalysisManager",
-    "SimilaritySearcher",
+    "CodeBlock",
+    "ConcolicExecutionEngine",
     "ControlFlowDeobfuscator",
+    "CoverageEntry",
     "DeobfuscationResult",
     "DispatcherInfo",
-    "BasicBlock",
-    # Frida Stalker integration
+    "DynamicAnalyzer",
+    "IncrementalAnalysisManager",
+    "InstructionNode",
+    "MultiFormatBinaryAnalyzer",
+    "MutationType",
+    "PolymorphicAnalysis",
+    "PolymorphicAnalyzer",
+    "PolymorphicEngine",
+    "ProductActivationKey",
+    "ROPChainGenerator",
+    "SecuROMAnalysis",
+    "SecuROMAnalyzer",
+    "SimilaritySearcher",
     "StalkerSession",
     "StalkerStats",
-    "TraceEvent",
-    "APICallEvent",
-    "CoverageEntry",
-    # Protection-specific analyzers
-    "StarForceAnalyzer",
     "StarForceAnalysis",
-    "SecuROMAnalyzer",
-    "SecuROMAnalysis",
-    "ActivationMechanism",
+    "StarForceAnalyzer",
+    "SymbolicExecutionEngine",
+    "TaintAnalysisEngine",
+    "TraceEvent",
     "TriggerPoint",
-    "ProductActivationKey",
-    # Polymorphic analysis
-    "PolymorphicAnalyzer",
-    "PolymorphicAnalysis",
-    "MutationType",
-    "PolymorphicEngine",
-    "BehaviorPattern",
-    "InstructionNode",
-    "CodeBlock",
+    "VulnerabilityEngine",
+    "analyze_binary_internal",
+    "calculate_entropy",
+    "detect_packing",
+    "enhanced_deep_license_analysis",
+    "run_taint_analysis",
 ]
 
-# Filter out None values from __all__
-__all__ = [item for item in __all__ if locals().get(item) is not None]
+__all__ = [item for item in __all__ if item in _lazy_imports or locals().get(item) is not None]

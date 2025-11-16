@@ -410,10 +410,10 @@ class BinaryAnalyzer:
                 )
 
                 if ei_class == 2:
-                    e_type, e_machine, e_version, e_entry, e_phoff, e_shoff = struct.unpack("<HHIQQQQ", mm[16:48])[:6]
+                    e_type, e_machine, _, e_entry, e_phoff, _ = struct.unpack("<HHIQQQQ", mm[16:48])[:6]
                     e_phentsize, e_phnum = struct.unpack("<HH", mm[54:58])
                 else:
-                    e_type, e_machine, _e_version, e_entry, e_phoff, _e_shoff = struct.unpack("<HHIIII", mm[16:36])[:6]
+                    e_type, e_machine, _, e_entry, e_phoff, _ = struct.unpack("<HHIIII", mm[16:36])[:6]
                     e_phentsize, e_phnum = struct.unpack("<HH", mm[42:46])
 
                 elf_info.update(
@@ -430,11 +430,11 @@ class BinaryAnalyzer:
                         break
 
                     if ei_class == 2:
-                        p_type, p_flags, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_align = struct.unpack(
+                        p_type, p_flags, p_offset, p_vaddr, _, p_filesz, p_memsz, _ = struct.unpack(
                             "<IIQQQQQQ", mm[ph_offset : ph_offset + 56],
                         )
                     else:
-                        p_type, p_offset, p_vaddr, _p_paddr, p_filesz, p_memsz, p_flags, _p_align = struct.unpack(
+                        p_type, p_offset, p_vaddr, _, p_filesz, p_memsz, p_flags, _ = struct.unpack(
                             "<IIIIIIII", mm[ph_offset : ph_offset + 32],
                         )
 
@@ -505,10 +505,10 @@ class BinaryAnalyzer:
                     return {"error": "Invalid Mach-O magic"}
 
                 if is_64:
-                    cpu_type, cpu_subtype, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", mm[4:28])
+                    cpu_type, _, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", mm[4:28])
                     offset = 32
                 else:
-                    cpu_type, _cpu_subtype, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", mm[4:28])
+                    cpu_type, _, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", mm[4:28])
                     offset = 28
 
                 macho_info.update(
@@ -1103,10 +1103,10 @@ class BinaryAnalyzer:
 
             # Parse program headers (segments)
             if ei_class == 2:  # 64-bit
-                e_type, e_machine, e_version, e_entry, e_phoff, e_shoff = struct.unpack("<HHIQQQQ", data[16:48])[:6]
+                e_type, e_machine, _, e_entry, e_phoff, _ = struct.unpack("<HHIQQQQ", data[16:48])[:6]
                 e_phentsize, e_phnum = struct.unpack("<HH", data[54:58])
             else:  # 32-bit
-                e_type, e_machine, _e_version, e_entry, e_phoff, _e_shoff = struct.unpack("<HHIIII", data[16:36])[:6]
+                e_type, e_machine, _, e_entry, e_phoff, _ = struct.unpack("<HHIIII", data[16:36])[:6]
                 e_phentsize, e_phnum = struct.unpack("<HH", data[42:46])
 
             elf_info.update(
@@ -1124,11 +1124,11 @@ class BinaryAnalyzer:
                     break
 
                 if ei_class == 2:  # 64-bit
-                    p_type, p_flags, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_align = struct.unpack(
+                    p_type, p_flags, p_offset, p_vaddr, _, p_filesz, p_memsz, _ = struct.unpack(
                         "<IIQQQQQQ", data[ph_offset : ph_offset + 56],
                     )
                 else:  # 32-bit
-                    p_type, p_offset, p_vaddr, _p_paddr, p_filesz, p_memsz, p_flags, _p_align = struct.unpack(
+                    p_type, p_offset, p_vaddr, _, p_filesz, p_memsz, p_flags, _ = struct.unpack(
                         "<IIIIIIII", data[ph_offset : ph_offset + 32],
                     )
 
@@ -1201,10 +1201,10 @@ class BinaryAnalyzer:
 
             # Parse header
             if is_64:
-                cpu_type, cpu_subtype, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", data[4:28])
+                cpu_type, _, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", data[4:28])
                 offset = 32
             else:
-                cpu_type, _cpu_subtype, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", data[4:28])
+                cpu_type, _, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", data[4:28])
                 offset = 28
 
             macho_info.update(

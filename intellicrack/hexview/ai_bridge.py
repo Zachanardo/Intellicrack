@@ -471,7 +471,7 @@ class AIBinaryBridge:
     including pattern recognition, anomaly detection, and edit suggestions.
     """
 
-    def __init__(self, model_manager=None) -> None:
+    def __init__(self, model_manager: object | None = None) -> None:
         """Initialize the AI binary bridge.
 
         Args:
@@ -1431,7 +1431,7 @@ class AIBinaryBridge:
 # AI tool functions for _Intellicrack integration
 
 
-def wrapper_ai_binary_analyze(app_instance, parameters):
+def wrapper_ai_binary_analyze(app_instance: object, parameters: object) -> dict[str, object]:
     """AI tool wrapper for analyzing binary data.
 
     Args:
@@ -1481,7 +1481,7 @@ def wrapper_ai_binary_analyze(app_instance, parameters):
         return {"error": str(e)}
 
 
-def wrapper_ai_binary_pattern_search(app_instance, parameters):
+def wrapper_ai_binary_pattern_search(app_instance: object, parameters: object) -> dict[str, object]:
     """AI tool wrapper for searching binary patterns.
 
     Args:
@@ -1556,7 +1556,7 @@ def wrapper_ai_binary_pattern_search(app_instance, parameters):
         return {"error": str(e)}
 
 
-def wrapper_ai_binary_edit_suggest(app_instance, parameters):
+def wrapper_ai_binary_edit_suggest(app_instance: object, parameters: object) -> dict[str, object]:
     """AI tool wrapper for suggesting binary edits.
 
     Args:

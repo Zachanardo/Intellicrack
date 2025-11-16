@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import json
 import threading
 import time
+from collections.abc import Generator, Iterator
 from pathlib import Path
 from typing import Any
 
@@ -236,8 +237,33 @@ class LocalGGUFServer:
         """Check if the server can run (dependencies available)."""
         return HAS_FLASK and HAS_LLAMA_CPP
 
-    def load_model(self, model_path: str, **kwargs) -> bool:
-        """Load a GGUF model."""
+    def load_model(self, model_path: str, **kwargs: object) -> bool:
+        """Load a GGUF model.
+
+        Args:
+            model_path: Path to the GGUF model file.
+            **kwargs: Additional model loading parameters including:
+                context_length: Maximum context length for the model.
+                batch_size: Batch size for inference.
+                threads: Number of CPU threads to use.
+                gpu_layers: Number of layers to offload to GPU (-1 for all).
+                auto_gpu: Whether to automatically detect and use GPU.
+                use_mmap: Whether to use memory mapping for model loading.
+                use_mlock: Whether to lock model in RAM.
+                seed: Random seed for generation.
+                verbose: Enable verbose logging.
+                f16_kv: Use FP16 for key-value cache.
+                logits_all: Return logits for all tokens.
+                vocab_only: Load vocabulary only.
+                embedding: Enable embedding mode.
+                main_gpu: Index of the main GPU to use.
+                tensor_split: Tensor split configuration for multi-GPU.
+                mul_mat_q: Enable matrix multiplication quantization.
+
+        Returns:
+            True if model loaded successfully, False otherwise.
+
+        """
         if not self.can_run():
             logger.error("Cannot load model: missing dependencies")
             return False
@@ -382,8 +408,13 @@ class LocalGGUFServer:
         """Set up Flask routes for the server."""
 
         @self.app.route("/health", methods=["GET"])
-        def health():
-            """Health check endpoint."""
+        def health() -> object:
+            """Health check endpoint.
+
+            Returns:
+                JSON response with server health status and GPU information.
+
+            """
             return jsonify(
                 {
                     "status": "healthy",
@@ -397,8 +428,13 @@ class LocalGGUFServer:
             )
 
         @self.app.route("/models", methods=["GET"])
-        def list_models():
-            """List available models."""
+        def list_models() -> object:
+            """List available models.
+
+            Returns:
+                JSON response with list of available models.
+
+            """
             return jsonify(
                 {
                     "models": [self.model_config] if self.model else [],
@@ -407,8 +443,13 @@ class LocalGGUFServer:
             )
 
         @self.app.route("/gpu_info", methods=["GET"])
-        def gpu_info():
-            """Get detailed GPU information."""
+        def gpu_info() -> object:
+            """Get detailed GPU information.
+
+            Returns:
+                JSON response with GPU backend and device information.
+
+            """
             gpu_details = {
                 "backend": self.gpu_backend,
                 "devices": self.gpu_devices,
@@ -432,8 +473,13 @@ class LocalGGUFServer:
             return jsonify(gpu_details)
 
         @self.app.route("/v1/chat/completions", methods=["POST"])
-        def chat_completions():
-            """OpenAI-compatible chat completions endpoint."""
+        def chat_completions() -> object:
+            """OpenAI-compatible chat completions endpoint.
+
+            Returns:
+                JSON response with chat completion or error message.
+
+            """
             try:
                 if not self.model:
                     return jsonify({"error": "No model loaded"}), 400
@@ -462,8 +508,13 @@ class LocalGGUFServer:
                 return jsonify({"error": str(e)}), 500
 
         @self.app.route("/v1/completions", methods=["POST"])
-        def completions():
-            """OpenAI-compatible completions endpoint."""
+        def completions() -> object:
+            """OpenAI-compatible completions endpoint.
+
+            Returns:
+                JSON response with completion or error message.
+
+            """
             try:
                 if not self.model:
                     return jsonify({"error": "No model loaded"}), 400
@@ -489,8 +540,13 @@ class LocalGGUFServer:
                 return jsonify({"error": str(e)}), 500
 
         @self.app.route("/load_model", methods=["POST"])
-        def load_model_endpoint():
-            """Load a new model."""
+        def load_model_endpoint() -> object:
+            """Load a new model.
+
+            Returns:
+                JSON response with success status or error message.
+
+            """
             try:
                 data = request.get_json()
                 model_path = data.get("model_path")
@@ -519,8 +575,13 @@ class LocalGGUFServer:
                 return jsonify({"error": str(e)}), 500
 
         @self.app.route("/unload_model", methods=["POST"])
-        def unload_model_endpoint():
-            """Unload the current model."""
+        def unload_model_endpoint() -> object:
+            """Unload the current model.
+
+            Returns:
+                JSON response with success status or error message.
+
+            """
             try:
                 self.unload_model()
                 return jsonify({"status": "success", "message": "Model unloaded"})
@@ -590,11 +651,23 @@ class LocalGGUFServer:
             logger.error(f"Response generation error: {e}")
             raise
 
-    def _stream_response(self, prompt: str, max_tokens: int, temperature: float, top_p: float, stop: list[str]):
-        """Generate a streaming response."""
+    def _stream_response(self, prompt: str, max_tokens: int, temperature: float, top_p: float, stop: list[str]) -> object:
+        """Generate a streaming response.
+
+        Args:
+            prompt: The input prompt text.
+            max_tokens: Maximum number of tokens to generate.
+            temperature: Sampling temperature for randomness.
+            top_p: Nucleus sampling probability threshold.
+            stop: List of stop sequences to end generation.
+
+        Returns:
+            Flask response object with streaming content.
+
+        """
         try:
 
-            def generate():
+            def generate() -> Generator[str, None, None]:
                 response_iter = self.model(
                     prompt,
                     max_tokens=max_tokens,
@@ -780,8 +853,18 @@ class GGUFModelManager:
             logger.error(f"Failed to download model: {e}")
             return False
 
-    def load_model(self, model_name: str, **kwargs) -> bool:
-        """Load a model by name."""
+    def load_model(self, model_name: str, **kwargs: object) -> bool:
+        """Load a model by name.
+
+        Args:
+            model_name: Name of the model to load from available models.
+            **kwargs: Additional parameters to pass to the model loader.
+                See LocalGGUFServer.load_model for available parameters.
+
+        Returns:
+            True if model loaded successfully, False otherwise.
+
+        """
         if model_name not in self.available_models:
             logger.error(f"Model not found: {model_name}")
             return False

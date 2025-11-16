@@ -20,14 +20,18 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import os
 import threading
+import threading as _threading
 import time
 import types
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 from queue import Empty, Queue
 from typing import Any
+
+from typing_extensions import Self
 
 from ..utils.logger import get_logger
 from .ai_script_generator import AIScriptGenerator
@@ -37,8 +41,6 @@ from .performance_monitor import performance_monitor, profile_ai_operation
 from .script_generation_agent import AIAgent
 
 logger = get_logger(__name__)
-import threading as _threading
-from pathlib import Path
 
 # Import QEMU Test Manager with fallback
 try:
@@ -1038,7 +1040,7 @@ class IntegrationManager:
         with self._state_lock:
             if task_id in self.active_tasks:
                 task = self.active_tasks[task_id]
-                setattr(task, "cancelled", True)
+                task.cancelled = True
                 del self.active_tasks[task_id]
                 cancelled = True
 
@@ -1176,7 +1178,7 @@ class IntegrationManager:
 
         logger.info("Cleanup completed")
 
-    def __enter__(self) -> IntegrationManager:
+    def __enter__(self) -> Self:
         """Context manager entry.
 
         Returns:

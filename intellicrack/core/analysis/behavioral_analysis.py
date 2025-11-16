@@ -426,7 +426,6 @@ class APIHookingFramework:
         except Exception as e:
             logger.error(f"Hook error: {e}")
 
-        return None
 
     def _hook_read_file(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor ReadFile calls."""
@@ -448,7 +447,6 @@ class APIHookingFramework:
         except Exception as e:
             logger.error(f"Hook error: {e}")
 
-        return None
 
     def _hook_write_file(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor WriteFile calls to track file writes."""
@@ -472,7 +470,6 @@ class APIHookingFramework:
         except Exception as e:
             logger.error(f"Hook error: {e}")
 
-        return None
 
     def _hook_reg_open_key(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor RegOpenKeyExW calls to track registry access."""
@@ -495,7 +492,6 @@ class APIHookingFramework:
         except Exception as e:
             logger.error(f"Hook error: {e}")
 
-        return None
 
     def _hook_reg_query_value(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor registry queries via RegQueryValueExW hook."""
@@ -516,7 +512,6 @@ class APIHookingFramework:
         except Exception as e:
             logger.error(f"Hook error: {e}")
 
-        return None
 
     def _hook_reg_set_value(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor registry writes via RegSetValueExW hook."""
@@ -539,7 +534,6 @@ class APIHookingFramework:
         except Exception as e:
             logger.error(f"Hook error: {e}")
 
-        return None
 
     def _hook_connect(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor network connections via connect hook (Windows)."""
@@ -563,7 +557,6 @@ class APIHookingFramework:
         except Exception as e:
             logger.error(f"Hook error: {e}")
 
-        return None
 
     def _hook_send(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor network data transmission via send hook."""
@@ -587,7 +580,6 @@ class APIHookingFramework:
         except Exception as e:
             logger.error(f"Hook error: {e}")
 
-        return None
 
     def _hook_recv(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor network data reception via recv hook."""
@@ -609,7 +601,6 @@ class APIHookingFramework:
         except Exception as e:
             logger.error(f"Hook error: {e}")
 
-        return None
 
     def _hook_create_process(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor process creation via NtCreateProcess hook."""
@@ -631,7 +622,6 @@ class APIHookingFramework:
         except Exception as e:
             logger.error(f"Hook error: {e}")
 
-        return None
 
     def _hook_open_process(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor process access via NtOpenProcess hook."""
@@ -654,7 +644,6 @@ class APIHookingFramework:
         except Exception as e:
             logger.error(f"Hook error: {e}")
 
-        return None
 
     def _hook_open(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor file opening via open hook (Linux)."""
@@ -675,7 +664,6 @@ class APIHookingFramework:
         except Exception as e:
             logger.error(f"Hook error: {e}")
 
-        return None
 
     def _hook_read(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor file reading via read hook (Linux)."""
@@ -697,7 +685,6 @@ class APIHookingFramework:
         except Exception as e:
             logger.error(f"Hook error: {e}")
 
-        return None
 
     def _hook_write(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor file writing via write hook (Linux)."""
@@ -721,7 +708,6 @@ class APIHookingFramework:
         except Exception as e:
             logger.error(f"Hook error: {e}")
 
-        return None
 
     def _hook_socket(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor network socket creation via socket hook (Linux)."""
@@ -743,7 +729,6 @@ class APIHookingFramework:
         except Exception as e:
             logger.error(f"Hook error: {e}")
 
-        return None
 
     def _hook_connect_linux(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor network connections via connect hook (Linux)."""
@@ -766,7 +751,6 @@ class APIHookingFramework:
         except Exception as e:
             logger.error(f"Hook error: {e}")
 
-        return None
 
     def _read_wide_string(self, address: int, max_length: int = 260) -> str:
         """Read a wide string from memory."""

@@ -1808,11 +1808,7 @@ class LicenseDebugger:
 
     def continue_execution(self) -> bool:
         """Continue execution after breakpoint or exception."""
-        if not self.process_id or not self.debugging:
-            return False
-
-        # Signal the debug loop to continue
-        return True
+        return bool(self.process_id and self.debugging)
 
     def single_step(self, thread_id: int | None = None) -> bool:
         """Execute single instruction step."""
@@ -2039,10 +2035,7 @@ class LicenseDebugger:
                     """
                     exc_code = exception_record.ExceptionCode
                     # DBG_PRINTEXCEPTION_C and DBG_PRINTEXCEPTION_W
-                    if exc_code in [0x40010006, 0x4001000A]:
-                        # Suppress the exception to prevent detection
-                        return True  # Handled
-                    return False  # Not handled
+                    return exc_code in [0x40010006, 0x4001000A]
 
                 self.register_exception_filter(output_debug_filter)
 
@@ -3866,11 +3859,7 @@ class LicenseDebugger:
             True if function is bound
 
         """
-        if is_loaded and iat_entry not in (0, int_entry):
-            # IAT entry has been updated with actual function address
-            return True
-        # Function not yet resolved
-        return False
+        return is_loaded and iat_entry not in (0, int_entry)
 
     def _log_delayed_imports_summary(self, delayed_imports: dict[str, list[tuple[int, str, bool]]]) -> None:
         """Log summary of delayed imports and check for suspicious imports.

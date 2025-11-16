@@ -21,7 +21,9 @@ from collections.abc import Callable
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any, Generator, ParamSpec, cast
+
+P = ParamSpec("P")
 
 from intellicrack.handlers.psutil_handler import psutil
 
@@ -449,7 +451,11 @@ class ResourceManager:
         return self._resources.get(resource_id)
 
     @contextlib.contextmanager
-    def managed_process(self, command: str | list[str], **kwargs: Any) -> Generator[ProcessResource, None, None]:
+    def managed_process(
+        self,
+        command: str | list[str],
+        **kwargs: dict[str, object],
+    ) -> Generator[ProcessResource, None, None]:
         """Context manager for managed processes.
 
         Args:
@@ -680,8 +686,13 @@ class ResourceManager:
         logger.info(f"Force cleaned {cleaned_count} expired resources (older than {max_age_seconds}s)")
         return cleaned_count
 
-    def set_resource_limits(self, **limits: Any) -> None:
-        """Update resource limits dynamically."""
+    def set_resource_limits(self, **limits: int) -> None:
+        """Update resource limits dynamically.
+
+        Args:
+            **limits: Keyword arguments with limit names and values
+
+        """
         with self._lock:
             if "max_processes" in limits:
                 self.max_processes = limits["max_processes"]
@@ -863,7 +874,7 @@ class ResourceContext:
     def register_resource(
         self,
         resource_type: ResourceType,
-        resource_handle: Any,
+        resource_handle: object,
         cleanup_func: Callable[[], None] | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> str:
@@ -939,7 +950,17 @@ class AutoCleanupResource:
 
         """
 
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def wrapper(*args: object, **kwargs: object) -> object:
+            """Wrap function with automatic resource cleanup.
+
+            Args:
+                *args: Variable positional arguments for wrapped function
+                **kwargs: Variable keyword arguments for wrapped function
+
+            Returns:
+                Result from wrapped function
+
+            """
             with ResourceContext(self.resource_manager, f"auto_{func.__name__}") as ctx:
                 # Execute function
                 result = func(*args, **kwargs)
@@ -1036,7 +1057,7 @@ class FallbackHandler:
             },
         )
 
-    def get_fallback(self, tool_name: str, *args: Any, **kwargs: Any) -> Any:
+    def get_fallback(self, tool_name: str, *args: object, **kwargs: object) -> object | None:
         """Get fallback implementation for a tool.
 
         Args:
@@ -1050,7 +1071,8 @@ class FallbackHandler:
         """
         if tool_name in self.fallback_registry:
             try:
-                return self.fallback_registry[tool_name](*args, **kwargs)
+                fallback_func: Callable[..., object | None] = cast("Callable[..., object | None]", self.fallback_registry[tool_name])
+                return fallback_func(*args, **kwargs)
             except Exception as e:
                 logger.error(f"Fallback for {tool_name} failed: {e}")
                 return None
@@ -1354,12 +1376,12 @@ class FallbackHandler:
             logger.error(f"netstat fallback failed: {e}")
             return [{"error": str(e)}]
 
-    def _qemu_fallback(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+    def _qemu_fallback(self, *_args: object, **_kwargs: object) -> dict[str, object]:
         """QEMU fallback using alternative emulation.
 
         Args:
-            *args: Variable positional arguments (unused)
-            **kwargs: Variable keyword arguments (unused)
+            *_args: Variable positional arguments (unused)
+            **_kwargs: Variable keyword arguments (unused)
 
         Returns:
             Dictionary with fallback status and alternative recommendations
@@ -1375,12 +1397,12 @@ class FallbackHandler:
             ],
         }
 
-    def _gdb_fallback(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+    def _gdb_fallback(self, *_args: object, **_kwargs: object) -> dict[str, object]:
         """GDB fallback for debugging.
 
         Args:
-            *args: Variable positional arguments (unused)
-            **kwargs: Variable keyword arguments (unused)
+            *_args: Variable positional arguments (unused)
+            **_kwargs: Variable keyword arguments (unused)
 
         Returns:
             Dictionary with fallback status and alternative recommendations
@@ -1396,12 +1418,12 @@ class FallbackHandler:
             ],
         }
 
-    def _afl_fallback(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+    def _afl_fallback(self, *_args: object, **_kwargs: object) -> dict[str, object]:
         """AFL++ fallback fuzzing implementation.
 
         Args:
-            *args: Variable positional arguments (unused)
-            **kwargs: Variable keyword arguments (unused)
+            *_args: Variable positional arguments (unused)
+            **_kwargs: Variable keyword arguments (unused)
 
         Returns:
             Dictionary with fallback status and features

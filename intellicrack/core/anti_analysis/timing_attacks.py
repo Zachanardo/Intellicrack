@@ -277,10 +277,7 @@ class TimingAttackDefense:
             self.logger.debug(f"RDTSC check completed with total: {total}")
 
             # Check if execution was too fast (accelerated)
-            if elapsed_ns < expected_ns * 0.1:  # 10x faster than expected
-                return False
-
-            return True
+            return elapsed_ns >= expected_ns * 0.1
 
         except Exception as e:
             self.logger.debug(f"RDTSC check failed: {e}")

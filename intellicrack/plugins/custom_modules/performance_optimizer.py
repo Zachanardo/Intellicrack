@@ -36,7 +36,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import TypeVar
 
 from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.psutil_handler import psutil
@@ -108,7 +108,7 @@ class PerformanceMetric:
     resource_type: ResourceType
     value: float
     component: str
-    details: dict[str, Any] = field(default_factory=dict)
+    details: dict[str, object] = field(default_factory=dict)
 
 
 @dataclass
@@ -133,7 +133,7 @@ class ResourcePool:
     growth_factor: float = 1.5
     shrink_threshold: float = 0.3
     allocated: int = 0
-    available_items: list[Any] = field(default_factory=list)
+    available_items: list[object] = field(default_factory=list)
     in_use_items: set = field(default_factory=set)
     creation_func: Callable | None = None
 
@@ -231,7 +231,7 @@ class CacheManager:
         self.misses = 0
         self.evictions = 0
 
-    def _calculate_size(self, obj: Any) -> int:
+    def _calculate_size(self, obj: object) -> int:
         """Calculate object size in memory.
 
         Determine the memory footprint of an object by using its __sizeof__
@@ -269,7 +269,7 @@ class CacheManager:
 
         return frequency_score * 0.7 + recency_score * 0.3
 
-    def get(self, key: str, default: Any = None) -> Any:
+    def get(self, key: str, default: object = None) -> object:
         """Get item from cache.
 
         Retrieve a cached value by key with automatic access tracking for
@@ -299,7 +299,7 @@ class CacheManager:
             self.misses += 1
             return default
 
-    def put(self, key: str, value: Any) -> bool:
+    def put(self, key: str, value: object) -> bool:
         """Put item in cache.
 
         Add or update a cached value with automatic eviction when size or
@@ -358,7 +358,7 @@ class CacheManager:
 
         return False
 
-    def get_stats(self) -> dict[str, Any]:
+    def get_stats(self) -> dict[str, object]:
         """Get cache statistics."""
         total_requests = self.hits + self.misses
         hit_rate = self.hits / total_requests if total_requests > 0 else 0.0
@@ -391,7 +391,7 @@ class ThreadPoolOptimizer:
 
         self.lock = threading.Lock()
 
-    def submit(self, fn: Callable, *args: Any, **kwargs: Any) -> Future:
+    def submit(self, fn: Callable, *args: object, **kwargs: object) -> Future:
         """Submit task and collect metrics.
 
         Submit a task to the thread pool with automatic response time and
@@ -458,7 +458,7 @@ class ThreadPoolOptimizer:
             # Shutdown old executor gracefully
             threading.Thread(target=lambda: old_executor.shutdown(wait=True)).start()
 
-    def get_stats(self) -> dict[str, Any]:
+    def get_stats(self) -> dict[str, object]:
         """Get thread pool statistics."""
         with self.lock:
             return {
@@ -528,7 +528,7 @@ class GPUOptimizer:
                     "utilization": allocated / total,
                 }
 
-    def get_stats(self) -> dict[str, Any]:
+    def get_stats(self) -> dict[str, object]:
         """Get GPU statistics."""
         if not self.gpu_available:
             return {"gpu_available": False}
@@ -707,7 +707,7 @@ class DatabaseOptimizer:
         finally:
             self.return_connection(conn)
 
-    def execute_optimized(self, query: str, params: Any = None) -> list[tuple]:
+    def execute_optimized(self, query: str, params: object = None) -> list[tuple]:
         """Execute query with caching and statistics.
 
         Execute a SQL query with automatic result caching and performance
@@ -790,7 +790,7 @@ class DatabaseOptimizer:
                     with contextlib.suppress(sqlite3.Error):
                         cursor.execute(f"CREATE INDEX IF NOT EXISTS {index_name} ON {table}({column})")
 
-    def get_stats(self) -> dict[str, Any]:
+    def get_stats(self) -> dict[str, object]:
         """Get database performance statistics."""
         total_queries = sum(len(stats) for stats in self.query_stats.values())
         avg_execution_time = 0
@@ -833,7 +833,7 @@ class PerformanceProfiler:
         # Start background monitoring
         threading.Thread(target=self._monitor_system, daemon=True).start()
 
-    def stop_profiling(self) -> dict[str, Any]:
+    def stop_profiling(self) -> dict[str, object]:
         """Stop profiling and return results."""
         self.profiling_active = False
 
@@ -922,7 +922,7 @@ class PerformanceProfiler:
                 logging.exception(f"Error in system monitoring: {e}")
                 time.sleep(5)
 
-    def _get_metrics_summary(self) -> dict[str, Any]:
+    def _get_metrics_summary(self) -> dict[str, object]:
         """Get summary of collected metrics."""
         summary = {}
 
@@ -1031,7 +1031,7 @@ class AdaptiveOptimizer:
             adjusted_value = current_value + self.learning_rate * (new_value - current_value)
             self.current_config[key] = max(1, int(adjusted_value))
 
-    def get_recommendations(self) -> dict[str, Any]:
+    def get_recommendations(self) -> dict[str, object]:
         """Get optimization recommendations."""
         if not self.optimization_history:
             return {}
@@ -1080,7 +1080,7 @@ class AdaptiveOptimizer:
 class PerformanceOptimizer:
     """Run performance optimization engine."""
 
-    def __init__(self, config: dict[str, Any] = None) -> None:
+    def __init__(self, config: dict[str, object] | None = None) -> None:
         """Initialize performance optimizer with all optimization components."""
         self.config = config or {}
         self.optimization_level = PerformanceLevel(
@@ -1116,7 +1116,7 @@ class PerformanceOptimizer:
         # Start background optimization thread
         threading.Thread(target=self._background_optimization, daemon=True).start()
 
-    def stop_monitoring(self) -> dict[str, Any]:
+    def stop_monitoring(self) -> dict[str, object]:
         """Stop performance monitoring.
 
         Halt the background monitoring thread and return the final profiling
@@ -1158,21 +1158,21 @@ class PerformanceOptimizer:
                 logging.exception(f"Error in background optimization: {e}")
                 time.sleep(60)  # Wait longer on error
 
-    def _calculate_performance_score(self, metrics: dict[str, float]) -> float:
+    def _calculate_performance_score(self, metrics: dict[str, object]) -> float:
         """Calculate overall performance score (0-1)."""
         # Normalize metrics to 0-1 scale (higher is better)
-        cpu_score = max(0, 1 - metrics.get("cpu_percent", 0) / 100)
-        memory_score = max(0, 1 - metrics.get("memory_percent", 0) / 100)
+        cpu_score = max(0, 1 - float(metrics.get("cpu_percent", 0)) / 100)
+        memory_score = max(0, 1 - float(metrics.get("memory_percent", 0)) / 100)
 
         # Weight different metrics
         score = cpu_score * 0.4 + memory_score * 0.4 + 0.2  # Base 0.2 for running
 
         return min(1.0, max(0.0, score))
 
-    def _apply_automatic_optimizations(self, metrics: dict[str, float]) -> None:
+    def _apply_automatic_optimizations(self, metrics: dict[str, object]) -> None:
         """Apply automatic optimizations based on current metrics."""
-        memory_percent = metrics.get("memory_percent", 0)
-        cpu_percent = metrics.get("cpu_percent", 0)
+        memory_percent = float(metrics.get("memory_percent", 0))
+        cpu_percent = float(metrics.get("cpu_percent", 0))
 
         # Memory optimization
         if memory_percent > 80:
@@ -1253,7 +1253,7 @@ class PerformanceOptimizer:
         self.optimization_results.append(result)
         return result
 
-    def get_performance_report(self) -> dict[str, Any]:
+    def get_performance_report(self) -> dict[str, object]:
         """Generate comprehensive performance report."""
         current_metrics = self.profiler.get_current_metrics()
         cache_stats = self.cache_manager.get_stats()
@@ -1307,9 +1307,9 @@ class PerformanceOptimizer:
             self.cache_manager.max_size = 5000
             self.memory_pool = MemoryPool(initial_buffers=50)
 
-    def optimize_all(self) -> dict[OptimizationType, OptimizationResult]:
+    def optimize_all(self) -> dict[object, OptimizationResult]:
         """Optimize all components."""
-        results = {}
+        results: dict[object, OptimizationResult] = {}
 
         optimization_types = [
             OptimizationType.MEMORY,
@@ -1368,7 +1368,7 @@ class PerformanceOptimizer:
 _global_optimizer = None
 
 
-def get_performance_optimizer(config: dict[str, Any] = None) -> PerformanceOptimizer:
+def get_performance_optimizer(config: dict[str, object] | None = None) -> PerformanceOptimizer:
     """Get global performance optimizer instance."""
     global _global_optimizer
 
@@ -1404,7 +1404,7 @@ def performance_monitor(component_name: str = "default") -> Callable:
 
         """
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def wrapper(*args: object, **kwargs: object) -> object:
             """Execute wrapped function with performance context.
 
             Args:
@@ -1456,7 +1456,7 @@ def optimize_cpu() -> OptimizationResult:
     return optimizer.optimize_component(OptimizationType.CPU)
 
 
-def get_performance_stats() -> dict[str, Any]:
+def get_performance_stats() -> dict[str, object]:
     """Get current performance statistics."""
     optimizer = get_performance_optimizer()
     return optimizer.get_performance_report()

@@ -25,7 +25,6 @@ from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
 
 try:
     from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -74,7 +73,7 @@ class WidgetConfig:
     height: int = 300
     refresh_interval: float = 5.0
     data_source: str | None = None
-    options: dict[str, Any] = field(default_factory=dict)
+    options: dict[str, object] = field(default_factory=dict)
 
 
 @dataclass
@@ -82,10 +81,10 @@ class WidgetData:
     """Data for widget rendering."""
 
     timestamp: datetime
-    values: dict[str, Any]
+    values: dict[str, object]
     labels: list[str] | None = None
     categories: list[str] | None = None
-    metadata: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, object] = field(default_factory=dict)
 
 
 class DashboardWidget:
@@ -100,9 +99,9 @@ class DashboardWidget:
         """
         self.config = config
         self.logger = logger
-        self.data_history: deque = deque(maxlen=config.options.get("history_size", 100))
-        self.last_update = datetime.now()
-        self.render_cache = None
+        self.data_history: deque[WidgetData] = deque(maxlen=config.options.get("history_size", 100))
+        self.last_update: datetime = datetime.now()
+        self.render_cache: object | None = None
 
     def update_data(self, data: WidgetData) -> None:
         """Update widget data.
@@ -115,7 +114,7 @@ class DashboardWidget:
         self.last_update = datetime.now()
         self.render_cache = None  # Invalidate cache
 
-    def render(self, format: str = "json") -> Any:
+    def render(self, format: str = "json") -> dict[str, object] | None:
         """Render widget.
 
         Args:
@@ -161,7 +160,7 @@ class DashboardWidget:
 class LineChartWidget(DashboardWidget):
     """Line chart widget for time series data."""
 
-    def render(self, format: str = "json") -> Any:
+    def render(self, format: str = "json") -> dict[str, object] | object | None:
         """Render line chart.
 
         Args:
@@ -182,7 +181,7 @@ class LineChartWidget(DashboardWidget):
             return self._render_matplotlib()
         return self._render_json()
 
-    def _render_json(self) -> dict[str, Any]:
+    def _render_json(self) -> dict[str, object]:
         """Render as JSON data."""
         x_data = []
         y_data = {}
@@ -201,8 +200,13 @@ class LineChartWidget(DashboardWidget):
             "series": [{"name": key, "data": values} for key, values in y_data.items()],
         }
 
-    def _render_plotly(self):
-        """Render using Plotly."""
+    def _render_plotly(self) -> object:
+        """Render using Plotly.
+
+        Returns:
+            Plotly Figure object
+
+        """
         fig = go.Figure()
 
         x_data = [data.timestamp for data in self.data_history]
@@ -226,7 +230,12 @@ class LineChartWidget(DashboardWidget):
         return fig
 
     def _render_matplotlib(self) -> Figure:
-        """Render using Matplotlib."""
+        """Render using Matplotlib.
+
+        Returns:
+            Matplotlib Figure object
+
+        """
         fig = Figure(figsize=(self.config.width / 100, self.config.height / 100))
         FigureCanvasAgg(fig)  # Use FigureCanvasAgg that was imported
         ax = fig.add_subplot(111)
@@ -250,7 +259,7 @@ class LineChartWidget(DashboardWidget):
 class GaugeWidget(DashboardWidget):
     """Gauge widget for single metric display."""
 
-    def render(self, format: str = "json") -> Any:
+    def render(self, format: str = "json") -> dict[str, object] | object | None:
         """Render gauge.
 
         Args:
@@ -301,8 +310,13 @@ class GaugeWidget(DashboardWidget):
             return fig
         return self.render("json")
 
-    def _get_gauge_steps(self) -> list[dict[str, Any]]:
-        """Get gauge color steps."""
+    def _get_gauge_steps(self) -> list[dict[str, object]]:
+        """Get gauge color steps.
+
+        Returns:
+            List of gauge threshold steps with color ranges
+
+        """
         thresholds = self.config.options.get("thresholds", [])
         if not thresholds:
             return []
@@ -317,7 +331,7 @@ class GaugeWidget(DashboardWidget):
 class TableWidget(DashboardWidget):
     """Table widget for structured data display."""
 
-    def render(self, format: str = "json") -> Any:
+    def render(self, format: str = "json") -> dict[str, object] | str | None:
         """Render table.
 
         Args:
@@ -348,7 +362,15 @@ class TableWidget(DashboardWidget):
         return self.render("json")
 
     def _render_html_table(self, data: WidgetData) -> str:
-        """Render as HTML table."""
+        """Render as HTML table.
+
+        Args:
+            data: Widget data to render as HTML table
+
+        Returns:
+            HTML string representation of table
+
+        """
         rows = data.values.get("rows", [])
         columns = data.values.get("columns", [])
 
@@ -378,7 +400,7 @@ class TableWidget(DashboardWidget):
 class HeatmapWidget(DashboardWidget):
     """Heatmap widget for 2D data visualization."""
 
-    def render(self, format: str = "json") -> Any:
+    def render(self, format: str = "json") -> dict[str, object] | object | None:
         """Render heatmap.
 
         Args:
@@ -415,7 +437,7 @@ class HeatmapWidget(DashboardWidget):
 class NetworkGraphWidget(DashboardWidget):
     """Network graph widget for relationship visualization."""
 
-    def render(self, format: str = "json") -> Any:
+    def render(self, format: str = "json") -> dict[str, object] | object | None:
         """Render network graph.
 
         Args:
@@ -445,8 +467,17 @@ class NetworkGraphWidget(DashboardWidget):
             return self._render_plotly_network(nodes, edges)
         return self.render("json")
 
-    def _render_plotly_network(self, nodes: list[dict], edges: list[dict]):
-        """Render network using Plotly."""
+    def _render_plotly_network(self, nodes: list[dict[str, object]], edges: list[dict[str, object]]) -> object:
+        """Render network using Plotly.
+
+        Args:
+            nodes: List of node dictionaries with id and optional label
+            edges: List of edge dictionaries with source and target node IDs
+
+        Returns:
+            Plotly Figure object with network graph visualization
+
+        """
         # Calculate node positions (simple circular layout)
         n = len(nodes)
         node_positions = {}
@@ -519,7 +550,7 @@ class NetworkGraphWidget(DashboardWidget):
 class TimelineWidget(DashboardWidget):
     """Timeline widget for event visualization."""
 
-    def render(self, format: str = "json") -> Any:
+    def render(self, format: str = "json") -> dict[str, object] | None:
         """Render timeline.
 
         Args:
@@ -553,7 +584,7 @@ class TimelineWidget(DashboardWidget):
 class ProgressWidget(DashboardWidget):
     """Progress bar widget."""
 
-    def render(self, format: str = "json") -> Any:
+    def render(self, format: str = "json") -> dict[str, object] | None:
         """Render progress bar.
 
         Args:
@@ -584,7 +615,15 @@ class ProgressWidget(DashboardWidget):
         return self.render("json")
 
     def _get_progress_color(self, percentage: float) -> str:
-        """Get progress bar color based on percentage."""
+        """Get progress bar color based on percentage.
+
+        Args:
+            percentage: Progress percentage (0-100)
+
+        Returns:
+            Color name for progress bar
+
+        """
         if percentage < 25:
             return "red"
         if percentage < 50:
@@ -626,7 +665,7 @@ class WidgetFactory:
         return widget_class(config)
 
 
-def create_widget(widget_id: str, widget_type: WidgetType, title: str, **kwargs) -> DashboardWidget:
+def create_widget(widget_id: str, widget_type: WidgetType, title: str, **kwargs: object) -> DashboardWidget:
     """Create a widget.
 
     Args:

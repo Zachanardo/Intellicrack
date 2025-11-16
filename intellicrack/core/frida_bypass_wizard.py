@@ -369,8 +369,7 @@ class FridaBypassWizard:
 
             # Create temporary analysis script
             temp_script = Path("temp_analysis.js")
-            with open(temp_script, "w") as f:
-                f.write(analysis_script)
+            await asyncio.to_thread(lambda: temp_script.write_text(analysis_script, encoding="utf-8"))
 
             # Load and run analysis
             success = self.frida_manager.load_script(
@@ -959,8 +958,7 @@ class FridaBypassWizard:
 
             # Run detection script
             temp_script = Path("anti_debug_check.js")
-            with open(temp_script, "w") as f:
-                f.write(detection_script)
+            await asyncio.to_thread(lambda: temp_script.write_text(detection_script, encoding="utf-8"))
 
             result = await self._run_detection_script(temp_script)
             temp_script.unlink()
@@ -1033,8 +1031,7 @@ class FridaBypassWizard:
 
             # Run detection script
             temp_script = Path("anti_attach_check.js")
-            with open(temp_script, "w") as f:
-                f.write(detection_script)
+            await asyncio.to_thread(lambda: temp_script.write_text(detection_script, encoding="utf-8"))
 
             result = await self._run_detection_script(temp_script)
             temp_script.unlink()
@@ -1130,8 +1127,7 @@ class FridaBypassWizard:
 
             # Run detection script
             temp_script = Path("ssl_pinning_check.js")
-            with open(temp_script, "w") as f:
-                f.write(detection_script)
+            await asyncio.to_thread(lambda: temp_script.write_text(detection_script, encoding="utf-8"))
 
             result = await self._run_detection_script(temp_script)
             temp_script.unlink()

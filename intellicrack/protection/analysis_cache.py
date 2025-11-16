@@ -30,7 +30,6 @@ import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from threading import Lock
-from typing import Any
 
 from ..utils.logger import get_logger
 
@@ -43,7 +42,7 @@ PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-cha
 class RestrictedUnpickler(pickle.Unpickler):
     """Restricted unpickler that only allows safe classes."""
 
-    def find_class(self, module, name):
+    def find_class(self, module: str, name: str) -> type:
         """Override ``find_class`` to restrict allowed classes."""
         # Allow only safe modules and classes
         ALLOWED_MODULES = {
@@ -75,8 +74,14 @@ class RestrictedUnpickler(pickle.Unpickler):
         raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
 
 
-def secure_pickle_dump(obj, file_path) -> None:
-    """Securely dump object with integrity check."""
+def secure_pickle_dump(obj: object, file_path: str) -> None:
+    """Securely dump object with integrity check.
+
+    Args:
+        obj: Object to serialize.
+        file_path: Path to write pickled data with HMAC integrity check.
+
+    """
     # Serialize object
     data = pickle.dumps(obj)
 
@@ -89,8 +94,19 @@ def secure_pickle_dump(obj, file_path) -> None:
         f.write(data)
 
 
-def secure_pickle_load(file_path):
-    """Securely load object with integrity verification."""
+def secure_pickle_load(file_path: str) -> object:
+    """Securely load object with integrity verification.
+
+    Args:
+        file_path: Path to pickled data file with HMAC integrity check.
+
+    Returns:
+        Deserialized object loaded from file.
+
+    Raises:
+        ValueError: If integrity check fails, indicating possible tampering.
+
+    """
     try:
         # Try joblib first as it's safer for ML models
         import joblib
@@ -120,7 +136,7 @@ def secure_pickle_load(file_path):
 class CacheEntry:
     """Single cache entry with metadata."""
 
-    data: Any
+    data: object
     timestamp: float
     file_mtime: float
     file_size: int
@@ -128,7 +144,7 @@ class CacheEntry:
     last_access: float = 0.0
     cache_key: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize logger after dataclass initialization."""
         self.logger = logging.getLogger(__name__ + ".CacheEntry")
 
@@ -174,7 +190,7 @@ class CacheStats:
         total = self.cache_hits + self.cache_misses
         return (self.cache_hits / total * 100) if total > 0 else 0.0
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, object]:
         """Convert to dictionary for JSON serialization."""
         return asdict(self)
 
@@ -234,15 +250,15 @@ class AnalysisCache:
 
         logger.info(f"Analysis cache initialized: {len(self._cache)} entries, {self._get_cache_size_mb():.1f}MB")
 
-    def get(self, file_path: str, scan_options: str = "") -> Any | None:
+    def get(self, file_path: str, scan_options: str = "") -> object | None:
         """Get cached analysis result.
 
         Args:
-            file_path: Path to analyzed file
-            scan_options: Additional scan options for cache key
+            file_path: Path to analyzed file.
+            scan_options: Additional scan options for cache key.
 
         Returns:
-            Cached result or None if not found/invalid
+            Cached result or None if not found/invalid.
 
         """
         cache_key = self._generate_cache_key(file_path, scan_options)
@@ -270,13 +286,13 @@ class AnalysisCache:
             logger.debug(f"Cache hit: {cache_key}")
             return entry.data
 
-    def put(self, file_path: str, data: Any, scan_options: str = "") -> None:
+    def put(self, file_path: str, data: object, scan_options: str = "") -> None:
         """Store analysis result in cache.
 
         Args:
-            file_path: Path to analyzed file
-            data: Analysis result to cache
-            scan_options: Additional scan options for cache key
+            file_path: Path to analyzed file.
+            data: Analysis result to cache.
+            scan_options: Additional scan options for cache key.
 
         """
         cache_key = self._generate_cache_key(file_path, scan_options)
@@ -390,7 +406,7 @@ class AnalysisCache:
             self._stats.total_size_bytes = self._calculate_cache_size()
             return self._stats
 
-    def get_cache_info(self) -> dict[str, Any]:
+    def get_cache_info(self) -> dict[str, object]:
         """Get detailed cache information."""
         stats = self.get_stats()
 

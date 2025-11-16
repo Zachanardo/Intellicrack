@@ -7,27 +7,29 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-from typing import Any
-
 from PyQt6.QtCore import QAbstractItemModel, QModelIndex, Qt, pyqtSignal
 
-from .pe_file_model import FileStructure, PEFileModel, SectionInfo
+from .pe_file_model import CertificateInfo, FileStructure, PEFileModel, SectionInfo
 
 
 class PEStructureItem:
     """Tree item representing a PE structure element."""
 
-    def __init__(self, data: FileStructure | SectionInfo | str, parent=None) -> None:
+    def __init__(
+        self,
+        data: FileStructure | SectionInfo | str,
+        parent: "PEStructureItem | None" = None,
+    ) -> None:
         """Initialize PE structure item with hierarchical data representation."""
         self.parent_item = parent
         self.item_data = data
-        self.child_items = []
+        self.child_items: list[PEStructureItem] = []
 
-    def append_child(self, item) -> None:
+    def append_child(self, item: "PEStructureItem") -> None:
         """Add a child item."""
         self.child_items.append(item)
 
-    def child(self, row: int):
+    def child(self, row: int) -> "PEStructureItem | None":
         """Get child at row."""
         if 0 <= row < len(self.child_items):
             return self.child_items[row]
@@ -41,7 +43,7 @@ class PEStructureItem:
         """Get number of columns."""
         return 3  # Name, Offset, Size
 
-    def data(self, column: int) -> Any:
+    def data(self, column: int) -> object:
         """Get data for column."""
         if isinstance(self.item_data, str):
             # Root node or category
@@ -65,7 +67,7 @@ class PEStructureItem:
 
         return ""
 
-    def parent(self):
+    def parent(self) -> "PEStructureItem | None":
         """Get parent item."""
         return self.parent_item
 
@@ -85,7 +87,11 @@ class PEStructureModel(QAbstractItemModel):
     #: RVA address (type: int)
     rva_selected = pyqtSignal(int)
 
-    def __init__(self, pe_model: PEFileModel | None = None, parent=None) -> None:
+    def __init__(
+        self,
+        pe_model: PEFileModel | None = None,
+        parent: object | None = None,
+    ) -> None:
         """Initialize PE structure model with optional PE file data for tree representation."""
         super().__init__(parent)
         self.pe_model = pe_model
@@ -222,7 +228,11 @@ class PEStructureModel(QAbstractItemModel):
             more_item = PEStructureItem(f"... and {len(exports) - 50} more", exports_root)
             exports_root.append_child(more_item)
 
-    def _add_certificate_details(self, signing_cert, certificates_root) -> None:
+    def _add_certificate_details(
+        self,
+        signing_cert: object,
+        certificates_root: PEStructureItem,
+    ) -> None:
         """Add certificate details to the tree."""
         cert_info = "Signing Certificate"
         if signing_cert.subject:
@@ -257,7 +267,11 @@ class PEStructureModel(QAbstractItemModel):
             detail_item = PEStructureItem(detail, cert_item)
             cert_item.append_child(detail_item)
 
-    def _add_certificate_chain(self, certificates, certificates_root) -> None:
+    def _add_certificate_chain(
+        self,
+        certificates: CertificateInfo,
+        certificates_root: PEStructureItem,
+    ) -> None:
         """Add certificate chain information to the tree."""
         if len(certificates.certificates) <= 1:
             return
@@ -324,7 +338,7 @@ class PEStructureModel(QAbstractItemModel):
             parent = QModelIndex()
         return self.root_item.column_count()
 
-    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> object:
         """Return data for index and role."""
         if not index.isValid():
             return None
@@ -361,7 +375,12 @@ class PEStructureModel(QAbstractItemModel):
 
         return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
 
-    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
+    def headerData(
+        self,
+        section: int,
+        orientation: Qt.Orientation,
+        role: int = Qt.ItemDataRole.DisplayRole,
+    ) -> object:
         """Return header data."""
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             if section == 0:

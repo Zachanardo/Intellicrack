@@ -411,9 +411,20 @@ class GPUAccelerator:
             logger.error(f"Numba pattern search failed: {e}")
             return self._cpu_pattern_search(data, pattern)
 
-    def _create_pattern_match_kernel(self):
+    def _create_pattern_match_kernel(self) -> object:
+        """Create Numba CUDA pattern matching kernel.
+
+        Returns:
+            Numba CUDA compiled function for pattern matching.
+
+        """
         @numba_cuda.jit
-        def pattern_match_kernel(data, pattern, matches, positions) -> None:
+        def pattern_match_kernel(
+            data: object,
+            pattern: object,
+            matches: object,
+            positions: object,
+        ) -> None:
             idx = numba_cuda.grid(1)
             if idx <= len(data) - len(pattern):
                 match = True
@@ -652,9 +663,19 @@ class GPUAccelerator:
             logger.error(f"Numba entropy calculation failed: {e}")
             return self._cpu_entropy(data, block_size)
 
-    def _create_entropy_kernel(self):
+    def _create_entropy_kernel(self) -> object:
+        """Create Numba CUDA entropy calculation kernel.
+
+        Returns:
+            Numba CUDA compiled function for entropy calculation.
+
+        """
         @numba_cuda.jit
-        def entropy_kernel(data, block_size, entropies) -> None:
+        def entropy_kernel(
+            data: object,
+            block_size: object,
+            entropies: object,
+        ) -> None:
             block_idx = numba_cuda.grid(1)
             if block_idx < len(entropies):
                 # Calculate histogram for this block

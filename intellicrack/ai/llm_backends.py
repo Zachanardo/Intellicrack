@@ -2577,7 +2577,7 @@ Please analyze this script and return validation results in JSON format."""
 
 
 # Convenience functions for creating common configurations
-def create_openai_config(model_name: str = "gpt-4", api_key: str | None = None, **kwargs: Any) -> LLMConfig:
+def create_openai_config(model_name: str = "gpt-4", api_key: str | None = None, **kwargs: object) -> LLMConfig:
     """Create OpenAI configuration."""
     return LLMConfig(
         provider=LLMProvider.OPENAI,
@@ -2587,7 +2587,7 @@ def create_openai_config(model_name: str = "gpt-4", api_key: str | None = None, 
     )
 
 
-def create_anthropic_config(model_name: str = "claude-3-5-sonnet-20241022", api_key: str | None = None, **kwargs: Any) -> LLMConfig:
+def create_anthropic_config(model_name: str = "claude-3-5-sonnet-20241022", api_key: str | None = None, **kwargs: object) -> LLMConfig:
     """Create Anthropic configuration."""
     return LLMConfig(
         provider=LLMProvider.ANTHROPIC,
@@ -2597,7 +2597,7 @@ def create_anthropic_config(model_name: str = "claude-3-5-sonnet-20241022", api_
     )
 
 
-def create_gguf_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
+def create_gguf_config(model_path: str, model_name: str | None = None, **kwargs: object) -> LLMConfig:
     """Create GGUF model configuration."""
     if not model_name:
         model_name = os.path.basename(model_path)
@@ -2610,7 +2610,7 @@ def create_gguf_config(model_path: str, model_name: str | None = None, **kwargs:
     )
 
 
-def create_ollama_config(model_name: str, api_base: str | None = None, **kwargs: Any) -> LLMConfig:
+def create_ollama_config(model_name: str, api_base: str | None = None, **kwargs: object) -> LLMConfig:
     """Create Ollama configuration."""
     from intellicrack.utils.service_utils import get_service_url
 
@@ -2622,7 +2622,7 @@ def create_ollama_config(model_name: str, api_base: str | None = None, **kwargs:
     )
 
 
-def create_pytorch_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
+def create_pytorch_config(model_path: str, model_name: str | None = None, **kwargs: object) -> LLMConfig:
     """Create PyTorch model configuration."""
     if not model_name:
         model_name = os.path.basename(model_path)
@@ -2635,7 +2635,7 @@ def create_pytorch_config(model_path: str, model_name: str | None = None, **kwar
     )
 
 
-def create_tensorflow_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
+def create_tensorflow_config(model_path: str, model_name: str | None = None, **kwargs: object) -> LLMConfig:
     """Create TensorFlow model configuration."""
     if not model_name:
         model_name = os.path.basename(model_path)
@@ -2648,7 +2648,7 @@ def create_tensorflow_config(model_path: str, model_name: str | None = None, **k
     )
 
 
-def create_onnx_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
+def create_onnx_config(model_path: str, model_name: str | None = None, **kwargs: object) -> LLMConfig:
     """Create ONNX model configuration."""
     if not model_name:
         model_name = os.path.basename(model_path)
@@ -2661,7 +2661,7 @@ def create_onnx_config(model_path: str, model_name: str | None = None, **kwargs:
     )
 
 
-def create_safetensors_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
+def create_safetensors_config(model_path: str, model_name: str | None = None, **kwargs: object) -> LLMConfig:
     """Create Safetensors model configuration."""
     if not model_name:
         model_name = os.path.basename(model_path)
@@ -2674,7 +2674,7 @@ def create_safetensors_config(model_path: str, model_name: str | None = None, **
     )
 
 
-def create_gptq_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
+def create_gptq_config(model_path: str, model_name: str | None = None, **kwargs: object) -> LLMConfig:
     """Create GPTQ model configuration."""
     if not model_name:
         model_name = os.path.basename(model_path)
@@ -2687,7 +2687,7 @@ def create_gptq_config(model_path: str, model_name: str | None = None, **kwargs:
     )
 
 
-def create_huggingface_local_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
+def create_huggingface_local_config(model_path: str, model_name: str | None = None, **kwargs: object) -> LLMConfig:
     """Create Hugging Face local model configuration."""
     if not model_name:
         model_name = os.path.basename(model_path)

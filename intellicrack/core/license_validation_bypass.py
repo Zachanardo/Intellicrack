@@ -288,10 +288,7 @@ class LicenseValidationBypass:
 
         # Additional heuristics
         hex_str = hex(n)
-        if hex_str.count("0") > len(hex_str) * 0.7:  # Too many zeros
-            return False
-
-        return True
+        return hex_str.count("0") <= len(hex_str) * 0.7
 
     def _extract_from_pe_resources(self, binary_path: str) -> list[ExtractedKey]:
         """Extract keys from PE resources and data sections."""

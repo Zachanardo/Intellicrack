@@ -24,9 +24,12 @@ import os
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import yara
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -1546,12 +1549,12 @@ rule Delphi_Compiler {
 
     def scan_process_with_analyzer(
         self,
-        license_analyzer,
+        license_analyzer: object,
         categories: list[RuleCategory] | None = None,
         scan_dlls: bool = True,
         scan_heap: bool = True,
         use_cache: bool = True,
-        progress_callback=None,
+        progress_callback: Callable[[int, int, str], None] | None = None,
     ) -> list[YaraMatch]:
         """Scan process memory using LicenseAnalyzer for enhanced memory access.
 
@@ -1701,7 +1704,7 @@ rule Delphi_Compiler {
             logger.error(f"Process scanning error: {e}")
             return matches
 
-    def _is_dll_region(self, license_analyzer, region: dict[str, Any]) -> bool:
+    def _is_dll_region(self, license_analyzer: object, region: dict[str, Any]) -> bool:
         """Check if memory region belongs to a DLL."""
         try:
             # Check if region has IMAGE characteristics
@@ -1720,7 +1723,7 @@ rule Delphi_Compiler {
 
         return False
 
-    def _is_heap_region(self, license_analyzer, region: dict[str, Any]) -> bool:
+    def _is_heap_region(self, license_analyzer: object, region: dict[str, Any]) -> bool:
         """Check if memory region belongs to heap."""
         try:
             # Check for typical heap characteristics
@@ -1773,8 +1776,8 @@ rule Delphi_Compiler {
             memory_regions = analyzer.enumerate_memory_regions()
 
             # Prepare scanning tasks
-            def scan_region_chunk(region_info):
-                region_matches = []
+            def scan_region_chunk(region_info: dict[str, Any]) -> list[YaraMatch]:
+                region_matches: list[YaraMatch] = []
                 try:
                     base_addr = region_info["base_address"]
                     size = region_info["size"]
@@ -1841,7 +1844,7 @@ rule Delphi_Compiler {
         include_readonly: bool = False,
         min_size: int = 0,
         max_size: int = 0,
-    ) -> Any:
+    ) -> object:
         """Create a memory region filter for YARA scanning.
 
         Args:
@@ -1857,7 +1860,7 @@ rule Delphi_Compiler {
         """
 
         class MemoryFilter:
-            def __init__(self, scanner) -> None:
+            def __init__(self, scanner: YaraScanner) -> None:
                 self.scanner = scanner
                 self.include_executable = include_executable
                 self.include_writable = include_writable
@@ -1912,7 +1915,7 @@ rule Delphi_Compiler {
         with self._scan_progress_lock:
             return dict(self._scan_progress)
 
-    def set_scan_progress_callback(self, callback) -> None:
+    def set_scan_progress_callback(self, callback: Callable[[int, int, str], None]) -> None:
         """Set callback for scan progress updates.
 
         Args:
@@ -2920,7 +2923,7 @@ extern "C" {{
         ordered = []
         processed = set()
 
-        def add_category_patches(category) -> None:
+        def add_category_patches(category: str) -> None:
             if category in processed:
                 return
             processed.add(category)
@@ -3096,7 +3099,7 @@ extern "C" {{
             "statistics": self.patch_statistics,
         }
 
-    def connect_to_debugger(self, debugger_instance) -> None:
+    def connect_to_debugger(self, debugger_instance: object) -> None:
         """Connect YaraScanner to a debugger instance for breakpoint integration.
 
         Args:
@@ -3345,7 +3348,7 @@ extern "C" {{
         # Also write to debug log
         logger.debug(f"Match execution: {json.dumps(log_entry, indent=2)}")
 
-    def set_match_triggered_action(self, rule_name: str, action_callback) -> None:
+    def set_match_triggered_action(self, rule_name: str, action_callback: Callable[[YaraMatch, dict[str, Any]], object]) -> None:
         """Set a callback to execute when specific rule matches are hit.
 
         Args:
@@ -3359,7 +3362,7 @@ extern "C" {{
         self._match_actions[rule_name] = action_callback
         logger.info(f"Registered action for rule: {rule_name}")
 
-    def trigger_match_action(self, match: YaraMatch, context: dict[str, Any]) -> Any:
+    def trigger_match_action(self, match: YaraMatch, context: dict[str, Any]) -> object | None:
         """Trigger registered action for a match.
 
         Args:

@@ -61,7 +61,7 @@ class TrafficAnalyzer:
         self.analysis_thread = None
         self.capture_active = False
 
-    def run_visual_network_traffic_analyzer(self, main_window) -> None:
+    def run_visual_network_traffic_analyzer(self, main_window: object) -> None:
         """Launch visual network traffic analyzer dialog.
 
         Args:
@@ -96,7 +96,7 @@ class TrafficAnalyzer:
 class NetworkTrafficAnalysisDialog(QDialog):
     """Comprehensive network traffic analysis dialog with real-time capture and visualization."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the network traffic analysis dialog.
 
         Args:
@@ -169,7 +169,6 @@ class NetworkTrafficAnalysisDialog(QDialog):
 
         interface_layout.addWidget(QLabel("Capture Filter:"), 1, 0)
         self.filter_edit = QLineEdit()
-        self.filter_edit.setPlaceholderText("tcp port 443 or udp port 53")
         interface_layout.addWidget(self.filter_edit, 1, 1)
 
         interface_layout.addWidget(QLabel("Timeout (seconds):"), 2, 0)
@@ -367,8 +366,13 @@ class NetworkTrafficAnalysisDialog(QDialog):
 
         self.tab_widget.addTab(viz_widget, "Visualization")
 
-    def _create_control_buttons(self, layout) -> None:
-        """Create main control buttons."""
+    def _create_control_buttons(self, layout: QVBoxLayout) -> None:
+        """Create main control buttons.
+
+        Args:
+            layout: Vertical layout to add control buttons to
+
+        """
         button_layout = QHBoxLayout()
 
         self.start_capture_btn = QPushButton("Start Capture")
@@ -455,8 +459,13 @@ class NetworkTrafficAnalysisDialog(QDialog):
             log_error(error_msg)
             QMessageBox.critical(self, "Capture Error", error_msg)
 
-    def _capture_worker(self, config) -> None:
-        """Worker method for packet capture."""
+    def _capture_worker(self, config: dict[str, object]) -> None:
+        """Worker method for packet capture.
+
+        Args:
+            config: Configuration dictionary containing capture settings
+
+        """
         try:
             # Set license patterns if enabled
             if config.get("enable_license_detection"):
@@ -769,13 +778,16 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
 
 
 # Network capture management functions for main_app binding
-def start_network_capture(self, interface=None, filter_str=None) -> bool | None:
+def start_network_capture(self: object, interface: str | None = None, filter_str: str | None = None) -> bool | None:
     """Start network packet capture on specified interface.
 
     Args:
         self: Traffic analyzer instance
         interface: Network interface to capture on (None for default)
         filter_str: BPF filter string for capture filtering
+
+    Returns:
+        True if capture started successfully, False on error, None if unhandled
 
     """
     try:
@@ -826,8 +838,16 @@ def start_network_capture(self, interface=None, filter_str=None) -> bool | None:
         return False
 
 
-def stop_network_capture(self) -> bool | None:
-    """Stop active network packet capture."""
+def stop_network_capture(self: object) -> bool | None:
+    """Stop active network packet capture.
+
+    Args:
+        self: Traffic analyzer instance
+
+    Returns:
+        True if capture stopped successfully, False on error, None if unhandled
+
+    """
     try:
         if hasattr(self, "_capture_active"):
             self._capture_active = False
@@ -851,8 +871,16 @@ def stop_network_capture(self) -> bool | None:
         return False
 
 
-def clear_network_capture(self) -> bool | None:
-    """Clear captured network packets from memory."""
+def clear_network_capture(self: object) -> bool | None:
+    """Clear captured network packets from memory.
+
+    Args:
+        self: Traffic analyzer instance
+
+    Returns:
+        True if data cleared successfully, False on error, None if unhandled
+
+    """
     try:
         if hasattr(self, "_captured_packets"):
             packet_count = len(self._captured_packets)
@@ -871,7 +899,7 @@ def clear_network_capture(self) -> bool | None:
         return False
 
 
-def _perform_network_capture(self, interface, filter_str) -> None:
+def _perform_network_capture(self: object, interface: str | None, filter_str: str | None) -> None:
     """Background thread function to perform packet capture.
 
     Args:
@@ -885,8 +913,13 @@ def _perform_network_capture(self, interface, filter_str) -> None:
         try:
             from scapy.all import sniff
 
-            def packet_handler(packet) -> None:
-                """Handle captured packets."""
+            def packet_handler(packet: object) -> None:
+                """Handle captured packets.
+
+                Args:
+                    packet: Captured network packet from scapy
+
+                """
                 if hasattr(self, "_captured_packets"):
                     self._captured_packets.append(packet)
 

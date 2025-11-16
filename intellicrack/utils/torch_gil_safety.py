@@ -12,7 +12,8 @@ import logging
 import os
 import sys
 import threading
-from typing import Any, Callable
+from types import ModuleType, TracebackType
+from typing import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -42,14 +43,14 @@ def torch_thread_safe(func: Callable) -> Callable:
     """
 
     @functools.wraps(func)
-    def wrapper(*args, **kwargs) -> Any:
+    def wrapper(*args: object, **kwargs: object) -> object:
         with _torch_lock:
             return func(*args, **kwargs)
 
     return wrapper
 
 
-def safe_torch_import():
+def safe_torch_import() -> ModuleType | None:
     """Safely import PyTorch with thread-safe configuration.
 
     Returns:
@@ -78,12 +79,12 @@ def safe_torch_import():
 class TorchGILSafeContext:
     """Context manager for PyTorch operations that ensures GIL safety."""
 
-    def __enter__(self):
+    def __enter__(self) -> "TorchGILSafeContext":
         """Enter the thread-safe PyTorch context."""
         _torch_lock.acquire()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None) -> None:
         """Exit the thread-safe PyTorch context."""
         _torch_lock.release()
 
@@ -99,7 +100,7 @@ def with_torch_gil_safety(torch_func: Callable) -> Callable:
 
     """
 
-    def safe_func(*args, **kwargs):
+    def safe_func(*args: object, **kwargs: object) -> object:
         with TorchGILSafeContext():
             return torch_func(*args, **kwargs)
 

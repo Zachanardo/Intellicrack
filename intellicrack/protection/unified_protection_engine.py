@@ -47,12 +47,12 @@ except ImportError:
 
 from ..utils.logger import get_logger
 from .analysis_cache import AnalysisCache, get_analysis_cache
-from .intellicrack_protection_advanced import (
-    AdvancedProtectionAnalysis,
-)
 
 if TYPE_CHECKING:
     from .icp_backend import ICPScanResult
+    from .intellicrack_protection_advanced import (
+        AdvancedProtectionAnalysis,
+    )
 
 logger = get_logger(__name__)
 

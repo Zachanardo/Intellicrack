@@ -330,7 +330,7 @@ class AnalysisPage(QWizardPage):
         except Exception as e:
             logger.error(f"Error adding licensing file to tree: {e}")
 
-    def format_file_size(self, size: int | float) -> str:
+    def format_file_size(self, size: float) -> str:
         """Format file size in human-readable format.
 
         Converts a file size in bytes to a human-readable format with appropriate

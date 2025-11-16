@@ -53,8 +53,14 @@ class PluginEditorDialog(QDialog):
     #: Emitted when plugin is saved (type: str)
     plugin_saved = pyqtSignal(str)
 
-    def __init__(self, parent=None, plugin_path=None) -> None:
-        """Initialize the PluginEditorDialog with default values."""
+    def __init__(self, parent: QWidget | None = None, plugin_path: str | None = None) -> None:
+        """Initialize the PluginEditorDialog with default values.
+
+        Args:
+            parent: Parent widget for the dialog, None for standalone window.
+            plugin_path: Path to the plugin file to load initially.
+
+        """
         super().__init__(parent)
         self.plugin_path = plugin_path
         self.test_process = None
@@ -134,7 +140,6 @@ class PluginEditorDialog(QDialog):
         file_layout = QHBoxLayout()
         file_layout.addWidget(QLabel("Test Binary:"))
         self.test_file_edit = QLineEdit()
-        self.test_file_edit.setPlaceholderText("Select a binary to test with...")
         file_layout.addWidget(self.test_file_edit)
 
         browse_btn = QPushButton("Browse...")
@@ -219,8 +224,14 @@ class PluginEditorDialog(QDialog):
         if self.api_list.count() > 0:
             self.api_list.setCurrentRow(0)
 
-    def show_api_docs(self, current, previous) -> None:
-        """Show API documentation."""
+    def show_api_docs(self, current: object, previous: object) -> None:
+        """Show API documentation for the selected API topic.
+
+        Args:
+            current: Currently selected list item containing API topic.
+            previous: Previously selected list item (unused).
+
+        """
         _ = previous
         if not current:
             return
@@ -229,8 +240,16 @@ class PluginEditorDialog(QDialog):
         docs = self.get_api_documentation(topic)
         self.docs_viewer.setHtml(docs)
 
-    def get_api_documentation(self, topic):
-        """Get API documentation for topic."""
+    def get_api_documentation(self, topic: str) -> str:
+        """Get API documentation for the specified topic.
+
+        Args:
+            topic: Name of the API topic to retrieve documentation for.
+
+        Returns:
+            HTML-formatted documentation string for the topic.
+
+        """
         docs = {
             "Plugin Base Class": """
                 <h2>Plugin Base Class</h2>
@@ -322,8 +341,13 @@ Process.enumerateModules().forEach(function(module) {
 
         return docs.get(topic, f"<h2>{topic}</h2><p>Documentation not available yet.</p>")
 
-    def load_plugin(self, path) -> None:
-        """Load a plugin file."""
+    def load_plugin(self, path: str) -> None:
+        """Load a plugin file into the editor.
+
+        Args:
+            path: File system path to the plugin Python file to load.
+
+        """
         self.plugin_path = path
         try:
             with open(path) as f:
@@ -339,13 +363,23 @@ Process.enumerateModules().forEach(function(module) {
         """Save the plugin."""
         self.editor.save_file()
 
-    def on_plugin_saved(self, path) -> None:
-        """Handle plugin saved."""
+    def on_plugin_saved(self, path: str) -> None:
+        """Handle plugin saved event.
+
+        Args:
+            path: File system path where the plugin was saved.
+
+        """
         self.plugin_saved.emit(path)
         QMessageBox.information(self, "Saved", "Plugin saved successfully!")
 
-    def on_validation_complete(self, results) -> None:
-        """Handle validation results."""
+    def on_validation_complete(self, results: dict[str, object]) -> None:
+        """Handle plugin validation results.
+
+        Args:
+            results: Dictionary containing validation results with at least a 'valid' key.
+
+        """
         if results["valid"]:
             self.run_btn.setEnabled(True)
             self.run_btn.setToolTip("Plugin is valid and ready to run")
@@ -449,8 +483,14 @@ Process.enumerateModules().forEach(function(module) {
             text = data.data().decode("utf-8", errors="replace")
             self.test_output.append(f"<span style='color: red;'>{text}</span>")
 
-    def test_finished(self, exit_code, exit_status) -> None:
-        """Handle test process finished."""
+    def test_finished(self, exit_code: int, exit_status: object) -> None:
+        """Handle test process completion.
+
+        Args:
+            exit_code: Process exit code (0 for success, non-zero for failure).
+            exit_status: Qt process exit status enumeration value.
+
+        """
         _ = exit_status
         self.test_output.append(f"\nTest finished with exit code: {exit_code}")
 

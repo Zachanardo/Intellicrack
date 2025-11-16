@@ -42,7 +42,7 @@ except ImportError as e:
 class EmulatorStatusWidget(QWidget):
     """Widget showing emulator status with visual indicators."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the emulator status widget with UI components and status tracking."""
         super().__init__(parent)
         self.setup_ui()
@@ -179,7 +179,7 @@ class EmulatorRequiredDecorator:
     def requires_qemu(func: Callable) -> Callable:
         """Decorate functions requiring QEMU."""
 
-        def wrapper(self, *args, **kwargs):
+        def wrapper(self: object, *args: object, **kwargs: object) -> object:
             from ..core.processing.emulator_manager import get_emulator_manager
 
             if not hasattr(self, "binary_path") or not self.binary_path:
@@ -204,7 +204,7 @@ class EmulatorRequiredDecorator:
     def requires_qiling(func: Callable) -> Callable:
         """Decorate functions requiring Qiling."""
 
-        def wrapper(self, *args, **kwargs):
+        def wrapper(self: object, *args: object, **kwargs: object) -> object:
             from ..core.processing.emulator_manager import get_emulator_manager
 
             if not hasattr(self, "binary_path") or not self.binary_path:

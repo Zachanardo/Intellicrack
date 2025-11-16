@@ -31,7 +31,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Coroutine
 
 logger = logging.getLogger(__name__)
 
@@ -216,7 +216,7 @@ class PerformanceMonitor:
 
     @contextmanager
     def profile_operation(
-        self, operation_name: str, metadata: dict[str, Any] | None = None
+        self, operation_name: str, metadata: dict[str, Any] | None = None,
     ) -> Generator[str, None, None]:
         """Profile an operation with automatic performance metric collection.
 
@@ -288,7 +288,7 @@ class PerformanceMonitor:
                 del self.active_operations[operation_id]
 
     def time_function(
-        self, func_name: str | None = None
+        self, func_name: str | None = None,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Create a decorator that profiles function execution time.
 
@@ -305,11 +305,11 @@ class PerformanceMonitor:
 
         """
 
-        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        def decorator(func: Callable[..., object]) -> Callable[..., object]:
             name = func_name or f"{func.__module__}.{func.__name__}"
 
             @functools.wraps(func)
-            def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401, ANN002, ANN003
+            def wrapper(*args: object, **kwargs: object) -> object:
                 with self.profile_operation(name):
                     return func(*args, **kwargs)
 
@@ -656,8 +656,8 @@ class AsyncPerformanceMonitor:
         self.async_operations: dict[str, dict[str, Any]] = {}
 
     async def profile_async_operation(
-        self, operation_name: str, coro: Any  # noqa: ANN401
-    ) -> Any:  # noqa: ANN401
+        self, operation_name: str, coro: Coroutine[None, None, object],
+    ) -> object:
         """Profile an async operation with performance metrics.
 
         Executes an async coroutine while measuring execution time, memory usage,
@@ -709,7 +709,7 @@ class AsyncPerformanceMonitor:
             self.base_monitor.profiles.append(profile)
 
     def profile_async(
-        self, operation_name: str | None = None
+        self, operation_name: str | None = None,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Create a decorator that profiles async function execution.
 
@@ -725,11 +725,11 @@ class AsyncPerformanceMonitor:
 
         """
 
-        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        def decorator(func: Callable[..., Coroutine[None, None, object]]) -> Callable[..., Coroutine[None, None, object]]:
             name = operation_name or func.__name__
 
             @functools.wraps(func)
-            async def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401, ANN002, ANN003
+            async def wrapper(*args: object, **kwargs: object) -> object:
                 return await self.profile_async_operation(name, func(*args, **kwargs))
 
             return wrapper

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <intellicrack_scan_results>
   <summary>
-    <total_issues>784</total_issues>
+    <total_issues>815</total_issues>
     <total_languages>3</total_languages>
-    <critical>502</critical>
-    <high>116</high>
-    <medium>166</medium>
+    <critical>530</critical>
+    <high>118</high>
+    <medium>167</medium>
     <low>0</low>
   </summary>
   <languages>
@@ -154,7 +154,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>register_agent</function_name>
-          <line>3728</line>
+          <line>3733</line>
           <column>5</column>
           <severity>MEDIUM</severity>
           <confidence>55</confidence>
@@ -262,7 +262,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_validate_generic_script</function_name>
-          <line>2193</line>
+          <line>2339</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>160</confidence>
@@ -276,10 +276,10 @@
               Validator/checker function with no conditionals (no actual validation)
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -463,7 +463,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_handle_suggest_patches</function_name>
-          <line>408</line>
+          <line>390</line>
           <column>5</column>
           <severity>MEDIUM</severity>
           <confidence>70</confidence>
@@ -490,7 +490,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>apply_patch</function_name>
-          <line>377</line>
+          <line>376</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>505</confidence>
@@ -533,7 +533,7 @@
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_binary</function_name>
-          <line>335</line>
+          <line>334</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>182</confidence>
@@ -561,7 +561,7 @@
         <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>suggest_patches</function_name>
-          <line>369</line>
+          <line>368</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>135</confidence>
@@ -591,7 +591,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_demo_license_detection</function_name>
-          <line>470</line>
+          <line>469</line>
           <column>1</column>
           <severity>CRITICAL</severity>
           <confidence>220</confidence>
@@ -871,7 +871,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>create_behavioral_analyzer</function_name>
-          <line>1565</line>
+          <line>1549</line>
           <column>1</column>
           <severity>CRITICAL</severity>
           <confidence>150</confidence>
@@ -1278,7 +1278,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_detect_dispatchers</function_name>
-          <line>415</line>
+          <line>424</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>495</confidence>
@@ -1318,7 +1318,7 @@
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_is_dispatcher_block</function_name>
-          <line>460</line>
+          <line>469</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>330</confidence>
@@ -1346,7 +1346,7 @@
         <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_classify_dispatcher_type</function_name>
-          <line>614</line>
+          <line>623</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>330</confidence>
@@ -1374,7 +1374,7 @@
         <issue id="4" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_generate_patch_information</function_name>
-          <line>1111</line>
+          <line>1120</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>220</confidence>
@@ -1424,10 +1424,10 @@
               Trivial implementation: no loops, conditionals, or local vars despite multiple lines
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -1442,38 +1442,11 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\analysis\frida_advanced_hooks.py" issue_count="1">
-        <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>init_exception_hooker</function_name>
-          <line>1487</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>130</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Domain function &apos;init_exception_hooker&apos; is ≤3 LOC with no logic (likely incomplete)
-            </item>
-            <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+30">
-              Very short domain-specific function (≤3 LOC - likely incomplete)
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-      </file>
       <file path=".\intellicrack\core\analysis\frida_protection_bypass.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>generate_bypass_report</function_name>
-          <line>1469</line>
+          <line>1468</line>
           <column>5</column>
           <severity>MEDIUM</severity>
           <confidence>55</confidence>
@@ -2918,7 +2891,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>create_realtime_analyzer</function_name>
-          <line>1497</line>
+          <line>1552</line>
           <column>1</column>
           <severity>CRITICAL</severity>
           <confidence>125</confidence>
@@ -3462,13 +3435,13 @@
       <file path=".\intellicrack\core\analysis\yara_scanner.py" issue_count="12">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>add_category_patches</function_name>
-          <line>2923</line>
-          <column>9</column>
+          <function_name>recommend_patch_sequence</function_name>
+          <line>2894</line>
+          <column>5</column>
           <severity>CRITICAL</severity>
-          <confidence>330</confidence>
+          <confidence>320</confidence>
           <issue_type>hardcoded_return</issue_type>
-          <description>5 production issues detected</description>
+          <description>6 production issues detected</description>
           <evidence>
             <item points="+45">
               Patcher without binary file manipulation
@@ -3485,14 +3458,17 @@
             <item points="+80">
               Patcher sophistication: 35% (DANGEROUS - will break on updates)
             </item>
+            <item points="-10">
+              Deductions for production patterns
+            </item>
           </evidence>
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>recommend_patch_sequence</function_name>
-          <line>2891</line>
-          <column>5</column>
+          <function_name>add_category_patches</function_name>
+          <line>2926</line>
+          <column>9</column>
           <severity>CRITICAL</severity>
           <confidence>320</confidence>
           <issue_type>hardcoded_return</issue_type>
@@ -3522,7 +3498,7 @@
         <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>get_patch_metrics</function_name>
-          <line>3078</line>
+          <line>3081</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>280</confidence>
@@ -3553,7 +3529,7 @@
         <issue id="4" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>get_patch_suggestions</function_name>
-          <line>2703</line>
+          <line>2706</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>270</confidence>
@@ -3584,7 +3560,7 @@
         <issue id="5" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_patch</function_name>
-          <line>2954</line>
+          <line>2957</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>255</confidence>
@@ -3615,7 +3591,7 @@
         <issue id="6" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>initialize_patch_database</function_name>
-          <line>2554</line>
+          <line>2557</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>130</confidence>
@@ -3643,7 +3619,7 @@
         <issue id="7" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_generate_patch_data</function_name>
-          <line>2757</line>
+          <line>2760</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>125</confidence>
@@ -3668,7 +3644,7 @@
         <issue id="8" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_assess_patch_complexity</function_name>
-          <line>2869</line>
+          <line>2872</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>115</confidence>
@@ -3693,7 +3669,7 @@
         <issue id="9" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_rule_syntax</function_name>
-          <line>2427</line>
+          <line>2430</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>110</confidence>
@@ -3718,7 +3694,7 @@
         <issue id="10" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_assess_patch_risk</function_name>
-          <line>2847</line>
+          <line>2850</line>
           <column>5</column>
           <severity>HIGH</severity>
           <confidence>85</confidence>
@@ -3740,7 +3716,7 @@
         <issue id="11" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>detect_protections</function_name>
-          <line>967</line>
+          <line>970</line>
           <column>5</column>
           <severity>HIGH</severity>
           <confidence>75</confidence>
@@ -3756,7 +3732,7 @@
         <issue id="12" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>track_patch_effectiveness</function_name>
-          <line>3056</line>
+          <line>3059</line>
           <column>5</column>
           <severity>MEDIUM</severity>
           <confidence>65</confidence>
@@ -4155,12 +4131,12 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>hook_mem_write</function_name>
-          <line>2786</line>
+          <line>2789</line>
           <column>13</column>
           <severity>CRITICAL</severity>
-          <confidence>175</confidence>
+          <confidence>165</confidence>
           <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
+          <description>5 production issues detected</description>
           <evidence>
             <item points="+50">
               Function has no meaningful content (≤1 line)
@@ -4173,6 +4149,9 @@
             </item>
             <item points="+30">
               Very short domain-specific function (≤3 LOC - likely incomplete)
+            </item>
+            <item points="-10">
+              Deductions for production patterns
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -5144,10 +5123,10 @@
               Keygen without crypto/random operations (likely trivial)
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -5244,10 +5223,10 @@
           <description>3 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -5284,7 +5263,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_generate_patch</function_name>
-          <line>1765</line>
+          <line>1799</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>380</confidence>
@@ -5318,7 +5297,7 @@
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_generate_intelligent_patch</function_name>
-          <line>2083</line>
+          <line>2117</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>360</confidence>
@@ -5355,7 +5334,7 @@
         <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>select_optimal_patch_points</function_name>
-          <line>1132</line>
+          <line>1161</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>320</confidence>
@@ -5386,7 +5365,7 @@
         <issue id="4" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_generate_trial_patch</function_name>
-          <line>1803</line>
+          <line>1837</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>250</confidence>
@@ -5420,7 +5399,7 @@
         <issue id="5" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_generate_registration_patch</function_name>
-          <line>1811</line>
+          <line>1845</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>250</confidence>
@@ -5454,7 +5433,7 @@
         <issue id="6" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_generate_hardware_check_patch</function_name>
-          <line>1837</line>
+          <line>1871</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>250</confidence>
@@ -5488,7 +5467,7 @@
         <issue id="7" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_generate_integrity_check_patch</function_name>
-          <line>1883</line>
+          <line>1917</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>250</confidence>
@@ -5522,7 +5501,7 @@
         <issue id="8" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_generate_default_patch</function_name>
-          <line>1891</line>
+          <line>1925</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>250</confidence>
@@ -5556,7 +5535,7 @@
         <issue id="9" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_generate_online_validation_patch</function_name>
-          <line>1845</line>
+          <line>1879</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>200</confidence>
@@ -5587,7 +5566,7 @@
         <issue id="10" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_generate_signature_check_patch</function_name>
-          <line>1873</line>
+          <line>1907</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>200</confidence>
@@ -5618,7 +5597,7 @@
         <issue id="11" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_generate_async_online_patch</function_name>
-          <line>1853</line>
+          <line>1887</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>150</confidence>
@@ -5646,7 +5625,7 @@
         <issue id="12" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_get_patch_strategy</function_name>
-          <line>1899</line>
+          <line>1933</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>130</confidence>
@@ -5668,7 +5647,7 @@
         <issue id="13" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_generate_virt_registration_patch</function_name>
-          <line>1819</line>
+          <line>1853</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>125</confidence>
@@ -5693,7 +5672,7 @@
         <issue id="14" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_generate_serial_validation_patch</function_name>
-          <line>1785</line>
+          <line>1819</line>
           <column>5</column>
           <severity>HIGH</severity>
           <confidence>85</confidence>
@@ -5778,7 +5757,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_convert_r2_to_binary_patches</function_name>
-          <line>108</line>
+          <line>109</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>320</confidence>
@@ -6007,7 +5986,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>apply_patches</function_name>
-          <line>863</line>
+          <line>860</line>
           <column>9</column>
           <severity>CRITICAL</severity>
           <confidence>270</confidence>
@@ -6038,7 +6017,7 @@
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>add_license_detection_hooks</function_name>
-          <line>296</line>
+          <line>293</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>205</confidence>
@@ -6060,7 +6039,7 @@
         <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>hook_code_execution</function_name>
-          <line>424</line>
+          <line>421</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>105</confidence>
@@ -6132,7 +6111,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>verify_license</function_name>
-          <line>742</line>
+          <line>750</line>
           <column>9</column>
           <severity>CRITICAL</severity>
           <confidence>170</confidence>
@@ -6146,10 +6125,10 @@
               Validator/checker function with no conditionals (no actual validation)
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -6160,7 +6139,7 @@
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_serialize_endpoint</function_name>
-          <line>813</line>
+          <line>821</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>100</confidence>
@@ -6171,10 +6150,10 @@
               Function name implies file I/O but no file operations detected
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -6185,7 +6164,7 @@
         <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>activate_license</function_name>
-          <line>757</line>
+          <line>765</line>
           <column>9</column>
           <severity>MEDIUM</severity>
           <confidence>65</confidence>
@@ -6193,10 +6172,10 @@
           <description>3 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -6207,7 +6186,7 @@
         <issue id="4" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_serialize_token</function_name>
-          <line>825</line>
+          <line>833</line>
           <column>5</column>
           <severity>MEDIUM</severity>
           <confidence>55</confidence>
@@ -6218,10 +6197,10 @@
               Function name implies file I/O but no file operations detected
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="-10">
               Deductions for production patterns
@@ -6465,10 +6444,10 @@
               Keygen function with no crypto/random operations (trivial algorithm)
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;capstone&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;capstone&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="-10">
               Deductions for production patterns
@@ -6490,10 +6469,10 @@
               Weak encryption detected (XOR, character-by-character)
             </item>
             <item points="+15">
-              Imports &apos;capstone&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;capstone&apos; but doesn&apos;t use it in function
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -6512,10 +6491,10 @@
               Weak encryption detected (XOR, character-by-character)
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;capstone&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;capstone&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -6884,10 +6863,10 @@
           <description>3 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -7152,7 +7131,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_find_patch_patterns</function_name>
-          <line>2019</line>
+          <line>2043</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>290</confidence>
@@ -7183,7 +7162,7 @@
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_generate_patch_analysis_summary</function_name>
-          <line>1765</line>
+          <line>1789</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>250</confidence>
@@ -7490,7 +7469,7 @@
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>activate</function_name>
-          <line>1092</line>
+          <line>1094</line>
           <column>5</column>
           <severity>MEDIUM</severity>
           <confidence>65</confidence>
@@ -7511,7 +7490,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_parse_intercepted_key</function_name>
-          <line>2003</line>
+          <line>2002</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>180</confidence>
@@ -7539,7 +7518,7 @@
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_validate_product_key</function_name>
-          <line>3270</line>
+          <line>3269</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>125</confidence>
@@ -7567,7 +7546,7 @@
         <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_validate_product_key</function_name>
-          <line>6530</line>
+          <line>6535</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>125</confidence>
@@ -7581,10 +7560,10 @@
               Validator sophistication: 60% (BASIC - needs improvement)
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="-10">
               Deductions for production patterns
@@ -7595,7 +7574,7 @@
         <issue id="4" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>create_license_client</function_name>
-          <line>7139</line>
+          <line>7144</line>
           <column>5</column>
           <severity>HIGH</severity>
           <confidence>95</confidence>
@@ -7617,7 +7596,7 @@
         <issue id="5" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_get_remaining_activations</function_name>
-          <line>6612</line>
+          <line>6617</line>
           <column>5</column>
           <severity>HIGH</severity>
           <confidence>85</confidence>
@@ -7628,10 +7607,10 @@
               Domain function &apos;_get_remaining_activations&apos; is ≤3 LOC with no logic (likely incomplete)
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -7648,7 +7627,7 @@
         <issue id="6" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>create_license_server</function_name>
-          <line>7126</line>
+          <line>7131</line>
           <column>5</column>
           <severity>HIGH</severity>
           <confidence>85</confidence>
@@ -7673,7 +7652,7 @@
         <issue id="7" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>verify_license_signature</function_name>
-          <line>262</line>
+          <line>261</line>
           <column>5</column>
           <severity>MEDIUM</severity>
           <confidence>70</confidence>
@@ -7687,10 +7666,10 @@
               Validator/checker function with no conditionals (no actual validation)
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -7704,7 +7683,7 @@
         <issue id="8" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>root</function_name>
-          <line>6748</line>
+          <line>6753</line>
           <column>9</column>
           <severity>MEDIUM</severity>
           <confidence>65</confidence>
@@ -7725,7 +7704,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>get_success_rate_analyzer</function_name>
-          <line>1391</line>
+          <line>1394</line>
           <column>1</column>
           <severity>HIGH</severity>
           <confidence>75</confidence>
@@ -8214,10 +8193,10 @@
           <description>3 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -9107,7 +9086,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>generate_bypass_script</function_name>
-          <line>1097</line>
+          <line>1169</line>
           <column>5</column>
           <severity>MEDIUM</severity>
           <confidence>70</confidence>
@@ -9983,10 +9962,10 @@
               Domain function &apos;tp10_patcher_no_validation&apos; is only 1 line (trivial/incomplete)
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -10020,10 +9999,10 @@
               Domain function &apos;tp02_keygen_hardcoded&apos; is only 1 line (trivial/incomplete)
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -10088,10 +10067,10 @@
               Domain function &apos;tp01_keygen_no_crypto&apos; is ≤3 LOC with no logic (likely incomplete)
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -10150,10 +10129,10 @@
               Domain function &apos;tp09_keygen_linear&apos; is ≤3 LOC with no logic (likely incomplete)
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -10237,10 +10216,10 @@
               Function has no meaningful content (≤1 line)
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -16398,6 +16377,579 @@
           <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
         </issue>
       </file>
+      <file path=".\tests\unit\core\exploitation\test_keygen_generator.py" issue_count="22">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_generate_keygen_selects_highest_confidence_algorithm</function_name>
+          <line>1075</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>350</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+40">
+              Keygen without crypto/random operations (likely trivial)
+            </item>
+            <item points="+90">
+              CRITICAL: Keygen lacks cryptographic operations (insufficient for production)
+            </item>
+            <item points="+75">
+              CRITICAL: Keygen without loops or conditionals (linear execution only)
+            </item>
+            <item points="+50">
+              Keygen with trivial complexity (insufficient for production)
+            </item>
+            <item points="+70">
+              Keygen sophistication score: 16% (INSUFFICIENT)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+            <item points="-10">
+              Deductions for production patterns
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_comprehensive_keygen_workflow</function_name>
+          <line>1375</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>170</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+40">
+              Keygen without crypto/random operations (likely trivial)
+            </item>
+            <item points="+90">
+              CRITICAL: Keygen lacks cryptographic operations (insufficient for production)
+            </item>
+            <item points="+50">
+              Keygen sophistication score: 33% (WEAK implementation)
+            </item>
+            <item points="-10">
+              Deductions for production patterns
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="3" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validator</function_name>
+          <line>847</line>
+          <column>9</column>
+          <severity>CRITICAL</severity>
+          <confidence>165</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+50">
+              Function has no meaningful content (≤1 line)
+            </item>
+            <item points="+60">
+              Domain function &apos;validator&apos; is only 1 line (trivial/incomplete)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+            <item points="+30">
+              Very short domain-specific function (≤3 LOC - likely incomplete)
+            </item>
+            <item points="-10">
+              Deductions for production patterns
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="4" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validator</function_name>
+          <line>858</line>
+          <column>9</column>
+          <severity>CRITICAL</severity>
+          <confidence>165</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+50">
+              Function has no meaningful content (≤1 line)
+            </item>
+            <item points="+60">
+              Domain function &apos;validator&apos; is only 1 line (trivial/incomplete)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+            <item points="+30">
+              Very short domain-specific function (≤3 LOC - likely incomplete)
+            </item>
+            <item points="-10">
+              Deductions for production patterns
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="5" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validator</function_name>
+          <line>869</line>
+          <column>9</column>
+          <severity>CRITICAL</severity>
+          <confidence>165</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+50">
+              Function has no meaningful content (≤1 line)
+            </item>
+            <item points="+60">
+              Domain function &apos;validator&apos; is only 1 line (trivial/incomplete)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+            <item points="+30">
+              Very short domain-specific function (≤3 LOC - likely incomplete)
+            </item>
+            <item points="-10">
+              Deductions for production patterns
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="6" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validator</function_name>
+          <line>881</line>
+          <column>9</column>
+          <severity>CRITICAL</severity>
+          <confidence>165</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+50">
+              Function has no meaningful content (≤1 line)
+            </item>
+            <item points="+60">
+              Domain function &apos;validator&apos; is only 1 line (trivial/incomplete)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+            <item points="+30">
+              Very short domain-specific function (≤3 LOC - likely incomplete)
+            </item>
+            <item points="-10">
+              Deductions for production patterns
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="7" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validator</function_name>
+          <line>892</line>
+          <column>9</column>
+          <severity>CRITICAL</severity>
+          <confidence>165</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+50">
+              Function has no meaningful content (≤1 line)
+            </item>
+            <item points="+60">
+              Domain function &apos;validator&apos; is only 1 line (trivial/incomplete)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+            <item points="+30">
+              Very short domain-specific function (≤3 LOC - likely incomplete)
+            </item>
+            <item points="-10">
+              Deductions for production patterns
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="8" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validator</function_name>
+          <line>903</line>
+          <column>9</column>
+          <severity>CRITICAL</severity>
+          <confidence>165</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+50">
+              Function has no meaningful content (≤1 line)
+            </item>
+            <item points="+60">
+              Domain function &apos;validator&apos; is only 1 line (trivial/incomplete)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+            <item points="+30">
+              Very short domain-specific function (≤3 LOC - likely incomplete)
+            </item>
+            <item points="-10">
+              Deductions for production patterns
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="9" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validator</function_name>
+          <line>915</line>
+          <column>9</column>
+          <severity>CRITICAL</severity>
+          <confidence>165</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+50">
+              Function has no meaningful content (≤1 line)
+            </item>
+            <item points="+60">
+              Domain function &apos;validator&apos; is only 1 line (trivial/incomplete)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+            <item points="+30">
+              Very short domain-specific function (≤3 LOC - likely incomplete)
+            </item>
+            <item points="-10">
+              Deductions for production patterns
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="10" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validator</function_name>
+          <line>930</line>
+          <column>9</column>
+          <severity>CRITICAL</severity>
+          <confidence>165</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+50">
+              Function has no meaningful content (≤1 line)
+            </item>
+            <item points="+60">
+              Domain function &apos;validator&apos; is only 1 line (trivial/incomplete)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+            <item points="+30">
+              Very short domain-specific function (≤3 LOC - likely incomplete)
+            </item>
+            <item points="-10">
+              Deductions for production patterns
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="11" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validator</function_name>
+          <line>1235</line>
+          <column>9</column>
+          <severity>CRITICAL</severity>
+          <confidence>165</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+50">
+              Function has no meaningful content (≤1 line)
+            </item>
+            <item points="+60">
+              Domain function &apos;validator&apos; is only 1 line (trivial/incomplete)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+            <item points="+30">
+              Very short domain-specific function (≤3 LOC - likely incomplete)
+            </item>
+            <item points="-10">
+              Deductions for production patterns
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="12" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validator</function_name>
+          <line>1250</line>
+          <column>9</column>
+          <severity>CRITICAL</severity>
+          <confidence>165</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+50">
+              Function has no meaningful content (≤1 line)
+            </item>
+            <item points="+60">
+              Domain function &apos;validator&apos; is only 1 line (trivial/incomplete)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+            <item points="+30">
+              Very short domain-specific function (≤3 LOC - likely incomplete)
+            </item>
+            <item points="-10">
+              Deductions for production patterns
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="13" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validator</function_name>
+          <line>1266</line>
+          <column>9</column>
+          <severity>CRITICAL</severity>
+          <confidence>165</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+50">
+              Function has no meaningful content (≤1 line)
+            </item>
+            <item points="+60">
+              Domain function &apos;validator&apos; is only 1 line (trivial/incomplete)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+            <item points="+30">
+              Very short domain-specific function (≤3 LOC - likely incomplete)
+            </item>
+            <item points="-10">
+              Deductions for production patterns
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="14" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validator</function_name>
+          <line>1363</line>
+          <column>9</column>
+          <severity>CRITICAL</severity>
+          <confidence>165</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+50">
+              Function has no meaningful content (≤1 line)
+            </item>
+            <item points="+60">
+              Domain function &apos;validator&apos; is only 1 line (trivial/incomplete)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+            <item points="+30">
+              Very short domain-specific function (≤3 LOC - likely incomplete)
+            </item>
+            <item points="-10">
+              Deductions for production patterns
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="15" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validator</function_name>
+          <line>1395</line>
+          <column>13</column>
+          <severity>CRITICAL</severity>
+          <confidence>165</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+50">
+              Function has no meaningful content (≤1 line)
+            </item>
+            <item points="+60">
+              Domain function &apos;validator&apos; is only 1 line (trivial/incomplete)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+            <item points="+30">
+              Very short domain-specific function (≤3 LOC - likely incomplete)
+            </item>
+            <item points="-10">
+              Deductions for production patterns
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="16" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_validate_checksum_key_identifies_crc32</function_name>
+          <line>1096</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>140</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+65">
+              Validator without cryptographic verification (string comparison only)
+            </item>
+            <item points="+40">
+              Validator sophistication: 50% (BASIC - needs improvement)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="17" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_validate_rsa_key_validates_minimum_length</function_name>
+          <line>1116</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>140</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+65">
+              Validator without cryptographic verification (string comparison only)
+            </item>
+            <item points="+40">
+              Validator sophistication: 40% (BASIC - needs improvement)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="18" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_validate_pattern_key_matches_constraint</function_name>
+          <line>1126</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>140</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+65">
+              Validator without cryptographic verification (string comparison only)
+            </item>
+            <item points="+40">
+              Validator sophistication: 40% (BASIC - needs improvement)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="19" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_keygen_with_checksum_constraint_integration</function_name>
+          <line>1319</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>120</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+40">
+              Keygen without crypto/random operations (likely trivial)
+            </item>
+            <item points="+45">
+              Keygen function with no crypto/random operations (trivial algorithm)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="20" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_verify_key_checks_all_constraints</function_name>
+          <line>759</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>75</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+40">
+              Validator sophistication: 60% (BASIC - needs improvement)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="21" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_generate_keygen_falls_back_to_heuristic</function_name>
+          <line>1063</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>75</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+40">
+              Keygen without crypto/random operations (likely trivial)
+            </item>
+            <item points="+45">
+              Keygen function with no crypto/random operations (trivial algorithm)
+            </item>
+            <item points="-10">
+              Deductions for production patterns
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="22" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_verify_checksum_validates_luhn</function_name>
+          <line>697</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>65</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+            <item points="+30">
+              Very short domain-specific function (≤3 LOC - likely incomplete)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
       <file path=".\tests\unit\core\mitigation_bypass\test_aslr_bypass.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
@@ -16977,13 +17529,13 @@
               Validator/checker function with no conditionals (no actual validation)
             </item>
             <item points="+15">
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+15">
               Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
               Imports &apos;Crypto&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -17039,13 +17591,13 @@
               Function has no meaningful content (≤1 line)
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
               Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -17064,10 +17616,10 @@
               Function has no meaningful content (≤1 line)
             </item>
             <item points="+15">
-              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
               Imports &apos;cryptography&apos; but doesn&apos;t use it in function
@@ -17089,10 +17641,10 @@
               &apos;Simple&apos; implementation confirmed: no iteration logic
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -17111,13 +17663,13 @@
           <description>4 production issues detected</description>
           <evidence>
             <item points="+15">
+              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+15">
               Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
               Imports &apos;cryptography&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+15">
-              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -17136,13 +17688,13 @@
           <description>4 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+15">
               Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
               Imports &apos;Crypto&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+15">
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -17164,13 +17716,13 @@
               Function name implies file I/O but no file operations detected
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+15">
               Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
               Imports &apos;Crypto&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+15">
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="-10">
               Deductions for production patterns
@@ -17192,13 +17744,13 @@
               Function name implies file I/O but no file operations detected
             </item>
             <item points="+15">
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+15">
               Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
               Imports &apos;Crypto&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="-10">
               Deductions for production patterns
@@ -17217,10 +17769,10 @@
           <description>3 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -17239,10 +17791,10 @@
           <description>3 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -17264,13 +17816,13 @@
               &apos;Simple&apos; implementation confirmed: no iteration logic
             </item>
             <item points="+15">
-              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
               Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
             </item>
             <item points="-13">
               Deductions for production patterns
@@ -17972,7 +18524,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\tests\unit\core\test_protection_analyzer.py" issue_count="5">
+      <file path=".\tests\unit\core\test_protection_analyzer.py" issue_count="10">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_detect_protections_returns_detection_with_correct_structure</function_name>
@@ -18095,6 +18647,116 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
+        <issue id="6" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_detect_protections_finds_asprotect_signatures</function_name>
+          <line>375</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>170</confidence>
+          <issue_type>naive_implementation</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+60">
+              Protection analyzer without signature database (weak detection)
+            </item>
+            <item points="+75">
+              CRITICAL: Analyzer without binary format parsing (string matching only)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="7" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_detect_protections_finds_armadillo_signatures</function_name>
+          <line>385</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>170</confidence>
+          <issue_type>naive_implementation</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+60">
+              Protection analyzer without signature database (weak detection)
+            </item>
+            <item points="+75">
+              CRITICAL: Analyzer without binary format parsing (string matching only)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="8" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_detect_protections_finds_obsidium_signatures</function_name>
+          <line>395</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>170</confidence>
+          <issue_type>naive_implementation</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+60">
+              Protection analyzer without signature database (weak detection)
+            </item>
+            <item points="+75">
+              CRITICAL: Analyzer without binary format parsing (string matching only)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="9" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_detect_protections_finds_dotfuscator_signatures</function_name>
+          <line>405</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>170</confidence>
+          <issue_type>naive_implementation</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+60">
+              Protection analyzer without signature database (weak detection)
+            </item>
+            <item points="+75">
+              CRITICAL: Analyzer without binary format parsing (string matching only)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="10" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_detect_protections_finds_safengine_signatures</function_name>
+          <line>415</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>170</confidence>
+          <issue_type>naive_implementation</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+60">
+              Protection analyzer without signature database (weak detection)
+            </item>
+            <item points="+75">
+              CRITICAL: Analyzer without binary format parsing (string matching only)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
       </file>
       <file path=".\tests\unit\core\test_remaining_critical_modules.py" issue_count="3">
         <issue id="1" completed="false">
@@ -18130,10 +18792,10 @@
           <description>3 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -18159,6 +18821,151 @@
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path=".\tests\unit\core\test_trial_reset_engine.py" issue_count="5">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_freeze_time_for_app_injects_hooks</function_name>
+          <line>927</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>380</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+35">
+              Low complexity for domain-specific function (likely incomplete)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_detect_trial_type_returns_time_based</function_name>
+          <line>357</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>212</confidence>
+          <issue_type>naive_implementation</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+60">
+              Protection analyzer without signature database (weak detection)
+            </item>
+            <item points="+75">
+              CRITICAL: Analyzer without binary format parsing (string matching only)
+            </item>
+            <item points="+55">
+              Analyzer without loops (single pattern check only)
+            </item>
+            <item points="+70">
+              Analyzer sophistication: 10% (WEAK - misses most protections)
+            </item>
+            <item points="-48">
+              Deductions for production patterns
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="3" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_detect_trial_type_returns_usage_based</function_name>
+          <line>378</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>212</confidence>
+          <issue_type>naive_implementation</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+60">
+              Protection analyzer without signature database (weak detection)
+            </item>
+            <item points="+75">
+              CRITICAL: Analyzer without binary format parsing (string matching only)
+            </item>
+            <item points="+55">
+              Analyzer without loops (single pattern check only)
+            </item>
+            <item points="+70">
+              Analyzer sophistication: 10% (WEAK - misses most protections)
+            </item>
+            <item points="-48">
+              Deductions for production patterns
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="4" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_detect_trial_type_returns_hybrid</function_name>
+          <line>399</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>212</confidence>
+          <issue_type>naive_implementation</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+60">
+              Protection analyzer without signature database (weak detection)
+            </item>
+            <item points="+75">
+              CRITICAL: Analyzer without binary format parsing (string matching only)
+            </item>
+            <item points="+55">
+              Analyzer without loops (single pattern check only)
+            </item>
+            <item points="+70">
+              Analyzer sophistication: 10% (WEAK - misses most protections)
+            </item>
+            <item points="-48">
+              Deductions for production patterns
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="5" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_detect_trial_type_returns_feature_limited</function_name>
+          <line>420</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>212</confidence>
+          <issue_type>naive_implementation</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+60">
+              Protection analyzer without signature database (weak detection)
+            </item>
+            <item points="+75">
+              CRITICAL: Analyzer without binary format parsing (string matching only)
+            </item>
+            <item points="+55">
+              Analyzer without loops (single pattern check only)
+            </item>
+            <item points="+70">
+              Analyzer sophistication: 10% (WEAK - misses most protections)
+            </item>
+            <item points="-48">
+              Deductions for production patterns
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>

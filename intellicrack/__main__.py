@@ -34,6 +34,8 @@ import logging
 import os
 import sys
 
+from .main import main
+
 logger = logging.getLogger(__name__)
 
 # Disable pybind11 GIL assertions to prevent EnumType errors
@@ -55,8 +57,6 @@ try:
         logger.info(f"Security enforcement initialized: {security_status.get('patches_applied', {})}")
 except ImportError:
     logger.warning("Security enforcement module not available - running without enhanced protections")
-
-from .main import main
 
 # Set Qt to offscreen mode for WSL/headless environments if no display
 # This prevents Qt initialization errors when running without a GUI environment

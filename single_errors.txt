@@ -1,0 +1,60 @@
+D100 Missing docstring in public module
+--> extract_samples.py:1:1
+
+PYI036 The third argument in `__exit__` should be annotated with `object` or `types.TracebackType | None`
+    --> intellicrack\core\processing\qemu_emulator.py:2356:101
+     |
+2354 |         return self
+2355 |
+2356 |     def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object | None) -> bool:
+     |                                                                                                     ^^^^^^^^^^^^^
+2357 |         """Context manager exit with cleanup.
+     |
+
+F811 Redefinition of unused `Any` from line 41
+  --> intellicrack\plugins\custom_modules\license_server_emulator.py:41:20
+   |
+39 | from datetime import datetime, timedelta
+40 | from enum import Enum
+41 | from typing import Any
+   |                    --- previous definition of `Any` here
+42 |
+43 | # Type alias to replace Any with object
+44 | Any = object
+   | ^^^ `Any` redefined here
+45 |
+46 | import psutil
+   |
+help: Remove definition: `Any`
+
+RET503 Missing explicit `return` at the end of function able to return non-`None` value
+    --> intellicrack\plugins\custom_modules\license_server_emulator.py:3378:5
+     |
+3376 |           return self._hook_unix_apis(process_id)
+3377 |
+3378 | /     def _hook_windows_apis(self, pid: int) -> dict:
+3379 | |         """Install hooks for Windows APIs for license interception using inline hooking and IAT patching."""
+3380 | |         hooked_data = {'registry_keys': [], 'crypto_operations': [], 'network_calls': [], 'file_operations': []}
+3381 | |         import ctypes
+3382 | |         kernel32 = ctypes.windll.kernel32
+3383 | |         PROCESS_ALL_ACCESS = 2035711
+3384 | |         process_handle = kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, pid)
+3385 | |         if not process_handle:
+3386 | |             return hooked_data
+     | |______________________________^
+3387 |
+3388 |       def _detect_memory_protection(self, process_handle: int) -> str | None:
+     |
+help: Add explicit `return` statement
+
+PLE0604 Invalid object in `__all__`, must contain only strings
+    --> intellicrack\plugins\plugin_system.py:2255:5
+     |
+2254 |     _plugin_system_exports: list[str] = ([str(item) for item in PLUGIN_SYSTEM_EXPORTS] if isinstance(PLUGIN_SYSTEM_EXPORTS, (list, t…
+2255 |     __all__: list[str] = ["PluginSystem", "create_plugin_template", *_plugin_system_exports]
+     |     ^^^^^^^
+2256 | except ImportError as e:
+2257 |     logger.exception(f"Import error in plugin_system, possibly due to missing plugin_config module: {e}")
+     |
+
+Found 5 errors.

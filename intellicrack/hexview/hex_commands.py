@@ -22,7 +22,10 @@ import logging
 import sys
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from .file_handler import VirtualFileAccess
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +64,7 @@ class HexCommand(ABC):
         self.executed = False
 
     @abstractmethod
-    def execute(self, file_handler) -> bool:
+    def execute(self, file_handler: "VirtualFileAccess") -> bool:
         """Execute the command.
 
         Args:
@@ -73,7 +76,7 @@ class HexCommand(ABC):
         """
 
     @abstractmethod
-    def undo(self, file_handler) -> bool:
+    def undo(self, file_handler: "VirtualFileAccess") -> bool:
         """Undo the command.
 
         Args:
@@ -136,7 +139,7 @@ class ReplaceCommand(HexCommand):
         self.new_data = new_data
         self.old_data = old_data
 
-    def execute(self, file_handler) -> bool:
+    def execute(self, file_handler: "VirtualFileAccess") -> bool:
         """Execute the replace operation."""
         try:
             # Store old data if not already stored
@@ -153,7 +156,7 @@ class ReplaceCommand(HexCommand):
             logger.error("Error executing replace command: %s", e)
             return False
 
-    def undo(self, file_handler) -> bool:
+    def undo(self, file_handler: "VirtualFileAccess") -> bool:
         """Undo the replace operation."""
         try:
             if not self.executed or self.old_data is None:
@@ -204,7 +207,7 @@ class InsertCommand(HexCommand):
         self.offset = offset
         self.data = data
 
-    def execute(self, file_handler) -> bool:
+    def execute(self, file_handler: "VirtualFileAccess") -> bool:
         """Execute the insert operation."""
         try:
             success = file_handler.insert(self.offset, self.data)
@@ -216,7 +219,7 @@ class InsertCommand(HexCommand):
             logger.error("Error executing insert command: %s", e)
             return False
 
-    def undo(self, file_handler) -> bool:
+    def undo(self, file_handler: "VirtualFileAccess") -> bool:
         """Undo the insert operation."""
         try:
             if not self.executed:
@@ -291,7 +294,7 @@ class DeleteCommand(HexCommand):
         self.length = length
         self.deleted_data = deleted_data
 
-    def execute(self, file_handler) -> bool:
+    def execute(self, file_handler: "VirtualFileAccess") -> bool:
         """Execute the delete operation."""
         try:
             # Store data being deleted if not already stored
@@ -307,7 +310,7 @@ class DeleteCommand(HexCommand):
             logger.error("Error executing delete command: %s", e)
             return False
 
-    def undo(self, file_handler) -> bool:
+    def undo(self, file_handler: "VirtualFileAccess") -> bool:
         """Undo the delete operation."""
         try:
             if not self.executed or self.deleted_data is None:
@@ -427,7 +430,7 @@ class FillCommand(HexCommand):
         self.fill_value = fill_value
         self.old_data = old_data
 
-    def execute(self, file_handler) -> bool:
+    def execute(self, file_handler: "VirtualFileAccess") -> bool:
         """Execute the fill operation."""
         try:
             # Store old data if not already stored
@@ -451,7 +454,7 @@ class FillCommand(HexCommand):
             logger.error("Error executing fill command: %s", e)
             return False
 
-    def undo(self, file_handler) -> bool:
+    def undo(self, file_handler: "VirtualFileAccess") -> bool:
         """Undo the fill operation."""
         try:
             if not self.executed or self.old_data is None:
@@ -483,7 +486,7 @@ class PasteCommand(HexCommand):
         self.insert_mode = insert_mode
         self.old_data = old_data
 
-    def execute(self, file_handler) -> bool:
+    def execute(self, file_handler: "VirtualFileAccess") -> bool:
         """Execute the paste operation."""
         try:
             if self.insert_mode:
@@ -504,7 +507,7 @@ class PasteCommand(HexCommand):
             logger.error("Error executing paste command: %s", e)
             return False
 
-    def undo(self, file_handler) -> bool:
+    def undo(self, file_handler: "VirtualFileAccess") -> bool:
         """Undo the paste operation."""
         try:
             if not self.executed:
@@ -550,7 +553,7 @@ class CommandManager:
         self.file_handler = None
         self.auto_merge = True
 
-    def set_file_handler(self, file_handler) -> None:
+    def set_file_handler(self, file_handler: "VirtualFileAccess") -> None:
         """Set the file handler for command execution."""
         self.file_handler = file_handler
 

@@ -344,4 +344,468 @@ class TestEntropyAnalysis:
         assert abs(entropy_analysis["overall_entropy"] - expected_entropy) < 0.1
 
 
-pytest.main([__file__, "-v", "--tb=short"])
+class TestAdditionalProtectionDetection:
+    """Test detection of additional protection systems."""
+
+    @pytest.fixture
+    def asprotect_data(self) -> bytes:
+        """Create binary data with ASProtect signatures."""
+        return b"\x00" * 100 + b"ASProtect" + b"\x00" * 100 + b"\x68\x00\x00\x00\x00\x64\xff\x35\x00\x00\x00\x00" + b"\x00" * 100
+
+    @pytest.fixture
+    def armadillo_data(self) -> bytes:
+        """Create binary data with Armadillo signatures."""
+        return b"\x00" * 100 + b"Armadillo" + b"\x00" * 100 + b"\x55\x8b\xec\x6a\xff\x68\x00\x00\x00\x00" + b"\x00" * 100
+
+    @pytest.fixture
+    def obsidium_data(self) -> bytes:
+        """Create binary data with Obsidium signatures."""
+        return b"\x00" * 100 + b"Obsidium" + b"\x00" * 100 + b"\xeb\x02\xcd\x20\x03\xc0\x0f\x84" + b"\x00" * 100
+
+    @pytest.fixture
+    def dotfuscator_data(self) -> bytes:
+        """Create binary data with Dotfuscator/.NET Reactor signatures."""
+        return b"\x00" * 100 + b"Dotfuscator" + b"\x00" * 100 + b".NET Reactor" + b"\x00" * 100
+
+    @pytest.fixture
+    def safengine_data(self) -> bytes:
+        """Create binary data with SafeEngine signatures."""
+        return b"\x00" * 100 + b"SafeEngine" + b"\x00" * 100 + b"\x60\xe8\x00\x00\x00\x00\x5d\x81\xed" + b"\x00" * 100
+
+    def test_detect_protections_finds_asprotect_signatures(self, asprotect_data: bytes) -> None:
+        """Test _detect_protections finds ASProtect signatures."""
+        analyzer = ProtectionAnalyzer()
+
+        detections = analyzer._detect_protections(asprotect_data)
+
+        assert len(detections) > 0
+        asp_detected = any(d["name"] == "ASProtect" for d in detections)
+        assert asp_detected, "ASProtect should be detected"
+
+    def test_detect_protections_finds_armadillo_signatures(self, armadillo_data: bytes) -> None:
+        """Test _detect_protections finds Armadillo signatures."""
+        analyzer = ProtectionAnalyzer()
+
+        detections = analyzer._detect_protections(armadillo_data)
+
+        assert len(detections) > 0
+        arma_detected = any(d["name"] == "Armadillo" for d in detections)
+        assert arma_detected, "Armadillo should be detected"
+
+    def test_detect_protections_finds_obsidium_signatures(self, obsidium_data: bytes) -> None:
+        """Test _detect_protections finds Obsidium signatures."""
+        analyzer = ProtectionAnalyzer()
+
+        detections = analyzer._detect_protections(obsidium_data)
+
+        assert len(detections) > 0
+        obs_detected = any(d["name"] == "Obsidium" for d in detections)
+        assert obs_detected, "Obsidium should be detected"
+
+    def test_detect_protections_finds_dotfuscator_signatures(self, dotfuscator_data: bytes) -> None:
+        """Test _detect_protections finds Dotfuscator/.NET Reactor signatures."""
+        analyzer = ProtectionAnalyzer()
+
+        detections = analyzer._detect_protections(dotfuscator_data)
+
+        assert len(detections) > 0
+        dotf_detected = any(".NET Reactor" in d["name"] or "Dotfuscator" in d["name"] for d in detections)
+        assert dotf_detected, "Dotfuscator/.NET Reactor should be detected"
+
+    def test_detect_protections_finds_safengine_signatures(self, safengine_data: bytes) -> None:
+        """Test _detect_protections finds SafeEngine signatures."""
+        analyzer = ProtectionAnalyzer()
+
+        detections = analyzer._detect_protections(safengine_data)
+
+        assert len(detections) > 0
+        safe_detected = any(d["name"] == "SafeEngine Protector" for d in detections)
+        assert safe_detected, "SafeEngine should be detected"
+
+
+class TestSectionAnalysis:
+    """Test binary section analysis functionality."""
+
+    def test_analyze_sections_returns_correct_structure(self) -> None:
+        """Test _analyze_sections returns expected dict structure."""
+        analyzer = ProtectionAnalyzer()
+
+        clean_data = b"MZ\x90\x00" + b"\x00" * 1000
+        result = analyzer._analyze_sections(Path("test.exe"), clean_data)
+
+        assert isinstance(result, dict)
+        assert "sections" in result
+        assert "suspicious_sections" in result
+        assert isinstance(result["sections"], list)
+        assert isinstance(result["suspicious_sections"], list)
+
+    def test_analyze_sections_handles_non_pe_files(self) -> None:
+        """Test _analyze_sections handles non-PE files gracefully."""
+        analyzer = ProtectionAnalyzer()
+
+        elf_data = b"\x7fELF" + b"\x00" * 1000
+        result = analyzer._analyze_sections(Path("test.elf"), elf_data)
+
+        assert isinstance(result, dict)
+        assert "sections" in result
+
+    def test_analyze_sections_identifies_high_entropy_sections(self) -> None:
+        """Test _analyze_sections identifies suspicious high-entropy sections."""
+        analyzer = ProtectionAnalyzer()
+
+        result = {
+            "sections": [
+                {"name": ".text", "entropy": 6.5},
+                {"name": ".vmp", "entropy": 7.8},
+                {"name": ".data", "entropy": 3.2},
+            ],
+            "suspicious_sections": [],
+        }
+
+        suspicious = [s for s in result["sections"] if s.get("entropy", 0) > 7.0]
+        assert len(suspicious) == 1
+        assert suspicious[0]["name"] == ".vmp"
+
+
+class TestImportAnalysis:
+    """Test import table analysis functionality."""
+
+    def test_analyze_imports_returns_correct_structure(self) -> None:
+        """Test _analyze_imports returns expected dict structure."""
+        analyzer = ProtectionAnalyzer()
+
+        clean_data = b"MZ\x90\x00" + b"\x00" * 1000
+        result = analyzer._analyze_imports(Path("test.exe"), clean_data)
+
+        assert isinstance(result, dict)
+        assert "imports" in result
+        assert "suspicious_imports" in result
+        assert "import_count" in result
+
+    def test_analyze_imports_handles_non_pe_files(self) -> None:
+        """Test _analyze_imports handles non-PE files gracefully."""
+        analyzer = ProtectionAnalyzer()
+
+        elf_data = b"\x7fELF" + b"\x00" * 1000
+        result = analyzer._analyze_imports(Path("test.elf"), elf_data)
+
+        assert isinstance(result, dict)
+        assert result["import_count"] == 0
+
+    def test_analyze_imports_identifies_suspicious_apis(self) -> None:
+        """Test _analyze_imports identifies suspicious API calls."""
+        analyzer = ProtectionAnalyzer()
+
+        suspicious_apis = [
+            "VirtualAlloc", "VirtualProtect", "CreateRemoteThread",
+            "WriteProcessMemory", "IsDebuggerPresent", "CheckRemoteDebuggerPresent",
+        ]
+
+        for api in suspicious_apis:
+            test_import = f"kernel32.dll!{api}"
+            assert any(sus_api in api for sus_api in suspicious_apis)
+
+
+class TestAntiAnalysisDetection:
+    """Test anti-analysis technique detection."""
+
+    def test_detect_anti_analysis_finds_is_debugger_present(self) -> None:
+        """Test _detect_anti_analysis detects IsDebuggerPresent."""
+        analyzer = ProtectionAnalyzer()
+
+        data = b"\x00" * 100 + b"IsDebuggerPresent" + b"\x00" * 100
+
+        result = analyzer._detect_anti_analysis(data)
+
+        assert result["anti_debug_detected"] is True
+        assert "IsDebuggerPresent" in result["techniques"]
+
+    def test_detect_anti_analysis_finds_check_remote_debugger(self) -> None:
+        """Test _detect_anti_analysis detects CheckRemoteDebuggerPresent."""
+        analyzer = ProtectionAnalyzer()
+
+        data = b"\x00" * 100 + b"CheckRemoteDebuggerPresent" + b"\x00" * 100
+
+        result = analyzer._detect_anti_analysis(data)
+
+        assert result["anti_debug_detected"] is True
+        assert "CheckRemoteDebuggerPresent" in result["techniques"]
+
+    def test_detect_anti_analysis_finds_nt_query_information_process(self) -> None:
+        """Test _detect_anti_analysis detects NtQueryInformationProcess."""
+        analyzer = ProtectionAnalyzer()
+
+        data = b"\x00" * 100 + b"NtQueryInformationProcess" + b"\x00" * 100
+
+        result = analyzer._detect_anti_analysis(data)
+
+        assert result["anti_debug_detected"] is True
+        assert "NtQueryInformationProcess" in result["techniques"]
+
+    def test_detect_anti_analysis_finds_output_debug_string(self) -> None:
+        """Test _detect_anti_analysis detects OutputDebugString."""
+        analyzer = ProtectionAnalyzer()
+
+        data = b"\x00" * 100 + b"OutputDebugStringA" + b"\x00" * 100
+
+        result = analyzer._detect_anti_analysis(data)
+
+        assert result["anti_debug_detected"] is True
+        assert "OutputDebugString" in result["techniques"]
+
+    def test_detect_anti_analysis_finds_rdtsc_timing(self) -> None:
+        """Test _detect_anti_analysis detects RDTSC timing checks."""
+        analyzer = ProtectionAnalyzer()
+
+        data = b"\x00" * 100 + b"\x0f\x31" + b"\x00" * 100
+
+        result = analyzer._detect_anti_analysis(data)
+
+        assert result["anti_debug_detected"] is True
+        assert "RDTSC timing" in result["techniques"]
+
+    def test_detect_anti_analysis_returns_clean_for_no_techniques(self) -> None:
+        """Test _detect_anti_analysis returns empty when no techniques found."""
+        analyzer = ProtectionAnalyzer()
+
+        clean_data = b"MZ\x90\x00" + b"\x00" * 1000
+
+        result = analyzer._detect_anti_analysis(clean_data)
+
+        assert result["anti_debug_detected"] is False
+        assert len(result["techniques"]) == 0
+        assert result["risk_level"] == "low"
+
+    def test_detect_anti_analysis_calculates_correct_risk_level(self) -> None:
+        """Test _detect_anti_analysis calculates risk level correctly."""
+        analyzer = ProtectionAnalyzer()
+
+        data_high_risk = (
+            b"\x00" * 50
+            + b"IsDebuggerPresent" + b"\x00" * 50
+            + b"CheckRemoteDebuggerPresent" + b"\x00" * 50
+            + b"NtQueryInformationProcess" + b"\x00" * 50
+        )
+
+        result = analyzer._detect_anti_analysis(data_high_risk)
+
+        assert result["anti_debug_detected"] is True
+        assert len(result["techniques"]) >= 3
+        assert result["risk_level"] == "high"
+
+
+class TestRecommendationGeneration:
+    """Test recommendation generation functionality."""
+
+    def test_generate_recommendations_for_detected_protections(self) -> None:
+        """Test _generate_recommendations provides recommendations for detected protections."""
+        analyzer = ProtectionAnalyzer()
+
+        detected_protections = [
+            {"name": "UPX Packer", "type": "packer", "severity": "medium"},
+            {"name": "VMProtect", "type": "protector", "severity": "high"},
+        ]
+        entropy_analysis = {"overall_entropy": 5.0}
+        section_analysis = {"suspicious_sections": []}
+        anti_analysis = {"anti_debug_detected": False}
+
+        recommendations = analyzer._generate_recommendations(
+            detected_protections, entropy_analysis, section_analysis, anti_analysis
+        )
+
+        assert len(recommendations) > 0
+        assert any("UPX Packer" in rec or "VMProtect" in rec for rec in recommendations)
+        assert any("unpacking" in rec.lower() for rec in recommendations)
+
+    def test_generate_recommendations_for_high_entropy(self) -> None:
+        """Test _generate_recommendations recommends entropy analysis for high-entropy files."""
+        analyzer = ProtectionAnalyzer()
+
+        detected_protections = []
+        entropy_analysis = {"overall_entropy": 7.8}
+        section_analysis = {"suspicious_sections": []}
+        anti_analysis = {"anti_debug_detected": False}
+
+        recommendations = analyzer._generate_recommendations(
+            detected_protections, entropy_analysis, section_analysis, anti_analysis
+        )
+
+        assert len(recommendations) > 0
+        assert any("entropy" in rec.lower() for rec in recommendations)
+        assert any("encrypted" in rec.lower() or "compressed" in rec.lower() for rec in recommendations)
+
+    def test_generate_recommendations_for_anti_debug(self) -> None:
+        """Test _generate_recommendations recommends anti-debug bypass."""
+        analyzer = ProtectionAnalyzer()
+
+        detected_protections = []
+        entropy_analysis = {"overall_entropy": 5.0}
+        section_analysis = {"suspicious_sections": []}
+        anti_analysis = {"anti_debug_detected": True, "techniques": ["IsDebuggerPresent"]}
+
+        recommendations = analyzer._generate_recommendations(
+            detected_protections, entropy_analysis, section_analysis, anti_analysis
+        )
+
+        assert len(recommendations) > 0
+        assert any("anti-debug" in rec.lower() or "debug" in rec.lower() for rec in recommendations)
+
+    def test_generate_recommendations_for_suspicious_sections(self) -> None:
+        """Test _generate_recommendations notes suspicious sections."""
+        analyzer = ProtectionAnalyzer()
+
+        detected_protections = []
+        entropy_analysis = {"overall_entropy": 5.0}
+        section_analysis = {"suspicious_sections": [{"name": ".vmp", "entropy": 7.9}]}
+        anti_analysis = {"anti_debug_detected": False}
+
+        recommendations = analyzer._generate_recommendations(
+            detected_protections, entropy_analysis, section_analysis, anti_analysis
+        )
+
+        assert len(recommendations) > 0
+        assert any("section" in rec.lower() for rec in recommendations)
+
+    def test_generate_recommendations_for_clean_binary(self) -> None:
+        """Test _generate_recommendations provides standard advice for clean binaries."""
+        analyzer = ProtectionAnalyzer()
+
+        detected_protections = []
+        entropy_analysis = {"overall_entropy": 5.0}
+        section_analysis = {"suspicious_sections": []}
+        anti_analysis = {"anti_debug_detected": False}
+
+        recommendations = analyzer._generate_recommendations(
+            detected_protections, entropy_analysis, section_analysis, anti_analysis
+        )
+
+        assert len(recommendations) > 0
+        assert any("no significant protections" in rec.lower() or "standard analysis" in rec.lower() for rec in recommendations)
+
+
+class TestRiskScoreCalculation:
+    """Test risk score calculation functionality."""
+
+    def test_calculate_risk_score_returns_zero_for_clean_files(self) -> None:
+        """Test _calculate_risk_score returns 0 for clean files."""
+        analyzer = ProtectionAnalyzer()
+
+        detected_protections = []
+        entropy_analysis = {"overall_entropy": 5.0}
+        anti_analysis = {"anti_debug_detected": False, "techniques": []}
+
+        risk_score = analyzer._calculate_risk_score(detected_protections, entropy_analysis, anti_analysis)
+
+        assert risk_score == 0
+
+    def test_calculate_risk_score_increases_for_detected_protections(self) -> None:
+        """Test _calculate_risk_score increases based on detected protections."""
+        analyzer = ProtectionAnalyzer()
+
+        detected_protections = [
+            {"name": "UPX Packer", "type": "packer", "severity": "medium"},
+        ]
+        entropy_analysis = {"overall_entropy": 5.0}
+        anti_analysis = {"anti_debug_detected": False, "techniques": []}
+
+        risk_score = analyzer._calculate_risk_score(detected_protections, entropy_analysis, anti_analysis)
+
+        assert risk_score > 0
+        assert risk_score >= 15
+
+    def test_calculate_risk_score_weights_by_severity(self) -> None:
+        """Test _calculate_risk_score weights protections by severity."""
+        analyzer = ProtectionAnalyzer()
+
+        high_severity_protections = [
+            {"name": "VMProtect", "type": "protector", "severity": "high"},
+        ]
+        medium_severity_protections = [
+            {"name": "UPX Packer", "type": "packer", "severity": "medium"},
+        ]
+
+        entropy_analysis = {"overall_entropy": 5.0}
+        anti_analysis = {"anti_debug_detected": False, "techniques": []}
+
+        risk_high = analyzer._calculate_risk_score(high_severity_protections, entropy_analysis, anti_analysis)
+        risk_medium = analyzer._calculate_risk_score(medium_severity_protections, entropy_analysis, anti_analysis)
+
+        assert risk_high > risk_medium
+
+    def test_calculate_risk_score_increases_for_high_entropy(self) -> None:
+        """Test _calculate_risk_score increases for high entropy."""
+        analyzer = ProtectionAnalyzer()
+
+        detected_protections = []
+        high_entropy_analysis = {"overall_entropy": 7.8}
+        low_entropy_analysis = {"overall_entropy": 5.0}
+        anti_analysis = {"anti_debug_detected": False, "techniques": []}
+
+        risk_high = analyzer._calculate_risk_score(detected_protections, high_entropy_analysis, anti_analysis)
+        risk_low = analyzer._calculate_risk_score(detected_protections, low_entropy_analysis, anti_analysis)
+
+        assert risk_high > risk_low
+
+    def test_calculate_risk_score_increases_for_anti_analysis(self) -> None:
+        """Test _calculate_risk_score increases for anti-analysis techniques."""
+        analyzer = ProtectionAnalyzer()
+
+        detected_protections = []
+        entropy_analysis = {"overall_entropy": 5.0}
+        anti_analysis_detected = {"anti_debug_detected": True, "techniques": ["IsDebuggerPresent", "RDTSC timing"]}
+        anti_analysis_clean = {"anti_debug_detected": False, "techniques": []}
+
+        risk_with_anti = analyzer._calculate_risk_score(detected_protections, entropy_analysis, anti_analysis_detected)
+        risk_without_anti = analyzer._calculate_risk_score(detected_protections, entropy_analysis, anti_analysis_clean)
+
+        assert risk_with_anti > risk_without_anti
+
+    def test_calculate_risk_score_caps_at_maximum_value(self) -> None:
+        """Test _calculate_risk_score caps at maximum value (100)."""
+        analyzer = ProtectionAnalyzer()
+
+        many_protections = [
+            {"name": f"Protection{i}", "type": "protector", "severity": "high"}
+            for i in range(20)
+        ]
+        entropy_analysis = {"overall_entropy": 7.9}
+        anti_analysis = {"anti_debug_detected": True, "techniques": ["IsDebuggerPresent"] * 10}
+
+        risk_score = analyzer._calculate_risk_score(many_protections, entropy_analysis, anti_analysis)
+
+        assert risk_score <= 100
+
+
+class TestThreadSafety:
+    """Test thread safety of analyzer."""
+
+    def test_concurrent_analysis_thread_safety(self, tmp_path: Path) -> None:
+        """Test analyzer can be used concurrently from multiple threads."""
+        import threading
+
+        analyzer = ProtectionAnalyzer()
+
+        test_files = []
+        for i in range(5):
+            file_path = tmp_path / f"test_{i}.exe"
+            data = b"MZ\x90\x00" + b"\x00" * 100 + (b"UPX0" if i % 2 == 0 else b"\x00" * 10) + b"\x00" * 100
+            file_path.write_bytes(data)
+            test_files.append(file_path)
+
+        results = []
+
+        def analyze_file(file_path: Path) -> None:
+            result = analyzer.analyze(file_path)
+            results.append(result)
+
+        threads = [threading.Thread(target=analyze_file, args=(f,)) for f in test_files]
+
+        for thread in threads:
+            thread.start()
+
+        for thread in threads:
+            thread.join()
+
+        assert len(results) == 5
+        for result in results:
+            assert "file_info" in result or "error" in result

@@ -55,7 +55,7 @@ except ImportError as e:
     import re
     from collections import Counter
 
-    def wrapper_ai_binary_analyze(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
+    def wrapper_ai_binary_analyze(app_instance: object, parameters: dict[str, Any]) -> dict[str, Any]:
         """Perform static binary analysis when AI bridge is not available.
 
         Analyzes binary data using entropy calculation, string extraction,
@@ -91,7 +91,7 @@ except ImportError as e:
             logger.error("Error in fallback binary analyze: %s", e)
             return {"error": f"Analysis failed: {e!s}"}
 
-    def wrapper_ai_binary_pattern_search(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
+    def wrapper_ai_binary_pattern_search(app_instance: object, parameters: dict[str, Any]) -> dict[str, Any]:
         """Search for patterns in binary data when AI bridge is not available.
 
         Performs pattern matching using regex, byte sequences, and common
@@ -168,7 +168,7 @@ except ImportError as e:
             logger.error("Error in fallback pattern search: %s", e)
             return {"error": f"Pattern search failed: {e!s}"}
 
-    def wrapper_ai_binary_edit_suggest(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
+    def wrapper_ai_binary_edit_suggest(app_instance: object, parameters: dict[str, Any]) -> dict[str, Any]:
         """Suggest binary edits for license bypass when AI bridge is not available.
 
         Analyzes binary code to suggest patches for common license validation
@@ -365,7 +365,7 @@ logger = logging.getLogger("Intellicrack.HexView")
 TOOL_REGISTRY = {}
 
 
-def show_enhanced_hex_viewer(app_instance: Any, file_path: str | None = None, read_only: bool = True) -> QDialog | None:
+def show_enhanced_hex_viewer(app_instance: object, file_path: str | None = None, read_only: bool = True) -> QDialog | None:
     """Show the enhanced hex viewer/editor dialog.
 
     This function creates and shows the enhanced hex viewer dialog, optionally
@@ -455,7 +455,7 @@ def show_enhanced_hex_viewer(app_instance: Any, file_path: str | None = None, re
         return None
 
 
-def initialize_hex_viewer(app_instance: Any) -> None:
+def initialize_hex_viewer(app_instance: object) -> None:
     """Initialize the hex viewer functionality.
 
     This function sets up the hex viewer methods on the application instance
@@ -484,7 +484,7 @@ def initialize_hex_viewer(app_instance: Any) -> None:
     logger.info("Initialized hex viewer functionality")
 
 
-def restore_standard_hex_viewer(app_instance: Any) -> None:
+def restore_standard_hex_viewer(app_instance: object) -> None:
     """Restore the standard hex viewer.
 
     This function restores the original hex viewer function if it was
@@ -499,7 +499,7 @@ def restore_standard_hex_viewer(app_instance: Any) -> None:
         logger.info("Restored standard hex viewer")
 
 
-def add_hex_viewer_menu(app_instance: Any, menu_name: str | None = None) -> None:
+def add_hex_viewer_menu(app_instance: object, menu_name: str | None = None) -> None:
     """Add the enhanced hex viewer to a menu.
 
     This function adds a menu item for the enhanced hex viewer to the
@@ -542,7 +542,7 @@ def add_hex_viewer_menu(app_instance: Any, menu_name: str | None = None) -> None
     logger.info("Added Enhanced Hex Viewer options to %s menu", menu_name)
 
 
-def add_hex_viewer_toolbar_button(app_instance: Any, toolbar: QToolBar | None = None) -> None:
+def add_hex_viewer_toolbar_button(app_instance: object, toolbar: QToolBar | None = None) -> None:
     """Add the enhanced hex viewer to a toolbar.
 
     This function adds a toolbar button for the enhanced hex viewer to the
@@ -572,7 +572,7 @@ def add_hex_viewer_toolbar_button(app_instance: Any, toolbar: QToolBar | None = 
     logger.info("Added Enhanced Hex Viewer button to toolbar")
 
 
-def register_hex_viewer_ai_tools(app_instance: Any) -> None:
+def register_hex_viewer_ai_tools(app_instance: object) -> None:
     """Register the AI tool wrappers for the hex viewer.
 
     This function registers the AI tool wrappers that provide integration
@@ -600,7 +600,7 @@ def register_hex_viewer_ai_tools(app_instance: Any) -> None:
     logger.info(f"Registered {len(tool_registry)} hex viewer AI tools")
 
 
-def integrate_enhanced_hex_viewer(app_instance: Any) -> bool | None:
+def integrate_enhanced_hex_viewer(app_instance: object) -> bool | None:
     """Fully integrate the enhanced hex viewer with Intellicrack.
 
     This function performs all necessary steps to integrate the enhanced hex
@@ -654,7 +654,7 @@ def hex_viewer_ai_tool(func: Callable[[Any, dict[str, Any]], dict[str, Any]]) ->
 
     """
 
-    def wrapper(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
+    def wrapper(app_instance: object, parameters: dict[str, Any]) -> dict[str, Any]:
         """Add error handling and logging to hex viewer AI tools.
 
         Args:

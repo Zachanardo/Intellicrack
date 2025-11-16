@@ -21,7 +21,7 @@ import logging
 import threading
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable
+from typing import Any, Callable, TypedDict, Unpack
 
 from intellicrack.utils.logger import logger as main_logger
 
@@ -47,6 +47,27 @@ class MessageCategory(Enum):
     NETWORK = "NETWORK"
     FILE_IO = "FILE_IO"
     BINARY_PROCESSING = "BINARY_PROCESSING"
+
+
+class LogMessageKwargs(TypedDict, total=False):
+    """Type definition for log_message keyword arguments.
+
+    Attributes:
+        context: Optional dictionary with additional context information
+        exception: Optional exception object for error logging
+        source: Optional source identifier (module, function, etc.)
+        timestamp: Optional custom timestamp (defaults to current time)
+        persist: Whether to add message to persistent queue for UI display
+        notify_ui: Whether to notify registered UI callbacks
+
+    """
+
+    context: dict[str, Any] | None
+    exception: Exception | None
+    source: str | None
+    timestamp: datetime | None
+    persist: bool
+    notify_ui: bool
 
 
 # Thread-safe message queue for UI updates
@@ -225,62 +246,62 @@ def log_message(
                     print(f"[CALLBACK ERROR] {callback_error}")
 
 
-def log_debug(message: str, **kwargs) -> None:
+def log_debug(message: str, **kwargs: Unpack[LogMessageKwargs]) -> None:
     """Log for debug purposes."""
     log_message(message, level=MessageLevel.DEBUG, **kwargs)
 
 
-def log_info(message: str, **kwargs) -> None:
+def log_info(message: str, **kwargs: Unpack[LogMessageKwargs]) -> None:
     """Log for info purposes."""
     log_message(message, level=MessageLevel.INFO, **kwargs)
 
 
-def log_warning(message: str, **kwargs) -> None:
+def log_warning(message: str, **kwargs: Unpack[LogMessageKwargs]) -> None:
     """Log for warning purposes."""
     log_message(message, level=MessageLevel.WARNING, **kwargs)
 
 
-def log_error(message: str, **kwargs) -> None:
+def log_error(message: str, **kwargs: Unpack[LogMessageKwargs]) -> None:
     """Log for error purposes."""
     log_message(message, level=MessageLevel.ERROR, **kwargs)
 
 
-def log_critical(message: str, **kwargs) -> None:
+def log_critical(message: str, **kwargs: Unpack[LogMessageKwargs]) -> None:
     """Log for critical purposes."""
     log_message(message, level=MessageLevel.CRITICAL, **kwargs)
 
 
-def log_analysis(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs) -> None:
+def log_analysis(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]) -> None:
     """Log for analysis-related purposes."""
     log_message(message, level=level, category=MessageCategory.ANALYSIS, **kwargs)
 
 
-def log_ui(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs) -> None:
+def log_ui(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]) -> None:
     """Log for UI-related purposes."""
     log_message(message, level=level, category=MessageCategory.UI, **kwargs)
 
 
-def log_security(message: str, level: str | MessageLevel = MessageLevel.WARNING, **kwargs) -> None:
+def log_security(message: str, level: str | MessageLevel = MessageLevel.WARNING, **kwargs: Unpack[LogMessageKwargs]) -> None:
     """Log for security-related purposes."""
     log_message(message, level=level, category=MessageCategory.SECURITY, **kwargs)
 
 
-def log_performance(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs) -> None:
+def log_performance(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]) -> None:
     """Log for performance-related purposes."""
     log_message(message, level=level, category=MessageCategory.PERFORMANCE, **kwargs)
 
 
-def log_binary_processing(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs) -> None:
+def log_binary_processing(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]) -> None:
     """Log for binary processing purposes."""
     log_message(message, level=level, category=MessageCategory.BINARY_PROCESSING, **kwargs)
 
 
 # Legacy compatibility aliases
-def log_msg(*args, **kwargs) -> None:
+def log_msg(*args: Any, **kwargs: Any) -> None:
     """Legacy alias for log_message."""
     log_message(*args, **kwargs)
 
 
-def message_log(*args, **kwargs) -> None:
+def message_log(*args: Any, **kwargs: Any) -> None:
     """Legacy alias for log_message."""
     log_message(*args, **kwargs)

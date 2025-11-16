@@ -75,5 +75,5 @@ def is_handler_available(handler_name):
     return handler_name in _handlers
 
 
-_handlers_list: list[str] = [str(name) for name in _handlers]
-__all__: list[str] = ["get_available_handlers", "is_handler_available"] + _handlers_list  # noqa: RUF005
+_handlers_list = [str(name) for name in _handlers]
+__all__ = ["get_available_handlers", "is_handler_available", *_handlers_list]

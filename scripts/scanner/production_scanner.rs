@@ -227,6 +227,21 @@ static RE_CALLBACK_SETTER: Lazy<Regex> =
 static RE_CLEAR_RESET: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"^(clear_.*|reset_.*)$").unwrap());
 
+static RE_INCOMPLETE_TEXT: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?i)(not\s+(yet\s+)?implemented|todo:\s*implement|coming\s+soon)").unwrap());
+
+static RE_UNCONDITIONAL_TRUE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)^\s*return\s+True\s*$").unwrap());
+
+static RE_STATIC_FLOAT_DATA: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\[\s*0\.\d+\s*,\s*0\.\d+").unwrap());
+
+static RE_TEMPLATE_ADDRESS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"0x00[4-7][0-9A-Fa-f]{5}").unwrap());
+
+static RE_ZERO_BYTES: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\\x00\\x00\\x00\\x00").unwrap());
+
 struct Cli {
     root_path: String,
     format: String,
@@ -2067,6 +2082,130 @@ fn is_prompt_builder_pattern(func: &FunctionInfo) -> bool {
     is_prompt_function && has_prompt_content && uses_fstring && no_code_generation
 }
 
+fn is_factory_pattern(func: &FunctionInfo) -> bool {
+    let body_lower = func.body.to_lowercase();
+    let name_lower = func.name.to_lowercase();
+
+    let is_factory_name = name_lower.starts_with("create_")
+        || name_lower.starts_with("init_")
+        || name_lower.starts_with("make_")
+        || name_lower.starts_with("build_")
+        || name_lower.starts_with("get_") && (name_lower.contains("instance") || name_lower.contains("_analyzer") || name_lower.contains("_engine"));
+
+    let returns_new_instance = body_lower.contains("return");
+
+    let line_count = func.body.lines().filter(|l| !l.trim().is_empty() && !l.trim().starts_with("#") && !l.trim().starts_with("\"\"\"") && !l.trim().starts_with("'''")).count();
+    let is_short = line_count <= 10;
+
+    let has_class_instantiation = body_lower.contains("(") && body_lower.contains(")");
+
+    let result = is_factory_name && returns_new_instance && has_class_instantiation && is_short;
+
+    if name_lower.starts_with("create") {
+        eprintln!("    FACTORY CHECK '{}': is_factory_name={}, returns={}, has_class={}, is_short={} (lines={}), RESULT={}",
+            func.name, is_factory_name, returns_new_instance, has_class_instantiation, is_short, line_count, result);
+    }
+
+    result
+}
+
+fn is_enhanced_code_generator(func: &FunctionInfo) -> bool {
+    let body = &func.body;
+
+    let has_multiline_string = body.contains("return \"\"\"")
+        || body.contains("return '''")
+        || body.contains("return f\"\"\"")
+        || body.contains("return f'''")
+        || body.contains("return r\"\"\"")
+        || body.contains("return r'''");
+
+    if !has_multiline_string {
+        return false;
+    }
+
+    let body_lower = body.to_lowercase();
+
+    let has_code_keywords = body_lower.contains("import ")
+        || body_lower.contains("def ")
+        || body_lower.contains("function ")
+        || body_lower.contains("class ")
+        || body_lower.contains("const ")
+        || body_lower.contains("var ")
+        || body_lower.contains("let ")
+        || body_lower.contains("frida.")
+        || body_lower.contains("process.")
+        || body_lower.contains("interceptor.")
+        || body_lower.contains("console.log")
+        || body_lower.contains("#include")
+        || body_lower.contains("malloc")
+        || body_lower.contains("printf");
+
+    has_multiline_string && has_code_keywords
+}
+
+fn is_production_implementation(func: &FunctionInfo) -> bool {
+    let body = &func.body;
+    let body_lower = body.to_lowercase();
+
+    let has_actual_logic = body_lower.contains("for ")
+        || body_lower.contains("while ")
+        || body_lower.contains("if ")
+        || body_lower.contains("elif ")
+        || body_lower.contains("else:");
+
+    let has_external_calls = body_lower.matches('.').count() >= 3;
+
+    let has_error_handling = body_lower.contains("try:")
+        || body_lower.contains("except ")
+        || body_lower.contains("catch ")
+        || body_lower.contains("finally")
+        || body_lower.contains("raise ")
+        || body_lower.contains("throw ");
+
+    let line_count = body.lines().filter(|l| !l.trim().is_empty() && !l.trim().starts_with("#") && !l.trim().starts_with("\"\"\"") && !l.trim().starts_with("'''")).count();
+    let has_reasonable_length = line_count >= 8;
+
+    let has_multiple_operations = body_lower.matches('=').count() >= 3
+        || body_lower.matches(".append").count() >= 1
+        || body_lower.matches(".add(").count() >= 1
+        || body_lower.matches(".extend").count() >= 1
+        || body_lower.matches(".update(").count() >= 1
+        || body_lower.matches(".insert(").count() >= 1;
+
+    let has_data_structures = body_lower.contains("[]") || body_lower.contains("{}") || body_lower.contains("dict(") || body_lower.contains("list(") || body_lower.contains("set(");
+
+    (has_actual_logic && has_external_calls)
+        || (has_error_handling && has_reasonable_length)
+        || (has_multiple_operations && has_data_structures && line_count >= 5)
+}
+
+fn is_enhanced_binary_analyzer(func: &FunctionInfo) -> bool {
+    let body_lower = func.body.to_lowercase();
+
+    let uses_binary_libs = body_lower.contains("import pefile")
+        || body_lower.contains("import magic")
+        || body_lower.contains("import lief")
+        || body_lower.contains("pefile.pe(")
+        || body_lower.contains("magic.from_file(");
+
+    let uses_regex_analysis = (body_lower.contains("import re") || body_lower.contains("re."))
+        && (body_lower.contains("search(") || body_lower.contains("findall(") || body_lower.contains("match("));
+
+    let analyzes_traces = body_lower.contains("trace")
+        && (body_lower.contains("for ") || body_lower.contains("enumerate("))
+        && body_lower.contains("instruction");
+
+    let analyzes_patterns = body_lower.contains("pattern")
+        && (body_lower.contains("[") || body_lower.contains("{"))
+        && (body_lower.contains("in ") || body_lower.contains("for "));
+
+    let searches_binary_data = body_lower.contains("data.find(")
+        || body_lower.contains("binary_data")
+        || (body_lower.contains(".read()") && body_lower.contains("rb"));
+
+    uses_binary_libs || uses_regex_analysis || analyzes_traces || analyzes_patterns || searches_binary_data
+}
+
 /// Detects if a function is a delegator pattern that routes/dispatches to other functions.
 ///
 /// Delegator functions are thin wrappers that primarily call other functions without significant
@@ -2253,31 +2392,6 @@ fn is_wrapper_pattern(func: &FunctionInfo) -> bool {
 ///
 /// # Returns
 /// * `bool` - True if the function is a factory pattern, false otherwise
-fn is_factory_pattern(func: &FunctionInfo) -> bool {
-    let name_lower = func.name.to_lowercase();
-    let body_lower = func.body.to_lowercase();
-
-    let has_factory_name = name_lower.starts_with("create_") ||
-                         name_lower.starts_with("make_") ||
-                         name_lower.starts_with("build_") ||
-                         name_lower.contains("factory") ||
-                         name_lower.starts_with("get_") && name_lower.contains("instance");
-
-    if !has_factory_name {
-        return false;
-    }
-
-    let has_object_creation = body_lower.contains("()") &&
-                            (body_lower.contains("return") || body_lower.contains("="));
-
-    let has_factory_logic = body_lower.contains("{") ||
-                          (body_lower.contains("if") && body_lower.contains("return"));
-
-    let loc = func.actual_loc.unwrap_or_else(|| func.body.lines().filter(|l| !l.trim().is_empty()).count());
-
-    has_object_creation && has_factory_logic && loc <= 20
-}
-
 /// Detects if a function implements backup/restore capability for file operations.
 ///
 /// Identifies functions that create backup copies of files before modification, which is a
@@ -2382,6 +2496,11 @@ fn should_exclude_function(func: &FunctionInfo, file_context: &FileContext) -> b
         return true;
     }
 
+    if is_factory_pattern(func) {
+        eprintln!("  EXCLUDED: factory pattern");
+        return true;
+    }
+
     if !is_domain_specific && is_delegator_pattern(func) {
         eprintln!("  EXCLUDED: delegator pattern");
         return true;
@@ -2392,23 +2511,18 @@ fn should_exclude_function(func: &FunctionInfo, file_context: &FileContext) -> b
         return true;
     }
 
-    if is_event_handler(func) {
+    if !is_domain_specific && is_event_handler(func) {
         eprintln!("  EXCLUDED: event handler");
         return true;
     }
 
-    if is_config_loader(func) {
+    if !is_domain_specific && is_config_loader(func) {
         eprintln!("  EXCLUDED: config loader");
         return true;
     }
 
     if !is_domain_specific && is_wrapper_pattern(func) {
         eprintln!("  EXCLUDED: wrapper pattern");
-        return true;
-    }
-
-    if !is_domain_specific && is_factory_pattern(func) {
-        eprintln!("  EXCLUDED: factory pattern");
         return true;
     }
 
@@ -3759,24 +3873,6 @@ fn detect_domain_specific_issues(
 ) -> Vec<(String, i32)> {
     eprintln!("DEBUG detect_domain_specific: checking function '{}'", func.name);
 
-    let is_code_gen = is_code_generator_pattern(func);
-    let is_orch = is_orchestration_pattern(func);
-    let is_deleg = is_legitimate_delegation(func);
-    let is_llm = is_llm_delegation_pattern(func);
-    let is_cli_wrapper = is_cli_wrapper_pattern(func);
-    let is_binary_analyzer = is_binary_analyzer_pattern(func);
-    let is_getter_setter = is_getter_setter_pattern(func);
-    let is_knowledge_base = is_knowledge_base_pattern(func);
-    let is_prompt_builder = is_prompt_builder_pattern(func);
-
-    eprintln!("  Patterns: code_gen={}, orch={}, deleg={}, llm={}, cli={}, bin_analyzer={}, getter={}, kb={}, prompt={}",
-        is_code_gen, is_orch, is_deleg, is_llm, is_cli_wrapper, is_binary_analyzer, is_getter_setter, is_knowledge_base, is_prompt_builder);
-
-    if is_code_gen || is_orch || is_deleg || is_llm || is_cli_wrapper || is_binary_analyzer || is_getter_setter || is_knowledge_base || is_prompt_builder {
-        eprintln!("  SKIPPED due to pattern match");
-        return Vec::new();
-    }
-
     let mut issues = Vec::new();
     let name_lower = func.name.to_lowercase();
 
@@ -3803,12 +3899,84 @@ fn detect_domain_specific_issues(
         return issues;
     }
 
+    let is_code_gen = is_code_generator_pattern(func);
+    let is_orch = is_orchestration_pattern(func);
+    let is_deleg = is_legitimate_delegation(func);
+    let is_llm = is_llm_delegation_pattern(func);
+    let is_cli_wrapper = is_cli_wrapper_pattern(func);
+    let is_binary_analyzer = is_binary_analyzer_pattern(func);
+    let is_getter_setter = is_getter_setter_pattern(func);
+    let is_knowledge_base = is_knowledge_base_pattern(func);
+    let is_prompt_builder = is_prompt_builder_pattern(func);
+    let is_factory = is_factory_pattern(func);
+    let is_enhanced_codegen = is_enhanced_code_generator(func);
+    let is_production = is_production_implementation(func);
+    let is_enhanced_analyzer = is_enhanced_binary_analyzer(func);
+
+    eprintln!("  Patterns: code_gen={}, orch={}, deleg={}, llm={}, cli={}, bin_analyzer={}, getter={}, kb={}, prompt={}, factory={}, enh_codegen={}, production={}, enh_analyzer={}",
+        is_code_gen, is_orch, is_deleg, is_llm, is_cli_wrapper, is_binary_analyzer, is_getter_setter, is_knowledge_base, is_prompt_builder, is_factory, is_enhanced_codegen, is_production, is_enhanced_analyzer);
+
+    if is_code_gen || is_orch || is_deleg || is_llm || is_cli_wrapper || is_binary_analyzer || is_getter_setter || is_knowledge_base || is_prompt_builder || is_factory || is_enhanced_codegen || is_production || is_enhanced_analyzer {
+        eprintln!("  Domain function matched pattern - still analyzing with Phase 1 regex");
+    }
+
     let actual_loc = func.actual_loc.unwrap_or(0);
     eprintln!("  actual_loc={}", actual_loc);
     let has_loops = func.has_loops.unwrap_or(false);
     let has_conditionals = func.has_conditionals.unwrap_or(false);
     let has_local_vars = func.local_vars.as_ref().map_or(false, |v| !v.is_empty());
     let body_lower = func.body.to_lowercase();
+
+    if RE_INCOMPLETE_TEXT.is_match(&func.body) {
+        eprintln!("DEBUG INCOMPLETE_TEXT matched for '{}'", func.name);
+        issues.push((
+            format!("Function '{}' contains explicit incomplete implementation marker", func.name),
+            70,
+        ));
+        return issues;
+    }
+
+    if name_lower.contains("validat") || name_lower.contains("verify") || name_lower.contains("check") {
+        eprintln!("DEBUG VALIDATOR CHECK for '{}': has_conditionals={}, RE_UNCONDITIONAL_TRUE matches={}, actual_loc={}",
+            func.name, has_conditionals, RE_UNCONDITIONAL_TRUE.is_match(&func.body), actual_loc);
+        eprintln!("DEBUG VALIDATOR BODY PREVIEW: {}", func.body.lines().take(3).collect::<Vec<_>>().join(" | "));
+        if !has_conditionals && RE_UNCONDITIONAL_TRUE.is_match(&func.body) {
+            eprintln!("DEBUG PHASE 1 PATTERN MATCHED!");
+            issues.push((
+                format!("Validator '{}' always returns True without any conditional logic", func.name),
+                75,
+            ));
+            return issues;
+        }
+    }
+
+    if (name_lower.contains("analyz") || name_lower.contains("detect") || name_lower.contains("extract"))
+        && actual_loc <= 15
+        && RE_STATIC_FLOAT_DATA.is_match(&func.body)
+        && !body_lower.contains("open(")
+        && !body_lower.contains(".read")
+        && !body_lower.contains("pefile")
+        && !body_lower.contains("r2pipe") {
+        issues.push((
+            format!("Analyzer '{}' returns static float arrays without actual file analysis", func.name),
+            70,
+        ));
+        return issues;
+    }
+
+    if name_lower.contains("patch") || name_lower.contains("hook") || name_lower.contains("detour") {
+        let clean_addr_count = RE_TEMPLATE_ADDRESS.find_iter(&func.body).count();
+        let has_zero_bytes = RE_ZERO_BYTES.is_match(&func.body);
+        let has_analysis = body_lower.contains("r2") || body_lower.contains("binary_data") || body_lower.contains("pe.");
+
+        if (clean_addr_count >= 3 || has_zero_bytes) && !has_analysis {
+            issues.push((
+                format!("Patch/hook function '{}' contains template addresses without binary analysis", func.name),
+                65,
+            ));
+            return issues;
+        }
+    }
 
     if actual_loc <= 1 {
         issues.push((
@@ -5218,6 +5386,8 @@ fn analyze_file(path: &Path, content: &str, lang: LanguageType) -> Vec<Issue> {
         }
         eprintln!("DEBUG analyze_file: function '{}' passed exclusion checks", func.name);
 
+        let is_domain_licensing_func = is_licensing_crack_function(&func.name);
+
         let is_code_gen = is_code_generator_pattern(func);
         let is_orch = is_orchestration_pattern(func);
         let is_deleg = is_legitimate_delegation(func);
@@ -5227,8 +5397,12 @@ fn analyze_file(path: &Path, content: &str, lang: LanguageType) -> Vec<Issue> {
         let is_getter_setter = is_getter_setter_pattern(func);
         let is_knowledge_base = is_knowledge_base_pattern(func);
         let is_prompt_builder = is_prompt_builder_pattern(func);
+        let is_factory = is_factory_pattern(func);
+        let is_enhanced_codegen = is_enhanced_code_generator(func);
+        let is_production = is_production_implementation(func);
+        let is_enhanced_analyzer = is_enhanced_binary_analyzer(func);
 
-        if is_code_gen || is_orch || is_deleg || is_llm || is_cli_wrapper || is_binary_analyzer || is_getter_setter || is_knowledge_base || is_prompt_builder {
+        if !is_domain_licensing_func && (is_code_gen || is_orch || is_deleg || is_llm || is_cli_wrapper || is_binary_analyzer || is_getter_setter || is_knowledge_base || is_prompt_builder || is_factory || is_enhanced_codegen || is_production || is_enhanced_analyzer) {
             eprintln!("DEBUG analyze_file: function '{}' matched architectural pattern - skipping all checks", func.name);
             continue;
         }
@@ -5262,40 +5436,45 @@ fn analyze_file(path: &Path, content: &str, lang: LanguageType) -> Vec<Issue> {
 
         match lang {
             LanguageType::Python => {
-                for (desc, points) in detect_python_specific_issues(func, &file_context) {
-                    evidence.push(Evidence {
-                        description: desc,
-                        points,
-                    });
-                    score += points;
-                }
-                for (desc, points) in detect_semantic_issues(func, &file_context) {
-                    evidence.push(Evidence {
-                        description: desc,
-                        points,
-                    });
-                    score += points;
-                }
-                for (desc, points) in detect_domain_specific_issues(func, &file_context) {
-                    evidence.push(Evidence {
-                        description: desc,
-                        points,
-                    });
-                    score += points;
-                }
-                for (desc, points) in detect_naive_implementations(func) {
-                    evidence.push(Evidence {
-                        description: desc,
-                        points,
-                    });
-                    score += points;
-                }
-                for (desc, points) in detect_import_usage_issues(func, &file_context) {
-                    evidence.push(Evidence {
-                        description: desc,
-                        points,
-                    });
-                    score += points;
+                let domain_issues = detect_domain_specific_issues(func, &file_context);
+                if !domain_issues.is_empty() {
+                    eprintln!("DEBUG: Phase 1 regex matched - using ONLY Phase 1 results");
+                    for (desc, points) in domain_issues {
+                        evidence.push(Evidence {
+                            description: desc,
+                            points,
+                        });
+                        score += points;
+                    }
+                } else {
+                    for (desc, points) in detect_python_specific_issues(func, &file_context) {
+                        evidence.push(Evidence {
+                            description: desc,
+                            points,
+                        });
+                        score += points;
+                    }
+                    for (desc, points) in detect_semantic_issues(func, &file_context) {
+                        evidence.push(Evidence {
+                            description: desc,
+                            points,
+                        });
+                        score += points;
+                    }
+                    for (desc, points) in detect_naive_implementations(func) {
+                        evidence.push(Evidence {
+                            description: desc,
+                            points,
+                        });
+                        score += points;
+                    }
+                    for (desc, points) in detect_import_usage_issues(func, &file_context) {
+                        evidence.push(Evidence {
+                            description: desc,
+                            points,
+                        });
+                        score += points;
+                    }
                 }
             }
             LanguageType::Rust => {

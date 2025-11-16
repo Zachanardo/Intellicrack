@@ -62,7 +62,7 @@ class HexViewerDialog(QDialog):
     for navigation, searching, and display options.
     """
 
-    def __init__(self, parent=None, file_path: str | None = None, read_only: bool = True) -> None:
+    def __init__(self, parent: QWidget | None = None, file_path: str | None = None, read_only: bool = True) -> None:
         """Initialize the hex viewer dialog.
 
         Args:
@@ -531,7 +531,7 @@ class HexViewerDialog(QDialog):
 
         """
 
-        def sync_vertical(value) -> None:
+        def sync_vertical(value: int) -> None:
             if not self.sync_scrolling_action.isChecked():
                 return
             for other in self.viewers:
@@ -540,7 +540,7 @@ class HexViewerDialog(QDialog):
                     other.vertical_scroll_bar.setValue(value)
                     other.vertical_scroll_bar.blockSignals(False)
 
-        def sync_horizontal(value) -> None:
+        def sync_horizontal(value: int) -> None:
             if not self.sync_scrolling_action.isChecked():
                 return
             for other in self.viewers:
@@ -852,11 +852,11 @@ class HexViewerDialog(QDialog):
         worker = ComparisonWorker(comparer, file1, file2)
 
         # Connect signals
-        def update_progress(current, total) -> None:
+        def update_progress(current: int, total: int) -> None:
             if total > 0:
                 progress.setValue(int(current * 100 / total))
 
-        def on_finished(differences) -> None:
+        def on_finished(differences: list[object]) -> None:
             progress.close()
 
             if mode == "visual":
@@ -866,7 +866,7 @@ class HexViewerDialog(QDialog):
             else:  # structural
                 self.show_structural_comparison(differences, settings)
 
-        def on_error(error_msg) -> None:
+        def on_error(error_msg: str) -> None:
             progress.close()
             QMessageBox.critical(self, "Comparison Error", f"Error comparing files: {error_msg}")
 
@@ -1304,7 +1304,7 @@ class HexViewerDialog(QDialog):
         except ValueError as e:
             self.logger.error("Value error in hex_dialog: %s", e)
 
-    def show_bookmark_context_menu(self, position) -> None:
+    def show_bookmark_context_menu(self, position: object) -> None:
         """Show context menu for bookmarks list.
 
         Args:
@@ -1325,7 +1325,7 @@ class HexViewerDialog(QDialog):
 
         menu.exec_(self.bookmarks_list.mapToGlobal(position))
 
-    def show_search_context_menu(self, position) -> None:
+    def show_search_context_menu(self, position: object) -> None:
         """Show context menu for search results list.
 
         Args:
@@ -1346,7 +1346,7 @@ class HexViewerDialog(QDialog):
 
         menu.exec_(self.search_list.mapToGlobal(position))
 
-    def jump_to_bookmark(self, item) -> None:
+    def jump_to_bookmark(self, item: QListWidgetItem) -> None:
         """Jump to the location of a bookmark.
 
         Args:
@@ -1359,7 +1359,7 @@ class HexViewerDialog(QDialog):
         if highlight:
             self.hex_viewer.select_range(highlight.start, highlight.end)
 
-    def remove_bookmark(self, item) -> None:
+    def remove_bookmark(self, item: QListWidgetItem) -> None:
         """Remove a bookmark.
 
         Args:
@@ -1375,7 +1375,7 @@ class HexViewerDialog(QDialog):
             # Update the view
             self.hex_viewer.viewport().update()
 
-    def jump_to_search_result(self, item) -> None:
+    def jump_to_search_result(self, item: QListWidgetItem) -> None:
         """Jump to the location of a search result.
 
         Args:

@@ -18,12 +18,17 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 from collections import defaultdict
+from collections.abc import Callable
 from typing import Any
 
 from intellicrack.utils.logger import logger
 
 
-def analyze_network_apis(pe_binary, network_apis, logger_func=None):
+def analyze_network_apis(
+    pe_binary: object,
+    network_apis: dict[str, list[str]],
+    logger_func: Callable[[str], None] | None = None,
+) -> dict[str, list[str]]:
     """Analyze network APIs in a PE binary.
 
     Args:
@@ -81,7 +86,7 @@ def process_network_api_results(detected_apis: dict[str, list[str]]) -> dict[str
     return results
 
 
-def get_scapy_layers(scapy_module) -> tuple | None:
+def get_scapy_layers(scapy_module: object) -> tuple[object, object] | None:
     """Get IP and TCP layers from scapy module with proper error handling.
 
     Args:
@@ -107,7 +112,11 @@ def get_scapy_layers(scapy_module) -> tuple | None:
             return None
 
 
-def detect_network_apis(pe_binary, network_apis, logger_func=None):
+def detect_network_apis(
+    pe_binary: object,
+    network_apis: dict[str, list[str]],
+    logger_func: Callable[[str], None] | None = None,
+) -> dict[str, list[str]]:
     """Alias for analyze_network_apis for backward compatibility.
 
     Args:
@@ -122,7 +131,7 @@ def detect_network_apis(pe_binary, network_apis, logger_func=None):
     return analyze_network_apis(pe_binary, network_apis, logger_func)
 
 
-def get_network_api_categories():
+def get_network_api_categories() -> dict[str, list[str]]:
     """Get standard network API categories.
 
     Returns:
@@ -137,7 +146,7 @@ def get_network_api_categories():
     }
 
 
-def summarize_network_capabilities(detected_apis):
+def summarize_network_capabilities(detected_apis: dict[str, list[str]]) -> dict[str, object]:
     """Summarize network capabilities based on detected APIs.
 
     Args:

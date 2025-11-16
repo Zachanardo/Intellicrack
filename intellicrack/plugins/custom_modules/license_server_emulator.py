@@ -38,7 +38,6 @@ from ctypes import wintypes
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
 
 # Type alias to replace Any with object
 Any = object
@@ -3385,6 +3384,8 @@ class RuntimeKeyExtractor:
         if not process_handle:
             return hooked_data
 
+        return hooked_data
+
     def _detect_memory_protection(self, process_handle: int) -> str | None:
         """Detect memory protection scheme (VMProtect, Themida, etc.)."""
         protection_signatures = {'vmprotect': [b'VMProtect', b'.vmp0', b'.vmp1', b'.vmp2'], 'themida': [b'Themida', b'WinLicense', b'.themida', b'.wlprot'], 'obsidium': [b'Obsidium', b'.obsid'], 'asprotect': [b'ASProtect', b'.aspr'], 'enigma': [b'Enigma', b'.enigma1']}
@@ -4022,6 +4023,8 @@ class RuntimeKeyExtractor:
                 kernel32.CloseHandle(process_handle)
         return hooked_data
 
+        return hooked_data
+
     def _detect_memory_protection(self, process_handle: int) -> str | None:
         """Detect memory protection scheme (VMProtect, Themida, etc.)."""
         protection_signatures = {'vmprotect': [b'VMProtect', b'.vmp0', b'.vmp1', b'.vmp2'], 'themida': [b'Themida', b'WinLicense', b'.themida', b'.wlprot'], 'obsidium': [b'Obsidium', b'.obsid'], 'asprotect': [b'ASProtect', b'.aspr'], 'enigma': [b'Enigma', b'.enigma1']}
@@ -4616,6 +4619,8 @@ class RuntimeKeyExtractor:
         except Exception as e:
             import logging
             logging.warning('Error extracting system calls from hook data:', extra={'e': e})
+        return hooked_data
+
         return hooked_data
 
     def _detect_memory_protection(self, process_handle: int) -> str | None:

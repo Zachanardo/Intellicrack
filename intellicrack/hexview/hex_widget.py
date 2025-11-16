@@ -124,7 +124,7 @@ class HexViewerWidget(QAbstractScrollArea):
     #: Signal emitted when view mode changes (type: ViewMode)
     view_mode_changed = pyqtSignal(ViewMode)
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: object = None) -> None:
         """Initialize the hex viewer widget.
 
         Sets up the hexadecimal file viewer with support for multiple view modes,
@@ -472,8 +472,16 @@ class HexViewerWidget(QAbstractScrollArea):
         # This is handled by viewportPaintEvent
         super().paintEvent(event)
 
-    def viewportEvent(self, event):
-        """Handle viewport events."""
+    def viewportEvent(self, event: object) -> bool:
+        """Handle viewport events.
+
+        Args:
+            event: Viewport event to process.
+
+        Returns:
+            True if event was handled, False otherwise.
+
+        """
         if event.type() == event.Paint:
             self.viewportPaintEvent(QPaintEvent(event.region().boundingRect()))
             return True
@@ -1331,12 +1339,15 @@ class HexViewerWidget(QAbstractScrollArea):
         # No match found
         return None
 
-    def edit_byte(self, offset: int, value: int):
+    def edit_byte(self, offset: int, value: int) -> bool:
         """Edit a single byte at the specified offset.
 
         Args:
             offset: Offset of the byte to edit
             value: New byte value (0-255)
+
+        Returns:
+            True if edit was successful, False otherwise.
 
         """
         if not self.file_handler or self.file_handler.read_only:
@@ -1365,11 +1376,14 @@ class HexViewerWidget(QAbstractScrollArea):
 
         return result
 
-    def edit_selection(self, data: bytes):
+    def edit_selection(self, data: bytes) -> bool:
         """Replace the selected data with new data.
 
         Args:
             data: New data to write
+
+        Returns:
+            True if edit was successful, False otherwise.
 
         """
         if not self.file_handler or self.file_handler.read_only or self.selection_start < 0 or self.selection_end <= self.selection_start:
@@ -1395,8 +1409,13 @@ class HexViewerWidget(QAbstractScrollArea):
 
         return result
 
-    def apply_edits(self):
-        """Apply all pending edits to the file."""
+    def apply_edits(self) -> bool:
+        """Apply all pending edits to the file.
+
+        Returns:
+            True if edits were applied successfully, False otherwise.
+
+        """
         if not self.file_handler or self.file_handler.read_only:
             return False
 
@@ -2003,8 +2022,13 @@ class HexViewerWidget(QAbstractScrollArea):
         super().resizeEvent(event)
         self.update_scrollbars()
 
-    def keyPressEvent(self, event: QKeyEvent):
-        """Handle key press events."""
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        """Handle key press events.
+
+        Args:
+            event: Key press event to handle.
+
+        """
         if not self.file_handler:
             return super().keyPressEvent(event)
 
@@ -2124,8 +2148,13 @@ class HexViewerWidget(QAbstractScrollArea):
             else:
                 self.select_range(file_size - 1, file_size)
 
-    def mousePressEvent(self, event: QMouseEvent):
-        """Handle mouse press events."""
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        """Handle mouse press events.
+
+        Args:
+            event: Mouse press event to handle.
+
+        """
         if not self.file_handler or event.button() != Qt.LeftButton:
             return super().mousePressEvent(event)
 
@@ -2145,8 +2174,13 @@ class HexViewerWidget(QAbstractScrollArea):
         event.accept()
         return None
 
-    def mouseMoveEvent(self, event: QMouseEvent):
-        """Handle mouse move events."""
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        """Handle mouse move events.
+
+        Args:
+            event: Mouse move event to handle.
+
+        """
         if not self.file_handler or not (event.buttons() & Qt.LeftButton):
             return super().mouseMoveEvent(event)
 
@@ -2263,20 +2297,20 @@ class HexViewerWidget(QAbstractScrollArea):
 
         return -1
 
-    def get_performance_widget(self):
+    def get_performance_widget(self) -> object | None:
         """Get the performance monitoring widget.
 
         Returns:
-            Performance monitoring widget or None if not available
+            Performance monitoring widget or None if not available.
 
         """
         return self.performance_monitor.create_widget(self)
 
-    def get_performance_stats(self):
+    def get_performance_stats(self) -> dict[str, object]:
         """Get current performance statistics.
 
         Returns:
-            Dictionary with performance statistics
+            Dictionary with performance statistics.
 
         """
         return self.performance_monitor.get_stats_summary()

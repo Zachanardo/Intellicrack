@@ -25,9 +25,23 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Protocol
 
 from intellicrack.utils.logger import logger
+
+
+class R2Session(Protocol):
+    """Protocol for r2pipe session interface.
+
+    Describes the duck-type interface for r2pipe.open() return objects used in
+    binary analysis and license protection cracking operations.
+    """
+
+    def cmd(self, command: str) -> str:
+        """Execute radare2 command and return string result."""
+
+    def cmdj(self, command: str) -> dict[str, Any] | list[Any] | None:
+        """Execute radare2 command and return JSON result."""
 
 # Optional import for file monitoring capabilities
 try:
@@ -43,12 +57,17 @@ except ImportError:
         """Fallback FileSystemEventHandler when watchdog is not available."""
 
         def __init__(self) -> None:
-            self.event_queue = []
-            self.last_modified = {}
-            self.debounce_time = 0.5  # 500ms debounce
+            self.event_queue: list[dict[str, Any]] = []
+            self.last_modified: dict[str, float] = {}
+            self.debounce_time: float = 0.5  # 500ms debounce
 
-        def on_modified(self, event) -> None:
-            """Handle file modification events."""
+        def on_modified(self, event: object) -> None:
+            """Handle file modification events.
+
+            Args:
+                event: File system event object with src_path attribute.
+
+            """
             import time
 
             current_time = time.time()
@@ -70,8 +89,13 @@ except ImportError:
                 },
             )
 
-        def on_created(self, event) -> None:
-            """Handle file creation events."""
+        def on_created(self, event: object) -> None:
+            """Handle file creation events.
+
+            Args:
+                event: File system event object with src_path attribute.
+
+            """
             import time
 
             # Queue creation event
@@ -84,11 +108,21 @@ except ImportError:
                 },
             )
 
-        def on_deleted(self, event) -> None:
-            """Handle file deletion events."""
+        def on_deleted(self, event: object) -> None:
+            """Handle file deletion events.
 
-        def on_moved(self, event) -> None:
-            """Handle file move events."""
+            Args:
+                event: File system event object with src_path attribute.
+
+            """
+
+        def on_moved(self, event: object) -> None:
+            """Handle file move events.
+
+            Args:
+                event: File system event object with src_path attribute.
+
+            """
 
 
 from ...utils.logger import get_logger
@@ -181,17 +215,28 @@ class BinaryFileWatcher(FileSystemEventHandler):
     """File system watcher for binary file changes."""
 
     def __init__(self, callback: Callable, watched_files: set[str]) -> None:
-        """Initialize the binary file watcher with callback and file monitoring."""
-        self.callback = callback
-        self.watched_files = watched_files
+        """Initialize the binary file watcher with callback and file monitoring.
+
+        Args:
+            callback: Callable to invoke when file changes are detected.
+            watched_files: Set of file paths to monitor for changes.
+
+        """
+        self.callback: Callable = callback
+        self.watched_files: set[str] = watched_files
         self.logger = logger
 
         # Debouncing to prevent multiple events for same change
-        self.last_modified = {}
-        self.debounce_delay = 1.0  # 1 second  # 1 second
+        self.last_modified: dict[str, float] = {}
+        self.debounce_delay: float = 1.0  # 1 second
 
-    def on_modified(self, event) -> None:
-        """Handle file modification events."""
+    def on_modified(self, event: object) -> None:
+        """Handle file modification events.
+
+        Args:
+            event: File system event object with src_path and is_directory attributes.
+
+        """
         if event.is_directory:
             return
 
@@ -844,8 +889,18 @@ class R2RealtimeAnalyzer:
 
         return unique_components
 
-    def _run_analysis_component(self, r2, component: str, binary_path: str) -> dict[str, Any] | None:
-        """Run specific analysis component with context awareness."""
+    def _run_analysis_component(self, r2: R2Session, component: str, binary_path: str) -> dict[str, Any] | None:
+        """Run specific analysis component with context awareness.
+
+        Args:
+            r2: R2pipe session object for binary analysis.
+            component: Name of the analysis component to execute.
+            binary_path: Path to the binary being analyzed.
+
+        Returns:
+            Dictionary containing component analysis results, or None if component fails.
+
+        """
         try:
             # Get binary context information
             file_name = os.path.basename(binary_path).lower()
@@ -1245,15 +1300,15 @@ class R2RealtimeAnalyzer:
             "performance_stats": self.performance_optimizer.get_performance_report(),
         }
 
-    def _perform_enhanced_string_analysis(self, r2, binary_path: str) -> dict[str, Any]:
+    def _perform_enhanced_string_analysis(self, r2: R2Session, binary_path: str) -> dict[str, Any]:
         """Perform enhanced string analysis using Day 5.1 pattern detection algorithms.
 
         Args:
-            r2: R2 session instance
-            binary_path: Path to the binary being analyzed
+            r2: R2pipe session object for binary analysis.
+            binary_path: Path to the binary being analyzed.
 
         Returns:
-            Dictionary containing enhanced string analysis results
+            Dictionary containing enhanced string analysis results with pattern detection.
 
         """
         try:
@@ -1362,15 +1417,15 @@ class R2RealtimeAnalyzer:
                 "enhanced_features": {"available": False},
             }
 
-    def _monitor_dynamic_string_patterns(self, r2, binary_path: str) -> dict[str, Any]:
+    def _monitor_dynamic_string_patterns(self, r2: R2Session, binary_path: str) -> dict[str, Any]:
         """Monitor dynamic string generation patterns during execution.
 
         Args:
-            r2: R2 session instance
-            binary_path: Path to the binary being analyzed
+            r2: R2pipe session object for binary analysis.
+            binary_path: Path to the binary being analyzed.
 
         Returns:
-            Dictionary containing dynamic monitoring results
+            Dictionary containing dynamic monitoring results and memory-based string extraction.
 
         """
         try:
@@ -1421,14 +1476,14 @@ class R2RealtimeAnalyzer:
             self.logger.error(f"Dynamic string monitoring failed: {e}")
             return {"error": str(e), "dynamic_extraction_enabled": False}
 
-    def _monitor_string_api_calls(self, r2) -> dict[str, Any]:
+    def _monitor_string_api_calls(self, r2: R2Session) -> dict[str, Any]:
         """Monitor string-related API calls for dynamic string generation.
 
         Args:
-            r2: R2 session instance
+            r2: R2pipe session object for binary analysis.
 
         Returns:
-            Dictionary containing API call monitoring results
+            Dictionary containing API call monitoring results and potential dynamic string creation.
 
         """
         try:

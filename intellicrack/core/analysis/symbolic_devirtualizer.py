@@ -165,8 +165,18 @@ class GuidedVMExploration(ExplorationTechnique):
         self.max_depth = max_depth
         self.visited_handlers = set()
 
-    def step(self, exploration_mgr, stash="active", **kwargs):
-        """Perform guided exploration step."""
+    def step(self, exploration_mgr: object, stash: str = "active", **kwargs: object) -> object:
+        """Perform guided exploration step.
+
+        Args:
+            exploration_mgr: The exploration manager instance.
+            stash: The stash name to process (default: "active").
+            **kwargs: Additional keyword arguments passed to step method.
+
+        Returns:
+            The updated exploration manager.
+
+        """
         exploration_mgr = exploration_mgr.step(stash=stash, **kwargs)
 
         if stash in exploration_mgr.stashes:
@@ -190,8 +200,18 @@ class PathExplosionMitigation(ExplorationTechnique):
         self.max_total = max_total
         self.total_stepped = 0
 
-    def step(self, exploration_mgr, stash="active", **kwargs):
-        """Perform path explosion mitigation step."""
+    def step(self, exploration_mgr: object, stash: str = "active", **kwargs: object) -> object:
+        """Perform path explosion mitigation step.
+
+        Args:
+            exploration_mgr: The exploration manager instance.
+            stash: The stash name to process (default: "active").
+            **kwargs: Additional keyword arguments passed to step method.
+
+        Returns:
+            The updated exploration manager after mitigation.
+
+        """
         if self.total_stepped >= self.max_total:
             return exploration_mgr
 

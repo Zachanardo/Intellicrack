@@ -67,7 +67,7 @@ class FileTreeWidget(QTreeWidget):
 
     file_selected = pyqtSignal(str)
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the FileTreeWidget with default values."""
         super().__init__(parent)
         self.setHeaderLabel("Project Files")
@@ -176,7 +176,7 @@ class FileTreeWidget(QTreeWidget):
         """Get list of expanded item paths."""
         expanded = []
 
-        def traverse(item) -> None:
+        def traverse(item: QTreeWidgetItem) -> None:
             if item.isExpanded():
                 path = item.data(0, Qt.UserRole)
                 if path:
@@ -193,7 +193,7 @@ class FileTreeWidget(QTreeWidget):
     def restore_expanded_items(self, expanded_paths: list[str]) -> None:
         """Restore expanded state of items."""
 
-        def traverse(item) -> None:
+        def traverse(item: QTreeWidgetItem) -> None:
             path = item.data(0, Qt.UserRole)
             if path in expanded_paths:
                 item.setExpanded(True)
@@ -225,7 +225,7 @@ class CodeEditor(QPlainTextEdit):
     #: Signal emitted when content changes (str: file path)
     content_changed = pyqtSignal(str)
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the CodeEditor with default values."""
         super().__init__(parent)
         self.current_file = None
@@ -321,7 +321,7 @@ class ChatWidget(QWidget):
 
     message_sent = pyqtSignal(str)
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the ChatWidget with default values."""
         super().__init__(parent)
         self.conversation_history = []
@@ -557,7 +557,7 @@ class ChatWidget(QWidget):
 class AICodingAssistantWidget(QWidget):
     """AI Coding Assistant Widget with three-panel layout - extracted from dialog for reuse."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the AICodingAssistantWidget with development environment features."""
         super().__init__(parent)
 
@@ -619,7 +619,7 @@ class AICodingAssistantWidget(QWidget):
         # Status bar
         self.setup_status_bar(layout)
 
-    def setup_menu_bar(self, layout) -> None:
+    def setup_menu_bar(self, layout: QVBoxLayout) -> None:
         """Set up the menu bar."""
         # Simplified menu bar for widget - full implementation when needed
 
@@ -793,7 +793,7 @@ class AICodingAssistantWidget(QWidget):
 
         return panel
 
-    def setup_status_bar(self, layout) -> None:
+    def setup_status_bar(self, layout: QVBoxLayout) -> None:
         """Set up the status bar."""
         # Simplified status bar for widget
 
@@ -1808,7 +1808,7 @@ def validate_license_key(key: str) -> bool:
         pattern = config.get("VALIDATION_PATTERN", r"^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$")
         return bool(re.match(pattern, key))
 
-    def _on_frida_message(self, message, data) -> None:
+    def _on_frida_message(self, message: dict[str, Any], data: bytes | None) -> None:
         """Handle Frida script messages."""
         if message.get("type") == "send":
             payload = message.get("payload", {})
@@ -1838,7 +1838,7 @@ def validate_license_key(key: str) -> bool:
                     self.target_path = target_path
                     self.protection_info = {}
 
-                def analyze_protection(self):
+                def analyze_protection(self) -> dict[str, Any]:
                     """Perform comprehensive license protection analysis."""
                     import re
 
@@ -3703,7 +3703,7 @@ For specific guidance:
 class AICodingAssistantDialog(QDialog):
     """AI Coding Assistant with three-panel layout similar to Claude Code."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the AICodingAssistantDialog as a container for the widget."""
         super().__init__(parent)
         self.setWindowTitle("AI Coding Assistant")
@@ -3761,7 +3761,7 @@ class AICodingAssistantDialog(QDialog):
         # Status bar
         self.setup_status_bar(layout)
 
-    def setup_menu_bar(self, layout) -> None:
+    def setup_menu_bar(self, layout: QVBoxLayout) -> None:
         """Set up the menu bar."""
         menubar = QMenuBar()
 
@@ -3923,7 +3923,7 @@ class AICodingAssistantDialog(QDialog):
 
         return panel
 
-    def setup_status_bar(self, layout) -> None:
+    def setup_status_bar(self, layout: QVBoxLayout) -> None:
         """Set up the status bar."""
         self.status_bar = QStatusBar()
 

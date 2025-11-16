@@ -30,7 +30,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, ParamSpec, TypeVar
 
 from scipy import stats
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
@@ -108,7 +108,7 @@ class AnalysisEvent:
     metadata: dict[str, Any] = field(default_factory=dict)
     error_details: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize analysis event with generated ID if not provided."""
         if not self.event_id:
             self.event_id = self.generate_event_id()
@@ -1387,8 +1387,11 @@ class SuccessRateAnalyzer:
 # Global analyzer instance
 _global_analyzer = None
 
+P = ParamSpec("P")
+R = TypeVar("R")
 
-def get_success_rate_analyzer(db_path: str = None) -> SuccessRateAnalyzer:
+
+def get_success_rate_analyzer(db_path: str | None = None) -> SuccessRateAnalyzer:
     """Get global success rate analyzer instance."""
     global _global_analyzer
 
@@ -1399,11 +1402,11 @@ def get_success_rate_analyzer(db_path: str = None) -> SuccessRateAnalyzer:
 
 
 # Decorator for automatic success tracking
-def track_success(event_type: EventType, protection_category: ProtectionCategory, component: str = None):
+def track_success(event_type: EventType, protection_category: ProtectionCategory, component: str | None = None) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Create decorator for automatic success/failure tracking."""
 
-    def decorator(func):
-        def wrapper(*args, **kwargs):
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             analyzer = get_success_rate_analyzer()
             start_time = time.time()
             func_component = component or func.__name__
@@ -1462,12 +1465,12 @@ if __name__ == "__main__":
     from intellicrack.plugins.custom_modules.hardware_dongle_emulator import HardwareDongleEmulator
 
     # Hook into real component events for live tracking
-    def register_component_hooks():
+    def register_component_hooks() -> dict[str, Callable]:
         """Register success tracking hooks with Intellicrack components."""
 
         # Track protection detection events
         @track_success(EventType.PROTECTION_DETECTION, ProtectionCategory.SERIAL_KEY, "protection_detector")
-        def detect_serial_protection(binary_path):
+        def detect_serial_protection(binary_path: str) -> bool:
             try:
                 detector = ProtectionDetector()
                 result = detector.analyze_binary(binary_path)
@@ -1477,7 +1480,7 @@ if __name__ == "__main__":
 
         # Track bypass attempts
         @track_success(EventType.BYPASS_ATTEMPT, ProtectionCategory.VM_PROTECTION, "bypass_manager")
-        def bypass_vm_protection(target_process):
+        def bypass_vm_protection(target_process: str) -> bool:
             try:
                 manager = BypassManager()
                 result = manager.bypass_protection(target_process, "vm_protection")
@@ -1487,7 +1490,7 @@ if __name__ == "__main__":
 
         # Track hardware emulation
         @track_success(EventType.EMULATION, ProtectionCategory.DONGLE, "dongle_emulator")
-        def emulate_hardware_dongle(dongle_type):
+        def emulate_hardware_dongle(dongle_type: str) -> bool:
             try:
                 emulator = HardwareDongleEmulator()
                 result = emulator.emulate_dongle(dongle_type)

@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import ast
 import json
 import logging
 import struct
@@ -26,6 +27,7 @@ import threading
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
+from types import TracebackType
 from typing import Any, Callable
 
 try:
@@ -762,7 +764,7 @@ class RadareESILEmulator:
         except Exception:
             return False
 
-    def _validate_ast_node(self, node) -> bool:
+    def _validate_ast_node(self, node: ast.AST) -> bool:
         """Validate that the AST node contains only safe operations.
 
         Args:
@@ -772,8 +774,6 @@ class RadareESILEmulator:
             True if node is safe
 
         """
-        import ast
-
         for subnode in ast.walk(node):
             if not isinstance(subnode, (
                 ast.Expression, ast.Compare, ast.BinOp, ast.UnaryOp,
@@ -786,7 +786,7 @@ class RadareESILEmulator:
                 return False
         return True
 
-    def _eval_node(self, node):
+    def _eval_node(self, node: ast.AST) -> int | float | str | bool:
         """Evaluate the parsed AST manually instead of using eval.
 
         Args:
@@ -796,8 +796,6 @@ class RadareESILEmulator:
             Evaluation result
 
         """
-        import ast
-
         if isinstance(node, ast.Expression):
             return self._eval_node(node.body)
         if isinstance(node, ast.Constant):
@@ -818,7 +816,7 @@ class RadareESILEmulator:
             return self._eval_compare(node)
         raise ValueError(f"Unsupported AST node type: {type(node)}")
 
-    def _eval_binop(self, node):
+    def _eval_binop(self, node: ast.BinOp) -> int | float:
         """Evaluate binary operations.
 
         Args:
@@ -828,8 +826,6 @@ class RadareESILEmulator:
             Operation result
 
         """
-        import ast
-
         left = self._eval_node(node.left)
         right = self._eval_node(node.right)
         if isinstance(node.op, ast.Add):
@@ -856,7 +852,7 @@ class RadareESILEmulator:
             return left >> right
         return 0
 
-    def _eval_unaryop(self, node):
+    def _eval_unaryop(self, node: ast.UnaryOp) -> int:
         """Evaluate unary operations.
 
         Args:
@@ -866,8 +862,6 @@ class RadareESILEmulator:
             Operation result
 
         """
-        import ast
-
         operand = self._eval_node(node.operand)
         if isinstance(node.op, ast.UAdd):
             return +operand
@@ -877,7 +871,7 @@ class RadareESILEmulator:
             return ~operand
         return 0
 
-    def _eval_compare(self, node):
+    def _eval_compare(self, node: ast.Compare) -> bool:
         """Evaluate comparison operations.
 
         Args:
@@ -887,8 +881,6 @@ class RadareESILEmulator:
             Comparison result
 
         """
-        import ast
-
         left = self._eval_node(node.left)
         result = True
         for op, comparator in zip(node.ops, node.comparators, strict=False):
@@ -1244,7 +1236,7 @@ class RadareESILEmulator:
 
             logger.info("ESIL emulator cleaned up")
 
-    def __enter__(self):
+    def __enter__(self) -> "RadareESILEmulator":
         """Context manager entry.
 
         Returns:
@@ -1253,7 +1245,12 @@ class RadareESILEmulator:
         """
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Context manager exit.
 
         Args:

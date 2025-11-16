@@ -1,0 +1,2076 @@
+[
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 23,
+      "row": 59
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\__main__.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 59
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 59,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 23,
+      "row": 29
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\file_reading_helper.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 29
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 29,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 31,
+      "row": 40
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\integration_manager.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 40
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 40,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 25,
+      "row": 41
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\integration_manager.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 41
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 41,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 35,
+      "row": 43
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\integration_manager.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 43
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 43,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 38,
+      "row": 37
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\performance_optimization_layer.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 37
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 37,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 56,
+      "row": 38
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\performance_optimization_layer.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 38
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 38,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 54,
+      "row": 39
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\performance_optimization_layer.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 39
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 39,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 54,
+      "row": 35
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\cfg_explorer.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 35
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 35,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 52,
+      "row": 42
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\cfg_explorer.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 42
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 42,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 49,
+      "row": 49
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\cfg_explorer.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 49
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 49,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 46,
+      "row": 56
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\cfg_explorer.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 56
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 56,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 64,
+      "row": 63
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\cfg_explorer.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 63
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 63,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 18,
+      "row": 36
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\commercial_license_analyzer.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 36
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 36,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 39,
+      "row": 38
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\commercial_license_analyzer.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 38
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 38,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 39,
+      "row": 128
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_realtime_analyzer.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 128
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 128,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 71,
+      "row": 129
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_realtime_analyzer.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 129
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 129,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 61,
+      "row": 130
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_realtime_analyzer.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 130
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 130,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 94,
+      "row": 131
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_realtime_analyzer.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 131
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 131,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 15,
+      "row": 8
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_vulnerability_engine.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 8
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 8,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 10,
+      "row": 9
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_vulnerability_engine.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 9
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 9,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 14,
+      "row": 10
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_vulnerability_engine.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 10
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 10,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 23,
+      "row": 11
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_vulnerability_engine.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 11
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 11,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 45,
+      "row": 29
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_vulnerability_engine.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 29
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 29,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 76,
+      "row": 36
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_vulnerability_engine.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 36
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 36,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 71,
+      "row": 51
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_vulnerability_engine.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 51
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 51,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 63,
+      "row": 58
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_vulnerability_engine.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 58
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 58,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 67,
+      "row": 65
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_vulnerability_engine.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 65
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 65,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 54,
+      "row": 72
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_vulnerability_engine.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 72
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 72,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 45,
+      "row": 79
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_vulnerability_engine.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 79
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 79,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 52,
+      "row": 86
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_vulnerability_engine.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 86
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 86,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 46,
+      "row": 93
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_vulnerability_engine.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 93
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 93,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 12,
+      "row": 26
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\network\\protocol_fingerprinter.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 26
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 26,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 15,
+      "row": 27
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\network\\protocol_fingerprinter.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 27
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 27,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 12,
+      "row": 28
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\network\\protocol_fingerprinter.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 28
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 28,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 10,
+      "row": 29
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\network\\protocol_fingerprinter.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 29
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 29,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 10,
+      "row": 30
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\network\\protocol_fingerprinter.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 30
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 30,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 12,
+      "row": 31
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\network\\protocol_fingerprinter.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 31
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 31,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 17,
+      "row": 32
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\network\\protocol_fingerprinter.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 32
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 32,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 32,
+      "row": 33
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\network\\protocol_fingerprinter.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 33
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 33,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 23,
+      "row": 34
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\network\\protocol_fingerprinter.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 34
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 34,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 56,
+      "row": 39
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\network\\protocol_fingerprinter.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 39
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 39,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 11,
+      "row": 1071
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\network\\protocol_fingerprinter.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 1071
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 1071,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 60,
+      "row": 48
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\patching\\memory_patcher.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 48
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 48,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 39,
+      "row": 58
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\patching\\memory_patcher.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 58
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 58,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 2,
+      "row": 31
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\protection_detection\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 26
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 26,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 2,
+      "row": 37
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\protection_detection\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 32
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 32,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 2,
+      "row": 42
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\protection_detection\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 38
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 38,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 56,
+      "row": 28
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\resources\\resource_manager.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 28
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 28,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 39,
+      "row": 30
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\resources\\resource_manager.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 30
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 30,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 62,
+      "row": 172
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\security_enforcement.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 172
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 172,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 15,
+      "row": 34
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\security_utils.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 34
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 34,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 56,
+      "row": 36
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\security_utils.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 36
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 36,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 10,
+      "row": 27
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\torch_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 27
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 27,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 45,
+      "row": 29
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\torch_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 29
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 29,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 56,
+      "row": 102
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\main.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 102
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 102,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 14,
+      "row": 45
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 45
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 45,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 18,
+      "row": 77
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 77
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 77,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 52,
+      "row": 79
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 79
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 79,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 11,
+      "row": 80
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 80
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 80,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 15,
+      "row": 81
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 81
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 81,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 62,
+      "row": 82
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 82
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 82,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 51,
+      "row": 83
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 83
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 83,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 40,
+      "row": 84
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 84
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 84,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 38,
+      "row": 85
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 85
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 85,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 99,
+      "row": 86
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 86
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 86,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 56,
+      "row": 87
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 87
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 87,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 63,
+      "row": 88
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 88
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 88,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 39,
+      "row": 89
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 89
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 89,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 94,
+      "row": 91
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 91
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 91,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 79,
+      "row": 92
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 92
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 92,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 66,
+      "row": 28
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\plugin_base.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 28
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 28,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 38,
+      "row": 35
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\protection\\protection_detector.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 35
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 35,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 56,
+      "row": 42
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\protection\\protection_detector.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 42
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 42,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 2,
+      "row": 53
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\protection\\protection_detector.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 49
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 49,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 2,
+      "row": 63
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\protection\\protection_detector.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 60
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 60,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 87,
+      "row": 49
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 49
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 49,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 2,
+      "row": 52
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 50
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 50,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 91,
+      "row": 53
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 53
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 53,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 73,
+      "row": 54
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 54
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 54,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 84,
+      "row": 55
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 55
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 55,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 85,
+      "row": 56
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 56
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 56,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 87,
+      "row": 57
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 57
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 57,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 87,
+      "row": 58
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 58
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 58,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 96,
+      "row": 59
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 59
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 59,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 94,
+      "row": 60
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 60
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 60,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 58,
+      "row": 61
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 61
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 61,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 84,
+      "row": 62
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 62
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 62,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 2,
+      "row": 66
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 63
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 63,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 76,
+      "row": 67
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 67
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 67,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 72,
+      "row": 68
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 68
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 68,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 2,
+      "row": 72
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 69
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 69,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 95,
+      "row": 73
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 73
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 73,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 73,
+      "row": 74
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 74
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 74,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 86,
+      "row": 75
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 75
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 75,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 60,
+      "row": 76
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 76
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 76,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 2,
+      "row": 91
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 77
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 77,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 59,
+      "row": 92
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 92
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 92,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 89,
+      "row": 93
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 93
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 93,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 101,
+      "row": 94
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 94
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 94,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 64,
+      "row": 95
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 95
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 95,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 63,
+      "row": 96
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 96
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 96,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 73,
+      "row": 97
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 97
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 97,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 53,
+      "row": 98
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 98
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 98,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 53,
+      "row": 99
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 99
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 99,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 65,
+      "row": 100
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 100
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 100,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 65,
+      "row": 101
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 101
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 101,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 58,
+      "row": 102
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 102
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 102,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 60,
+      "row": 103
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 103
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 103,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 66,
+      "row": 104
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 104
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 104,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 58,
+      "row": 105
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 105
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 105,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 58,
+      "row": 106
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 106
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 106,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 52,
+      "row": 107
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 107
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 107,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 60,
+      "row": 108
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 108
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 108,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 60,
+      "row": 109
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 109
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 109,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 129,
+      "row": 110
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 110
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 110,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 115,
+      "row": 111
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 111
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 111,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 95,
+      "row": 112
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 112
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 112,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 55,
+      "row": 113
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 113
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 113,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 54,
+      "row": 114
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 114
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 114,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 79,
+      "row": 115
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 115
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 115,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 65,
+      "row": 116
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\main_app.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 116
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 116,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  }
+]

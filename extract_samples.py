@@ -1,6 +1,12 @@
-import re
+"""Extract sample verification report entries from the scanner output file.
 
-with open('scanner_output_full.txt', 'r', encoding='utf-8') as f:
+This script reads the scanner_output_full.txt file and extracts unique file:line:function
+entries from the verification report sections using regex patterns.
+It limits output to the first 100 unique entries.
+"""
+import regex
+
+with open('scanner_output_full.txt', encoding='utf-8') as f:
     content = f.read()
 
 pattern = r'File: ([^\n]+)\n(?:.*?\n)*?#### \d+\. \[ \] `([^`]+)`[^\(]*\(Line (\d+)\)'
@@ -12,5 +18,5 @@ for file, func, line in matches:
     if key not in seen:
         seen.add(key)
         print(f'{file.strip()}:{line.strip()}:{func.strip()}')
-        if len(seen) >= 50:
+        if len(seen) >= 100:
             break

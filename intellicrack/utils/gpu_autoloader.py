@@ -11,7 +11,6 @@ import logging
 import os
 import subprocess
 import sys
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -21,13 +20,13 @@ class GPUAutoLoader:
 
     def __init__(self) -> None:
         """Initialize the GPU autoloader with default values."""
-        self.gpu_available = False
-        self.gpu_type = None
-        self.gpu_info = {}
-        self._torch = None
-        self._device = None
-        self._ipex = None
-        self._device_string = None
+        self.gpu_available: bool = False
+        self.gpu_type: str | None = None
+        self.gpu_info: dict[str, object] = {}
+        self._torch: object | None = None
+        self._device: object | None = None
+        self._ipex: object | None = None
+        self._device_string: str | None = None
 
     def setup(self) -> bool:
         """Run setup function that tries different GPU configurations."""
@@ -398,19 +397,19 @@ class GPUAutoLoader:
             sys.path.insert(0, site_packages)
             logger.info(f"Injected conda packages from: {site_packages}")
 
-    def get_device(self) -> Any | None:
+    def get_device(self) -> object | None:
         """Get the configured device object."""
         return self._device
 
-    def get_torch(self) -> Any | None:
+    def get_torch(self) -> object | None:
         """Get the torch module if available."""
         return self._torch
 
-    def get_ipex(self) -> Any | None:
+    def get_ipex(self) -> object | None:
         """Get the Intel Extension module if available."""
         return self._ipex
 
-    def to_device(self, tensor_or_model: Any) -> Any:
+    def to_device(self, tensor_or_model: object) -> object:
         """Move a tensor or model to the configured device."""
         if self._device and hasattr(tensor_or_model, "to"):
             return tensor_or_model.to(self._device)
@@ -420,14 +419,14 @@ class GPUAutoLoader:
         """Get device string for torch operations."""
         return self._device_string or "cpu"
 
-    def optimize_model(self, model: Any) -> Any:
+    def optimize_model(self, model: object) -> object:
         """Optimize model for the current backend."""
         if self.gpu_type == "intel_xpu" and self._ipex:
             logger.info("Optimizing model with Intel Extension for PyTorch")
             return self._ipex.optimize(model)
         return model
 
-    def get_memory_info(self) -> dict[str, Any]:
+    def get_memory_info(self) -> dict[str, object]:
         """Get GPU memory information."""
         if not self.gpu_available or not self._torch:
             return {}
@@ -482,12 +481,12 @@ class GPUAutoLoader:
 gpu_autoloader = GPUAutoLoader()
 
 
-def get_device():
+def get_device() -> object | None:
     """Get the configured GPU device."""
     return gpu_autoloader.get_device()
 
 
-def get_gpu_info() -> dict[str, Any]:
+def get_gpu_info() -> dict[str, object]:
     """Get GPU information."""
     return {
         "available": gpu_autoloader.gpu_available,
@@ -498,17 +497,17 @@ def get_gpu_info() -> dict[str, Any]:
     }
 
 
-def to_device(tensor_or_model: Any) -> Any:
+def to_device(tensor_or_model: object) -> object:
     """Move tensor or model to GPU."""
     return gpu_autoloader.to_device(tensor_or_model)
 
 
-def optimize_for_gpu(model: Any) -> Any:
+def optimize_for_gpu(model: object) -> object:
     """Optimize model for current GPU backend."""
     return gpu_autoloader.optimize_model(model)
 
 
-def detect_gpu_frameworks() -> dict[str, Any]:
+def detect_gpu_frameworks() -> dict[str, object]:
     """Detect available GPU frameworks on the system.
 
     Returns:

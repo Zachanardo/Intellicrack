@@ -27,6 +27,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from ..utils.logger import get_logger
+from .llm_backends import LLMManager
+from .llm_fallback_chains import FallbackManager
 
 logger = get_logger(__name__)
 
@@ -64,7 +66,7 @@ else:
                     self.absolute_path = path or []
 
             @staticmethod
-            def validate(instance: Any, schema: dict[str, Any]) -> None:
+            def validate(instance: object, schema: dict[str, object]) -> None:
                 """Validate schema.
 
                 Note:
@@ -75,7 +77,7 @@ else:
                 _BasicValidator._validate_recursive(instance, schema, [])  # scanner-ignore
 
             @staticmethod
-            def _validate_recursive(instance: Any, schema: dict[str, Any], path: list[str]) -> None:
+            def _validate_recursive(instance: object, schema: dict[str, object], path: list[str]) -> None:
                 """Recursively validate instance against schema."""
                 if "type" in schema:
                     expected_type = schema["type"]
@@ -452,7 +454,7 @@ class ConfigAsCodeManager:
         except Exception as e:
             raise ConfigValidationError(f"Failed to save configuration: {e}") from e
 
-    def _substitute_env_vars(self, obj: Any) -> Any:
+    def _substitute_env_vars(self, obj: object) -> object:
         """Recursively substitute environment variables in configuration.
 
         Supports syntax: ${VAR_NAME}, ${VAR_NAME:default_value}
@@ -609,7 +611,11 @@ class ConfigAsCodeManager:
 
         return template
 
-    def export_current_config(self, llm_manager: Any | None = None, fallback_manager: Any | None = None) -> dict[str, Any]:
+    def export_current_config(
+        self,
+        llm_manager: LLMManager | None = None,
+        fallback_manager: FallbackManager | None = None,
+    ) -> dict[str, Any]:
         """Export current system configuration.
 
         Args:
@@ -665,7 +671,12 @@ class ConfigAsCodeManager:
 
         return config
 
-    def apply_config(self, config: dict[str, Any], llm_manager: Any | None = None, fallback_manager: Any | None = None) -> None:
+    def apply_config(
+        self,
+        config: dict[str, Any],
+        llm_manager: LLMManager | None = None,
+        fallback_manager: FallbackManager | None = None,
+    ) -> None:
         """Apply configuration to the system.
 
         Args:

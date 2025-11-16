@@ -1,19 +1,6 @@
-"""QEMU emulator interface for running binaries in virtual environments."""
+#!/usr/bin/env python3
+"""QEMU emulator interface for running binaries in virtual environments.
 
-import base64
-import os
-import subprocess
-import tempfile
-import time
-from pathlib import Path
-from typing import Any
-
-from intellicrack.utils.logger import logger
-from intellicrack.utils.path_resolver import get_qemu_images_dir
-
-from .base_snapshot_handler import BaseSnapshotHandler
-
-"""
 QEMU System Emulator for Full System Analysis.
 
 Copyright (C) 2025 Zachary Flint
@@ -34,7 +21,20 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-#!/usr/bin/env python3
+import base64
+import os
+import subprocess
+import tempfile
+import time
+from pathlib import Path
+from types import TracebackType
+from typing import Any
+
+from intellicrack.utils.logger import logger
+from intellicrack.utils.path_resolver import get_qemu_images_dir
+
+from .base_snapshot_handler import BaseSnapshotHandler
+
 """
 QEMU System Emulator for Full System Analysis.
 
@@ -1767,7 +1767,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         self.logger.info("QEMU emulator cleanup completed")
         return success
 
-    def _execute_binary_analysis(self, binary_path: str, app: Any = None) -> dict[str, Any]:
+    def _execute_binary_analysis(self, binary_path: str, app: types.TracebackType | None = None) -> dict[str, Any]:
         """Execute binary within the QEMU environment and monitor for activity.
 
         Args:
@@ -1814,7 +1814,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 "error": str(e),
             }
 
-    def _execute_pe_binary_real(self, binary_path: str, app=None) -> dict[str, Any]:
+    def _execute_pe_binary_real(self, binary_path: str, app: types.TracebackType | None = None) -> dict[str, Any]:
         """Execute Windows PE binary using real QEMU with Windows guest."""
         start_time = time.time()
 
@@ -1877,7 +1877,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 "execution_time": time.time() - start_time,
             }
 
-    def _execute_linux_binary_real(self, binary_path: str, app=None) -> dict[str, Any]:
+    def _execute_linux_binary_real(self, binary_path: str, app: types.TracebackType | None = None) -> dict[str, Any]:
         """Execute Linux binary using real QEMU with Linux guest."""
         start_time = time.time()
 
@@ -1939,7 +1939,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 "execution_time": time.time() - start_time,
             }
 
-    def _copy_binary_to_windows_guest(self, binary_path: str, app=None) -> str | None:
+    def _copy_binary_to_windows_guest(self, binary_path: str, app: types.TracebackType | None = None) -> str | None:
         """Copy binary to Windows guest using QEMU guest agent."""
         try:
             binary_name = os.path.basename(binary_path)
@@ -2018,7 +2018,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             self.logger.error("Failed to copy binary to Windows guest: %s", e)
             return None
 
-    def _copy_binary_to_linux_guest(self, binary_path: str, app=None) -> str | None:
+    def _copy_binary_to_linux_guest(self, binary_path: str, app: types.TracebackType | None = None) -> str | None:
         """Copy binary to Linux guest using SSH or guest agent."""
         try:
             binary_name = os.path.basename(binary_path)
@@ -2090,7 +2090,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             self.logger.error("Failed to copy binary to Linux guest: %s", e)
             return None
 
-    def _execute_in_windows_guest(self, guest_path: str, app=None) -> dict[str, Any]:
+    def _execute_in_windows_guest(self, guest_path: str, app: types.TracebackType | None = None) -> dict[str, Any]:
         """Execute binary in Windows guest and capture results."""
         try:
             if app:
@@ -2160,7 +2160,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 "exit_code": -1,
             }
 
-    def _execute_in_linux_guest(self, guest_path: str, app=None) -> dict[str, Any]:
+    def _execute_in_linux_guest(self, guest_path: str, app: types.TracebackType | None = None) -> dict[str, Any]:
         """Execute binary in Linux guest and capture results."""
         try:
             if app:
@@ -2212,7 +2212,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 "exit_code": -1,
             }
 
-    def _monitor_windows_execution(self, guest_path: str, app=None) -> dict[str, Any]:
+    def _monitor_windows_execution(self, guest_path: str, app: types.TracebackType | None = None) -> dict[str, Any]:
         """Monitor Windows execution for registry, file, and network changes."""
         try:
             binary_name = os.path.basename(guest_path) if guest_path else "unknown"
@@ -2283,7 +2283,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 "processes_created": [],
             }
 
-    def _monitor_linux_execution(self, guest_path: str, app=None) -> dict[str, Any]:
+    def _monitor_linux_execution(self, guest_path: str, app: types.TracebackType | None = None) -> dict[str, Any]:
         """Monitor Linux execution for file and network changes."""
         try:
             if app:
@@ -2299,7 +2299,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
             if hasattr(self, "ssh_client") and self.ssh_client:
                 # Monitor file changes in the execution directory
-                stdin, stdout, stderr = self.ssh_client.exec_command(f"ls -la {binary_dir} 2>/dev/null")
+                stdin, stdout, _ = self.ssh_client.exec_command(f"ls -la {binary_dir} 2>/dev/null")
                 if stdout:
                     dir_output = stdout.read().decode("utf-8", errors="ignore")
                     if dir_output.strip():
@@ -2344,17 +2344,35 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 "processes_created": [],
             }
 
-    def __enter__(self):
-        """Context manager entry."""
+    def __enter__(self) -> "QEMUEmulator":
+        """Context manager entry.
+
+        Returns:
+            This QEMUEmulator instance
+
+        """
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager exit with cleanup."""
+    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object) -> bool:
+        """Context manager exit with cleanup.
+
+        Args:
+            exc_type: Exception type if exception occurred
+            exc_val: Exception value if exception occurred
+            exc_tb: Exception traceback if exception occurred
+
+        Returns:
+            False to propagate exception if any
+
+        """
         if exc_type:
             self.logger.error(f"QEMU emulator exiting due to {exc_type.__name__}: {exc_val}")
             if exc_tb:
-                self.logger.debug(f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
+                tb_frame = getattr(exc_tb, "tb_frame", None)
+                if tb_frame:
+                    self.logger.debug(f"Exception traceback from {tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
         self.cleanup()
+        return False
 
     def _capture_filesystem_snapshot(self) -> dict[str, dict[str, Any]]:
         """Capture filesystem snapshot for comparison."""
@@ -3113,7 +3131,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
 
-def run_qemu_analysis(app: Any, binary_path: str, architecture: str = "x86_64") -> dict[str, Any]:
+def run_qemu_analysis(app: types.TracebackType | None, binary_path: str, architecture: str = "x86_64") -> dict[str, Any]:
     """Run complete QEMU-based analysis workflow.
 
     Args:

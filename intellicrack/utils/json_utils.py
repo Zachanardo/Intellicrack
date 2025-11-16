@@ -11,7 +11,7 @@ Licensed under GNU General Public License v3.0
 import json
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
-from typing import Any, Dict, TextIO
+from typing import TextIO
 
 from intellicrack.utils.logger import get_logger
 
@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 class DateTimeEncoder(json.JSONEncoder):
     """JSON encoder that handles datetime objects."""
 
-    def default(self, obj: Any) -> Dict[str, Any]:  # type: ignore[arg-type, return-value]
+    def default(self, obj: object) -> dict[str, object]:  # type: ignore[arg-type, return-value]
         """Convert non-JSON-serializable objects to JSON-compatible formats.
 
         Args:
@@ -50,7 +50,7 @@ class DateTimeEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
-def datetime_decoder(dct: dict[str, Any]) -> Any:
+def datetime_decoder(dct: dict[str, object]) -> object:
     """Decode datetime objects from JSON.
 
     Args:
@@ -87,7 +87,7 @@ def datetime_decoder(dct: dict[str, Any]) -> Any:
     return dct
 
 
-def dumps(obj: Any, **kwargs: Any) -> str:
+def dumps(obj: object, **kwargs: object) -> str:
     """Serialize object to JSON string with datetime support.
 
     Args:
@@ -103,7 +103,7 @@ def dumps(obj: Any, **kwargs: Any) -> str:
     return json.dumps(obj, **kwargs)
 
 
-def dump(obj: Any, fp: TextIO, **kwargs: Any) -> None:
+def dump(obj: object, fp: TextIO, **kwargs: object) -> None:
     """Serialize object to JSON file with datetime support.
 
     Args:
@@ -117,7 +117,7 @@ def dump(obj: Any, fp: TextIO, **kwargs: Any) -> None:
     json.dump(obj, fp, **kwargs)
 
 
-def loads(s: str, **kwargs: Any) -> Any:
+def loads(s: str, **kwargs: object) -> object:
     """Deserialize JSON string to Python object with datetime support.
 
     Args:
@@ -132,7 +132,7 @@ def loads(s: str, **kwargs: Any) -> Any:
     return json.loads(s, **kwargs)
 
 
-def load(fp: TextIO, **kwargs: Any) -> Any:
+def load(fp: TextIO, **kwargs: object) -> object:
     """Deserialize JSON file to Python object with datetime support.
 
     Args:
@@ -147,7 +147,7 @@ def load(fp: TextIO, **kwargs: Any) -> Any:
     return json.load(fp, **kwargs)
 
 
-def safe_serialize(obj: Any, filepath: Path, use_pickle: bool = False) -> None:
+def safe_serialize(obj: object, filepath: Path, use_pickle: bool = False) -> None:
     """Safely serialize object to file, preferring JSON over pickle.
 
     Args:
@@ -174,7 +174,7 @@ def safe_serialize(obj: Any, filepath: Path, use_pickle: bool = False) -> None:
                 pickle.dump(obj, f)
 
 
-def safe_deserialize(filepath: Path, use_pickle: bool = False) -> Any:
+def safe_deserialize(filepath: Path, use_pickle: bool = False) -> object:
     """Safely deserialize object from file.
 
     Args:

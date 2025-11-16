@@ -31,6 +31,8 @@ from enum import Enum
 from typing import Any, TypeVar
 
 T = TypeVar("T")
+ArgsType = TypeVar("ArgsType")
+KwargsType = TypeVar("KwargsType")
 
 from ..utils.logger import get_logger
 from .learning_engine_simple import get_learning_engine
@@ -199,7 +201,7 @@ class PerformanceOptimizer:
         ]
 
     @profile_ai_operation("performance_optimization")
-    def optimize_operation(self, operation_id: str, operation_func: Callable[..., T], *args: Any, **kwargs: Any) -> T:  # noqa: ANN002, ANN003, ANN401
+    def optimize_operation(self, operation_id: str, operation_func: Callable[..., T], *args: object, **kwargs: object) -> T:
         """Optimize execution of an AI operation.
 
         Applies applicable optimization strategies to the given operation based on profiling
@@ -398,7 +400,7 @@ class PerformanceOptimizer:
         """
         max_workers = parameters.get("max_workers", 4)
 
-        def parallel_wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN002, ANN003, ANN401
+        def parallel_wrapper(*args: object, **kwargs: object) -> object:
             """Execute function in parallel or sequentially based on arguments.
 
             Args:
@@ -444,7 +446,7 @@ class PerformanceOptimizer:
         """
         gc_threshold = parameters.get("gc_threshold", 0.8)
 
-        def memory_optimized_wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN002, ANN003, ANN401
+        def memory_optimized_wrapper(*args: object, **kwargs: object) -> object:
             """Execute function with memory optimization and monitoring.
 
             Args:
@@ -519,7 +521,7 @@ class PerformanceOptimizer:
         """
         batch_size = parameters.get("batch_size", 50)
 
-        def batched_wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN002, ANN003, ANN401
+        def batched_wrapper(*args: object, **kwargs: object) -> object:
             """Execute function with automatic batching for list arguments.
 
             Args:
@@ -886,7 +888,7 @@ class ParallelExecutor:
         logger.info("Parallel executor initialized")
 
     @profile_ai_operation("parallel_execution")
-    def execute_parallel(self, func: Callable, items: list[Any], max_workers: int | None = None, *args: Any, **kwargs: Any) -> list[Any]:  # noqa: ANN002, ANN003, ANN401
+    def execute_parallel(self, func: Callable, items: list[Any], max_workers: int | None = None, *args: object, **kwargs: object) -> list[Any]:
         """Execute function in parallel for list of items.
 
         Distributes function execution across multiple worker threads for each item
@@ -1266,7 +1268,7 @@ class PerformanceOptimizationLayer:
         thread.start()
         logger.info("Started background optimization worker")
 
-    def optimize(self, operation_id: str, operation_func: Callable, *args: Any, **kwargs: Any) -> Any:  # noqa: ANN002, ANN003, ANN401
+    def optimize(self, operation_id: str, operation_func: Callable, *args: object, **kwargs: object) -> object:
         """Optimize operation execution as main entry point.
 
         Routes optimization request to the internal optimizer for applying

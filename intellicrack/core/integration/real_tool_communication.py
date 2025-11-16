@@ -22,7 +22,7 @@ import threading
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable
+from typing import Callable
 
 import lz4.frame
 import msgpack
@@ -75,8 +75,8 @@ class ToolMessage:
     message_type: MessageType
     correlation_id: str
     timestamp: float
-    data: Any
-    metadata: dict[str, Any]
+    data: object
+    metadata: dict[str, object]
 
 
 @dataclass
@@ -155,7 +155,15 @@ class SharedMemoryManager:
             self.memory.write(struct.pack("<I", 0))
 
     def write_message(self, message: bytes) -> bool:
-        """Write message to shared memory."""
+        """Write message to shared memory.
+
+        Args:
+            message: Raw bytes to write to shared memory.
+
+        Returns:
+            True if message was successfully written, False otherwise.
+
+        """
         with self.lock:
             try:
                 # Get write pointer
@@ -195,7 +203,12 @@ class SharedMemoryManager:
                 return False
 
     def read_message(self) -> bytes | None:
-        """Read message from shared memory."""
+        """Read message from shared memory.
+
+        Returns:
+            Message bytes if available, None if no messages in queue.
+
+        """
         with self.lock:
             try:
                 # Get read pointer
@@ -257,7 +270,16 @@ class SerializationProtocol:
 
     @staticmethod
     def serialize(message: ToolMessage, format: SerializationFormat = SerializationFormat.MSGPACK) -> bytes:
-        """Serialize message to bytes."""
+        """Serialize message to bytes.
+
+        Args:
+            message: ToolMessage instance to serialize.
+            format: Serialization format to use. Defaults to MSGPACK.
+
+        Returns:
+            Serialized message as bytes.
+
+        """
         data = {
             "source": message.source.value,
             "destination": message.destination.value,
@@ -279,7 +301,16 @@ class SerializationProtocol:
 
     @staticmethod
     def deserialize(data: bytes, format: SerializationFormat = SerializationFormat.MSGPACK) -> ToolMessage | None:
-        """Deserialize bytes to message."""
+        """Deserialize bytes to message.
+
+        Args:
+            data: Serialized message bytes.
+            format: Serialization format used. Defaults to MSGPACK.
+
+        Returns:
+            Deserialized ToolMessage if successful, None on error.
+
+        """
         try:
             if format == SerializationFormat.JSON:
                 msg_dict = json.loads(data.decode("utf-8"))
@@ -319,7 +350,13 @@ class ToolMonitor:
         self.monitor_thread: threading.Thread | None = None
 
     def register_tool(self, tool: ToolType, pid: int) -> None:
-        """Register a tool for monitoring."""
+        """Register a tool for monitoring.
+
+        Args:
+            tool: Type of tool to register.
+            pid: Process ID of the tool instance.
+
+        """
         with self.lock:
             self.tools[tool] = ToolStatus(
                 tool=tool,
@@ -333,8 +370,14 @@ class ToolMonitor:
                 success_count=0,
             )
 
-    def update_status(self, tool: ToolType, **kwargs) -> None:
-        """Update tool status."""
+    def update_status(self, tool: ToolType, **kwargs: object) -> None:
+        """Update tool status.
+
+        Args:
+            tool: Type of tool to update.
+            **kwargs: Arbitrary keyword arguments for status attributes.
+
+        """
         with self.lock:
             if tool in self.tools:
                 for key, value in kwargs.items():
@@ -383,12 +426,25 @@ class ToolMonitor:
             self.monitor_thread.join(timeout=5)
 
     def get_status(self, tool: ToolType) -> ToolStatus | None:
-        """Get tool status."""
+        """Get tool status.
+
+        Args:
+            tool: Type of tool to query.
+
+        Returns:
+            ToolStatus instance if tool is registered, None otherwise.
+
+        """
         with self.lock:
             return self.tools.get(tool)
 
     def get_all_status(self) -> dict[ToolType, ToolStatus]:
-        """Get all tool statuses."""
+        """Get all tool statuses.
+
+        Returns:
+            Dictionary mapping tool types to their status objects.
+
+        """
         with self.lock:
             return self.tools.copy()
 
@@ -403,11 +459,26 @@ class FailureRecovery:
         self.recovery_handlers: dict[ToolType, Callable] = {}
 
     def add_recovery_handler(self, tool: ToolType, handler: Callable) -> None:
-        """Add recovery handler for a tool."""
+        """Add recovery handler for a tool.
+
+        Args:
+            tool: Type of tool to add handler for.
+            handler: Callable to handle message recovery.
+
+        """
         self.recovery_handlers[tool] = handler
 
     def handle_failure(self, message: ToolMessage, error: Exception) -> bool:
-        """Handle message failure."""
+        """Handle message failure.
+
+        Args:
+            message: ToolMessage that failed.
+            error: Exception that caused the failure.
+
+        Returns:
+            True if retry was scheduled, False if max retries exceeded.
+
+        """
         correlation_id = message.correlation_id
 
         # Track failed message
@@ -434,7 +505,12 @@ class FailureRecovery:
         return True
 
     def _retry_message(self, message: ToolMessage) -> None:
-        """Retry sending a message."""
+        """Retry sending a message.
+
+        Args:
+            message: ToolMessage to retry sending.
+
+        """
         if message.destination in self.recovery_handlers:
             try:
                 self.recovery_handlers[message.destination](message)
@@ -445,7 +521,13 @@ class FailureRecovery:
                 self.handle_failure(message, e)
 
     def _handle_permanent_failure(self, message: ToolMessage, error: Exception) -> None:
-        """Handle permanent failure."""
+        """Handle permanent failure.
+
+        Args:
+            message: ToolMessage that permanently failed.
+            error: Exception that caused the permanent failure.
+
+        """
         logger.error(f"Permanent failure for message {message.correlation_id}: {error}")
 
         # Clean up
@@ -470,16 +552,33 @@ class ConflictResolver:
         }
         self.tool_weights = {ToolType.GHIDRA: 1.0, ToolType.IDA: 1.2, ToolType.RADARE2: 0.9, ToolType.FRIDA: 0.8}
 
-    def resolve(self, conflicts: list[ToolMessage], strategy: str = "confidence_based") -> Any | None:
-        """Resolve conflicts between tool results."""
+    def resolve(self, conflicts: list[ToolMessage], strategy: str = "confidence_based") -> object | None:
+        """Resolve conflicts between tool results.
+
+        Args:
+            conflicts: List of conflicting ToolMessages to resolve.
+            strategy: Resolution strategy name. Defaults to "confidence_based".
+
+        Returns:
+            Resolved result object, or None if resolution fails.
+
+        """
         if strategy not in self.resolution_strategies:
             strategy = "confidence_based"
 
         resolver = self.resolution_strategies[strategy]
         return resolver(conflicts)
 
-    def _majority_vote(self, messages: list[ToolMessage]) -> Any | None:
-        """Resolve by majority vote."""
+    def _majority_vote(self, messages: list[ToolMessage]) -> object | None:
+        """Resolve by majority vote.
+
+        Args:
+            messages: List of ToolMessages to vote on.
+
+        Returns:
+            Data from the message with most votes, or None if no messages.
+
+        """
         if not messages:
             return None
 
@@ -499,8 +598,16 @@ class ConflictResolver:
 
         return None
 
-    def _weighted_average(self, messages: list[ToolMessage]) -> Any | None:
-        """Resolve by weighted average."""
+    def _weighted_average(self, messages: list[ToolMessage]) -> object | None:
+        """Resolve by weighted average.
+
+        Args:
+            messages: List of ToolMessages to calculate weighted average from.
+
+        Returns:
+            Weighted average result for numeric data, or majority vote result for non-numeric data.
+
+        """
         if not messages:
             return None
 
@@ -529,8 +636,16 @@ class ConflictResolver:
         # For non-numeric, fall back to majority vote
         return self._majority_vote(messages)
 
-    def _confidence_based(self, messages: list[ToolMessage]) -> Any | None:
-        """Resolve based on confidence scores."""
+    def _confidence_based(self, messages: list[ToolMessage]) -> object | None:
+        """Resolve based on confidence scores.
+
+        Args:
+            messages: List of ToolMessages to resolve by confidence.
+
+        Returns:
+            Data from the message with highest confidence score, or None if no messages.
+
+        """
         if not messages:
             return None
 
@@ -546,8 +661,16 @@ class ConflictResolver:
         # Return highest confidence result
         return scored_messages[0][1].data if scored_messages else None
 
-    def _timestamp_based(self, messages: list[ToolMessage]) -> Any | None:
-        """Resolve based on most recent timestamp."""
+    def _timestamp_based(self, messages: list[ToolMessage]) -> object | None:
+        """Resolve based on most recent timestamp.
+
+        Args:
+            messages: List of ToolMessages to resolve by timestamp.
+
+        Returns:
+            Data from the most recent message, or None if no messages.
+
+        """
         if not messages:
             return None
 
@@ -557,8 +680,16 @@ class ConflictResolver:
         # Return most recent
         return messages[0].data
 
-    def _authority_based(self, messages: list[ToolMessage]) -> Any | None:
-        """Resolve based on tool authority."""
+    def _authority_based(self, messages: list[ToolMessage]) -> object | None:
+        """Resolve based on tool authority.
+
+        Args:
+            messages: List of ToolMessages to resolve by authority.
+
+        Returns:
+            Data from the message from the highest authority tool, or None if no messages.
+
+        """
         if not messages:
             return None
 
@@ -580,7 +711,13 @@ class LoadBalancer:
         self.lock = threading.Lock()
 
     def register_instance(self, tool: ToolType, pid: int) -> None:
-        """Register a tool instance."""
+        """Register a tool instance.
+
+        Args:
+            tool: Type of tool to register.
+            pid: Process ID of the tool instance.
+
+        """
         with self.lock:
             if tool not in self.tool_instances:
                 self.tool_instances[tool] = []
@@ -590,7 +727,15 @@ class LoadBalancer:
             self.load_metrics[pid] = {"cpu": 0.0, "memory": 0.0, "queue_size": 0, "response_time": 0.0}
 
     def get_best_instance(self, tool: ToolType) -> int | None:
-        """Get best instance for load balancing."""
+        """Get best instance for load balancing.
+
+        Args:
+            tool: Type of tool to find best instance for.
+
+        Returns:
+            Process ID of the best instance, or None if no instances available.
+
+        """
         with self.lock:
             if tool not in self.tool_instances:
                 return None
@@ -624,14 +769,29 @@ class LoadBalancer:
             scores.sort(key=lambda x: x[0])
             return scores[0][1]
 
-    def update_metrics(self, pid: int, **metrics) -> None:
-        """Update instance metrics."""
+    def update_metrics(self, pid: int, **metrics: object) -> None:
+        """Update instance metrics.
+
+        Args:
+            pid: Process ID of the instance to update.
+            **metrics: Arbitrary keyword arguments for metric values.
+
+        """
         with self.lock:
             if pid in self.load_metrics:
                 self.load_metrics[pid].update(metrics)
 
-    def distribute_task(self, tool: ToolType, task: Any) -> bool:
-        """Distribute task to best instance."""
+    def distribute_task(self, tool: ToolType, task: object) -> bool:
+        """Distribute task to best instance.
+
+        Args:
+            tool: Type of tool to distribute task to.
+            task: Task object to distribute.
+
+        Returns:
+            True if task was successfully queued, False otherwise.
+
+        """
         pid = self.get_best_instance(tool)
         if not pid:
             return False
@@ -666,7 +826,14 @@ class RealToolCommunicator:
         self.worker_thread: threading.Thread | None = None
 
     def register_tool(self, tool: ToolType, pid: int, handler: Callable | None = None) -> None:
-        """Register a tool with the communicator."""
+        """Register a tool with the communicator.
+
+        Args:
+            tool: Type of tool to register.
+            pid: Process ID of the tool instance.
+            handler: Optional message handler callable.
+
+        """
         self.monitor.register_tool(tool, pid)
         self.balancer.register_instance(tool, pid)
 
@@ -707,7 +874,12 @@ class RealToolCommunicator:
                 logger.error(f"Error in message loop: {e}")
 
     def _process_message(self, message: ToolMessage) -> None:
-        """Process incoming message."""
+        """Process incoming message.
+
+        Args:
+            message: ToolMessage to process.
+
+        """
         # Update heartbeat
         if message.message_type == MessageType.HEARTBEAT:
             self.monitor.update_status(message.source, last_heartbeat=time.time())
@@ -732,7 +904,15 @@ class RealToolCommunicator:
                 self.recovery.handle_failure(message, e)
 
     def send_message(self, message: ToolMessage) -> bool:
-        """Send a message to a tool."""
+        """Send a message to a tool.
+
+        Args:
+            message: ToolMessage to send.
+
+        Returns:
+            True if message was successfully sent, False otherwise.
+
+        """
         try:
             # Serialize message
             serialized = SerializationProtocol.serialize(message)
@@ -750,8 +930,15 @@ class RealToolCommunicator:
             self.recovery.handle_failure(message, e)
             return False
 
-    def broadcast_message(self, source: ToolType, data: Any, message_type: MessageType = MessageType.DATA) -> None:
-        """Broadcast message to all tools."""
+    def broadcast_message(self, source: ToolType, data: object, message_type: MessageType = MessageType.DATA) -> None:
+        """Broadcast message to all tools.
+
+        Args:
+            source: Source tool type sending the broadcast.
+            data: Data object to broadcast.
+            message_type: Type of message to send. Defaults to DATA.
+
+        """
         for tool in ToolType:
             if tool != source:
                 message = ToolMessage(
@@ -765,16 +952,38 @@ class RealToolCommunicator:
                 )
                 self.send_message(message)
 
-    def resolve_conflicts(self, messages: list[ToolMessage], strategy: str = "confidence_based") -> Any | None:
-        """Resolve conflicts between tool results."""
+    def resolve_conflicts(self, messages: list[ToolMessage], strategy: str = "confidence_based") -> object | None:
+        """Resolve conflicts between tool results.
+
+        Args:
+            messages: List of conflicting ToolMessages.
+            strategy: Resolution strategy name. Defaults to "confidence_based".
+
+        Returns:
+            Resolved result object, or None if resolution fails.
+
+        """
         return self.resolver.resolve(messages, strategy)
 
     def get_tool_status(self, tool: ToolType) -> ToolStatus | None:
-        """Get status of a specific tool."""
+        """Get status of a specific tool.
+
+        Args:
+            tool: Type of tool to query status for.
+
+        Returns:
+            ToolStatus instance if tool is registered, None otherwise.
+
+        """
         return self.monitor.get_status(tool)
 
     def get_all_status(self) -> dict[ToolType, ToolStatus]:
-        """Get status of all tools."""
+        """Get status of all tools.
+
+        Returns:
+            Dictionary mapping tool types to their status objects.
+
+        """
         return self.monitor.get_all_status()
 
     def stop(self) -> None:
@@ -790,7 +999,12 @@ class RealToolCommunicator:
 
 
 def main() -> None:
-    """Demonstrate example usage of real tool communication."""
+    """Demonstrate example usage of real tool communication.
+
+    Runs as either server or client mode based on command line arguments.
+    Server mode monitors multiple tools, client mode sends heartbeats.
+
+    """
     import argparse
 
     parser = argparse.ArgumentParser(description="Real Tool Communication System")

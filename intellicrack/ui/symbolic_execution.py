@@ -20,7 +20,6 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import logging
 import os
 from pathlib import Path
-from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -50,15 +49,15 @@ class SymbolicExecution:
 
     def __init__(self) -> None:
         """Initialize symbolic execution with existing engine integration."""
-        self.logger = logging.getLogger(__name__)
-        self.engine_available = False
-        self.angr_available = False
+        self.logger: logging.Logger = logging.getLogger(__name__)
+        self.engine_available: bool = False
+        self.angr_available: bool = False
+        self.engine_class: type[object] | None = None
 
-        # Configuration options
-        self.max_paths = 100
-        self.timeout = 300
-        self.memory_limit = 4096
-        self.vulnerability_types = [
+        self.max_paths: int = 100
+        self.timeout: int = 300
+        self.memory_limit: int = 4096
+        self.vulnerability_types: list[str] = [
             "buffer_overflow",
             "format_string",
             "use_after_free",
@@ -67,12 +66,13 @@ class SymbolicExecution:
             "path_traversal",
         ]
 
-        # Initialize symbolic execution engine
         self._initialize_symbolic_execution()
 
-        # UI state tracking
-        self.progress_dialog = None
-        self.current_analysis = None
+        self.progress_dialog: QDialog | None = None
+        self.current_analysis: dict[str, object] | None = None
+        self.progress_bar: QProgressBar | None = None
+        self.status_label: QLabel | None = None
+        self.results_text: QTextEdit | None = None
 
     def _initialize_symbolic_execution(self) -> None:
         """Initialize symbolic execution using existing engine."""
@@ -111,7 +111,7 @@ class SymbolicExecution:
             self.engine_available = False
             log_error("Symbolic execution engine initialization failed", category="SYMBOLIC", exception=e)
 
-    def run_symbolic_execution(self, app) -> None:
+    def run_symbolic_execution(self, app: object) -> None:
         """Run symbolic execution analysis with UI integration.
 
         Args:
@@ -183,8 +183,16 @@ class SymbolicExecution:
         finally:
             self._hide_progress_dialog()
 
-    def _get_binary_path(self, app) -> str | None:
-        """Extract binary path from application state."""
+    def _get_binary_path(self, app: object) -> str | None:
+        """Extract binary path from application state.
+
+        Args:
+            app: Main application instance with binary data and UI signals
+
+        Returns:
+            Path to the binary file, or None if no valid binary is found
+
+        """
         try:
             # Check various possible locations for binary path
             if hasattr(app, "current_file") and app.current_file:
@@ -208,8 +216,11 @@ class SymbolicExecution:
             self.logger.error(f"Failed to get binary path: {e}")
             return None
 
-    def _show_configuration_dialog(self, app) -> bool:
+    def _show_configuration_dialog(self, app: object) -> bool:
         """Show configuration dialog for symbolic execution parameters.
+
+        Args:
+            app: Main application instance with binary data and UI signals
 
         Returns:
             True if user clicked OK, False if cancelled
@@ -305,8 +316,14 @@ class SymbolicExecution:
             self.logger.error(f"Failed to show configuration dialog: {e}")
             return True  # Use defaults on error
 
-    def _show_progress_dialog(self, app, binary_path: str) -> None:
-        """Show progress dialog for symbolic execution."""
+    def _show_progress_dialog(self, app: object, binary_path: str) -> None:
+        """Show progress dialog for symbolic execution.
+
+        Args:
+            app: Main application instance with binary data and UI signals
+            binary_path: Path to the binary file being analyzed
+
+        """
         try:
             if not hasattr(app, "centralWidget") or not app.centralWidget():
                 return
@@ -372,9 +389,18 @@ class SymbolicExecution:
         except Exception as e:
             self.logger.error(f"Failed to hide progress dialog: {e}")
 
-    def _run_symbolic_analysis(self, app, engine) -> dict[str, Any]:
-        """Run the actual symbolic analysis."""
-        results = {"vulnerabilities": [], "paths_explored": 0, "coverage": {}, "constraints": [], "crashed_states": [], "execution_time": 0}
+    def _run_symbolic_analysis(self, app: object, engine: object) -> dict[str, object]:
+        """Run the actual symbolic analysis.
+
+        Args:
+            app: Main application instance with binary data and UI signals
+            engine: Symbolic execution engine instance
+
+        Returns:
+            Dictionary containing analysis results including vulnerabilities, paths explored, and execution time
+
+        """
+        results: dict[str, object] = {"vulnerabilities": [], "paths_explored": 0, "coverage": {}, "constraints": [], "crashed_states": [], "execution_time": 0}
 
         try:
             # Update progress
@@ -406,8 +432,16 @@ class SymbolicExecution:
             results["error"] = str(e)
             return results
 
-    def _check_buffer_overflow_constraint(self, constraint) -> bool:
-        """Check if a constraint indicates potential buffer overflow."""
+    def _check_buffer_overflow_constraint(self, constraint: object) -> bool:
+        """Check if a constraint indicates potential buffer overflow.
+
+        Args:
+            constraint: Symbolic constraint object from the execution engine
+
+        Returns:
+            True if the constraint indicates a potential buffer overflow vulnerability
+
+        """
         try:
             constraint_str = str(constraint).lower()
             # Look for common buffer overflow patterns
@@ -443,8 +477,16 @@ class SymbolicExecution:
             log_warning(f"Failed to check memory access constraint: {e}", category="SYMBOLIC")
         return False
 
-    def _check_integer_overflow_constraint(self, constraint) -> bool:
-        """Check if a constraint indicates potential integer overflow."""
+    def _check_integer_overflow_constraint(self, constraint: object) -> bool:
+        """Check if a constraint indicates potential integer overflow.
+
+        Args:
+            constraint: Symbolic constraint object from the execution engine
+
+        Returns:
+            True if the constraint indicates a potential integer overflow vulnerability
+
+        """
         try:
             constraint_str = str(constraint).lower()
 
@@ -483,9 +525,18 @@ class SymbolicExecution:
             log_warning(f"Failed to check integer overflow constraint: {e}", category="SYMBOLIC")
         return False
 
-    def _fallback_analysis(self, app, engine) -> dict[str, Any]:
-        """Fallback analysis when full engine features are not available."""
-        results = {"vulnerabilities": [], "paths_explored": 0, "coverage": {}, "execution_time": 0, "fallback_mode": True}
+    def _fallback_analysis(self, app: object, engine: object) -> dict[str, object]:
+        """Fallback analysis when full engine features are not available.
+
+        Args:
+            app: Main application instance with binary data and UI signals
+            engine: Symbolic execution engine instance
+
+        Returns:
+            Dictionary containing analysis results from fallback mode
+
+        """
+        results: dict[str, object] = {"vulnerabilities": [], "paths_explored": 0, "coverage": {}, "execution_time": 0, "fallback_mode": True}
 
         try:
             if hasattr(app, "update_output"):
@@ -553,9 +604,7 @@ class SymbolicExecution:
                                     },
                                 )
 
-            # Only report completion if we actually found something or explored paths
             if results["paths_explored"] > 0 and not results["vulnerabilities"]:
-                # This is informational only, not a mock vulnerability
                 if hasattr(app, "update_output"):
                     app.update_output.emit(
                         f"[SYMBOLIC] Analysis complete: {results['paths_explored']} paths explored, no vulnerabilities found",
@@ -568,8 +617,15 @@ class SymbolicExecution:
             results["error"] = str(e)
             return results
 
-    def _process_analysis_results(self, app, results: dict[str, Any], binary_path: str) -> None:
-        """Process and display symbolic execution results."""
+    def _process_analysis_results(self, app: object, results: dict[str, object], binary_path: str) -> None:
+        """Process and display symbolic execution results.
+
+        Args:
+            app: Main application instance with binary data and UI signals
+            results: Dictionary containing analysis results
+            binary_path: Path to the binary file that was analyzed
+
+        """
         try:
             if not results:
                 return
@@ -616,7 +672,7 @@ class SymbolicExecution:
             if hasattr(app, "update_output"):
                 app.update_output.emit(f"[ERROR] Failed to process symbolic execution results: {e}")
 
-    def get_analysis_status(self) -> dict[str, Any]:
+    def get_analysis_status(self) -> dict[str, object]:
         """Get current symbolic execution status and capabilities.
 
         Returns:

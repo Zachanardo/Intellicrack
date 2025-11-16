@@ -52,8 +52,17 @@ logger = get_logger(__name__)
 
 
 # Utility functions for QHeaderView and QAbstractItemView
-def create_custom_header_view(orientation, parent=None):
-    """Create a custom header view with enhanced functionality."""
+def create_custom_header_view(orientation: int, parent: object | None = None) -> QHeaderView:
+    """Create a custom header view with enhanced functionality.
+
+    Args:
+        orientation: Header orientation (Qt.Horizontal or Qt.Vertical)
+        parent: Parent widget
+
+    Returns:
+        Configured QHeaderView instance
+
+    """
     header = QHeaderView(orientation, parent)
     header.setDefaultSectionSize(100)
     header.setMinimumSectionSize(50)
@@ -62,8 +71,22 @@ def create_custom_header_view(orientation, parent=None):
     return header
 
 
-def configure_table_selection(table, behavior=None, mode=None):
-    """Configure table selection behavior using QAbstractItemView."""
+def configure_table_selection(
+    table: QTableWidget,
+    behavior: int | None = None,
+    mode: int | None = None,
+) -> QTableWidget:
+    """Configure table selection behavior using QAbstractItemView.
+
+    Args:
+        table: Table widget to configure
+        behavior: Selection behavior (default: SelectRows)
+        mode: Selection mode (default: SingleSelection)
+
+    Returns:
+        Configured table widget
+
+    """
     if behavior is None:
         behavior = QAbstractItemView.SelectRows
     if mode is None:
@@ -79,8 +102,16 @@ def configure_table_selection(table, behavior=None, mode=None):
     return table
 
 
-def create_enhanced_item_view(parent=None):
-    """Create an enhanced item view with custom behavior."""
+def create_enhanced_item_view(parent: object | None = None) -> object:
+    """Create an enhanced item view with custom behavior.
+
+    Args:
+        parent: Parent widget
+
+    Returns:
+        Configured QListView instance
+
+    """
     from intellicrack.handlers.pyqt6_handler import QListView
 
     view = QListView(parent)
@@ -156,7 +187,7 @@ class ModelDownloadThread(QThread):
 class ModelManagerDialog(BaseDialog):
     """Dialog for managing local GGUF models."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: object | None = None) -> None:
         """Initialize the ModelManagerDialog with default values."""
         super().__init__(parent, "Local GGUF Model Manager")
         self.setMinimumSize(900, 700)
@@ -174,8 +205,13 @@ class ModelManagerDialog(BaseDialog):
         self.status_timer.timeout.connect(self.update_server_status)
         self.status_timer.start(5000)  # Update every 5 seconds
 
-    def setup_content(self, layout) -> None:
-        """Set up the user interface content."""
+    def setup_content(self, layout: QVBoxLayout | None) -> None:
+        """Set up the user interface content.
+
+        Args:
+            layout: Existing layout to populate, or None to create new one
+
+        """
         if layout is None:
             layout = QVBoxLayout(self.content_widget)
 
@@ -213,8 +249,13 @@ class ModelManagerDialog(BaseDialog):
 
         layout.addLayout(status_layout)
 
-    def setup_local_models_tab(self, tab_widget) -> None:
-        """Set up the local models management tab."""
+    def setup_local_models_tab(self, tab_widget: QWidget) -> None:
+        """Set up the local models management tab.
+
+        Args:
+            tab_widget: Tab widget to populate with local models interface
+
+        """
         layout = QVBoxLayout(tab_widget)
 
         # Controls
@@ -286,8 +327,13 @@ class ModelManagerDialog(BaseDialog):
 
         layout.addWidget(info_group)
 
-    def setup_download_tab(self, tab_widget) -> None:
-        """Set up the model download tab."""
+    def setup_download_tab(self, tab_widget: QWidget) -> None:
+        """Set up the model download tab.
+
+        Args:
+            tab_widget: Tab widget to populate with model download interface
+
+        """
         layout = QVBoxLayout(tab_widget)
 
         # Recommended models
@@ -327,10 +373,13 @@ class ModelManagerDialog(BaseDialog):
         custom_layout = QVBoxLayout(custom_group)
 
         url_layout = QHBoxLayout()
-        url_layout.addWidget(QLabel("Model URL:"))
+        url_label = QLabel("Model URL:")
+        url_label.setToolTip("Enter full HTTPS URL to GGUF model (e.g., from Hugging Face)")
+        url_layout.addWidget(url_label)
 
         self.custom_url_input = QLineEdit()
-        self.custom_url_input.setPlaceholderText("https://huggingface.co/.../model.gguf")
+        self.custom_url_input.setText("")
+        self.custom_url_input.setToolTip("Paste complete HTTPS URL to GGUF model file from Hugging Face, Ollama, or other repositories")
         url_layout.addWidget(self.custom_url_input)
 
         custom_download_btn = QPushButton("Download")
@@ -356,7 +405,7 @@ class ModelManagerDialog(BaseDialog):
 
         layout.addWidget(progress_group)
 
-    def setup_server_tab(self, tab_widget) -> None:
+    def setup_server_tab(self, tab_widget: QWidget) -> None:
         """Set up the server control tab."""
         layout = QVBoxLayout(tab_widget)
 
@@ -815,8 +864,13 @@ Server URL: {gguf_manager.get_server_url()}"""
 
         self.deps_status_text.setPlainText("\n".join(deps_status))
 
-    def closeEvent(self, event) -> None:
-        """Handle dialog close."""
+    def closeEvent(self, event: object) -> None:
+        """Handle dialog close.
+
+        Args:
+            event: Close event from Qt
+
+        """
         # Cancel any ongoing downloads
         for thread in self.download_threads.values():
             thread.cancel()

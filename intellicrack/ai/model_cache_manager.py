@@ -45,8 +45,14 @@ memory_reserved = None
 PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
 
 
-def secure_pickle_dump(obj: Any, file_path: str) -> None:
-    """Securely dump object with integrity check."""
+def secure_pickle_dump(obj: object, file_path: str) -> None:
+    """Securely dump object with integrity check.
+
+    Args:
+        obj: Object to serialize and save with integrity check
+        file_path: Path to save the pickled object
+
+    """
     # Serialize object
     data = pickle.dumps(obj)
 
@@ -62,8 +68,20 @@ def secure_pickle_dump(obj: Any, file_path: str) -> None:
 class RestrictedUnpickler(pickle.Unpickler):
     """Restricted unpickler that only allows safe classes."""
 
-    def find_class(self, module: str, name: str):
-        """Override ``find_class`` to restrict allowed classes."""
+    def find_class(self, module: str, name: str) -> type:
+        """Override ``find_class`` to restrict allowed classes.
+
+        Args:
+            module: Module name to load from
+            name: Class name to load
+
+        Returns:
+            The requested class type
+
+        Raises:
+            pickle.UnpicklingError: If the class is not in the allowed list
+
+        """
         # Allow only safe modules and classes
         ALLOWED_MODULES = {
             "numpy",
@@ -93,8 +111,20 @@ class RestrictedUnpickler(pickle.Unpickler):
         raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
 
 
-def secure_pickle_load(file_path: str):
-    """Securely load object with integrity verification and restricted unpickling."""
+def secure_pickle_load(file_path: str) -> object:
+    """Securely load object with integrity verification and restricted unpickling.
+
+    Args:
+        file_path: Path to the pickled file to load
+
+    Returns:
+        The unpickled object
+
+    Raises:
+        ValueError: If integrity check fails
+        pickle.UnpicklingError: If unsafe classes are detected
+
+    """
     with open(file_path, "rb") as f:
         # Read MAC
         stored_mac = f.read(32)  # SHA256 produces 32 bytes
@@ -233,11 +263,11 @@ class ModelCacheManager:
         except Exception as e:
             logger.error(f"Failed to save disk cache index: {e}")
 
-    def _estimate_model_memory(self, model: Any) -> int:
+    def _estimate_model_memory(self, model: object) -> int:
         """Estimate memory usage of a model.
 
         Args:
-            model: Model object
+            model: Model object (PyTorch, TensorFlow, ONNX, or other)
 
         Returns:
             Estimated memory in bytes
@@ -282,16 +312,16 @@ class ModelCacheManager:
     def get(
         self,
         model_id: str,
-        load_function: Any | None = None,
-    ) -> tuple[Any, Any | None] | None:
+        load_function: (lambda: tuple[object, object | None]) | None = None,
+    ) -> tuple[object, object | None] | None:
         """Get a model from cache or load it.
 
         Args:
             model_id: Unique identifier for the model
-            load_function: Function to load the model if not cached
+            load_function: Callable that loads the model if not cached
 
         Returns:
-            Tuple of (model, tokenizer) or None
+            Tuple of (model, tokenizer) or None if load fails
 
         """
         # Check in-memory cache
@@ -352,23 +382,23 @@ class ModelCacheManager:
     def put(
         self,
         model_id: str,
-        model: Any,
-        tokenizer: Any | None = None,
+        model: object,
+        tokenizer: object | None = None,
         model_type: str = "auto",
-        config: dict[str, Any] | None = None,
+        config: dict[str, object] | None = None,
         load_time: float = 0.0,
-        **kwargs,
+        **kwargs: object,
     ) -> None:
         """Add a model to the cache.
 
         Args:
-            model_id: Unique identifier
-            model: Model object
-            tokenizer: Optional tokenizer
-            model_type: Type of model
-            config: Model configuration
-            load_time: Time taken to load
-            **kwargs: Additional metadata
+            model_id: Unique identifier for the model
+            model: Model object to cache (PyTorch, TensorFlow, ONNX, etc.)
+            tokenizer: Optional tokenizer associated with the model
+            model_type: Type of model ("pytorch", "tensorflow", "onnx", or "auto")
+            config: Model configuration dictionary
+            load_time: Time taken to load the model in seconds
+            **kwargs: Additional metadata (quantization, adapter_info, etc.)
 
         """
         # Auto-detect model type

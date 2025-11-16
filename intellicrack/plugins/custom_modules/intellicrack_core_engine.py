@@ -907,11 +907,13 @@ class GhidraPlugin(AbstractPlugin):
         binary_hash = hashlib.sha256()
 
         # Calculate hash of binary for tracking
-        with open(binary_path, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                binary_hash.update(chunk)
+        def _hash_file() -> str:
+            with open(binary_path, "rb") as f:
+                for chunk in iter(lambda: f.read(4096), b""):
+                    binary_hash.update(chunk)
+            return binary_hash.hexdigest()[:16]
 
-        binary_id = binary_hash.hexdigest()[:16]
+        binary_id = await asyncio.to_thread(_hash_file)
 
         # Use inspect to validate parameters
         current_function = inspect.currentframe().f_code.co_name
@@ -1191,8 +1193,7 @@ class FridaPlugin(AbstractPlugin):
                 self.frida_session = device.attach(target)
 
             # Load script
-            with open(self.script_path) as f:
-                script_code = f.read()
+            script_code = await asyncio.to_thread(lambda: Path(self.script_path).read_text(encoding="utf-8"))
 
             self.frida_script = self.frida_session.create_script(script_code)
             self.frida_script.on("message", self._on_message)
@@ -1877,8 +1878,7 @@ class PluginManager:
     async def _extract_ghidra_metadata(self, script_file: Path) -> PluginMetadata | None:
         """Extract metadata from Ghidra script."""
         try:
-            with open(script_file, encoding="utf-8") as f:
-                content = f.read()
+            content = await asyncio.to_thread(lambda: script_file.read_text(encoding="utf-8"))
 
             # Parse Java comments for metadata
             metadata = {
@@ -1922,8 +1922,7 @@ class PluginManager:
     async def _extract_frida_metadata(self, script_file: Path) -> PluginMetadata | None:
         """Extract metadata from Frida script."""
         try:
-            with open(script_file, encoding="utf-8") as f:
-                content = f.read()
+            content = await asyncio.to_thread(lambda: script_file.read_text(encoding="utf-8"))
 
             # Parse JavaScript comments for metadata
             metadata = {
@@ -1970,8 +1969,7 @@ class PluginManager:
     async def _extract_python_metadata(self, module_file: Path) -> PluginMetadata | None:
         """Extract metadata from Python module."""
         try:
-            with open(module_file, encoding="utf-8") as f:
-                content = f.read()
+            content = await asyncio.to_thread(lambda: module_file.read_text(encoding="utf-8"))
 
             # Parse docstring and comments
             metadata = {
@@ -3000,10 +2998,15 @@ class AnalysisCoordinator:
             if stat.st_size < 100 * 1024 * 1024:  # 100MB limit
                 import hashlib
 
-                with open(file_path, "rb") as f:
-                    content = f.read()
-                    info["hash_sha256_primary"] = hashlib.sha256(content).hexdigest()
-                    info["hash_sha256"] = hashlib.sha256(content).hexdigest()
+                def _calc_hashes() -> tuple[str, str]:
+                    with open(file_path, "rb") as f:
+                        content = f.read()
+                        hash_val = hashlib.sha256(content).hexdigest()
+                        return hash_val, hash_val
+
+                hash_primary, hash_sha256 = await asyncio.to_thread(_calc_hashes)
+                info["hash_sha256_primary"] = hash_primary
+                info["hash_sha256"] = hash_sha256
 
             # Detect file type
             info["file_type"] = self._detect_file_type(file_path)

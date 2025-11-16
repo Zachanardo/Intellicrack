@@ -12,7 +12,6 @@ import time
 from datetime import datetime
 from pathlib import Path
 from threading import Thread
-from typing import Any
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QColor, QFont, QTextCharFormat, QTextCursor
@@ -52,7 +51,7 @@ from intellicrack.core.analysis.frida_script_manager import FridaScriptConfig, F
 class FridaScriptParameterWidget(QDialog):
     """Advanced parameter configuration dialog for Frida scripts."""
 
-    def __init__(self, script_config: FridaScriptConfig, parent=None) -> None:
+    def __init__(self, script_config: FridaScriptConfig, parent: QWidget | None = None) -> None:
         """Initialize the FridaScriptParameterWidget with a script configuration.
 
         Args:
@@ -173,7 +172,7 @@ class FridaScriptParameterWidget(QDialog):
         layout.addLayout(button_layout)
         self.setLayout(layout)
 
-    def _create_parameter_widget(self, name: str, default_value: Any) -> QWidget:
+    def _create_parameter_widget(self, name: str, default_value: object) -> QWidget:
         """Create appropriate widget based on parameter type."""
         if isinstance(default_value, bool):
             widget = QCheckBox()
@@ -227,7 +226,7 @@ class FridaScriptParameterWidget(QDialog):
 
         return widget
 
-    def get_parameters(self) -> dict[str, Any]:
+    def get_parameters(self) -> dict[str, object]:
         """Get configured parameter values."""
         parameters = {}
 
@@ -339,7 +338,7 @@ class FridaScriptOutputWidget(QWidget):
         # Switch to new tab
         self.tab_widget.setCurrentWidget(tab)
 
-    def update_output(self, session_id: str, message: Any) -> None:
+    def update_output(self, session_id: str, message: object) -> None:
         """Update script output."""
         if session_id in self.script_outputs:
             self.script_outputs[session_id].add_message(message)
@@ -426,7 +425,7 @@ class ScriptOutputTab(QWidget):
 
         self.setLayout(layout)
 
-    def add_message(self, message: Any) -> None:
+    def add_message(self, message: object) -> None:
         """Add message to output."""
         self.messages.append(message)
 
@@ -451,7 +450,7 @@ class ScriptOutputTab(QWidget):
         if isinstance(message, dict) and "data" in message:
             self.update_data_tree(message["data"])
 
-    def format_message(self, message: Any) -> str:
+    def format_message(self, message: object) -> str:
         """Format message for display."""
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
 
@@ -465,7 +464,7 @@ class ScriptOutputTab(QWidget):
             return f"[{timestamp}] [{msg_type}] {content}"
         return f"[{timestamp}] {message}"
 
-    def get_message_color(self, message: Any) -> str:
+    def get_message_color(self, message: object) -> str:
         """Get color for message based on type."""
         if isinstance(message, dict):
             msg_type = message.get("type", "").lower()
@@ -481,7 +480,7 @@ class ScriptOutputTab(QWidget):
 
         return "#e0e0e0"  # Default gray
 
-    def update_data_tree(self, data: dict[str, Any]) -> None:
+    def update_data_tree(self, data: dict[str, object]) -> None:
         """Update data tree with collected data."""
         self.data.update(data)
 
@@ -489,7 +488,7 @@ class ScriptOutputTab(QWidget):
         self.data_tree.clear()
         self._add_dict_to_tree(self.data, self.data_tree.invisibleRootItem())
 
-    def _add_dict_to_tree(self, data: Any, parent: QTreeWidgetItem, key: str = "") -> None:
+    def _add_dict_to_tree(self, data: object, parent: QTreeWidgetItem, key: str = "") -> None:
         """Recursively add dictionary to tree."""
         if isinstance(data, dict):
             for k, v in data.items():
@@ -651,7 +650,7 @@ class FridaScriptDebuggerWidget(QWidget):
 class FridaScriptCreatorWidget(QDialog):
     """Wizard for creating custom Frida scripts."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the FridaScriptCreatorWidget with an optional parent."""
         super().__init__(parent)
         self.setWindowTitle("Create Custom Frida Script")
@@ -867,7 +866,7 @@ if (typeof ObjC !== 'undefined') {
             self.module_edit.clear()
             self.function_edit.clear()
 
-    def load_template(self, item) -> None:
+    def load_template(self, item: QListWidget | None) -> None:
         """Load selected template."""
         if not item:
             return
@@ -1131,7 +1130,7 @@ send({ type: 'ready', payload: 'Memory scanner initialized' });
             self.accept()
 
 
-def integrate_frida_gui(main_app) -> bool:
+def integrate_frida_gui(main_app: object) -> bool:
     """Integrate Frida GUI components."""
     # Create Frida menu if not exists
     if not hasattr(main_app, "frida_menu"):
@@ -1161,7 +1160,7 @@ def integrate_frida_gui(main_app) -> bool:
     return True
 
 
-def show_parameter_dialog(main_app) -> None:
+def show_parameter_dialog(main_app: object) -> None:
     """Show parameter configuration dialog."""
     # Get script manager
     if not hasattr(main_app, "frida_script_manager"):
@@ -1196,7 +1195,7 @@ def show_parameter_dialog(main_app) -> None:
                         main_app.frida_output_widget.add_script_output(script_name, session_id)
 
                         # Execute script in background
-                        def output_callback(message) -> None:
+                        def output_callback(message: object) -> None:
                             main_app.frida_output_widget.update_output(session_id, message)
 
                         # Run in thread
@@ -1205,19 +1204,19 @@ def show_parameter_dialog(main_app) -> None:
                         thread.start()
 
 
-def show_output_viewer(main_app) -> None:
+def show_output_viewer(main_app: object) -> None:
     """Show output viewer window."""
     if hasattr(main_app, "frida_output_widget"):
         main_app.frida_output_widget.show()
 
 
-def show_debugger(main_app) -> None:
+def show_debugger(main_app: object) -> None:
     """Show debugger window."""
     debugger = FridaScriptDebuggerWidget()
     debugger.show()
 
 
-def show_creator(main_app) -> None:
+def show_creator(main_app: object) -> None:
     """Show script creator dialog."""
     creator = FridaScriptCreatorWidget(main_app)
     creator.exec()

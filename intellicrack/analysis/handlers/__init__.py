@@ -79,5 +79,5 @@ def is_handler_available(handler_name: str):
 
 
 # Get all handler names and convert to list of strings
-_handler_names: list[str] = [str(name) for name in _available_handlers]
-__all__: list[str] = ["get_available_handlers", "get_handler", "is_handler_available"] + _handler_names  # noqa: RUF005
+_handler_names = [str(name) for name in _available_handlers]
+__all__ = ["get_available_handlers", "get_handler", "is_handler_available", *_handler_names]

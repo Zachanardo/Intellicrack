@@ -57,7 +57,7 @@ def validate_snapshots(
 
 
 def log_comparison_start(
-    snapshot1: str, snapshot2: str, logger: logging.Logger | None = None
+    snapshot1: str, snapshot2: str, logger: logging.Logger | None = None,
 ) -> None:
     """Log the start of snapshot comparison.
 
@@ -113,7 +113,7 @@ def start_snapshot_comparison(
 
 
 def get_snapshot_data(
-    snapshots_dict: dict[str, Any], snapshot_name: str
+    snapshots_dict: dict[str, Any], snapshot_name: str,
 ) -> dict[str, Any]:
     """Get snapshot data safely.
 
@@ -129,7 +129,7 @@ def get_snapshot_data(
 
 
 def compare_file_lists(
-    files1_data: str | None, files2_data: str | None, limit: int = 100
+    files1_data: str | None, files2_data: str | None, limit: int = 100,
 ) -> dict[str, list[str]]:
     """Compare file lists between two snapshots.
 

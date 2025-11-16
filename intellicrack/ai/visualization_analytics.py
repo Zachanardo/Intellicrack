@@ -410,10 +410,7 @@ class DataCollector:
 
             # Check for execution time anomalies (might indicate errors)
             execution_time = record.get("execution_time", 0)
-            if execution_time > 30000:  # More than 30 seconds might indicate timeout/error
-                return True
-
-            return False
+            return execution_time > 30000
 
         except Exception as e:
             logger.error(f"Error checking error indicators: {e}")

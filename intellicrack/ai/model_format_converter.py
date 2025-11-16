@@ -19,7 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
 
 from intellicrack.handlers.numpy_handler import numpy as np
 
@@ -170,7 +170,7 @@ class ModelFormatConverter:
         source_path: str | Path,
         target_format: str,
         output_path: str | Path | None = None,
-        **kwargs,
+        **kwargs: object,
     ) -> Path | None:
         """Convert a model to a different format.
 
@@ -285,7 +285,7 @@ class ModelFormatConverter:
         self,
         source_path: Path,
         output_path: Path,
-        **kwargs,
+        **kwargs: object,
     ) -> Path | None:
         """Convert PyTorch model to ONNX.
 
@@ -410,7 +410,7 @@ class ModelFormatConverter:
         self,
         source_path: Path,
         output_path: Path,
-        **kwargs,
+        **kwargs: object,
     ) -> Path | None:
         """Convert PyTorch model to SafeTensors.
 
@@ -499,7 +499,7 @@ class ModelFormatConverter:
         self,
         source_path: Path,
         output_path: Path,
-        **kwargs,
+        **kwargs: object,
     ) -> Path | None:
         """Convert SafeTensors to PyTorch format.
 
@@ -556,7 +556,7 @@ class ModelFormatConverter:
         self,
         source_path: Path,
         output_path: Path,
-        **kwargs,
+        **kwargs: object,
     ) -> Path | None:
         """Convert TensorFlow model to ONNX.
 
@@ -597,7 +597,7 @@ class ModelFormatConverter:
                         return None
 
                     @tf.function
-                    def inference_func(x: Any):
+                    def inference_func(x: object) -> object:
                         return model(x)
 
                     concrete_func = inference_func.get_concrete_function(input_spec)
@@ -831,7 +831,7 @@ class ModelFormatConverter:
 
         return info
 
-    def load_model_for_conversion(self, model_path: str | Path, model_type: str = "auto") -> Any | None:
+    def load_model_for_conversion(self, model_path: str | Path, model_type: str = "auto") -> object | None:
         """Load a model using appropriate AutoModel class based on type.
 
         Args:
@@ -933,7 +933,7 @@ class ModelFormatConverter:
             logger.error(f"Failed to analyze model architecture: {e}")
             return None
 
-    def convert_model_with_automodel(self, source_path: str | Path, target_format: str, model_type: str = "auto", **kwargs) -> Path | None:
+    def convert_model_with_automodel(self, source_path: str | Path, target_format: str, model_type: str = "auto", **kwargs: object) -> Path | None:
         """Convert a model using AutoModel for flexible model loading.
 
         Args:

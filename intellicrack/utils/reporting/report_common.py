@@ -21,10 +21,18 @@ Common reporting utilities for generating analysis reports.
 Common report generation utilities to avoid code duplication.
 """
 
+from collections.abc import Callable
+from typing import Any
+
 from intellicrack.utils.logger import logger
 
 
-def generate_analysis_report(app, report_type, results_data, generator_func=None):
+def generate_analysis_report(
+    app: object,
+    report_type: str,
+    results_data: object,
+    generator_func: Callable[[str, object], str] | None = None,
+) -> str | None:
     """Generate analysis reports.
 
     Args:
@@ -70,7 +78,7 @@ def generate_analysis_report(app, report_type, results_data, generator_func=None
     return report_path
 
 
-def _generate_default_report(filename, report_type, results_data):
+def _generate_default_report(filename: str, report_type: str, results_data: object) -> str | None:
     """Generate a default HTML report.
 
     Args:
@@ -114,14 +122,14 @@ def _generate_default_report(filename, report_type, results_data):
         return None
 
 
-def ensure_html_extension(filename):
+def ensure_html_extension(filename: str) -> str:
     """Ensure filename has .html extension.
 
     Args:
         filename: Input filename
 
     Returns:
-        str: Filename with .html extension
+        Filename with .html extension
 
     """
     if not filename.endswith(".html"):
@@ -129,7 +137,7 @@ def ensure_html_extension(filename):
     return filename
 
 
-def handle_pyqt6_report_generation(app, report_type, generator):
+def handle_pyqt6_report_generation(app: object, report_type: str, generator: object) -> str | None:
     """Handle PyQt6 report generation workflow.
 
     Args:
@@ -138,7 +146,7 @@ def handle_pyqt6_report_generation(app, report_type, generator):
         generator: Object with generate_report method
 
     Returns:
-        str or None: Path to generated report file, or None if cancelled
+        Path to generated report file, or None if cancelled
 
     """
     try:

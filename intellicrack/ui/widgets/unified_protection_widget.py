@@ -12,7 +12,7 @@ from typing import Any
 
 # Import for QDateTime
 from PyQt6.QtCore import QDateTime, Qt, QThread, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtGui import QColor, QFont, QMouseEvent
 from PyQt6.QtWidgets import (
     QFileDialog,
     QFrame,
@@ -102,8 +102,14 @@ class ProtectionCard(QFrame):
     #: Emit protection data when clicked (type: dict)
     clicked = pyqtSignal(dict)
 
-    def __init__(self, protection_data: dict[str, Any], parent=None) -> None:
-        """Initialize protection card widget with analysis data and UI setup."""
+    def __init__(self, protection_data: dict[str, Any], parent: QWidget | None = None) -> None:
+        """Initialize protection card widget with analysis data and UI setup.
+
+        Args:
+            protection_data: Dictionary containing protection information including name, type, confidence, and source
+            parent: Parent widget for Qt ownership hierarchy
+
+        """
         super().__init__(parent)
         self.protection_data = protection_data
         self.init_ui()
@@ -162,8 +168,16 @@ class ProtectionCard(QFrame):
 
         self.setLayout(layout)
 
-    def _get_source_text(self, source) -> str:
-        """Get user-friendly source text."""
+    def _get_source_text(self, source: AnalysisSource) -> str:
+        """Get user-friendly source text for display in the protection card.
+
+        Args:
+            source: The analysis source enum value indicating detection method
+
+        Returns:
+            Human-readable string describing the detection source
+
+        """
         if source == AnalysisSource.PROTECTION_ENGINE:
             return "Pattern Analysis"
         if source == AnalysisSource.ML_MODEL:
@@ -174,8 +188,13 @@ class ProtectionCard(QFrame):
             return "Multi-Engine Verification"
         return "Signature Match"
 
-    def mousePressEvent(self, event) -> None:
-        """Handle mouse click."""
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        """Handle mouse click event on the protection card.
+
+        Args:
+            event: The mouse event containing button and position information
+
+        """
         if event.button() == Qt.LeftButton:
             self.clicked.emit(self.protection_data)
         super().mousePressEvent(event)
@@ -190,7 +209,7 @@ class UnifiedProtectionWidget(QWidget):
     #: file_path, protection_data (type: str, dict)
     bypass_requested = pyqtSignal(str, dict)
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the unified protection analysis widget.
 
         Args:
@@ -229,8 +248,13 @@ class UnifiedProtectionWidget(QWidget):
 
         self.setLayout(layout)
 
-    def _create_header_section(self, parent_layout) -> None:
-        """Create header section with controls."""
+    def _create_header_section(self, parent_layout: QVBoxLayout) -> None:
+        """Create header section with controls and file information.
+
+        Args:
+            parent_layout: The parent layout to add the header section to
+
+        """
         header_widget = QWidget()
         header_layout = QVBoxLayout()
 
@@ -280,8 +304,13 @@ class UnifiedProtectionWidget(QWidget):
         header_widget.setLayout(header_layout)
         parent_layout.addWidget(header_widget)
 
-    def _create_overview_panel(self):
-        """Create overview panel."""
+    def _create_overview_panel(self) -> QWidget:
+        """Create overview panel with summary and protection cards.
+
+        Returns:
+            Widget containing the overview panel UI components
+
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -320,8 +349,13 @@ class UnifiedProtectionWidget(QWidget):
         widget.setLayout(layout)
         return widget
 
-    def _create_details_panel(self):
-        """Create details panel."""
+    def _create_details_panel(self) -> QTabWidget:
+        """Create details panel with tabbed interface for analysis results.
+
+        Returns:
+            Tab widget containing analysis details, hex view, strings, entropy, bypass strategies, and technical info
+
+        """
         self.details_tabs = QTabWidget()
 
         # Analysis Details tab
@@ -363,8 +397,13 @@ class UnifiedProtectionWidget(QWidget):
 
         return self.details_tabs
 
-    def _create_bypass_widget(self):
-        """Create bypass strategies widget."""
+    def _create_bypass_widget(self) -> QWidget:
+        """Create bypass strategies widget with export functionality.
+
+        Returns:
+            Widget containing bypass strategies display and export button
+
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -389,8 +428,13 @@ class UnifiedProtectionWidget(QWidget):
         widget.setLayout(layout)
         return widget
 
-    def _create_status_bar(self, parent_layout) -> None:
-        """Create status bar."""
+    def _create_status_bar(self, parent_layout: QVBoxLayout) -> None:
+        """Create status bar with progress indicator.
+
+        Args:
+            parent_layout: The parent layout to add the status bar to
+
+        """
         status_widget = QWidget()
         status_layout = QHBoxLayout()
 
@@ -625,8 +669,16 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
 
         self.details_text.setPlainText(details)
 
-    def _format_source(self, source):
-        """Format analysis source for display."""
+    def _format_source(self, source: AnalysisSource) -> str:
+        """Format analysis source for display in technical information.
+
+        Args:
+            source: The analysis source enum value indicating detection method
+
+        Returns:
+            Human-readable description of the detection source
+
+        """
         if source == AnalysisSource.PROTECTION_ENGINE:
             return "Pattern-based detection"
         if source == AnalysisSource.ML_MODEL:
@@ -658,8 +710,16 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
 
         self.strategies_layout.addStretch()
 
-    def _create_strategy_card(self, strategy: dict[str, Any]):
-        """Create a bypass strategy card."""
+    def _create_strategy_card(self, strategy: dict[str, Any]) -> QGroupBox:
+        """Create a bypass strategy card with difficulty and steps.
+
+        Args:
+            strategy: Dictionary containing strategy information including name, description, difficulty, tools, and steps
+
+        Returns:
+            Group box containing the formatted strategy information
+
+        """
         card = QGroupBox(strategy["name"])
         layout = QVBoxLayout()
 
@@ -979,7 +1039,13 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
             analysis_complete = pyqtSignal(dict)
             progress_updated = pyqtSignal(int)
 
-            def __init__(self, file_path) -> None:
+            def __init__(self, file_path: str) -> None:
+                """Initialize ICP analysis thread.
+
+                Args:
+                    file_path: Path to the binary file to analyze
+
+                """
                 super().__init__()
                 self.file_path = file_path
 
@@ -997,7 +1063,13 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
                     logger.error(f"ICP analysis error: {e}")
                     self.analysis_complete.emit({"error": str(e)})
 
-        def update_analysis(analysis_data) -> None:
+        def update_analysis(analysis_data: dict[str, Any]) -> None:
+            """Update the dialog with ICP analysis results.
+
+            Args:
+                analysis_data: Dictionary containing ICP analysis results including file type, entropy, sections, and strings
+
+            """
             progress.setVisible(False)
 
             if "error" in analysis_data:

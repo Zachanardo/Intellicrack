@@ -692,7 +692,7 @@ class R2AIEngine:
 
         return model
 
-    def _generate_license_training_data(self) -> tuple[np.ndarray, np.ndarray]:
+    def _generate_license_training_data(self) -> tuple["np.ndarray", "np.ndarray"]:
         """Generate training data from analysis of actual license-protected binaries."""
         try:
             # Analyze real license-protected binaries to extract features
@@ -861,7 +861,7 @@ class R2AIEngine:
 
         return features
 
-    def _generate_pattern_based_license_data(self) -> tuple[np.ndarray, np.ndarray]:
+    def _generate_pattern_based_license_data(self) -> tuple["np.ndarray", "np.ndarray"]:
         """Generate training data based on real license validation patterns."""
         # Extract features from real license patterns
         self._get_real_license_patterns()
@@ -903,7 +903,7 @@ class R2AIEngine:
 
         return X, y
 
-    def _generate_vulnerability_training_data(self) -> tuple[np.ndarray, np.ndarray]:
+    def _generate_vulnerability_training_data(self) -> tuple["np.ndarray", "np.ndarray"]:
         """Generate training data from analysis of actual vulnerability patterns."""
         try:
             # Analyze real vulnerability patterns from CVE database and known exploits
@@ -1055,7 +1055,7 @@ class R2AIEngine:
 
         return features
 
-    def _generate_cve_based_vulnerability_data(self) -> tuple[np.ndarray, np.ndarray]:
+    def _generate_cve_based_vulnerability_data(self) -> tuple["np.ndarray", "np.ndarray"]:
         """Generate vulnerability training data based on CVE database patterns."""
         vuln_classes = self._get_real_vulnerability_classes()
 
@@ -1224,7 +1224,7 @@ class R2AIEngine:
 
         return min(1.0, score)
 
-    def _assess_clustering_quality(self, cluster_labels: np.ndarray) -> float:
+    def _assess_clustering_quality(self, cluster_labels: "np.ndarray") -> float:
         """Assess quality of clustering results."""
         unique_labels = set(cluster_labels)
         if len(unique_labels) <= 1:

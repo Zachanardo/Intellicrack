@@ -626,12 +626,9 @@ class StructureVisualizerWidget(QWidget):
         raw_size = section.get("raw_size", 0)
 
         if virtual_size > 0 and raw_size == 0:
-            return True  # Virtual section with no raw data
+            return True
 
-        if raw_size > virtual_size * 2:
-            return True  # Much larger on disk than in memory
-
-        return False
+        return raw_size > virtual_size * 2
 
     def _is_suspicious_import(self, func_name: str) -> bool:
         """Check if an import is suspicious."""

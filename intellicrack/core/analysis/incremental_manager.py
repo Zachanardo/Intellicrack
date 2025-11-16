@@ -1,19 +1,6 @@
-"""Incremental analysis manager for caching and tracking analysis progress."""
+#!/usr/bin/env python3
+"""Incremental analysis manager for caching and tracking analysis progress.
 
-import datetime
-import hashlib
-import hmac
-import json
-import logging
-import os
-import pickle
-import time
-from pathlib import Path
-from typing import Any
-
-from intellicrack.utils.logger import logger
-
-"""
 Incremental Analysis Manager for avoiding reprocessing unchanged code.
 
 Copyright (C) 2025 Zachary Flint
@@ -34,7 +21,19 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-#!/usr/bin/env python3
+import datetime
+import hashlib
+import hmac
+import json
+import logging
+import os
+import pickle
+import time
+from pathlib import Path
+from typing import Any
+
+from intellicrack.utils.logger import logger
+
 """
 Incremental Analysis Manager for avoiding reprocessing unchanged code.
 
@@ -56,8 +55,18 @@ except ImportError as e:
 PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
 
 
-def secure_pickle_dump(obj, file_path) -> None:
-    """Securely dump object with integrity check."""
+def secure_pickle_dump(obj: object, file_path: str | Path) -> None:
+    """Securely dump object with integrity check.
+
+    Args:
+        obj: Python object to serialize and dump to file.
+        file_path: Path to write the pickled object with HMAC integrity check.
+
+    Raises:
+        OSError: If file cannot be written.
+        pickle.PicklingError: If object cannot be serialized.
+
+    """
     # Serialize object
     data = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -73,8 +82,20 @@ def secure_pickle_dump(obj, file_path) -> None:
 class RestrictedUnpickler(pickle.Unpickler):
     """Restricted unpickler that only allows safe classes."""
 
-    def find_class(self, module, name):
-        """Override find_class to restrict allowed classes."""
+    def find_class(self, module: str, name: str) -> type:
+        """Override find_class to restrict allowed classes.
+
+        Args:
+            module: Module name to check for safety.
+            name: Class name to check for safety.
+
+        Returns:
+            The class object if allowed.
+
+        Raises:
+            pickle.UnpicklingError: If module or class is not in allowed list.
+
+        """
         # Allow only safe modules and classes
         ALLOWED_MODULES = {
             "numpy",
@@ -105,8 +126,21 @@ class RestrictedUnpickler(pickle.Unpickler):
         raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
 
 
-def secure_pickle_load(file_path):
-    """Securely load object with integrity verification."""
+def secure_pickle_load(file_path: str | Path) -> object:
+    """Securely load object with integrity verification.
+
+    Args:
+        file_path: Path to the pickled file to load.
+
+    Returns:
+        Deserialized Python object from the pickled file.
+
+    Raises:
+        ValueError: If integrity check fails indicating possible tampering.
+        OSError: If file cannot be read.
+        pickle.UnpicklingError: If object cannot be deserialized.
+
+    """
     try:
         # Try joblib first as it's safer for ML models
         import joblib
@@ -358,7 +392,7 @@ class IncrementalAnalysisManager:
             self.logger.error("Error calculating file hash: %s", e)
             return None
 
-    def get_cached_analysis(self, analysis_type: str) -> Any | None:
+    def get_cached_analysis(self, analysis_type: str) -> object | None:
         """Get cached analysis results for the current binary.
 
         Args:
@@ -410,7 +444,7 @@ class IncrementalAnalysisManager:
             self.logger.error("Unexpected error loading cache: %s", e)
             return None
 
-    def cache_analysis(self, analysis_type: str, results: Any) -> bool:
+    def cache_analysis(self, analysis_type: str, results: object) -> bool:
         """Cache analysis results for the current binary.
 
         Args:
@@ -777,7 +811,7 @@ class IncrementalAnalysisManager:
             }
 
 
-def run_analysis_manager(app: Any) -> None:
+def run_analysis_manager(app: object) -> None:
     """Initialize and run the incremental analysis manager.
 
     This is the main entry point for the standalone incremental analysis feature.

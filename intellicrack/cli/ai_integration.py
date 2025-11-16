@@ -1,26 +1,11 @@
 """AI Integration Module for Intellicrack.
 
-Copyright (C) 2025 Zachary Flint
-
-This file is part of Intellicrack.
-
-Intellicrack is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Intellicrack is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
+This module provides integration points for various AI models (OpenAI, Anthropic, etc.)
+to use Intellicrack capabilities safely. It offers model-specific adapters for Claude,
+OpenAI, and LangChain frameworks to interact with Intellicrack's binary analysis and
+licensing protection cracking capabilities through a controlled, confirmation-based interface.
 """
 
-#!/usr/bin/env python3
-
-# Standard library imports
 import json
 import logging
 import os
@@ -28,23 +13,14 @@ import sys
 from abc import ABC, abstractmethod
 from typing import Any
 
-# Local imports
 from .ai_wrapper import ConfirmationManager, IntellicrackAIInterface
 
-# Add parent directories to path
-script_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(script_dir, "..", ".."))
+script_dir: str = os.path.dirname(os.path.abspath(__file__))
+project_root: str = os.path.abspath(os.path.join(script_dir, "..", ".."))
 sys.path.insert(0, project_root)
 
-"""
-AI Integration Module for Intellicrack.
 
-This module provides integration points for various AI models (OpenAI, Anthropic, etc.)
-to use Intellicrack capabilities safely.
-"""
-
-
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class AIModelAdapter(ABC):
@@ -356,12 +332,18 @@ class LangChainIntegration:
         """Initialize LangChain integration with Intellicrack interface."""
         self.interface = intellicrack_interface
 
-    def create_tools(self):
-        """Create LangChain tool wrappers."""
+    def create_tools(self) -> list[Any]:
+        """Create LangChain tool wrappers.
+
+        Returns:
+            List of LangChain Tool objects for binary analysis operations,
+            or an empty list if LangChain is not available.
+
+        """
         try:
             from langchain.tools import Tool
 
-            tools = []
+            tools: list[Any] = []
 
             # Analyze binary tool
             tools.append(

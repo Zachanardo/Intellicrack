@@ -14,7 +14,6 @@ import logging
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
 
 import frida
 
@@ -43,7 +42,7 @@ class ProtectionInfo:
     type: ProtectionType
     location: str
     confidence: float
-    details: dict[str, Any]
+    details: dict[str, object]
     bypass_available: bool
     bypass_script: str | None = None
 
@@ -275,7 +274,7 @@ class FridaProtectionBypasser:
         });
         """
 
-        def on_message(message, data) -> None:
+        def on_message(message: object, data: object) -> None:
             if message["type"] == "send":
                 payload = message["payload"]
                 if payload["type"] == "anti_debug":
@@ -438,7 +437,7 @@ class FridaProtectionBypasser:
         });
         """
 
-        def on_message(message, data) -> None:
+        def on_message(message: object, data: object) -> None:
             if message["type"] == "send":
                 payload = message["payload"]
                 if payload["type"] == "cert_pinning":
@@ -619,7 +618,7 @@ class FridaProtectionBypasser:
         });
         """
 
-        def on_message(message, data) -> None:
+        def on_message(message: object, data: object) -> None:
             if message["type"] == "send":
                 payload = message["payload"]
                 if payload["type"] == "integrity_check":
@@ -829,7 +828,7 @@ class FridaProtectionBypasser:
         });
         """
 
-        def on_message(message, data) -> None:
+        def on_message(message: object, data: object) -> None:
             if message["type"] == "send":
                 payload = message["payload"]
                 if payload["type"] == "vm_detection":
@@ -1002,7 +1001,7 @@ class FridaProtectionBypasser:
             }
             """
 
-            def on_message(message, data) -> None:
+            def on_message(message: object, data: object) -> None:
                 if message["type"] == "send":
                     payload = message["payload"]
                     if payload["type"] == "packer_heuristic":
@@ -1421,7 +1420,7 @@ class FridaProtectionBypasser:
             combined_script = "\n\n".join(all_scripts)
             self.script = self.session.create_script(combined_script)
 
-            def on_message(message, data) -> None:
+            def on_message(message: object, data: object) -> None:
                 if message["type"] == "send":
                     logger.info(f"Bypass result: {message['payload']}")
                 elif message["type"] == "error":

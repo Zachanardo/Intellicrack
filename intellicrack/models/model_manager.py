@@ -22,7 +22,7 @@ import os
 from collections.abc import Callable
 from datetime import datetime
 from threading import Thread
-from typing import Any
+from typing import Any, TypeVar, cast
 
 from intellicrack.utils.logger import logger
 from intellicrack.utils.torch_gil_safety import _torch_lock, safe_torch_import
@@ -48,37 +48,71 @@ except ImportError:
         """Fallback repository factory when repositories unavailable."""
 
         @staticmethod
-        def create_repository(*args, **kwargs) -> None:
-            """Create repository instance."""
+        def create_repository(*args: object, **kwargs: object) -> object | None:
+            """Create repository instance.
+
+            Args:
+                *args: Variable positional arguments
+                **kwargs: Variable keyword arguments
+
+            Returns:
+                None for fallback implementation
+
+            """
             logger.debug(f"Fallback repository creation called with {len(args)} args and {len(kwargs)} kwargs")
+            return None
 
     class DownloadProgressCallback:
         """Fallback progress callback for downloads."""
 
-        def __call__(self, *args, **kwargs):
-            """Handle progress callback with fallback logging."""
+        def __call__(self, *args: object, **kwargs: object) -> None:
+            """Handle progress callback with fallback logging.
+
+            Args:
+                *args: Variable positional arguments
+                **kwargs: Variable keyword arguments
+
+            """
             logger.debug(f"Progress callback called with {len(args)} args and {len(kwargs)} kwargs")
 
     class ModelInfo:
         """Fallback model information container."""
 
-        def __init__(self, *args, **kwargs) -> None:
-            """Initialize fallback ModelInfo with default values and debug logging."""
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize fallback ModelInfo with default values and debug logging.
+
+            Args:
+                *args: Variable positional arguments
+                **kwargs: Variable keyword arguments
+
+            """
             logger.debug(f"ModelInfo fallback initialized with {len(args)} args and {len(kwargs)} kwargs")
-            self.name = "unknown"
-            self.size = 0
+            self.name: str = "unknown"
+            self.size: int = 0
 
     class ModelRepositoryInterface:
         """Fallback model repository interface."""
 
-        def __init__(self, *args, **kwargs) -> None:
-            """Initialize the abstract model repository interface."""
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize the abstract model repository interface.
+
+            Args:
+                *args: Variable positional arguments
+                **kwargs: Variable keyword arguments
+
+            """
 
     class LocalFileRepository:
         """Fallback local file repository."""
 
-        def __init__(self, *args, **kwargs) -> None:
-            """Initialize the local file repository for model storage."""
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize the local file repository for model storage.
+
+            Args:
+                *args: Variable positional arguments
+                **kwargs: Variable keyword arguments
+
+            """
 
 
 class ProgressHandler(DownloadProgressCallback):
@@ -427,7 +461,7 @@ class ModelManager:
             # This will trigger a refresh by calling get_available_models
             repository.get_available_models()
 
-    def train_model(self, training_data: Any, model_type: str) -> bool:
+    def train_model(self, training_data: object, model_type: str) -> bool:
         """Train machine learning model.
 
         This method trains a new machine learning model using the provided data
@@ -531,7 +565,16 @@ class ModelManager:
                             self.relu = nn.ReLU()
                             self.fc2 = nn.Linear(hidden_size, output_size)
 
-                        def forward(self, x: Any):
+                        def forward(self, x: object) -> object:
+                            """Forward pass for neural network.
+
+                            Args:
+                                x: Input tensor
+
+                            Returns:
+                                Output tensor
+
+                            """
                             x = self.fc1(x)
                             x = self.relu(x)
                             x = self.fc2(x)
@@ -584,7 +627,7 @@ class ModelManager:
             logger.error(f"Model training failed: {e}")
             return False
 
-    def save_model(self, model: Any, path: str) -> bool:
+    def save_model(self, model: object, path: str) -> bool:
         """Save trained model to disk.
 
         This method saves a trained model to disk with support for various

@@ -1904,53 +1904,58 @@ class StaticAnalysisAgent(BaseAgent):
             try:
                 import mmap
 
-                with open(binary_path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped_file:
-                    # Basic heuristic analysis
-                    file_size = len(mmapped_file)
+                def _analyze_with_mmap() -> dict[str, Any]:
+                    mmap_result = result.copy()
+                    with open(binary_path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped_file:
+                        # Basic heuristic analysis
+                        file_size = len(mmapped_file)
 
-                    # Look for common control flow patterns
-                    jump_instructions = 0
-                    call_instructions = 0
-                    ret_instructions = 0
+                        # Look for common control flow patterns
+                        jump_instructions = 0
+                        call_instructions = 0
+                        ret_instructions = 0
 
-                    # x86/x64 instruction patterns
-                    for i in range(file_size - 1):
-                        byte = mmapped_file[i]
-                        next_byte = mmapped_file[i + 1] if i + 1 < file_size else 0
+                        # x86/x64 instruction patterns
+                        for i in range(file_size - 1):
+                            byte = mmapped_file[i]
+                            next_byte = mmapped_file[i + 1] if i + 1 < file_size else 0
 
-                        # Jump instructions (JMP, JE, JNE, etc.)
-                        if byte in [0xEB, 0xE9] or (byte == 0x0F and next_byte in range(0x80, 0x90)):
-                            jump_instructions += 1
+                            # Jump instructions (JMP, JE, JNE, etc.)
+                            if byte in [0xEB, 0xE9] or (byte == 0x0F and next_byte in range(0x80, 0x90)):
+                                jump_instructions += 1
 
-                        # Call instructions
-                        elif byte in [0xE8, 0xFF] and (next_byte & 0x38) == 0x10:
-                            call_instructions += 1
+                            # Call instructions
+                            elif byte in [0xE8, 0xFF] and (next_byte & 0x38) == 0x10:
+                                call_instructions += 1
 
-                        # Return instructions
-                        elif byte in [0xC3, 0xCB, 0xC2, 0xCA]:
-                            ret_instructions += 1
+                            # Return instructions
+                            elif byte in [0xC3, 0xCB, 0xC2, 0xCA]:
+                                ret_instructions += 1
 
-                    # Estimate basic blocks (very rough)
-                    result["basic_blocks"] = max(jump_instructions, call_instructions) + ret_instructions
+                        # Estimate basic blocks (very rough)
+                        mmap_result["basic_blocks"] = max(jump_instructions, call_instructions) + ret_instructions
 
-                    # Estimate function count
-                    result["function_count"] = max(1, ret_instructions)
+                        # Estimate function count
+                        mmap_result["function_count"] = max(1, ret_instructions)
 
-                    # Estimate cyclomatic complexity
-                    if result["function_count"] > 0:
-                        result["cyclomatic_complexity"] = (jump_instructions / result["function_count"]) + 1
+                        # Estimate cyclomatic complexity
+                        if mmap_result["function_count"] > 0:
+                            mmap_result["cyclomatic_complexity"] = (jump_instructions / mmap_result["function_count"]) + 1
 
-                    # Estimate call graph nodes
-                    result["call_graph_nodes"] = call_instructions + result["function_count"]
+                        # Estimate call graph nodes
+                        mmap_result["call_graph_nodes"] = call_instructions + mmap_result["function_count"]
 
-                    # Look for anomalies
-                    if jump_instructions > call_instructions * 3:
-                        result["control_flow_anomalies"].append({"type": "excessive_branching", "address": "0x0"})
+                        # Look for anomalies
+                        if jump_instructions > call_instructions * 3:
+                            mmap_result["control_flow_anomalies"].append({"type": "excessive_branching", "address": "0x0"})
 
-                    if ret_instructions > call_instructions * 1.5:
-                        result["control_flow_anomalies"].append({"type": "unbalanced_returns", "address": "0x0"})
+                        if ret_instructions > call_instructions * 1.5:
+                            mmap_result["control_flow_anomalies"].append({"type": "unbalanced_returns", "address": "0x0"})
 
-                    result["confidence"] = 0.6
+                        mmap_result["confidence"] = 0.6
+                    return mmap_result
+
+                result.update(await asyncio.to_thread(_analyze_with_mmap))
 
             except Exception as e:
                 logger.error(f"Control flow analysis failed: {e}")

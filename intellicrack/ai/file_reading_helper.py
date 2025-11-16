@@ -22,11 +22,9 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
-
-
-from typing import Any
 
 
 def read_file_with_ai_tools(

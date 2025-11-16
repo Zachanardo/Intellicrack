@@ -26,7 +26,6 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +48,7 @@ class MemoryManager:
         self.current_usage = 0
         self.memory_lock = threading.Lock()
 
-    def check_memory_usage(self) -> dict[str, Any]:
+    def check_memory_usage(self) -> dict[str, object]:
         """Check current memory usage."""
         try:
             from intellicrack.handlers.psutil_handler import psutil
@@ -106,7 +105,7 @@ class BinaryChunker:
         """Initialize binary chunker with memory manager for efficient data processing."""
         self.memory_manager = memory_manager
 
-    def chunk_binary(self, file_path: str, chunk_size: int | None = None) -> list[dict[str, Any]]:
+    def chunk_binary(self, file_path: str, chunk_size: int | None = None) -> list[dict[str, object]]:
         """Split binary into manageable chunks for analysis.
 
         Args:
@@ -148,7 +147,7 @@ class BinaryChunker:
         logger.info(f"Split {file_path.name} into {len(chunks)} chunks of ~{chunk_size // 1024 // 1024}MB each")
         return chunks
 
-    def read_chunk(self, chunk_info: dict[str, Any]) -> bytes:
+    def read_chunk(self, chunk_info: dict[str, object]) -> bytes:
         """Read a specific chunk from the binary."""
         try:
             with open(chunk_info["file_path"], "rb") as f:
@@ -158,7 +157,7 @@ class BinaryChunker:
             logger.error(f"Error reading chunk {chunk_info['id']}: {e}")
             return b""
 
-    def analyze_chunk_parallel(self, chunks: list[dict[str, Any]], analysis_func, max_workers: int = 4) -> list[dict[str, Any]]:
+    def analyze_chunk_parallel(self, chunks: list[dict[str, object]], analysis_func: object, max_workers: int = 4) -> list[dict[str, object]]:
         """Analyze chunks in parallel with controlled concurrency.
 
         Args:
@@ -233,7 +232,7 @@ class CacheManager:
         file_hash = self.get_file_hash(file_path)
         return f"{analysis_type}_{file_hash}"
 
-    def get_cached_result(self, file_path: str, analysis_type: str) -> dict[str, Any] | None:
+    def get_cached_result(self, file_path: str, analysis_type: str) -> dict[str, object] | None:
         """Get cached analysis result if available."""
         cache_key = self.get_cache_key(file_path, analysis_type)
 
@@ -261,7 +260,7 @@ class CacheManager:
 
         return None
 
-    def cache_result(self, file_path: str, analysis_type: str, result: dict[str, Any]) -> None:
+    def cache_result(self, file_path: str, analysis_type: str, result: dict[str, object]) -> None:
         """Cache analysis result."""
         cache_key = self.get_cache_key(file_path, analysis_type)
 
@@ -300,7 +299,7 @@ class AdaptiveAnalyzer:
         self.memory_manager = memory_manager
         self.cache_manager = cache_manager
 
-    def get_analysis_strategy(self, file_path: str) -> dict[str, Any]:
+    def get_analysis_strategy(self, file_path: str) -> dict[str, object]:
         """Determine optimal analysis strategy for the binary.
 
         Args:
@@ -354,7 +353,7 @@ class AdaptiveAnalyzer:
 
         return strategy
 
-    def _identify_priority_sections(self, file_path: str) -> list[dict[str, Any]]:
+    def _identify_priority_sections(self, file_path: str) -> list[dict[str, object]]:
         """Identify important sections to prioritize during analysis."""
         priority_sections = []
 
@@ -417,7 +416,7 @@ class PerformanceOptimizer:
         self.binary_chunker = BinaryChunker(self.memory_manager)
         self.adaptive_analyzer = AdaptiveAnalyzer(self.memory_manager, self.cache_manager)
 
-    def optimize_analysis(self, file_path: str, analysis_functions: list[callable]) -> dict[str, Any]:
+    def optimize_analysis(self, file_path: str, analysis_functions: list[object]) -> dict[str, object]:
         """Perform optimized analysis of a large binary.
 
         Args:
@@ -504,7 +503,7 @@ class PerformanceOptimizer:
 
         return results
 
-    def _run_chunked_analysis(self, file_path: str, analysis_func: callable, strategy: dict[str, Any]) -> dict[str, Any]:
+    def _run_chunked_analysis(self, file_path: str, analysis_func: object, strategy: dict[str, object]) -> dict[str, object]:
         """Run analysis on binary chunks."""
         chunk_size = int(strategy["chunk_size_mb"] * 1024 * 1024)
         chunks = self.binary_chunker.chunk_binary(file_path, chunk_size)
@@ -517,7 +516,7 @@ class PerformanceOptimizer:
             chunks = [chunks[i] for i in range(0, len(chunks), step)][:sample_count]
 
         # Define chunk analysis wrapper
-        def analyze_chunk(chunk_info):
+        def analyze_chunk(chunk_info: dict[str, object]) -> dict[str, object]:
             """Analyze a single chunk of binary data."""
             chunk_data = self.binary_chunker.read_chunk(chunk_info)
             if chunk_data:
@@ -538,7 +537,7 @@ class PerformanceOptimizer:
 
         return aggregated_result
 
-    def _run_standard_analysis(self, file_path: str, analysis_func: callable, strategy: dict[str, Any]) -> dict[str, Any]:
+    def _run_standard_analysis(self, file_path: str, analysis_func: object, strategy: dict[str, object]) -> dict[str, object]:
         """Run standard analysis on entire file."""
         _ = strategy
         try:
@@ -552,7 +551,7 @@ class PerformanceOptimizer:
                 data = f.read()
                 return analysis_func(data)
 
-    def _aggregate_chunk_results(self, chunk_results: list[dict[str, Any]], analysis_name: str) -> dict[str, Any]:
+    def _aggregate_chunk_results(self, chunk_results: list[dict[str, object]], analysis_name: str) -> dict[str, object]:
         """Aggregate results from multiple chunks."""
         aggregated = {
             "analysis_type": analysis_name,
@@ -586,7 +585,7 @@ def create_performance_optimizer(max_memory_mb: int = 2048, cache_dir: str = "ca
 
 
 # Example analysis functions for testing
-def example_string_analysis(data, chunk_info=None) -> dict[str, Any]:
+def example_string_analysis(data: object, chunk_info: object = None) -> dict[str, object]:
     """Demonstrate string analysis function."""
     # Include chunk information in results for comprehensive analysis
     result_metadata = {}
@@ -628,7 +627,7 @@ def example_string_analysis(data, chunk_info=None) -> dict[str, Any]:
     return result
 
 
-def example_entropy_analysis(data, chunk_info=None) -> dict[str, Any]:
+def example_entropy_analysis(data: object, chunk_info: object = None) -> dict[str, object]:
     """Demonstrate entropy analysis function."""
     # Include chunk information in entropy analysis for position-aware results
     result_metadata = {}

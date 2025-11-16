@@ -57,8 +57,14 @@ class DashboardTab(BaseTab):
     project_opened = pyqtSignal(str)
     project_closed = pyqtSignal()
 
-    def __init__(self, shared_context=None, parent=None) -> None:
-        """Initialize dashboard tab with system overview and status monitoring."""
+    def __init__(self, shared_context: object = None, parent: QWidget | None = None) -> None:
+        """Initialize dashboard tab with system overview and status monitoring.
+
+        Args:
+            shared_context: Shared application context for cross-component communication.
+            parent: Parent widget for Qt object hierarchy.
+
+        """
         self.config_manager = get_ui_config_manager()
 
         super().__init__(shared_context, parent)
@@ -102,8 +108,13 @@ class DashboardTab(BaseTab):
         # Store layout to avoid recreation
         self.main_layout = layout
 
-    def create_quick_start_panel(self):
-        """Create the prominent Quick Start panel."""
+    def create_quick_start_panel(self) -> QGroupBox:
+        """Create the prominent Quick Start panel.
+
+        Returns:
+            QGroupBox widget containing quick start action buttons for file operations.
+
+        """
         panel = QGroupBox("Quick Start")
 
         # Apply theme-based styling
@@ -188,8 +199,13 @@ class DashboardTab(BaseTab):
 
         return panel
 
-    def create_recent_files_panel(self):
-        """Create the recent files panel."""
+    def create_recent_files_panel(self) -> QWidget:
+        """Create the recent files panel.
+
+        Returns:
+            QWidget containing the recent files list and management controls.
+
+        """
         panel = QWidget()
         layout = QVBoxLayout(panel)
 
@@ -343,15 +359,23 @@ class DashboardTab(BaseTab):
             )
             self.log_activity(f"Error in program selection: {e!s}")
 
-    def log_activity(self, message) -> None:
-        """Log an activity message - simplified version for dashboard."""
-        # For the simplified dashboard, we can log to console or a simple logger
-        # The full activity log functionality will be moved to WorkspaceTab
+    def log_activity(self, message: str) -> None:
+        """Log an activity message - simplified version for dashboard.
+
+        Args:
+            message: Activity message to log with timestamp.
+
+        """
         timestamp = datetime.now().strftime("%H:%M:%S")
         print(f"[{timestamp}] {message}")
 
-    def create_system_monitor_panel(self):
-        """Create system monitoring panel."""
+    def create_system_monitor_panel(self) -> SystemMonitorWidget:
+        """Create system monitoring panel.
+
+        Returns:
+            SystemMonitorWidget configured with dashboard monitoring settings.
+
+        """
         self.system_monitor = SystemMonitorWidget()
         self.system_monitor.alert_triggered.connect(self.handle_system_alert)
 
@@ -374,8 +398,13 @@ class DashboardTab(BaseTab):
         if alert_type in ["CPU", "Memory", "Disk"]:
             QMessageBox.warning(self, f"System Alert - {alert_type}", message)
 
-    def create_gpu_status_panel(self):
-        """Create GPU status monitoring panel."""
+    def create_gpu_status_panel(self) -> GPUStatusWidget:
+        """Create GPU status monitoring panel.
+
+        Returns:
+            GPUStatusWidget configured with GPU monitoring settings.
+
+        """
         self.gpu_status = GPUStatusWidget()
 
         # Configure GPU monitoring based on settings
@@ -388,8 +417,13 @@ class DashboardTab(BaseTab):
 
         return self.gpu_status
 
-    def create_cpu_status_panel(self):
-        """Create CPU status monitoring panel."""
+    def create_cpu_status_panel(self) -> CPUStatusWidget:
+        """Create CPU status monitoring panel.
+
+        Returns:
+            CPUStatusWidget configured with CPU monitoring settings.
+
+        """
         self.cpu_status = CPUStatusWidget()
 
         # Configure CPU monitoring based on settings
@@ -444,8 +478,13 @@ class DashboardTab(BaseTab):
 
                 self.recent_files_list.addItem(item)
 
-    def load_recent_file(self, item) -> None:
-        """Load a file from the recent files list."""
+    def load_recent_file(self, item: QListWidgetItem) -> None:
+        """Load a file from the recent files list.
+
+        Args:
+            item: List widget item containing the file path to load.
+
+        """
         file_path = item.data(Qt.ItemDataRole.UserRole)
         if file_path and os.path.exists(file_path):
             # Add to recent files and emit signal
@@ -459,8 +498,13 @@ class DashboardTab(BaseTab):
             else:
                 self.log_activity(f"Loaded recent file: {os.path.basename(file_path)}")
 
-    def add_to_recent_files(self, file_path) -> None:
-        """Add a file to the recent files list."""
+    def add_to_recent_files(self, file_path: str) -> None:
+        """Add a file to the recent files list.
+
+        Args:
+            file_path: Absolute path to the file to add to recent files history.
+
+        """
         recent_files = self.config_manager.get_setting("recent_files", [])
         max_recent = self.config_manager.get_setting("dashboard.max_recent_files", 10)
 
@@ -511,8 +555,14 @@ class DashboardTab(BaseTab):
         # Call parent cleanup
         super().cleanup()
 
-    def _style_quick_start_button(self, button, base_color) -> None:
-        """Apply consistent styling to quick start buttons with improved contrast."""
+    def _style_quick_start_button(self, button: QPushButton, base_color: str) -> None:
+        """Apply consistent styling to quick start buttons with improved contrast.
+
+        Args:
+            button: QPushButton to apply styling to.
+            base_color: Base color string (hex format) for button theming.
+
+        """
         theme = self.config_manager.get_theme_config()
         font_config = self.config_manager.get_font_config()
 

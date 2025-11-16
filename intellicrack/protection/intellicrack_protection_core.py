@@ -314,7 +314,7 @@ class IntellicrackProtectionCore:
                 architecture="Unknown",
             )
 
-    def _convert_icp_result(self, icp_result: "ICPScanResult") -> ProtectionAnalysis:
+    def _convert_icp_result(self, icp_result: ICPScanResult) -> ProtectionAnalysis:
         """Convert native ICPScanResult to ProtectionAnalysis format.
 
         This method bridges the gap between the native ICP Engine backend

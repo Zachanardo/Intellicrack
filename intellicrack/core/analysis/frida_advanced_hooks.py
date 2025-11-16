@@ -8,7 +8,6 @@ Licensed under GNU General Public License v3.0
 """
 
 from dataclasses import dataclass
-from typing import Any
 
 import frida
 
@@ -19,10 +18,10 @@ class StalkerTrace:
 
     thread_id: int
     timestamp: float
-    instructions: list[dict[str, Any]]  # address, mnemonic, operands
-    basic_blocks: list[tuple[int, int]]  # start, end addresses
-    call_graph: dict[int, list[int]]  # caller -> [callees]
-    coverage: float  # percentage of code covered
+    instructions: list[dict[str, object]]
+    basic_blocks: list[tuple[int, int]]
+    call_graph: dict[int, list[int]]
+    coverage: float
 
 
 @dataclass
@@ -62,7 +61,7 @@ class ExceptionInfo:
     thread_id: int
     timestamp: float
     handled: bool
-    exception_record: dict[str, Any]
+    exception_record: dict[str, object]
 
 
 class FridaStalkerEngine:
@@ -263,8 +262,14 @@ startThreadTrace(Process.getCurrentThreadId());
         self.script.on("message", self._on_message)
         self.script.load()
 
-    def _on_message(self, message, data) -> None:
-        """Handle Stalker messages."""
+    def _on_message(self, message: dict[str, object], data: object) -> None:
+        """Handle Stalker messages.
+
+        Args:
+            message: Frida message dictionary containing type and payload.
+            data: Additional binary data from Frida (unused).
+
+        """
         if message["type"] == "send":
             payload = message.get("payload", {})
             msg_type = payload.get("type")
@@ -281,7 +286,15 @@ startThreadTrace(Process.getCurrentThreadId());
                 )
 
     def start_trace(self, thread_id: int | None = None) -> bool:
-        """Start tracing a thread."""
+        """Start tracing a thread.
+
+        Args:
+            thread_id: Thread ID to trace. If None, traces current thread.
+
+        Returns:
+            True if tracing started successfully, False otherwise.
+
+        """
         try:
             result = self.script.exports.start_trace(thread_id)
             return result["success"]
@@ -290,7 +303,15 @@ startThreadTrace(Process.getCurrentThreadId());
             return False
 
     def stop_trace(self, thread_id: int) -> bool:
-        """Stop tracing a thread."""
+        """Stop tracing a thread.
+
+        Args:
+            thread_id: Thread ID to stop tracing.
+
+        Returns:
+            True if tracing stopped successfully, False otherwise.
+
+        """
         try:
             result = self.script.exports.stop_trace(thread_id)
             return result["success"]
@@ -299,7 +320,15 @@ startThreadTrace(Process.getCurrentThreadId());
             return False
 
     def get_trace(self, thread_id: int) -> StalkerTrace | None:
-        """Get trace for a thread."""
+        """Get trace for a thread.
+
+        Args:
+            thread_id: Thread ID to retrieve trace for.
+
+        Returns:
+            StalkerTrace object if available, None otherwise.
+
+        """
         return self.traces.get(thread_id)
 
 
@@ -501,8 +530,14 @@ send({ type: 'heap_tracking_ready' });
         self.script.on("message", self._on_message)
         self.script.load()
 
-    def _on_message(self, message, data) -> None:
-        """Handle heap tracking messages."""
+    def _on_message(self, message: dict[str, object], data: object) -> None:
+        """Handle heap tracking messages.
+
+        Args:
+            message: Frida message dictionary containing type and payload.
+            data: Additional binary data from Frida (unused).
+
+        """
         if message["type"] == "send":
             payload = message.get("payload", {})
             msg_type = payload.get("type")
@@ -523,12 +558,22 @@ send({ type: 'heap_tracking_ready' });
                     self.allocations[addr].freed = True
                     self.allocations[addr].freed_timestamp = payload["timestamp"]
 
-    def get_stats(self) -> dict[str, Any]:
-        """Get heap statistics."""
+    def get_stats(self) -> dict[str, object]:
+        """Get heap statistics.
+
+        Returns:
+            Dictionary containing heap allocation statistics.
+
+        """
         return self.script.exports.get_heap_stats()
 
     def find_leaks(self) -> list[HeapAllocation]:
-        """Find potential memory leaks."""
+        """Find potential memory leaks.
+
+        Returns:
+            List of HeapAllocation objects representing potential memory leaks.
+
+        """
         leaks = self.script.exports.find_leaks()
         return [self.allocations.get(leak["address"]) for leak in leaks if leak["address"] in self.allocations]
 
@@ -695,8 +740,14 @@ send({ type: 'thread_monitor_ready' });
         self.script.on("message", self._on_message)
         self.script.load()
 
-    def _on_message(self, message, data) -> None:
-        """Handle thread monitoring messages."""
+    def _on_message(self, message: dict[str, object], data: object) -> None:
+        """Handle thread monitoring messages.
+
+        Args:
+            message: Frida message dictionary containing type and payload.
+            data: Additional binary data from Frida (unused).
+
+        """
         if message["type"] == "send":
             payload = message.get("payload", {})
             msg_type = payload.get("type")
@@ -718,11 +769,21 @@ send({ type: 'thread_monitor_ready' });
                     self.threads[tid].termination_time = payload["timestamp"]
 
     def get_threads(self) -> list[ThreadInfo]:
-        """Get all tracked threads."""
+        """Get all tracked threads.
+
+        Returns:
+            List of ThreadInfo objects for all monitored threads.
+
+        """
         return list(self.threads.values())
 
-    def get_current_threads(self) -> list[dict[str, Any]]:
-        """Get current system threads."""
+    def get_current_threads(self) -> list[dict[str, object]]:
+        """Get current system threads.
+
+        Returns:
+            List of dictionaries containing current system thread information.
+
+        """
         return self.script.exports.get_current_threads()
 
 
@@ -868,8 +929,14 @@ send({ type: 'exception_hooking_ready' });
         self.script.on("message", self._on_message)
         self.script.load()
 
-    def _on_message(self, message, data) -> None:
-        """Handle exception messages."""
+    def _on_message(self, message: dict[str, object], data: object) -> None:
+        """Handle exception messages.
+
+        Args:
+            message: Frida message dictionary containing type and payload.
+            data: Additional binary data from Frida (unused).
+
+        """
         if message["type"] == "send":
             payload = message.get("payload", {})
             msg_type = payload.get("type")
@@ -892,11 +959,20 @@ send({ type: 'exception_hooking_ready' });
                     self.exceptions[-1].handled = payload["handled"]
 
     def get_exceptions(self) -> list[ExceptionInfo]:
-        """Get all tracked exceptions."""
+        """Get all tracked exceptions.
+
+        Returns:
+            List of ExceptionInfo objects for all caught exceptions.
+
+        """
         return self.exceptions
 
     def clear_exceptions(self) -> None:
-        """Clear exception history."""
+        """Clear exception history.
+
+        Clears both the local exception list and the Frida script exception list.
+
+        """
         self.exceptions.clear()
         self.script.exports.clear_exceptions()
 
@@ -912,7 +988,7 @@ class FridaNativeReplacer:
 
         """
         self.session = session
-        self.replacements: dict[int, dict[str, Any]] = {}
+        self.replacements: dict[int, dict[str, object]] = {}
         self.script = None
         self._init_replacer()
 
@@ -1054,8 +1130,14 @@ send({ type: 'replacer_ready' });
         self.script.on("message", self._on_message)
         self.script.load()
 
-    def _on_message(self, message, data) -> None:
-        """Handle replacement messages."""
+    def _on_message(self, message: dict[str, object], data: object) -> None:
+        """Handle replacement messages.
+
+        Args:
+            message: Frida message dictionary containing type and payload.
+            data: Additional binary data from Frida (unused).
+
+        """
         if message["type"] == "send":
             payload = message.get("payload", {})
             msg_type = payload.get("type")
@@ -1064,8 +1146,19 @@ send({ type: 'replacer_ready' });
                 addr = payload["address"]
                 self.replacements[addr] = {"args": payload["args"], "result": payload["result"]}
 
-    def replace_function(self, address: int, impl_name: str, ret_type: str = "int", arg_types: list[str] = None) -> bool:
-        """Replace a native function."""
+    def replace_function(self, address: int, impl_name: str, ret_type: str = "int", arg_types: list[str] | None = None) -> bool:
+        """Replace a native function.
+
+        Args:
+            address: Memory address of the function to replace.
+            impl_name: Name of the replacement implementation.
+            ret_type: Return type of the function (default: "int").
+            arg_types: List of argument types (default: empty list).
+
+        Returns:
+            True if replacement succeeded, False otherwise.
+
+        """
         try:
             return self.script.exports.replace(address, impl_name, ret_type, arg_types or [])
         except Exception as e:
@@ -1073,7 +1166,15 @@ send({ type: 'replacer_ready' });
             return False
 
     def restore_function(self, address: int) -> bool:
-        """Restore original function."""
+        """Restore original function.
+
+        Args:
+            address: Memory address of the function to restore.
+
+        Returns:
+            True if restoration succeeded, False otherwise.
+
+        """
         try:
             return self.script.exports.restore(address)
         except Exception as e:
@@ -1431,23 +1532,67 @@ send({ type: 'rpc_ready' });
         self.script.load()
 
     def memory_read(self, address: int, size: int) -> bytes:
-        """Read memory."""
+        """Read memory.
+
+        Args:
+            address: Memory address to read from.
+            size: Number of bytes to read.
+
+        Returns:
+            Bytes read from the specified memory address.
+
+        """
         return self.script.exports.memory.read(address, size)
 
     def memory_write(self, address: int, data: bytes) -> bool:
-        """Write memory."""
+        """Write memory.
+
+        Args:
+            address: Memory address to write to.
+            data: Bytes to write to memory.
+
+        Returns:
+            True if write succeeded, False otherwise.
+
+        """
         return self.script.exports.memory.write(address, data)
 
     def memory_scan(self, pattern: str, limit: int = 10) -> list[dict[str, int]]:
-        """Scan memory for pattern."""
+        """Scan memory for pattern.
+
+        Args:
+            pattern: Pattern string to search for in memory.
+            limit: Maximum number of matches to return (default: 10).
+
+        Returns:
+            List of dictionaries containing match address and size.
+
+        """
         return self.script.exports.memory.scan(pattern, limit)
 
     def module_find_export(self, module: str, name: str) -> int | None:
-        """Find module export."""
+        """Find module export.
+
+        Args:
+            module: Name of the module to search.
+            name: Name of the exported function.
+
+        Returns:
+            Address of the exported function, or None if not found.
+
+        """
         return self.script.exports.module.find_export(module, name)
 
-    def evaluate(self, code: str) -> Any:
-        """Evaluate JavaScript code."""
+    def evaluate(self, code: str) -> object:
+        """Evaluate JavaScript code.
+
+        Args:
+            code: JavaScript code string to evaluate.
+
+        Returns:
+            Result of the JavaScript evaluation.
+
+        """
         return self.script.exports.evaluate(code)
 
 
@@ -1470,37 +1615,72 @@ class FridaAdvancedHooking:
         self.rpc_interface = None
 
     def init_stalker(self) -> FridaStalkerEngine:
-        """Initialize Stalker engine."""
+        """Initialize Stalker engine.
+
+        Returns:
+            FridaStalkerEngine instance for instruction-level tracing.
+
+        """
         self.stalker = FridaStalkerEngine(self.session)
         return self.stalker
 
     def init_heap_tracker(self) -> FridaHeapTracker:
-        """Initialize heap tracking."""
+        """Initialize heap tracking.
+
+        Returns:
+            FridaHeapTracker instance for monitoring heap allocations.
+
+        """
         self.heap_tracker = FridaHeapTracker(self.session)
         return self.heap_tracker
 
     def init_thread_monitor(self) -> FridaThreadMonitor:
-        """Initialize thread monitoring."""
+        """Initialize thread monitoring.
+
+        Returns:
+            FridaThreadMonitor instance for tracking thread creation and termination.
+
+        """
         self.thread_monitor = FridaThreadMonitor(self.session)
         return self.thread_monitor
 
     def init_exception_hooker(self) -> FridaExceptionHooker:
-        """Initialize exception hooking."""
+        """Initialize exception hooking.
+
+        Returns:
+            FridaExceptionHooker instance for monitoring exception handlers.
+
+        """
         self.exception_hooker = FridaExceptionHooker(self.session)
         return self.exception_hooker
 
     def init_native_replacer(self) -> FridaNativeReplacer:
-        """Initialize native function replacement."""
+        """Initialize native function replacement.
+
+        Returns:
+            FridaNativeReplacer instance for replacing native function implementations.
+
+        """
         self.native_replacer = FridaNativeReplacer(self.session)
         return self.native_replacer
 
     def init_rpc_interface(self) -> FridaRPCInterface:
-        """Initialize RPC interface."""
+        """Initialize RPC interface.
+
+        Returns:
+            FridaRPCInterface instance for complex RPC operations.
+
+        """
         self.rpc_interface = FridaRPCInterface(self.session)
         return self.rpc_interface
 
-    def init_all(self):
-        """Initialize all advanced features."""
+    def init_all(self) -> "FridaAdvancedHooking":
+        """Initialize all advanced features.
+
+        Returns:
+            Self reference for method chaining.
+
+        """
         self.init_stalker()
         self.init_heap_tracker()
         self.init_thread_monitor()

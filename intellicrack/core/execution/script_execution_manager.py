@@ -168,13 +168,9 @@ class ScriptExecutionManager(QObject):
         saved_pref = self.config.get(f"qemu_testing.script_type_preferences.{script_type}", "ask")
 
         if saved_pref in ["always", "never"]:
-            return False  # Don't ask, use saved preference
+            return False
 
-        # Check if binary is trusted
-        if self._is_trusted_binary(target_binary):
-            return False  # Don't ask for trusted binaries
-
-        return True  # Ask the user
+        return not self._is_trusted_binary(target_binary)
 
     def _should_auto_test_qemu(self, script_type: str, options: dict[str, Any]) -> bool:
         """Check if we should automatically test in QEMU."""

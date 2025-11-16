@@ -19,14 +19,28 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class LearningRecord:
-    """Record of AI learning experience."""
+    """Record of AI learning experience from license protection analysis.
+
+    Attributes:
+        record_id: Unique identifier for this learning record
+        task_type: Type of protection analysis task performed
+        input_hash: Hash of the input binary or license check being analyzed
+        output_hash: Hash of the analysis output or crack result
+        success: Whether the license cracking attempt succeeded
+        confidence: Confidence score of the analysis (0.0 to 1.0)
+        execution_time: Time taken to analyze the protection in seconds
+        memory_usage: Memory consumed during analysis in bytes
+        error_message: Error message if analysis failed, None if successful
+        context: Additional context about the protection mechanism analyzed
+        timestamp: When this learning experience was recorded
+
+    """
 
     record_id: str
     task_type: str
@@ -37,13 +51,23 @@ class LearningRecord:
     execution_time: float
     memory_usage: int
     error_message: str | None = None
-    context: dict[str, Any] = field(default_factory=dict)
+    context: dict[str, object] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
 
 
 @dataclass
 class PatternRule:
-    """Pattern rule for AI behavior."""
+    """Pattern rule for AI-driven license protection bypass behavior.
+
+    Attributes:
+        rule_id: Unique identifier for this pattern rule
+        pattern: Pattern signature detected in license protection code
+        action: Automated action to take when pattern is detected
+        effectiveness: Effectiveness score of this rule (0.0 to 1.0)
+        usage_count: Number of times this rule has been applied
+        last_used: Timestamp when this rule was last used successfully
+
+    """
 
     rule_id: str
     pattern: str
@@ -55,7 +79,19 @@ class PatternRule:
 
 @dataclass
 class FailureAnalysis:
-    """Analysis of AI failure patterns."""
+    """Analysis of AI failure patterns during license cracking attempts.
+
+    Attributes:
+        failure_id: Unique identifier for this failure case
+        failure_type: Category of failure encountered in protection analysis
+        frequency: Number of times this failure pattern has occurred
+        pattern_signature: Signature identifying this specific failure pattern
+        suggested_fixes: List of potential fixes for this failure type
+        affected_components: Components impacted by this failure pattern
+        mitigation_strategies: Strategies to prevent or mitigate this failure
+        resolution_status: Current status of failure resolution (open/resolved)
+
+    """
 
     failure_id: str
     failure_type: str
@@ -68,14 +104,20 @@ class FailureAnalysis:
 
 
 class AILearningEngine:
-    """Simplified AI learning engine."""
+    """Simplified AI learning engine for license protection cracking patterns.
+
+    This engine records learning experiences from license cracking attempts,
+    identifies successful patterns for bypassing protection mechanisms, and
+    analyzes failures to improve future cracking effectiveness.
+    """
 
     def __init__(self, db_path: str | None = None) -> None:
         """Initialize the simplified AI learning engine.
 
         Args:
-            db_path: Optional path to the database file (currently unused in
-                     simplified implementation)
+            db_path: Optional path to the database file for persisting learning
+                data. Currently unused in the simplified implementation which
+                maintains learning state in memory only.
 
         """
         self.learning_enabled = True
@@ -87,35 +129,104 @@ class AILearningEngine:
         }
         logger.info("Simplified AI learning engine initialized")
 
-    def record_experience(self, **kwargs) -> bool:
-        """Record a learning experience."""
+    def record_experience(self, **kwargs: object) -> bool:
+        """Record a learning experience from license cracking attempt.
+
+        Args:
+            **kwargs: Arbitrary keyword arguments containing experience data such
+                as task_type, success status, confidence scores, and context
+                about the protection mechanism analyzed.
+
+        Returns:
+            True if the experience was successfully recorded.
+
+        """
         return True
 
-    def learn_from_vulnerability_analysis(self, *args, **kwargs) -> bool:
-        """Learn from vulnerability analysis."""
+    def learn_from_vulnerability_analysis(self, *args: object, **kwargs: object) -> bool:
+        """Learn from license protection vulnerability analysis.
+
+        Args:
+            *args: Positional arguments containing vulnerability analysis results.
+            **kwargs: Keyword arguments with additional vulnerability context.
+
+        Returns:
+            True if learning from the vulnerability analysis succeeded.
+
+        """
         return True
 
-    def learn_from_exploit_development(self, *args, **kwargs) -> bool:
-        """Learn from exploit development."""
+    def learn_from_exploit_development(self, *args: object, **kwargs: object) -> bool:
+        """Learn from license bypass exploit development.
+
+        Args:
+            *args: Positional arguments containing exploit development data.
+            **kwargs: Keyword arguments with additional exploit context.
+
+        Returns:
+            True if learning from the exploit development succeeded.
+
+        """
         return True
 
-    def learn_from_payload_generation(self, *args, **kwargs) -> bool:
-        """Learn from payload generation."""
+    def learn_from_payload_generation(self, *args: object, **kwargs: object) -> bool:
+        """Learn from keygen or patch payload generation.
+
+        Args:
+            *args: Positional arguments containing payload generation results.
+            **kwargs: Keyword arguments with additional payload context.
+
+        Returns:
+            True if learning from the payload generation succeeded.
+
+        """
         return True
 
-    def learn_from_evasion_technique(self, *args, **kwargs) -> bool:
-        """Learn from evasion technique."""
+    def learn_from_evasion_technique(self, *args: object, **kwargs: object) -> bool:
+        """Learn from protection evasion technique application.
+
+        Args:
+            *args: Positional arguments containing evasion technique data.
+            **kwargs: Keyword arguments with additional evasion context.
+
+        Returns:
+            True if learning from the evasion technique succeeded.
+
+        """
         return True
 
-    def learn_from_exploit_chain(self, *args, **kwargs) -> bool:
-        """Learn from exploit chain."""
+    def learn_from_exploit_chain(self, *args: object, **kwargs: object) -> bool:
+        """Learn from multi-stage license cracking exploit chain.
+
+        Args:
+            *args: Positional arguments containing exploit chain execution data.
+            **kwargs: Keyword arguments with additional chain context.
+
+        Returns:
+            True if learning from the exploit chain succeeded.
+
+        """
         return True
 
-    def get_learning_insights(self) -> dict[str, Any]:
-        """Get insights from learning data.
+    def get_learning_insights(self) -> dict[str, object]:
+        """Get insights from learning data accumulated during cracking sessions.
 
-        Returns comprehensive learning metrics and insights for visualization
-        and monitoring purposes.
+        Analyzes accumulated learning records to produce comprehensive metrics
+        about license cracking success rates, pattern effectiveness, failure
+        analysis, and performance characteristics.
+
+        Returns:
+            Dictionary containing learning insights with the following keys:
+                - total_records: Total number of learning experiences recorded
+                - success_rate: Overall success rate of cracking attempts
+                - avg_confidence: Average confidence score across all attempts
+                - learning_stats: Detailed statistics about learning progress
+                - pattern_insights: Information about discovered patterns
+                - failure_insights: Analysis of failure patterns and resolutions
+                - performance_metrics: Execution time and resource usage metrics
+                - learning_velocity: Rate of learning and improvement metrics
+                - recommendations: Actionable recommendations for improvement
+
         """
         # Calculate success rate based on processed records
         total_records = self.learning_stats.get("records_processed", 0)
@@ -159,12 +270,21 @@ class AILearningEngine:
         return insights
 
 
-# Lazy initialization
-_learning_engine = None
+_learning_engine: AILearningEngine | None = None
 
 
-def get_learning_engine():
-    """Get the global learning engine instance."""
+def get_learning_engine() -> AILearningEngine:
+    """Get the global learning engine instance.
+
+    Implements lazy initialization pattern to create the learning engine
+    singleton only when first requested. This allows the engine to be
+    shared across all license cracking operations.
+
+    Returns:
+        The global AILearningEngine instance used for recording and analyzing
+        license cracking experiences across all protection analysis sessions.
+
+    """
     global _learning_engine
     if _learning_engine is None:
         _learning_engine = AILearningEngine()
