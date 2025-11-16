@@ -315,7 +315,7 @@ class CertificateExtractor:
 
             # Create SHA1 hash for legacy compatibility with explicit security context
             # Using a secure wrapper function to encapsulate the insecure hash usage
-            def create_legacy_sha1_hash(backend: Any) -> Any:
+            def create_legacy_sha1_hash(backend: Backend) -> hashes.Hash:
                 """Create SHA1 hash for certificate fingerprint analysis only.
 
                 WARNING: SHA1 is cryptographically broken. This is only used

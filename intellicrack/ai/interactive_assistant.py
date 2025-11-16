@@ -63,7 +63,7 @@ class Tool:
 class IntellicrackAIAssistant:
     """Enhanced AI Assistant with Claude Code-like functionality."""
 
-    def __init__(self, cli_interface: Any | None = None) -> None:
+    def __init__(self, cli_interface: object | None = None) -> None:
         """Initialize AI assistant with CLI interface and tools."""
         self.cli_interface = cli_interface
         self.file_tools = get_ai_file_tools(cli_interface)

@@ -977,7 +977,6 @@ unfixable = [
   "TID252",  # Relative→absolute imports - breaks circular imports
   "Q000",    # Quote changes - breaks SQL/regex/Frida scripts
   "Q001",    # Multiline quote changes - same risk as Q000
-  "UP035",   # Deprecated imports - may remove intentional fallbacks
   "UP012",   # unnecessary-encode-utf8 - binary analysis needs explicit encoding
   "RUF013",  # implicit-optional - changes function signatures
   "PLW1510", # subprocess check=True - breaks intentional error ignoring

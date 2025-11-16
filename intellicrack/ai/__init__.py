@@ -20,13 +20,13 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 logger.debug("AI module loaded")
 
-_lazy_imports = {}
+_lazy_imports: dict[str, object] = {}
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> object:
     """Lazy load AI module attributes to prevent circular imports."""
     if name in _lazy_imports:
         return _lazy_imports[name]

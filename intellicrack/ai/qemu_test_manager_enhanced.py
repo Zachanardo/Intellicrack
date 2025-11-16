@@ -45,8 +45,33 @@ class EnhancedQEMUTestManager:
         script_content: str,
         binary_path: str,
         output_callback: Callable[[str], None],
-    ):
-        """Execute Frida script with real-time output streaming."""
+    ) -> dict[str, Any]:
+        """Execute Frida script with real-time output streaming.
+
+        Captures actual execution data from the target binary running in a QEMU
+        VM, monitoring memory changes, API calls, and other runtime behavior
+        through Frida instrumentation.
+
+        Args:
+            snapshot_id: QEMU VM snapshot identifier to use for test execution.
+            script_content: Frida JavaScript code to inject into the target process.
+            binary_path: Full path to the binary to execute and monitor.
+            output_callback: Callback function to receive real-time output from
+                both QEMU and Frida processes.
+
+        Returns:
+            Dictionary containing execution results with the following keys:
+                - success: Boolean indicating if both processes succeeded.
+                - qemu_returncode: Exit code from QEMU process.
+                - frida_returncode: Exit code from Frida/Python process.
+                - detailed_data: Captured API calls and memory changes.
+                - execution_summary: Summary of API calls and memory modifications.
+
+        Raises:
+            OSError: If temporary file operations fail.
+            FileNotFoundError: If binary_path does not exist.
+
+        """
         # Extract binary information for targeted analysis
         binary_name = os.path.basename(binary_path)
         binary_dir = os.path.dirname(binary_path)

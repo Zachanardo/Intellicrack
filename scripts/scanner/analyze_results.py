@@ -8,8 +8,20 @@ from collections import defaultdict
 from pathlib import Path
 
 
-def analyze_scan_results(json_file):
-    """Parse and analyze scan results."""
+def analyze_scan_results(json_file: str) -> dict[str, object]:
+    """Parse and analyze scan results.
+
+    Reads a JSON file containing scanner findings and generates summary
+    statistics organized by finding type, severity, and affected file.
+
+    Args:
+        json_file: Path to the JSON file containing scanner results.
+
+    Returns:
+        Dictionary containing total findings count, severity breakdown,
+        findings grouped by type, sample findings, and all findings.
+
+    """
     with open(json_file) as f:
         data = json.load(f)
 
