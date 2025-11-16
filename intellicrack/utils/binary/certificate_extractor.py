@@ -14,6 +14,11 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
+try:
+    from cryptography.hazmat.backends import Backend
+except ImportError:
+    Backend = object
+
 from ..logger import get_logger
 
 logger = get_logger(__name__)

@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Sat, Nov 15, 2025 07:53:23 PM
+Generated: Sun, Nov 16, 2025 03:42:30 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -59,6 +59,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── performance_optimization_layer.cpython-312.pyc
 │   │   ├── performance_optimization_layer.cpython-314.pyc
 │   │   ├── predictive_intelligence.cpython-314.pyc
+│   │   ├── protection_aware_script_gen.cpython-312.pyc
 │   │   ├── protection_aware_script_gen.cpython-314.pyc
 │   │   ├── qemu_manager.cpython-314.pyc
 │   │   ├── qemu_test_manager_enhanced.cpython-314.pyc
@@ -364,6 +365,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   └── trial_reset_engine.cpython-314.pyc
 │   ├── analysis/
 │   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-312.pyc
 │   │   │   ├── __init__.cpython-314.pyc
 │   │   │   ├── analysis_orchestrator.cpython-314.pyc
 │   │   │   ├── angr_enhancements.cpython-314.pyc
@@ -381,6 +383,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── concolic_obfuscation_handler.cpython-314.pyc
 │   │   │   ├── control_flow_deobfuscation.cpython-314.pyc
 │   │   │   ├── core_analysis.cpython-314.pyc
+│   │   │   ├── cross_tool_orchestrator.cpython-312.pyc
 │   │   │   ├── cross_tool_orchestrator.cpython-314.pyc
 │   │   │   ├── cryptographic_routine_detector.cpython-314.pyc
 │   │   │   ├── dynamic_analyzer.cpython-314.pyc
@@ -422,6 +425,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── radare2_patch_engine.cpython-314.pyc
 │   │   │   ├── radare2_performance_metrics.cpython-314.pyc
 │   │   │   ├── radare2_performance_optimizer.cpython-314.pyc
+│   │   │   ├── radare2_realtime_analyzer.cpython-312.pyc
 │   │   │   ├── radare2_realtime_analyzer.cpython-314.pyc
 │   │   │   ├── radare2_scripting.cpython-314.pyc
 │   │   │   ├── radare2_session_helpers.cpython-314.pyc
@@ -1077,6 +1081,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── README.md
 │   │   ├── scaler.pkl
 │   │   └── training_results.json
+│   ├── radare2/
 │   ├── repositories/
 │   │   ├── __pycache__/
 │   │   │   ├── __init__.cpython-314.pyc
@@ -1119,12 +1124,16 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── hardware_dongle_emulator.cpython-314.pyc
 │   │   │   ├── intellicrack_core_engine.cpython-312.pyc
 │   │   │   ├── intellicrack_core_engine.cpython-314.pyc
+│   │   │   ├── license_server_emulator.cpython-312.pyc
 │   │   │   ├── license_server_emulator.cpython-314.pyc
 │   │   │   ├── network_analysis_plugin.cpython-314.pyc
+│   │   │   ├── performance_optimizer.cpython-312.pyc
 │   │   │   ├── performance_optimizer.cpython-314.pyc
 │   │   │   ├── simple_analysis_plugin.cpython-314.pyc
+│   │   │   ├── success_rate_analyzer.cpython-312.pyc
 │   │   │   ├── success_rate_analyzer.cpython-314.pyc
 │   │   │   ├── ui_enhancement_module.cpython-314.pyc
+│   │   │   ├── vm_protection_unwrapper.cpython-312.pyc
 │   │   │   └── vm_protection_unwrapper.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── anti_anti_debug_suite.py
@@ -1318,6 +1327,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── main_window.cpython-314.pyc
 │   │   ├── menu_utils.cpython-314.pyc
 │   │   ├── protection_detection_handlers.cpython-314.pyc
+│   │   ├── radare2_integration_ui.cpython-312.pyc
 │   │   ├── radare2_integration_ui.cpython-314.pyc
 │   │   ├── radare2_ui_manager.cpython-314.pyc
 │   │   ├── shared_ui_layouts.cpython-314.pyc
@@ -1345,6 +1355,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── export_dialog.cpython-314.pyc
 │   │   │   ├── first_run_setup.cpython-314.pyc
 │   │   │   ├── frida_bypass_wizard_dialog.cpython-314.pyc
+│   │   │   ├── frida_manager_dialog.cpython-312.pyc
 │   │   │   ├── frida_manager_dialog.cpython-314.pyc
 │   │   │   ├── ghidra_script_selector.cpython-314.pyc
 │   │   │   ├── guided_workflow_wizard.cpython-314.pyc
@@ -1370,6 +1381,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── script_generator_dialog.cpython-314.pyc
 │   │   │   ├── serial_generator_dialog.cpython-314.pyc
 │   │   │   ├── signature_editor_dialog.cpython-314.pyc
+│   │   │   ├── similarity_search_dialog.cpython-312.pyc
 │   │   │   ├── similarity_search_dialog.cpython-314.pyc
 │   │   │   ├── smart_program_selector_dialog.cpython-314.pyc
 │   │   │   ├── splash_screen.cpython-314.pyc
@@ -1443,6 +1455,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── settings_tab.cpython-314.pyc
 │   │   │   ├── terminal_tab.cpython-314.pyc
 │   │   │   ├── tools_tab.cpython-314.pyc
+│   │   │   ├── workspace_tab.cpython-312.pyc
 │   │   │   └── workspace_tab.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── adobe_injector_tab.py
@@ -1564,6 +1577,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── http_utils.cpython-314.pyc
 │   │   ├── json_utils.cpython-314.pyc
 │   │   ├── log_message.cpython-314.pyc
+│   │   ├── logger.cpython-312.pyc
 │   │   ├── logger.cpython-314.pyc
 │   │   ├── path_resolver.cpython-314.pyc
 │   │   ├── protection_utils.cpython-314.pyc

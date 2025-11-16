@@ -232,11 +232,30 @@ def _benchmark_numba_framework(framework_results: dict, test_data: dict[int, byt
             pattern = np.array([0x4D, 0x5A], dtype=np.uint8)  # MZ header pattern
             d_pattern = numba_cuda.to_device(pattern)
 
-            # Perform a simple search operation using the GPU data
+            # Perform pattern search operation using GPU acceleration
             search_start = time.time()
-            # In a real implementation, this would be a CUDA kernel
-            # For benchmark purposes, we access the data to ensure it's used
-            result_count = len(d_data) // len(d_pattern)  # Simple calculation using GPU data
+
+            @numba_cuda.jit
+            def pattern_search_kernel(data: numba_cuda.uint8[:], pattern: numba_cuda.uint8[:], results: numba_cuda.int32[:]) -> None:
+                """GPU kernel for pattern matching in binary data."""
+                idx = numba_cuda.grid(1)
+                if idx < len(data) - len(pattern) + 1:
+                    match = True
+                    for i in range(len(pattern)):
+                        if data[idx + i] != pattern[i]:
+                            match = False
+                            break
+                    if match:
+                        numba_cuda.atomic.add(results, 0, 1)
+
+            result_array = np.array([0], dtype=np.int32)
+            d_results = numba_cuda.to_device(result_array)
+
+            threadsperblock = 128
+            blockspergrid = (len(d_data) + threadsperblock - 1) // threadsperblock
+            pattern_search_kernel[blockspergrid, threadsperblock](d_data, d_pattern, d_results)
+
+            result_count = d_results.copy_to_host()[0]
             numba_cuda.synchronize()
             search_time = time.time() - search_start
             framework_results["pattern_search"][f"{size_mb}MB"] = search_time
@@ -343,7 +362,7 @@ def _generate_recommendations(results: dict[str, Any]) -> None:
             )
 
 
-def benchmark_gpu_frameworks(app, test_sizes: list[int] = None) -> dict[str, Any]:
+def benchmark_gpu_frameworks(app: object, test_sizes: list[int] | None = None) -> dict[str, Any]:
     """Benchmark available GPU frameworks.
 
     Args:
