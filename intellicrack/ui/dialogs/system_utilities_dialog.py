@@ -63,7 +63,7 @@ class SystemUtilitiesWorker(QThread):
     progress_updated = pyqtSignal(int, str)
     error_occurred = pyqtSignal(str)
 
-    def __init__(self, operation: str, **kwargs) -> None:
+    def __init__(self, operation: str, **kwargs: object) -> None:
         """Initialize the system utilities worker with operation type and parameters."""
         super().__init__()
         self.operation = operation
@@ -184,7 +184,7 @@ class SystemUtilitiesWorker(QThread):
 class SystemUtilitiesDialog(QDialog):
     """System Utilities Dialog with various system tools."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the system utilities dialog with UI components and system monitoring capabilities."""
         # Initialize UI attributes
         self.close_btn = None
@@ -257,7 +257,9 @@ class SystemUtilitiesDialog(QDialog):
         file_layout = QHBoxLayout(file_group)
 
         self.icon_file_edit = QLineEdit()
-        self.icon_file_edit.setPlaceholderText("Select executable file to extract icon from...")
+        self.icon_file_edit.setText("")
+        hint_style = "color: #888888;"
+        self.icon_file_edit.setStyleSheet(f"QLineEdit {{ {hint_style} }}")
 
         self.icon_browse_btn = QPushButton("Browse")
         self.icon_browse_btn.clicked.connect(self.browse_icon_file)
@@ -273,7 +275,7 @@ class SystemUtilitiesDialog(QDialog):
         output_layout = QGridLayout(output_group)
 
         self.icon_output_edit = QLineEdit()
-        self.icon_output_edit.setPlaceholderText("Output directory (optional)")
+        self.icon_output_edit.setText("")
 
         self.icon_output_browse_btn = QPushButton("Browse")
         self.icon_output_browse_btn.clicked.connect(self.browse_icon_output)
@@ -408,7 +410,7 @@ class SystemUtilitiesDialog(QDialog):
         # Filter
         controls_layout.addWidget(QLabel("Filter:"))
         self.process_filter = QLineEdit()
-        self.process_filter.setPlaceholderText("Filter by process name...")
+        self.process_filter.setText("")
         self.process_filter.textChanged.connect(self.filter_processes)
 
         controls_layout.addWidget(self.process_refresh_btn)
@@ -498,7 +500,7 @@ class SystemUtilitiesDialog(QDialog):
         layout.addStretch()
         self.tabs.addTab(memory_widget, "Memory Optimizer")
 
-    def setup_footer(self, layout) -> None:
+    def setup_footer(self, layout: QVBoxLayout) -> None:
         """Set up footer with status and progress."""
         footer_layout = QVBoxLayout()
 
@@ -632,7 +634,7 @@ class SystemUtilitiesDialog(QDialog):
         self.worker.error_occurred.connect(self.on_error)
         self.worker.start()
 
-    def on_icon_extracted(self, result) -> None:
+    def on_icon_extracted(self, result: dict[str, object]) -> None:
         """Handle icon extraction completion."""
         self.current_results["icon_extraction"] = result
 
@@ -669,7 +671,7 @@ class SystemUtilitiesDialog(QDialog):
         self.worker.error_occurred.connect(self.on_error)
         self.worker.start()
 
-    def on_system_info_received(self, result) -> None:
+    def on_system_info_received(self, result: dict[str, object]) -> None:
         """Handle system information reception."""
         self.current_results["system_info"] = result
 
@@ -681,7 +683,7 @@ class SystemUtilitiesDialog(QDialog):
         self.progress_bar.setVisible(False)
         self.sysinfo_refresh_btn.setEnabled(True)
 
-    def format_system_info(self, info):
+    def format_system_info(self, info: dict[str, object]) -> str:
         """Format system information for display."""
         text = "System Information\n"
         text += "=" * 50 + "\n\n"
@@ -759,7 +761,7 @@ class SystemUtilitiesDialog(QDialog):
         self.worker.error_occurred.connect(self.on_error)
         self.worker.start()
 
-    def on_dependencies_checked(self, result) -> None:
+    def on_dependencies_checked(self, result: dict[str, object]) -> None:
         """Handle dependency check completion."""
         self.current_results["dependencies"] = result
 
@@ -817,7 +819,7 @@ class SystemUtilitiesDialog(QDialog):
         self.worker.error_occurred.connect(self.on_error)
         self.worker.start()
 
-    def on_process_list_received(self, result) -> None:
+    def on_process_list_received(self, result: dict[str, object]) -> None:
         """Handle process list reception."""
         self.current_results["processes"] = result
 
@@ -836,7 +838,7 @@ class SystemUtilitiesDialog(QDialog):
         self.progress_bar.setVisible(False)
         self.process_refresh_btn.setEnabled(True)
 
-    def filter_processes(self, filter_text) -> None:
+    def filter_processes(self, filter_text: str) -> None:
         """Filter process table by name."""
         for _i in range(self.process_table.rowCount()):
             name_item = self.process_table.item(_i, 1)
@@ -904,7 +906,7 @@ class SystemUtilitiesDialog(QDialog):
         self.worker.error_occurred.connect(self.on_error)
         self.worker.start()
 
-    def on_memory_optimized(self, result) -> None:
+    def on_memory_optimized(self, result: dict[str, object]) -> None:
         """Handle memory optimization completion."""
         self.current_results["memory_optimization"] = result
 
@@ -921,12 +923,12 @@ class SystemUtilitiesDialog(QDialog):
         self.progress_bar.setVisible(False)
         self.optimize_memory_btn.setEnabled(True)
 
-    def on_progress_updated(self, value, message) -> None:
+    def on_progress_updated(self, value: int, message: str) -> None:
         """Handle progress updates."""
         self.progress_bar.setValue(value)
         self.status_label.setText(message)
 
-    def on_error(self, error_msg) -> None:
+    def on_error(self, error_msg: str) -> None:
         """Handle worker thread errors."""
         QMessageBox.critical(self, "Error", error_msg)
         self.status_label.setText("Error occurred")
@@ -939,7 +941,7 @@ class SystemUtilitiesDialog(QDialog):
         self.process_refresh_btn.setEnabled(True)
         self.optimize_memory_btn.setEnabled(True)
 
-    def closeEvent(self, event) -> None:
+    def closeEvent(self, event: object) -> None:
         """Handle dialog close event."""
         if self.worker and self.worker.isRunning():
             self.worker.stop()
@@ -948,7 +950,7 @@ class SystemUtilitiesDialog(QDialog):
 
 
 # Convenience function for main app integration
-def show_system_utilities_dialog(parent=None):
+def show_system_utilities_dialog(parent: QWidget | None = None) -> int:
     """Show the system utilities dialog."""
     dialog = SystemUtilitiesDialog(parent)
     return dialog.exec()

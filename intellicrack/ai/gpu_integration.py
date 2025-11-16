@@ -41,11 +41,11 @@ except ImportError:
     GPU_AUTOLOADER_AVAILABLE = False
 
     # Fallback implementations
-    def get_device():
+    def get_device() -> object:
         """Get the compute device (CPU when GPU not available).
 
         Returns:
-            torch.device: CPU device instance.
+            object: CPU device instance or "cpu" string if torch unavailable.
 
         """
         from ..utils.torch_gil_safety import safe_torch_import
@@ -56,11 +56,11 @@ except ImportError:
             return "cpu"
         return torch.device("cpu")
 
-    def get_gpu_info():
+    def get_gpu_info() -> dict[str, Any]:
         """Get GPU information (fallback to CPU info).
 
         Returns:
-            dict: Device info indicating CPU-only mode.
+            dict[str, Any]: Device info indicating CPU-only mode.
 
         """
         return {
@@ -71,26 +71,26 @@ except ImportError:
             "memory": {},
         }
 
-    def to_device(tensor_or_model: Any):
+    def to_device(tensor_or_model: object) -> object:
         """Move tensor or model to device (no-op for CPU).
 
         Args:
-            tensor_or_model: PyTorch tensor or model.
+            tensor_or_model: PyTorch tensor or model object.
 
         Returns:
-            Same tensor or model unchanged.
+            object: Same tensor or model unchanged.
 
         """
         return tensor_or_model
 
-    def optimize_for_gpu(model: Any):
+    def optimize_for_gpu(model: object) -> object:
         """Optimize model for GPU (no-op for CPU).
 
         Args:
-            model: PyTorch model.
+            model: PyTorch model object.
 
         Returns:
-            Same model unchanged.
+            object: Same model unchanged.
 
         """
         return model
@@ -139,8 +139,16 @@ class GPUIntegration:
 
         return info
 
-    def prepare_model(self, model: Any) -> Any:
-        """Prepare model for GPU execution."""
+    def prepare_model(self, model: object) -> object:
+        """Prepare model for GPU execution.
+
+        Args:
+            model: PyTorch model object to prepare for execution.
+
+        Returns:
+            object: Prepared model ready for GPU or CPU execution.
+
+        """
         # Move to device
         model = to_device(model)
 
@@ -149,8 +157,16 @@ class GPUIntegration:
 
         return model
 
-    def prepare_tensor(self, tensor: Any) -> Any:
-        """Prepare tensor for GPU execution."""
+    def prepare_tensor(self, tensor: object) -> object:
+        """Prepare tensor for GPU execution.
+
+        Args:
+            tensor: PyTorch tensor object to prepare for execution.
+
+        Returns:
+            object: Prepared tensor ready for GPU or CPU execution.
+
+        """
         return to_device(tensor)
 
     def get_memory_usage(self) -> dict[str, Any]:
@@ -178,26 +194,57 @@ gpu_integration = GPUIntegration()
 
 
 # Export convenience functions
-def get_ai_device():
-    """Get device for AI operations."""
+def get_ai_device() -> object:
+    """Get device for AI operations.
+
+    Returns:
+        object: The compute device for AI operations.
+
+    """
     return gpu_integration.device
 
 
-def prepare_ai_model(model: Any) -> Any:
-    """Prepare AI model for GPU execution."""
+def prepare_ai_model(model: object) -> object:
+    """Prepare AI model for GPU execution.
+
+    Args:
+        model: PyTorch model object to prepare for GPU execution.
+
+    Returns:
+        object: Prepared model ready for execution on GPU or CPU.
+
+    """
     return gpu_integration.prepare_model(model)
 
 
-def prepare_ai_tensor(tensor: Any) -> Any:
-    """Prepare tensor for GPU execution."""
+def prepare_ai_tensor(tensor: object) -> object:
+    """Prepare tensor for GPU execution.
+
+    Args:
+        tensor: PyTorch tensor object to prepare for GPU execution.
+
+    Returns:
+        object: Prepared tensor ready for execution on GPU or CPU.
+
+    """
     return gpu_integration.prepare_tensor(tensor)
 
 
 def get_ai_gpu_info() -> dict[str, Any]:
-    """Get GPU information for AI operations."""
+    """Get GPU information for AI operations.
+
+    Returns:
+        dict[str, Any]: Comprehensive GPU and device information.
+
+    """
     return gpu_integration.get_device_info()
 
 
 def is_gpu_available() -> bool:
-    """Check if GPU is available for AI operations."""
+    """Check if GPU is available for AI operations.
+
+    Returns:
+        bool: True if GPU acceleration is available, False otherwise.
+
+    """
     return gpu_integration.is_available()

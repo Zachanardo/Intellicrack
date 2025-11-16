@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from collections.abc import Callable
+
 from intellicrack.utils.logger import logger
 
 try:
@@ -174,7 +176,7 @@ class EmulatorRequiredDecorator:
     """
 
     @staticmethod
-    def requires_qemu(func):
+    def requires_qemu(func: Callable) -> Callable:
         """Decorate functions requiring QEMU."""
 
         def wrapper(self, *args, **kwargs):
@@ -199,7 +201,7 @@ class EmulatorRequiredDecorator:
         return wrapper
 
     @staticmethod
-    def requires_qiling(func):
+    def requires_qiling(func: Callable) -> Callable:
         """Decorate functions requiring Qiling."""
 
         def wrapper(self, *args, **kwargs):

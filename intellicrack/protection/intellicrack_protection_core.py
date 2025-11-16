@@ -20,6 +20,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
+# pylint: disable=cyclic-import
+
+from __future__ import annotations
 
 import asyncio
 import json
@@ -27,9 +30,12 @@ import os
 import sys
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from ..utils.logger import get_logger
-from .icp_backend import ICPBackend, ICPScanResult, ScanMode
+
+if TYPE_CHECKING:
+    from .icp_backend import ICPBackend, ICPScanResult, ScanMode
 
 logger = get_logger(__name__)
 
@@ -229,6 +235,8 @@ class IntellicrackProtectionCore:
         """
         self.engine_path = engine_path  # Keep for compatibility
         try:
+            from .icp_backend import ICPBackend
+
             self.icp_backend = ICPBackend()
             self._validate_engine_installation()
         except Exception as e:
@@ -274,6 +282,8 @@ class IntellicrackProtectionCore:
             return self._fallback_analysis(file_path)
 
         try:
+            from .icp_backend import ScanMode
+
             # Use asyncio to run the async analysis method
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
@@ -304,7 +314,7 @@ class IntellicrackProtectionCore:
                 architecture="Unknown",
             )
 
-    def _convert_icp_result(self, icp_result: ICPScanResult) -> ProtectionAnalysis:
+    def _convert_icp_result(self, icp_result: "ICPScanResult") -> ProtectionAnalysis:
         """Convert native ICPScanResult to ProtectionAnalysis format.
 
         This method bridges the gap between the native ICP Engine backend

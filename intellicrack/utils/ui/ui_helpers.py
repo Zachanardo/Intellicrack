@@ -1,6 +1,11 @@
 """UI helper utilities for common interface operations."""
 
+from typing import TYPE_CHECKING
+
 from intellicrack.utils.logger import logger
+
+if TYPE_CHECKING:
+    from intellicrack.handlers.pyqt6_handler import QWidget
 
 """
 Common UI helper functions to reduce code duplication.
@@ -24,7 +29,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
-def check_binary_path_and_warn(app_instance) -> bool:
+def check_binary_path_and_warn(app_instance: object) -> bool:
     """Check if binary path exists and show warning if not.
 
     Args:
@@ -47,7 +52,7 @@ def check_binary_path_and_warn(app_instance) -> bool:
     return True
 
 
-def emit_log_message(app_instance, message) -> None:
+def emit_log_message(app_instance: object, message: str) -> None:
     """Emit log message if app instance supports it.
 
     Args:
@@ -67,7 +72,7 @@ def emit_log_message(app_instance, message) -> None:
         app_instance.update_output.emit(message)
 
 
-def show_file_dialog(parent, title, file_filter="HTML Files (*.html);;All Files (*)"):
+def show_file_dialog(parent: object, title: str, file_filter: str = "HTML Files (*.html);;All Files (*)") -> str:
     """Show file save dialog and return filename.
 
     Args:
@@ -89,7 +94,7 @@ def show_file_dialog(parent, title, file_filter="HTML Files (*.html);;All Files 
         return ""
 
 
-def ask_yes_no_question(parent, title, question):
+def ask_yes_no_question(parent: object, title: str, question: str) -> bool:
     """Show yes/no question dialog.
 
     Args:
@@ -118,7 +123,7 @@ def ask_yes_no_question(parent, title, question):
         return False
 
 
-def generate_exploit_payload_common(payload_type, target_path="target_software"):
+def generate_exploit_payload_common(payload_type: str, target_path: str = "target_software") -> dict[str, str | bool | list[str]]:
     """Generate exploit payload of specified type.
 
     This is the common implementation extracted from duplicate code
@@ -197,7 +202,7 @@ def generate_exploit_payload_common(payload_type, target_path="target_software")
         return {"error": str(e)}
 
 
-def generate_exploit_strategy_common(binary_path, vulnerability_type="buffer_overflow"):
+def generate_exploit_strategy_common(binary_path: str, vulnerability_type: str = "buffer_overflow") -> dict[str, str | object]:
     """Generate exploit strategy for given binary and vulnerability type.
 
     This is the common implementation extracted from duplicate code.

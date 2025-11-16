@@ -28,7 +28,9 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
+from typing import Any, TypeVar
+
+T = TypeVar("T")
 
 from ..utils.logger import get_logger
 from .learning_engine_simple import get_learning_engine
@@ -197,8 +199,23 @@ class PerformanceOptimizer:
         ]
 
     @profile_ai_operation("performance_optimization")
-    def optimize_operation(self, operation_id: str, operation_func: Callable, *args, **kwargs) -> Any:
-        """Optimize execution of an operation."""
+    def optimize_operation(self, operation_id: str, operation_func: Callable[..., T], *args: Any, **kwargs: Any) -> T:  # noqa: ANN002, ANN003, ANN401
+        """Optimize execution of an AI operation.
+
+        Applies applicable optimization strategies to the given operation based on profiling
+        data and optimization rules. Caches results for expensive operations and records
+        execution profiles for performance analysis.
+
+        Args:
+            operation_id: Unique identifier for the operation.
+            operation_func: The callable to optimize and execute.
+            *args: Positional arguments to pass to the operation function.
+            **kwargs: Keyword arguments to pass to the operation function.
+
+        Returns:
+            The result of executing the optimized operation.
+
+        """
         # Check if optimization is cached
         cache_key = self._generate_cache_key(operation_id, args, kwargs)
 
@@ -264,14 +281,39 @@ class PerformanceOptimizer:
             # Fall back to original function
             return operation_func(*args, **kwargs)
 
-    def _generate_cache_key(self, operation_id: str, args: tuple, kwargs: dict) -> str:
-        """Generate cache key for operation."""
+    def _generate_cache_key(self, operation_id: str, args: tuple, kwargs: dict[str, Any]) -> str:
+        """Generate deterministic cache key for operation.
+
+        Creates a unique, reproducible hash key from the operation identifier and its arguments
+        to enable consistent caching of operation results.
+
+        Args:
+            operation_id: Unique operation identifier.
+            args: Positional arguments tuple.
+            kwargs: Keyword arguments dictionary.
+
+        Returns:
+            MD5 hexadecimal hash string representing the operation and its arguments.
+
+        """
         # Create deterministic hash from operation and arguments
         content = f"{operation_id}_{args!s}_{sorted(kwargs.items())!s}"
         return hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()
 
     def _apply_optimizations(self, operation_id: str, operation_func: Callable) -> Callable:
-        """Apply applicable optimizations to operation."""
+        """Apply applicable optimization strategies to operation.
+
+        Iterates through enabled optimization rules and applies relevant strategies
+        based on rule conditions and operation characteristics.
+
+        Args:
+            operation_id: Unique operation identifier.
+            operation_func: The callable to apply optimizations to.
+
+        Returns:
+            The operation function wrapped with applicable optimizations.
+
+        """
         optimized_func = operation_func
 
         # Check each optimization rule
@@ -288,7 +330,19 @@ class PerformanceOptimizer:
         return optimized_func
 
     def _rule_applies(self, rule: OptimizationRule, operation_id: str) -> bool:
-        """Check if optimization rule applies to operation."""
+        """Determine if optimization rule applies to operation.
+
+        Evaluates rule conditions against execution profiles to determine whether
+        a specific optimization rule should be applied.
+
+        Args:
+            rule: The optimization rule to evaluate.
+            operation_id: Unique operation identifier.
+
+        Returns:
+            True if the rule applies, False otherwise.
+
+        """
         # Get recent profile for operation
         if operation_id in self.execution_profiles:
             profile = self.execution_profiles[operation_id]
@@ -305,7 +359,20 @@ class PerformanceOptimizer:
         return True
 
     def _apply_optimization_strategy(self, func: Callable, strategy: OptimizationStrategy, parameters: dict[str, Any]) -> Callable:
-        """Apply specific optimization strategy."""
+        """Apply specific optimization strategy to function.
+
+        Wraps the function with the appropriate optimization wrapper based on the
+        selected strategy and strategy-specific parameters.
+
+        Args:
+            func: The callable to wrap with optimization.
+            strategy: The optimization strategy to apply.
+            parameters: Strategy-specific configuration parameters.
+
+        Returns:
+            The function wrapped with the specified optimization strategy.
+
+        """
         if strategy == OptimizationStrategy.PARALLEL_EXECUTION:
             return self._wrap_for_parallel_execution(func, parameters)
         if strategy == OptimizationStrategy.MEMORY_OPTIMIZATION:
@@ -316,10 +383,32 @@ class PerformanceOptimizer:
         return func
 
     def _wrap_for_parallel_execution(self, func: Callable, parameters: dict[str, Any]) -> Callable:
-        """Wrap function for parallel execution."""
+        """Wrap function for parallel execution.
+
+        Creates a wrapper that distributes execution of iterable operations across
+        multiple workers when applicable.
+
+        Args:
+            func: The callable to wrap for parallel execution.
+            parameters: Strategy parameters including max_workers.
+
+        Returns:
+            A wrapped function that executes in parallel when possible.
+
+        """
         max_workers = parameters.get("max_workers", 4)
 
-        def parallel_wrapper(*args, **kwargs):
+        def parallel_wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN002, ANN003, ANN401
+            """Execute function in parallel or sequentially based on arguments.
+
+            Args:
+                *args: Positional arguments for the wrapped function.
+                **kwargs: Keyword arguments for the wrapped function.
+
+            Returns:
+                Function results from parallel or sequential execution.
+
+            """
             # Check if arguments support parallel processing
             if len(args) > 0 and hasattr(args[0], "__iter__") and not isinstance(args[0], str):
                 # Parallel processing for iterable first argument
@@ -340,10 +429,32 @@ class PerformanceOptimizer:
         return parallel_wrapper
 
     def _wrap_for_memory_optimization(self, func: Callable, parameters: dict[str, Any]) -> Callable:
-        """Wrap function for memory optimization."""
+        """Wrap function for memory optimization.
+
+        Creates a wrapper that monitors memory usage before and after execution,
+        triggering garbage collection when memory usage exceeds threshold.
+
+        Args:
+            func: The callable to wrap for memory optimization.
+            parameters: Strategy parameters including gc_threshold.
+
+        Returns:
+            A wrapped function that optimizes memory usage during execution.
+
+        """
         gc_threshold = parameters.get("gc_threshold", 0.8)
 
-        def memory_optimized_wrapper(*args, **kwargs):
+        def memory_optimized_wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN002, ANN003, ANN401
+            """Execute function with memory optimization and monitoring.
+
+            Args:
+                *args: Positional arguments for the wrapped function.
+                **kwargs: Keyword arguments for the wrapped function.
+
+            Returns:
+                The result from the wrapped function execution.
+
+            """
             import gc
 
             # Check memory usage before execution
@@ -393,10 +504,32 @@ class PerformanceOptimizer:
         return memory_optimized_wrapper
 
     def _wrap_for_batching(self, func: Callable, parameters: dict[str, Any]) -> Callable:
-        """Wrap function for batched execution."""
+        """Wrap function for batched execution.
+
+        Creates a wrapper that divides list arguments into batches and processes
+        them sequentially to improve memory efficiency and performance.
+
+        Args:
+            func: The callable to wrap for batched execution.
+            parameters: Strategy parameters including batch_size.
+
+        Returns:
+            A wrapped function that batches list arguments during execution.
+
+        """
         batch_size = parameters.get("batch_size", 50)
 
-        def batched_wrapper(*args, **kwargs):
+        def batched_wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN002, ANN003, ANN401
+            """Execute function with automatic batching for list arguments.
+
+            Args:
+                *args: Positional arguments for the wrapped function.
+                **kwargs: Keyword arguments for the wrapped function.
+
+            Returns:
+                Combined results from batched execution.
+
+            """
             # Check if first argument is a list that can be batched
             if len(args) > 0 and isinstance(args[0], list) and len(args[0]) > batch_size:
                 items = args[0]
@@ -414,12 +547,34 @@ class PerformanceOptimizer:
         return batched_wrapper
 
     def _should_cache_result(self, profile: PerformanceProfile) -> bool:
-        """Determine if result should be cached."""
+        """Determine if operation result should be cached.
+
+        Makes caching decisions based on operation execution time and memory consumption.
+        Expensive operations are cached to avoid redundant computation.
+
+        Args:
+            profile: Performance profile of the operation.
+
+        Returns:
+            True if the result should be cached, False otherwise.
+
+        """
         # Cache expensive operations
         return profile.execution_time > 2.0 or profile.memory_usage > 100
 
     def get_optimization_recommendations(self, operation_id: str) -> list[str]:
-        """Get optimization recommendations for operation."""
+        """Get optimization recommendations for operation.
+
+        Analyzes execution profile and generates actionable recommendations for
+        improving operation performance and resource efficiency.
+
+        Args:
+            operation_id: Unique operation identifier.
+
+        Returns:
+            List of optimization recommendations as strings.
+
+        """
         recommendations = []
 
         if operation_id in self.execution_profiles:
@@ -441,7 +596,15 @@ class PerformanceOptimizer:
         return recommendations
 
     def get_optimization_stats(self) -> dict[str, Any]:
-        """Get optimization statistics."""
+        """Get comprehensive optimization statistics.
+
+        Collects and returns current optimization performance metrics including
+        cache statistics, execution profiles, and active optimization rules.
+
+        Returns:
+            Dictionary containing optimization statistics and metrics.
+
+        """
         return {
             **self.optimization_stats,
             "cache_hit_rate": self.optimization_stats["cache_hits"]
@@ -471,7 +634,15 @@ class ResourceManager:
         logger.info("Resource manager initialized")
 
     def _get_system_limits(self) -> dict[ResourceType, int]:
-        """Get system resource limits."""
+        """Get system resource limits and capabilities.
+
+        Detects available CPU cores, total memory, and other system resource
+        constraints for resource allocation and monitoring purposes.
+
+        Returns:
+            Dictionary mapping ResourceType to available system limits.
+
+        """
         try:
             cpu_count = psutil.cpu_count(logical=False) if PSUTIL_AVAILABLE else 4
             # Ensure cpu_count is an integer
@@ -502,7 +673,11 @@ class ResourceManager:
         }
 
     def _initialize_resource_pools(self) -> None:
-        """Initialize resource pools."""
+        """Initialize thread and process executor pools.
+
+        Creates thread pool and process pool executors based on system capabilities
+        and resource limits for managing parallel and concurrent operations.
+        """
         # Thread pool
         max_threads = min(32, self.resource_limits[ResourceType.CPU] * 4)
         self.resource_pools[ResourceType.THREADS] = concurrent.futures.ThreadPoolExecutor(
@@ -519,7 +694,19 @@ class ResourceManager:
 
     @profile_ai_operation("resource_allocation")
     def allocate_resources(self, operation_id: str, requirements: ResourceAllocation) -> bool:
-        """Allocate resources for operation."""
+        """Allocate system resources for operation execution.
+
+        Reserves CPU cores, memory, threads, and other resources needed for an operation.
+        Checks resource availability before allocation and records allocation history.
+
+        Args:
+            operation_id: Unique operation identifier.
+            requirements: ResourceAllocation configuration specifying needed resources.
+
+        Returns:
+            True if resources were successfully allocated, False if insufficient.
+
+        """
         # Check if resources are available
         if not self._check_resource_availability(requirements):
             logger.warning(f"Insufficient resources for operation {operation_id}")
@@ -542,7 +729,15 @@ class ResourceManager:
         return True
 
     def release_resources(self, operation_id: str) -> None:
-        """Release resources for operation."""
+        """Release previously allocated resources for operation.
+
+        Frees system resources that were reserved for an operation, making them
+        available for other operations. Records resource release in history.
+
+        Args:
+            operation_id: Unique operation identifier.
+
+        """
         if operation_id in self.active_allocations:
             allocation = self.active_allocations[operation_id]
             del self.active_allocations[operation_id]
@@ -560,7 +755,18 @@ class ResourceManager:
             logger.debug(f"Released resources for operation {operation_id}")
 
     def _check_resource_availability(self, requirements: ResourceAllocation) -> bool:
-        """Check if required resources are available."""
+        """Check if required resources are currently available.
+
+        Validates that sufficient CPU, memory, and thread pool capacity exist
+        to meet the operation's resource requirements.
+
+        Args:
+            requirements: ResourceAllocation specifying required resources.
+
+        Returns:
+            True if all required resources are available, False otherwise.
+
+        """
         # Check CPU cores
         if requirements.cpu_cores > self.resource_limits[ResourceType.CPU]:
             return False
@@ -588,7 +794,15 @@ class ResourceManager:
         return not (hasattr(thread_pool, "_threads") and len(thread_pool._threads) >= thread_pool._max_workers)
 
     def get_resource_usage(self) -> dict[str, float]:
-        """Get current resource usage."""
+        """Get current system resource usage metrics.
+
+        Measures CPU percentage, memory usage, available memory, and disk I/O
+        to monitor system resource consumption and availability.
+
+        Returns:
+            Dictionary containing current resource usage percentages and values.
+
+        """
         cpu_usage = psutil.cpu_percent() if PSUTIL_AVAILABLE else 0.0
         memory = (
             psutil.virtual_memory()
@@ -623,7 +837,15 @@ class ResourceManager:
         return usage
 
     def optimize_resource_allocation(self) -> dict[str, Any]:
-        """Optimize current resource allocations."""
+        """Optimize current resource allocations.
+
+        Analyzes resource usage patterns and generates optimization suggestions
+        to improve overall system performance and resource efficiency.
+
+        Returns:
+            Dictionary containing current usage, optimization suggestions, and allocation totals.
+
+        """
         optimizations = []
 
         # Analyze resource usage patterns
@@ -664,8 +886,24 @@ class ParallelExecutor:
         logger.info("Parallel executor initialized")
 
     @profile_ai_operation("parallel_execution")
-    def execute_parallel(self, func: Callable, items: list[Any], max_workers: int = None, *args, **kwargs) -> list[Any]:
-        """Execute function in parallel for list of items."""
+    def execute_parallel(self, func: Callable, items: list[Any], max_workers: int | None = None, *args: Any, **kwargs: Any) -> list[Any]:  # noqa: ANN002, ANN003, ANN401
+        """Execute function in parallel for list of items.
+
+        Distributes function execution across multiple worker threads for each item
+        in the input list. Measures baseline sequential performance and calculates
+        parallel speedup metrics.
+
+        Args:
+            func: The callable to execute in parallel for each item.
+            items: List of items to process.
+            max_workers: Maximum number of worker threads (auto-detected if None).
+            *args: Additional positional arguments to pass to the function.
+            **kwargs: Additional keyword arguments to pass to the function.
+
+        Returns:
+            List of results from parallel execution of the function.
+
+        """
         if not items:
             return []
 
@@ -718,8 +956,20 @@ class ParallelExecutor:
         return results
 
     @profile_ai_operation("batch_parallel_execution")
-    def execute_batch_parallel(self, operations: list[tuple[Callable, tuple, dict]], max_workers: int = None) -> list[Any]:
-        """Execute multiple different operations in parallel."""
+    def execute_batch_parallel(self, operations: list[tuple[Callable, tuple, dict]], max_workers: int | None = None) -> list[Any]:
+        """Execute multiple different operations in parallel.
+
+        Processes a list of different callables with their respective arguments
+        across multiple worker threads to maximize concurrent execution.
+
+        Args:
+            operations: List of tuples containing (callable, args, kwargs).
+            max_workers: Maximum number of worker threads (auto-detected if None).
+
+        Returns:
+            List of results from parallel execution of all operations.
+
+        """
         if not operations:
             return []
 
@@ -746,7 +996,19 @@ class ParallelExecutor:
         return results
 
     def should_parallelize(self, item_count: int, estimated_time_per_item: float) -> bool:
-        """Determine if parallelization would be beneficial."""
+        """Determine if parallelization would be beneficial.
+
+        Evaluates whether parallel execution would provide performance benefits
+        based on item count and estimated execution time per item.
+
+        Args:
+            item_count: Number of items to process.
+            estimated_time_per_item: Estimated execution time per item in seconds.
+
+        Returns:
+            True if parallelization would be beneficial, False otherwise.
+
+        """
         # Don't parallelize small tasks
         if item_count < 3:
             return False
@@ -760,7 +1022,15 @@ class ParallelExecutor:
         return total_estimated_time > 2.0
 
     def get_execution_stats(self) -> dict[str, Any]:
-        """Get parallel execution statistics."""
+        """Get parallel execution statistics.
+
+        Retrieves current statistics for parallel execution performance including
+        execution counts, speedup metrics, and time savings.
+
+        Returns:
+            Dictionary containing parallel execution statistics.
+
+        """
         return self.execution_stats.copy()
 
 
@@ -790,8 +1060,19 @@ class CacheManager:
 
         logger.info(f"Cache manager initialized with {max_size_mb}MB limit")
 
-    def get(self, key: str) -> Any | None:
-        """Get value from cache."""
+    def get(self, key: str) -> object | None:
+        """Retrieve value from cache if present.
+
+        Looks up a cached value by key and updates access statistics for
+        cache hit rate tracking and LRU eviction decisions.
+
+        Args:
+            key: Cache key for the value to retrieve.
+
+        Returns:
+            Cached value if key exists, None otherwise.
+
+        """
         if key in self.cache:
             # Update access statistics
             self.access_times[key] = datetime.now()
@@ -803,8 +1084,18 @@ class CacheManager:
         self.stats["misses"] += 1
         return None
 
-    def set(self, key: str, value: Any, ttl_seconds: int = 3600) -> None:
-        """Set value in cache."""
+    def set(self, key: str, value: object, ttl_seconds: int = 3600) -> None:
+        """Store value in cache with TTL expiration.
+
+        Caches a value with optional time-to-live. Automatically evicts least-recently-used
+        items if cache exceeds size limits, and tracks item expiration for cleanup.
+
+        Args:
+            key: Cache key to store value under.
+            value: Value to cache.
+            ttl_seconds: Time-to-live for cache entry in seconds (default: 3600).
+
+        """
         # Estimate size of cached item
         import sys
 
@@ -830,7 +1121,11 @@ class CacheManager:
         logger.debug(f"Cached item {key[:8]}... ({item_size_mb:.2f}MB)")
 
     def _evict_lru_item(self) -> None:
-        """Evict least recently used item."""
+        """Evict least recently used cache item.
+
+        Removes the cache item with the oldest access time to make room for new items
+        when cache size limit is exceeded.
+        """
         if not self.access_times:
             return
 
@@ -850,7 +1145,11 @@ class CacheManager:
             logger.debug(f"Evicted LRU item {lru_key[:8]}... ({item_size:.2f}MB)")
 
     def cleanup_expired(self) -> None:
-        """Remove expired items from cache."""
+        """Remove expired items from cache.
+
+        Scans cache for items that have exceeded their TTL and removes them
+        to free cache space and keep cache fresh.
+        """
         now = datetime.now()
         expired_keys = []
 
@@ -865,7 +1164,14 @@ class CacheManager:
             logger.debug(f"Removed {len(expired_keys)} expired cache items")
 
     def _remove_item(self, key: str) -> None:
-        """Remove specific item from cache."""
+        """Remove specific item from cache.
+
+        Deletes a cache item and updates size tracking and access statistics.
+
+        Args:
+            key: Cache key to remove.
+
+        """
         if key in self.cache:
             item_size = self.cache[key]["size_mb"]
             del self.cache[key]
@@ -878,7 +1184,10 @@ class CacheManager:
             self.current_size_mb -= item_size
 
     def clear(self) -> None:
-        """Clear entire cache."""
+        """Clear entire cache.
+
+        Removes all cached items and resets size tracking and statistics.
+        """
         self.cache.clear()
         self.access_times.clear()
         self.access_counts.clear()
@@ -886,7 +1195,15 @@ class CacheManager:
         logger.info("Cache cleared")
 
     def get_cache_stats(self) -> dict[str, Any]:
-        """Get cache statistics."""
+        """Get cache statistics and metrics.
+
+        Returns comprehensive cache statistics including hit rate, size utilization,
+        item count, and eviction metrics.
+
+        Returns:
+            Dictionary containing cache statistics and performance metrics.
+
+        """
         hit_rate = self.stats["hits"] / max(1, self.stats["hits"] + self.stats["misses"])
 
         return {
@@ -919,7 +1236,11 @@ class PerformanceOptimizationLayer:
         logger.info("Performance optimization layer initialized")
 
     def _start_background_optimization(self) -> None:
-        """Start background optimization tasks."""
+        """Start background optimization tasks.
+
+        Launches a daemon thread that periodically cleans up expired cache items
+        and optimizes resource allocations. Skipped when in testing mode.
+        """
         # Skip thread creation during testing
         if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
             logger.info("Skipping background optimization worker (testing mode)")
@@ -945,24 +1266,76 @@ class PerformanceOptimizationLayer:
         thread.start()
         logger.info("Started background optimization worker")
 
-    def optimize(self, operation_id: str, operation_func: Callable, *args, **kwargs) -> Any:
-        """Optimize as the main entry point."""
+    def optimize(self, operation_id: str, operation_func: Callable, *args: Any, **kwargs: Any) -> Any:  # noqa: ANN002, ANN003, ANN401
+        """Optimize operation execution as main entry point.
+
+        Routes optimization request to the internal optimizer for applying
+        performance optimization strategies and caching.
+
+        Args:
+            operation_id: Unique operation identifier.
+            operation_func: The callable to optimize and execute.
+            *args: Positional arguments for the operation function.
+            **kwargs: Keyword arguments for the operation function.
+
+        Returns:
+            Result from optimized operation execution.
+
+        """
         return self.optimizer.optimize_operation(operation_id, operation_func, *args, **kwargs)
 
-    def execute_parallel(self, func: Callable, items: list[Any], max_workers: int = None) -> list[Any]:
-        """Execute function in parallel."""
+    def execute_parallel(self, func: Callable, items: list[Any], max_workers: int | None = None) -> list[Any]:
+        """Execute function in parallel for list of items.
+
+        Distributes function execution across multiple worker threads.
+
+        Args:
+            func: Callable to execute in parallel.
+            items: List of items to process.
+            max_workers: Maximum worker threads (auto-detected if None).
+
+        Returns:
+            List of results from parallel execution.
+
+        """
         return self.parallel_executor.execute_parallel(func, items, max_workers)
 
     def allocate_resources(self, operation_id: str, requirements: ResourceAllocation) -> bool:
-        """Allocate resources for operation."""
+        """Allocate resources for operation.
+
+        Reserves system resources for the specified operation.
+
+        Args:
+            operation_id: Unique operation identifier.
+            requirements: ResourceAllocation configuration.
+
+        Returns:
+            True if resources allocated successfully, False otherwise.
+
+        """
         return self.resource_manager.allocate_resources(operation_id, requirements)
 
     def release_resources(self, operation_id: str) -> None:
-        """Release resources for operation."""
+        """Release resources for operation.
+
+        Frees previously allocated resources for the specified operation.
+
+        Args:
+            operation_id: Unique operation identifier.
+
+        """
         self.resource_manager.release_resources(operation_id)
 
     def get_comprehensive_stats(self) -> dict[str, Any]:
-        """Get comprehensive optimization statistics."""
+        """Get comprehensive optimization statistics.
+
+        Collects and returns aggregate statistics from optimizer, cache manager,
+        parallel executor, and resource manager along with system information.
+
+        Returns:
+            Dictionary containing comprehensive system and optimization statistics.
+
+        """
         return {
             "optimizer_stats": self.optimizer.get_optimization_stats(),
             "cache_stats": self.cache_manager.get_cache_stats(),

@@ -71,7 +71,7 @@ except ImportError:
             self._children = []
             self._properties = {}
 
-        def setParent(self, parent: Any) -> None:  # noqa: ANN401
+        def setParent(self, parent: object) -> None:
             """Set parent object for hierarchy management."""
             if self._parent:
                 self._parent._children.remove(self)
@@ -79,19 +79,19 @@ except ImportError:
             if parent:
                 parent._children.append(self)
 
-        def parent(self) -> Any:  # noqa: ANN401
+        def parent(self) -> object:
             """Get parent object in hierarchy."""
             return self._parent
 
-        def children(self) -> list[Any]:  # noqa: ANN401
+        def children(self) -> list[object]:
             """Get list of child objects."""
             return self._children.copy()
 
-        def setProperty(self, name: str, value: Any) -> None:  # noqa: ANN401
+        def setProperty(self, name: str, value: object) -> None:
             """Set property value by name."""
             self._properties[name] = value
 
-        def property(self, name: str) -> Any:  # noqa: ANN401
+        def property(self, name: str) -> object:
             """Get property value by name."""
             return self._properties.get(name)
 
@@ -155,7 +155,7 @@ except ImportError:
         interface when PyQt6 is not available.
         """
 
-        def __init__(self, parent: Any = None) -> None:  # noqa: ANN401
+        def __init__(self, parent: object | None = None) -> None:
             """Initialize the VisibilityController with an optional parent and set visibility to False."""
             self._parent = parent
             self._visible = False
@@ -212,7 +212,7 @@ except ImportError:
             """Activate dialog window in console mode."""
             logger.debug(f"Activating dialog '{self._title}'")
 
-        def closeEvent(self, event: Any) -> None:  # noqa: ANN401
+        def closeEvent(self, event: object) -> None:
             """Handle close event to be overridden in subclass."""
             # Override in subclass
 
@@ -223,7 +223,7 @@ except ImportError:
         operation when PyQt6 is not available.
         """
 
-        def __init__(self, parent: Any = None) -> None:  # noqa: ANN401
+        def __init__(self, parent: object | None = None) -> None:
             """Initialize the ChildManager with an optional parent and empty children list."""
             self._parent = parent
             self._children = []
@@ -237,7 +237,7 @@ except ImportError:
             if parent:
                 parent._children.append(self)
 
-        def setParent(self, parent: Any) -> None:  # noqa: ANN401
+        def setParent(self, parent: object) -> None:
             """Set parent widget for hierarchy management."""
             if self._parent:
                 self._parent._children.remove(self)
@@ -245,11 +245,11 @@ except ImportError:
             if parent:
                 parent._children.append(self)
 
-        def parent(self) -> Any:  # noqa: ANN401
+        def parent(self) -> object:
             """Get parent widget in hierarchy."""
             return self._parent
 
-        def children(self) -> list[Any]:
+        def children(self) -> list[object]:
             """Get list of child widgets."""
             return self._children.copy()
 
@@ -280,11 +280,11 @@ except ImportError:
             """Get widget geometry tuple."""
             return self._geometry
 
-        def setLayout(self, layout: Any) -> None:  # noqa: ANN401
+        def setLayout(self, layout: object) -> None:
             """Set widget layout manager."""
             self._layout = layout
 
-        def layout(self) -> Any:  # noqa: ANN401
+        def layout(self) -> object:
             """Get widget layout manager."""
             return self._layout
 
@@ -315,7 +315,7 @@ except ImportError:
         observer pattern when PyQt6 is not available.
         """
 
-        def __init__(self, *types: Any) -> None:  # noqa: ANN002,ANN401
+        def __init__(self, *types: object) -> None:
             """Initialize signal with type signatures.
 
             Args:
@@ -327,7 +327,7 @@ except ImportError:
             self._blocked = False
             self._mutex = threading.RLock()
 
-        def connect(self, slot: Any) -> None:  # noqa: ANN401
+        def connect(self, slot: object) -> None:
             """Connect a slot function to this signal.
 
             Args:
@@ -338,7 +338,7 @@ except ImportError:
                 if slot not in self.slots:
                     self.slots.append(slot)
 
-        def disconnect(self, slot: Any | None = None) -> None:  # noqa: ANN401
+        def disconnect(self, slot: object | None = None) -> None:
             """Disconnect a slot or all slots from this signal.
 
             Args:
@@ -351,7 +351,7 @@ except ImportError:
                 elif slot in self.slots:
                     self.slots.remove(slot)
 
-        def emit(self, *args: Any) -> None:  # noqa: ANN002,ANN401
+        def emit(self, *args: object) -> None:
             """Emit the signal with given arguments.
 
             Args:
@@ -379,7 +379,7 @@ except ImportError:
             """
             self._blocked = blocked
 
-        def __get__(self, obj: Any, objtype: Any | None = None) -> Any:  # noqa: ANN401
+        def __get__(self, obj: object, objtype: object | None = None) -> object:
             """Support for use as a descriptor in classes."""
             if obj is None:
                 return self
@@ -395,20 +395,20 @@ except ImportError:
     class BoundSignal:
         """Bound signal for specific object instance."""
 
-        def __init__(self, signal: Any, instance: Any) -> None:  # noqa: ANN401
+        def __init__(self, signal: object, instance: object) -> None:
             """Initialize the BoundSignal with a signal and instance."""
             self.signal = signal
             self.instance = instance
             self.slots = []
             self._mutex = threading.RLock()
 
-        def connect(self, slot: Any) -> None:  # noqa: ANN401
+        def connect(self, slot: object) -> None:
             """Connect slot to bound signal instance."""
             with self._mutex:
                 if slot not in self.slots:
                     self.slots.append(slot)
 
-        def disconnect(self, slot: Any | None = None) -> None:  # noqa: ANN401
+        def disconnect(self, slot: object | None = None) -> None:
             """Disconnect slot from bound signal instance."""
             with self._mutex:
                 if slot is None:
@@ -416,7 +416,7 @@ except ImportError:
                 elif slot in self.slots:
                     self.slots.remove(slot)
 
-        def emit(self, *args: Any) -> None:  # noqa: ANN002,ANN401
+        def emit(self, *args: object) -> None:
             """Emit bound signal with arguments to connected slots."""
             if hasattr(self.signal, "_blocked") and self.signal._blocked:
                 return
@@ -969,7 +969,7 @@ class DistributedWorkerThread(QThread):
 
         return passwords
 
-    def _check_password(self, password: str, target_hash: str, hash_func: Any) -> tuple[str, bool]:  # noqa: ANN401
+    def _check_password(self, password: str, target_hash: str, hash_func: object) -> tuple[str, bool]:
         """Check if password matches target hash.
 
         Args:
@@ -1598,7 +1598,7 @@ class DistributedWorkerThread(QThread):
 class DistributedProcessingDialog(QDialog):
     """Dialog for managing distributed processing tasks."""
 
-    def __init__(self, parent: Any = None) -> None:  # noqa: ANN401
+    def __init__(self, parent: object | None = None) -> None:
         """Initialize distributed processing dialog.
 
         Args:
@@ -1819,7 +1819,7 @@ class DistributedProcessingDialog(QDialog):
             timestamp = datetime.now().strftime("%H:%M:%S")
             self.status_text.append(f"[{timestamp}] {message}")
 
-    def closeEvent(self, event: Any) -> None:  # noqa: ANN401
+    def closeEvent(self, event: object) -> None:
         """Handle dialog close event.
 
         Args:
@@ -1840,7 +1840,7 @@ class DistributedProcessing:
         self.workers: list[DistributedWorkerThread] = []
         self.dialog: DistributedProcessingDialog | None = None
 
-    def run_distributed_processing(self, main_app_instance: Any = None) -> None:  # noqa: ANN401
+    def run_distributed_processing(self, main_app_instance: object | None = None) -> None:
         """Launch distributed processing interface.
 
         Args:

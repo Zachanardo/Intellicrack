@@ -23,7 +23,9 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 
 import functools
 import warnings
-from typing import Any, Callable
+from typing import Callable, TypeVar
+
+F = TypeVar("F", bound=Callable)
 
 
 def deprecated_config_method(replacement: str, version: str = "4.0") -> Callable:
@@ -38,9 +40,9 @@ def deprecated_config_method(replacement: str, version: str = "4.0") -> Callable
 
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: F) -> F:
         @functools.wraps(func)
-        def wrapper(*args, **kwargs) -> Any:
+        def wrapper(*args: object, **kwargs: object) -> object:
             warnings.warn(
                 f"{func.__name__} is deprecated and will be removed in version {version}. Use {replacement} instead.",
                 DeprecationWarning,
@@ -48,12 +50,12 @@ def deprecated_config_method(replacement: str, version: str = "4.0") -> Callable
             )
             return func(*args, **kwargs)
 
-        return wrapper
+        return wrapper  # type: ignore[return-value]
 
     return decorator
 
 
-def deprecated_qsettings(func: Callable) -> Callable:
+def deprecated_qsettings(func: F) -> F:
     """Mark QSettings-based methods as deprecated.
 
     Args:
@@ -65,7 +67,7 @@ def deprecated_qsettings(func: Callable) -> Callable:
     """
 
     @functools.wraps(func)
-    def wrapper(*args, **kwargs) -> Any:
+    def wrapper(*args: object, **kwargs: object) -> object:
         warnings.warn(
             f"QSettings usage in {func.__name__} is deprecated. "
             "All configuration now uses central IntellicrackConfig. "
@@ -75,10 +77,10 @@ def deprecated_qsettings(func: Callable) -> Callable:
         )
         return func(*args, **kwargs)
 
-    return wrapper
+    return wrapper  # type: ignore[return-value]
 
 
-def deprecated_llm_file_storage(func: Callable) -> Callable:
+def deprecated_llm_file_storage(func: F) -> F:
     """Decorate LLM configuration file storage methods.
 
     Args:
@@ -90,7 +92,7 @@ def deprecated_llm_file_storage(func: Callable) -> Callable:
     """
 
     @functools.wraps(func)
-    def wrapper(*args, **kwargs) -> Any:
+    def wrapper(*args: object, **kwargs: object) -> object:
         warnings.warn(
             f"File-based LLM configuration storage in {func.__name__} is deprecated. "
             "All LLM configurations are now stored in central IntellicrackConfig. "
@@ -100,10 +102,10 @@ def deprecated_llm_file_storage(func: Callable) -> Callable:
         )
         return func(*args, **kwargs)
 
-    return wrapper
+    return wrapper  # type: ignore[return-value]
 
 
-def deprecated_cli_config_file(func: Callable) -> Callable:
+def deprecated_cli_config_file(func: F) -> F:
     """Decorate CLI configuration file methods.
 
     Args:
@@ -115,7 +117,7 @@ def deprecated_cli_config_file(func: Callable) -> Callable:
     """
 
     @functools.wraps(func)
-    def wrapper(*args, **kwargs) -> Any:
+    def wrapper(*args: object, **kwargs: object) -> object:
         warnings.warn(
             f"Separate CLI configuration file usage in {func.__name__} is deprecated. "
             "CLI configuration is now part of central IntellicrackConfig. "
@@ -125,7 +127,7 @@ def deprecated_cli_config_file(func: Callable) -> Callable:
         )
         return func(*args, **kwargs)
 
-    return wrapper
+    return wrapper  # type: ignore[return-value]
 
 
 def deprecated_legacy_config_path(path: str) -> None:
@@ -179,12 +181,12 @@ class DeprecatedConfigAccess:
         """
         self.system_name = system_name
 
-    def __enter__(self):
+    def __enter__(self) -> "DeprecatedConfigAccess":
         """Enter context and emit warning."""
         emit_migration_warning(self.system_name)
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object) -> None:
         """Exit context."""
 
 

@@ -2798,6 +2798,7 @@ def main():
 
     # Otherwise run CLI
     cli()  # pylint: disable=E1120
+    return None
 
 
 if __name__ == "__main__":

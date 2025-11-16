@@ -130,7 +130,7 @@ except ImportError as e:
     class PlotWidget:
         """Matplotlib-based PlotWidget for when pyqtgraph is not available."""
 
-        def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: ANN002, ANN003, ANN401
+        def __init__(self, *args: object, **kwargs: object) -> None:
             """Initialize matplotlib-based PlotWidget with full plotting functionality."""
             self.parent = kwargs.get("parent")
             self._enabled = True
@@ -148,7 +148,7 @@ except ImportError as e:
             self._legend_enabled = False
             self._auto_range_enabled = True
 
-        def plot(self, *args: Any, **kwargs: Any) -> "PlotWidget":  # noqa: ANN002, ANN003, ANN401
+        def plot(self, *args: object, **kwargs: object) -> "PlotWidget":
             """Plot data using matplotlib."""
             if len(args) >= 2:
                 x_data = args[0]
@@ -184,7 +184,7 @@ except ImportError as e:
             self._data_y = []
             self._update_display()
 
-        def setLabel(self, axis: str, text: str, **kwargs: Any) -> None:  # noqa: ANN003, ANN401
+        def setLabel(self, axis: str, text: str, **kwargs: object) -> None:
             """Set axis labels using matplotlib."""
             if not hasattr(self, "_labels"):
                 self._labels = {}
@@ -199,14 +199,14 @@ except ImportError as e:
 
             self._update_display()
 
-        def enableAutoRange(self, *args: Any, **kwargs: Any) -> None:  # noqa: ANN002, ANN003, ANN401
+        def enableAutoRange(self, *args: object, **kwargs: object) -> None:
             """Enable auto range for axes."""
             self._auto_range_enabled = True
             if self._auto_range_enabled:
                 self.ax.autoscale(enable=True)
             self._update_display()
 
-        def showGrid(self, x: bool | None = None, y: bool | None = None, **kwargs: Any) -> None:  # noqa: ANN003, ANN401
+        def showGrid(self, x: bool | None = None, y: bool | None = None, **kwargs: object) -> None:
             """Show grid on the plot."""
             if not hasattr(self, "_grid_settings"):
                 self._grid_settings = {}
@@ -222,7 +222,7 @@ except ImportError as e:
             self.ax.grid(True, which="both", axis="both" if show_x and show_y else ("x" if show_x else "y"))
             self._update_display()
 
-        def setBackground(self, *args: Any, **kwargs: Any) -> None:  # noqa: ANN002, ANN003, ANN401
+        def setBackground(self, *args: object, **kwargs: object) -> None:
             """Set background color of the plot."""
             if args:
                 color = args[0]
@@ -236,7 +236,7 @@ except ImportError as e:
 
             self._update_display()
 
-        def addLegend(self, *args: Any, **kwargs: Any) -> "PlotWidget":  # noqa: ANN002, ANN003, ANN401
+        def addLegend(self, *args: object, **kwargs: object) -> "PlotWidget":
             """Add legend to the plot."""
             self._legend_enabled = True
             if self._plots:
@@ -523,7 +523,7 @@ class TrainingThread(QThread):
         """Resume the training process."""
         self.paused = False
 
-    def _process_training_batch(self, batch_data: list[Any], epoch: int) -> tuple[float, float]:  # noqa: ANN401
+    def _process_training_batch(self, batch_data: list[Any], epoch: int) -> tuple[float, float]:
         """Process a training batch and return loss and accuracy.
 
         Args:
@@ -583,7 +583,7 @@ class TrainingThread(QThread):
             self.log_message.emit(f"Batch processing error: {batch_error}")
             return 1.0, 0.0  # Default high loss, zero accuracy on error
 
-    def _evaluate_validation_data(self, validation_data: list[Any]) -> tuple[float, float]:  # noqa: ANN401
+    def _evaluate_validation_data(self, validation_data: list[Any]) -> tuple[float, float]:
         """Evaluate model performance on validation data.
 
         Args:
@@ -805,7 +805,7 @@ class TrainingThread(QThread):
 
         return real_data if real_data else [{"features": [0.5] * 7, "label": 0}]
 
-    def _extract_features_from_sample(self, sample: Any) -> list[float]:  # noqa: ANN401
+    def _extract_features_from_sample(self, sample: object) -> list[float]:
         """Extract features from a raw sample.
 
         Args:
@@ -830,7 +830,7 @@ class TrainingThread(QThread):
         except Exception:
             return [0.5, 0.5, 0.5]
 
-    def _extract_label_from_sample(self, sample: Any, index: int) -> int:  # noqa: ANN401
+    def _extract_label_from_sample(self, sample: object, index: int) -> int:
         """Extract label from a sample.
 
         Args:
@@ -951,7 +951,7 @@ class TrainingThread(QThread):
             "epsilon": 1e-8,
         }
 
-    def _relu(self, x: Any) -> Any:  # noqa: ANN401
+    def _relu(self, x: object) -> object:
         """ReLU activation function.
 
         Args:
@@ -963,7 +963,7 @@ class TrainingThread(QThread):
         """
         return np.maximum(0, x)
 
-    def _sigmoid(self, x: Any) -> Any:  # noqa: ANN401
+    def _sigmoid(self, x: object) -> object:
         """Sigmoid activation function.
 
         Args:
@@ -1011,6 +1011,7 @@ class TrainingThread(QThread):
 
         if ratios:
             import numpy as np
+
             return float(np.mean(ratios))
         return 1.1
 
@@ -1028,6 +1029,7 @@ class TrainingThread(QThread):
 
         if ratios:
             import numpy as np
+
             return float(np.mean(ratios))
         return 0.95
 

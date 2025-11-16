@@ -20,6 +20,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
+# pylint: disable=cyclic-import
 
 from datetime import datetime
 from typing import Any
@@ -98,12 +99,6 @@ except ImportError:
     PYQT6_AVAILABLE = False
 
 try:
-    from ...protection.icp_report_generator import ICPReportGenerator, ReportOptions
-except ImportError:
-    ICPReportGenerator = None
-    ReportOptions = None
-
-try:
     from ...protection.unified_protection_engine import UnifiedProtectionResult
 except ImportError:
     UnifiedProtectionResult = None
@@ -161,6 +156,8 @@ class ReportGeneratorWorker(QRunnable):
     def run(self) -> None:
         """Generate the report."""
         try:
+            from ...protection.icp_report_generator import ICPReportGenerator, ReportOptions
+
             self.signals.progress.emit(f"Generating {self.format_type.upper()} report...")
 
             # Use the new ICP report generator

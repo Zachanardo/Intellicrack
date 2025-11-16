@@ -560,7 +560,8 @@ class HardwareFingerPrintSpoofer:
         try:
             # Enumerate network adapters
             with winreg.OpenKey(
-                winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}",
+                winreg.HKEY_LOCAL_MACHINE,
+                r"SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}",
             ) as key:
                 i = 0
                 while True:
@@ -647,7 +648,7 @@ class HardwareFingerPrintSpoofer:
                 ("Data4", ctypes.c_ubyte * 8),
             ]
 
-        def uuid_to_guid(u: uuid.UUID) -> GUID:  # noqa: ANN401
+        def uuid_to_guid(u: uuid.UUID) -> GUID:
             """Convert UUID object to Windows GUID structure.
 
             Args:
@@ -719,7 +720,12 @@ class HardwareFingerPrintSpoofer:
 
         # Create hooked function
         def hooked_exec_query(
-            this: c_void_p, strQueryLanguage: c_void_p, strQuery: c_void_p, lFlags: int, pCtx: c_void_p, ppEnum: POINTER(c_void_p),
+            this: c_void_p,
+            strQueryLanguage: c_void_p,
+            strQuery: c_void_p,
+            lFlags: int,
+            pCtx: c_void_p,
+            ppEnum: POINTER(c_void_p),
         ) -> int:
             """Intercept WMI ExecQuery to return spoofed hardware information.
 
@@ -805,7 +811,7 @@ class HardwareFingerPrintSpoofer:
         # Hardware-related registry paths to intercept
 
         # Create inline hook for RegQueryValueExW
-        def create_inline_hook(target_func: c_void_p, hook_func: c_void_p) -> bool:  # noqa: ANN401
+        def create_inline_hook(target_func: c_void_p, hook_func: c_void_p) -> bool:
             """Create inline hook to replace target function with hook function.
 
             Args:
@@ -855,7 +861,7 @@ class HardwareFingerPrintSpoofer:
             return False
 
         # Create hooked RegQueryValueExW
-        def hooked_RegQueryValueExW(  # noqa: ANN401
+        def hooked_RegQueryValueExW(
             hKey: c_void_p,
             lpValueName: c_void_p,
             lpReserved: c_void_p,
@@ -925,7 +931,7 @@ class HardwareFingerPrintSpoofer:
         # Create RegGetValueW hook if available (Vista+)
         if self.original_RegGetValueW:
 
-            def hooked_RegGetValueW(  # noqa: ANN401
+            def hooked_RegGetValueW(
                 hKey: c_void_p,
                 lpSubKey: c_void_p,
                 lpValue: c_void_p,
@@ -1052,7 +1058,7 @@ class HardwareFingerPrintSpoofer:
         self.original_GetComputerNameExW = kernel32.GetComputerNameExW
 
         # Create inline hook helper
-        def install_inline_hook(target_addr: int, hook_func: c_void_p) -> bool:  # noqa: ANN401
+        def install_inline_hook(target_addr: int, hook_func: c_void_p) -> bool:
             """Install inline hook at target address.
 
             Args:
@@ -1096,7 +1102,7 @@ class HardwareFingerPrintSpoofer:
             return False
 
         # Hook GetVolumeInformationW
-        def hooked_GetVolumeInformationW(  # noqa: ANN401
+        def hooked_GetVolumeInformationW(
             lpRootPathName: wintypes.LPCWSTR,
             lpVolumeNameBuffer: wintypes.LPWSTR,
             nVolumeNameSize: wintypes.DWORD,
@@ -1142,7 +1148,7 @@ class HardwareFingerPrintSpoofer:
             return result
 
         # Hook GetSystemInfo
-        def hooked_GetSystemInfo(lpSystemInfo: c_void_p) -> None:  # noqa: ANN401
+        def hooked_GetSystemInfo(lpSystemInfo: c_void_p) -> None:
             """Intercept GetSystemInfo to return spoofed processor count.
 
             Args:
@@ -1163,7 +1169,7 @@ class HardwareFingerPrintSpoofer:
                     processor_count_ptr.contents = 8  # Spoof 8 processors
 
         # Hook GlobalMemoryStatusEx
-        def hooked_GlobalMemoryStatusEx(lpBuffer: c_void_p) -> wintypes.BOOL:  # noqa: ANN401
+        def hooked_GlobalMemoryStatusEx(lpBuffer: c_void_p) -> wintypes.BOOL:
             """Intercept GlobalMemoryStatusEx to return spoofed RAM size.
 
             Args:
@@ -1185,7 +1191,7 @@ class HardwareFingerPrintSpoofer:
             return result
 
         # Hook GetComputerNameExW
-        def hooked_GetComputerNameExW(NameType: wintypes.DWORD, lpBuffer: wintypes.LPWSTR, nSize: POINTER(wintypes.DWORD)) -> wintypes.BOOL:  # noqa: ANN401
+        def hooked_GetComputerNameExW(NameType: wintypes.DWORD, lpBuffer: wintypes.LPWSTR, nSize: POINTER(wintypes.DWORD)) -> wintypes.BOOL:
             """Intercept GetComputerNameExW to return spoofed computer name.
 
             Args:
@@ -1268,7 +1274,7 @@ class HardwareFingerPrintSpoofer:
         SPDRP_HARDWAREID = 0x00000001
 
         # Hook SetupDiGetDeviceRegistryPropertyW
-        def hooked_SetupDiGetDeviceRegistryPropertyW(  # noqa: ANN401
+        def hooked_SetupDiGetDeviceRegistryPropertyW(
             DeviceInfoSet: wintypes.HANDLE,
             DeviceInfoData: c_void_p,
             Property: wintypes.DWORD,
@@ -1314,11 +1320,23 @@ class HardwareFingerPrintSpoofer:
 
             # Call original for other properties
             return self.original_SetupDiGetDeviceRegistryPropertyW(
-                DeviceInfoSet, DeviceInfoData, Property, PropertyRegDataType, PropertyBuffer, PropertyBufferSize, RequiredSize,
+                DeviceInfoSet,
+                DeviceInfoData,
+                Property,
+                PropertyRegDataType,
+                PropertyBuffer,
+                PropertyBufferSize,
+                RequiredSize,
             )
 
         # Hook SetupDiGetDeviceInstanceIdW
-        def hooked_SetupDiGetDeviceInstanceIdW(DeviceInfoSet: wintypes.HANDLE, DeviceInfoData: c_void_p, DeviceInstanceId: wintypes.LPWSTR, DeviceInstanceIdSize: wintypes.DWORD, RequiredSize: POINTER(wintypes.DWORD)) -> wintypes.BOOL:  # noqa: ANN401
+        def hooked_SetupDiGetDeviceInstanceIdW(
+            DeviceInfoSet: wintypes.HANDLE,
+            DeviceInfoData: c_void_p,
+            DeviceInstanceId: wintypes.LPWSTR,
+            DeviceInstanceIdSize: wintypes.DWORD,
+            RequiredSize: POINTER(wintypes.DWORD),
+        ) -> wintypes.BOOL:
             """Intercept SetupDiGetDeviceInstanceIdW to return spoofed device instance IDs.
 
             Args:
@@ -1350,11 +1368,15 @@ class HardwareFingerPrintSpoofer:
                 return 0
 
             return self.original_SetupDiGetDeviceInstanceIdW(
-                DeviceInfoSet, DeviceInfoData, DeviceInstanceId, DeviceInstanceIdSize, RequiredSize,
+                DeviceInfoSet,
+                DeviceInfoData,
+                DeviceInstanceId,
+                DeviceInstanceIdSize,
+                RequiredSize,
             )
 
         # Create inline hook installer
-        def install_setupapi_hook(target_func: c_void_p, hook_func: c_void_p) -> bool:  # noqa: ANN401
+        def install_setupapi_hook(target_func: c_void_p, hook_func: c_void_p) -> bool:
             """Install inline hook for SetupAPI function.
 
             Args:
@@ -1410,7 +1432,12 @@ class HardwareFingerPrintSpoofer:
         )
 
         SetupDiGetDeviceInstanceIdW_func = ctypes.WINFUNCTYPE(
-            wintypes.BOOL, wintypes.HANDLE, c_void_p, wintypes.LPWSTR, wintypes.DWORD, POINTER(wintypes.DWORD),
+            wintypes.BOOL,
+            wintypes.HANDLE,
+            c_void_p,
+            wintypes.LPWSTR,
+            wintypes.DWORD,
+            POINTER(wintypes.DWORD),
         )
 
         # Create callbacks
@@ -1466,7 +1493,7 @@ class HardwareFingerPrintSpoofer:
         ]
 
         # Hook GetAdaptersInfo
-        def hooked_GetAdaptersInfo(pAdapterInfo: c_void_p, pOutBufLen: POINTER(wintypes.ULONG)) -> wintypes.DWORD:  # noqa: ANN401
+        def hooked_GetAdaptersInfo(pAdapterInfo: c_void_p, pOutBufLen: POINTER(wintypes.ULONG)) -> wintypes.DWORD:
             """Intercept GetAdaptersInfo to return spoofed MAC addresses.
 
             Args:
@@ -1502,7 +1529,13 @@ class HardwareFingerPrintSpoofer:
             return result
 
         # Hook GetAdaptersAddresses
-        def hooked_GetAdaptersAddresses(Family: wintypes.ULONG, Flags: wintypes.ULONG, Reserved: c_void_p, pAdapterAddresses: c_void_p, pOutBufLen: POINTER(wintypes.ULONG)) -> wintypes.ULONG:  # noqa: ANN401
+        def hooked_GetAdaptersAddresses(
+            Family: wintypes.ULONG,
+            Flags: wintypes.ULONG,
+            Reserved: c_void_p,
+            pAdapterAddresses: c_void_p,
+            pOutBufLen: POINTER(wintypes.ULONG),
+        ) -> wintypes.ULONG:
             """Intercept GetAdaptersAddresses to return spoofed MAC addresses.
 
             Args:
@@ -1544,7 +1577,7 @@ class HardwareFingerPrintSpoofer:
             return result
 
         # Create inline hook installer
-        def install_iphlpapi_hook(target_func: c_void_p, hook_func: c_void_p) -> bool:  # noqa: ANN401
+        def install_iphlpapi_hook(target_func: c_void_p, hook_func: c_void_p) -> bool:
             """Install inline hook for IP Helper API function.
 
             Args:
@@ -1591,7 +1624,12 @@ class HardwareFingerPrintSpoofer:
         GetAdaptersInfo_func = ctypes.WINFUNCTYPE(wintypes.DWORD, c_void_p, POINTER(wintypes.ULONG))
 
         GetAdaptersAddresses_func = ctypes.WINFUNCTYPE(
-            wintypes.ULONG, wintypes.ULONG, wintypes.ULONG, c_void_p, c_void_p, POINTER(wintypes.ULONG),
+            wintypes.ULONG,
+            wintypes.ULONG,
+            wintypes.ULONG,
+            c_void_p,
+            c_void_p,
+            POINTER(wintypes.ULONG),
         )
 
         # Create callbacks
@@ -1634,7 +1672,9 @@ class HardwareFingerPrintSpoofer:
         for pid in wmi_pids:
             # Open process with required permissions
             hProcess = kernel32.OpenProcess(
-                PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION | PROCESS_QUERY_INFORMATION, False, pid,
+                PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION | PROCESS_QUERY_INFORMATION,
+                False,
+                pid,
             )
 
             if hProcess:
@@ -1697,7 +1737,7 @@ class HardwareFingerPrintSpoofer:
         kernel32.CloseHandle(hSnapshot)
         return processes
 
-    def _patch_processor_info(self, kernel32: c_void_p, hProcess: int) -> None:  # noqa: ANN401
+    def _patch_processor_info(self, kernel32: c_void_p, hProcess: int) -> None:
         """Patch processor information in WMI process memory.
 
         Args:
@@ -1724,7 +1764,7 @@ class HardwareFingerPrintSpoofer:
                             patch_addr = match + offset
                             self._patch_memory_value(kernel32, hProcess, patch_addr, old_id, new_id)
 
-    def _patch_motherboard_info(self, kernel32: c_void_p, hProcess: int) -> None:  # noqa: ANN401
+    def _patch_motherboard_info(self, kernel32: c_void_p, hProcess: int) -> None:
         """Patch motherboard information in WMI process memory.
 
         Args:
@@ -1748,7 +1788,7 @@ class HardwareFingerPrintSpoofer:
                             patch_addr = match + offset
                             self._patch_memory_value(kernel32, hProcess, patch_addr, old_serial, new_serial)
 
-    def _patch_bios_info(self, kernel32: Any, hProcess: int) -> None:
+    def _patch_bios_info(self, kernel32: c_void_p, hProcess: int) -> None:
         """Patch BIOS information in WMI process memory.
 
         Args:
@@ -1769,7 +1809,7 @@ class HardwareFingerPrintSpoofer:
                         patch_addr = match + offset
                         self._patch_memory_value(kernel32, hProcess, patch_addr, old_bios, new_bios)
 
-    def _scan_memory_for_pattern(self, kernel32: Any, hProcess: int, pattern: bytes) -> list[int]:
+    def _scan_memory_for_pattern(self, kernel32: c_void_p, hProcess: int, pattern: bytes) -> list[int]:
         """Scan process memory for pattern.
 
         Args:
@@ -1854,7 +1894,7 @@ class HardwareFingerPrintSpoofer:
 
         return matches
 
-    def _patch_memory_value(self, kernel32: Any, hProcess: int, address: int, old_value: bytes, new_value: bytes) -> bool:
+    def _patch_memory_value(self, kernel32: c_void_p, hProcess: int, address: int, old_value: bytes, new_value: bytes) -> bool:
         """Patch a value at given address.
 
         Args:
@@ -1924,7 +1964,8 @@ class HardwareFingerPrintSpoofer:
         # Update registry
         try:
             with winreg.CreateKey(
-                winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0",
+                winreg.HKEY_LOCAL_MACHINE,
+                r"HARDWARE\DESCRIPTION\System\CentralProcessor\0",
             ) as key:  # pragma: allowlist secret
                 winreg.SetValueEx(key, "ProcessorNameString", 0, winreg.REG_SZ, cpu_name)
                 winreg.SetValueEx(key, "Identifier", 0, winreg.REG_SZ, cpu_id)
@@ -2059,7 +2100,8 @@ class HardwareFingerPrintSpoofer:
         """Remove network adapter spoofing."""
         try:
             with winreg.OpenKey(
-                winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}",
+                winreg.HKEY_LOCAL_MACHINE,
+                r"SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}",
             ) as key:
                 i = 0
                 while True:

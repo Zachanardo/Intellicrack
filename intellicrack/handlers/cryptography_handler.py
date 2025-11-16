@@ -22,7 +22,7 @@ import hashlib
 import hmac
 import os
 import struct
-from typing import Any, Callable, Optional, Union
+from typing import Callable, Optional, Union
 
 from intellicrack.utils.logger import logger
 
@@ -391,7 +391,7 @@ except ImportError as e:
     class FallbackCipher:
         """Cipher implementation for AES."""
 
-        def __init__(self, algorithm: Any, mode: Any) -> None:
+        def __init__(self, algorithm: object, mode: object) -> None:
             """Initialize cipher.
 
             Args:
@@ -401,8 +401,8 @@ except ImportError as e:
             """
             self.algorithm = algorithm
             self.mode = mode
-            self.encryptor_obj: Optional[Any] = None
-            self.decryptor_obj: Optional[Any] = None
+            self.encryptor_obj: Optional[object] = None
+            self.decryptor_obj: Optional[object] = None
 
         def encryptor(self) -> "FallbackEncryptor":
             """Get encryptor.
@@ -427,7 +427,7 @@ except ImportError as e:
     class FallbackEncryptor:
         """Encryptor for cipher operations."""
 
-        def __init__(self, algorithm: Any, mode: Any) -> None:
+        def __init__(self, algorithm: object, mode: object) -> None:
             """Initialize encryptor.
 
             Args:
@@ -488,7 +488,7 @@ except ImportError as e:
     class FallbackDecryptor:
         """Decryptor for cipher operations."""
 
-        def __init__(self, algorithm: Any, mode: Any) -> None:
+        def __init__(self, algorithm: object, mode: object) -> None:
             """Initialize decryptor.
 
             Args:
@@ -667,7 +667,7 @@ except ImportError as e:
         """RSA key generation and operations."""
 
         @staticmethod
-        def generate_private_key(public_exponent: int = 65537, key_size: int = 2048, backend: Optional[Any] = None) -> "FallbackRSAPrivateKey":
+        def generate_private_key(public_exponent: int = 65537, key_size: int = 2048, backend: Optional[object] = None) -> "FallbackRSAPrivateKey":
             """Generate RSA private key."""
             # Simplified RSA key generation
             logger.info("Generating RSA key pair (fallback mode)")
@@ -733,7 +733,7 @@ except ImportError as e:
             """
             return FallbackRSAPublicKey(self.n, self.e)
 
-        def private_bytes(self, encoding: Any, format: Any, encryption_algorithm: Any) -> bytes:
+        def private_bytes(self, encoding: object, format: object, encryption_algorithm: object) -> bytes:
             """Export private key."""
             # Simplified PEM format
             key_data = f"""-----BEGIN RSA PRIVATE KEY-----
@@ -743,7 +743,7 @@ MIIEowIBAAKCAQEA{base64.b64encode(str(self.n).encode()).decode()}
 -----END RSA PRIVATE KEY-----"""
             return key_data.encode()
 
-        def sign(self, message: bytes, padding_obj: Any, algorithm: Any) -> bytes:
+        def sign(self, message: bytes, padding_obj: object, algorithm: object) -> bytes:
             """Sign a message."""
             # Simplified signature
             h = hashlib.sha256(message).digest()
@@ -751,7 +751,7 @@ MIIEowIBAAKCAQEA{base64.b64encode(str(self.n).encode()).decode()}
             signature = pow(h_int, self.d, self.n)
             return signature.to_bytes((signature.bit_length() + 7) // 8, "big")
 
-        def decrypt(self, ciphertext: bytes, padding_obj: Any) -> bytes:
+        def decrypt(self, ciphertext: bytes, padding_obj: object) -> bytes:
             """Decrypt ciphertext."""
             c_int = int.from_bytes(ciphertext, "big")
             m_int = pow(c_int, self.d, self.n)
@@ -766,7 +766,7 @@ MIIEowIBAAKCAQEA{base64.b64encode(str(self.n).encode()).decode()}
             self.e = e
             self.key_size = n.bit_length()
 
-        def public_bytes(self, encoding: Any, format: Any) -> bytes:
+        def public_bytes(self, encoding: object, format: object) -> bytes:
             """Export public key."""
             # Simplified PEM format
             key_data = f"""-----BEGIN PUBLIC KEY-----
@@ -775,13 +775,13 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
 -----END PUBLIC KEY-----"""
             return key_data.encode()
 
-        def encrypt(self, message: bytes, padding_obj: Any) -> bytes:
+        def encrypt(self, message: bytes, padding_obj: object) -> bytes:
             """Encrypt message."""
             m_int = int.from_bytes(message, "big")
             c_int = pow(m_int, self.e, self.n)
             return c_int.to_bytes((c_int.bit_length() + 7) // 8, "big")
 
-        def verify(self, signature: bytes, message: bytes, padding_obj: Any, algorithm: Any) -> bool:
+        def verify(self, signature: bytes, message: bytes, padding_obj: object, algorithm: object) -> bool:
             """Verify signature."""
             # Simplified verification
             s_int = int.from_bytes(signature, "big")
@@ -794,11 +794,11 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
 
         def __init__(
             self,
-            algorithm: Any,
+            algorithm: object,
             length: int,
             salt: bytes,
             iterations: int,
-            backend: Optional[Any] = None,
+            backend: Optional[object] = None,
         ) -> None:
             """Initialize PBKDF2."""
             self.algorithm = algorithm
@@ -947,7 +947,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
         return FallbackBackend()
 
     # X.509 certificate handling
-    def load_pem_x509_certificate(data: bytes, backend: Optional[Any] = None) -> "FallbackX509Certificate":
+    def load_pem_x509_certificate(data: bytes, backend: Optional[object] = None) -> "FallbackX509Certificate":
         """Load PEM certificate."""
         # Parse PEM format (simplified)
         lines = data.decode().split("\n")
@@ -966,7 +966,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
         cert_bytes = base64.b64decode(cert_data)
         return FallbackX509Certificate(cert_bytes)
 
-    def load_pem_private_key(data: Union[bytes, str], password: Optional[bytes] = None, backend: Optional[Any] = None) -> "FallbackRSAPrivateKey":
+    def load_pem_private_key(data: Union[bytes, str], password: Optional[bytes] = None, backend: Optional[object] = None) -> "FallbackRSAPrivateKey":
         """Load PEM private key."""
         # Parse PEM format (simplified)
         lines = data.decode() if isinstance(data, bytes) else data
@@ -1122,20 +1122,20 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
 
                 class Padding:
                     class OAEP:
-                        def __init__(self, mgf: Any, algorithm: Any, label: Optional[bytes] = None) -> None:
+                        def __init__(self, mgf: object, algorithm: object, label: Optional[bytes] = None) -> None:
                             self.mgf = mgf
                             self.algorithm = algorithm
                             self.label = label
 
                     class PSS:
-                        def __init__(self, mgf: Any, salt_length: int) -> None:
+                        def __init__(self, mgf: object, salt_length: int) -> None:
                             self.mgf = mgf
                             self.salt_length = salt_length
 
                     class MGF1:
                         """MGF1 mask generation function."""
 
-                        def __init__(self, algorithm: Any) -> None:
+                        def __init__(self, algorithm: object) -> None:
                             """Initialize MGF1.
 
                             Args:

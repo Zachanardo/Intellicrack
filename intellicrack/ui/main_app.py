@@ -778,11 +778,11 @@ class IntellicrackApp(QMainWindow):
                 self.PLUGIN_TYPE_GHIDRA: [],
             }
 
-    def _on_ai_task_complete(self, event_data) -> None:
+    def _on_ai_task_complete(self, event_data: object) -> None:
         """Handle AI task completion events from the orchestrator.
 
         Args:
-            event_data: Dictionary containing task completion information
+            event_data: Dictionary containing task completion information.
 
         """
         try:
@@ -806,11 +806,11 @@ class IntellicrackApp(QMainWindow):
         except Exception as e:
             self.logger.error(f"Error handling AI task completion: {e}")
 
-    def _on_coordinated_analysis_complete(self, event_data) -> None:
+    def _on_coordinated_analysis_complete(self, event_data: object) -> None:
         """Handle coordinated analysis completion events from AI coordinator.
 
         Args:
-            event_data: Dictionary containing coordinated analysis results
+            event_data: Dictionary containing coordinated analysis results.
 
         """
         try:
@@ -946,8 +946,13 @@ class IntellicrackApp(QMainWindow):
             self.update_output.emit(self.log_message(f"Binary loaded: {binary_info}"))
             self.logger.info(f"Binary loaded: {binary_info}")
 
-    def _on_analysis_completed(self, results) -> None:
-        """Handle analysis completion event from app context."""
+    def _on_analysis_completed(self, results: object) -> None:
+        """Handle analysis completion event from app context.
+
+        Args:
+            results: Analysis results object.
+
+        """
         self.update_analysis_results.emit(f"Analysis completed with {len(results)} results")
         self.logger.info("Analysis completed")
 
@@ -1021,14 +1026,14 @@ class IntellicrackApp(QMainWindow):
             self.theme_manager.set_theme(theme_name)
         self.logger.info(f"Theme changed to: {theme_name}")
 
-    def _load_cache_data(self, cache_file):
+    def _load_cache_data(self, cache_file: object) -> dict | None:
         """Load and parse cache data from file.
 
         Args:
-            cache_file: Path to cache file
+            cache_file: Path to cache file.
 
         Returns:
-            dict: Parsed cache data, or None if loading fails
+            Parsed cache data, or None if loading fails.
 
         """
         import json
@@ -1043,17 +1048,17 @@ class IntellicrackApp(QMainWindow):
             self.logger.debug(f"Failed to load cache data: {e}")
             return None
 
-    def _check_file_modifications(self, plugin_dir, cached_filenames):
+    def _check_file_modifications(self, plugin_dir: object, cached_filenames: dict) -> tuple[bool, dict]:
         """Check if files in directory have been modified compared to cache.
 
         Args:
-            plugin_dir: Path to plugin directory (Path object or string)
-            cached_filenames: Dict mapping filenames to cached modification times
+            plugin_dir: Path to plugin directory (Path object or string).
+            cached_filenames: Dict mapping filenames to cached modification times.
 
         Returns:
-            tuple: (is_valid, remaining_cached_files) where is_valid indicates if
-                   all files match cache, and remaining_cached_files contains files
-                   that were in cache but not found in directory
+            Tuple of (is_valid, remaining_cached_files) where is_valid indicates if
+            all files match cache, and remaining_cached_files contains files
+            that were in cache but not found in directory.
 
         """
         from pathlib import Path
@@ -1075,16 +1080,16 @@ class IntellicrackApp(QMainWindow):
 
         return True, remaining
 
-    def _validate_plugin_directory_cache(self, plugin_type, plugin_dir, cached_data):
+    def _validate_plugin_directory_cache(self, plugin_type: str, plugin_dir: object, cached_data: dict) -> bool:
         """Validate cache for a specific plugin directory.
 
         Args:
-            plugin_type: Type of plugin (custom, frida, ghidra)
-            plugin_dir: Path to plugin directory (Path object or string)
-            cached_data: Complete cached data dictionary
+            plugin_type: Type of plugin (custom, frida, ghidra).
+            plugin_dir: Path to plugin directory (Path object or string).
+            cached_data: Complete cached data dictionary.
 
         Returns:
-            bool: True if cache is valid for this directory, False otherwise
+            True if cache is valid for this directory, False otherwise.
 
         """
         from pathlib import Path
@@ -1103,16 +1108,16 @@ class IntellicrackApp(QMainWindow):
 
         return len(remaining) == 0
 
-    def _is_plugin_cache_valid(self, cache_file, plugin_directories):
+    def _is_plugin_cache_valid(self, cache_file: object, plugin_directories: dict) -> tuple[bool, dict | None]:
         """Check if plugin cache exists and is still valid.
 
         Args:
-            cache_file: Path to cache file (Path object)
-            plugin_directories: Dict mapping plugin types to their directories
+            cache_file: Path to cache file (Path object).
+            plugin_directories: Dict mapping plugin types to their directories.
 
         Returns:
-            tuple: (is_valid, cached_data) where is_valid is True if cache is valid,
-                   and cached_data contains the loaded cache or None if invalid
+            Tuple of (is_valid, cached_data) where is_valid is True if cache is valid,
+            and cached_data contains the loaded cache or None if invalid.
 
         """
         cached_data = self._load_cache_data(cache_file)
@@ -1125,14 +1130,14 @@ class IntellicrackApp(QMainWindow):
 
         return True, cached_data
 
-    def load_available_plugins(self):
+    def load_available_plugins(self) -> dict:
         """Load available plugins from plugin directory with caching for performance.
 
         Uses a cache file to avoid rescanning the filesystem on every startup. Cache is
         invalidated when plugin files are added, removed, or modified.
 
         Returns:
-            dict: Dictionary containing lists of plugins by type (custom, frida, ghidra)
+            Dictionary containing lists of plugins by type (custom, frida, ghidra).
 
         """
         import json
@@ -1151,15 +1156,15 @@ class IntellicrackApp(QMainWindow):
             self.PLUGIN_TYPE_GHIDRA: get_ghidra_scripts_dir(),
         }
 
-        def is_path_safe(file_path, plugin_dir) -> bool:
+        def is_path_safe(file_path: object, plugin_dir: object) -> bool:
             """Validate that reconstructed path is within allowed plugin directory.
 
             Args:
-                file_path: Path to validate (Path object or string)
-                plugin_dir: Expected parent directory (Path object or string)
+                file_path: Path to validate (Path object or string).
+                plugin_dir: Expected parent directory (Path object or string).
 
             Returns:
-                bool: True if file_path is within plugin_dir, False otherwise
+                True if file_path is within plugin_dir, False otherwise.
 
             """
             try:
@@ -1376,14 +1381,14 @@ class IntellicrackApp(QMainWindow):
                 self.settings_tab.setVisible(True)
 
 
-def launch():
+def launch() -> int:
     """Launch the Intellicrack application.
 
     Creates QApplication instance, instantiates IntellicrackApp,
     shows the main window, and runs the Qt event loop.
 
     Returns:
-        int: Application exit code
+        Application exit code.
 
     """
     try:

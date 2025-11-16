@@ -17,6 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
+# pylint: disable=cyclic-import
 
 import hashlib
 import json
@@ -116,7 +117,7 @@ class LLMConfig:
     quantization: str | None = None  # For quantized models
     model: str | None = None  # Alternative name for model_name
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Post-initialization to handle alternative parameter names."""
         # Handle 'model' as alias for 'model_name'
         if self.model and not self.model_name:
@@ -1886,7 +1887,7 @@ class LLMManager:
     _instance = None
     _lock = threading.Lock()
 
-    def __new__(cls, enable_lazy_loading: bool = True, enable_background_loading: bool = True):
+    def __new__(cls, enable_lazy_loading: bool = True, enable_background_loading: bool = True) -> "LLMManager":
         """Singleton pattern implementation."""
         with cls._lock:
             if cls._instance is None:
@@ -1992,7 +1993,7 @@ class LLMManager:
                 logger.error("Failed to register LLM %s: %s", llm_id, e)
                 return False
 
-    def _get_backend_class(self, provider: LLMProvider):
+    def _get_backend_class(self, provider: LLMProvider) -> type | None:
         """Get the backend class for a given provider."""
         backend_classes = {
             LLMProvider.OPENAI: OpenAIBackend,
@@ -2278,9 +2279,9 @@ Please analyze this data and provide detailed protection pattern analysis in JSO
         self,
         prompt: str,
         script_type: str,
-        context_data: dict[str, Any] = None,
+        context_data: dict[str, Any] | None = None,
         llm_id: str | None = None,
-    ):
+    ) -> str | None:
         """Generate script with streaming support for long generation times."""
         # Direct streaming passthrough to standard generation for compatibility
         # All configured backends handle streaming internally when available
@@ -2557,7 +2558,7 @@ Please analyze this script and return validation results in JSON format."""
         """Add an LLM with the given configuration (alias for ``register_llm``)."""
         return self.register_llm(llm_id, config)
 
-    def get_llm(self, llm_id: str) -> Any | None:
+    def get_llm(self, llm_id: str) -> object | None:
         """Get an LLM backend by ID."""
         with self.lock:
             # First try to get from immediate backends
@@ -2576,7 +2577,7 @@ Please analyze this script and return validation results in JSON format."""
 
 
 # Convenience functions for creating common configurations
-def create_openai_config(model_name: str = "gpt-4", api_key: str = None, **kwargs) -> LLMConfig:
+def create_openai_config(model_name: str = "gpt-4", api_key: str | None = None, **kwargs: Any) -> LLMConfig:
     """Create OpenAI configuration."""
     return LLMConfig(
         provider=LLMProvider.OPENAI,
@@ -2586,7 +2587,7 @@ def create_openai_config(model_name: str = "gpt-4", api_key: str = None, **kwarg
     )
 
 
-def create_anthropic_config(model_name: str = "claude-3-5-sonnet-20241022", api_key: str = None, **kwargs) -> LLMConfig:
+def create_anthropic_config(model_name: str = "claude-3-5-sonnet-20241022", api_key: str | None = None, **kwargs: Any) -> LLMConfig:
     """Create Anthropic configuration."""
     return LLMConfig(
         provider=LLMProvider.ANTHROPIC,
@@ -2596,7 +2597,7 @@ def create_anthropic_config(model_name: str = "claude-3-5-sonnet-20241022", api_
     )
 
 
-def create_gguf_config(model_path: str, model_name: str = None, **kwargs) -> LLMConfig:
+def create_gguf_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
     """Create GGUF model configuration."""
     if not model_name:
         model_name = os.path.basename(model_path)
@@ -2609,7 +2610,7 @@ def create_gguf_config(model_path: str, model_name: str = None, **kwargs) -> LLM
     )
 
 
-def create_ollama_config(model_name: str, api_base: str = None, **kwargs) -> LLMConfig:
+def create_ollama_config(model_name: str, api_base: str | None = None, **kwargs: Any) -> LLMConfig:
     """Create Ollama configuration."""
     from intellicrack.utils.service_utils import get_service_url
 
@@ -2621,7 +2622,7 @@ def create_ollama_config(model_name: str, api_base: str = None, **kwargs) -> LLM
     )
 
 
-def create_pytorch_config(model_path: str, model_name: str = None, **kwargs) -> LLMConfig:
+def create_pytorch_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
     """Create PyTorch model configuration."""
     if not model_name:
         model_name = os.path.basename(model_path)
@@ -2634,7 +2635,7 @@ def create_pytorch_config(model_path: str, model_name: str = None, **kwargs) -> 
     )
 
 
-def create_tensorflow_config(model_path: str, model_name: str = None, **kwargs) -> LLMConfig:
+def create_tensorflow_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
     """Create TensorFlow model configuration."""
     if not model_name:
         model_name = os.path.basename(model_path)
@@ -2647,7 +2648,7 @@ def create_tensorflow_config(model_path: str, model_name: str = None, **kwargs) 
     )
 
 
-def create_onnx_config(model_path: str, model_name: str = None, **kwargs) -> LLMConfig:
+def create_onnx_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
     """Create ONNX model configuration."""
     if not model_name:
         model_name = os.path.basename(model_path)
@@ -2660,7 +2661,7 @@ def create_onnx_config(model_path: str, model_name: str = None, **kwargs) -> LLM
     )
 
 
-def create_safetensors_config(model_path: str, model_name: str = None, **kwargs) -> LLMConfig:
+def create_safetensors_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
     """Create Safetensors model configuration."""
     if not model_name:
         model_name = os.path.basename(model_path)
@@ -2673,7 +2674,7 @@ def create_safetensors_config(model_path: str, model_name: str = None, **kwargs)
     )
 
 
-def create_gptq_config(model_path: str, model_name: str = None, **kwargs) -> LLMConfig:
+def create_gptq_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
     """Create GPTQ model configuration."""
     if not model_name:
         model_name = os.path.basename(model_path)
@@ -2686,7 +2687,7 @@ def create_gptq_config(model_path: str, model_name: str = None, **kwargs) -> LLM
     )
 
 
-def create_huggingface_local_config(model_path: str, model_name: str = None, **kwargs) -> LLMConfig:
+def create_huggingface_local_config(model_path: str, model_name: str | None = None, **kwargs: Any) -> LLMConfig:
     """Create Hugging Face local model configuration."""
     if not model_name:
         model_name = os.path.basename(model_path)

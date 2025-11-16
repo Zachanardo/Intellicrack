@@ -63,8 +63,14 @@ class ToolsTab(BaseTab):
     plugin_loaded = pyqtSignal(str, bool)
     network_capture_started = pyqtSignal(str)
 
-    def __init__(self, shared_context=None, parent=None) -> None:
-        """Initialize tools tab with external tool integration and management."""
+    def __init__(self, shared_context: dict | None = None, parent: QWidget | None = None) -> None:
+        """Initialize tools tab with external tool integration and management.
+
+        Args:
+            shared_context: Optional shared context dictionary containing app state and signals.
+            parent: Optional parent QWidget for this tab.
+
+        """
         self.available_tools = {}
         self.loaded_plugins = {}
         self.network_interfaces = []
@@ -107,8 +113,13 @@ class ToolsTab(BaseTab):
         layout.addWidget(h_container)
         self.is_loaded = True
 
-    def create_tools_panel(self):
-        """Create the tools control panel."""
+    def create_tools_panel(self) -> QWidget:
+        """Create the tools control panel.
+
+        Returns:
+            QWidget: The tools panel widget containing the tools tabs interface.
+
+        """
         panel = QWidget()
         layout = QVBoxLayout(panel)
 
@@ -131,8 +142,13 @@ class ToolsTab(BaseTab):
         layout.addWidget(self.tools_tabs)
         return panel
 
-    def create_system_tools_tab(self):
-        """Create system tools tab."""
+    def create_system_tools_tab(self) -> QWidget:
+        """Create system tools tab.
+
+        Returns:
+            QWidget: The system tools tab widget containing file operations, registry tools, and system information.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -210,8 +226,13 @@ class ToolsTab(BaseTab):
 
         return tab
 
-    def create_analysis_tools_tab(self):
-        """Create analysis tools tab."""
+    def create_analysis_tools_tab(self) -> QWidget:
+        """Create analysis tools tab.
+
+        Returns:
+            QWidget: The analysis tools tab widget containing binary and cryptographic analysis tools.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -301,8 +322,13 @@ class ToolsTab(BaseTab):
 
         return tab
 
-    def create_plugin_manager_tab(self):
-        """Create plugin manager tab."""
+    def create_plugin_manager_tab(self) -> QWidget:
+        """Create plugin manager tab.
+
+        Returns:
+            QWidget: The plugin manager tab widget for plugin loading, unloading, and development.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -365,8 +391,13 @@ class ToolsTab(BaseTab):
 
         return tab
 
-    def create_network_tools_tab(self):
-        """Create network tools tab."""
+    def create_network_tools_tab(self) -> QWidget:
+        """Create network tools tab.
+
+        Returns:
+            QWidget: The network tools tab widget containing packet capture and network scanning tools.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -455,8 +486,13 @@ class ToolsTab(BaseTab):
 
         return tab
 
-    def create_activation_tools_tab(self):
-        """Create activation tools tab for Windows activation."""
+    def create_activation_tools_tab(self) -> QWidget:
+        """Create activation tools tab for Windows activation.
+
+        Returns:
+            QWidget: The activation tools tab widget for Windows activation management.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -529,8 +565,13 @@ class ToolsTab(BaseTab):
             if hasattr(self.parent(), "append_output"):
                 self.parent().append_output(f"Error launching Windows activation: {e}")
 
-    def create_advanced_analysis_tab(self):
-        """Create advanced analysis tools tab with sophisticated backend integration."""
+    def create_advanced_analysis_tab(self) -> QWidget:
+        """Create advanced analysis tools tab with sophisticated backend integration.
+
+        Returns:
+            QWidget: The advanced analysis tab widget containing dynamic analysis, static analysis, and AI-powered tools.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -683,8 +724,13 @@ class ToolsTab(BaseTab):
 
         return tab
 
-    def create_results_panel(self):
-        """Create the results panel."""
+    def create_results_panel(self) -> QWidget:
+        """Create the results panel.
+
+        Returns:
+            QWidget: The results panel widget containing output console, tool output, network packets, and plugin output tabs.
+
+        """
         panel = QWidget()
         layout = QVBoxLayout(panel)
 
@@ -730,8 +776,13 @@ class ToolsTab(BaseTab):
         layout.addWidget(self.results_tabs)
         return panel
 
-    def on_binary_loaded(self, binary_info) -> None:
-        """Handle binary loaded signal from app_context."""
+    def on_binary_loaded(self, binary_info: dict | None) -> None:
+        """Handle binary loaded signal from app_context.
+
+        Args:
+            binary_info: Dictionary containing binary metadata including 'name' and 'path' keys.
+
+        """
         if isinstance(binary_info, dict):
             self.current_binary = binary_info.get("name", "Unknown")
             self.current_binary_path = binary_info.get("path")
@@ -763,8 +814,13 @@ class ToolsTab(BaseTab):
         if hasattr(self, "tool_output"):
             self.tool_output.append("[INFO] Binary unloaded")
 
-    def enable_binary_dependent_tools(self, enabled) -> None:
-        """Enable or disable tools that require a loaded binary."""
+    def enable_binary_dependent_tools(self, enabled: bool) -> None:
+        """Enable or disable tools that require a loaded binary.
+
+        Args:
+            enabled: Boolean flag to enable or disable the tools.
+
+        """
         # List of buttons that require a binary to be loaded
         binary_dependent_buttons = [
             "file_info_btn",
@@ -1259,8 +1315,16 @@ class ToolsTab(BaseTab):
         except Exception as e:
             self.output_console.append(f"Error analyzing symbols: {e!s}")
 
-    def calculate_hash(self, algorithm) -> None:
-        """Calculate hash of input data."""
+    def calculate_hash(self, algorithm: str) -> None:
+        """Calculate hash of input data.
+
+        Args:
+            algorithm: The hashing algorithm to use (md5 or sha256).
+
+        Raises:
+            ValueError: If an unsupported hashing algorithm is specified.
+
+        """
         data = self.crypto_input.toPlainText().strip()
         if not data:
             self.output_console.append("Error: No input data provided")
@@ -1697,9 +1761,17 @@ def get_plugin():
             self.tool_output.append(f"Port scan results for {target}:")
             self.tool_output.append("PORT     STATE SERVICE")
 
-            open_ports = []
+            open_ports: list[str] = []
 
-            def scan_port(host, port, service) -> None:
+            def scan_port(host: str, port: int, service: str) -> None:
+                """Scan a single port for connectivity.
+
+                Args:
+                    host: The target host IP address.
+                    port: The port number to scan.
+                    service: The service name associated with the port.
+
+                """
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(0.5)
                 try:
@@ -2598,8 +2670,14 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error running protocol analysis: {e!s}")
 
-    def log_message(self, message, level="info") -> None:
-        """Log message to console or status."""
+    def log_message(self, message: str, level: str = "info") -> None:
+        """Log message to console or status.
+
+        Args:
+            message: The message text to log.
+            level: The logging level (info, warning, error, debug). Defaults to "info".
+
+        """
         if hasattr(self.shared_context, "log_message"):
             self.shared_context.log_message(message, level)
         else:

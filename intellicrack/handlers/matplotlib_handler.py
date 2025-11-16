@@ -18,6 +18,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import traceback
+import types
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from intellicrack.utils.logger import logger
@@ -1290,7 +1291,7 @@ except ImportError as e:
             """
             return self
 
-        def __exit__(self, exc_type: Optional[type], exc_val: Optional[Exception], exc_tb: Optional[object]) -> None:
+        def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None) -> None:
             """Context manager exit.
 
             Args:

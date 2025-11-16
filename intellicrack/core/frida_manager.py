@@ -239,7 +239,7 @@ class FridaOperationLogger:
         function_name: str,
         module: str,
         arguments: list[Any],
-        return_value: Any = None,
+        return_value: bytes | bytearray | None = None,
         modified: bool = False,
     ) -> None:
         """Log individual hook executions.
@@ -781,7 +781,7 @@ class HookBatcher:
         if self.batch_thread:
             self.batch_thread.join()
 
-    def _batch_processor(self):
+    def _batch_processor(self) -> None:
         """Process hooks in batches."""
         while self.running:
             batch = []
@@ -3092,7 +3092,7 @@ class FridaManager:
             detection = session.create_script(detection_script)
             protections_found = []
 
-            def on_message(message, data) -> None:
+            def on_message(message: dict, data: bytes | bytearray) -> None:
                 if message["type"] == "send":
                     payload = message.get("payload", {})
                     if payload.get("type") == "protections":
@@ -3175,7 +3175,7 @@ class FridaManager:
             # Create temporary analysis script
             analyzer = session.create_script(analysis_script)
 
-            def on_message(message, data) -> None:
+            def on_message(message: dict, data: bytes | bytearray) -> None:
                 if message["type"] == "send":
                     payload = message.get("payload", {})
                     if payload.get("type") == "target_info":
@@ -3298,7 +3298,7 @@ class FridaManager:
 
         return instrumentation + "\n" + script_code
 
-    def _on_script_message(self, session_id: str, script_name: str, message: dict, data: Any) -> None:
+    def _on_script_message(self, session_id: str, script_name: str, message: dict, data: bytes | bytearray) -> None:
         """Handle messages from Frida scripts including binary data."""
         msg_type = message.get("type")
         payload = message.get("payload", {})
@@ -3674,7 +3674,7 @@ class FridaManager:
             {"method": "usermode_emulation"},
         )
 
-    def _handle_memory_dump(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]) -> None:
+    def _handle_memory_dump(self, session_id: str, script_name: str, data: bytes | bytearray, payload: dict[str, Any]) -> None:
         """Handle memory dump data from Frida scripts."""
         # Extract metadata from payload
         address = payload.get("address", "0x0")
@@ -3713,7 +3713,7 @@ class FridaManager:
         except Exception as e:
             logger.exception(f"Failed to save memory dump: {e}")
 
-    def _handle_screenshot_data(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]) -> None:
+    def _handle_screenshot_data(self, session_id: str, script_name: str, data: bytes | bytearray, payload: dict[str, Any]) -> None:
         """Handle screenshot data from Frida scripts."""
         # Extract metadata
         window_title = payload.get("window_title", "unknown")
@@ -3747,7 +3747,7 @@ class FridaManager:
         except Exception as e:
             logger.exception(f"Failed to save screenshot: {e}")
 
-    def _handle_file_content(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]) -> None:
+    def _handle_file_content(self, session_id: str, script_name: str, data: bytes | bytearray, payload: dict[str, Any]) -> None:
         """Handle file content intercepted by Frida scripts."""
         # Extract file information
         file_path = payload.get("file_path", "unknown")
@@ -3775,7 +3775,7 @@ class FridaManager:
             # Monitor for persistence or modification attempts
             self._analyze_file_write(data, file_path, payload)
 
-    def _handle_network_packet(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]) -> None:
+    def _handle_network_packet(self, session_id: str, script_name: str, data: bytes | bytearray, payload: dict[str, Any]) -> None:
         """Handle network packet data from Frida scripts."""
         # Extract packet information
         direction = payload.get("direction", "unknown")  # send/recv
@@ -3805,7 +3805,7 @@ class FridaManager:
             # Potential license server communication
             self._analyze_license_traffic(data, payload)
 
-    def _handle_encrypted_data(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]) -> None:
+    def _handle_encrypted_data(self, session_id: str, script_name: str, data: bytes | bytearray, payload: dict[str, Any]) -> None:
         """Handle encrypted data intercepted by Frida scripts."""
         # Extract encryption information
         algorithm = payload.get("algorithm", "unknown")
@@ -3842,7 +3842,7 @@ class FridaManager:
         except Exception as e:
             logger.exception(f"Failed to save crypto data: {e}")
 
-    def _handle_generic_binary_data(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]) -> None:
+    def _handle_generic_binary_data(self, session_id: str, script_name: str, data: bytes | bytearray, payload: dict[str, Any]) -> None:
         """Handle generic binary data from Frida scripts."""
         # Extract any available metadata
         data_type = payload.get("data_type", "binary")
@@ -3870,7 +3870,7 @@ class FridaManager:
         except Exception as e:
             logger.exception(f"Failed to save binary data: {e}")
 
-    def _analyze_memory_dump(self, data: Any, payload: dict[str, Any]) -> None:
+    def _analyze_memory_dump(self, data: bytes | bytearray, payload: dict[str, Any]) -> None:
         """Analyze memory dump for interesting patterns."""
         # Convert to bytes if necessary
         if not isinstance(data, bytes):
@@ -3914,7 +3914,7 @@ class FridaManager:
                 success=True,
             )
 
-    def _analyze_screenshot(self, data: Any, payload: dict[str, Any]) -> None:
+    def _analyze_screenshot(self, data: bytes | bytearray, payload: dict[str, Any]) -> None:
         """Analyze screenshot for UI elements or text."""
         # Analyze screenshot data for UI elements
         analysis_results = {
@@ -3968,7 +3968,7 @@ class FridaManager:
             success=True,
         )
 
-    def _analyze_license_file(self, data: Any, file_path: str, payload: dict[str, Any]) -> None:
+    def _analyze_license_file(self, data: bytes | bytearray, file_path: str, payload: dict[str, Any]) -> None:
         """Analyze potential license file content."""
         try:
             # Try to decode as text
@@ -4011,7 +4011,7 @@ class FridaManager:
         except Exception as e:
             logger.debug(f"Failed to analyze license file: {e}")
 
-    def _analyze_file_write(self, data: Any, file_path: str, payload: dict[str, Any]) -> None:
+    def _analyze_file_write(self, data: bytes | bytearray, file_path: str, payload: dict[str, Any]) -> None:
         """Analyze file write operations for suspicious activity."""
         # Use payload data for comprehensive analysis
         write_context = {
@@ -4033,7 +4033,7 @@ class FridaManager:
                 success=True,
             )
 
-    def _analyze_http_traffic(self, data: Any, payload: dict[str, Any]) -> None:
+    def _analyze_http_traffic(self, data: bytes | bytearray, payload: dict[str, Any]) -> None:
         """Analyze HTTP/HTTPS traffic for license checks."""
         try:
             if isinstance(data, bytes):
@@ -4058,7 +4058,7 @@ class FridaManager:
         except Exception as e:
             logger.debug(f"Failed to analyze HTTP traffic: {e}")
 
-    def _analyze_license_traffic(self, data: Any, payload: dict[str, Any]) -> None:
+    def _analyze_license_traffic(self, data: bytes | bytearray, payload: dict[str, Any]) -> None:
         """Analyze potential license server communication."""
         self.logger.log_operation(
             "license_server_communication",
@@ -4079,7 +4079,7 @@ class FridaManager:
             },
         )
 
-    def _analyze_decrypted_data(self, data: Any, payload: dict[str, Any]) -> None:
+    def _analyze_decrypted_data(self, data: bytes | bytearray, payload: dict[str, Any]) -> None:
         """Analyze decrypted data for interesting content."""
         try:
             # Try to interpret as text

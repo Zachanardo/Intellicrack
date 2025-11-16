@@ -17,34 +17,33 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-import os
-
-from intellicrack.utils.logger import logger
-
-"""
-PyTorch Import Handler with Production-Ready Fallbacks
+"""PyTorch Import Handler with Production-Ready Fallbacks.
 
 This module provides a centralized abstraction layer for PyTorch imports.
 When PyTorch is not available, it provides fallback implementations for
 tensor operations used in Intellicrack's ML components.
 """
 
+import os
+
+from intellicrack.utils.logger import logger
+
 # PyTorch availability detection and import handling with Intel Arc B580 compatibility
 
 # Initialize variables
-HAS_TORCH = False
-TORCH_AVAILABLE = False
-TORCH_VERSION = None
-torch = None
-Tensor = None
-cuda = None
-device = None
-dtype = None
-nn = None
-optim = None
-save = None
-load = None
-tensor = None
+HAS_TORCH: bool = False
+TORCH_AVAILABLE: bool = False
+TORCH_VERSION: str | None = None
+torch: object | None = None
+Tensor: type | None = None
+cuda: object | None = None
+device: type | None = None
+dtype: object | None = None
+nn: object | None = None
+optim: object | None = None
+save: object | None = None
+load: object | None = None
+tensor: object | None = None
 
 # Load environment variables from .env file
 # Users can customize GPU settings in the .env file
@@ -56,9 +55,17 @@ except ImportError:
     pass  # dotenv not available, use system environment variables
 
 
-# Detect Intel Arc GPU and apply workaround
 def _detect_and_fix_intel_arc() -> bool:
-    """Detect Intel Arc GPU and apply CPU-only workaround to prevent GIL crashes."""
+    """Detect Intel Arc GPU and apply CPU-only workaround to prevent GIL crashes.
+
+    Checks for Intel Arc GPU environment variables and disables CUDA to prevent
+    Global Interpreter Lock (GIL) related crashes when using PyTorch with Intel
+    Arc GPUs. This is a known compatibility issue that requires CPU-only mode.
+
+    Returns:
+        bool: True if Intel Arc GPU detected and CUDA disabled, False otherwise.
+
+    """
     # Check if UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS is set (Intel Arc indicator)
     if os.environ.get("UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS") == "1":
         logger.info("Intel Arc GPU environment detected - using CPU mode for PyTorch to prevent GIL issues")
@@ -77,13 +84,30 @@ def _detect_and_fix_intel_arc() -> bool:
 _is_intel_arc = _detect_and_fix_intel_arc()
 
 
-def _safe_torch_import(timeout: float = 10.0) -> tuple[bool, object | None, Exception | None]:
-    """Safely import PyTorch with Intel Arc workaround applied."""
+def _safe_torch_import(timeout: float = 10.0) -> tuple[bool, dict[str, object] | None, Exception | None]:
+    """Safely import PyTorch with Intel Arc workaround applied.
+
+    Attempts to import PyTorch and all necessary submodules. Returns a tuple
+    containing a success flag, a dictionary of imported modules, and any
+    exception that occurred during import.
+
+    Args:
+        timeout: Timeout in seconds for import operation (currently unused).
+
+    Returns:
+        tuple[bool, dict[str, object] | None, Exception | None]: Success flag,
+            dictionary of torch modules (if successful) or None, and exception
+            (if failed) or None.
+
+    Raises:
+        No exceptions are raised; they are captured and returned in the tuple.
+
+    """
     try:
         # Direct import - Intel Arc workaround already applied
         import torch as torch_temp
 
-        torch_modules = {
+        torch_modules: dict[str, object] = {
             "torch": torch_temp,
             "Tensor": torch_temp.Tensor,
             "cuda": torch_temp.cuda,
@@ -145,55 +169,127 @@ if not HAS_TORCH:
 
     # Production-ready fallback implementations
     class FallbackTensor:
-        """Fallback tensor implementation."""
+        """Fallback tensor implementation for when PyTorch is unavailable.
 
-        def __init__(self, data=None, dtype=None, device=None) -> None:
-            self.data = data or []
-            self.dtype = dtype
-            self.device = device
+        Provides a minimal tensor-like interface to maintain API compatibility
+        with PyTorch code when the actual library cannot be imported.
+        """
+
+        def __init__(self, data: object | None = None, dtype: object | None = None, device: object | None = None) -> None:
+            """Initialize fallback tensor.
+
+            Args:
+                data: Tensor data (default None, becomes empty list).
+                dtype: Data type specification (stored but not used).
+                device: Device specification (stored but not used).
+
+            """
+            self.data: object = data or []
+            self.dtype: object | None = dtype
+            self.device: object | None = device
 
         def __repr__(self) -> str:
+            """Return string representation of fallback tensor."""
             return f"FallbackTensor({self.data})"
 
-        def cuda(self):
-            """Move to CUDA (no-op in fallback)."""
+        def cuda(self) -> "FallbackTensor":
+            """Move to CUDA (no-op in fallback).
+
+            Returns:
+                FallbackTensor: Self (no actual device transfer).
+
+            """
             return self
 
-        def cpu(self):
-            """Move to CPU (no-op in fallback)."""
+        def cpu(self) -> "FallbackTensor":
+            """Move to CPU (no-op in fallback).
+
+            Returns:
+                FallbackTensor: Self (no actual device transfer).
+
+            """
             return self
 
-        def numpy(self):
-            """Convert to numpy array."""
+        def numpy(self) -> object:
+            """Convert to numpy array representation.
+
+            Returns:
+                object: The underlying data object.
+
+            """
             return self.data
 
     class FallbackCuda:
-        """Fallback CUDA interface."""
+        """Fallback CUDA interface for when PyTorch is unavailable.
+
+        Provides methods that indicate CUDA is not available, maintaining
+        API compatibility with PyTorch's cuda module.
+        """
 
         @staticmethod
         def is_available() -> bool:
+            """Check CUDA availability.
+
+            Returns:
+                bool: Always False in fallback mode.
+
+            """
             return False
 
         @staticmethod
         def device_count() -> int:
+            """Get count of CUDA devices.
+
+            Returns:
+                int: Always 0 in fallback mode.
+
+            """
             return 0
 
         @staticmethod
-        def get_device_name(device=None) -> str:
+        def get_device_name(device: int | None = None) -> str:
+            """Get CUDA device name.
+
+            Args:
+                device: Device index (unused in fallback).
+
+            Returns:
+                str: Always "CPU Fallback" in fallback mode.
+
+            """
             return "CPU Fallback"
 
     class FallbackDevice:
-        """Fallback device."""
+        """Fallback device for when PyTorch is unavailable.
 
-        def __init__(self, device_str) -> None:
-            self.type = "cpu"
+        Represents a CPU device, maintaining API compatibility with PyTorch's
+        device class.
+        """
+
+        def __init__(self, device_str: str) -> None:
+            """Initialize fallback device.
+
+            Args:
+                device_str: Device string specification (stored but not used).
+
+            """
+            self.type: str = "cpu"
 
     class FallbackModule:
-        """Fallback neural network module."""
+        """Fallback neural network module for when PyTorch is unavailable.
 
+        Provides minimal interface for neural network module compatibility.
+        """
+
+        pass
 
     class FallbackOptimizer:
-        """Fallback optimizer."""
+        """Fallback optimizer for when PyTorch is unavailable.
+
+        Provides minimal interface for optimizer compatibility.
+        """
+
+        pass
 
 
     # Assign fallback objects
@@ -205,15 +301,48 @@ if not HAS_TORCH:
     nn = type("nn", (), {"Module": FallbackModule})()
     optim = type("optim", (), {"Optimizer": FallbackOptimizer})()
 
-    def tensor(data, **kwargs):
-        """Create fallback tensor."""
+    def tensor(data: object, **kwargs: object) -> FallbackTensor:
+        """Create fallback tensor.
+
+        Wraps data in a FallbackTensor object for API compatibility.
+
+        Args:
+            data: Tensor data to wrap.
+            **kwargs: Additional keyword arguments (passed to FallbackTensor).
+
+        Returns:
+            FallbackTensor: Wrapped tensor object.
+
+        """
         return FallbackTensor(data, **kwargs)
 
-    def save(obj, path) -> None:
-        """Fallback save function."""
+    def save(obj: object, path: str) -> None:
+        """Fallback save function for PyTorch compatibility.
 
-    def load(path, **kwargs):
-        """Fallback load function."""
+        No-op implementation when PyTorch is unavailable. In production,
+        this would serialize objects to disk; in fallback mode it does nothing.
+
+        Args:
+            obj: Object to save (unused in fallback).
+            path: File path for saving (unused in fallback).
+
+        """
+
+    def load(path: str, **kwargs: object) -> dict[str, object]:
+        """Fallback load function for PyTorch compatibility.
+
+        No-op implementation when PyTorch is unavailable. In production,
+        this would deserialize objects from disk; in fallback mode it
+        returns an empty dictionary.
+
+        Args:
+            path: File path to load from (unused in fallback).
+            **kwargs: Additional keyword arguments (unused in fallback).
+
+        Returns:
+            dict[str, object]: Empty dictionary in fallback mode.
+
+        """
         return {}
 
 

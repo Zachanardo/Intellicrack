@@ -759,13 +759,13 @@ except ImportError as e:
                 self._timers = [t for t in self._timers if t is not None]
 
         @classmethod
-        def critical(cls, title: str, message: str, **kwargs: object) -> int:
+        def critical(cls, title: str, message: str, **_kwargs: object) -> int:
             """Display a critical message dialog.
 
             Args:
                 title: The dialog title.
                 message: The message to display.
-                **kwargs: Additional keyword arguments (ignored for compatibility).
+                **_kwargs: Additional keyword arguments (ignored for compatibility).
 
             Returns:
                 int: Always 0.
@@ -785,13 +785,13 @@ except ImportError as e:
             return 0
 
         @classmethod
-        def warning(cls, title: str, message: str, **kwargs: object) -> int:
+        def warning(cls, title: str, message: str, **_kwargs: object) -> int:
             """Display a warning message dialog.
 
             Args:
                 title: The dialog title.
                 message: The message to display.
-                **kwargs: Additional keyword arguments (ignored for compatibility).
+                **_kwargs: Additional keyword arguments (ignored for compatibility).
 
             Returns:
                 int: Always 0.
@@ -811,13 +811,13 @@ except ImportError as e:
             return 0
 
         @classmethod
-        def information(cls, title: str, message: str, **kwargs: object) -> int:
+        def information(cls, title: str, message: str, **_kwargs: object) -> int:
             """Display an information message dialog.
 
             Args:
                 title: The dialog title.
                 message: The message to display.
-                **kwargs: Additional keyword arguments (ignored for compatibility).
+                **_kwargs: Additional keyword arguments (ignored for compatibility).
 
             Returns:
                 int: Always 0.
@@ -837,13 +837,13 @@ except ImportError as e:
             return 0
 
         @classmethod
-        def question(cls, title: str, message: str, **kwargs: object) -> int:
+        def question(cls, title: str, message: str, **_kwargs: object) -> int:
             """Display a question message dialog.
 
             Args:
                 title: The dialog title.
                 message: The message to display.
-                **kwargs: Additional keyword arguments (ignored for compatibility).
+                **_kwargs: Additional keyword arguments (ignored for compatibility).
 
             Returns:
                 int: Default answer or 0.

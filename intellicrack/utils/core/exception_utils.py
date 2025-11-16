@@ -20,13 +20,14 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import hashlib
 import hmac
+import io
 import json
 import logging
 import os
 import pickle
 import sys
 import traceback
-from typing import Any
+from types import TracebackType
 
 logger = logging.getLogger(__name__)
 
@@ -44,9 +45,20 @@ PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-cha
 class RestrictedUnpickler(pickle.Unpickler):
     """Restricted unpickler that only allows safe classes."""
 
-    def find_class(self, module, name):
-        """Override ``find_class`` to restrict allowed classes."""
-        # Allow only safe modules and classes
+    def find_class(self, module: str, name: str) -> type[object]:
+        """Override ``find_class`` to restrict allowed classes.
+
+        Args:
+            module: The module name of the class to unpickle
+            name: The class name to unpickle
+
+        Returns:
+            The class object if allowed
+
+        Raises:
+            pickle.UnpicklingError: If the class is not in the allowed list
+
+        """
         ALLOWED_MODULES = {
             "numpy",
             "numpy.core.multiarray",
@@ -79,8 +91,17 @@ class RestrictedUnpickler(pickle.Unpickler):
         raise pickle.UnpicklingError(error_msg)
 
 
-def secure_pickle_dump(obj, file_path) -> None:
-    """Securely dump object with integrity check."""
+def secure_pickle_dump(obj: object, file_path: str) -> None:
+    """Securely dump object with integrity check.
+
+    Args:
+        obj: Object to pickle and save
+        file_path: Path where the pickled object will be saved
+
+    Raises:
+        OSError: If file cannot be written
+
+    """
     # Serialize object
     data = pickle.dumps(obj)
 
@@ -93,8 +114,20 @@ def secure_pickle_dump(obj, file_path) -> None:
         f.write(data)
 
 
-def secure_pickle_load(file_path):
-    """Securely load object with integrity verification."""
+def secure_pickle_load(file_path: str) -> object:
+    """Securely load object with integrity verification.
+
+    Args:
+        file_path: Path to the pickled file to load
+
+    Returns:
+        The unpickled object
+
+    Raises:
+        ValueError: If integrity check fails or file format is invalid
+        OSError: If file cannot be read
+
+    """
     try:
         # Try joblib first as it's safer for ML models
         import joblib
@@ -117,18 +150,16 @@ def secure_pickle_load(file_path):
         raise ValueError(error_msg)
 
     # Load object using RestrictedUnpickler
-    import io
-
     return RestrictedUnpickler(io.BytesIO(data)).load()
 
 
-def handle_exception(exc_type, exc_value, exc_traceback) -> None:
+def handle_exception(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType | None) -> None:
     """Global exception handler for unhandled exceptions.
 
     Args:
         exc_type: Exception type
-        exc_value: Exception value
-        exc_traceback: Exception traceback
+        exc_value: Exception instance
+        exc_traceback: Exception traceback object
 
     """
     if issubclass(exc_type, KeyboardInterrupt):
@@ -146,13 +177,13 @@ def handle_exception(exc_type, exc_value, exc_traceback) -> None:
     _report_error(exc_type, exc_value, exc_traceback)
 
 
-def _display_exception_dialog(exc_type, exc_value, exc_traceback) -> None:
+def _display_exception_dialog(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType | None) -> None:
     """Display an exception dialog to the user.
 
     Args:
         exc_type: Exception type
-        exc_value: Exception value
-        exc_traceback: Exception traceback
+        exc_value: Exception instance
+        exc_traceback: Exception traceback object
 
     """
     if not QMessageBox or not QApplication.instance():
@@ -175,13 +206,13 @@ def _display_exception_dialog(exc_type, exc_value, exc_traceback) -> None:
         logger.error("Failed to display exception dialog: %s", e)
 
 
-def _report_error(exc_type, exc_value, exc_traceback) -> None:
+def _report_error(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType | None) -> None:
     """Report error to log file and optionally to remote service.
 
     Args:
         exc_type: Exception type
-        exc_value: Exception value
-        exc_traceback: Exception traceback
+        exc_value: Exception instance
+        exc_traceback: Exception traceback object
 
     """
     try:
@@ -375,14 +406,22 @@ def register():
         return False
 
 
-def load_ai_model(model_path: str) -> Any | None:
+def load_ai_model(model_path: str) -> object | None:
     """Load an AI model from file.
 
+    Supports loading models in joblib, pickle, and ONNX formats with
+    security validation to prevent loading maliciously crafted model files.
+
     Args:
-        model_path: Path to model file
+        model_path: Path to model file (must be .joblib, .pkl, or .onnx)
 
     Returns:
-        Loaded model or None if failed
+        Loaded model object, or None if loading fails due to unsupported
+        format, missing dependencies, or security restrictions
+
+    Raises:
+        OSError: If model file cannot be accessed
+        ValueError: If pickle file fails integrity check
 
     """
     try:

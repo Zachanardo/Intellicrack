@@ -20,6 +20,9 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from typing import Optional, Tuple
+
+from PyQt6.QtCore import QRectF
 from PyQt6.QtGui import (
     QFont,
     QFontMetrics,
@@ -43,6 +46,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QSpinBox,
     QVBoxLayout,
+    QWidget,
 )
 
 from ..utils.logger import get_logger
@@ -53,12 +57,16 @@ logger = get_logger(__name__)
 class PrintOptionsDialog(QDialog):
     """Dialog for configuring print options."""
 
-    def __init__(self, parent=None, hex_viewer=None) -> None:
+    def __init__(
+        self,
+        parent: Optional[QWidget] = None,
+        hex_viewer: Optional[QWidget] = None,
+    ) -> None:
         """Initialize print options dialog.
 
         Args:
-            parent: Parent widget
-            hex_viewer: Reference to hex viewer widget
+            parent: Parent widget for the dialog.
+            hex_viewer: Reference to hex viewer widget instance.
 
         """
         super().__init__(parent)
@@ -257,19 +265,31 @@ class PrintOptionsDialog(QDialog):
                 self.from_page_spin.setEnabled(False)
                 self.to_page_spin.setEnabled(False)
 
-    def on_header_toggled(self, checked) -> None:
-        """Handle header checkbox toggle."""
+    def on_header_toggled(self, checked: bool) -> None:
+        """Handle header checkbox toggle.
+
+        Args:
+            checked: Whether the header checkbox is checked.
+
+        """
         self.header_edit.setEnabled(checked)
 
-    def on_footer_toggled(self, checked) -> None:
-        """Handle footer checkbox toggle."""
+    def on_footer_toggled(self, checked: bool) -> None:
+        """Handle footer checkbox toggle.
+
+        Args:
+            checked: Whether the footer checkbox is checked.
+
+        """
         self.footer_edit.setEnabled(checked)
 
-    def get_print_data(self):
+    def get_print_data(self) -> Tuple[Optional[bytes], int]:
         """Get the data to print based on selected range.
 
         Returns:
-            Tuple of (data, start_offset)
+            Tuple of (data, start_offset) where data is the bytes to print
+            or None if no data is available, and start_offset is the file
+            offset in bytes where the print data begins.
 
         """
         if not self.hex_viewer or not hasattr(self.hex_viewer, "file_handler"):
@@ -290,16 +310,22 @@ class PrintOptionsDialog(QDialog):
 
         return (None, 0)
 
-    def format_hex_line(self, offset, data_chunk, bytes_per_row):
+    def format_hex_line(
+        self,
+        offset: int,
+        data_chunk: bytes,
+        bytes_per_row: int,
+    ) -> str:
         """Format a single line of hex output.
 
         Args:
-            offset: Starting offset of this line
-            data_chunk: Bytes for this line
-            bytes_per_row: Number of bytes per row
+            offset: Starting file offset of this line in bytes.
+            data_chunk: Bytes for this line to format.
+            bytes_per_row: Number of bytes per row to display.
 
         Returns:
-            Formatted line string
+            Formatted hex line string with offset, hex bytes, and optional
+            ASCII representation based on current display settings.
 
         """
         line = ""
@@ -342,16 +368,24 @@ class PrintOptionsDialog(QDialog):
 
         return line
 
-    def render_page(self, painter, page_rect, data, start_offset, page_num, total_pages) -> None:
+    def render_page(
+        self,
+        painter: QPainter,
+        page_rect: QRectF,
+        data: bytes,
+        start_offset: int,
+        page_num: int,
+        total_pages: int,
+    ) -> None:
         """Render a page of hex data.
 
         Args:
-            painter: QPainter to draw with
-            page_rect: Rectangle for the page content
-            data: Data to print
-            start_offset: Starting offset in the file
-            page_num: Current page number
-            total_pages: Total number of pages
+            painter: QPainter instance to draw with.
+            page_rect: Rectangle defining the page content area.
+            data: Bytes data to print.
+            start_offset: Starting file offset in bytes where data begins.
+            page_num: Current page number being rendered (1-indexed).
+            total_pages: Total number of pages being printed.
 
         """
         # Set up font
@@ -410,16 +444,23 @@ class PrintOptionsDialog(QDialog):
             footer_y = content_rect.bottom() - line_height
             painter.drawText(content_rect.left(), footer_y, footer_text)
 
-    def replace_variables(self, text, page_num, total_pages):
+    def replace_variables(
+        self,
+        text: str,
+        page_num: int,
+        total_pages: int,
+    ) -> str:
         """Replace variables in header/footer text.
 
         Args:
-            text: Text with variables
-            page_num: Current page number
-            total_pages: Total pages
+            text: Text containing variables to replace.
+            page_num: Current page number (1-indexed).
+            total_pages: Total number of pages.
 
         Returns:
-            Text with variables replaced
+            Text with variables replaced. Supported variables are:
+            %filename% (source file name), %page% (current page number),
+            %total% (total pages), and %date% (current date and time).
 
         """
         import datetime
@@ -438,14 +479,15 @@ class PrintOptionsDialog(QDialog):
 
         return text
 
-    def calculate_total_pages(self, data):
+    def calculate_total_pages(self, data: bytes) -> int:
         """Calculate total number of pages.
 
         Args:
-            data: Data to print
+            data: Data bytes to be printed.
 
         Returns:
-            Total number of pages
+            Total number of pages required to print all data given current
+            page size, font settings, and header/footer configuration.
 
         """
         if not data:
@@ -483,11 +525,11 @@ class PrintOptionsDialog(QDialog):
         preview.paintRequested.connect(self.on_print_preview)
         preview.exec()
 
-    def on_print_preview(self, printer) -> None:
+    def on_print_preview(self, printer: QPrinter) -> None:
         """Handle print preview paint request.
 
         Args:
-            printer: QPrinter to render to
+            printer: QPrinter instance to render preview to.
 
         """
         self.render_to_printer(printer)
@@ -500,11 +542,11 @@ class PrintOptionsDialog(QDialog):
             self.render_to_printer(self.printer)
             self.accept()
 
-    def render_to_printer(self, printer) -> None:
+    def render_to_printer(self, printer: QPrinter) -> None:
         """Render the hex data to a printer.
 
         Args:
-            printer: QPrinter to render to
+            printer: QPrinter instance to render hex data to.
 
         """
         # Get data to print

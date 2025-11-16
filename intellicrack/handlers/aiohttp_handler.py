@@ -114,7 +114,7 @@ except ImportError as e:
             """
             return self._content.decode(encoding)
 
-        async def json(self: "ClientResponse", encoding: str = "utf-8") -> Any:
+        async def json(self: "ClientResponse", encoding: str = "utf-8") -> object:
             """Parse JSON response.
 
             Args:
@@ -273,7 +273,7 @@ except ImportError as e:
             self: "ClientSession",
             method: str,
             url: str,
-            **kwargs: Any,
+            **kwargs: object,
         ) -> "ClientResponse":
             """Send async HTTP request.
 
@@ -292,9 +292,9 @@ except ImportError as e:
 
             """
             # Extract parameters
-            params: Optional[Dict[str, Any]] = kwargs.get("params")
-            data: Optional[Any] = kwargs.get("data")
-            json_data: Optional[Any] = kwargs.get("json")
+            params: Optional[Dict[str, object]] = kwargs.get("params")
+            data: Optional[object] = kwargs.get("data")
+            json_data: Optional[object] = kwargs.get("json")
             headers: Dict[str, str] = kwargs.get("headers", {})
             timeout: ClientTimeout = kwargs.get("timeout", self.timeout)
 
@@ -370,7 +370,7 @@ except ImportError as e:
         async def get(
             self: "ClientSession",
             url: str,
-            **kwargs: Any,
+            **kwargs: object,
         ) -> "ClientResponse":
             """Send GET request.
 
@@ -387,9 +387,9 @@ except ImportError as e:
         async def post(
             self: "ClientSession",
             url: str,
-            data: Optional[Any] = None,
-            json: Optional[Any] = None,
-            **kwargs: Any,
+            data: Optional[object] = None,
+            json: Optional[object] = None,
+            **kwargs: object,
         ) -> "ClientResponse":
             """Send POST request.
 
@@ -408,8 +408,8 @@ except ImportError as e:
         async def put(
             self: "ClientSession",
             url: str,
-            data: Optional[Any] = None,
-            **kwargs: Any,
+            data: Optional[object] = None,
+            **kwargs: object,
         ) -> "ClientResponse":
             """Send PUT request.
 
@@ -427,8 +427,8 @@ except ImportError as e:
         async def patch(
             self: "ClientSession",
             url: str,
-            data: Optional[Any] = None,
-            **kwargs: Any,
+            data: Optional[object] = None,
+            **kwargs: object,
         ) -> "ClientResponse":
             """Send PATCH request.
 
@@ -446,7 +446,7 @@ except ImportError as e:
         async def delete(
             self: "ClientSession",
             url: str,
-            **kwargs: Any,
+            **kwargs: object,
         ) -> "ClientResponse":
             """Send DELETE request.
 
@@ -463,7 +463,7 @@ except ImportError as e:
         async def head(
             self: "ClientSession",
             url: str,
-            **kwargs: Any,
+            **kwargs: object,
         ) -> "ClientResponse":
             """Send HEAD request.
 
@@ -480,7 +480,7 @@ except ImportError as e:
         async def options(
             self: "ClientSession",
             url: str,
-            **kwargs: Any,
+            **kwargs: object,
         ) -> "ClientResponse":
             """Send OPTIONS request.
 
@@ -558,7 +558,7 @@ except ImportError as e:
             """
             return self.body.decode("utf-8")
 
-        async def json(self: "Request") -> Any:
+        async def json(self: "Request") -> object:
             """Parse JSON request.
 
             Returns:
@@ -735,7 +735,7 @@ except ImportError as e:
             self.on_shutdown: list[Callable[[Any], Awaitable[None]]] = []
             self["state"] = {}
 
-        def __getitem__(self: "Application", key: str) -> Any:
+        def __getitem__(self: "Application", key: str) -> object:
             """Get app state item.
 
             Args:
@@ -749,7 +749,7 @@ except ImportError as e:
                 self._state: Dict[str, Any] = {}
             return self._state.get(key)
 
-        def __setitem__(self: "Application", key: str, value: Any) -> None:
+        def __setitem__(self: "Application", key: str, value: object) -> None:
             """Set app state item.
 
             Args:
@@ -761,7 +761,7 @@ except ImportError as e:
                 self._state: Dict[str, Any] = {}
             self._state[key] = value
 
-        def add_routes(self: "Application", routes: Any) -> None:
+        def add_routes(self: "Application", routes: object) -> None:
             """Add routes to application.
 
             Args:
@@ -836,9 +836,9 @@ except ImportError as e:
 
         @staticmethod
         def json_response(
-            data: Any,
+            data: object,
             status: int = 200,
-            **kwargs: Any,
+            **kwargs: object,
         ) -> "Response":
             """Create JSON response.
 

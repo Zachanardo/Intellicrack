@@ -22,9 +22,10 @@ This module consolidates repeated import checking patterns
 to avoid code duplication across modules.
 """
 
+import logging
 import platform
 
-from intellicrack.utils.logger import logger
+logger = logging.getLogger(__name__)
 
 # Binary analysis libraries
 try:

@@ -1,13 +1,18 @@
 """Patch verification utilities for validating binary patches."""
 
+from __future__ import annotations
+
 import os
 import shutil
 import tempfile
 import time
 import traceback
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.utils.logger import logger
+
+if TYPE_CHECKING:
+    from intellicrack.ui.main_app import MainWindow
 
 from ..exploitation.exploitation import run_automated_patch_agent
 from ..logger import log_message
@@ -67,7 +72,7 @@ except ImportError as e:
     keystone = None
 
 
-def verify_patches(app: Any, patched_path: str, instructions: list[dict[str, Any]]) -> list[str]:
+def verify_patches(app: MainWindow, patched_path: str, instructions: list[dict[str, Any]]) -> list[str]:
     """Verify that patches were applied correctly.
 
     Args:
@@ -307,7 +312,7 @@ def test_patch_and_verify(binary_path: str, patches: list[dict[str, Any]]) -> li
     return results
 
 
-def apply_parsed_patch_instructions_with_validation(app: Any, instructions: list[dict[str, Any]]) -> bool:
+def apply_parsed_patch_instructions_with_validation(app: MainWindow, instructions: list[dict[str, Any]]) -> bool:
     """Apply parsed patch instructions to a copy of the binary.
 
     Takes a list of patch instructions (typically parsed from AI output)
@@ -508,8 +513,11 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: list
     return False
 
 
-def _validate_binary_selection(app: Any) -> bool:
+def _validate_binary_selection(app: MainWindow) -> bool:
     """Validate that a binary is selected.
+
+    Args:
+        app: Application instance
 
     Returns:
         True if binary is selected, False otherwise
@@ -521,8 +529,11 @@ def _validate_binary_selection(app: Any) -> bool:
     return True
 
 
-def _process_deep_analysis_candidates(app: Any) -> tuple[list, str]:
+def _process_deep_analysis_candidates(app: MainWindow) -> tuple[list[dict[str, Any]], str]:
     """Process candidates from deep license analysis.
+
+    Args:
+        app: Application instance
 
     Returns:
         Tuple of (patches list, strategy used)
@@ -552,8 +563,11 @@ def _process_deep_analysis_candidates(app: Any) -> tuple[list, str]:
     return patches, strategy_used
 
 
-def _sort_candidates_by_confidence(candidates):
+def _sort_candidates_by_confidence(candidates: list[dict[str, Any]] | dict[str, Any]) -> list[dict[str, Any]]:
     """Sort candidates by confidence score.
+
+    Args:
+        candidates: List or dict of candidates with confidence scores
 
     Returns:
         Sorted list of candidates
@@ -567,8 +581,13 @@ def _sort_candidates_by_confidence(candidates):
     return candidates
 
 
-def _process_candidates_with_tools(app: Any, top_candidates: list, candidates: list) -> list:
+def _process_candidates_with_tools(app: MainWindow, top_candidates: list[dict[str, Any]], candidates: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Process candidates using pefile, capstone, and keystone tools.
+
+    Args:
+        app: Application instance
+        top_candidates: List of top candidate patches to process
+        candidates: Complete list of candidates
 
     Returns:
         List of patches generated
@@ -612,8 +631,11 @@ def _process_candidates_with_tools(app: Any, top_candidates: list, candidates: l
     return patches
 
 
-def _setup_disassembly_tools(is_64bit: bool) -> dict:
+def _setup_disassembly_tools(is_64bit: bool) -> dict[str, Any]:
     """Set up capstone and keystone tools.
+
+    Args:
+        is_64bit: Whether the binary is 64-bit
 
     Returns:
         Dictionary with 'ks' and 'md' tools
@@ -630,8 +652,12 @@ def _setup_disassembly_tools(is_64bit: bool) -> dict:
     return {"ks": ks, "md": md}
 
 
-def _get_text_section(pe, app: Any):
+def _get_text_section(pe: Any, app: MainWindow) -> Any:
     """Get the .text section from PE file.
+
+    Args:
+        pe: PE file object
+        app: Application instance
 
     Returns:
         Text section or None if not found
@@ -644,15 +670,24 @@ def _get_text_section(pe, app: Any):
 
 
 def _process_single_candidate(
-    app: Any,
-    candidate: dict,
+    app: MainWindow,
+    candidate: dict[str, Any],
     is_64bit: bool,
-    tools: dict,
+    tools: dict[str, Any],
     code_data: bytes,
     code_base_addr: int,
-    candidates: list,
-) -> dict | None:
+    candidates: list[dict[str, Any]],
+) -> dict[str, Any] | None:
     """Process a single candidate for patching.
+
+    Args:
+        app: Application instance
+        candidate: Candidate patch dictionary
+        is_64bit: Whether the binary is 64-bit
+        tools: Dictionary with disassembly tools (ks, md)
+        code_data: Binary code data
+        code_base_addr: Base address of the code section
+        candidates: List of all candidates
 
     Returns:
         Patch dictionary or None if no patch generated
@@ -672,8 +707,12 @@ def _process_single_candidate(
     return patch
 
 
-def _generate_patch_bytes(is_64bit: bool, ks) -> tuple[bytes, str]:
+def _generate_patch_bytes(is_64bit: bool, ks: Any) -> tuple[bytes, str]:
     """Generate patch bytes for the architecture.
+
+    Args:
+        is_64bit: Whether the binary is 64-bit
+        ks: Keystone assembler instance
 
     Returns:
         Tuple of (patch bytes, assembly string)
@@ -693,16 +732,26 @@ def _generate_patch_bytes(is_64bit: bool, ks) -> tuple[bytes, str]:
 
 
 def _perform_safety_check_and_patch(
-    app: Any,
+    app: MainWindow,
     start_addr: int,
     code_data: bytes,
     code_base_addr: int,
     patch_bytes: bytes,
     patch_asm: str,
-    md,
-    candidates: list,
-) -> dict | None:
+    md: Any,
+    candidates: list[dict[str, Any]],
+) -> dict[str, Any] | None:
     """Perform safety check and create patch if safe.
+
+    Args:
+        app: Application instance
+        start_addr: Start address of the patch
+        code_data: Binary code data
+        code_base_addr: Base address of the code section
+        patch_bytes: Bytes to patch with
+        patch_asm: Assembly string representation
+        md: Capstone disassembler instance
+        candidates: List of all candidates
 
     Returns:
         Patch dictionary or None if not safe
@@ -747,16 +796,26 @@ def _perform_safety_check_and_patch(
 
 
 def _check_patch_safety_and_create(
-    app: Any,
-    instructions: list,
+    app: MainWindow,
+    instructions: list[Any],
     patch_bytes: bytes,
     patch_asm: str,
     start_addr: int,
     code_data: bytes,
     code_offset: int,
-    candidates: list,
-) -> dict | None:
+    candidates: list[dict[str, Any]],
+) -> dict[str, Any] | None:
     """Check if patch is safe and create it.
+
+    Args:
+        app: Application instance
+        instructions: List of disassembled instructions
+        patch_bytes: Bytes to patch with
+        patch_asm: Assembly string representation
+        start_addr: Start address of the patch
+        code_data: Binary code data
+        code_offset: Offset within code_data
+        candidates: List of all candidates
 
     Returns:
         Patch dictionary or None if not safe
@@ -787,8 +846,11 @@ def _check_patch_safety_and_create(
     return None
 
 
-def _calculate_safe_prologue_size(instructions: list) -> int:
+def _calculate_safe_prologue_size(instructions: list[Any]) -> int:
     """Calculate safe prologue size from instructions.
+
+    Args:
+        instructions: List of disassembled instructions
 
     Returns:
         Safe prologue size in bytes
@@ -814,9 +876,20 @@ def _calculate_safe_prologue_size(instructions: list) -> int:
 
 
 def _add_manual_review_suggestions(
-    app: Any, instructions: list, start_addr: int, code_data: bytes, code_offset: int, candidates: list, patch_bytes: bytes,
+    app: MainWindow, instructions: list[Any], start_addr: int, code_data: bytes, code_offset: int, candidates: list[dict[str, Any]], patch_bytes: bytes,
 ) -> None:
-    """Add suggestions for manual review."""
+    """Add suggestions for manual review.
+
+    Args:
+        app: Application instance
+        instructions: List of disassembled instructions
+        start_addr: Start address of the candidate
+        code_data: Binary code data
+        code_offset: Offset within code_data
+        candidates: List of all candidates
+        patch_bytes: Bytes to patch with
+
+    """
     # Check first 3 instructions for conditional jumps
     for insn in instructions[:3]:
         if insn.mnemonic.startswith("j") and insn.mnemonic != "jmp" and insn.size > 0:
@@ -863,8 +936,14 @@ def _add_manual_review_suggestions(
     app.analyze_results.append(f"Manual review needed for potential license check at 0x{start_addr:X}")
 
 
-def _handle_no_patches_alternative(app: Any, strategy_used: str) -> None:
-    """Handle case when no patches were generated from deep analysis."""
+def _handle_no_patches_alternative(app: MainWindow, strategy_used: str) -> None:
+    """Handle case when no patches were generated from deep analysis.
+
+    Args:
+        app: Application instance
+        strategy_used: Strategy that was attempted
+
+    """
     app.update_output.emit(log_message("[License Rewrite] Deep analysis did not identify suitable patches. Suggesting alternatives..."))
 
     # Log safer alternative approaches
@@ -887,8 +966,11 @@ def _handle_no_patches_alternative(app: Any, strategy_used: str) -> None:
         app.analyze_results.append("3. Use dynamic tracing to identify license verification code paths")
 
 
-def _apply_ai_fallback_patching(app: Any) -> list:
+def _apply_ai_fallback_patching(app: MainWindow) -> list[dict[str, Any]]:
     """Apply AI-based fallback patching.
+
+    Args:
+        app: Application instance
 
     Returns:
         List of patches generated
@@ -932,8 +1014,13 @@ def _apply_ai_fallback_patching(app: Any) -> list:
     return patches
 
 
-def _log_application_state(app: Any) -> None:
-    """Log application state for diagnostics."""
+def _log_application_state(app: MainWindow) -> None:
+    """Log application state for diagnostics.
+
+    Args:
+        app: Application instance
+
+    """
     app.update_output.emit(log_message("[License Rewrite] Checking application state before invoking agent..."))
     app.update_output.emit(log_message(f"[License Rewrite] Has binary_path: {hasattr(app, 'binary_path')}"))
     if hasattr(app, "binary_path"):
@@ -942,8 +1029,12 @@ def _log_application_state(app: Any) -> None:
         )
 
 
-def _process_ai_patches(app: Any, original_patches: list | None) -> list:
+def _process_ai_patches(app: MainWindow, original_patches: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
     """Process patches generated by AI agent.
+
+    Args:
+        app: Application instance
+        original_patches: Original patches from previous analysis or None
 
     Returns:
         List of patches
@@ -982,8 +1073,15 @@ def _process_ai_patches(app: Any, original_patches: list | None) -> list:
     return patches
 
 
-def _apply_patches_and_finalize(app: Any, patches: list, strategy_used: str) -> None:
-    """Apply patches and finalize the process."""
+def _apply_patches_and_finalize(app: MainWindow, patches: list[dict[str, Any]], strategy_used: str) -> None:
+    """Apply patches and finalize the process.
+
+    Args:
+        app: Application instance
+        patches: List of patches to apply
+        strategy_used: Strategy used to generate patches
+
+    """
     if patches:
         app.update_output.emit(log_message(f"[License Rewrite] Strategy: {strategy_used}"))
         app.update_output.emit(log_message(f"[License Rewrite] Found {len(patches)} patches to apply"))
@@ -1005,7 +1103,7 @@ def _apply_patches_and_finalize(app: Any, patches: list, strategy_used: str) -> 
     app.analyze_status.setText("License function rewriting complete")
 
 
-def rewrite_license_functions_with_parsing(app: Any) -> None:
+def rewrite_license_functions_with_parsing(app: MainWindow) -> None:
     """Attempt to find and rewrite license checking functions using various methods.
 
     Includes enhanced logging and basic safety checks for code size.

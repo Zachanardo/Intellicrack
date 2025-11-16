@@ -27,6 +27,11 @@ import logging
 import subprocess
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from intellicrack.ui.main_app import IntellicrackApp
+    from intellicrack.ui.widgets import TerminalSessionWidget
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +49,7 @@ class TerminalManager:
 
     _instance = None
 
-    def __new__(cls):
+    def __new__(cls) -> "TerminalManager":
         """Singleton pattern implementation."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -66,7 +71,7 @@ class TerminalManager:
 
         logger.info("TerminalManager singleton initialized")
 
-    def register_terminal_widget(self, widget) -> None:
+    def register_terminal_widget(self, widget: "TerminalSessionWidget") -> None:
         """Register the main terminal widget from Terminal tab.
 
         Args:
@@ -86,7 +91,7 @@ class TerminalManager:
         self._terminal_widget = widget
         logger.info("Terminal widget registered with TerminalManager")
 
-    def set_main_app(self, app) -> None:
+    def set_main_app(self, app: "IntellicrackApp") -> None:
         """Set reference to main app for tab switching.
 
         Args:
@@ -131,7 +136,7 @@ class TerminalManager:
 
         logger.warning("Terminal tab not found in main app")
 
-    def _resolve_script_path(self, script_path):
+    def _resolve_script_path(self, script_path: str | Path) -> Path:
         """Resolve script path relative to intellicrack/scripts/ directory.
 
         Args:
@@ -164,7 +169,7 @@ class TerminalManager:
 
         return resolved
 
-    def execute_script(self, script_path, interactive=True, auto_switch=True, cwd=None):
+    def execute_script(self, script_path: str | Path, interactive: bool = True, auto_switch: bool = True, cwd: str | Path | None = None) -> str:
         """Execute script in terminal session.
 
         Args:
@@ -234,7 +239,7 @@ class TerminalManager:
 
         return session_id
 
-    def execute_command(self, command, capture_output=False, auto_switch=False, cwd=None):
+    def execute_command(self, command: str | list[str], capture_output: bool = False, auto_switch: bool = False, cwd: str | Path | None = None) -> str | tuple[int, str, str]:
         """Execute command, return output if capture_output=True.
 
         Args:
@@ -302,7 +307,7 @@ class TerminalManager:
 
             return session_id
 
-    def is_terminal_available(self):
+    def is_terminal_available(self) -> bool:
         """Check if terminal widget is available for use.
 
         Returns:
@@ -311,7 +316,7 @@ class TerminalManager:
         """
         return self._terminal_widget is not None
 
-    def get_terminal_widget(self):
+    def get_terminal_widget(self) -> "TerminalSessionWidget | None":
         """Get the registered terminal widget.
 
         Returns:
@@ -342,7 +347,7 @@ class TerminalManager:
             logger.debug(f"Terminal widget not available, logging to logger: {message}")
 
 
-def get_terminal_manager():
+def get_terminal_manager() -> TerminalManager:
     """Get TerminalManager singleton instance.
 
     Returns:

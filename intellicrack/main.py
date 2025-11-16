@@ -164,6 +164,14 @@ def main() -> int:
         else:
             logger.info("File logging is disabled.")
 
+        # Initialize comprehensive logging system
+        try:
+            from intellicrack.core.logging.audit_logger import setup_comprehensive_logging
+            setup_comprehensive_logging()
+            logger.info("Comprehensive logging system initialized successfully.")
+        except Exception as e:
+            logger.warning(f"Failed to initialize comprehensive logging: {e}")
+
         # Initialize GIL safety measures
         logger.debug("Attempting to initialize GIL safety...")
         try:

@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Tue, Nov 11, 2025 09:54:00 PM
+Generated: Sat, Nov 15, 2025 12:33:06 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -346,6 +346,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── gpu_acceleration.cpython-314.pyc
 │   │   ├── hardware_spoofer.cpython-314.pyc
 │   │   ├── license_snapshot.cpython-314.pyc
+│   │   ├── license_validation_bypass.cpython-312.pyc
 │   │   ├── license_validation_bypass.cpython-314.pyc
 │   │   ├── network_capture.cpython-314.pyc
 │   │   ├── offline_activation_emulator.cpython-314.pyc
@@ -371,6 +372,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── binary_analyzer.cpython-314.pyc
 │   │   │   ├── binary_pattern_detector.cpython-314.pyc
 │   │   │   ├── binary_similarity_search.cpython-314.pyc
+│   │   │   ├── cfg_explorer.cpython-312.pyc
 │   │   │   ├── cfg_explorer.cpython-314.pyc
 │   │   │   ├── commercial_license_analyzer.cpython-314.pyc
 │   │   │   ├── concolic_executor.cpython-314.pyc
@@ -716,6 +718,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── intelligent_correlation_engine.cpython-314.pyc
 │   │   │   ├── result_serialization_protocol.cpython-314.pyc
 │   │   │   └── tool_communication_bridge.cpython-314.pyc
+│   │   ├── __init__.py
 │   │   ├── intelligent_correlation_engine.py
 │   │   ├── result_serialization_protocol.py
 │   │   └── tool_communication_bridge.py
@@ -765,6 +768,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── arxan_bypass.cpython-314.pyc
 │   │   │   ├── cloud_license.cpython-314.pyc
 │   │   │   ├── cloud_license_analyzer.cpython-314.pyc
+│   │   │   ├── dongle_emulator.cpython-312.pyc
 │   │   │   ├── dongle_emulator.cpython-314.pyc
 │   │   │   ├── hardware_id_spoofer.cpython-314.pyc
 │   │   │   ├── hardware_token.cpython-314.pyc
@@ -781,6 +785,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── cloud_license.py
 │   │   ├── cloud_license_analyzer.py
 │   │   ├── dongle_emulator.py
+│   │   ├── dongle_emulator.py.backup
 │   │   ├── hardware_id_spoofer.py
 │   │   ├── hardware_token.py
 │   │   ├── integrity_check_defeat.py
@@ -937,6 +942,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── ipex_handler.cpython-314.pyc
 │   │   ├── keystone_handler.cpython-314.pyc
 │   │   ├── lief_handler.cpython-314.pyc
+│   │   ├── matplotlib_handler.cpython-312.pyc
 │   │   ├── matplotlib_handler.cpython-314.pyc
 │   │   ├── numpy_handler.cpython-314.pyc
 │   │   ├── opencl_handler.cpython-314.pyc
@@ -944,8 +950,10 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── pefile_handler.cpython-314.pyc
 │   │   ├── psutil_handler.cpython-314.pyc
 │   │   ├── pyelftools_handler.cpython-314.pyc
+│   │   ├── pyqt6_handler.cpython-312.pyc
 │   │   ├── pyqt6_handler.cpython-314.pyc
 │   │   ├── requests_handler.cpython-314.pyc
+│   │   ├── sqlite3_handler.cpython-312.pyc
 │   │   ├── sqlite3_handler.cpython-314.pyc
 │   │   ├── tensorflow_handler.cpython-314.pyc
 │   │   ├── tkinter_handler.cpython-314.pyc
@@ -969,6 +977,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── pyqt6_handler.py
 │   ├── requests_handler.py
 │   ├── sqlite3_handler.py
+│   ├── sqlite3_handler.py.backup
 │   ├── tensorflow_handler.py
 │   ├── tkinter_handler.py
 │   ├── torch_handler.py
@@ -1048,6 +1057,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── __init__.cpython-314.pyc
 │   │   ├── binary_feature_extractor.cpython-314.pyc
 │   │   ├── license_protection_neural_network.cpython-314.pyc
+│   │   ├── pattern_evolution_tracker.cpython-312.pyc
 │   │   └── pattern_evolution_tracker.cpython-314.pyc
 │   ├── __init__.py
 │   ├── binary_feature_extractor.py
@@ -1791,5 +1801,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 ├── config.py
 ├── main.py
 ├── README.md
+├── test_scanner_minimal.py
 ├── TODO.md
 └── TODO.xml

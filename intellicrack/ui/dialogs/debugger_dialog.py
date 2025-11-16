@@ -21,6 +21,7 @@ import queue
 from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
+    QCloseEvent,
     QColor,
     QDialog,
     QFileDialog,
@@ -32,7 +33,12 @@ from intellicrack.handlers.pyqt6_handler import (
     QListWidgetItem,
     QMenu,
     QMessageBox,
+    QMouseEvent,
+    QPaintEvent,
+    QPoint,
     QPushButton,
+    QRect,
+    QResizeEvent,
     QSize,
     QSplitter,
     Qt,
@@ -84,15 +90,21 @@ class DebuggerOutputThread(QThread):
 class DebuggerDialog(QDialog):
     """Advanced debugger dialog with breakpoint support."""
 
-    def __init__(self, parent=None, plugin_path=None) -> None:
-        """Initialize the DebuggerDialog with default values."""
+    def __init__(self, parent: QWidget | None = None, plugin_path: str | None = None) -> None:
+        """Initialize the DebuggerDialog with default values.
+
+        Args:
+            parent: Parent widget, defaults to None.
+            plugin_path: Path to the plugin file to debug, defaults to None.
+
+        """
         super().__init__(parent)
         self.plugin_path = plugin_path
         self.debugger = PluginDebugger()
-        self.debugger_thread = None
-        self.output_thread = None
-        self.breakpoint_lines = {}
-        self.current_line = None
+        self.debugger_thread: DebuggerThread | None = None
+        self.output_thread: DebuggerOutputThread | None = None
+        self.breakpoint_lines: dict[str, int] = {}
+        self.current_line: int | None = None
 
         self.setWindowTitle("Plugin Debugger")
         self.setMinimumSize(1200, 800)
@@ -174,7 +186,7 @@ class DebuggerDialog(QDialog):
         # REPL input
         repl_layout = QHBoxLayout()
         self.repl_input = QLineEdit()
-        self.repl_input.setPlaceholderText("Enter expression to evaluate...")
+        self.repl_input.setToolTip("Enter expression to evaluate in the current debug context")
         self.repl_input.returnPressed.connect(self.evaluate_expression)
         repl_layout.addWidget(self.repl_input)
 
@@ -272,7 +284,7 @@ class DebuggerDialog(QDialog):
         # Add watch
         add_layout = QHBoxLayout()
         self.watch_input = QLineEdit()
-        self.watch_input.setPlaceholderText("Enter expression to watch...")
+        self.watch_input.setToolTip("Enter expression to watch during execution")
         add_layout.addWidget(self.watch_input)
 
         add_watch_btn = QPushButton("Add Watch")
@@ -373,8 +385,13 @@ class DebuggerDialog(QDialog):
             item.setData(Qt.UserRole, bp.id)
             self.breakpoint_list.addItem(item)
 
-    def show_breakpoint_menu(self, pos) -> None:
-        """Show breakpoint context menu."""
+    def show_breakpoint_menu(self, pos: QPoint) -> None:
+        """Show breakpoint context menu.
+
+        Args:
+            pos: Position where the context menu was requested.
+
+        """
         item = self.breakpoint_list.itemAt(pos)
         if not item:
             return
@@ -544,8 +561,14 @@ class DebuggerDialog(QDialog):
             self.step_into_action.setEnabled(True)
             self.step_out_action.setEnabled(True)
 
-    def handle_debugger_output(self, msg_type: str, data: Any) -> None:
-        """Handle debugger output messages."""
+    def handle_debugger_output(self, msg_type: str, data: dict[str, Any] | str | list[dict[str, Any]]) -> None:
+        """Handle debugger output messages.
+
+        Args:
+            msg_type: Type of debugger message (e.g., 'paused', 'breakpoint', 'stack').
+            data: Message data payload, varies by message type.
+
+        """
         if msg_type == "paused":
             self.update_ui_state("paused")
             self.current_line = data["line"]
@@ -680,8 +703,13 @@ class DebuggerDialog(QDialog):
         # Clear input
         self.repl_input.clear()
 
-    def closeEvent(self, event) -> None:
-        """Handle dialog close."""
+    def closeEvent(self, event: QCloseEvent) -> None:
+        """Handle dialog close event.
+
+        Args:
+            event: The close event that triggered this handler.
+
+        """
         if self.debugger.state != DebuggerState.IDLE:
             reply = QMessageBox.question(
                 self,
@@ -704,12 +732,17 @@ class CodeEditorWidget(QTextEdit):
 
     breakpoint_toggled = pyqtSignal(int)
 
-    def __init__(self, parent=None) -> None:
-        """Initialize the CodeEditorWidget with default values."""
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialize the CodeEditorWidget with default values.
+
+        Args:
+            parent: Parent widget, defaults to None.
+
+        """
         super().__init__(parent)
-        self.file_path = None
-        self.breakpoint_lines = set()
-        self.current_line = None
+        self.file_path: str | None = None
+        self.breakpoint_lines: set[int] = set()
+        self.current_line: int | None = None
 
         # Set font
         font = QFont("Consolas", 10)
@@ -726,8 +759,13 @@ class CodeEditorWidget(QTextEdit):
         self.update_line_number_area_width(0)
         self.highlight_current_line()
 
-    def line_number_area_width(self):
-        """Calculate line number area width."""
+    def line_number_area_width(self) -> int:
+        """Calculate line number area width.
+
+        Returns:
+            Width in pixels required for the line number area.
+
+        """
         digits = 1
         max_num = max(1, self.blockCount())
         while max_num >= 10:
@@ -737,14 +775,23 @@ class CodeEditorWidget(QTextEdit):
         space = 3 + self.fontMetrics().horizontalAdvance("9") * (digits + 1)
         return space
 
-    def update_line_number_area_width(self, new_block_count) -> None:
-        """Update line number area width."""
-        # Log block count changes for debugging
-        self.logger.debug(f"Updating line number area width for {new_block_count} blocks")
+    def update_line_number_area_width(self, new_block_count: int) -> None:
+        """Update line number area width.
+
+        Args:
+            new_block_count: Number of blocks (lines) in the document.
+
+        """
         self.setViewportMargins(self.line_number_area_width(), 0, 0, 0)
 
-    def update_line_number_area(self, rect, dy) -> None:
-        """Update line number area."""
+    def update_line_number_area(self, rect: QRect, dy: int) -> None:
+        """Update line number area.
+
+        Args:
+            rect: Rectangle containing the area to update.
+            dy: Vertical scroll distance in pixels.
+
+        """
         if dy:
             self.line_number_area.scroll(0, dy)
         else:
@@ -753,15 +800,25 @@ class CodeEditorWidget(QTextEdit):
         if rect.contains(self.viewport().rect()):
             self.update_line_number_area_width(0)
 
-    def resizeEvent(self, event) -> None:
-        """Handle resize event."""
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        """Handle resize event.
+
+        Args:
+            event: The resize event.
+
+        """
         super().resizeEvent(event)
 
         cr = self.contentsRect()
         self.line_number_area.setGeometry(cr.left(), cr.top(), self.line_number_area_width(), cr.height())
 
-    def line_number_area_paint_event(self, event) -> None:
-        """Paint line numbers."""
+    def line_number_area_paint_event(self, event: QPaintEvent) -> None:
+        """Paint line numbers.
+
+        Args:
+            event: The paint event containing the area to paint.
+
+        """
         from intellicrack.handlers.pyqt6_handler import QPainter
 
         painter = QPainter(self.line_number_area)
@@ -803,8 +860,13 @@ class CodeEditorWidget(QTextEdit):
             bottom = top + int(self.blockBoundingRect(block).height())
             block_number += 1
 
-    def line_number_area_mouse_press(self, event) -> None:
-        """Handle mouse press in line number area."""
+    def line_number_area_mouse_press(self, event: QMouseEvent) -> None:
+        """Handle mouse press in line number area.
+
+        Args:
+            event: The mouse event.
+
+        """
         if event.button() == Qt.LeftButton:
             cursor = self.cursorForPosition(event.pos())
             line = cursor.blockNumber() + 1
@@ -878,19 +940,39 @@ class CodeEditorWidget(QTextEdit):
 class LineNumberArea(QWidget):
     """Line number area widget."""
 
-    def __init__(self, editor) -> None:
-        """Initialize the LineNumberArea with default values."""
-        super().__init__(editor)
-        self.code_editor = editor
+    def __init__(self, editor: CodeEditorWidget) -> None:
+        """Initialize the LineNumberArea with default values.
 
-    def sizeHint(self):
-        """Return size hint."""
+        Args:
+            editor: The code editor widget this area is associated with.
+
+        """
+        super().__init__(editor)
+        self.code_editor: CodeEditorWidget = editor
+
+    def sizeHint(self) -> QSize:
+        """Return size hint.
+
+        Returns:
+            Size hint for the line number area.
+
+        """
         return QSize(self.code_editor.line_number_area_width(), 0)
 
-    def paintEvent(self, event) -> None:
-        """Paint event."""
+    def paintEvent(self, event: QPaintEvent) -> None:
+        """Paint event.
+
+        Args:
+            event: The paint event.
+
+        """
         self.code_editor.line_number_area_paint_event(event)
 
-    def mousePressEvent(self, event) -> None:
-        """Mouse press event."""
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        """Mouse press event.
+
+        Args:
+            event: The mouse event.
+
+        """
         self.code_editor.line_number_area_mouse_press(event)

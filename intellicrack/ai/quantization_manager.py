@@ -20,10 +20,13 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import gc
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
 
 from ..utils.logger import get_logger
 from .model_sharding import get_sharding_manager
+
+ModelType = TypeVar("ModelType")
+ConfigType = TypeVar("ConfigType")
 
 try:
     import torch
@@ -117,12 +120,12 @@ class QuantizationManager:
 
     def __init__(self) -> None:
         """Initialize the quantization manager."""
-        self.loaded_models = {}
-        self.quantization_configs = {}
-        self.sharding_manager = None
+        self.loaded_models: dict[str, ModelType] = {}
+        self.quantization_configs: dict[str, dict[str, Any]] = {}
+        self.sharding_manager: Any = None
 
         # Check available backends
-        self.available_backends = {
+        self.available_backends: dict[str, bool] = {
             "bitsandbytes": HAS_BITSANDBYTES,
             "auto_gptq": HAS_AUTO_GPTQ,
             "transformers": HAS_TRANSFORMERS,
@@ -146,8 +149,8 @@ class QuantizationManager:
         model_path: str | Path,
         quantization_type: str = "auto",
         device: str = "auto",
-        **kwargs,
-    ) -> Any | None:
+        **kwargs: Any,
+    ) -> ModelType | None:
         """Load a quantized model with automatic backend selection.
 
         Args:
@@ -224,7 +227,7 @@ class QuantizationManager:
 
         return "none"
 
-    def _load_8bit_model(self, model_path: Path, device: str, **kwargs) -> Any | None:
+    def _load_8bit_model(self, model_path: Path, device: str, **kwargs: Any) -> ModelType | None:
         """Load model with 8-bit quantization using bitsandbytes."""
         if not HAS_BITSANDBYTES or not HAS_TRANSFORMERS:
             logger.error("bitsandbytes and transformers required for 8-bit quantization")
@@ -268,7 +271,7 @@ class QuantizationManager:
             logger.error(f"Failed to load 8-bit model: {e}")
             return None
 
-    def _load_4bit_model(self, model_path: Path, device: str, **kwargs) -> Any | None:
+    def _load_4bit_model(self, model_path: Path, device: str, **kwargs: Any) -> ModelType | None:
         """Load model with 4-bit quantization using bitsandbytes."""
         if not HAS_BITSANDBYTES or not HAS_TRANSFORMERS:
             logger.error("bitsandbytes and transformers required for 4-bit quantization")
@@ -316,7 +319,7 @@ class QuantizationManager:
             logger.error(f"Failed to load 4-bit model: {e}")
             return None
 
-    def _load_gptq_model(self, model_path: Path, device: str, **kwargs) -> Any | None:
+    def _load_gptq_model(self, model_path: Path, device: str, **kwargs: Any) -> ModelType | None:
         """Load GPTQ quantized model."""
         if not HAS_AUTO_GPTQ:
             logger.error("auto-gptq required for GPTQ models")
@@ -344,7 +347,7 @@ class QuantizationManager:
             logger.error(f"Failed to load GPTQ model: {e}")
             return None
 
-    def _load_standard_model(self, model_path: Path, device: str, **kwargs) -> Any | None:
+    def _load_standard_model(self, model_path: Path, device: str, **kwargs: Any) -> ModelType | None:
         """Load model without quantization."""
         if not HAS_TRANSFORMERS:
             logger.error("transformers required for model loading")
@@ -401,10 +404,10 @@ class QuantizationManager:
 
     def load_lora_adapter(
         self,
-        base_model: Any,
+        base_model: ModelType,
         adapter_path: str | Path,
-        **kwargs,
-    ) -> Any | None:
+        **kwargs: Any,
+    ) -> ModelType | None:
         """Load LoRA adapter onto a base model.
 
         Args:
@@ -444,9 +447,9 @@ class QuantizationManager:
 
     def apply_dynamic_quantization(
         self,
-        model: Any,
+        model: ModelType,
         quantization_config: dict[str, Any],
-    ) -> Any | None:
+    ) -> ModelType | None:
         """Apply dynamic quantization to a loaded model.
 
         Args:
@@ -531,10 +534,10 @@ class QuantizationManager:
         self,
         r: int = 16,
         lora_alpha: int = 32,
-        target_modules: list | None = None,
+        target_modules: list[str] | None = None,
         lora_dropout: float = 0.1,
-        **kwargs,
-    ) -> Any | None:
+        **kwargs: Any,
+    ) -> ConfigType | None:
         """Create a LoRA configuration for fine-tuning.
 
         Args:
@@ -595,7 +598,7 @@ class QuantizationManager:
             "reason": "Single GPU or no GPU available",
         }
 
-    def get_supported_quantization_types(self) -> list:
+    def get_supported_quantization_types(self) -> list[str]:
         """Get list of supported quantization types."""
         supported_types = []
 
@@ -613,7 +616,7 @@ class QuantizationManager:
 
         return supported_types
 
-    def quantize_model_with_bnb(self, model: Any, quantization_bits: int = 8, **kwargs) -> Any | None:
+    def quantize_model_with_bnb(self, model: ModelType, quantization_bits: int = 8, **kwargs: Any) -> ModelType | None:
         """Quantize a model using bitsandbytes (bnb) library.
 
         Args:
@@ -706,7 +709,7 @@ class QuantizationManager:
             logger.error(f"Failed to quantize model with bnb: {e}")
             return None
 
-    def create_gptq_config(self, bits: int = 4, group_size: int = 128, **kwargs) -> Any | None:
+    def create_gptq_config(self, bits: int = 4, group_size: int = 128, **kwargs: Any) -> ConfigType | None:
         """Create a GPTQ configuration using BaseQuantizeConfig.
 
         Args:
@@ -743,7 +746,7 @@ class QuantizationManager:
             logger.error(f"Failed to create GPTQ config: {e}")
             return None
 
-    def prepare_model_for_gptq_quantization(self, model_path: str | Path, config: Any = None, **kwargs) -> Any | None:
+    def prepare_model_for_gptq_quantization(self, model_path: str | Path, config: ConfigType | None = None, **kwargs: Any) -> ModelType | None:
         """Prepare a model for GPTQ quantization using GPTQConfig.
 
         Args:
@@ -887,7 +890,7 @@ class QuantizationManager:
 
 
 # Global instance
-_QUANTIZATION_MANAGER = None
+_QUANTIZATION_MANAGER: QuantizationManager | None = None
 
 
 def get_quantization_manager() -> QuantizationManager:

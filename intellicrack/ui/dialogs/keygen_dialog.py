@@ -66,8 +66,15 @@ class KeygenWorker(QThread):
     batch_completed = pyqtSignal(list)
     error_occurred = pyqtSignal(str)
 
-    def __init__(self, binary_path: str, operation: str, **kwargs) -> None:
-        """Initialize the KeygenWorker with default values."""
+    def __init__(self, binary_path: str, operation: str, **kwargs: object) -> None:
+        """Initialize the KeygenWorker with default values.
+
+        Args:
+            binary_path: Path to the binary file for key generation.
+            operation: Type of operation (single, batch, analyze).
+            **kwargs: Additional keyword arguments for the operation.
+
+        """
         super().__init__()
         self.binary_path = binary_path
         self.operation = operation
@@ -158,8 +165,14 @@ class KeygenWorker(QThread):
 class KeygenDialog(BaseDialog):
     """Professional Keygen Dialog with advanced features."""
 
-    def __init__(self, parent=None, binary_path: str = "") -> None:
-        """Initialize the KeygenDialog with default values."""
+    def __init__(self, parent: object | None = None, binary_path: str = "") -> None:
+        """Initialize the KeygenDialog with default values.
+
+        Args:
+            parent: Parent widget for the dialog.
+            binary_path: Path to binary file for analysis.
+
+        """
         # Initialize UI attributes
         self.analysis_display = None
         self.analyze_keys_btn = None
@@ -211,13 +224,23 @@ class KeygenDialog(BaseDialog):
         # Status and controls
         self.setup_footer(layout)
 
-    def setup_header(self, layout) -> None:
-        """Set up header with binary selection."""
+    def setup_header(self, layout: object) -> None:
+        """Set up header with binary selection.
+
+        Args:
+            layout: Main layout widget.
+
+        """
         # Use the base class method with analyze button
         super().setup_header(layout, show_label=True, extra_buttons=[("Analyze Binary", self.analyze_binary)])
 
-    def setup_tabs(self, layout) -> None:
-        """Set up main tab widget."""
+    def setup_tabs(self, layout: object) -> None:
+        """Set up main tab widget.
+
+        Args:
+            layout: Main layout widget.
+
+        """
         self.tabs = QTabWidget()
 
         # Single Key Generation Tab
@@ -459,7 +482,9 @@ class KeygenDialog(BaseDialog):
 
         self.existing_keys_input = QTextEdit()
         self.existing_keys_input.setMaximumHeight(100)
-        self.existing_keys_input.setPlaceholderText("Paste existing license keys (one per line) to analyze patterns...")
+        self.existing_keys_input.setToolTip("Enter existing license keys to analyze their patterns and characteristics")
+        instruction_label = QLabel("Paste existing license keys (one per line) to analyze patterns and detect key generation algorithms:")
+        input_layout.insertWidget(0, instruction_label)
         input_layout.addWidget(self.existing_keys_input)
 
         self.analyze_keys_btn = QPushButton("Analyze Key Patterns")
@@ -477,8 +502,13 @@ class KeygenDialog(BaseDialog):
 
         self.tabs.addTab(management_widget, "Key Management")
 
-    def setup_footer(self, layout) -> None:
-        """Set up footer with status and close button."""
+    def setup_footer(self, layout: object) -> None:
+        """Set up footer with status and close button.
+
+        Args:
+            layout: Main layout widget.
+
+        """
         from ..dialog_utils import setup_footer
 
         setup_footer(self, layout)
@@ -489,8 +519,13 @@ class KeygenDialog(BaseDialog):
 
         connect_binary_signals(self)
 
-    def on_binary_path_changed(self, text) -> None:
-        """Handle binary path change."""
+    def on_binary_path_changed(self, text: str) -> None:
+        """Handle binary path change.
+
+        Args:
+            text: New binary path text.
+
+        """
         from ..dialog_utils import on_binary_path_changed
 
         on_binary_path_changed(self, text)
@@ -515,8 +550,13 @@ class KeygenDialog(BaseDialog):
         self.worker.error_occurred.connect(self.on_error)
         self.worker.start()
 
-    def on_analysis_completed(self, result) -> None:
-        """Handle analysis completion."""
+    def on_analysis_completed(self, result: object) -> None:
+        """Handle analysis completion.
+
+        Args:
+            result: Analysis result dictionary with algorithm and format detection.
+
+        """
         self.current_analysis = result
 
         # Update UI with detected values
@@ -557,8 +597,16 @@ class KeygenDialog(BaseDialog):
         self.status_label.setText("Analysis completed")
         self.analyze_btn.setEnabled(True)
 
-    def format_analysis_results(self, result):
-        """Format analysis results for display."""
+    def format_analysis_results(self, result: object) -> str:
+        """Format analysis results for display.
+
+        Args:
+            result: Analysis result dictionary.
+
+        Returns:
+            Formatted analysis results as a string.
+
+        """
         text = f"Binary Analysis Results for: {os.path.basename(self.binary_path)}\n"
         text += "=" * 60 + "\n\n"
 
@@ -643,8 +691,13 @@ class KeygenDialog(BaseDialog):
         self.worker.error_occurred.connect(self.on_error)
         self.worker.start()
 
-    def on_single_key_generated(self, result) -> None:
-        """Handle single key generation completion."""
+    def on_single_key_generated(self, result: object) -> None:
+        """Handle single key generation completion.
+
+        Args:
+            result: Key generation result dictionary.
+
+        """
         # Display the key
         self.key_display.setPlainText(result.get("key", "Error generating key"))
 
@@ -662,8 +715,16 @@ class KeygenDialog(BaseDialog):
         self.status_label.setText("Key generated successfully")
         self.generate_btn.setEnabled(True)
 
-    def format_single_key_results(self, result):
-        """Format single key results for display."""
+    def format_single_key_results(self, result: object) -> str:
+        """Format single key results for display.
+
+        Args:
+            result: Key generation result dictionary.
+
+        Returns:
+            Formatted key results as a string.
+
+        """
         text = "Key Generation Results\n"
         text += "=" * 30 + "\n\n"
 
@@ -852,13 +913,24 @@ class KeygenDialog(BaseDialog):
         self.worker.error_occurred.connect(self.on_error)
         self.worker.start()
 
-    def on_batch_progress(self, current, total) -> None:
-        """Handle batch generation progress."""
+    def on_batch_progress(self, current: int, total: int) -> None:
+        """Handle batch generation progress.
+
+        Args:
+            current: Current number of keys generated.
+            total: Total number of keys to generate.
+
+        """
         self.batch_progress.setValue(current)
         self.status_label.setText(f"Generating keys: {current}/{total}")
 
-    def on_batch_completed(self, keys) -> None:
-        """Handle batch generation completion."""
+    def on_batch_completed(self, keys: object) -> None:
+        """Handle batch generation completion.
+
+        Args:
+            keys: List of generated key results.
+
+        """
         self.generated_keys = keys
 
         # Populate table
@@ -1017,8 +1089,13 @@ class KeygenDialog(BaseDialog):
             logger.error("Error in keygen_dialog: %s", e)
             QMessageBox.critical(self, "Analysis Error", f"Failed to analyze keys: {e!s}")
 
-    def on_error(self, error_msg) -> None:
-        """Handle worker thread errors."""
+    def on_error(self, error_msg: str) -> None:
+        """Handle worker thread errors.
+
+        Args:
+            error_msg: Error message describing what went wrong.
+
+        """
         QMessageBox.critical(self, "Error", f"An error occurred: {error_msg}")
         self.status_label.setText("Error occurred")
         self.generate_btn.setEnabled(True)
@@ -1026,8 +1103,13 @@ class KeygenDialog(BaseDialog):
         self.batch_stop_btn.setEnabled(False)
         self.analyze_btn.setEnabled(True)
 
-    def closeEvent(self, event) -> None:
-        """Handle dialog close event."""
+    def closeEvent(self, event: object) -> None:
+        """Handle dialog close event.
+
+        Args:
+            event: Close event from Qt framework.
+
+        """
         if self.worker and self.worker.isRunning():
             self.worker.stop()
             self.worker.wait()
@@ -1035,7 +1117,16 @@ class KeygenDialog(BaseDialog):
 
 
 # Convenience function for main app integration
-def show_keygen_dialog(parent=None, binary_path: str = ""):
-    """Show the keygen dialog."""
+def show_keygen_dialog(parent: object | None = None, binary_path: str = "") -> int:
+    """Show the keygen dialog.
+
+    Args:
+        parent: Parent widget for the dialog.
+        binary_path: Path to binary file for key generation.
+
+    Returns:
+        Dialog execution result code.
+
+    """
     dialog = KeygenDialog(parent, binary_path)
     return dialog.exec()

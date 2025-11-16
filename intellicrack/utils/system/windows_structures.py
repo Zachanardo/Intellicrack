@@ -199,7 +199,7 @@ class WindowsProcessStructures:
     """Provide Windows process creation structures."""
 
     @staticmethod
-    def create_startup_info():
+    def create_startup_info() -> type[ctypes.Structure] | None:
         """Create STARTUPINFO structure."""
         if not STRUCTURES_AVAILABLE:
             return None
@@ -231,7 +231,7 @@ class WindowsProcessStructures:
         return STARTUPINFO
 
     @staticmethod
-    def create_process_information():
+    def create_process_information() -> type[ctypes.Structure] | None:
         """Create ``PROCESS_INFORMATION`` structure."""
         if not STRUCTURES_AVAILABLE:
             return None

@@ -96,9 +96,17 @@ class ANSIParser:
         font.setStyleHint(QFont.StyleHint.Monospace)
         self.current_format.setFont(font)
 
-    def parse(self, text):
-        """Parse ANSI codes and return list of (text, format) tuples."""
-        segments = []
+    def parse(self, text: str) -> list[tuple[str, QTextCharFormat]]:
+        """Parse ANSI codes and return list of (text, format) tuples.
+
+        Args:
+            text: The text string containing potential ANSI escape sequences.
+
+        Returns:
+            A list of tuples containing (text_segment, formatting) pairs to be rendered.
+
+        """
+        segments: list[tuple[str, QTextCharFormat]] = []
         last_pos = 0
 
         for match in self.ANSI_ESCAPE_PATTERN.finditer(text):
@@ -114,8 +122,13 @@ class ANSIParser:
 
         return segments
 
-    def _apply_codes(self, codes) -> None:
-        """Apply ANSI codes to current format."""
+    def _apply_codes(self, codes: list[str]) -> None:
+        """Apply ANSI codes to current format.
+
+        Args:
+            codes: List of ANSI code strings to apply to the current text format.
+
+        """
         for code in codes:
             if code in {"0", ""}:
                 self.reset_format()
@@ -163,8 +176,13 @@ class EmbeddedTerminalWidget(QWidget):
     process_finished = pyqtSignal(int, int)
     output_received = pyqtSignal(str)
 
-    def __init__(self, parent=None) -> None:
-        """Initialize terminal widget with PTY and UI components."""
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialize terminal widget with PTY and UI components.
+
+        Args:
+            parent: Optional parent widget for Qt widget hierarchy.
+
+        """
         super().__init__(parent)
 
         self._process = None
@@ -276,8 +294,13 @@ class EmbeddedTerminalWidget(QWidget):
 
         self.setMinimumSize(600, 400)
 
-    def _show_context_menu(self, position) -> None:
-        """Show context menu for copy/paste operations."""
+    def _show_context_menu(self, position: object) -> None:
+        """Show context menu for copy/paste operations.
+
+        Args:
+            position: The position where the context menu should be displayed.
+
+        """
         menu = QMenu(self)
 
         copy_action = QAction("Copy", self)
@@ -332,16 +355,19 @@ class EmbeddedTerminalWidget(QWidget):
             except Exception as e:
                 logger.error(f"Error exporting terminal log: {e}")
 
-    def start_process(self, command, cwd=None, env=None):
+    def start_process(self, command: str | list[str], cwd: str | None = None, env: dict[str, str] | None = None) -> int | None:
         """Start a new process in the terminal with PTY.
 
         Args:
-            command: Command as list of strings
-            cwd: Working directory (optional)
-            env: Environment variables dict (optional)
+            command: Command as string or list of strings to execute.
+            cwd: Working directory path (optional).
+            env: Environment variables dictionary (optional). If None, inherits from current process.
 
         Returns:
-            Process PID
+            Process PID if successful, None if process failed to start.
+
+        Raises:
+            ValueError: If the command contains unsafe characters.
 
         """
         if self._process and self._running:
@@ -446,8 +472,14 @@ class EmbeddedTerminalWidget(QWidget):
         except queue.Empty:
             pass
 
-    def _handle_output(self, data, is_error=False) -> None:
-        """Handle and display process output with ANSI parsing."""
+    def _handle_output(self, data: str, is_error: bool = False) -> None:
+        """Handle and display process output with ANSI parsing.
+
+        Args:
+            data: The output text to display in the terminal.
+            is_error: Whether to display the text as an error (red color).
+
+        """
         if is_error:
             cursor = self.terminal_display.textCursor()
             cursor.movePosition(QTextCursor.MoveOperation.End)
@@ -488,8 +520,13 @@ class EmbeddedTerminalWidget(QWidget):
                 cursor.removeSelectedText()
                 cursor.deleteChar()
 
-    def _handle_keyboard_input(self, event) -> None:
-        """Handle keyboard input and forward to process or buffer locally."""
+    def _handle_keyboard_input(self, event: object) -> None:
+        """Handle keyboard input and forward to process or buffer locally.
+
+        Args:
+            event: The keyboard event containing key code and modifiers.
+
+        """
         key = event.key()
         modifiers = event.modifiers()
         text = event.text()
@@ -547,8 +584,13 @@ class EmbeddedTerminalWidget(QWidget):
         elif text and text.isprintable():
             self._append_to_command_buffer(text)
 
-    def _append_to_command_buffer(self, text) -> None:
-        """Append text to command buffer and display it."""
+    def _append_to_command_buffer(self, text: str) -> None:
+        """Append text to command buffer and display it.
+
+        Args:
+            text: The text to append to the command buffer.
+
+        """
         self._command_buffer += text
 
         cursor = self.terminal_display.textCursor()
@@ -617,11 +659,14 @@ class EmbeddedTerminalWidget(QWidget):
         else:
             self.start_process(["sh", "-c", command], cwd=os.getcwd())
 
-    def send_input(self, text) -> None:
+    def send_input(self, text: str) -> None:
         """Send text input to the running process.
 
         Args:
-            text: Text to send to process stdin
+            text: Text to send to process stdin.
+
+        Raises:
+            Exception: If writing to process stdin fails.
 
         """
         if not self._process or not self._running:
@@ -676,10 +721,20 @@ class EmbeddedTerminalWidget(QWidget):
         if not self._running:
             self._show_prompt()
 
-    def is_running(self):
-        """Check if a process is currently running."""
+    def is_running(self) -> bool:
+        """Check if a process is currently running.
+
+        Returns:
+            True if a process is running, False otherwise.
+
+        """
         return self._running and self._process is not None
 
-    def get_pid(self):
-        """Get PID of currently running process."""
+    def get_pid(self) -> int | None:
+        """Get PID of currently running process.
+
+        Returns:
+            The process ID if a process is running, None otherwise.
+
+        """
         return self._pid

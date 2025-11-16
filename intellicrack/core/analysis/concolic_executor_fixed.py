@@ -105,6 +105,8 @@ class ConcolicExecutionEngine:
         if self.symbolic_engine == "simconcolic":
             return self._explore_paths_simconcolic(target_address, avoid_addresses)
 
+        return {"error": "Unknown symbolic execution engine"}
+
     def _explore_paths_angr(self, target_address, avoid_addresses):
         """Explore paths using angr."""
         try:

@@ -85,10 +85,10 @@ except ImportError:
 
         for count in byte_counts:
             if count > 0:
-                    probability = count / data_len
-                    entropy -= probability * math.log2(probability)
+                probability = count / data_len
+                entropy -= probability * math.log2(probability)
 
-            return entropy
+        return entropy
 
 from ..utils.logger import log_all_methods
 

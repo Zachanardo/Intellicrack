@@ -24,9 +24,23 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Protocol
 
 from intellicrack.utils.logger import logger
+
+# Type alias for Z3 expressions
+if False:
+    from z3 import ExprRef
+
+Z3Expr = Any  # Z3 expression type - cannot be typed statically
+
+
+class BasicBlockProtocol(Protocol):
+    """Protocol for BasicBlock objects in control flow analysis."""
+
+    instructions: list[dict[str, Any]]
+    successors: list[int]
+    address: int
 
 try:
     import z3
@@ -152,7 +166,7 @@ class ConstantPropagationEngine:
         return mnemonic, operands
 
     def _analyze_block(
-        self, basic_block, entry_state: dict[str, ConstantValue],
+        self, basic_block: BasicBlockProtocol, entry_state: dict[str, ConstantValue],
     ) -> dict[str, ConstantValue]:
         """Analyze a single basic block for constant propagation.
 
@@ -658,7 +672,7 @@ class SymbolicExecutionEngine:
         self.solver = z3.Solver() if Z3_AVAILABLE else None
 
     def analyze_predicate(
-        self, basic_block, register_state: dict[str, ConstantValue],
+        self, basic_block: BasicBlockProtocol, register_state: dict[str, ConstantValue],
     ) -> tuple[bool | None, str | None]:
         """Symbolically analyze a conditional predicate.
 
@@ -710,7 +724,7 @@ class SymbolicExecutionEngine:
             self.logger.debug(f"Symbolic execution failed: {e}")
             return None, None
 
-    def _build_symbolic_expression(self, basic_block, symbolic_vars: dict[str, Any]) -> Any:
+    def _build_symbolic_expression(self, basic_block: BasicBlockProtocol, symbolic_vars: dict[str, Any]) -> Z3Expr:
         """Build Z3 expression from assembly instructions.
 
         Args:
@@ -751,7 +765,7 @@ class SymbolicExecutionEngine:
 
     def _build_comparison_expr(
         self, cmp_inst: dict[str, Any], jump_inst: str, symbolic_vars: dict[str, Any],
-    ) -> Any:
+    ) -> Z3Expr:
         """Build Z3 expression for CMP instruction.
 
         Args:
@@ -804,7 +818,7 @@ class SymbolicExecutionEngine:
 
     def _build_test_expr(
         self, test_inst: dict[str, Any], jump_inst: str, symbolic_vars: dict[str, Any],
-    ) -> Any:
+    ) -> Z3Expr:
         """Build Z3 expression for TEST instruction.
 
         Args:
@@ -845,7 +859,7 @@ class SymbolicExecutionEngine:
 
         return None
 
-    def _parse_operand(self, operand: str, symbolic_vars: dict[str, Any]) -> Any:
+    def _parse_operand(self, operand: str, symbolic_vars: dict[str, Any]) -> Z3Expr:
         """Parse operand into Z3 expression.
 
         Args:
@@ -946,7 +960,7 @@ class PatternRecognizer:
             },
         ]
 
-    def recognize_pattern(self, basic_block) -> tuple[str | None, bool | None]:
+    def recognize_pattern(self, basic_block: BasicBlockProtocol) -> tuple[str | None, bool | None]:
         """Try to recognize opaque predicate pattern.
 
         Args:
@@ -963,7 +977,7 @@ class PatternRecognizer:
 
         return None, None
 
-    def _match_self_xor(self, basic_block) -> bool:
+    def _match_self_xor(self, basic_block: BasicBlockProtocol) -> bool:
         """Match x XOR x pattern.
 
         Args:
@@ -982,7 +996,7 @@ class PatternRecognizer:
                         return True
         return False
 
-    def _match_self_comparison(self, basic_block) -> bool:
+    def _match_self_comparison(self, basic_block: BasicBlockProtocol) -> bool:
         """Match x CMP x pattern.
 
         Args:
@@ -1001,7 +1015,7 @@ class PatternRecognizer:
                         return True
         return False
 
-    def _match_algebraic_identity(self, basic_block) -> bool:
+    def _match_algebraic_identity(self, basic_block: BasicBlockProtocol) -> bool:
         """Match algebraic identities like x*x >= 0.
 
         Args:
@@ -1027,7 +1041,7 @@ class PatternRecognizer:
 
         return False
 
-    def _match_modulo_invariant(self, basic_block) -> bool:
+    def _match_modulo_invariant(self, basic_block: BasicBlockProtocol) -> bool:
         """Match modulo 2 invariants.
 
         Args:
@@ -1055,7 +1069,7 @@ class PatternRecognizer:
 
         return False
 
-    def _match_bit_masking(self, basic_block) -> bool:
+    def _match_bit_masking(self, basic_block: BasicBlockProtocol) -> bool:
         """Match (x & 0) == 0 pattern.
 
         Args:
@@ -1075,7 +1089,7 @@ class PatternRecognizer:
 
         return False
 
-    def _match_impossible_overflow(self, basic_block) -> bool:
+    def _match_impossible_overflow(self, basic_block: BasicBlockProtocol) -> bool:
         """Match impossible overflow conditions.
 
         Args:
@@ -1172,7 +1186,7 @@ class OpaquePredicateAnalyzer:
         return opaque_predicates
 
     def _check_constant_predicate(
-        self, basic_block, register_state: dict[str, ConstantValue],
+        self, basic_block: BasicBlockProtocol, register_state: dict[str, ConstantValue],
     ) -> bool | None:
         """Check if predicate can be resolved using constant values.
 
@@ -1263,7 +1277,7 @@ class OpaquePredicateAnalyzer:
 
         return None
 
-    def _identify_dead_branch(self, basic_block, cfg: nx.DiGraph, always_value: bool) -> int | None:
+    def _identify_dead_branch(self, basic_block: BasicBlockProtocol, cfg: nx.DiGraph, always_value: bool) -> int | None:
         """Identify which branch is dead based on predicate value.
 
         Args:

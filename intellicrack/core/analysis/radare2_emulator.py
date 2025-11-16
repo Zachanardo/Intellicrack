@@ -344,24 +344,52 @@ class Radare2Emulator:
             logger.error(f"Failed to setup Unicorn: {e}")
             return False
 
-    def _unicorn_code_hook(self, uc, address, size, user_data) -> None:
-        """Monitor code execution in Unicorn emulator."""
+    def _unicorn_code_hook(self, uc: unicorn.Uc, address: int, size: int, user_data: object) -> None:
+        """Monitor code execution in Unicorn emulator.
+
+        Args:
+            uc: Unicorn engine instance.
+            address: Current instruction address.
+            size: Size of instruction being executed.
+            user_data: User-provided callback data.
+
+        """
         self.execution_trace.append(address)
 
         # Optional: Stop at certain addresses
         if address in self.breakpoints if hasattr(self, "breakpoints") else []:
             uc.emu_stop()
 
-    def _unicorn_mem_write_hook(self, uc, access, address, size, value, user_data) -> None:
-        """Monitor memory writes in Unicorn emulator."""
+    def _unicorn_mem_write_hook(self, uc: unicorn.Uc, access: int, address: int, size: int, value: int, user_data: object) -> None:
+        """Monitor memory writes in Unicorn emulator.
+
+        Args:
+            uc: Unicorn engine instance.
+            access: Memory access type.
+            address: Memory address being written.
+            size: Number of bytes being written.
+            value: Value being written.
+            user_data: User-provided callback data.
+
+        """
         self.memory_map[address] = struct.pack("<Q", value)[:size]
 
         # Check for taint propagation
         if address in self.taint_tracker:
             self._propagate_taint(address, value)
 
-    def _unicorn_mem_read_hook(self, uc, access, address, size, value, user_data) -> None:
-        """Monitor memory reads in Unicorn emulator."""
+    def _unicorn_mem_read_hook(self, uc: unicorn.Uc, access: int, address: int, size: int, value: int, user_data: object) -> None:
+        """Monitor memory reads in Unicorn emulator.
+
+        Args:
+            uc: Unicorn engine instance.
+            access: Memory access type.
+            address: Memory address being read.
+            size: Number of bytes being read.
+            value: Value at memory address.
+            user_data: User-provided callback data.
+
+        """
         # Track memory reads for taint analysis
         if address in self.taint_tracker:
             self.taint_tracker[address].propagation_path.append(uc.reg_read(UC_X86_REG_EIP))

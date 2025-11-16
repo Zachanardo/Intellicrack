@@ -94,5 +94,5 @@ def get_supported_protocols():
     return protocols
 
 
-_parsers_list = [str(name) for name in _parsers]
-__all__ = ["get_available_parsers", "get_parser", "is_parser_available", "get_supported_protocols", *_parsers_list]
+_parsers_list: list[str] = [str(name) for name in _parsers]
+__all__: list[str] = ["get_available_parsers", "get_parser", "is_parser_available", "get_supported_protocols"] + _parsers_list  # noqa: RUF005

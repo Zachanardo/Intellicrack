@@ -2362,6 +2362,7 @@ class AIAgent:
         # Removed redundant except OSError block as it is already handled earlier
         except json.JSONEncodeError as e:
             logger.error(f"Failed to encode session data as JSON: {e}")
+            raise RuntimeError(f"Invalid session data format: {e!s}") from e
         except OSError as e:
             logger.error(f"Failed to save session data: {e}")
             raise RuntimeError(f"Could not save session data: {e!s}") from e
@@ -2372,14 +2373,6 @@ class AIAgent:
         except Exception as e:
             logger.error(f"Unexpected error saving session data: {e}")
             raise RuntimeError(f"Session save failed: {e!s}") from e
-        self.iteration_count = 0
-        self.generated_scripts.clear()
-        self.validation_results.clear()
-        self.refinement_history.clear()
-        self.conversation_history.clear()
-
-        # Clean up any active VMs
-        self._cleanup_all_vms()
 
     # ==================== VM Lifecycle Management ====================
 

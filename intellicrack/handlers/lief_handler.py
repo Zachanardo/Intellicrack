@@ -19,6 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import os
 import struct
+from typing import IO, Any, Optional
 
 from intellicrack.utils.logger import log_all_methods, logger
 
@@ -94,7 +95,9 @@ except ImportError as e:
     class FallbackSection:
         """Functional section implementation for binary sections."""
 
-        def __init__(self, name="", offset=0, size=0, virtual_address=0, virtual_size=0, characteristics=0) -> None:
+        def __init__(
+            self, name: str = "", offset: int = 0, size: int = 0, virtual_address: int = 0, virtual_size: int = 0, characteristics: int = 0,
+        ) -> None:
             """Initialize section."""
             self.name = name
             self.offset = offset
@@ -116,7 +119,7 @@ except ImportError as e:
     class FallbackSymbol:
         """Functional symbol implementation."""
 
-        def __init__(self, name="", value=0, size=0, type="", binding="") -> None:
+        def __init__(self, name: str = "", value: int = 0, size: int = 0, type: str = "", binding: str = "") -> None:
             """Initialize symbol."""
             self.name = name
             self.value = value
@@ -136,7 +139,7 @@ except ImportError as e:
     class FallbackFunction:
         """Functional function implementation."""
 
-        def __init__(self, name="", address=0, size=0) -> None:
+        def __init__(self, name: str = "", address: int = 0, size: int = 0) -> None:
             """Initialize function."""
             self.name = name
             self.address = address
@@ -154,7 +157,7 @@ except ImportError as e:
     class FallbackBinary:
         """Base binary implementation with real parsing capabilities."""
 
-        def __init__(self, path="") -> None:
+        def __init__(self, path: str = "") -> None:
             """Initialize binary."""
             self.path = path
             self.name = os.path.basename(path) if path else ""
@@ -197,7 +200,7 @@ except ImportError as e:
             except Exception as e:
                 logger.error("Failed to parse binary %s: %s", self.path, e)
 
-        def _parse_pe(self, f) -> None:
+        def _parse_pe(self, f: IO[bytes]) -> None:
             """Parse PE format binary."""
             self.format = "PE"
 
@@ -280,7 +283,7 @@ except ImportError as e:
             except Exception as e:
                 logger.error("Failed to parse PE binary: %s", e)
 
-        def _parse_elf(self, f) -> None:
+        def _parse_elf(self, f: IO[bytes]) -> None:
             """Parse ELF format binary."""
             self.format = "ELF"
 
@@ -408,7 +411,7 @@ except ImportError as e:
             except Exception as e:
                 logger.error("Failed to parse ELF binary: %s", e)
 
-        def _parse_macho(self, f) -> None:
+        def _parse_macho(self, f: IO[bytes]) -> None:
             """Parse Mach-O format binary."""
             self.format = "MACHO"
 
@@ -503,7 +506,7 @@ except ImportError as e:
     class FallbackPE(FallbackBinary):
         """PE specific binary implementation."""
 
-        def __init__(self, path="") -> None:
+        def __init__(self, path: str = "") -> None:
             """Initialize PE binary."""
             super().__init__(path)
             self.dos_header = {}
@@ -521,7 +524,7 @@ except ImportError as e:
     class FallbackELF(FallbackBinary):
         """ELF specific binary implementation."""
 
-        def __init__(self, path="") -> None:
+        def __init__(self, path: str = "") -> None:
             """Initialize ELF binary."""
             super().__init__(path)
             self.segments = []
@@ -535,7 +538,7 @@ except ImportError as e:
     class FallbackMachO(FallbackBinary):
         """Mach-O specific binary implementation."""
 
-        def __init__(self, path="") -> None:
+        def __init__(self, path: str = "") -> None:
             """Initialize Mach-O binary."""
             super().__init__(path)
             self.commands = []
@@ -545,7 +548,7 @@ except ImportError as e:
             self.dylibs = []
             self.rpaths = []
 
-    def parse(filepath):
+    def parse(filepath: str) -> Optional[FallbackBinary]:
         """Parse a binary file and return appropriate object."""
         if not os.path.exists(filepath):
             logger.error("File not found: %s", filepath)
@@ -567,7 +570,7 @@ except ImportError as e:
             logger.error("Failed to parse binary %s: %s", filepath, e)
             return None
 
-    def is_pe(filepath):
+    def is_pe(filepath: str) -> bool:
         """Check if file is PE format."""
         try:
             with open(filepath, "rb") as f:
@@ -576,7 +579,7 @@ except ImportError as e:
         except Exception:
             return False
 
-    def is_elf(filepath):
+    def is_elf(filepath: str) -> bool:
         """Check if file is ELF format."""
         try:
             with open(filepath, "rb") as f:
@@ -585,7 +588,7 @@ except ImportError as e:
         except Exception:
             return False
 
-    def is_macho(filepath):
+    def is_macho(filepath: str) -> bool:
         """Check if file is Mach-O format."""
         try:
             with open(filepath, "rb") as f:

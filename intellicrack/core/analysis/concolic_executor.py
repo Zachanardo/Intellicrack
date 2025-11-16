@@ -135,8 +135,15 @@ if not MANTICORE_AVAILABLE:
             capabilities without requiring external dependencies like the Manticore framework.
             """
 
-            def __init__(self, binary_path: str | None = None, *args: Any, **kwargs: Any) -> None:  # noqa: ANN001,ANN002,ANN003,ANN401
-                """Initialize native concolic execution engine."""
+            def __init__(self, binary_path: str | None = None, *args: object, **kwargs: object) -> None:
+                """Initialize native concolic execution engine.
+
+                Args:
+                    binary_path: Path to the binary file to analyze, or None to skip binary loading
+                    *args: Additional positional arguments for engine initialization
+                    **kwargs: Additional keyword arguments for engine configuration
+
+                """
                 self.binary_path = binary_path
                 self.init_args = args
                 self.init_kwargs = kwargs
@@ -1274,15 +1281,29 @@ if not MANTICORE_AVAILABLE:
                 self.logger = logging.getLogger(__name__)
                 self.logger.debug("Native plugin implementation initialized")
 
-            def will_run_callback(self, executor: Any, *args: Any, **kwargs: Any) -> None:  # noqa: ANN001,ANN002,ANN003,ANN401
-                """Call before execution starts."""
+            def will_run_callback(self, executor: object, *args: object, **kwargs: object) -> None:
+                """Call before execution starts.
+
+                Args:
+                    executor: The execution engine object about to run
+                    *args: Additional positional arguments from the execution engine
+                    **kwargs: Additional keyword arguments from the execution engine
+
+                """
                 self.logger.debug(f"Execution starting on executor {type(executor).__name__} with args={args}, kwargs={kwargs}")
 
-            def did_finish_run_callback(self, executor: Any, *args: Any, **kwargs: Any) -> None:  # noqa: ANN001,ANN002,ANN003,ANN401
-                """Call after execution completes."""
+            def did_finish_run_callback(self, executor: object, *args: object, **kwargs: object) -> None:
+                """Call after execution completes.
+
+                Args:
+                    executor: The execution engine object that completed
+                    *args: Additional positional arguments from the execution engine
+                    **kwargs: Additional keyword arguments from the execution engine
+
+                """
                 self.logger.debug(f"Execution finished on executor {type(executor).__name__} with args={args}, kwargs={kwargs}")
 
-            def will_fork_state_callback(self, state: Any, new_state: Any, *args: Any, **kwargs: Any) -> None:  # noqa: ANN001,ANN002,ANN003,ANN401
+            def will_fork_state_callback(self, state: object, new_state: object, *args: object, **kwargs: object) -> None:
                 """Call before state fork.
 
                 Args:
@@ -1294,8 +1315,15 @@ if not MANTICORE_AVAILABLE:
                 """
                 self.logger.debug(f"State fork: PC 0x{state.pc:x} -> 0x{new_state.pc:x} with args={args}, kwargs={kwargs}")
 
-            def will_execute_instruction_callback(self, state: Any, pc: int, insn: Any) -> None:  # noqa: ANN001,ANN401
-                """Call before instruction execution."""
+            def will_execute_instruction_callback(self, state: object, pc: int, insn: object) -> None:
+                """Call before instruction execution.
+
+                Args:
+                    state: Current execution state
+                    pc: Program counter value
+                    insn: Instruction object being executed
+
+                """
                 self.logger.debug(f"Executing instruction at 0x{pc:x}, state={state}, insn={insn}")
 
         import platform
@@ -1399,23 +1427,35 @@ class ConcolicExecutionEngine:
                     super().__init__()
                     self.logger = logging.getLogger(__name__)
 
-                def will_run_callback(self, *args: Any, **kwargs: Any) -> None:  # noqa: ANN001,ANN002,ANN003,ANN401
-                    """Call when path exploration is about to start."""
+                def will_run_callback(self, *args: object, **kwargs: object) -> None:
+                    """Call when path exploration is about to start.
+
+                    Args:
+                        *args: Additional positional arguments from the execution engine
+                        **kwargs: Additional keyword arguments from the execution engine
+
+                    """
                     self.logger.info(f"Starting path exploration with {len(args)} args and {len(kwargs)} kwargs")
                     if args:
                         self.logger.debug(f"Exploration args: {[type(arg).__name__ for arg in args]}")
                     if kwargs:
                         self.logger.debug(f"Exploration kwargs: {list(kwargs.keys())}")
 
-                def did_finish_run_callback(self, *args: Any, **kwargs: Any) -> None:  # noqa: ANN001,ANN002,ANN003,ANN401
-                    """Call when path exploration has finished execution."""
+                def did_finish_run_callback(self, *args: object, **kwargs: object) -> None:
+                    """Call when path exploration has finished execution.
+
+                    Args:
+                        *args: Additional positional arguments from the execution engine
+                        **kwargs: Additional keyword arguments from the execution engine
+
+                    """
                     self.logger.info(f"Finished path exploration with {len(args)} args and {len(kwargs)} kwargs")
                     if args:
                         self.logger.debug(f"Finish args: {[type(arg).__name__ for arg in args]}")
                     if kwargs:
                         self.logger.debug(f"Finish kwargs: {list(kwargs.keys())}")
 
-                def will_fork_state_callback(self, state: Any, *args: Any, **kwargs: Any) -> None:  # noqa: ANN001,ANN002,ANN003,ANN401
+                def will_fork_state_callback(self, state: object, *args: object, **kwargs: object) -> None:
                     """Call before a state is about to be forked during exploration.
 
                     Args:
@@ -1470,21 +1510,21 @@ class ConcolicExecutionEngine:
             self.logger.error(traceback.format_exc())
             return {"error": f"Concolic execution failed: {e!s}"}
 
-    def _target_hook(self, state: Any) -> None:  # noqa: ANN001,ANN401
+    def _target_hook(self, state: object) -> None:
         """Execute hook when target address is reached.
 
         Args:
-            state: Current execution state
+            state: Current execution state with cpu register information
 
         """
         state.abandon()  # Stop exploring this state
         self.logger.info("Reached target address at PC: %s", state.cpu.PC)
 
-    def _avoid_hook(self, state: Any) -> None:  # noqa: ANN001,ANN401
+    def _avoid_hook(self, state: object) -> None:
         """Execute hook to avoid specified addresses.
 
         Args:
-            state: Current execution state
+            state: Current execution state with cpu register information
 
         """
         state.abandon()  # Stop exploring this state
@@ -1547,16 +1587,16 @@ class ConcolicExecutionEngine:
                     super().__init__()
                     self.logger = logging.getLogger(__name__)
 
-                def will_execute_instruction_callback(self, state: Any, pc: int, insn: Any) -> None:  # noqa: ANN001,ANN401
+                def will_execute_instruction_callback(self, state: object, pc: int, insn: object) -> None:
                     """Execute before each instruction during emulation.
 
                     Monitors for license check functions and attempts to force successful path
                     when conditional branches are encountered during trace recording.
 
                     Args:
-                        state: Current emulation state
+                        state: Current emulation state with record_trace flag
                         pc: Program counter (current instruction address)
-                        insn: Current instruction being executed
+                        insn: Current instruction being executed with mnemonic and op_str attributes
 
                     """
                     # Check if we're at the license check function
@@ -1678,8 +1718,16 @@ class ConcolicExecutionEngine:
             self.logger.error("Error finding license check address: %s", e)
             return None
 
-    def _extract_analysis_parameters(self, **kwargs: Any) -> dict[str, Any]:  # noqa: ANN002,ANN003,ANN401
-        """Extract and validate analysis parameters from kwargs."""
+    def _extract_analysis_parameters(self, **kwargs: object) -> dict[str, object]:
+        """Extract and validate analysis parameters from kwargs.
+
+        Args:
+            **kwargs: Keyword arguments containing analysis parameters
+
+        Returns:
+            Dictionary containing extracted and validated analysis parameters
+
+        """
         return {
             "target_functions": kwargs.get("target_functions", []),
             "avoid_functions": kwargs.get("avoid_functions", []),
@@ -1708,8 +1756,16 @@ class ConcolicExecutionEngine:
             "error": None,
         }
 
-    def _setup_symbolic_input(self, m: Any, generate_test_cases: bool, symbolic_stdin_size: int, concrete_seed: Any) -> None:  # noqa: ANN001,ANN401
-        """Set up symbolic input for test case generation."""
+    def _setup_symbolic_input(self, m: object, generate_test_cases: bool, symbolic_stdin_size: int, concrete_seed: object) -> None:
+        """Set up symbolic input for test case generation.
+
+        Args:
+            m: Manticore execution engine instance
+            generate_test_cases: Whether to generate test cases from execution
+            symbolic_stdin_size: Size of symbolic stdin buffer
+            concrete_seed: Optional concrete seed for initial input
+
+        """
         if generate_test_cases:
             stdin_data = m.make_symbolic_buffer(symbolic_stdin_size)
             m.input_symbols["stdin"] = stdin_data
@@ -1720,8 +1776,18 @@ class ConcolicExecutionEngine:
                 for i, byte in enumerate(concrete_seed[:symbolic_stdin_size]):
                     m.constrain(stdin_data[i] == byte)
 
-    def _generate_test_cases(self, m: Any, analysis_data: dict, symbolic_stdin_size: int) -> list[dict]:  # noqa: ANN001,ANN401
-        """Generate test cases from terminated states."""
+    def _generate_test_cases(self, m: object, analysis_data: dict, symbolic_stdin_size: int) -> list[dict]:
+        """Generate test cases from terminated states.
+
+        Args:
+            m: Manticore execution engine instance
+            analysis_data: Dictionary containing analysis results
+            symbolic_stdin_size: Size of symbolic stdin buffer used during execution
+
+        Returns:
+            List of exploit vector dictionaries containing test cases and triggers
+
+        """
         exploit_vectors = []
         for i, state in enumerate(m.terminated_states[:50]):
             try:
@@ -1763,7 +1829,7 @@ class ConcolicExecutionEngine:
 
         return processed_results
 
-    def analyze(self, binary_path: str, **kwargs: Any) -> dict[str, Any]:  # noqa: ANN002,ANN003,ANN401
+    def analyze(self, binary_path: str, **kwargs: object) -> dict[str, object]:
         """Perform comprehensive concolic execution analysis on a binary.
 
         This method conducts a thorough concolic execution analysis combining
@@ -1872,8 +1938,15 @@ class ConcolicExecutionEngine:
                 self.analysis_data = analysis_data
                 self.logger = logging.getLogger(__name__)
 
-            def will_execute_instruction_callback(self, state: Any, pc: Any, insn: Any) -> None:  # noqa: ANN001,ANN401
-                """Track execution and detect interesting behaviors."""
+            def will_execute_instruction_callback(self, state: object, pc: object, insn: object) -> None:
+                """Track execution and detect interesting behaviors.
+
+                Args:
+                    state: Current execution state
+                    pc: Program counter value for current instruction
+                    insn: Current instruction object with mnemonic attribute
+
+                """
                 self.analysis_data["covered_blocks"].add(pc)
 
                 if find_vulnerabilities:
@@ -1885,8 +1958,18 @@ class ConcolicExecutionEngine:
                     if insn.mnemonic in ["syscall", "int"] or insn.mnemonic == "call":
                         self.analysis_data["interesting_addresses"].add(pc)
 
-            def _check_for_vulnerability(self, state: Any, pc: int, insn: Any) -> dict[str, Any] | None:  # noqa: ANN001,ANN401
-                """Check for potential vulnerabilities using execution state."""
+            def _check_for_vulnerability(self, state: object, pc: int, insn: object) -> dict[str, object] | None:
+                """Check for potential vulnerabilities using execution state.
+
+                Args:
+                    state: Current execution state with cpu register information
+                    pc: Program counter address
+                    insn: Instruction object with mnemonic and operands attributes
+
+                Returns:
+                    Dictionary containing vulnerability information, or None if no vulnerability detected
+
+                """
                 vuln = None
 
                 try:
@@ -1937,11 +2020,11 @@ class ConcolicExecutionEngine:
 
                 return vuln
 
-            def will_fork_state_callback(self, state: Any, expression: Any, solutions: Any, *args: Any, **kwargs: Any) -> None:  # noqa: ANN001,ANN002,ANN003,ANN401
+            def will_fork_state_callback(self, state: object, expression: object, solutions: object, *args: object, **kwargs: object) -> None:
                 """Track constraints when state forks.
 
                 Args:
-                    state: Current execution state being forked
+                    state: Current execution state being forked with id and cpu attributes
                     expression: Symbolic expression representing the branch condition
                     solutions: Possible solutions for the branch condition
                     *args: Additional positional arguments from the execution engine
@@ -1976,8 +2059,17 @@ class ConcolicExecutionEngine:
 
         return ComprehensiveAnalysisPlugin(analysis_data)
 
-    def _native_analyze(self, binary_path: str, **kwargs: Any) -> dict[str, Any]:  # noqa: ANN002,ANN003,ANN401
-        """Native implementation of analyze without Manticore."""
+    def _native_analyze(self, binary_path: str, **kwargs: object) -> dict[str, object]:
+        """Native implementation of analyze without Manticore.
+
+        Args:
+            binary_path: Path to the binary file to analyze
+            **kwargs: Additional keyword arguments for analysis configuration
+
+        Returns:
+            Dictionary containing analysis results with paths explored, test cases, and vulnerabilities
+
+        """
         import time
 
         start_time = time.time()
@@ -2086,8 +2178,17 @@ class ConcolicExecutionEngine:
         return self.analyze(self.binary_path, find_vulnerabilities=True, find_license_checks=True, generate_test_cases=True)
 
 
-def run_concolic_execution(app: Any, target_binary: str) -> dict[str, Any]:  # noqa: ANN001,ANN401
-    """Run concolic execution on a binary."""
+def run_concolic_execution(app: object, target_binary: str) -> dict[str, object]:
+    """Run concolic execution on a binary.
+
+    Args:
+        app: Application context object for execution
+        target_binary: Path to the binary file to analyze
+
+    Returns:
+        Dictionary containing execution results with paths explored and test cases
+
+    """
     engine = ConcolicExecutionEngine(target_binary)
     return engine.execute(target_binary)
 

@@ -76,8 +76,9 @@ fn main() {
             };
 
             if !rc_compiled {
-                let empty_macros: &[&str] = &[];
                 use embed_resource::CompilationResult;
+
+                let empty_macros: &[&str] = &[];
 
                 match embed_resource::compile("intellicrack.rc", empty_macros) {
                     CompilationResult::Ok => {
@@ -92,8 +93,7 @@ fn main() {
                     }
                     CompilationResult::NotAttempted(reason) => {
                         println!(
-                            "cargo:warning=Resource compilation not attempted: {}",
-                            reason
+                            "cargo:warning=Resource compilation not attempted: {reason}"
                         );
                         println!(
                             "cargo:warning=Continuing without Windows manifest (non-critical)"
@@ -101,13 +101,11 @@ fn main() {
                     }
                     CompilationResult::Failed(reason) => {
                         eprintln!(
-                            "cargo:warning=CRITICAL: Failed to compile Windows resource file: {}",
-                            reason
+                            "cargo:warning=CRITICAL: Failed to compile Windows resource file: {reason}"
                         );
                         eprintln!("cargo:warning=Windows manifest will be missing from executable");
                         panic!(
-                            "Resource compilation failed: {}. This may cause runtime issues on Windows.",
-                            reason
+                            "Resource compilation failed: {reason}. This may cause runtime issues on Windows."
                         );
                     }
                 }

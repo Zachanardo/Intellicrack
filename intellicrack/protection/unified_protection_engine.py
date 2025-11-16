@@ -19,6 +19,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
+# pylint: disable=cyclic-import
+
+from __future__ import annotations
 
 import asyncio
 import bz2
@@ -29,7 +32,7 @@ import zlib
 from collections import Counter
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -44,10 +47,12 @@ except ImportError:
 
 from ..utils.logger import get_logger
 from .analysis_cache import AnalysisCache, get_analysis_cache
-from .icp_backend import ICPScanResult
 from .intellicrack_protection_advanced import (
     AdvancedProtectionAnalysis,
 )
+
+if TYPE_CHECKING:
+    from .icp_backend import ICPScanResult
 
 logger = get_logger(__name__)
 

@@ -19,6 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import os
 import platform
 import shutil
+from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -43,11 +44,34 @@ from intellicrack.utils.logger import logger
 class MemoryDumperWidget(QWidget):
     """Widget for dumping and analyzing process memory."""
 
-    def __init__(self, parent=None) -> None:
-        """Initialize memory dumper widget with parent widget and process tracking components."""
+    current_process: int | None
+    dump_thread: MemoryDumpThread | None
+    process_combo: QComboBox
+    process_info: QLabel
+    regions_table: QTableWidget
+    readable_check: QCheckBox
+    writable_check: QCheckBox
+    executable_check: QCheckBox
+    private_check: QCheckBox
+    raw_dump_check: QCheckBox
+    minidump_check: QCheckBox
+    full_dump_check: QCheckBox
+    compress_check: QCheckBox
+    metadata_check: QCheckBox
+    strings_check: QCheckBox
+    progress_bar: QProgressBar
+    output_log: QTextEdit
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialize memory dumper widget with parent widget and process tracking components.
+
+        Args:
+            parent: Parent QWidget instance or None. Defaults to None.
+
+        """
         super().__init__(parent)
-        self.current_process = None
-        self.dump_thread = None
+        self.current_process: int | None = None
+        self.dump_thread: MemoryDumpThread | None = None
         self.setup_ui()
 
     def setup_ui(self) -> None:
@@ -67,7 +91,8 @@ class MemoryDumperWidget(QWidget):
 
         self.process_combo = QComboBox()
         self.process_combo.setEditable(True)
-        self.process_combo.setPlaceholderText("Select process or enter PID")
+        self.process_combo.insertItem(0, "Select process or enter PID")
+        self.process_combo.setCurrentIndex(-1)
         process_controls.addWidget(self.process_combo)
 
         refresh_btn = QPushButton("Refresh")
@@ -396,8 +421,16 @@ class MemoryDumperWidget(QWidget):
         except Exception as e:
             self.output_log.append(f"Error scanning regions: {e}")
 
-    def _get_protection_string(self, protect):
-        """Convert Windows protection flags to string."""
+    def _get_protection_string(self, protect: int) -> str:
+        """Convert Windows protection flags to string.
+
+        Args:
+            protect: Windows memory protection flags value.
+
+        Returns:
+            Human-readable protection string representation.
+
+        """
         protections = {
             0x01: "NOACCESS",
             0x02: "READONLY",
@@ -412,8 +445,16 @@ class MemoryDumperWidget(QWidget):
         base_protect = protect & 0xFF
         return protections.get(base_protect, f"0x{protect:X}")
 
-    def _get_region_type(self, mem_type):
-        """Convert Windows memory type to string."""
+    def _get_region_type(self, mem_type: int) -> str:
+        """Convert Windows memory type to string.
+
+        Args:
+            mem_type: Windows memory type flags value.
+
+        Returns:
+            Human-readable memory type string representation.
+
+        """
         types = {
             0x20000: "PRIVATE",
             0x40000: "MAPPED",
@@ -421,12 +462,19 @@ class MemoryDumperWidget(QWidget):
         }
         return types.get(mem_type, f"0x{mem_type:X}")
 
-    def _should_include_region(self, protect) -> bool:
-        """Check if Windows region should be included based on filters."""
-        # Check protection flags
-        readable = protect & 0x66  # Any read permission
-        writable = protect & 0x44  # Any write permission
-        executable = protect & 0xF0  # Any execute permission
+    def _should_include_region(self, protect: int) -> bool:
+        """Check if Windows region should be included based on filters.
+
+        Args:
+            protect: Windows memory protection flags value.
+
+        Returns:
+            True if region matches filter criteria, False otherwise.
+
+        """
+        readable = protect & 0x66
+        writable = protect & 0x44
+        executable = protect & 0xF0
 
         if self.readable_check.isChecked() and not readable:
             return False
@@ -434,8 +482,16 @@ class MemoryDumperWidget(QWidget):
             return False
         return not (self.executable_check.isChecked() and not executable)
 
-    def _should_include_region_linux(self, perms) -> bool:
-        """Check if Linux region should be included based on filters."""
+    def _should_include_region_linux(self, perms: str) -> bool:
+        """Check if Linux region should be included based on filters.
+
+        Args:
+            perms: Linux memory permission string (e.g., "rwxp").
+
+        Returns:
+            True if region matches filter criteria, False otherwise.
+
+        """
         if self.readable_check.isChecked() and "r" not in perms:
             return False
         if self.writable_check.isChecked() and "w" not in perms:
@@ -503,8 +559,13 @@ class MemoryDumperWidget(QWidget):
         self.progress_bar.setVisible(True)
         self.dump_thread.start()
 
-    def get_dump_options(self):
-        """Get current dump options."""
+    def get_dump_options(self) -> dict[str, bool]:
+        """Get current dump options.
+
+        Returns:
+            Dictionary containing dump option states keyed by option name.
+
+        """
         return {
             "raw": self.raw_dump_check.isChecked(),
             "minidump": self.minidump_check.isChecked(),
@@ -514,8 +575,13 @@ class MemoryDumperWidget(QWidget):
             "strings": self.strings_check.isChecked(),
         }
 
-    def update_progress(self, value) -> None:
-        """Update progress bar."""
+    def update_progress(self, value: int) -> None:
+        """Update progress bar.
+
+        Args:
+            value: Progress value between 0 and 100.
+
+        """
         self.progress_bar.setValue(value)
 
     def dump_finished(self) -> None:
@@ -530,8 +596,30 @@ class MemoryDumpThread(QThread):
     progress = pyqtSignal(int)
     log = pyqtSignal(str)
 
-    def __init__(self, pid, rows, table, output_dir, options) -> None:
-        """Initialize memory dump thread with process ID, table data, output directory, and dump options."""
+    pid: int
+    rows: list[int]
+    table: QTableWidget
+    output_dir: str
+    options: dict[str, bool]
+
+    def __init__(
+        self,
+        pid: int,
+        rows: list[int],
+        table: QTableWidget,
+        output_dir: str,
+        options: dict[str, bool],
+    ) -> None:
+        """Initialize memory dump thread with process ID, table data, output directory, and dump options.
+
+        Args:
+            pid: Process ID to dump memory from.
+            rows: List of row indices representing memory regions to dump.
+            table: QTableWidget containing region information.
+            output_dir: Output directory path for dump files.
+            options: Dictionary of dump options and their states.
+
+        """
         super().__init__()
         self.pid = pid
         self.rows = rows
@@ -565,8 +653,14 @@ class MemoryDumpThread(QThread):
             # Update progress
             self.progress.emit(int((i + 1) / total * 100))
 
-    def _dump_windows_region(self, addr, size) -> None:
-        """Dump Windows memory region."""
+    def _dump_windows_region(self, addr: int, size: int) -> None:
+        """Dump Windows memory region.
+
+        Args:
+            addr: Memory address to dump from.
+            size: Number of bytes to dump.
+
+        """
         import ctypes
 
         # Open process
@@ -610,8 +704,14 @@ class MemoryDumpThread(QThread):
         finally:
             kernel32.CloseHandle(h_process)
 
-    def _dump_linux_region(self, addr, size) -> None:
-        """Dump Linux memory region."""
+    def _dump_linux_region(self, addr: int, size: int) -> None:
+        """Dump Linux memory region.
+
+        Args:
+            addr: Memory address to dump from.
+            size: Number of bytes to dump.
+
+        """
         mem_file = f"/proc/{self.pid}/mem"
 
         try:
@@ -633,9 +733,15 @@ class MemoryDumpThread(QThread):
         except Exception as e:
             self.log.emit(f"Failed to read memory at 0x{addr:016X}: {e}")
 
-    def _extract_strings(self, data, base_addr) -> None:
-        """Extract printable strings from memory dump."""
-        strings = []
+    def _extract_strings(self, data: bytes, base_addr: int) -> None:
+        """Extract printable strings from memory dump.
+
+        Args:
+            data: Memory bytes to extract strings from.
+            base_addr: Base memory address of the data.
+
+        """
+        strings: list[tuple[int, str]] = []
         current_string = bytearray()
 
         for i, byte in enumerate(data):

@@ -37,7 +37,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from ..utils.logger import get_logger
 
@@ -84,20 +84,6 @@ except (ImportError, OSError):
     _icp_module = None
 
 logger = get_logger(__name__)
-
-# Import analysis engines for supplemental data
-try:
-    from ..core.analysis.firmware_analyzer import get_firmware_analyzer, is_binwalk_available
-    from ..core.analysis.memory_forensics_engine import (
-        get_memory_forensics_engine,
-        is_volatility3_available,
-    )
-    from ..core.analysis.yara_pattern_engine import get_yara_engine, is_yara_available
-
-    SUPPLEMENTAL_ENGINES_AVAILABLE = True
-except ImportError as e:
-    logger.debug(f"Some supplemental analysis engines not available: {e}")
-    SUPPLEMENTAL_ENGINES_AVAILABLE = False
 
 
 class ScanMode(Enum):
@@ -692,7 +678,7 @@ class ParallelScanner:
         self.active_scans = set()
 
     async def scan_files_parallel(
-        self, file_paths: list[str], scan_mode: ScanMode, progress_callback: callable | None = None,
+        self, file_paths: list[str], scan_mode: ScanMode, progress_callback: Callable | None = None,
     ) -> dict[str, ICPScanResult]:
         """Scan multiple files in parallel with progress tracking."""
         results = {}
@@ -1055,7 +1041,7 @@ class ICPBackend:
         file_paths: list[str],
         scan_mode: ScanMode = ScanMode.NORMAL,
         max_concurrent: int = 4,
-        progress_callback: callable | None = None,
+        progress_callback: Callable | None = None,
     ) -> dict[str, ICPScanResult]:
         """Analyze multiple files concurrently with native parallel scanning.
 
@@ -1939,91 +1925,108 @@ class ICPBackend:
             },
         }
 
-        # Run YARA pattern analysis
-        if is_yara_available():
-            try:
-                yara_engine = get_yara_engine()
-                if yara_engine:
-                    logger.debug("Running YARA pattern analysis")
-                    yara_result = yara_engine.scan_file(file_path, timeout=30)
-                    if not yara_result.error:
-                        yara_supplemental = yara_engine.generate_icp_supplemental_data(yara_result)
-                        if yara_supplemental:
-                            supplemental_data.update(yara_supplemental)
-                            supplemental_data["engines_used"].append("yara")
-                            supplemental_data["analysis_summary"]["yara_available"] = True
-            except Exception as e:
-                logger.debug(f"YARA analysis failed: {e}")
+        # Lazy import and run YARA pattern analysis
+        try:
+            from ..core.analysis.yara_pattern_engine import get_yara_engine, is_yara_available
+            if is_yara_available():
+                try:
+                    yara_engine = get_yara_engine()
+                    if yara_engine:
+                        logger.debug("Running YARA pattern analysis")
+                        yara_result = yara_engine.scan_file(file_path, timeout=30)
+                        if not yara_result.error:
+                            yara_supplemental = yara_engine.generate_icp_supplemental_data(yara_result)
+                            if yara_supplemental:
+                                supplemental_data.update(yara_supplemental)
+                                supplemental_data["engines_used"].append("yara")
+                                supplemental_data["analysis_summary"]["yara_available"] = True
+                except Exception as e:
+                    logger.debug(f"YARA analysis failed: {e}")
+        except (ImportError, Exception) as e:
+            logger.debug(f"YARA engine unavailable: {e}")
 
-        # Run Binwalk firmware analysis
-        if is_binwalk_available():
-            try:
-                firmware_analyzer = get_firmware_analyzer()
-                if firmware_analyzer:
-                    logger.debug("Running Binwalk firmware analysis")
-                    # Run firmware analysis asynchronously
-                    loop = asyncio.get_event_loop()
-                    firmware_result = await loop.run_in_executor(
-                        None,
-                        lambda: firmware_analyzer.analyze_firmware(
-                            file_path,
-                            extract_files=False,  # Skip extraction for performance
-                            analyze_security=True,
-                            extraction_depth=1,
-                        ),
-                    )
-                    if not firmware_result.error:
-                        firmware_supplemental = firmware_analyzer.generate_icp_supplemental_data(firmware_result)
-                        if firmware_supplemental:
-                            supplemental_data.update(firmware_supplemental)
-                            supplemental_data["engines_used"].append("binwalk")
-                            supplemental_data["analysis_summary"]["binwalk_available"] = True
-            except Exception as e:
-                logger.debug(f"Binwalk analysis failed: {e}")
-
-        # Skip Volatility3 analysis for regular files (it's for memory dumps)
-        if is_volatility3_available():
-            try:
-                # Only run Volatility3 if the file looks like a memory dump
-                file_size = os.path.getsize(file_path)
-                filename = os.path.basename(file_path).lower()
-
-                # Heuristics for memory dump detection
-                is_memory_dump = (
-                    file_size > 100 * 1024 * 1024  # > 100MB
-                    or any(keyword in filename for keyword in ["dump", "mem", "vmem", "raw", "dmp"])
-                    or filename.endswith((".vmem", ".raw", ".dmp", ".mem"))
-                )
-
-                if is_memory_dump:
-                    memory_engine = get_memory_forensics_engine()
-                    if memory_engine:
-                        logger.debug("Running Volatility3 memory analysis")
-                        # Run memory analysis asynchronously
+        # Lazy import and run Binwalk firmware analysis
+        try:
+            from ..core.analysis.firmware_analyzer import get_firmware_analyzer, is_binwalk_available
+            if is_binwalk_available():
+                try:
+                    firmware_analyzer = get_firmware_analyzer()
+                    if firmware_analyzer:
+                        logger.debug("Running Binwalk firmware analysis")
+                        # Run firmware analysis asynchronously
                         loop = asyncio.get_event_loop()
-                        memory_result = await loop.run_in_executor(
+                        firmware_result = await loop.run_in_executor(
                             None,
-                            lambda: memory_engine.analyze_memory_dump(
+                            lambda: firmware_analyzer.analyze_firmware(
                                 file_path,
-                                deep_analysis=False,  # Skip deep analysis for performance
+                                extract_files=False,  # Skip extraction for performance
+                                analyze_security=True,
+                                extraction_depth=1,
                             ),
                         )
-                        if not memory_result.error:
-                            memory_supplemental = memory_engine.generate_icp_supplemental_data(memory_result)
-                            if memory_supplemental:
-                                supplemental_data.update(memory_supplemental)
-                                supplemental_data["engines_used"].append("volatility3")
-                                supplemental_data["analysis_summary"]["volatility_available"] = True
-                else:
-                    logger.debug("Skipping Volatility3 analysis - file doesn't appear to be a memory dump")
-                    supplemental_data["analysis_summary"]["volatility_available"] = True
-            except Exception as e:
-                logger.debug(f"Volatility3 analysis failed: {e}")
+                        if not firmware_result.error:
+                            firmware_supplemental = firmware_analyzer.generate_icp_supplemental_data(firmware_result)
+                            if firmware_supplemental:
+                                supplemental_data.update(firmware_supplemental)
+                                supplemental_data["engines_used"].append("binwalk")
+                                supplemental_data["analysis_summary"]["binwalk_available"] = True
+                except Exception as e:
+                    logger.debug(f"Binwalk analysis failed: {e}")
+        except (ImportError, Exception) as e:
+            logger.debug(f"Binwalk engine unavailable: {e}")
+
+        # Lazy import and run Volatility3 analysis for memory dumps
+        try:
+            from ..core.analysis.memory_forensics_engine import (
+                get_memory_forensics_engine,
+                is_volatility3_available,
+            )
+            if is_volatility3_available():
+                try:
+                    # Only run Volatility3 if the file looks like a memory dump
+                    file_size = os.path.getsize(file_path)
+                    filename = os.path.basename(file_path).lower()
+
+                    # Heuristics for memory dump detection
+                    is_memory_dump = (
+                        file_size > 100 * 1024 * 1024  # > 100MB
+                        or any(keyword in filename for keyword in ["dump", "mem", "vmem", "raw", "dmp"])
+                        or filename.endswith((".vmem", ".raw", ".dmp", ".mem"))
+                    )
+
+                    if is_memory_dump:
+                        memory_engine = get_memory_forensics_engine()
+                        if memory_engine:
+                            logger.debug("Running Volatility3 memory analysis")
+                            # Run memory analysis asynchronously
+                            loop = asyncio.get_event_loop()
+                            memory_result = await loop.run_in_executor(
+                                None,
+                                lambda: memory_engine.analyze_memory_dump(
+                                    file_path,
+                                    deep_analysis=False,  # Skip deep analysis for performance
+                                ),
+                            )
+                            if not memory_result.error:
+                                memory_supplemental = memory_engine.generate_icp_supplemental_data(memory_result)
+                                if memory_supplemental:
+                                    supplemental_data.update(memory_supplemental)
+                                    supplemental_data["engines_used"].append("volatility3")
+                                    supplemental_data["analysis_summary"]["volatility_available"] = True
+                    else:
+                        logger.debug("Skipping Volatility3 analysis - file doesn't appear to be a memory dump")
+                        supplemental_data["analysis_summary"]["volatility_available"] = True
+                except Exception as e:
+                    logger.debug(f"Volatility3 analysis failed: {e}")
+        except (ImportError, Exception) as e:
+            logger.debug(f"Volatility3 engine unavailable: {e}")
 
         # Add summary information
         supplemental_data["analysis_summary"]["engines_run"] = len(supplemental_data["engines_used"])
         supplemental_data["analysis_summary"]["total_engines_available"] = (
-            int(is_yara_available()) + int(is_binwalk_available()) + int(is_volatility3_available())
+            int(supplemental_data["analysis_summary"]["yara_available"])
+            + int(supplemental_data["analysis_summary"]["binwalk_available"])
+            + int(supplemental_data["analysis_summary"]["volatility_available"])
         )
 
         logger.info(f"Supplemental analysis complete: {supplemental_data['engines_used']}")

@@ -18,12 +18,17 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from typing import TYPE_CHECKING
+
 from intellicrack.handlers.pyqt6_handler import QMainWindow, QTabWidget, QWidget
 
 from ..utils.logger import get_logger
 from .enhanced_ui_integration import EnhancedAnalysisDashboard
 from .radare2_integration_ui import R2IntegrationWidget
 from .radare2_ui_manager import R2UIManager, integrate_radare2_ui_comprehensive
+
+if TYPE_CHECKING:
+    from typing import Any
 
 logger = get_logger(__name__)
 
@@ -38,9 +43,9 @@ class ComprehensiveR2Integration:
     def __init__(self) -> None:
         """Initialize the ComprehensiveR2Integration with default values."""
         self.logger = logger
-        self.ui_manager = None
-        self.integrated_apps = []
-        self.integration_status = {
+        self.ui_manager: R2UIManager | None = None
+        self.integrated_apps: list[object] = []
+        self.integration_status: dict[str, bool] = {
             "ui_manager": False,
             "main_app": False,
             "menu_integration": False,
@@ -48,7 +53,7 @@ class ComprehensiveR2Integration:
             "error_handling": False,
         }
 
-    def integrate_with_application(self, main_app) -> bool:
+    def integrate_with_application(self, main_app: object) -> bool:
         """Integrate radare2 functionality with application.
 
         Args:
@@ -88,8 +93,16 @@ class ComprehensiveR2Integration:
             self.logger.error(f"Integration failed with exception: {e}")
             return False
 
-    def _detect_integration_method(self, main_app) -> str:
-        """Detect the best integration method based on application type."""
+    def _detect_integration_method(self, main_app: object) -> str:
+        """Detect the best integration method based on application type.
+
+        Args:
+            main_app: The main application instance to analyze
+
+        Returns:
+            str: Integration method name (intellicrack_app, main_window, tab_widget, generic_widget, or fallback)
+
+        """
         try:
             # Check for IntellicrackApp class
             if hasattr(main_app, "__class__") and "IntellicrackApp" in str(type(main_app)):
@@ -114,8 +127,16 @@ class ComprehensiveR2Integration:
             self.logger.error(f"Failed to detect integration method: {e}")
             return "fallback"
 
-    def _integrate_with_intellicrack_app(self, main_app) -> bool:
-        """Integration specific to IntellicrackApp."""
+    def _integrate_with_intellicrack_app(self, main_app: object) -> bool:
+        """Integration specific to IntellicrackApp.
+
+        Args:
+            main_app: The IntellicrackApp instance
+
+        Returns:
+            bool: True if integration successful, False otherwise
+
+        """
         try:
             self.logger.info("Integrating with IntellicrackApp")
 
@@ -142,8 +163,16 @@ class ComprehensiveR2Integration:
             self.logger.error(f"IntellicrackApp integration failed: {e}")
             return False
 
-    def _integrate_with_main_window(self, main_app) -> bool:
-        """Integration with QMainWindow applications."""
+    def _integrate_with_main_window(self, main_app: object) -> bool:
+        """Integration with QMainWindow applications.
+
+        Args:
+            main_app: The QMainWindow application instance
+
+        Returns:
+            bool: True if integration successful, False otherwise
+
+        """
         try:
             self.logger.info("Integrating with QMainWindow")
 
@@ -164,8 +193,16 @@ class ComprehensiveR2Integration:
             self.logger.error(f"QMainWindow integration failed: {e}")
             return False
 
-    def _integrate_with_tab_widget(self, main_app) -> bool:
-        """Integration with applications that have tab widgets."""
+    def _integrate_with_tab_widget(self, main_app: object) -> bool:
+        """Integration with applications that have tab widgets.
+
+        Args:
+            main_app: The application instance with tab_widget attribute
+
+        Returns:
+            bool: True if integration successful, False otherwise
+
+        """
         try:
             self.logger.info("Integrating with tab widget application")
 
@@ -193,8 +230,16 @@ class ComprehensiveR2Integration:
             self.logger.error(f"Tab widget integration failed: {e}")
             return False
 
-    def _integrate_with_generic_widget(self, main_app) -> bool:
-        """Integration with generic QWidget applications."""
+    def _integrate_with_generic_widget(self, main_app: object) -> bool:
+        """Integration with generic QWidget applications.
+
+        Args:
+            main_app: The QWidget application instance
+
+        Returns:
+            bool: True if integration successful, False otherwise
+
+        """
         try:
             self.logger.info("Integrating with generic widget application")
 
@@ -213,8 +258,16 @@ class ComprehensiveR2Integration:
             self.logger.error(f"Generic widget integration failed: {e}")
             return False
 
-    def _integrate_fallback_method(self, main_app) -> bool:
-        """Fallback integration method."""
+    def _integrate_fallback_method(self, main_app: object) -> bool:
+        """Fallback integration method.
+
+        Args:
+            main_app: The application instance to integrate
+
+        Returns:
+            bool: True if integration successful, False otherwise
+
+        """
         try:
             self.logger.info("Using fallback integration method")
 
@@ -236,8 +289,13 @@ class ComprehensiveR2Integration:
             self.logger.error(f"Fallback integration failed: {e}")
             return False
 
-    def _integrate_intellicrack_specific_features(self, main_app) -> None:
-        """Add IntellicrackApp specific integrations."""
+    def _integrate_intellicrack_specific_features(self, main_app: object) -> None:
+        """Add IntellicrackApp specific integrations.
+
+        Args:
+            main_app: The IntellicrackApp instance
+
+        """
         try:
             # Connect to existing signals if they exist
             if hasattr(main_app, "update_output"):
@@ -260,8 +318,13 @@ class ComprehensiveR2Integration:
         except Exception as e:
             self.logger.error(f"IntellicrackApp specific integration failed: {e}")
 
-    def _setup_intellicrack_binary_sync(self, main_app) -> None:
-        """Set up binary path synchronization for IntellicrackApp."""
+    def _setup_intellicrack_binary_sync(self, main_app: object) -> None:
+        """Set up binary path synchronization for IntellicrackApp.
+
+        Args:
+            main_app: The IntellicrackApp instance
+
+        """
         try:
             # Create a method to update binary path
             def update_binary_path() -> None:
@@ -280,8 +343,13 @@ class ComprehensiveR2Integration:
         except Exception as e:
             self.logger.error(f"Binary path sync setup failed: {e}")
 
-    def _setup_intellicrack_signals(self, main_app) -> None:
-        """Set up signal connections for IntellicrackApp."""
+    def _setup_intellicrack_signals(self, main_app: object) -> None:
+        """Set up signal connections for IntellicrackApp.
+
+        Args:
+            main_app: The IntellicrackApp instance
+
+        """
         try:
             # Connect analysis completion to main app
             if hasattr(main_app, "update_analysis_results"):
@@ -299,8 +367,13 @@ class ComprehensiveR2Integration:
         except Exception as e:
             self.logger.error(f"Signal setup failed: {e}")
 
-    def _setup_main_window_features(self, main_app) -> None:
-        """Set up features specific to QMainWindow."""
+    def _setup_main_window_features(self, main_app: object) -> None:
+        """Set up features specific to QMainWindow.
+
+        Args:
+            main_app: The QMainWindow application instance
+
+        """
         try:
             # Add toolbar items if toolbar exists
             if hasattr(main_app, "addToolBar"):
@@ -315,8 +388,13 @@ class ComprehensiveR2Integration:
         except Exception as e:
             self.logger.error(f"Main window features setup failed: {e}")
 
-    def _add_radare2_menu_items(self, main_app) -> None:
-        """Add radare2 menu items to application."""
+    def _add_radare2_menu_items(self, main_app: object) -> None:
+        """Add radare2 menu items to application.
+
+        Args:
+            main_app: The application instance with menuBar method
+
+        """
         try:
             from .menu_utils import find_or_create_menu
 
@@ -360,8 +438,13 @@ class ComprehensiveR2Integration:
         except Exception as e:
             self.logger.error(f"Failed to add menu items: {e}")
 
-    def _add_radare2_toolbar(self, main_app) -> None:
-        """Add radare2 toolbar to main window."""
+    def _add_radare2_toolbar(self, main_app: object) -> None:
+        """Add radare2 toolbar to main window.
+
+        Args:
+            main_app: The QMainWindow application instance
+
+        """
         try:
             toolbar = main_app.addToolBar("Radare2")
 
@@ -389,8 +472,13 @@ class ComprehensiveR2Integration:
         except Exception as e:
             self.logger.error(f"Failed to add toolbar: {e}")
 
-    def _integrate_status_bar(self, main_app) -> None:
-        """Integrate with application status bar."""
+    def _integrate_status_bar(self, main_app: object) -> None:
+        """Integrate with application status bar.
+
+        Args:
+            main_app: The application instance with statusBar method
+
+        """
         try:
             if hasattr(main_app, "statusBar"):
                 status_bar = main_app.statusBar()
@@ -405,13 +493,18 @@ class ComprehensiveR2Integration:
         except Exception as e:
             self.logger.error(f"Status bar integration failed: {e}")
 
-    def _add_fallback_functionality(self, main_app) -> None:
-        """Add basic functionality for fallback integration."""
+    def _add_fallback_functionality(self, main_app: object) -> None:
+        """Add basic functionality for fallback integration.
+
+        Args:
+            main_app: The application instance to enhance with fallback functionality
+
+        """
         try:
             # Try to add at least a way to start analysis
             if hasattr(main_app, "__dict__"):
                 # Add start_radare2_analysis method
-                def start_r2_analysis(analysis_type="comprehensive"):
+                def start_r2_analysis(analysis_type: str = "comprehensive") -> bool:
                     if self.ui_manager:
                         return self.ui_manager.start_analysis(analysis_type)
                     return False
@@ -431,15 +524,29 @@ class ComprehensiveR2Integration:
             self.logger.error(f"Failed to add fallback functionality: {e}")
 
     def get_integration_status(self) -> dict[str, bool]:
-        """Get current integration status."""
+        """Get current integration status.
+
+        Returns:
+            dict[str, bool]: Copy of the integration status dictionary
+
+        """
         return self.integration_status.copy()
 
     def get_ui_manager(self) -> R2UIManager | None:
-        """Get the UI manager instance."""
+        """Get the UI manager instance.
+
+        Returns:
+            R2UIManager | None: The UI manager instance if available, None otherwise
+
+        """
         return self.ui_manager
 
     def cleanup(self) -> None:
-        """Cleanup all integrations."""
+        """Cleanup all integrations.
+
+        Performs cleanup of all integrated applications and resets internal state.
+
+        """
         try:
             if self.ui_manager:
                 self.ui_manager.cleanup()
@@ -453,19 +560,24 @@ class ComprehensiveR2Integration:
             self.logger.error(f"Cleanup failed: {e}")
 
 
-# Global integration instance
-_GLOBAL_INTEGRATION = None
+# Global integration instance managed by this module
+_GLOBAL_INTEGRATION: ComprehensiveR2Integration | None = None
 
 
 def get_comprehensive_integration() -> ComprehensiveR2Integration:
-    """Get or create global comprehensive integration instance."""
+    """Get or create global comprehensive integration instance.
+
+    Returns:
+        ComprehensiveR2Integration: The singleton integration instance
+
+    """
     global _GLOBAL_INTEGRATION
     if _GLOBAL_INTEGRATION is None:
         _GLOBAL_INTEGRATION = ComprehensiveR2Integration()
     return _GLOBAL_INTEGRATION
 
 
-def integrate_radare2_comprehensive(main_app) -> bool:
+def integrate_radare2_comprehensive(main_app: object) -> bool:
     """Integrate radare2 comprehensively into application.
 
     This function provides the simplest way to integrate all radare2
@@ -487,13 +599,22 @@ def integrate_radare2_comprehensive(main_app) -> bool:
 
 
 def get_integration_status() -> dict[str, bool]:
-    """Get current integration status."""
+    """Get current integration status.
+
+    Returns:
+        dict[str, bool]: Integration status for each component
+
+    """
     integration = get_comprehensive_integration()
     return integration.get_integration_status()
 
 
 def cleanup_integration() -> None:
-    """Cleanup all radare2 integrations."""
+    """Cleanup all radare2 integrations.
+
+    Performs cleanup of the global integration instance and resets it to None.
+
+    """
     global _GLOBAL_INTEGRATION
     if _GLOBAL_INTEGRATION:
         _GLOBAL_INTEGRATION.cleanup()

@@ -24,6 +24,7 @@ concurrent terminal sessions.
 
 import logging
 import uuid
+from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QHBoxLayout,
@@ -49,16 +50,21 @@ class TerminalSessionWidget(QWidget):
     - Active session tracking
     """
 
-    session_created = pyqtSignal(str)
-    session_closed = pyqtSignal(str)
-    active_session_changed = pyqtSignal(str)
+    session_created: pyqtSignal = pyqtSignal(str)
+    session_closed: pyqtSignal = pyqtSignal(str)
+    active_session_changed: pyqtSignal = pyqtSignal(str)
 
-    def __init__(self, parent=None) -> None:
-        """Initialize terminal session widget."""
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialize terminal session widget.
+
+        Args:
+            parent: Optional parent widget.
+
+        """
         super().__init__(parent)
 
-        self._sessions = {}
-        self._active_session_id = None
+        self._sessions: dict[str, Any] = {}
+        self._active_session_id: str | None = None
 
         self._setup_ui()
 
@@ -101,14 +107,14 @@ class TerminalSessionWidget(QWidget):
 
         self.create_new_session()
 
-    def create_new_session(self, name=None):
+    def create_new_session(self, name: str | None = None) -> str:
         """Create new terminal session.
 
         Args:
             name: Optional session name. If not provided, auto-generates one.
 
         Returns:
-            Session ID (string)
+            Session ID as a UUID string.
 
         """
         session_id = str(uuid.uuid4())
@@ -137,11 +143,11 @@ class TerminalSessionWidget(QWidget):
 
         return session_id
 
-    def close_session(self, session_id) -> None:
+    def close_session(self, session_id: str) -> None:
         """Close specified session.
 
         Args:
-            session_id: ID of session to close
+            session_id: ID of session to close.
 
         """
         if session_id not in self._sessions:
@@ -176,8 +182,13 @@ class TerminalSessionWidget(QWidget):
         if self._active_session_id:
             self.close_session(self._active_session_id)
 
-    def _close_tab_at_index(self, index) -> None:
-        """Close tab at specified index."""
+    def _close_tab_at_index(self, index: int) -> None:
+        """Close tab at specified index.
+
+        Args:
+            index: Tab index to close.
+
+        """
         widget = self.tab_widget.widget(index)
 
         for session_id, session_data in self._sessions.items():
@@ -185,8 +196,13 @@ class TerminalSessionWidget(QWidget):
                 self.close_session(session_id)
                 break
 
-    def _on_tab_changed(self, index) -> None:
-        """Handle tab change event."""
+    def _on_tab_changed(self, index: int) -> None:
+        """Handle tab change event.
+
+        Args:
+            index: Index of the newly selected tab.
+
+        """
         if index < 0:
             self._active_session_id = None
             return
@@ -200,11 +216,11 @@ class TerminalSessionWidget(QWidget):
                 widget.terminal_display.setFocus()
                 break
 
-    def get_active_session(self):
+    def get_active_session(self) -> tuple[str | None, EmbeddedTerminalWidget | None]:
         """Get currently active terminal session.
 
         Returns:
-            Tuple of (session_id, EmbeddedTerminalWidget) or (None, None)
+            Tuple of (session_id, EmbeddedTerminalWidget) or (None, None).
 
         """
         if self._active_session_id and self._active_session_id in self._sessions:
@@ -213,14 +229,14 @@ class TerminalSessionWidget(QWidget):
 
         return (None, None)
 
-    def get_session(self, session_id):
+    def get_session(self, session_id: str) -> EmbeddedTerminalWidget | None:
         """Get specific session by ID.
 
         Args:
-            session_id: ID of session to retrieve
+            session_id: ID of session to retrieve.
 
         Returns:
-            EmbeddedTerminalWidget or None
+            EmbeddedTerminalWidget instance or None if not found.
 
         """
         if session_id in self._sessions:
@@ -228,11 +244,11 @@ class TerminalSessionWidget(QWidget):
 
         return None
 
-    def switch_to_session(self, session_id) -> None:
+    def switch_to_session(self, session_id: str) -> None:
         """Switch to specified session tab.
 
         Args:
-            session_id: ID of session to switch to
+            session_id: ID of session to switch to.
 
         """
         if session_id not in self._sessions:
@@ -248,12 +264,12 @@ class TerminalSessionWidget(QWidget):
                 widget.terminal_display.setFocus()
                 break
 
-    def rename_session(self, session_id, new_name) -> None:
+    def rename_session(self, session_id: str, new_name: str) -> None:
         """Rename a session.
 
         Args:
-            session_id: ID of session to rename
-            new_name: New name for the session
+            session_id: ID of session to rename.
+            new_name: New name for the session.
 
         """
         if session_id not in self._sessions:
@@ -272,17 +288,23 @@ class TerminalSessionWidget(QWidget):
 
         logger.info(f"Renamed session {session_id} to: {new_name}")
 
-    def get_all_sessions(self):
+    def get_all_sessions(self) -> dict[str, Any]:
         """Get all active sessions.
 
         Returns:
-            Dictionary of {session_id: session_data}
+            Dictionary of session_id to session data mapping.
 
         """
         return self._sessions.copy()
 
-    def _on_process_started(self, session_id, pid) -> None:
-        """Handle process started in session."""
+    def _on_process_started(self, session_id: str, pid: int) -> None:
+        """Handle process started in session.
+
+        Args:
+            session_id: ID of session where process started.
+            pid: Process ID of the started process.
+
+        """
         if session_id in self._sessions:
             session = self._sessions[session_id]
             name = session["name"]
@@ -293,8 +315,15 @@ class TerminalSessionWidget(QWidget):
                     self.tab_widget.setTabText(i, f"{name} [PID:{pid}]")
                     break
 
-    def _on_process_finished(self, session_id, pid, exit_code) -> None:
-        """Handle process finished in session."""
+    def _on_process_finished(self, session_id: str, pid: int, exit_code: int) -> None:
+        """Handle process finished in session.
+
+        Args:
+            session_id: ID of session where process finished.
+            pid: Process ID of the finished process.
+            exit_code: Exit code returned by the process.
+
+        """
         if session_id in self._sessions:
             session = self._sessions[session_id]
             name = session["name"]

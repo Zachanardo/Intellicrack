@@ -24,7 +24,7 @@ import ssl
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import Any, Dict, Generator, Optional, Union
+from typing import Dict, Generator, Optional, Union
 
 from intellicrack.utils.logger import logger
 
@@ -95,42 +95,32 @@ except ImportError as e:
     class RequestError(Exception):
         """Base exception for requests."""
 
-
     class ConnectionError(RequestError):
         """Connection error."""
-
 
     class HTTPError(RequestError):
         """HTTP error."""
 
-
     class TimeoutError(RequestError):
         """Timeout error."""
-
 
     class TooManyRedirectsError(RequestError):
         """Too many redirects."""
 
-
     class InvalidURLError(RequestError):
         """Invalid URL."""
-
 
     class ConnectTimeoutError(TimeoutError):
         """Connection timeout."""
 
-
     class ReadTimeoutError(TimeoutError):
         """Read timeout."""
-
 
     class SSLError(ConnectionError):
         """SSL error."""
 
-
     class ProxyError(ConnectionError):
         """Proxy error."""
-
 
     # Response class
     class Response:
@@ -151,11 +141,11 @@ except ImportError as e:
             self.raw = None
             self.history = []
 
-        def json(self) -> Any:
+        def json(self) -> object:
             """Parse JSON response.
 
             Returns:
-                Any: Parsed JSON object from response content.
+                object: Parsed JSON object from response content.
 
             Raises:
                 json.JSONDecodeError: If response content is not valid JSON.
@@ -220,7 +210,7 @@ except ImportError as e:
         for HTTP headers which are case-insensitive.
         """
 
-        def __init__(self, data: Optional[Dict[Any, Any]] = None) -> None:
+        def __init__(self, data: Optional[Dict[object, object]] = None) -> None:
             """Initialize case-insensitive dictionary.
 
             Args:
@@ -232,7 +222,7 @@ except ImportError as e:
                 for key, value in data.items():
                     self[key] = value
 
-        def __setitem__(self, key: Any, value: Any) -> None:
+        def __setitem__(self, key: object, value: object) -> None:
             """Set item with case-insensitive key.
 
             Args:
@@ -242,14 +232,14 @@ except ImportError as e:
             """
             super().__setitem__(key.lower() if isinstance(key, str) else key, value)
 
-        def __getitem__(self, key: Any) -> Any:
+        def __getitem__(self, key: object) -> object:
             """Get item with case-insensitive key.
 
             Args:
                 key: Dictionary key (lowercased if string).
 
             Returns:
-                Any: Value associated with the key.
+                object: Value associated with the key.
 
             Raises:
                 KeyError: If key not found in dictionary.
@@ -257,7 +247,7 @@ except ImportError as e:
             """
             return super().__getitem__(key.lower() if isinstance(key, str) else key)
 
-        def get(self, key: Any, default: Any = None) -> Any:
+        def get(self, key: object, default: object = None) -> object:
             """Get value with case-insensitive key.
 
             Args:
@@ -265,7 +255,7 @@ except ImportError as e:
                 default: Default value if key not found.
 
             Returns:
-                Any: Value associated with key, or default if not found.
+                object: Value associated with key, or default if not found.
 
             """
             try:
@@ -292,7 +282,7 @@ except ImportError as e:
             """
             self[name] = value
 
-        def get(self, name: str, default: Any = None) -> Any:
+        def get(self, name: str, default: object = None) -> object:
             """Get cookie from jar.
 
             Args:
@@ -300,7 +290,7 @@ except ImportError as e:
                 default: Default value if cookie not found.
 
             Returns:
-                Any: Cookie value or default if not found.
+                object: Cookie value or default if not found.
 
             """
             return super().get(name, default)
@@ -319,20 +309,20 @@ except ImportError as e:
             self.url = ""
             self.headers = CaseInsensitiveDict()
             self.body: Optional[bytes] = None
-            self.hooks: Dict[str, Any] = {}
+            self.hooks: Dict[str, object] = {}
 
         def prepare(
             self,
             method: Optional[str] = None,
             url: Optional[str] = None,
-            headers: Optional[Dict[str, Any]] = None,
-            files: Optional[Any] = None,
-            data: Optional[Union[Dict[str, Any], bytes, str]] = None,
-            params: Optional[Dict[str, Any]] = None,
-            auth: Optional[Any] = None,
-            cookies: Optional[Dict[str, Any]] = None,
-            hooks: Optional[Dict[str, Any]] = None,
-            json: Optional[Any] = None,
+            headers: Optional[Dict[str, object]] = None,
+            files: Optional[object] = None,
+            data: Optional[Union[Dict[str, object], bytes, str]] = None,
+            params: Optional[Dict[str, object]] = None,
+            auth: Optional[object] = None,
+            cookies: Optional[Dict[str, object]] = None,
+            hooks: Optional[Dict[str, object]] = None,
+            json: Optional[object] = None,
         ) -> None:
             """Prepare the HTTP request.
 
@@ -384,15 +374,15 @@ except ImportError as e:
             """Initialize HTTP session."""
             self.headers: CaseInsensitiveDict = CaseInsensitiveDict()
             self.cookies: RequestsCookieJar = RequestsCookieJar()
-            self.auth: Optional[Any] = None
+            self.auth: Optional[object] = None
             self.proxies: Dict[str, str] = {}
             self.verify: Union[bool, str] = True
             self.cert: Optional[str] = None
             self.max_redirects: int = 30
             self.trust_env: bool = True
-            self.adapters: Dict[str, Any] = {}
+            self.adapters: Dict[str, object] = {}
 
-        def request(self, method: str, url: str, **kwargs: Any) -> Response:
+        def request(self, method: str, url: str, **kwargs: object) -> Response:
             """Send HTTP request.
 
             Args:
@@ -406,7 +396,7 @@ except ImportError as e:
             """
             return request(method, url, session=self, **kwargs)
 
-        def get(self, url: str, **kwargs: Any) -> Response:
+        def get(self, url: str, **kwargs: object) -> Response:
             """Send GET request.
 
             Args:
@@ -419,7 +409,7 @@ except ImportError as e:
             """
             return self.request("GET", url, **kwargs)
 
-        def post(self, url: str, data: Optional[Any] = None, json: Optional[Any] = None, **kwargs: Any) -> Response:
+        def post(self, url: str, data: Optional[object] = None, json: Optional[object] = None, **kwargs: object) -> Response:
             """Send POST request.
 
             Args:
@@ -434,7 +424,7 @@ except ImportError as e:
             """
             return self.request("POST", url, data=data, json=json, **kwargs)
 
-        def put(self, url: str, data: Optional[Any] = None, **kwargs: Any) -> Response:
+        def put(self, url: str, data: Optional[object] = None, **kwargs: object) -> Response:
             """Send PUT request.
 
             Args:
@@ -448,7 +438,7 @@ except ImportError as e:
             """
             return self.request("PUT", url, data=data, **kwargs)
 
-        def patch(self, url: str, data: Optional[Any] = None, **kwargs: Any) -> Response:
+        def patch(self, url: str, data: Optional[object] = None, **kwargs: object) -> Response:
             """Send PATCH request.
 
             Args:
@@ -462,7 +452,7 @@ except ImportError as e:
             """
             return self.request("PATCH", url, data=data, **kwargs)
 
-        def delete(self, url: str, **kwargs: Any) -> Response:
+        def delete(self, url: str, **kwargs: object) -> Response:
             """Send DELETE request.
 
             Args:
@@ -475,7 +465,7 @@ except ImportError as e:
             """
             return self.request("DELETE", url, **kwargs)
 
-        def head(self, url: str, **kwargs: Any) -> Response:
+        def head(self, url: str, **kwargs: object) -> Response:
             """Send HEAD request.
 
             Args:
@@ -488,7 +478,7 @@ except ImportError as e:
             """
             return self.request("HEAD", url, **kwargs)
 
-        def options(self, url: str, **kwargs: Any) -> Response:
+        def options(self, url: str, **kwargs: object) -> Response:
             """Send OPTIONS request.
 
             Args:
@@ -599,7 +589,7 @@ except ImportError as e:
             self.backoff_factor = backoff_factor
 
     # Main request function
-    def request(method: str, url: str, **kwargs: Any) -> Response:
+    def request(method: str, url: str, **kwargs: object) -> Response:
         """Send HTTP request using urllib.
 
         Args:
@@ -755,7 +745,7 @@ except ImportError as e:
             raise RequestError(error_msg) from e
 
     # Convenience functions
-    def get(url: str, **kwargs: Any) -> Response:
+    def get(url: str, **kwargs: object) -> Response:
         """Send GET request.
 
         Args:
@@ -768,7 +758,7 @@ except ImportError as e:
         """
         return request("GET", url, **kwargs)
 
-    def post(url: str, data: Optional[Any] = None, json: Optional[Any] = None, **kwargs: Any) -> Response:
+    def post(url: str, data: Optional[object] = None, json: Optional[object] = None, **kwargs: object) -> Response:
         """Send POST request.
 
         Args:
@@ -783,7 +773,7 @@ except ImportError as e:
         """
         return request("POST", url, data=data, json=json, **kwargs)
 
-    def put(url: str, data: Optional[Any] = None, **kwargs: Any) -> Response:
+    def put(url: str, data: Optional[object] = None, **kwargs: object) -> Response:
         """Send PUT request.
 
         Args:
@@ -797,7 +787,7 @@ except ImportError as e:
         """
         return request("PUT", url, data=data, **kwargs)
 
-    def patch(url: str, data: Optional[Any] = None, **kwargs: Any) -> Response:
+    def patch(url: str, data: Optional[object] = None, **kwargs: object) -> Response:
         """Send PATCH request.
 
         Args:
@@ -811,7 +801,7 @@ except ImportError as e:
         """
         return request("PATCH", url, data=data, **kwargs)
 
-    def delete(url: str, **kwargs: Any) -> Response:
+    def delete(url: str, **kwargs: object) -> Response:
         """Send DELETE request.
 
         Args:
@@ -824,7 +814,7 @@ except ImportError as e:
         """
         return request("DELETE", url, **kwargs)
 
-    def head(url: str, **kwargs: Any) -> Response:
+    def head(url: str, **kwargs: object) -> Response:
         """Send HEAD request.
 
         Args:
@@ -837,7 +827,7 @@ except ImportError as e:
         """
         return request("HEAD", url, **kwargs)
 
-    def options(url: str, **kwargs: Any) -> Response:
+    def options(url: str, **kwargs: object) -> Response:
         """Send OPTIONS request.
 
         Args:

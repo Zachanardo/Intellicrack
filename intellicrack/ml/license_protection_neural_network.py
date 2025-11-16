@@ -37,12 +37,12 @@ try:
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
-    torch = None
-    nn = None
-    F = None
-    optim = None
-    DataLoader = None
-    Dataset = None
+    torch = None  # type: ignore[assignment]
+    nn = None  # type: ignore[assignment]
+    F = None  # type: ignore[assignment]
+    optim = None  # type: ignore[assignment]
+    DataLoader = None  # type: ignore[assignment]
+    Dataset = None  # type: ignore[assignment]
 
 try:
     import tensorflow as tf
@@ -208,8 +208,16 @@ class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):
         torch.save(self.state_dict(), path)
         logging.getLogger(__name__).info(f"Saved model weights to {path}")
 
-    def forward(self, x):
-        """Forward pass with attention and residual connections."""
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass with attention and residual connections.
+
+        Args:
+            x: Input tensor of shape (batch_size, 4096).
+
+        Returns:
+            Output logits tensor of shape (batch_size, num_classes).
+
+        """
         # Reshape input
         batch_size = x.size(0)
         x = x.view(batch_size, 1, 64, 64)
@@ -266,14 +274,22 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):
 
         # Transformer encoder layers
         encoder_layer = nn.TransformerEncoderLayer(
-            d_model=self.model_dim, nhead=num_heads, dim_feedforward=2048, dropout=0.1, activation="gelu", batch_first=True,
+            d_model=self.model_dim,
+            nhead=num_heads,
+            dim_feedforward=2048,
+            dropout=0.1,
+            activation="gelu",
+            batch_first=True,
         )
         self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
 
         # Output layers for classification
         self.global_pool = nn.AdaptiveAvgPool1d(1)
         self.classifier = nn.Sequential(
-            nn.Linear(self.model_dim, 256), nn.ReLU(), nn.Dropout(0.3), nn.Linear(256, len(LicenseProtectionType)),
+            nn.Linear(self.model_dim, 256),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(256, len(LicenseProtectionType)),
         )
 
         # Initialize weights properly
@@ -330,8 +346,16 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):
 
         return pe.unsqueeze(0)
 
-    def forward(self, x):
-        """Forward pass through transformer."""
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass through transformer.
+
+        Args:
+            x: Input tensor of shape (batch_size, seq_len, input_dim).
+
+        Returns:
+            Output logits tensor of shape (batch_size, num_classes).
+
+        """
         _batch_size, seq_len, _ = x.size()
 
         # Project input and add positional encoding
@@ -446,13 +470,33 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
         torch.save(self.state_dict(), path)
         logging.getLogger(__name__).info(f"Saved Hybrid model weights to {path}")
 
-    def _create_gnn_branch(self):
-        """Create Graph Neural Network branch for CFG analysis."""
+    def _create_gnn_branch(self) -> nn.Sequential:
+        """Create Graph Neural Network branch for CFG analysis.
+
+        Returns:
+            Sequential model for control flow graph analysis.
+
+        """
         # Simplified GNN using standard layers
         return nn.Sequential(nn.Linear(512, 256), nn.ReLU(), nn.BatchNorm1d(256), nn.Linear(256, 256), nn.ReLU())
 
-    def forward(self, binary_features, sequence_features, graph_features):
-        """Multi-modal forward pass."""
+    def forward(
+        self,
+        binary_features: torch.Tensor,
+        sequence_features: torch.Tensor,
+        graph_features: torch.Tensor,
+    ) -> dict[str, torch.Tensor]:
+        """Multi-modal forward pass.
+
+        Args:
+            binary_features: CNN input tensor of shape (batch_size, 4096).
+            sequence_features: Transformer input tensor of shape (batch_size, seq_len, input_dim).
+            graph_features: GNN input tensor of shape (batch_size, 512).
+
+        Returns:
+            Dictionary containing model outputs with keys: protection_type, version, complexity, bypass_difficulty.
+
+        """
         # Process through each branch
         cnn_out = self.cnn_branch(binary_features)
         transformer_out = self.transformer_branch(sequence_features)
@@ -474,16 +518,23 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
 class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
     """Dataset for license protection training data."""
 
-    def __init__(self, data_path: str, transform=None, cache_features: bool = True) -> None:
-        """Initialize dataset with protection samples."""
+    def __init__(self, data_path: str, transform: None | object = None, cache_features: bool = True) -> None:
+        """Initialize dataset with protection samples.
+
+        Args:
+            data_path: Path to dataset directory containing binary samples.
+            transform: Optional transformation to apply to features.
+            cache_features: Whether to cache extracted features in memory.
+
+        """
         self.data_path = Path(data_path)
         self.transform = transform
         self.cache_features = cache_features
-        self.samples = []
-        self.labels = []
-        self.feature_cache = {}
-        self.label_to_idx = {}
-        self.idx_to_label = {}
+        self.samples: list[Path] = []
+        self.labels: list[str] = []
+        self.feature_cache: dict[str, LicenseFeatures] = {}
+        self.label_to_idx: dict[str, int] = {}
+        self.idx_to_label: dict[int, str] = {}
 
         self._load_data()
         self._build_label_mapping()
@@ -540,8 +591,16 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
         """Return dataset size."""
         return len(self.samples)
 
-    def __getitem__(self, idx):
-        """Get sample and label with caching support."""
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor] | tuple[np.ndarray, int]:
+        """Get sample and label with caching support.
+
+        Args:
+            idx: Index of the sample to retrieve.
+
+        Returns:
+            Tuple of (features, label) as tensors if PyTorch available, else numpy array and int.
+
+        """
         sample_path = self.samples[idx]
         label_str = self.labels[idx]
 
@@ -980,8 +1039,23 @@ class ProtectionLoss(nn.Module if TORCH_AVAILABLE else object):
         # Contrastive loss weight
         self.contrastive_weight = 0.1
 
-    def forward(self, outputs, targets, features=None):
-        """Compute combined loss."""
+    def forward(
+        self,
+        outputs: dict[str, torch.Tensor] | torch.Tensor,
+        targets: torch.Tensor,
+        features: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Compute combined loss.
+
+        Args:
+            outputs: Model outputs, either a dict for multi-task learning or tensor for single-task.
+            targets: Ground truth labels.
+            features: Optional feature representations for center loss computation.
+
+        Returns:
+            Computed loss value.
+
+        """
         if isinstance(outputs, dict):
             # Multi-task learning
             total_loss = 0.0
@@ -1015,15 +1089,33 @@ class ProtectionLoss(nn.Module if TORCH_AVAILABLE else object):
         # Single task - use focal loss
         return self.focal_loss(outputs, targets)
 
-    def focal_loss(self, logits, targets):
-        """Compute focal loss for addressing class imbalance."""
+    def focal_loss(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        """Compute focal loss for addressing class imbalance.
+
+        Args:
+            logits: Model output logits.
+            targets: Ground truth labels.
+
+        Returns:
+            Computed focal loss value.
+
+        """
         ce_loss = functional.cross_entropy(logits, targets, reduction="none")
         pt = torch.exp(-ce_loss)
         focal_loss = self.focal_alpha * (1 - pt) ** self.focal_gamma * ce_loss
         return focal_loss.mean()
 
-    def compute_center_loss(self, features, targets):
-        """Compute center loss for feature clustering."""
+    def compute_center_loss(self, features: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        """Compute center loss for feature clustering.
+
+        Args:
+            features: Feature representations.
+            targets: Ground truth labels.
+
+        Returns:
+            Computed center loss value.
+
+        """
         batch_size = features.size(0)
         features = features.view(batch_size, -1)
 
@@ -1040,9 +1132,19 @@ class LicenseProtectionTrainer:
     """Trainer for license protection neural networks."""
 
     def __init__(
-        self, model, device=None, class_weights: torch.Tensor | None = None,
+        self,
+        model: nn.Module | object,
+        device: str | None = None,
+        class_weights: torch.Tensor | None = None,
     ) -> None:
-        """Initialize trainer with model and training configuration."""
+        """Initialize trainer with model and training configuration.
+
+        Args:
+            model: Neural network model to train.
+            device: Device to run training on (cpu/cuda).
+            class_weights: Optional weights for imbalanced classes.
+
+        """
         # Set default device if not provided
         if device is None:
             device = "cuda" if torch and torch.cuda.is_available() else "cpu"
@@ -1077,10 +1179,18 @@ class LicenseProtectionTrainer:
             self.criterion = ProtectionLoss(num_classes=len(LicenseProtectionType), class_weights=class_weights)
 
         # Training history
-        self.history = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": []}
+        self.history: dict[str, list[float]] = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": []}
 
-    def train_epoch(self, dataloader):
-        """Train for one epoch."""
+    def train_epoch(self, dataloader: DataLoader) -> tuple[float, float]:
+        """Train for one epoch.
+
+        Args:
+            dataloader: DataLoader providing training batches.
+
+        Returns:
+            Tuple of (average_loss, accuracy_percentage).
+
+        """
         if not TORCH_AVAILABLE:
             return 0.0, 0.0
 
@@ -1125,8 +1235,16 @@ class LicenseProtectionTrainer:
 
         return avg_loss, accuracy
 
-    def validate(self, dataloader):
-        """Validate model performance."""
+    def validate(self, dataloader: DataLoader) -> tuple[float, float]:
+        """Validate model performance.
+
+        Args:
+            dataloader: DataLoader providing validation batches.
+
+        Returns:
+            Tuple of (average_loss, accuracy_percentage).
+
+        """
         if not TORCH_AVAILABLE:
             return 0.0, 0.0
 
@@ -1157,8 +1275,14 @@ class LicenseProtectionTrainer:
 
         return avg_loss, accuracy
 
-    def train(self, train_loader, val_loader=None) -> None:
-        """Full training loop."""
+    def train(self, train_loader: DataLoader, val_loader: DataLoader | None = None) -> None:
+        """Full training loop.
+
+        Args:
+            train_loader: DataLoader providing training batches.
+            val_loader: Optional DataLoader providing validation batches.
+
+        """
         if not TORCH_AVAILABLE:
             self.logger.warning("PyTorch not available for training")
             return
@@ -1194,8 +1318,13 @@ class LicenseProtectionTrainer:
             # Learning rate scheduling
             self.scheduler.step()
 
-    def save_checkpoint(self, filepath) -> None:
-        """Save model checkpoint with enhanced metadata."""
+    def save_checkpoint(self, filepath: str) -> None:
+        """Save model checkpoint with enhanced metadata.
+
+        Args:
+            filepath: Path where checkpoint will be saved.
+
+        """
         if not TORCH_AVAILABLE:
             return
 
@@ -1228,8 +1357,16 @@ class LicenseProtectionTrainer:
         if hasattr(self.model, "save_weights"):
             self.model.save_weights()
 
-    def load_checkpoint(self, filepath) -> bool | None:
-        """Load model checkpoint with validation."""
+    def load_checkpoint(self, filepath: str) -> bool | None:
+        """Load model checkpoint with validation.
+
+        Args:
+            filepath: Path to checkpoint file to load.
+
+        Returns:
+            True if successful, False if failed, None if PyTorch unavailable.
+
+        """
         if not TORCH_AVAILABLE:
             return None
 
@@ -1292,8 +1429,13 @@ class LicenseProtectionPredictor:
             self.model = None
             self.logger.warning("PyTorch not available for predictions")
 
-    def load_model(self, model_path) -> None:
-        """Load pre-trained model."""
+    def load_model(self, model_path: str) -> None:
+        """Load pre-trained model.
+
+        Args:
+            model_path: Path to the pre-trained model checkpoint.
+
+        """
         if not TORCH_AVAILABLE:
             return
 
@@ -1494,12 +1636,19 @@ def create_dataloaders(
 
     # Split dataset
     train_dataset, val_dataset, test_dataset = random_split(
-        dataset, [train_size, val_size, test_size], generator=torch.Generator().manual_seed(42),
+        dataset,
+        [train_size, val_size, test_size],
+        generator=torch.Generator().manual_seed(42),
     )
 
     # Create dataloaders
     train_loader = DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, pin_memory=pin_memory, drop_last=True,
+        train_dataset,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        num_workers=num_workers,
+        pin_memory=pin_memory,
+        drop_last=True,
     )
 
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=pin_memory)

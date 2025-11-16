@@ -920,7 +920,7 @@ class FallbackKerasLayers:
 
             output_data: list[float] = []
             for val in inputs.data:
-                if random.random() > self.rate:
+                if random.random() > self.rate:  # noqa: S311
                     output_data.append(val / (1 - self.rate))
                 else:
                     output_data.append(0)
@@ -1309,7 +1309,7 @@ def random_uniform(shape: tuple[int, ...], minval: float = 0, maxval: float = 1,
     size: int = 1
     for dim in shape:
         size *= dim
-    data: list[float] = [random.uniform(minval, maxval) for _ in range(size)]
+    data: list[float] = [random.uniform(minval, maxval) for _ in range(size)]  # noqa: S311
     return FallbackTensor(data, shape=shape, dtype=dtype)
 
 

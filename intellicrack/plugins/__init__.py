@@ -22,6 +22,7 @@ import importlib
 import logging
 import os
 from pathlib import Path
+from typing import Any
 
 from .plugin_config import PLUGIN_SYSTEM_EXPORTS
 
@@ -29,17 +30,27 @@ from .plugin_config import PLUGIN_SYSTEM_EXPORTS
 logger = logging.getLogger(__name__)
 
 # Plugin directories
-PLUGIN_DIR = Path(__file__).parent if __file__ else Path.cwd() / "intellicrack" / "plugins"
-CUSTOM_MODULES_DIR = PLUGIN_DIR / "custom_modules"
-FRIDA_SCRIPTS_DIR = PLUGIN_DIR.parent.parent / "scripts" / "frida"
-GHIDRA_SCRIPTS_DIR = PLUGIN_DIR.parent.parent / "scripts" / "ghidra"
+PLUGIN_DIR: Path = Path(__file__).parent if __file__ else Path.cwd() / "intellicrack" / "plugins"
+CUSTOM_MODULES_DIR: Path = PLUGIN_DIR / "custom_modules"
+FRIDA_SCRIPTS_DIR: Path = PLUGIN_DIR.parent.parent / "scripts" / "frida"
+GHIDRA_SCRIPTS_DIR: Path = PLUGIN_DIR.parent.parent / "scripts" / "ghidra"
 
 # Plugin registry
-_plugins = {}
+_plugins: dict[str, object] = {}
 
 
-def load_plugin(plugin_name, plugin_type="custom"):
-    """Load a plugin by name and type."""
+def load_plugin(plugin_name: str, plugin_type: str = "custom") -> object | None:
+    """Load a plugin by name and type.
+
+    Args:
+        plugin_name: The name of the plugin to load.
+        plugin_type: The type of plugin ("custom", "frida", or "ghidra").
+            Defaults to "custom".
+
+    Returns:
+        The loaded module object or None if loading failed.
+
+    """
     try:
         if plugin_type == "custom":
             module = importlib.import_module(f".custom_modules.{plugin_name}", package="intellicrack.plugins")
@@ -51,9 +62,18 @@ def load_plugin(plugin_name, plugin_type="custom"):
         return None
 
 
-def list_plugins(plugin_type="custom"):
-    """List available plugins of a given type."""
-    plugins = []
+def list_plugins(plugin_type: str = "custom") -> list[str]:
+    """List available plugins of a given type.
+
+    Args:
+        plugin_type: The type of plugins to list ("custom", "frida", or "ghidra").
+            Defaults to "custom".
+
+    Returns:
+        A list of plugin names available for the specified type.
+
+    """
+    plugins: list[str] = []
     if plugin_type == "custom":
         if CUSTOM_MODULES_DIR.exists():
             plugins = [f.stem for f in CUSTOM_MODULES_DIR.glob("*.py") if f.stem != "__init__"]
@@ -67,16 +87,33 @@ def list_plugins(plugin_type="custom"):
     return plugins
 
 
-def get_frida_script(script_name):
-    """Get the path to a Frida script."""
+def get_frida_script(script_name: str) -> str | None:
+    """Get the path to a Frida script.
+
+    Args:
+        script_name: The name of the Frida script (without .js extension).
+
+    Returns:
+        The absolute path to the script if found, None otherwise.
+
+    """
     script_path = FRIDA_SCRIPTS_DIR / f"{script_name}.js"
     if script_path.exists():
         return str(script_path)
     return None
 
 
-def get_ghidra_script(script_name):
-    """Get the path to a Ghidra script."""
+def get_ghidra_script(script_name: str) -> str | None:
+    """Get the path to a Ghidra script.
+
+    Args:
+        script_name: The name of the Ghidra script (without extension).
+
+    Returns:
+        The absolute path to the script if found, None otherwise.
+        Checks for both .java and .py extensions.
+
+    """
     for ext in [".java", ".py"]:
         script_path = GHIDRA_SCRIPTS_DIR / f"{script_name}{ext}"
         if script_path.exists():
@@ -84,8 +121,19 @@ def get_ghidra_script(script_name):
     return None
 
 
-def get_plugin_size(plugin_name, plugin_type="custom"):
-    """Get the size of a plugin file in bytes."""
+def get_plugin_size(plugin_name: str, plugin_type: str = "custom") -> int:
+    """Get the size of a plugin file in bytes.
+
+    Args:
+        plugin_name: The name of the plugin.
+        plugin_type: The type of plugin ("custom", "frida", or "ghidra").
+            Defaults to "custom".
+
+    Returns:
+        The size in bytes of the plugin file, or 0 if the file does not exist
+        or an invalid plugin type is specified.
+
+    """
     if plugin_type == "custom":
         plugin_path = CUSTOM_MODULES_DIR / f"{plugin_name}.py"
     elif plugin_type == "frida":
@@ -118,16 +166,20 @@ except ImportError as e:
     logger.warning("Failed to import plugin system functions: %s", e)
 
     # Provide fallback empty functions
-    def load_plugins(*args, **kwargs):
+    def load_plugins(*args: object, **kwargs: object) -> dict[str, object]:
         """Fallback function for loading plugins when plugin system is not available.
 
+        Args:
+            *args: Variable positional arguments (ignored).
+            **kwargs: Variable keyword arguments (ignored).
+
         Returns:
-            dict: Empty dictionary
+            A dictionary mapping plugin names to their metadata and modules.
 
         """
         logger.debug(f"Fallback load_plugins called with args: {args}, kwargs: {kwargs}")
         # Try to load available plugins from directories
-        loaded_plugins = {}
+        loaded_plugins: dict[str, object] = {}
 
         # Load custom Python plugins
         if CUSTOM_MODULES_DIR.exists():
@@ -169,55 +221,93 @@ except ImportError as e:
 
         return loaded_plugins
 
-    def run_plugin(*args, **kwargs) -> None:
+    def run_plugin(*args: object, **kwargs: object) -> None:
         """Fallback function for running plugins when plugin system is not available.
 
-        Does nothing when the actual plugin system cannot be imported.
+        Args:
+            *args: Variable positional arguments (ignored).
+            **kwargs: Variable keyword arguments (ignored).
+
+        Notes:
+            Does nothing when the actual plugin system cannot be imported.
+
         """
         logger.debug(f"Fallback run_plugin called with args: {args}, kwargs: {kwargs}")
 
-    def run_custom_plugin(*args, **kwargs) -> None:
+    def run_custom_plugin(*args: object, **kwargs: object) -> None:
         """Fallback function for running custom plugins when plugin system is not available.
 
-        Does nothing when the actual plugin system cannot be imported.
+        Args:
+            *args: Variable positional arguments (ignored).
+            **kwargs: Variable keyword arguments (ignored).
+
+        Notes:
+            Does nothing when the actual plugin system cannot be imported.
+
         """
         logger.debug(f"Fallback run_custom_plugin called with args: {args}, kwargs: {kwargs}")
 
-    def run_frida_plugin_from_file(*args, **kwargs) -> None:
+    def run_frida_plugin_from_file(*args: object, **kwargs: object) -> None:
         """Fallback function for running Frida plugins when plugin system is not available.
 
-        Does nothing when the actual plugin system cannot be imported.
+        Args:
+            *args: Variable positional arguments (ignored).
+            **kwargs: Variable keyword arguments (ignored).
+
+        Notes:
+            Does nothing when the actual plugin system cannot be imported.
+
         """
         logger.debug(f"Fallback run_frida_plugin_from_file called with args: {args}, kwargs: {kwargs}")
 
-    def run_ghidra_plugin_from_file(*args, **kwargs) -> None:
+    def run_ghidra_plugin_from_file(*args: object, **kwargs: object) -> None:
         """Fallback function for running Ghidra plugins when plugin system is not available.
 
-        Does nothing when the actual plugin system cannot be imported.
+        Args:
+            *args: Variable positional arguments (ignored).
+            **kwargs: Variable keyword arguments (ignored).
+
+        Notes:
+            Does nothing when the actual plugin system cannot be imported.
+
         """
         logger.debug(f"Fallback run_ghidra_plugin_from_file called with args: {args}, kwargs: {kwargs}")
 
-    def create_sample_plugins(*args, **kwargs) -> None:
+    def create_sample_plugins(*args: object, **kwargs: object) -> None:
         """Fallback function for creating sample plugins when plugin system is not available.
 
-        Does nothing when the actual plugin system cannot be imported.
+        Args:
+            *args: Variable positional arguments (ignored).
+            **kwargs: Variable keyword arguments (ignored).
+
+        Notes:
+            Does nothing when the actual plugin system cannot be imported.
+
         """
         logger.debug(f"Fallback create_sample_plugins called with args: {args}, kwargs: {kwargs}")
 
-    def run_plugin_in_sandbox(*args, **kwargs) -> None:
+    def run_plugin_in_sandbox(*args: object, **kwargs: object) -> None:
         """Fallback function for running plugins in sandbox when plugin system is not available.
 
-        Returns:
-            None
+        Args:
+            *args: Variable positional arguments (ignored).
+            **kwargs: Variable keyword arguments (ignored).
+
+        Notes:
+            Does nothing when the actual plugin system cannot be imported.
 
         """
         logger.debug(f"Fallback run_plugin_in_sandbox called with args: {args}, kwargs: {kwargs}")
 
-    def run_plugin_remotely(*args, **kwargs) -> None:
+    def run_plugin_remotely(*args: object, **kwargs: object) -> None:
         """Fallback function for running plugins remotely when plugin system is not available.
 
-        Returns:
-            None
+        Args:
+            *args: Variable positional arguments (ignored).
+            **kwargs: Variable keyword arguments (ignored).
+
+        Notes:
+            Does nothing when the actual plugin system cannot be imported.
 
         """
         logger.debug(f"Fallback run_plugin_remotely called with args: {args}, kwargs: {kwargs}")
@@ -231,9 +321,9 @@ except ImportError as e:
     RemotePluginExecutor = None
 
 # Define package exports
-_plugin_system_exports = [str(item) for item in PLUGIN_SYSTEM_EXPORTS] if isinstance(PLUGIN_SYSTEM_EXPORTS, (list, tuple)) else []
-__all__ = ["load_plugin", "list_plugins", "get_frida_script", "get_ghidra_script", "CUSTOM_MODULES_DIR", "FRIDA_SCRIPTS_DIR", "GHIDRA_SCRIPTS_DIR", "RemotePluginExecutor", *_plugin_system_exports]
+_plugin_system_exports: list[str] = ([str(item) for item in PLUGIN_SYSTEM_EXPORTS] if isinstance(PLUGIN_SYSTEM_EXPORTS, (list, tuple)) else []) if PLUGIN_SYSTEM_EXPORTS is not None else []
+__all__: list[str] = ["load_plugin", "list_plugins", "get_frida_script", "get_ghidra_script", "CUSTOM_MODULES_DIR", "FRIDA_SCRIPTS_DIR", "GHIDRA_SCRIPTS_DIR", "RemotePluginExecutor"] + _plugin_system_exports  # noqa: RUF005
 
 # Package metadata
-__version__ = "0.1.0"
-__author__ = "Intellicrack Development Team"
+__version__: str = "0.1.0"
+__author__: str = "Intellicrack Development Team"

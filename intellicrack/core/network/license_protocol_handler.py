@@ -4,7 +4,6 @@ import logging
 import os
 import secrets
 import threading
-from abc import ABC, abstractmethod
 from typing import Any
 
 from intellicrack.utils.logger import logger
@@ -39,7 +38,7 @@ for various license verification protocols including FlexLM, HASP, Adobe, and ot
 """
 
 
-class LicenseProtocolHandler(ABC):
+class LicenseProtocolHandler:
     """Base class for license protocol handlers.
 
     This abstract base class defines the interface for implementing protocol-specific
@@ -203,39 +202,96 @@ class LicenseProtocolHandler(ABC):
             "thread_active": self.proxy_thread.is_alive() if self.proxy_thread else False,
         }
 
-    @abstractmethod
     def _run_proxy(self, port: int) -> None:
-        """Run the proxy server - must be implemented by subclasses.
+        """Run the proxy server.
 
-        This method contains the main proxy server loop and should handle
-        incoming connections according to the specific protocol requirements.
+        Default implementation provides a basic TCP server that accepts connections
+        and delegates to handle_connection. Subclasses can override for protocol-specific
+        server logic (UDP, custom protocols, etc.).
 
         Args:
             port: Port number to bind the proxy server to
 
         """
-        raise NotImplementedError("Subclasses must implement _run_proxy")
+        import socket
 
-    @abstractmethod
+        self.logger.info("Starting proxy server on port %s", port)
+
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+        try:
+            server_socket.bind((self.bind_host, port))
+            server_socket.listen(5)
+            server_socket.settimeout(1.0)
+
+            self.logger.info("Proxy listening on %s:%s", self.bind_host, port)
+
+            while self.running:
+                try:
+                    client_socket, client_addr = server_socket.accept()
+                    self.logger.info("Connection from %s:%s", client_addr[0], client_addr[1])
+
+                    client_thread = threading.Thread(
+                        target=self._handle_client,
+                        args=(client_socket, client_addr),
+                        daemon=True,
+                    )
+                    client_thread.start()
+
+                except TimeoutError:
+                    continue
+                except Exception as e:
+                    if self.running:
+                        self.logger.error("Proxy server error: %s", e)
+
+        finally:
+            server_socket.close()
+            self.logger.info("Proxy server stopped")
+
+    def _handle_client(self, client_socket: Any, client_addr: tuple[str, int]) -> None:
+        """Handle individual client connection.
+
+        Args:
+            client_socket: Client socket connection
+            client_addr: Client address tuple (ip, port)
+
+        """
+        try:
+            initial_data = client_socket.recv(4096)
+            if initial_data:
+                self.handle_connection(client_socket, initial_data)
+        except Exception as e:
+            self.logger.error("Error handling client %s: %s", client_addr, e)
+        finally:
+            client_socket.close()
+
     def handle_connection(self, socket: Any, initial_data: bytes) -> None:
         """Handle a client connection with the specific protocol.
 
-        This method should process incoming connections and implement
-        protocol-specific communication handling.
+        Default implementation logs the request and sends back a generic response.
+        Subclasses should override for protocol-specific handling.
 
         Args:
             socket: Client socket connection
             initial_data: Initial data received from the client
 
         """
-        raise NotImplementedError("Subclasses must implement handle_connection")
+        self.log_request(initial_data, "client")
 
-    @abstractmethod
+        response = self.generate_response(initial_data)
+
+        try:
+            socket.send(response)
+            self.log_response(response, "client")
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Failed to send response: %s", e)
+
     def generate_response(self, request_data: bytes) -> bytes:
         """Generate a protocol-specific response.
 
-        This method should analyze the request data and generate an appropriate
-        response according to the specific license protocol requirements.
+        Default implementation returns a generic success response.
+        Subclasses should override for protocol-specific response generation.
 
         Args:
             request_data: Raw request data from the client
@@ -244,7 +300,8 @@ class LicenseProtocolHandler(ABC):
             Protocol-specific response data
 
         """
-        raise NotImplementedError("Subclasses must implement generate_response")
+        self.logger.debug("Generating generic response for %d bytes of data", len(request_data))
+        return b"OK\n"
 
     def log_request(self, request_data: bytes, source: str = "unknown") -> None:
         """Log incoming request data for analysis.
@@ -438,6 +495,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
                 expiry = "0" if self.license_type == "permanent" else str(int(time.time()) + 86400 * 365)
                 response = f"GRANT {feature} {self.feature_version} {self.license_type} {expiry} 0 0 0 HOSTID=ANY\n"
                 return response.encode("utf-8")
+            return b"ERROR: Invalid GETLIC request\n"
 
         elif request_str.startswith("CHECKIN"):
             # License checkin

@@ -104,7 +104,10 @@ class PluginCreationWizard(QWizard):
         self.code_page.set_generated_code(code)
 
     def generate_code_from_template(
-        self, info: Dict[str, str], template: Optional[Dict[str, Any]], features: List[str]
+        self,
+        info: Dict[str, str],
+        template: Optional[Dict[str, Any]],
+        features: List[str],
     ) -> str:
         """Generate plugin code from template.
 
@@ -124,7 +127,10 @@ class PluginCreationWizard(QWizard):
         return self.generate_python_code(info, template, features)
 
     def generate_python_code(
-        self, info: Dict[str, str], template: Optional[Dict[str, Any]], features: List[str]
+        self,
+        info: Dict[str, str],
+        template: Optional[Dict[str, Any]],
+        features: List[str],
     ) -> str:
         """Generate Python plugin code.
 
@@ -195,7 +201,10 @@ def get_plugin() -> Any:
         return code
 
     def generate_frida_code(
-        self, info: Dict[str, str], template: Optional[Dict[str, Any]], features: List[str]
+        self,
+        info: Dict[str, str],
+        template: Optional[Dict[str, Any]],
+        features: List[str],
     ) -> str:
         """Generate Frida script code.
 
@@ -243,7 +252,10 @@ function hexdump(buffer, options) {{
         return code
 
     def generate_ghidra_code(
-        self, info: Dict[str, str], template: Optional[Dict[str, Any]], features: List[str]
+        self,
+        info: Dict[str, str],
+        template: Optional[Dict[str, Any]],
+        features: List[str],
     ) -> str:
         """Generate Ghidra script code.
 

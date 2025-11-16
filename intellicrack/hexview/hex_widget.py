@@ -2046,6 +2046,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         # For other keys, fall back to parent implementation
         super().keyPressEvent(event)
+        return None
 
     def handle_navigation_key(self, key: int, modifiers: Qt.KeyboardModifier) -> None:
         """Handle navigation key events with modifier key support."""
@@ -2142,6 +2143,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         # Accept the event
         event.accept()
+        return None
 
     def mouseMoveEvent(self, event: QMouseEvent):
         """Handle mouse move events."""
@@ -2161,6 +2163,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         # Accept the event
         event.accept()
+        return None
 
     def get_offset_from_position(self, position: QPoint) -> int:
         """Get the byte offset from a position in the viewport.

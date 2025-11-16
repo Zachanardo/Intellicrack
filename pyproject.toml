@@ -994,6 +994,9 @@ unfixable = [
 
 # Rules to ignore (stylistic preferences, not harmful)
 ignore = [
+  # Code formatting (handled by formatter)
+  "E501",   # line-too-long - handled by black/formatter
+
   # CLI output (user-facing)
   "T201",   # print() - CLI tool needs output
   "T203",   # pprint() - debugging tool
@@ -1039,6 +1042,10 @@ ignore = [
   "PIE810",  # multiple-starts-ends-with
   "FURB161", # bit-count
   "FURB166", # int-on-sliced-str
+
+  # Quote style (embedded SQL/regex/Frida scripts need specific quotes)
+  "Q000",    # bad-quotes-inline-string
+  "Q001",    # bad-quotes-multiline-string
 
   # Exception handling style
   "TRY003", # raise-vanilla-args

@@ -24,7 +24,7 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import Any
+from typing import Any, Protocol, TypedDict, Unpack
 
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
@@ -55,6 +55,62 @@ try:
     XLSX_AVAILABLE = True
 except ImportError:
     XLSX_AVAILABLE = False
+
+
+class ExportOptions(TypedDict, total=False):
+    """Type definition for export function options.
+
+    Attributes:
+        include_raw_data: Whether to include raw binary data samples in JSON export
+        data_type: Type of data to export in CSV format
+
+    """
+
+    include_raw_data: bool
+    data_type: str
+
+
+class XlsxWorkbookProxy:
+    """Proxy for xlsxwriter Workbook objects to avoid direct Any typing."""
+
+    def __init__(self, workbook: object) -> None:
+        """Initialize proxy with actual workbook.
+
+        Args:
+            workbook: The actual xlsxwriter Workbook instance
+
+        """
+        self._workbook = workbook
+
+    def add_worksheet(self, name: str = "") -> object:
+        """Add a worksheet to the workbook.
+
+        Args:
+            name: Name of the worksheet
+
+        Returns:
+            The worksheet object
+
+        """
+        return getattr(self._workbook, "add_worksheet", lambda n="": None)(name)
+
+    def add_format(self, properties: dict[str, Any] | None = None) -> object:
+        """Add a format to the workbook.
+
+        Args:
+            properties: Format properties dictionary
+
+        Returns:
+            The format object
+
+        """
+        if properties is None:
+            properties = {}
+        return getattr(self._workbook, "add_format", lambda p: None)(properties)
+
+    def close(self) -> None:
+        """Close the workbook."""
+        getattr(self._workbook, "close", lambda: None)()
 
 
 class AdvancedExporter:
@@ -743,8 +799,14 @@ KEY FINDINGS
 
         return min(score, 100.0)
 
-    def _dict_to_xml(self, data: Any, parent: ET.Element) -> None:
-        """Convert dictionary to XML elements."""
+    def _dict_to_xml(self, data: dict[str, Any] | list[Any] | str | float | bool | None, parent: ET.Element) -> None:
+        """Convert dictionary to XML elements.
+
+        Args:
+            data: Data to convert to XML elements
+            parent: Parent XML element to attach converted data to
+
+        """
         if isinstance(data, dict):
             for key, value in data.items():
                 elem = ET.SubElement(parent, str(key).replace(" ", "_"))
@@ -1112,12 +1174,28 @@ KEY FINDINGS
 
         return rules
 
-    def _create_summary_sheet(self, workbook: Any, header_format: Any | None = None, cell_format: Any | None = None, worksheet_name: str = "Summary"):
-        """Create summary sheet for Excel export."""
+    def _create_summary_sheet(
+        self,
+        workbook: object,
+        header_format: object | None = None,
+        cell_format: object | None = None,
+        worksheet_name: str = "Summary",
+    ) -> object | None:
+        """Create summary sheet for Excel export.
+
+        Args:
+            workbook: xlsxwriter Workbook instance
+            header_format: Header format object (unused, generated internally)
+            cell_format: Cell format object (unused, generated internally)
+            worksheet_name: Name for the worksheet
+
+        Returns:
+            The worksheet object or None if creation failed
+
+        """
         try:
             worksheet = workbook.add_worksheet(worksheet_name)
 
-            # Header format
             header_format = workbook.add_format(
                 {
                     "bold": True,
@@ -1126,23 +1204,19 @@ KEY FINDINGS
                 },
             )
 
-            # Write headers
             headers = ["Category", "Count", "Status", "Risk Level"]
             for col, header in enumerate(headers):
                 worksheet.write(0, col, header, header_format)
 
-            # Write summary data
             summary = self._generate_summary()
             row = 1
 
-            # Binary info
             worksheet.write(row, 0, "Binary Analysis")
             worksheet.write(row, 1, 1)
             worksheet.write(row, 2, "Complete")
             worksheet.write(row, 3, summary.get("risk_assessment", {}).get("level", "Unknown"))
             row += 1
 
-            # Vulnerabilities
             vuln_count = len(self.analysis_results.get("vulnerabilities", {}))
             worksheet.write(row, 0, "Vulnerabilities")
             worksheet.write(row, 1, vuln_count)
@@ -1150,7 +1224,6 @@ KEY FINDINGS
             worksheet.write(row, 3, "High" if vuln_count > 5 else "Medium" if vuln_count > 0 else "Low")
             row += 1
 
-            # Protections
             protections = self.analysis_results.get("protections", [])
             worksheet.write(row, 0, "Protections")
             worksheet.write(row, 1, len(protections))
@@ -1164,16 +1237,26 @@ KEY FINDINGS
 
     def _create_vulnerabilities_sheet(
         self,
-        workbook: Any,
-        header_format: Any | None = None,
-        cell_format: Any | None = None,
+        workbook: object,
+        header_format: object | None = None,
+        cell_format: object | None = None,
         worksheet_name: str = "Vulnerabilities",
-    ):
-        """Create vulnerabilities sheet for Excel export."""
+    ) -> object | None:
+        """Create vulnerabilities sheet for Excel export.
+
+        Args:
+            workbook: xlsxwriter Workbook instance
+            header_format: Header format object (unused, generated internally)
+            cell_format: Cell format object (unused, generated internally)
+            worksheet_name: Name for the worksheet
+
+        Returns:
+            The worksheet object or None if creation failed
+
+        """
         try:
             worksheet = workbook.add_worksheet(worksheet_name)
 
-            # Header format
             header_format = workbook.add_format(
                 {
                     "bold": True,
@@ -1182,12 +1265,10 @@ KEY FINDINGS
                 },
             )
 
-            # Write headers
             headers = ["Type", "Severity", "Description", "Location", "Recommendation"]
             for col, header in enumerate(headers):
                 worksheet.write(0, col, header, header_format)
 
-            # Write vulnerability data
             vulnerabilities = self.analysis_results.get("vulnerabilities", {})
             row = 1
 
@@ -1205,12 +1286,28 @@ KEY FINDINGS
             print(f"Failed to create vulnerabilities sheet: {e}")
             return None
 
-    def _create_strings_sheet(self, workbook: Any, header_format: Any | None = None, cell_format: Any | None = None, worksheet_name: str = "Strings"):
-        """Create strings sheet for Excel export."""
+    def _create_strings_sheet(
+        self,
+        workbook: object,
+        header_format: object | None = None,
+        cell_format: object | None = None,
+        worksheet_name: str = "Strings",
+    ) -> object | None:
+        """Create strings sheet for Excel export.
+
+        Args:
+            workbook: xlsxwriter Workbook instance
+            header_format: Header format object (unused, generated internally)
+            cell_format: Cell format object (unused, generated internally)
+            worksheet_name: Name for the worksheet
+
+        Returns:
+            The worksheet object or None if creation failed
+
+        """
         try:
             worksheet = workbook.add_worksheet(worksheet_name)
 
-            # Header format
             header_format = workbook.add_format(
                 {
                     "bold": True,
@@ -1219,12 +1316,10 @@ KEY FINDINGS
                 },
             )
 
-            # Write headers
             headers = ["String", "Address", "Section", "Type", "Length"]
             for col, header in enumerate(headers):
                 worksheet.write(0, col, header, header_format)
 
-            # Write strings data
             strings_data = self.analysis_results.get("strings", [])
             row = 1
 
@@ -1245,12 +1340,28 @@ KEY FINDINGS
             print(f"Failed to create strings sheet: {e}")
             return None
 
-    def _create_imports_sheet(self, workbook: Any, header_format: Any | None = None, cell_format: Any | None = None, worksheet_name: str = "Imports"):
-        """Create imports sheet for Excel export."""
+    def _create_imports_sheet(
+        self,
+        workbook: object,
+        header_format: object | None = None,
+        cell_format: object | None = None,
+        worksheet_name: str = "Imports",
+    ) -> object | None:
+        """Create imports sheet for Excel export.
+
+        Args:
+            workbook: xlsxwriter Workbook instance
+            header_format: Header format object (unused, generated internally)
+            cell_format: Cell format object (unused, generated internally)
+            worksheet_name: Name for the worksheet
+
+        Returns:
+            The worksheet object or None if creation failed
+
+        """
         try:
             worksheet = workbook.add_worksheet(worksheet_name)
 
-            # Header format
             header_format = workbook.add_format(
                 {
                     "bold": True,
@@ -1259,12 +1370,10 @@ KEY FINDINGS
                 },
             )
 
-            # Write headers
             headers = ["Library", "Function", "Address", "Ordinal"]
             for col, header in enumerate(headers):
                 worksheet.write(0, col, header, header_format)
 
-            # Write imports data
             imports_data = self.analysis_results.get("imports", {})
             row = 1
 
@@ -1290,12 +1399,28 @@ KEY FINDINGS
             print(f"Failed to create imports sheet: {e}")
             return None
 
-    def _create_statistics_sheet(self, workbook: Any, header_format: Any | None = None, cell_format: Any | None = None, worksheet_name: str = "Statistics"):
-        """Create statistics sheet for Excel export."""
+    def _create_statistics_sheet(
+        self,
+        workbook: object,
+        header_format: object | None = None,
+        cell_format: object | None = None,
+        worksheet_name: str = "Statistics",
+    ) -> object | None:
+        """Create statistics sheet for Excel export.
+
+        Args:
+            workbook: xlsxwriter Workbook instance
+            header_format: Header format object (unused, generated internally)
+            cell_format: Cell format object (unused, generated internally)
+            worksheet_name: Name for the worksheet
+
+        Returns:
+            The worksheet object or None if creation failed
+
+        """
         try:
             worksheet = workbook.add_worksheet(worksheet_name)
 
-            # Header format
             header_format = workbook.add_format(
                 {
                     "bold": True,
@@ -1304,12 +1429,10 @@ KEY FINDINGS
                 },
             )
 
-            # Write headers
             headers = ["Metric", "Value", "Category", "Notes"]
             for col, header in enumerate(headers):
                 worksheet.write(0, col, header, header_format)
 
-            # Write statistics
             statistics = self._generate_statistics()
             row = 1
 
@@ -1345,18 +1468,31 @@ def get_available_formats() -> list[str]:
     return formats
 
 
-def export_analysis_results(binary_path: str, analysis_results: dict[str, Any], output_path: str, format_type: str, **kwargs) -> bool:
+def export_analysis_results(
+    binary_path: str,
+    analysis_results: dict[str, Any],
+    output_path: str,
+    format_type: str,
+    **kwargs: Unpack[ExportOptions],
+) -> bool:
     """Export analysis results in specified format.
 
+    Exports analysis results from binary analysis to various formats including
+    JSON, CSV, XML, HTML, Markdown, YAML, and Excel with comprehensive metadata
+    and structured reporting capabilities for software licensing analysis.
+
     Args:
-        binary_path: Path to analyzed binary
-        analysis_results: Analysis results dictionary
-        output_path: Output file path
-        format_type: Export format
-        **kwargs: Additional format-specific options
+        binary_path: Path to analyzed binary file
+        analysis_results: Dictionary containing analysis results from protection detection,
+            vulnerability scanning, and licensing mechanism analysis
+        output_path: Output file path where results will be written
+        format_type: Export format (json, markdown, html, txt, csv, xml, yaml, xlsx, vulnerability)
+        **kwargs: Additional format-specific options:
+            - include_raw_data (bool): Include raw binary data samples in JSON export
+            - data_type (str): Type of data for CSV export (all, vulnerabilities, strings, imports)
 
     Returns:
-        True if export successful
+        True if export was successful, False otherwise
 
     """
     exporter = AdvancedExporter(binary_path, analysis_results)

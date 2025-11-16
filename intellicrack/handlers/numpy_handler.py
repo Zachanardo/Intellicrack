@@ -1479,13 +1479,13 @@ except ImportError as e:
 
                 """
                 if not shape:
-                    return _random.random()
+                    return _random.random()  # noqa: S311
 
                 total = 1
                 for dim in shape:
                     total *= dim
 
-                data = [_random.random() for _ in range(total)]
+                data = [_random.random() for _ in range(total)]  # noqa: S311
                 return FallbackArray(data, float, shape)
 
             @staticmethod
@@ -1527,7 +1527,7 @@ except ImportError as e:
                     low = 0
 
                 if size is None:
-                    return _random.randint(low, high - 1)
+                    return _random.randint(low, high - 1)  # noqa: S311
 
                 if isinstance(size, int):
                     size = (size,)
@@ -1536,7 +1536,7 @@ except ImportError as e:
                 for dim in size:
                     total *= dim
 
-                data = [_random.randint(low, high - 1) for _ in range(total)]
+                data = [_random.randint(low, high - 1) for _ in range(total)]  # noqa: S311
                 return FallbackArray(data, int, size)
 
             @staticmethod
@@ -1563,7 +1563,7 @@ except ImportError as e:
                     data = list(a)
 
                 if size is None:
-                    return _random.choice(data)
+                    return _random.choice(data)  # noqa: S311
 
                 if isinstance(size, int):
                     total = size
@@ -1575,7 +1575,7 @@ except ImportError as e:
                     shape = size
 
                 if replace:
-                    result = [_random.choice(data) for _ in range(total)]
+                    result = [_random.choice(data) for _ in range(total)]  # noqa: S311
                 else:
                     if total > len(data):
                         raise ValueError("Cannot sample more items than available without replacement")

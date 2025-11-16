@@ -29,14 +29,14 @@ import threading
 import time
 import tracemalloc
 from collections import defaultdict, deque
-from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor
+from collections.abc import Callable, Generator
+from concurrent.futures import Future, ThreadPoolExecutor
 from contextlib import contextmanager, suppress
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
 
 from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.psutil_handler import psutil
@@ -232,13 +232,25 @@ class CacheManager:
         self.evictions = 0
 
     def _calculate_size(self, obj: Any) -> int:
-        """Calculate object size in memory."""
+        """Calculate object size in memory.
+
+        Determine the memory footprint of an object by using its __sizeof__
+        method or serializing it with pickle. Used for cache memory management.
+        Accepts any object type since cache may store heterogeneous data.
+
+        Args:
+            obj: The object whose size needs to be calculated. Can be any type.
+
+        Returns:
+            Size in bytes. Returns 1024 as a default estimate if calculation fails.
+
+        """
         try:
             if hasattr(obj, "__sizeof__"):
                 return obj.__sizeof__()
             return len(pickle.dumps(obj))
         except Exception:
-            return 1024  # Default estimate
+            return 1024
 
     def _calculate_score(self, key: str) -> float:
         """Calculate popularity score for cache item."""
@@ -257,8 +269,22 @@ class CacheManager:
 
         return frequency_score * 0.7 + recency_score * 0.3
 
-    def get(self, key: str, default=None) -> Any:
-        """Get item from cache."""
+    def get(self, key: str, default: Any = None) -> Any:
+        """Get item from cache.
+
+        Retrieve a cached value by key with automatic access tracking for
+        LRU and popularity-based eviction policies.
+
+        Args:
+            key: The cache key to retrieve.
+            default: Default value to return if key is not found (default: None).
+                Can be any type.
+
+        Returns:
+            The cached value if found, otherwise the default value.
+            Can be any type since cache stores heterogeneous data.
+
+        """
         with self.lock:
             if key in self.cache:
                 self.hits += 1
@@ -274,14 +300,27 @@ class CacheManager:
             return default
 
     def put(self, key: str, value: Any) -> bool:
-        """Put item in cache."""
+        """Put item in cache.
+
+        Add or update a cached value with automatic eviction when size or
+        memory limits are exceeded.
+
+        Args:
+            key: The cache key to store the value under.
+            value: The value to cache. Can be any type.
+
+        Returns:
+            True if the value was successfully cached, False if it cannot be
+            evicted to make space.
+
+        """
         with self.lock:
             value_size = self._calculate_size(value)
 
             # Check if we need to evict items
             while len(self.cache) >= self.max_size or self.memory_usage + value_size > self.max_memory:
                 if not self._evict_least_valuable():
-                    return False  # Cannot evict more items
+                    return False
 
             # Add new item
             self.cache[key] = value
@@ -352,8 +391,21 @@ class ThreadPoolOptimizer:
 
         self.lock = threading.Lock()
 
-    def submit(self, fn: Callable, *args, **kwargs):
-        """Submit task and collect metrics."""
+    def submit(self, fn: Callable, *args: Any, **kwargs: Any) -> Future:
+        """Submit task and collect metrics.
+
+        Submit a task to the thread pool with automatic response time and
+        queue depth tracking for adaptive pool optimization.
+
+        Args:
+            fn: The callable to execute in the thread pool.
+            *args: Positional arguments to pass to the callable. Can be any type.
+            **kwargs: Keyword arguments to pass to the callable. Can be any type.
+
+        Returns:
+            A Future object representing the submitted task.
+
+        """
         start_time = time.time()
         queue_depth = len(self.executor._threads) - len([t for t in self.executor._threads if not t._tstate_lock.acquire(False)])
 
@@ -362,7 +414,7 @@ class ThreadPoolOptimizer:
 
         future = self.executor.submit(fn, *args, **kwargs)
 
-        def track_completion(fut) -> None:
+        def track_completion(fut: Future) -> None:
             end_time = time.time()
             response_time = end_time - start_time
 
@@ -631,8 +683,19 @@ class DatabaseOptimizer:
             conn.close()
 
     @contextmanager
-    def get_cursor(self):
-        """Context manager for database operations."""
+    def get_cursor(self) -> Generator:
+        """Context manager for database operations.
+
+        Provide a cursor with automatic connection pooling and transaction
+        management. Commits on success, rolls back on exception.
+
+        Yields:
+            A SQLite cursor ready for query execution.
+
+        Raises:
+            Any exception that occurs during database operations.
+
+        """
         conn = self.get_connection()
         try:
             cursor = conn.cursor()
@@ -644,8 +707,21 @@ class DatabaseOptimizer:
         finally:
             self.return_connection(conn)
 
-    def execute_optimized(self, query: str, params=None) -> list[tuple]:
-        """Execute query with caching and statistics."""
+    def execute_optimized(self, query: str, params: Any = None) -> list[tuple]:
+        """Execute query with caching and statistics.
+
+        Execute a SQL query with automatic result caching and performance
+        tracking. SELECT queries are cached for 5 minutes.
+
+        Args:
+            query: The SQL query string to execute.
+            params: Optional parameters for parameterized queries (default: None).
+                Can be any type for flexible SQL parameter binding.
+
+        Returns:
+            A list of result tuples from the query.
+
+        """
         query_hash = hashlib.sha256(f"{query}{params}".encode()).hexdigest()
 
         # Check cache for SELECT queries
@@ -1040,8 +1116,16 @@ class PerformanceOptimizer:
         # Start background optimization thread
         threading.Thread(target=self._background_optimization, daemon=True).start()
 
-    def stop_monitoring(self):
-        """Stop performance monitoring."""
+    def stop_monitoring(self) -> dict[str, Any]:
+        """Stop performance monitoring.
+
+        Halt the background monitoring thread and return the final profiling
+        results including memory usage statistics.
+
+        Returns:
+            A dictionary containing top memory consumers and metrics summary.
+
+        """
         self.is_monitoring = False
         return self.profiler.stop_profiling()
 
@@ -1245,8 +1329,19 @@ class PerformanceOptimizer:
         return results
 
     @contextmanager
-    def performance_context(self, component_name: str):
-        """Context manager for performance tracking."""
+    def performance_context(self, component_name: str) -> Generator:
+        """Context manager for performance tracking.
+
+        Track resource usage (CPU and memory) for a code block with automatic
+        logging of performance deltas.
+
+        Args:
+            component_name: Name of the component being profiled for logging.
+
+        Yields:
+            Control to the wrapped code block.
+
+        """
         start_time = time.time()
         start_metrics = self.profiler.get_current_metrics()
 
@@ -1283,12 +1378,45 @@ def get_performance_optimizer(config: dict[str, Any] = None) -> PerformanceOptim
     return _global_optimizer
 
 
-def performance_monitor(component_name: str = "default"):
-    """Create decorator for automatic performance monitoring."""
+def performance_monitor(component_name: str = "default") -> Callable:
+    """Create decorator for automatic performance monitoring.
 
-    def decorator(func):
+    Wrap a function to automatically track its resource usage with the global
+    performance optimizer and log results.
+
+    Args:
+        component_name: Logical component name for organizing metrics
+            (default: "default").
+
+    Returns:
+        A decorator function that wraps the target function.
+
+    """
+
+    def decorator(func: Callable) -> Callable:
+        """Decorate function for performance tracking.
+
+        Args:
+            func: The function to wrap with performance monitoring.
+
+        Returns:
+            The wrapped function with performance tracking enabled.
+
+        """
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            """Execute wrapped function with performance context.
+
+            Args:
+                *args: Positional arguments for the wrapped function.
+                    Can be any type.
+                **kwargs: Keyword arguments for the wrapped function.
+                    Can be any type.
+
+            Returns:
+                Return value from the wrapped function. Can be any type.
+
+            """
             optimizer = get_performance_optimizer()
 
             with optimizer.performance_context(f"{component_name}.{func.__name__}"):
@@ -1300,14 +1428,30 @@ def performance_monitor(component_name: str = "default"):
 
 
 # Utility functions for common optimizations
-def optimize_memory():
-    """Quick memory optimization."""
+def optimize_memory() -> OptimizationResult:
+    """Quick memory optimization.
+
+    Trigger an immediate memory optimization cycle on the global performance
+    optimizer.
+
+    Returns:
+        The OptimizationResult detailing memory improvement and statistics.
+
+    """
     optimizer = get_performance_optimizer()
     return optimizer.optimize_component(OptimizationType.MEMORY)
 
 
-def optimize_cpu():
-    """Quick CPU optimization."""
+def optimize_cpu() -> OptimizationResult:
+    """Quick CPU optimization.
+
+    Trigger an immediate CPU thread pool optimization on the global
+    performance optimizer.
+
+    Returns:
+        The OptimizationResult detailing CPU optimization results.
+
+    """
     optimizer = get_performance_optimizer()
     return optimizer.optimize_component(OptimizationType.CPU)
 

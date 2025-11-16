@@ -384,8 +384,8 @@ class LoggingManager:
         workflow_id: str,
         step_id: str,
         status: str,
-        duration: float = None,
-        result: Any = None,
+        duration: float | None = None,
+        result: object = None,
     ) -> None:
         """Log workflow step execution."""
         logger = self.get_logger("workflows")
@@ -406,7 +406,7 @@ class LoggingManager:
 class JSONFormatter(logging.Formatter):
     """JSON formatter for structured logging."""
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         """Format log record as JSON structure."""
         log_entry = {
             "timestamp": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
@@ -647,10 +647,10 @@ class ConfigurationManager:
         self.file_watcher = threading.Thread(target=watch_file, daemon=True)
         self.file_watcher.start()
 
-    def get(self, key: str, default: Any = None) -> Any:
+    def get(self, key: str, default: object = None) -> object:
         """Get configuration value with dot notation support."""
         keys = key.split(".")
-        value = self.config
+        value: object = self.config
 
         for k in keys:
             if isinstance(value, dict) and k in value:
@@ -660,7 +660,7 @@ class ConfigurationManager:
 
         return value
 
-    def set(self, key: str, value: Any) -> None:
+    def set(self, key: str, value: object) -> None:
         """Set configuration value with dot notation support."""
         keys = key.split(".")
         config = self.config
@@ -726,7 +726,7 @@ class AbstractPlugin(ABC):
         """Get list of supported operations."""
 
     @abstractmethod
-    async def execute_operation(self, operation: str, parameters: dict[str, Any]) -> Any:
+    async def execute_operation(self, operation: str, parameters: dict[str, object]) -> object:
         """Execute a specific operation."""
 
     def set_logger(self, logger: logging.Logger) -> None:
@@ -758,7 +758,7 @@ class AbstractPlugin(ABC):
             # Remove task from set when it's done
             task.add_done_callback(self._event_tasks.discard)
 
-    def log_performance_metric(self, metric_name: str, value: Any) -> None:
+    def log_performance_metric(self, metric_name: str, value: object) -> None:
         """Log performance metric."""
         self.performance_metrics[metric_name] = {
             "value": value,
@@ -854,7 +854,7 @@ class GhidraPlugin(AbstractPlugin):
             "detect_packers",
         ]
 
-    async def execute_operation(self, operation: str, parameters: dict[str, Any]) -> Any:
+    async def execute_operation(self, operation: str, parameters: dict[str, object]) -> object:
         """Execute Ghidra operation."""
         try:
             if operation not in self.get_supported_operations():
@@ -1123,7 +1123,7 @@ class FridaPlugin(AbstractPlugin):
             "extract_runtime_data",
         ]
 
-    async def execute_operation(self, operation: str, parameters: dict[str, Any]) -> Any:
+    async def execute_operation(self, operation: str, parameters: dict[str, object]) -> object:
         """Execute Frida operation."""
         try:
             from intellicrack.handlers.frida_handler import frida
@@ -1216,7 +1216,7 @@ class FridaPlugin(AbstractPlugin):
         except Exception as e:
             raise Exception(f"Failed to attach to process: {e}") from e
 
-    def _on_message(self, message, data) -> None:
+    def _on_message(self, message: object, data: object) -> None:
         """Handle Frida script messages."""
         if self.logger:
             self.logger.debug(f"Frida message: {message}")
@@ -1494,7 +1494,7 @@ class PythonPlugin(AbstractPlugin):
 
         return list(set(operations))
 
-    async def execute_operation(self, operation: str, parameters: dict[str, Any]) -> Any:
+    async def execute_operation(self, operation: str, parameters: dict[str, object]) -> object:
         """Execute Python plugin operation."""
         try:
             if not self.plugin_instance:
@@ -3296,7 +3296,7 @@ class ResourceManager:
         except Exception as e:
             self.logger.exception(f"Error in auto cleanup: {e}")
 
-    async def execute_in_process(self, func: Callable, *args, **kwargs):
+    async def execute_in_process(self, func: Callable, *args: object, **kwargs: object) -> object:
         """Execute function in process pool."""
         if not self.process_pool:
             raise Exception("Process pool not initialized")
@@ -3305,7 +3305,7 @@ class ResourceManager:
         future = self.process_pool.submit(func, *args, **kwargs)
         return await loop.run_in_executor(None, future.result)
 
-    async def execute_in_thread(self, func: Callable, *args, **kwargs):
+    async def execute_in_thread(self, func: Callable, *args: object, **kwargs: object) -> object:
         """Execute function in thread pool."""
         if not self.thread_pool:
             raise Exception("Thread pool not initialized")

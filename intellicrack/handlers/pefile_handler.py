@@ -19,7 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import hashlib
 import struct
-from typing import Optional, Tuple, Union, Any
+from typing import Any, Optional, Tuple, Union
 
 from intellicrack.utils.logger import log_all_methods, logger
 
@@ -236,7 +236,6 @@ except ImportError as e:
     class PEFormatError(Exception):
         """PE format error exception."""
 
-
     class Structure:
         """Base structure for PE components."""
 
@@ -355,7 +354,7 @@ except ImportError as e:
                 self._parse_debug()
                 self._parse_relocations()
 
-        def _parse_file_header(self, offset: int) -> Any:  # noqa: ANN401
+        def _parse_file_header(self, offset: int) -> Any:
             """Parse COFF file header.
 
             Args:
@@ -382,7 +381,7 @@ except ImportError as e:
 
             return header
 
-        def _parse_optional_header32(self, offset: int) -> Any:  # noqa: ANN401
+        def _parse_optional_header32(self, offset: int) -> Any:
             """Parse 32-bit optional header.
 
             Args:
@@ -447,7 +446,7 @@ except ImportError as e:
 
             return header
 
-        def _parse_optional_header64(self, offset: int) -> Any:  # noqa: ANN401
+        def _parse_optional_header64(self, offset: int) -> Any:
             """Parse 64-bit optional header.
 
             Args:
@@ -606,7 +605,7 @@ except ImportError as e:
 
                 offset += 20
 
-        def _parse_import_thunks(self, import_desc: Any, offset: int) -> None:  # noqa: ANN401
+        def _parse_import_thunks(self, import_desc: Any, offset: int) -> None:
             """Parse import thunks.
 
             Args:

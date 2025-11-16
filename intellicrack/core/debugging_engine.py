@@ -750,7 +750,7 @@ class LicenseDebugger:
             except Exception as e:
                 logger.exception(f"An unexpected error occurred in the debug loop: {e}")
 
-    def _handle_exception(self, debug_event: Any) -> int:
+    def _handle_exception(self, debug_event: object) -> int:
         """Handle exception debug events.
 
         Args:
@@ -807,7 +807,7 @@ class LicenseDebugger:
 
         return self.DBG_EXCEPTION_NOT_HANDLED
 
-    def _handle_create_process(self, debug_event: Any) -> None:
+    def _handle_create_process(self, debug_event: object) -> None:
         """Handle process creation event.
 
         Args:
@@ -825,7 +825,7 @@ class LicenseDebugger:
 
         logger.info("Process created and analyzed for license checks")
 
-    def _handle_load_dll(self, debug_event: Any) -> None:
+    def _handle_load_dll(self, debug_event: object) -> None:
         """Handle DLL load event with sophisticated license analysis.
 
         Args:
@@ -1411,7 +1411,7 @@ class LicenseDebugger:
 
         return False
 
-    def _evaluate_breakpoint_condition(self, bp: Breakpoint, debug_event: Any) -> bool:
+    def _evaluate_breakpoint_condition(self, bp: Breakpoint, debug_event: object) -> bool:
         """Evaluate conditional breakpoint expression.
 
         Args:
@@ -1884,7 +1884,7 @@ class LicenseDebugger:
         """Public alias for _write_memory."""
         return self._write_memory(address, data)
 
-    def handle_exception(self, debug_event: Any) -> int:
+    def handle_exception(self, debug_event: object) -> int:
         """Public alias for _handle_exception.
 
         Args:
@@ -1976,7 +1976,7 @@ class LicenseDebugger:
             logger.exception(f"An unexpected error occurred while trying to hide the debugger: {e}")
             return False
 
-    def _anti_debug_callback(self, debugger: Any, debug_event: Any) -> None:
+    def _anti_debug_callback(self, debugger: object, debug_event: object) -> None:
         """Handle anti-debug API hooks callback.
 
         Args:
@@ -2069,7 +2069,7 @@ class LicenseDebugger:
             logger.exception(f"An unexpected error occurred while bypassing OutputDebugString detection: {e}")
             return False
 
-    def _output_debug_string_callback(self, debugger: Any, debug_event: Any) -> None:
+    def _output_debug_string_callback(self, debugger: object, debug_event: object) -> None:
         """Handle OutputDebugString API hooks callback.
 
         Modifies behavior to prevent debugger detection.
@@ -2189,7 +2189,7 @@ class LicenseDebugger:
             logger.exception(f"Failed to mitigate timing attacks: {e}")
             return False
 
-    def _timing_api_callback(self, debugger: Any, debug_event: Any) -> None:
+    def _timing_api_callback(self, debugger: object, debug_event: object) -> None:
         """Handle timing API hooks callback to provide controlled time values.
 
         Args:
@@ -2230,7 +2230,7 @@ class LicenseDebugger:
         except Exception as e:
             logger.exception(f"Timing API callback error: {e}")
 
-    def _sleep_callback(self, debugger: Any, debug_event: Any) -> None:
+    def _sleep_callback(self, debugger: object, debug_event: object) -> None:
         """Handle Sleep API callback to compensate for debugging overhead.
 
         Args:
@@ -2283,7 +2283,7 @@ class LicenseDebugger:
         except Exception as e:
             logger.exception(f"Sleep callback error: {e}")
 
-    def _delay_execution_callback(self, debugger: Any, debug_event: Any) -> None:
+    def _delay_execution_callback(self, debugger: object, debug_event: object) -> None:
         """Speed up delays with NtDelayExecution callback.
 
         Args:
@@ -2383,7 +2383,7 @@ class LicenseDebugger:
             logger.exception(f"Failed to bypass thread enumeration: {e}")
             return False
 
-    def _thread_enum_callback(self, debugger: Any, debug_event: Any) -> None:
+    def _thread_enum_callback(self, debugger: object, debug_event: object) -> None:
         """Handle thread enumeration API hooks.
 
         Args:
@@ -4336,7 +4336,7 @@ class LicenseDebugger:
             raise ValueError(f"Offset {offset} too large for near jump")
         raise ValueError(f"Invalid instruction size: {instruction_size}")
 
-    def generate_dynamic_patch(self, target_addr: int, patch_type: str, **kwargs: Any) -> bytes:
+    def generate_dynamic_patch(self, target_addr: int, patch_type: str, **kwargs: object) -> bytes:
         """Generate dynamic patches for various scenarios.
 
         Args:
@@ -4517,7 +4517,7 @@ class LicenseDebugger:
             logger.exception(f"Failed to relocate code: {e}")
             return code
 
-    def generate_shellcode(self, shellcode_type: str, **params: Any) -> bytes:
+    def generate_shellcode(self, shellcode_type: str, **params: object) -> bytes:
         """Generate various types of shellcode for injection.
 
         Args:

@@ -26,7 +26,7 @@ import signal
 import sys
 import tempfile
 import traceback
-from typing import Any
+from typing import Callable
 
 from PyQt6.QtWidgets import QInputDialog, QMessageBox
 
@@ -62,7 +62,7 @@ except ImportError as e:
         RLIMIT_STACK = 3  # Stack size limit
 
         @staticmethod
-        def getrlimit(resource_type):
+        def getrlimit(resource_type: int) -> tuple[float | int, float | int]:
             """Get resource limits (returns Windows defaults)."""
             # Windows doesn't have hard limits like Unix, return practical defaults
             # These values represent typical Windows process limits
@@ -77,7 +77,7 @@ except ImportError as e:
             return (1024 * 1024, 1024 * 1024)  # Default 1MB
 
         @staticmethod
-        def setrlimit(resource_type, limits) -> None:
+        def setrlimit(resource_type: int, limits: tuple[int, int]) -> None:
             """Set resource limits (no-op on Windows)."""
             # Windows doesn't support Unix-style resource limits
             # Process limits are controlled through Job Objects API instead
@@ -91,7 +91,7 @@ def log_message(msg: str) -> str:
     return f"[{msg}]"
 
 
-def load_plugins(plugin_dir: str = "intellicrack/intellicrack/plugins") -> dict[str, list[dict[str, Any]]]:
+def load_plugins(plugin_dir: str = "intellicrack/intellicrack/plugins") -> dict[str, list[dict[str, object]]]:
     """Load and initialize plugins from the plugin directory.
 
     Returns a dictionary of loaded plugins by category.
@@ -176,12 +176,23 @@ def load_plugins(plugin_dir: str = "intellicrack/intellicrack/plugins") -> dict[
     return plugins
 
 
-def run_plugin(app, plugin_name: str) -> None:
+def run_plugin(app: object, plugin_name: str) -> None:
     """Run a built-in plugin.
 
+    Executes a built-in plugin system that generates and injects API hooking
+    scripts for various licensing protection bypass techniques including HWID
+    spoofing, anti-debugger evasion, time bomb defusal, and telemetry blocking.
+
     Args:
-        app: Application instance
-        plugin_name: Name of the built-in plugin to run
+        app: Application instance with binary_path attribute and update_output signal
+        plugin_name: Name of the built-in plugin to run (HWID Spoofer, Anti-Debugger,
+            Time Bomb Defuser, or Telemetry Blocker)
+
+    Returns:
+        None
+
+    Raises:
+        None explicitly, but may emit error messages through app.update_output.emit()
 
     """
     if not app.binary_path:
@@ -228,12 +239,24 @@ def run_plugin(app, plugin_name: str) -> None:
         inject_comprehensive_api_hooks(app, script)
 
 
-def run_custom_plugin(app, plugin_info: dict[str, Any]) -> None:
+def run_custom_plugin(app: object, plugin_info: dict[str, object]) -> None:
     """Run a custom plugin with the current binary.
 
+    Loads and executes a custom Python plugin that implements analyze and optional
+    patch methods for binary analysis and modification. Handles both simple and
+    list-based results from plugin execution.
+
     Args:
-        app: Application instance
-        plugin_info: Plugin information dictionary
+        app: Application instance with binary_path attribute and update_output signal
+        plugin_info: Plugin information dictionary containing 'name', 'instance',
+            'module', and 'description' keys
+
+    Returns:
+        None
+
+    Raises:
+        None explicitly, but catches OSError, ValueError, RuntimeError, and
+        generic Exception during plugin execution
 
     """
     if not app.binary_path:
@@ -295,14 +318,28 @@ def run_custom_plugin(app, plugin_info: dict[str, Any]) -> None:
                 app.update_output.emit(log_message(traceback.format_exc()))
 
 
-def run_frida_plugin_from_file(app, plugin_path: str) -> None:
+def run_frida_plugin_from_file(app: object, plugin_path: str) -> None:
     """Run a Frida plugin script from a file.
 
-    Enhanced with robust PID finding and error handling.
+    Enhanced with robust PID finding and error handling for dynamic binary
+    instrumentation. Loads JavaScript Frida scripts, attaches to target processes,
+    and injects code for runtime analysis and modification of licensing protection
+    mechanisms. Handles process attachment, script loading, and message callbacks.
 
     Args:
-        app: Application instance
-        plugin_path: Path to the Frida script file
+        app: Application instance with binary_path attribute and update_output signal
+        plugin_path: Path to the Frida script file (.js) to be injected
+
+    Returns:
+        None
+
+    Raises:
+        frida.ProcessNotFoundError: If target process cannot be located
+        frida.TransportError: If Frida server connection fails
+        frida.InvalidArgumentError: If invalid arguments passed to Frida
+        frida.NotSupportedError: If operation unsupported by Frida
+        frida.ExecutableNotFoundError: If required executable not found
+        OSError, ValueError, RuntimeError: For file I/O and general execution errors
 
     """
     if not FRIDA_AVAILABLE:
@@ -347,10 +384,24 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
 
         script = session.create_script(script_content)
 
-        def on_message(message, data) -> None:
+        def on_message(message: dict[str, object], data: bytes | None) -> None:
             """Handle messages from a Frida script.
 
-            Adds the plugin name as a prefix to log messages and processes payloads.
+            Adds the plugin name as a prefix to log messages and processes payloads
+            received from Frida instrumentation scripts. Handles both 'send' messages
+            containing analysis results and 'error' messages from script failures.
+
+            Args:
+                message: Dictionary containing message metadata with 'type', 'payload',
+                    'description', and 'stack' keys
+                data: Optional binary data attached to the message
+
+            Returns:
+                None
+
+            Raises:
+                TypeError: If payload serialization to JSON fails
+
             """
             # Add plugin name prefix to logs
             prefix = f"[{plugin_name}]"
@@ -426,12 +477,22 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
                 logger.debug(f"Failed to detach Frida session during cleanup: {e}")
 
 
-def run_ghidra_plugin_from_file(app, plugin_path: str) -> None:
+def run_ghidra_plugin_from_file(app: object, plugin_path: str) -> None:
     """Run a Ghidra script on the current binary.
 
+    Executes Ghidra analysis scripts for static binary analysis including reverse
+    engineering and decompilation of licensing protection mechanisms. Creates temporary
+    projects, executes scripts, and processes output files.
+
     Args:
-        app: Application instance
-        plugin_path: Path to the Ghidra script file
+        app: Application instance with binary_path attribute and update_output signal
+        plugin_path: Path to the Ghidra script file (.java)
+
+    Returns:
+        None
+
+    Raises:
+        OSError, ValueError, RuntimeError: For script execution and cleanup errors
 
     """
     if not app.binary_path:
@@ -539,7 +600,18 @@ def create_sample_plugins(plugin_dir: str = "intellicrack/intellicrack/plugins")
 
 
 def _create_specialized_templates(plugin_dir: str) -> None:
-    """Create specialized plugin templates for different use cases."""
+    """Create specialized plugin templates for different use cases.
+
+    Generates template files for simple analysis, binary patching, and network
+    analysis plugins to aid users in creating custom license analysis tools.
+
+    Args:
+        plugin_dir: Directory to create plugin templates in
+
+    Returns:
+        None
+
+    """
     # Simple Analysis Plugin Template
     simple_template = '''"""
 Simple Analysis Plugin Template
@@ -1069,14 +1141,24 @@ def register():
     return create_plugin_template(plugin_name, "advanced")
 
 
-def _sandbox_worker(plugin_path: str, function_name: str, args: tuple, result_queue: multiprocessing.Queue) -> None:
+def _sandbox_worker(plugin_path: str, function_name: str, args: tuple[object, ...], result_queue: multiprocessing.Queue[tuple[str, object]]) -> None:
     """Worker function for sandboxed plugin execution.
 
+    Executes plugin code in an isolated subprocess with resource limits to prevent
+    runaway plugin code from consuming system resources. Applies CPU time, memory,
+    and file size limits on Unix systems.
+
     Args:
-        plugin_path: Path to the plugin module
-        function_name: Name of the function to execute
-        args: Arguments to pass to the function
-        result_queue: Queue to put results in
+        plugin_path: Path to the plugin module file
+        function_name: Name of the function to execute within the module
+        args: Tuple of arguments to pass to the function
+        result_queue: Multiprocessing queue for returning results
+
+    Returns:
+        None
+
+    Raises:
+        OSError, ValueError, RuntimeError: Caught and put in result_queue as ("error", str)
 
     """
     try:
@@ -1104,16 +1186,23 @@ def _sandbox_worker(plugin_path: str, function_name: str, args: tuple, result_qu
         result_queue.put(("error", str(e)))
 
 
-def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> list[str] | None:
+def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args: object) -> list[str] | None:
     """Run a plugin in a sandboxed process with resource limits.
 
+    Executes plugin code in an isolated subprocess to prevent resource exhaustion
+    or runaway execution from affecting the main application. Enforces CPU time
+    (30 seconds), memory (500MB), and file size (50MB) limits on Unix systems.
+
     Args:
-        plugin_path: Path to the plugin file
-        function_name: Name of the function to execute
-        *args: Arguments to pass to the function
+        plugin_path: Path to the plugin file to execute
+        function_name: Name of the function to execute within the plugin
+        *args: Variable-length arguments to pass to the function
 
     Returns:
-        List of strings with results, or None on error
+        List of strings containing plugin output on success, None on error or timeout
+
+    Raises:
+        None explicitly, but logs errors for subprocess communication failures
 
     """
     logger.info("Running plugin in sandbox: %s", plugin_path)
@@ -1152,15 +1241,22 @@ def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> list[s
         return ["No results returned from plugin"]
 
 
-def run_plugin_remotely(app, plugin_info: dict[str, Any]) -> list[str] | None:
+def run_plugin_remotely(app: object, plugin_info: dict[str, object]) -> list[str] | None:
     """Run a plugin on a remote system.
 
+    Executes a plugin on a remote system using network communication for distributed
+    binary analysis workflows. Connects to a remote plugin executor service and runs
+    the plugin code remotely.
+
     Args:
-        app: Application instance
-        plugin_info: Plugin information dictionary
+        app: Application instance with binary_path, update_output signal
+        plugin_info: Plugin information dictionary containing 'name' and 'path' keys
 
     Returns:
-        List of strings with results, or None on error
+        List of strings containing remote execution results, None on error
+
+    Raises:
+        OSError, ValueError, RuntimeError: For network and execution errors
 
     """
     # Check if remote plugins are enabled
@@ -1224,34 +1320,109 @@ def run_plugin_remotely(app, plugin_info: dict[str, Any]) -> list[str] | None:
 class PluginSystem:
     """Run plugin system class that encapsulates all plugin functionality.
 
-    This class provides a unified interface for plugin management in Intellicrack.
+    This class provides a unified interface for plugin management in Intellicrack,
+    including loading custom plugins, executing Frida/Ghidra scripts, sandboxing,
+    remote execution, and plugin discovery for software licensing analysis.
+
+    Attributes:
+        plugin_dir: Root directory containing plugin subdirectories
+        plugins: Cached dictionary of loaded plugins by category
+        logger: Logger instance for diagnostic output
+
     """
 
     def __init__(self, plugin_dir: str = "intellicrack/intellicrack/plugins") -> None:
-        """Initialize the plugin system."""
+        """Initialize the plugin system.
+
+        Args:
+            plugin_dir: Root directory containing plugin subdirectories
+
+        Returns:
+            None
+
+        """
         self.plugin_dir = plugin_dir
         self.plugins = None
         self.logger = logger
 
-    def load_plugins(self) -> dict[str, list[dict[str, Any]]]:
-        """Load and initialize plugins from the plugin directory."""
+    def load_plugins(self) -> dict[str, list[dict[str, object]]]:
+        """Load and initialize plugins from the plugin directory.
+
+        Scans plugin directories and loads custom Python modules, Frida scripts,
+        and Ghidra scripts. Returns a dictionary with 'frida', 'ghidra', and
+        'custom' categories.
+
+        Args:
+            None
+
+        Returns:
+            Dictionary mapping category names to lists of plugin information dicts
+
+        """
         self.plugins = load_plugins(self.plugin_dir)
         return self.plugins
 
-    def run_plugin(self, app, plugin_name: str) -> None:
-        """Run a built-in plugin."""
+    def run_plugin(self, app: object, plugin_name: str) -> None:
+        """Run a built-in plugin.
+
+        Executes one of the built-in protection bypass plugins for HWID spoofing,
+        anti-debugging, time bomb defusal, or telemetry blocking.
+
+        Args:
+            app: Application instance with binary_path and update_output signal
+            plugin_name: Name of the built-in plugin to execute
+
+        Returns:
+            None
+
+        """
         run_plugin(app, plugin_name)
 
-    def run_custom_plugin(self, app, plugin_info: dict[str, Any]) -> None:
-        """Run a custom plugin with the current binary."""
+    def run_custom_plugin(self, app: object, plugin_info: dict[str, object]) -> None:
+        """Run a custom plugin with the current binary.
+
+        Executes a custom Python plugin that implements analyze and optional patch
+        methods for binary modification and analysis.
+
+        Args:
+            app: Application instance with binary_path and update_output signal
+            plugin_info: Plugin information dictionary containing 'instance' key
+
+        Returns:
+            None
+
+        """
         run_custom_plugin(app, plugin_info)
 
-    def run_frida_plugin_from_file(self, app, plugin_path: str) -> None:
-        """Run a Frida plugin script from a file."""
+    def run_frida_plugin_from_file(self, app: object, plugin_path: str) -> None:
+        """Run a Frida plugin script from a file.
+
+        Loads a Frida JavaScript script from a file and injects it into a running
+        process for runtime instrumentation of licensing protection mechanisms.
+
+        Args:
+            app: Application instance with binary_path and update_output signal
+            plugin_path: Path to the Frida script file
+
+        Returns:
+            None
+
+        """
         run_frida_plugin_from_file(app, plugin_path)
 
     def find_plugin(self, plugin_name: str) -> str | None:
-        """Find a plugin by name and return its path."""
+        """Find a plugin by name and return its path.
+
+        Searches plugin directories for a plugin with the given name, supporting
+        Python and JavaScript files.
+
+        Args:
+            plugin_name: Name of the plugin to find (without extension)
+
+        Returns:
+            Full path to plugin file, or None if not found
+
+        """
         # Check custom modules directory
         custom_dir = os.path.join(self.plugin_dir, "custom_modules")
         if os.path.exists(custom_dir):
@@ -1271,30 +1442,98 @@ class PluginSystem:
 
         return None
 
-    def run_ghidra_plugin_from_file(self, app, plugin_path: str) -> None:
-        """Run a Ghidra script on the current binary."""
+    def run_ghidra_plugin_from_file(self, app: object, plugin_path: str) -> None:
+        """Run a Ghidra script on the current binary.
+
+        Executes a Ghidra analysis script for static binary analysis and reverse
+        engineering of licensing protection mechanisms.
+
+        Args:
+            app: Application instance with binary_path and update_output signal
+            plugin_path: Path to the Ghidra script file
+
+        Returns:
+            None
+
+        """
         run_ghidra_plugin_from_file(app, plugin_path)
 
     def create_sample_plugins(self) -> None:
-        """Create comprehensive sample plugin files for users to reference."""
+        """Create comprehensive sample plugin files for users to reference.
+
+        Generates template Python plugins in the custom_modules directory to help
+        users understand plugin development patterns.
+
+        Args:
+            None
+
+        Returns:
+            None
+
+        """
         create_sample_plugins(self.plugin_dir)
 
     @staticmethod
     def create_plugin_template(plugin_name: str, template_type: str = "advanced") -> str:
-        """Generate a plugin template based on the specified type."""
+        """Generate a plugin template based on the specified type.
+
+        Creates a template plugin with common structure for different plugin types.
+
+        Args:
+            plugin_name: Name for the generated plugin
+            template_type: Type of template (simple, advanced, patcher, network)
+
+        Returns:
+            String containing the plugin template code
+
+        """
         return create_plugin_template(plugin_name, template_type)
 
     @staticmethod
-    def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> list[str] | None:
-        """Run a plugin in a sandboxed process with resource limits."""
+    def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args: object) -> list[str] | None:
+        """Run a plugin in a sandboxed process with resource limits.
+
+        Executes plugin code in isolated subprocess with CPU, memory, and file size
+        restrictions to prevent runaway execution.
+
+        Args:
+            plugin_path: Path to the plugin file
+            function_name: Name of the function to execute
+            *args: Variable-length arguments to pass to the function
+
+        Returns:
+            List of strings with results, None on error or timeout
+
+        """
         return run_plugin_in_sandbox(plugin_path, function_name, *args)
 
-    def run_plugin_remotely(self, app, plugin_info: dict[str, Any]) -> list[str] | None:
-        """Run a plugin on a remote system."""
+    def run_plugin_remotely(self, app: object, plugin_info: dict[str, object]) -> list[str] | None:
+        """Run a plugin on a remote system.
+
+        Executes a plugin on a remote system for distributed binary analysis.
+
+        Args:
+            app: Application instance with binary_path and update_output signal
+            plugin_info: Plugin information dictionary
+
+        Returns:
+            List of strings with results, None on error
+
+        """
         return run_plugin_remotely(app, plugin_info)
 
     def discover_plugins(self) -> list[str]:
-        """Discover available plugins."""
+        """Discover available plugins.
+
+        Scans plugin directories for available plugins and returns list of names.
+
+        Args:
+            None
+
+        Returns:
+            List of discovered plugin names (without extensions)
+
+        """
         self.logger.info("Plugin discovery called")
         discovered = []
 
@@ -1316,8 +1555,19 @@ class PluginSystem:
 
         return discovered
 
-    def list_plugins(self) -> list[dict[str, Any]]:
-        """List installed plugins."""
+    def list_plugins(self) -> list[dict[str, object]]:
+        """List installed plugins.
+
+        Returns information about all loaded plugins organized by category.
+
+        Args:
+            None
+
+        Returns:
+            List of plugin information dictionaries with name, category, path,
+            description, and enabled status
+
+        """
         plugin_list = []
 
         # Load plugins if not already loaded
@@ -1340,7 +1590,22 @@ class PluginSystem:
         return plugin_list
 
     def install_plugin(self, plugin_name: str) -> bool:
-        """Install a plugin."""
+        """Install a plugin.
+
+        Installs a plugin from a URL, local file path, or builtin repository.
+        Supports Python and JavaScript plugins, downloading them to the appropriate
+        plugin directory.
+
+        Args:
+            plugin_name: URL, file path, or plugin repository name
+
+        Returns:
+            True if plugin installed successfully, False otherwise
+
+        Raises:
+            None explicitly, but logs all errors
+
+        """
         self.logger.info(f"Install plugin called: {plugin_name}")
 
         # Check if plugin already exists
@@ -1380,7 +1645,7 @@ class PluginSystem:
 
                 # Download the plugin
                 dest_path = os.path.join(dest_dir, filename)
-                urllib.request.urlretrieve(plugin_name, dest_path)  # noqa: S310  # Legitimate plugin download for security research tool
+                urllib.request.urlretrieve(plugin_name, dest_path)
 
                 # Verify the downloaded file
                 if os.path.exists(dest_path) and os.path.getsize(dest_path) > 0:
@@ -1443,8 +1708,25 @@ class PluginSystem:
 
         return plugin_installed
 
-    def execute_plugin(self, plugin_name: str, *args, **kwargs) -> Any:
-        """Execute a plugin."""
+    def execute_plugin(self, plugin_name: str, *args: object, **kwargs: object) -> object:
+        """Execute a plugin.
+
+        Finds and executes a plugin by name, handling both Python and JavaScript
+        (Frida) plugins. Automatically detects entry points and handles function
+        signature inspection for proper argument passing.
+
+        Args:
+            plugin_name: Name of the plugin to execute
+            *args: Variable-length arguments to pass to the plugin
+            **kwargs: Keyword arguments to pass to the plugin
+
+        Returns:
+            Result from plugin execution, or None if plugin not found or failed
+
+        Raises:
+            None explicitly, but logs all errors during plugin execution
+
+        """
         self.logger.info(f"Execute plugin called: {plugin_name}")
 
         # Find the plugin
@@ -1577,7 +1859,7 @@ class PluginSystem:
                     # Set up message handler
                     messages = []
 
-                    def on_message(message, data) -> None:
+                    def on_message(message: dict[str, Any], data: bytes | None) -> None:
                         messages.append({"message": message, "data": data})
                         if message["type"] == "send":
                             self.logger.info(f"Frida message: {message.get('payload', '')}")
@@ -1614,8 +1896,26 @@ class PluginSystem:
             self.logger.exception(f"Unsupported plugin type: {plugin_path}")
             return None
 
-    def execute_remote_plugin(self, plugin_url: str, *args, **kwargs) -> Any:
-        """Execute a remote plugin."""
+    def execute_remote_plugin(self, plugin_url: str, *args: object, **kwargs: object) -> object:
+        """Execute a remote plugin.
+
+        Downloads and executes a plugin from a remote URL. Performs security checks
+        including content type validation, size limits (10MB), and dangerous code
+        pattern detection before execution. Uses sandboxed execution with restricted
+        builtins.
+
+        Args:
+            plugin_url: URL to the remote plugin file
+            *args: Variable-length arguments to pass to the plugin
+            **kwargs: Keyword arguments to pass to the plugin
+
+        Returns:
+            Result from plugin execution, or None if download/execution fails
+
+        Raises:
+            None explicitly, but logs all errors during remote execution
+
+        """
         self.logger.info(f"Execute remote plugin called: {plugin_url}")
 
         try:
@@ -1646,14 +1946,14 @@ class PluginSystem:
             # Download the plugin with security checks
             try:
                 # Set up request with timeout and size limit
-                req = urllib.request.Request(  # noqa: S310  # Legitimate plugin download request for security research tool
+                req = urllib.request.Request(
                     plugin_url,
                     headers={
                         "User-Agent": "Intellicrack Plugin System/1.0",
                     },
                 )
 
-                with urllib.request.urlopen(req, timeout=30) as response:  # noqa: S310  # Legitimate plugin download for security research tool
+                with urllib.request.urlopen(req, timeout=30) as response:
                     # Check content size (limit to 10MB)
                     content_length = response.headers.get("Content-Length")
                     if content_length and int(content_length) > 10 * 1024 * 1024:
@@ -1739,8 +2039,26 @@ class PluginSystem:
             self.logger.debug(f"Traceback: {traceback.format_exc()}")
             return None
 
-    def execute_sandboxed_plugin(self, plugin_name: str, *args, **kwargs) -> Any:
-        """Execute a plugin in sandbox."""
+    def execute_sandboxed_plugin(self, plugin_name: str, *args: object, **kwargs: object) -> object:
+        """Execute a plugin in sandbox.
+
+        Executes a plugin in an isolated subprocess with restricted builtins and
+        resource limits. Supports both plugin names and full file paths. Enforces
+        CPU time (30 seconds), memory (512MB), and file size (50MB) limits.
+
+        Args:
+            plugin_name: Plugin name or full path to plugin file
+            *args: Variable-length arguments to pass to the plugin
+            **kwargs: Keyword arguments to pass to the plugin. Special key
+                'function_name' specifies the function to execute (default: 'execute')
+
+        Returns:
+            Plugin result, or None if plugin not found or execution failed
+
+        Raises:
+            None explicitly, but logs all errors during sandbox execution
+
+        """
         self.logger.info(f"Execute sandboxed plugin called: {plugin_name}")
 
         # Find the plugin - support both names and paths
@@ -1864,7 +2182,7 @@ finally:
             if sys.platform == "win32":
                 # Windows doesn't support resource limits, use process creation flags
                 CREATE_NO_WINDOW = 0x08000000
-                process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                process = subprocess.Popen(
                     [sys.executable, "-c", sandbox_code],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
@@ -1873,7 +2191,7 @@ finally:
                 )
             else:
                 # Unix-like systems with resource limits
-                process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                process = subprocess.Popen(
                     [sys.executable, "-c", sandbox_code],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
@@ -1933,8 +2251,8 @@ finally:
 try:
     from .plugin_config import PLUGIN_SYSTEM_EXPORTS
 
-    _plugin_system_exports = [str(item) for item in PLUGIN_SYSTEM_EXPORTS] if isinstance(PLUGIN_SYSTEM_EXPORTS, (list, tuple)) else []
-    __all__ = ["PluginSystem", "create_plugin_template", *_plugin_system_exports]
+    _plugin_system_exports: list[str] = ([str(item) for item in PLUGIN_SYSTEM_EXPORTS] if isinstance(PLUGIN_SYSTEM_EXPORTS, (list, tuple)) else []) if PLUGIN_SYSTEM_EXPORTS is not None else []
+    __all__: list[str] = ["PluginSystem", "create_plugin_template", *_plugin_system_exports]
 except ImportError as e:
     logger.exception(f"Import error in plugin_system, possibly due to missing plugin_config module: {e}")
     # Fallback in case of circular import issues

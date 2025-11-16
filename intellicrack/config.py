@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 _get_new_config = None
 
 
-def _ensure_config_manager_imported():
+def _ensure_config_manager_imported() -> object:
     """Lazy import of config_manager to avoid circular dependencies."""
     global _get_new_config
     if _get_new_config is None:
@@ -62,7 +62,7 @@ _modern_config = None
 _legacy_mode = False
 
 
-def _get_modern_config():
+def _get_modern_config() -> object:
     """Get the modern configuration instance.
 
     This internal function implements a singleton pattern to ensure only one
@@ -375,7 +375,7 @@ class ConfigManager:
         logger.debug("ConfigManager.save_config() called (modern config auto-saves).")
         return True
 
-    def get(self, key: str, default: Any = None) -> Any:
+    def get(self, key: str, default: object = None) -> object:
         """Get configuration value with legacy key support."""
         logger.debug(f"ConfigManager.get() called for key: '{key}'.")
         # Handle legacy key mappings
@@ -414,7 +414,7 @@ class ConfigManager:
         logger.debug(f"Key '{key}' not found in modern config, falling back to legacy structure. Result: '{result}'.")
         return result
 
-    def set(self, key: str, value: Any) -> None:
+    def set(self, key: str, value: object) -> None:
         """Set configuration value."""
         logger.debug(f"ConfigManager.set() called for key: '{key}', value: '{value}'.")
         # Update modern config
@@ -459,17 +459,17 @@ class ConfigManager:
         logger.debug(f"Tool '{tool_name}' availability: {available}.")
         return available
 
-    def get_logs_dir(self):
+    def get_logs_dir(self) -> object:
         """Get logs directory."""
         logger.debug("ConfigManager.get_logs_dir() called.")
         return self._modern_config.get_logs_dir()
 
-    def get_output_dir(self):
+    def get_output_dir(self) -> object:
         """Get output directory."""
         logger.debug("ConfigManager.get_output_dir() called.")
         return self._modern_config.get_output_dir()
 
-    def get_cache_dir(self):
+    def get_cache_dir(self) -> object:
         """Get cache directory."""
         logger.debug("ConfigManager.get_cache_dir() called.")
         return self._modern_config.get_cache_dir()
@@ -481,27 +481,27 @@ class ConfigManager:
         # Always return True for backward compatibility
         return True
 
-    def items(self):
+    def items(self) -> object:
         """Return items from the configuration dictionary."""
         logger.debug("ConfigManager.items() called.")
         return self.config.items()
 
-    def keys(self):
+    def keys(self) -> object:
         """Return keys from the configuration dictionary."""
         logger.debug("ConfigManager.keys() called.")
         return self.config.keys()
 
-    def values(self):
+    def values(self) -> object:
         """Return values from the configuration dictionary."""
         logger.debug("ConfigManager.values() called.")
         return self.config.values()
 
-    def __getitem__(self, key: str):
+    def __getitem__(self, key: str) -> object:
         """Allow dictionary-style access."""
         logger.debug(f"ConfigManager.__getitem__() called for key: '{key}'.")
         return self.get(key)
 
-    def __setitem__(self, key: str, value: Any) -> None:
+    def __setitem__(self, key: str, value: object) -> None:
         """Allow dictionary-style setting."""
         logger.debug(f"ConfigManager.__setitem__() called for key: '{key}', value: '{value}'.")
         self.set(key, value)
@@ -609,12 +609,12 @@ class _LazyConfig(dict):
         else:
             logger.debug("LazyConfig: Configuration already loaded.")
 
-    def __getitem__(self, key: str):
+    def __getitem__(self, key: str) -> object:
         self._ensure_loaded()
         logger.debug(f"LazyConfig: Accessing item with key '{key}'.")
         return super().__getitem__(key)
 
-    def __setitem__(self, key: str, value: Any) -> None:
+    def __setitem__(self, key: str, value: object) -> None:
         self._ensure_loaded()
         logger.debug(f"LazyConfig: Setting item with key '{key}' to value '{value}'.")
         return super().__setitem__(key, value)
@@ -624,22 +624,22 @@ class _LazyConfig(dict):
         logger.debug(f"LazyConfig: Checking containment for key '{key}'.")
         return super().__contains__(key)
 
-    def get(self, key: str, default: Any | None = None):
+    def get(self, key: str, default: object = None) -> object:
         self._ensure_loaded()
         logger.debug(f"LazyConfig: Getting item with key '{key}'.")
         return super().get(key, default)
 
-    def keys(self):
+    def keys(self) -> object:
         self._ensure_loaded()
         logger.debug("LazyConfig: Getting keys.")
         return super().keys()
 
-    def values(self):
+    def values(self) -> object:
         self._ensure_loaded()
         logger.debug("LazyConfig: Getting values.")
         return super().values()
 
-    def items(self):
+    def items(self) -> object:
         self._ensure_loaded()
         logger.debug("LazyConfig: Getting items.")
         return super().items()

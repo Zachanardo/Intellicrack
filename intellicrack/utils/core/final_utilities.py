@@ -28,7 +28,6 @@ import threading
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
 
 from intellicrack.handlers.numpy_handler import HAS_NUMPY
 from intellicrack.handlers.pyqt6_handler import HAS_PYQT, QFileDialog
@@ -88,7 +87,7 @@ logger = setup_logger(__name__)
 # === UI Functions ===
 
 
-def add_table(parent: Any, headers: list[str], data: list[list[Any]]) -> Any:
+def add_table(parent: object, headers: list[str], data: list[list[object]]) -> object:
     """Add a table widget to the parent UI element.
 
     Args:
@@ -116,7 +115,7 @@ def add_table(parent: Any, headers: list[str], data: list[list[Any]]) -> Any:
     return table
 
 
-def browse_dataset(parent: Any = None) -> str | None:
+def browse_dataset(parent: object | None = None) -> str | None:
     """Browse for a dataset file using file dialog.
 
     Args:
@@ -141,7 +140,7 @@ def browse_dataset(parent: Any = None) -> str | None:
     return file_path if file_path else None
 
 
-def browse_model(parent: Any = None) -> str | None:
+def browse_model(parent: object | None = None) -> str | None:
     """Browse for a model file using file dialog.
 
     Args:
@@ -164,7 +163,7 @@ def browse_model(parent: Any = None) -> str | None:
     return file_path if file_path else None
 
 
-def show_analysis_results(results: dict[str, Any], parent: Any = None) -> None:
+def show_analysis_results(results: dict[str, object], parent: object | None = None) -> None:
     """Display analysis results in a dialog.
 
     Args:
@@ -211,7 +210,7 @@ def update_training_progress(progress: float, message: str = "") -> None:
         logger.info("Training Progress: %.2f%%", progress)
 
 
-def update_visualization(data: Any, viz_type: str = "plot") -> None:
+def update_visualization(data: object, viz_type: str = "plot") -> None:
     """Update visualization with new data.
 
     Args:
@@ -226,7 +225,7 @@ def update_visualization(data: Any, viz_type: str = "plot") -> None:
 # === Analysis Functions ===
 
 
-def monitor_memory(process_name: str | None = None, threshold_mb: float = 1000.0) -> dict[str, Any]:
+def monitor_memory(process_name: str | None = None, threshold_mb: float = 1000.0) -> dict[str, object]:
     """Monitor memory usage of a process or the system.
 
     Args:
@@ -433,7 +432,7 @@ def get_resource_type(file_path: str) -> str:
     return "unknown"
 
 
-def cache_analysis_results(key: str, results: dict[str, Any], cache_dir: str = ".cache") -> bool:
+def cache_analysis_results(key: str, results: dict[str, object], cache_dir: str = ".cache") -> bool:
     """Cache analysis results to disk.
 
     Args:
@@ -464,7 +463,7 @@ def cache_analysis_results(key: str, results: dict[str, Any], cache_dir: str = "
         return False
 
 
-def get_captured_requests(limit: int = 100) -> list[dict[str, Any]]:
+def get_captured_requests(limit: int = 100) -> list[dict[str, object]]:
     """Get recently captured network requests from all active capture sources.
 
     This function aggregates network request data from multiple sources including
@@ -514,7 +513,7 @@ def get_captured_requests(limit: int = 100) -> list[dict[str, Any]]:
         return []
 
 
-def _get_protocol_handler_requests(limit: int) -> list[dict[str, Any]]:
+def _get_protocol_handler_requests(limit: int) -> list[dict[str, object]]:
     """Get requests from active license protocol handlers.
 
     Args:
@@ -624,7 +623,7 @@ def _get_protocol_handler_requests(limit: int) -> list[dict[str, Any]]:
     return request_list[:limit]
 
 
-def _get_network_interceptor_requests(limit: int) -> list[dict[str, Any]]:
+def _get_network_interceptor_requests(limit: int) -> list[dict[str, object]]:
     """Get requests from network traffic interceptors.
 
     Args:
@@ -676,7 +675,7 @@ def _get_network_interceptor_requests(limit: int) -> list[dict[str, Any]]:
     return request_list
 
 
-def _get_cached_capture_requests(limit: int) -> list[dict[str, Any]]:
+def _get_cached_capture_requests(limit: int) -> list[dict[str, object]]:
     """Get requests from cached capture files.
 
     Args:
@@ -730,7 +729,7 @@ def _get_cached_capture_requests(limit: int) -> list[dict[str, Any]]:
     return request_list[:limit]
 
 
-def _get_system_network_requests(limit: int) -> list[dict[str, Any]]:
+def _get_system_network_requests(limit: int) -> list[dict[str, object]]:
     """Get requests from system-level network monitoring.
 
     Args:
@@ -845,7 +844,7 @@ def _generate_realistic_response_data(req_type: str, protocol: str) -> str:
     return f"{req_type}_UDP_RESPONSE\\x00\\x01\\xFF\\xFF"
 
 
-def _enhance_request_metadata(request: dict[str, Any]) -> None:
+def _enhance_request_metadata(request: dict[str, object]) -> None:
     """Enhance request with additional metadata and analysis.
 
     Args:
@@ -881,7 +880,7 @@ def _enhance_request_metadata(request: dict[str, Any]) -> None:
         logger.debug("Error enhancing request metadata: %s", e)
 
 
-def _get_ip_geolocation(ip: str) -> dict[str, Any]:
+def _get_ip_geolocation(ip: str) -> dict[str, object]:
     """Get basic geolocation info for IP address.
 
     Args:
@@ -907,7 +906,7 @@ def _get_ip_geolocation(ip: str) -> dict[str, Any]:
     }
 
 
-def _analyze_protocol(protocol: str, request: dict[str, Any]) -> dict[str, Any]:
+def _analyze_protocol(protocol: str, request: dict[str, object]) -> dict[str, object]:
     """Analyze protocol-specific characteristics.
 
     Args:
@@ -938,7 +937,7 @@ def _analyze_protocol(protocol: str, request: dict[str, Any]) -> dict[str, Any]:
     return analysis
 
 
-def _assess_request_security(request: dict[str, Any]) -> list[str]:
+def _assess_request_security(request: dict[str, object]) -> list[str]:
     """Assess security characteristics of the request.
 
     Args:
@@ -977,7 +976,7 @@ def _assess_request_security(request: dict[str, Any]) -> list[str]:
     return flags
 
 
-def _analyze_request_timing(request: dict[str, Any]) -> dict[str, Any]:
+def _analyze_request_timing(request: dict[str, object]) -> dict[str, object]:
     """Analyze timing characteristics of the request.
 
     Args:
@@ -1043,7 +1042,7 @@ def _categorize_age(age_seconds: float) -> str:
     return "old"
 
 
-def force_memory_cleanup() -> dict[str, Any]:
+def force_memory_cleanup() -> dict[str, object]:
     """Force garbage collection and memory cleanup.
 
     Returns:
@@ -1072,7 +1071,7 @@ def force_memory_cleanup() -> dict[str, Any]:
     }
 
 
-def initialize_memory_optimizer(threshold_mb: float = 500.0) -> dict[str, Any]:
+def initialize_memory_optimizer(threshold_mb: float = 500.0) -> dict[str, object]:
     """Initialize memory optimization settings.
 
     Args:
@@ -1097,7 +1096,7 @@ def initialize_memory_optimizer(threshold_mb: float = 500.0) -> dict[str, Any]:
     return config
 
 
-def sandbox_process(command: list[str], timeout: int = 60) -> dict[str, Any]:
+def sandbox_process(command: list[str], timeout: int = 60) -> dict[str, object]:
     """Run a process in a sandboxed environment.
 
     Args:
@@ -1192,7 +1191,7 @@ def truncate_text(text: str, max_length: int = 100, suffix: str = "...") -> str:
     return text[: max_length - len(suffix)] + suffix
 
 
-def center_on_screen(widget: Any) -> None:
+def center_on_screen(widget: object) -> None:
     """Center a widget on the screen.
 
     Args:
@@ -1246,7 +1245,7 @@ def copy_to_clipboard(text: str) -> bool:
     return False
 
 
-def async_wrapper(func: Callable) -> Callable:
+def async_wrapper(func: Callable[..., None]) -> Callable[..., threading.Thread]:
     """Wrap to run a function asynchronously in a thread.
 
     Args:
@@ -1257,7 +1256,7 @@ def async_wrapper(func: Callable) -> Callable:
 
     """
 
-    def wrapped(*args, **kwargs):
+    def wrapped(*args: object, **kwargs: object) -> threading.Thread:
         """Inner wrapper function."""
         thread = threading.Thread(
             target=func,
@@ -1271,7 +1270,7 @@ def async_wrapper(func: Callable) -> Callable:
     return wrapped
 
 
-def hash_func(data: Any, algorithm: str = "sha256") -> str:
+def hash_func(data: object, algorithm: str = "sha256") -> str:
     """Provide hash function for any data type.
 
     Args:
@@ -1297,7 +1296,7 @@ def hash_func(data: Any, algorithm: str = "sha256") -> str:
 # === Report Functions ===
 
 
-def export_metrics(metrics: dict[str, Any], output_path: str) -> bool:
+def export_metrics(metrics: dict[str, object], output_path: str) -> bool:
     """Export metrics to a file.
 
     Args:
@@ -1317,7 +1316,7 @@ def export_metrics(metrics: dict[str, Any], output_path: str) -> bool:
         return False
 
 
-def submit_report(report_data: dict[str, Any], endpoint: str | None = None) -> dict[str, Any]:
+def submit_report(report_data: dict[str, object], endpoint: str | None = None) -> dict[str, object]:
     """Submit a comprehensive analysis report to an endpoint or save locally with full validation.
 
     This function handles report submission with multiple delivery methods including
@@ -1379,7 +1378,7 @@ def submit_report(report_data: dict[str, Any], endpoint: str | None = None) -> d
         return {"status": "error", "error": str(e), "timestamp": time.time()}
 
 
-def _validate_and_enhance_report(report_data: dict[str, Any]) -> dict[str, Any] | None:
+def _validate_and_enhance_report(report_data: dict[str, object]) -> dict[str, object] | None:
     """Validate and enhance report data before submission.
 
     Args:
@@ -1436,7 +1435,7 @@ def _validate_and_enhance_report(report_data: dict[str, Any]) -> dict[str, Any] 
         return None
 
 
-def _generate_report_id(report_data: dict[str, Any]) -> str:
+def _generate_report_id(report_data: dict[str, object]) -> str:
     """Generate unique report ID based on content and timestamp.
 
     Args:
@@ -1461,7 +1460,7 @@ def _generate_report_id(report_data: dict[str, Any]) -> str:
     return report_id
 
 
-def _create_submission_metadata(report_id: str, endpoint: str | None) -> dict[str, Any]:
+def _create_submission_metadata(report_id: str, endpoint: str | None) -> dict[str, object]:
     """Create comprehensive submission metadata.
 
     Args:
@@ -1485,7 +1484,7 @@ def _create_submission_metadata(report_id: str, endpoint: str | None) -> dict[st
     }
 
 
-def _submit_to_remote_endpoint(report_data: dict[str, Any], endpoint: str, report_id: str) -> dict[str, Any]:
+def _submit_to_remote_endpoint(report_data: dict[str, object], endpoint: str, report_id: str) -> dict[str, object]:
     """Submit report to remote endpoint with comprehensive handling."""
     try:
         # Parse endpoint URL
@@ -1566,7 +1565,7 @@ def _submit_to_remote_endpoint(report_data: dict[str, Any], endpoint: str, repor
         return {"status": "error", "error": str(e)}
 
 
-def _submit_to_local_storage(report_data: dict[str, Any], report_id: str) -> dict[str, Any]:
+def _submit_to_local_storage(report_data: dict[str, object], report_id: str) -> dict[str, object]:
     """Submit report to local storage with multiple format options."""
     try:
         # Create reports directory if it doesn't exist
@@ -1640,7 +1639,7 @@ def _submit_to_local_storage(report_data: dict[str, Any], report_id: str) -> dic
         return {"status": "error", "error": str(e)}
 
 
-def _handle_additional_delivery_methods(report_data: dict[str, Any], report_id: str) -> list[dict[str, Any]]:
+def _handle_additional_delivery_methods(report_data: dict[str, object], report_id: str) -> list[dict[str, object]]:
     """Handle additional delivery methods like email, cloud storage, etc."""
     additional_deliveries = []
 
@@ -1666,7 +1665,7 @@ def _handle_additional_delivery_methods(report_data: dict[str, Any], report_id: 
     return additional_deliveries
 
 
-def _attempt_email_delivery(report_data: dict[str, Any], report_id: str) -> dict[str, Any] | None:
+def _attempt_email_delivery(report_data: dict[str, object], report_id: str) -> dict[str, object] | None:
     """Attempt to deliver report via email."""
     # Check for email configuration
     email_config = os.environ.get("INTELLICRACK_EMAIL_CONFIG")
@@ -1733,7 +1732,7 @@ def _attempt_email_delivery(report_data: dict[str, Any], report_id: str) -> dict
         return None
 
 
-def _attempt_cloud_storage(report_data: dict[str, Any], report_id: str) -> dict[str, Any] | None:
+def _attempt_cloud_storage(report_data: dict[str, object], report_id: str) -> dict[str, object] | None:
     """Attempt to store report in cloud storage."""
     # Check for cloud storage configuration
     cloud_config = os.environ.get("INTELLICRACK_CLOUD_CONFIG")
@@ -1865,7 +1864,7 @@ def _attempt_cloud_storage(report_data: dict[str, Any], report_id: str) -> dict[
         }
 
 
-def _attempt_database_storage(report_data: dict[str, Any], report_id: str) -> dict[str, Any] | None:
+def _attempt_database_storage(report_data: dict[str, object], report_id: str) -> dict[str, object] | None:
     """Attempt to store report in database."""
     # Check for database configuration
     db_config = os.environ.get("INTELLICRACK_DB_CONFIG")
@@ -2082,7 +2081,7 @@ def _attempt_database_storage(report_data: dict[str, Any], report_id: str) -> di
         }
 
 
-def _generate_report_summary(report_data: dict[str, Any]) -> dict[str, Any]:
+def _generate_report_summary(report_data: dict[str, object]) -> dict[str, object]:
     """Generate a summary of the report data."""
     summary = {
         "total_sections": len(report_data),
@@ -2105,14 +2104,14 @@ def _generate_report_summary(report_data: dict[str, Any]) -> dict[str, Any]:
     return summary
 
 
-def _sanitize_report_data(report_data: dict[str, Any]) -> dict[str, Any]:
+def _sanitize_report_data(report_data: dict[str, object]) -> dict[str, object]:
     """Sanitize report data to remove sensitive information."""
     sanitized = report_data.copy()
 
     # Remove or mask sensitive keys
     sensitive_patterns = ["password", "key", "token", "secret", "credential"]
 
-    def sanitize_dict(data):
+    def sanitize_dict(data: object) -> object:
         if isinstance(data, dict):
             for key, value in data.items():
                 if any(pattern in key.lower() for pattern in sensitive_patterns):
@@ -2128,7 +2127,7 @@ def _sanitize_report_data(report_data: dict[str, Any]) -> dict[str, Any]:
     return sanitize_dict(sanitized)
 
 
-def _format_report_as_text(report_data: dict[str, Any]) -> str:
+def _format_report_as_text(report_data: dict[str, object]) -> str:
     """Format report data as human-readable text."""
     lines = []
     lines.append("INTELLICRACK ANALYSIS REPORT")
@@ -2155,10 +2154,10 @@ def _format_report_as_text(report_data: dict[str, Any]) -> str:
     lines.append("ANALYSIS CONTENT:")
     lines.append("-" * 30)
 
-    def format_value(value, indent=0):
+    def format_value(value: object, indent: int = 0) -> list[str]:
         indent_str = "  " * indent
         if isinstance(value, dict):
-            result = []
+            result: list[str] = []
             for k, v in value.items():
                 result.append(f"{indent_str}{k}:")
                 result.extend(format_value(v, indent + 1))
@@ -2179,7 +2178,7 @@ def _format_report_as_text(report_data: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def _save_report_as_csv(report_data: dict[str, Any], csv_path: str) -> bool:
+def _save_report_as_csv(report_data: dict[str, object], csv_path: str) -> bool:
     """Save report data as CSV format."""
     try:
         import csv
@@ -2215,7 +2214,7 @@ def _save_report_as_csv(report_data: dict[str, Any], csv_path: str) -> bool:
         return False
 
 
-def _create_report_archive(report_id: str, formats_saved: list[dict[str, Any]], archive_path: str) -> bool:
+def _create_report_archive(report_id: str, formats_saved: list[dict[str, object]], archive_path: str) -> bool:
     """Create compressed archive of all report formats."""
     _ = report_id
     try:
@@ -2236,7 +2235,7 @@ def _create_report_archive(report_id: str, formats_saved: list[dict[str, Any]], 
         return False
 
 
-def _create_submission_audit_trail(submission_result: dict[str, Any], metadata: dict[str, Any]) -> None:
+def _create_submission_audit_trail(submission_result: dict[str, object], metadata: dict[str, object]) -> None:
     """Create audit trail for report submission."""
     try:
         audit_entry = {
@@ -2270,7 +2269,7 @@ def _create_submission_audit_trail(submission_result: dict[str, Any], metadata: 
 # === Training Functions ===
 
 
-def start_training(model_config: dict[str, Any]) -> dict[str, Any]:
+def start_training(model_config: dict[str, object]) -> dict[str, object]:
     """Start model training with given configuration.
 
     Args:
@@ -2306,7 +2305,7 @@ def stop_training(training_id: str) -> bool:
     return True
 
 
-def on_training_finished(results: dict[str, Any]) -> None:
+def on_training_finished(results: dict[str, object]) -> None:
     """Handle callback for training finishes.
 
     Args:
@@ -2319,7 +2318,7 @@ def on_training_finished(results: dict[str, Any]) -> None:
 # === Model Functions ===
 
 
-def create_dataset(data: list[dict[str, Any]], format: str = "json") -> dict[str, Any]:  # pylint: disable=redefined-builtin
+def create_dataset(data: list[dict[str, object]], format: str = "json") -> dict[str, object]:  # pylint: disable=redefined-builtin
     """Create a dataset from raw data.
 
     Args:
@@ -2348,7 +2347,7 @@ def create_dataset(data: list[dict[str, Any]], format: str = "json") -> dict[str
     return dataset
 
 
-def augment_dataset(dataset: list[dict[str, Any]], augmentation_config: dict[str, Any]) -> list[dict[str, Any]]:
+def augment_dataset(dataset: list[dict[str, object]], augmentation_config: dict[str, object]) -> list[dict[str, object]]:
     """Augment a dataset with various techniques.
 
     Args:
@@ -2380,7 +2379,7 @@ def augment_dataset(dataset: list[dict[str, Any]], augmentation_config: dict[str
     return augmented
 
 
-def load_dataset_preview(dataset_path: str, limit: int = 10) -> list[dict[str, Any]]:
+def load_dataset_preview(dataset_path: str, limit: int = 10) -> list[dict[str, object]]:
     """Load a preview of a dataset.
 
     Args:
@@ -2411,7 +2410,7 @@ def load_dataset_preview(dataset_path: str, limit: int = 10) -> list[dict[str, A
         return []
 
 
-def create_full_feature_model(features: list[str], model_type: str = "ensemble") -> dict[str, Any]:
+def create_full_feature_model(features: list[str], model_type: str = "ensemble") -> dict[str, object]:
     """Create a model configuration with all features.
 
     Args:
@@ -2436,7 +2435,7 @@ def create_full_feature_model(features: list[str], model_type: str = "ensemble")
     }
 
 
-def predict_vulnerabilities(binary_features: dict[str, Any], model: Any | None = None) -> dict[str, Any]:
+def predict_vulnerabilities(binary_features: dict[str, object], model: object | None = None) -> dict[str, object]:
     """Predict vulnerabilities in a binary.
 
     Args:
@@ -2474,7 +2473,7 @@ def predict_vulnerabilities(binary_features: dict[str, Any], model: Any | None =
 # === Misc Functions ===
 
 
-def add_code_snippet(snippets: list[dict[str, Any]], title: str, code: str, language: str = "python") -> None:
+def add_code_snippet(snippets: list[dict[str, object]], title: str, code: str, language: str = "python") -> None:
     """Add a code snippet to a collection.
 
     Args:
@@ -2495,7 +2494,7 @@ def add_code_snippet(snippets: list[dict[str, Any]], title: str, code: str, lang
     )
 
 
-def add_dataset_row(dataset: list[dict[str, Any]], row: dict[str, Any]) -> None:
+def add_dataset_row(dataset: list[dict[str, object]], row: dict[str, object]) -> None:
     """Add a row to a dataset.
 
     Args:
@@ -2506,7 +2505,7 @@ def add_dataset_row(dataset: list[dict[str, Any]], row: dict[str, Any]) -> None:
     dataset.append(row)
 
 
-def add_image(document: Any, image_path: str, caption: str | None = None) -> bool:
+def add_image(document: object, image_path: str, caption: str | None = None) -> bool:
     """Add an image to a document.
 
     Args:
@@ -2525,7 +2524,7 @@ def add_image(document: Any, image_path: str, caption: str | None = None) -> boo
     return os.path.exists(image_path)
 
 
-def add_recommendations(report: dict[str, Any], recommendations: list[str]) -> None:
+def add_recommendations(report: dict[str, object], recommendations: list[str]) -> None:
     """Add recommendations to a report.
 
     Args:
@@ -2539,7 +2538,7 @@ def add_recommendations(report: dict[str, Any], recommendations: list[str]) -> N
     report["recommendations"].extend(recommendations)
 
 
-def showEvent(event: Any) -> None:
+def showEvent(event: object) -> None:
     """Handle widget show event.
 
     Args:
@@ -2561,7 +2560,7 @@ def patches_reordered(old_order: list[int], new_order: list[int]) -> None:
     logger.info("Patches reordered from %s to %s", old_order, new_order)
 
 
-def do_GET(request_handler: Any) -> None:
+def do_GET(request_handler: object) -> None:
     """Handle HTTP GET request.
 
     Args:
@@ -2574,7 +2573,7 @@ def do_GET(request_handler: Any) -> None:
     request_handler.wfile.write(b"Intellicrack Server Running")
 
 
-def show_simulation_results(results: dict[str, Any], display_mode: str = "console") -> None:
+def display_patch_validation_results(results: dict[str, object], display_mode: str = "console") -> None:
     """Display patch testing and validation results in various formats.
 
     Args:

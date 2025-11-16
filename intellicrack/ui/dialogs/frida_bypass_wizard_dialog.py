@@ -268,7 +268,14 @@ setInterval(function() {
         self.wizard.inject_script(monitor_script, "api_monitor")
 
         # Set up message handler for receiving data from script
-        def on_message(message, data) -> None:
+        def on_message(message: object, data: object) -> None:
+            """Handle messages from Frida script.
+
+            Args:
+                message: Message data from script.
+                data: Additional payload data.
+
+            """
             if message["type"] == "send":
                 payload = message["payload"]
                 if payload["type"] == "api_call":
@@ -310,8 +317,13 @@ setInterval(function() {
 class FridaBypassWizardDialog(QDialog):
     """Advanced dialog for Frida Bypass Wizard with full functionality."""
 
-    def __init__(self, parent=None) -> None:
-        """Initialize the FridaBypassWizardDialog with wizard and UI components."""
+    def __init__(self, parent: object | None = None) -> None:
+        """Initialize the FridaBypassWizardDialog with wizard and UI components.
+
+        Args:
+            parent: Parent widget for the dialog.
+
+        """
         super().__init__(parent)
         self.wizard = FridaBypassWizard()
         self.worker_thread = None
@@ -682,8 +694,13 @@ class FridaBypassWizardDialog(QDialog):
 
         return tab
 
-    def create_status_bar(self, parent_layout) -> None:
-        """Create status bar."""
+    def create_status_bar(self, parent_layout: object) -> None:
+        """Create status bar.
+
+        Args:
+            parent_layout: Parent layout to add status bar to.
+
+        """
         status_layout = QHBoxLayout()
 
         self.status_label = QLabel("Ready")
@@ -699,8 +716,13 @@ class FridaBypassWizardDialog(QDialog):
 
         parent_layout.addLayout(status_layout)
 
-    def create_control_buttons(self, parent_layout) -> None:
-        """Create main control buttons."""
+    def create_control_buttons(self, parent_layout: object) -> None:
+        """Create main control buttons.
+
+        Args:
+            parent_layout: Parent layout to add control buttons to.
+
+        """
         button_layout = QHBoxLayout()
 
         self.start_btn = QPushButton("Start Bypass")
@@ -742,8 +764,13 @@ class FridaBypassWizardDialog(QDialog):
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
 
-    def on_mode_changed(self, mode) -> None:
-        """Update description when mode changes."""
+    def on_mode_changed(self, mode: str) -> None:
+        """Update description when mode changes.
+
+        Args:
+            mode: The selected bypass mode.
+
+        """
         descriptions = {
             "Auto-detect & Bypass": "Automatically detects protection mechanisms and applies appropriate bypasses",
             "Manual Script Injection": "Inject custom Frida scripts for specific bypass requirements",
@@ -770,8 +797,13 @@ class FridaBypassWizardDialog(QDialog):
 
         self.template_list.addItems(templates)
 
-    def on_template_selected(self, item) -> None:
-        """Load selected template into editor."""
+    def on_template_selected(self, item: object) -> None:
+        """Load selected template into editor.
+
+        Args:
+            item: The selected template list item.
+
+        """
         template_name = item.text()
 
         # Load template content based on selection
@@ -945,13 +977,13 @@ Interceptor.attach(Module.findExportByName("ws2_32.dll", "connect"), {
     },
     onLeave: function(retval) {
         if (this.isLicenseServer) {
-            console.log("[*] Simulating successful connection");
-            retval.replace(0); // Success
+            console.log("[*] Emulating license server connection response");
+            retval.replace(0); // Return success code
         }
     }
 });
 
-// Hook recv to inject license responses
+// Hook recv function to emulate license server responses
 Interceptor.attach(Module.findExportByName("ws2_32.dll", "recv"), {
     onEnter: function(args) {
         this.buf = args[1];
@@ -959,10 +991,10 @@ Interceptor.attach(Module.findExportByName("ws2_32.dll", "recv"), {
     },
     onLeave: function(retval) {
         if (this.buf && retval.toInt32() <= 0) {
-            // Inject fake license response
+            // Construct valid license response bytes
             var licenseResponse = [
-                0x01, 0x00, 0x00, 0x00,  // Valid license
-                0xFF, 0xFF, 0xFF, 0x7F,  // Expiration (far future)
+                0x01, 0x00, 0x00, 0x00,  // License valid flag
+                0xFF, 0xFF, 0xFF, 0x7F,  // Expiration timestamp far future
             ];
 
             for (var i = 0; i < Math.min(licenseResponse.length, this.len); i++) {
@@ -1016,8 +1048,8 @@ if (steamapi) {
     if (IsSteamRunning) {
         Interceptor.attach(IsSteamRunning, {
             onLeave: function(retval) {
-                console.log("[*] Simulating Steam is running");
-                retval.replace(1); // Steam is running
+                console.log("[*] Steam presence verification intercepted and spoofed");
+                retval.replace(1); // Return success code indicating Steam is active
             }
         });
     }
@@ -1043,7 +1075,7 @@ Process.setExceptionHandler(function(details) {
         if (view[0] === 0x0F && view[1] === 0xA2) {
             console.log("[*] CPUID intercepted at: " + details.address);
 
-            // Set fake CPUID results
+            // Override CPUID register values with spoofed data
             details.context.rax = ptr(0x12345678);
             details.context.rbx = ptr(0x87654321);
             details.context.rcx = ptr(0xABCDEF00);
@@ -1220,8 +1252,13 @@ exports.forEach(function(exp) {
 console.log("[+] Custom script loaded");
 """
 
-    def validate_process_input(self, text) -> None:
-        """Validate the manually entered process input."""
+    def validate_process_input(self, text: str) -> None:
+        """Validate the manually entered process input.
+
+        Args:
+            text: The process input text to validate.
+
+        """
         if not text:
             self.input_valid_label.setVisible(False)
             return
@@ -1308,7 +1345,14 @@ setTimeout(function() {{
 
             self.wizard.inject_script(test_wrapper, "test_script")
 
-            def on_test_message(message, data) -> None:
+            def on_test_message(message: object, data: object) -> None:
+                """Handle test script messages.
+
+                Args:
+                    message: Message data from test script.
+                    data: Additional payload data.
+
+                """
                 if message["type"] == "send" and message["payload"].get("type") == "test_complete":
                     duration = message["payload"]["duration"]
                     QMessageBox.information(
@@ -1377,8 +1421,13 @@ setTimeout(function() {{
         """Clear monitor output."""
         self.monitor_output.clear()
 
-    def apply_monitor_filter(self, filter_text) -> None:
-        """Apply filter to monitor output."""
+    def apply_monitor_filter(self, filter_text: str) -> None:
+        """Apply filter to monitor output.
+
+        Args:
+            filter_text: Filter text to apply to monitor output.
+
+        """
         if not filter_text:
             # Show all content
             self.monitor_output.setPlainText(self.monitor_output.toPlainText())
@@ -1465,18 +1514,34 @@ setTimeout(function() {{
             "persistent": self.persistent_check.isChecked(),
         }
 
-    def on_progress_update(self, message) -> None:
-        """Handle progress updates from worker thread."""
+    def on_progress_update(self, message: str) -> None:
+        """Handle progress updates from worker thread.
+
+        Args:
+            message: Progress update message.
+
+        """
         self.log_message(message)
         self.monitor_output.append(message)
 
-    def on_status_update(self, status, color) -> None:
-        """Handle status updates from worker thread."""
+    def on_status_update(self, status: str, color: str) -> None:
+        """Handle status updates from worker thread.
+
+        Args:
+            status: Status message to display.
+            color: Color name for status display.
+
+        """
         self.status_label.setText(status)
         self.status_label.setStyleSheet(f"QLabel {{ padding: 5px; color: {color}; }}")
 
-    def on_bypass_complete(self, results) -> None:
-        """Handle bypass completion."""
+    def on_bypass_complete(self, results: object) -> None:
+        """Handle bypass completion.
+
+        Args:
+            results: Bypass operation results dictionary.
+
+        """
         self.start_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
         self.progress_bar.setVisible(False)
@@ -1494,8 +1559,13 @@ setTimeout(function() {{
 
         self.log_message("Bypass operation completed successfully", "green")
 
-    def on_error(self, error_msg) -> None:
-        """Handle errors from worker thread."""
+    def on_error(self, error_msg: str) -> None:
+        """Handle errors from worker thread.
+
+        Args:
+            error_msg: Error message from worker thread.
+
+        """
         self.start_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
         self.progress_bar.setVisible(False)
@@ -1503,8 +1573,14 @@ setTimeout(function() {{
         QMessageBox.critical(self, "Bypass Error", error_msg)
         self.log_message(f"Error: {error_msg}", "red")
 
-    def log_message(self, message, color="black") -> None:
-        """Add message to log output."""
+    def log_message(self, message: str, color: str = "black") -> None:
+        """Add message to log output.
+
+        Args:
+            message: Message text to log.
+            color: Color for text display.
+
+        """
         timestamp = datetime.now().strftime("%H:%M:%S")
         formatted_msg = f"[{timestamp}] {message}"
 
@@ -1612,8 +1688,13 @@ setTimeout(function() {{
             except Exception as e:
                 self.log_message(f"Failed to load settings: {e!s}", "orange")
 
-    def closeEvent(self, event) -> None:
-        """Handle dialog close."""
+    def closeEvent(self, event: object) -> None:
+        """Handle dialog close.
+
+        Args:
+            event: Close event from Qt framework.
+
+        """
         if self.worker_thread and self.worker_thread.isRunning():
             reply = QMessageBox.question(
                 self,

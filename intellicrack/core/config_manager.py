@@ -84,6 +84,8 @@ class IntellicrackConfig:
         self.logger.info("IntellicrackConfig: Initializing configuration manager.")
         self._config = {}
         self._config_lock = threading.RLock()
+        self._runtime_state: dict[str, Any] = {}
+        self._runtime_state_lock = threading.RLock()
         self.auto_save = True
 
         self.config_dir = self._get_user_config_dir()
@@ -115,10 +117,13 @@ class IntellicrackConfig:
             self.logger.debug(f"IntellicrackConfig: Found INTELLICRACK_ROOT environment variable: {intellicrack_root_env}")
             return Path(intellicrack_root_env)
 
-        import intellicrack
-        root = Path(intellicrack.__file__).parent.parent
-        self.logger.debug(f"IntellicrackConfig: Determined Intellicrack root from package location: {root}")
-        return root
+        try:
+            root = Path(__file__).parent.parent.parent
+            self.logger.debug(f"IntellicrackConfig: Determined Intellicrack root from module location: {root}")
+            return root
+        except (AttributeError, OSError) as e:
+            self.logger.error(f"Failed to determine Intellicrack root: {e}")
+            return Path.cwd()
 
     def _get_user_config_dir(self) -> Path:
         """Get platform-appropriate user config directory."""
@@ -455,9 +460,74 @@ class IntellicrackConfig:
         return self.cache_dir
 
     def _get_runtime_state_property(self, key: str, default: Any = None) -> Any:
-        # Placeholder for runtime state property retrieval
-        return self.get(f"runtime_state.{key}", default)
+        """Get a runtime state property value.
+
+        Runtime state is stored in-memory only and not persisted to configuration files.
+        This is used for transient application state that should not survive process restarts.
+
+        Args:
+            key: Dot-separated property path (e.g., 'analyzer.active_session_id')
+            default: Default value if property doesn't exist
+
+        Returns:
+            The property value or default if not found
+
+        """
+        with self._runtime_state_lock:
+            keys = key.split('.')
+            current = self._runtime_state
+
+            for k in keys[:-1]:
+                if k not in current:
+                    return default
+                current = current.get(k, {})
+                if not isinstance(current, dict):
+                    return default
+
+            return current.get(keys[-1], default)
 
     def _set_runtime_state_property(self, key: str, value: Any) -> None:
-        # Placeholder for runtime state property setting
-        self.set(f"runtime_state.{key}", value)
+        """Set a runtime state property value.
+
+        Runtime state is stored in-memory only and not persisted to configuration files.
+        This is used for transient application state that should not survive process restarts.
+
+        Args:
+            key: Dot-separated property path (e.g., 'analyzer.active_session_id')
+            value: Value to set
+
+        """
+        with self._runtime_state_lock:
+            keys = key.split('.')
+            current = self._runtime_state
+
+            for k in keys[:-1]:
+                if k not in current:
+                    current[k] = {}
+                elif not isinstance(current[k], dict):
+                    current[k] = {}
+                current = current[k]
+
+            current[keys[-1]] = value
+
+
+_config_instance: IntellicrackConfig | None = None
+_config_lock = threading.Lock()
+
+
+def get_config() -> IntellicrackConfig:
+    """Get the singleton configuration instance.
+
+    Returns:
+        IntellicrackConfig: The global configuration instance
+
+    """
+    global _config_instance
+    if _config_instance is None:
+        with _config_lock:
+            if _config_instance is None:
+                _config_instance = IntellicrackConfig()
+    return _config_instance
+
+
+__all__ = ['IntellicrackConfig', 'get_config']

@@ -27,11 +27,46 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Protocol
 
 from intellicrack.utils.subprocess_security import secure_run
 
 logger = logging.getLogger(__name__)
+
+
+class OrchestratorLike(Protocol):
+    """Protocol defining the interface for orchestrator objects in script generation workflows.
+
+    This protocol specifies the contract that orchestrator implementations must follow
+    for autonomous script generation and processing in the licensing cracking analysis pipeline.
+    """
+
+    def process_request(self, request: str) -> dict[str, Any]:
+        """Process an autonomous script generation request.
+
+        Args:
+            request: The script generation request description
+
+        Returns:
+            Dictionary containing the result of processing the request
+
+        """
+        pass
+
+
+class PEFile(Protocol):
+    """Protocol for PE file objects from pefile module."""
+
+    DIRECTORY_ENTRY_RESOURCE: Any
+
+    def __init__(self, filename: str) -> None: ...
+
+
+class ResourceDirectory(Protocol):
+    """Protocol for PE resource directory objects."""
+
+    entries: list[Any]
+
 
 # Import performance optimizer
 try:
@@ -428,8 +463,15 @@ def _identify_auto_generation_candidates(analysis_results: dict[str, Any]) -> li
     return candidates
 
 
-def _trigger_autonomous_script_generation(orchestrator, analysis_results: dict[str, Any], binary_path: str) -> None:
-    """Trigger autonomous script generation for high-confidence scenarios."""
+def _trigger_autonomous_script_generation(orchestrator: OrchestratorLike, analysis_results: dict[str, Any], binary_path: str) -> None:
+    """Trigger autonomous script generation for high-confidence scenarios.
+
+    Args:
+        orchestrator: Orchestrator instance for managing script generation workflow
+        analysis_results: Dictionary containing analysis findings and metrics
+        binary_path: Path to the binary being analyzed
+
+    """
     try:
         from ...ai.script_generation_agent import AIAgent
 
@@ -1126,7 +1168,7 @@ def _try_import_pyshark() -> bool | None:
         return False
 
 
-def _is_suspicious_connection(src_ip, dst_ip, port) -> bool:
+def _is_suspicious_connection(src_ip: str, dst_ip: str, port: int) -> bool:
     """Check if connection is suspicious."""
     # Log connection details for debugging
     logger.debug(f"Checking connection from {src_ip} to {dst_ip}:{port}")
@@ -1144,7 +1186,7 @@ def _is_suspicious_connection(src_ip, dst_ip, port) -> bool:
     return bool(src_ip in ["127.0.0.1", "::1"] and not dst_ip.startswith(("127.", "::1", "localhost")))
 
 
-def _get_suspicious_reason(ip, port) -> str:
+def _get_suspicious_reason(ip: str, port: int) -> str:
     """Get reason why connection is suspicious."""
     # Include IP in analysis for more specific reasons
     if port in [4444, 4445, 8888, 9999, 1337, 31337]:
@@ -1198,12 +1240,26 @@ def check_suspicious_import(func_name: str, dll_name: str, suspicious_list: list
         suspicious_list.append(f"{dll_name}!{func_name} - {suspicious_imports[func_name]}")
 
 
-def analyze_pe_resources(pe) -> list[dict[str, Any]]:
-    """Analyze PE resources."""
-    resources = []
+def analyze_pe_resources(pe: PEFile) -> list[dict[str, Any]]:
+    """Analyze PE resources.
 
-    def walk_resources(directory, level=0) -> None:
-        """Recursively walk resource directory tree."""
+    Args:
+        pe: PE file object from pefile module
+
+    Returns:
+        List of resource dictionaries containing type, size, language information
+
+    """
+    resources: list[dict[str, Any]] = []
+
+    def walk_resources(directory: ResourceDirectory, level: int = 0) -> None:
+        """Recursively walk resource directory tree.
+
+        Args:
+            directory: Resource directory entry to traverse
+            level: Current depth level in resource tree hierarchy
+
+        """
         logger.debug(f"Walking resources at level {level}")
 
         for entry in directory.entries:
@@ -1404,8 +1460,17 @@ def scan_binary(binary_path: str, signatures: dict[str, bytes] | None = None) ->
 
 
 # Optimized analysis functions for performance optimizer
-def _optimized_basic_analysis(data, chunk_info=None) -> dict[str, Any]:
-    """Optimized basic binary analysis for chunks."""
+def _optimized_basic_analysis(data: bytes, chunk_info: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Optimized basic binary analysis for chunks.
+
+    Args:
+        data: Binary data chunk to analyze
+        chunk_info: Metadata about the chunk being analyzed
+
+    Returns:
+        Dictionary with analysis status, findings, and chunk information
+
+    """
     try:
         results = {"status": "success", "findings": [], "chunk_info": chunk_info}
 
@@ -1430,8 +1495,17 @@ def _optimized_basic_analysis(data, chunk_info=None) -> dict[str, Any]:
         return {"status": "failed", "error": str(e)}
 
 
-def _optimized_string_analysis(data, chunk_info=None) -> dict[str, Any]:
-    """Optimized string analysis for chunks."""
+def _optimized_string_analysis(data: bytes, chunk_info: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Optimized string analysis for chunks.
+
+    Args:
+        data: Binary data chunk to analyze
+        chunk_info: Metadata about the chunk being analyzed
+
+    Returns:
+        Dictionary with extracted strings and license-related keywords
+
+    """
     try:
         results = {
             "status": "success",
@@ -1479,8 +1553,17 @@ def _optimized_string_analysis(data, chunk_info=None) -> dict[str, Any]:
         return {"status": "failed", "error": str(e)}
 
 
-def _optimized_entropy_analysis(data, chunk_info=None) -> dict[str, Any]:
-    """Optimized entropy analysis for chunks."""
+def _optimized_entropy_analysis(data: bytes, chunk_info: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Optimized entropy analysis for chunks.
+
+    Args:
+        data: Binary data chunk to analyze
+        chunk_info: Metadata about the chunk being analyzed
+
+    Returns:
+        Dictionary with calculated entropy value and compression/encryption classification
+
+    """
     try:
         results = {"status": "success", "findings": [], "entropy": 0.0, "chunk_info": chunk_info}
 
@@ -1516,8 +1599,17 @@ def _optimized_entropy_analysis(data, chunk_info=None) -> dict[str, Any]:
         return {"status": "failed", "error": str(e)}
 
 
-def _optimized_section_analysis(data, chunk_info=None) -> dict[str, Any]:
-    """Optimized section analysis for chunks."""
+def _optimized_section_analysis(data: bytes, chunk_info: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Optimized section analysis for chunks.
+
+    Args:
+        data: Binary data chunk to analyze
+        chunk_info: Metadata about the chunk being analyzed
+
+    Returns:
+        Dictionary with detected section headers and findings
+
+    """
     try:
         results = {
             "status": "success",
@@ -1550,8 +1642,17 @@ def _optimized_section_analysis(data, chunk_info=None) -> dict[str, Any]:
         return {"status": "failed", "error": str(e)}
 
 
-def _optimized_import_analysis(data, chunk_info=None) -> dict[str, Any]:
-    """Optimized import analysis for chunks."""
+def _optimized_import_analysis(data: bytes, chunk_info: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Optimized import analysis for chunks.
+
+    Args:
+        data: Binary data chunk to analyze
+        chunk_info: Metadata about the chunk being analyzed
+
+    Returns:
+        Dictionary with detected DLL imports and suspicious function calls
+
+    """
     try:
         results = {
             "status": "success",
@@ -1589,8 +1690,17 @@ def _optimized_import_analysis(data, chunk_info=None) -> dict[str, Any]:
         return {"status": "failed", "error": str(e)}
 
 
-def _optimized_pattern_analysis(data, chunk_info=None) -> dict[str, Any]:
-    """Optimized pattern analysis for chunks."""
+def _optimized_pattern_analysis(data: bytes, chunk_info: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Optimized pattern analysis for chunks.
+
+    Args:
+        data: Binary data chunk to analyze
+        chunk_info: Metadata about the chunk being analyzed
+
+    Returns:
+        Dictionary with detected binary patterns and special markers
+
+    """
     try:
         results = {
             "status": "success",
@@ -1600,19 +1710,33 @@ def _optimized_pattern_analysis(data, chunk_info=None) -> dict[str, Any]:
         }
 
         if isinstance(data, bytes):
-            # Look for common patterns
-            patterns = {
-                b"\x90" * 10: "NOP sled detected",
-                b"\x00" * 50: "Large null sequence detected",
-                b"\xff" * 20: "Fill pattern detected",
-                b"DEADBEEF": "Debug marker detected",
-                b"This program cannot be run in DOS mode": "DOS stub detected",
-            }
+            # Detect NOP sleds (common in buffer overflows and code injection)
+            if b"\x90" * 10 in data:
+                results["patterns_found"].append("NOP sled detected")
+                results["findings"].append("NOP sled detected")
 
-            for pattern, description in patterns.items():
-                if pattern in data:
-                    results["patterns_found"].append(description)
-                    results["findings"].append(description)
+            # Detect large null sequences (padding, alignment, or uninitialized data)
+            if b"\x00" * 50 in data:
+                results["patterns_found"].append("Large null sequence detected")
+                results["findings"].append("Large null sequence detected")
+
+            # Detect fill patterns (typically 0xFF in padding regions)
+            if b"\xff" * 20 in data:
+                results["patterns_found"].append("Fill pattern detected")
+                results["findings"].append("Fill pattern detected")
+
+            # Detect DEADBEEF debug marker
+            if b"DEADBEEF" in data:
+                results["patterns_found"].append("Debug marker detected")
+                results["findings"].append("Debug marker detected")
+
+            # Detect legacy DOS header compatibility string in PE files
+            # This error message is hardcoded in the DOS executable header of PE files
+            # to maintain backward compatibility with DOS systems
+            dos_error_message = b"This program cannot be run in DOS mode"
+            if dos_error_message in data:
+                results["patterns_found"].append("DOS error message detected")
+                results["findings"].append("DOS error message detected")
 
         return results
     except (OSError, ValueError, RuntimeError) as e:
@@ -1738,7 +1862,7 @@ def _get_elf_entry_point(binary_path: str) -> int:
 
 
 def disassemble_with_objdump(
-    binary_path: str, extra_args: list[str] | None = None, timeout: int = 30, parse_func=None,
+    binary_path: str, extra_args: list[str] | None = None, timeout: int = 30, parse_func: Callable[[str], list[Any]] | None = None,
 ) -> list[Any] | None:
     """Provide objdump disassembly fallback function.
 
@@ -1746,7 +1870,7 @@ def disassemble_with_objdump(
         binary_path: Path to binary file
         extra_args: Additional objdump arguments (e.g., ['--no-show-raw-insn'])
         timeout: Command timeout in seconds
-        parse_func: Function to parse objdump output (should accept stdout string)
+        parse_func: Optional function to parse objdump output (accepts stdout string, returns list of instructions)
 
     Returns:
         List of parsed instructions or None if objdump fails

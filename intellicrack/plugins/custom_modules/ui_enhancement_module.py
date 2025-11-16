@@ -385,11 +385,11 @@ class LogViewer:
             self.text_widget.tag_add("SEARCH_HIGHLIGHT", highlight_start, highlight_end)
             start_idx = idx + 1
 
-    def on_search(self, event=None) -> None:
+    def on_search(self, event: tk.Event | None = None) -> None:
         """Handle search input."""
         self.refresh_display()
 
-    def on_filter_change(self, event=None) -> None:
+    def on_filter_change(self, event: tk.Event | None = None) -> None:
         """Handle filter change."""
         self.refresh_display()
 
@@ -538,7 +538,7 @@ class ProgressTracker:
 class FileExplorerPanel:
     """Enhanced file explorer with analysis integration."""
 
-    def __init__(self, parent: tk.Widget, config: UIConfig, ui_controller) -> None:
+    def __init__(self, parent: tk.Widget, config: UIConfig, ui_controller: object) -> None:
         """Initialize enhanced file explorer with analysis integration."""
         self.parent = parent
         self.config = config
@@ -785,7 +785,7 @@ class FileExplorerPanel:
             size /= 1024.0
         return f"{size:.1f} PB"
 
-    def on_double_click(self, event) -> None:
+    def on_double_click(self, event: tk.Event) -> None:
         """Handle double-click on tree item."""
         item = self.tree.selection()[0]
         item_path = Path(self.tree.set(item, "path"))
@@ -797,21 +797,21 @@ class FileExplorerPanel:
             # Analyze file
             self.analyze_file(item_path)
 
-    def on_right_click(self, event) -> None:
+    def on_right_click(self, event: tk.Event) -> None:
         """Handle right-click on tree item."""
         item = self.tree.identify_row(event.y)
         if item:
             self.tree.selection_set(item)
             self.context_menu.post(event.x_root, event.y_root)
 
-    def on_selection_change(self, event) -> None:
+    def on_selection_change(self, event: tk.Event) -> None:
         """Handle selection change."""
         selection = self.tree.selection()
         if selection:
             item_path = Path(self.tree.set(selection[0], "path"))
             self.status_label.config(text=str(item_path))
 
-    def on_path_change(self, event) -> None:
+    def on_path_change(self, event: tk.Event) -> None:
         """Handle path entry change."""
         try:
             new_path = Path(self.path_var.get())
@@ -892,7 +892,7 @@ class FileExplorerPanel:
 class AnalysisViewerPanel:
     """Central analysis viewer with real-time updates."""
 
-    def __init__(self, parent: tk.Widget, config: UIConfig, ui_controller) -> None:
+    def __init__(self, parent: tk.Widget, config: UIConfig, ui_controller: object) -> None:
         """Initialize central analysis viewer with real-time updates."""
         self.parent = parent
         self.config = config
@@ -1151,7 +1151,7 @@ class AnalysisViewerPanel:
         for item in self.details_tree.get_children():
             self.details_tree.item(item, open=True)
 
-    def update_visualization(self, event=None) -> None:
+    def update_visualization(self, event: tk.Event | None = None) -> None:
         """Update visualization based on current chart type."""
         if not self.current_analysis:
             return
@@ -1235,7 +1235,7 @@ class AnalysisViewerPanel:
         if items:
             self.history_tree.see(items[-1])
 
-    def on_details_select(self, event) -> None:
+    def on_details_select(self, event: tk.Event) -> None:
         """Handle details tree selection."""
         selection = self.details_tree.selection()
         if selection:
@@ -1262,7 +1262,7 @@ class AnalysisViewerPanel:
             self.details_text.delete(1.0, tk.END)
             self.details_text.insert(1.0, details_content)
 
-    def on_history_double_click(self, event) -> None:
+    def on_history_double_click(self, event: tk.Event) -> None:
         """Handle history double-click to view details."""
         selection = self.history_tree.selection()
         if selection:
@@ -1372,7 +1372,7 @@ class AnalysisViewerPanel:
 class ScriptGeneratorPanel:
     """Script generation and management panel."""
 
-    def __init__(self, parent: tk.Widget, config: UIConfig, ui_controller) -> None:
+    def __init__(self, parent: tk.Widget, config: UIConfig, ui_controller: object) -> None:
         """Initialize script generation and management panel."""
         self.parent = parent
         self.config = config
@@ -1617,7 +1617,7 @@ class ScriptGeneratorPanel:
         ttk.Button(action_frame, text="Save Script", command=self.save_custom_script).pack(side=tk.LEFT, padx=5)
         ttk.Button(action_frame, text="Load Script", command=self.load_custom_script).pack(side=tk.LEFT, padx=5)
 
-    def setup_js_syntax_highlighting(self, text_widget) -> None:
+    def setup_js_syntax_highlighting(self, text_widget: tk.Text) -> None:
         """Configure JavaScript syntax highlighting."""
         # Define color schemes for different elements
         text_widget.tag_configure("keyword", foreground="#569cd6")
@@ -1657,7 +1657,7 @@ class ScriptGeneratorPanel:
         # Bind highlighting
         text_widget.bind("<KeyRelease>", lambda e: self.highlight_syntax(text_widget, js_keywords))
 
-    def setup_java_syntax_highlighting(self, text_widget) -> None:
+    def setup_java_syntax_highlighting(self, text_widget: tk.Text) -> None:
         """Configure Java syntax highlighting."""
         text_widget.tag_configure("keyword", foreground="#569cd6")
         text_widget.tag_configure("string", foreground="#ce9178")
@@ -1703,7 +1703,7 @@ class ScriptGeneratorPanel:
 
         text_widget.bind("<KeyRelease>", lambda e: self.highlight_syntax(text_widget, java_keywords))
 
-    def setup_python_syntax_highlighting(self, text_widget) -> None:
+    def setup_python_syntax_highlighting(self, text_widget: tk.Text) -> None:
         """Configure Python syntax highlighting."""
         text_widget.tag_configure("keyword", foreground="#569cd6")
         text_widget.tag_configure("string", foreground="#ce9178")
@@ -1741,7 +1741,7 @@ class ScriptGeneratorPanel:
 
         text_widget.bind("<KeyRelease>", lambda e: self.highlight_syntax(text_widget, python_keywords))
 
-    def highlight_syntax(self, text_widget, keywords) -> None:
+    def highlight_syntax(self, text_widget: tk.Text, keywords: list[str]) -> None:
         """Apply basic syntax highlighting to text widget."""
         content = text_widget.get(1.0, tk.END)
 
@@ -1886,7 +1886,7 @@ class ScriptGeneratorPanel:
             },
         )
 
-    def on_language_change(self, event=None) -> None:
+    def on_language_change(self, event: tk.Event | None = None) -> None:
         """Handle language change for custom scripts."""
         language = self.custom_lang_var.get()
 
@@ -2688,7 +2688,7 @@ if __name__ == "__main__":
 
                 script_obj = session.create_script(script)
 
-                def on_message(message, data) -> None:
+                def on_message(message: dict[str, Any], data: object) -> None:
                     if message['type'] == 'send':
                         payload = message.get('payload', '')
                         self.root.after(0, lambda: self.log_viewer.add_log("INFO", str(payload), "Frida"))

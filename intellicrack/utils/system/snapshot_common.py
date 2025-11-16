@@ -19,20 +19,26 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 Common snapshot comparison utilities to avoid code duplication.
 """
 
+import logging
 from typing import Any
 
 
-def validate_snapshots(snapshots_dict, snapshot1, snapshot2, logger=None):
+def validate_snapshots(
+    snapshots_dict: dict[str, Any],
+    snapshot1: str,
+    snapshot2: str,
+    logger: logging.Logger | None = None,
+) -> tuple[bool, str | None]:
     """Validate that both snapshots exist.
 
     Args:
-        snapshots_dict: Dictionary containing snapshots
-        snapshot1: Name of first snapshot
-        snapshot2: Name of second snapshot
-        logger: Optional logger instance
+        snapshots_dict: Dictionary containing snapshots.
+        snapshot1: Name of first snapshot.
+        snapshot2: Name of second snapshot.
+        logger: Optional logger instance.
 
     Returns:
-        tuple: (is_valid, error_message)
+        Tuple containing validation status and error message (None if valid).
 
     """
     if snapshot1 not in snapshots_dict:
@@ -50,13 +56,15 @@ def validate_snapshots(snapshots_dict, snapshot1, snapshot2, logger=None):
     return True, None
 
 
-def log_comparison_start(snapshot1, snapshot2, logger=None) -> None:
+def log_comparison_start(
+    snapshot1: str, snapshot2: str, logger: logging.Logger | None = None
+) -> None:
     """Log the start of snapshot comparison.
 
     Args:
-        snapshot1: Name of first snapshot
-        snapshot2: Name of second snapshot
-        logger: Optional logger instance
+        snapshot1: Name of first snapshot.
+        snapshot2: Name of second snapshot.
+        logger: Optional logger instance.
 
     """
     if logger:
@@ -64,19 +72,22 @@ def log_comparison_start(snapshot1, snapshot2, logger=None) -> None:
 
 
 def start_snapshot_comparison(
-    snapshots_dict: dict[str, Any], snapshot1: str, snapshot2: str, logger=None,
-) -> tuple[bool, dict | None, str | None]:
+    snapshots_dict: dict[str, Any],
+    snapshot1: str,
+    snapshot2: str,
+    logger: logging.Logger | None = None,
+) -> tuple[bool, dict[str, Any] | None, str | None]:
     """Start snapshot comparison with validation and logging.
 
     Args:
-        snapshots_dict: Dictionary containing snapshots
-        snapshot1: Name of first snapshot
-        snapshot2: Name of second snapshot
-        logger: Optional logger instance
+        snapshots_dict: Dictionary containing snapshots.
+        snapshot1: Name of first snapshot.
+        snapshot2: Name of second snapshot.
+        logger: Optional logger instance.
 
     Returns:
-        tuple: (success, snapshot_data, error_message)
-               snapshot_data is dict with s1 and s2 if successful
+        Tuple containing success status, snapshot data dict (with 's1' and 's2' keys if successful),
+        and error message (None if successful).
 
     """
     # Validate snapshots exist
@@ -101,30 +112,34 @@ def start_snapshot_comparison(
         return False, None, error_msg
 
 
-def get_snapshot_data(snapshots_dict, snapshot_name):
+def get_snapshot_data(
+    snapshots_dict: dict[str, Any], snapshot_name: str
+) -> dict[str, Any]:
     """Get snapshot data safely.
 
     Args:
-        snapshots_dict: Dictionary containing snapshots
-        snapshot_name: Name of the snapshot
+        snapshots_dict: Dictionary containing snapshots.
+        snapshot_name: Name of the snapshot.
 
     Returns:
-        dict: Snapshot data or empty dict if not found
+        Snapshot data dictionary, or empty dict if snapshot not found.
 
     """
     return snapshots_dict.get(snapshot_name, {})
 
 
-def compare_file_lists(files1_data, files2_data, limit=100):
+def compare_file_lists(
+    files1_data: str | None, files2_data: str | None, limit: int = 100
+) -> dict[str, list[str]]:
     """Compare file lists between two snapshots.
 
     Args:
-        files1_data: File data from first snapshot
-        files2_data: File data from second snapshot
-        limit: Maximum number of changes to return
+        files1_data: File data from first snapshot.
+        files2_data: File data from second snapshot.
+        limit: Maximum number of changes to return.
 
     Returns:
-        dict: Dictionary with new_files, deleted_files, and modified_files lists
+        Dictionary with 'new_files', 'deleted_files', and 'modified_files' lists.
 
     """
     files1 = set(files1_data.splitlines() if files1_data else [])

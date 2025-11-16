@@ -11,8 +11,16 @@ from datetime import datetime
 from pathlib import Path
 
 
-def get_file_icon(file_path):
-    """Return appropriate icon based on file extension."""
+def get_file_icon(file_path: str) -> str:
+    """Return appropriate icon based on file extension.
+
+    Args:
+        file_path: Full or relative path to a file.
+
+    Returns:
+        A string icon representation matching the file type.
+
+    """
     ext = Path(file_path).suffix.lower()
     icons = {
         ".py": "[PY]",
@@ -54,12 +62,20 @@ def get_file_icon(file_path):
     return icons.get(ext, "[FILE]")
 
 
-def scan_directory(root_path):
-    """Recursively scan directory and build HTML directly."""
+def scan_directory(root_path: str) -> tuple[str, int, int]:
+    """Recursively scan directory and build HTML directly.
+
+    Args:
+        root_path: Root directory path to scan.
+
+    Returns:
+        A tuple containing the HTML tree structure, file count, and folder count.
+
+    """
     file_count = 0
     folder_count = 0
 
-    def build_html(path, level=0):
+    def build_html(path: str, level: int = 0) -> str:
         nonlocal file_count, folder_count
 
         # Generate unique ID for this item
@@ -128,8 +144,16 @@ def scan_directory(root_path):
     return html_tree, file_count, folder_count
 
 
-def format_size(bytes) -> str:
-    """Format file size in human readable format."""
+def format_size(bytes: int) -> str:
+    """Format file size in human-readable format.
+
+    Args:
+        bytes: Number of bytes to format.
+
+    Returns:
+        Human-readable string representation of file size (e.g., "1.23 MB").
+
+    """
     if bytes == 0:
         return "0 B"
     k = 1024
@@ -141,8 +165,17 @@ def format_size(bytes) -> str:
     return f"{bytes:.2f} {sizes[i]}"
 
 
-def generate_txt_tree(root_path, output_file) -> None:
-    """Generate plain text tree structure file."""
+def generate_txt_tree(root_path: str, output_file: str) -> None:
+    """Generate plain text tree structure file.
+
+    Args:
+        root_path: Root directory path to generate tree from.
+        output_file: Output file path for the text tree structure.
+
+    Returns:
+        None
+
+    """
     print(f"Generating text tree for: {root_path}")
 
     header_content = f"""INTELLICRACK PROJECT FILE TREE STRUCTURE
@@ -180,8 +213,18 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
     print(f"TXT tree generated: {output_file} ({line_count} lines)")
 
 
-def generate_fallback_tree(root_path, prefix="", is_last=True):
-    """Generate tree structure as fallback if tree command fails."""
+def generate_fallback_tree(root_path: str, prefix: str = "", is_last: bool = True) -> str:
+    """Generate tree structure as fallback if tree command fails.
+
+    Args:
+        root_path: Root directory path to generate tree from.
+        prefix: Prefix string for tree indentation (used in recursion).
+        is_last: Whether this is the last item in the current directory.
+
+    Returns:
+        String representation of the directory tree structure.
+
+    """
     tree_str = ""
 
     try:
@@ -209,8 +252,17 @@ def generate_fallback_tree(root_path, prefix="", is_last=True):
     return tree_str
 
 
-def generate_hta(root_path, output_file) -> None:
-    """Generate HTA file with clickable directory tree."""
+def generate_hta(root_path: str, output_file: str) -> None:
+    """Generate HTA file with clickable directory tree.
+
+    Args:
+        root_path: Root directory path to generate HTA for.
+        output_file: Output file path for the HTA application.
+
+    Returns:
+        None
+
+    """
     print(f"Scanning directory: {root_path}")
     html_tree, file_count, folder_count = scan_directory(root_path)
 

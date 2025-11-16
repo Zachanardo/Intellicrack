@@ -28,6 +28,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     HAS_PYQT,
@@ -45,6 +46,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
+    QWidget,
     QWizard,
     QWizardPage,
 )
@@ -55,10 +57,17 @@ logger = logging.getLogger(__name__)
 class FileSelectionPage(QWizardPage):
     """First wizard page for file selection."""
 
-    def __init__(self, wizard) -> None:
-        """Initialize the file selection page."""
+    def __init__(self, wizard: QWizard) -> None:
+        """Initialize the file selection page.
+
+        Args:
+            wizard: The parent QWizard instance managing the dialog pages.
+
+        """
         super().__init__()
-        self.wizard = wizard
+        self.wizard: QWizard = wizard
+        self.file_path_edit: QLineEdit
+        self.browse_btn: QPushButton
         self.setTitle("Select Program File")
         self.setSubTitle("Choose the executable file or shortcut you want to analyze.")
 
@@ -82,7 +91,7 @@ class FileSelectionPage(QWizardPage):
         path_layout.addWidget(QLabel("File Path:"))
 
         self.file_path_edit = QLineEdit()
-        self.file_path_edit.setPlaceholderText("Select a file or enter path manually...")
+        self.file_path_edit.setToolTip("Select a file or enter path manually (e.g., C:\\Program Files\\App\\app.exe)")
         self.file_path_edit.textChanged.connect(self.validate_file_path)
         path_layout.addWidget(self.file_path_edit)
 
@@ -135,12 +144,22 @@ class FileSelectionPage(QWizardPage):
         self.wizard.selected_program = file_path
         self.setCommitPage(True)
 
-    def get_selected_file(self):
-        """Get the selected file path."""
+    def get_selected_file(self) -> str:
+        """Get the selected file path.
+
+        Returns:
+            The file path entered or selected by the user, stripped of whitespace.
+
+        """
         return self.file_path_edit.text().strip()
 
-    def isComplete(self):
-        """Check if the page is complete."""
+    def isComplete(self) -> bool:
+        """Check if the page is complete.
+
+        Returns:
+            True if a valid file path has been selected, False otherwise.
+
+        """
         file_path = self.file_path_edit.text().strip()
         return bool(file_path and os.path.exists(file_path) and os.path.isfile(file_path))
 
@@ -148,15 +167,21 @@ class FileSelectionPage(QWizardPage):
 class AnalysisPage(QWizardPage):
     """Second wizard page for displaying analysis results."""
 
-    def __init__(self, wizard) -> None:
-        """Initialize the analysis page."""
+    def __init__(self, wizard: QWizard) -> None:
+        """Initialize the analysis page.
+
+        Args:
+            wizard: The parent QWizard instance managing the dialog pages.
+
+        """
         super().__init__()
-        self.wizard = wizard
+        self.wizard: QWizard = wizard
+        self.licensing_files: list[dict[str, Any]] = []
+        self.program_info: QLabel
+        self.licensing_tree: QTreeWidget
         self.setTitle("Installation Analysis")
         self.setSubTitle("Analysis of the selected program's installation folder.")
         self.setFinalPage(True)
-
-        self.licensing_files = []
 
         # Setup UI
         layout = QVBoxLayout()
@@ -212,8 +237,17 @@ class AnalysisPage(QWizardPage):
             # Analyze installation folder
             self.analyze_installation_folder(str(file_path.parent))
 
-    def analyze_installation_folder(self, folder_path) -> None:
-        """Analyze the installation folder for licensing files."""
+    def analyze_installation_folder(self, folder_path: str) -> None:
+        """Analyze the installation folder for licensing files.
+
+        Recursively searches the installation folder for files matching common
+        licensing patterns (license, eula, copyright, etc.) and populates the
+        licensing tree widget with discovered files.
+
+        Args:
+            folder_path: Path to the installation folder to analyze.
+
+        """
         self.licensing_tree.clear()
         self.licensing_files = []
 
@@ -258,8 +292,18 @@ class AnalysisPage(QWizardPage):
         except Exception as e:
             logger.error(f"Error analyzing installation folder: {e}")
 
-    def add_licensing_file_to_tree(self, file_path, file_type, priority) -> None:
-        """Add a licensing file to the tree widget."""
+    def add_licensing_file_to_tree(self, file_path: str | Path, file_type: str, priority: int) -> None:
+        """Add a licensing file to the tree widget.
+
+        Creates a QTreeWidgetItem for the given licensing file and adds it to
+        the licensing tree display with appropriate icon and metadata.
+
+        Args:
+            file_path: Path to the licensing file to add (str or Path object).
+            file_type: Classification of the file type (e.g., "License", "EULA", "Copyright").
+            priority: Priority level of the licensing file (lower values = higher priority).
+
+        """
         try:
             file_path = Path(file_path)
             file_size = self.format_file_size(file_path.stat().st_size)
@@ -286,20 +330,48 @@ class AnalysisPage(QWizardPage):
         except Exception as e:
             logger.error(f"Error adding licensing file to tree: {e}")
 
-    def format_file_size(self, size) -> str:
-        """Format file size in human readable format."""
+    def format_file_size(self, size: int | float) -> str:
+        """Format file size in human-readable format.
+
+        Converts a file size in bytes to a human-readable format with appropriate
+        units (B, KB, MB, GB, TB).
+
+        Args:
+            size: The file size in bytes.
+
+        Returns:
+            A formatted string representation of the file size (e.g., "1.5 MB").
+
+        """
         for unit in ["B", "KB", "MB", "GB"]:
             if size < 1024.0:
                 return f"{size:.1f} {unit}"
             size /= 1024.0
         return f"{size:.1f} TB"
 
-    def get_licensing_files(self):
-        """Get the list of discovered licensing files."""
+    def get_licensing_files(self) -> list[dict[str, Any]]:
+        """Get the list of discovered licensing files.
+
+        Returns:
+            A list of dictionaries, each containing licensing file metadata with keys:
+            'path', 'name', 'type', 'priority', and 'size'.
+
+        """
         return self.licensing_files
 
-    def open_licensing_file(self, item) -> None:
-        """Open the selected licensing file."""
+    def open_licensing_file(self, item: QTreeWidgetItem) -> None:
+        """Open the selected licensing file.
+
+        Attempts to open the selected licensing file using the system's default
+        file viewer based on the platform (Windows, macOS, or Linux).
+
+        Args:
+            item: The QTreeWidgetItem representing the selected licensing file.
+
+        Raises:
+            Displays a warning dialog if the file cannot be opened.
+
+        """
         try:
             file_path = item.data(0, Qt.UserRole)
             if file_path and os.path.exists(file_path):
@@ -328,15 +400,23 @@ class ProgramSelectorDialog(QWizard):
     and installation folder discovery.
     """
 
-    def __init__(self, parent=None) -> None:
-        """Initialize program selector wizard."""
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialize program selector wizard.
+
+        Args:
+            parent: The parent widget (typically None for standalone dialogs).
+
+        """
         super().__init__(parent)
+        self.selected_program: str | None = None
+        self.analysis_results: dict[str, Any] = {}
+        self.file_filters: dict[str, list[str]]
+        self.file_selection_page: FileSelectionPage
+        self.analysis_page: AnalysisPage
         self.setWindowTitle("Program Selection Wizard")
         self.setMinimumSize(800, 600)
 
         # State management
-        self.selected_program = None
-        self.analysis_results = {}
 
         # File filters
         self.file_filters = {
@@ -358,14 +438,30 @@ class ProgramSelectorDialog(QWizard):
         self.setWizardStyle(QWizard.ModernStyle)
         self.setOption(QWizard.HaveHelpButton, False)
 
-    def get_selected_program(self):
-        """Get the selected program file path for compatibility with dashboard."""
+    def get_selected_program(self) -> str | None:
+        """Get the selected program file path for compatibility with dashboard.
+
+        Returns:
+            The file path of the selected program, or None if no program is selected.
+
+        """
         if self.file_selection_page:
             return self.file_selection_page.get_selected_file()
         return None
 
-    def get_selected_program_data(self):
-        """Get data for the wizard results."""
+    def get_selected_program_data(self) -> dict[str, Any] | None:
+        """Get data for the wizard results.
+
+        Returns:
+            A dictionary containing program information, installation folder path,
+            discovered licensing files, and auto-analyze flag, or None if no program
+            is selected. The dictionary structure includes:
+            - program_info: Dict with 'name' and 'path' keys
+            - installation_folder: Path to the installation directory
+            - licensing_files: List of discovered licensing file metadata
+            - auto_analyze: Boolean flag for automatic analysis
+
+        """
         file_path = self.file_selection_page.get_selected_file()
         if not file_path:
             return None
@@ -379,8 +475,22 @@ class ProgramSelectorDialog(QWizard):
 
 
 # Convenience function for creating and showing the dialog
-def show_program_selector(parent=None):
-    """Show the program selector dialog and return selected data."""
+def show_program_selector(parent: QWidget | None = None) -> dict[str, Any] | None:
+    """Show the program selector dialog and return selected data.
+
+    Creates and displays a modal ProgramSelectorDialog wizard. If the user
+    completes the wizard and accepts the selection, returns the selected
+    program data; otherwise returns None.
+
+    Args:
+        parent: The parent widget for the dialog (typically None for standalone use).
+
+    Returns:
+        A dictionary with program information and licensing file metadata if the
+        user accepts the dialog, or None if the user cancels or doesn't select
+        a valid program.
+
+    """
     dialog = ProgramSelectorDialog(parent)
     if dialog.exec() == QDialog.Accepted:
         return dialog.get_selected_program_data()

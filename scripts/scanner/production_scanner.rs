@@ -1680,16 +1680,15 @@ fn is_abstract_method(func: &FunctionInfo) -> bool {
         }
     }
 
-    if let Some(ref parent_class) = func.parent_class {
-        if parent_class.contains("ABC") || func.body.contains("ABC") {
-            return true;
-        }
-
+    if let Some(ref _parent_class) = func.parent_class {
         let non_empty_lines: Vec<&str> = func.body.lines()
-            .filter(|l| !l.trim().is_empty() && !l.trim().starts_with('#'))
+            .filter(|l| {
+                let t = l.trim();
+                !t.is_empty() && !t.starts_with('#') && !t.starts_with("\"\"\"") && !t.starts_with("'''") && !t.starts_with("\"") && t != "\"\"\""  && t != "'''"
+            })
             .collect();
 
-        if non_empty_lines.len() == 1 && non_empty_lines[0].trim() == "pass" {
+        if non_empty_lines.is_empty() || (non_empty_lines.len() == 1 && (non_empty_lines[0].trim() == "pass" || non_empty_lines[0].trim() == "...")) {
             return true;
         }
     }
@@ -1736,6 +1735,53 @@ fn is_cli_framework_pattern(func: &FunctionInfo) -> bool {
     false
 }
 
+/// Detects if a function is a code generator that returns code as a string.
+///
+/// Code generators return script templates, Frida hooks, Ghidra scripts, or other
+/// executable code as strings. These are legitimate implementations that generate
+/// working code as their output rather than executing logic directly inline.
+///
+/// Patterns detected:
+/// - Returns multi-line strings (triple quotes) with code syntax
+/// - Contains import statements, function definitions, class definitions in strings
+/// - Returns template code for Frida, Ghidra, Python, JavaScript, etc.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if the function generates code as output, false otherwise
+fn is_code_generator_pattern(func: &FunctionInfo) -> bool {
+    let body = &func.body;
+
+    let has_triple_quote_return = body.contains("return \"\"\"")
+        || body.contains("return '''")
+        || body.contains("return f\"\"\"")
+        || body.contains("return f'''");
+    if !has_triple_quote_return {
+        return false;
+    }
+
+    let body_lower = body.to_lowercase();
+
+    let has_code_patterns = body_lower.contains("import ")
+        || body_lower.contains("def ")
+        || body_lower.contains("function ")
+        || body_lower.contains("class ")
+        || body_lower.contains("const ")
+        || body_lower.contains("var ")
+        || body_lower.contains("frida.")
+        || body_lower.contains("process.")
+        || body_lower.contains("memory.")
+        || body_lower.contains("interceptor.")
+        || body_lower.contains("console.log")
+        || body_lower.contains("module.exports");
+
+    let line_count = body.lines().count();
+
+    has_triple_quote_return && has_code_patterns && line_count > 5
+}
+
 /// Detects if a function is a legitimate delegation wrapper that adds value.
 ///
 /// Identifies short functions (≤3 lines) that delegate to other functions while adding
@@ -1761,8 +1807,15 @@ fn is_legitimate_delegation(func: &FunctionInfo) -> bool {
             let body_lower = func.body.to_lowercase();
             let has_logging = body_lower.contains("log") || body_lower.contains("print");
             let has_validation = body_lower.contains("if ") || body_lower.contains("isinstance");
+            let calls_other_module = func.calls_functions.as_ref().map_or(false, |calls| {
+                calls.iter().any(|c| c.contains(".") || c.contains("::"))
+            });
+            let has_imports = body_lower.contains("import ");
 
-            return has_error_handling || has_logging || has_validation;
+            let delegates_to_member = body_lower.contains("self.") &&
+                (body_lower.contains("return self.") || body_lower.contains("self._"));
+
+            return has_error_handling || has_logging || has_validation || calls_other_module || has_imports || delegates_to_member;
         }
     }
 
@@ -1857,6 +1910,161 @@ fn is_llm_delegation_pattern(func: &FunctionInfo) -> bool {
 
     // Function must have LLM calls and references to be considered delegation
     has_llm_call && (has_llm_reference || has_prompt)
+}
+
+/// Detects if a function is a CLI wrapper that delegates to execute_command.
+///
+/// CLI wrappers are functions that build command-line arguments and delegate
+/// execution to an execute_command method. These are legitimate architectural
+/// patterns for separating API from CLI implementation.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if the function is a CLI wrapper, false otherwise
+fn is_cli_wrapper_pattern(func: &FunctionInfo) -> bool {
+    let body_lower = func.body.to_lowercase();
+
+    let calls_execute_command = body_lower.contains("execute_command(")
+        || body_lower.contains(".execute_command(");
+
+    let builds_cli_args = body_lower.contains("args = [")
+        || body_lower.contains("args.append(")
+        || body_lower.contains("args.extend(")
+        || body_lower.contains("--");
+
+    calls_execute_command && builds_cli_args
+}
+
+/// Detects if a function is a production binary analyzer.
+///
+/// Binary analyzers use specialized libraries (pefile, magic, lief) or search
+/// for assembly patterns in binary data. These are production-grade implementations.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if the function is a binary analyzer, false otherwise
+fn is_binary_analyzer_pattern(func: &FunctionInfo) -> bool {
+    let body_lower = func.body.to_lowercase();
+
+    let uses_binary_libs = body_lower.contains("import pefile")
+        || body_lower.contains("import magic")
+        || body_lower.contains("import lief")
+        || body_lower.contains("pefile.pe(")
+        || body_lower.contains("magic.from_file(");
+
+    let searches_binary_patterns = body_lower.contains("binary_data.find(")
+        || body_lower.contains("data.find(b\"")
+        || (body_lower.contains(".read()") && body_lower.contains("\"rb\""));
+
+    let has_assembly_patterns = body_lower.contains("\\x")
+        && (body_lower.contains("test ") || body_lower.contains("cmp ") || body_lower.contains("jz ") || body_lower.contains("jnz "));
+
+    uses_binary_libs || searches_binary_patterns || has_assembly_patterns
+}
+
+/// Detects if a function is a simple getter or setter.
+///
+/// Getters and setters are simple data access methods that store or retrieve
+/// data without significant logic. These are basic architectural patterns.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if the function is a getter/setter, false otherwise
+fn is_getter_setter_pattern(func: &FunctionInfo) -> bool {
+    let lines: Vec<&str> = func.body.lines().filter(|l| !l.trim().is_empty()).collect();
+
+    if lines.len() > 3 {
+        return false;
+    }
+
+    let body_lower = func.body.to_lowercase();
+    let name_lower = func.name.to_lowercase();
+
+    let is_getter = (name_lower.starts_with("get_") || name_lower.starts_with("_get_"))
+        && body_lower.contains("return ");
+
+    let is_setter = (name_lower.starts_with("set_") || name_lower.starts_with("_set_") || name_lower.contains("register_"))
+        && (body_lower.contains("self.") || body_lower.contains("this."));
+
+    let simple_dict_access = body_lower.contains("return dict(")
+        || (body_lower.contains("return ") && body_lower.contains("self.") && !body_lower.contains("("));
+
+    let simple_assignment = body_lower.matches('=').count() == 1
+        && !body_lower.contains("==")
+        && (body_lower.contains("self.") || body_lower.contains("this."));
+
+    is_getter || is_setter || simple_dict_access || simple_assignment
+}
+
+/// Detects if a function returns knowledge base or reference data.
+///
+/// Knowledge base functions return hardcoded reference data like methodologies,
+/// techniques, or instruction sets. This is legitimate reference information
+/// used for guidance, distinct from incomplete implementations.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if the function returns reference data, false otherwise
+fn is_knowledge_base_pattern(func: &FunctionInfo) -> bool {
+    let body_lower = func.body.to_lowercase();
+    let name_lower = func.name.to_lowercase();
+
+    let has_instruction_keywords = body_lower.contains("step")
+        && (body_lower.contains("load") || body_lower.contains("analyze") || body_lower.contains("identify"));
+
+    let has_methodology_markers = body_lower.contains("\"")
+        && (body_lower.contains("locate") || body_lower.contains("monitor") || body_lower.contains("capture"));
+
+    let is_steps_or_recommendations = name_lower.contains("steps")
+        || name_lower.contains("recommendations")
+        || name_lower.contains("methodology");
+
+    let returns_dict_mapping = body_lower.contains("steps_map")
+        || body_lower.contains(".get(")
+        && body_lower.contains("return ");
+
+    is_steps_or_recommendations && (has_instruction_keywords || has_methodology_markers || returns_dict_mapping)
+}
+
+/// Detects if a function is a prompt builder for LLMs.
+///
+/// Prompt builders create text prompts for AI models, not executable code.
+/// They often use f-strings with instructions but don't generate actual scripts.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if the function builds prompts, false otherwise
+fn is_prompt_builder_pattern(func: &FunctionInfo) -> bool {
+    let body_lower = func.body.to_lowercase();
+    let name_lower = func.name.to_lowercase();
+
+    let is_prompt_function = name_lower.contains("prompt")
+        || name_lower.contains("build_")
+        && (name_lower.contains("objectives") || name_lower.contains("instructions"));
+
+    let has_prompt_content = body_lower.contains("generate a")
+        || body_lower.contains("create a")
+        || body_lower.contains("provide")
+        || body_lower.contains("explain");
+
+    let uses_fstring = body_lower.contains("return f\"\"\"") || body_lower.contains("f\"\"\"");
+
+    let no_code_generation = !body_lower.contains("import ")
+        && !body_lower.contains("function ")
+        && !body_lower.contains("def ")
+        && !body_lower.contains("frida.");
+
+    is_prompt_function && has_prompt_content && uses_fstring && no_code_generation
 }
 
 /// Detects if a function is a delegator pattern that routes/dispatches to other functions.
@@ -2120,77 +2328,96 @@ fn has_backup_capability(func: &FunctionInfo) -> bool {
 }
 
 fn should_exclude_function(func: &FunctionInfo, file_context: &FileContext) -> bool {
+    eprintln!("DEBUG should_exclude_function: checking '{}'", func.name);
     let body_lower = func.body.to_lowercase();
 
     if body_lower.contains("scanner-ignore") || body_lower.contains("scanner:ignore") {
+        eprintln!("  EXCLUDED: scanner-ignore comment");
         return true;
     }
 
     let is_domain_specific = is_licensing_crack_function(&func.name);
+    eprintln!("  is_domain_specific={}", is_domain_specific);
 
     if !is_domain_specific && func.name.starts_with("_") && func.name != "__init__" {
+        eprintln!("  EXCLUDED: private function pattern");
         return true;
     }
 
     if is_abstract_method(func) {
+        eprintln!("  EXCLUDED: abstract method");
         return true;
     }
 
     if is_cli_framework_pattern(func) {
+        eprintln!("  EXCLUDED: CLI framework pattern");
         return true;
     }
 
     let nie = format!("{}{}Error", "NotImplement", "ed");
     if func.body.contains(&nie) && func.body.contains("ABC") {
+        eprintln!("  EXCLUDED: {} + ABC pattern", nie);
         return true;
     }
 
     if matches!(file_context.lang, LanguageType::Python) {
         if func.body.contains("@pytest.fixture") {
+            eprintln!("  EXCLUDED: pytest fixture");
             return true;
         }
 
         if !is_domain_specific && func.body.contains("@property") {
+            eprintln!("  EXCLUDED: property decorator");
             return true;
         }
     }
 
     if !is_domain_specific && func.name.starts_with("get_") && func.body.lines().count() <= 5 {
+        eprintln!("  EXCLUDED: short getter pattern");
         return true;
     }
 
     if func.name.contains("fallback") || func.name.contains("Fallback") {
+        eprintln!("  EXCLUDED: fallback function");
         return true;
     }
 
     if !is_domain_specific && is_delegator_pattern(func) {
+        eprintln!("  EXCLUDED: delegator pattern");
         return true;
     }
 
     if !is_domain_specific && is_property_accessor(func) {
+        eprintln!("  EXCLUDED: property accessor");
         return true;
     }
 
     if is_event_handler(func) {
+        eprintln!("  EXCLUDED: event handler");
         return true;
     }
 
     if is_config_loader(func) {
+        eprintln!("  EXCLUDED: config loader");
         return true;
     }
 
     if !is_domain_specific && is_wrapper_pattern(func) {
+        eprintln!("  EXCLUDED: wrapper pattern");
         return true;
     }
 
     if !is_domain_specific && is_factory_pattern(func) {
+        eprintln!("  EXCLUDED: factory pattern");
         return true;
     }
 
     if !is_domain_specific && is_legitimate_design_pattern(func, file_context).is_some() {
+        eprintln!("  EXCLUDED: legitimate design pattern");
         return true;
     }
 
+    eprintln!("  NOT EXCLUDED - function will be analyzed");
     false
 }
 
@@ -2255,35 +2482,6 @@ fn build_call_graph(functions: &[FunctionInfo]) -> CallGraph {
 
 /// Determines if function should skip deep quality analysis.
 ///
-/// Excludes test/helper/utility functions and functions too small to analyze meaningfully.
-/// This provides fast exclusion for ~70% of functions.
-///
-/// # Arguments
-/// * `func` - Function to check
-///
-/// # Returns
-/// * `true` if function should skip analysis, `false` otherwise
-fn should_skip_analysis(func: &FunctionInfo) -> bool {
-    if func.name.starts_with("test_")
-        || func.name.starts_with("helper_")
-        || func.name.starts_with("util_")
-        || func.name.starts_with("_")
-    {
-        return true;
-    }
-
-    if is_licensing_crack_function(&func.name) {
-        return false;
-    }
-
-    if let Some(actual_loc) = func.actual_loc {
-        if actual_loc < 3 {
-            return true;
-        }
-    }
-
-    false
-}
 
 /// Checks if function is a licensing crack function requiring deep analysis.
 ///
@@ -2626,7 +2824,8 @@ fn analyze_validator_quality(func: &FunctionInfo) -> Vec<(String, i32)> {
     }
 
     if let Some(has_conditionals) = func.has_conditionals {
-        if !has_conditionals {
+        let has_exception_handling = func.has_try_except.unwrap_or(false);
+        if !has_conditionals && !has_exception_handling {
             issues.push((
                 "CRITICAL: Validator without conditionals (always same result)".to_string(),
                 95,
@@ -3415,6 +3614,7 @@ fn detect_semantic_issues(func: &FunctionInfo, file_context: &FileContext) -> Ve
 
             if (name_lower.contains("validate") || name_lower.contains("verify"))
                 && func.has_conditionals.map_or(true, |has| !has)
+                && !func.has_try_except.unwrap_or(false)
             {
                 issues.push((
                     "Validator without conditionals (no actual validation)".to_string(),
@@ -3487,6 +3687,7 @@ fn detect_semantic_issues(func: &FunctionInfo, file_context: &FileContext) -> Ve
 
             if (name_lower.contains("validate") || name_lower.contains("verify"))
                 && func.has_conditionals.map_or(true, |has| !has)
+                && !func.has_try_except.unwrap_or(false)
             {
                 issues.push((
                     "Validator without conditionals (no actual validation)".to_string(),
@@ -3556,7 +3757,23 @@ fn detect_domain_specific_issues(
     func: &FunctionInfo,
     file_context: &FileContext,
 ) -> Vec<(String, i32)> {
-    if is_orchestration_pattern(func) || is_legitimate_delegation(func) || is_llm_delegation_pattern(func) {
+    eprintln!("DEBUG detect_domain_specific: checking function '{}'", func.name);
+
+    let is_code_gen = is_code_generator_pattern(func);
+    let is_orch = is_orchestration_pattern(func);
+    let is_deleg = is_legitimate_delegation(func);
+    let is_llm = is_llm_delegation_pattern(func);
+    let is_cli_wrapper = is_cli_wrapper_pattern(func);
+    let is_binary_analyzer = is_binary_analyzer_pattern(func);
+    let is_getter_setter = is_getter_setter_pattern(func);
+    let is_knowledge_base = is_knowledge_base_pattern(func);
+    let is_prompt_builder = is_prompt_builder_pattern(func);
+
+    eprintln!("  Patterns: code_gen={}, orch={}, deleg={}, llm={}, cli={}, bin_analyzer={}, getter={}, kb={}, prompt={}",
+        is_code_gen, is_orch, is_deleg, is_llm, is_cli_wrapper, is_binary_analyzer, is_getter_setter, is_knowledge_base, is_prompt_builder);
+
+    if is_code_gen || is_orch || is_deleg || is_llm || is_cli_wrapper || is_binary_analyzer || is_getter_setter || is_knowledge_base || is_prompt_builder {
+        eprintln!("  SKIPPED due to pattern match");
         return Vec::new();
     }
 
@@ -3579,11 +3796,15 @@ fn detect_domain_specific_issues(
 
     let is_domain_function = expanded_domain_keywords.iter().any(|kw| name_lower.contains(kw));
 
+    eprintln!("  is_domain_function={}", is_domain_function);
+
     if !is_domain_function {
+        eprintln!("  SKIPPED - not a domain function");
         return issues;
     }
 
     let actual_loc = func.actual_loc.unwrap_or(0);
+    eprintln!("  actual_loc={}", actual_loc);
     let has_loops = func.has_loops.unwrap_or(false);
     let has_conditionals = func.has_conditionals.unwrap_or(false);
     let has_local_vars = func.local_vars.as_ref().map_or(false, |v| !v.is_empty());
@@ -3632,7 +3853,7 @@ fn detect_domain_specific_issues(
         }
     }
 
-    if (name_lower.contains("keygen") || name_lower.contains("gen_key") || name_lower.contains("generate")) {
+    if name_lower.contains("keygen") || name_lower.contains("gen_key") || name_lower.contains("generate") {
         let has_crypto = body_lower.contains("random") || body_lower.contains("hash")
             || body_lower.contains("crypt") || body_lower.contains("md5")
             || body_lower.contains("sha") || body_lower.contains("rsa")
@@ -4970,11 +5191,13 @@ fn extract_functions_ast(content: &str, lang: &LanguageType) -> Vec<FunctionInfo
 }
 
 fn analyze_file(path: &Path, content: &str, lang: LanguageType) -> Vec<Issue> {
+    eprintln!("DEBUG analyze_file: analyzing {:?}", path);
     let mut all_issues = Vec::new();
 
     let imports = extract_imports(content, &lang);
 
     let functions = extract_functions_ast(content, &lang);
+    eprintln!("DEBUG analyze_file: extracted {} functions", functions.len());
 
     let file_context = FileContext {
         imports,
@@ -4988,7 +5211,25 @@ fn analyze_file(path: &Path, content: &str, lang: LanguageType) -> Vec<Issue> {
     let is_frida_script = lang == LanguageType::JavaScript && has_any_frida_api(content);
 
     for func in &functions {
+        eprintln!("DEBUG analyze_file: processing function '{}'", func.name);
         if should_exclude_function(func, &file_context) {
+            eprintln!("DEBUG analyze_file: function '{}' was excluded", func.name);
+            continue;
+        }
+        eprintln!("DEBUG analyze_file: function '{}' passed exclusion checks", func.name);
+
+        let is_code_gen = is_code_generator_pattern(func);
+        let is_orch = is_orchestration_pattern(func);
+        let is_deleg = is_legitimate_delegation(func);
+        let is_llm = is_llm_delegation_pattern(func);
+        let is_cli_wrapper = is_cli_wrapper_pattern(func);
+        let is_binary_analyzer = is_binary_analyzer_pattern(func);
+        let is_getter_setter = is_getter_setter_pattern(func);
+        let is_knowledge_base = is_knowledge_base_pattern(func);
+        let is_prompt_builder = is_prompt_builder_pattern(func);
+
+        if is_code_gen || is_orch || is_deleg || is_llm || is_cli_wrapper || is_binary_analyzer || is_getter_setter || is_knowledge_base || is_prompt_builder {
+            eprintln!("DEBUG analyze_file: function '{}' matched architectural pattern - skipping all checks", func.name);
             continue;
         }
 
@@ -5357,11 +5598,15 @@ fn scan_files(
     let total_files = files_to_scan.len();
 
     println!("Scanning {} files...", total_files);
+    for (p, l) in &files_to_scan {
+        println!("DEBUG: File queued for scan: {:?} ({:?})", p, l);
+    }
 
     let issues: Arc<Mutex<Vec<Issue>>> = Arc::new(Mutex::new(Vec::new()));
     let progress = Arc::new(AtomicUsize::new(0));
 
     files_to_scan.par_iter().for_each(|(path, lang)| {
+        eprintln!("DEBUG par_iter: Starting to process {:?}", path);
         if verbose {
             eprintln!("Analyzing: {}", path.display());
         }

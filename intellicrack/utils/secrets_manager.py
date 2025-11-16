@@ -95,8 +95,8 @@ class SecretsManager:
 
     def __init__(self, config_dir: Path | None = None) -> None:
         """Initialize the secrets manager."""
-        from intellicrack.core.config_manager import get_config
-        self.central_config = get_config()
+        self._central_config = None
+        self._config_dir_override = config_dir
 
         # Get config directory from central config or use provided/default
         if config_dir is None:
@@ -130,6 +130,18 @@ class SecretsManager:
 
         # Sync encrypted keys metadata to central config
         self._sync_metadata_to_central_config()
+
+    def _get_central_config(self):
+        """Lazy load central config."""
+        if self._central_config is None:
+            from intellicrack.core.config_manager import get_config
+            self._central_config = get_config()
+        return self._central_config
+
+    @property
+    def central_config(self):
+        """Get central config instance (lazy-loaded)."""
+        return self._get_central_config()
 
     def _get_default_config_dir(self) -> Path:
         r"""Get unified configuration directory.

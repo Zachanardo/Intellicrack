@@ -26,7 +26,7 @@ import threading
 import time
 import types
 from collections import defaultdict, deque
-from collections.abc import Callable
+from collections.abc import AsyncGenerator, Callable, Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -215,8 +215,26 @@ class PerformanceMonitor:
         self.metrics[name].append(metric)
 
     @contextmanager
-    def profile_operation(self, operation_name: str, metadata: dict[str, Any] = None):
-        """Context manager for profiling operations."""
+    def profile_operation(
+        self, operation_name: str, metadata: dict[str, Any] | None = None
+    ) -> Generator[str, None, None]:
+        """Profile an operation with automatic performance metric collection.
+
+        Context manager that profiles a single operation, measuring execution time,
+        memory usage, and CPU usage. Records all metrics and handles exceptions.
+
+        Args:
+            operation_name: Identifier for the operation being profiled
+            metadata: Optional metadata dictionary to associate with the operation
+
+        Yields:
+            str: Operation ID for use in the profiled code block
+
+        Raises:
+            Exception: Any exception raised in the context is re-raised after
+                      profiling is completed and metrics are recorded
+
+        """
         start_time = time.time()
         start_memory = self.process.memory_info().rss if HAS_PSUTIL and self.process else 0
         start_cpu = psutil.cpu_percent() if HAS_PSUTIL else 0
@@ -269,14 +287,29 @@ class PerformanceMonitor:
             if operation_id in self.active_operations:
                 del self.active_operations[operation_id]
 
-    def time_function(self, func_name: str = None):
-        """Time function execution with a decorator."""
+    def time_function(
+        self, func_name: str | None = None
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        """Create a decorator that profiles function execution time.
 
-        def decorator(func: Callable) -> Callable:
+        Returns a decorator that wraps a function to automatically measure and
+        record its execution time, memory usage, and CPU usage.
+
+        Args:
+            func_name: Optional name to use for the operation. If not provided,
+                      uses module.function name format
+
+        Returns:
+            Callable: Decorator function that takes a callable and returns a
+                     wrapped version with profiling enabled
+
+        """
+
+        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             name = func_name or f"{func.__module__}.{func.__name__}"
 
             @functools.wraps(func)
-            def wrapper(*args, **kwargs):
+            def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401, ANN002, ANN003
                 with self.profile_operation(name):
                     return func(*args, **kwargs)
 
@@ -443,8 +476,21 @@ class PerformanceMonitor:
         if expired_keys:
             logger.debug(f"Cleaned {len(expired_keys)} expired cache entries")
 
-    def get_cached_result(self, cache_key: str) -> Any | None:
-        """Get cached performance result."""
+    def get_cached_result(self, cache_key: str) -> dict[str, Any] | None:
+        """Retrieve a cached performance result if still valid.
+
+        Checks the cache for a result with the given key. If found and not
+        expired based on cache_ttl, returns the cached value. Otherwise
+        removes the expired entry and returns None.
+
+        Args:
+            cache_key: Key identifying the cached result
+
+        Returns:
+            dict[str, Any] | None: The cached result dictionary if valid,
+                                   or None if not cached or expired
+
+        """
         if cache_key in self.performance_cache:
             timestamp, result = self.performance_cache[cache_key]
             if time.time() - timestamp < self.cache_ttl:
@@ -452,8 +498,18 @@ class PerformanceMonitor:
             del self.performance_cache[cache_key]
         return None
 
-    def cache_result(self, cache_key: str, result: Any) -> None:
-        """Cache performance result."""
+    def cache_result(self, cache_key: str, result: dict[str, Any]) -> None:
+        """Store a performance result in the cache with timestamp.
+
+        Caches a result dictionary along with the current timestamp.
+        The result can later be retrieved with get_cached_result until
+        the cache_ttl expires.
+
+        Args:
+            cache_key: Key to identify this cached result
+            result: Result dictionary to cache
+
+        """
         self.performance_cache[cache_key] = (time.time(), result)
 
     def _log_final_metrics(self) -> None:
@@ -466,13 +522,33 @@ class PerformanceMonitor:
         except Exception as e:
             logger.debug(f"Could not log final metrics: {e}")
 
-    def __enter__(self):
-        """Context manager entry."""
+    def __enter__(self) -> "PerformanceMonitor":
+        """Start background monitoring on context entry.
+
+        Returns:
+            PerformanceMonitor: The performance monitor instance
+
+        """
         self.start_monitoring()
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None):
-        """Context manager exit."""
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> bool:
+        """Stop background monitoring and log metrics on context exit.
+
+        Args:
+            exc_type: Exception type if an exception occurred
+            exc_val: Exception value if an exception occurred
+            exc_tb: Exception traceback if an exception occurred
+
+        Returns:
+            bool: False to not suppress any exceptions
+
+        """
         if exc_type:
             logger.error(f"Performance monitor exiting due to {exc_type.__name__}: {exc_val}")
             # Log performance data before exit for debugging
@@ -488,18 +564,42 @@ class PerformanceMonitor:
 _performance_monitor = None
 
 
-def get_performance_monitor():
-    """Get the global performance monitor instance."""
+def get_performance_monitor() -> PerformanceMonitor:
+    """Retrieve or create the global performance monitor instance.
+
+    Returns the singleton PerformanceMonitor instance, creating it on
+    first access if needed. This lazy initialization prevents circular
+    import issues.
+
+    Returns:
+        PerformanceMonitor: The global performance monitor instance
+
+    """
     global _performance_monitor
     if _performance_monitor is None:
         _performance_monitor = PerformanceMonitor()
     return _performance_monitor
 
 
-def profile_ai_operation(operation_name: str = None):
-    """Profile AI operations with a decorator."""
+def profile_ai_operation(
+    operation_name: str | None = None,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Create a decorator for profiling AI operation performance.
 
-    def decorator(func: Callable) -> Callable:
+    Returns a decorator that wraps AI functions to automatically measure
+    execution time, memory usage, and CPU usage. Designed to integrate
+    with the global performance monitor for licensing analysis operations.
+
+    Args:
+        operation_name: Optional custom name for the operation. If not
+                       provided, uses the wrapped function's name
+
+    Returns:
+        Callable: Decorator function that profiles wrapped functions
+
+    """
+
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         # Simplified version to avoid initialization issues
         return func
 
@@ -507,8 +607,21 @@ def profile_ai_operation(operation_name: str = None):
 
 
 @contextmanager
-def monitor_memory_usage(threshold_mb: float = 100.0):
-    """Context manager for monitoring memory usage."""
+def monitor_memory_usage(threshold_mb: float = 100.0) -> Generator[None, None, None]:
+    """Monitor memory usage within a code block and log warnings.
+
+    Context manager that tracks memory consumption during execution of
+    a code block. If memory increase exceeds the threshold, logs a warning
+    and records the metric to the global performance monitor.
+
+    Args:
+        threshold_mb: Memory increase threshold in MB that triggers warning.
+                     Defaults to 100.0 MB
+
+    Yields:
+        None
+
+    """
     start_memory = psutil.Process().memory_info().rss
 
     try:
@@ -542,8 +655,27 @@ class AsyncPerformanceMonitor:
         self.base_monitor = base_monitor
         self.async_operations: dict[str, dict[str, Any]] = {}
 
-    async def profile_async_operation(self, operation_name: str, coro: Any):
-        """Profile an async operation."""
+    async def profile_async_operation(
+        self, operation_name: str, coro: Any  # noqa: ANN401
+    ) -> Any:  # noqa: ANN401
+        """Profile an async operation with performance metrics.
+
+        Executes an async coroutine while measuring execution time, memory usage,
+        and recording performance metrics. Exceptions are re-raised after metrics
+        are collected.
+
+        Args:
+            operation_name: Name identifier for the async operation
+            coro: The coroutine to execute and profile
+
+        Returns:
+            Any: The return value of the coroutine
+
+        Raises:
+            Exception: Any exception raised by the coroutine is re-raised
+                      after profiling is completed
+
+        """
         start_time = time.time()
         start_memory = psutil.Process().memory_info().rss
 
@@ -576,14 +708,28 @@ class AsyncPerformanceMonitor:
 
             self.base_monitor.profiles.append(profile)
 
-    def profile_async(self, operation_name: str = None):
-        """Profile async functions with a decorator."""
+    def profile_async(
+        self, operation_name: str | None = None
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        """Create a decorator that profiles async function execution.
 
-        def decorator(func: Callable) -> Callable:
+        Returns a decorator that wraps an async function to automatically
+        measure execution time and memory usage using the base monitor.
+
+        Args:
+            operation_name: Optional name for the operation. If not provided,
+                           uses the wrapped function's name
+
+        Returns:
+            Callable: Decorator function that profiles wrapped async functions
+
+        """
+
+        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             name = operation_name or func.__name__
 
             @functools.wraps(func)
-            async def wrapper(*args, **kwargs):
+            async def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401, ANN002, ANN003
                 return await self.profile_async_operation(name, func(*args, **kwargs))
 
             return wrapper
@@ -595,8 +741,16 @@ class AsyncPerformanceMonitor:
 _async_monitor = None
 
 
-def get_async_monitor():
-    """Get the global async performance monitor instance."""
+def get_async_monitor() -> AsyncPerformanceMonitor:
+    """Retrieve or create the global async performance monitor instance.
+
+    Returns the singleton AsyncPerformanceMonitor instance, creating it on
+    first access if needed. Uses the global performance monitor as the base.
+
+    Returns:
+        AsyncPerformanceMonitor: The global async performance monitor instance
+
+    """
     global _async_monitor
     if _async_monitor is None:
         _async_monitor = AsyncPerformanceMonitor(get_performance_monitor())

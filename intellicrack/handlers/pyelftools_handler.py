@@ -220,7 +220,7 @@ except ImportError as e:
     class Struct:
         """Structure parser."""
 
-        def __init__(self, name: str, *fields: Any) -> None:
+        def __init__(self, name: str, *fields: tuple[Any, ...]) -> None:
             """Initialize structure parser with name and field definitions."""
             self.name = name
             self.fields = fields
@@ -229,17 +229,17 @@ except ImportError as e:
     class FallbackELFFile:
         """Functional ELF file parser implementation."""
 
-        stream: Any
+        stream: BinaryIO
         little_endian: bool
         elfclass: int
-        header: Optional[Any]
-        _section_headers: list[Any]
-        _program_headers: list[Any]
+        header: Optional[Container]
+        _section_headers: list[Container]
+        _program_headers: list[Container]
         _sections: list[Any]
         _segments: list[Any]
         _string_table: Optional[bytes]
 
-        def __init__(self, stream: Any) -> None:
+        def __init__(self, stream: BinaryIO) -> None:
             """Initialize ELF file parser."""
             self.stream = stream
             self.little_endian = True
@@ -471,20 +471,20 @@ except ImportError as e:
             """Get number of segments."""
             return len(self._segments)
 
-        def get_section(self, n: int) -> Optional[Any]:
+        def get_section(self, n: int) -> Optional[FallbackSection]:
             """Get section by index."""
             if 0 <= n < len(self._sections):
                 return self._sections[n]
             return None
 
-        def get_section_by_name(self, name: str) -> Optional[Any]:
+        def get_section_by_name(self, name: str) -> Optional[FallbackSection]:
             """Get section by name."""
             for section in self._sections:
                 if section.name == name:
                     return section
             return None
 
-        def get_segment(self, n: int) -> Optional[Any]:
+        def get_segment(self, n: int) -> Optional[FallbackSegment]:
             """Get segment by index."""
             if 0 <= n < len(self._segments):
                 return self._segments[n]
@@ -505,7 +505,7 @@ except ImportError as e:
                     return True
             return False
 
-        def get_dwarf_info(self) -> Optional[Any]:
+        def get_dwarf_info(self) -> Optional[FallbackDWARFInfo]:
             """Get DWARF info (basic fallback)."""
             if not self.has_dwarf_info():
                 return None
@@ -522,12 +522,12 @@ except ImportError as e:
     class FallbackSection:
         """Functional ELF section implementation."""
 
-        header: Any
+        header: Container
         name: str
-        stream: Any
+        stream: BinaryIO
         _data: Optional[bytes]
 
-        def __init__(self, header: Any, name: str, stream: Any) -> None:
+        def __init__(self, header: Container, name: str, stream: BinaryIO) -> None:
             """Initialize section."""
             self.header = header
             self.name = name
@@ -612,10 +612,10 @@ except ImportError as e:
     class FallbackSymbolTableSection(FallbackSection):
         """Symbol table section."""
 
-        elffile: Any
+        elffile: FallbackELFFile
         _symbols: list[FallbackSymbol]
 
-        def __init__(self, header: Any, name: str, stream: Any, elffile: Any) -> None:
+        def __init__(self, header: Container, name: str, stream: BinaryIO, elffile: FallbackELFFile) -> None:
             """Initialize symbol table."""
             super().__init__(header, name, stream)
             self.elffile = elffile
@@ -709,10 +709,10 @@ except ImportError as e:
     class FallbackRelocationSection(FallbackSection):
         """Relocation section."""
 
-        elffile: Any
+        elffile: FallbackELFFile
         _relocations: list[FallbackRelocation]
 
-        def __init__(self, header: Any, name: str, stream: Any, elffile: Any) -> None:
+        def __init__(self, header: Container, name: str, stream: BinaryIO, elffile: FallbackELFFile) -> None:
             """Initialize relocation section."""
             super().__init__(header, name, stream)
             self.elffile = elffile
@@ -782,10 +782,10 @@ except ImportError as e:
     class FallbackDynamicSection(FallbackSection):
         """Dynamic section."""
 
-        elffile: Any
+        elffile: FallbackELFFile
         _dynamics: list[FallbackDynamic]
 
-        def __init__(self, header: Any, name: str, stream: Any, elffile: Any) -> None:
+        def __init__(self, header: Container, name: str, stream: BinaryIO, elffile: FallbackELFFile) -> None:
             """Initialize dynamic section."""
             super().__init__(header, name, stream)
             self.elffile = elffile
@@ -866,11 +866,11 @@ except ImportError as e:
     class FallbackSegment:
         """Functional ELF segment implementation."""
 
-        header: Any
-        stream: Any
+        header: Container
+        stream: BinaryIO
         _data: Optional[bytes]
 
-        def __init__(self, header: Any, stream: Any) -> None:
+        def __init__(self, header: Container, stream: BinaryIO) -> None:
             """Initialize segment."""
             self.header = header
             self.stream = stream
@@ -968,9 +968,9 @@ except ImportError as e:
     class FallbackDWARFInfo:
         """Basic DWARF info fallback."""
 
-        elffile: Any
+        elffile: FallbackELFFile
 
-        def __init__(self, elffile: Any) -> None:
+        def __init__(self, elffile: FallbackELFFile) -> None:
             """Initialize DWARF info."""
             self.elffile = elffile
 
@@ -978,17 +978,17 @@ except ImportError as e:
             """Iterate over compilation units (empty for fallback)."""
             return iter([])
 
-        def get_DIE_from_refaddr(self, refaddr: Any) -> None:
+        def get_DIE_from_refaddr(self, refaddr: int) -> None:
             """Get DIE from reference address."""
             return
 
     class FallbackDIE:
         """Debug Information Entry."""
 
-        tag: Any
+        tag: int
         attributes: dict[str, Any]
 
-        def __init__(self, tag: Any, attributes: Optional[dict[str, Any]] = None) -> None:
+        def __init__(self, tag: int, attributes: Optional[dict[str, Any]] = None) -> None:
             """Initialize DIE."""
             self.tag = tag
             self.attributes = attributes or {}
@@ -1001,7 +1001,6 @@ except ImportError as e:
             """Iterate over children."""
             return iter([])
 
-    # Description functions
     def describe_e_type(e_type: int) -> str:
         """Describe ELF type."""
         types = {
@@ -1015,7 +1014,7 @@ except ImportError as e:
 
     def describe_p_type(p_type: int) -> str:
         """Describe program header type."""
-        types = {0: "PT_NULL", 1: "PT_LOAD", 2: "PT_DYNAMIC", 3: "PT_INTERP", 4: "PT_NOTE", 5: "PT_SHLIB", 6: "PT_PHDR", 7: "PT_TLS"}
+        types: dict[int, str] = {0: "PT_NULL", 1: "PT_LOAD", 2: "PT_DYNAMIC", 3: "PT_INTERP", 4: "PT_NOTE", 5: "PT_SHLIB", 6: "PT_PHDR", 7: "PT_TLS"}
         return types.get(p_type, f"Unknown type {p_type}")
 
     def describe_sh_type(sh_type: int) -> str:

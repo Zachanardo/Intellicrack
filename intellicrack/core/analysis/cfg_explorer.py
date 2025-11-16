@@ -24,7 +24,6 @@ import os
 import sys
 import time
 import traceback
-from typing import Any
 
 from intellicrack.utils.logger import logger
 
@@ -114,7 +113,7 @@ except ImportError as e:
         class DiGraph:
             """Directed graph implementation with NetworkX-compatible interface."""
 
-            def __init__(self, data: dict[str, Any] | None = None) -> None:
+            def __init__(self, data: dict[str, object] | None = None) -> None:
                 """Initialize directed graph.
 
                 Args:
@@ -128,7 +127,7 @@ except ImportError as e:
                 if data:
                     self.update(data)
 
-            def add_node(self, node: Any, **attrs: Any) -> None:  # noqa: ANN401
+            def add_node(self, node: object, **attrs: object) -> None:
                 """Add node to graph with optional attributes.
 
                 Args:
@@ -140,7 +139,7 @@ except ImportError as e:
                 if attrs:
                     self._node_attrs[node] = attrs
 
-            def add_edge(self, u: Any, v: Any, **attrs: Any) -> None:  # noqa: ANN401
+            def add_edge(self, u: object, v: object, **attrs: object) -> None:
                 """Add edge to graph with optional attributes.
 
                 Args:
@@ -161,7 +160,7 @@ except ImportError as e:
                 if attrs:
                     self._edge_attrs[(u, v)] = attrs
 
-            def nodes(self, data: bool = False) -> list[Any] | list[tuple[Any, dict[str, Any]]]:
+            def nodes(self, data: bool = False) -> list[object] | list[tuple[object, dict[str, object]]]:
                 """Return nodes with optional data.
 
                 Args:
@@ -175,7 +174,7 @@ except ImportError as e:
                     return [(n, self._node_attrs.get(n, {})) for n in self._nodes]
                 return list(self._nodes.keys())
 
-            def edges(self, data: bool = False) -> list[tuple[Any, Any]] | list[tuple[Any, Any, dict[str, Any]]]:
+            def edges(self, data: bool = False) -> list[tuple[object, object]] | list[tuple[object, object, dict[str, object]]]:
                 """Return edges with optional data.
 
                 Args:
@@ -212,7 +211,7 @@ except ImportError as e:
                 """
                 return sum(len(neighbors) for neighbors in self._edges.values())
 
-            def in_degree(self, node: Any) -> int:  # noqa: ANN401
+            def in_degree(self, node: object) -> int:
                 """Return in-degree of node.
 
                 Args:
@@ -228,7 +227,7 @@ except ImportError as e:
                         count += 1
                 return count
 
-            def successors(self, node: Any) -> list[Any]:  # noqa: ANN401
+            def successors(self, node: object) -> list[object]:
                 """Return successors of node.
 
                 Args:
@@ -240,7 +239,7 @@ except ImportError as e:
                 """
                 return list(self._edges.get(node, set()))
 
-            def predecessors(self, node: Any) -> list[Any]:  # noqa: ANN401
+            def predecessors(self, node: object) -> list[object]:
                 """Return predecessors of node.
 
                 Args:
@@ -256,7 +255,7 @@ except ImportError as e:
                         preds.append(u)
                 return preds
 
-            def has_edge(self, u: Any, v: Any) -> bool:  # noqa: ANN401
+            def has_edge(self, u: object, v: object) -> bool:
                 """Check if edge exists.
 
                 Args:
@@ -286,9 +285,8 @@ except ImportError as e:
         class NetworkXError(Exception):
             """NetworkX-compatible exception."""
 
-
         @staticmethod
-        def simple_cycles(graph: "_IntellicrackNetworkX.DiGraph") -> list[list[Any]]:  # noqa: ANN401
+        def simple_cycles(graph: "_IntellicrackNetworkX.DiGraph") -> list[list[object]]:
             """Find simple cycles using DFS.
 
             Args:
@@ -299,7 +297,7 @@ except ImportError as e:
 
             """
 
-            def _dfs_cycles(node: Any, path: list[Any], visited: set[Any], stack: list[Any]) -> list[list[Any]]:  # noqa: ANN401
+            def _dfs_cycles(node: object, path: list[object], visited: set[object], stack: list[object]) -> list[list[object]]:
                 """Perform depth-first search to find cycles.
 
                 Args:
@@ -340,7 +338,7 @@ except ImportError as e:
             return all_cycles
 
         @staticmethod
-        def strongly_connected_components(graph: "_IntellicrackNetworkX.DiGraph") -> list[list[Any]]:  # noqa: ANN401
+        def strongly_connected_components(graph: "_IntellicrackNetworkX.DiGraph") -> list[list[object]]:
             """Find strongly connected components using Tarjan's algorithm.
 
             Args:
@@ -351,13 +349,13 @@ except ImportError as e:
 
             """
             index_counter = [0]
-            stack: list[Any] = []
-            lowlinks: dict[Any, int] = {}
-            index: dict[Any, int] = {}
-            on_stack: dict[Any, bool] = {}
-            components: list[list[Any]] = []
+            stack: list[object] = []
+            lowlinks: dict[object, int] = {}
+            index: dict[object, int] = {}
+            on_stack: dict[object, bool] = {}
+            components: list[list[object]] = []
 
-            def _strongconnect(node: Any) -> None:  # noqa: ANN401
+            def _strongconnect(node: object) -> None:
                 """Recursively find strongly connected components.
 
                 Args:
@@ -378,7 +376,7 @@ except ImportError as e:
                         lowlinks[node] = min(lowlinks[node], index[neighbor])
 
                 if lowlinks[node] == index[node]:
-                    component: list[Any] = []
+                    component: list[object] = []
                     while True:
                         w = stack.pop()
                         on_stack[w] = False
@@ -399,7 +397,7 @@ except ImportError as e:
             alpha: float = 0.85,
             max_iter: int = 100,
             tol: float = 1e-6,
-        ) -> dict[Any, float]:  # noqa: ANN401
+        ) -> dict[object, float]:
             """Calculate PageRank using power iteration.
 
             Args:
@@ -422,7 +420,7 @@ except ImportError as e:
             pr = dict.fromkeys(nodes, 1.0 / n)
 
             for _ in range(max_iter):
-                new_pr: dict[Any, float] = {}
+                new_pr: dict[object, float] = {}
                 max_diff = 0.0
 
                 for node in nodes:
@@ -444,7 +442,7 @@ except ImportError as e:
             return pr
 
         @staticmethod
-        def betweenness_centrality(graph: "_IntellicrackNetworkX.DiGraph") -> dict[Any, float]:  # noqa: ANN401
+        def betweenness_centrality(graph: "_IntellicrackNetworkX.DiGraph") -> dict[object, float]:
             """Calculate betweenness centrality.
 
             Args:
@@ -455,18 +453,18 @@ except ImportError as e:
 
             """
             nodes = list(graph.nodes())
-            centrality: dict[Any, float] = dict.fromkeys(nodes, 0.0)
+            centrality: dict[object, float] = dict.fromkeys(nodes, 0.0)
 
             for source in nodes:
-                stack: list[Any] = []
-                paths: dict[Any, list[Any]] = {node: [] for node in nodes}
+                stack: list[object] = []
+                paths: dict[object, list[object]] = {node: [] for node in nodes}
                 paths[source] = [source]
-                sigma: dict[Any, int] = dict.fromkeys(nodes, 0)
+                sigma: dict[object, int] = dict.fromkeys(nodes, 0)
                 sigma[source] = 1
-                distances: dict[Any, int] = dict.fromkeys(nodes, -1)
+                distances: dict[object, int] = dict.fromkeys(nodes, -1)
                 distances[source] = 0
 
-                queue: list[Any] = [source]
+                queue: list[object] = [source]
                 while queue:
                     node = queue.pop(0)
                     stack.append(node)
@@ -480,7 +478,7 @@ except ImportError as e:
                             sigma[neighbor] += sigma[node]
                             paths[neighbor].extend(paths[node])
 
-                delta: dict[Any, float] = dict.fromkeys(nodes, 0)
+                delta: dict[object, float] = dict.fromkeys(nodes, 0)
                 while stack:
                     node = stack.pop()
                     for pred in graph.predecessors(node):
@@ -498,7 +496,7 @@ except ImportError as e:
             return centrality
 
         @staticmethod
-        def closeness_centrality(graph: "_IntellicrackNetworkX.DiGraph") -> dict[Any, float]:  # noqa: ANN401
+        def closeness_centrality(graph: "_IntellicrackNetworkX.DiGraph") -> dict[object, float]:
             """Calculate closeness centrality.
 
             Args:
@@ -509,12 +507,12 @@ except ImportError as e:
 
             """
             nodes = list(graph.nodes())
-            centrality: dict[Any, float] = {}
+            centrality: dict[object, float] = {}
 
             for node in nodes:
-                distances: dict[Any, float | int] = {n: float("inf") for n in nodes}
+                distances: dict[object, float | int] = {n: float("inf") for n in nodes}
                 distances[node] = 0
-                queue: list[Any] = [node]
+                queue: list[object] = [node]
 
                 while queue:
                     current = queue.pop(0)
@@ -535,9 +533,9 @@ except ImportError as e:
         def spring_layout(
             graph: "_IntellicrackNetworkX.DiGraph",
             k: float | None = None,
-            pos: dict[Any, tuple[float, float]] | None = None,  # noqa: ANN401
+            pos: dict[object, tuple[float, float]] | None = None,
             iterations: int = 50,
-        ) -> dict[Any, tuple[float, float]]:  # noqa: ANN401
+        ) -> dict[object, tuple[float, float]]:
             """Spring layout algorithm for graph visualization.
 
             Args:
@@ -573,7 +571,7 @@ except ImportError as e:
                 pos = pos.copy()
 
             for _ in range(iterations):
-                forces: dict[Any, list[float]] = {node: [0, 0] for node in nodes}
+                forces: dict[object, list[float]] = {node: [0, 0] for node in nodes}
 
                 for i, node1 in enumerate(nodes):
                     for j, node2 in enumerate(nodes):
@@ -606,7 +604,7 @@ except ImportError as e:
             return pos
 
         @staticmethod
-        def circular_layout(graph: "_IntellicrackNetworkX.DiGraph") -> dict[Any, tuple[float, float]]:  # noqa: ANN401
+        def circular_layout(graph: "_IntellicrackNetworkX.DiGraph") -> dict[object, tuple[float, float]]:
             """Circular layout for graph visualization.
 
             Args:
@@ -623,7 +621,7 @@ except ImportError as e:
                 return {}
 
             n = len(nodes)
-            positions: dict[Any, tuple[float, float]] = {}
+            positions: dict[object, tuple[float, float]] = {}
 
             for i, node in enumerate(nodes):
                 angle = 2 * math.pi * i / n
@@ -636,9 +634,9 @@ except ImportError as e:
         @staticmethod
         def draw_networkx(
             graph: "_IntellicrackNetworkX.DiGraph",
-            pos: dict[Any, tuple[float, float]] | None = None,  # noqa: ANN401
-            ax: Any = None,  # noqa: ANN401
-            **kwargs: Any,  # noqa: ANN401
+            pos: dict[object, tuple[float, float]] | None = None,
+            ax: object = None,
+            **kwargs: object,
         ) -> None:
             """Draw graph with basic functionality.
 
@@ -658,7 +656,7 @@ except ImportError as e:
                 """PyDot interface for NetworkX compatibility."""
 
                 @staticmethod
-                def write_dot(graph: "_IntellicrackNetworkX.DiGraph", path: str) -> None:  # noqa: ANN401
+                def write_dot(graph: "_IntellicrackNetworkX.DiGraph", path: str) -> None:
                     """Write graph in DOT format.
 
                     Args:
@@ -677,7 +675,7 @@ except ImportError as e:
                         f.write("}\n")
 
                 @staticmethod
-                def graphviz_layout(graph: "_IntellicrackNetworkX.DiGraph", prog: str = "dot") -> dict[Any, tuple[float, float]]:  # noqa: ANN401
+                def graphviz_layout(graph: "_IntellicrackNetworkX.DiGraph", prog: str = "dot") -> dict[object, tuple[float, float]]:
                     """Graphviz layout (fallback to spring layout).
 
                     Args:
@@ -901,7 +899,7 @@ class CFGExplorer:
             self.logger.error(f"Error loading binary with advanced analysis: {e}")
             return False
 
-    def _create_enhanced_function_graph(self, graph_data: dict[str, Any], r2: Any, function_addr: int) -> nx.DiGraph:  # noqa: ANN401
+    def _create_enhanced_function_graph(self, graph_data: dict[str, object], r2: object, function_addr: int) -> nx.DiGraph:
         """Create enhanced function graph with comprehensive node data."""
         function_graph = nx.DiGraph()
 
@@ -972,7 +970,7 @@ class CFGExplorer:
 
         return function_graph
 
-    def _classify_block_type(self, block: dict[str, Any]) -> str:
+    def _classify_block_type(self, block: dict[str, object]) -> str:
         """Classify block type based on its characteristics."""
         ops = block.get("ops", [])
 
@@ -997,7 +995,7 @@ class CFGExplorer:
 
         return "basic"
 
-    def _calculate_block_complexity(self, block: dict[str, Any]) -> float:
+    def _calculate_block_complexity(self, block: dict[str, object]) -> float:
         """Calculate complexity score for a basic block."""
         ops = block.get("ops", [])
 
@@ -1021,7 +1019,7 @@ class CFGExplorer:
 
         return complexity
 
-    def _build_call_graph(self, r2: Any) -> None:  # noqa: ANN401
+    def _build_call_graph(self, r2: object) -> None:
         """Build inter-function call graph."""
         try:
             # Get all cross-references
@@ -1255,7 +1253,7 @@ class CFGExplorer:
 
         return layout
 
-    def get_graph_data(self, layout_type: str = "spring") -> dict[str, Any] | None:
+    def get_graph_data(self, layout_type: str = "spring") -> dict[str, object] | None:
         """Get graph data for visualization."""
         if not self.graph:
             self.logger.error("No graph loaded")
@@ -1299,7 +1297,7 @@ class CFGExplorer:
             "function": self.current_function,
         }
 
-    def get_advanced_analysis_results(self) -> dict[str, Any]:
+    def get_advanced_analysis_results(self) -> dict[str, object]:
         """Get comprehensive advanced analysis results."""
         return {
             "analysis_cache": self.analysis_cache,
@@ -1311,7 +1309,7 @@ class CFGExplorer:
             "cross_reference_analysis": self.get_cross_reference_analysis(),
         }
 
-    def get_call_graph_metrics(self) -> dict[str, Any]:
+    def get_call_graph_metrics(self) -> dict[str, object]:
         """Get call graph analysis metrics."""
         if not self.call_graph or not NETWORKX_AVAILABLE:
             return {}
@@ -1360,7 +1358,7 @@ class CFGExplorer:
 
         return list(set(recursive_funcs))
 
-    def get_vulnerability_patterns(self) -> dict[str, Any]:
+    def get_vulnerability_patterns(self) -> dict[str, object]:
         """Get vulnerability patterns from advanced analysis."""
         patterns = {
             "buffer_overflow_candidates": [],
@@ -1418,7 +1416,7 @@ class CFGExplorer:
 
         return patterns
 
-    def get_license_validation_analysis(self) -> dict[str, Any]:
+    def get_license_validation_analysis(self) -> dict[str, object]:
         """Get comprehensive license validation analysis."""
         analysis = {
             "license_functions": [],
@@ -1464,7 +1462,7 @@ class CFGExplorer:
 
         return analysis
 
-    def get_code_complexity_analysis(self) -> dict[str, Any]:
+    def get_code_complexity_analysis(self) -> dict[str, object]:
         """Get comprehensive code complexity analysis."""
         complexity_data = {
             "function_complexities": {},
@@ -1545,7 +1543,7 @@ class CFGExplorer:
         except (AttributeError, TypeError):
             return 1
 
-    def get_cross_reference_analysis(self) -> dict[str, Any]:
+    def get_cross_reference_analysis(self) -> dict[str, object]:
         """Get cross-reference analysis between functions."""
         xref_analysis = {
             "function_dependencies": {},
@@ -1586,7 +1584,7 @@ class CFGExplorer:
 
         return xref_analysis
 
-    def find_license_check_patterns(self) -> list[dict[str, Any]]:
+    def find_license_check_patterns(self) -> list[dict[str, object]]:
         """Find potential license check patterns in the CFG."""
         if not self.graph:
             self.logger.error("No graph loaded")
@@ -1906,7 +1904,7 @@ class CFGExplorer:
             self.logger.error("Error exporting DOT file: %s", e)
             return False
 
-    def analyze_cfg(self, binary_path: str | None = None) -> dict[str, Any]:
+    def analyze_cfg(self, binary_path: str | None = None) -> dict[str, object]:
         """Perform comprehensive advanced CFG analysis on a binary.
 
         Args:
@@ -2078,7 +2076,7 @@ class CFGExplorer:
 
         return clusters
 
-    def _generate_analysis_summary(self, results: dict[str, Any]) -> dict[str, Any]:
+    def _generate_analysis_summary(self, results: dict[str, object]) -> dict[str, object]:
         """Generate comprehensive analysis summary."""
         summary = {
             "total_functions": results.get("functions_analyzed", 0),
@@ -2317,7 +2315,7 @@ class CFGExplorer:
             except Exception as e:
                 self.logger.warning(f"Failed to export some metrics: {e}")
 
-            def json_serializable(obj: Any) -> Any:  # noqa: ANN401
+            def json_serializable(obj: object) -> object:
                 """Convert non-serializable objects to JSON-friendly format.
 
                 Args:
@@ -2365,7 +2363,7 @@ class CFGExplorer:
             return False
 
 
-def run_deep_cfg_analysis(app: Any) -> None:  # noqa: ANN401
+def run_deep_cfg_analysis(app: object) -> None:
     """Run deep CFG analysis.
 
     Args:
@@ -2528,7 +2526,7 @@ def run_deep_cfg_analysis(app: Any) -> None:  # noqa: ANN401
         app.analyze_status.setText(f"CFG analysis error: {e!s}")
 
 
-def run_cfg_explorer(app: Any) -> None:  # noqa: ANN401
+def run_cfg_explorer(app: object) -> None:
     """Initialize and run the CFG explorer with GUI integration.
 
     Args:

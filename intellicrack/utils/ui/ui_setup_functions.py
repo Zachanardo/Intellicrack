@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-from typing import Any
+from typing import Callable
 
 # Optional imports with graceful fallbacks
 from intellicrack.handlers.pyqt6_handler import HAS_PYQT
@@ -48,17 +48,17 @@ else:
     class HeadlessWidget:
         """Production fallback widget for headless operation."""
 
-        def __init__(self, *args, **kwargs) -> None:
+        def __init__(self, *args: object, **kwargs: object) -> None:
             self._args = args
             self._kwargs = kwargs
-            self._attributes = {}
-            self._children = []
-            self._parent = None
+            self._attributes: dict[str, object] = {}
+            self._children: list[object] = []
+            self._parent: object | None = None
             self._visible = False
             self._enabled = True
             self._name = kwargs.get("objectName", f"widget_{id(self)}")
 
-        def setParent(self, parent) -> None:
+        def setParent(self, parent: object) -> None:
             self._parent = parent
             if parent and hasattr(parent, "_children"):
                 parent._children.append(self)
@@ -69,32 +69,31 @@ else:
         def hide(self) -> None:
             self._visible = False
 
-        def setEnabled(self, enabled) -> None:
+        def setEnabled(self, enabled: bool) -> None:
             self._enabled = enabled
 
-        def setText(self, text) -> None:
+        def setText(self, text: str) -> None:
             self._attributes["text"] = text
 
-        def text(self):
+        def text(self) -> str:
             return self._attributes.get("text", "")
 
-        def setValue(self, value) -> None:
+        def setValue(self, value: int) -> None:
             self._attributes["value"] = value
 
-        def value(self):
+        def value(self) -> int:
             return self._attributes.get("value", 0)
 
-        def addWidget(self, widget) -> None:
+        def addWidget(self, widget: object) -> None:
             if widget:
                 widget.setParent(self)
 
-        def addLayout(self, layout) -> None:
+        def addLayout(self, layout: object) -> None:
             if layout:
                 self._children.append(layout)
 
-        def __getattr__(self, name):
-            # Return a callable that stores the call but doesn't fail
-            def method(*args, **kwargs) -> None:
+        def __getattr__(self, name: str) -> Callable[..., None]:
+            def method(*args: object, **kwargs: object) -> None:
                 return None
 
             return method
@@ -102,26 +101,26 @@ else:
     class HeadlessLayout(HeadlessWidget):
         """Production fallback layout for headless operation."""
 
-        def __init__(self, *args, **kwargs) -> None:
+        def __init__(self, *args: object, **kwargs: object) -> None:
             super().__init__(*args, **kwargs)
             self._spacing = 0
             self._margin = 0
 
-        def setSpacing(self, spacing) -> None:
+        def setSpacing(self, spacing: int) -> None:
             self._spacing = spacing
 
-        def setContentsMargins(self, left, top, right, bottom) -> None:
+        def setContentsMargins(self, left: int, top: int, right: int, bottom: int) -> None:
             self._margin = (left, top, right, bottom)
 
     class HeadlessTimer:
         """Production fallback timer for headless operation."""
 
-        def __init__(self, *args, **kwargs) -> None:
+        def __init__(self, *args: object, **kwargs: object) -> None:
             self._interval = 1000
             self._active = False
             self._single_shot = False
 
-        def start(self, interval=None) -> None:
+        def start(self, interval: int | None = None) -> None:
             if interval:
                 self._interval = interval
             self._active = True
@@ -129,15 +128,14 @@ else:
         def stop(self) -> None:
             self._active = False
 
-        def setInterval(self, interval) -> None:
+        def setInterval(self, interval: int) -> None:
             self._interval = interval
 
-        def setSingleShot(self, single) -> None:
+        def setSingleShot(self, single: bool) -> None:
             self._single_shot = single
 
         @staticmethod
-        def singleShot(interval, callback) -> None:
-            # Execute callback immediately in headless mode
+        def singleShot(interval: int, callback: Callable[..., None]) -> None:
             if callable(callback):
                 callback()
 
@@ -175,8 +173,19 @@ except ImportError as e:
     HAS_MATPLOTLIB = False
 
 
-def setup_dataset_tab(parent: Any) -> Any | None:
-    """Set up the dataset management tab."""
+def setup_dataset_tab(parent: object) -> object | None:
+    """Set up the dataset management tab.
+
+    Configure and initialize a dataset management tab widget with controls for
+    dataset selection, preview, statistics, operations, and visualization.
+
+    Args:
+        parent: Parent widget for proper widget hierarchy.
+
+    Returns:
+        Configured dataset management widget, or None if PyQt6 is unavailable.
+
+    """
     if not HAS_PYQT:
         logger.warning("PyQt6 not available, cannot create dataset tab")
         return None
@@ -283,8 +292,19 @@ def setup_dataset_tab(parent: Any) -> Any | None:
     return tab
 
 
-def setup_memory_monitor(parent: Any) -> Any | None:
-    """Set up memory monitoring widget."""
+def setup_memory_monitor(parent: object) -> object | None:
+    """Set up memory monitoring widget.
+
+    Create a memory monitoring widget with statistics display, usage bar,
+    history visualization, and garbage collection controls.
+
+    Args:
+        parent: Parent widget for proper widget hierarchy.
+
+    Returns:
+        Configured memory monitor widget, or None if PyQt6 is unavailable.
+
+    """
     if not HAS_PYQT:
         logger.warning("PyQt6 not available, cannot create memory monitor")
         return None
@@ -380,8 +400,19 @@ def setup_memory_monitor(parent: Any) -> Any | None:
     return widget
 
 
-def setup_training_tab(parent: Any) -> Any | None:
-    """Set up the model training tab."""
+def setup_training_tab(parent: object) -> object | None:
+    """Set up the model training tab.
+
+    Initialize a comprehensive model training interface with configuration,
+    progress tracking, metrics visualization, and training logs.
+
+    Args:
+        parent: Parent widget for proper widget hierarchy.
+
+    Returns:
+        Configured training tab widget, or None if PyQt6 is unavailable.
+
+    """
     if not HAS_PYQT:
         logger.warning("PyQt6 not available, cannot create training tab")
         return None

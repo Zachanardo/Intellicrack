@@ -32,16 +32,16 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 
 from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-_secrets_manager_module = None
+_secrets_manager_module: Any = None
 
 
-def _get_secrets_manager():
+def _get_secrets_manager() -> Any:  # noqa: ANN401
     """Lazy import secrets_manager to prevent circular imports."""
     global _secrets_manager_module
     if _secrets_manager_module is None:
@@ -50,13 +50,30 @@ def _get_secrets_manager():
     return _secrets_manager_module
 
 
-def get_secret(key):
-    """Lazy wrapper for get_secret."""
+def get_secret(key: str) -> Any:  # noqa: ANN401
+    """Lazy wrapper for get_secret.
+
+    Args:
+        key: Secret key to retrieve.
+
+    Returns:
+        The secret value associated with the key.
+
+    """
     return _get_secrets_manager().get_secret(key)
 
 
-def set_secret(key, value):
-    """Lazy wrapper for set_secret."""
+def set_secret(key: str, value: Any) -> Any:  # noqa: ANN401
+    """Lazy wrapper for set_secret.
+
+    Args:
+        key: Secret key to set.
+        value: Secret value to store.
+
+    Returns:
+        The result of the set_secret operation.
+
+    """
     return _get_secrets_manager().set_secret(key, value)
 
 
@@ -146,21 +163,48 @@ class AuditEvent:
         self.process_id = os.getpid()
 
     def _generate_event_id(self) -> str:
-        """Generate a unique event ID."""
+        """Generate a unique event ID.
+
+        Uses SHA-256 hash of timestamp and random bytes to create a unique
+        identifier for each audit event, enabling reliable event tracking
+        and correlation in logs.
+
+        Returns:
+            A 16-character hexadecimal string representing the event ID.
+
+        """
         # Use timestamp + random bytes for uniqueness
         timestamp = str(time.time()).encode()
         random_bytes = os.urandom(8)
         return hashlib.sha256(timestamp + random_bytes).hexdigest()[:16]
 
     def _get_current_user(self) -> str:
-        """Get the current system user."""
+        """Get the current system user.
+
+        Attempts to retrieve the currently logged-in user name from the system.
+        Falls back to environment variables (USER on Unix, USERNAME on Windows)
+        if direct retrieval fails.
+
+        Returns:
+            The username of the current system user, or 'unknown' if unable
+            to determine.
+
+        """
         try:
             return os.getlogin()
         except (OSError, AttributeError):
             return os.environ.get("USER", os.environ.get("USERNAME", "unknown"))
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert event to dictionary format."""
+        """Convert event to dictionary format.
+
+        Serializes the audit event to a dictionary with ISO format timestamps
+        and enumeration values for event type and severity.
+
+        Returns:
+            Dictionary representation of the audit event with all fields.
+
+        """
         return {
             "event_id": self.event_id,
             "timestamp": self.timestamp.isoformat(),
@@ -176,11 +220,27 @@ class AuditEvent:
         }
 
     def to_json(self) -> str:
-        """Convert event to JSON string."""
+        """Convert event to JSON string.
+
+        Serializes the audit event to a formatted JSON string suitable for
+        file storage or transmission.
+
+        Returns:
+            JSON string representation of the audit event with 2-space indentation.
+
+        """
         return json.dumps(self.to_dict(), indent=2)
 
     def calculate_hash(self) -> str:
-        """Calculate SHA-256 hash of the event for integrity verification."""
+        """Calculate SHA-256 hash of the event for integrity verification.
+
+        Creates a deterministic hash of the event by sorting all keys before
+        hashing, enabling validation that the event has not been modified.
+
+        Returns:
+            SHA-256 hexadecimal hash digest of the event data.
+
+        """
         # Create a stable string representation
         event_str = json.dumps(self.to_dict(), sort_keys=True)
         return hashlib.sha256(event_str.encode()).hexdigest()
@@ -238,7 +298,16 @@ class AuditLogger:
         )
 
     def _get_default_log_dir(self) -> Path:
-        """Get platform-specific audit log directory."""
+        """Get platform-specific audit log directory.
+
+        Returns the appropriate system directory for audit logs based on the
+        operating system: PROGRAMDATA/intellicrack/audit on Windows, or
+        /var/log/intellicrack/audit on Unix-like systems.
+
+        Returns:
+            Path object pointing to the platform-specific audit log directory.
+
+        """
         system = platform.system()
 
         if system == "Windows":
@@ -249,7 +318,14 @@ class AuditLogger:
         return base / "intellicrack" / "audit"
 
     def _init_encryption(self) -> None:
-        """Initialize encryption for log entries."""
+        """Initialize encryption for log entries.
+
+        Sets up Fernet symmetric encryption for audit logs using a key stored
+        in the secrets manager. Generates a new key if one does not exist.
+        If cryptography is unavailable, logs a warning and continues without
+        encryption.
+
+        """
         try:
             from intellicrack.handlers.cryptography_handler import Fernet
 
@@ -267,7 +343,16 @@ class AuditLogger:
             self._cipher = None
 
     def _load_last_hash(self) -> str | None:
-        """Load the last hash from the hash chain file."""
+        """Load the last hash from the hash chain file.
+
+        Retrieves the most recent event hash from the hash chain file for
+        integrity verification and hash linking.
+
+        Returns:
+            The last stored hash value, or None if the file does not exist
+            or cannot be read.
+
+        """
         hash_file = self.log_dir / ".hash_chain"
         if hash_file.exists():
             try:
@@ -277,7 +362,16 @@ class AuditLogger:
         return None
 
     def _save_hash(self, hash_value: str) -> None:
-        """Save hash to the hash chain file."""
+        """Save hash to the hash chain file.
+
+        Persists the event hash to the hash chain file with restricted
+        permissions (0o600) on Unix-like systems. This enables detection
+        of log tampering through hash chain verification.
+
+        Args:
+            hash_value: The SHA-256 hash to save to the chain file.
+
+        """
         hash_file = self.log_dir / ".hash_chain"
         try:
             hash_file.write_text(hash_value)
@@ -288,12 +382,27 @@ class AuditLogger:
             logger.error(f"Failed to save hash chain: {e}")
 
     def _get_current_log_file(self) -> Path:
-        """Get the current log file path."""
+        """Get the current log file path.
+
+        Generates the path for the current day's audit log file using
+        YYYYMMDD format in the filename.
+
+        Returns:
+            Path object for the current audit log file (audit_YYYYMMDD.log).
+
+        """
         date_str = datetime.now().strftime("%Y%m%d")
         return self.log_dir / f"audit_{date_str}.log"
 
     def _rotate_logs(self) -> None:
-        """Rotate log files when size limit is reached."""
+        """Rotate log files when size limit is reached.
+
+        Implements log rotation using numbered suffixes (audit_YYYYMMDD.log.1,
+        audit_YYYYMMDD.log.2, etc.). When the rotation count is exceeded,
+        the oldest file is removed and remaining files are renumbered.
+        Resets the current file size counter after rotation.
+
+        """
         current_file = self._get_current_log_file()
 
         # Find next available rotation number
@@ -321,7 +430,16 @@ class AuditLogger:
         self._current_size = 0
 
     def log_event(self, event: AuditEvent) -> None:
-        """Log an audit event with integrity protection."""
+        """Log an audit event with integrity protection.
+
+        Writes an audit event to the log file with tamper-detection features
+        including hash chaining, optional encryption, and automatic log rotation.
+        Thread-safe operation with file synchronization to disk.
+
+        Args:
+            event: The AuditEvent to log.
+
+        """
         with self._lock:
             try:
                 # Add hash chain
@@ -391,7 +509,21 @@ class AuditLogger:
         success: bool = False,
         error: str | None = None,
     ) -> None:
-        """Log an exploitation attempt."""
+        """Log an exploitation attempt.
+
+        Records a licensing protection exploitation attempt with details about
+        the target, exploit type, success/failure status, and any associated
+        errors. Payload information is hashed for security rather than logged
+        in full.
+
+        Args:
+            target: Target of the exploitation attempt (file path, license type).
+            exploit_type: Type of exploit attempted (keygen, patcher, etc.).
+            payload: Optional payload data (hashed in logs for security).
+            success: Whether the exploitation attempt succeeded.
+            error: Optional error message if the attempt failed.
+
+        """
         event_type = AuditEventType.EXPLOIT_SUCCESS if success else AuditEventType.EXPLOIT_FAILURE
         severity = AuditSeverity.HIGH if success else AuditSeverity.MEDIUM
 
@@ -416,7 +548,19 @@ class AuditLogger:
         )
 
     def log_binary_analysis(self, file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]) -> None:
-        """Log binary analysis results."""
+        """Log binary analysis results.
+
+        Records binary analysis operations including detected protections,
+        identified vulnerabilities, and file metadata for tracking licensing
+        protection analysis activities.
+
+        Args:
+            file_path: Path to the analyzed binary file.
+            file_hash: SHA-256 or similar hash of the binary file.
+            protections: List of licensing protections detected in the binary.
+            vulnerabilities: List of detected vulnerabilities or bypass points.
+
+        """
         self.log_event(
             AuditEvent(
                 event_type=AuditEventType.BINARY_LOADED,
@@ -434,7 +578,18 @@ class AuditLogger:
         )
 
     def log_vm_operation(self, operation: str, vm_name: str, success: bool = True, error: str | None = None) -> None:
-        """Log VM-related operations."""
+        """Log VM-related operations.
+
+        Records virtual machine operations such as start, stop, and snapshot
+        actions used in licensing protection analysis environments.
+
+        Args:
+            operation: Type of VM operation ('start', 'stop', 'snapshot').
+            vm_name: Name identifier of the virtual machine.
+            success: Whether the operation completed successfully.
+            error: Optional error message if operation failed.
+
+        """
         event_map = {
             "start": AuditEventType.VM_START,
             "stop": AuditEventType.VM_STOP,
@@ -503,7 +658,20 @@ class AuditLogger:
         output: str | None = None,
         error: str | None = None,
     ) -> None:
-        """Log external tool execution."""
+        """Log external tool execution.
+
+        Records execution of external tools (radare2, Frida, etc.) used in
+        licensing protection analysis, including command details and results.
+        Output is truncated and hashed for security and privacy.
+
+        Args:
+            tool_name: Name of the external tool executed.
+            command: Full command line used to invoke the tool.
+            success: Whether tool execution completed successfully.
+            output: Optional output from tool execution (truncated in logs).
+            error: Optional error message if execution failed.
+
+        """
         event_type = AuditEventType.TOOL_EXECUTION if success else AuditEventType.TOOL_ERROR
         severity = AuditSeverity.LOW if success else AuditSeverity.MEDIUM
 
@@ -529,7 +697,19 @@ class AuditLogger:
         )
 
     def verify_log_integrity(self, log_file: Path) -> bool:
-        """Verify the integrity of a log file using hash chain."""
+        """Verify the integrity of a log file using hash chain.
+
+        Validates that a log file has not been tampered with by checking the
+        hash chain linkage between events. Detects both event modification
+        and insertion/deletion of events.
+
+        Args:
+            log_file: Path to the audit log file to verify.
+
+        Returns:
+            True if the log file passes integrity verification, False otherwise.
+
+        """
         try:
             previous_hash = None
 
@@ -599,7 +779,24 @@ class AuditLogger:
         user: str | None = None,
         target: str | None = None,
     ) -> list[dict[str, Any]]:
-        """Search audit logs based on criteria."""
+        """Search audit logs based on criteria.
+
+        Queries audit logs across all log files, filtering by optional time
+        range, event types, severity level, user, and target. Handles both
+        encrypted and plaintext log entries.
+
+        Args:
+            start_time: Earliest event timestamp to include (optional).
+            end_time: Latest event timestamp to include (optional).
+            event_types: List of AuditEventType values to filter by (optional).
+            severity: Severity level to filter by (optional).
+            user: Username to filter events by (optional).
+            target: Target identifier to filter events by (optional).
+
+        Returns:
+            List of event dictionaries matching the search criteria.
+
+        """
         results = []
 
         # Get all log files in time range
@@ -657,7 +854,21 @@ class AuditLogger:
         return results
 
     def generate_report(self, start_time: datetime, end_time: datetime, output_file: Path | None = None) -> str:
-        """Generate an audit report for a time period."""
+        """Generate an audit report for a time period.
+
+        Creates a formatted text report summarizing audit activities within
+        the specified time range, including event counts by type, severity,
+        and user, plus details of critical events.
+
+        Args:
+            start_time: Start of the reporting period.
+            end_time: End of the reporting period.
+            output_file: Optional path to write the report to disk.
+
+        Returns:
+            Formatted report string with audit statistics and critical events.
+
+        """
         events = self.search_events(start_time=start_time, end_time=end_time)
 
         # Group by event type
@@ -735,14 +946,36 @@ class PerformanceMonitor:
         self._lock = threading.RLock()
 
     def start_timer(self, operation: str) -> str:
-        """Start timing an operation."""
+        """Start timing an operation.
+
+        Creates a unique timer ID and records the start time for measuring
+        operation duration. Timer IDs are microsecond-precision based to
+        ensure uniqueness.
+
+        Args:
+            operation: Name of the operation being timed.
+
+        Returns:
+            Unique timer ID for later reference with end_timer().
+
+        """
         timer_id = f"{operation}_{int(time.time() * 1000000)}"
         with self._lock:
             self.start_times[timer_id] = time.time()
         return timer_id
 
-    def end_timer(self, timer_id: str, metadata: dict = None) -> None:
-        """End timing and record duration."""
+    def end_timer(self, timer_id: str, metadata: dict[str, Any] | None = None) -> None:
+        """End timing and record duration.
+
+        Completes timing for an operation, calculating elapsed time and updating
+        performance metrics including percentile calculations. Logs warnings
+        for operations exceeding 5 seconds.
+
+        Args:
+            timer_id: The timer ID returned by start_timer().
+            metadata: Optional metadata dictionary (currently unused).
+
+        """
         end_time = time.time()
         with self._lock:
             if timer_id in self.start_times:
@@ -776,8 +1009,18 @@ class PerformanceMonitor:
                 if duration > 5.0:  # More than 5 seconds
                     logger.warning(f"Slow operation {operation}: {duration:.2f}s")
 
-    def increment_counter(self, metric: str, value: int = 1, tags: dict = None) -> None:
-        """Increment a counter metric."""
+    def increment_counter(self, metric: str, value: int = 1, tags: dict[str, Any] | None = None) -> None:
+        """Increment a counter metric.
+
+        Updates a counter metric by a specified value, optionally tagged with
+        metadata for categorization.
+
+        Args:
+            metric: Name of the counter metric.
+            value: Amount to increment by (default 1).
+            tags: Optional dictionary of tags for metric categorization.
+
+        """
         with self._lock:
             metric_key = f"counter.{metric}"
             if tags:
@@ -785,8 +1028,18 @@ class PerformanceMonitor:
                 metric_key += f"_{tag_str}"
             self.counters[metric_key] += value
 
-    def record_gauge(self, metric: str, value: float, tags: dict = None) -> None:
-        """Record a gauge metric."""
+    def record_gauge(self, metric: str, value: float, tags: dict[str, Any] | None = None) -> None:
+        """Record a gauge metric.
+
+        Records a point-in-time numeric value for a gauge metric with
+        timestamp, optionally tagged for categorization.
+
+        Args:
+            metric: Name of the gauge metric.
+            value: Numeric value to record.
+            tags: Optional dictionary of tags for metric categorization.
+
+        """
         with self._lock:
             metric_key = f"gauge.{metric}"
             if tags:
@@ -795,7 +1048,17 @@ class PerformanceMonitor:
             self.metrics[metric_key] = {"value": value, "timestamp": time.time()}
 
     def get_metrics_summary(self) -> dict[str, Any]:
-        """Get summary of all metrics."""
+        """Get summary of all metrics.
+
+        Compiles a comprehensive summary of all collected metrics including
+        performance metrics, counters, system metrics, and percentile data
+        for histograms.
+
+        Returns:
+            Dictionary containing performance metrics, counters, system metrics,
+            and percentile distributions.
+
+        """
         with self._lock:
             summary = {
                 "timestamp": time.time(),
@@ -821,7 +1084,17 @@ class PerformanceMonitor:
             return summary
 
     def _get_system_metrics(self) -> dict[str, Any]:
-        """Get system-level metrics."""
+        """Get system-level metrics.
+
+        Collects system resource metrics including CPU, memory, disk, and
+        network statistics using psutil. Returns error information if psutil
+        is unavailable.
+
+        Returns:
+            Dictionary with CPU, memory, disk, and network metrics, or error
+            information if metrics cannot be collected.
+
+        """
         try:
             from intellicrack.handlers.psutil_handler import psutil
 
@@ -868,7 +1141,12 @@ class PerformanceMonitor:
             return {"error": f"Failed to get system metrics: {e}"}
 
     def reset_metrics(self) -> None:
-        """Reset all metrics."""
+        """Reset all metrics.
+
+        Clears all accumulated metrics, counters, histograms, and active timers.
+        Thread-safe operation suitable for periodic metric reset operations.
+
+        """
         with self._lock:
             self.metrics.clear()
             self.counters.clear()
@@ -895,11 +1173,25 @@ class TelemetryCollector:
         self._running = False
 
     def set_audit_logger(self, audit_logger: AuditLogger) -> None:
-        """Set the audit logger for telemetry."""
+        """Set the audit logger for telemetry.
+
+        Associates an AuditLogger instance with the telemetry collector for
+        logging security events discovered during telemetry collection.
+
+        Args:
+            audit_logger: The AuditLogger instance to use.
+
+        """
         self.audit_logger = audit_logger
 
     def start_collection(self) -> None:
-        """Start telemetry collection."""
+        """Start telemetry collection.
+
+        Begins background telemetry collection in a daemon thread. Respects
+        testing mode environment variables to avoid background threads during
+        unit testing.
+
+        """
         if self._running:
             return
 
@@ -914,14 +1206,25 @@ class TelemetryCollector:
         logger.info("Telemetry collection started")
 
     def stop_collection(self) -> None:
-        """Stop telemetry collection."""
+        """Stop telemetry collection.
+
+        Halts background telemetry collection and waits for the collection
+        thread to terminate with a 5-second timeout.
+
+        """
         self._running = False
         if self._export_thread:
             self._export_thread.join(timeout=5)
         logger.info("Telemetry collection stopped")
 
     def _export_loop(self) -> None:
-        """Run main export loop."""
+        """Run main export loop.
+
+        Main loop for background telemetry collection. Periodically calls
+        _collect_and_export() at the configured export_interval. Continues
+        until stop_collection() is called.
+
+        """
         while self._running:
             try:
                 self._collect_and_export()
@@ -931,7 +1234,13 @@ class TelemetryCollector:
                 time.sleep(60)  # Wait before retrying
 
     def _collect_and_export(self) -> None:
-        """Collect and export telemetry data."""
+        """Collect and export telemetry data.
+
+        Gathers performance metrics, resource statistics, and external tool
+        status. Stores telemetry data internally and logs a summary. Gracefully
+        handles failures in individual collection steps.
+
+        """
         try:
             # Get performance metrics
             metrics = self.performance_monitor.get_metrics_summary()
@@ -972,7 +1281,15 @@ class TelemetryCollector:
             logger.error(f"Failed to collect telemetry: {e}")
 
     def _log_telemetry_summary(self, metrics: dict[str, Any]) -> None:
-        """Log telemetry summary."""
+        """Log telemetry summary.
+
+        Logs a concise summary of current system metrics and triggers alerts
+        for critical resource conditions (>90% CPU or memory usage).
+
+        Args:
+            metrics: Dictionary of collected metrics.
+
+        """
         try:
             system_metrics = metrics.get("system_metrics", {})
 
@@ -1013,12 +1330,30 @@ class TelemetryCollector:
             logger.debug(f"Failed to log telemetry summary: {e}")
 
     def get_telemetry_history(self, limit: int = 50) -> list[dict[str, Any]]:
-        """Get recent telemetry history."""
+        """Get recent telemetry history.
+
+        Retrieves the most recent telemetry data points up to the specified limit.
+
+        Args:
+            limit: Maximum number of recent entries to return (default 50).
+
+        Returns:
+            List of telemetry data dictionaries in reverse chronological order.
+
+        """
         with self._lock:
             return self.telemetry_data[-limit:]
 
     def export_telemetry_json(self, filepath: str) -> None:
-        """Export telemetry data to JSON file."""
+        """Export telemetry data to JSON file.
+
+        Writes all collected telemetry data to a JSON file with metadata
+        including export timestamp and interval configuration.
+
+        Args:
+            filepath: Path where the JSON telemetry export will be written.
+
+        """
         try:
             import json
 
@@ -1053,35 +1388,80 @@ class ContextualLogger:
         self.audit_logger = audit_logger
         self.context = {}
 
-    def set_context(self, **kwargs) -> None:
-        """Set contextual information."""
+    def set_context(self, **kwargs: Any) -> None:  # noqa: ANN401
+        """Set contextual information.
+
+        Args:
+            **kwargs: Key-value pairs of context information to set.
+
+        """
         self.context.update(kwargs)
 
     def clear_context(self) -> None:
-        """Clear contextual information."""
+        """Clear contextual information.
+
+        Removes all contextual key-value pairs from the logger. Subsequent
+        log messages will not include context information.
+
+        """
         self.context.clear()
 
     def _format_message(self, message: str) -> str:
-        """Format message with context."""
+        """Format message with context.
+
+        Prepends contextual information to log messages in square brackets
+        if context is available.
+
+        Args:
+            message: The message to format.
+
+        Returns:
+            Formatted message with context prefix, or original message if no context.
+
+        """
         if self.context:
             context_str = " ".join(f"{k}={v}" for k, v in self.context.items())
             return f"[{context_str}] {message}"
         return message
 
-    def debug(self, message: str, **kwargs) -> None:
-        """Log debug message with context."""
+    def debug(self, message: str, **kwargs: Any) -> None:  # noqa: ANN401
+        """Log debug message with context.
+
+        Args:
+            message: The debug message to log.
+            **kwargs: Additional context key-value pairs.
+
+        """
         self.logger.debug(self._format_message(message), extra=kwargs)
 
-    def info(self, message: str, **kwargs) -> None:
-        """Log info message with context."""
+    def info(self, message: str, **kwargs: Any) -> None:  # noqa: ANN401
+        """Log info message with context.
+
+        Args:
+            message: The info message to log.
+            **kwargs: Additional context key-value pairs.
+
+        """
         self.logger.info(self._format_message(message), extra=kwargs)
 
-    def warning(self, message: str, **kwargs) -> None:
-        """Log warning message with context."""
+    def warning(self, message: str, **kwargs: Any) -> None:  # noqa: ANN401
+        """Log warning message with context.
+
+        Args:
+            message: The warning message to log.
+            **kwargs: Additional context key-value pairs.
+
+        """
         self.logger.warning(self._format_message(message), extra=kwargs)
 
-    def error(self, message: str, **kwargs) -> None:
-        """Log error message with context."""
+    def error(self, message: str, **kwargs: Any) -> None:  # noqa: ANN401
+        """Log error message with context.
+
+        Args:
+            message: The error message to log.
+            **kwargs: Additional context key-value pairs.
+
+        """
         self.logger.error(self._format_message(message), extra=kwargs)
 
         # Also audit log errors
@@ -1099,8 +1479,14 @@ class ContextualLogger:
 
                 logging.getLogger(__name__).debug(f"Audit logging error: {e}")
 
-    def critical(self, message: str, **kwargs) -> None:
-        """Log critical message with context."""
+    def critical(self, message: str, **kwargs: Any) -> None:  # noqa: ANN401
+        """Log critical message with context.
+
+        Args:
+            message: The critical message to log.
+            **kwargs: Additional context key-value pairs.
+
+        """
         self.logger.critical(self._format_message(message), extra=kwargs)
 
         # Also audit log critical errors
@@ -1119,29 +1505,57 @@ class ContextualLogger:
                 logging.getLogger(__name__).debug(f"Critical audit logging error: {e}")
 
 
-# Global telemetry collector
-telemetry_collector = TelemetryCollector()
+telemetry_collector: TelemetryCollector = TelemetryCollector()
 
 
 def get_telemetry_collector() -> TelemetryCollector:
-    """Get the global telemetry collector."""
+    """Get the global telemetry collector instance.
+
+    Returns:
+        The singleton TelemetryCollector instance for system-wide telemetry collection.
+
+    """
     return telemetry_collector
 
 
 def get_performance_monitor() -> PerformanceMonitor:
-    """Get the global performance monitor."""
+    """Get the global performance monitor instance.
+
+    Returns:
+        The PerformanceMonitor associated with the global telemetry collector.
+
+    """
     return telemetry_collector.performance_monitor
 
 
-def create_contextual_logger(name: str, **context) -> ContextualLogger:
-    """Create a contextual logger with initial context."""
+def create_contextual_logger(name: str, **context: Any) -> ContextualLogger:  # noqa: ANN401
+    """Create a contextual logger with initial context.
+
+    Args:
+        name: Logger name.
+        **context: Initial context key-value pairs.
+
+    Returns:
+        A new ContextualLogger instance with the provided context.
+
+    """
     logger = ContextualLogger(name)
     logger.set_context(**context)
     return logger
 
 
 def setup_comprehensive_logging() -> None:
-    """Set up comprehensive logging and monitoring system."""
+    """Set up comprehensive logging and monitoring system.
+
+    Initializes the global telemetry collector, starts performance monitoring,
+    and integrates the audit logger for security event tracking. This function
+    should be called explicitly from the main application to avoid circular
+    import issues during module initialization.
+
+    Raises:
+        Exception: Logs errors during setup but does not raise.
+
+    """
     try:
         # Start telemetry collection
         telemetry_collector.start_collection()
@@ -1161,45 +1575,86 @@ def setup_comprehensive_logging() -> None:
         logger.error(f"Failed to setup comprehensive logging: {e}")
 
 
-# Initialize logging system on module import
-try:
-    setup_comprehensive_logging()
-except Exception as e:
-    logger.warning(f"Failed to initialize logging system: {e}")
+# Note: Call setup_comprehensive_logging() explicitly from main application
+# to avoid circular import issues during module initialization
 
 
-# Global audit logger instance
 _audit_logger: AuditLogger | None = None
 
 
 def get_audit_logger() -> AuditLogger:
-    """Get the global audit logger instance."""
+    """Get the global audit logger instance.
+
+    Creates and returns the singleton AuditLogger instance for system-wide
+    audit event logging. The logger is initialized on first access with
+    default settings including encryption if available.
+
+    Returns:
+        The singleton AuditLogger instance for logging security events.
+
+    """
     global _audit_logger
     if _audit_logger is None:
         _audit_logger = AuditLogger()
     return _audit_logger
 
 
-def log_exploit_attempt(target: str, exploit_type: str, **kwargs) -> None:
-    """Log exploit attempts."""
+def log_exploit_attempt(target: str, exploit_type: str, **kwargs: Any) -> None:  # noqa: ANN401
+    """Log exploit attempts.
+
+    Args:
+        target: Target of the exploit attempt.
+        exploit_type: Type of exploit attempted.
+        **kwargs: Additional context for the exploit attempt.
+
+    """
     get_audit_logger().log_exploit_attempt(target, exploit_type, **kwargs)
 
 
 def log_binary_analysis(file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]) -> None:
-    """Log binary analysis."""
+    """Log binary analysis.
+
+    Args:
+        file_path: Path to the analyzed binary file.
+        file_hash: Hash of the binary file.
+        protections: List of protections detected in the binary.
+        vulnerabilities: List of vulnerabilities found in the binary.
+
+    """
     get_audit_logger().log_binary_analysis(file_path, file_hash, protections, vulnerabilities)
 
 
-def log_vm_operation(operation: str, vm_name: str, **kwargs) -> None:
-    """Log VM operations."""
+def log_vm_operation(operation: str, vm_name: str, **kwargs: Any) -> None:  # noqa: ANN401
+    """Log VM operations.
+
+    Args:
+        operation: Type of VM operation (start, stop, snapshot, etc.).
+        vm_name: Name of the virtual machine.
+        **kwargs: Additional context for the VM operation.
+
+    """
     get_audit_logger().log_vm_operation(operation, vm_name, **kwargs)
 
 
-def log_credential_access(credential_type: str, purpose: str, **kwargs) -> None:
-    """Log credential access."""
+def log_credential_access(credential_type: str, purpose: str, **kwargs: Any) -> None:  # noqa: ANN401
+    """Log credential access.
+
+    Args:
+        credential_type: Type of credential being accessed.
+        purpose: Purpose for the credential access.
+        **kwargs: Additional context for the credential access event.
+
+    """
     get_audit_logger().log_credential_access(credential_type, purpose, **kwargs)
 
 
-def log_tool_execution(tool_name: str, command: str, **kwargs) -> None:
-    """Log tool execution."""
+def log_tool_execution(tool_name: str, command: str, **kwargs: Any) -> None:  # noqa: ANN401
+    """Log tool execution.
+
+    Args:
+        tool_name: Name of the tool being executed.
+        command: Command line used to execute the tool.
+        **kwargs: Additional context for the tool execution.
+
+    """
     get_audit_logger().log_tool_execution(tool_name, command, **kwargs)

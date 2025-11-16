@@ -26,7 +26,7 @@ import pickle
 import subprocess
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from ..utils.logger import log_all_methods
 
@@ -42,7 +42,7 @@ logger.setLevel(logging.INFO)
 class DateTimeEncoder(json.JSONEncoder):
     """Customize JSON encoder for datetime and date objects."""
 
-    def default(self, obj: Any) -> str:  # noqa: ANN401
+    def default(self, obj: datetime | date | Path | object) -> str:
         """Convert datetime, date, and Path objects to JSON-serializable strings.
 
         Args:
@@ -81,6 +81,7 @@ class SecurityEnforcement:
         logger.debug("SecurityEnforcement: Attempting to load security configuration from IntellicrackConfig.")
         try:
             from intellicrack.core.config_manager import IntellicrackConfig
+
             config_manager_instance = IntellicrackConfig()
             # Get the main config dictionary
             config_data = config_manager_instance._config if hasattr(config_manager_instance, "_config") else {}
@@ -173,7 +174,7 @@ from ..utils.logger import log_all_methods, log_function_call
 
 # Subprocess Protection
 @log_function_call
-def _secure_subprocess_run(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401, ANN401, ANN401
+def _secure_subprocess_run(*args: object, **kwargs: object) -> object:
     """Secure wrapper for subprocess.run.
 
     Validates subprocess.run calls against security policy, enforcing shell
@@ -221,7 +222,7 @@ def _secure_subprocess_run(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401, A
 
 
 @log_function_call
-def _secure_subprocess_popen(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401, ANN401, ANN401
+def _secure_subprocess_popen(*args: object, **kwargs: object) -> object:
     """Secure wrapper for subprocess.Popen.
 
     Validates subprocess.Popen calls against security policy, enforcing shell
@@ -267,7 +268,7 @@ def _secure_subprocess_popen(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401,
 
 
 @log_function_call
-def _secure_subprocess_call(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401, ANN401, ANN401
+def _secure_subprocess_call(*args: object, **kwargs: object) -> object:
     """Secure wrapper for subprocess.call.
 
     Validates subprocess.call calls against security policy, enforcing shell
@@ -300,7 +301,7 @@ def _secure_subprocess_call(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401, 
 
 
 @log_function_call
-def _secure_subprocess_check_call(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401, ANN401, ANN401
+def _secure_subprocess_check_call(*args: object, **kwargs: object) -> object:
     """Secure wrapper for subprocess.check_call.
 
     Validates subprocess.check_call calls against security policy, enforcing
@@ -333,7 +334,7 @@ def _secure_subprocess_check_call(*args: Any, **kwargs: Any) -> Any:  # noqa: AN
 
 
 @log_function_call
-def _secure_subprocess_check_output(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401, ANN401, ANN401
+def _secure_subprocess_check_output(*args: object, **kwargs: object) -> object:
     """Secure wrapper for subprocess.check_output.
 
     Validates subprocess.check_output calls against security policy, enforcing
@@ -367,7 +368,7 @@ def _secure_subprocess_check_output(*args: Any, **kwargs: Any) -> Any:  # noqa: 
 
 # Pickle Security
 @log_function_call
-def _secure_pickle_dump(obj: Any, file: Any, protocol: int | None = None, *, fix_imports: bool = True, buffer_callback: Any = None) -> None:  # noqa: ANN401, ANN401, ANN401
+def _secure_pickle_dump(obj: object, file: object, protocol: int | None = None, *, fix_imports: bool = True, buffer_callback: object = None) -> None:
     """Secure wrapper for pickle.dump.
 
     Attempts to serialize using JSON first when pickle restriction is enabled,
@@ -411,7 +412,7 @@ def _secure_pickle_dump(obj: Any, file: Any, protocol: int | None = None, *, fix
 
 
 @log_function_call
-def _secure_pickle_dumps(obj: Any, protocol: int | None = None, *, fix_imports: bool = True, buffer_callback: Any = None) -> bytes:  # noqa: ANN401, ANN401, ANN401
+def _secure_pickle_dumps(obj: object, protocol: int | None = None, *, fix_imports: bool = True, buffer_callback: object = None) -> bytes:
     """Secure wrapper for pickle.dumps.
 
     Attempts to serialize using JSON first when pickle restriction is enabled,
@@ -451,7 +452,9 @@ def _secure_pickle_dumps(obj: Any, protocol: int | None = None, *, fix_imports: 
 
 
 @log_function_call
-def _secure_pickle_load(file: Any, *, fix_imports: bool = True, encoding: str = "ASCII", errors: str = "strict", buffers: Any = None) -> Any:  # noqa: ANN401, ANN401, ANN401
+def _secure_pickle_load(
+    file: object, *, fix_imports: bool = True, encoding: str = "ASCII", errors: str = "strict", buffers: object = None,
+) -> object:
     """Secure wrapper for pickle.load.
 
     Attempts to deserialize using JSON first when pickle restriction is enabled,
@@ -474,7 +477,11 @@ def _secure_pickle_load(file: Any, *, fix_imports: bool = True, encoding: str = 
     if _security._bypass_security:
         logger.debug("Security bypass active for pickle.load.")
         return _security._original_functions["pickle.load"](
-            file, fix_imports=fix_imports, encoding=encoding, errors=errors, buffers=buffers,
+            file,
+            fix_imports=fix_imports,
+            encoding=encoding,
+            errors=errors,
+            buffers=buffers,
         )
 
     if _security.security_config.get("serialization", {}).get("restrict_pickle", True):
@@ -501,7 +508,9 @@ def _secure_pickle_load(file: Any, *, fix_imports: bool = True, encoding: str = 
 
 
 @log_function_call
-def _secure_pickle_loads(data: bytes | str, *, fix_imports: bool = True, encoding: str = "ASCII", errors: str = "strict", buffers: Any = None) -> Any:  # noqa: ANN401, ANN401, ANN401
+def _secure_pickle_loads(
+    data: bytes | str, *, fix_imports: bool = True, encoding: str = "ASCII", errors: str = "strict", buffers: object = None,
+) -> object:
     """Secure wrapper for pickle.loads.
 
     Attempts to deserialize using JSON first when pickle restriction is enabled,
@@ -524,7 +533,11 @@ def _secure_pickle_loads(data: bytes | str, *, fix_imports: bool = True, encodin
     if _security._bypass_security:
         logger.debug("Security bypass active for pickle.loads.")
         return _security._original_functions["pickle.loads"](
-            data, fix_imports=fix_imports, encoding=encoding, errors=errors, buffers=buffers,
+            data,
+            fix_imports=fix_imports,
+            encoding=encoding,
+            errors=errors,
+            buffers=buffers,
         )
 
     if _security.security_config.get("serialization", {}).get("restrict_pickle", True):
@@ -657,7 +670,7 @@ class SecureHash:
 
 
 @log_function_call
-def _secure_hashlib_new(name: str, data: bytes = b"", **kwargs: Any) -> Any:  # noqa: ANN401, ANN401, ANN401
+def _secure_hashlib_new(name: str, data: bytes = b"", **kwargs: object) -> object:
     """Secure wrapper for hashlib.new.
 
     Creates hash objects with algorithm policy enforcement, blocking MD5 unless
@@ -692,7 +705,7 @@ def _secure_hashlib_new(name: str, data: bytes = b"", **kwargs: Any) -> Any:  # 
 
 
 @log_function_call
-def _secure_hashlib_md5(data: bytes = b"", **kwargs: Any) -> Any:  # noqa: ANN401, ANN401, ANN401
+def _secure_hashlib_md5(data: bytes = b"", **kwargs: object) -> object:
     """Secure wrapper for hashlib.md5.
 
     Blocks MD5 hashing unless explicitly allowed by security configuration,
@@ -801,7 +814,7 @@ def validate_file_input(file_path: str | Path, operation: str = "read") -> bool:
 
 # Secure file operations
 @log_function_call
-def secure_open(file: str | Path, mode: str = "r", *args: Any, **kwargs: Any) -> Any:  # noqa: ANN401, ANN401, ANN401
+def secure_open(file: str | Path, mode: str = "r", *args: object, **kwargs: object) -> object:
     """Secure wrapper for open() with validation.
 
     Opens files with security validation to enforce access policies.
@@ -846,7 +859,7 @@ def _monkey_patch_subprocess() -> None:
     class SecurePopen(_security._original_functions["subprocess.Popen"]):
         """Secure wrapper for subprocess.Popen that can be subclassed."""
 
-        def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: ANN401, ANN401, ANN401
+        def __init__(self, *args: object, **kwargs: object) -> None:
             """Initialize SecurePopen with security validation.
 
             Args:

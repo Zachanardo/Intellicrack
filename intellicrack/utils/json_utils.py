@@ -11,7 +11,7 @@ Licensed under GNU General Public License v3.0
 import json
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, TextIO
 
 from intellicrack.utils.logger import get_logger
 
@@ -21,8 +21,16 @@ logger = get_logger(__name__)
 class DateTimeEncoder(json.JSONEncoder):
     """JSON encoder that handles datetime objects."""
 
-    def default(self, obj):
-        """Convert non-JSON-serializable objects to JSON-compatible formats."""
+    def default(self, obj: Any) -> Dict[str, Any]:  # type: ignore[arg-type, return-value]
+        """Convert non-JSON-serializable objects to JSON-compatible formats.
+
+        Args:
+            obj: Object to encode.
+
+        Returns:
+            Dictionary representation of the object suitable for JSON encoding.
+
+        """
         if isinstance(obj, datetime):
             return {"__type__": "datetime", "value": obj.isoformat()}
         if isinstance(obj, date):
@@ -42,8 +50,16 @@ class DateTimeEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
-def datetime_decoder(dct: dict) -> Any:
-    """Decode datetime objects from JSON."""
+def datetime_decoder(dct: dict[str, Any]) -> Any:
+    """Decode datetime objects from JSON.
+
+    Args:
+        dct: Dictionary to decode.
+
+    Returns:
+        Decoded Python object.
+
+    """
     if "__type__" not in dct:
         return dct
 
@@ -71,15 +87,15 @@ def datetime_decoder(dct: dict) -> Any:
     return dct
 
 
-def dumps(obj: Any, **kwargs) -> str:
+def dumps(obj: Any, **kwargs: Any) -> str:
     """Serialize object to JSON string with datetime support.
 
     Args:
-        obj: Object to serialize
-        **kwargs: Additional arguments passed to json.dumps
+        obj: Object to serialize.
+        **kwargs: Additional arguments passed to json.dumps.
 
     Returns:
-        JSON string representation
+        JSON string representation.
 
     """
     kwargs.setdefault("cls", DateTimeEncoder)
@@ -87,13 +103,13 @@ def dumps(obj: Any, **kwargs) -> str:
     return json.dumps(obj, **kwargs)
 
 
-def dump(obj: Any, fp, **kwargs) -> None:
+def dump(obj: Any, fp: TextIO, **kwargs: Any) -> None:
     """Serialize object to JSON file with datetime support.
 
     Args:
-        obj: Object to serialize
-        fp: File pointer
-        **kwargs: Additional arguments passed to json.dump
+        obj: Object to serialize.
+        fp: File pointer opened in write mode.
+        **kwargs: Additional arguments passed to json.dump.
 
     """
     kwargs.setdefault("cls", DateTimeEncoder)
@@ -101,30 +117,30 @@ def dump(obj: Any, fp, **kwargs) -> None:
     json.dump(obj, fp, **kwargs)
 
 
-def loads(s: str, **kwargs) -> Any:
+def loads(s: str, **kwargs: Any) -> Any:
     """Deserialize JSON string to Python object with datetime support.
 
     Args:
-        s: JSON string
-        **kwargs: Additional arguments passed to json.loads
+        s: JSON string.
+        **kwargs: Additional arguments passed to json.loads.
 
     Returns:
-        Deserialized Python object
+        Deserialized Python object.
 
     """
     kwargs.setdefault("object_hook", datetime_decoder)
     return json.loads(s, **kwargs)
 
 
-def load(fp, **kwargs) -> Any:
+def load(fp: TextIO, **kwargs: Any) -> Any:
     """Deserialize JSON file to Python object with datetime support.
 
     Args:
-        fp: File pointer
-        **kwargs: Additional arguments passed to json.load
+        fp: File pointer opened in read mode.
+        **kwargs: Additional arguments passed to json.load.
 
     Returns:
-        Deserialized Python object
+        Deserialized Python object.
 
     """
     kwargs.setdefault("object_hook", datetime_decoder)
@@ -135,9 +151,9 @@ def safe_serialize(obj: Any, filepath: Path, use_pickle: bool = False) -> None:
     """Safely serialize object to file, preferring JSON over pickle.
 
     Args:
-        obj: Object to serialize
-        filepath: Path to save file
-        use_pickle: If True, use pickle; otherwise use JSON with warning
+        obj: Object to serialize.
+        filepath: Path to save file.
+        use_pickle: If True, use pickle; otherwise use JSON with warning.
 
     """
     if use_pickle:
@@ -162,11 +178,11 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> Any:
     """Safely deserialize object from file.
 
     Args:
-        filepath: Path to file
-        use_pickle: If True, expect pickle; otherwise expect JSON
+        filepath: Path to file.
+        use_pickle: If True, expect pickle; otherwise expect JSON.
 
     Returns:
-        Deserialized object
+        Deserialized object.
 
     """
     if use_pickle:
@@ -176,7 +192,20 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> Any:
         with open(filepath, "rb") as f:
             # Use a custom Unpickler to restrict what can be unpickled
             class RestrictedUnpickler(pickle.Unpickler):
-                def find_class(self, module, name):
+                def find_class(self, module: str, name: str) -> type:
+                    """Restrict unpickling to safe classes from whitelisted modules.
+
+                    Args:
+                        module: Module name.
+                        name: Class name.
+
+                    Returns:
+                        The class object.
+
+                    Raises:
+                        pickle.UnpicklingError: If the class is not whitelisted.
+
+                    """
                     # Only allow safe classes from specific modules
                     if module in ("builtins", "collections", "datetime") and name in (
                         "dict",
@@ -215,7 +244,20 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> Any:
             with open(filepath, "rb") as f:
                 # Use a custom Unpickler to restrict what can be unpickled
                 class RestrictedUnpickler(pickle.Unpickler):
-                    def find_class(self, module, name):
+                    def find_class(self, module: str, name: str) -> type:
+                        """Restrict unpickling to safe classes from whitelisted modules.
+
+                        Args:
+                            module: Module name.
+                            name: Class name.
+
+                        Returns:
+                            The class object.
+
+                        Raises:
+                            pickle.UnpicklingError: If the class is not whitelisted.
+
+                        """
                         # Only allow safe classes from specific modules
                         if module in ("builtins", "collections", "datetime") and name in (
                             "dict",

@@ -716,8 +716,10 @@ class USBDongleDriver:
                     return dongle.decrypt_data(payload)
                 if operation == 0x03:  # Hash
                     return dongle.generate_response(payload)
+                return b"\xff"  # Unknown operation
+            return b"\xff"  # Invalid data length
 
-        elif request == 0x05:  # Get hardware ID
+        if request == 0x05:  # Get hardware ID
             # Real hardware ID from USB device
             if hasattr(dongle, "_usb_device") and dongle._usb_device:
                 device = dongle._usb_device

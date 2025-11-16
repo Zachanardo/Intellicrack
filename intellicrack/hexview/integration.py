@@ -1,12 +1,19 @@
 """Integration module for hex viewer functionality."""
 
+from __future__ import annotations
+
 import logging
 import os
+from collections import Counter
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtWidgets import QDialog, QMessageBox, QToolBar
 
 from intellicrack.handlers.pyqt6_handler import QAction
 from intellicrack.utils.logger import logger
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 """
 Integration between enhanced hex viewer/editor and Intellicrack.
@@ -48,7 +55,7 @@ except ImportError as e:
     import re
     from collections import Counter
 
-    def wrapper_ai_binary_analyze(app_instance, parameters):
+    def wrapper_ai_binary_analyze(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
         """Perform static binary analysis when AI bridge is not available.
 
         Analyzes binary data using entropy calculation, string extraction,
@@ -84,7 +91,7 @@ except ImportError as e:
             logger.error("Error in fallback binary analyze: %s", e)
             return {"error": f"Analysis failed: {e!s}"}
 
-    def wrapper_ai_binary_pattern_search(app_instance, parameters):
+    def wrapper_ai_binary_pattern_search(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
         """Search for patterns in binary data when AI bridge is not available.
 
         Performs pattern matching using regex, byte sequences, and common
@@ -161,7 +168,7 @@ except ImportError as e:
             logger.error("Error in fallback pattern search: %s", e)
             return {"error": f"Pattern search failed: {e!s}"}
 
-    def wrapper_ai_binary_edit_suggest(app_instance, parameters):
+    def wrapper_ai_binary_edit_suggest(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
         """Suggest binary edits for license bypass when AI bridge is not available.
 
         Analyzes binary code to suggest patches for common license validation
@@ -273,7 +280,7 @@ except ImportError as e:
             logger.error("Error in fallback edit suggest: %s", e)
             return {"error": f"Edit suggestion failed: {e!s}"}
 
-    def _calculate_entropy(data):
+    def _calculate_entropy(data: bytes) -> float:
         """Calculate Shannon entropy of binary data."""
         if not data:
             return 0.0
@@ -285,9 +292,9 @@ except ImportError as e:
             entropy -= probability * ((probability and (probability * 0.434294482)) or 0)
         return entropy * 2.302585093
 
-    def _extract_strings(data, min_length=4):
+    def _extract_strings(data: bytes, min_length: int = 4) -> list[str]:
         """Extract printable ASCII strings from binary data."""
-        strings = []
+        strings: list[str] = []
         current_string = []
         for byte in data:
             if 32 <= byte <= 126:
@@ -300,9 +307,9 @@ except ImportError as e:
             strings.append("".join(current_string))
         return strings[:50]
 
-    def _detect_patterns(data):
+    def _detect_patterns(data: bytes) -> dict[str, Any]:
         """Detect common binary patterns and signatures."""
-        patterns = {}
+        patterns: dict[str, Any] = {}
         if b"MZ" in data[:2]:
             patterns["file_type"] = "PE executable"
         elif b"\x7fELF" in data[:4]:
@@ -317,9 +324,9 @@ except ImportError as e:
 
         return patterns
 
-    def _analyze_structure(data):
+    def _analyze_structure(data: bytes) -> dict[str, Any]:
         """Analyze structural characteristics of binary data."""
-        structure = {
+        structure: dict[str, Any] = {
             "null_bytes": data.count(b"\x00"),
             "high_entropy_sections": 0,
             "code_like_patterns": 0,
@@ -338,7 +345,7 @@ except ImportError as e:
 
         return structure
 
-    def _analyze_byte_distribution(data):
+    def _analyze_byte_distribution(data: bytes) -> dict[str, Any]:
         """Analyze distribution of byte values."""
         if not data:
             return {}
@@ -358,7 +365,7 @@ logger = logging.getLogger("Intellicrack.HexView")
 TOOL_REGISTRY = {}
 
 
-def show_enhanced_hex_viewer(app_instance, file_path: str | None = None, read_only: bool = True) -> QDialog:
+def show_enhanced_hex_viewer(app_instance: Any, file_path: str | None = None, read_only: bool = True) -> QDialog | None:
     """Show the enhanced hex viewer/editor dialog.
 
     This function creates and shows the enhanced hex viewer dialog, optionally
@@ -448,7 +455,7 @@ def show_enhanced_hex_viewer(app_instance, file_path: str | None = None, read_on
         return None
 
 
-def initialize_hex_viewer(app_instance) -> None:
+def initialize_hex_viewer(app_instance: Any) -> None:
     """Initialize the hex viewer functionality.
 
     This function sets up the hex viewer methods on the application instance
@@ -477,7 +484,7 @@ def initialize_hex_viewer(app_instance) -> None:
     logger.info("Initialized hex viewer functionality")
 
 
-def restore_standard_hex_viewer(app_instance) -> None:
+def restore_standard_hex_viewer(app_instance: Any) -> None:
     """Restore the standard hex viewer.
 
     This function restores the original hex viewer function if it was
@@ -492,7 +499,7 @@ def restore_standard_hex_viewer(app_instance) -> None:
         logger.info("Restored standard hex viewer")
 
 
-def add_hex_viewer_menu(app_instance, menu_name: str = None) -> None:
+def add_hex_viewer_menu(app_instance: Any, menu_name: str | None = None) -> None:
     """Add the enhanced hex viewer to a menu.
 
     This function adds a menu item for the enhanced hex viewer to the
@@ -535,7 +542,7 @@ def add_hex_viewer_menu(app_instance, menu_name: str = None) -> None:
     logger.info("Added Enhanced Hex Viewer options to %s menu", menu_name)
 
 
-def add_hex_viewer_toolbar_button(app_instance, toolbar: QToolBar | None = None) -> None:
+def add_hex_viewer_toolbar_button(app_instance: Any, toolbar: QToolBar | None = None) -> None:
     """Add the enhanced hex viewer to a toolbar.
 
     This function adds a toolbar button for the enhanced hex viewer to the
@@ -565,7 +572,7 @@ def add_hex_viewer_toolbar_button(app_instance, toolbar: QToolBar | None = None)
     logger.info("Added Enhanced Hex Viewer button to toolbar")
 
 
-def register_hex_viewer_ai_tools(app_instance) -> None:
+def register_hex_viewer_ai_tools(app_instance: Any) -> None:
     """Register the AI tool wrappers for the hex viewer.
 
     This function registers the AI tool wrappers that provide integration
@@ -593,7 +600,7 @@ def register_hex_viewer_ai_tools(app_instance) -> None:
     logger.info(f"Registered {len(tool_registry)} hex viewer AI tools")
 
 
-def integrate_enhanced_hex_viewer(app_instance) -> bool | None:
+def integrate_enhanced_hex_viewer(app_instance: Any) -> bool | None:
     """Fully integrate the enhanced hex viewer with Intellicrack.
 
     This function performs all necessary steps to integrate the enhanced hex
@@ -601,6 +608,9 @@ def integrate_enhanced_hex_viewer(app_instance) -> bool | None:
 
     Args:
         app_instance: Intellicrack application instance
+
+    Returns:
+        True if integration succeeded, False if it failed, None on error
 
     """
     try:
@@ -630,7 +640,7 @@ def integrate_enhanced_hex_viewer(app_instance) -> bool | None:
 
 
 # Decorator for hex viewer AI tool wrappers
-def hex_viewer_ai_tool(func):
+def hex_viewer_ai_tool(func: Callable[[Any, dict[str, Any]], dict[str, Any]]) -> Callable[[Any, dict[str, Any]], dict[str, Any]]:
     """Decorate hex viewer AI tool wrappers.
 
     This decorator adds common functionality to all hex viewer AI tool wrappers,
@@ -640,11 +650,11 @@ def hex_viewer_ai_tool(func):
         func: The tool wrapper function
 
     Returns:
-        Decorated function
+        Decorated function with error handling and logging
 
     """
 
-    def wrapper(app_instance, parameters):
+    def wrapper(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
         """Add error handling and logging to hex viewer AI tools.
 
         Args:

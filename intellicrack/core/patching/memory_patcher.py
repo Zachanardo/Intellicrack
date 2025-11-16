@@ -21,7 +21,27 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import datetime
 import os
 import sys
-from typing import Any
+from pathlib import Path
+from typing import Any, Protocol, TypeVar
+
+# Type variables for generic ctypes operations
+T = TypeVar("T")
+
+
+class ApplicationInterface(Protocol):
+    """Protocol for application interface used in patching operations."""
+
+    binary_path: str
+    potential_patches: list[dict[str, Any]]
+
+    def update_output(self) -> Any:
+        """Signal for updating UI output.
+
+        Returns:
+            Signal object or callable for emitting updates.
+
+        """
+        pass
 
 print("[DEBUG memory_patcher] Importing pyqt6_handler...")
 sys.stdout.flush()
@@ -42,24 +62,47 @@ print("[DEBUG memory_patcher] logger obtained OK")
 sys.stdout.flush()
 
 
-def _create_dword_type(ctypes):
-    """Create Windows DWORD type implementation."""
+def _create_dword_type(ctypes: Any) -> type:
+    """Create Windows DWORD type implementation.
+
+    Args:
+        ctypes: The ctypes module for type definitions.
+
+    Returns:
+        DWORD class derived from ctypes.c_uint32.
+
+    """
 
     class DWORD(ctypes.c_uint32):
         """Real Windows DWORD type implementation."""
 
-        def __init__(self, value=0) -> None:
-            """Initialize DWORD with proper value handling."""
+        def __init__(self, value: int = 0) -> None:
+            """Initialize DWORD with proper value handling.
+
+            Args:
+                value: Initial DWORD value (default 0).
+
+            """
             super().__init__(value)
 
         @property
-        def value(self):
-            """Get the DWORD value."""
+        def value(self) -> int:
+            """Get the DWORD value.
+
+            Returns:
+                The current DWORD value as an integer.
+
+            """
             return super().value
 
         @value.setter
-        def value(self, val) -> None:
-            """Set the DWORD value with bounds checking."""
+        def value(self, val: int) -> None:
+            """Set the DWORD value with bounds checking.
+
+            Args:
+                val: New DWORD value to set.
+
+            """
             if val < 0:
                 val = 0
             elif val > 0xFFFFFFFF:
@@ -75,24 +118,47 @@ def _create_dword_type(ctypes):
     return DWORD
 
 
-def _create_bool_type(ctypes):
-    """Create Windows BOOL type implementation."""
+def _create_bool_type(ctypes: Any) -> type:
+    """Create Windows BOOL type implementation.
+
+    Args:
+        ctypes: The ctypes module for type definitions.
+
+    Returns:
+        BOOL class derived from ctypes.c_int32.
+
+    """
 
     class BOOL(ctypes.c_int32):
         """Real Windows BOOL type implementation."""
 
-        def __init__(self, value=0) -> None:
-            """Initialize BOOL with proper value handling."""
+        def __init__(self, value: int = 0) -> None:
+            """Initialize BOOL with proper value handling.
+
+            Args:
+                value: Initial BOOL value (default 0, falsey).
+
+            """
             super().__init__(1 if value else 0)
 
         @property
-        def value(self):
-            """Get the BOOL value."""
+        def value(self) -> bool:
+            """Get the BOOL value.
+
+            Returns:
+                The current BOOL value as a boolean.
+
+            """
             return bool(super().value)
 
         @value.setter
-        def value(self, val) -> None:
-            """Set the BOOL value."""
+        def value(self, val: int) -> None:
+            """Set the BOOL value.
+
+            Args:
+                val: New BOOL value to set.
+
+            """
             super().__setattr__("value", 1 if val else 0)
 
         def __bool__(self) -> bool:
@@ -107,14 +173,27 @@ def _create_bool_type(ctypes):
     return BOOL
 
 
-def _create_word_type(ctypes):
-    """Create Windows WORD type implementation."""
+def _create_word_type(ctypes: Any) -> type:
+    """Create Windows WORD type implementation.
+
+    Args:
+        ctypes: The ctypes module for type definitions.
+
+    Returns:
+        WORD class derived from ctypes.c_uint16.
+
+    """
 
     class WORD(ctypes.c_uint16):
         """Real Windows WORD type implementation."""
 
-        def __init__(self, value=0) -> None:
-            """Initialize WORD with proper value handling."""
+        def __init__(self, value: int = 0) -> None:
+            """Initialize WORD with proper value handling.
+
+            Args:
+                value: Initial WORD value (default 0).
+
+            """
             super().__init__(value & 0xFFFF)
 
         def __str__(self) -> str:
@@ -126,14 +205,27 @@ def _create_word_type(ctypes):
     return WORD
 
 
-def _create_byte_type(ctypes):
-    """Create Windows BYTE type implementation."""
+def _create_byte_type(ctypes: Any) -> type:
+    """Create Windows BYTE type implementation.
+
+    Args:
+        ctypes: The ctypes module for type definitions.
+
+    Returns:
+        BYTE class derived from ctypes.c_uint8.
+
+    """
 
     class BYTE(ctypes.c_uint8):
         """Real Windows BYTE type implementation."""
 
-        def __init__(self, value=0) -> None:
-            """Initialize BYTE with proper value handling."""
+        def __init__(self, value: int = 0) -> None:
+            """Initialize BYTE with proper value handling.
+
+            Args:
+                value: Initial BYTE value (default 0).
+
+            """
             super().__init__(value & 0xFF)
 
         def __str__(self) -> str:
@@ -145,18 +237,36 @@ def _create_byte_type(ctypes):
     return BYTE
 
 
-def _create_handle_types(ctypes):
-    """Create Windows HANDLE and related types."""
+def _create_handle_types(ctypes: Any) -> tuple[type, type, type, type]:
+    """Create Windows HANDLE and related types.
+
+    Args:
+        ctypes: The ctypes module for type definitions.
+
+    Returns:
+        Tuple of (HANDLE, HWND, HDC, HINSTANCE) classes.
+
+    """
 
     class HANDLE(ctypes.c_void_p):
         """Real Windows HANDLE type implementation."""
 
-        def __init__(self, value=None) -> None:
-            """Initialize HANDLE with proper value handling."""
+        def __init__(self, value: int | None = None) -> None:
+            """Initialize HANDLE with proper value handling.
+
+            Args:
+                value: Initial handle value (None for NULL).
+
+            """
             super().__init__(value)
 
-        def is_valid(self):
-            """Check if handle is valid (not NULL or INVALID_HANDLE_VALUE)."""
+        def is_valid(self) -> bool:
+            """Check if handle is valid (not NULL or INVALID_HANDLE_VALUE).
+
+            Returns:
+                True if handle is valid, False otherwise.
+
+            """
             return self.value is not None and self.value not in (0, -1)
 
         def __bool__(self) -> bool:
@@ -198,8 +308,16 @@ def _create_handle_types(ctypes):
     return HANDLE, HWND, HDC, HINSTANCE
 
 
-def _create_pointer_types(ctypes):
-    """Create Windows pointer types."""
+def _create_pointer_types(ctypes: Any) -> tuple[type, type, type]:
+    """Create Windows pointer types.
+
+    Args:
+        ctypes: The ctypes module for type definitions.
+
+    Returns:
+        Tuple of (LPVOID, SIZE_T, ULONG_PTR) classes.
+
+    """
 
     class LPVOID(ctypes.c_void_p):
         """Real Windows LPVOID type implementation."""
@@ -231,8 +349,15 @@ def _create_pointer_types(ctypes):
     return LPVOID, SIZE_T, ULONG_PTR
 
 
-def _get_wintypes():
-    """Get wintypes module or create production-ready replacement."""
+def _get_wintypes() -> tuple[Any, bool]:
+    """Get wintypes module or create production-ready replacement.
+
+    Returns:
+        Tuple of (wintypes module/class, is_native_bool). If native ctypes.wintypes
+        is available, returns it with True. Otherwise returns custom implementation
+        with False.
+
+    """
     try:
         from ctypes import wintypes
 
@@ -289,7 +414,7 @@ def log_message(msg: str) -> str:
     return f"[{msg}]"
 
 
-def generate_launcher_script(app: Any, patching_strategy: str = "memory") -> str | None:
+def generate_launcher_script(app: ApplicationInterface, patching_strategy: str = "memory") -> str | None:
     """Generate a launcher script that uses Frida to patch the target program in memory.
 
     This function creates a Python script that launches the target application
@@ -531,7 +656,7 @@ if __name__ == "__main__":
         return None
 
 
-def setup_memory_patching(app: Any) -> None:
+def setup_memory_patching(app: ApplicationInterface) -> None:
     """Set up a memory patching environment for heavily protected binaries.
 
     This function detects various protection mechanisms and configures

@@ -172,7 +172,13 @@ if not SKLEARN_AVAILABLE:
     class AgglomerativeClustering:
         """Fallback agglomerative clustering implementation."""
 
-        def __init__(self, n_clusters: int | None = None, distance_threshold: float | None = None, affinity: str = "euclidean", linkage: str = "average") -> None:
+        def __init__(
+            self,
+            n_clusters: int | None = None,
+            distance_threshold: float | None = None,
+            affinity: str = "euclidean",
+            linkage: str = "average",
+        ) -> None:
             """Initialize the AgglomerativeClustering algorithm.
 
             Args:
@@ -353,7 +359,7 @@ class RestrictedUnpickler(pickle.Unpickler):
         raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
 
 
-def secure_pickle_dumps(obj: Any) -> bytes:  # noqa: ANN401 - arbitrary object serialization
+def secure_pickle_dumps(obj: Any) -> bytes:
     """Securely serialize object with integrity check.
 
     Args:
@@ -373,7 +379,7 @@ def secure_pickle_dumps(obj: Any) -> bytes:  # noqa: ANN401 - arbitrary object s
     return mac + data
 
 
-def secure_pickle_loads(data: bytes) -> Any:  # noqa: ANN401 - arbitrary object deserialization
+def secure_pickle_loads(data: bytes) -> Any:
     """Securely deserialize object with integrity verification.
 
     Args:
@@ -1335,7 +1341,10 @@ class PatternEvolutionTracker:
         # Hierarchical clustering based on similarity
         distance_matrix = 1.0 - similarity_matrix
         clustering = AgglomerativeClustering(
-            n_clusters=None, distance_threshold=1.0 - similarity_threshold, affinity="precomputed", linkage="average",
+            n_clusters=None,
+            distance_threshold=1.0 - similarity_threshold,
+            affinity="precomputed",
+            linkage="average",
         )
         labels = clustering.fit_predict(distance_matrix)
 

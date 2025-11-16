@@ -122,7 +122,9 @@ impl IntellicrackLauncher {
         //     "GIL safety initialization completed in {:.2?}",
         //     gil_safety_duration
         // );
-        tracing::info!("Skipping Rust-side GIL initialization - Python will initialize on first use");
+        tracing::info!(
+            "Skipping Rust-side GIL initialization - Python will initialize on first use"
+        );
 
         // NOW initialize Python with the correct environment and GIL safety
         let python_init_start = std::time::Instant::now();

@@ -1374,7 +1374,7 @@ class WizardPresetManager:
         logger.info(f"Applied preset for: {software_name}")
 
     @staticmethod
-    def create_custom_wizard(config: dict[str, Any]):
+    def create_custom_wizard(config: dict[str, Any]) -> "FridaBypassWizard":
         """Create wizard with custom configuration.
 
         Factory method for creating pre-configured wizard instances.
@@ -1402,14 +1402,12 @@ class WizardPresetManager:
             })
 
         """
-        # Use lazy import to avoid cyclic import
-        from . import get_frida_manager
+        try:
+            from .frida_manager import FridaManager as _FridaManager
+        except ImportError as e:
+            raise ImportError("FridaManager not available") from e
 
-        FridaManager = get_frida_manager()
-        if FridaManager is None:
-            raise ImportError("FridaManager not available")
-
-        manager = FridaManager()
+        manager = _FridaManager()
         wizard = FridaBypassWizard(manager)
 
         # Apply custom configuration

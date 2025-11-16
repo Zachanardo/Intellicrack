@@ -211,7 +211,7 @@ except ImportError as e:
             None as PyQt6 is not available.
 
         """
-        return None
+        return
 
     def create_pixmap_from_file(path: str, size: Optional[Tuple[int, int]] = None) -> None:
         """Create pixmap fallback when PyQt6 is unavailable.
@@ -224,7 +224,7 @@ except ImportError as e:
             None as PyQt6 is not available.
 
         """
-        return None
+        return
 
     def get_user_input(parent: object, title: str, label: str, default: str = "", password: bool = False) -> Tuple[str, bool]:
         """Get user input fallback when PyQt6 is unavailable.
@@ -313,8 +313,7 @@ class FallbackSlider:
 
         """
         self._min = val
-        if self._value < self._min:
-            self._value = self._min
+        self._value = max(self._value, self._min)
 
     def setMaximum(self, val: int) -> None:
         """Set the maximum slider value.
@@ -324,8 +323,7 @@ class FallbackSlider:
 
         """
         self._max = val
-        if self._value > self._max:
-            self._value = self._max
+        self._value = min(self._value, self._max)
 
     def setTickPosition(self, position: object) -> None:
         """Set tick mark position (no-op in fallback).

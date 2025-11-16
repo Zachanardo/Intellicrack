@@ -1132,7 +1132,8 @@ Path: {plugin_info.get("path", "Unknown")}"""
                 def perform_installation() -> None:
                     try:
                         import requests
-                        from requests.exceptions import RequestException, Timeout, ConnectionError
+                        from requests.exceptions import ConnectionError as RequestsConnectionError
+                        from requests.exceptions import RequestException, Timeout
 
                         status_label.setText("Downloading plugin...")
                         log_text.append(f"Downloading from: {download_url}")
@@ -1142,12 +1143,12 @@ Path: {plugin_info.get("path", "Unknown")}"""
                             response.raise_for_status()
                             progress_bar.setValue(25)
 
-                            total_size = int(response.headers.get('content-length', 0))
+                            total_size = int(response.headers.get("content-length", 0))
                             downloaded = 0
                             chunk_size = 8192
                             temp_file = os.path.join(self.temp_dir, f"{plugin_name}_download.zip")
 
-                            with open(temp_file, 'wb') as f:
+                            with open(temp_file, "wb") as f:
                                 for chunk in response.iter_content(chunk_size=chunk_size):
                                     if chunk:
                                         f.write(chunk)
@@ -1164,8 +1165,8 @@ Path: {plugin_info.get("path", "Unknown")}"""
                             extract_dir = os.path.join(self.plugins_dir, plugin_name.lower().replace(" ", "_"))
                             os.makedirs(extract_dir, exist_ok=True)
 
-                            if temp_file.endswith('.zip'):
-                                with zipfile.ZipFile(temp_file, 'r') as zip_ref:
+                            if temp_file.endswith(".zip"):
+                                with zipfile.ZipFile(temp_file, "r") as zip_ref:
                                     zip_ref.extractall(extract_dir)
                             else:
                                 shutil.copy2(temp_file, extract_dir)
@@ -1176,7 +1177,7 @@ Path: {plugin_info.get("path", "Unknown")}"""
 
                             if os.path.exists(extract_dir):
                                 plugin_files = os.listdir(extract_dir)
-                                if any(f.endswith('.py') for f in plugin_files):
+                                if any(f.endswith(".py") for f in plugin_files):
                                     progress_bar.setValue(100)
                                     status_label.setText("Installation complete!")
                                     log_text.append(f"Plugin '{plugin_name}' installed successfully")
@@ -1194,7 +1195,7 @@ Path: {plugin_info.get("path", "Unknown")}"""
 
                             QTimer.singleShot(1000, install_dialog.accept)
 
-                        except (RequestException, Timeout, ConnectionError) as net_error:
+                        except (RequestException, Timeout, RequestsConnectionError) as net_error:
                             status_label.setText("Installation failed!")
                             log_text.append(f"Network error: {net_error!s}")
                             progress_bar.setValue(0)

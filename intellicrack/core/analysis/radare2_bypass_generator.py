@@ -23,7 +23,7 @@ import re
 import struct
 from typing import Any
 
-from ...utils.tools.radare2_utils import R2Exception, r2_session
+from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
 from .radare2_ai_integration import R2AIEngine
 from .radare2_decompiler import R2DecompilationEngine
 from .radare2_vulnerability_engine import R2VulnerabilityEngine
@@ -133,7 +133,7 @@ class R2BypassGenerator:
 
         return result
 
-    def _analyze_license_mechanisms(self, r2) -> dict[str, Any]:
+    def _analyze_license_mechanisms(self, r2: R2Session) -> dict[str, Any]:
         """Analyze license validation mechanisms in detail."""
         analysis = {
             "validation_functions": [],
@@ -289,7 +289,7 @@ class R2BypassGenerator:
 
         return crypto_ops
 
-    def _analyze_license_strings(self, r2) -> list[dict[str, Any]]:
+    def _analyze_license_strings(self, r2: R2Session) -> list[dict[str, Any]]:
         """Analyze license-related strings."""
         patterns = []
 
@@ -336,7 +336,7 @@ class R2BypassGenerator:
 
         return patterns
 
-    def _analyze_validation_apis(self, r2) -> dict[str, list[dict[str, Any]]]:
+    def _analyze_validation_apis(self, r2: R2Session) -> dict[str, list[dict[str, Any]]]:
         """Analyze API calls used in validation."""
         api_analysis = {
             "registry_operations": [],
@@ -495,7 +495,7 @@ class R2BypassGenerator:
 
         return strategies
 
-    def _generate_automated_patches(self, r2, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
+    def _generate_automated_patches(self, r2: R2Session, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
         """Generate sophisticated automated binary patches using control flow analysis.
 
         This method performs deep analysis of binary logic to create intelligent patches
@@ -957,7 +957,7 @@ if __name__ == "__main__":
             "pattern_analysis": self._analyze_key_patterns(crypto_op),
         }
 
-    def _extract_sbox_data(self, r2, func_addr: int) -> list[int]:
+    def _extract_sbox_data(self, r2: R2Session, func_addr: int) -> list[int]:
         """Extract S-box data from function."""
         try:
             # Read 256 bytes for full S-box
@@ -966,7 +966,7 @@ if __name__ == "__main__":
         except Exception:
             return []
 
-    def _analyze_loop_iterations(self, r2, loop_addr: int) -> int:
+    def _analyze_loop_iterations(self, r2: R2Session, loop_addr: int) -> int:
         """Analyze loop to determine iteration count."""
         try:
             # Analyze loop counter
@@ -978,7 +978,7 @@ if __name__ == "__main__":
         except Exception:
             return 0
 
-    def _find_key_expansion(self, r2, func_addr: int) -> dict[str, Any] | None:
+    def _find_key_expansion(self, r2: R2Session, func_addr: int) -> dict[str, Any] | None:
         """Find and analyze key expansion routine."""
         try:
             # Look for key expansion patterns
@@ -993,7 +993,7 @@ if __name__ == "__main__":
         except Exception:
             return None
 
-    def _find_ivs(self, r2, func_addr: int) -> list[str]:
+    def _find_ivs(self, r2: R2Session, func_addr: int) -> list[str]:
         """Find initialization vectors."""
         ivs = []
         try:
@@ -1010,7 +1010,7 @@ if __name__ == "__main__":
             logger.debug(f"Failed to find initialization vectors: {e}")
         return ivs
 
-    def _find_salts(self, r2, func_addr: int) -> list[str]:
+    def _find_salts(self, r2: R2Session, func_addr: int) -> list[str]:
         """Find salt values used in crypto."""
         salts = []
         try:
@@ -1327,7 +1327,7 @@ if __name__ == "__main__":
 
         return modifications
 
-    def _generate_memory_patches(self, r2, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
+    def _generate_memory_patches(self, r2: R2Session, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
         """Generate runtime memory patches."""
         patches = []
 
@@ -1729,7 +1729,7 @@ void apply_patch() {{
             "confidence": len(registry_patterns) * 0.2 + len(license_keys) * 0.15,
         }
 
-    def _create_binary_patch(self, r2, func_info: dict[str, Any], bypass_point: dict[str, Any]) -> dict[str, Any] | None:
+    def _create_binary_patch(self, r2: R2Session, func_info: dict[str, Any], bypass_point: dict[str, Any]) -> dict[str, Any] | None:
         """Create binary patch for bypass point."""
         func_addr = func_info["function"].get("offset", 0)
         if not func_addr:
@@ -2141,7 +2141,7 @@ Compatible=1.0,1.5,2.0"""
             return "encrypted"
         return "ini"
 
-    def _get_original_bytes(self, r2, func_addr: int) -> str:
+    def _get_original_bytes(self, r2: R2Session, func_addr: int) -> str:
         """Get original bytes at function address."""
         try:
             # Get first few bytes of function
@@ -3168,7 +3168,7 @@ def generate_key():
 
         return list(set(precautions))
 
-    def _analyze_control_flow_graph(self, r2, func_addr: int) -> dict[str, Any]:
+    def _analyze_control_flow_graph(self, r2: R2Session, func_addr: int) -> dict[str, Any]:
         """Analyze the control flow graph of a function.
 
         Builds a comprehensive understanding of the function's control flow
@@ -3239,7 +3239,7 @@ def generate_key():
             logger.error(f"Error analyzing control flow graph: {e}")
             return {"blocks": {}, "edges": [], "conditionals": []}
 
-    def _identify_decision_points(self, r2, func_addr: int, cfg: dict[str, Any]) -> list[dict[str, Any]]:
+    def _identify_decision_points(self, r2: R2Session, func_addr: int, cfg: dict[str, Any]) -> list[dict[str, Any]]:
         """Identify critical decision points in the control flow.
 
         Finds the optimal locations for patches by analyzing conditional branches,
@@ -3286,7 +3286,7 @@ def generate_key():
 
         return decision_points
 
-    def _determine_patch_strategy(self, r2, decision_point: dict[str, Any], cfg: dict[str, Any]) -> dict[str, Any]:
+    def _determine_patch_strategy(self, r2: R2Session, decision_point: dict[str, Any], cfg: dict[str, Any]) -> dict[str, Any]:
         """Determine the optimal patching strategy for a decision point.
 
         Analyzes the context around the decision point to determine the most
@@ -3370,7 +3370,7 @@ def generate_key():
 
         return strategy
 
-    def _generate_register_patch(self, r2, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
+    def _generate_register_patch(self, r2: R2Session, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
         """Generate a patch that manipulates register values."""
         patch = {
             "type": "register_manipulation",
@@ -3398,7 +3398,7 @@ def generate_key():
 
         return patch
 
-    def _generate_stack_patch(self, r2, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
+    def _generate_stack_patch(self, r2: R2Session, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
         """Generate a patch that manipulates stack values."""
         return {
             "type": "stack_manipulation",
@@ -3412,7 +3412,7 @@ def generate_key():
             "side_effects": strategy["side_effects"],
         }
 
-    def _generate_flow_redirect_patch(self, r2, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
+    def _generate_flow_redirect_patch(self, r2: R2Session, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
         """Generate a patch that redirects control flow."""
         return {
             "type": "control_flow_redirect",
@@ -3426,7 +3426,7 @@ def generate_key():
             "side_effects": strategy["side_effects"],
         }
 
-    def _generate_memory_override_patch(self, r2, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
+    def _generate_memory_override_patch(self, r2: R2Session, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
         """Generate a patch that overrides memory values."""
         return {
             "type": "memory_value_override",
@@ -3440,7 +3440,7 @@ def generate_key():
             "side_effects": strategy["side_effects"],
         }
 
-    def _generate_return_injection_patch(self, r2, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
+    def _generate_return_injection_patch(self, r2: R2Session, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
         """Generate a patch that injects a return value."""
         return {
             "type": "return_value_injection",
@@ -3454,7 +3454,7 @@ def generate_key():
             "side_effects": strategy["side_effects"],
         }
 
-    def _analyze_condition(self, r2, address: int, disasm: str) -> dict[str, Any]:
+    def _analyze_condition(self, r2: R2Session, address: int, disasm: str) -> dict[str, Any]:
         """Analyze the condition being checked at a decision point."""
         condition = {
             "type": "unknown",
@@ -3540,7 +3540,7 @@ def generate_key():
 
         return min(importance, 1.0)
 
-    def _find_entry_validation_checks(self, r2, func_addr: int) -> list[dict[str, Any]]:
+    def _find_entry_validation_checks(self, r2: R2Session, func_addr: int) -> list[dict[str, Any]]:
         """Find validation checks at function entry."""
         entry_checks = []
 
@@ -3755,7 +3755,7 @@ def generate_key():
         upper = (value >> 16) & 0xFFFF
         return f"{lower:04X}{reg_num:01X}0E3{upper:04X}{reg_num:01X}4E3"
 
-    def _get_original_bytes_at(self, r2, address: int, size: int) -> str:
+    def _get_original_bytes_at(self, r2: R2Session, address: int, size: int) -> str:
         """Get original bytes at a specific address."""
         try:
             hex_bytes = r2._execute_command(f"px {size} @ {hex(address)}")

@@ -15,6 +15,7 @@ import socket
 import subprocess
 import threading
 import time
+import types
 from collections import defaultdict
 from collections.abc import Callable
 from datetime import datetime, timedelta
@@ -268,6 +269,7 @@ class VMResource(ManagedResource):
 
         try:
             from ..logging.audit_logger import get_audit_logger
+
             get_audit_logger().log_vm_operation("stop", self.vm_name, success=True)
         except ImportError:
             pass
@@ -447,7 +449,7 @@ class ResourceManager:
         return self._resources.get(resource_id)
 
     @contextlib.contextmanager
-    def managed_process(self, command: str | list[str], **kwargs: Any) -> Generator[ProcessResource, None, None]:  # noqa: ANN401
+    def managed_process(self, command: str | list[str], **kwargs: Any) -> Generator[ProcessResource, None, None]:
         """Context manager for managed processes.
 
         Args:
@@ -489,6 +491,7 @@ class ResourceManager:
             self.register_resource(resource)
             try:
                 from ..logging.audit_logger import get_audit_logger
+
                 get_audit_logger().log_vm_operation("start", vm_name, success=True)
             except ImportError:
                 pass
@@ -548,7 +551,9 @@ class ResourceManager:
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> bool:  # noqa: ANN401
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None,
+    ) -> bool:
         """Context manager exit with cleanup."""
         self.cleanup_all()
         if exc_type:
@@ -675,7 +680,7 @@ class ResourceManager:
         logger.info(f"Force cleaned {cleaned_count} expired resources (older than {max_age_seconds}s)")
         return cleaned_count
 
-    def set_resource_limits(self, **limits: Any) -> None:  # noqa: ANN401
+    def set_resource_limits(self, **limits: Any) -> None:
         """Update resource limits dynamically."""
         with self._lock:
             if "max_processes" in limits:
@@ -847,7 +852,9 @@ class ResourceContext:
         self._entered = True
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> bool:  # noqa: ANN401
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None,
+    ) -> bool:
         """Exit resource context with cleanup."""
         if self._entered:
             self.cleanup_all()
@@ -856,7 +863,7 @@ class ResourceContext:
     def register_resource(
         self,
         resource_type: ResourceType,
-        resource_handle: Any,  # noqa: ANN401
+        resource_handle: Any,
         cleanup_func: Callable[[], None] | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> str:
@@ -932,7 +939,7 @@ class AutoCleanupResource:
 
         """
 
-        def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             with ResourceContext(self.resource_manager, f"auto_{func.__name__}") as ctx:
                 # Execute function
                 result = func(*args, **kwargs)
@@ -1029,7 +1036,7 @@ class FallbackHandler:
             },
         )
 
-    def get_fallback(self, tool_name: str, *args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
+    def get_fallback(self, tool_name: str, *args: Any, **kwargs: Any) -> Any:
         """Get fallback implementation for a tool.
 
         Args:
@@ -1347,7 +1354,7 @@ class FallbackHandler:
             logger.error(f"netstat fallback failed: {e}")
             return [{"error": str(e)}]
 
-    def _qemu_fallback(self, *args: Any, **kwargs: Any) -> dict[str, Any]:  # noqa: ANN401
+    def _qemu_fallback(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         """QEMU fallback using alternative emulation.
 
         Args:
@@ -1368,7 +1375,7 @@ class FallbackHandler:
             ],
         }
 
-    def _gdb_fallback(self, *args: Any, **kwargs: Any) -> dict[str, Any]:  # noqa: ANN401
+    def _gdb_fallback(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         """GDB fallback for debugging.
 
         Args:
@@ -1389,7 +1396,7 @@ class FallbackHandler:
             ],
         }
 
-    def _afl_fallback(self, *args: Any, **kwargs: Any) -> dict[str, Any]:  # noqa: ANN401
+    def _afl_fallback(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         """AFL++ fallback fuzzing implementation.
 
         Args:
@@ -1470,7 +1477,11 @@ def execute_with_fallback(
     try:
         # Try primary command first
         result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-            primary_command, check=False, capture_output=True, text=True, timeout=30,
+            primary_command,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if result.returncode == 0:
             return {"status": "success", "output": result.stdout, "method": "primary"}

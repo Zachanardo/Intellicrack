@@ -897,7 +897,7 @@ except ImportError as e:
 
         return gone, alive
 
-    class Popen(subprocess.Popen):  # type: ignore
+    class Popen(subprocess.Popen):  # type: ignore[misc]
         """Process class that wraps subprocess.Popen."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:

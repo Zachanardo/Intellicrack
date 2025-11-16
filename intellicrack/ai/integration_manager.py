@@ -37,6 +37,8 @@ from .performance_monitor import performance_monitor, profile_ai_operation
 from .script_generation_agent import AIAgent
 
 logger = get_logger(__name__)
+import threading as _threading
+from pathlib import Path
 
 # Import QEMU Test Manager with fallback
 try:
@@ -45,9 +47,9 @@ except ImportError:
     logger.warning("QEMUManager not available")
 
     class QEMUManager:
-        """Fallback QEMUManager when real implementation not available."""
+        """Fallback QEMUManager providing static validation and safe dry-run only."""
 
-        def __init__(self, *_args, **_kwargs) -> None:
+        def __init__(self, *_args: object, **_kwargs: object) -> None:
             """Initialize the fallback QEMU test manager.
 
             Args:
@@ -63,11 +65,21 @@ except ImportError:
             self.snapshots = {}
             logger.warning("QEMUManager fallback initialized")
 
-        def validate_script_in_vm(self, script: str, target_binary: str, vm_config: dict[str, Any] | None = None):
-            """Real VM script testing implementation."""
-            logger.info(f"Executing real VM testing for script on {target_binary}")
+        def validate_script_in_vm(self, script: str, target_binary: str, vm_config: dict[str, Any] | None = None) -> dict[str, Any]:
+            """Perform safe validation and optional dry-run; no real VM execution in fallback.
 
-            import os
+            Args:
+                script: The script content to validate
+                target_binary: Path to the target binary file
+                vm_config: Optional VM configuration dictionary
+
+            Returns:
+                Dictionary containing validation results with keys: success, output, errors,
+                exit_code, runtime_ms, results, and method
+
+            """
+            logger.info("Fallback QEMUManager: performing static validation and optional dry-run")
+
             import tempfile
             import time
             from pathlib import Path
@@ -80,7 +92,7 @@ except ImportError:
 
                 # Set up VM configuration
                 if vm_config is None:
-                    vm_config = {"memory": "512M", "cpu": "qemu64", "timeout": 30, "network": False, "snapshot": True}
+                    vm_config = {"memory": "512M", "cpu": "qemu64", "timeout": 30, "network": False, "snapshot": True, "dry_run": True}
 
                 # Create isolated execution environment
                 with tempfile.TemporaryDirectory() as execution_env:
@@ -97,12 +109,13 @@ except ImportError:
                         import shutil
 
                         shutil.copy2(target_binary, target_file)
-                        Path(target_file).chmod(0o700)  # Owner-only executable for security analysis
+                        Path(target_file).chmod(0o700)
                     else:
-                        # Generate real binary for testing with minimal protection
-                        self._create_protected_binary(target_file)
+                        # Create a deterministic non-executable marker file in fallback
+                        with open(target_file, "wb") as tf:
+                            tf.write(b"INTELLICRACK_FALLBACK_TARGET\n")
 
-                    # Execute script testing based on type
+                    # Execute script testing based on type (dry-run only in fallback unless explicitly enabled)
                     execution_result = self._execute_script_in_environment(script, script_file, target_file, vm_config, execution_dir)
 
                     # Calculate execution time
@@ -116,7 +129,7 @@ except ImportError:
                         "exit_code": execution_result["exit_code"],
                         "runtime_ms": runtime_ms,
                         "results": {
-                            "real_execution": True,
+                            "real_execution": False if vm_config.get("dry_run", True) else execution_result.get("method") == "qemu",
                             "script_analyzed": script_info,
                             "target": str(target_binary),
                             "config": vm_config,
@@ -130,14 +143,14 @@ except ImportError:
                 logger.error(f"VM testing error: {vm_error}", exc_info=True)
                 runtime_ms = int((time.time() - start_time) * 1000)
 
-                # Fallback to script analysis when VM execution fails
                 script_analysis = self._analyze_script_content(script)
                 return {
                     "success": False,
-                    "output": f"VM execution failed, script analysis completed:\n{script_analysis['analysis']}",
-                    "errors": f"VM execution error: {vm_error}",
-                    "exit_code": 2,  # Partial success
+                    "output": f"Validation error; analysis completed:\n{script_analysis['analysis']}",
+                    "error": f"VM execution error: {vm_error}",
+                    "exit_code": 2,
                     "runtime_ms": runtime_ms,
+                    "method": "fallback",
                     "results": {
                         "real_execution": False,
                         "analysis_only": True,
@@ -148,8 +161,17 @@ except ImportError:
                     },
                 }
 
-        def _analyze_script_content(self, script: str):
-            """Analyze script content to determine type and characteristics."""
+        def _analyze_script_content(self, script: str) -> dict[str, Any]:
+            """Analyze script content to determine type and characteristics.
+
+            Args:
+                script: The script content to analyze
+
+            Returns:
+                Dictionary containing analysis results with type, extension, length,
+                lines, features, and analysis summary
+
+            """
             try:
                 if not script:
                     return {"type": "empty", "extension": "txt", "analysis": "Empty script"}
@@ -305,30 +327,47 @@ Script Analysis:
                     elf_header += b"\x00" * 32  # Rest of header
                     f.write(elf_header)
 
-        def _execute_script_in_environment(self, script: str, script_file: str, target_file: str, vm_config: dict[str, Any] | None, execution_dir: str):
-            """Execute script in controlled environment with multiple fallback methods."""
+        def _execute_script_in_environment(self, script: str, script_file: str | Path, target_file: str | Path, vm_config: dict[str, Any] | None, execution_dir: str | Path) -> dict[str, Any]:
+            """Execute in controlled environment; default to validation unless explicit run is enabled.
+
+            Args:
+                script: The script content to execute
+                script_file: Path to the script file
+                target_file: Path to the target binary file
+                vm_config: Optional VM configuration dictionary
+                execution_dir: Path to the execution directory
+
+            Returns:
+                Dictionary containing execution results with success, output, error,
+                exit_code, and method
+
+            """
             try:
-                # Method 1: Try QEMU execution
+                script_path = Path(script_file)
+                target_path = Path(target_file)
+                exec_dir = Path(execution_dir)
+
+                if vm_config and vm_config.get("dry_run", True):
+                    return self._perform_script_validation(script, script_path, target_path)
+
                 try:
-                    qemu_result = self._try_qemu_execution(script_file, target_file, vm_config)
+                    qemu_result = self._try_qemu_execution(script_path, target_path, vm_config)  # may raise
                     if qemu_result["success"]:
                         return qemu_result
                 except Exception as qemu_error:
-                    logger.debug(f"QEMU execution failed: {qemu_error}")
+                    logger.debug("QEMU execution failed: %s", qemu_error)
 
-                # Method 2: Try native script execution in sandbox
                 try:
-                    native_result = self._try_native_execution(script, script_file, target_file, execution_dir)
+                    native_result = self._try_native_execution(script, script_path, target_path, exec_dir)
                     if native_result["success"]:
                         return native_result
                 except Exception as native_error:
-                    logger.debug(f"Native execution failed: {native_error}")
+                    logger.debug("Native execution failed: %s", native_error)
 
-                # Method 3: Script validation and static analysis
-                return self._perform_script_validation(script, script_file, target_file)
+                return self._perform_script_validation(script, script_path, target_path)
 
             except Exception as execution_error:
-                logger.error(f"Script execution error: {execution_error}")
+                logger.error("Script execution error: %s", execution_error)
                 return {
                     "success": False,
                     "output": f"Script execution failed: {execution_error}",
@@ -337,80 +376,105 @@ Script Analysis:
                     "method": "error_fallback",
                 }
 
-        def _try_qemu_execution(self, script_file: str, target_file: str, vm_config: dict[str, Any]):
-            """Attempt QEMU-based script execution."""
-            try:
-                import subprocess
+        def _try_qemu_execution(self, script_file: Path, target_file: Path, vm_config: dict[str, Any]) -> dict[str, Any]:
+            """Attempt QEMU-based script execution (best-effort; requires proper setup).
 
-                # Build QEMU command
-                qemu_cmd = [
-                    "qemu-x86_64" if os.name != "nt" else "qemu-system-x86_64",
-                    "-cpu",
-                    vm_config.get("cpu", "qemu64"),
-                    "-m",
-                    vm_config.get("memory", "512M"),
-                ]
+            Args:
+                script_file: Path to the script file
+                target_file: Path to the target binary file
+                vm_config: VM configuration dictionary
 
-                if os.name == "nt":
-                    qemu_cmd.extend(["-nographic", "-no-reboot"])
+            Returns:
+                Dictionary containing execution results with success, output, error,
+                exit_code, and method
 
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                    [*qemu_cmd, str(target_file)],
-                    capture_output=True,
-                    text=True,
-                    timeout=vm_config.get("timeout", 30),
-                    cwd=script_file.parent,
-                    shell=False,  # Explicitly secure - using list format prevents shell injection
-                )
+            """
+            import shutil
+            import subprocess
 
-                return {
-                    "success": result.returncode == 0,
-                    "output": f"QEMU execution:\n{result.stdout}\n{result.stderr}",
-                    "error": result.stderr if result.returncode != 0 else "",
-                    "exit_code": result.returncode,
-                    "method": "qemu",
-                }
+            qemu_bin = "qemu-x86_64" if os.name != "nt" else "qemu-system-x86_64"
+            if shutil.which(qemu_bin) is None:
+                raise FileNotFoundError(f"{qemu_bin} not found on PATH")
 
-            except (FileNotFoundError, subprocess.TimeoutExpired) as qemu_error:
-                raise Exception(f"QEMU not available: {qemu_error}") from qemu_error
+            qemu_cmd = [qemu_bin]
+            if qemu_bin == "qemu-system-x86_64":
+                qemu_cmd += ["-cpu", vm_config.get("cpu", "qemu64"), "-m", str(vm_config.get("memory", "512"))]
+                qemu_cmd += ["-nographic", "-no-reboot"]
+            else:
+                # qemu-x86_64 user mode can directly run the binary
+                pass
 
-        def _try_native_execution(self, script: str, script_file: Any, target_file: str, execution_dir: str):
-            """Attempt native script execution in sandbox."""
-            try:
-                import subprocess
+            result = subprocess.run(  # nosec S603
+                [*qemu_cmd, str(target_file)],
+                capture_output=True,
+                text=True,
+                timeout=vm_config.get("timeout", 30),
+                cwd=str(script_file.parent),
+                shell=False,
+            )
 
-                if script_file.suffix == ".js":
-                    # Try Node.js execution for JavaScript
-                    cmd = ["node", str(script_file)]
-                elif script_file.suffix == ".py":
-                    # Try Python execution
-                    cmd = ["python", str(script_file)]
-                else:
-                    # Generic execution attempt
-                    cmd = ["cat", str(script_file)]  # At least validate file content
+            return {
+                "success": result.returncode == 0,
+                "output": result.stdout,
+                "error": result.stderr,
+                "exit_code": result.returncode,
+                "method": "qemu",
+            }
 
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                    cmd,
-                    capture_output=True,
-                    text=True,
-                    timeout=15,
-                    cwd=execution_dir,
-                    shell=False,  # Explicitly secure - using list format prevents shell injection
-                )
+        def _try_native_execution(self, script: str, script_file: Path, target_file: Path, execution_dir: Path) -> dict[str, Any]:
+            """Attempt native script execution in sandbox with allowlisted interpreters.
 
-                return {
-                    "success": result.returncode == 0,
-                    "output": f"Native execution:\nSTDOUT: {result.stdout}\nSTDERR: {result.stderr}",
-                    "error": result.stderr if result.returncode != 0 else "",
-                    "exit_code": result.returncode,
-                    "method": "native",
-                }
+            Args:
+                script: The script content to execute
+                script_file: Path to the script file
+                target_file: Path to the target binary file
+                execution_dir: Path to the execution directory
 
-            except Exception as native_error:
-                raise RuntimeError(f"Native execution failed: {native_error}") from native_error
+            Returns:
+                Dictionary containing execution results with success, output, error,
+                exit_code, and method
 
-        def _perform_script_validation(self, script: str, script_file: Any, target_file: str):
-            """Perform script validation and static analysis."""
+            """
+            import shutil
+            import subprocess
+
+            if script_file.suffix == ".js" and shutil.which("node"):
+                cmd = ["node", str(script_file)]
+            elif script_file.suffix == ".py":
+                cmd = ["python", str(script_file)]
+            else:
+                return {"success": False, "output": "Interpreter not available or unsupported", "error": "unsupported", "exit_code": 1, "method": "native"}
+
+            result = subprocess.run(  # nosec S603
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=15,
+                cwd=str(execution_dir),
+                shell=False,
+            )
+
+            return {
+                "success": result.returncode == 0,
+                "output": result.stdout,
+                "error": result.stderr,
+                "exit_code": result.returncode,
+                "method": "native",
+            }
+
+        def _perform_script_validation(self, script: str, script_file: Path, target_file: Path) -> dict[str, Any]:
+            """Perform script validation and static analysis (ASCII-only output).
+
+            Args:
+                script: The script content to validate
+                script_file: Path to the script file
+                target_file: Path to the target binary file
+
+            Returns:
+                Dictionary containing validation results with success, output, error,
+                exit_code, and method
+
+            """
             try:
                 validation_results = []
                 validation_results.append("=== Script Validation Results ===")
@@ -418,25 +482,21 @@ Script Analysis:
                 validation_results.append(f"Target binary: {target_file}")
                 validation_results.append(f"Script size: {len(script)} bytes")
 
-                # Syntax validation
                 try:
                     if script_file.suffix == ".js":
-                        # Basic JavaScript validation
-                        if "function" in script or "var " in script or "let " in script:
+                        if any(tok in script for tok in ("function", "var ", "let ", "const ")):
                             validation_results.append("OK JavaScript syntax patterns detected")
                         else:
-                            validation_results.append("WARNING️  No clear JavaScript patterns found")
+                            validation_results.append("WARNING No clear JavaScript patterns found")
 
-                    # Security pattern detection
                     security_patterns = ["hook", "patch", "memory", "bypass", "inject"]
-                    found_patterns = [p for p in security_patterns if p in script.lower()]
-                    if found_patterns:
-                        validation_results.append(f"OK Security patterns detected: {', '.join(found_patterns)}")
+                    found = [p for p in security_patterns if p in script.lower()]
+                    if found:
+                        validation_results.append("OK Security patterns detected: " + ", ".join(found))
 
                     validation_results.append("OK Script validation completed successfully")
-
                 except Exception as validation_error:
-                    validation_results.append(f"WARNING️  Validation warning: {validation_error}")
+                    validation_results.append(f"WARNING Validation warning: {validation_error}")
 
                 return {"success": True, "output": "\n".join(validation_results), "error": "", "exit_code": 0, "method": "validation"}
 
@@ -506,10 +566,12 @@ class IntegrationManager:
         self.active_tasks: dict[str, IntegrationTask] = {}
         self.completed_tasks: dict[str, IntegrationTask] = {}
         self.task_dependencies: dict[str, list[str]] = {}
+        self._state_lock = threading.Lock()
 
         # Workflow management
         self.active_workflows: dict[str, dict[str, Any]] = {}
         self.workflow_results: dict[str, WorkflowResult] = {}
+        self._workflow_lock = threading.Lock()
 
         # Execution control
         self.max_workers = 4
@@ -567,11 +629,9 @@ class IntegrationManager:
         """Process tasks in the main worker loop."""
         while self.running:
             try:
-                # Get task from queue (with timeout)
                 try:
                     task = self.task_queue.get(timeout=1.0)
-                except Empty as e:
-                    self.logger.error("Empty in integration_manager: %s", e)
+                except Empty:
                     continue
 
                 # Check dependencies
@@ -602,7 +662,8 @@ class IntegrationManager:
         """Execute a single task."""
         task.status = "running"
         task.started_at = datetime.now()
-        self.active_tasks[task.task_id] = task
+        with self._state_lock:
+            self.active_tasks[task.task_id] = task
 
         try:
             # Emit task started event
@@ -639,9 +700,10 @@ class IntegrationManager:
 
         finally:
             # Move from active to completed
-            if task.task_id in self.active_tasks:
-                del self.active_tasks[task.task_id]
-            self.completed_tasks[task.task_id] = task
+            with self._state_lock:
+                if task.task_id in self.active_tasks:
+                    del self.active_tasks[task.task_id]
+                self.completed_tasks[task.task_id] = task
 
     def _execute_script_generation(self, task: IntegrationTask) -> dict[str, Any]:
         """Execute script generation task."""
@@ -728,8 +790,17 @@ class IntegrationManager:
 
         return combined
 
-    def _select_best_result(self, results: dict[str, Any], criteria: str) -> Any:
-        """Select best result based on criteria."""
+    def _select_best_result(self, results: dict[str, Any], criteria: str) -> dict[str, Any] | None:
+        """Select best result based on criteria.
+
+        Args:
+            results: Dictionary of results to select from
+            criteria: Selection criteria (e.g., 'confidence')
+
+        Returns:
+            The best result dictionary or None if no results available
+
+        """
         if not results:
             return None
 
@@ -868,8 +939,8 @@ class IntegrationManager:
 
         for task_id, task in completed_tasks.items():
             results[task_id] = task.result
-            if hasattr(task.result, "artifacts"):
-                artifacts[task_id] = task.result.artifacts
+            if isinstance(task.result, dict) and "artifacts" in task.result:
+                artifacts[task_id] = task.result["artifacts"]
 
         for task_id, task in failed_tasks.items():
             errors.append(f"Task {task_id}: {task.error}")
@@ -949,20 +1020,27 @@ class IntegrationManager:
         # Remove task from queue or stop execution
         cancelled = False
 
-        # Check pending queue
-        for i, (tid, _, _) in enumerate(self.task_queue):
-            if tid == task_id:
-                del self.task_queue[i]
+        # Requeue all except the one to cancel
+        try:
+            temp_items: list[IntegrationTask] = []
+            while True:
+                item = self.task_queue.get_nowait()
+                temp_items.append(item)
+        except Empty:
+            pass
+        for item in temp_items:
+            if getattr(item, "task_id", None) == task_id:
                 cancelled = True
-                break
+                continue
+            self.task_queue.put(item)
 
         # Check active tasks
-        if task_id in self.active_tasks:
-            task = self.active_tasks[task_id]
-            if hasattr(task, "terminate"):
-                task.terminate()
-            del self.active_tasks[task_id]
-            cancelled = True
+        with self._state_lock:
+            if task_id in self.active_tasks:
+                task = self.active_tasks[task_id]
+                setattr(task, "cancelled", True)
+                del self.active_tasks[task_id]
+                cancelled = True
 
         if cancelled:
             logger.info(f"Successfully cancelled task {task_id}")
@@ -977,8 +1055,14 @@ class IntegrationManager:
             self.event_handlers[event_type] = []
         self.event_handlers[event_type].append(handler)
 
-    def _emit_event(self, event_type: str, data: Any) -> None:
-        """Emit event to handlers."""
+    def _emit_event(self, event_type: str, data: IntegrationTask) -> None:
+        """Emit event to handlers.
+
+        Args:
+            event_type: Type of event to emit
+            data: Task data to emit with the event
+
+        """
         handlers = self.event_handlers.get(event_type, [])
         for handler in handlers:
             try:
@@ -1092,13 +1176,28 @@ class IntegrationManager:
 
         logger.info("Cleanup completed")
 
-    def __enter__(self):
-        """Context manager entry."""
+    def __enter__(self) -> IntegrationManager:
+        """Context manager entry.
+
+        Returns:
+            The IntegrationManager instance
+
+        """
         self.start()
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None):
-        """Context manager exit."""
+    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None) -> bool:
+        """Context manager exit.
+
+        Args:
+            exc_type: Exception type if an exception occurred
+            exc_val: Exception value if an exception occurred
+            exc_tb: Exception traceback if an exception occurred
+
+        Returns:
+            False to not suppress exceptions
+
+        """
         if exc_type:
             logger.error(f"Integration manager exiting due to {exc_type.__name__}: {exc_val}")
             if exc_tb:
@@ -1108,4 +1207,17 @@ class IntegrationManager:
 
 
 # Global integration manager instance
-integration_manager = IntegrationManager()
+_integration_manager_singleton: IntegrationManager | None = None
+
+
+def get_integration_manager() -> IntegrationManager:
+    """Get or create the global integration manager singleton.
+
+    Returns:
+        The global IntegrationManager instance
+
+    """
+    global _integration_manager_singleton
+    if _integration_manager_singleton is None:
+        _integration_manager_singleton = IntegrationManager()
+    return _integration_manager_singleton

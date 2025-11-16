@@ -2,11 +2,14 @@
 
 import hashlib
 import logging
+import struct
 import zlib
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import Any, Callable
 
+import capstone
 import z3
 
 from intellicrack.core.serial_generator import (
@@ -43,6 +46,76 @@ class ValidationRoutine:
     xrefs: list[int] = field(default_factory=list)
 
 
+class CryptoType(Enum):
+    """Types of cryptographic primitives."""
+
+    HASH = "hash"
+    CIPHER = "cipher"
+    SIGNATURE = "signature"
+    CHECKSUM = "checksum"
+    CUSTOM = "custom"
+
+
+class AlgorithmType(Enum):
+    """Types of validation algorithms."""
+
+    MD5 = "md5"
+    SHA1 = "sha1"
+    SHA256 = "sha256"
+    CRC32 = "crc32"
+    RSA = "rsa"
+    AES = "aes"
+    CUSTOM = "custom"
+    UNKNOWN = "unknown"
+
+
+@dataclass
+class CryptoPrimitive:
+    """Represents a detected cryptographic primitive."""
+
+    crypto_type: CryptoType
+    algorithm: str
+    offset: int
+    constants: list[int] = field(default_factory=list)
+    confidence: float = 0.0
+
+
+@dataclass
+class ValidationConstraint:
+    """Represents a constraint extracted from validation code."""
+
+    constraint_type: str
+    value: Any
+    offset: int
+    description: str = ""
+
+
+@dataclass
+class PatchLocation:
+    """Represents a location that can be patched to bypass validation."""
+
+    offset: int
+    instruction: str
+    patch_type: str
+    original_bytes: bytes
+    suggested_patch: bytes
+    description: str = ""
+
+
+@dataclass
+class ValidationAnalysis:
+    """Complete analysis of a validation routine."""
+
+    algorithm_type: AlgorithmType
+    confidence: float
+    crypto_primitives: list[CryptoPrimitive] = field(default_factory=list)
+    constraints: list[ValidationConstraint] = field(default_factory=list)
+    patch_points: list[PatchLocation] = field(default_factory=list)
+    api_calls: list[str] = field(default_factory=list)
+    embedded_constants: dict[str, bytes] = field(default_factory=dict)
+    recommendations: list[str] = field(default_factory=list)
+
+
 @dataclass
 class ExtractedAlgorithm:
     """Represents an extracted license validation algorithm."""
@@ -53,6 +126,512 @@ class ExtractedAlgorithm:
     key_format: SerialFormat | None = None
     constraints: list[KeyConstraint] = field(default_factory=list)
     confidence: float = 0.0
+
+
+class ValidationAnalyzer:
+    """Analyzes binary validation routines to extract algorithm and constraints."""
+
+    MD5_CONSTANTS = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476]
+    SHA1_CONSTANTS = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0]
+    SHA256_CONSTANTS = [
+        0x6A09E667,
+        0xBB67AE85,
+        0x3C6EF372,
+        0xA54FF53A,
+        0x510E527F,
+        0x9B05688C,
+        0x1F83D9AB,
+        0x5BE0CD19,
+    ]
+    CRC32_POLYNOMIALS = [0xEDB88320, 0x04C11DB7]
+    RSA_COMMON_EXPONENTS = [3, 17, 65537]
+
+    def __init__(self) -> None:
+        """Initialize the validation analyzer."""
+        self.logger = logging.getLogger(__name__)
+        self.md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+        self.md.detail = True
+
+    def analyze(self, binary_code: bytes, entry_point: int = 0, arch: str = "x64") -> ValidationAnalysis:
+        """Analyze binary validation routine and extract algorithm details.
+
+        Args:
+            binary_code: Raw bytes of the validation routine
+            entry_point: Starting offset within binary_code
+            arch: Architecture ("x64" or "x86")
+
+        Returns:
+            ValidationAnalysis with detected algorithm and constraints
+
+        """
+        if arch == "x86":
+            self.md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+        else:
+            self.md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+        self.md.detail = True
+
+        instructions = self._disassemble_routine(binary_code, entry_point)
+
+        crypto_primitives = self._detect_crypto_constants(instructions, binary_code)
+
+        api_calls = self._identify_api_calls(instructions)
+
+        constraints = self._extract_constraints(instructions)
+
+        patch_points = self._find_patch_points(instructions)
+
+        algorithm_type, confidence = self._determine_algorithm(crypto_primitives, api_calls, constraints)
+
+        embedded_constants = self._extract_embedded_constants(binary_code, instructions)
+
+        recommendations = self._generate_recommendations(algorithm_type, crypto_primitives, patch_points)
+
+        return ValidationAnalysis(
+            algorithm_type=algorithm_type,
+            confidence=confidence,
+            crypto_primitives=crypto_primitives,
+            constraints=constraints,
+            patch_points=patch_points,
+            api_calls=api_calls,
+            embedded_constants=embedded_constants,
+            recommendations=recommendations,
+        )
+
+    def _disassemble_routine(self, code: bytes, start: int, max_instructions: int = 500) -> list[Any]:
+        """Disassemble validation routine code.
+
+        Args:
+            code: Binary code to disassemble
+            start: Starting offset
+            max_instructions: Maximum instructions to disassemble
+
+        Returns:
+            List of Capstone instruction objects
+
+        """
+        instructions = []
+        try:
+            for i, instruction in enumerate(self.md.disasm(code[start:], start)):
+                instructions.append(instruction)
+                if i >= max_instructions:
+                    break
+                if instruction.mnemonic == "ret":
+                    break
+        except capstone.CsError as e:
+            self.logger.warning(f"Disassembly error: {e}")
+
+        return instructions
+
+    def _detect_crypto_constants(self, instructions: list[Any], binary_code: bytes) -> list[CryptoPrimitive]:
+        """Detect cryptographic constants in disassembled code.
+
+        Args:
+            instructions: List of disassembled instructions
+            binary_code: Original binary data for scanning
+
+        Returns:
+            List of detected cryptographic primitives
+
+        """
+        primitives = []
+
+        for _idx, instr in enumerate(instructions):
+            if instr.mnemonic in {"mov", "movabs", "lea"}:
+                for operand in instr.operands:
+                    if operand.type == capstone.x86.X86_OP_IMM:
+                        imm_value = operand.imm
+
+                        if imm_value in self.MD5_CONSTANTS:
+                            primitives.append(
+                                CryptoPrimitive(
+                                    crypto_type=CryptoType.HASH,
+                                    algorithm="MD5",
+                                    offset=instr.address,
+                                    constants=[imm_value],
+                                    confidence=0.9,
+                                ),
+                            )
+                        elif imm_value in self.SHA1_CONSTANTS:
+                            primitives.append(
+                                CryptoPrimitive(
+                                    crypto_type=CryptoType.HASH,
+                                    algorithm="SHA1",
+                                    offset=instr.address,
+                                    constants=[imm_value],
+                                    confidence=0.85,
+                                ),
+                            )
+                        elif imm_value in self.SHA256_CONSTANTS:
+                            primitives.append(
+                                CryptoPrimitive(
+                                    crypto_type=CryptoType.HASH,
+                                    algorithm="SHA256",
+                                    offset=instr.address,
+                                    constants=[imm_value],
+                                    confidence=0.95,
+                                ),
+                            )
+                        elif imm_value in self.CRC32_POLYNOMIALS:
+                            primitives.append(
+                                CryptoPrimitive(
+                                    crypto_type=CryptoType.CHECKSUM,
+                                    algorithm="CRC32",
+                                    offset=instr.address,
+                                    constants=[imm_value],
+                                    confidence=0.9,
+                                ),
+                            )
+                        elif imm_value in self.RSA_COMMON_EXPONENTS:
+                            primitives.append(
+                                CryptoPrimitive(
+                                    crypto_type=CryptoType.SIGNATURE,
+                                    algorithm="RSA",
+                                    offset=instr.address,
+                                    constants=[imm_value],
+                                    confidence=0.8,
+                                ),
+                            )
+
+        xor_chain_count = 0
+        for i in range(len(instructions) - 3):
+            if all(instructions[j].mnemonic == "xor" for j in range(i, min(i + 3, len(instructions)))):
+                xor_chain_count += 1
+
+        if xor_chain_count > 5:
+            primitives.append(
+                CryptoPrimitive(
+                    crypto_type=CryptoType.CHECKSUM,
+                    algorithm="CUSTOM_XOR",
+                    offset=instructions[0].address if instructions else 0,
+                    constants=[],
+                    confidence=0.7,
+                ),
+            )
+
+        return primitives
+
+    def _identify_api_calls(self, instructions: list[Any]) -> list[str]:
+        """Identify cryptographic API calls in code.
+
+        Args:
+            instructions: List of disassembled instructions
+
+        Returns:
+            List of identified API function names
+
+        """
+        api_calls = []
+        crypto_apis = {
+            "CryptVerifySignature": "RSA signature verification",
+            "CryptDecrypt": "Decryption operation",
+            "CryptEncrypt": "Encryption operation",
+            "CryptHashData": "Hash computation",
+            "CryptCreateHash": "Hash object creation",
+            "BCryptEncrypt": "Modern encryption (BCrypt)",
+            "BCryptDecrypt": "Modern decryption (BCrypt)",
+            "BCryptHashData": "Modern hash (BCrypt)",
+            "MD5Init": "MD5 initialization",
+            "SHA1Init": "SHA1 initialization",
+            "SHA256Init": "SHA256 initialization",
+        }
+
+        for instr in instructions:
+            if instr.mnemonic == "call":
+                for op in instr.operands:
+                    if op.type == capstone.x86.X86_OP_IMM:
+                        api_calls.extend(crypto_apis)
+
+        return api_calls
+
+    def _extract_constraints(self, instructions: list[Any]) -> list[ValidationConstraint]:
+        """Extract validation constraints from assembly instructions.
+
+        Args:
+            instructions: List of disassembled instructions
+
+        Returns:
+            List of extracted constraints
+
+        """
+        constraints = []
+
+        for idx, instr in enumerate(instructions):
+            if instr.mnemonic == "cmp":
+                if len(instr.operands) >= 2:
+                    if instr.operands[1].type == capstone.x86.X86_OP_IMM:
+                        imm_value = instr.operands[1].imm
+
+                        if 8 <= imm_value <= 64:
+                            constraints.append(
+                                ValidationConstraint(
+                                    constraint_type="length",
+                                    value=imm_value,
+                                    offset=instr.address,
+                                    description=f"Key length must be {imm_value}",
+                                ),
+                            )
+
+                        if imm_value == 0x2D:
+                            constraints.append(
+                                ValidationConstraint(
+                                    constraint_type="separator",
+                                    value="-",
+                                    offset=instr.address,
+                                    description="Dash separator detected",
+                                ),
+                            )
+
+                        if 0x30 <= imm_value <= 0x39:
+                            constraints.append(
+                                ValidationConstraint(
+                                    constraint_type="charset",
+                                    value="numeric",
+                                    offset=instr.address,
+                                    description=f"Numeric character check: {chr(imm_value)}",
+                                ),
+                            )
+                        elif 0x41 <= imm_value <= 0x5A:
+                            constraints.append(
+                                ValidationConstraint(
+                                    constraint_type="charset",
+                                    value="uppercase",
+                                    offset=instr.address,
+                                    description=f"Uppercase letter check: {chr(imm_value)}",
+                                ),
+                            )
+
+            elif instr.mnemonic == "test":
+                if idx + 1 < len(instructions):
+                    next_instr = instructions[idx + 1]
+                    if next_instr.mnemonic in {"je", "jz"}:
+                        constraints.append(
+                            ValidationConstraint(
+                                constraint_type="null_check",
+                                value=True,
+                                offset=instr.address,
+                                description="Null/empty validation",
+                            ),
+                        )
+
+        return constraints
+
+    def _find_patch_points(self, instructions: list[Any]) -> list[PatchLocation]:
+        """Find locations that can be patched to bypass validation.
+
+        Args:
+            instructions: List of disassembled instructions
+
+        Returns:
+            List of patchable locations
+
+        """
+        patch_points = []
+
+        for idx, instr in enumerate(instructions):
+            if instr.mnemonic in {"je", "jne", "jz", "jnz", "jg", "jl", "jge", "jle"}:
+                if idx > 0 and instructions[idx - 1].mnemonic in {"cmp", "test"}:
+                    nop_patch = b"\x90" * instr.size
+
+                    patch_points.append(
+                        PatchLocation(
+                            offset=instr.address,
+                            instruction=f"{instr.mnemonic} {instr.op_str}",
+                            patch_type="nop_conditional",
+                            original_bytes=instr.bytes,
+                            suggested_patch=nop_patch,
+                            description=f"NOP out conditional jump at {hex(instr.address)}",
+                        ),
+                    )
+
+                    if instr.mnemonic in {"je", "jz"}:
+                        jmp_bytes = bytearray(instr.bytes)
+                        if instr.size == 2:
+                            jmp_bytes[0] = 0xEB
+                        elif instr.size >= 5:
+                            jmp_bytes[0] = 0xE9
+
+                        patch_points.append(
+                            PatchLocation(
+                                offset=instr.address,
+                                instruction=f"{instr.mnemonic} {instr.op_str}",
+                                patch_type="force_jump",
+                                original_bytes=instr.bytes,
+                                suggested_patch=bytes(jmp_bytes),
+                                description=f"Force unconditional jump at {hex(instr.address)}",
+                            ),
+                        )
+
+            elif instr.mnemonic in {"mov", "movabs"}:
+                if len(instr.operands) >= 2:
+                    if instr.operands[0].type == capstone.x86.X86_OP_REG:
+                        reg_name = instr.reg_name(instr.operands[0].reg)
+                        if reg_name in {"eax", "rax", "al"}:
+                            if idx + 1 < len(instructions) and instructions[idx + 1].mnemonic == "ret":
+                                success_patch = b"\xb8\x01\x00\x00\x00" if instr.size >= 5 else b"\xb0\x01"
+
+                                patch_points.append(
+                                    PatchLocation(
+                                        offset=instr.address,
+                                        instruction=f"{instr.mnemonic} {instr.op_str}",
+                                        patch_type="force_success",
+                                        original_bytes=instr.bytes,
+                                        suggested_patch=success_patch,
+                                        description=f"Force return value to success at {hex(instr.address)}",
+                                    ),
+                                )
+
+        return patch_points
+
+    def _determine_algorithm(
+        self,
+        crypto_primitives: list[CryptoPrimitive],
+        api_calls: list[str],
+        constraints: list[ValidationConstraint],
+    ) -> tuple[AlgorithmType, float]:
+        """Determine the validation algorithm type with confidence.
+
+        Args:
+            crypto_primitives: Detected cryptographic primitives
+            api_calls: Identified API calls
+            constraints: Extracted constraints
+
+        Returns:
+            Tuple of (algorithm type, confidence score)
+
+        """
+        if not crypto_primitives and not api_calls:
+            return (AlgorithmType.CUSTOM, 0.5)
+
+        algorithm_votes: dict[AlgorithmType, float] = {}
+
+        for primitive in crypto_primitives:
+            if primitive.algorithm == "MD5":
+                algorithm_votes[AlgorithmType.MD5] = max(
+                    algorithm_votes.get(AlgorithmType.MD5, 0.0),
+                    primitive.confidence,
+                )
+            elif primitive.algorithm == "SHA1":
+                algorithm_votes[AlgorithmType.SHA1] = max(
+                    algorithm_votes.get(AlgorithmType.SHA1, 0.0),
+                    primitive.confidence,
+                )
+            elif primitive.algorithm == "SHA256":
+                algorithm_votes[AlgorithmType.SHA256] = max(
+                    algorithm_votes.get(AlgorithmType.SHA256, 0.0),
+                    primitive.confidence,
+                )
+            elif primitive.algorithm == "CRC32":
+                algorithm_votes[AlgorithmType.CRC32] = max(
+                    algorithm_votes.get(AlgorithmType.CRC32, 0.0),
+                    primitive.confidence,
+                )
+            elif primitive.algorithm == "RSA":
+                algorithm_votes[AlgorithmType.RSA] = max(
+                    algorithm_votes.get(AlgorithmType.RSA, 0.0),
+                    primitive.confidence,
+                )
+
+        for api_call in api_calls:
+            if "MD5" in api_call:
+                algorithm_votes[AlgorithmType.MD5] = max(algorithm_votes.get(AlgorithmType.MD5, 0.0), 0.8)
+            elif "SHA1" in api_call:
+                algorithm_votes[AlgorithmType.SHA1] = max(algorithm_votes.get(AlgorithmType.SHA1, 0.0), 0.8)
+            elif "SHA256" in api_call:
+                algorithm_votes[AlgorithmType.SHA256] = max(algorithm_votes.get(AlgorithmType.SHA256, 0.0), 0.8)
+            elif "Crypt" in api_call and "Signature" in api_call:
+                algorithm_votes[AlgorithmType.RSA] = max(algorithm_votes.get(AlgorithmType.RSA, 0.0), 0.85)
+
+        if algorithm_votes:
+            best_algorithm = max(algorithm_votes.items(), key=lambda x: x[1])
+            return best_algorithm
+        return (AlgorithmType.UNKNOWN, 0.3)
+
+    def _extract_embedded_constants(self, binary_code: bytes, instructions: list[Any]) -> dict[str, bytes]:
+        """Extract embedded constants from binary code.
+
+        Args:
+            binary_code: Raw binary data
+            instructions: Disassembled instructions for reference
+
+        Returns:
+            Dictionary of named constants
+
+        """
+        constants = {}
+
+        for idx in range(0, len(binary_code) - 16, 4):
+            dword = struct.unpack("<I", binary_code[idx : idx + 4])[0]
+
+            if dword in self.MD5_CONSTANTS:
+                constants[f"md5_const_{hex(dword)}"] = binary_code[idx : idx + 4]
+            elif dword in self.SHA256_CONSTANTS:
+                constants[f"sha256_const_{hex(dword)}"] = binary_code[idx : idx + 4]
+            elif dword in self.CRC32_POLYNOMIALS:
+                constants[f"crc32_poly_{hex(dword)}"] = binary_code[idx : idx + 4]
+
+        for idx in range(0, len(binary_code) - 32, 1):
+            chunk = binary_code[idx : idx + 32]
+            if len(set(chunk)) > 16:
+                if all(32 <= b < 127 or b in {9, 10, 13} for b in chunk):
+                    try:
+                        ascii_str = chunk.decode("ascii").rstrip("\x00")
+                        if len(ascii_str) >= 8:
+                            constants[f"string_{hex(idx)}"] = chunk
+                    except (UnicodeDecodeError, ValueError):
+                        pass
+
+        return constants
+
+    def _generate_recommendations(
+        self,
+        algorithm_type: AlgorithmType,
+        crypto_primitives: list[CryptoPrimitive],
+        patch_points: list[PatchLocation],
+    ) -> list[str]:
+        """Generate actionable recommendations for cracking.
+
+        Args:
+            algorithm_type: Detected algorithm type
+            crypto_primitives: List of crypto primitives found
+            patch_points: List of patchable locations
+
+        Returns:
+            List of recommendation strings
+
+        """
+        recommendations = []
+
+        if algorithm_type == AlgorithmType.MD5:
+            recommendations.append("MD5 hash detected - consider rainbow table attack or keygen with hash matching")
+            recommendations.append("Look for input transformation before MD5 - may reveal key format requirements")
+        elif algorithm_type == AlgorithmType.SHA1:
+            recommendations.append("SHA1 hash detected - analyze input preparation for keygen creation")
+        elif algorithm_type == AlgorithmType.SHA256:
+            recommendations.append("SHA256 hash detected - strong algorithm, focus on input analysis or patching")
+        elif algorithm_type == AlgorithmType.CRC32:
+            recommendations.append("CRC32 checksum detected - easily reversible, create keygen with CRC matching")
+            recommendations.append("Extract CRC polynomial and generate valid checksums")
+        elif algorithm_type == AlgorithmType.RSA:
+            recommendations.append("RSA signature detected - extract public key and analyze key format")
+            recommendations.append("Consider patching signature verification instead of key generation")
+        elif algorithm_type == AlgorithmType.CUSTOM:
+            recommendations.append("Custom algorithm detected - perform dynamic analysis to trace validation logic")
+            recommendations.append("Use debugger to capture input/output of validation function")
+
+        if patch_points:
+            recommendations.append(f"Found {len(patch_points)} potential patch points for binary modification")
+            recommendations.append("Priority: Patch conditional jumps to bypass validation checks")
+
+        if crypto_primitives:
+            hash_primitives = [p for p in crypto_primitives if p.crypto_type == CryptoType.HASH]
+            if len(hash_primitives) > 1:
+                recommendations.append("Multiple hash algorithms detected - composite validation scheme")
+
+        if not patch_points and algorithm_type == AlgorithmType.UNKNOWN:
+            recommendations.append("Limited information - recommend dynamic analysis with debugger")
+            recommendations.append("Set breakpoints on string comparison functions (strcmp, memcmp)")
+
+        return recommendations
 
 
 class ConstraintExtractor:

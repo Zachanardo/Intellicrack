@@ -18,11 +18,13 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import os
 import time
+from typing import Any, Dict, List, Optional, Union
 
 from intellicrack.ai.code_analysis_tools import AIAssistant
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,
     QCheckBox,
+    QCloseEvent,
     QColor,
     QComboBox,
     QFileDialog,
@@ -77,8 +79,15 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 class TestScriptDialog(BaseDialog):
     """Comprehensive script testing dialog with validation and security analysis."""
 
-    def __init__(self, parent=None, script_content="", script_type="") -> None:
-        """Initialize the TestScriptDialog with script content and type."""
+    def __init__(self, parent: Optional[QWidget] = None, script_content: str = "", script_type: str = "") -> None:
+        """Initialize the TestScriptDialog with script content and type.
+
+        Args:
+            parent: Parent widget for the dialog.
+            script_content: The script content to test.
+            script_type: The type of script being tested.
+
+        """
         super().__init__(parent, "Script Testing & Validation")
         self.setMinimumSize(800, 600)
 
@@ -91,8 +100,13 @@ class TestScriptDialog(BaseDialog):
         self.setup_test_environment()
         self.start_comprehensive_test()
 
-    def setup_content(self, layout) -> None:
-        """Set up the testing dialog UI content."""
+    def setup_content(self, layout: Optional[QVBoxLayout]) -> None:
+        """Set up the testing dialog UI content.
+
+        Args:
+            layout: The layout to add widgets to, or None to create a new one.
+
+        """
         if layout is None:
             layout = QVBoxLayout(self.content_widget)
 
@@ -301,9 +315,22 @@ class TestScriptDialog(BaseDialog):
         # Default fallback
         return "unknown"
 
-    def validate_python_syntax(self):
-        """Validate Python script syntax."""
-        validation_results = {"syntax_valid": False, "parse_errors": [], "warnings": [], "imports": [], "functions": [], "classes": []}
+    def validate_python_syntax(self) -> Dict[str, Any]:
+        """Validate Python script syntax.
+
+        Returns:
+            Dictionary containing syntax validation results with keys: syntax_valid,
+            parse_errors, warnings, imports, functions, classes, tests.
+
+        """
+        validation_results: Dict[str, Any] = {
+            "syntax_valid": False,
+            "parse_errors": [],
+            "warnings": [],
+            "imports": [],
+            "functions": [],
+            "classes": [],
+        }
 
         try:
             import ast
@@ -337,9 +364,15 @@ class TestScriptDialog(BaseDialog):
 
         return validation_results
 
-    def validate_javascript_syntax(self):
-        """Validate JavaScript/Frida script syntax."""
-        validation_results = {"syntax_valid": True, "warnings": [], "frida_patterns": [], "security_features": []}
+    def validate_javascript_syntax(self) -> Dict[str, Any]:
+        """Validate JavaScript/Frida script syntax.
+
+        Returns:
+            Dictionary containing JavaScript validation results with keys: syntax_valid,
+            warnings, frida_patterns, security_features, tests.
+
+        """
+        validation_results: Dict[str, Any] = {"syntax_valid": True, "warnings": [], "frida_patterns": [], "security_features": []}
 
         # Check for common Frida patterns
         frida_patterns = [
@@ -368,9 +401,15 @@ class TestScriptDialog(BaseDialog):
 
         return validation_results
 
-    def validate_powershell_syntax(self):
-        """Validate PowerShell script syntax."""
-        validation_results = {"syntax_valid": True, "cmdlets": [], "variables": [], "warnings": []}
+    def validate_powershell_syntax(self) -> Dict[str, Any]:
+        """Validate PowerShell script syntax.
+
+        Returns:
+            Dictionary containing PowerShell validation results with keys: syntax_valid,
+            cmdlets, variables, warnings, tests.
+
+        """
+        validation_results: Dict[str, Any] = {"syntax_valid": True, "cmdlets": [], "variables": [], "warnings": []}
 
         lines = self.script_content.split("\n")
         for line in lines:
@@ -394,9 +433,15 @@ class TestScriptDialog(BaseDialog):
 
         return validation_results
 
-    def perform_generic_syntax_checks(self):
-        """Perform language-agnostic syntax checks."""
-        checks = {
+    def perform_generic_syntax_checks(self) -> Dict[str, Any]:
+        """Perform language-agnostic syntax checks.
+
+        Returns:
+            Dictionary containing generic syntax checks with keys: line_count,
+            character_count, contains_comments, contains_strings, suspicious_patterns.
+
+        """
+        checks: Dict[str, Any] = {
             "line_count": len(self.script_content.split("\n")),
             "character_count": len(self.script_content),
             "contains_comments": False,
@@ -559,9 +604,15 @@ class TestScriptDialog(BaseDialog):
         self.test_results["effectiveness_testing"] = effectiveness_results
         self.update_effectiveness_display()
 
-    def analyze_bypass_effectiveness(self):
-        """Analyze bypass script effectiveness."""
-        analysis = {"effectiveness_score": 0, "capabilities": [], "missing_features": []}
+    def analyze_bypass_effectiveness(self) -> Dict[str, Any]:
+        """Analyze bypass script effectiveness.
+
+        Returns:
+            Dictionary containing bypass effectiveness analysis with keys: effectiveness_score,
+            capabilities, missing_features.
+
+        """
+        analysis: Dict[str, Any] = {"effectiveness_score": 0, "capabilities": [], "missing_features": []}
 
         # Check for bypass techniques
         bypass_techniques = {
@@ -595,9 +646,15 @@ class TestScriptDialog(BaseDialog):
         analysis["effectiveness_score"] = min(score, 100)
         return analysis
 
-    def analyze_exploit_effectiveness(self):
-        """Analyze exploit script effectiveness."""
-        analysis = {"effectiveness_score": 0, "capabilities": [], "missing_features": []}
+    def analyze_exploit_effectiveness(self) -> Dict[str, Any]:
+        """Analyze exploit script effectiveness.
+
+        Returns:
+            Dictionary containing exploit effectiveness analysis with keys: effectiveness_score,
+            capabilities, missing_features.
+
+        """
+        analysis: Dict[str, Any] = {"effectiveness_score": 0, "capabilities": [], "missing_features": []}
 
         # Check for exploit components
         exploit_components = {
@@ -617,9 +674,15 @@ class TestScriptDialog(BaseDialog):
         analysis["effectiveness_score"] = min(score, 100)
         return analysis
 
-    def analyze_strategy_effectiveness(self):
-        """Analyze strategy document effectiveness."""
-        analysis = {"effectiveness_score": 0, "capabilities": [], "missing_features": []}
+    def analyze_strategy_effectiveness(self) -> Dict[str, Any]:
+        """Analyze strategy document effectiveness.
+
+        Returns:
+            Dictionary containing strategy effectiveness analysis with keys: effectiveness_score,
+            capabilities, missing_features.
+
+        """
+        analysis: Dict[str, Any] = {"effectiveness_score": 0, "capabilities": [], "missing_features": []}
 
         # Check for strategy components
         strategy_components = {
@@ -914,7 +977,10 @@ class TestScriptDialog(BaseDialog):
         default_name = f"script_test_results_{timestamp}.txt"
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Export Test Results", default_name, "Text Files (*.txt);;JSON Files (*.json);;All Files (*)",
+            self,
+            "Export Test Results",
+            default_name,
+            "Text Files (*.txt);;JSON Files (*.json);;All Files (*)",
         )
 
         if file_path:
@@ -956,8 +1022,13 @@ class TestScriptDialog(BaseDialog):
 class PythonHighlighter(QSyntaxHighlighter):
     """Perform Python syntax highlighter."""
 
-    def __init__(self, parent=None) -> None:
-        """Initialize the PythonHighlighter with default values."""
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
+        """Initialize the PythonHighlighter with default values.
+
+        Args:
+            parent: Parent widget for the syntax highlighter.
+
+        """
         super().__init__(parent)
         self.highlighting_rules = []
 
@@ -995,8 +1066,13 @@ class PythonHighlighter(QSyntaxHighlighter):
         comment_format.setColor(QColor(128, 128, 128))
         self.highlighting_rules.append(("#.*", comment_format))
 
-    def highlightBlock(self, text) -> None:
-        """Highlight a block of text."""
+    def highlightBlock(self, text: str) -> None:
+        """Highlight a block of text.
+
+        Args:
+            text: The text block to apply syntax highlighting to.
+
+        """
         import re
 
         for pattern, text_format in self.highlighting_rules:
@@ -1011,8 +1087,15 @@ class ScriptGeneratorWorker(QThread):
     script_generated = pyqtSignal(dict)
     error_occurred = pyqtSignal(str)
 
-    def __init__(self, binary_path: str, script_type: str, **kwargs) -> None:
-        """Initialize the ScriptGeneratorWorker with default values."""
+    def __init__(self, binary_path: str, script_type: str, **kwargs: Union[str, int, bool, List[str]]) -> None:
+        """Initialize the ScriptGeneratorWorker with default values.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+            script_type: Type of script to generate (bypass, exploit, strategy).
+            **kwargs: Additional keyword arguments for script generation configuration.
+
+        """
         super().__init__()
         self.binary_path = binary_path
         self.script_type = script_type
@@ -1101,8 +1184,14 @@ class ScriptGeneratorWorker(QThread):
 class ScriptGeneratorDialog(BaseDialog):
     """Script Generation Dialog with multiple script types."""
 
-    def __init__(self, parent=None, binary_path: str = "") -> None:
-        """Initialize the ScriptGeneratorDialog with default values."""
+    def __init__(self, parent: Optional[QWidget] = None, binary_path: str = "") -> None:
+        """Initialize the ScriptGeneratorDialog with default values.
+
+        Args:
+            parent: Parent widget for the dialog.
+            binary_path: Path to the binary file to analyze.
+
+        """
         # Initialize UI attributes
         self.analysis_depth = None
         self.analyze_btn = None
@@ -1146,8 +1235,13 @@ class ScriptGeneratorDialog(BaseDialog):
         self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
         self.connect_signals()
 
-    def setup_content(self, layout) -> None:
-        """Set up the user interface content."""
+    def setup_content(self, layout: Optional[QVBoxLayout]) -> None:
+        """Set up the user interface content.
+
+        Args:
+            layout: The layout to add widgets to, or None to create a new one.
+
+        """
         if layout is None:
             layout = QVBoxLayout(self.content_widget)
 
@@ -1160,13 +1254,23 @@ class ScriptGeneratorDialog(BaseDialog):
         # Footer
         self.setup_footer(layout)
 
-    def setup_header(self, layout) -> None:
-        """Set up header with binary selection."""
+    def setup_header(self, layout: QVBoxLayout) -> None:
+        """Set up header with binary selection.
+
+        Args:
+            layout: The layout to add header widgets to.
+
+        """
         # Use the base class method
         super().setup_header(layout, show_label=True)
 
-    def setup_main_content(self, layout) -> None:
-        """Set up main content area."""
+    def setup_main_content(self, layout: QVBoxLayout) -> None:
+        """Set up main content area.
+
+        Args:
+            layout: The layout to add content widgets to.
+
+        """
         splitter = QSplitter(Qt.Horizontal)
 
         # Left panel - Script types and configuration
@@ -1180,8 +1284,13 @@ class ScriptGeneratorDialog(BaseDialog):
 
         layout.addWidget(splitter)
 
-    def setup_left_panel(self, splitter) -> None:
-        """Set up left configuration panel."""
+    def setup_left_panel(self, splitter: QSplitter) -> None:
+        """Set up left configuration panel.
+
+        Args:
+            splitter: The splitter widget to add the left panel to.
+
+        """
         left_widget = QWidget()
         left_layout = QVBoxLayout(left_widget)
 
@@ -1283,7 +1392,6 @@ class ScriptGeneratorDialog(BaseDialog):
         # Target function
         layout.addWidget(QLabel("Target Function:"), 1, 0)
         self.target_function = QLineEdit()
-        self.target_function.setPlaceholderText("e.g., CheckLicense, ValidateUser")
         layout.addWidget(self.target_function, 1, 1)
 
         # Payload type
@@ -1347,8 +1455,13 @@ class ScriptGeneratorDialog(BaseDialog):
         self.config_layout.addWidget(self.strategy_config)
         self.strategy_config.hide()
 
-    def setup_right_panel(self, splitter) -> None:
-        """Set up right script display panel."""
+    def setup_right_panel(self, splitter: QSplitter) -> None:
+        """Set up right script display panel.
+
+        Args:
+            splitter: The splitter widget to add the right panel to.
+
+        """
         right_widget = QWidget()
         right_layout = QVBoxLayout(right_widget)
 
@@ -1402,8 +1515,13 @@ class ScriptGeneratorDialog(BaseDialog):
 
         splitter.addWidget(right_widget)
 
-    def setup_footer(self, layout) -> None:
-        """Set up footer with status and close button."""
+    def setup_footer(self, layout: QVBoxLayout) -> None:
+        """Set up footer with status and close button.
+
+        Args:
+            layout: The layout to add footer widgets to.
+
+        """
         footer_layout = QHBoxLayout()
 
         self.status_label = QLabel("Ready")
@@ -1422,13 +1540,22 @@ class ScriptGeneratorDialog(BaseDialog):
         """Connect internal signals."""
         self.binary_path_edit.textChanged.connect(self.on_binary_path_changed)
 
-    def on_binary_path_changed(self, text) -> None:
-        """Handle binary path change."""
+    def on_binary_path_changed(self, text: str) -> None:
+        """Handle binary path change.
+
+        Args:
+            text: The new binary path text.
+
+        """
         self.binary_path = text
 
-    def on_script_type_changed(self, script_type) -> None:
-        """Handle script type change."""
-        # Hide all config groups
+    def on_script_type_changed(self, script_type: str) -> None:
+        """Handle script type change.
+
+        Args:
+            script_type: The newly selected script type.
+
+        """
         self.bypass_config.hide()
         self.exploit_config.hide()
         self.strategy_config.hide()
@@ -1472,9 +1599,14 @@ class ScriptGeneratorDialog(BaseDialog):
         self.worker.error_occurred.connect(self.on_error)
         self.worker.start()
 
-    def get_bypass_config(self):
-        """Get bypass script configuration."""
-        methods = []
+    def get_bypass_config(self) -> Dict[str, Any]:
+        """Get bypass script configuration.
+
+        Returns:
+            Dictionary containing bypass configuration with keys: language, methods, output_format.
+
+        """
+        methods: List[str] = []
         if self.method_patch.isChecked():
             methods.append("patch")
         if self.method_loader.isChecked():
@@ -1492,8 +1624,14 @@ class ScriptGeneratorDialog(BaseDialog):
             "output_format": self.bypass_output.currentText().lower(),
         }
 
-    def get_exploit_config(self):
-        """Get exploit script configuration."""
+    def get_exploit_config(self) -> Dict[str, Any]:
+        """Get exploit script configuration.
+
+        Returns:
+            Dictionary containing exploit configuration with keys: exploit_type, target_function,
+            payload_type, include_anti_detection.
+
+        """
         return {
             "exploit_type": self.exploit_type.currentText().lower().replace(" ", "_"),
             "target_function": self.target_function.text(),
@@ -1501,8 +1639,14 @@ class ScriptGeneratorDialog(BaseDialog):
             "include_anti_detection": self.exploit_advanced.isChecked(),
         }
 
-    def get_strategy_config(self):
-        """Get strategy configuration."""
+    def get_strategy_config(self) -> Dict[str, Any]:
+        """Get strategy configuration.
+
+        Returns:
+            Dictionary containing strategy configuration with keys: strategy_type, analysis_depth,
+            include_recon, include_analysis, include_exploitation, include_persistence.
+
+        """
         return {
             "strategy_type": self.strategy_type.currentText().lower().replace(" ", "_"),
             "analysis_depth": self.analysis_depth.currentText().lower(),
@@ -1512,8 +1656,13 @@ class ScriptGeneratorDialog(BaseDialog):
             "include_persistence": self.include_persistence.isChecked(),
         }
 
-    def on_script_generated(self, result) -> None:
-        """Handle script generation completion."""
+    def on_script_generated(self, result: Dict[str, Any]) -> None:
+        """Handle script generation completion.
+
+        Args:
+            result: Dictionary containing generated script and related metadata.
+
+        """
         self.generated_scripts[self.script_type_combo.currentText()] = result
 
         # Display script
@@ -1657,9 +1806,17 @@ class ScriptGeneratorDialog(BaseDialog):
             QMessageBox.critical(self, "Error", f"Failed to analyze script: {e!s}")
             self.status_label.setText("Error occurred")
 
-    def _format_analysis_results(self, analysis_result):
-        """Format code analysis results for display."""
-        lines = ["Script Analysis Results", "=" * 50, ""]
+    def _format_analysis_results(self, analysis_result: Dict[str, Any]) -> str:
+        """Format code analysis results for display.
+
+        Args:
+            analysis_result: Dictionary containing analysis results from AI tools.
+
+        Returns:
+            Formatted string representation of the analysis results.
+
+        """
+        lines: List[str] = ["Script Analysis Results", "=" * 50, ""]
 
         # Basic info
         lines.append(f"Language: {analysis_result.get('language', 'Unknown')}")
@@ -1707,21 +1864,40 @@ class ScriptGeneratorDialog(BaseDialog):
 
         return "\n".join(lines)
 
-    def on_error(self, error_msg) -> None:
-        """Handle worker thread errors."""
+    def on_error(self, error_msg: str) -> None:
+        """Handle worker thread errors.
+
+        Args:
+            error_msg: Error message from the worker thread.
+
+        """
         QMessageBox.critical(self, "Error", f"Script generation failed: {error_msg}")
         self.status_label.setText("Error occurred")
         self.generate_btn.setEnabled(True)
 
-    def closeEvent(self, event) -> None:
-        """Handle dialog close event."""
+    def closeEvent(self, event: QCloseEvent) -> None:
+        """Handle dialog close event.
+
+        Args:
+            event: The close event object.
+
+        """
         if self.worker and self.worker.isRunning():
             self.worker.wait()
         event.accept()
 
 
 # Convenience function for main app integration
-def show_script_generator_dialog(parent=None, binary_path: str = ""):
-    """Show the script generator dialog."""
+def show_script_generator_dialog(parent: Optional[QWidget] = None, binary_path: str = "") -> int:
+    """Show the script generator dialog.
+
+    Args:
+        parent: Parent widget for the dialog.
+        binary_path: Path to the binary file to analyze.
+
+    Returns:
+        Result code from the dialog execution (QDialog.Accepted or QDialog.Rejected).
+
+    """
     dialog = ScriptGeneratorDialog(parent, binary_path)
     return dialog.exec()
