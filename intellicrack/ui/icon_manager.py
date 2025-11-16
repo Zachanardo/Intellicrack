@@ -57,7 +57,7 @@ class IconManager:
         "status_success": "OK",
         "status_error": "ERROR",
         "status_warning": "WARNING️",
-        "status_info": "ℹ️",
+        "status_info": "i",
         "status_question": "❓",
         "status_loading": "⏳",
         "status_ready": "OK",
@@ -97,7 +97,7 @@ class IconManager:
         "db_query": "",
         "db_table": "📋",
         # Help
-        "help_about": "ℹ️",
+        "help_about": "i",
         "help_documentation": "📚",
         "help_tutorial": "📖",
         "help_support": "🆘",

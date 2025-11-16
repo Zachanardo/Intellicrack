@@ -24,13 +24,13 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Attempt to import all available handlers
-_handlers = {}
+_handlers: dict[str, object] = {}
 
 # Core handlers that are commonly needed
-_handler_modules = [
+_handler_modules: list[tuple[str, str]] = [
     ("aiohttp_handler", "aiohttp support"),
     ("capstone_handler", "capstone disassembly engine"),
     ("cryptography_handler", "cryptographic operations"),
@@ -65,15 +65,34 @@ for module_name, description in _handler_modules:
         logger.warning("Error loading handler %s: %s", module_name, e)
 
 
-def get_available_handlers():
-    """Get list of successfully loaded handlers."""
+def get_available_handlers() -> list[str]:
+    """Get list of successfully loaded handlers.
+
+    Returns the names of all dependency handlers that were successfully
+    loaded during module initialization.
+
+    Returns:
+        List of successfully loaded handler module names.
+
+    """
     return list(_handlers.keys())
 
 
-def is_handler_available(handler_name):
-    """Check if a specific handler is available."""
+def is_handler_available(handler_name: str) -> bool:
+    """Check if a specific handler is available.
+
+    Determines whether a dependency handler was successfully loaded and
+    is available for use.
+
+    Args:
+        handler_name: The name of the handler module to check.
+
+    Returns:
+        True if the handler is available, False otherwise.
+
+    """
     return handler_name in _handlers
 
 
-_handlers_list = [str(name) for name in _handlers]
-__all__ = ["get_available_handlers", "is_handler_available", *_handlers_list]
+_handlers_list: list[str] = [str(name) for name in _handlers]
+__all__: list[str] = ["get_available_handlers", "is_handler_available", *_handlers_list]

@@ -23,7 +23,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 try:
     from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
@@ -49,7 +49,7 @@ except ImportError:
             """Return the global thread pool instance."""
             return
 
-    def pyqtSignal(*args) -> None:
+    def pyqtSignal(*args: object) -> None:
         """Fallback pyqtSignal function when PyQt6 is not available."""
         return
 
@@ -73,7 +73,7 @@ try:
 except ImportError:
     import logging
 
-    def get_logger(name: str):
+    def get_logger(name: str) -> logging.Logger:
         """Create a logger instance with the given name.
 
         Args:
@@ -101,7 +101,7 @@ class LLMWorkerSignals(QObject):
 class LLMAnalysisWorker(QRunnable):
     """Worker thread for LLM analysis operations."""
 
-    def __init__(self, operation: str, analysis_result: UnifiedProtectionResult, **kwargs) -> None:
+    def __init__(self, operation: str, analysis_result: UnifiedProtectionResult, **kwargs: object) -> None:
         """Initialize the LLM analysis worker.
 
         Args:
@@ -153,7 +153,7 @@ class LLMAnalysisWorker(QRunnable):
         finally:
             self.signals.finished.emit()
 
-    def _build_llm_context(self, result: UnifiedProtectionResult) -> dict[str, Any]:
+    def _build_llm_context(self, result: UnifiedProtectionResult) -> dict[str, object]:
         """Build context dictionary for LLM."""
         context = {
             "file_path": result.file_path,
@@ -250,7 +250,7 @@ class LLMHandler(QObject):
     #: Signal emitted to report LLM operation progress (type: str)
     llm_progress = pyqtSignal(str)
 
-    def __init__(self, parent: Any | None = None) -> None:
+    def __init__(self, parent: QObject | None = None) -> None:
         """Initialize the LLM handler.
 
         Args:

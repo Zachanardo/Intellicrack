@@ -26,6 +26,7 @@ import subprocess
 import tempfile
 import threading
 import traceback
+from pathlib import Path
 from typing import Callable
 
 from intellicrack.handlers.psutil_handler import PSUTIL_AVAILABLE
@@ -2110,7 +2111,7 @@ def _run_ghidra_thread(app: object, cmd: list[str], temp_dir: str) -> None:
                 app.update_output.emit(log_message(f"[Ghidra Warnings/Output]\n{clean_stderr}"))
 
         # Check for output JSON file (only if process succeeded)
-        json_path = os.path.join(os.getcwd(), "analysis_results.json")
+        json_path = os.path.join(str(Path.cwd()), "analysis_results.json")
         if os.path.exists(json_path) and app:
             app.update_output.emit(log_message(f"[Ghidra Analysis] Results file found: {json_path}"))
             try:

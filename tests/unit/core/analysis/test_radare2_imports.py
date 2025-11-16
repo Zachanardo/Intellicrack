@@ -245,7 +245,7 @@ class RealR2ImportAnalyzer:
 
     def _detect_license_apis(self):
         """Detect licensing-related APIs."""
-        license = []
+        license_list = []
         license_names = [
             'RegQueryValueExW', 'GetComputerNameW', 'GetVolumeInformationW',
             'CryptProtectData', 'WNetGetUserW', 'GetComputerName'
@@ -253,14 +253,14 @@ class RealR2ImportAnalyzer:
 
         for imp in self.imports_data:
             if imp.get('name') in license_names:
-                license.append({
+                license_list.append({
                     'name': imp.get('name'),
                     'usage_purpose': 'hardware_id' if 'Computer' in imp.get('name', '') else 'license_check',
                     'bypass_difficulty': 'hard' if 'Crypt' in imp.get('name', '') else 'medium',
                     'data_type': 'system_info'
                 })
 
-        return license
+        return license_list
 
     def _detect_crypto_apis(self):
         """Detect cryptographic APIs."""

@@ -88,7 +88,7 @@ class PDFReportGenerator:
     features of the application-specific implementation.
     """
 
-    def __init__(self, output_dir: str = "reports", app_instance: Any | None = None) -> None:
+    def __init__(self, output_dir: str = "reports", app_instance: object | None = None) -> None:
         """Initialize the PDF report generator.
 
         Args:
@@ -483,7 +483,7 @@ class PDFReportGenerator:
         self.logger.info("License report generation not fully implemented")
         return self._generate_comprehensive_report(binary_path, analysis_results, output_path)
 
-    def _add_pe_section_analysis(self, binary_path: str, elements: list[Any], styles: Any, colors: Any) -> bool:
+    def _add_pe_section_analysis(self, binary_path: str, elements: list[Any], styles: object, colors: object) -> bool:
         """Add PE section analysis and visualization to the report.
 
         Args:
@@ -950,8 +950,16 @@ class PDFReportGenerator:
             self.logger.error(f"CSV export error: {e}")
             return False
 
-    def _sanitize_for_json(self, obj: Any) -> Any:
-        """Sanitize object for JSON serialization."""
+    def _sanitize_for_json(self, obj: object) -> object:
+        """Sanitize object for JSON serialization.
+
+        Args:
+            obj: Object to sanitize for JSON encoding
+
+        Returns:
+            Sanitized object suitable for JSON serialization
+
+        """
         if isinstance(obj, dict):
             return {k: self._sanitize_for_json(v) for k, v in obj.items()}
         if isinstance(obj, list):
@@ -970,8 +978,17 @@ class PDFReportGenerator:
         text = text.replace("'", "&apos;")
         return text
 
-    def _dict_to_xml(self, data: Any, indent: str = "") -> list[str]:
-        """Convert dictionary to XML elements."""
+    def _dict_to_xml(self, data: object, indent: str = "") -> list[str]:
+        """Convert dictionary to XML elements.
+
+        Args:
+            data: Dictionary, list, or value to convert to XML elements
+            indent: Current indentation level (spaces)
+
+        Returns:
+            List of XML element strings
+
+        """
         xml_lines = []
 
         if isinstance(data, dict):
@@ -993,8 +1010,16 @@ class PDFReportGenerator:
 
         return xml_lines
 
-    def _flatten_dict_for_csv(self, data: Any, csv_data: list[list[str]], section: str, parent_key: str = "") -> None:
-        """Flatten dictionary for CSV export."""
+    def _flatten_dict_for_csv(self, data: object, csv_data: list[list[str]], section: str, parent_key: str = "") -> None:
+        """Flatten dictionary for CSV export.
+
+        Args:
+            data: Dictionary, list, or value to flatten for CSV
+            csv_data: List accumulating CSV rows (modified in place)
+            section: Section name for CSV row classification
+            parent_key: Parent key path for nested structures
+
+        """
         if isinstance(data, dict):
             for key, value in data.items():
                 full_key = f"{parent_key}.{key}" if parent_key else key
@@ -1051,7 +1076,7 @@ class PDFReportGenerator:
         return summary
 
 
-def run_report_generation(app: Any) -> None:
+def run_report_generation(app: object) -> None:
     """Generate a report for the analysis results.
 
     Args:

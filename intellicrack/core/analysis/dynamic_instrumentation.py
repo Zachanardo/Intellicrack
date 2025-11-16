@@ -26,8 +26,24 @@ from threading import Thread
 import frida
 
 
-def on_message(main_app, message, data) -> None:
-    """Handle messages from Frida scripts."""
+def on_message(main_app: object, message: dict[str, object], data: object) -> None:
+    """Handle messages from Frida scripts.
+
+    Processes messages received from Frida instrumentation scripts and relays
+    them to the main UI for display. Handles both standard output messages and
+    error messages from the instrumentation engine.
+
+    Args:
+        main_app: Reference to the main application window that receives output
+            updates via signals.
+        message: Dictionary containing message metadata including "type" field
+            ("send" or "error") and relevant payload or stack trace data.
+        data: Optional binary data payload from Frida script (typically unused).
+
+    Returns:
+        None
+
+    """
     if message["type"] == "send":
         payload = message["payload"]
         main_app.update_output.emit(f"[Frida] {payload}")
@@ -35,10 +51,29 @@ def on_message(main_app, message, data) -> None:
         main_app.update_output.emit(f"[Frida Error] {message['stack']}")
 
 
-def run_instrumentation_thread(main_app, binary_path, script_source) -> None:
+def run_instrumentation_thread(main_app: object, binary_path: str, script_source: str) -> None:
     """Run instrumentation logic in a separate thread.
 
-    to avoid blocking the main UI.
+    Executes binary instrumentation using Frida in a separate thread to avoid
+    blocking the main UI. This function handles process attachment, script
+    injection, execution monitoring, and graceful cleanup of Frida sessions.
+
+    Args:
+        main_app: Reference to the main application window for emitting status
+            updates via signals.
+        binary_path: Absolute file path to the binary executable to instrument.
+        script_source: Frida JavaScript instrumentation code to inject and execute
+            in the target process.
+
+    Returns:
+        None
+
+    Raises:
+        frida.ProcessNotFoundError: If the spawned process terminates unexpectedly
+            before analysis completion.
+        frida.TransportError: If Frida communication with the target process fails.
+        Exception: For any other unexpected errors during instrumentation.
+
     """
     try:
         main_app.update_output.emit("[Dynamic Instrumentation] Starting instrumentation thread...")
@@ -78,10 +113,26 @@ def run_instrumentation_thread(main_app, binary_path, script_source) -> None:
             main_app.analysis_completed.emit("Dynamic Instrumentation")
 
 
-def run_dynamic_instrumentation(main_app) -> None:
-    """Launch dynamic instrumentation session using Frida. This function.
+def run_dynamic_instrumentation(main_app: object) -> None:
+    """Launch dynamic instrumentation session using Frida.
 
-    is designed to be called from the main UI thread.
+    Initiates a Frida-based dynamic instrumentation session targeting the
+    currently loaded binary. This function is designed to be called from the
+    main UI thread and delegates the actual instrumentation work to a background
+    thread to maintain UI responsiveness. The instrumentation hooks into system
+    calls such as file operations (CreateFileW on Windows, open on Linux/macOS)
+    to monitor binary behavior.
+
+    Args:
+        main_app: Reference to the main application window containing the
+            currently loaded binary path and output signal for status updates.
+
+    Returns:
+        None
+
+    Raises:
+        None: Errors are caught internally and communicated via main_app signals.
+
     """
     if not main_app.current_binary:
         main_app.update_output.emit("[Dynamic Instrumentation] Error: No binary loaded.")

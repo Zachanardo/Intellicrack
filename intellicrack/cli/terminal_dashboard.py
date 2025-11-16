@@ -164,7 +164,7 @@ class TerminalDashboard:
         if len(self.activity_log) > self.max_activity_entries:
             self.activity_log.pop(0)
 
-    def update_analysis_stats(self, **kwargs) -> None:
+    def update_analysis_stats(self, **kwargs: object) -> None:
         """Update analysis statistics.
 
         Args:
@@ -175,7 +175,7 @@ class TerminalDashboard:
             if hasattr(self.analysis_stats, key):
                 setattr(self.analysis_stats, key, value)
 
-    def update_session_info(self, **kwargs) -> None:
+    def update_session_info(self, **kwargs: object) -> None:
         """Update session information.
 
         Args:
@@ -756,7 +756,7 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
         uptime_str = self._format_duration(self.system_metrics.uptime)
         table.add_row("System Uptime", uptime_str, "OK Running", "⏱️")
 
-        table.add_row("Process Count", str(self.system_metrics.process_count), "ℹ️ Active", "")
+        table.add_row("Process Count", str(self.system_metrics.process_count), "i Active", "")
 
         self.console.print(table)
 

@@ -438,10 +438,10 @@ class ScriptOutputTab(QWidget):
 
         # Apply color based on message type
         color = self.get_message_color(message)
-        format = QTextCharFormat()
-        format.setForeground(QColor(color))
+        text_format = QTextCharFormat()
+        text_format.setForeground(QColor(color))
 
-        cursor.insertText(formatted + "\n", format)
+        cursor.insertText(formatted + "\n", text_format)
 
         # Auto-scroll to bottom
         self.output_text.verticalScrollBar().setValue(self.output_text.verticalScrollBar().maximum())

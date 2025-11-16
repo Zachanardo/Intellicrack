@@ -132,13 +132,28 @@ class AISharedContext:
         }
         self._lock = threading.RLock()
 
-    def get(self, key: str, default: Any = None) -> Any:
-        """Get a value from shared context."""
+    def get(self, key: str, default: object = None) -> object:
+        """Get a value from shared context.
+
+        Args:
+            key: The context key to retrieve
+            default: Default value if key not found
+
+        Returns:
+            The context value or default if not found
+
+        """
         with self._lock:
             return self._context.get(key, default)
 
-    def set(self, key: str, value: Any) -> None:
-        """Set a value in shared context."""
+    def set(self, key: str, value: object) -> None:
+        """Set a value in shared context.
+
+        Args:
+            key: The context key to set
+            value: The value to store in context
+
+        """
         with self._lock:
             self._context[key] = value
 

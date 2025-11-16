@@ -23,6 +23,7 @@ import math
 import os
 import shutil
 from datetime import datetime
+from pathlib import Path
 
 from intellicrack.core.license_snapshot import LicenseSnapshot
 from intellicrack.core.license_validation_bypass import LicenseValidationBypass
@@ -1345,7 +1346,7 @@ class AnalysisTab(BaseTab):
 
                 # File information
                 if os.path.exists(self.current_file_path):
-                    stat_info = os.stat(self.current_file_path)
+                    stat_info = Path(self.current_file_path).stat()
                     self.results_display.append(f"   File size: {stat_info.st_size} bytes\n")
                     self.results_display.append(f"   Last modified: {stat_info.st_mtime}\n")
 
@@ -2177,7 +2178,7 @@ class AnalysisTab(BaseTab):
                                 "imports": [],
                                 "exports": [],
                                 "headers": {
-                                    "File Size": len(open(self.current_file_path, "rb").read()),
+                                    "File Size": len(self._read_file_content(self.current_file_path)),
                                     "Magic Bytes": elf_header[:4].hex(),
                                 },
                             }
@@ -3115,8 +3116,9 @@ class AnalysisTab(BaseTab):
             self.bypass_display.append(f"Risk Level: {strategy['risk']}")
             self.bypass_display.append(f"Effectiveness: {strategy['effectiveness']}")
 
-            if "addresses" in strategy and strategy["addresses"]:
-                self.bypass_display.append(f"Target Addresses: {', '.join(hex(addr) for addr in strategy['addresses'][:5])}")
+            addresses = strategy.get("addresses")
+            if addresses:
+                self.bypass_display.append(f"Target Addresses: {', '.join(hex(addr) for addr in addresses[:5])}")
             if "apis" in strategy:
                 self.bypass_display.append(f"Target APIs: {', '.join(strategy['apis'])}")
             if "port" in strategy:
@@ -3672,3 +3674,8 @@ class AnalysisTab(BaseTab):
             except Exception as e:
                 self.log_activity(f"Import error: {e!s}")
                 QMessageBox.critical(self, "Import Error", f"Failed to import snapshot:\n{e!s}")
+
+    def _read_file_content(self, file_path: str) -> bytes:
+        """Read file content using a context manager."""
+        with open(file_path, "rb") as f:
+            return f.read()

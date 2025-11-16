@@ -395,7 +395,7 @@ class AIAssistant:
             return f"Binary analysis context: {analysis_results.get('summary', 'No analysis available')}\n"
         return ""
 
-    def _analyze_question_with_vulnerability_engine(self, question: str, context: str, vuln_engine: Any) -> str:
+    def _analyze_question_with_vulnerability_engine(self, question: str, context: str, vuln_engine: object) -> str:
         question_lower = question.lower()
         if "license" in question_lower or "activation" in question_lower:
             return (
@@ -726,7 +726,7 @@ class CodeAnalyzer:
             logger.debug("PE section analysis failed: %s", e)
             result["errors"].append("PE section analysis failed")
 
-    def _analyze_pe_imports(self, pe: Any, result: dict[str, Any]) -> None:
+    def _analyze_pe_imports(self, pe: object, result: dict[str, Any]) -> None:
         """Analyze PE imports for protections."""
         if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
             imports = [imp.dll.decode() for imp in pe.DIRECTORY_ENTRY_IMPORT]
@@ -735,7 +735,7 @@ class CodeAnalyzer:
             if any("debug" in imp.lower() for imp in imports):
                 result["findings"].append("Debugging libraries imported")
 
-    def _analyze_pe_sections(self, pe: Any, result: dict[str, Any]) -> None:
+    def _analyze_pe_sections(self, pe: object, result: dict[str, Any]) -> None:
         """Analyze PE sections for security issues."""
         for section in pe.sections:
             section_name = section.Name.decode("utf-8", errors="ignore").strip("\x00")
@@ -755,7 +755,7 @@ class CodeAnalyzer:
             logger.debug("LIEF binary analysis failed: %s", e)
             result["errors"].append("Cross-platform binary analysis failed")
 
-    def _process_binary_format(self, binary: Any, result: dict[str, Any]) -> None:
+    def _process_binary_format(self, binary: object, result: dict[str, Any]) -> None:
         """Process binary format and update results."""
         result["findings"].append(f"Binary type: {binary.format}")
 
@@ -1070,7 +1070,7 @@ class CodeAnalyzer:
         return patterns[:6], vulnerabilities[:6], recommendations[:5]
 
 
-def analyze_with_ai(data: Any, analysis_type: str = "general") -> dict[str, Any]:
+def analyze_with_ai(data: object, analysis_type: str = "general") -> dict[str, Any]:
     """Analyze data using AI capabilities."""
     try:
         analyzer = CodeAnalyzer()

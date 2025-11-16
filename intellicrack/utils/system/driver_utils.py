@@ -49,5 +49,5 @@ def get_driver_path(driver_name: str) -> str:
         logger.debug("path_discovery module not available for driver location")
 
     # Fallback to standard Windows location
-    system_root = os.environ.get("SystemRoot", r"C:\Windows")
+    system_root = os.environ.get("SYSTEMROOT", r"C:\Windows")
     return os.path.join(system_root, "System32", "drivers", driver_name)

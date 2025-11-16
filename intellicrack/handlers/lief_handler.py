@@ -637,16 +637,16 @@ except ImportError as e:
     Section = FallbackSection
     Symbol = FallbackSymbol
     Function = FallbackFunction
-    PE = PE
-    ELF = ELF
-    MachO = MachO
-    ARCHITECTURES = ARCHITECTURES
-    ENDIANNESS = ENDIANNESS
-    MODES = MODES
-    parse = parse
-    is_pe = is_pe
-    is_elf = is_elf
-    is_macho = is_macho
+    PE = lief.PE
+    ELF = lief.ELF
+    MachO = lief.MachO
+    ARCHITECTURES = lief.ARCHITECTURES
+    ENDIANNESS = lief.ENDIANNESS
+    MODES = lief.MODES
+    parse = lief.parse
+    is_pe = lief.is_pe
+    is_elf = lief.is_elf
+    is_macho = lief.is_macho
 
 
 # Export all LIEF objects and availability flag

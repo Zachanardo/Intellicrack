@@ -298,7 +298,7 @@ def test_day5_2_implementation():
         r2_mock = None
         dynamic_result = analyzer._monitor_dynamic_string_patterns(r2_mock, "test.exe")
 
-        if "dynamic_extraction_enabled" in dynamic_result and dynamic_result["dynamic_extraction_enabled"]:
+        if dynamic_result.get("dynamic_extraction_enabled"):
             if "memory_strings" in dynamic_result and "api_monitoring" in dynamic_result:
                 print("  OK PASS: Dynamic string monitoring functional")
                 print(f"  OK INFO: Monitoring {len(dynamic_result['memory_strings'])} memory strings")
@@ -320,7 +320,7 @@ def test_day5_2_implementation():
         r2_mock = None
         api_result = analyzer._monitor_string_api_calls(r2_mock)
 
-        if "monitoring_active" in api_result and api_result["monitoring_active"]:
+        if api_result.get("monitoring_active"):
             api_count = api_result["total_string_apis"]
             if api_count > 0:
                 print(f"  OK PASS: API monitoring active with {api_count} APIs")

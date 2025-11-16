@@ -95,11 +95,11 @@ except ImportError as e:
     Queue = FallbackQueue
     Platform = FallbackPlatform
 
-    def create_some_context():
+    def create_some_context() -> FallbackContext:
         """Fallback context creation."""
         return FallbackContext()
 
-    def get_platforms():
+    def get_platforms() -> list:
         """Fallback platform enumeration."""
         return []
 

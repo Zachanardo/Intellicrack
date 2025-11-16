@@ -1044,7 +1044,7 @@ Return ONLY the code, no explanations."""
                 elif language == "JavaScript":
                     self.keygen_output.setPlainText(
                         f"{keygen_content}\n\n{'=' * 50}\n"
-                        "ℹ JavaScript keygens run with Node.js\n"
+                        "i JavaScript keygens run with Node.js\n"
                         "Save as keygen.js and run with: node keygen.js\n"
                         "For executable, use pkg: npm install -g pkg && pkg keygen.js",
                     )
@@ -1053,7 +1053,7 @@ Return ONLY the code, no explanations."""
                 elif language == "Assembly":
                     self.keygen_output.setPlainText(
                         f"{keygen_content}\n\n{'=' * 50}\n"
-                        "ℹ Assembly keygens require NASM or MASM\n"
+                        "i Assembly keygens require NASM or MASM\n"
                         "Save as keygen.asm and compile with:\n"
                         "NASM: nasm -f win64 keygen.asm && gcc keygen.o -o keygen.exe\n"
                         "MASM: ml64 keygen.asm /link /out:keygen.exe",

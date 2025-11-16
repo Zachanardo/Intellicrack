@@ -140,7 +140,7 @@ class SerialGeneratorWorker(QThread):
 class SerialGeneratorDialog(QDialog):
     """Comprehensive serial number generator interface."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QDialog | None = None) -> None:
         """Initialize the SerialNumberGeneratorDialog with an optional parent."""
         super().__init__(parent)
         self.generator = SerialNumberGenerator()
@@ -186,7 +186,7 @@ class SerialGeneratorDialog(QDialog):
 
         self.setLayout(layout)
 
-    def create_generation_tab(self):
+    def create_generation_tab(self) -> QWidget:
         """Create serial generation tab."""
         widget = QWidget()
         layout = QVBoxLayout()
@@ -329,7 +329,7 @@ class SerialGeneratorDialog(QDialog):
         widget.setLayout(layout)
         return widget
 
-    def create_analysis_tab(self):
+    def create_analysis_tab(self) -> QWidget:
         """Create serial analysis tab."""
         widget = QWidget()
         layout = QVBoxLayout()
@@ -387,7 +387,7 @@ class SerialGeneratorDialog(QDialog):
         widget.setLayout(layout)
         return widget
 
-    def create_batch_tab(self):
+    def create_batch_tab(self) -> QWidget:
         """Create batch generation tab."""
         widget = QWidget()
         layout = QVBoxLayout()
@@ -467,7 +467,7 @@ class SerialGeneratorDialog(QDialog):
         widget.setLayout(layout)
         return widget
 
-    def create_validation_tab(self):
+    def create_validation_tab(self) -> QWidget:
         """Create serial validation tab."""
         widget = QWidget()
         layout = QVBoxLayout()
@@ -541,7 +541,7 @@ class SerialGeneratorDialog(QDialog):
         widget.setLayout(layout)
         return widget
 
-    def create_patterns_tab(self):
+    def create_patterns_tab(self) -> QWidget:
         """Create pattern library tab."""
         widget = QWidget()
         layout = QVBoxLayout()
@@ -614,7 +614,7 @@ class SerialGeneratorDialog(QDialog):
         widget.setLayout(layout)
         return widget
 
-    def create_presets_tab(self):
+    def create_presets_tab(self) -> QWidget:
         """Create presets management tab."""
         widget = QWidget()
         layout = QVBoxLayout()

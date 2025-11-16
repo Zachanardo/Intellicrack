@@ -486,7 +486,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             # Clean up monitor socket
             if self.monitor_socket and os.path.exists(self.monitor_socket):
                 try:
-                    os.unlink(self.monitor_socket)
+                    Path(self.monitor_socket).unlink()
                 except OSError as e:
                     logger.error("OS error in qemu_emulator: %s", e)
 

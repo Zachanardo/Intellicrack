@@ -1167,7 +1167,7 @@ class HardwareDebugProtector:
         self.kernel32 = ctypes.windll.kernel32
         self.saved_context = None
 
-    def get_thread_context(self) -> Any | None:
+    def get_thread_context(self) -> dict[str, Any] | None:
         """Get current thread context including debug registers."""
         try:
 
@@ -1699,7 +1699,7 @@ class ExceptionHandler:
         self.original_handler = None
         self.exception_count = 0
 
-    def custom_exception_handler(self, exception_info) -> int | None:
+    def custom_exception_handler(self, exception_info: object) -> int | None:
         """Handle custom exceptions to mask debugging based on exception info."""
         self.exception_count += 1
 
@@ -1735,7 +1735,7 @@ class ExceptionHandler:
             # Use AddVectoredExceptionHandler for first-chance exception handling
             EXCEPTION_HANDLER = ctypes.WINFUNCTYPE(ctypes.c_long, ctypes.POINTER(ctypes.c_void_p))
 
-            def exception_filter(exception_pointers) -> int | None:
+            def exception_filter(exception_pointers: ctypes.c_void_p | None) -> int | None:
                 """Filter exceptions to hide debugging."""
                 try:
                     # Get exception code

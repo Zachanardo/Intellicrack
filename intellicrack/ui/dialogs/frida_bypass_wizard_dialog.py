@@ -1587,9 +1587,9 @@ setTimeout(function() {{
         cursor = self.log_output.textCursor()
         cursor.movePosition(QTextCursor.MoveOperation.End)
 
-        format = cursor.charFormat()
-        format.setForeground(QColor(color))
-        cursor.setCharFormat(format)
+        text_format = cursor.charFormat()
+        text_format.setForeground(QColor(color))
+        cursor.setCharFormat(text_format)
 
         cursor.insertText(formatted_msg + "\n")
         self.log_output.setTextCursor(cursor)

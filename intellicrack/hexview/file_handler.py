@@ -50,13 +50,13 @@ class LRUCache:
         self.max_size = max_size
         self.cache = OrderedDict()
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> object:
         """Get an item from the cache and mark it as recently used."""
         value = self.cache.pop(key)
         self.cache[key] = value  # Move to the end (most recently used)
         return value
 
-    def __setitem__(self, key, value) -> None:
+    def __setitem__(self, key: str, value: object) -> None:
         """Add an item to the cache, evicting least recently used items if necessary."""
         if key in self.cache:
             self.cache.pop(key)
@@ -65,7 +65,7 @@ class LRUCache:
             self.cache.popitem(last=False)
         self.cache[key] = value
 
-    def __contains__(self, key) -> bool:
+    def __contains__(self, key: str) -> bool:
         """Check if an item is in the cache."""
         return key in self.cache
 
@@ -93,7 +93,7 @@ class ChunkManager:
         self.file_path = file_path
         self.file_size = os.path.getsize(file_path)
         self.chunk_size = chunk_size
-        self.file = open(file_path, "rb")  # pylint: disable=consider-using-with
+        self.file = open(file_path, "rb")  # noqa: SIM115, pylint: disable=consider-using-with
 
         # Create LRU cache for active chunks
         self.active_chunks = LRUCache(max_size=cache_size)
@@ -115,14 +115,14 @@ class ChunkManager:
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error closing ChunkManager resources: %s", e)
 
-    def get_chunk(self, offset: int):
+    def get_chunk(self, offset: int) -> bytes | mmap.mmap:
         """Get the chunk containing the specified offset.
 
         Args:
             offset: Byte offset into the file
 
         Returns:
-            Memory-mapped chunk data
+            Memory-mapped chunk data or raw bytes if memory mapping fails
 
         """
         chunk_index = offset // self.chunk_size
@@ -283,7 +283,7 @@ class VirtualFileAccess:
             self.write_file = None
             if not read_only:
                 # Open in read+write mode for potential edits
-                self.write_file = open(file_path, "r+b")  # pylint: disable=consider-using-with
+                self.write_file = open(file_path, "r+b")  # noqa: SIM115, pylint: disable=consider-using-with
 
         except PermissionError:
             # Handle permission errors - create a temp copy
@@ -689,7 +689,7 @@ class VirtualFileAccess:
             shutil.move(temp_path, self.file_path)
 
             # Reopen the file for writing
-            self.write_file = open(self.file_path, "r+b")
+            self.write_file = open(self.file_path, "r+b")  # noqa: SIM115
             self.read_file = self.write_file
 
             # Update file size
@@ -781,7 +781,7 @@ class VirtualFileAccess:
             shutil.move(temp_path, self.file_path)
 
             # Reopen the file for writing
-            self.write_file = open(self.file_path, "r+b")
+            self.write_file = open(self.file_path, "r+b")  # noqa: SIM115
             self.read_file = self.write_file
 
             # Update file size

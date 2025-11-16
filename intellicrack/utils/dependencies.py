@@ -68,7 +68,7 @@ def check_weasyprint_dependencies() -> list[str]:
     if sys.platform == "win32":
         try:
             gtk_paths = [
-                os.path.join(os.environ.get("ProgramFiles", r"C:\Program Files"), "GTK3-Runtime Win64", "bin"),
+                os.path.join(os.environ.get("PROGRAMFILES", r"C:\Program Files"), "GTK3-Runtime Win64", "bin"),
                 r"C:\GTK\bin",
                 os.environ.get("GTK_BASEPATH", "") + "\\bin",
             ]
@@ -143,7 +143,7 @@ def check_and_install_dependencies() -> bool:
             __import__(dep)
             logger.info("OK %s available (%s)", dep, description)
         except ImportError:
-            logger.info("ℹ %s not available - %s will be disabled", dep, description)
+            logger.info("i %s not available - %s will be disabled", dep, description)
 
     return len(missing_deps) == 0
 

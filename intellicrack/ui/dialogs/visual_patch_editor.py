@@ -87,7 +87,7 @@ class VisualPatchEditorDialog(QDialog):
     with real-time disassembly view and byte preview capabilities.
     """
 
-    def __init__(self, binary_path: str, patches: list[dict[str, Any]], parent=None) -> None:
+    def __init__(self, binary_path: str, patches: list[dict[str, Any]], parent: QWidget | None = None) -> None:
         """Initialize the Visual Patch Editor dialog.
 
         Args:
@@ -161,11 +161,13 @@ class VisualPatchEditorDialog(QDialog):
         form_layout = QFormLayout()
 
         self.address_edit = QLineEdit()
-        self.address_edit.setPlaceholderText("e.g., 0x401000")
+        self.address_edit.setText("0x401000")
+        self.address_edit.setToolTip("Enter memory address in hexadecimal format (e.g., 0x401000 or 401000 in decimal)")
         form_layout.addRow("Address:", self.address_edit)
 
         self.bytes_edit = QLineEdit()
-        self.bytes_edit.setPlaceholderText("e.g., 9090909090")
+        self.bytes_edit.setText("9090")
+        self.bytes_edit.setToolTip("Enter replacement bytes as hexadecimal without spaces (e.g., 9090909090 for NOP instructions)")
         form_layout.addRow("New Bytes:", self.bytes_edit)
 
         self.description_edit = QTextEdit()
@@ -254,10 +256,15 @@ class VisualPatchEditorDialog(QDialog):
         if self.patches:
             self.patch_list.setCurrentRow(0)
 
-    def patch_selected(self, current, previous) -> None:
-        """Handle patch selection in the list."""
-        # Note: previous parameter is required by Qt signal but not used
-        _ = previous  # Acknowledge unused parameter
+    def patch_selected(self, current: QListWidgetItem | None, previous: QListWidgetItem | None) -> None:
+        """Handle patch selection in the list.
+
+        Args:
+            current: The currently selected list widget item.
+            previous: The previously selected list widget item.
+
+        """
+        _ = previous
         if not current:
             self.clear_patch_form()
             return
@@ -594,7 +601,7 @@ class VisualPatchEditorDialog(QDialog):
         return self.patches != self.original_patches
 
 
-def create_visual_patch_editor(binary_path: str, patches: list[dict[str, Any]], parent=None) -> VisualPatchEditorDialog:
+def create_visual_patch_editor(binary_path: str, patches: list[dict[str, Any]], parent: QWidget | None = None) -> VisualPatchEditorDialog:
     """Create a VisualPatchEditorDialog.
 
     Args:

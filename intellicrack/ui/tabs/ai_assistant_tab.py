@@ -33,7 +33,7 @@ logger = get_logger(__name__)
 class APIKeyConfigDialog(QDialog):
     """Enhanced dialog for configuring API providers with dynamic model discovery."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QDialog | None = None) -> None:
         """Initialize the API configuration dialog.
 
         Args:
@@ -239,7 +239,7 @@ class APIKeyConfigDialog(QDialog):
         if model.context_length:
             self.max_tokens_spin.setMaximum(min(model.context_length, 200000))
 
-    def get_config(self):
+    def get_config(self) -> dict[str, object]:
         """Retrieve the current configuration."""
         model_id = self.model_combo.currentData()
         if not model_id:
@@ -254,7 +254,7 @@ class APIKeyConfigDialog(QDialog):
             "max_tokens": self.max_tokens_spin.value(),
         }
 
-    def set_config(self, config) -> None:
+    def set_config(self, config: dict[str, object]) -> None:
         """Populate the dialog with existing configuration."""
         if config.get("provider"):
             index = self.provider_combo.findText(config["provider"])
@@ -280,7 +280,7 @@ class APIKeyConfigDialog(QDialog):
 class AIAssistantTab(BaseTab):
     """AI Assistant tab providing AI-powered analysis and script generation."""
 
-    def __init__(self, shared_context=None, parent=None) -> None:
+    def __init__(self, shared_context: object | None = None, parent: object | None = None) -> None:
         """Initialize the AI Assistant tab."""
         super().__init__(shared_context, parent)
         self.ai_assistant = None

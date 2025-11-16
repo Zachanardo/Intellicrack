@@ -173,7 +173,7 @@ class EnvFileManager:
             except Exception:
                 # Clean up temp file on error
                 if os.path.exists(temp_path):
-                    os.unlink(temp_path)
+                    Path(temp_path).unlink()
                 raise
 
         except Exception as e:

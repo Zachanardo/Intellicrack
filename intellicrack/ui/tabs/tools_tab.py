@@ -937,7 +937,7 @@ class ToolsTab(BaseTab):
             import stat
             from datetime import datetime
 
-            file_stat = os.stat(file_path)
+            file_stat = Path(file_path).stat()
 
             info = []
             info.append(f"File: {os.path.basename(file_path)}")

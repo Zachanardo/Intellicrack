@@ -1103,6 +1103,11 @@ class Radare2AdvancedPatcher:
             logger.error(f"Failed to revert patch at {hex(patch.address)}: {e}")
             return False
 
+    def _read_binary_content(self) -> bytes:
+        """Read binary content safely using a context manager."""
+        with open(self.binary_path, "rb") as f:
+            return f.read()
+
     def save_patches(self, output_file: str) -> bool:
         """Save patches to JSON file."""
         try:
@@ -1127,7 +1132,7 @@ class Radare2AdvancedPatcher:
                         "bits": self.bits,
                         "endianness": self.endianness,
                         "patches": patches_data,
-                        "checksum": hashlib.sha256(open(self.binary_path, "rb").read()).hexdigest(),
+                        "checksum": hashlib.sha256(self._read_binary_content()).hexdigest(),
                     },
                     f,
                     indent=2,
@@ -1147,7 +1152,7 @@ class Radare2AdvancedPatcher:
                 data = json.load(f)
 
             # Verify binary checksum
-            current_checksum = hashlib.sha256(open(self.binary_path, "rb").read()).hexdigest()
+            current_checksum = hashlib.sha256(self._read_binary_content()).hexdigest()
             if data.get("checksum") != current_checksum:
                 logger.warning("Binary checksum mismatch - patches may not apply correctly")
 

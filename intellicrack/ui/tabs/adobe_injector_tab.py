@@ -10,6 +10,8 @@ Licensed under GNU GPL v3.0
 import json
 import subprocess
 import threading
+from collections.abc import Callable
+from typing import Any
 
 from intellicrack.core.adobe_injector_integration import AdobeInjectorWidget
 from intellicrack.core.terminal_manager import get_terminal_manager
@@ -36,10 +38,16 @@ class AdobeInjectorTab(BaseTab):
     injector_started = pyqtSignal(str)
     patch_completed = pyqtSignal(bool, str)
 
-    def __init__(self, shared_context=None, parent=None) -> None:
-        """Initialize Adobe Injector tab."""
-        self.adobe_injector_process = None
-        self.integration_method = "embedded"  # embedded, subprocess, terminal, dll
+    def __init__(self, shared_context: dict[str, Any] | None = None, parent: QWidget | None = None) -> None:
+        """Initialize Adobe Injector tab.
+
+        Args:
+            shared_context: Shared application context dictionary containing app_context, task_manager, and main_window.
+            parent: Parent QWidget for this tab.
+
+        """
+        self.adobe_injector_process: subprocess.Popen[bytes] | None = None
+        self.integration_method: str = "embedded"
         super().__init__(shared_context, parent)
 
     def setup_content(self) -> None:
@@ -72,28 +80,35 @@ class AdobeInjectorTab(BaseTab):
 
         layout.addWidget(self.method_tabs)
 
-    def create_embedded_tab(self):
-        """Create embedded window integration tab."""
+    def create_embedded_tab(self) -> QWidget:
+        """Create embedded window integration tab.
+
+        Returns:
+            QWidget: A tab widget containing the embedded Adobe Injector widget.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
-        # Use the AdobeInjectorWidget from our integration module
         self.embedded_widget = AdobeInjectorWidget()
         self.embedded_widget.status_updated.connect(self.on_status_update)
         layout.addWidget(self.embedded_widget)
 
         return tab
 
-    def create_subprocess_tab(self):
-        """Create subprocess control tab."""
+    def create_subprocess_tab(self) -> QWidget:
+        """Create subprocess control tab.
+
+        Returns:
+            QWidget: A tab widget for controlling Adobe Injector via subprocess.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
-        # Control panel
         control_group = QGroupBox("Subprocess Control")
         control_layout = QVBoxLayout(control_group)
 
-        # Command line options
         cmd_layout = QHBoxLayout()
         cmd_layout.addWidget(QLabel("Arguments:"))
         self.cmd_args = QLineEdit()
@@ -102,7 +117,6 @@ class AdobeInjectorTab(BaseTab):
 
         control_layout.addLayout(cmd_layout)
 
-        # Launch buttons
         btn_layout = QHBoxLayout()
 
         launch_hidden_btn = QPushButton("Launch Hidden")
@@ -123,7 +137,6 @@ class AdobeInjectorTab(BaseTab):
         control_layout.addLayout(btn_layout)
         layout.addWidget(control_group)
 
-        # Output display
         output_group = QGroupBox("Process Output")
         output_layout = QVBoxLayout(output_group)
 
@@ -135,16 +148,19 @@ class AdobeInjectorTab(BaseTab):
 
         return tab
 
-    def create_terminal_tab(self):
-        """Create terminal execution tab."""
+    def create_terminal_tab(self) -> QWidget:
+        """Create terminal execution tab.
+
+        Returns:
+            QWidget: A tab widget for executing commands in embedded terminal.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
-        # Terminal control
         terminal_group = QGroupBox("Terminal Execution")
         terminal_layout = QVBoxLayout(terminal_group)
 
-        # Quick launch buttons
         btn_layout = QHBoxLayout()
 
         scan_btn = QPushButton("Scan Adobe Products")
@@ -164,7 +180,6 @@ class AdobeInjectorTab(BaseTab):
 
         terminal_layout.addLayout(btn_layout)
 
-        # Command builder
         cmd_builder_layout = QHBoxLayout()
         cmd_builder_layout.addWidget(QLabel("Command:"))
         self.terminal_cmd = QLineEdit()
@@ -178,7 +193,6 @@ class AdobeInjectorTab(BaseTab):
         terminal_layout.addLayout(cmd_builder_layout)
         layout.addWidget(terminal_group)
 
-        # Terminal output display widget
         terminal_output = QGroupBox("Terminal Output")
         terminal_output_layout = QVBoxLayout(terminal_output)
 
@@ -199,12 +213,16 @@ class AdobeInjectorTab(BaseTab):
 
         return tab
 
-    def create_advanced_tab(self):
-        """Create advanced integration options tab."""
+    def create_advanced_tab(self) -> QWidget:
+        """Create advanced integration options tab.
+
+        Returns:
+            QWidget: A tab widget for advanced Adobe Injector options including DLL compilation, COM interface, resources, and silent configuration.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
-        # DLL Compilation
         dll_group = QGroupBox("DLL Compilation")
         dll_layout = QVBoxLayout(dll_group)
 
@@ -217,7 +235,6 @@ class AdobeInjectorTab(BaseTab):
 
         layout.addWidget(dll_group)
 
-        # AutoIt3X COM
         com_group = QGroupBox("AutoIt3X COM Interface")
         com_layout = QVBoxLayout(com_group)
 
@@ -232,7 +249,6 @@ class AdobeInjectorTab(BaseTab):
 
         layout.addWidget(com_group)
 
-        # Resource Modification
         resource_group = QGroupBox("Resource Modification")
         resource_layout = QVBoxLayout(resource_group)
 
@@ -251,7 +267,6 @@ class AdobeInjectorTab(BaseTab):
 
         layout.addWidget(resource_group)
 
-        # Silent Configuration
         config_group = QGroupBox("Silent Mode Configuration")
         config_layout = QVBoxLayout(config_group)
 

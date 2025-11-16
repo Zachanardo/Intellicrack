@@ -19,6 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import json
 import logging
 import os
+from pathlib import Path
 from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
@@ -83,12 +84,12 @@ class BinarySimilaritySearchDialog(QDialog):
     and apply patterns from similar cracking attempts.
     """
 
-    def __init__(self, binary_path: str, parent=None) -> None:
+    def __init__(self, binary_path: str, parent: QWidget | None = None) -> None:
         """Initialize the binary similarity search dialog.
 
         Args:
             binary_path: Path to the binary file to analyze
-            parent: Parent widget
+            parent: Parent widget for dialog hierarchy
 
         """
         # Initialize UI attributes
@@ -100,7 +101,7 @@ class BinarySimilaritySearchDialog(QDialog):
 
         super().__init__(parent)
         self.binary_path = binary_path
-        self.database_path = os.path.join(os.getcwd(), "binary_database.json")
+        self.database_path = os.path.join(str(Path.cwd()), "binary_database.json")
         self.similar_binaries: list[dict[str, Any]] = []
         self.search_thread = None
 
@@ -263,8 +264,15 @@ class BinarySimilaritySearchDialog(QDialog):
 
             result_signal = pyqtSignal(list)
 
-            def __init__(self, search_engine, binary_path: str, threshold: float) -> None:
-                """Initialize the SearchThread with default values."""
+            def __init__(self, search_engine: object, binary_path: str, threshold: float) -> None:
+                """Initialize the SearchThread with default values.
+
+                Args:
+                    search_engine: The binary similarity search engine instance
+                    binary_path: Path to the binary file to analyze
+                    threshold: Similarity threshold for matching (0.0 to 1.0)
+
+                """
                 super().__init__()
                 self.search_engine = search_engine
                 self.binary_path = binary_path
@@ -276,7 +284,7 @@ class BinarySimilaritySearchDialog(QDialog):
                     results = self.search_engine.search_similar_binaries(self.binary_path, self.threshold)
                     self.result_signal.emit(results)
                 except (OSError, ValueError, RuntimeError) as e:
-                    logging.exception("Binary similarity search failed: %s", e)
+                    logger.exception("Binary similarity search failed: %s", e)
                     # Emit empty list on error
                     self.result_signal.emit([])
 
@@ -480,15 +488,15 @@ class BinarySimilaritySearchDialog(QDialog):
         return self.similar_binaries.copy()
 
 
-def create_similarity_search_dialog(binary_path: str, parent=None) -> BinarySimilaritySearchDialog:
+def create_similarity_search_dialog(binary_path: str, parent: QWidget | None = None) -> BinarySimilaritySearchDialog:
     """Create a BinarySimilaritySearchDialog.
 
     Args:
         binary_path: Path to binary for similarity search
-        parent: Parent widget
+        parent: Parent widget for dialog hierarchy
 
     Returns:
-        Configured dialog instance
+        Configured dialog instance with similarity search capabilities
 
     """
     return BinarySimilaritySearchDialog(binary_path, parent)

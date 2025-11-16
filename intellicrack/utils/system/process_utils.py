@@ -151,11 +151,11 @@ def _get_system_path(path_type: str) -> str | None:
         logger.error("Import error in process_utils: %s", e)
         # Fallback
         if path_type == "windows_system":
-            return os.environ.get("SystemRoot", r"C:\Windows")
+            return os.environ.get("SYSTEMROOT", r"C:\Windows")
         if path_type == "windows_system32":
-            return os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32")
+            return os.path.join(os.environ.get("SYSTEMROOT", r"C:\Windows"), "System32")
         if path_type == "windows_drivers":
-            return os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "drivers")
+            return os.path.join(os.environ.get("SYSTEMROOT", r"C:\Windows"), "System32", "drivers")
         return None
 
 

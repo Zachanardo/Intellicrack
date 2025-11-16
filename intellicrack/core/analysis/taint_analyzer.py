@@ -1374,7 +1374,7 @@ class TaintAnalysisEngine:
             return "Modify comparison result or skip comparison"
         return "NOP the validation or force success return"
 
-    def analyze_with_sources(self, sources: list[str], **kwargs) -> dict[str, Any]:
+    def analyze_with_sources(self, sources: list[str], **kwargs: object) -> dict[str, Any]:
         """Analyze taint propagation from specific sources.
 
         This method performs taint analysis starting from a specified list of sources,
@@ -1703,7 +1703,7 @@ class TaintAnalysisEngine:
         return base_mitigation
 
 
-def run_taint_analysis(app: Any) -> None:
+def run_taint_analysis(app: object) -> None:
     """Initialize and run the taint analysis engine."""
     # Check if binary is loaded
     if not hasattr(app, "binary_path") or not app.binary_path:

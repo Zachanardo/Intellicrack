@@ -234,7 +234,7 @@ class IncrementalAnalysisManager:
 
         # Check file ownership and permissions (Unix-like systems)
         if hasattr(os, "stat"):
-            stat_info = os.stat(file_path)
+            stat_info = Path(file_path).stat()
             # Ensure file is owned by current user
             if hasattr(os, "getuid") and stat_info.st_uid != os.getuid():  # pylint: disable=no-member
                 self.logger.warning("Cache file not owned by current user, rejecting")
@@ -722,7 +722,7 @@ class IncrementalAnalysisManager:
 
     def _basic_analysis(self, binary_path: str) -> dict[str, Any]:
         """Perform basic file analysis."""
-        stat_info = os.stat(binary_path)
+        stat_info = Path(binary_path).stat()
         return {
             "file_size": stat_info.st_size,
             "modification_time": stat_info.st_mtime,
@@ -848,7 +848,7 @@ def run_analysis_manager(app: object) -> None:
     # Create and configure the manager
     manager = IncrementalAnalysisManager(
         {
-            "cache_dir": os.path.join(os.getcwd(), "analysis_cache"),
+            "cache_dir": os.path.join(str(Path.cwd()), "analysis_cache"),
             "enable_caching": True,
             "cache_max_age": 30,
         },

@@ -19,40 +19,58 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
+from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import QApplication
 
 
 class ThemeManager:
-    """Manages application themes and dynamic stylesheet switching."""
+    """Manages application themes and dynamic stylesheet switching.
+
+    Handles theme switching between dark and light modes with persistence
+    of user preferences and fallback support for built-in stylesheets.
+    """
 
     def __init__(self) -> None:
         """Initialize theme manager with default themes and UI styling options."""
         from intellicrack.core.config_manager import get_config
 
-        self.themes = {
+        self.themes: dict[str, str] = {
             "dark": "dark_theme.qss",
             "light": "light_theme.qss",
         }
 
         # Directory for theme files
-        self.styles_dir = os.path.join(os.path.dirname(__file__), "styles")
+        self.styles_dir: str = os.path.join(os.path.dirname(__file__), "styles")
 
         # Config for persistence
-        self.config = get_config()
+        self.config: Any = get_config()
 
         # Initialize with saved or default theme
-        self.current_theme = self.load_theme_preference()
+        self.current_theme: str = self.load_theme_preference()
 
         # Apply the initial theme
         self._apply_theme()
 
-    def get_current_theme(self):
-        """Get the currently active theme name."""
+    def get_current_theme(self) -> str:
+        """Get the currently active theme name.
+
+        Returns:
+            The name of the currently active theme ("dark" or "light").
+
+        """
         return self.current_theme
 
-    def load_theme_preference(self):
-        """Load theme preference from central config, default to dark."""
+    def load_theme_preference(self) -> str:
+        """Load theme preference from central config, default to dark.
+
+        Retrieves the saved theme preference from the configuration manager,
+        with normalization and fallback support for common theme name variations.
+
+        Returns:
+            The theme name to use ("dark" or "light").
+
+        """
         stored_theme = self.config.get("ui_preferences.theme", "dark")
 
         # Normalize stored theme name to lowercase for consistency
@@ -68,11 +86,15 @@ class ThemeManager:
         """Save current theme preference to central config."""
         self.config.set("ui_preferences.theme", self.current_theme)
 
-    def set_theme(self, theme_name) -> None:
+    def set_theme(self, theme_name: str) -> None:
         """Set the application theme.
 
+        Normalizes the theme name and updates the current theme, saving the
+        preference to the configuration manager and applying the stylesheet.
+
         Args:
-            theme_name: Name of the theme ("dark" or "light")
+            theme_name: Name of the theme to apply ("dark" or "light").
+                Supports common variations like "default", "black", "white".
 
         """
         # Normalize theme name to lowercase for consistent handling
@@ -117,8 +139,16 @@ class ThemeManager:
             # Fallback to built-in dark theme
             self._apply_builtin_dark_theme()
 
-    def _get_theme_stylesheet(self):
-        """Load theme stylesheet from file or return built-in stylesheet."""
+    def _get_theme_stylesheet(self) -> str:
+        """Load theme stylesheet from file or return built-in stylesheet.
+
+        Attempts to load the theme stylesheet from an external file first,
+        then falls back to a built-in stylesheet if the file is not found.
+
+        Returns:
+            The CSS stylesheet content as a string.
+
+        """
         theme_file = self.themes[self.current_theme]
         theme_path = os.path.join(self.styles_dir, theme_file)
 
@@ -133,14 +163,29 @@ class ThemeManager:
         # Fallback to built-in themes
         return self._get_builtin_theme_stylesheet()
 
-    def _get_builtin_theme_stylesheet(self):
-        """Get built-in theme stylesheet when external files are not available."""
+    def _get_builtin_theme_stylesheet(self) -> str:
+        """Get built-in theme stylesheet when external files are not available.
+
+        Selects the appropriate built-in stylesheet based on the current theme.
+
+        Returns:
+            The CSS stylesheet content as a string.
+
+        """
         if self.current_theme == "dark":
             return self._get_builtin_dark_stylesheet()
         return self._get_builtin_light_stylesheet()
 
     def _get_builtin_dark_stylesheet(self) -> str:
-        """Built-in dark theme stylesheet with proper contrast."""
+        """Generate built-in dark theme stylesheet with proper contrast.
+
+        Provides a comprehensive dark theme CSS stylesheet that is applied when
+        external theme files are unavailable.
+
+        Returns:
+            The complete dark theme CSS stylesheet as a string.
+
+        """
         return """
 /* Intellicrack Dark Theme */
 QMainWindow {
@@ -519,7 +564,15 @@ QPushButton#resetButton:pressed {
 """
 
     def _get_builtin_light_stylesheet(self) -> str:
-        """Built-in light theme stylesheet with improved contrast."""
+        """Generate built-in light theme stylesheet with improved contrast.
+
+        Provides a comprehensive light theme CSS stylesheet that is applied when
+        external theme files are unavailable.
+
+        Returns:
+            The complete light theme CSS stylesheet as a string.
+
+        """
         return """
 /* Intellicrack Light Theme - Enhanced Contrast */
 QMainWindow {
@@ -922,7 +975,11 @@ QPushButton#resetButton:pressed {
 """
 
     def _apply_builtin_dark_theme(self) -> None:
-        """Apply built-in dark theme as fallback."""
+        """Apply built-in dark theme as fallback.
+
+        Applies the built-in dark theme stylesheet directly when the external
+        theme loading fails or when no QApplication instance is available.
+        """
         try:
             app = QApplication.instance()
             if app:
@@ -933,22 +990,46 @@ QPushButton#resetButton:pressed {
 
 
 # Global theme manager instance (lazy initialization)
-_theme_manager = None
+_theme_manager: ThemeManager | None = None
 
 
-def get_theme_manager():
-    """Get the global theme manager instance (lazy initialization)."""
+def get_theme_manager() -> ThemeManager:
+    """Get the global theme manager instance (lazy initialization).
+
+    Returns a singleton ThemeManager instance, creating it if necessary.
+    This function implements the lazy initialization pattern for the global
+    theme manager.
+
+    Returns:
+        The singleton ThemeManager instance.
+
+    """
     global _theme_manager
     if _theme_manager is None:
         _theme_manager = ThemeManager()
     return _theme_manager
 
 
-def apply_theme(theme_name) -> None:
-    """Apply a theme."""
+def apply_theme(theme_name: str) -> None:
+    """Apply a theme.
+
+    Sets the application theme to the specified name and applies the
+    corresponding stylesheet.
+
+    Args:
+        theme_name: Name of the theme to apply ("dark" or "light").
+
+    """
     get_theme_manager().set_theme(theme_name)
 
 
-def get_current_theme():
-    """Get current theme."""
+def get_current_theme() -> str:
+    """Get current theme.
+
+    Retrieves the name of the currently active theme.
+
+    Returns:
+        The name of the current theme ("dark" or "light").
+
+    """
     return get_theme_manager().get_current_theme()

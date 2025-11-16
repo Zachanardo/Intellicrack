@@ -451,7 +451,7 @@ class PatternEvolutionEngine:
             return "medium"
         return "low"
 
-    def _generalize_value(self, value: Any) -> str:
+    def _generalize_value(self, value: object) -> str:
         """Generalize values for pattern matching."""
         if isinstance(value, str):
             if len(value) > 50:
@@ -1185,15 +1185,15 @@ class AILearningEngine:
     def record_experience(
         self,
         task_type: str,
-        input_data: Any,
-        output_data: Any,
+        input_data: object,
+        output_data: object,
         success: bool,
         confidence: float,
         execution_time: float,
         memory_usage: int,
         error_message: str | None = None,
-        context: dict[str, Any] | None = None,
-        metadata: dict[str, Any] | None = None,
+        context: dict[str, object] | None = None,
+        metadata: dict[str, object] | None = None,
     ) -> str:
         """Record AI learning experience."""
         if not self.learning_enabled:
@@ -1286,8 +1286,8 @@ class AILearningEngine:
 
     def record_exploit_chain_creation(
         self,
-        vulnerability: Any,
-        chain: Any,
+        vulnerability: object,
+        chain: object,
         success: bool,
         execution_time: float | None = None,
         error_message: str | None = None,
@@ -1663,7 +1663,7 @@ class AILearningEngine:
 _learning_engine = None
 
 
-def get_learning_engine():
+def get_learning_engine() -> AILearningEngine:
     """Get the global learning engine instance."""
     global _learning_engine
     if _learning_engine is None:

@@ -753,7 +753,7 @@ class EnhancedR2Integration:
             self.logger.error(f"Failed to generate xref graph: {e}")
             return {}
 
-    def visualize_graph(self, graph_type: str, **kwargs) -> bool:
+    def visualize_graph(self, graph_type: str, **kwargs: object) -> bool:
         """Visualize a graph.
 
         Args:
@@ -824,7 +824,7 @@ class EnhancedR2Integration:
             self.logger.error(f"Cleanup failed: {e}")
 
 
-def create_enhanced_r2_integration(binary_path: str, **config) -> EnhancedR2Integration:
+def create_enhanced_r2_integration(binary_path: str, **config: object) -> EnhancedR2Integration:
     """Create enhanced radare2 integration instance.
 
     Args:

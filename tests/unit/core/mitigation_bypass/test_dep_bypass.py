@@ -208,7 +208,7 @@ class TestDEPBypassSpecificationDriven:
         for gadget in result['gadgets']:
             assert 'thumb_mode' in gadget or 'arm_mode' in gadget
             # ARM addresses should be aligned
-            if 'thumb_mode' in gadget and gadget['thumb_mode']:
+            if gadget.get('thumb_mode'):
                 assert gadget['address'] % 2 == 0, "Thumb mode addresses should be 2-byte aligned"
             else:
                 assert gadget['address'] % 4 == 0, "ARM mode addresses should be 4-byte aligned"

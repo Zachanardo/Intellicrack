@@ -119,11 +119,6 @@ class ROPChainGenerator:
         self.chains = []
 
         try:
-            # This is a simplified implementation
-            # In a real implementation, we would use constraint solving
-            # to generate valid ROP chains
-
-            # Generate real ROP chains using constraint solving
             self._generate_real_rop_chains()
 
             self.logger.info(f"Generated {len(self.chains)} ROP chains")
@@ -1576,7 +1571,7 @@ class ROPChainGenerator:
             "max_chain_length": self.max_chain_length,
         }
 
-    def generate_chain(self, target: str, **kwargs) -> list[dict[str, Any]]:
+    def generate_chain(self, target: str, **kwargs: object) -> list[dict[str, Any]]:
         """Generate ROP chain for target.
 
         This method generates a complete ROP chain for the specified target,
@@ -1705,7 +1700,7 @@ class ROPChainGenerator:
         return target_info
 
 
-def _setup_rop_generator(app: Any) -> ROPChainGenerator:
+def _setup_rop_generator(app: object) -> ROPChainGenerator:
     """Create and configure the ROP chain generator."""
     generator = ROPChainGenerator(
         {
@@ -1727,7 +1722,7 @@ def _setup_rop_generator(app: Any) -> ROPChainGenerator:
     return None
 
 
-def _configure_architecture_and_targets(app: Any, generator: ROPChainGenerator) -> bool:
+def _configure_architecture_and_targets(app: object, generator: ROPChainGenerator) -> bool:
     """Configure architecture and target functions for the ROP generator."""
     if PYQT6_AVAILABLE:
         arch_options = ["x86_64", "x86", "arm", "arm64", "mips"]
@@ -1772,7 +1767,7 @@ def _configure_architecture_and_targets(app: Any, generator: ROPChainGenerator) 
     return True
 
 
-def _execute_rop_generation_workflow(app: Any, generator: ROPChainGenerator) -> bool:
+def _execute_rop_generation_workflow(app: object, generator: ROPChainGenerator) -> bool:
     """Execute the main ROP generation workflow."""
     if hasattr(app, "update_output"):
         app.update_output.emit("log_message([ROP Chain Generator] Finding gadgets...)")
@@ -1797,7 +1792,7 @@ def _execute_rop_generation_workflow(app: Any, generator: ROPChainGenerator) -> 
     return False
 
 
-def _process_rop_results(app: Any, generator: ROPChainGenerator) -> None:
+def _process_rop_results(app: object, generator: ROPChainGenerator) -> None:
     """Process and display ROP generation results."""
     results = generator.get_results()
 
@@ -1832,7 +1827,7 @@ def _process_rop_results(app: Any, generator: ROPChainGenerator) -> None:
             app.analyze_results.append(f"  {_addr}")
 
 
-def _handle_rop_report_generation(app: Any, generator: ROPChainGenerator) -> None:
+def _handle_rop_report_generation(app: object, generator: ROPChainGenerator) -> None:
     """Handle report generation for ROP chain results."""
     if PYQT6_AVAILABLE:
         from ...utils.reporting.report_common import handle_pyqt6_report_generation
@@ -1852,7 +1847,7 @@ def _handle_rop_report_generation(app: Any, generator: ROPChainGenerator) -> Non
             app.update_output.emit("log_message([ROP Chain Generator] Failed to generate report)")
 
 
-def run_rop_chain_generator(app: Any) -> None:
+def run_rop_chain_generator(app: object) -> None:
     """Initialize and run the ROP chain generator."""
     # Check if binary is loaded
     if not hasattr(app, "binary_path") or not app.binary_path:

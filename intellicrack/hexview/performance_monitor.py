@@ -48,7 +48,7 @@ __all__ = ["PerformanceMonitor", "PerformanceWidget"]
 class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
     """Widget for displaying performance statistics."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the performance widget."""
         if not PYQT6_AVAILABLE:
             logger.warning("PyQt6 not available, PerformanceWidget cannot be created")
@@ -309,7 +309,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
 
         self.layout().addLayout(controls_layout)
 
-    def set_file_handler(self, file_handler) -> None:
+    def set_file_handler(self, file_handler: object) -> None:
         """Set the file handler to monitor."""
         self.file_handler = file_handler
         self.stats_history.clear()
@@ -466,7 +466,7 @@ class PerformanceMonitor:
         self.widget = None
         self.file_handler = None
 
-    def create_widget(self, parent=None) -> QWidget | None:
+    def create_widget(self, parent: QWidget | None = None) -> QWidget | None:
         """Create and return the performance monitoring widget."""
         if not PYQT6_AVAILABLE:
             return None
@@ -477,7 +477,7 @@ class PerformanceMonitor:
 
         return self.widget
 
-    def set_file_handler(self, file_handler) -> None:
+    def set_file_handler(self, file_handler: object) -> None:
         """Set the file handler to monitor."""
         self.file_handler = file_handler
         if self.widget:

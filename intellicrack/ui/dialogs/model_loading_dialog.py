@@ -10,6 +10,7 @@ Licensed under GNU General Public License v3.0
 import logging
 
 from intellicrack.handlers.pyqt6_handler import (
+    QCloseEvent,
     QComboBox,
     QDialogButtonBox,
     QFont,
@@ -43,7 +44,7 @@ class ModelLoadingDialog(BaseDialog):
     #: model_id (type: str)
     model_loaded = pyqtSignal(str)
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the ModelLoadingDialog with default values."""
         super().__init__(parent, "Model Loading Manager")
         self.setMinimumSize(800, 600)
@@ -51,7 +52,7 @@ class ModelLoadingDialog(BaseDialog):
         self.llm_manager = get_llm_manager()
         self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
 
-    def setup_content(self, layout) -> None:
+    def setup_content(self, layout: QVBoxLayout) -> None:
         """Set up the UI content."""
         if layout is None:
             layout = QVBoxLayout(self.content_widget)
@@ -87,7 +88,7 @@ class ModelLoadingDialog(BaseDialog):
 
         self.setLayout(layout)
 
-    def create_new_model_tab(self):
+    def create_new_model_tab(self) -> QWidget:
         """Create the new model loading tab."""
         widget = QWidget()
         layout = QVBoxLayout()
@@ -150,7 +151,7 @@ class ModelLoadingDialog(BaseDialog):
         widget.setLayout(layout)
         return widget
 
-    def create_loaded_models_tab(self):
+    def create_loaded_models_tab(self) -> QWidget:
         """Create the loaded models tab."""
         widget = QWidget()
         layout = QVBoxLayout()
@@ -213,7 +214,7 @@ class ModelLoadingDialog(BaseDialog):
             logger.error(f"Error loading model: {e}")
             QMessageBox.critical(self, "Error", f"Error loading model:\n{e!s}")
 
-    def get_next_id(self):
+    def get_next_id(self) -> int:
         """Get next available ID number."""
         all_tasks = self.llm_manager.get_all_loading_tasks()
         return len(all_tasks) + 1
@@ -252,7 +253,7 @@ class ModelLoadingDialog(BaseDialog):
         # Show notification
         QMessageBox.information(self, "Model Loaded", f"Model successfully loaded:\n{model_id}")
 
-    def closeEvent(self, event) -> None:
+    def closeEvent(self, event: QCloseEvent) -> None:
         """Handle dialog close."""
         # Cleanup progress widget
         self.progress_widget.cleanup()

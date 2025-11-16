@@ -428,7 +428,7 @@ except ImportError as e:
 
             del self.tables[name]
 
-        def execute_sql(self, sql: str, params: Optional[List[Any]] = None) -> Any:
+        def execute_sql(self, sql: str, params: Optional[List[Any]] = None) -> List[Tuple[Any, ...]] | None:
             """Execute SQL statement.
 
             Args:
@@ -1161,7 +1161,7 @@ except ImportError as e:
             self.cursor: Cursor = cursor
             self.row: Tuple[Any, ...] = row
 
-        def __getitem__(self, key: Union[int, str]) -> Any:
+        def __getitem__(self, key: int | str) -> object:
             """Get item by index or column name.
 
             Args:
@@ -1196,7 +1196,7 @@ except ImportError as e:
             """
             return [desc[0] for desc in self.cursor.description or []]
 
-    def connect(database: str = ":memory:", **kwargs: Any) -> Connection:
+    def connect(database: str = ":memory:", **kwargs: object) -> Connection:
         """Connect to database.
 
         Args:

@@ -627,21 +627,21 @@ class LiveDataPipeline:
         except Exception as e:
             self.logger.error(f"Error storing metrics: {e}")
 
-    def add_websocket_connection(self, connection: Any) -> None:
+    def add_websocket_connection(self, connection: object) -> None:
         """Add WebSocket connection.
 
         Args:
-            connection: WebSocket connection
+            connection: WebSocket connection object
 
         """
         with self.websocket_lock:
             self.websocket_connections.add(connection)
 
-    def remove_websocket_connection(self, connection: Any) -> None:
+    def remove_websocket_connection(self, connection: object) -> None:
         """Remove WebSocket connection.
 
         Args:
-            connection: WebSocket connection
+            connection: WebSocket connection object
 
         """
         with self.websocket_lock:

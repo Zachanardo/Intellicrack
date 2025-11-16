@@ -12,7 +12,7 @@ from collections import deque
 from dataclasses import dataclass
 from typing import Any
 
-from PyQt6.QtCore import QObject, Qt, QThread, pyqtSignal
+from PyQt6.QtCore import QCloseEvent, QObject, Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QBrush, QColor
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -175,7 +175,7 @@ class SystemMonitorWidget(QWidget):
     #: alert_type, message (type: str, str)
     alert_triggered = pyqtSignal(str, str)
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize system monitor widget with performance tracking and alerts."""
         super().__init__(parent)
 
@@ -545,7 +545,7 @@ class SystemMonitorWidget(QWidget):
         with open(filepath, "w") as f:
             json.dump(data, f, indent=2)
 
-    def closeEvent(self, event) -> None:
+    def closeEvent(self, event: QCloseEvent) -> None:
         """Handle widget close event."""
         self.stop_monitoring()
         event.accept()

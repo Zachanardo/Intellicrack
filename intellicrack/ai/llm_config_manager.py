@@ -30,11 +30,14 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ..utils.deprecation_warnings import deprecated_config_method
 from ..utils.logger import get_logger
 from .llm_backends import LLMConfig, LLMProvider, get_llm_manager
+
+if TYPE_CHECKING:
+    from .llm_backends import LLMManager
 
 logger = get_logger(__name__)
 
@@ -109,8 +112,19 @@ class LLMConfigManager:
         except Exception as e:
             logger.warning(f"Could not load from central config: {e}")
 
-    def _load_json_file(self, file_path: Path, default: Any) -> Any:
-        """Load a JSON file with error handling - ONLY for migration purposes."""
+    def _load_json_file(
+        self, file_path: Path, default: dict[str, object] | list[object],
+    ) -> dict[str, object] | list[object]:
+        """Load a JSON file with error handling - ONLY for migration purposes.
+
+        Args:
+            file_path: Path to the JSON file to load
+            default: Default value to return if file doesn't exist or loading fails
+
+        Returns:
+            Loaded JSON data as dict or list, or default value on error
+
+        """
         if not file_path.exists():
             return default
 
@@ -329,11 +343,16 @@ class LLMConfigManager:
         # Fall back to internal cache if central config is empty
         return self.configs.copy()
 
-    def auto_load_models(self, llm_manager: Any | None = None):
+    def auto_load_models(
+        self, llm_manager: "LLMManager | None" = None,
+    ) -> tuple[int, int]:
         """Auto-load all saved models into the LLM manager.
 
         Args:
             llm_manager: LLMManager instance (uses global if not provided)
+
+        Returns:
+            Tuple of (loaded_count, failed_count) for models loaded
 
         """
         if llm_manager is None:

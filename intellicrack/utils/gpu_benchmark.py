@@ -27,7 +27,7 @@ from intellicrack.handlers.numpy_handler import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def run_gpu_accelerated_analysis(app, binary_data: bytes) -> dict[str, Any]:
+def run_gpu_accelerated_analysis(app: object, binary_data: bytes) -> dict[str, Any]:
     """Run GPU-accelerated binary analysis using available frameworks.
 
     Args:

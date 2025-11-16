@@ -146,7 +146,7 @@ class EnhancedCLIRunner:
                     # Get file size and basic stats
                     import os
 
-                    stat_info = os.stat(binary_path)
+                    stat_info = Path(binary_path).stat()
                     results["file_size"] = stat_info.st_size
                     results["last_modified"] = stat_info.st_mtime
                 except Exception:

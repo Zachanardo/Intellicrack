@@ -592,8 +592,18 @@ class AITerminalChat:
 
         self.console.print()
 
-    def _process_code_blocks(self, response: str):
-        """Process response with code blocks and apply syntax highlighting."""
+    def _process_code_blocks(self, response: str) -> str | object:
+        """Process response with code blocks and apply syntax highlighting.
+
+        Args:
+            response: The AI response text potentially containing code blocks.
+
+        Returns:
+            The processed response with syntax highlighting applied, or the original
+            response string if no code blocks are found or Rich is unavailable.
+            May return a Syntax object or string depending on content.
+
+        """
         if not RICH_AVAILABLE:
             return response
 
@@ -602,11 +612,19 @@ class AITerminalChat:
         # Pattern to match code blocks with optional language specification
         pattern = r"```(\w+)?\n(.*?)\n```"
 
-        def replace_code_block(match: re.Match[str]):
-            language = match.group(1) or "python"  # Default to python if no language specified
+        def replace_code_block(match: re.Match[str]) -> Syntax:
+            """Replace code block with syntax highlighted version.
+
+            Args:
+                match: The regex match object containing code block and language.
+
+            Returns:
+                A Syntax object with highlighted code.
+
+            """
+            language = match.group(1) or "python"
             code = match.group(2)
 
-            # Create syntax highlighted code block
             syntax = Syntax(code, language, theme="monokai", line_numbers=True)
             return syntax
 

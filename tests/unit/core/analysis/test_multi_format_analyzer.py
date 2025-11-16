@@ -636,7 +636,9 @@ class TestMultiFormatBinaryAnalyzer(unittest.TestCase):
             apk.writestr('AndroidManifest.xml', manifest_content)
 
             # Add classes.dex
-            dex_content = open(self._create_dex_test_binary("embedded.dex"), 'rb').read()
+            dex_path = self._create_dex_test_binary("embedded.dex")
+            with open(dex_path, 'rb') as f:
+                dex_content = f.read()
             apk.writestr('classes.dex', dex_content)
 
             # Add resources
@@ -796,7 +798,9 @@ class TestMultiFormatBinaryAnalyzer(unittest.TestCase):
         """Test performance with reasonably large binary files."""
         # Create larger test binary
         large_pe = os.path.join(self.test_dir, "large.exe")
-        base_data = open(self._create_pe_test_binary("base.exe"), 'rb').read()
+        base_path = self._create_pe_test_binary("base.exe")
+        with open(base_path, 'rb') as f:
+            base_data = f.read()
 
         with open(large_pe, 'wb') as f:
             f.write(base_data)
@@ -849,7 +853,9 @@ class TestMultiFormatBinaryAnalyzer(unittest.TestCase):
         dotnet_path = os.path.join(self.test_dir, "test.dll")
 
         # Start with regular PE
-        pe_data = open(self._create_pe_test_binary("base.exe"), 'rb').read()
+        pe_path = self._create_pe_test_binary("base.exe")
+        with open(pe_path, 'rb') as f:
+            pe_data = f.read()
 
         # Modify to add .NET CLI header indicators
         with open(dotnet_path, 'wb') as f:

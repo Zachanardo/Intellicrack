@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 TOOL_REGISTRY = {}
 
 
-def main(args: list[str] | None = None):
+def main(args: list[str] | None = None) -> int:
     """Run entry point for Intellicrack.
 
     Args:
@@ -122,7 +122,7 @@ def main(args: list[str] | None = None):
         return 1
 
 
-def run_gui_mode(args) -> int:
+def run_gui_mode(args: object) -> int:
     """Run Intellicrack in GUI mode.
 
     Args:
@@ -156,7 +156,7 @@ def run_gui_mode(args) -> int:
         return 1
 
 
-def run_cli_mode(args) -> int:
+def run_cli_mode(args: object) -> int:
     """Run Intellicrack in CLI mode.
 
     Args:
@@ -214,7 +214,7 @@ def run_cli_mode(args) -> int:
         return 1
 
 
-def dispatch_tool(app_instance, tool_name: str, parameters: dict[str, Any]) -> dict[str, Any]:
+def dispatch_tool(app_instance: object, tool_name: str, parameters: dict[str, Any]) -> dict[str, Any]:
     """Dispatch an AI-requested tool to the corresponding function.
 
     Args:
@@ -376,7 +376,7 @@ def register_default_tools() -> bool | None:
         return False
 
 
-def on_message(message: dict[str, Any], data: Any = None) -> None:
+def on_message(message: dict[str, Any], data: bytes | bytearray | None = None) -> None:
     """Handle messages from Frida scripts.
 
     This is a callback function for Frida message handling.
@@ -490,7 +490,7 @@ def retrieve_few_shot_examples(task_type: str, count: int = 5) -> list[dict[str,
             {
                 "input": "High entropy section .text (7.8/8.0)",
                 "analysis": "Likely packed or encrypted code section",
-                "suggestion": "Look for unpacking stub, check entry point",
+                "suggestion": "Look for unpacking routine, check entry point",
             },
             {
                 "input": "Imports: IsDebuggerPresent, CheckRemoteDebuggerPresent",

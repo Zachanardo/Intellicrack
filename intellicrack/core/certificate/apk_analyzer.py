@@ -87,6 +87,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import types
 import xml.etree.ElementTree as ET
 import zipfile
 from dataclasses import dataclass, field
@@ -600,11 +601,16 @@ class APKAnalyzer:
             except Exception as e:
                 logger.warning(f"Failed to clean up temp directory: {e}")
 
-    def __enter__(self):
+    def __enter__(self) -> "APKAnalyzer":
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> bool:
         """Context manager exit."""
         self.cleanup()
         return False

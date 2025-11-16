@@ -1693,7 +1693,7 @@ def validate_license_key(key: str) -> bool:
                 self.chat_widget.add_message("System", f"ERROR Python bypass failed:\n{error_msg}")
 
             # Cleanup
-            os.unlink(tmp_script_path)
+            Path(tmp_script_path).unlink()
 
         except subprocess.TimeoutExpired:
             self.chat_widget.add_message("System", "WARNING️ Script execution timeout (30s limit)")
@@ -4331,7 +4331,7 @@ def example_function():
                     self.chat_widget.add_message("System", f"Formatting failed: {result.stderr}")
 
             finally:
-                os.unlink(temp_file_path)
+                Path(temp_file_path).unlink()
 
         except FileNotFoundError as e:
             logger.error("File not found in ai_coding_assistant_dialog: %s", e)

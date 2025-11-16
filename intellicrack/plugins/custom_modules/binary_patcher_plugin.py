@@ -31,7 +31,20 @@ Specialized template for binary patching operations
 
 @dataclass
 class BinaryPatch:
-    """Represents a binary patch operation."""
+    """Represents a binary patch operation.
+
+    This dataclass encapsulates the metadata and byte sequences for a single
+    binary patch operation, including the location, original content, patched
+    content, and type of patch applied.
+
+    Attributes:
+        offset: The byte offset in the binary where the patch is applied.
+        original_bytes: The original bytes at the patch location before patching.
+        patched_bytes: The replacement bytes to write at the patch location.
+        description: Human-readable description of the patch operation.
+        patch_type: Classification of the patch type (default: "defensive").
+
+    """
 
     offset: int
     original_bytes: bytes
@@ -50,8 +63,26 @@ class BinaryPatcherPlugin:
         self.patches: list[BinaryPatch] = []
         self.logger = logging.getLogger(__name__)
 
-    def analyze(self, binary_path):
-        """Analyze binary for patchable locations."""
+    def analyze(self, binary_path: str) -> list[str]:
+        """Analyze binary for patchable locations.
+
+        Scans a binary executable for common patterns that indicate patchable
+        locations related to licensing checks and protection mechanisms. This
+        analysis identifies potential targets for defensive research patching
+        including NOP sleds and function prologues.
+
+        Args:
+            binary_path: Absolute or relative path to the binary file to analyze.
+
+        Returns:
+            A list of strings containing analysis results and findings, including
+            identified patch targets and any errors encountered during analysis.
+
+        Raises:
+            No exceptions are explicitly raised; errors are caught and reported
+            in the returned results list.
+
+        """
         results = []
         results.append(f"Scanning for patch targets in: {binary_path}")
 
@@ -73,8 +104,38 @@ class BinaryPatcherPlugin:
 
         return results
 
-    def patch(self, binary_path, patch_data=None):
-        """Apply defensive security patches to the binary."""
+    def patch(self, binary_path: str, patch_data: dict[str, object] | None = None) -> list[str]:
+        """Apply defensive security patches to the binary.
+
+        Applies defensive research patches to remove or neutralize licensing
+        checks and trial period enforcement mechanisms in a binary executable.
+        This method creates a backup before patching and implements rollback
+        functionality if patching fails. Patches target common licensing
+        protection patterns including conditional jumps around license checks
+        and trial-related string markers.
+
+        Args:
+            binary_path: Absolute or relative path to the binary executable to patch.
+            patch_data: Optional dictionary containing patch configuration parameters
+                (currently unused but reserved for future extension).
+
+        Returns:
+            A list of strings containing detailed results of the patching operation,
+            including backup creation status, number of patches applied, patch types,
+            and any errors encountered.
+
+        Raises:
+            No exceptions are explicitly raised; all errors are caught and reported
+            in the returned results list. File restoration is attempted on failure.
+
+        Notes:
+            - Creates a .backup file before any modifications
+            - Implements file size validation to detect corruption
+            - Uses NOP (0x90) byte sequences to neutralize conditional jumps
+            - Replaces trial-related text with spaces to preserve string structure
+            - Restores from backup if patching encounters errors
+
+        """
         results = []
 
         # Create backup
@@ -185,6 +246,19 @@ class BinaryPatcherPlugin:
         return results
 
 
-def register():
-    """Register and return an instance of the binary patcher plugin."""
+def register() -> BinaryPatcherPlugin:
+    """Register and return an instance of the binary patcher plugin.
+
+    Factory function that instantiates and returns a new BinaryPatcherPlugin
+    instance. This function is called by the plugin system to create the plugin
+    for use in the Intellicrack framework.
+
+    Returns:
+        A fully initialized BinaryPatcherPlugin instance ready for use.
+
+    Notes:
+        This function follows the standard plugin registration interface and
+        should be called by the plugin loader system.
+
+    """
     return BinaryPatcherPlugin()

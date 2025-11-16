@@ -221,7 +221,7 @@ class FallbackChain:
             return self.model_configs
 
         # Sort by success rate and response time
-        def model_score(item: tuple[str, Any]):
+        def model_score(item: tuple[str, Any]) -> float:
             model_id, _ = item
             health = self.health_stats[model_id]
 
@@ -371,7 +371,7 @@ class FallbackManager:
 
         logger.info("FallbackManager initialized")
 
-    def create_chain(self, chain_id: str, model_configs: list[tuple[str, LLMConfig]], **kwargs) -> FallbackChain:
+    def create_chain(self, chain_id: str, model_configs: list[tuple[str, LLMConfig]], **kwargs: object) -> FallbackChain:
         """Create a new fallback chain.
 
         Args:

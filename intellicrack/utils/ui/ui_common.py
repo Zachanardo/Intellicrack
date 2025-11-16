@@ -23,7 +23,6 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import os
 import webbrowser
 from collections.abc import Callable
-from typing import Any
 
 from intellicrack.utils.logger import logger
 
@@ -51,7 +50,7 @@ except ImportError as e:
     QLabel = None
 
 
-def ask_open_report(parent: Any, report_path: str) -> bool:
+def ask_open_report(parent: object, report_path: str) -> bool:
     """Ask user if they want to open a generated report.
 
     Args:
@@ -89,7 +88,7 @@ def ask_open_report(parent: Any, report_path: str) -> bool:
 
 
 def get_save_filename(
-    parent: Any,
+    parent: object,
     caption: str = "Save File",
     filter_str: str = "HTML Files (*.html);;All Files (*.*)",
     default_suffix: str = ".html",
@@ -130,11 +129,11 @@ def get_save_filename(
 
 
 def create_binary_selection_header(
-    parent_layout: Any,
+    parent_layout: object,
     binary_path: str = "",
     show_label: bool = True,
     extra_buttons: list[tuple[str, Callable]] | None = None,
-) -> dict:
+) -> dict[str, object]:
     """Create a standard binary selection header widget.
 
     Args:
@@ -164,7 +163,8 @@ def create_binary_selection_header(
         header_layout.addWidget(QLabel("Binary Path:"))
 
     path_edit = QLineEdit(binary_path)
-    path_edit.setPlaceholderText("Select target binary file...")
+    if not binary_path:
+        path_edit.setText("(No binary selected)")
     widgets["path_edit"] = path_edit
 
     browse_btn = QPushButton("Browse")

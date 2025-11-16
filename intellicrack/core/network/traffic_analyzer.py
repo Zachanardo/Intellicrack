@@ -343,7 +343,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             }
 
             # Inner function to handle the main capture logic
-            def perform_capture(out_file) -> None:
+            def perform_capture(out_file: object) -> None:
                 """Perform the actual packet capture."""
                 nonlocal packets_captured
 
@@ -557,7 +557,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             # Define signal handler for graceful exit
             original_sigint_handler = signal.getsignal(signal.SIGINT)
 
-            def signal_handler(sig, frame) -> None:
+            def signal_handler(sig: int, frame: object) -> None:
                 """Handle SIGINT for graceful packet capture termination.
 
                 Logs the interrupt and restores the original signal handler.
@@ -643,7 +643,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             self.logger.error(traceback.format_exc())
             raise
 
-    def _process_pyshark_packet(self, packet) -> bool:
+    def _process_pyshark_packet(self, packet: object) -> bool:
         """Process a captured packet from pyshark.
 
         Args:
@@ -811,7 +811,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             )
 
             # Define packet processing function
-            def process_tcp_packet(packet, IP, TCP) -> None:
+            def process_tcp_packet(packet: object, IP: object, TCP: object) -> None:
                 """Process TCP packets for analysis."""
                 if IP in packet and TCP in packet:
                     # Extract packet info
@@ -903,7 +903,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             self.logger.info("Starting Scapy sniffer with filter: %s", bpf_filter)
 
             # Use sniff with a stop filter
-            def stop_filter(packet) -> bool:
+            def stop_filter(packet: object) -> bool:
                 self.logger.debug("Checking stop condition for packet: %s", type(packet).__name__)
                 return not self.capturing
 
@@ -1211,8 +1211,16 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
 
         return results
 
-    def _assess_threat_level(self, indicators: list) -> str:
-        """Assess threat level based on suspicious indicators."""
+    def _assess_threat_level(self, indicators: list[str]) -> str:
+        """Assess threat level based on suspicious indicators.
+
+        Args:
+            indicators: List of suspicious indicator descriptions
+
+        Returns:
+            str: Threat level as "high", "medium", or "low"
+
+        """
         if len(indicators) >= 3:
             return "high"
         if len(indicators) >= 2:
@@ -1220,7 +1228,12 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         return "low"
 
     def _calculate_capture_duration(self) -> float:
-        """Calculate total capture duration in seconds."""
+        """Calculate total capture duration in seconds.
+
+        Returns:
+            float: Total duration in seconds from first to last packet
+
+        """
         if not self.packets:
             return 0.0
 
@@ -1230,14 +1243,24 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         return 0.0
 
     def _calculate_packet_rate(self) -> float:
-        """Calculate average packets per second."""
+        """Calculate average packets per second.
+
+        Returns:
+            float: Average number of packets captured per second
+
+        """
         duration = self._calculate_capture_duration()
         if duration > 0:
             return len(self.packets) / duration
         return 0.0
 
     def _calculate_protocol_distribution(self) -> dict[str, int]:
-        """Calculate distribution of protocols."""
+        """Calculate distribution of protocols.
+
+        Returns:
+            dict[str, int]: Protocol names mapped to packet counts
+
+        """
         distribution = {}
 
         port_protocol_map = {
@@ -1257,7 +1280,12 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         return distribution
 
     def _calculate_port_distribution(self) -> dict[int, int]:
-        """Calculate distribution of destination ports."""
+        """Calculate distribution of destination ports.
+
+        Returns:
+            dict[int, int]: Top 10 destination ports mapped to connection counts
+
+        """
         distribution = {}
 
         for conn in self.connections.values():
@@ -1267,7 +1295,12 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         return dict(sorted(distribution.items(), key=lambda x: x[1], reverse=True)[:10])
 
     def _calculate_license_traffic_percentage(self) -> float:
-        """Calculate percentage of traffic that is license-related."""
+        """Calculate percentage of traffic that is license-related.
+
+        Returns:
+            float: Percentage of packets identified as license-related traffic
+
+        """
         if not self.packets:
             return 0.0
 
@@ -1276,7 +1309,12 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         return (license_packets / len(self.packets)) * 100 if self.packets else 0.0
 
     def _identify_peak_traffic_time(self) -> str | None:
-        """Identify time period with peak traffic."""
+        """Identify time period with peak traffic.
+
+        Returns:
+            str | None: Timestamp of peak traffic period formatted as YYYY-MM-DD HH:MM, or None if no packets
+
+        """
         if not self.packets:
             return None
 
@@ -1293,7 +1331,12 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         return None
 
     def _analyze_connection_durations(self) -> dict[str, float]:
-        """Analyze connection duration statistics."""
+        """Analyze connection duration statistics.
+
+        Returns:
+            dict[str, float]: Dictionary with keys 'min', 'max', 'avg', 'total' containing duration statistics
+
+        """
         durations = []
 
         for conn in self.connections.values():

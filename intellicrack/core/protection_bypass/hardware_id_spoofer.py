@@ -711,7 +711,7 @@ class HardwareIDSpoofer:
 
             original_cpuid = ctypes.WINFUNCTYPE(None, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32))
 
-            def hooked_cpuid(eax_in, regs) -> None:
+            def hooked_cpuid(eax_in: int, regs: ctypes.Array[ctypes.c_uint32]) -> None:
                 if eax_in == 0:
                     regs[0] = 0x0D
                     regs[1] = int.from_bytes(vendor[:4].encode(), "little")
@@ -719,7 +719,6 @@ class HardwareIDSpoofer:
                     regs[3] = int.from_bytes(vendor[4:8].encode(), "little")
                 elif eax_in == 1:
                     regs[0] = int(processor_id[:8], 16)
-                    # Note: Using random module for generating fake CPUID values, not cryptographic purposes
                     regs[1] = random.randint(0, 0xFFFFFFFF)  # noqa: S311
                     regs[2] = random.randint(0, 0xFFFFFFFF)  # noqa: S311
                     regs[3] = random.randint(0, 0xFFFFFFFF)  # noqa: S311
@@ -860,14 +859,12 @@ class HardwareIDSpoofer:
             return False
 
     def _generate_random_disk_serial(self) -> str:
-        # Note: Using random module for generating fake disk serials, not cryptographic purposes
         return "".join(random.choices(string.ascii_uppercase + string.digits, k=16))  # noqa: S311
 
     def _spoof_disk_usermode(self, drive: str, new_serial: str) -> bool:
         try:
             key_path = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion"
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_WRITE) as key:
-                # Note: Using random module for generating fake volume IDs, not cryptographic purposes
                 volume_id = f"{random.randint(1000, 9999)}-{random.randint(1000, 9999)}"  # noqa: S311
                 winreg.SetValueEx(key, "VolumeId", 0, winreg.REG_SZ, volume_id)
 
@@ -894,7 +891,6 @@ exit"""
     def spoof_motherboard_serial(self, manufacturer: str = None, product: str = None, serial: str = None) -> bool:
         """Spoof motherboard manufacturer, product, and serial via SMBIOS manipulation."""
         if manufacturer is None:
-            # Note: Using random module for generating fake motherboard identifiers, not cryptographic purposes
             manufacturer = random.choice(["ASUS", "MSI", "Gigabyte", "ASRock", "EVGA"])  # noqa: S311
 
         if product is None:
@@ -935,7 +931,6 @@ exit"""
             return False
 
     def _generate_random_serial(self) -> str:
-        # Note: Using random module for generating fake hardware identifiers, not cryptographic purposes
         return "".join(random.choices(string.ascii_uppercase + string.digits, k=12))  # noqa: S311
 
     def _spoof_motherboard_usermode(self, manufacturer: str, product: str, serial: str) -> bool:

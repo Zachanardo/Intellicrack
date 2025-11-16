@@ -3,7 +3,9 @@
 import gc
 import logging
 import os
+import sys
 import time
+from types import TracebackType
 from typing import Any
 
 from intellicrack.utils.logger import logger
@@ -51,7 +53,7 @@ class MemoryOptimizer:
     6. Performance statistics and reporting
     """
 
-    def __init__(self, app_instance: Any | None = None) -> None:
+    def __init__(self, app_instance: object | None = None) -> None:
         """Initialize the memory optimizer.
 
         Args:
@@ -888,12 +890,17 @@ class MemoryOptimizer:
         total_mb = total_bytes / (1024 * 1024)
         return (used_mb, total_mb, usage_percentage)
 
-    def __enter__(self):
+    def __enter__(self) -> "MemoryOptimizer":
         """Context manager entry."""
         self.enable()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Context manager exit."""
         if exc_type:
             self.logger.error(f"Memory optimizer exiting due to {exc_type.__name__}: {exc_val}")
@@ -902,7 +909,10 @@ class MemoryOptimizer:
         self.disable()
 
 
-def create_memory_optimizer(app_instance: Any | None = None, **kwargs) -> MemoryOptimizer:
+def create_memory_optimizer(
+    app_instance: object | None = None,
+    **kwargs: float | dict[str, bool],
+) -> MemoryOptimizer:
     """Create and configure a MemoryOptimizer instance.
 
     Args:

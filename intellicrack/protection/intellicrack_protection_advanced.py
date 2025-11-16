@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Any
 
 # Secure XML parser import
-import defusedxml.ElementTree as ElementTree
+from defusedxml import ElementTree
 
 from ..utils.logger import get_logger
 from .intellicrack_protection_core import (

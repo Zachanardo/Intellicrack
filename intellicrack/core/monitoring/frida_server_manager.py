@@ -14,6 +14,8 @@ import socket
 import subprocess
 import time
 from pathlib import Path
+from types import TracebackType
+from typing import Any
 
 import frida
 import requests
@@ -295,11 +297,28 @@ class FridaServerManager:
             "process_managed": self.server_process is not None,
         }
 
-    def __enter__(self):
-        """Context manager entry."""
+    def __enter__(self) -> "FridaServerManager":
+        """Context manager entry.
+
+        Returns:
+            The FridaServerManager instance.
+
+        """
         self.start()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager exit."""
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        """Context manager exit.
+
+        Args:
+            exc_type: Exception type if an exception occurred.
+            exc_val: Exception instance if an exception occurred.
+            exc_tb: Exception traceback if an exception occurred.
+
+        """
         self.stop()

@@ -117,7 +117,7 @@ def write_hex_region(file_path: str, offset: int, data: bytes) -> bool:
 # Analysis operations
 
 
-def analyze_binary_data(data: bytes, query: str | None = None, model_manager=None) -> dict[str, Any]:
+def analyze_binary_data(data: bytes, query: str | None = None, model_manager: object | None = None) -> dict[str, Any]:
     """Analyze binary data using AI assistance.
 
     Args:
@@ -138,7 +138,7 @@ def analyze_binary_data(data: bytes, query: str | None = None, model_manager=Non
         return {"error": str(e)}
 
 
-def search_binary_pattern(data: bytes, pattern_desc: str, model_manager=None) -> list[dict[str, Any]]:
+def search_binary_pattern(data: bytes, pattern_desc: str, model_manager: object | None = None) -> list[dict[str, Any]]:
     """Search for a pattern in binary data using AI assistance.
 
     Args:
@@ -159,7 +159,7 @@ def search_binary_pattern(data: bytes, pattern_desc: str, model_manager=None) ->
         return []
 
 
-def suggest_binary_edits(data: bytes, edit_intent: str, model_manager=None) -> dict[str, Any]:
+def suggest_binary_edits(data: bytes, edit_intent: str, model_manager: object | None = None) -> dict[str, Any]:
     """Suggest edits to binary data using AI assistance.
 
     Args:
@@ -183,7 +183,7 @@ def suggest_binary_edits(data: bytes, edit_intent: str, model_manager=None) -> d
 # UI operations
 
 
-def create_hex_viewer_widget(parent=None) -> HexViewerWidget:
+def create_hex_viewer_widget(parent: object | None = None) -> HexViewerWidget:
     """Create a new hex viewer widget.
 
     Args:
@@ -196,7 +196,7 @@ def create_hex_viewer_widget(parent=None) -> HexViewerWidget:
     return HexViewerWidget(parent)
 
 
-def create_hex_viewer_dialog(parent=None, file_path: str | None = None, read_only: bool = True) -> HexViewerDialog:
+def create_hex_viewer_dialog(parent: object | None = None, file_path: str | None = None, read_only: bool = True) -> HexViewerDialog:
     """Create a new hex viewer dialog.
 
     Args:
@@ -233,7 +233,7 @@ def launch_hex_viewer(file_path: str, read_only: bool = True) -> QDialog:
 # Integration operations
 
 
-def integrate_with_intellicrack(app_instance) -> bool:
+def integrate_with_intellicrack(app_instance: object) -> bool:
     """Integrate the enhanced hex viewer with Intellicrack.
 
     Args:
@@ -246,7 +246,7 @@ def integrate_with_intellicrack(app_instance) -> bool:
     return integrate_enhanced_hex_viewer(app_instance)
 
 
-def add_hex_viewer_to_application(app_instance) -> bool:
+def add_hex_viewer_to_application(app_instance: object) -> bool:
     """Add the enhanced hex viewer to an application.
 
     Args:
@@ -272,7 +272,7 @@ def add_hex_viewer_to_application(app_instance) -> bool:
         return False
 
 
-def register_ai_tools(app_instance) -> bool:
+def register_ai_tools(app_instance: object) -> bool:
     """Register hex viewer AI tools with the application.
 
     Args:

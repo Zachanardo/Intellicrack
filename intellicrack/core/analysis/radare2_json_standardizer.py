@@ -684,7 +684,7 @@ class R2JSONStandardizer:
         total_fields = 0
         filled_fields = 0
 
-        def count_fields(obj, path="") -> None:
+        def count_fields(obj: dict[str, Any] | list[Any], path: str = "") -> None:
             nonlocal total_fields, filled_fields
             if isinstance(obj, dict):
                 for key, value in obj.items():
@@ -1252,7 +1252,7 @@ class R2JSONStandardizer:
         # Convert variance to consistency score (inverse relationship)
         return max(0.0, 1.0 - variance)
 
-    def _calculate_nesting_depth(self, data: Any, current_depth: int = 0) -> int:
+    def _calculate_nesting_depth(self, data: dict[str, Any] | list[Any] | object, current_depth: int = 0) -> int:
         """Calculate maximum nesting depth of data structure."""
         if isinstance(data, dict):
             if not data:
@@ -1268,7 +1268,7 @@ class R2JSONStandardizer:
         """Analyze data types in the structure."""
         type_counts = {}
 
-        def count_types(obj) -> None:
+        def count_types(obj: object) -> None:
             if isinstance(obj, dict):
                 type_counts["dict"] = type_counts.get("dict", 0) + 1
                 for value in obj.values():
@@ -1295,7 +1295,7 @@ class R2JSONStandardizer:
         """Extract numeric values from nested data structure."""
         values = []
 
-        def extract_values(obj) -> None:
+        def extract_values(obj: object) -> None:
             if isinstance(obj, dict):
                 for value in obj.values():
                     extract_values(value)

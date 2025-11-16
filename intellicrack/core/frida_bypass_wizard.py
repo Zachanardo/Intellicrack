@@ -144,7 +144,7 @@ class BypassStrategy:
 class FridaBypassWizard:
     """Automated bypass wizard with intelligent decision making."""
 
-    def __init__(self, frida_manager) -> None:
+    def __init__(self, frida_manager: object) -> None:
         """Initialize the Frida bypass wizard.
 
         Args:
@@ -1144,7 +1144,7 @@ class FridaBypassWizard:
 
         try:
             # Set up message handler to receive results
-            def on_message(message, data) -> None:
+            def on_message(message: dict[str, Any], data: bytes | None) -> None:
                 if message["type"] == "send":
                     payload = message["payload"]
                     if payload.get("type") == "detection":

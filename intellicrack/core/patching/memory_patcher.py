@@ -22,9 +22,12 @@ import datetime
 import os
 import sys
 from pathlib import Path
-from typing import Any, Protocol, TypeVar
+from typing import Protocol, TypeVar
 
-# Type variables for generic ctypes operations
+from intellicrack.handlers.pyqt6_handler import QMessageBox
+
+from ...utils.logger import get_logger
+
 T = TypeVar("T")
 
 
@@ -32,9 +35,9 @@ class ApplicationInterface(Protocol):
     """Protocol for application interface used in patching operations."""
 
     binary_path: str
-    potential_patches: list[dict[str, Any]]
+    potential_patches: list[dict[str, object]]
 
-    def update_output(self) -> Any:
+    def update_output(self) -> object:
         """Signal for updating UI output.
 
         Returns:
@@ -45,7 +48,6 @@ class ApplicationInterface(Protocol):
 
 print("[DEBUG memory_patcher] Importing pyqt6_handler...")
 sys.stdout.flush()
-from intellicrack.handlers.pyqt6_handler import QMessageBox
 
 print("[DEBUG memory_patcher] pyqt6_handler imported OK")
 sys.stdout.flush()
@@ -55,14 +57,13 @@ sys.stdout.flush()
 
 print("[DEBUG memory_patcher] Getting logger...")
 sys.stdout.flush()
-from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
 print("[DEBUG memory_patcher] logger obtained OK")
 sys.stdout.flush()
 
 
-def _create_dword_type(ctypes: Any) -> type:
+def _create_dword_type(ctypes: object) -> type:
     """Create Windows DWORD type implementation.
 
     Args:
@@ -118,7 +119,7 @@ def _create_dword_type(ctypes: Any) -> type:
     return DWORD
 
 
-def _create_bool_type(ctypes: Any) -> type:
+def _create_bool_type(ctypes: object) -> type:
     """Create Windows BOOL type implementation.
 
     Args:
@@ -173,7 +174,7 @@ def _create_bool_type(ctypes: Any) -> type:
     return BOOL
 
 
-def _create_word_type(ctypes: Any) -> type:
+def _create_word_type(ctypes: object) -> type:
     """Create Windows WORD type implementation.
 
     Args:
@@ -205,7 +206,7 @@ def _create_word_type(ctypes: Any) -> type:
     return WORD
 
 
-def _create_byte_type(ctypes: Any) -> type:
+def _create_byte_type(ctypes: object) -> type:
     """Create Windows BYTE type implementation.
 
     Args:
@@ -237,7 +238,7 @@ def _create_byte_type(ctypes: Any) -> type:
     return BYTE
 
 
-def _create_handle_types(ctypes: Any) -> tuple[type, type, type, type]:
+def _create_handle_types(ctypes: object) -> tuple[type, type, type, type]:
     """Create Windows HANDLE and related types.
 
     Args:
@@ -308,7 +309,7 @@ def _create_handle_types(ctypes: Any) -> tuple[type, type, type, type]:
     return HANDLE, HWND, HDC, HINSTANCE
 
 
-def _create_pointer_types(ctypes: Any) -> tuple[type, type, type]:
+def _create_pointer_types(ctypes: object) -> tuple[type, type, type]:
     """Create Windows pointer types.
 
     Args:

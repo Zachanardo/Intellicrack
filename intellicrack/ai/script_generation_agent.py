@@ -455,7 +455,7 @@ class AIAgent:
 
             real_path = os.path.realpath(binary_path)
             allowed_dirs = [
-                os.path.realpath(os.getcwd()),
+                os.path.realpath(Path.cwd()),
                 os.path.realpath(os.path.expanduser("~")),
                 os.path.realpath(tempfile.gettempdir()),
             ]

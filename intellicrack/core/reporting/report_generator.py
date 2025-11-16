@@ -497,7 +497,7 @@ class ReportGenerator:
         return None
 
 
-def generate_report(app_instance, format: str = "html", save: bool = True, filename: str | None = None) -> str | None:
+def generate_report(app_instance: object, format: str = "html", save: bool = True, filename: str | None = None) -> str | None:
     """Generate an analysis report in the specified format.
 
     Args:
@@ -575,10 +575,10 @@ def generate_report(app_instance, format: str = "html", save: bool = True, filen
                 return pdf_path
             except ImportError:
                 logger.warning("PDF generation not available, saving as HTML instead")
-                format = "html"
+                report_format = "html"
                 content = html_content
         else:
-            logger.error(f"Unsupported report format: {format}")
+            logger.error(f"Unsupported report format: {report_format}")
             return None
 
         # Save or return content
@@ -599,7 +599,7 @@ def generate_report(app_instance, format: str = "html", save: bool = True, filen
         return None
 
 
-def view_report(app_instance, filepath: str | None = None) -> bool:
+def view_report(app_instance: object, filepath: str | None = None) -> bool:
     """View a generated report in the appropriate viewer.
 
     Args:

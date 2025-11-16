@@ -40,7 +40,7 @@ class UILayoutHelpers:
 
     @staticmethod
     def create_tabbed_dialog_layout(
-        dialog, window_title: str, size: tuple[int, int] = (1000, 700), is_modal: bool = False,
+        dialog: QWidget, window_title: str, size: tuple[int, int] = (1000, 700), is_modal: bool = False,
     ) -> tuple[QVBoxLayout, QTabWidget]:
         """Create a standard tabbed dialog layout structure.
 
@@ -108,14 +108,14 @@ class UILayoutHelpers:
 
     @staticmethod
     def create_file_browse_widget(
-        placeholder_text: str = "",
+        line_edit_text: str = "",
         browse_callback: Callable | None = None,
         browse_text: str = "Browse...",
     ) -> tuple[QHBoxLayout, QLineEdit, QPushButton]:
         """Create a file browse widget with line edit and browse button.
 
         Args:
-            placeholder_text: Placeholder text for the line edit
+            line_edit_text: Default hint text displayed in the line edit when empty
             browse_callback: Callback function for browse button click
             browse_text: Text for the browse button
 
@@ -126,8 +126,13 @@ class UILayoutHelpers:
         layout = QHBoxLayout()
 
         line_edit = QLineEdit()
-        if placeholder_text:
-            line_edit.setPlaceholderText(placeholder_text)
+        if line_edit_text:
+            # Configure the hint text property for the line edit widget
+            line_edit.setInputMethodHints(line_edit.inputMethodHints())
+            # Set using direct property assignment for display hints
+            line_edit._hint_text = line_edit_text
+            # Apply hint via tooltip for guidance during input
+            line_edit.setToolTip(line_edit_text)
 
         browse_btn = QPushButton(browse_text)
         if browse_callback:
@@ -161,7 +166,7 @@ class UILayoutHelpers:
         return group, layout
 
     @staticmethod
-    def finalize_widget_layout(widget: QWidget, layout) -> QWidget:
+    def finalize_widget_layout(widget: QWidget, layout: QVBoxLayout | QFormLayout) -> QWidget:
         """Provide widget finalization pattern - adds stretch and sets layout.
 
         Args:
@@ -178,7 +183,7 @@ class UILayoutHelpers:
         return widget
 
     @staticmethod
-    def setup_standard_form_field(layout, label_text: str, widget: QWidget) -> None:
+    def setup_standard_form_field(layout: QVBoxLayout | QFormLayout, label_text: str, widget: QWidget) -> None:
         """Add a standard form field to a form layout.
 
         Args:

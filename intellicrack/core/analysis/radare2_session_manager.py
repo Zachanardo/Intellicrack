@@ -22,6 +22,7 @@ import hashlib
 import logging
 import threading
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
@@ -149,7 +150,7 @@ class R2SessionWrapper:
                     self.state = SessionState.CLOSED
                     logger.debug(f"Session {self.session_id} closed")
 
-    def execute(self, command: str, expect_json: bool = False) -> Any:
+    def execute(self, command: str, expect_json: bool = False) -> str | dict | list | None:
         """Execute radare2 command with error handling.
 
         Args:
@@ -157,7 +158,7 @@ class R2SessionWrapper:
             expect_json: Whether to parse result as JSON
 
         Returns:
-            Command result
+            Command result as string, dict, list, or None depending on expect_json flag
 
         Raises:
             RuntimeError: If session not connected
@@ -568,7 +569,7 @@ class R2SessionPool:
         binary_path: str,
         flags: list[str] | None = None,
         timeout: float | None = None,
-    ):
+    ) -> Generator[R2SessionWrapper, None, None]:
         """Context manager for session pooling.
 
         Args:
@@ -631,7 +632,7 @@ def r2_session_pooled(
     flags: list[str] | None = None,
     timeout: float | None = None,
     pool: R2SessionPool | None = None,
-):
+) -> Generator[R2SessionWrapper, None, None]:
     """Context manager for pooled r2pipe sessions.
 
     Args:

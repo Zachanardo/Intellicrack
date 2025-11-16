@@ -457,12 +457,12 @@ class AdvancedDynamicAnalyzer:
             # Message handler
             analysis_data = {}
 
-            def on_message(message, _data) -> None:  # pylint: disable=unused-argument
+            def on_message(message: dict[str, Any], _data: bytes | None) -> None:  # pylint: disable=unused-argument
                 """Handle messages from the Frida script during dynamic analysis.
 
                 Args:
                     message: Message dictionary from Frida containing 'type' and 'payload'
-                    _data: Additional data (unused)
+                    _data: Additional data from Frida message (typically binary payload, unused in this handler)
 
                 Processes different message types including analysis completion and
                 various activity tracking (file access, registry, network, licensing).
@@ -704,7 +704,7 @@ class AdvancedDynamicAnalyzer:
             script = session.create_script(script_code)
             results = {"matches": [], "status": "success", "scan_count": 0}
 
-            def on_message(message, data) -> None:
+            def on_message(message: dict[str, Any], data: bytes | None) -> None:
                 if data:
                     self.logger.debug(f"Message data: {len(data)} bytes")
                 if message["type"] == "send":
@@ -1276,7 +1276,7 @@ print(matches)
 
 
 # Convenience functions for application integration
-def run_dynamic_analysis(app, binary_path: str | Path | None = None, payload: bytes | None = None) -> dict[str, Any]:
+def run_dynamic_analysis(app: object, binary_path: str | Path | None = None, payload: bytes | None = None) -> dict[str, Any]:
     """Run dynamic analysis on a binary with app integration.
 
     Args:
@@ -1453,7 +1453,7 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> list[str]
         script = session.create_script(script_content)
 
         # Set up message handler
-        def on_message(message, _data) -> None:  # pylint: disable=unused-argument
+        def on_message(message: dict[str, Any], _data: bytes | None) -> None:  # pylint: disable=unused-argument
             """Handle messages from a Frida script.
 
             Appends payloads from 'send' messages to the logs list.

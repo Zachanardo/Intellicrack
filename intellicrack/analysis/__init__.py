@@ -24,9 +24,11 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Import core analysis modules
+AnalysisResultOrchestrator: object | None = None
+HAS_ORCHESTRATOR: bool = False
 try:
     from .analysis_result_orchestrator import AnalysisResultOrchestrator
 
@@ -37,6 +39,8 @@ except ImportError as e:
     AnalysisResultOrchestrator = None
     HAS_ORCHESTRATOR = False
 
+ProtectionWorkflow: object | None = None
+HAS_PROTECTION_WORKFLOW: bool = False
 try:
     from .protection_workflow import ProtectionAnalysisWorkflow as ProtectionWorkflow
 
@@ -48,6 +52,7 @@ except ImportError as e:
     HAS_PROTECTION_WORKFLOW = False
 
 # Import from core.analysis for additional functionality
+CORE_ANALYSIS_AVAILABLE: bool = False
 try:
     from intellicrack.core.analysis import *
 
@@ -58,8 +63,8 @@ except ImportError as e:
     CORE_ANALYSIS_AVAILABLE = False
 
 # Import analysis handlers
-_handlers = {}
-_handler_modules = [
+_handlers: dict[str, object] = {}
+_handler_modules: list[tuple[str, str]] = [
     ("llm_handler", "LLM analysis handler"),
     ("report_generation_handler", "Report generation handler"),
     ("script_generation_handler", "Script generation handler"),
@@ -76,8 +81,14 @@ for module_name, description in _handler_modules:
         logger.warning("Error loading analysis handler %s: %s", module_name, e)
 
 
-def get_available_capabilities():
-    """Get list of available analysis capabilities."""
+def get_available_capabilities() -> list[str]:
+    """Get list of available analysis capabilities.
+
+    Returns:
+        list[str]: List of available capability names including result
+            orchestration, protection workflows, and installed handlers.
+
+    """
     capabilities = []
     if HAS_ORCHESTRATOR:
         capabilities.append("result_orchestration")
@@ -87,17 +98,25 @@ def get_available_capabilities():
     return capabilities
 
 
-def is_capability_available(capability_name: str):
-    """Check if a specific analysis capability is available."""
+def is_capability_available(capability_name: str) -> bool:
+    """Check if a specific analysis capability is available.
+
+    Args:
+        capability_name: The name of the capability to check for availability.
+
+    Returns:
+        bool: True if the capability is available, False otherwise.
+
+    """
     return capability_name in get_available_capabilities()
 
 
 __all__ = [
-    "get_available_capabilities",
-    "is_capability_available",
+    "CORE_ANALYSIS_AVAILABLE",
     "HAS_ORCHESTRATOR",
     "HAS_PROTECTION_WORKFLOW",
-    "CORE_ANALYSIS_AVAILABLE",
+    "get_available_capabilities",
+    "is_capability_available",
 ]
 
 if AnalysisResultOrchestrator:

@@ -22,15 +22,19 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
+from typing import Callable
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Import validation modules
+ImportValidator: type | None
+validate_imports: Callable[..., bool] | None
+
 try:
     from .import_validator import ImportValidator, validate_imports
 
     logger.debug("Import validator loaded successfully")
-    HAS_IMPORT_VALIDATOR = True
+    HAS_IMPORT_VALIDATOR: bool = True
 except ImportError as e:
     logger.warning("Import validator not available: %s", e)
     ImportValidator = None
@@ -38,22 +42,27 @@ except ImportError as e:
     HAS_IMPORT_VALIDATOR = False
 
 
-def get_validation_capabilities():
-    """Get list of available validation capabilities."""
-    capabilities = []
+def get_validation_capabilities() -> list[str]:
+    """Get list of available validation capabilities.
+
+    Returns:
+        list[str]: List of available validation capability names.
+
+    """
+    capabilities: list[str] = []
     if HAS_IMPORT_VALIDATOR:
         capabilities.append("import_validation")
     return capabilities
 
 
-def is_validation_available(validation_type):
+def is_validation_available(validation_type: str) -> bool:
     """Check if a specific validation capability is available.
 
     Args:
-        validation_type (str): Type of validation to check
+        validation_type: Type of validation to check.
 
     Returns:
-        bool: True if validation is available, False otherwise
+        True if validation is available, False otherwise.
 
     """
     return validation_type in get_validation_capabilities()

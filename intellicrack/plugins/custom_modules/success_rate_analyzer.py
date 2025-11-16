@@ -761,7 +761,7 @@ class MLPredictor:
             try:
                 model.fit(X_scaled, y)
             except Exception as e:
-                logging.exception(f"Error training {name} model: {e}")
+                logger.exception("Error training %s model: %s", name, e)
 
         self.is_trained = True
 
@@ -785,7 +785,7 @@ class MLPredictor:
                 pred = model.predict(X_scaled)[0]
                 predictions[name] = max(0.0, min(1.0, pred))  # Clamp to [0, 1]
             except Exception as e:
-                logging.exception(f"Error predicting with {name}: {e}")
+                logger.exception("Error predicting with %s: %s", name, e)
 
         # Ensemble prediction (average)
         if predictions:
@@ -1060,7 +1060,7 @@ class SuccessRateAnalyzer:
                     time.sleep(3600)  # Run every hour
 
                 except Exception as e:
-                    logging.exception(f"Error in background analysis: {e}")
+                    logger.exception("Error in background analysis: %s", e)
                     time.sleep(600)  # Wait 10 minutes on error
 
         threading.Thread(target=background_worker, daemon=True).start()

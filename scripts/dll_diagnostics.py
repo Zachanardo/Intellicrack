@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 
 
-def get_loaded_dll_path(dll_name):
+def get_loaded_dll_path(dll_name: str) -> str | None:
     """Get the actual path of a loaded DLL using Windows API.
 
     Args:
@@ -40,7 +40,7 @@ def get_loaded_dll_path(dll_name):
         return f"Error: {e}"
 
 
-def check_path_priority():
+def check_path_priority() -> tuple[list[str], list[str], list[str]]:
     """Analyze PATH environment variable for Intel oneAPI interference."""
     path_dirs = os.environ.get("PATH", "").split(";")
 

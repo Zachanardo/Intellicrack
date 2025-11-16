@@ -285,12 +285,12 @@ def run_test_binary_packing():
         # Test structure packing
         class_format = '<4sIHH'  # signature, version, major, minor
         packed_struct = struct.pack(class_format, b'TEST', 0x01000000, 4, 0)
-        sig, ver, maj, min = struct.unpack(class_format, packed_struct)
+        sig, ver, maj, minor = struct.unpack(class_format, packed_struct)
 
         assert sig == b'TEST', "Signature mismatch"
         assert ver == 0x01000000, "Version mismatch"
         assert maj == 4, "Major version mismatch"
-        assert min == 0, "Minor version mismatch"
+        assert minor == 0, "Minor version mismatch"
         print("Structure packing/unpacking working")
 
         print("OK Test PASSED!")

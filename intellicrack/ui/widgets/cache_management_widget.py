@@ -37,15 +37,29 @@ logger = get_logger(__name__)
 
 
 class CacheStatsWidget(QWidget):
-    """Widget displaying cache statistics."""
+    """Widget displaying cache statistics.
 
-    def __init__(self, parent=None) -> None:
-        """Initialize the cache statistics widget with UI components."""
+    Displays real-time cache metrics including entry count, total size in MB,
+    and cache hit rate. Shows progress bars indicating cache utilization relative
+    to configured maximums for entries and size limits.
+    """
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialize the cache statistics widget with UI components.
+
+        Args:
+            parent: Parent QWidget for this widget. Defaults to None.
+
+        """
         super().__init__(parent)
         self.init_ui()
 
     def init_ui(self) -> None:
-        """Initialize the UI."""
+        """Initialize the UI.
+
+        Creates metric labels for entries, size, and hit rate, and progress bars
+        for entry count and size utilization with appropriate maximum values.
+        """
         layout = QVBoxLayout()
 
         # Cache metrics
@@ -94,7 +108,16 @@ class CacheStatsWidget(QWidget):
         self.setLayout(layout)
 
     def update_stats(self, stats: dict[str, Any]) -> None:
-        """Update displayed statistics."""
+        """Update displayed statistics.
+
+        Args:
+            stats: Dictionary containing cache statistics with keys like
+                'stats', 'cache_size_mb', 'max_entries', and 'max_size_mb'.
+
+        Raises:
+            Exception: Logs exceptions but continues gracefully.
+
+        """
         try:
             stats_data = stats.get("stats", {})
 
@@ -119,15 +142,28 @@ class CacheStatsWidget(QWidget):
 
 
 class CacheTopEntriesWidget(QWidget):
-    """Widget showing most accessed cache entries."""
+    """Widget showing most accessed cache entries.
 
-    def __init__(self, parent=None) -> None:
-        """Initialize the cache top entries widget with UI components."""
+    Displays a table of the most frequently accessed cache entries with columns
+    for filename, access count, size in kilobytes, and age in hours.
+    """
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialize the cache top entries widget with UI components.
+
+        Args:
+            parent: Parent QWidget for this widget. Defaults to None.
+
+        """
         super().__init__(parent)
         self.init_ui()
 
     def init_ui(self) -> None:
-        """Initialize the UI."""
+        """Initialize the UI.
+
+        Creates a table widget with 4 columns (File, Access Count, Size, Age)
+        and configures column resize modes for proper display.
+        """
         layout = QVBoxLayout()
 
         # Header
@@ -153,8 +189,14 @@ class CacheTopEntriesWidget(QWidget):
         layout.addWidget(self.table)
         self.setLayout(layout)
 
-    def update_entries(self, entries: list) -> None:
-        """Update top entries table."""
+    def update_entries(self, entries: list[dict[str, Any]]) -> None:
+        """Update top entries table.
+
+        Args:
+            entries: List of dictionaries containing entry data with keys like
+                'file', 'access_count', 'size_kb', and 'age_hours'.
+
+        """
         self.table.setRowCount(len(entries))
 
         for row, entry in enumerate(entries):
@@ -165,13 +207,24 @@ class CacheTopEntriesWidget(QWidget):
 
 
 class CacheManagementWidget(QWidget):
-    """Complete cache management interface."""
+    """Complete cache management interface.
+
+    Provides a comprehensive UI for monitoring and managing the analysis cache,
+    including viewing cache statistics, top entries, detailed metrics, and
+    performing cache operations (cleanup, save, clear). Auto-refreshes statistics
+    every 5 seconds.
+    """
 
     cache_cleared = pyqtSignal()
     cache_cleaned = pyqtSignal(int)
 
-    def __init__(self, parent=None) -> None:
-        """Initialize cache management widget with engine, cache, UI, and refresh timer."""
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialize cache management widget with engine, cache, UI, and refresh timer.
+
+        Args:
+            parent: Parent QWidget for this widget. Defaults to None.
+
+        """
         super().__init__(parent)
         self.engine = get_unified_engine()
         self.cache = get_analysis_cache()
@@ -179,7 +232,12 @@ class CacheManagementWidget(QWidget):
         self.setup_timer()
 
     def init_ui(self) -> None:
-        """Initialize the UI."""
+        """Initialize the user interface.
+
+        Constructs the main layout with title, splitter containing stats/controls
+        on the left and top entries/details on the right. Calls refresh_stats to
+        populate initial data.
+        """
         layout = QVBoxLayout()
 
         # Title
@@ -269,13 +327,22 @@ class CacheManagementWidget(QWidget):
         self.refresh_stats()
 
     def setup_timer(self) -> None:
-        """Set up auto-refresh timer."""
+        """Set up auto-refresh timer.
+
+        Creates a QTimer that refreshes cache statistics every 5000 milliseconds
+        (5 seconds) by connecting the timeout signal to refresh_stats method.
+        """
         self.timer = QTimer()
         self.timer.timeout.connect(self.refresh_stats)
         self.timer.start(5000)  # Refresh every 5 seconds
 
     def refresh_stats(self) -> None:
-        """Refresh cache statistics."""
+        """Refresh cache statistics.
+
+        Retrieves current cache statistics from the unified engine and updates
+        all UI components (stats widget, top entries table, and details text).
+        Handles exceptions gracefully and logs errors.
+        """
         try:
             stats = self.engine.get_cache_stats()
 
@@ -293,7 +360,15 @@ class CacheManagementWidget(QWidget):
             logger.error(f"Failed to refresh cache stats: {e}")
 
     def update_details(self, stats: dict[str, Any]) -> None:
-        """Update cache details text."""
+        """Update cache details text.
+
+        Args:
+            stats: Dictionary containing cache statistics and configuration.
+
+        Extracts cache metrics, AI coordination performance stats if available,
+        and timestamp information to display in the details text widget.
+
+        """
         details = []
 
         stats_data = stats.get("stats", {})
@@ -352,7 +427,12 @@ class CacheManagementWidget(QWidget):
         self.details_text.setPlainText("\n".join(details))
 
     def cleanup_cache(self) -> None:
-        """Clean up invalid cache entries."""
+        """Clean up invalid cache entries.
+
+        Invokes the unified engine to clean up invalid cache entries, emits
+        the cache_cleaned signal with the number of entries removed, and refreshes
+        the UI. Shows confirmation dialog on success and error dialog on failure.
+        """
         try:
             removed = self.engine.cleanup_cache()
 
@@ -374,7 +454,11 @@ class CacheManagementWidget(QWidget):
             )
 
     def save_cache(self) -> None:
-        """Save cache to disk."""
+        """Save cache to disk.
+
+        Persists all cached analysis data to disk through the unified engine.
+        Shows confirmation dialog on success and error dialog on failure.
+        """
         try:
             self.engine.save_cache()
 
@@ -393,7 +477,12 @@ class CacheManagementWidget(QWidget):
             )
 
     def clear_cache(self) -> None:
-        """Clear all cache entries."""
+        """Clear all cache entries.
+
+        Prompts user for confirmation before clearing all cached analysis results
+        and AI coordination cache. Emits cache_cleared signal after successful
+        clearance and refreshes the UI. Shows error dialog on failure.
+        """
         reply = QMessageBox.question(
             self,
             "Clear Cache",
@@ -440,8 +529,15 @@ class CacheManagementWidget(QWidget):
                     f"Failed to clear cache: {e}",
                 )
 
-    def closeEvent(self, event) -> None:
-        """Clean up on close."""
+    def closeEvent(self, event: object) -> None:
+        """Clean up on close.
+
+        Args:
+            event: The close event object from Qt.
+
+        Stops the auto-refresh timer before closing the widget.
+
+        """
         if hasattr(self, "timer"):
             self.timer.stop()
         super().closeEvent(event)

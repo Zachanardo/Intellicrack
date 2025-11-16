@@ -108,7 +108,7 @@ class ExtractedFile:
     def from_path(cls, file_path: str, original_offset: int = 0) -> "ExtractedFile":
         """Create ExtractedFile from filesystem path."""
         try:
-            stat_info = os.stat(file_path)
+            stat_info = Path(file_path).stat()
 
             # Calculate file hash
             with open(file_path, "rb") as f:
@@ -604,7 +604,7 @@ class FirmwareAnalyzer:
 
         try:
             # Check file permissions
-            stat_info = os.stat(file_path)
+            stat_info = Path(file_path).stat()
             security_info["file_permissions"] = oct(stat_info.st_mode)[-3:]
             security_info["is_setuid"] = bool(stat_info.st_mode & 0o4000)
 

@@ -19,6 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 from abc import ABC, abstractmethod
+from logging import Logger
 from typing import Any
 
 from ...utils.system.windows_common import WindowsConstants, get_windows_kernel32, get_windows_ntdll
@@ -69,15 +70,18 @@ class BaseWindowsPatcher(ABC):
         self.THREAD_GET_CONTEXT = 0x0008
         self.THREAD_SUSPEND_RESUME = 0x0002
 
-    def handle_suspended_process_result(self, result, logger_instance=None):
+    def handle_suspended_process_result(
+        self, result: dict[str, Any], logger_instance: Logger | None = None,
+    ) -> tuple[bool, Any, Any]:
         """Handle suspended process creation result with common pattern.
 
         Args:
-            result: Result from create_suspended_process_with_context
-            logger_instance: Logger instance to use (defaults to self.logger)
+            result: Result from create_suspended_process_with_context containing
+                success, process_info, and context keys.
+            logger_instance: Logger instance to use (defaults to self.logger).
 
         Returns:
-            Tuple of (success, process_info, context) or (False, None, None)
+            Tuple of (success, process_info, context) or (False, None, None).
 
         """
         if logger_instance is None:
@@ -92,17 +96,20 @@ class BaseWindowsPatcher(ABC):
 
         return True, process_info, context
 
-    def create_and_handle_suspended_process(self, target_exe: str, logger_instance=None) -> tuple[bool, Any, Any]:
+    def create_and_handle_suspended_process(
+        self, target_exe: str, logger_instance: Logger | None = None,
+    ) -> tuple[bool, Any, Any]:
         """Create a suspended process and handle the result in one operation.
 
-        Common pattern to eliminate duplication between early bird injection and process hollowing.
+        Common pattern to eliminate duplication between early bird injection and
+        process hollowing.
 
         Args:
-            target_exe: Path to target executable
-            logger_instance: Optional logger instance to use
+            target_exe: Path to target executable.
+            logger_instance: Optional logger instance to use.
 
         Returns:
-            Tuple of (success, process_info, context) or (False, None, None)
+            Tuple of (success, process_info, context) or (False, None, None).
 
         """
         from ...utils.system.process_common import create_suspended_process_with_context
@@ -121,13 +128,34 @@ class BaseWindowsPatcher(ABC):
         return self.handle_suspended_process_result(result, logger_instance)
 
     @abstractmethod
-    def get_required_libraries(self) -> list:
-        """Get list of required Windows libraries for this patcher."""
+    def get_required_libraries(self) -> list[str]:
+        """Get list of required Windows libraries for this patcher.
+
+        Returns:
+            List of Windows library names required for this patcher.
+
+        """
 
     @abstractmethod
-    def _create_suspended_process(self, target_exe: str):
-        """Create a suspended process."""
+    def _create_suspended_process(self, target_exe: str) -> dict[str, Any]:
+        """Create a suspended process.
+
+        Args:
+            target_exe: Path to the target executable to launch in suspended state.
+
+        Returns:
+            Dictionary containing process creation result details.
+
+        """
 
     @abstractmethod
-    def _get_thread_context(self, thread_handle):
-        """Get thread context."""
+    def _get_thread_context(self, thread_handle: int) -> dict[str, Any]:
+        """Get thread context.
+
+        Args:
+            thread_handle: Handle to the thread.
+
+        Returns:
+            Dictionary containing thread context information.
+
+        """

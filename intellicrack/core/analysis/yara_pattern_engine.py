@@ -510,9 +510,9 @@ rule Basic_PE_Detection
         if not self.compiled_rules:
             return
 
-        def parse_meta_from_source(rule_source, rule_name):
+        def parse_meta_from_source(rule_source: str, rule_name: str) -> dict[str, Any]:
             """Parse meta fields from a specific rule in the source."""
-            meta = {}
+            meta: dict[str, Any] = {}
 
             # Find the specific rule in the source
             rule_pattern = rf"rule\s+{re.escape(rule_name)}\s*{{.*?^}}"
@@ -618,7 +618,7 @@ rule Basic_PE_Detection
 
         # Get file metadata for deduplication
         try:
-            file_stat = os.stat(file_path)
+            file_stat = Path(file_path).stat()
             file_mtime = file_stat.st_mtime
             file_size = file_stat.st_size
         except Exception:
@@ -782,7 +782,7 @@ rule Basic_PE_Detection
                 except Exception as cleanup_error:
                     logger.warning(f"Failed to cleanup temp directory: {cleanup_error}")
 
-    def _determine_category(self, match) -> PatternCategory:
+    def _determine_category(self, match: object) -> PatternCategory:
         """Determine pattern category from YARA match."""
         # Check rule name first
         rule_name = match.rule.lower()
@@ -803,7 +803,7 @@ rule Basic_PE_Detection
             return PatternCategory.LICENSE_BYPASS
         return PatternCategory.SUSPICIOUS
 
-    def _calculate_confidence(self, match) -> float:
+    def _calculate_confidence(self, match: object) -> float:
         """Calculate confidence score for a match."""
         # Check metadata first
         if hasattr(match, "meta") and "confidence" in match.meta:

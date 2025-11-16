@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 from typing import Any
 
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QEvent, QThread, pyqtSignal
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QButtonGroup,
@@ -124,7 +124,7 @@ class TrialResetWorker(QThread):
 class TrialResetDialog(QDialog):
     """Comprehensive trial reset engine interface."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the TrialResetDialog with an optional parent."""
         super().__init__(parent)
         self.engine = TrialResetEngine()
@@ -174,7 +174,7 @@ class TrialResetDialog(QDialog):
 
         self.setLayout(layout)
 
-    def create_scan_tab(self):
+    def create_scan_tab(self) -> QWidget:
         """Create trial scan tab."""
         widget = QWidget()
         layout = QVBoxLayout()
@@ -241,7 +241,7 @@ class TrialResetDialog(QDialog):
         widget.setLayout(layout)
         return widget
 
-    def create_reset_tab(self):
+    def create_reset_tab(self) -> QWidget:
         """Create trial reset tab."""
         widget = QWidget()
         layout = QVBoxLayout()
@@ -332,7 +332,7 @@ class TrialResetDialog(QDialog):
         widget.setLayout(layout)
         return widget
 
-    def create_monitor_tab(self):
+    def create_monitor_tab(self) -> QWidget:
         """Create trial monitoring tab."""
         widget = QWidget()
         layout = QVBoxLayout()
@@ -404,7 +404,7 @@ class TrialResetDialog(QDialog):
         widget.setLayout(layout)
         return widget
 
-    def create_advanced_tab(self):
+    def create_advanced_tab(self) -> QWidget:
         """Create advanced options tab."""
         widget = QWidget()
         layout = QVBoxLayout()
@@ -494,7 +494,7 @@ class TrialResetDialog(QDialog):
         widget.setLayout(layout)
         return widget
 
-    def create_history_tab(self):
+    def create_history_tab(self) -> QWidget:
         """Create scan history tab."""
         widget = QWidget()
         layout = QVBoxLayout()
@@ -1035,7 +1035,7 @@ class TrialResetDialog(QDialog):
         scrollbar = self.console.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
 
-    def closeEvent(self, event) -> None:
+    def closeEvent(self, event: QEvent) -> None:
         """Handle dialog close."""
         # Stop monitoring if active
         if self.monitor_worker:

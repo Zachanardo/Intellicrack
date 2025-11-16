@@ -23,6 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import os
 import time
+import types
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
@@ -281,7 +282,7 @@ class StalkerSession:
         self._save_json(output_file, data)
         self._log(f"Trace results saved to {output_file}")
 
-    def _save_json(self, filepath: str, data: Any) -> None:
+    def _save_json(self, filepath: str, data: object) -> None:
         """Save data to JSON file."""
         try:
             with open(filepath, "w", encoding="utf-8") as f:
@@ -582,12 +583,17 @@ class StalkerSession:
         self._is_active = False
         self._log("Session cleaned up")
 
-    def __enter__(self):
+    def __enter__(self) -> "StalkerSession":
         """Context manager entry."""
         self.start()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> None:
         """Context manager exit."""
         if self._is_active:
             self.stop_stalking()

@@ -21,7 +21,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-from typing import Any
+from PyQt6.QtWidgets import QWidget
 
 try:
     from PyQt6.QtCore import QObject, QRunnable, QThreadPool, QTimer, pyqtSignal
@@ -62,7 +62,7 @@ except ImportError:
         """Fallback QTimer class when PyQt6 is not available."""
 
 
-    def pyqtSignal(*args) -> None:
+    def pyqtSignal(*args: object) -> None:
         """Fallback pyqtSignal function when PyQt6 is not available."""
         return
 
@@ -124,7 +124,7 @@ try:
 except ImportError:
     import logging
 
-    def get_logger(name: str):
+    def get_logger(name: str) -> logging.Logger:
         """Create a logger instance with the given name.
 
         Args:
@@ -207,9 +207,7 @@ class ScriptGenerationWorker(QRunnable):
                     self.signals.progress.emit("AI enhancement unavailable, using base script")
                 except Exception as ai_error:
                     # Log AI enhancement error but continue with base script
-                    import logging
-
-                    logging.warning(f"AI enhancement failed: {ai_error}")
+                    logger.warning("AI enhancement failed: %s", ai_error)
                     self.signals.progress.emit("AI enhancement failed, using base script")
 
             self.signals.result.emit(result)
@@ -226,7 +224,7 @@ class ScriptGenerationWorker(QRunnable):
 class ScriptDisplayDialog(QDialog):
     """Dialog for displaying and managing generated scripts."""
 
-    def __init__(self, script_data: dict, parent: Any | None = None) -> None:
+    def __init__(self, script_data: dict, parent: QWidget | None = None) -> None:
         """Initialize the script display dialog.
 
         Args:
@@ -463,7 +461,7 @@ class ScriptGenerationHandler(QObject):
     script_error = pyqtSignal(str)
     script_progress = pyqtSignal(str)
 
-    def __init__(self, parent: Any | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the script generation handler.
 
         Args:
@@ -480,7 +478,7 @@ class ScriptGenerationHandler(QObject):
         self.current_result = result
         logger.info(f"Script generation handler received analysis for: {result.file_path}")
 
-    def generate_script(self, script_type: str = "frida", parent_widget: Any | None = None) -> None:
+    def generate_script(self, script_type: str = "frida", parent_widget: QWidget | None = None) -> None:
         """Generate a bypass script of the specified type.
 
         Args:
@@ -514,7 +512,7 @@ class ScriptGenerationHandler(QObject):
 
         self.thread_pool.start(worker)
 
-    def _on_script_ready(self, result: dict, parent_widget: Any | None = None) -> None:
+    def _on_script_ready(self, result: dict, parent_widget: QWidget | None = None) -> None:
         """Handle script generation completion."""
         if result["success"]:
             # Emit signal

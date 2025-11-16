@@ -903,7 +903,7 @@ class GhidraPlugin(AbstractPlugin):
         if not os.path.exists(binary_path):
             raise FileNotFoundError(f"Binary file not found: {binary_path}")
 
-        binary_stats = os.stat(binary_path)
+        binary_stats = Path(binary_path).stat()
         binary_hash = hashlib.sha256()
 
         # Calculate hash of binary for tracking

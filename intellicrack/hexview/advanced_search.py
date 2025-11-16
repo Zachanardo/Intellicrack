@@ -182,7 +182,7 @@ class SearchHistory:
 class SearchEngine:
     """Core search engine for finding patterns in binary data."""
 
-    def __init__(self, file_handler) -> None:
+    def __init__(self, file_handler: object) -> None:
         """Initialize the SearchEngine with file handler and chunk size."""
         self.file_handler = file_handler
 
@@ -657,7 +657,7 @@ class SearchThread(QThread if PYQT6_AVAILABLE else object):
         pattern: str,
         search_type: SearchType,
         find_all: bool = False,
-        **kwargs,
+        **kwargs: object,
     ) -> None:
         """Initialize the SearchThread with search parameters."""
         if PYQT6_AVAILABLE:
@@ -699,7 +699,7 @@ class SearchThread(QThread if PYQT6_AVAILABLE else object):
 class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
     """Advanced search dialog with comprehensive search options."""
 
-    def __init__(self, parent=None, search_engine: SearchEngine = None) -> None:
+    def __init__(self, parent: object | None = None, search_engine: SearchEngine | None = None) -> None:
         """Initialize the advanced search dialog with parent widget and search engine."""
         if not PYQT6_AVAILABLE:
             return
@@ -1199,7 +1199,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
 class FindAllDialog(QDialog):
     """Dialog for displaying find all results."""
 
-    def __init__(self, parent=None, results=None) -> None:
+    def __init__(self, parent: object | None = None, results: list[SearchResult] | None = None) -> None:
         """Initialize find all dialog."""
         super().__init__(parent)
         self.results = results or []
@@ -1245,7 +1245,7 @@ class FindAllDialog(QDialog):
 class ReplaceDialog(QDialog):
     """Dialog for replace operations."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: object | None = None) -> None:
         """Initialize replace dialog."""
         super().__init__(parent)
         self.setWindowTitle("Replace")

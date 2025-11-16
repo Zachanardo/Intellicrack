@@ -1,0 +1,3948 @@
+warning: `incorrect-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible. Ignoring `incorrect-blank-line-before-class`.
+warning: `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible. Ignoring `multi-line-summary-second-line`.
+[
+  {
+    "cell": null,
+    "code": "D100",
+    "end_location": {
+      "column": 1,
+      "row": 1
+    },
+    "filename": "D:\\Intellicrack\\extract_40_samples.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 1
+    },
+    "message": "Missing docstring in public module",
+    "noqa_row": 1,
+    "url": "https://docs.astral.sh/ruff/rules/undocumented-public-module"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 16,
+      "row": 29
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 29
+    },
+    "message": "Missing return type annotation for private function `__getattr__`",
+    "noqa_row": 29,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 24,
+      "row": 48
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\api_provider_clients.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 48
+    },
+    "message": "Missing return type annotation for private function `_configure_auth`",
+    "noqa_row": 48,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN003",
+    "end_location": {
+      "column": 60,
+      "row": 55
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\api_provider_clients.py",
+    "fix": null,
+    "location": {
+      "column": 52,
+      "row": 55
+    },
+    "message": "Missing type annotation for `**kwargs`",
+    "noqa_row": 55,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 40,
+      "row": 405
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\background_loader.py",
+    "fix": null,
+    "location": {
+      "column": 37,
+      "row": 405
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `llm_manager`",
+    "noqa_row": 405,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 50,
+      "row": 488
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\background_loader.py",
+    "fix": null,
+    "location": {
+      "column": 40,
+      "row": 488
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `llm_manager`",
+    "noqa_row": 488,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 49,
+      "row": 65
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\interactive_assistant.py",
+    "fix": null,
+    "location": {
+      "column": 39,
+      "row": 65
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `cli_interface`",
+    "noqa_row": 65,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 24,
+      "row": 224
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\llm_fallback_chains.py",
+    "fix": null,
+    "location": {
+      "column": 13,
+      "row": 224
+    },
+    "message": "Missing return type annotation for private function `model_score`",
+    "noqa_row": 224,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN003",
+    "end_location": {
+      "column": 95,
+      "row": 374
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\llm_fallback_chains.py",
+    "fix": null,
+    "location": {
+      "column": 87,
+      "row": 374
+    },
+    "message": "Missing type annotation for `**kwargs`",
+    "noqa_row": 374,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 43,
+      "row": 98
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\qemu_manager.py",
+    "fix": null,
+    "location": {
+      "column": 40,
+      "row": 98
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `client`",
+    "noqa_row": 98,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 68,
+      "row": 98
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\qemu_manager.py",
+    "fix": null,
+    "location": {
+      "column": 65,
+      "row": 98
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `key`",
+    "noqa_row": 98,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 40,
+      "row": 41
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\qemu_test_manager_enhanced.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 41
+    },
+    "message": "Missing return type annotation for public function `test_frida_script_with_callback`",
+    "noqa_row": 41,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN003",
+    "end_location": {
+      "column": 59,
+      "row": 278
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\script_generation_prompts.py",
+    "fix": null,
+    "location": {
+      "column": 51,
+      "row": 278
+    },
+    "message": "Missing type annotation for `**kwargs`",
+    "noqa_row": 278,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 31,
+      "row": 79
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\analysis\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 79
+    },
+    "message": "Missing return type annotation for public function `get_available_capabilities`",
+    "noqa_row": 79,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 28,
+      "row": 90
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\analysis\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 90
+    },
+    "message": "Missing return type annotation for public function `is_capability_available`",
+    "noqa_row": 90,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 19,
+      "row": 80
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\analysis\\protection_workflow.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 80
+    },
+    "message": "Missing return type annotation for public function `get_logger`",
+    "noqa_row": 80,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 29,
+      "row": 595
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\cli\\ai_chat_interface.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 595
+    },
+    "message": "Missing return type annotation for private function `_process_code_blocks`",
+    "noqa_row": 595,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 31,
+      "row": 605
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\cli\\ai_chat_interface.py",
+    "fix": null,
+    "location": {
+      "column": 13,
+      "row": 605
+    },
+    "message": "Missing return type annotation for private function `replace_code_block`",
+    "noqa_row": 605,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 9,
+      "row": 2788
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\cli\\cli.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 2788
+    },
+    "message": "Missing return type annotation for public function `main`",
+    "noqa_row": 2788,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 30,
+      "row": 130
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\cli\\hex_viewer_cli.py",
+    "fix": null,
+    "location": {
+      "column": 27,
+      "row": 130
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `stdscr`",
+    "noqa_row": 130,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 9,
+      "row": 331
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\cli\\interactive_mode.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 331
+    },
+    "message": "Missing return type annotation for public function `main`",
+    "noqa_row": 331,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN204",
+    "end_location": {
+      "column": 22,
+      "row": 79
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\cli\\progress_manager.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 79
+    },
+    "message": "Missing return type annotation for special method `__post_init__`",
+    "noqa_row": 79,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-special-method"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 15,
+      "row": 88
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\cli\\progress_manager.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 88
+    },
+    "message": "Missing return type annotation for public function `render`",
+    "noqa_row": 88,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN003",
+    "end_location": {
+      "column": 45,
+      "row": 167
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\cli\\terminal_dashboard.py",
+    "fix": null,
+    "location": {
+      "column": 37,
+      "row": 167
+    },
+    "message": "Missing type annotation for `**kwargs`",
+    "noqa_row": 167,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
+  },
+  {
+    "cell": null,
+    "code": "ANN003",
+    "end_location": {
+      "column": 43,
+      "row": 178
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\cli\\terminal_dashboard.py",
+    "fix": null,
+    "location": {
+      "column": 35,
+      "row": 178
+    },
+    "message": "Missing type annotation for `**kwargs`",
+    "noqa_row": 178,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 42,
+      "row": 231
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\adobe_injector_integration.py",
+    "fix": null,
+    "location": {
+      "column": 32,
+      "row": 231
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `parent`",
+    "noqa_row": 231,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 31,
+      "row": 398
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\adobe_injector_integration.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 398
+    },
+    "message": "Missing return type annotation for private function `control_adobe_injector`",
+    "noqa_row": 398,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 34,
+      "row": 141
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 31,
+      "row": 141
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `__getattr__`",
+    "noqa_row": 141,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 59,
+      "row": 69
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\analysis_orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 56,
+      "row": 69
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `result`",
+    "noqa_row": 69,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 30,
+      "row": 351
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\analysis_orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 351
+    },
+    "message": "Missing return type annotation for private function `_select_ghidra_script`",
+    "noqa_row": 351,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN204",
+    "end_location": {
+      "column": 22,
+      "row": 77
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\binary_pattern_detector.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 77
+    },
+    "message": "Missing return type annotation for special method `__post_init__`",
+    "noqa_row": 77,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-special-method"
+  },
+  {
+    "cell": null,
+    "code": "ANN003",
+    "end_location": {
+      "column": 138,
+      "row": 846
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\binary_pattern_detector.py",
+    "fix": null,
+    "location": {
+      "column": 130,
+      "row": 846
+    },
+    "message": "Missing type annotation for `**kwargs`",
+    "noqa_row": 846,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 35,
+      "row": 552
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\concolic_obfuscation_handler.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 552
+    },
+    "message": "Missing type annotation for function argument `base_engine`",
+    "noqa_row": 552,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 48,
+      "row": 801
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\concolic_obfuscation_handler.py",
+    "fix": null,
+    "location": {
+      "column": 37,
+      "row": 801
+    },
+    "message": "Missing type annotation for function argument `base_engine`",
+    "noqa_row": 801,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 23,
+      "row": 465
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\ghidra_project_manager.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 465
+    },
+    "message": "Missing return type annotation for public function `export_project`",
+    "noqa_row": 465,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 38,
+      "row": 42
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\incremental_analyzer.py",
+    "fix": null,
+    "location": {
+      "column": 30,
+      "row": 42
+    },
+    "message": "Missing type annotation for function argument `main_app`",
+    "noqa_row": 42,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 53,
+      "row": 837
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\memory_forensics_engine.py",
+    "fix": null,
+    "location": {
+      "column": 50,
+      "row": 837
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `module_data`",
+    "noqa_row": 837,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 42,
+      "row": 1178
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\multi_format_analyzer.py",
+    "fix": null,
+    "location": {
+      "column": 36,
+      "row": 1178
+    },
+    "message": "Missing type annotation for function argument `binary`",
+    "noqa_row": 1178,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 34,
+      "row": 1204
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\multi_format_analyzer.py",
+    "fix": null,
+    "location": {
+      "column": 31,
+      "row": 1204
+    },
+    "message": "Missing type annotation for function argument `app`",
+    "noqa_row": 1204,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 41,
+      "row": 309
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_ai_integration.py",
+    "fix": null,
+    "location": {
+      "column": 39,
+      "row": 309
+    },
+    "message": "Missing type annotation for function argument `r2`",
+    "noqa_row": 309,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 43,
+      "row": 347
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_ai_integration.py",
+    "fix": null,
+    "location": {
+      "column": 41,
+      "row": 347
+    },
+    "message": "Missing type annotation for function argument `r2`",
+    "noqa_row": 347,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN003",
+    "end_location": {
+      "column": 56,
+      "row": 756
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_enhanced_integration.py",
+    "fix": null,
+    "location": {
+      "column": 48,
+      "row": 756
+    },
+    "message": "Missing type annotation for `**kwargs`",
+    "noqa_row": 756,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
+  },
+  {
+    "cell": null,
+    "code": "ANN003",
+    "end_location": {
+      "column": 62,
+      "row": 827
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_enhanced_integration.py",
+    "fix": null,
+    "location": {
+      "column": 54,
+      "row": 827
+    },
+    "message": "Missing type annotation for `**config`",
+    "noqa_row": 827,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 29,
+      "row": 443
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_performance_metrics.py",
+    "fix": null,
+    "location": {
+      "column": 13,
+      "row": 443
+    },
+    "message": "Missing return type annotation for private function `convert_datetime`",
+    "noqa_row": 443,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 33,
+      "row": 443
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_performance_metrics.py",
+    "fix": null,
+    "location": {
+      "column": 30,
+      "row": 443
+    },
+    "message": "Missing type annotation for function argument `obj`",
+    "noqa_row": 443,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 45,
+      "row": 588
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_performance_optimizer.py",
+    "fix": null,
+    "location": {
+      "column": 35,
+      "row": 588
+    },
+    "message": "Missing type annotation for function argument `r2_session`",
+    "noqa_row": 588,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 70,
+      "row": 152
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_session_manager.py",
+    "fix": null,
+    "location": {
+      "column": 67,
+      "row": 152
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `execute`",
+    "noqa_row": 152,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 16,
+      "row": 566
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_session_manager.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 566
+    },
+    "message": "Missing return type annotation for public function `session`",
+    "noqa_row": 566,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 22,
+      "row": 629
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_session_manager.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 629
+    },
+    "message": "Missing return type annotation for public function `r2_session_pooled`",
+    "noqa_row": 629,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 34,
+      "row": 359
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\streaming_crypto_detector.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 359
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `progress_callback`",
+    "noqa_row": 359,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 34,
+      "row": 454
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\streaming_entropy_analyzer.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 454
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `progress_callback`",
+    "noqa_row": 454,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 34,
+      "row": 449
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\streaming_yara_scanner.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 449
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `progress_callback`",
+    "noqa_row": 449,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN003",
+    "end_location": {
+      "column": 64,
+      "row": 1377
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\taint_analyzer.py",
+    "fix": null,
+    "location": {
+      "column": 56,
+      "row": 1377
+    },
+    "message": "Missing type annotation for `**kwargs`",
+    "noqa_row": 1377,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 32,
+      "row": 1706
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\taint_analyzer.py",
+    "fix": null,
+    "location": {
+      "column": 29,
+      "row": 1706
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `app`",
+    "noqa_row": 1706,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 35,
+      "row": 53
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 53
+    },
+    "message": "Missing return type annotation for public function `detect_virtual_environment`",
+    "noqa_row": 53,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 24,
+      "row": 57
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 57
+    },
+    "message": "Missing return type annotation for public function `detect_debugger`",
+    "noqa_row": 57,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 23,
+      "row": 61
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 61
+    },
+    "message": "Missing return type annotation for public function `detect_sandbox`",
+    "noqa_row": 61,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN002",
+    "end_location": {
+      "column": 53,
+      "row": 384
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\api_obfuscation.py",
+    "fix": null,
+    "location": {
+      "column": 48,
+      "row": 384
+    },
+    "message": "Missing type annotation for `*args`",
+    "noqa_row": 384,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-args"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 61,
+      "row": 384
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\api_obfuscation.py",
+    "fix": null,
+    "location": {
+      "column": 58,
+      "row": 384
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `_indirect_call`",
+    "noqa_row": 384,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 52,
+      "row": 434
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": null,
+    "location": {
+      "column": 45,
+      "row": 434
+    },
+    "message": "Missing type annotation for function argument `process`",
+    "noqa_row": 434,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 25,
+      "row": 61
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\binary_analyzer.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 61
+    },
+    "message": "Missing return type annotation for public function `detect_file_type`",
+    "noqa_row": 61,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 35,
+      "row": 61
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\binary_analyzer.py",
+    "fix": null,
+    "location": {
+      "column": 26,
+      "row": 61
+    },
+    "message": "Missing type annotation for function argument `file_path`",
+    "noqa_row": 61,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 70,
+      "row": 747
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\binary_analyzer.py",
+    "fix": null,
+    "location": {
+      "column": 60,
+      "row": 747
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `create_binary_info`",
+    "noqa_row": 747,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN003",
+    "end_location": {
+      "column": 13,
+      "row": 543
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 543
+    },
+    "message": "Missing type annotation for `**kwargs`",
+    "noqa_row": 543,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 49,
+      "row": 239
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\validation_detector.py",
+    "fix": null,
+    "location": {
+      "column": 42,
+      "row": 239
+    },
+    "message": "Missing type annotation for function argument `context`",
+    "noqa_row": 239,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 57,
+      "row": 269
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\validation_detector.py",
+    "fix": null,
+    "location": {
+      "column": 50,
+      "row": 269
+    },
+    "message": "Missing type annotation for function argument `context`",
+    "noqa_row": 269,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 40,
+      "row": 113
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\config_migration_handler.py",
+    "fix": null,
+    "location": {
+      "column": 37,
+      "row": 113
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `data`",
+    "noqa_row": 113,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 37,
+      "row": 147
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\frida_bypass_wizard.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 147
+    },
+    "message": "Missing type annotation for function argument `frida_manager`",
+    "noqa_row": 147,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 35,
+      "row": 1147
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\frida_bypass_wizard.py",
+    "fix": null,
+    "location": {
+      "column": 28,
+      "row": 1147
+    },
+    "message": "Missing type annotation for function argument `message`",
+    "noqa_row": 1147,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 41,
+      "row": 1147
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\frida_bypass_wizard.py",
+    "fix": null,
+    "location": {
+      "column": 37,
+      "row": 1147
+    },
+    "message": "Missing type annotation for function argument `data`",
+    "noqa_row": 1147,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 38,
+      "row": 477
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\integration\\intelligent_correlation.py",
+    "fix": null,
+    "location": {
+      "column": 35,
+      "row": 477
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `val1`",
+    "noqa_row": 477,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 49,
+      "row": 477
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\integration\\intelligent_correlation.py",
+    "fix": null,
+    "location": {
+      "column": 46,
+      "row": 477
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `val2`",
+    "noqa_row": 477,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 22,
+      "row": 1022
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\license\\keygen.py",
+    "fix": null,
+    "location": {
+      "column": 19,
+      "row": 1022
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `**kwargs`",
+    "noqa_row": 1022,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 16,
+      "row": 67
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\logging\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 67
+    },
+    "message": "Missing return type annotation for private function `__getattr__`",
+    "noqa_row": 67,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 21,
+      "row": 67
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\logging\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 17,
+      "row": 67
+    },
+    "message": "Missing type annotation for function argument `name`",
+    "noqa_row": 67,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 67,
+      "row": 82
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\monitoring\\api_monitor.py",
+    "fix": null,
+    "location": {
+      "column": 64,
+      "row": 82
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `data`",
+    "noqa_row": 82,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 32,
+      "row": 30
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\monitoring\\file_monitor.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 30
+    },
+    "message": "Missing type annotation for function argument `callback`",
+    "noqa_row": 30,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 53,
+      "row": 209
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\monitoring\\monitoring_session.py",
+    "fix": null,
+    "location": {
+      "column": 50,
+      "row": 209
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `monitor`",
+    "noqa_row": 209,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 37,
+      "row": 98
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\monitoring\\network_monitor.py",
+    "fix": null,
+    "location": {
+      "column": 31,
+      "row": 98
+    },
+    "message": "Missing type annotation for function argument `packet`",
+    "noqa_row": 98,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 26,
+      "row": 43
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\network\\base_network_analyzer.py",
+    "fix": null,
+    "location": {
+      "column": 23,
+      "row": 43
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `scapy_module`",
+    "noqa_row": 43,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 34,
+      "row": 59
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\network\\base_network_analyzer.py",
+    "fix": null,
+    "location": {
+      "column": 28,
+      "row": 59
+    },
+    "message": "Missing type annotation for function argument `packet`",
+    "noqa_row": 59,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 42,
+      "row": 503
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\network\\cloud_license_hooker.py",
+    "fix": null,
+    "location": {
+      "column": 30,
+      "row": 503
+    },
+    "message": "Missing type annotation for function argument `app_instance`",
+    "noqa_row": 503,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 51,
+      "row": 171
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\network\\generic_protocol_handler.py",
+    "fix": null,
+    "location": {
+      "column": 48,
+      "row": 171
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `client_socket`",
+    "noqa_row": 171,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 36,
+      "row": 2087
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\network\\protocols\\hasp_parser.py",
+    "fix": null,
+    "location": {
+      "column": 33,
+      "row": 2087
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `sock`",
+    "noqa_row": 2087,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 36,
+      "row": 2102
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\network\\protocols\\hasp_parser.py",
+    "fix": null,
+    "location": {
+      "column": 33,
+      "row": 2102
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `sock`",
+    "noqa_row": 2102,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 34,
+      "row": 52
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\network_capture.py",
+    "fix": null,
+    "location": {
+      "column": 28,
+      "row": 52
+    },
+    "message": "Missing type annotation for function argument `packet`",
+    "noqa_row": 52,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 31,
+      "row": 1459
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\offline_activation_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 1459
+    },
+    "message": "Missing return type annotation for public function `create_activation_file`",
+    "noqa_row": 1459,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 16,
+      "row": 422
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\orchestration\\result_serialization_protocol.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 422
+    },
+    "message": "Missing return type annotation for public function `default`",
+    "noqa_row": 422,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 26,
+      "row": 422
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\orchestration\\result_serialization_protocol.py",
+    "fix": null,
+    "location": {
+      "column": 23,
+      "row": 422
+    },
+    "message": "Missing type annotation for function argument `obj`",
+    "noqa_row": 422,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 37,
+      "row": 41
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\patching\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 41
+    },
+    "message": "Missing return type annotation for public function `activate_windows_interactive`",
+    "noqa_row": 41,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 53,
+      "row": 41
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\patching\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 38,
+      "row": 41
+    },
+    "message": "Missing type annotation for function argument `output_callback`",
+    "noqa_row": 41,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 37,
+      "row": 46
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\patching\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 46
+    },
+    "message": "Missing return type annotation for public function `activate_windows_in_terminal`",
+    "noqa_row": 46,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 81,
+      "row": 2853
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\process_manipulation.py",
+    "fix": null,
+    "location": {
+      "column": 78,
+      "row": 2853
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `new_value`",
+    "noqa_row": 2853,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN204",
+    "end_location": {
+      "column": 15,
+      "row": 112
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\processing\\distributed_manager.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 112
+    },
+    "message": "Missing return type annotation for special method `__lt__`",
+    "noqa_row": 112,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-special-method"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 27,
+      "row": 112
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\processing\\distributed_manager.py",
+    "fix": null,
+    "location": {
+      "column": 22,
+      "row": 112
+    },
+    "message": "Missing type annotation for function argument `other`",
+    "noqa_row": 112,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 36,
+      "row": 454
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\processing\\gpu_accelerator.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 454
+    },
+    "message": "Missing return type annotation for public function `create_gpu_acceleration_manager`",
+    "noqa_row": 454,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 27,
+      "row": 468
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\processing\\gpu_accelerator.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 468
+    },
+    "message": "Missing return type annotation for public function `create_gpu_accelerator`",
+    "noqa_row": 468,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 34,
+      "row": 482
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\processing\\gpu_accelerator.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 482
+    },
+    "message": "Missing return type annotation for public function `is_gpu_acceleration_available`",
+    "noqa_row": 482,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 55
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\protection_analyzer.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 55
+    },
+    "message": "Missing type annotation for function argument `logger`",
+    "noqa_row": 55,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 60,
+      "row": 423
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\protection_bypass\\arxan_bypass.py",
+    "fix": null,
+    "location": {
+      "column": 45,
+      "row": 423
+    },
+    "message": "Missing type annotation for function argument `analysis_result`",
+    "noqa_row": 423,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 40,
+      "row": 566
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\protection_bypass\\arxan_bypass.py",
+    "fix": null,
+    "location": {
+      "column": 33,
+      "row": 566
+    },
+    "message": "Missing type annotation for function argument `message`",
+    "noqa_row": 566,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 46,
+      "row": 566
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\protection_bypass\\arxan_bypass.py",
+    "fix": null,
+    "location": {
+      "column": 42,
+      "row": 566
+    },
+    "message": "Missing type annotation for function argument `data`",
+    "noqa_row": 566,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 53,
+      "row": 426
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\protection_bypass\\dongle_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 50,
+      "row": 426
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `private_key`",
+    "noqa_row": 426,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 39,
+      "row": 451
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\protection_bypass\\dongle_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 29,
+      "row": 451
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `app`",
+    "noqa_row": 451,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 48,
+      "row": 1549
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\protection_bypass\\dongle_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 45,
+      "row": 1549
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `app`",
+    "noqa_row": 1549,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 36,
+      "row": 714
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\protection_bypass\\hardware_id_spoofer.py",
+    "fix": null,
+    "location": {
+      "column": 30,
+      "row": 714
+    },
+    "message": "Missing type annotation for function argument `eax_in`",
+    "noqa_row": 714,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 42,
+      "row": 714
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\protection_bypass\\hardware_id_spoofer.py",
+    "fix": null,
+    "location": {
+      "column": 38,
+      "row": 714
+    },
+    "message": "Missing type annotation for function argument `regs`",
+    "noqa_row": 714,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 34,
+      "row": 1551
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\protection_bypass\\integrity_check_defeat.py",
+    "fix": null,
+    "location": {
+      "column": 27,
+      "row": 1551
+    },
+    "message": "Missing type annotation for function argument `message`",
+    "noqa_row": 1551,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 40,
+      "row": 1551
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\protection_bypass\\integrity_check_defeat.py",
+    "fix": null,
+    "location": {
+      "column": 36,
+      "row": 1551
+    },
+    "message": "Missing type annotation for function argument `data`",
+    "noqa_row": 1551,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 39,
+      "row": 48
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\protection_bypass\\vm_bypass.py",
+    "fix": null,
+    "location": {
+      "column": 29,
+      "row": 48
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `app`",
+    "noqa_row": 48,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 33,
+      "row": 707
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\protection_bypass\\vm_bypass.py",
+    "fix": null,
+    "location": {
+      "column": 30,
+      "row": 707
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `app`",
+    "noqa_row": 707,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 48,
+      "row": 145
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\protection_detection\\securom_detector.py",
+    "fix": null,
+    "location": {
+      "column": 38,
+      "row": 145
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `_compile_yara_rules`",
+    "noqa_row": 145,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 33,
+      "row": 500
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\reporting\\report_generator.py",
+    "fix": null,
+    "location": {
+      "column": 21,
+      "row": 500
+    },
+    "message": "Missing type annotation for function argument `app_instance`",
+    "noqa_row": 500,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 29,
+      "row": 602
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\reporting\\report_generator.py",
+    "fix": null,
+    "location": {
+      "column": 17,
+      "row": 602
+    },
+    "message": "Missing type annotation for function argument `app_instance`",
+    "noqa_row": 602,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN003",
+    "end_location": {
+      "column": 104,
+      "row": 75
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\security_utils.py",
+    "fix": null,
+    "location": {
+      "column": 96,
+      "row": 75
+    },
+    "message": "Missing type annotation for `**kwargs`",
+    "noqa_row": 75,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 39,
+      "row": 125
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\security_utils.py",
+    "fix": null,
+    "location": {
+      "column": 36,
+      "row": 125
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `secure_yaml_load`",
+    "noqa_row": 125,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 39,
+      "row": 140
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\security_utils.py",
+    "fix": null,
+    "location": {
+      "column": 36,
+      "row": 140
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `secure_json_load`",
+    "noqa_row": 140,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN204",
+    "end_location": {
+      "column": 22,
+      "row": 50
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\shared\\result_types.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 50
+    },
+    "message": "Missing return type annotation for special method `__post_init__`",
+    "noqa_row": 50,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-special-method"
+  },
+  {
+    "cell": null,
+    "code": "ANN003",
+    "end_location": {
+      "column": 35,
+      "row": 32
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\shared\\result_utils.py",
+    "fix": null,
+    "location": {
+      "column": 27,
+      "row": 32
+    },
+    "message": "Missing type annotation for `**kwargs`",
+    "noqa_row": 32,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
+  },
+  {
+    "cell": null,
+    "code": "ANN003",
+    "end_location": {
+      "column": 46,
+      "row": 49
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\shared\\result_utils.py",
+    "fix": null,
+    "location": {
+      "column": 38,
+      "row": 49
+    },
+    "message": "Missing type annotation for `**kwargs`",
+    "noqa_row": 49,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 20,
+      "row": 45
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\startup_checks.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 45
+    },
+    "message": "Missing return type annotation for private function `_get_tensorflow`",
+    "noqa_row": 45,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 29,
+      "row": 95
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\startup_checks.py",
+    "fix": null,
+    "location": {
+      "column": 13,
+      "row": 95
+    },
+    "message": "Missing return type annotation for private function `validation_route`",
+    "noqa_row": 95,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 27,
+      "row": 653
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\vulnerability_research\\binary_differ.py",
+    "fix": null,
+    "location": {
+      "column": 13,
+      "row": 653
+    },
+    "message": "Missing return type annotation for private function `_compute_stats`",
+    "noqa_row": 653,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 37,
+      "row": 702
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\vulnerability_research\\binary_differ.py",
+    "fix": null,
+    "location": {
+      "column": 13,
+      "row": 702
+    },
+    "message": "Missing return type annotation for private function `_compute_recommendations`",
+    "noqa_row": 702,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 58,
+      "row": 267
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\dashboard\\dashboard_manager.py",
+    "fix": null,
+    "location": {
+      "column": 55,
+      "row": 267
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `handler`",
+    "noqa_row": 267,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 55,
+      "row": 630
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\dashboard\\live_data_pipeline.py",
+    "fix": null,
+    "location": {
+      "column": 52,
+      "row": 630
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `connection`",
+    "noqa_row": 630,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 58,
+      "row": 640
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\dashboard\\live_data_pipeline.py",
+    "fix": null,
+    "location": {
+      "column": 55,
+      "row": 640
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `connection`",
+    "noqa_row": 640,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 22,
+      "row": 1116
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\dashboard\\visualization_renderer.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 1116
+    },
+    "message": "Missing return type annotation for private function `_get_colormap`",
+    "noqa_row": 1116,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 27,
+      "row": 68
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 68
+    },
+    "message": "Missing return type annotation for private function `get_available_handlers`",
+    "noqa_row": 68,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 25,
+      "row": 73
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 73
+    },
+    "message": "Missing return type annotation for private function `is_handler_available`",
+    "noqa_row": 73,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 38,
+      "row": 73
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 26,
+      "row": 73
+    },
+    "message": "Missing type annotation for function argument `handler_name`",
+    "noqa_row": 73,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 25,
+      "row": 882
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\aiohttp_handler.py",
+    "fix": null,
+    "location": {
+      "column": 22,
+      "row": 882
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `app`",
+    "noqa_row": 882,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 36,
+      "row": 24
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\ipex_handler.py",
+    "fix": null,
+    "location": {
+      "column": 28,
+      "row": 24
+    },
+    "message": "Missing type annotation for function argument `dll_dirs`",
+    "noqa_row": 24,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 28,
+      "row": 98
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\opencl_handler.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 98
+    },
+    "message": "Missing return type annotation for public function `create_some_context`",
+    "noqa_row": 98,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 22,
+      "row": 102
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\opencl_handler.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 102
+    },
+    "message": "Missing return type annotation for public function `get_platforms`",
+    "noqa_row": 102,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 41,
+      "row": 217
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\pyelftools_handler.py",
+    "fix": null,
+    "location": {
+      "column": 38,
+      "row": 217
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `**kwargs`",
+    "noqa_row": 217,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 83,
+      "row": 431
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\sqlite3_handler.py",
+    "fix": null,
+    "location": {
+      "column": 80,
+      "row": 431
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `execute_sql`",
+    "noqa_row": 431,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 59,
+      "row": 1164
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\sqlite3_handler.py",
+    "fix": null,
+    "location": {
+      "column": 56,
+      "row": 1164
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `__getitem__`",
+    "noqa_row": 1164,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 58,
+      "row": 1199
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\sqlite3_handler.py",
+    "fix": null,
+    "location": {
+      "column": 55,
+      "row": 1199
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `**kwargs`",
+    "noqa_row": 1199,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN204",
+    "end_location": {
+      "column": 28,
+      "row": 44
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\wmi_handler.py",
+    "fix": null,
+    "location": {
+      "column": 17,
+      "row": 44
+    },
+    "message": "Missing return type annotation for special method `__getattr__`",
+    "noqa_row": 44,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-special-method"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 39,
+      "row": 44
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\wmi_handler.py",
+    "fix": null,
+    "location": {
+      "column": 35,
+      "row": 44
+    },
+    "message": "Missing type annotation for function argument `name`",
+    "noqa_row": 44,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 103
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\hexview\\checksum_dialog.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 103
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 103,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 47,
+      "row": 103
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\hexview\\checksum_dialog.py",
+    "fix": null,
+    "location": {
+      "column": 37,
+      "row": 103
+    },
+    "message": "Missing type annotation for function argument `hex_viewer`",
+    "noqa_row": 103,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 45,
+      "row": 226
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\hexview\\checksums.py",
+    "fix": null,
+    "location": {
+      "column": 37,
+      "row": 226
+    },
+    "message": "Missing type annotation for function argument `callback`",
+    "noqa_row": 226,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 32,
+      "row": 42
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\hexview\\compare_dialog.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 42
+    },
+    "message": "Missing type annotation for function argument `comparer`",
+    "noqa_row": 42,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 75
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\hexview\\compare_dialog.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 75
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 75,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 467
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\hexview\\data_inspector.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 467
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 467,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 63
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\hexview\\export_dialog.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 63
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 63,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 47,
+      "row": 63
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\hexview\\export_dialog.py",
+    "fix": null,
+    "location": {
+      "column": 37,
+      "row": 63
+    },
+    "message": "Missing type annotation for function argument `hex_viewer`",
+    "noqa_row": 63,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN003",
+    "end_location": {
+      "column": 59,
+      "row": 283
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\hexview\\hex_highlighter.py",
+    "fix": null,
+    "location": {
+      "column": 51,
+      "row": 283
+    },
+    "message": "Missing type annotation for `**kwargs`",
+    "noqa_row": 283,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 45,
+      "row": 343
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\hexview\\statistics.py",
+    "fix": null,
+    "location": {
+      "column": 37,
+      "row": 343
+    },
+    "message": "Missing type annotation for function argument `callback`",
+    "noqa_row": 343,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 99
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\hexview\\statistics_dialog.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 99
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 99,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 47,
+      "row": 99
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\hexview\\statistics_dialog.py",
+    "fix": null,
+    "location": {
+      "column": 37,
+      "row": 99
+    },
+    "message": "Missing type annotation for function argument `hex_viewer`",
+    "noqa_row": 99,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 24,
+      "row": 40
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ml\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 40
+    },
+    "message": "Missing return type annotation for private function `get_ml_capabilities`",
+    "noqa_row": 40,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 33,
+      "row": 362
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ml\\pattern_evolution_tracker.py",
+    "fix": null,
+    "location": {
+      "column": 30,
+      "row": 362
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `obj`",
+    "noqa_row": 362,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 44,
+      "row": 382
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ml\\pattern_evolution_tracker.py",
+    "fix": null,
+    "location": {
+      "column": 41,
+      "row": 382
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `secure_pickle_loads`",
+    "noqa_row": 382,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 54,
+      "row": 101
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\models\\repositories\\base.py",
+    "fix": null,
+    "location": {
+      "column": 44,
+      "row": 101
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `get_cached_item`",
+    "noqa_row": 101,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 46,
+      "row": 136
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\models\\repositories\\base.py",
+    "fix": null,
+    "location": {
+      "column": 43,
+      "row": 136
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `value`",
+    "noqa_row": 136,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 47,
+      "row": 1170
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\anti_anti_debug_suite.py",
+    "fix": null,
+    "location": {
+      "column": 37,
+      "row": 1170
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `get_thread_context`",
+    "noqa_row": 1170,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 54,
+      "row": 1702
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\anti_anti_debug_suite.py",
+    "fix": null,
+    "location": {
+      "column": 40,
+      "row": 1702
+    },
+    "message": "Missing type annotation for function argument `exception_info`",
+    "noqa_row": 1702,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 52,
+      "row": 1738
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\anti_anti_debug_suite.py",
+    "fix": null,
+    "location": {
+      "column": 34,
+      "row": 1738
+    },
+    "message": "Missing type annotation for function argument `exception_pointers`",
+    "noqa_row": 1738,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 16,
+      "row": 34
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\simple_analysis_plugin.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 34
+    },
+    "message": "Missing return type annotation for public function `analyze`",
+    "noqa_row": 34,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 34,
+      "row": 34
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\simple_analysis_plugin.py",
+    "fix": null,
+    "location": {
+      "column": 23,
+      "row": 34
+    },
+    "message": "Missing type annotation for function argument `binary_path`",
+    "noqa_row": 34,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 13,
+      "row": 48
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\simple_analysis_plugin.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 48
+    },
+    "message": "Missing return type annotation for public function `register`",
+    "noqa_row": 48,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN204",
+    "end_location": {
+      "column": 22,
+      "row": 99
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\vm_protection_unwrapper.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 99
+    },
+    "message": "Missing return type annotation for special method `__post_init__`",
+    "noqa_row": 99,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-special-method"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 16,
+      "row": 35
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\protection\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 35
+    },
+    "message": "Missing return type annotation for private function `__getattr__`",
+    "noqa_row": 35,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 43,
+      "row": 650
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\protection\\icp_report_generator.py",
+    "fix": null,
+    "location": {
+      "column": 40,
+      "row": 650
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `details`",
+    "noqa_row": 650,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 44,
+      "row": 267
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\scripts\\radare2\\radare2_keygen_assistant.py",
+    "fix": null,
+    "location": {
+      "column": 40,
+      "row": 267
+    },
+    "message": "Missing type annotation for function argument `insn`",
+    "noqa_row": 267,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 33,
+      "row": 299
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\scripts\\radare2\\radare2_keygen_assistant.py",
+    "fix": null,
+    "location": {
+      "column": 29,
+      "row": 299
+    },
+    "message": "Missing type annotation for function argument `insn`",
+    "noqa_row": 299,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 16,
+      "row": 28
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 28
+    },
+    "message": "Missing return type annotation for private function `__getattr__`",
+    "noqa_row": 28,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 21,
+      "row": 28
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 17,
+      "row": 28
+    },
+    "message": "Missing type annotation for function argument `name`",
+    "noqa_row": 28,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 32,
+      "row": 39
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dashboard_manager.py",
+    "fix": null,
+    "location": {
+      "column": 29,
+      "row": 39
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `app`",
+    "noqa_row": 39,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 42,
+      "row": 118
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dialogs\\event_handler_utils.py",
+    "fix": null,
+    "location": {
+      "column": 34,
+      "row": 118
+    },
+    "message": "Missing type annotation for function argument `position`",
+    "noqa_row": 118,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 67,
+      "row": 95
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dialogs\\first_run_setup.py",
+    "fix": null,
+    "location": {
+      "column": 61,
+      "row": 95
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 95,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 88
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dialogs\\guided_workflow_wizard.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 88
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 88,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 41,
+      "row": 1085
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dialogs\\guided_workflow_wizard.py",
+    "fix": null,
+    "location": {
+      "column": 35,
+      "row": 1085
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 1085,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 54
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dialogs\\help_documentation_widget.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 54
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 54,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 36,
+      "row": 30
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dialogs\\plugin_browser_utils.py",
+    "fix": null,
+    "location": {
+      "column": 23,
+      "row": 30
+    },
+    "message": "Missing type annotation for function argument `parent_widget`",
+    "noqa_row": 30,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 43,
+      "row": 30
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dialogs\\plugin_browser_utils.py",
+    "fix": null,
+    "location": {
+      "column": 38,
+      "row": 30
+    },
+    "message": "Missing type annotation for function argument `title`",
+    "noqa_row": 30,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 39
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dialogs\\plugin_dialog_base.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 39
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 39,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 39,
+      "row": 83
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dialogs\\plugin_dialog_base.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 83
+    },
+    "message": "Missing return type annotation for public function `create_plugin_selection_layout`",
+    "noqa_row": 83,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 94,
+      "row": 42
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dialogs\\qemu_test_dialog.py",
+    "fix": null,
+    "location": {
+      "column": 88,
+      "row": 42
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 42,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 111
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dialogs\\smart_program_selector_dialog.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 111
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 111,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 39,
+      "row": 276
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dialogs\\smart_program_selector_dialog.py",
+    "fix": null,
+    "location": {
+      "column": 33,
+      "row": 276
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 276,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 41
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\exploitation_handlers.py",
+    "fix": null,
+    "location": {
+      "column": 26,
+      "row": 41
+    },
+    "message": "Missing type annotation for function argument `self`",
+    "noqa_row": 41,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 34,
+      "row": 64
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\exploitation_handlers.py",
+    "fix": null,
+    "location": {
+      "column": 30,
+      "row": 64
+    },
+    "message": "Missing type annotation for function argument `self`",
+    "noqa_row": 64,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 27,
+      "row": 249
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\icon_manager.py",
+    "fix": null,
+    "location": {
+      "column": 21,
+      "row": 249
+    },
+    "message": "Missing type annotation for function argument `button`",
+    "noqa_row": 249,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 36,
+      "row": 48
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\protection_detection_handlers.py",
+    "fix": null,
+    "location": {
+      "column": 29,
+      "row": 48
+    },
+    "message": "Missing type annotation for function argument `message`",
+    "noqa_row": 48,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 49,
+      "row": 261
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\tooltip_helper.py",
+    "fix": null,
+    "location": {
+      "column": 36,
+      "row": 261
+    },
+    "message": "Missing type annotation for function argument `parent_widget`",
+    "noqa_row": 261,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 44,
+      "row": 576
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\tooltip_helper.py",
+    "fix": null,
+    "location": {
+      "column": 31,
+      "row": 576
+    },
+    "message": "Missing type annotation for function argument `parent_widget`",
+    "noqa_row": 576,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 35,
+      "row": 56
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\ui_manager.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 56
+    },
+    "message": "Missing type annotation for function argument `main_window`",
+    "noqa_row": 56,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 52
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\ai_assistant_widget.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 52
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 52,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 231
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\batch_analysis_widget.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 231
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 231,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 157
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\cpu_status_widget.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 157
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 157,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 39
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\entropy_visualizer.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 39
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 39,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 48
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\file_metadata_widget.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 48
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 48,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 382
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\gpu_status_widget.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 382
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 382,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 36,
+      "row": 577
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\gpu_status_widget.py",
+    "fix": null,
+    "location": {
+      "column": 31,
+      "row": 577
+    },
+    "message": "Missing type annotation for function argument `index`",
+    "noqa_row": 577,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 90
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\icp_analysis_widget.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 90
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 90,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 106
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\intellicrack_advanced_protection_widget.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 106
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 106,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 177
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\intellicrack_advanced_protection_widget.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 177
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 177,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 125
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\intellicrack_protection_widget.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 125
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 125,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 55,
+      "row": 459
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\intellicrack_protection_widget.py",
+    "fix": null,
+    "location": {
+      "column": 46,
+      "row": 459
+    },
+    "message": "Missing type annotation for function argument `detection`",
+    "noqa_row": 459,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 45,
+      "row": 44
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\model_loading_progress_widget.py",
+    "fix": null,
+    "location": {
+      "column": 39,
+      "row": 44
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 44,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 145
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\model_loading_progress_widget.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 145
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 145,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 150
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\string_extraction_widget.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 150
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 150,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 42,
+      "row": 574
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\string_extraction_widget.py",
+    "fix": null,
+    "location": {
+      "column": 34,
+      "row": 574
+    },
+    "message": "Missing type annotation for function argument `position`",
+    "noqa_row": 574,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 49
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\structure_visualizer.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 49
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 49,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 178
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\system_monitor_widget.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 178
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 178,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 31,
+      "row": 548
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\system_monitor_widget.py",
+    "fix": null,
+    "location": {
+      "column": 26,
+      "row": 548
+    },
+    "message": "Missing type annotation for function argument `event`",
+    "noqa_row": 548,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 16,
+      "row": 28
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 28
+    },
+    "message": "Missing return type annotation for private function `__getattr__`",
+    "noqa_row": 28,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 21,
+      "row": 28
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\__init__.py",
+    "fix": null,
+    "location": {
+      "column": 17,
+      "row": 28
+    },
+    "message": "Missing type annotation for function argument `name`",
+    "noqa_row": 28,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 92,
+      "row": 261
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\analysis\\analysis_stats.py",
+    "fix": null,
+    "location": {
+      "column": 82,
+      "row": 261
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `default_return`",
+    "noqa_row": 261,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 107,
+      "row": 261
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\analysis\\analysis_stats.py",
+    "fix": null,
+    "location": {
+      "column": 104,
+      "row": 261
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `safe_stats_generation`",
+    "noqa_row": 261,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 40,
+      "row": 308
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\binary\\binary_utils.py",
+    "fix": null,
+    "location": {
+      "column": 34,
+      "row": 308
+    },
+    "message": "Missing type annotation for function argument `pe_obj`",
+    "noqa_row": 308,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 59,
+      "row": 333
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\binary\\binary_utils.py",
+    "fix": null,
+    "location": {
+      "column": 44,
+      "row": 333
+    },
+    "message": "Missing type annotation for function argument `logger_instance`",
+    "noqa_row": 333,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 40,
+      "row": 313
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\binary\\certificate_extractor.py",
+    "fix": null,
+    "location": {
+      "column": 17,
+      "row": 313
+    },
+    "message": "Missing return type annotation for private function `create_legacy_sha1_hash`",
+    "noqa_row": 313,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 48,
+      "row": 313
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\binary\\certificate_extractor.py",
+    "fix": null,
+    "location": {
+      "column": 41,
+      "row": 313
+    },
+    "message": "Missing type annotation for function argument `backend`",
+    "noqa_row": 313,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 22,
+      "row": 155
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\core\\misc_utils.py",
+    "fix": null,
+    "location": {
+      "column": 19,
+      "row": 155
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `obj`",
+    "noqa_row": 155,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 13,
+      "row": 35
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\ghidra_common.py",
+    "fix": null,
+    "location": {
+      "column": 10,
+      "row": 35
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `app`",
+    "noqa_row": 35,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 37,
+      "row": 30
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\gpu_benchmark.py",
+    "fix": null,
+    "location": {
+      "column": 34,
+      "row": 30
+    },
+    "message": "Missing type annotation for function argument `app`",
+    "noqa_row": 30,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 33,
+      "row": 346
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\gpu_benchmark.py",
+    "fix": null,
+    "location": {
+      "column": 30,
+      "row": 346
+    },
+    "message": "Missing type annotation for function argument `app`",
+    "noqa_row": 346,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 31,
+      "row": 30
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\protection\\certificate_common.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 30
+    },
+    "message": "Missing return type annotation for public function `create_certificate_builder`",
+    "noqa_row": 30,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 44,
+      "row": 25
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\protection_utils.py",
+    "fix": null,
+    "location": {
+      "column": 41,
+      "row": 25
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `app`",
+    "noqa_row": 25,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 28,
+      "row": 134
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\secrets_manager.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 134
+    },
+    "message": "Missing return type annotation for private function `_get_central_config`",
+    "noqa_row": 134,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 23,
+      "row": 142
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\secrets_manager.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 142
+    },
+    "message": "Missing return type annotation for public function `central_config`",
+    "noqa_row": 142,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 15,
+      "row": 46
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\service_health_checker.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 46
+    },
+    "message": "Missing return type annotation for public function `config`",
+    "noqa_row": 46,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN202",
+    "end_location": {
+      "column": 27,
+      "row": 235
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\severity_levels.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 235
+    },
+    "message": "Missing return type annotation for private function `get_priority_score`",
+    "noqa_row": 235,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 35,
+      "row": 235
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\severity_levels.py",
+    "fix": null,
+    "location": {
+      "column": 28,
+      "row": 235
+    },
+    "message": "Missing type annotation for function argument `finding`",
+    "noqa_row": 235,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 32,
+      "row": 211
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\system\\process_utils.py",
+    "fix": null,
+    "location": {
+      "column": 29,
+      "row": 211
+    },
+    "message": "Missing type annotation for function argument `app`",
+    "noqa_row": 211,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 25,
+      "row": 11
+    },
+    "filename": "D:\\Intellicrack\\scripts\\scanner\\analyze_results.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 11
+    },
+    "message": "Missing return type annotation for public function `analyze_scan_results`",
+    "noqa_row": 11,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 35,
+      "row": 11
+    },
+    "filename": "D:\\Intellicrack\\scripts\\scanner\\analyze_results.py",
+    "fix": null,
+    "location": {
+      "column": 26,
+      "row": 11
+    },
+    "message": "Missing type annotation for function argument `json_file`",
+    "noqa_row": 11,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  }
+]

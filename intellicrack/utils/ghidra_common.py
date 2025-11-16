@@ -814,7 +814,7 @@ def cleanup_ghidra_project(project_dir: str, project_name: str) -> bool:
                 file_path = os.path.join(project_dir, file)
                 if os.path.isfile(file_path):
                     os.remove(file_path)
-                elif os.path.isdir(file_path):
+                elif Path(file_path).is_dir():
                     import shutil
 
                     shutil.rmtree(file_path)

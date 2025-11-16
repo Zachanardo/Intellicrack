@@ -43,9 +43,6 @@ import traceback
 from functools import partial
 
 from intellicrack.ai.model_manager_module import ModelManager
-from intellicrack.core.config_manager import get_config
-
-CONFIG = get_config()
 from intellicrack.core.analysis.automated_patch_agent import run_automated_patch_agent
 from intellicrack.core.analysis.concolic_executor import (
     run_concolic_execution,
@@ -59,6 +56,7 @@ from intellicrack.core.analysis.protection_scanner import run_enhanced_protectio
 from intellicrack.core.analysis.rop_generator import ROPChainGenerator, run_rop_chain_generator
 from intellicrack.core.analysis.taint_analyzer import TaintAnalysisEngine, run_taint_analysis
 from intellicrack.core.app_context import get_app_context
+from intellicrack.core.config_manager import get_config
 from intellicrack.core.network.cloud_license_hooker import run_cloud_license_hooker
 from intellicrack.core.network.protocol_tool import (
     launch_protocol_tool,
@@ -114,6 +112,8 @@ from intellicrack.utils.log_message import log_message
 from intellicrack.utils.logger import log_all_methods
 from intellicrack.utils.protection_utils import inject_comprehensive_api_hooks
 from intellicrack.utils.resource_helper import get_resource_path
+
+CONFIG = get_config()
 
 logger = logging.getLogger(__name__)
 

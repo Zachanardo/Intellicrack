@@ -440,7 +440,7 @@ class R2PerformanceMonitor:
         report = self.get_performance_report()
 
         # Convert datetime objects to strings
-        def convert_datetime(obj):
+        def convert_datetime(obj: object) -> object:
             if isinstance(obj, datetime):
                 return obj.isoformat()
             return obj

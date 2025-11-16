@@ -29,7 +29,7 @@ from .comprehensive_integration import integrate_radare2_comprehensive
 logger = get_logger(__name__)
 
 
-def add_radare2_to_intellicrack_app(app_instance) -> bool:
+def add_radare2_to_intellicrack_app(app_instance: object) -> bool:
     """Add comprehensive radare2 functionality to existing IntellicrackApp instance.
 
     This is the main entry point for users who want to add radare2 functionality
@@ -101,7 +101,7 @@ def add_radare2_to_intellicrack_app(app_instance) -> bool:
         return False
 
 
-def integrate_with_main_app():
+def integrate_with_main_app() -> bool:
     """Automatic integration function that tries to find and integrate with.
 
     the main IntellicrackApp instance.
@@ -156,7 +156,7 @@ def integrate_with_main_app():
         return False
 
 
-def create_standalone_radare2_app():
+def create_standalone_radare2_app() -> tuple[object, object] | tuple[None, None]:
     """Create a standalone radare2 analysis application.
 
     This creates a new application window with only radare2 functionality,
@@ -182,7 +182,7 @@ def create_standalone_radare2_app():
         return None, None
 
 
-def show_integration_status(app_instance=None) -> dict:
+def show_integration_status(app_instance: object | None = None) -> dict:
     """Show the current integration status.
 
     Args:

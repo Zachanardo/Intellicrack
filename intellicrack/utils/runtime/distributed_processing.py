@@ -25,6 +25,7 @@ import os
 import time
 from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from pathlib import Path
 
 from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, torch
 
@@ -522,7 +523,7 @@ def extract_binary_info(binary_path: str) -> dict[str, object]:
 
     try:
         # Get file times
-        stat = os.stat(binary_path)
+        stat = Path(binary_path).stat()
         info["created"] = time.ctime(stat.st_ctime)
         info["modified"] = time.ctime(stat.st_mtime)
 

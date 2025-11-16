@@ -19,8 +19,6 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import json
 import logging
 import os
-
-# Import our advanced radare2 analysis engines
 import sys
 import time
 import traceback
@@ -29,38 +27,38 @@ from intellicrack.utils.logger import logger
 
 from ...utils.tools.radare2_utils import R2Exception, r2_session
 from .radare2_ai_integration import R2AIEngine
+from .radare2_decompiler import R2DecompilationEngine
+from .radare2_imports import R2ImportExportAnalyzer
+from .radare2_scripting import R2ScriptingEngine
+from .radare2_strings import R2StringAnalyzer
+from .radare2_vulnerability_engine import R2VulnerabilityEngine
 
 print("[DEBUG cfg_explorer] Importing radare2_decompiler...")
 sys.stdout.flush()
-from .radare2_decompiler import R2DecompilationEngine
 
 print("[DEBUG cfg_explorer] radare2_decompiler imported OK")
 sys.stdout.flush()
 
 print("[DEBUG cfg_explorer] Importing radare2_imports...")
 sys.stdout.flush()
-from .radare2_imports import R2ImportExportAnalyzer
 
 print("[DEBUG cfg_explorer] radare2_imports imported OK")
 sys.stdout.flush()
 
 print("[DEBUG cfg_explorer] Importing radare2_scripting...")
 sys.stdout.flush()
-from .radare2_scripting import R2ScriptingEngine
 
 print("[DEBUG cfg_explorer] radare2_scripting imported OK")
 sys.stdout.flush()
 
 print("[DEBUG cfg_explorer] Importing radare2_strings...")
 sys.stdout.flush()
-from .radare2_strings import R2StringAnalyzer
 
 print("[DEBUG cfg_explorer] radare2_strings imported OK")
 sys.stdout.flush()
 
 print("[DEBUG cfg_explorer] Importing radare2_vulnerability_engine...")
 sys.stdout.flush()
-from .radare2_vulnerability_engine import R2VulnerabilityEngine
 
 print("[DEBUG cfg_explorer] radare2_vulnerability_engine imported OK")
 sys.stdout.flush()

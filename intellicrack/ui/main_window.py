@@ -19,6 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
+from pathlib import Path
 from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
@@ -187,7 +188,7 @@ class IntellicrackMainWindow(QMainWindow):
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Binary for Analysis",
-            CONFIG.get("default_binary_directory", os.getcwd()),
+            CONFIG.get("default_binary_directory", str(Path.cwd())),
             "Executable Files (*.exe *.dll *.bin);;All Files (*)",
             options=dialog_options,
         )

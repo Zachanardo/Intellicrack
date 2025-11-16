@@ -1,0 +1,167 @@
+
+Starting Intellicrack production-readiness scan...
+Root: intellicrack/core/analysis/multi_format_analyzer.py
+
+Scanning 1 files...
+DEBUG: File queued for scan: "intellicrack/core/analysis/multi_format_analyzer.py" (Python)
+DEBUG par_iter: Starting to process "intellicrack/core/analysis/multi_format_analyzer.py"
+DEBUG analyze_file: analyzing "intellicrack/core/analysis/multi_format_analyzer.py"
+DEBUG analyze_file: extracted 21 functions
+DEBUG analyze_file: processing function '__init__'
+DEBUG should_exclude_function: checking '__init__'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function '__init__' passed exclusion checks
+DEBUG analyze_file: function '__init__' matched architectural pattern - skipping all checks
+DEBUG analyze_file: processing function '__init__'
+DEBUG should_exclude_function: checking '__init__'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function '__init__' passed exclusion checks
+DEBUG analyze_file: function '__init__' matched architectural pattern - skipping all checks
+DEBUG analyze_file: processing function '_check_available_backends'
+DEBUG should_exclude_function: checking '_check_available_backends'
+  is_domain_specific=false
+  EXCLUDED: private function pattern
+DEBUG analyze_file: function '_check_available_backends' was excluded
+DEBUG analyze_file: processing function 'identify_format'
+DEBUG should_exclude_function: checking 'identify_format'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function 'identify_format' passed exclusion checks
+DEBUG analyze_file: function 'identify_format' matched architectural pattern - skipping all checks
+DEBUG analyze_file: processing function 'analyze_binary'
+DEBUG should_exclude_function: checking 'analyze_binary'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function 'analyze_binary' passed exclusion checks
+DEBUG analyze_file: function 'analyze_binary' matched architectural pattern - skipping all checks
+DEBUG analyze_file: processing function 'analyze_pe'
+DEBUG should_exclude_function: checking 'analyze_pe'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function 'analyze_pe' passed exclusion checks
+DEBUG analyze_file: function 'analyze_pe' matched architectural pattern - skipping all checks
+DEBUG analyze_file: processing function 'analyze_elf'
+DEBUG should_exclude_function: checking 'analyze_elf'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function 'analyze_elf' passed exclusion checks
+DEBUG analyze_file: function 'analyze_elf' matched architectural pattern - skipping all checks
+DEBUG analyze_file: processing function 'analyze_macho'
+DEBUG should_exclude_function: checking 'analyze_macho'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function 'analyze_macho' passed exclusion checks
+DEBUG analyze_file: function 'analyze_macho' matched architectural pattern - skipping all checks
+DEBUG analyze_file: processing function 'analyze_dotnet'
+DEBUG should_exclude_function: checking 'analyze_dotnet'
+  is_domain_specific=false
+  EXCLUDED: delegator pattern
+DEBUG analyze_file: function 'analyze_dotnet' was excluded
+DEBUG analyze_file: processing function 'analyze_java'
+DEBUG should_exclude_function: checking 'analyze_java'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function 'analyze_java' passed exclusion checks
+DEBUG detect_domain_specific: checking function 'analyze_java'
+  is_domain_function=false
+  SKIPPED - not a domain function
+DEBUG analyze_file: processing function 'analyze_dex'
+DEBUG should_exclude_function: checking 'analyze_dex'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function 'analyze_dex' passed exclusion checks
+DEBUG analyze_file: function 'analyze_dex' matched architectural pattern - skipping all checks
+DEBUG analyze_file: processing function 'analyze_apk'
+DEBUG should_exclude_function: checking 'analyze_apk'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function 'analyze_apk' passed exclusion checks
+DEBUG analyze_file: function 'analyze_apk' matched architectural pattern - skipping all checks
+DEBUG analyze_file: processing function 'analyze_jar'
+DEBUG should_exclude_function: checking 'analyze_jar'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function 'analyze_jar' passed exclusion checks
+DEBUG analyze_file: function 'analyze_jar' matched architectural pattern - skipping all checks
+DEBUG analyze_file: processing function 'analyze_msi'
+DEBUG should_exclude_function: checking 'analyze_msi'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function 'analyze_msi' passed exclusion checks
+DEBUG analyze_file: function 'analyze_msi' matched architectural pattern - skipping all checks
+DEBUG analyze_file: processing function 'analyze_com'
+DEBUG should_exclude_function: checking 'analyze_com'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function 'analyze_com' passed exclusion checks
+DEBUG analyze_file: function 'analyze_com' matched architectural pattern - skipping all checks
+DEBUG analyze_file: processing function '_get_machine_type'
+DEBUG should_exclude_function: checking '_get_machine_type'
+  is_domain_specific=false
+  EXCLUDED: private function pattern
+DEBUG analyze_file: function '_get_machine_type' was excluded
+DEBUG analyze_file: processing function '_get_pe_timestamp'
+DEBUG should_exclude_function: checking '_get_pe_timestamp'
+  is_domain_specific=false
+  EXCLUDED: private function pattern
+DEBUG analyze_file: function '_get_pe_timestamp' was excluded
+DEBUG analyze_file: processing function '_get_characteristics'
+DEBUG should_exclude_function: checking '_get_characteristics'
+  is_domain_specific=false
+  EXCLUDED: private function pattern
+DEBUG analyze_file: function '_get_characteristics' was excluded
+DEBUG analyze_file: processing function 'analyze'
+DEBUG should_exclude_function: checking 'analyze'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function 'analyze' passed exclusion checks
+DEBUG analyze_file: function 'analyze' matched architectural pattern - skipping all checks
+DEBUG analyze_file: processing function '_analyze_lief_binary'
+DEBUG should_exclude_function: checking '_analyze_lief_binary'
+  is_domain_specific=false
+  EXCLUDED: private function pattern
+DEBUG analyze_file: function '_analyze_lief_binary' was excluded
+DEBUG analyze_file: processing function 'run_multi_format_analysis'
+DEBUG should_exclude_function: checking 'run_multi_format_analysis'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function 'run_multi_format_analysis' passed exclusion checks
+DEBUG analyze_file: function 'run_multi_format_analysis' matched architectural pattern - skipping all checks
+Progress: 1/1
+Scan complete!
+Failed to write TODO.md: The system cannot find the path specified. (os error 3)
+Failed to write TODO.xml: The system cannot find the path specified. (os error 3)
+
+# Intellicrack Production-Readiness Issues
+
+**Total Issues:** 1
+
+---
+
+## Python Issues (1 files)
+
+### File: `intellicrack/core/analysis/multi_format_analyzer.py`
+
+**Issues in this file:** 1
+
+#### 1. [ ] `analyze_java()` - MEDIUM (Line 563)
+
+**Confidence:** 62%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Function name implies external tool usage but no subprocess/tool calls detected (+30 points)
+- Trivial implementation: no loops, conditionals, or local vars despite multiple lines (+55 points)
+- Deductions for production patterns (-23 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+

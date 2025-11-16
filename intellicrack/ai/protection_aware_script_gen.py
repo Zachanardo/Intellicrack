@@ -21,8 +21,8 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import logging
 from typing import Any
 
-from ..models.protection_knowledge_base import get_protection_knowledge_base
-from ..protection.unified_protection_engine import get_unified_engine
+from ..models.protection_knowledge_base import ProtectionSchemeInfo, get_protection_knowledge_base
+from ..protection.unified_protection_engine import UnifiedProtectionResult, get_unified_engine
 
 """
 Protection-Aware AI Script Generation
@@ -207,7 +207,13 @@ class ProtectionAwareScriptGenerator:
             "icp_analysis": result.icp_analysis,
         }
 
-    def _generate_ai_prompt(self, result: Any, protection_type: str, confidence: float, protection_info: Any) -> str:
+    def _generate_ai_prompt(
+        self,
+        result: UnifiedProtectionResult,
+        protection_type: str,
+        confidence: float,
+        protection_info: ProtectionSchemeInfo | None,
+    ) -> str:
         """Generate AI prompt for script enhancement."""
         prompt = f"""Generate a bypass script for {protection_type} protection.
 
@@ -254,7 +260,7 @@ Focus on the most effective approach for this specific protection type.
 
         return prompt
 
-    def _format_detections(self, result: Any) -> str:
+    def _format_detections(self, result: UnifiedProtectionResult) -> str:
         """Format detections for display."""
         lines = []
 
@@ -279,7 +285,7 @@ Focus on the most effective approach for this specific protection type.
 
         return "\n".join(lines)
 
-    def _get_recommended_techniques(self, protection_info: Any) -> list[dict[str, Any]]:
+    def _get_recommended_techniques(self, protection_info: ProtectionSchemeInfo | None) -> list[dict[str, Any]]:
         """Get recommended bypass techniques."""
         if not protection_info:
             return []
@@ -5193,7 +5199,7 @@ print("[+] Generic {script_type} analysis started")
 
 
 # Integration function
-def enhance_ai_script_generation(ai_generator: Any, binary_path: str) -> dict[str, Any]:
+def enhance_ai_script_generation(ai_generator: object | None, binary_path: str) -> dict[str, Any]:
     """Enhance existing AI script generation with protection awareness.
 
     This function integrates AI-powered enhancements into protection-specific

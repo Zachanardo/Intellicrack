@@ -381,8 +381,17 @@ class APIObfuscator:
 
         return None
 
-    def _indirect_call(self, api_address: int, *args) -> Any:
-        """Make indirect API call through function pointer."""
+    def _indirect_call(self, api_address: int, *args: object) -> object:
+        """Make indirect API call through function pointer.
+
+        Args:
+            api_address: Address of the API function to call
+            *args: Variable arguments to pass to the API function
+
+        Returns:
+            Result of the API call, or None if the call fails
+
+        """
         try:
             # Create function prototype based on number of arguments
             if len(args) == 0:
@@ -988,7 +997,7 @@ if (p{api_name}) {{
             ],
         )
 
-        # Decryption loop label
+        # Decryption loop label position (used for relative loop calculations)
         len(stub)
 
         # XOR byte at [ESI] with key

@@ -25,7 +25,7 @@ import hashlib
 import logging
 import time
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence
 
 try:
     import angr
@@ -109,7 +109,7 @@ class LicensePathPrioritizer(ExplorationTechnique):
                 self.logger.debug(f"Error loading string data at {hex(string_ref)}: {e}")
                 continue
 
-    def step(self, simgr: object, stash: str = "active", **kwargs: Any) -> object:
+    def step(self, simgr: object, stash: str = "active", **kwargs: object) -> object:
         """Prioritize paths based on license relevance with advanced scoring.
 
         Applies path scoring heuristics to rank execution paths by their relevance
@@ -302,7 +302,7 @@ class ConstraintOptimizer(ExplorationTechnique):
 
         self.logger.info(f"Constraint optimizer configured (timeout: {self.solver_timeout}ms)")
 
-    def step(self, simgr: object, stash: str = "active", **kwargs: Any) -> object:
+    def step(self, simgr: object, stash: str = "active", **kwargs: object) -> object:
         """Optimize constraints during exploration.
 
         Periodically simplifies constraint sets to reduce solver complexity and
@@ -395,7 +395,7 @@ class StateMerger(ExplorationTechnique):
         self.max_merge_count = max_merge_count
         self.logger = logging.getLogger("IntellicrackLogger.StateMerger")
 
-    def step(self, simgr: object, stash: str = "active", **kwargs: Any) -> object:
+    def step(self, simgr: object, stash: str = "active", **kwargs: object) -> object:
         """Merge similar states to reduce path explosion.
 
         Identifies and merges states at the same address to reduce branching
@@ -488,7 +488,7 @@ class StateMerger(ExplorationTechnique):
 class WindowsLicensingSimProcedure(SimProcedure):
     """Base class for Windows licensing API simprocedures."""
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: object, **kwargs: object) -> None:
         """Initialize the Windows licensing simprocedure.
 
         Calls parent SimProcedure constructor with all arguments and keyword arguments.

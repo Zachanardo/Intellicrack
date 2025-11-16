@@ -232,7 +232,7 @@ def aggregate_severity_stats(findings: list[dict]) -> dict:
 def prioritize_findings(findings: list[dict]) -> list[dict]:
     """Sort findings by priority (risk score)."""
 
-    def get_priority_score(finding):
+    def get_priority_score(finding: dict) -> float:
         severity = finding.get("severity", SeverityLevel.INFO)
         threat = finding.get("threat", ThreatLevel.UNLIKELY)
         confidence = finding.get("confidence", ConfidenceLevel.MEDIUM)

@@ -299,7 +299,7 @@ def configure_logging(
         # Set more verbose logging format for comprehensive mode
         comprehensive_format = "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(funcName)s() - %(message)s"
         setup_logger("Intellicrack", logging.DEBUG, log_file, comprehensive_format)
-        logging.debug("Comprehensive logging enabled with detailed function tracking")
+        logger.debug("Comprehensive logging enabled with detailed function tracking")
 
 
 def setup_logging(

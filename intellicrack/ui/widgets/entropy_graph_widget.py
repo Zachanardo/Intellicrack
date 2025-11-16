@@ -7,7 +7,7 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-from typing import Any
+from typing import Any, Sequence
 
 from intellicrack.handlers.pyqt6_handler import (
     QHBoxLayout,
@@ -69,10 +69,10 @@ class EntropyGraphWidget(QWidget):
     #: section_name, entropy_value (type: str, float)
     section_clicked = pyqtSignal(str, float)
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize entropy graph widget with data storage and UI setup."""
         super().__init__(parent)
-        self.entropy_data = []
+        self.entropy_data: list[Any] = []
         self.init_ui()
 
     def init_ui(self) -> None:
@@ -325,7 +325,7 @@ class EntropyGraphWidget(QWidget):
         # Redraw
         self.canvas.draw()
 
-    def _on_bar_clicked(self, item, points) -> None:
+    def _on_bar_clicked(self, item: object, points: Sequence[object]) -> None:
         """Handle bar click in PyQtGraph."""
         if points:
             point = points[0]

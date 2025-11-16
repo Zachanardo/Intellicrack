@@ -21,7 +21,6 @@ from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any
 
 import joblib
 import Levenshtein
@@ -474,8 +473,20 @@ class ConfidenceScorer:
 
         return matches / len(common_keys)
 
-    def _values_match(self, val1: Any, val2: Any) -> bool:
-        """Check if values match."""
+    def _values_match(self, val1: object, val2: object) -> bool:
+        """Check if values match.
+
+        Compare two values for equality, with type-specific logic for numeric
+        and string types.
+
+        Args:
+            val1: First value to compare. Can be any type.
+            val2: Second value to compare. Can be any type.
+
+        Returns:
+            True if values match according to type-specific rules, False otherwise.
+
+        """
         if type(val1) is not type(val2):
             return False
 

@@ -445,7 +445,7 @@ def main() -> None:
     }
 
     try:
-        if args.batch or os.path.isdir(args.target):
+        if args.batch or Path(args.target).is_dir():
             # Batch mode
             target_dir = Path(args.target)
 

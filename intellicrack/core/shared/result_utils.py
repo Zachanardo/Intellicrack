@@ -17,8 +17,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-from typing import Any
-
 """
 Result Dictionary Utilities
 
@@ -29,7 +27,7 @@ Common functionality for result dictionary operations to eliminate code duplicat
 class ResultMixin:
     """Mixin class providing common result dictionary operations."""
 
-    def init_result(self, **kwargs) -> dict[str, Any]:
+    def init_result(self, **kwargs: object) -> dict[str, object]:
         """Initialize a standard result dictionary.
 
         Args:
@@ -46,7 +44,7 @@ class ResultMixin:
         result.update(kwargs)
         return result
 
-    def create_analysis_result(self, **kwargs) -> dict[str, Any]:
+    def create_analysis_result(self, **kwargs: object) -> dict[str, object]:
         """Create a standardized analysis result dictionary.
 
         Alias for init_result to maintain compatibility.

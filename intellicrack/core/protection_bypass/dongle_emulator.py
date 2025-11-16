@@ -28,7 +28,7 @@ import threading
 from dataclasses import dataclass, field
 from enum import IntEnum
 from pathlib import Path
-from typing import Any, Callable
+from typing import Callable
 
 try:
     from Crypto.Cipher import AES, DES, DES3
@@ -185,7 +185,7 @@ class HASPDongle:
     password: bytes = b"defaultpass\x00\x00\x00\x00\x00"
     aes_key: bytes = field(default_factory=lambda: os.urandom(32))
     des_key: bytes = field(default_factory=lambda: os.urandom(24))
-    rsa_key: Any = None
+    rsa_key: object = None
     license_data: bytearray = field(default_factory=lambda: bytearray(512))
     rtc_counter: int = 0
     feature_map: dict[int, dict[str, Any]] = field(default_factory=dict)
@@ -219,7 +219,7 @@ class SentinelDongle:
     response_buffer: bytearray = field(default_factory=lambda: bytearray(1024))
     aes_key: bytes = field(default_factory=lambda: os.urandom(32))
     des_key: bytes = field(default_factory=lambda: os.urandom(24))
-    rsa_key: Any = None
+    rsa_key: object = None
     cell_data: dict[int, bytes] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -423,7 +423,7 @@ class CryptoEngine:
 
         return bytes(response)
 
-    def rsa_sign(self, data: bytes, private_key: Any) -> bytes:
+    def rsa_sign(self, data: bytes, private_key: object) -> bytes:
         """Sign data with RSA private key."""
         if not CRYPTO_AVAILABLE or private_key is None:
             return hashlib.sha256(data).digest()
@@ -448,7 +448,7 @@ class CryptoEngine:
 class HardwareDongleEmulator:
     """Implements hardware dongle emulation for various protection systems."""
 
-    def __init__(self, app: Any | None = None) -> None:
+    def __init__(self, app: object | None = None) -> None:
         """Initialize the hardware dongle emulator.
 
         Args:
@@ -1546,7 +1546,7 @@ class HardwareDongleEmulator:
         self.logger.info("Cleared all dongle emulation hooks and virtual devices")
 
 
-def activate_hardware_dongle_emulation(app: Any, dongle_types: list[str] = None) -> dict[str, Any]:
+def activate_hardware_dongle_emulation(app: object, dongle_types: list[str] | None = None) -> dict[str, object]:
     """Activate hardware dongle emulation.
 
     Args:

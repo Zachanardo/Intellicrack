@@ -24,6 +24,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QLineEdit,
     QMessageBox,
     QModelIndex,
+    QPoint,
     QPushButton,
     QSpinBox,
     QSplitter,
@@ -107,7 +108,7 @@ class HexViewerWidget(QWidget):
     #: Start, end offsets (type: int, int)
     region_highlighted = pyqtSignal(int, int)
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize hex viewer widget with file data, PE analysis components, and UI setup."""
         super().__init__(parent)
         self.file_path: str | None = None
@@ -220,7 +221,7 @@ class HexViewerWidget(QWidget):
         search_layout.addWidget(self.search_type)
 
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Enter search pattern...")
+        self.search_input.setToolTip("Enter search pattern in selected format (Hex, ASCII, or Unicode)")
         self.search_input.returnPressed.connect(self.search_data)
         search_layout.addWidget(self.search_input)
 
@@ -498,8 +499,33 @@ class HexViewerWidget(QWidget):
         for _ in range(start_line):
             cursor.movePosition(QTextCursor.Down)
 
-        # Highlight bytes
-        # Implementation depends on exact formatting
+        # Highlight bytes in the range
+        self.bytes_per_line * 3
+        for line_idx in range(start_line, min(end_line + 1, len(self.file_data) // self.bytes_per_line + 1)):
+            cursor.movePosition(QTextCursor.StartOfBlock)
+
+            if line_idx == start_line:
+                byte_in_line = (start - self.current_offset) % self.bytes_per_line
+                char_offset = 10 + byte_in_line * 3
+            else:
+                char_offset = 10
+
+            for _ in range(char_offset):
+                cursor.movePosition(QTextCursor.Right)
+
+            if line_idx == end_line:
+                bytes_to_highlight = (end - self.current_offset) % self.bytes_per_line + 1
+            else:
+                bytes_to_highlight = self.bytes_per_line - (byte_in_line if line_idx == start_line else 0)
+
+            for _ in range(bytes_to_highlight * 3):
+                cursor.movePosition(QTextCursor.Right, QTextCursor.KeepAnchor)
+
+            if cursor.hasSelection():
+                cursor.setCharFormat(fmt)
+
+            if line_idx < end_line:
+                cursor.movePosition(QTextCursor.Down)
 
     def go_to_offset(self, offset: int) -> None:
         """Navigate to specific offset."""
@@ -611,7 +637,7 @@ class HexViewerWidget(QWidget):
         cursor = self.hex_display.textCursor()
         position = cursor.position()
 
-        self.logger.debug("Cursor position: %d", position)
+        logger.debug("Cursor position: %d", position)
 
         # Calculate byte offset from cursor position
         # This is complex due to formatting - simplified version
@@ -744,7 +770,7 @@ class HexViewerWidget(QWidget):
                 )
 
                 # Log the export
-                self.logger.info(f"Exported {len(binary_data)} bytes to {file_path}")
+                logger.info(f"Exported {len(binary_data)} bytes to {file_path}")
 
         except ValueError as e:
             QMessageBox.critical(
@@ -759,12 +785,12 @@ class HexViewerWidget(QWidget):
                 f"Failed to write file: {e!s}",
             )
         except Exception as e:
-            self.logger.error(f"Export error: {e}")
+            logger.error(f"Export error: {e}")
             QMessageBox.critical(
                 self,
                 "Export Error",
                 f"Unexpected error: {e!s}",
-            )  # Implementation needed
+            )
 
     def clear_highlights(self) -> None:
         """Clear all highlighting."""
@@ -887,7 +913,7 @@ class HexViewerWidget(QWidget):
         if tooltip and tooltip != name:
             self.structure_info_text.append(f"\nDetails:\n{tooltip}")
 
-    def _show_context_menu(self, position) -> None:
+    def _show_context_menu(self, position: QPoint) -> None:
         """Show context menu for hex display."""
         from intellicrack.handlers.pyqt6_handler import QAction, QMenu
 
@@ -928,7 +954,7 @@ class HexViewerWidget(QWidget):
 
         menu.exec(self.hex_display.mapToGlobal(position))
 
-    def _extract_strings_from_selection(self, wide=False) -> None:
+    def _extract_strings_from_selection(self, wide: bool = False) -> None:
         """Extract strings from selected hex data."""
         try:
             from PyQt6.QtWidgets import (

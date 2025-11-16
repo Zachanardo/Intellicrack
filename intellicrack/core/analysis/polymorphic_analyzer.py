@@ -71,7 +71,7 @@ class InstructionNode:
     side_effects: set[str] = field(default_factory=set)
     semantic_hash: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Compute semantic hash after initialization."""
         hash_components = [
             self.semantic_class,
@@ -554,7 +554,7 @@ class PolymorphicAnalyzer:
             "".join(semantic_hashes).encode(),
         ).hexdigest()
 
-    def _create_instruction_node(self, insn) -> InstructionNode:
+    def _create_instruction_node(self, insn: object) -> InstructionNode:
         """Create normalized instruction node from disassembled instruction."""
         semantic_class = self.INSTRUCTION_SEMANTICS.get(insn.mnemonic, "other")
 
@@ -837,7 +837,7 @@ class PolymorphicAnalyzer:
 
         return dict(dependencies)
 
-    def _operands_equal(self, op1, op2) -> bool:
+    def _operands_equal(self, op1: object, op2: object) -> bool:
         """Check if two operands are equal."""
         if op1.type != op2.type:
             return False
@@ -855,7 +855,7 @@ class PolymorphicAnalyzer:
 
         return False
 
-    def _is_register_operand(self, operand) -> bool:
+    def _is_register_operand(self, operand: object) -> bool:
         """Check if operand is a register."""
         return operand.type == X86_OP_REG
 

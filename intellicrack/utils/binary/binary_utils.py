@@ -305,14 +305,14 @@ def get_file_entropy(file_path: str | Path, block_size: int = 256) -> float:
         return 0.0
 
 
-def check_suspicious_pe_sections(pe_obj) -> list:
+def check_suspicious_pe_sections(pe_obj: object) -> list[str]:
     """Check for suspicious PE sections that are both writable and executable.
 
     Args:
         pe_obj: A pefile PE object
 
     Returns:
-        list: List of suspicious section names
+        list[str]: List of suspicious section names
 
     """
     suspicious_sections = []
@@ -330,7 +330,7 @@ def check_suspicious_pe_sections(pe_obj) -> list:
     return suspicious_sections
 
 
-def validate_binary_path(binary_path: str, logger_instance=None) -> bool:
+def validate_binary_path(binary_path: str, logger_instance: object | None = None) -> bool:
     """Validate that a binary path exists and log appropriate error.
 
     This is the common pattern extracted from duplicate code in analysis modules.

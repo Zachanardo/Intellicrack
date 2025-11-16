@@ -25,6 +25,7 @@ import threading
 import time
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 from intellicrack.handlers.psutil_handler import psutil
@@ -267,7 +268,7 @@ class R2PerformanceOptimizer:
 
         try:
             # Basic file information
-            stat_info = os.stat(binary_path)
+            stat_info = Path(binary_path).stat()
             characteristics["file_size"] = stat_info.st_size
 
             # Quick r2 analysis for file type and architecture

@@ -29,11 +29,19 @@ class SimpleAnalysisPlugin:
     def __init__(self) -> None:
         """Initialize the simple analysis plugin."""
         super().__init__()
-        self.results = {}
+        self.results: dict[str, object] = {}
 
-    def analyze(self, binary_path):
-        """Perform simple binary analysis."""
-        results = []
+    def analyze(self, binary_path: str) -> list[str]:
+        """Perform simple binary analysis.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            A list of analysis results as strings.
+
+        """
+        results: list[str] = []
         results.append(f"Analyzing: {binary_path}")
 
         # Your analysis code here
@@ -45,6 +53,11 @@ class SimpleAnalysisPlugin:
         return results
 
 
-def register():
-    """Register and return an instance of the simple analysis plugin."""
+def register() -> SimpleAnalysisPlugin:
+    """Register and return an instance of the simple analysis plugin.
+
+    Returns:
+        A SimpleAnalysisPlugin instance ready for use.
+
+    """
     return SimpleAnalysisPlugin()

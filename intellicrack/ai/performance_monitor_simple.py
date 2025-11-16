@@ -20,11 +20,13 @@ import logging
 import threading
 import time
 from collections import defaultdict, deque
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
 from functools import wraps
-from typing import Any
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar('T')
 
 
 class PerformanceMonitor:
@@ -32,21 +34,36 @@ class PerformanceMonitor:
 
     def __init__(self) -> None:
         """Initialize performance monitor with metric tracking."""
-        self.metrics = defaultdict(list)
-        self.operation_counts = defaultdict(int)
-        self.error_counts = defaultdict(int)
-        self.lock = threading.Lock()
-        self.start_times = {}
+        self.metrics: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        self.operation_counts: dict[str, int] = defaultdict(int)
+        self.error_counts: dict[str, int] = defaultdict(int)
+        self.lock: threading.Lock = threading.Lock()
+        self.start_times: dict[str, float] = {}
 
     def start_operation(self, operation_name: str) -> str:
-        """Start timing an operation."""
+        """Start timing an operation.
+
+        Args:
+            operation_name: The name of the operation to time.
+
+        Returns:
+            A unique operation ID for tracking.
+
+        """
         operation_id = f"{operation_name}_{time.time()}_{threading.current_thread().ident}"
         with self.lock:
             self.start_times[operation_id] = time.time()
         return operation_id
 
     def end_operation(self, operation_id: str, operation_name: str, success: bool = True) -> None:
-        """End timing an operation and record metrics."""
+        """End timing an operation and record metrics.
+
+        Args:
+            operation_id: The unique operation ID returned by start_operation.
+            operation_name: The name of the operation being timed.
+            success: Whether the operation completed successfully.
+
+        """
         end_time = time.time()
         with self.lock:
             if operation_id in self.start_times:
@@ -63,12 +80,20 @@ class PerformanceMonitor:
                     self.error_counts[operation_name] += 1
                 del self.start_times[operation_id]
 
-                # Keep only last 1000 metrics per operation
                 if len(self.metrics[operation_name]) > 1000:
                     self.metrics[operation_name] = self.metrics[operation_name][-1000:]
 
     def get_stats(self, operation_name: str) -> dict[str, Any]:
-        """Get performance statistics for an operation."""
+        """Get performance statistics for an operation.
+
+        Args:
+            operation_name: The name of the operation to retrieve statistics for.
+
+        Returns:
+            A dictionary containing count, average duration, min/max duration,
+            error rate, and total operations for the specified operation.
+
+        """
         with self.lock:
             if operation_name not in self.metrics:
                 return {}
@@ -92,12 +117,21 @@ class AsyncPerformanceMonitor:
 
     def __init__(self) -> None:
         """Initialize async performance monitor with operation tracking."""
-        self.active_operations = {}
-        self.completed_operations = deque(maxlen=10000)
-        self.lock = threading.Lock()
+        self.active_operations: dict[str, dict[str, Any]] = {}
+        self.completed_operations: deque[dict[str, Any]] = deque(maxlen=10000)
+        self.lock: threading.Lock = threading.Lock()
 
-    async def monitor_operation(self, operation_name: str, coroutine: Any):
-        """Monitor an async operation."""
+    async def monitor_operation(self, operation_name: str, coroutine: Coroutine[Any, Any, T]) -> T:
+        """Monitor an async operation.
+
+        Args:
+            operation_name: The name of the operation being monitored.
+            coroutine: The coroutine to monitor.
+
+        Returns:
+            The result of the coroutine execution.
+
+        """
         start_time = time.time()
         operation_id = f"{operation_name}_{start_time}_{id(coroutine)}"
 
@@ -112,7 +146,7 @@ class AsyncPerformanceMonitor:
             success = True
         except Exception as e:
             logger.error(f"Operation {operation_name} failed: {e}")
-            result = None
+            result = None  # type: ignore[assignment]
             success = False
         finally:
             end_time = time.time()
@@ -131,22 +165,35 @@ class AsyncPerformanceMonitor:
         return result
 
     def get_active_count(self) -> int:
-        """Get number of currently active operations."""
+        """Get number of currently active operations.
+
+        Returns:
+            The count of currently active async operations.
+
+        """
         with self.lock:
             return len(self.active_operations)
 
 
-# Global instances
-_performance_monitor = PerformanceMonitor()
-_async_monitor = AsyncPerformanceMonitor()
+_performance_monitor: PerformanceMonitor = PerformanceMonitor()
+_async_monitor: AsyncPerformanceMonitor = AsyncPerformanceMonitor()
 
 
-def profile_ai_operation(operation_name: str = None):
-    """Profile AI operations with real performance tracking using a decorator."""
+def profile_ai_operation(operation_name: str | None = None) -> Callable[[Callable[..., T]], Callable[..., T]]:
+    """Profile AI operations with real performance tracking using a decorator.
 
-    def decorator(func: Callable) -> Callable:
+    Args:
+        operation_name: Optional name for the operation. If not provided,
+            the function module and name will be used.
+
+    Returns:
+        A decorator function that wraps the target function with performance monitoring.
+
+    """
+
+    def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: object, **kwargs: object) -> T:
             op_name = operation_name or f"{func.__module__}.{func.__name__}"
             operation_id = _performance_monitor.start_operation(op_name)
 
@@ -159,16 +206,26 @@ def profile_ai_operation(operation_name: str = None):
                 logger.error(f"Operation {op_name} failed: {e}")
                 raise
 
-        return wrapper
+        return wrapper  # type: ignore[return-value]
 
     return decorator
 
 
 def get_performance_monitor() -> PerformanceMonitor:
-    """Get the real performance monitor instance."""
+    """Get the real performance monitor instance.
+
+    Returns:
+        The global PerformanceMonitor instance.
+
+    """
     return _performance_monitor
 
 
 def get_async_monitor() -> AsyncPerformanceMonitor:
-    """Get the real async performance monitor instance."""
+    """Get the real async performance monitor instance.
+
+    Returns:
+        The global AsyncPerformanceMonitor instance.
+
+    """
     return _async_monitor

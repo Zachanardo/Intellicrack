@@ -20,6 +20,8 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 import os
+from contextlib import suppress
+from pathlib import Path
 
 from PyQt6.QtCore import QPoint, QRect, Qt, pyqtSignal
 from PyQt6.QtGui import (
@@ -353,35 +355,41 @@ class HexViewerWidget(QAbstractScrollArea):
                 return False
 
             # Create a temporary file
+            import os
             import tempfile
 
-            temp_file = tempfile.NamedTemporaryFile(delete=False)
+            temp_file = tempfile.NamedTemporaryFile(delete=False)  # noqa: SIM115
             temp_file.write(data)
             temp_file.flush()  # Ensure data is written to disk
             temp_file_path = temp_file.name
             temp_file.close()
 
-            # Load the temporary file
-            logger.debug("Loading temporary file: %s", temp_file_path)
-            result = self.load_file(temp_file_path, read_only=True)
+            try:
+                # Load the temporary file
+                logger.debug("Loading temporary file: %s", temp_file_path)
+                result = self.load_file(temp_file_path, read_only=True)
 
-            # Set the file path to indicate this is in-memory data
-            self.file_path = name
+                # Set the file path to indicate this is in-memory data
+                self.file_path = name
 
-            # Update window title if this is a top-level window
-            if self.window():
-                self.window().setWindowTitle(f"Hex Viewer - {name}")
+                # Update window title if this is a top-level window
+                if self.window():
+                    self.window().setWindowTitle(f"Hex Viewer - {name}")
 
-            # Force an update of the viewport
-            self.update()
-            self.viewport().update()
+                # Force an update of the viewport
+                self.update()
+                self.viewport().update()
 
-            # Reset scrollbars to top
-            self.verticalScrollBar().setValue(0)
-            self.horizontalScrollBar().setValue(0)
+                # Reset scrollbars to top
+                self.verticalScrollBar().setValue(0)
+                self.horizontalScrollBar().setValue(0)
 
-            logger.info(f"Loaded data buffer: {name} ({len(data)} bytes), success={result}")
-            return result
+                logger.info(f"Loaded data buffer: {name} ({len(data)} bytes), success={result}")
+                return result
+            finally:
+                # Clean up the temporary file
+                with suppress(OSError):
+                    Path(temp_file_path).unlink()
         except (OSError, ValueError, RuntimeError) as e:
             logger.error(f"Error loading data: {e}", exc_info=True)
             return False

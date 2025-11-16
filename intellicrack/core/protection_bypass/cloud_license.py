@@ -364,7 +364,7 @@ class ProtocolStateMachine:
             return token_data["token"]
         return None
 
-    def store_session_data(self, key: str, value: Any) -> None:
+    def store_session_data(self, key: str, value: object) -> None:
         """Store arbitrary session data for protocol context.
 
         Args:
@@ -374,7 +374,7 @@ class ProtocolStateMachine:
         """
         self.session_data[key] = value
 
-    def get_session_data(self, key: str) -> Any | None:
+    def get_session_data(self, key: str) -> object | None:
         """Retrieve stored session data.
 
         Args:
@@ -779,7 +779,7 @@ class ResponseSynthesizer:
             buf.append(value)
             return bytes(buf)
 
-        def encode_field(field_num: int, value: Any) -> None:
+        def encode_field(field_num: int, value: object) -> None:
             if isinstance(value, str):
                 wire_type = 2
                 tag = (field_num << 3) | wire_type
@@ -1224,7 +1224,7 @@ class CloudLicenseProtocolHandler:
         }
 
     def synthesize_license_response(self, protocol: ProtocolType, endpoint: str,
-                                   request_data: Any) -> Any:
+                                   request_data: object) -> object:
         """Synthesize license validation response based on protocol type.
 
         Args:
@@ -1460,7 +1460,7 @@ class CloudLicenseBypass:
         return self.protocol_handler.get_interception_stats()
 
 
-def create_cloud_license_bypass():
+def create_cloud_license_bypass() -> CloudLicenseBypass:
     """Create CloudLicenseBypass instance via factory function.
 
     Returns:

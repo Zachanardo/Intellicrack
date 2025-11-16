@@ -24,11 +24,11 @@ This module consolidates Windows-specific functionality to reduce code duplicati
 import logging
 import sys
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Global Windows availability check
-WINDOWS_AVAILABLE = False
-ctypes = None
+WINDOWS_AVAILABLE: bool = False
+ctypes: object = None
 
 if sys.platform == "win32":
     try:
@@ -47,8 +47,17 @@ def is_windows_available() -> bool:
     return WINDOWS_AVAILABLE
 
 
-def get_windows_kernel32():
-    """Get kernel32 library if available."""
+def get_windows_kernel32() -> object | None:
+    """Get kernel32 library if available.
+
+    Loads the Windows kernel32.dll library if Windows is available and
+    ctypes has been successfully imported. Returns None if Windows is not
+    available or if the library fails to load.
+
+    Returns:
+        The kernel32 WinDLL instance if available, None otherwise.
+
+    """
     if not WINDOWS_AVAILABLE or ctypes is None:
         return None
     try:
@@ -58,8 +67,17 @@ def get_windows_kernel32():
         return None
 
 
-def get_windows_ntdll():
-    """Get ntdll library if available."""
+def get_windows_ntdll() -> object | None:
+    """Get ntdll library if available.
+
+    Loads the Windows ntdll.dll library if Windows is available and
+    ctypes has been successfully imported. Returns None if Windows is not
+    available or if the library fails to load.
+
+    Returns:
+        The ntdll WinDLL instance if available, None otherwise.
+
+    """
     if not WINDOWS_AVAILABLE or ctypes is None:
         return None
     try:
@@ -80,13 +98,23 @@ class WindowsConstants:
     PAGE_EXECUTE_READWRITE = 0x40
 
 
-def cleanup_process_handles(kernel32, process_info: dict, logger_instance=None) -> None:
+def cleanup_process_handles(
+    kernel32: object, process_info: dict[str, object], logger_instance: logging.Logger | None = None,
+) -> None:
     """Clean up Windows process handles.
 
+    Closes process and thread handles stored in the provided dictionary.
+    Gracefully handles errors and logs them if a logger instance is provided.
+
     Args:
-        kernel32: Windows kernel32 library
-        process_info: Dictionary containing process and thread handles
-        logger_instance: Optional logger for error reporting
+        kernel32: Windows kernel32 library WinDLL instance.
+        process_info: Dictionary containing 'process_handle' and 'thread_handle' keys
+            with their respective handle values.
+        logger_instance: Optional logger instance for error reporting. If provided,
+            errors during handle cleanup will be logged as warnings.
+
+    Returns:
+        None.
 
     """
     try:

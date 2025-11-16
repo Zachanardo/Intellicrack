@@ -1548,7 +1548,7 @@ class IntegrityBypassEngine:
 
         return script
 
-    def _on_message(self, message, data) -> None:
+    def _on_message(self, message: dict[str, Any], data: bytes | None) -> None:
         """Handle Frida script messages."""
         if message["type"] == "send":
             logger.info(f"[Frida] {message['payload']}")

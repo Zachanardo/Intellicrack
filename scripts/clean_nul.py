@@ -2,6 +2,7 @@
 
 import os
 import sys
+from pathlib import Path
 
 
 def clean_nul_files() -> None:
@@ -12,7 +13,7 @@ def clean_nul_files() -> None:
     """
     print("--- Python NUL File Cleaner ---")
     # The batch script ensures this script is run from the project root.
-    root_dir = os.getcwd()
+    root_dir = str(Path.cwd())
     print(f"Starting recursive search in: {root_dir}")
     files_deleted = 0
 

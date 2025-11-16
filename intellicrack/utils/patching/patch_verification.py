@@ -652,7 +652,7 @@ def _setup_disassembly_tools(is_64bit: bool) -> dict[str, Any]:
     return {"ks": ks, "md": md}
 
 
-def _get_text_section(pe: Any, app: MainWindow) -> Any:
+def _get_text_section(pe: object, app: MainWindow) -> object:
     """Get the .text section from PE file.
 
     Args:
@@ -707,7 +707,7 @@ def _process_single_candidate(
     return patch
 
 
-def _generate_patch_bytes(is_64bit: bool, ks: Any) -> tuple[bytes, str]:
+def _generate_patch_bytes(is_64bit: bool, ks: object) -> tuple[bytes, str]:
     """Generate patch bytes for the architecture.
 
     Args:
@@ -738,7 +738,7 @@ def _perform_safety_check_and_patch(
     code_base_addr: int,
     patch_bytes: bytes,
     patch_asm: str,
-    md: Any,
+    md: object,
     candidates: list[dict[str, Any]],
 ) -> dict[str, Any] | None:
     """Perform safety check and create patch if safe.

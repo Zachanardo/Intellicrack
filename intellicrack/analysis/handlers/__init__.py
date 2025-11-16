@@ -23,13 +23,13 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Import available handlers
-_available_handlers = {}
+_available_handlers: dict[str, object] = {}
 
 # Handler modules with descriptions
-_handler_modules = [
+_handler_modules: list[tuple[str, str]] = [
     ("llm_handler", "Large Language Model integration handler"),
     ("report_generation_handler", "Analysis report generation handler"),
     ("script_generation_handler", "Dynamic script generation handler"),
@@ -47,37 +47,42 @@ for module_name, description in _handler_modules:
         logger.warning("Error loading analysis handler %s: %s", module_name, e)
 
 
-def get_available_handlers():
-    """Get list of successfully loaded analysis handlers."""
+def get_available_handlers() -> list[str]:
+    """Get list of successfully loaded analysis handlers.
+
+    Returns:
+        list[str]: List of available handler module names.
+
+    """
     return list(_available_handlers.keys())
 
 
-def get_handler(handler_name: str):
+def get_handler(handler_name: str) -> object | None:
     """Get a specific handler module if available.
 
     Args:
-        handler_name (str): Name of the handler module
+        handler_name: Name of the handler module to retrieve.
 
     Returns:
-        module: The handler module, or None if not available
+        The handler module, or None if not available.
 
     """
     return _available_handlers.get(handler_name)
 
 
-def is_handler_available(handler_name: str):
+def is_handler_available(handler_name: str) -> bool:
     """Check if a specific handler is available.
 
     Args:
-        handler_name (str): Name of the handler to check
+        handler_name: Name of the handler to check.
 
     Returns:
-        bool: True if handler is available, False otherwise
+        True if handler is available, False otherwise.
 
     """
     return handler_name in _available_handlers
 
 
 # Get all handler names and convert to list of strings
-_handler_names = [str(name) for name in _available_handlers]
+_handler_names: list[str] = [str(name) for name in _available_handlers]
 __all__ = ["get_available_handlers", "get_handler", "is_handler_available", *_handler_names]

@@ -22,7 +22,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
 
 # Optional imports for enhanced tutorials
 try:
@@ -74,11 +73,11 @@ class Tutorial:
 class TutorialSystem:
     """Interactive tutorial system for Intellicrack CLI."""
 
-    def __init__(self, cli_instance: Any | None = None) -> None:
+    def __init__(self, cli_instance: object | None = None) -> None:
         """Initialize tutorial system.
 
         Args:
-            cli_instance: Reference to CLI instance for command execution
+            cli_instance: Reference to CLI instance for command execution.
 
         """
         self.console = Console() if RICH_AVAILABLE else None
@@ -735,7 +734,7 @@ class TutorialSystem:
         self._show_current_step()
         return True
 
-    def skip_step(self):
+    def skip_step(self) -> bool:
         """Skip current tutorial step."""
         if not self.current_tutorial:
             return False
@@ -1194,7 +1193,7 @@ class TutorialSystem:
         tree = Tree(f"📚 [bold blue]{tutorial.title}[/bold blue]")
 
         # Add tutorial metadata
-        info_node = tree.add("ℹ️ [bold cyan]Tutorial Information[/bold cyan]")
+        info_node = tree.add("i [bold cyan]Tutorial Information[/bold cyan]")
         info_node.add(f" Difficulty: {tutorial.difficulty.title()}")
         info_node.add(f"⏱️ Estimated Time: {tutorial.estimated_time} minutes")
         info_node.add(f" Description: {tutorial.description}")
@@ -1224,12 +1223,12 @@ class TutorialSystem:
         self.console.print(tree)
 
 
-def create_tutorial_system(cli_instance: Any | None = None) -> TutorialSystem:
+def create_tutorial_system(cli_instance: object | None = None) -> TutorialSystem:
     """Create tutorial system instance."""
     return TutorialSystem(cli_instance)
 
 
-def run_interactive_tutorial(cli_instance: Any | None = None) -> int:
+def run_interactive_tutorial(cli_instance: object | None = None) -> int:
     """Run the interactive tutorial system."""
     tutorial_system = TutorialSystem(cli_instance)
 

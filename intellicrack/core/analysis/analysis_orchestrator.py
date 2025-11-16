@@ -26,6 +26,7 @@ import os
 import tempfile
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import QObject, pyqtSignal
@@ -65,8 +66,14 @@ class OrchestrationResult:
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
-    def add_result(self, phase: AnalysisPhase, result: Any) -> None:
-        """Add result for a phase."""
+    def add_result(self, phase: AnalysisPhase, result: dict[str, Any]) -> None:
+        """Add result for a phase.
+
+        Args:
+            phase: The analysis phase to add result for
+            result: Dictionary containing phase analysis results
+
+        """
         self.phases_completed.append(phase)
         self.results[phase.value] = result
 
@@ -189,7 +196,7 @@ class AnalysisOrchestrator(QObject):
 
     def _prepare_analysis(self, binary_path: str) -> dict[str, Any]:
         """Prepare for analysis."""
-        file_stat = os.stat(binary_path)
+        file_stat = Path(binary_path).stat()
         return {
             "file_size": file_stat.st_size,
             "file_path": os.path.abspath(binary_path),
@@ -231,33 +238,36 @@ class AnalysisOrchestrator(QObject):
                 components = analysis_result["components"]
 
                 # Extract imports and exports from the imports component
-                if "imports" in components and components["imports"]:
-                    imports_data = components["imports"]
+                imports_data = components.get("imports")
+                if imports_data:
                     result["imports"] = imports_data.get("imports", [])
                     result["exports"] = imports_data.get("exports", [])
                     result["sections"] = imports_data.get("sections", [])
 
                 # Extract strings from the strings component
-                if "strings" in components and components["strings"]:
-                    strings_data = components["strings"]
+                strings_data = components.get("strings")
+                if strings_data:
                     result["strings"] = strings_data.get("strings", [])
 
                 # Extract functions from decompiler component
-                if "decompiler" in components and components["decompiler"]:
-                    decompiler_data = components["decompiler"]
+                decompiler_data = components.get("decompiler")
+                if decompiler_data:
                     result["functions"] = decompiler_data.get("functions", [])
 
                 # Include signatures for additional static analysis data
-                if "signatures" in components and components["signatures"]:
-                    result["signatures"] = components["signatures"]
+                signatures_data = components.get("signatures")
+                if signatures_data:
+                    result["signatures"] = signatures_data
 
                 # Include ESIL analysis for advanced static analysis
-                if "esil" in components and components["esil"]:
-                    result["esil_analysis"] = components["esil"]
+                esil_data = components.get("esil")
+                if esil_data:
+                    result["esil_analysis"] = esil_data
 
             # Include any errors from the analysis
-            if "errors" in analysis_result and analysis_result["errors"]:
-                result["analysis_errors"] = analysis_result["errors"]
+            errors = analysis_result.get("errors")
+            if errors:
+                result["analysis_errors"] = errors
 
             return result
         except Exception as e:
@@ -344,11 +354,18 @@ class AnalysisOrchestrator(QObject):
         except Exception as e:
             return {"error": str(e), "ghidra_executed": False}
 
-    def _select_ghidra_script(self, binary_path: str):
+    def _select_ghidra_script(self, binary_path: str) -> object | None:
         """Select the most appropriate Ghidra script for the binary.
 
         Analyzes binary characteristics and selects the best matching
         Ghidra script from the available scripts.
+
+        Args:
+            binary_path: Path to the binary file to analyze
+
+        Returns:
+            The best matching Ghidra script object or None if no suitable script found
+
         """
         try:
             # Discover available scripts
@@ -660,12 +677,24 @@ class AnalysisOrchestrator(QObject):
 def run_selected_analysis(binary_path: str, analysis_types: list[str] | None = None) -> dict[str, Any]:
     """Run selected analysis on a binary file.
 
+    Orchestrates binary analysis using multiple analysis engines including static,
+    dynamic, vulnerability scanning, entropy analysis, pattern matching, and structure
+    analysis. Supports selective execution of analysis phases based on provided types.
+
     Args:
         binary_path: Path to the binary to analyze
-        analysis_types: List of analysis types to run (optional)
+        analysis_types: List of analysis types to run. Supported types: "static",
+            "dynamic", "vulnerability", "entropy", "pattern", "structure". If None,
+            all analysis types are executed.
 
     Returns:
-        Analysis results dictionary
+        Analysis results dictionary containing:
+            - success: Boolean indicating if analysis completed
+            - binary_path: Path to analyzed binary
+            - results: Dictionary mapping phase names to results
+            - phases_completed: List of completed analysis phases
+            - errors: List of errors encountered during analysis
+            - warnings: List of warnings from analysis phases
 
     """
     orchestrator = AnalysisOrchestrator(binary_path)

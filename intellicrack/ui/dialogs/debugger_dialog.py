@@ -474,9 +474,14 @@ class DebuggerDialog(QDialog):
 
         if not current_binary:
             # Generate real test binary if none available
+            import os
             import tempfile
 
-            test_binary = tempfile.NamedTemporaryFile(suffix=".exe", delete=False).name
+            # Create temporary file properly
+            test_temp_file = tempfile.NamedTemporaryFile(suffix=".exe", delete=False)  # noqa: SIM115
+            test_binary = test_temp_file.name
+            test_temp_file.close()  # Close immediately so we can write to it
+
             with open(test_binary, "wb") as f:
                 # Create minimal PE executable
                 f.write(b"MZ\x90\x00\x03\x00\x00\x00\x04\x00\x00\x00\xff\xff\x00\x00")

@@ -23,7 +23,7 @@ _dashboard_widgets = None
 _real_time_dashboard = None
 
 
-def _lazy_import_dashboard_manager():
+def _lazy_import_dashboard_manager() -> object:
     """Lazy import of dashboard manager module."""
     global _dashboard_manager
     if _dashboard_manager is None:
@@ -37,7 +37,7 @@ def _lazy_import_dashboard_manager():
     return _dashboard_manager if _dashboard_manager is not False else None
 
 
-def _lazy_import_dashboard_widgets():
+def _lazy_import_dashboard_widgets() -> object:
     """Lazy import of dashboard widgets module."""
     global _dashboard_widgets
     if _dashboard_widgets is None:
@@ -51,7 +51,7 @@ def _lazy_import_dashboard_widgets():
     return _dashboard_widgets if _dashboard_widgets is not False else None
 
 
-def _lazy_import_real_time_dashboard():
+def _lazy_import_real_time_dashboard() -> object:
     """Lazy import of real-time dashboard module."""
     global _real_time_dashboard
     if _real_time_dashboard is None:
@@ -72,7 +72,7 @@ real_time_dashboard = property(lambda self: _lazy_import_real_time_dashboard())
 
 
 # For backwards compatibility, expose the classes and functions
-def __getattr__(name: str):
+def __getattr__(name: str) -> object:
     """Lazy attribute access for dashboard components."""
     if name in ("DashboardLayout", "DashboardManager", "DataSource", "DataSourceType", "create_dashboard_manager"):
         dm = _lazy_import_dashboard_manager()

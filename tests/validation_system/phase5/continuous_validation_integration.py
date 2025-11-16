@@ -253,7 +253,7 @@ class NotificationManager:
         """Send Telegram notification."""
         try:
             icon = {
-                "info": "ℹ️",
+                "info": "i",
                 "warning": "WARNING",
                 "error": "FAIL",
                 "success": "OK"

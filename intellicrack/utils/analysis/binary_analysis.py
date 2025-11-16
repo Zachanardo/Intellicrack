@@ -1210,7 +1210,7 @@ def get_machine_type(machine: int) -> str:
 def get_basic_file_info(file_path: str) -> dict[str, Any]:
     """Get basic file information."""
     try:
-        stat = os.stat(file_path)
+        stat = Path(file_path).stat()
         return {
             "size": stat.st_size,
             "created": time.ctime(stat.st_ctime),

@@ -23,6 +23,7 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 
 import asyncio
 import logging
+import types
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -53,7 +54,7 @@ class APIClient:
         self.retry_delay = int(get_secret("API_RETRY_DELAY", "1000")) / 1000  # Convert ms to seconds
         self.session = None
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "APIClient":
         """Async context manager entry."""
         if not HAS_AIOHTTP:
             return self
@@ -61,7 +62,12 @@ class APIClient:
         self.session = aiohttp.ClientSession(timeout=timeout)
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> None:
         """Async context manager exit."""
         if self.session and HAS_AIOHTTP:
             await self.session.close()

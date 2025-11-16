@@ -24,7 +24,6 @@ import os
 import time
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Any
 
 from intellicrack.handlers.requests_handler import requests
 
@@ -73,7 +72,7 @@ class CacheManager:
         # Clean up expired entries on initialization
         self._cleanup_expired()
 
-    def _load_index(self) -> dict[str, dict[str, Any]]:
+    def _load_index(self) -> dict[str, dict[str, object]]:
         """Load the cache index from disk."""
         if os.path.exists(self.index_file):
             try:
@@ -98,7 +97,7 @@ class CacheManager:
         key_hash = hashlib.sha256(key.encode()).hexdigest()
         return os.path.join(self.cache_dir, f"{key_hash}.cache")
 
-    def get_cached_item(self, key: str) -> Any | None:
+    def get_cached_item(self, key: str) -> object | None:
         """Get an item from the cache.
 
         Args:
@@ -133,7 +132,7 @@ class CacheManager:
             self._remove_entry(key)
             return None
 
-    def cache_item(self, key: str, value: Any, ttl: int | None = None) -> bool:
+    def cache_item(self, key: str, value: object, ttl: int | None = None) -> bool:
         """Store an item in the cache.
 
         Args:
@@ -355,7 +354,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
         timeout: int = 60,
         proxy: str = "",
         rate_limit_config: RateLimitConfig | None = None,
-        cache_config: dict[str, Any] | None = None,
+        cache_config: dict[str, object] | None = None,
         download_dir: str = os.path.join(os.path.dirname(__file__), "..", "downloads"),
     ) -> None:
         """Initialize the API repository.
@@ -406,12 +405,12 @@ class APIRepositoryBase(ModelRepositoryInterface):
         self,
         endpoint: str,
         method: str = "GET",
-        params: dict[str, Any] | None = None,
-        data: dict[str, Any] | None = None,
+        params: dict[str, object] | None = None,
+        data: dict[str, object] | None = None,
         headers: dict[str, str] | None = None,
         use_cache: bool = True,
         cache_ttl: int | None = None,
-    ) -> tuple[bool, Any, str]:
+    ) -> tuple[bool, object, str]:
         """Make an API request with rate limiting, caching, and error handling.
 
         Args:

@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING
 
 try:
     import r2pipe
@@ -602,8 +602,17 @@ class R2BinaryDiff:
             return True
         return bb1.get("fail", 0) != bb2.get("fail", 0)
 
-    def _get_string_xrefs(self, r2_session, address: int) -> list[int]:
-        """Get cross-references to a string."""
+    def _get_string_xrefs(self, r2_session: object | None, address: int) -> list[int]:
+        """Get cross-references to a string.
+
+        Args:
+            r2_session: r2pipe session object for binary analysis.
+            address: Memory address of the string to analyze.
+
+        Returns:
+            List of cross-reference addresses where this string is referenced.
+
+        """
         try:
             r2_session.cmd(f"s {address}")
             xrefs = r2_session.cmd("axtj")
@@ -613,8 +622,16 @@ class R2BinaryDiff:
             self.logger.warning(f"Failed to get xrefs for address {hex(address)}: {e}")
             return []
 
-    def _get_file_hash(self, r2_session) -> str:
-        """Get file hash."""
+    def _get_file_hash(self, r2_session: object | None) -> str:
+        """Get file hash from binary using radare2.
+
+        Args:
+            r2_session: r2pipe session object for the binary.
+
+        Returns:
+            MD5 hash of the binary file, or empty string if computation fails.
+
+        """
         try:
             if r2_session:
                 result = r2_session.cmd("!rahash2 -a md5 -q $F")
@@ -623,8 +640,16 @@ class R2BinaryDiff:
             self.logger.warning(f"Failed to compute file hash: {e}")
         return ""
 
-    def _get_file_size(self, r2_session) -> int:
-        """Get file size."""
+    def _get_file_size(self, r2_session: object | None) -> int:
+        """Get file size in bytes using radare2 information.
+
+        Args:
+            r2_session: r2pipe session object for the binary.
+
+        Returns:
+            File size in bytes, or 0 if retrieval fails.
+
+        """
         try:
             if r2_session:
                 result = r2_session.cmd("i~size[1]")

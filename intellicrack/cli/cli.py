@@ -2402,7 +2402,7 @@ def cert_detect(target: str, report: str | None, verbose: bool, min_confidence: 
                 click.echo()
         else:
             click.echo()
-            click.echo("  ℹ️  No certificate validation detected")
+            click.echo("  i  No certificate validation detected")
 
         click.echo(f" Recommended method: {detection_report.recommended_method.value}")
         click.echo(f"WARNING  Risk level: {detection_report.risk_level}")
@@ -2592,7 +2592,7 @@ def cert_test(target: str, url: str, timeout: int) -> None:
         detection_report = detector.detect_certificate_validation(target)
 
         if not detection_report.validation_functions:
-            click.echo("  ℹ️  No certificate validation detected in target")
+            click.echo("  i  No certificate validation detected in target")
             click.echo("  Bypass not needed - target does not validate certificates")
             return
 
@@ -2742,9 +2742,9 @@ def cert_rollback(target: str, force: bool) -> None:
                     click.echo("  OK Frida hooks detached")
                     rollback_success = True
                 else:
-                    click.echo("  ℹ️  No active Frida hooks found")
+                    click.echo("  i  No active Frida hooks found")
             else:
-                click.echo("  ℹ️  Target process not running")
+                click.echo("  i  Target process not running")
 
         except ImportError:
             click.echo("  WARNING  psutil not available, skipping process check")

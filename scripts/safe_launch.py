@@ -14,11 +14,13 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 
-def validate_mkl_dlls():
+def validate_mkl_dlls() -> tuple[bool, str]:
     """Pre-validate Intel MKL DLLs before importing any packages.
 
     Returns:
-        tuple: (success: bool, error_message: str)
+        tuple[bool, str]: (success, error_message) where success is a boolean
+            indicating whether validation passed, and error_message is a string
+            describing any errors encountered.
 
     """
     pixi_lib = Path(r"D:\Intellicrack\.pixi\envs\default\Library\bin")
@@ -56,11 +58,13 @@ def validate_mkl_dlls():
     return True, ""
 
 
-def safe_import_check():
+def safe_import_check() -> tuple[bool, str]:
     """Safely test critical imports before launching GUI.
 
     Returns:
-        tuple: (success: bool, error_message: str)
+        tuple[bool, str]: (success, error_message) where success is a boolean
+            indicating whether all critical imports loaded successfully, and
+            error_message is a string describing any import errors encountered.
 
     """
     critical_imports = [
@@ -79,8 +83,16 @@ def safe_import_check():
     return True, ""
 
 
-def main():
-    """Safe entry point with comprehensive error handling."""
+def main() -> int:
+    """Safe entry point with comprehensive error handling.
+
+    Validates MKL DLLs, tests critical imports, and launches the main
+    Intellicrack application with comprehensive error handling.
+
+    Returns:
+        int: Exit code (0 for success, 1 for errors, 130 for interruption).
+
+    """
     print("=== Intellicrack Safe Launcher ===\n")
 
     print("[1/3] Validating Intel MKL DLLs...")

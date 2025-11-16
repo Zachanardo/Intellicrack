@@ -214,13 +214,27 @@ class QEMUExecutionThread(QThread):
 class QEMUTestResultsDialog(QDialog):
     """Dialog showing real QEMU test execution results."""
 
-    def __init__(self, parent=None, script_info=None, qemu_manager=None) -> None:
-        """Initialize the QEMUTestResultsDialog with default values."""
+    def __init__(
+        self,
+        parent: QWidget | None = None,
+        script_info: dict[str, Any] | None = None,
+        qemu_manager: QEMUManager | None = None,
+    ) -> None:
+        """Initialize the QEMUTestResultsDialog with default values.
+
+        Args:
+            parent: Parent widget for this dialog, or None for top-level window.
+            script_info: Dictionary containing script metadata including binary_path, platform,
+                script_content, and script_type for QEMU execution.
+            qemu_manager: QEMUManager instance for handling virtual machine operations, or None
+                to create a new instance.
+
+        """
         super().__init__(parent)
         self.script_info = script_info or {}
         self.qemu_manager = qemu_manager or QEMUManager()
-        self.test_results = None
-        self.execution_thread = None
+        self.test_results: TestResults | None = None
+        self.execution_thread: QEMUExecutionThread | None = None
 
         self.setup_ui()
         self.start_execution()

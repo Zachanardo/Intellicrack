@@ -23,7 +23,7 @@ class PCAPWriter:
     """Simple PCAP file writer for when Scapy is not available."""
 
     def __init__(self, filename: str):
-        self.file = open(filename, "wb")
+        self.file = open(filename, "wb")  # noqa: SIM115
         self._write_header()
 
     def _write_header(self):

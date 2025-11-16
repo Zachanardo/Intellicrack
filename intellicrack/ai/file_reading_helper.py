@@ -22,7 +22,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +29,7 @@ logger = logging.getLogger(__name__)
 def read_file_with_ai_tools(
     file_path: str,
     purpose: str = "File analysis",
-    app_instance: Any | None = None,
+    app_instance: object | None = None,
     mode: str = "text",
     encoding: str = "utf-8",
     max_bytes: int | None = None,
@@ -52,7 +51,7 @@ def read_file_with_ai_tools(
 
     """
 
-    def _process_ai_content(raw_content: Any):
+    def _process_ai_content(raw_content: object) -> str | bytes | None:
         """Normalize AI-provided content according to mode and max_bytes."""
         if mode == "binary":
             if isinstance(raw_content, str):
@@ -108,7 +107,7 @@ def read_binary_header(
     file_path: str,
     header_size: int = 512,
     purpose: str = "Binary header analysis",
-    app_instance: Any | None = None,
+    app_instance: object | None = None,
 ) -> bytes | None:
     """Read the header of a binary file.
 
@@ -135,7 +134,7 @@ def read_binary_header(
 def read_text_file(
     file_path: str,
     purpose: str = "Text file analysis",
-    app_instance: Any | None = None,
+    app_instance: object | None = None,
     encoding: str = "utf-8",
 ) -> str | None:
     """Read a text file with encoding support.

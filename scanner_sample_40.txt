@@ -1,0 +1,3000 @@
+
+Starting Intellicrack production-readiness scan...
+Root: .
+
+Scanning 1239 files...
+DEBUG: File queued for scan: ".\\.claude\\hooks\\post-tool-use.js" (JavaScript)
+DEBUG: File queued for scan: ".\\.claude\\hooks\\principles.js" (JavaScript)
+DEBUG: File queued for scan: ".\\.claude\\hooks\\sessionstart.js" (JavaScript)
+DEBUG: File queued for scan: ".\\.claude\\statusline.js" (JavaScript)
+DEBUG: File queued for scan: ".\\backups\\icp_engine_pre_rebrand\\icp-engine-wrapper.py" (Python)
+DEBUG: File queued for scan: ".\\coverage_html_report\\coverage_html_cb_2332b2e1.js" (JavaScript)
+DEBUG: File queued for scan: ".\\coverage_html_report\\coverage_html_cb_437fc316.js" (JavaScript)
+DEBUG: File queued for scan: ".\\docs\\source\\conf.py" (Python)
+DEBUG: File queued for scan: ".\\eslint.config.js" (JavaScript)
+DEBUG: File queued for scan: ".\\extract_samples.py" (Python)
+DEBUG: File queued for scan: ".\\htmlcov\\coverage_html_cb_497bf287.js" (JavaScript)
+DEBUG: File queued for scan: ".\\htmlcov\\coverage_html_cb_df357c50.js" (JavaScript)
+DEBUG: File queued for scan: ".\\htmlcov_mitigation\\coverage_html_cb_497bf287.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\ai_file_tools.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\ai_script_generator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\api_provider_clients.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\background_loader.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\code_analysis_tools.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\common_types.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\coordination_layer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\enhanced_training_interface.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\file_reading_helper.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\gpu_integration.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\headless_training_interface.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\integration_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\intelligent_code_modifier.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\interactive_assistant.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\lazy_model_loader.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\learning_engine.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\learning_engine_simple.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\llm_backends.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\llm_config_as_code.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\llm_config_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\llm_fallback_chains.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\llm_types.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\local_gguf_server.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\lora_adapter_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\model_batch_tester.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\model_cache_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\model_comparison.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\model_discovery_service.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\model_download_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\model_format_converter.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\model_manager_module.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\model_performance_monitor.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\model_sharding.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\multi_agent_system.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\optimization_config.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\orchestrator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\parsing_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\pattern_library.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\performance_monitor.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\performance_monitor_simple.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\performance_optimization_layer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\predictive_intelligence.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\protection_aware_script_gen.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\qemu_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\qemu_test_manager_enhanced.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\quantization_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\realtime_adaptation_engine.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\response_parser.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\script_editor.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\script_generation_agent.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\script_generation_prompts.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\semantic_code_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\visualization_analytics.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\vulnerability_research_integration.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\vulnerability_research_integration_helper.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ai\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\analysis\\analysis_result_orchestrator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\analysis\\handlers\\llm_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\analysis\\handlers\\report_generation_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\analysis\\handlers\\script_generation_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\analysis\\handlers\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\analysis\\protection_workflow.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\analysis\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\cli\\advanced_export.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\cli\\ai_chat_interface.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\cli\\ai_integration.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\cli\\ai_wrapper.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\cli\\analysis_cli.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\cli\\ascii_charts.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\cli\\cli.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\cli\\config_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\cli\\config_profiles.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\cli\\enhanced_runner.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\cli\\hex_viewer_cli.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\cli\\interactive_mode.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\cli\\pipeline.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\cli\\progress_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\cli\\project_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\cli\\run_analysis_cli.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\cli\\terminal_dashboard.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\cli\\tutorial_system.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\cli\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\config.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\adobe_injector_integration.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\ai_model_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\analysis_orchestrator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\angr_enhancements.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\arxan_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\automated_patch_agent.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\behavioral_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\binary_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\binary_pattern_detector.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\binary_similarity_search.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\cfg_explorer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\commercial_license_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\concolic_executor.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\concolic_executor_fixed.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\concolic_obfuscation_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\control_flow_deobfuscation.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\core_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\cross_tool_orchestrator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\cryptographic_routine_detector.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\dynamic_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\dynamic_instrumentation.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\entropy_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\firmware_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\frida_advanced_hooks.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\frida_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\frida_gui_integration.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\frida_protection_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\frida_script_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\ghidra_advanced_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\ghidra_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\ghidra_binary_integration.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\ghidra_output_parser.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\ghidra_project_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\ghidra_script_runner.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\incremental_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\incremental_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\memory_forensics_engine.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\multi_format_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\network_forensics_engine.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\opaque_predicate_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\polymorphic_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\protection_scanner.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_advanced_patcher.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_ai_integration.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_binary_diff.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_bypass_generator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_decompiler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_emulator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_enhanced_integration.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_error_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_esil.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_esil_emulator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_graph_view.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_imports.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_json_standardizer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_patch_engine.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_performance_metrics.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_performance_optimizer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_realtime_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_scripting.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_session_helpers.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_session_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_signatures.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_signature_detector.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_strings.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\radare2_vulnerability_engine.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\rop_generator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\securom_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\simconcolic.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\similarity_searcher.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\stalker_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\starforce_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\streaming_crypto_detector.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\streaming_entropy_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\streaming_yara_scanner.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\symbolic_devirtualizer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\symbolic_executor.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\taint_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\vmprotect_detector.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\vulnerability_engine.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\yara_pattern_engine.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\yara_scanner.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\analysis\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\anti_analysis\\advanced_debugger_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\anti_analysis\\api_obfuscation.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\anti_analysis\\base_detector.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\anti_analysis\\debugger_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\anti_analysis\\debugger_detector.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\anti_analysis\\sandbox_detector.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\anti_analysis\\timing_attacks.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\anti_analysis\\vm_detector.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\anti_analysis\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\app_context.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\binary_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\api_signatures.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\apk_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\binary_scanner.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\bypass_orchestrator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\bypass_strategy.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\cert_cache.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\cert_chain_generator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\cert_patcher.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\detection_report.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\frida_cert_hooks.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\frida_scripts\\android_pinning.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\frida_scripts\\cryptoapi_bypass.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\frida_scripts\\ios_pinning.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\frida_scripts\\openssl_bypass.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\frida_scripts\\schannel_bypass.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\frida_scripts\\universal_ssl_bypass.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\frida_scripts\\winhttp_bypass.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\frida_scripts\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\frida_stealth.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\hook_obfuscation.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\layer_detector.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\multilayer_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\patch_generators.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\pinning_detector.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\validation_detector.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\certificate\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\config_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\config_migration_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\debugging_engine.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\exceptions.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\execution\\script_execution_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\execution\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\exploitation\\automated_unpacker.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\exploitation\\bypass_engine.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\exploitation\\crypto_key_extractor.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\exploitation\\keygen_generator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\exploitation\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\frida_bypass_wizard.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\frida_constants.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\frida_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\frida_presets.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\gpu_acceleration.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\hardware_spoofer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\integration\\intelligent_correlation.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\integration\\real_tool_communication.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\license\\keygen.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\license\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\license_snapshot.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\license_validation_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\logging\\audit_logger.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\logging\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\ml\\feature_extraction.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\ml\\incremental_learner.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\ml\\ml_integration.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\ml\\protection_classifier.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\ml\\sample_database.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\ml\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\monitoring\\api_monitor.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\monitoring\\base_monitor.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\monitoring\\event_aggregator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\monitoring\\file_monitor.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\monitoring\\frida_server_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\monitoring\\memory_monitor.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\monitoring\\monitoring_session.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\monitoring\\network_monitor.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\monitoring\\registry_monitor.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\monitoring\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\network\\base_network_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\network\\cloud_license_hooker.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\network\\dynamic_response_generator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\network\\generic_protocol_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\network\\license_protocol_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\network\\protocols\\autodesk_parser.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\network\\protocols\\codemeter_parser.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\network\\protocols\\flexlm_parser.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\network\\protocols\\hasp_parser.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\network\\protocols\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\network\\protocol_fingerprinter.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\network\\protocol_tool.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\network\\ssl_interceptor.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\network\\traffic_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\network\\traffic_interception_engine.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\network\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\network_capture.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\offline_activation_emulator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\orchestration\\intelligent_correlation_engine.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\orchestration\\result_serialization_protocol.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\orchestration\\tool_communication_bridge.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\orchestration\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\patching\\base_patcher.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\patching\\license_check_remover.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\patching\\memory_patcher.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\patching\\radare2_patch_integration.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\patching\\windows_activator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\patching\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\processing\\base_snapshot_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\processing\\distributed_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\processing\\emulator_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\processing\\gpu_accelerator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\processing\\memory_loader.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\processing\\memory_optimizer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\processing\\parallel_processing_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\processing\\qemu_emulator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\processing\\qiling_emulator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\processing\\streaming_analysis_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\processing\\vm_workflow_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\processing\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\process_manipulation.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\protection_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\protection_bypass\\arxan_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\protection_bypass\\cloud_license.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\protection_bypass\\dongle_emulator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\protection_bypass\\hardware_id_spoofer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\protection_bypass\\hardware_token.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\protection_bypass\\integrity_check_defeat.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\protection_bypass\\securom_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\protection_bypass\\starforce_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\protection_bypass\\tpm_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\protection_bypass\\tpm_secure_enclave_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\protection_bypass\\vm_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\protection_bypass\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\protection_detection\\arxan_detector.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\protection_detection\\securom_detector.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\protection_detection\\starforce_detector.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\protection_detection\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\reporting\\pdf_generator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\reporting\\report_generator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\reporting\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\resources\\resource_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\resources\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\security\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\security_enforcement.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\security_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\serial_generator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\shared\\bypass_config.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\shared\\result_types.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\shared\\result_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\shared\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\startup_checks.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\subscription_validation_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\task_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\terminal_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\tool_discovery.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\trial_reset_engine.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\vulnerability_research\\base_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\vulnerability_research\\binary_differ.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\vulnerability_research\\common_enums.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\vulnerability_research\\exploit_developer\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\vulnerability_research\\fuzzing_engine.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\vulnerability_research\\patch_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\vulnerability_research\\research_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\vulnerability_research\\vulnerability_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\vulnerability_research\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\core\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\dashboard\\dashboard_integration.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\dashboard\\dashboard_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\dashboard\\dashboard_widgets.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\dashboard\\live_data_pipeline.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\dashboard\\real_time_dashboard.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\dashboard\\static\\js\\graph_visualization.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\dashboard\\visualization_renderer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\dashboard\\websocket_stream.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\dashboard\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\data\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\aiohttp_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\capstone_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\cryptography_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\frida_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\ipex_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\keystone_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\lief_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\matplotlib_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\numpy_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\opencl_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\pdfkit_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\pefile_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\psutil_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\pyelftools_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\pyqt6_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\requests_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\sqlite3_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\tensorflow_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\tkinter_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\torch_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\wmi_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\handlers\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\advanced_search.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\ai_bridge.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\api.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\checksums.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\checksum_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\compare_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\config_defaults.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\data_inspector.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\export_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\file_compare.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\file_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\hex_commands.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\hex_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\hex_highlighter.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\hex_renderer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\hex_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\integration.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\intellicrack_hex_protection_integration.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\large_file_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\performance_monitor.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\print_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\statistics.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\statistics_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\hexview\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\main.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ml\\binary_feature_extractor.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ml\\license_protection_neural_network.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ml\\pattern_evolution_tracker.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ml\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\models\\model_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\models\\protection_knowledge_base.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\models\\repositories\\anthropic_repository.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\models\\repositories\\base.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\models\\repositories\\factory.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\models\\repositories\\google_repository.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\models\\repositories\\interface.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\models\\repositories\\lmstudio_repository.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\models\\repositories\\local_repository.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\models\\repositories\\openai_repository.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\models\\repositories\\openrouter_repository.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\models\\repositories\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\models\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\plugins\\custom_modules\\anti_anti_debug_suite.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\plugins\\custom_modules\\binary_patcher_plugin.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\plugins\\custom_modules\\hardware_dongle_emulator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\plugins\\custom_modules\\intellicrack_core_engine.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\plugins\\custom_modules\\license_server_emulator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\plugins\\custom_modules\\network_analysis_plugin.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\plugins\\custom_modules\\performance_optimizer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\plugins\\custom_modules\\simple_analysis_plugin.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\plugins\\custom_modules\\success_rate_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\plugins\\custom_modules\\ui_enhancement_module.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\plugins\\custom_modules\\vm_protection_unwrapper.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\plugins\\custom_modules\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\plugins\\plugin_base.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\plugins\\plugin_config.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\plugins\\plugin_system.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\plugins\\remote_executor.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\plugins\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\protection\\analysis_cache.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\protection\\commercial_protectors_database.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\protection\\denuvo_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\protection\\denuvo_ticket_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\protection\\icp_backend.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\protection\\icp_report_generator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\protection\\intellicrack_protection_advanced.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\protection\\intellicrack_protection_core.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\protection\\protection_detector.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\protection\\themida_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\protection\\unified_protection_engine.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\protection\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\advanced_anti_debug_bypass.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\ai_scripts\\ai_3d72c547_20250817_041722.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\anti_debugger.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\arxan_bypass.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\behavioral_pattern_analyzer.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\binary_patcher.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\binary_patcher_advanced.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\blockchain_license_bypass.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\bypass_success_tracker.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\central_orchestrator.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\certificate_pinner_bypass.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\certificate_pinning_bypass.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\cloud_licensing_bypass.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\code_integrity_bypass.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\dotnet_bypass_suite.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\drm_bypass.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\dynamic_script_generator.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\hook_effectiveness_monitor.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\http3_quic_interceptor.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\hwid_spoofer.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\kernel_bridge.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\kernel_mode_bypass.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\keygen_generator.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\memory_dumper.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\memory_integrity_bypass.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\ml_license_detector.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\modular_hook_library.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\ntp_blocker.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\obfuscation_detector.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\quantum_crypto_handler.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\realtime_protection_detector.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\registry_monitor.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\stalker_tracer.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\telemetry_blocker.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\test_binary_patcher.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\test_structured_messaging.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\time_bomb_defuser.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\tpm_command_interceptor.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\tpm_emulator.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\tpm_pcr_manipulator.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\universal_unpacker.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\virtualization_bypass.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\wasm_protection_bypass.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\frida\\websocket_interceptor.js" (JavaScript)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java" (Java)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\ghidra\\anti_analysis_detector.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java" (Java)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\ghidra\\ControlFlowDeobfuscator.java" (Java)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\ghidra\\CryptoRoutineIdentifier.java" (Java)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\ghidra\\EnhancedLicensingAnalysisScript.java" (Java)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\ghidra\\FindCryptoSignatures.java" (Java)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\ghidra\\FunctionLister.java" (Java)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\ghidra\\KeygenTemplateGenerator.java" (Java)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\ghidra\\LicenseValidationAnalyzer.java" (Java)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\ghidra\\LicensingAnalysisScript.java" (Java)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\ghidra\\ModernPackerDetector.java" (Java)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\ghidra\\NetworkAnalysis.java" (Java)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\ghidra\\QuickStringDump.java" (Java)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java" (Java)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\ghidra\\StringDecryptionAutomator.java" (Java)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\ghidra\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\radare2\\radare2_keygen_assistant.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\radare2\\radare2_license_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\run_analysis_cli.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\setup\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\scripts\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\test_scanner_minimal.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\cfg_explorer_inner.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\comprehensive_integration.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\config_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dashboard_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\ai_coding_assistant_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\base_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\ci_cd_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\code_modification_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\common_imports.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\debugger_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\dialog_base_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\distributed_config_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\event_handler_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\export_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\first_run_setup.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\frida_bypass_wizard_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\frida_manager_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\ghidra_script_selector.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\guided_workflow_wizard.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\hardware_spoofer_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\help_documentation_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\keygen_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\llm_config_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\model_finetuning_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\model_loading_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\model_manager_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\nodejs_setup_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\offline_activation_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\plugin_browser_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\plugin_creation_wizard.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\plugin_dialog_base.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\plugin_editor_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\plugin_manager_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\preferences_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\program_selector_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\qemu_test_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\qemu_test_results_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\report_manager_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\script_generator_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\serial_generator_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\signature_editor_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\similarity_search_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\smart_program_selector_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\splash_screen.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\system_utilities_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\test_generator_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\text_editor_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\trial_reset_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\visual_patch_editor.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\vm_manager_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialogs\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\dialog_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\distributed_processing.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\emulator_ui_enhancements.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\enhanced_ui_integration.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\exploitation_handlers.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\gpu_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\icon_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\integrate_radare2.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\main_app.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\main_window.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\menu_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\protection_detection_handlers.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\radare2_integration_ui.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\radare2_ui_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\shared_ui_layouts.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\style_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\style_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\symbolic_execution.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\syntax_highlighter.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\tabs\\adobe_injector_tab.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\tabs\\ai_assistant_tab.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\tabs\\analysis_tab.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\tabs\\base_tab.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\tabs\\dashboard_tab.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\tabs\\exploitation_tab.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\tabs\\project_workspace_tab.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\tabs\\settings_tab.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\tabs\\terminal_tab.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\tabs\\tools_tab.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\tabs\\workspace_tab.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\tabs\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\theme_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\tooltip_helper.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\traffic_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\ui_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\ai_assistant_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\batch_analysis_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\cache_management_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\console_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\cpu_status_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\drop_zone_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\embedded_terminal_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\entropy_graph_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\entropy_visualizer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\file_metadata_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\gpu_status_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\hex_viewer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\hex_viewer_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\icp_analysis_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\intellicrack_advanced_protection_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\intellicrack_protection_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\memory_dumper.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\model_loading_progress_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\pe_file_model.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\pe_structure_model.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\plugin_editor.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\string_extraction_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\structure_visualizer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\syntax_highlighters.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\system_monitor_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\terminal_session_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\unified_protection_widget.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\widget_factory.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\widgets\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\window_sizing.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\ui\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\analysis\\analysis_exporter.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\analysis\\analysis_stats.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\analysis\\binary_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\analysis\\entropy_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\analysis\\pattern_search.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\analysis\\security_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\analysis\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\api_client.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\binary\\binary_io.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\binary\\binary_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\binary\\certificate_extractor.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\binary\\elf_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\binary\\hex_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\binary\\network_api_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\binary\\pe_analysis_common.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\binary\\pe_common.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\binary\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\config.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\config_cleanup.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\constants.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\core\\core_utilities.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\core\\dependency_feedback.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\core\\exception_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\core\\final_utilities.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\core\\import_checks.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\core\\import_patterns.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\core\\internal_helpers.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\core\\misc_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\core\\path_discovery.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\core\\plugin_paths.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\core\\siphash24_replacement.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\core\\string_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\core\\type_validation.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\core\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\dependencies.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\dependency_fallbacks.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\deprecation_warnings.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\env_file_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\exploitation\\exploitation.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\exploitation\\logger.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\exploitation\\patch_engine.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\exploitation\\payload_result_handler.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\exploitation\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\font_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\ghidra_common.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\gpu_autoloader.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\gpu_benchmark.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\http_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\json_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\logger.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\log_message.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\patching\\patch_generator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\patching\\patch_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\patching\\patch_verification.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\patching\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\path_resolver.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\protection\\certificate_common.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\protection\\certificate_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\protection\\protection_helpers.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\protection\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\protection_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\qemu_image_discovery.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\reporting\\report_common.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\reporting\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\report_generator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\resource_helper.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\runtime\\additional_runners.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\runtime\\distributed_processing.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\runtime\\performance_optimizer.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\runtime\\runner_functions.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\runtime\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\secrets_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\security_mitigations.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\service_health_checker.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\service_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\severity_levels.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\subprocess_security.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\system\\driver_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\system\\file_resolution.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\system\\os_detection.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\system\\os_detection_mixin.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\system\\process_common.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\system\\process_helpers.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\system\\process_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\system\\program_discovery.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\system\\snapshot_common.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\system\\snapshot_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\system\\subprocess_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\system\\system_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\system\\windows_common.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\system\\windows_structures.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\system\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\torch_gil_safety.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\ui\\ui_button_common.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\ui\\ui_common.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\ui\\ui_helpers.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\ui\\ui_setup_functions.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\ui\\ui_utils.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\ui\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\validation\\import_validator.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\validation\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\windows\\service_manager.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\windows\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\utils\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack\\__main__.py" (Python)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\benches\\dependency_benchmarks.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\benches\\performance_benchmarks.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\benches\\process_benchmarks.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\benches\\startup_optimization_benchmarks.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\build.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\src\\bin\\test_python.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\src\\dependencies.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\src\\diagnostics.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\src\\environment.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\src\\flask_validator.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\src\\gil_safety.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\src\\intel_gpu.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\src\\lib.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\src\\main.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\src\\platform.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\src\\preflight_checks.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\src\\process_manager.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\src\\process_optimization.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\src\\python_integration.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\src\\security.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\src\\startup_checks.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\src\\tensorflow_validator.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\src\\tool_discovery.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\tests\\integration.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\tests\\preflight_checks_tests.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\tests\\process_optimization_tests.rs" (Rust)
+DEBUG: File queued for scan: ".\\intellicrack-launcher\\tests\\tool_discovery_tests.rs" (Rust)
+DEBUG: File queued for scan: ".\\launch_intellicrack.py" (Python)
+DEBUG: File queued for scan: ".\\monkeytype_config.py" (Python)
+DEBUG: File queued for scan: ".\\scripts\\analyze_dependencies.py" (Python)
+DEBUG: File queued for scan: ".\\scripts\\clean_nul.py" (Python)
+DEBUG: File queued for scan: ".\\scripts\\dll_diagnostics.py" (Python)
+DEBUG: File queued for scan: ".\\scripts\\generate_tree.py" (Python)
+DEBUG: File queued for scan: ".\\scripts\\safe_launch.py" (Python)
+DEBUG: File queued for scan: ".\\scripts\\scanner\\analyze_results.py" (Python)
+DEBUG: File queued for scan: ".\\scripts\\scanner\\build.rs" (Rust)
+DEBUG: File queued for scan: ".\\scripts\\scanner\\enhanced_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\scripts\\scanner\\generate_report.py" (Python)
+DEBUG: File queued for scan: ".\\scripts\\scanner\\production_scanner.rs" (Rust)
+DEBUG: File queued for scan: ".\\scripts\\scanner\\tests\\integration_test.rs" (Rust)
+DEBUG: File queued for scan: ".\\scripts\\scanner\\test_suites\\TestScannerJava.java" (Java)
+DEBUG: File queued for scan: ".\\scripts\\scanner\\test_suites\\test_scanner_javascript.js" (JavaScript)
+DEBUG: File queued for scan: ".\\scripts\\scanner\\test_suites\\test_scanner_python.py" (Python)
+DEBUG: File queued for scan: ".\\scripts\\scanner\\test_suites\\test_scanner_rust.rs" (Rust)
+DEBUG: File queued for scan: ".\\scripts\\scanner\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\scripts\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\base_test.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\checkpoints\\day2_checkpoint2_validation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\checkpoints\\day3_checkpoint3_validation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\checkpoints\\day4_checkpoint4_validation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\checkpoints\\day5_3_production_checkpoint.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\checkpoints\\simple_day5_3_checkpoint.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\checkpoints\\simple_day6_3_checkpoint.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\conftest.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\conftest_original.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\core\\monitoring\\test_frida_server_manager.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\core\\monitoring\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\core\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\debug\\test_import_error.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\debug\\test_main_callable.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\exploitation\\test_bof_debug.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\exploitation\\test_exploitation_framework.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\exploitation\\test_exploitation_simple.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\exploitation\\test_exploitation_validation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\exploitation\\test_license_key_generation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\exploitation\\test_patch_analysis_automation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\exploitation\\test_protection_coverage.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\fixtures\\binary_fixtures.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\framework\\real_world_testing_framework.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\functional\\ai_operations\\test_real_ai_operations.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\functional\\binary_analysis\\test_binary_patcher_validation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\functional\\binary_analysis\\test_polymorphic_basic.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\functional\\binary_analysis\\test_polymorphic_direct.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\functional\\binary_analysis\\test_real_binary_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\functional\\binary_instrumentation\\test_real_binary_instrumentation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\functional\\exploit_generation\\test_real_exploit_generation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\functional\\keygen_operations\\test_real_keygen_operations.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\functional\\license_emulation\\test_real_license_emulation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\functional\\memory_forensics\\test_real_memory_forensics.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\functional\\network_operations\\test_real_network_operations.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\functional\\plugin_system\\test_real_plugin_operations.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\functional\\protection_bypass\\test_real_protection_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\functional\\vulnerability_research\\test_real_vulnerability_research.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\generators\\capture_license_protocols.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\generators\\create_protected_binaries.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\generators\\generate_vulnerable_samples.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\htmlcov\\coverage_html_cb_497bf287.js" (JavaScript)
+DEBUG: File queued for scan: ".\\tests\\integration\\ai_integration\\test_ai_analysis_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\ai_integration\\test_dynamic_generation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\ai_integration\\test_dynamic_llm_verification.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\ai_integration\\test_end_to_end_llm.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\ai_integration\\test_model_import_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\ai_integration\\test_real_llm_import.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\analysis\\test_analysis_orchestrator_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\network_integration\\test_network_license_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\real_binary_tests\\test_securom_real.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\real_binary_tests\\test_starforce_real.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\run_external_tools_tests.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\simple_day4_2_test.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\simple_day4_test.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\simple_day5_2_test.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\simple_day5_test.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\simple_day6_1_cet_cfi_test.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_application_startup_migration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_arxan_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_arxan_standalone.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_backup_restore_functionality.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_central_config_usage.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_clean_system_migration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_cli_configuration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_commercial_analyzer_debug.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_complete_config_system.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_config_cleanup_after_migration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_corrupted_config_handling.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_day4_2_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_day4_patch_instructions.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_day5_1_enhancements.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_day5_2_realtime_strings.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_day6_1_cet_cfi_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_day6_2_hardware_protection_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_day6_3_production_checkpoint.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_distributed_manager.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_env_inheritance.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_frida_script_manager.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_gui_fixes.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_hasp_parser_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_keygen_implementation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_legacy_system_migration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_live_metrics.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_llm_configuration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_llm_config_migration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_partial_migration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_protocol_tool_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_radare2_esil_emulator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_radare2_session_manager.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_securom_workflow.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_shared_context.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_stalker_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_streaming_analyzers.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_tkinter.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_ui_state_persistence.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\test_vm_framework_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\integration\\workflows\\test_binary_analysis_workflow.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\launcher\\test_rust_launcher_env.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\network\\test_real_protocol_parsers.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\payload\\test_payload_direct.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\payload\\test_payload_engine_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\payload\\test_payload_isolated.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\payload\\test_payload_methods_day2.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\performance\\test_ai_performance.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\performance\\test_binary_analysis_performance.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\performance\\test_config_concurrent_access.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\performance\\test_config_file_size_optimization.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\performance\\test_config_memory_leaks.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\performance\\test_config_performance_benchmark.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\performance\\test_exploitation_performance.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\performance\\test_gpu_performance.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\performance\\test_network_performance.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\performance\\test_protection_detection_performance.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\plugins\\test_real_plugin_operations.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\production_standards\\test_actual_modules.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\production_standards\\test_e2b_comprehensive.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\r2pipe\\test_r2pipe_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\r2pipe\\test_r2pipe_simple.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\runners\\execute_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\runners\\manual_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\runners\\manual_test_runner.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\runners\\quick_entropy_test.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\runners\\test_entropy_runner.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\runners\\test_runner.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\security\\test_vulnerability_validation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\standalone\\test_ai_modules.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\standalone\\test_core_utils.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\standalone\\test_more_modules.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\test_basic.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\test_comprehensive_suite.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\test_cross_tool_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\test_dashboard_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\test_embedded_terminal_widget.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\test_frida_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\test_full_rust_launch.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\test_ghidra_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\test_performance_benchmarks.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\test_radare2_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\test_startup_optimizations.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\test_terminal_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\ui\\test_gpu_monitoring_widgets.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\ai\\test_ai_import_simple.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\ai\\test_ai_script_generator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\ai\\test_anthropic_generation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\ai\\test_api_provider_clients.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\ai\\test_client_initialization.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\ai\\test_integration_manager.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\ai\\test_llm_backends.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\ai\\test_llm_fallback_chains.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\ai\\test_model_manager.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_analysis_orchestrator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_angr_enhancements.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_arxan_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_automated_patch_agent.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_binary_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_binary_similarity_search.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_cfg_explorer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_commercial_license_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_concolic_executor.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_concolic_executor_fixed.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_concolic_obfuscation_handler.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_control_flow_deobfuscation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_core_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_cryptographic_routine_detector.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_dynamic_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_dynamic_instrumentation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_entropy_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_firmware_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_frida_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_ghidra_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_incremental_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_incremental_manager.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_keygen_generation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_memory_forensics_engine.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_memory_patching.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_multi_format_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_network_forensics_engine.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_opaque_predicate_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_patch_point_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_polymorphic_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_protection_scanner.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_radare2_ai_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_radare2_binary_diff.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_radare2_bypass_generator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_radare2_decompiler.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_radare2_enhanced_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_radare2_error_handler.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_radare2_esil.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_radare2_imports.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_radare2_json_standardizer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_radare2_performance_optimizer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_radare2_realtime_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_radare2_scripting.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_radare2_signatures.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_radare2_strings.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_radare2_vulnerability_engine.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_rop_chain_generation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_rop_generator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_securom_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_shellcode_generation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_simconcolic.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_similarity_searcher.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_stalker_manager.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_starforce_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_streaming_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_symbolic_devirtualizer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_symbolic_executor.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_taint_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_vulnerability_engine.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\analysis\\test_yara_pattern_engine.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\anti_analysis\\anti_analysis_init_coverage_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\anti_analysis\\run_base_detector_tests.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\anti_analysis\\run_debugger_detector_tests.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\anti_analysis\\test_advanced_debugger_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\anti_analysis\\test_anti_analysis_init.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\anti_analysis\\test_api_obfuscation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\anti_analysis\\test_base_detector.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\anti_analysis\\test_debugger_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\anti_analysis\\test_debugger_detector.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\anti_analysis\\test_sandbox_detector.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\anti_analysis\\test_timing_attacks.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\anti_analysis\\test_vm_detector.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\certificate\\conftest.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\certificate\\test_cert_patcher.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\certificate\\test_frida_hooks.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\certificate\\test_orchestrator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\certificate\\test_validation_detector.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\certificate\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\config\\test_config_layers.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\config\\test_config_simple.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\config\\test_external_tools_config.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\execution\\test_script_execution_manager.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\exploitation\\run_cloud_hooker_tests.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\exploitation\\run_process_hollowing_tests.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\exploitation\\test_automated_unpacker.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\exploitation\\test_bypass_engine.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\exploitation\\test_cet_bypass_structure.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\exploitation\\test_keygen_generator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\exploitation\\test_payload_engine.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\exploitation\\test_stack_canary_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\exploitation\\test_timing_attacks_basic.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\logging\\test_audit_logger.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\mitigation_bypass\\run_aslr_tests.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\mitigation_bypass\\run_bypass_tests.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\mitigation_bypass\\test_aslr_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\mitigation_bypass\\test_aslr_simple.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\mitigation_bypass\\test_bypass_base.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\mitigation_bypass\\test_bypass_engine.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\mitigation_bypass\\test_cfi_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\mitigation_bypass\\test_cfi_bypass_real.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\mitigation_bypass\\test_cfi_directly.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\mitigation_bypass\\test_dep_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\ml\\test_incremental_learner.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\ml\\test_ml_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\ml\\test_protection_classifier.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\ml\\test_sample_database.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\ml\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\dynamic_response_generator_coverage_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\license_protocol_coverage_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\license_server_emulator_coverage_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\protocols\\test_flexlm_parser.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\protocols\\test_hasp_parser.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\protocols\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\run_license_protocol_coverage.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\run_protocol_fingerprinter_coverage.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\test_base_network_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\test_cloud_license_hooker.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\test_dynamic_response_generator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\test_generic_protocol_handler.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\test_generic_protocol_handler_real_data.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\test_license_emulator_simple.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\test_license_protocol_basic.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\test_license_protocol_exploitation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\test_license_protocol_handler.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\test_license_server_emulator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\test_protocol_analysis_capabilities.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\test_protocol_fingerprinter.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\test_protocol_manipulation_features.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\test_protocol_tool.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\test_ssl_interceptor.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\test_traffic_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\test_traffic_analyzer_basic.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\test_traffic_interception_engine.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\traffic_interception_engine_coverage_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\network\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\patching\\test_advanced_injection_real.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\patching\\test_intelligent_patching.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\patching\\test_windows_activation_real.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\processing\\test_streaming_analysis_manager.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\protection_bypass\\test_arxan_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\protection_bypass\\test_cloud_license.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\protection_bypass\\test_dongle_emulation_real.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\protection_bypass\\test_hardware_token.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\protection_bypass\\test_securom_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\protection_bypass\\test_starforce_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\protection_bypass\\test_subscription_validation_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\protection_bypass\\test_tpm_bypass.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\protection_bypass\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\protection_detection\\test_arxan_detector.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\protection_detection\\test_securom_detector.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\protection_detection\\test_starforce_detector.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\protection_detection\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\test_backward_compatibility.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\test_config_get_set_operations.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\test_config_manager.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\test_config_schema_validation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\test_migration_methods.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\test_protection_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\test_remaining_critical_modules.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\test_trial_reset_engine.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\core\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\gui\\dialogs\\test_base_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\gui\\dialogs\\test_llm_config_dialog.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\gui\\tabs\\test_ai_assistant_tab.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\gui\\tabs\\test_analysis_tab.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\gui\\test_main_window.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\gui\\widgets\\test_console_widget.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\gui\\widgets\\test_file_metadata_widget.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\gui\\widgets\\test_hex_viewer_widget.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\protection\\test_protection_detector.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\test_binary_utils.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\test_capstone.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\test_qemu_manager.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\test_utils_logger.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\test_vm_workflow_manager.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\ui\\test_plugin_caching.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\ui\\test_settings_tab_accent_color.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\ui\\test_settings_tab_animations.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\ui\\test_settings_tab_tooltips.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\ui\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\utils\\exploitation\\test_current_logger.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\utils\\exploitation\\test_exploit_common.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\utils\\exploitation\\test_init.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\utils\\exploitation\\test_init_simple.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\utils\\exploitation\\test_logger.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\utils\\exploitation\\test_payload_result_handler.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\utils\\exploitation\\test_runner.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\utils\\exploitation\\__init__.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\unit\\utils\\test_font_loading.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utilities\\test_real_crypto_operations.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utilities\\test_real_file_operations.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utilities\\test_real_string_and_validation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\coverage_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\coverage_runner.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\direct_coverage_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\Production_Readiness_Audit.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\protocol_tool_coverage_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\run_coverage_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\run_init_coverage.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\run_payload_tests.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\script_execution_manager_coverage_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\simple_ssl_interceptor_test.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\ssl_interceptor_coverage_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\test_basic_import.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\test_gui_direct.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\test_gui_launch.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\test_handler_imports.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\test_import_hang.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\test_intellicrack_direct.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\test_launch_debug.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\test_main_app_imports.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\test_qmainwindow_import.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\test_simple_qmainwindow.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\test_tensorflow_hang.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\test_ui_import_fix.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\test_utils_import.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\validate_ssl_interceptor_tests.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\validate_test_structure.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\verify_no_mocks.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\utils\\verify_pyqt6_consolidation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\check_mitigation_tests.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\check_test_env.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\cloud_hooker_test_summary.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\day7_3_checkpoint.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\day8_1_real_world_ui_tests.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\day8_1_ui_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\day8_2_end_to_end_simple_test.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\day8_2_end_to_end_workflow_test.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\day8_3_final_production_validation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\entropy_coverage_validator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\final_test_syntax_fix.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\fix_remaining_test_issues.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\simple_test_check.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\test_binwalk_comprehensive_validation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\test_binwalk_real_binary.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\test_denuvo_analyzer_validation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\test_denuvo_ticket_analyzer_validation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\test_denuvo_ticket_simple_validation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\test_import_check.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\test_syntax_check.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\validate_base_detector_tests.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\validate_cloud_hooker_tests.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\validate_entropy.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\validate_instrumentation_tests.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\validate_tests.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation\\validate_traffic_analyzer_tests.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\anti_detection_verifier.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\behavioral_enforcement_validator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\certified_ground_truth_profile.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\commercial_binary_manager.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\cross_environment_validator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\cross_version_tester.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\dynamic_mutation_tester.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\fingerprint_randomizer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\fix_final_errors.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\fix_indentation_issues.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\fix_phase1_violations.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\fix_remaining_phase1_errors.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\fix_syntax_errors.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\forensic_collector.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\full_functionality_validator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\functional_verification.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\ground_truth_establisher.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\memory_integrity_checker.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\multi_environment_tester.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\negative_control_validator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\persistence_validator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase2\\cross_validation.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase2\\detection_depth_validator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase2\\detection_evidence_collector.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase2\\detection_validator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase2\\evidence_verifier.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase2\\validation_orchestrator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase45\\binary_differential_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase45\\protection_challenge_generator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase45\\runtime_instruction_tracer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase5\\continuous_validation_integration.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase5\\reproducibility_packager.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase5\\undeniable_report_generator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase6\\anti_gaming_validation_system.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase6\\detection_pass_criteria_validator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase6\\end_of_phase_code_review.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase6\\evidence_requirements_validator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase6\\exploitation_pass_criteria_validator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase6\\final_verdict_algorithm.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase6\\reproducibility_requirements_checker.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase6\\statistical_requirements_validator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase_25_orchestrator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\phase_3_orchestrator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\protection_variant_generator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\runner.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\statistical_analysis.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\success_rate_verifier.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\test_commercial_binary_manager.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\test_env_validator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\test_fingerprint.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\test_multi_env.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\test_multi_env_debug.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\test_multi_env_debug2.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\unknown_pattern_tester.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\validation_orchestrator.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\version_compatibility_verifier.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\validation_system\\version_difference_analyzer.py" (Python)
+DEBUG: File queued for scan: ".\\tests\\__init__.py" (Python)
+Progress: 50/1239
+Progress: 100/1239
+Progress: 150/1239
+Progress: 200/1239
+Progress: 250/1239
+Progress: 300/1239
+Progress: 350/1239
+Progress: 400/1239
+Progress: 450/1239
+Progress: 500/1239
+Progress: 550/1239
+Progress: 600/1239
+Progress: 650/1239
+Progress: 700/1239
+Progress: 750/1239
+Progress: 800/1239
+Progress: 850/1239
+Progress: 900/1239
+Progress: 950/1239
+Progress: 1000/1239
+Progress: 1050/1239
+Progress: 1100/1239
+Progress: 1150/1239
+Progress: 1200/1239
+Progress: 1239/1239
+Scan complete!
+✓ Generated TODO.md
+✓ Generated TODO.xml
+
+# Intellicrack Production-Readiness Issues
+
+**Total Issues:** 852
+
+---
+
+## Python Issues (256 files)
+
+### File: `.\intellicrack\ai\ai_file_tools.py`
+
+**Issues in this file:** 1
+
+#### 1. [ ] `quick_license_scan()` - MEDIUM (Line 211)
+
+**Confidence:** 65%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Analysis/processing function without loops or conditionals (incomplete) (+40 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+### File: `.\intellicrack\ai\ai_script_generator.py`
+
+**Issues in this file:** 1
+
+#### 1. [ ] `_generate_vm_bypass_code()` - CRITICAL (Line 864)
+
+**Confidence:** 115%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+### File: `.\intellicrack\ai\interactive_assistant.py`
+
+**Issues in this file:** 4
+
+#### 1. [ ] `_handle_patching_intent()` - CRITICAL (Line 460)
+
+**Confidence:** 335%
+
+**Issue Type:** `hardcoded_return`
+
+**Description:** 6 production issues detected
+
+**Evidence:**
+
+- CRITICAL: Patcher without pattern search (hardcoded offsets only) (+85 points)
+- Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
+- Patcher without backup capability (destructive without safety) (+50 points)
+- Patcher without loops (single-target/single-patch only) (+60 points)
+- Patcher sophistication: 15% (DANGEROUS - will break on updates) (+80 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Implement actual binary patching with proper file I/O and byte manipulation
+
+---
+
+#### 2. [ ] `_detect_protections()` - CRITICAL (Line 614)
+
+**Confidence:** 295%
+
+**Issue Type:** `naive_implementation`
+
+**Description:** 6 production issues detected
+
+**Evidence:**
+
+- Protection analyzer without signature database (weak detection) (+60 points)
+- CRITICAL: Analyzer without binary format parsing (string matching only) (+75 points)
+- Analyzer without loops (single pattern check only) (+55 points)
+- Analyzer with no result storage (incomplete analysis) (+45 points)
+- Analyzer sophistication: 10% (WEAK - misses most protections) (+70 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 3. [ ] `_apply_patch()` - HIGH (Line 659)
+
+**Confidence:** 82%
+
+**Issue Type:** `hardcoded_return`
+
+**Description:** 6 production issues detected
+
+**Evidence:**
+
+- CRITICAL: Patcher without pattern search (hardcoded offsets only) (+85 points)
+- Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
+- Patcher without backup capability (destructive without safety) (+50 points)
+- Patcher without loops (single-target/single-patch only) (+60 points)
+- Patcher sophistication: 15% (DANGEROUS - will break on updates) (+80 points)
+- Deductions for production patterns (-180 points)
+
+**Suggested Fix:** Implement actual binary patching with proper file I/O and byte manipulation
+
+---
+
+#### 4. [ ] `_suggest_patches()` - MEDIUM (Line 634)
+
+**Confidence:** 70%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Patcher function with no loops and no file I/O (incomplete) (+50 points)
+- Patcher/modifier with no local variables (incomplete) (+30 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+### File: `.\intellicrack\ai\realtime_adaptation_engine.py`
+
+**Issues in this file:** 1
+
+#### 1. [ ] `get_hook_statistics()` - MEDIUM (Line 658)
+
+**Confidence:** 65%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 2 production issues detected
+
+**Evidence:**
+
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Very short domain-specific function (≤3 LOC - likely incomplete) (+30 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+### File: `.\intellicrack\ai\script_editor.py`
+
+**Issues in this file:** 1
+
+#### 1. [ ] `_validate_python_syntax()` - MEDIUM (Line 282)
+
+**Confidence:** 60%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Validator/checker function with no conditionals (no actual validation) (+55 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Deductions for production patterns (-30 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+### File: `.\intellicrack\ai\script_generation_agent.py`
+
+**Issues in this file:** 1
+
+#### 1. [ ] `_validate_generic_script()` - HIGH (Line 2339)
+
+**Confidence:** 80%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Validator/checker function with no conditionals (no actual validation) (+55 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+### File: `.\intellicrack\ai\script_generation_prompts.py`
+
+**Issues in this file:** 1
+
+#### 1. [ ] `_build_patching_objectives()` - CRITICAL (Line 376)
+
+**Confidence:** 275%
+
+**Issue Type:** `hardcoded_return`
+
+**Description:** 5 production issues detected
+
+**Evidence:**
+
+- CRITICAL: Patcher without pattern search (hardcoded offsets only) (+85 points)
+- Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
+- Patcher without backup capability (destructive without safety) (+50 points)
+- Patcher sophistication: 35% (DANGEROUS - will break on updates) (+80 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Replace hardcoded return with dynamic computation based on input parameters
+
+---
+
+### File: `.\intellicrack\ai\vulnerability_research_integration.py`
+
+**Issues in this file:** 2
+
+#### 1. [ ] `_analyze_protection_trends()` - CRITICAL (Line 771)
+
+**Confidence:** 115%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Analyzer/parser function with no loops (insufficient processing) (+40 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Analysis/processing function without loops or conditionals (incomplete) (+40 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 2. [ ] `_generate_bypass_steps()` - MEDIUM (Line 588)
+
+**Confidence:** 65%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Keygen without crypto/random operations (likely trivial) (+40 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+### File: `.\intellicrack\analysis\protection_workflow.py`
+
+**Issues in this file:** 3
+
+#### 1. [ ] `_generate_license_bypass_script()` - CRITICAL (Line 658)
+
+**Confidence:** 105%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 2. [ ] `_generate_generic_bypass_script()` - CRITICAL (Line 725)
+
+**Confidence:** 105%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 3. [ ] `_build_bypass_prompt()` - MEDIUM (Line 541)
+
+**Confidence:** 55%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Weak encryption detected (XOR, character-by-character) (+30 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+### File: `.\intellicrack\cli\ai_wrapper.py`
+
+**Issues in this file:** 2
+
+#### 1. [ ] `apply_patch()` - CRITICAL (Line 376)
+
+**Confidence:** 445%
+
+**Issue Type:** `hardcoded_return`
+
+**Description:** 8 production issues detected
+
+**Evidence:**
+
+- CRITICAL: Patcher without pattern search (hardcoded offsets only) (+85 points)
+- Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
+- Patcher without backup capability (destructive without safety) (+50 points)
+- Patcher without loops (single-target/single-patch only) (+60 points)
+- CRITICAL: Patcher without conditionals (blindly patches - dangerous) (+75 points)
+- Patcher sophistication: 0% (DANGEROUS - will break on updates) (+80 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Implement actual binary patching with proper file I/O and byte manipulation
+
+---
+
+#### 2. [ ] `suggest_patches()` - HIGH (Line 368)
+
+**Confidence:** 75%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Patcher function with no loops and no file I/O (incomplete) (+50 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+### File: `.\intellicrack\cli\interactive_mode.py`
+
+**Issues in this file:** 1
+
+#### 1. [ ] `do_patch()` - HIGH (Line 250)
+
+**Confidence:** 87%
+
+**Issue Type:** `hardcoded_return`
+
+**Description:** 6 production issues detected
+
+**Evidence:**
+
+- CRITICAL: Patcher without pattern search (hardcoded offsets only) (+85 points)
+- Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
+- Patcher without backup capability (destructive without safety) (+50 points)
+- Patcher without loops (single-target/single-patch only) (+60 points)
+- Patcher sophistication: 15% (DANGEROUS - will break on updates) (+80 points)
+- Deductions for production patterns (-170 points)
+
+**Suggested Fix:** Implement actual binary patching with proper file I/O and byte manipulation
+
+---
+
+### File: `.\intellicrack\cli\progress_manager.py`
+
+**Issues in this file:** 1
+
+#### 1. [ ] `_demo_license_detection()` - CRITICAL (Line 469)
+
+**Confidence:** 205%
+
+**Issue Type:** `naive_implementation`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Protection analyzer without signature database (weak detection) (+60 points)
+- CRITICAL: Analyzer without binary format parsing (string matching only) (+75 points)
+- Analyzer sophistication: 35% (WEAK - misses most protections) (+70 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+### File: `.\intellicrack\config.py`
+
+**Issues in this file:** 1
+
+#### 1. [ ] `validate_config()` - HIGH (Line 477)
+
+**Confidence:** 80%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Validator 'validate_config' always returns True without any conditional logic (+75 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Deductions for production patterns (-30 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+### File: `.\intellicrack\core\analysis\arxan_analyzer.py`
+
+**Issues in this file:** 1
+
+#### 1. [ ] `_analyze_license_validation()` - CRITICAL (Line 502)
+
+**Confidence:** 175%
+
+**Issue Type:** `naive_implementation`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- Protection analyzer without signature database (weak detection) (+60 points)
+- CRITICAL: Analyzer without binary format parsing (string matching only) (+75 points)
+- Analyzer sophistication: 35% (WEAK - misses most protections) (+70 points)
+- Deductions for production patterns (-30 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+### File: `.\intellicrack\core\analysis\automated_patch_agent.py`
+
+**Issues in this file:** 9
+
+#### 1. [ ] `generate_keygen()` - CRITICAL (Line 267)
+
+**Confidence:** 265%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 6 production issues detected
+
+**Evidence:**
+
+- CRITICAL: Keygen without loops or conditionals (linear execution only) (+75 points)
+- Keygen with trivial complexity (insufficient for production) (+50 points)
+- Keygen with minimal local state (incomplete implementation) (+45 points)
+- Keygen sophistication score: 13% (INSUFFICIENT) (+70 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 2. [ ] `_find_patch_points()` - CRITICAL (Line 200)
+
+**Confidence:** 255%
+
+**Issue Type:** `hardcoded_return`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- CRITICAL: Patcher without pattern search (hardcoded offsets only) (+85 points)
+- Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
+- Patcher without backup capability (destructive without safety) (+50 points)
+- Patcher sophistication: 45% (FRAGILE - limited reliability) (+50 points)
+
+**Suggested Fix:** Replace hardcoded return with dynamic computation based on input parameters
+
+---
+
+#### 3. [ ] `_generate_custom_keygen()` - CRITICAL (Line 375)
+
+**Confidence:** 150%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Function '_generate_custom_keygen' contains obvious template hex values (0xDEADBEEF, 0xCAFEBABE) (+80 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+
+**Suggested Fix:** Implement cryptographic key generation using RSA/ECDSA from Crypto library
+
+---
+
+#### 4. [ ] `_create_memory_patches()` - CRITICAL (Line 144)
+
+**Confidence:** 130%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Patch/hook function '_create_memory_patches' contains template addresses without binary analysis (+65 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Patcher/modifier with no local variables (incomplete) (+30 points)
+
+**Suggested Fix:** Implement actual binary patching with proper file I/O and byte manipulation
+
+---
+
+#### 5. [ ] `_generate_serial_keygen()` - CRITICAL (Line 278)
+
+**Confidence:** 115%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 6. [ ] `_generate_rsa_keygen()` - CRITICAL (Line 308)
+
+**Confidence:** 115%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 7. [ ] `_generate_ecc_keygen()` - CRITICAL (Line 345)
+
+**Confidence:** 115%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 8. [ ] `_create_hook_detours()` - CRITICAL (Line 124)
+
+**Confidence:** 100%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 2 production issues detected
+
+**Evidence:**
+
+- Patch/hook function '_create_hook_detours' contains template addresses without binary analysis (+65 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 9. [ ] `run_automated_patch_agent()` - HIGH (Line 406)
+
+**Confidence:** 97%
+
+**Issue Type:** `hardcoded_return`
+
+**Description:** 5 production issues detected
+
+**Evidence:**
+
+- CRITICAL: Patcher without pattern search (hardcoded offsets only) (+85 points)
+- Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
+- Patcher without backup capability (destructive without safety) (+50 points)
+- Patcher sophistication: 35% (DANGEROUS - will break on updates) (+80 points)
+- Deductions for production patterns (-90 points)
+
+**Suggested Fix:** Replace hardcoded return with dynamic computation based on input parameters
+
+---
+
+### File: `.\intellicrack\core\analysis\commercial_license_analyzer.py`
+
+**Issues in this file:** 10
+
+#### 1. [ ] `_generate_hasp_decrypt_patch()` - CRITICAL (Line 1003)
+
+**Confidence:** 195%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 7 production issues detected
+
+**Evidence:**
+
+- Domain function '_generate_hasp_decrypt_patch' is ≤3 LOC with no logic (likely incomplete) (+50 points)
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Patcher function with no loops and no file I/O (incomplete) (+50 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Very short domain-specific function (≤3 LOC - likely incomplete) (+30 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-50 points)
+
+**Suggested Fix:** Implement actual binary patching with proper file I/O and byte manipulation
+
+---
+
+#### 2. [ ] `_generate_hasp_encrypt_patch()` - CRITICAL (Line 941)
+
+**Confidence:** 130%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Patcher function with no loops and no file I/O (incomplete) (+50 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 3. [ ] `_generate_checkout_hook()` - CRITICAL (Line 590)
+
+**Confidence:** 115%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Keygen function with no crypto/random operations (trivial algorithm) (+45 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 4. [ ] `_generate_hasp_login_hook()` - CRITICAL (Line 934)
+
+**Confidence:** 115%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Keygen function with no crypto/random operations (trivial algorithm) (+45 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 5. [ ] `_generate_codemeter_license_info()` - HIGH (Line 1521)
+
+**Confidence:** 80%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 2 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 6. [ ] `_generate_cm_secure_data_hook()` - HIGH (Line 1723)
+
+**Confidence:** 80%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 2 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 7. [ ] `_generate_crypto_hook()` - MEDIUM (Line 618)
+
+**Confidence:** 70%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 8. [ ] `_generate_cm_access_hook()` - MEDIUM (Line 1464)
+
+**Confidence:** 70%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 9. [ ] `_generate_cm_crypto_hook()` - MEDIUM (Line 1654)
+
+**Confidence:** 70%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 10. [ ] `_generate_init_hook()` - MEDIUM (Line 601)
+
+**Confidence:** 65%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Keygen function with no crypto/random operations (trivial algorithm) (+45 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-60 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+### File: `.\intellicrack\core\analysis\concolic_executor.py`
+
+**Issues in this file:** 1
+
+#### 1. [ ] `add_hook()` - HIGH (Line 225)
+
+**Confidence:** 75%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- Domain function 'add_hook' is ≤3 LOC with no logic (likely incomplete) (+50 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Very short domain-specific function (≤3 LOC - likely incomplete) (+30 points)
+- Deductions for production patterns (-40 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+### File: `.\intellicrack\core\analysis\concolic_obfuscation_handler.py`
+
+**Issues in this file:** 3
+
+#### 1. [ ] `clear_detected_opaques()` - CRITICAL (Line 157)
+
+**Confidence:** 305%
+
+**Issue Type:** `naive_implementation`
+
+**Description:** 5 production issues detected
+
+**Evidence:**
+
+- Protection analyzer without signature database (weak detection) (+60 points)
+- CRITICAL: Analyzer without binary format parsing (string matching only) (+75 points)
+- Analyzer without loops (single pattern check only) (+55 points)
+- Analyzer with no result storage (incomplete analysis) (+45 points)
+- Analyzer sophistication: 10% (WEAK - misses most protections) (+70 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 2. [ ] `get_dispatcher_blocks()` - CRITICAL (Line 271)
+
+**Confidence:** 115%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Patcher function with no loops and no file I/O (incomplete) (+50 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Patcher/modifier with no local variables (incomplete) (+30 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 3. [ ] `is_dispatcher_block()` - CRITICAL (Line 745)
+
+**Confidence:** 105%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- Patcher function with no loops and no file I/O (incomplete) (+50 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Patcher/modifier with no local variables (incomplete) (+30 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+### File: `.\intellicrack\core\analysis\control_flow_deobfuscation.py`
+
+**Issues in this file:** 4
+
+#### 1. [ ] `_detect_dispatchers()` - CRITICAL (Line 424)
+
+**Confidence:** 450%
+
+**Issue Type:** `hardcoded_return`
+
+**Description:** 8 production issues detected
+
+**Evidence:**
+
+- CRITICAL: Patcher without pattern search (hardcoded offsets only) (+85 points)
+- Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
+- Patcher without backup capability (destructive without safety) (+50 points)
+- Patcher sophistication: 35% (DANGEROUS - will break on updates) (+80 points)
+- Protection analyzer without signature database (weak detection) (+60 points)
+- CRITICAL: Analyzer without binary format parsing (string matching only) (+75 points)
+- Analyzer sophistication: 35% (WEAK - misses most protections) (+70 points)
+- Deductions for production patterns (-40 points)
+
+**Suggested Fix:** Replace hardcoded return with dynamic computation based on input parameters
+
+---
+
+#### 2. [ ] `_is_dispatcher_block()` - CRITICAL (Line 469)
+
+**Confidence:** 285%
+
+**Issue Type:** `hardcoded_return`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- CRITICAL: Patcher without pattern search (hardcoded offsets only) (+85 points)
+- Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
+- Patcher without backup capability (destructive without safety) (+50 points)
+- Patcher sophistication: 35% (DANGEROUS - will break on updates) (+80 points)
+
+**Suggested Fix:** Replace hardcoded return with dynamic computation based on input parameters
+
+---
+
+#### 3. [ ] `_classify_dispatcher_type()` - CRITICAL (Line 623)
+
+**Confidence:** 285%
+
+**Issue Type:** `hardcoded_return`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- CRITICAL: Patcher without pattern search (hardcoded offsets only) (+85 points)
+- Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
+- Patcher without backup capability (destructive without safety) (+50 points)
+- Patcher sophistication: 35% (DANGEROUS - will break on updates) (+80 points)
+
+**Suggested Fix:** Replace hardcoded return with dynamic computation based on input parameters
+
+---
+
+#### 4. [ ] `_generate_patch_information()` - CRITICAL (Line 1120)
+
+**Confidence:** 135%
+
+**Issue Type:** `hardcoded_return`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- CRITICAL: Patcher without pattern search (hardcoded offsets only) (+85 points)
+- Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
+- Patcher sophistication: 50% (FRAGILE - limited reliability) (+50 points)
+- Deductions for production patterns (-70 points)
+
+**Suggested Fix:** Replace hardcoded return with dynamic computation based on input parameters
+
+---
+
+### File: `.\intellicrack\core\analysis\frida_protection_bypass.py`
+
+**Issues in this file:** 1
+
+#### 1. [ ] `generate_bypass_report()` - MEDIUM (Line 1468)
+
+**Confidence:** 55%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 2 production issues detected
+
+**Evidence:**
+
+- Keygen without crypto/random operations (likely trivial) (+40 points)
+- Imports 'frida' but doesn't use it in function (+15 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+### File: `.\intellicrack\core\analysis\ghidra_binary_integration.py`
+
+**Issues in this file:** 1
+
+#### 1. [ ] `generate_keygen_template()` - CRITICAL (Line 152)
+
+**Confidence:** 112%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 7 production issues detected
+
+**Evidence:**
+
+- CRITICAL: Keygen lacks cryptographic operations (insufficient for production) (+90 points)
+- CRITICAL: Keygen without loops or conditionals (linear execution only) (+75 points)
+- Keygen with trivial complexity (insufficient for production) (+50 points)
+- Keygen with minimal local state (incomplete implementation) (+45 points)
+- Keygen sophistication score: 0% (INSUFFICIENT) (+70 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Deductions for production patterns (-140 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+### File: `.\intellicrack\core\analysis\protection_scanner.py`
+
+**Issues in this file:** 1
+
+#### 1. [ ] `_analyze_protection_strings()` - CRITICAL (Line 664)
+
+**Confidence:** 125%
+
+**Issue Type:** `naive_implementation`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Protection analyzer without signature database (weak detection) (+60 points)
+- CRITICAL: Analyzer without binary format parsing (string matching only) (+75 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+### File: `.\intellicrack\core\analysis\radare2_advanced_patcher.py`
+
+**Issues in this file:** 2
+
+#### 1. [ ] `_generate_c_patcher()` - CRITICAL (Line 1239)
+
+**Confidence:** 360%
+
+**Issue Type:** `hardcoded_return`
+
+**Description:** 5 production issues detected
+
+**Evidence:**
+
+- CRITICAL: Patcher without pattern search (hardcoded offsets only) (+85 points)
+- Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
+- Patcher without backup capability (destructive without safety) (+50 points)
+- CRITICAL: Patcher without conditionals (blindly patches - dangerous) (+75 points)
+- Patcher sophistication: 20% (DANGEROUS - will break on updates) (+80 points)
+
+**Suggested Fix:** Implement actual binary patching with proper file I/O and byte manipulation
+
+---
+
+#### 2. [ ] `generate_patch_script()` - HIGH (Line 1180)
+
+**Confidence:** 85%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Patcher function with no loops and no file I/O (incomplete) (+50 points)
+- Keygen function with no crypto/random operations (trivial algorithm) (+45 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+### File: `.\intellicrack\core\analysis\radare2_ai_integration.py`
+
+**Issues in this file:** 2
+
+#### 1. [ ] `_train_license_detector()` - HIGH (Line 673)
+
+**Confidence:** 97%
+
+**Issue Type:** `naive_implementation`
+
+**Description:** 6 production issues detected
+
+**Evidence:**
+
+- Protection analyzer without signature database (weak detection) (+60 points)
+- CRITICAL: Analyzer without binary format parsing (string matching only) (+75 points)
+- Analyzer without loops (single pattern check only) (+55 points)
+- Analyzer sophistication: 10% (WEAK - misses most protections) (+70 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Deductions for production patterns (-100 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 2. [ ] `_analyze_license_protected_binaries()` - MEDIUM (Line 796)
+
+**Confidence:** 65%
+
+**Issue Type:** `hardcoded_return`
+
+**Description:** Function '_analyze_license_protected_binaries' uses hardcoded range instead of actual data length
+
+**Evidence:**
+
+- Function '_analyze_license_protected_binaries' uses hardcoded range instead of actual data length (+65 points)
+
+**Suggested Fix:** Replace hardcoded return with dynamic computation based on input parameters
+
+---
+
+### File: `.\intellicrack\core\analysis\radare2_bypass_generator.py`
+
+**Issues in this file:** 30
+
+#### 1. [ ] `_generate_hash_based_keygen()` - CRITICAL (Line 691)
+
+**Confidence:** 310%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 6 production issues detected
+
+**Evidence:**
+
+- CRITICAL: Keygen lacks cryptographic operations (insufficient for production) (+90 points)
+- CRITICAL: Keygen without loops or conditionals (linear execution only) (+75 points)
+- Keygen with trivial complexity (insufficient for production) (+50 points)
+- Keygen sophistication score: 16% (INSUFFICIENT) (+70 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 2. [ ] `_is_already_patched()` - CRITICAL (Line 3775)
+
+**Confidence:** 275%
+
+**Issue Type:** `hardcoded_return`
+
+**Description:** 5 production issues detected
+
+**Evidence:**
+
+- CRITICAL: Patcher without pattern search (hardcoded offsets only) (+85 points)
+- Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
+- Patcher without backup capability (destructive without safety) (+50 points)
+- Patcher sophistication: 35% (DANGEROUS - will break on updates) (+80 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Replace hardcoded return with dynamic computation based on input parameters
+
+---
+
+#### 3. [ ] `_assess_keygen_feasibility()` - CRITICAL (Line 1807)
+
+**Confidence:** 235%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 5 production issues detected
+
+**Evidence:**
+
+- CRITICAL: Keygen lacks cryptographic operations (insufficient for production) (+90 points)
+- Keygen missing loops OR conditionals (limited sophistication) (+40 points)
+- Keygen with minimal local state (incomplete implementation) (+45 points)
+- Keygen sophistication score: 8% (INSUFFICIENT) (+70 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 4. [ ] `_generate_hash_keygen_code()` - CRITICAL (Line 720)
+
+**Confidence:** 190%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- CRITICAL: Keygen lacks cryptographic operations (insufficient for production) (+90 points)
+- Keygen missing loops OR conditionals (limited sophistication) (+40 points)
+- Keygen sophistication score: 26% (INSUFFICIENT) (+70 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 5. [ ] `_generate_direct_patch_implementation()` - CRITICAL (Line 1477)
+
+**Confidence:** 160%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 6 production issues detected
+
+**Evidence:**
+
+- Keygen without crypto/random operations (likely trivial) (+40 points)
+- Patcher without binary file manipulation (+45 points)
+- Imports 'Crypto' but doesn't use it in function (+15 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 6. [ ] `_detect_license_format()` - CRITICAL (Line 2125)
+
+**Confidence:** 155%
+
+**Issue Type:** `naive_implementation`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- Protection analyzer without signature database (weak detection) (+60 points)
+- CRITICAL: Analyzer without binary format parsing (string matching only) (+75 points)
+- Analyzer sophistication: 35% (WEAK - misses most protections) (+70 points)
+- Deductions for production patterns (-50 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 7. [ ] `_generate_memory_patches()` - CRITICAL (Line 1330)
+
+**Confidence:** 135%
+
+**Issue Type:** `hardcoded_return`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- CRITICAL: Patcher without pattern search (hardcoded offsets only) (+85 points)
+- Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
+- Patcher sophistication: 50% (FRAGILE - limited reliability) (+50 points)
+- Deductions for production patterns (-70 points)
+
+**Suggested Fix:** Replace hardcoded return with dynamic computation based on input parameters
+
+---
+
+#### 8. [ ] `_generate_generic_keygen()` - CRITICAL (Line 944)
+
+**Confidence:** 115%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 5 production issues detected
+
+**Evidence:**
+
+- Keygen without crypto/random operations (likely trivial) (+40 points)
+- Imports 'Crypto' but doesn't use it in function (+15 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 9. [ ] `_generate_crypto_bypass_implementation()` - CRITICAL (Line 1487)
+
+**Confidence:** 115%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 5 production issues detected
+
+**Evidence:**
+
+- Keygen without crypto/random operations (likely trivial) (+40 points)
+- Imports 'Crypto' but doesn't use it in function (+15 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 10. [ ] `_generate_time_bypass_implementation()` - CRITICAL (Line 1679)
+
+**Confidence:** 115%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 5 production issues detected
+
+**Evidence:**
+
+- Keygen without crypto/random operations (likely trivial) (+40 points)
+- Imports 'Crypto' but doesn't use it in function (+15 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 11. [ ] `_get_aes_keygen_template()` - CRITICAL (Line 2900)
+
+**Confidence:** 115%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 12. [ ] `_get_generic_keygen_template()` - CRITICAL (Line 2920)
+
+**Confidence:** 115%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 13. [ ] `_generate_aes_keygen_code()` - CRITICAL (Line 1047)
+
+**Confidence:** 105%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 14. [ ] `_generate_rsa_keygen_code()` - CRITICAL (Line 1211)
+
+**Confidence:** 105%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 15. [ ] `_generate_custom_keygen_code()` - CRITICAL (Line 1239)
+
+**Confidence:** 105%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 16. [ ] `_generate_generic_keygen_code()` - CRITICAL (Line 1262)
+
+**Confidence:** 105%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 17. [ ] `_get_hash_keygen_template()` - CRITICAL (Line 2882)
+
+**Confidence:** 105%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- Generator/creator function with no local variables (no state/computation) (+45 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 18. [ ] `_generate_stack_patch()` - CRITICAL (Line 3401)
+
+**Confidence:** 100%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 6 production issues detected
+
+**Evidence:**
+
+- Keygen without crypto/random operations (likely trivial) (+40 points)
+- Patcher without binary file manipulation (+45 points)
+- Imports 'Crypto' but doesn't use it in function (+15 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-70 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 19. [ ] `_generate_flow_redirect_patch()` - CRITICAL (Line 3415)
+
+**Confidence:** 100%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 6 production issues detected
+
+**Evidence:**
+
+- Keygen without crypto/random operations (likely trivial) (+40 points)
+- Patcher without binary file manipulation (+45 points)
+- Imports 'Crypto' but doesn't use it in function (+15 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-70 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 20. [ ] `_generate_memory_override_patch()` - CRITICAL (Line 3429)
+
+**Confidence:** 100%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 6 production issues detected
+
+**Evidence:**
+
+- Keygen without crypto/random operations (likely trivial) (+40 points)
+- Patcher without binary file manipulation (+45 points)
+- Imports 'Crypto' but doesn't use it in function (+15 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-70 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 21. [ ] `_generate_return_injection_patch()` - CRITICAL (Line 3443)
+
+**Confidence:** 100%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 6 production issues detected
+
+**Evidence:**
+
+- Keygen without crypto/random operations (likely trivial) (+40 points)
+- Patcher without binary file manipulation (+45 points)
+- Imports 'Crypto' but doesn't use it in function (+15 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-70 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 22. [ ] `_generate_registry_hook_code()` - HIGH (Line 2180)
+
+**Confidence:** 95%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Function '_generate_registry_hook_code' contains obvious template hex values (0xDEADBEEF, 0xCAFEBABE) (+80 points)
+- Many local variables (11) - consider refactoring (+25 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 23. [ ] `_generate_file_hook_code()` - HIGH (Line 2379)
+
+**Confidence:** 95%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 5 production issues detected
+
+**Evidence:**
+
+- Keygen without crypto/random operations (likely trivial) (+40 points)
+- Weak encryption detected (XOR, character-by-character) (+30 points)
+- Very long function (333 lines total) (+20 points)
+- Many local variables (12) - consider refactoring (+25 points)
+- Deductions for production patterns (-20 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 24. [ ] `_generate_license_value()` - HIGH (Line 1853)
+
+**Confidence:** 80%
+
+**Issue Type:** `stub_detection`
+
+**Description:** Function '_generate_license_value' contains obvious template hex values (0xDEADBEEF, 0xCAFEBABE)
+
+**Evidence:**
+
+- Function '_generate_license_value' contains obvious template hex values (0xDEADBEEF, 0xCAFEBABE) (+80 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 25. [ ] `_generate_patch_instruction()` - HIGH (Line 2827)
+
+**Confidence:** 75%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Patcher function with no loops and no file I/O (incomplete) (+50 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 26. [ ] `_generate_patch_bytes_for_method()` - HIGH (Line 2852)
+
+**Confidence:** 75%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Patcher function with no loops and no file I/O (incomplete) (+50 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 27. [ ] `_generate_automated_patches()` - MEDIUM (Line 498)
+
+**Confidence:** 72%
+
+**Issue Type:** `hardcoded_return`
+
+**Description:** 5 production issues detected
+
+**Evidence:**
+
+- CRITICAL: Patcher without pattern search (hardcoded offsets only) (+85 points)
+- Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
+- Patcher without backup capability (destructive without safety) (+50 points)
+- Patcher sophistication: 35% (DANGEROUS - will break on updates) (+80 points)
+- Deductions for production patterns (-140 points)
+
+**Suggested Fix:** Replace hardcoded return with dynamic computation based on input parameters
+
+---
+
+#### 28. [ ] `_recommend_bypass_approach()` - MEDIUM (Line 1463)
+
+**Confidence:** 70%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- 'Simple' implementation confirmed: no iteration logic (+30 points)
+- Imports 'Crypto' but doesn't use it in function (+15 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 29. [ ] `generate_license_bypass()` - MEDIUM (Line 3784)
+
+**Confidence:** 70%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Keygen function with no crypto/random operations (trivial algorithm) (+45 points)
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 30. [ ] `_generate_aes_keygen()` - MEDIUM (Line 877)
+
+**Confidence:** 60%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Low complexity for domain-specific function (likely incomplete) (+35 points)
+- Keygen/generator with no local variables (no state) (+35 points)
+- Deductions for production patterns (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+### File: `.\intellicrack\core\analysis\radare2_decompiler.py`

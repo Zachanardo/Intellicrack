@@ -23,11 +23,11 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Generator, ParamSpec, cast
 
-P = ParamSpec("P")
-
 from intellicrack.handlers.psutil_handler import psutil
 
 from ...utils.logger import get_logger
+
+P = ParamSpec("P")
 
 logger = get_logger(__name__)
 

@@ -186,7 +186,7 @@ class BinaryAnalyzer:
             Tuple of (file_handle, mmap_object)
 
         """
-        file_handle = open(file_path, "rb")
+        file_handle = open(file_path, "rb")  # noqa: SIM115
         try:
             if file_handle.fileno() == -1:
                 raise OSError("Invalid file descriptor")

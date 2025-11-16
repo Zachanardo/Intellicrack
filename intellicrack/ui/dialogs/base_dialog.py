@@ -19,11 +19,14 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+from typing import Callable
 
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,
+    QCloseEvent,
     QDialog,
     QDialogButtonBox,
+    QEvent,
     QHBoxLayout,
     QKeySequence,
     QLabel,
@@ -396,7 +399,7 @@ class BaseDialog(QDialog):
         """
         self.content_layout.addWidget(widget)
 
-    def add_content_layout(self, layout) -> None:
+    def add_content_layout(self, layout: QVBoxLayout | QHBoxLayout) -> None:
         """Add a layout to the content area.
 
         Args:
@@ -490,7 +493,7 @@ class BaseDialog(QDialog):
         """
         self.cancel_button.setText(text)
 
-    def add_custom_button(self, text: str, callback, button_type: str = "default") -> QPushButton:
+    def add_custom_button(self, text: str, callback: Callable[[], None], button_type: str = "default") -> QPushButton:
         """Add a custom button to the button box.
 
         Args:
@@ -561,7 +564,7 @@ class BaseDialog(QDialog):
         """
         return {}
 
-    def closeEvent(self, event) -> None:
+    def closeEvent(self, event: QCloseEvent) -> None:
         """Handle dialog close event for cleanup.
 
         Args:
@@ -577,7 +580,7 @@ class BaseDialog(QDialog):
 
         super().closeEvent(event)
 
-    def showEvent(self, event) -> None:
+    def showEvent(self, event: QEvent) -> None:
         """Handle dialog show event for focus management.
 
         Args:

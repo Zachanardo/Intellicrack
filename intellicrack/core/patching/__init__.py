@@ -38,13 +38,26 @@ try:
         create_windows_activator,
     )
 
-    def activate_windows_interactive(output_callback=None):
-        """Launch Windows activation interactively."""
+    def activate_windows_interactive(output_callback: object = None) -> object:
+        """Launch Windows activation interactively.
+
+        Args:
+            output_callback: Optional callback function to handle output messages.
+
+        Returns:
+            The result of the Windows interactive activation process.
+
+        """
         activator = create_windows_activator()
         return activator.activate_windows_interactive(output_callback)
 
-    def activate_windows_in_terminal():
-        """Activate Windows using embedded terminal (recommended)."""
+    def activate_windows_in_terminal() -> object:
+        """Activate Windows using embedded terminal (recommended).
+
+        Returns:
+            The result of the Windows embedded terminal activation process.
+
+        """
         activator = create_windows_activator()
         return activator.activate_windows_in_terminal()
 

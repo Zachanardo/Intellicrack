@@ -47,8 +47,21 @@ class NetworkAnalysisPlugin:
         self.active_sockets = {}
         self.socket_monitor_thread = None
 
-    def analyze(self, binary_path):
-        """Analyze binary for network-related functionality."""
+    def analyze(self, binary_path: str) -> list[str]:
+        """Analyze binary for network-related functionality.
+
+        Scans a binary file for network-related indicators such as protocol
+        strings (HTTP, HTTPS, FTP) and Windows socket API references that
+        suggest network communication capabilities.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            A list of analysis results including detected network indicators
+            and error messages if the analysis fails.
+
+        """
         results = []
         results.append(f"Analyzing network capabilities of: {binary_path}")
 
@@ -423,8 +436,24 @@ class NetworkAnalysisPlugin:
             if self.socket_monitor_thread and self.socket_monitor_thread.is_alive():
                 self.socket_monitor_thread.join(timeout=2)
 
-    def monitor_traffic(self, target_process=None):
-        """Monitor network traffic and connections."""
+    def monitor_traffic(self, target_process: int | None = None) -> list[str]:
+        """Monitor network traffic and connections.
+
+        Monitors active network connections and listening ports, optionally
+        filtered by a specific process. Resolves remote hostnames and displays
+        network I/O statistics. Supports targeting specific processes on
+        Windows platforms.
+
+        Args:
+            target_process: Optional process ID to filter connections for.
+                If provided, only connections from this process are monitored.
+                Defaults to None, which monitors all system connections.
+
+        Returns:
+            A list of formatted strings containing connection details, listening
+            ports, and network I/O statistics.
+
+        """
         results = []
         results.append(f"Starting network monitoring{' for process: ' + str(target_process) if target_process else ''}...")
 
@@ -556,8 +585,18 @@ class NetworkAnalysisPlugin:
         return info
 
 
-def register():
-    """Register and return an instance of the network analysis plugin."""
+def register() -> NetworkAnalysisPlugin:
+    """Register and return an instance of the network analysis plugin.
+
+    Creates a NetworkAnalysisPlugin instance and registers cleanup handlers
+    to ensure all active sockets are properly closed when the program exits.
+    This function is called by the plugin system during initialization.
+
+    Returns:
+        An initialized NetworkAnalysisPlugin instance with cleanup handlers
+        registered via atexit.
+
+    """
     plugin = NetworkAnalysisPlugin()
     # Register cleanup on exit
     import atexit

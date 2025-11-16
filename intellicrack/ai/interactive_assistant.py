@@ -24,6 +24,7 @@ import os
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 from ..handlers.pyqt6_handler import QWidget
@@ -681,7 +682,7 @@ What security aspect interests you?"""
                 # Ensure temporary file is cleaned up even if an exception occurs
                 if patch_file and os.path.exists(patch_file):
                     try:
-                        os.unlink(patch_file)
+                        Path(patch_file).unlink()
                     except OSError as e:
                         logger.warning(f"Failed to clean up temporary patch file {patch_file}: {e}")
 

@@ -26,7 +26,6 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
-from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import QObject, QRunnable, QThreadPool, pyqtSignal, pyqtSlot
 from intellicrack.utils.logger import get_logger
@@ -72,28 +71,14 @@ class TaskSignals(QObject if QObject is not None else object):
     finished = pyqtSignal(str)
 
 
-# Determine if we can use ABC or need to fall back for documentation builds
-try:
-    # Check if ABC is properly available (not mocked)
-    if hasattr(ABC, "__abstractmethods__"):
-        # ABC is available, use it
-        ABC_BASE = ABC
+# Create a metaclass that resolves the conflict between QRunnable and ABC
+class TaskMeta(type(QRunnable), type(ABC)):
+    """Metaclass to resolve conflicts between QRunnable and ABC."""
 
-        # Create a metaclass that resolves the conflict between QRunnable and ABC
-        class TaskMeta(type(QRunnable), type(ABC)):
-            """Metaclass to resolve conflicts between QRunnable and ABC."""
-
-    else:
-        # ABC is mocked, don't use it
-        ABC_BASE = object
-        TaskMeta = type
-except (TypeError, AttributeError, NameError):
-    # Fallback if anything fails
-    ABC_BASE = object
-    TaskMeta = type
+    pass
 
 
-class BaseTask(QRunnable, ABC_BASE, metaclass=TaskMeta):
+class BaseTask(QRunnable, ABC, metaclass=TaskMeta):
     """Base class for all background tasks."""
 
     def __init__(self, task_id: str | None = None, description: str = "") -> None:
@@ -115,6 +100,10 @@ class BaseTask(QRunnable, ABC_BASE, metaclass=TaskMeta):
         self.progress = 0
         self.should_stop = False
         self.logger = logging.getLogger(__name__)
+        self.signals = TaskSignals()
+        self._is_cancelled = False
+        self._started_at: datetime | None = None
+        self._finished_at: datetime | None = None
 
     def run(self) -> None:
         """Execute the task."""
@@ -147,7 +136,7 @@ class BaseTask(QRunnable, ABC_BASE, metaclass=TaskMeta):
             self.signals.finished.emit(self.task_id)
 
     @abstractmethod
-    def execute(self) -> Any:
+    def execute(self) -> object:
         """Execute the task logic. Must be implemented by subclasses."""
 
     def cancel(self) -> None:
@@ -191,7 +180,7 @@ class CallableTask(BaseTask):
         self.args = args
         self.kwargs = kwargs or {}
 
-    def execute(self) -> Any:
+    def execute(self) -> object:
         """Execute the wrapped callable."""
         # If the function expects a task parameter, pass self
         import inspect
@@ -232,8 +221,8 @@ class TaskManager(QObject):
             self.thread_pool.setMaxThreadCount(max_thread_count)
 
         self._active_tasks: dict[str, BaseTask] = {}
-        self._task_history: list[dict] = []
-        self._task_results: dict[str, Any] = {}
+        self._task_history: list[dict[str, object]] = []
+        self._task_results: dict[str, object] = {}
 
         logger.info(f"TaskManager initialized with {self.thread_pool.maxThreadCount()} threads")
 
@@ -293,7 +282,7 @@ class TaskManager(QObject):
         """Get dictionary of active task IDs to descriptions."""
         return {task_id: task.description for task_id, task in self._active_tasks.items()}
 
-    def get_task_result(self, task_id: str) -> Any | None:
+    def get_task_result(self, task_id: str) -> object | None:
         """Get the result of a completed task."""
         return self._task_results.get(task_id)
 
@@ -322,7 +311,7 @@ class TaskManager(QObject):
         logger.debug(f"Task progress: {task_id} - {percentage}% - {message}")
 
     @pyqtSlot(str, object)
-    def _on_task_result(self, task_id: str, result: Any) -> None:
+    def _on_task_result(self, task_id: str, result: object) -> None:
         """Handle task result."""
         self._task_results[task_id] = result
         logger.debug(f"Task result received: {task_id}")
@@ -360,35 +349,6 @@ class TaskManager(QObject):
                 self.all_tasks_completed.emit()
 
         logger.debug(f"Task finished: {task_id}")
-
-
-class LongRunningTask(BaseTask):
-    """Demonstrate of a long-running task with progress updates."""
-
-    def __init__(self, duration: int = 10, task_id: str | None = None) -> None:
-        """Initialize the long running task with specified duration.
-
-        Args:
-            duration: Task duration in seconds
-            task_id: Optional unique identifier for the task
-
-        """
-        super().__init__(task_id, f"Long running task ({duration}s)")
-        self.duration = duration
-
-    def execute(self) -> str:
-        """Simulate a long-running operation."""
-        import time
-
-        for i in range(self.duration):
-            if self.is_cancelled():
-                return "Task cancelled"
-
-            time.sleep(1)
-            progress = int((i + 1) / self.duration * 100)
-            self.emit_progress(progress, f"Processing step {i + 1}/{self.duration}")
-
-        return f"Task completed after {self.duration} seconds"
 
 
 # Global instance

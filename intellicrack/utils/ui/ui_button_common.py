@@ -31,16 +31,20 @@ except ImportError as e:
     PYQT_AVAILABLE = False
 
 
-def add_extra_buttons(header_layout, extra_buttons, widget_refs=None):
+def add_extra_buttons(
+    header_layout: object,
+    extra_buttons: list[tuple[str, object]],
+    widget_refs: dict[str, object] | None = None,
+) -> dict[str, object]:
     """Add extra buttons to a header layout with consistent styling.
 
     Args:
-        header_layout: Qt layout to add buttons to
-        extra_buttons: List of (button_text, callback) tuples
-        widget_refs: Optional dict to store button references
+        header_layout: Qt layout to add buttons to.
+        extra_buttons: List of (button_text, callback) tuples.
+        widget_refs: Optional dict to store button references.
 
     Returns:
-        dict: Dictionary of button text -> button widget
+        Dictionary mapping button text to button widget objects.
 
     """
     if not PYQT_AVAILABLE or not extra_buttons:
@@ -69,14 +73,14 @@ def add_extra_buttons(header_layout, extra_buttons, widget_refs=None):
     return buttons
 
 
-def get_button_style(button_text) -> str:
+def get_button_style(button_text: str) -> str:
     """Get the appropriate style for a button based on its text.
 
     Args:
-        button_text: Text of the button
+        button_text: Text of the button.
 
     Returns:
-        str: Style sheet string
+        Style sheet string for the button.
 
     """
     if button_text == "Analyze Binary":

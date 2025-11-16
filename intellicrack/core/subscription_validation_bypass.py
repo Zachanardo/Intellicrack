@@ -12,7 +12,7 @@ from typing import Any
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import ec, rsa
+from cryptography.hazmat.primitives.asymmetric import ECPrivateKey, RSAPrivateKey, ec, rsa
 
 
 class SubscriptionTier(str, Enum):
@@ -141,7 +141,7 @@ class JWTManipulator:
 
         return header, payload, signature
 
-    def sign_jwt_rs256(self, payload: dict[str, Any], private_key: Any = None) -> str:
+    def sign_jwt_rs256(self, payload: dict[str, Any], private_key: RSAPrivateKey | None = None) -> str:
         """Sign JWT payload using RS256 algorithm (RSASSA-PKCS1-v1_5 with SHA-256) with provided RSA private key or instance default, returning signed JWT token string."""
         import jwt
 
@@ -156,7 +156,7 @@ class JWTManipulator:
         token = jwt.encode(payload, private_pem, algorithm="RS256")
         return token
 
-    def sign_jwt_rs512(self, payload: dict[str, Any], private_key: Any = None) -> str:
+    def sign_jwt_rs512(self, payload: dict[str, Any], private_key: RSAPrivateKey | None = None) -> str:
         """Sign JWT payload using RS512 algorithm (RSASSA-PKCS1-v1_5 with SHA-512) with provided RSA private key or instance default, returning signed JWT token string."""
         import jwt
 
@@ -171,7 +171,7 @@ class JWTManipulator:
         token = jwt.encode(payload, private_pem, algorithm="RS512")
         return token
 
-    def sign_jwt_es256(self, payload: dict[str, Any], private_key: Any = None) -> str:
+    def sign_jwt_es256(self, payload: dict[str, Any], private_key: ECPrivateKey | None = None) -> str:
         """Sign JWT payload using ES256 algorithm (ECDSA with P-256 curve and SHA-256) with provided EC private key or instance default, returning signed JWT token string."""
         import jwt
 
@@ -234,7 +234,7 @@ class JWTManipulator:
         token: str,
         modifications: dict[str, Any],
         algorithm: str = "RS256",
-        key: Any = None,
+        key: RSAPrivateKey | ECPrivateKey | str | None = None,
     ) -> str:
         """Modify JWT claims, then re-sign token with specified algorithm (RS256/RS512/ES256/HS256/HS512) using provided or default cryptographic key, returning forged JWT string."""
         modified_payload = self.modify_jwt_claims(token, modifications)

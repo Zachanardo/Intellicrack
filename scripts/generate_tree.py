@@ -84,7 +84,7 @@ def scan_directory(root_path: str) -> tuple[str, int, int]:
         html = ""
         name = os.path.basename(path) or path
 
-        if os.path.isdir(path):
+        if Path(path).is_dir():
             folder_count += 1
             icon = "[DIR]"
             html += "<li>"
@@ -99,7 +99,7 @@ def scan_directory(root_path: str) -> tuple[str, int, int]:
                     items.append(item_path)
 
                 # Sort: directories first, then files
-                items.sort(key=lambda x: (not os.path.isdir(x), x.lower()))
+                items.sort(key=lambda x: (not Path(x).is_dir(), x.lower()))
 
                 if items:
                     html += "<ul>"
@@ -144,25 +144,25 @@ def scan_directory(root_path: str) -> tuple[str, int, int]:
     return html_tree, file_count, folder_count
 
 
-def format_size(bytes: int) -> str:
+def format_size(file_bytes: int) -> str:
     """Format file size in human-readable format.
 
     Args:
-        bytes: Number of bytes to format.
+        file_bytes: Number of bytes to format.
 
     Returns:
         Human-readable string representation of file size (e.g., "1.23 MB").
 
     """
-    if bytes == 0:
+    if file_bytes == 0:
         return "0 B"
     k = 1024
     sizes = ["B", "KB", "MB", "GB", "TB"]
     i = 0
-    while bytes >= k and i < len(sizes) - 1:
-        bytes /= k
+    while file_bytes >= k and i < len(sizes) - 1:
+        file_bytes /= k
         i += 1
-    return f"{bytes:.2f} {sizes[i]}"
+    return f"{file_bytes:.2f} {sizes[i]}"
 
 
 def generate_txt_tree(root_path: str, output_file: str) -> None:
@@ -233,14 +233,14 @@ def generate_fallback_tree(root_path: str, prefix: str = "", is_last: bool = Tru
             item_path = os.path.join(root_path, item)
             items.append((item, item_path))
 
-        items.sort(key=lambda x: (not os.path.isdir(x[1]), x[0].lower()))
+        items.sort(key=lambda x: (not Path(x[1]).is_dir(), x[0].lower()))
 
         for i, (name, path) in enumerate(items):
             is_last_item = i == len(items) - 1
             connector = "└── " if is_last_item else "├── "
             tree_str += f"{prefix}{connector}{name}"
 
-            if os.path.isdir(path):
+            if Path(path).is_dir():
                 tree_str += "/\n"
                 extension = "    " if is_last_item else "│   "
                 tree_str += generate_fallback_tree(path, prefix + extension, is_last_item)

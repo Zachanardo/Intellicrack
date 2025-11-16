@@ -258,15 +258,21 @@ class AnalysisStatsGenerator:
             }
 
     @staticmethod
-    def safe_stats_generation(stats_function: Callable[[], Any], default_return: Any | None = None) -> Any:
+    def safe_stats_generation(
+        stats_function: Callable[[], object],
+        default_return: object = None,
+    ) -> object:
         """Safely execute a statistics generation function with error handling.
 
         Args:
-            stats_function: Function to execute
-            default_return: Default value to return on error
+            stats_function: Callable that takes no arguments and returns analysis statistics
+            default_return: Default value to return if an error occurs during execution
 
         Returns:
-            Function result or default value on error
+            The result of executing stats_function, or default_return if an exception occurs
+
+        Raises:
+            None: All exceptions are caught and logged
 
         """
         try:

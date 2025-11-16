@@ -19,6 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any
 
@@ -84,7 +85,7 @@ class DirectR2Session:
             finally:
                 self.r2 = None
 
-    def execute(self, command: str, expect_json: bool = False) -> Any:
+    def execute(self, command: str, expect_json: bool = False) -> dict[str, Any] | str:
         """Execute command.
 
         Args:
@@ -92,7 +93,7 @@ class DirectR2Session:
             expect_json: Whether to parse JSON
 
         Returns:
-            Command result
+            Command result as JSON dictionary if expect_json is True, else as string
 
         """
         if not self.r2:
@@ -109,7 +110,7 @@ def get_r2_session(
     flags: list[str] | None = None,
     use_pooling: bool = True,
     auto_analyze: bool = True,
-):
+) -> Generator[R2SessionWrapper | DirectR2Session, None, None]:
     """Get an r2 session with automatic pooling.
 
     Args:
@@ -144,7 +145,7 @@ def execute_r2_command(
     expect_json: bool = False,
     flags: list[str] | None = None,
     use_pooling: bool = True,
-) -> Any:
+) -> dict[str, Any] | str:
     """Execute a single r2 command on a binary.
 
     Args:
@@ -155,7 +156,7 @@ def execute_r2_command(
         use_pooling: Whether to use session pooling
 
     Returns:
-        Command result
+        Command result as JSON dictionary if expect_json is True, else as string
 
     """
     with get_r2_session(binary_path, flags, use_pooling) as session:

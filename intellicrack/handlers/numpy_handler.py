@@ -651,7 +651,7 @@ except ImportError as e:
             return FallbackArray([math.sqrt(val) for val in x.data], x.dtype, x.shape)
         return math.sqrt(x)
 
-    def abs(x: "FallbackArray" | float) -> "FallbackArray" | int | float:
+    def absolute(x: "FallbackArray" | float) -> "FallbackArray" | int | float:
         """Absolute value.
 
         Args:
@@ -665,7 +665,7 @@ except ImportError as e:
             return FallbackArray([abs(val) for val in x.data], x.dtype, x.shape)
         return abs(x)
 
-    def round(x: "FallbackArray" | float, decimals: int = 0) -> "FallbackArray" | int | float:
+    def round_func(x: "FallbackArray" | float, decimals: int = 0) -> "FallbackArray" | int | float:
         """Round to decimals.
 
         Args:
@@ -1127,7 +1127,7 @@ except ImportError as e:
         return FallbackArray(a)
 
     # Statistical functions that operate on arrays
-    def sum(a: "FallbackArray" | list, axis: int | None = None) -> int | float:
+    def sum_func(a: "FallbackArray" | list, axis: int | None = None) -> int | float:
         """Sum of array elements.
 
         Args:
@@ -1191,7 +1191,7 @@ except ImportError as e:
         m = mean(a)
         return sum((x - m) ** 2 for x in a) / len(a)
 
-    def min(a: "FallbackArray" | list, axis: int | None = None) -> int | float | None:
+    def min_func(a: "FallbackArray" | list, axis: int | None = None) -> int | float | None:
         """Minimum value.
 
         Args:
@@ -1206,7 +1206,7 @@ except ImportError as e:
             return a.min()
         return min(a) if a else None
 
-    def max(a: "FallbackArray" | list, axis: int | None = None) -> int | float | None:
+    def max_func(a: "FallbackArray" | list, axis: int | None = None) -> int | float | None:
         """Maximum value.
 
         Args:

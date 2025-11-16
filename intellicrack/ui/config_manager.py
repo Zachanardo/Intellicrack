@@ -24,7 +24,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import contextlib
 import logging
 from dataclasses import asdict, dataclass
-from typing import Any
+from typing import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -391,7 +391,7 @@ class UIConfigManager:
         self._notify_change("accessibility")
 
     # Generic Settings Access (for dashboard, etc.)
-    def get_setting(self, key: str, default: Any = None) -> Any:
+    def get_setting(self, key: str, default: object = None) -> object:
         """Get a UI setting from main config.
 
         Args:
@@ -405,7 +405,7 @@ class UIConfigManager:
         full_key = f"ui.{key}"
         return self.main_config.get(full_key, default)
 
-    def set_setting(self, key: str, value: Any) -> None:
+    def set_setting(self, key: str, value: object) -> None:
         """Set a UI setting in main config.
 
         Args:
@@ -417,12 +417,12 @@ class UIConfigManager:
         self.main_config.set(full_key, value)
 
     # Change Notification System
-    def register_callback(self, category: str, callback) -> None:
+    def register_callback(self, category: str, callback: Callable[[], None]) -> None:
         """Register a callback for configuration changes."""
         if category in self.change_callbacks:
             self.change_callbacks[category].append(callback)
 
-    def unregister_callback(self, category: str, callback) -> None:
+    def unregister_callback(self, category: str, callback: Callable[[], None]) -> None:
         """Unregister a change callback."""
         if category in self.change_callbacks:
             with contextlib.suppress(ValueError):

@@ -315,7 +315,7 @@ class ProgramDiscoveryEngine:
         else:
             return programs
 
-        # Replace username placeholder
+        # Substitute {username} token with actual username in directory paths
         username = os.environ.get("USER", os.environ.get("USERNAME", "user"))
         dirs = [d.replace("{username}", username) for d in dirs]
 
@@ -709,7 +709,7 @@ class ProgramDiscoveryEngine:
 
         return programs
 
-    def _scan_registry_path(self, hkey, path: str, include_system: bool) -> list[ProgramInfo]:
+    def _scan_registry_path(self, hkey: object, path: str, include_system: bool) -> list[ProgramInfo]:
         """Scan a specific registry path for installed programs."""
         programs = []
         self.logger.debug(f"Scanning registry path {path}, include_system={include_system}")
@@ -731,7 +731,7 @@ class ProgramDiscoveryEngine:
 
         return programs
 
-    def _extract_program_from_registry(self, hkey, path: str, subkey_name: str, include_system: bool) -> ProgramInfo | None:
+    def _extract_program_from_registry(self, hkey: object, path: str, subkey_name: str, include_system: bool) -> ProgramInfo | None:
         """Extract program information from a registry entry."""
         try:
             with winreg.OpenKey(hkey, f"{path}\\{subkey_name}") as subkey:
@@ -791,7 +791,7 @@ class ProgramDiscoveryEngine:
             self.logger.debug(f"Error extracting program from registry {subkey_name}: {e}")
             return None
 
-    def _get_registry_value(self, key, value_name: str) -> str | None:
+    def _get_registry_value(self, key: object, value_name: str) -> str | None:
         """Get a value from a registry key safely."""
         try:
             value, _ = winreg.QueryValueEx(key, value_name)

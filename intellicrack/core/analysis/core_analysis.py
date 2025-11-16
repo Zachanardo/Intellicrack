@@ -38,7 +38,17 @@ except ImportError as e:
 
 
 def get_machine_type(machine: int) -> str:
-    """Get human-readable machine type from PE machine value."""
+    """Get human-readable machine type from PE machine value.
+
+    Converts PE machine constant to human-readable architecture string.
+
+    Args:
+        machine: PE machine type constant value
+
+    Returns:
+        str: Human-readable machine type description
+
+    """
     machine_types = {
         0x014C: "x86 (32-bit)",
         0x8664: "x64 (64-bit)",
@@ -51,13 +61,34 @@ def get_machine_type(machine: int) -> str:
 
 
 def get_magic_type(magic: int) -> str:
-    """Get human-readable magic type from PE optional header magic value."""
+    """Get human-readable magic type from PE optional header magic value.
+
+    Converts PE magic constant to human-readable format designation.
+
+    Args:
+        magic: PE optional header magic constant value
+
+    Returns:
+        str: Human-readable magic type description
+
+    """
     magic_types = {0x10B: "PE32", 0x20B: "PE32+", 0x107: "ROM image"}
     return magic_types.get(magic, f"Unknown (0x{magic:04X})")
 
 
 def get_characteristics(characteristics: int) -> str:
-    """Get human-readable characteristics from PE file header."""
+    """Get human-readable characteristics from PE file header.
+
+    Decodes PE characteristics flags to identify key binary properties
+    such as executable, DLL, debug stripped, and address space layout.
+
+    Args:
+        characteristics: PE characteristics flag value
+
+    Returns:
+        str: Space-separated list of characteristic flags or "None"
+
+    """
     char_flags = {
         0x0001: "RELOCS_STRIPPED",
         0x0002: "EXECUTABLE_IMAGE",
@@ -148,8 +179,19 @@ def analyze_binary_internal(binary_path: str, flags: list[str] | None = None) ->
     return results
 
 
-def _analyze_pe_header(pe) -> list[str]:
-    """Analyze PE file header and return results."""
+def _analyze_pe_header(pe: object) -> list[str]:
+    """Analyze PE file header and return results.
+
+    Extracts machine type, section count, timestamp, and characteristics
+    from the PE file header.
+
+    Args:
+        pe: PE file object from pefile library
+
+    Returns:
+        list: Formatted strings describing PE header contents
+
+    """
     results = ["\nPE Header:"]
 
     if pe and hasattr(pe, "FILE_HEADER") and pe.FILE_HEADER:
@@ -171,8 +213,19 @@ def _analyze_pe_header(pe) -> list[str]:
     return results
 
 
-def _analyze_optional_header(pe) -> list[str]:
-    """Analyze PE optional header and return results."""
+def _analyze_optional_header(pe: object) -> list[str]:
+    """Analyze PE optional header and return results.
+
+    Extracts magic type, entry point, image base, and checksum from the
+    PE optional header.
+
+    Args:
+        pe: PE file object from pefile library
+
+    Returns:
+        list: Formatted strings describing PE optional header contents
+
+    """
     results = ["\nOptional Header:"]
 
     if pe and hasattr(pe, "OPTIONAL_HEADER") and pe.OPTIONAL_HEADER:
@@ -200,8 +253,21 @@ def _analyze_optional_header(pe) -> list[str]:
     return results
 
 
-def _analyze_sections(pe, results: list[str]) -> list[str]:
-    """Analyze PE sections and return list of suspicious sections."""
+def _analyze_sections(pe: object, results: list[str]) -> list[str]:
+    """Analyze PE sections and return list of suspicious sections.
+
+    Examines each section in the PE file, calculating entropy to detect
+    encryption, compression, or obfuscation. Identifies high-entropy sections
+    that may indicate packing or protection mechanisms.
+
+    Args:
+        pe: PE file object from pefile library
+        results: List to append section analysis results to
+
+    Returns:
+        list: List of suspicious section names identified
+
+    """
     results.append("\nSections:")
     suspicious_sections = []
 
@@ -234,8 +300,20 @@ def _analyze_sections(pe, results: list[str]) -> list[str]:
     return suspicious_sections
 
 
-def _analyze_imports(pe, results: list[str]) -> list[str]:
-    """Analyze PE imports and return list of license-related imports."""
+def _analyze_imports(pe: object, results: list[str]) -> list[str]:
+    """Analyze PE imports and return list of license-related imports.
+
+    Scans imported functions from DLLs, identifying license-related API calls
+    such as validation, verification, authentication, and activation functions.
+
+    Args:
+        pe: PE file object from pefile library
+        results: List to append import analysis results to
+
+    Returns:
+        list: List of license-related import function signatures
+
+    """
     results.append("\nImports:")
     license_related_imports = []
 
@@ -268,8 +346,17 @@ def _analyze_imports(pe, results: list[str]) -> list[str]:
     return license_related_imports
 
 
-def _analyze_exports(pe, results: list[str]) -> None:
-    """Analyze PE exports and add results to results list."""
+def _analyze_exports(pe: object, results: list[str]) -> None:
+    """Analyze PE exports and add results to results list.
+
+    Extracts exported functions from the PE file and adds them to the results
+    list for display.
+
+    Args:
+        pe: PE file object from pefile library
+        results: List to append export analysis results to
+
+    """
     if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
         results.append("\nExports:")
         for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
@@ -278,7 +365,17 @@ def _analyze_exports(pe, results: list[str]) -> None:
 
 
 def _generate_analysis_summary(results: list[str], suspicious_sections: list[str], license_related_imports: list[str]) -> None:
-    """Generate analysis summary and add to results list."""
+    """Generate analysis summary and add to results list.
+
+    Appends a summary section showing counts of suspicious sections and
+    license-related imports found during analysis.
+
+    Args:
+        results: List to append summary results to
+        suspicious_sections: List of suspicious section names
+        license_related_imports: List of license-related imports
+
+    """
     results.append("\nAnalysis Summary:")
     results.append(f"  Suspicious sections: {len(suspicious_sections)}")
     results.append(f"  License-related imports: {len(license_related_imports)}")
@@ -478,7 +575,6 @@ def detect_packing(binary_path: str) -> dict[str, Any]:
             ".charmve",
             ".edata",
             ".ecode",
-            ".edata",
             ".enigma1",
             ".enigma2",
             ".packed",
@@ -493,7 +589,6 @@ def detect_packing(binary_path: str) -> dict[str, Any]:
             ".taz",
             ".tsuarch",
             ".tsustub",
-            ".packed",
             ".wwpack",
             ".y0da",
         ]
@@ -553,8 +648,20 @@ def detect_packing(binary_path: str) -> dict[str, Any]:
     return results
 
 
-def decrypt_embedded_script(binary_path):
-    """Decrypt embedded scripts in the binary."""
+def decrypt_embedded_script(binary_path: str) -> list[str]:
+    """Decrypt embedded scripts in the binary.
+
+    Searches for embedded scripts within a binary file by looking for common
+    script markers and obfuscation patterns. Attempts to extract and decode
+    script content, identifying script type and displaying content preview.
+
+    Args:
+        binary_path: Path to the binary file to search for embedded scripts
+
+    Returns:
+        list: Analysis results as formatted strings describing found scripts
+
+    """
     results = [f"Searching for embedded scripts in {binary_path}..."]
 
     try:

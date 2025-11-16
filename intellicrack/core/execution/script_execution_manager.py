@@ -22,6 +22,7 @@ import hashlib
 import logging
 import os
 import subprocess
+from pathlib import Path
 from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import QDialog, QMessageBox, QObject, pyqtSignal
@@ -374,7 +375,7 @@ class ScriptExecutionManager(QObject):
             result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
 
             # Clean up
-            os.unlink(script_path)
+            Path(script_path).unlink()
 
             return {
                 "success": result.returncode == 0,
@@ -465,7 +466,7 @@ class ScriptExecutionManager(QObject):
             )
 
             # Clean up
-            os.unlink(script_path)
+            Path(script_path).unlink()
             import shutil
 
             shutil.rmtree(project_path, ignore_errors=True)

@@ -21,6 +21,8 @@ import os
 import sys
 import warnings
 
+from intellicrack.utils.logger import log_function_call
+
 # Suppress pkg_resources deprecation warning from capstone
 warnings.filterwarnings("ignore", message="pkg_resources is deprecated as an API.*", category=UserWarning)
 
@@ -97,9 +99,6 @@ else:
 
 # Comprehensive logging disabled for Qt compatibility
 # The comprehensive logging system interferes with Qt's window display mechanisms
-
-
-from intellicrack.utils.logger import log_function_call
 
 
 @log_function_call

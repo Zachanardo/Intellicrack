@@ -131,7 +131,7 @@ class AnalysisExporter:
             return False
 
     @staticmethod
-    def _write_vulnerability_csv(writer, result: dict[str, Any]) -> None:
+    def _write_vulnerability_csv(writer: object, result: dict[str, Any]) -> None:
         """Write vulnerability-specific CSV format."""
         writer.writerow(["Type", "File", "Line", "Severity", "Confidence", "Description"])
 
@@ -148,7 +148,7 @@ class AnalysisExporter:
             )
 
     @staticmethod
-    def _write_diff_csv(writer, result: dict[str, Any]) -> None:
+    def _write_diff_csv(writer: object, result: dict[str, Any]) -> None:
         """Write binary diff-specific CSV format."""
         writer.writerow(["Type", "Old_Value", "New_Value", "Severity", "Description"])
 
@@ -164,7 +164,7 @@ class AnalysisExporter:
             )
 
     @staticmethod
-    def _write_generic_csv(writer, result: dict[str, Any]) -> None:
+    def _write_generic_csv(writer: object, result: dict[str, Any]) -> None:
         """Write generic CSV format."""
         if not result:
             return

@@ -109,8 +109,21 @@ class AnalysisTask:
     dependencies: list[str] | None = None
     chunk_info: dict[str, Any] | None = None
 
-    def __lt__(self, other):
-        """Priority queue comparison."""
+    def __lt__(self, other: object) -> bool:
+        """Priority queue comparison.
+
+        Args:
+            other: Object to compare with.
+
+        Returns:
+            bool: True if this task has higher priority or earlier creation time.
+
+        Raises:
+            TypeError: If other is not an AnalysisTask instance.
+
+        """
+        if not isinstance(other, AnalysisTask):
+            raise TypeError(f"Cannot compare AnalysisTask with {type(other).__name__}")
         if self.priority.value != other.priority.value:
             return self.priority.value < other.priority.value
         return self.created_at < other.created_at

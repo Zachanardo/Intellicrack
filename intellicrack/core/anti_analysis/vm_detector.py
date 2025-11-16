@@ -140,7 +140,7 @@ class VMDetector(BaseDetector):
                 "processes": ["vmtoolsd.exe", "vmwaretray.exe", "vmwareuser.exe"],
                 "files": [
                     os.path.join(
-                        os.environ.get("ProgramFiles", "C:\\\\Program Files"),
+                        os.environ.get("PROGRAMFILES", "C:\\\\Program Files"),
                         "VMware",
                         "VMware Tools",
                     ),
@@ -156,7 +156,7 @@ class VMDetector(BaseDetector):
                 "processes": ["VBoxService.exe", "VBoxTray.exe"],
                 "files": [
                     os.path.join(
-                        os.environ.get("ProgramFiles", r"C:\\Program Files"),
+                        os.environ.get("PROGRAMFILES", r"C:\\Program Files"),
                         "Oracle",
                         "VirtualBox Guest Additions",
                     ),
@@ -171,7 +171,7 @@ class VMDetector(BaseDetector):
                 "processes": ["vmconnect.exe", "vmms.exe"],
                 "files": [
                     os.path.join(
-                        os.environ.get("SystemRoot", "C:\\\\Windows"),
+                        os.environ.get("SYSTEMROOT", "C:\\\\Windows"),
                         "System32",
                         "drivers",
                         "vmbus.sys",
@@ -211,7 +211,7 @@ class VMDetector(BaseDetector):
                 "processes": ["prl_tools.exe", "prl_cc.exe"],
                 "files": [
                     os.path.join(
-                        os.environ.get("ProgramFiles", r"C:\\Program Files"),
+                        os.environ.get("PROGRAMFILES", r"C:\\Program Files"),
                         "Parallels",
                         "Parallels Tools",
                     ),

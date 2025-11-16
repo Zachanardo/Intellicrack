@@ -22,11 +22,12 @@ This module provides common functions for PE file import parsing.
 """
 
 import logging
+from typing import Callable
 
 logger = logging.getLogger(__name__)
 
 
-def extract_pe_imports(pe_obj) -> list[str]:
+def extract_pe_imports(pe_obj: object) -> list[str]:
     """Extract import function names from a PE object.
 
     Args:
@@ -51,7 +52,9 @@ def extract_pe_imports(pe_obj) -> list[str]:
     return imports
 
 
-def iterate_pe_imports_with_dll(pe_obj, callback, include_import_obj=False):
+def iterate_pe_imports_with_dll(
+    pe_obj: object, callback: Callable[..., object], include_import_obj: bool = False,
+) -> object:
     """Iterate through PE imports with DLL names, calling callback for each.
 
     Args:
@@ -81,7 +84,7 @@ def iterate_pe_imports_with_dll(pe_obj, callback, include_import_obj=False):
         logger.debug("Error iterating PE imports: %s", e)
 
 
-def analyze_pe_import_security(pe_obj) -> dict:
+def analyze_pe_import_security(pe_obj: object) -> dict[str, list[str]]:
     """Analyze PE imports for security-related functions.
 
     Args:

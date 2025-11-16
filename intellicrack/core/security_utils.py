@@ -20,20 +20,18 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import hashlib
 import json
+import logging
 import shlex
 import subprocess
-from typing import Any
 
 import yaml
+
+from intellicrack.utils.logger import log_function_call
 
 
 class SecurityError(Exception):
     """Raised when a security policy is violated."""
 
-
-import logging
-
-from intellicrack.utils.logger import log_function_call
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +71,7 @@ def secure_hash(data: str | bytes, algorithm: str = "sha256") -> str:
 
 
 @log_function_call
-def secure_subprocess(command: str | list[str], shell: bool = False, timeout: int | None = 30, **kwargs) -> subprocess.CompletedProcess:
+def secure_subprocess(command: str | list[str], shell: bool = False, timeout: int | None = 30, **kwargs: object) -> subprocess.CompletedProcess[str]:
     """Execute a subprocess command securely.
 
     Args:
@@ -123,14 +121,14 @@ def secure_subprocess(command: str | list[str], shell: bool = False, timeout: in
 
 
 @log_function_call
-def secure_yaml_load(data: str) -> Any:
+def secure_yaml_load(data: str) -> object:
     """Safely load YAML data.
 
     Args:
         data: YAML string to parse
 
     Returns:
-        Parsed YAML data
+        Parsed YAML data as Python object (dict, list, or scalar)
 
     """
     logger.debug("Safely loading YAML data.")
@@ -138,14 +136,14 @@ def secure_yaml_load(data: str) -> Any:
 
 
 @log_function_call
-def secure_json_load(data: str) -> Any:
+def secure_json_load(data: str) -> object:
     """Safely load JSON data.
 
     Args:
         data: JSON string to parse
 
     Returns:
-        Parsed JSON data
+        Parsed JSON data as Python object (dict, list, or scalar)
 
     """
     logger.debug("Safely loading JSON data.")

@@ -202,7 +202,7 @@ class AIModelManager:
         # This is framework-specific (transformers, llama.cpp, etc.)
         logger.info(f"Local model {name} configured at {model_path}")
 
-    def get_model(self, name: str | None = None):
+    def get_model(self, name: str | None = None) -> object:
         """Get a model instance.
 
         Args:
@@ -227,7 +227,7 @@ class AIModelManager:
 
         return model_info["instance"]
 
-    def _load_model(self, name: str, model_info: dict[str, Any]):
+    def _load_model(self, name: str, model_info: dict[str, Any]) -> object:
         """Load actual model instance.
 
         Args:
@@ -257,7 +257,7 @@ class AIModelManager:
             return self._load_local_model(name, config)
         raise ValueError(f"Unknown provider: {provider}")
 
-    def _load_local_model(self, name: str, config: dict[str, Any]):
+    def _load_local_model(self, name: str, config: dict[str, Any]) -> dict[str, Any]:
         """Load local model from disk.
 
         Args:

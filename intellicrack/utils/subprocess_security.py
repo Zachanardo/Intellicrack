@@ -95,7 +95,7 @@ class SecureSubprocess:
             if not abs_path:
                 # Try common locations on Windows
                 if os.name == "nt":
-                    system_root = os.environ.get("SystemRoot", "C:\\Windows")
+                    system_root = os.environ.get("SYSTEMROOT", "C:\\Windows")
                     possible_paths = [
                         os.path.join(system_root, "System32", executable),
                         os.path.join(system_root, "System32", f"{executable}.exe"),
@@ -230,7 +230,7 @@ class SecureSubprocess:
         # Validate working directory if provided
         if cwd:
             cwd = os.path.abspath(cwd)
-            if not os.path.isdir(cwd):
+            if not Path(cwd).is_dir():
                 error_msg = f"Invalid working directory: {cwd}"
                 logger.error(error_msg)
                 raise ValueError(error_msg)
@@ -283,7 +283,7 @@ class SecureSubprocess:
         # Validate working directory if provided
         if cwd:
             cwd = os.path.abspath(cwd)
-            if not os.path.isdir(cwd):
+            if not Path(cwd).is_dir():
                 error_msg = f"Invalid working directory: {cwd}"
                 logger.error(error_msg)
                 raise ValueError(error_msg)

@@ -18,11 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-from intellicrack.utils.logger import get_logger
-
-logger = get_logger(__name__)
-logger.debug("Protection detection package initialized")
-
 from intellicrack.core.protection_detection.arxan_detector import (
     ArxanDetectionResult,
     ArxanDetector,
@@ -40,6 +35,10 @@ from intellicrack.core.protection_detection.starforce_detector import (
     StarForceDetector,
     StarForceVersion,
 )
+from intellicrack.utils.logger import get_logger
+
+logger = get_logger(__name__)
+logger.debug("Protection detection package initialized")
 
 __all__ = [
     "ArxanDetector",

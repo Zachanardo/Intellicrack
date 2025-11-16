@@ -27,6 +27,7 @@ import re
 import threading
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 from ..core.exceptions import ConfigurationError
@@ -1057,7 +1058,7 @@ class TensorFlowLLMBackend(LLMBackend):
             # Load model
             logger.info("Loading TensorFlow model from: %s", self.config.model_path)
 
-            if os.path.isdir(self.config.model_path):
+            if Path(self.config.model_path).is_dir():
                 # SavedModel format
                 if os.path.exists(os.path.join(self.config.model_path, "saved_model.pb")):
                     self.model = tf.keras.models.load_model(self.config.model_path)
@@ -1567,7 +1568,7 @@ class GPTQBackend(LLMBackend):
             logger.info("Loading GPTQ model from: %s", self.config.model_path)
 
             # GPTQ models are typically in directories
-            if os.path.isdir(self.config.model_path):
+            if Path(self.config.model_path).is_dir():
                 self.model = AutoGPTQForCausalLM.from_quantized(
                     self.config.model_path,
                     use_safetensors=True,
@@ -1688,7 +1689,7 @@ class HuggingFaceLocalBackend(LLMBackend):
                 logger.error("Hugging Face model directory not found: %s", self.config.model_path)
                 return False
 
-            if not os.path.isdir(self.config.model_path):
+            if not Path(self.config.model_path).is_dir():
                 logger.error("Hugging Face models should be in a directory")
                 return False
 

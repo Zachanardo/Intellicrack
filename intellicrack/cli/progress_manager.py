@@ -76,7 +76,7 @@ class AnalysisTask:
     error: str | None = None
     subtasks: list["AnalysisTask"] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize analysis task with empty subtasks list if not provided."""
         if self.subtasks is None:
             self.subtasks = []
@@ -85,7 +85,7 @@ class AnalysisTask:
 class SpeedColumn(ProgressColumn):
     """Customize column showing processing speed."""
 
-    def render(self, task: Task):
+    def render(self, task: Task) -> Text:
         """Render the speed column."""
         speed = task.fields.get("speed", 0)
         if speed > 0:

@@ -420,8 +420,16 @@ class ArxanBypass:
                     self.logger.debug(f"Decrypting string at 0x{address:x} with XOR key {xor_key}")
                     break
 
-    def _generate_frida_bypass_script(self, analysis_result) -> str:
-        """Generate Frida script for runtime bypass."""
+    def _generate_frida_bypass_script(self, analysis_result: object) -> str:
+        """Generate Frida script for runtime bypass.
+
+        Args:
+            analysis_result: Analysis result containing license routines and protection details.
+
+        Returns:
+            Frida JavaScript code for runtime protection bypass.
+
+        """
         script_parts = [
             "console.log('[Arxan Bypass] Initializing runtime hooks...');",
             "",
@@ -563,8 +571,14 @@ class ArxanBypass:
 
         return checksum & 0xFFFFFFFF
 
-    def _on_frida_message(self, message, data) -> None:
-        """Handle Frida script messages."""
+    def _on_frida_message(self, message: dict[str, object], data: object) -> None:
+        """Handle Frida script messages.
+
+        Args:
+            message: Dictionary containing Frida message type and payload.
+            data: Binary data associated with the message.
+
+        """
         if message["type"] == "send":
             self.logger.info(f"[Frida] {message['payload']}")
         elif message["type"] == "error":

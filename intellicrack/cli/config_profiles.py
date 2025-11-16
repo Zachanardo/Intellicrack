@@ -23,6 +23,7 @@ Legacy profile files are migrated on first run, then only central config is used
 """
 
 # Standard library imports
+import argparse
 import json
 from datetime import datetime
 from pathlib import Path
@@ -308,8 +309,17 @@ class ProfileManager:
 
         return profile
 
-    def apply_profile(self, profile_name: str, args: Any) -> Any:
-        """Apply a profile to command-line arguments."""
+    def apply_profile(self, profile_name: str, args: argparse.Namespace) -> argparse.Namespace:
+        """Apply a profile to command-line arguments.
+
+        Args:
+            profile_name: Name of the profile to apply.
+            args: Namespace object containing command-line arguments to modify.
+
+        Returns:
+            Modified namespace object with profile settings applied.
+
+        """
         profile = self.get_profile(profile_name)
         if not profile:
             self.console.print(f"[red]Profile '{profile_name}' not found![/red]")
@@ -336,8 +346,19 @@ class ProfileManager:
         return args
 
 
-def create_default_profiles():
-    """Create some default profiles for common use cases."""
+def create_default_profiles() -> ProfileManager:
+    """Create some default profiles for common use cases.
+
+    Creates and saves four predefined profiles to the central configuration:
+    - quick_scan: Fast basic analysis with minimal options
+    - full_analysis: Comprehensive analysis with all analysis features
+    - bypass_analysis: Specialized profile for license bypass analysis
+    - license_check: Focused profile for license and protection mechanisms
+
+    Returns:
+        ProfileManager instance with default profiles created and saved.
+
+    """
     manager = ProfileManager()
 
     # Quick scan profile

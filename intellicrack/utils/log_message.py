@@ -71,8 +71,8 @@ class LogMessageKwargs(TypedDict, total=False):
 
 
 # Thread-safe message queue for UI updates
-_message_queue = []
-_queue_lock = threading.Lock()
+_message_queue: list[dict[str, Any]] = []
+_queue_lock: threading.Lock = threading.Lock()
 _message_callbacks: list[Callable[[str, str, str], None]] = []
 
 
@@ -247,61 +247,194 @@ def log_message(
 
 
 def log_debug(message: str, **kwargs: Unpack[LogMessageKwargs]) -> None:
-    """Log for debug purposes."""
+    """Log a debug message with optional context.
+
+    Args:
+        message: The debug message to log
+        **kwargs: Additional keyword arguments from LogMessageKwargs
+
+    """
     log_message(message, level=MessageLevel.DEBUG, **kwargs)
 
 
 def log_info(message: str, **kwargs: Unpack[LogMessageKwargs]) -> None:
-    """Log for info purposes."""
+    """Log an info message with optional context.
+
+    Args:
+        message: The info message to log
+        **kwargs: Additional keyword arguments from LogMessageKwargs
+
+    """
     log_message(message, level=MessageLevel.INFO, **kwargs)
 
 
 def log_warning(message: str, **kwargs: Unpack[LogMessageKwargs]) -> None:
-    """Log for warning purposes."""
+    """Log a warning message with optional context.
+
+    Args:
+        message: The warning message to log
+        **kwargs: Additional keyword arguments from LogMessageKwargs
+
+    """
     log_message(message, level=MessageLevel.WARNING, **kwargs)
 
 
 def log_error(message: str, **kwargs: Unpack[LogMessageKwargs]) -> None:
-    """Log for error purposes."""
+    """Log an error message with optional context.
+
+    Args:
+        message: The error message to log
+        **kwargs: Additional keyword arguments from LogMessageKwargs
+
+    """
     log_message(message, level=MessageLevel.ERROR, **kwargs)
 
 
 def log_critical(message: str, **kwargs: Unpack[LogMessageKwargs]) -> None:
-    """Log for critical purposes."""
+    """Log a critical message with optional context.
+
+    Args:
+        message: The critical message to log
+        **kwargs: Additional keyword arguments from LogMessageKwargs
+
+    """
     log_message(message, level=MessageLevel.CRITICAL, **kwargs)
 
 
 def log_analysis(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]) -> None:
-    """Log for analysis-related purposes."""
+    """Log an analysis-related message with optional context.
+
+    Args:
+        message: The analysis message to log
+        level: Message severity level (default: INFO)
+        **kwargs: Additional keyword arguments from LogMessageKwargs
+
+    """
     log_message(message, level=level, category=MessageCategory.ANALYSIS, **kwargs)
 
 
 def log_ui(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]) -> None:
-    """Log for UI-related purposes."""
+    """Log a UI-related message with optional context.
+
+    Args:
+        message: The UI message to log
+        level: Message severity level (default: INFO)
+        **kwargs: Additional keyword arguments from LogMessageKwargs
+
+    """
     log_message(message, level=level, category=MessageCategory.UI, **kwargs)
 
 
 def log_security(message: str, level: str | MessageLevel = MessageLevel.WARNING, **kwargs: Unpack[LogMessageKwargs]) -> None:
-    """Log for security-related purposes."""
+    """Log a security-related message with optional context.
+
+    Args:
+        message: The security message to log
+        level: Message severity level (default: WARNING)
+        **kwargs: Additional keyword arguments from LogMessageKwargs
+
+    """
     log_message(message, level=level, category=MessageCategory.SECURITY, **kwargs)
 
 
 def log_performance(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]) -> None:
-    """Log for performance-related purposes."""
+    """Log a performance-related message with optional context.
+
+    Args:
+        message: The performance message to log
+        level: Message severity level (default: INFO)
+        **kwargs: Additional keyword arguments from LogMessageKwargs
+
+    """
     log_message(message, level=level, category=MessageCategory.PERFORMANCE, **kwargs)
 
 
 def log_binary_processing(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]) -> None:
-    """Log for binary processing purposes."""
+    """Log a binary processing message with optional context.
+
+    Args:
+        message: The binary processing message to log
+        level: Message severity level (default: INFO)
+        **kwargs: Additional keyword arguments from LogMessageKwargs
+
+    """
     log_message(message, level=level, category=MessageCategory.BINARY_PROCESSING, **kwargs)
 
 
 # Legacy compatibility aliases
-def log_msg(*args: Any, **kwargs: Any) -> None:
-    """Legacy alias for log_message."""
-    log_message(*args, **kwargs)
+def log_msg(
+    message: str,
+    level: str | MessageLevel = MessageLevel.INFO,
+    category: str | MessageCategory = MessageCategory.GENERAL,
+    *,
+    context: dict[str, Any] | None = None,
+    exception: Exception | None = None,
+    source: str | None = None,
+    timestamp: datetime | None = None,
+    persist: bool = True,
+    notify_ui: bool = True,
+) -> None:
+    """Log a message using legacy alias for backward compatibility.
+
+    Args:
+        message: The log message to record
+        level: Message severity level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        category: Message category for organization and filtering
+        context: Optional dictionary with additional context information
+        exception: Optional exception object for error logging
+        source: Optional source identifier (module, function, etc.)
+        timestamp: Optional custom timestamp (defaults to current time)
+        persist: Whether to add message to persistent queue for UI display
+        notify_ui: Whether to notify registered UI callbacks
+
+    """
+    log_message(
+        message,
+        level=level,
+        category=category,
+        context=context,
+        exception=exception,
+        source=source,
+        timestamp=timestamp,
+        persist=persist,
+        notify_ui=notify_ui,
+    )
 
 
-def message_log(*args: Any, **kwargs: Any) -> None:
-    """Legacy alias for log_message."""
-    log_message(*args, **kwargs)
+def message_log(
+    message: str,
+    level: str | MessageLevel = MessageLevel.INFO,
+    category: str | MessageCategory = MessageCategory.GENERAL,
+    *,
+    context: dict[str, Any] | None = None,
+    exception: Exception | None = None,
+    source: str | None = None,
+    timestamp: datetime | None = None,
+    persist: bool = True,
+    notify_ui: bool = True,
+) -> None:
+    """Log a message using legacy alias for backward compatibility.
+
+    Args:
+        message: The log message to record
+        level: Message severity level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        category: Message category for organization and filtering
+        context: Optional dictionary with additional context information
+        exception: Optional exception object for error logging
+        source: Optional source identifier (module, function, etc.)
+        timestamp: Optional custom timestamp (defaults to current time)
+        persist: Whether to add message to persistent queue for UI display
+        notify_ui: Whether to notify registered UI callbacks
+
+    """
+    log_message(
+        message,
+        level=level,
+        category=category,
+        context=context,
+        exception=exception,
+        source=source,
+        timestamp=timestamp,
+        persist=persist,
+        notify_ui=notify_ui,
+    )

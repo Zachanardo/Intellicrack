@@ -875,11 +875,13 @@ except ImportError as e:
 
     # Direct exports
     web: type = FallbackWeb
-    Application: type = Application
-    Request: type = Request
-    Response: type = Response
-    RouteTableDef: type = RouteTableDef
-    run_app: Callable[[Any, str, int, Callable[[str], None]], None] = run_app
+    Application: type = FallbackWeb
+    Request: type = FallbackWeb
+    Response: type = FallbackWeb
+    RouteTableDef: type = FallbackWeb
+    def run_app(app: Any, host: str, port: int, logger: Callable[[str], None]) -> None:
+        """Fallback implementation of run_app that simply prints the intended operation."""
+        return print(f"Would run app on {host}:{port}")
 
 
 # Export all aiohttp objects and availability flag

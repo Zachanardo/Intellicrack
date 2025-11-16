@@ -300,14 +300,16 @@ except ImportError as e:
 
             """
             if format is None and isinstance(fname, str):
-                format = fname.split(".")[-1].lower()
+                file_format = fname.split(".")[-1].lower()
+            else:
+                file_format = format
 
             svg_content = self._generate_svg()
 
-            if format == "svg":
+            if file_format == "svg":
                 with open(fname, "w") as f:
                     f.write(svg_content)
-            elif format in ["png", "jpg", "jpeg"]:
+            elif file_format in ["png", "jpg", "jpeg"]:
                 self._save_raster(fname, format, dpi or self.dpi)
 
         def _generate_svg(self) -> str:
@@ -689,24 +691,26 @@ except ImportError as e:
             """
             # Calculate histogram
             if range is None:
-                range = (min(x), max(x))
+                value_range = (min(x), max(x))
+            else:
+                value_range = range
 
-            bin_edges = [range[0] + i * (range[1] - range[0]) / bins for i in range(bins + 1)]
+            bin_edges = [value_range[0] + i * (value_range[1] - value_range[0]) / bins for i in range(bins + 1)]
             counts = [0] * bins
 
             for val in x:
-                if range[0] <= val <= range[1]:
-                    bin_idx = min(int((val - range[0]) / (range[1] - range[0]) * bins), bins - 1)
+                if value_range[0] <= val <= value_range[1]:
+                    bin_idx = min(int((val - value_range[0]) / (value_range[1] - value_range[0]) * bins), bins - 1)
                     counts[bin_idx] += 1
 
             if density:
                 total = sum(counts)
-                bin_width = (range[1] - range[0]) / bins
+                bin_width = (value_range[1] - value_range[0]) / bins
                 counts = [c / (total * bin_width) if total > 0 else 0 for c in counts]
 
             # Store as bars
             bin_centers = [(bin_edges[i] + bin_edges[i + 1]) / 2 for i in range(bins)]
-            bin_width = (range[1] - range[0]) / bins
+            bin_width = (value_range[1] - value_range[0]) / bins
 
             self.bar(bin_centers, counts, width=bin_width, color=color, label=label)
 

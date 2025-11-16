@@ -14,7 +14,7 @@ import json
 import subprocess
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from intellicrack.handlers.pyqt6_handler import (
     PYQT6_AVAILABLE,
@@ -228,7 +228,7 @@ class AdobeInjectorWidget(QWidget if PYQT6_AVAILABLE else object):
         status_updated = None
         patch_completed = None
 
-    def __init__(self, parent: Any | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the AdobeInjectorWidget.
 
         Args:
@@ -395,10 +395,23 @@ class AutoIt3COMInterface:
         except (AttributeError, OSError):
             self.available = False
 
-    def control_adobe_injector(self, action: str, params: dict = None):
-        """Control Adobe Injector via AutoIt3 COM interface."""
+    def control_adobe_injector(self, action: str, params: dict[str, str] | None = None) -> bool | str:
+        """Control Adobe Injector via AutoIt3 COM interface.
+
+        Args:
+            action: The action to perform ('click_button', 'set_text', or 'get_text').
+            params: Dictionary of parameters for the action. Defaults to None.
+
+        Returns:
+            True if successful, False if COM interface unavailable, or the text value
+            when action is 'get_text'.
+
+        """
         if not self.available:
             return False
+
+        if params is None:
+            params = {}
 
         if action == "click_button":
             # Click a button in Adobe Injector window

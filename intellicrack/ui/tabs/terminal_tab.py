@@ -49,8 +49,14 @@ class TerminalTab(BaseTab):
     - Session status tracking
     """
 
-    def __init__(self, shared_context=None, parent=None) -> None:
-        """Initialize terminal tab."""
+    def __init__(self, shared_context: object = None, parent: object = None) -> None:
+        """Initialize terminal tab.
+
+        Args:
+            shared_context: Optional shared context object passed from parent widget.
+            parent: Optional parent widget.
+
+        """
         self.terminal_widget = None
         self.status_label = None
         self.sessions_label = None
@@ -104,8 +110,16 @@ class TerminalTab(BaseTab):
             error_label = QLabel(f"Terminal initialization failed: {e}")
             fallback_layout.addWidget(error_label)
 
-    def _create_toolbar(self):
-        """Create toolbar with terminal actions."""
+    def _create_toolbar(self) -> QHBoxLayout:
+        """Create toolbar with terminal actions.
+
+        Constructs a horizontal layout containing buttons for terminal operations
+        including new session, clear, export log, and kill process controls.
+
+        Returns:
+            QHBoxLayout: Configured toolbar layout with action buttons.
+
+        """
         toolbar = QHBoxLayout()
 
         self.new_session_btn = QPushButton("📟 New Session")
@@ -133,8 +147,16 @@ class TerminalTab(BaseTab):
 
         return toolbar
 
-    def _create_status_bar(self):
-        """Create status bar with session info."""
+    def _create_status_bar(self) -> QHBoxLayout:
+        """Create status bar with session info.
+
+        Constructs a horizontal layout containing session count, status, and
+        current working directory information labels.
+
+        Returns:
+            QHBoxLayout: Configured status bar layout with information labels.
+
+        """
         status_bar = QHBoxLayout()
 
         self.sessions_label = QLabel("Sessions: 0")
@@ -215,18 +237,39 @@ class TerminalTab(BaseTab):
             logger.info("No process running in current session")
             self.status_label.setText("Status: No process running")
 
-    def _on_session_created(self, session_id) -> None:
-        """Handle session created event."""
+    def _on_session_created(self, session_id: object) -> None:
+        """Handle session created event.
+
+        Updates the status bar when a new terminal session is created.
+
+        Args:
+            session_id: The identifier of the newly created session.
+
+        """
         self._update_status()
         logger.info(f"Session created: {session_id}")
 
-    def _on_session_closed(self, session_id) -> None:
-        """Handle session closed event."""
+    def _on_session_closed(self, session_id: object) -> None:
+        """Handle session closed event.
+
+        Updates the status bar when a terminal session is closed.
+
+        Args:
+            session_id: The identifier of the closed session.
+
+        """
         self._update_status()
         logger.info(f"Session closed: {session_id}")
 
-    def _on_active_session_changed(self, session_id) -> None:
-        """Handle active session changed event."""
+    def _on_active_session_changed(self, session_id: object) -> None:
+        """Handle active session changed event.
+
+        Updates the status bar when the active terminal session changes.
+
+        Args:
+            session_id: The identifier of the newly active session.
+
+        """
         self._update_status()
         logger.info(f"Active session changed: {session_id}")
 
@@ -251,11 +294,14 @@ class TerminalTab(BaseTab):
         else:
             self.status_label.setText("Status: No session")
 
-    def get_terminal_widget(self):
+    def get_terminal_widget(self) -> object:
         """Get the terminal session widget.
 
+        Retrieves the TerminalSessionWidget instance used for managing
+        multiple terminal sessions and command execution.
+
         Returns:
-            TerminalSessionWidget
+            TerminalSessionWidget: The terminal session widget or None if not initialized.
 
         """
         return self.terminal_widget

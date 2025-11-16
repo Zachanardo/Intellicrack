@@ -26,6 +26,7 @@ from PyQt6.QtGui import (
     QColor,
     QFont,
     QKeySequence,
+    QSyntaxHighlighter,
     QTextCursor,
 )
 from PyQt6.QtWidgets import (
@@ -92,7 +93,7 @@ class PluginEditor(QWidget):
     #: Emits file path (type: str)
     save_requested = pyqtSignal(str)
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize plugin editor with validation and UI setup."""
         super().__init__(parent)
         self.current_file = None
@@ -297,7 +298,7 @@ class PluginEditor(QWidget):
         # Update code outline
         self.update_code_outline()
 
-    def change_syntax(self, syntax) -> None:
+    def change_syntax(self, syntax: str) -> None:
         """Change syntax highlighting."""
         if syntax == "Python":
             self.highlighter = PythonHighlighter(self.editor.document())
@@ -316,7 +317,7 @@ class PluginEditor(QWidget):
 
         # Only validate Python code
         if self.syntax_combo.currentText() != "Python":
-            item = QListWidgetItem("ℹ️ Validation only available for Python")
+            item = QListWidgetItem("i Validation only available for Python")
             self.validation_list.addItem(item)
             return
 
@@ -385,7 +386,7 @@ class PluginEditor(QWidget):
         except Exception as e:
             logger.debug("Failed to parse code for outline: %s", e)
 
-    def show_context_menu(self, position) -> None:
+    def show_context_menu(self, position: object) -> None:
         """Show context menu."""
         menu = QMenu(self)
 
@@ -426,10 +427,10 @@ class PluginEditor(QWidget):
                 self.editor.setTextCursor(cursor)
                 self.editor.find(text)
 
-    def get_code(self):
+    def get_code(self) -> str:
         """Get the current code."""
         return self.editor.toPlainText()
 
-    def set_code(self, code) -> None:
+    def set_code(self, code: str) -> None:
         """Set the editor code."""
         self.editor.setPlainText(code)

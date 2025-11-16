@@ -253,7 +253,7 @@ class TestProtectionScannerRealWorldCapabilities:
 
         # Expect comprehensive protection analysis
         protection_categories = ['packers', 'anti_debugging', 'virtualization_detection', 'obfuscation']
-        detected_protections = [cat for cat in protection_categories if cat in results and results[cat]]
+        detected_protections = [cat for cat in protection_categories if results.get(cat)]
 
         # VMProtect should trigger multiple protection categories
         assert len(detected_protections) >= 2, \

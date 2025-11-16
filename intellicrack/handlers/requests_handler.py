@@ -95,13 +95,13 @@ except ImportError as e:
     class RequestError(Exception):
         """Base exception for requests."""
 
-    class ConnectionError(RequestError):
+    class IntellicrackConnectionError(RequestError):
         """Connection error."""
 
     class HTTPError(RequestError):
         """HTTP error."""
 
-    class TimeoutError(RequestError):
+    class IntellicrackTimeoutError(RequestError):
         """Timeout error."""
 
     class TooManyRedirectsError(RequestError):

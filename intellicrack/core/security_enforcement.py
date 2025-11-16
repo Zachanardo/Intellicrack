@@ -28,7 +28,7 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Protocol
 
-from ..utils.logger import log_all_methods
+from ..utils.logger import log_all_methods, log_function_call
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -167,9 +167,6 @@ class SecurityEnforcement:
 
 # Global instance - lazy loaded to avoid import-time hang
 _security = None
-
-
-from ..utils.logger import log_all_methods, log_function_call
 
 
 # Subprocess Protection

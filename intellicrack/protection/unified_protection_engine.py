@@ -60,23 +60,51 @@ if not HAS_LZMA:
     logger.warning("LZMA module not available - using zlib compression fallback")
 
 
-def _get_advanced_protection():
+def _get_advanced_protection() -> type[AdvancedProtectionAnalysis]:
+    """Get the IntellicrackAdvancedProtection class.
+
+    Returns:
+        The IntellicrackAdvancedProtection class type for lazy loading.
+
+    """
     from .intellicrack_protection_advanced import IntellicrackAdvancedProtection
+
     return IntellicrackAdvancedProtection
 
 
-def _get_scan_mode():
+def _get_scan_mode() -> object:
+    """Get the ScanMode enum from protection analysis module.
+
+    Returns:
+        The ScanMode enum type for lazy loading.
+
+    """
     from .intellicrack_protection_advanced import ScanMode
+
     return ScanMode
 
 
-def _get_icp_scan_mode():
+def _get_icp_scan_mode() -> object:
+    """Get the ScanMode enum from ICP backend module.
+
+    Returns:
+        The ICP ScanMode enum type for lazy loading.
+
+    """
     from .icp_backend import ScanMode as ICPScanMode
+
     return ICPScanMode
 
 
-def _get_icp_backend_func():
+def _get_icp_backend_func() -> object:
+    """Get the get_icp_backend function from ICP backend module.
+
+    Returns:
+        The get_icp_backend function for lazy loading.
+
+    """
     from .icp_backend import get_icp_backend
+
     return get_icp_backend
 
 

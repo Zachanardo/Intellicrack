@@ -18,6 +18,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import datetime
 import os
+from pathlib import Path
 from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
@@ -85,7 +86,7 @@ class GuidedWorkflowWizard(QWizard):
     binary analysis and patching operations.
     """
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: object | None = None) -> None:
         """Initialize the guided workflow wizard.
 
         Args:
@@ -172,8 +173,9 @@ class GuidedWorkflowWizard(QWizard):
         # File path widgets
         path_layout = QHBoxLayout()
         self.file_path_edit = QLineEdit()
-        self.file_path_edit.setPlaceholderText("Select a binary file...")
+        self.file_path_edit.setText("No binary selected")
         self.file_path_edit.setReadOnly(True)
+        self.file_path_edit.setToolTip("Path to the binary file for analysis")
 
         browse_button = QPushButton("Browse...")
         browse_button.clicked.connect(self.browse_file)
@@ -1082,7 +1084,7 @@ class GuidedWorkflowWizard(QWizard):
         }
 
 
-def create_guided_workflow_wizard(parent=None) -> GuidedWorkflowWizard:
+def create_guided_workflow_wizard(parent: object | None = None) -> GuidedWorkflowWizard:
     """Create a GuidedWorkflowWizard.
 
     Args:

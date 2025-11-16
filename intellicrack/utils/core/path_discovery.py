@@ -28,6 +28,7 @@ import os
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -35,11 +36,11 @@ logger = logging.getLogger(__name__)
 class PathDiscovery:
     """Dynamic path discovery system for tools and resources."""
 
-    def __init__(self, config_manager=None) -> None:
+    def __init__(self, config_manager: object | None = None) -> None:
         """Initialize path discovery system.
 
         Args:
-            config_manager: Optional config manager for persistence
+            config_manager: Optional config manager for persistence.
 
         """
         self.config_manager = config_manager
@@ -92,7 +93,7 @@ class PathDiscovery:
                         r"C:\radare2",
                         r"C:\Tools\radare2",
                         os.path.join(
-                            os.path.dirname(__file__ or os.getcwd()),
+                            os.path.dirname(__file__ or str(Path.cwd())),
                             "..",
                             "..",
                             "radare2",
@@ -100,7 +101,7 @@ class PathDiscovery:
                             "bin",
                         )
                         if __file__
-                        else os.path.join(os.getcwd(), "radare2", "radare2-5.9.8-w64", "bin"),
+                        else os.path.join(str(Path.cwd()), "radare2", "radare2-5.9.8-w64", "bin"),
                     ],
                     "linux": [
                         "/usr/bin",
@@ -411,7 +412,7 @@ class PathDiscovery:
             if path and os.path.exists(path):
                 if os.path.isfile(path):
                     return path
-                if os.path.isdir(path):
+                if Path(path).is_dir():
                     # Look for executable in directory
                     for file in os.listdir(path):
                         if os.path.isfile(os.path.join(path, file)) and os.access(os.path.join(path, file), os.X_OK):
@@ -519,7 +520,7 @@ class PathDiscovery:
         """Get Windows system directory."""
         if not self.is_windows:
             return None
-        return os.environ.get("SystemRoot", r"C:\Windows")
+        return os.environ.get("SYSTEMROOT", r"C:\Windows")
 
     def _get_windows_system32_dir(self) -> str | None:
         """Get Windows System32 directory."""
@@ -539,13 +540,13 @@ class PathDiscovery:
         """Get Program Files directory."""
         if not self.is_windows:
             return None
-        return os.environ.get("ProgramFiles", r"C:\Program Files")
+        return os.environ.get("PROGRAMFILES", r"C:\Program Files")
 
     def _get_program_files_x86_dir(self) -> str | None:
         """Get Program Files (x86) directory."""
         if not self.is_windows:
             return None
-        return os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")
+        return os.environ.get("PROGRAMFILES(X86)", r"C:\Program Files (x86)")
 
     def _get_appdata_dir(self) -> str | None:
         """Get AppData directory."""
@@ -658,7 +659,7 @@ class PathDiscovery:
                 # Find latest version
                 versions = []
                 for item in os.listdir(cuda_base):
-                    if item.startswith("v") and os.path.isdir(os.path.join(cuda_base, item)):
+                    if item.startswith("v") and Path(os.path.join(cuda_base, item)).is_dir():
                         versions.append(item)
 
                 if versions:
@@ -673,15 +674,15 @@ class PathDiscovery:
 
         return None
 
-    def ensure_tool_available(self, tool_name: str, parent_widget=None) -> str | None:
+    def ensure_tool_available(self, tool_name: str, parent_widget: object | None = None) -> str | None:
         """Ensure a tool is available, prompting user if needed.
 
         Args:
-            tool_name: Name of the tool
-            parent_widget: Optional Qt widget for GUI prompts
+            tool_name: Name of the tool.
+            parent_widget: Optional Qt widget for GUI prompts.
 
         Returns:
-            Path to tool or None
+            Path to tool or None.
 
         """
         path = self.find_tool(tool_name)
@@ -746,8 +747,16 @@ class PathDiscovery:
 _path_discovery = None
 
 
-def get_path_discovery(config_manager=None) -> PathDiscovery:
-    """Get global PathDiscovery instance."""
+def get_path_discovery(config_manager: object | None = None) -> PathDiscovery:
+    """Get global PathDiscovery instance.
+
+    Args:
+        config_manager: Optional config manager for persistence.
+
+    Returns:
+        Global PathDiscovery instance.
+
+    """
     global _path_discovery  # pylint: disable=global-statement
     if _path_discovery is None:
         _path_discovery = PathDiscovery(config_manager)
@@ -764,6 +773,15 @@ def get_system_path(path_type: str) -> str | None:
     return get_path_discovery().get_system_path(path_type)
 
 
-def ensure_tool_available(tool_name: str, parent_widget=None) -> str | None:
-    """Ensure tool availability."""
+def ensure_tool_available(tool_name: str, parent_widget: object | None = None) -> str | None:
+    """Ensure tool availability.
+
+    Args:
+        tool_name: Name of the tool.
+        parent_widget: Optional Qt widget for GUI prompts.
+
+    Returns:
+        Path to tool or None.
+
+    """
     return get_path_discovery().ensure_tool_available(tool_name, parent_widget)

@@ -38,7 +38,7 @@ def mitigate_future_vulnerability() -> None:
 
         original_import = builtins.__import__
 
-        def secure_import(name, *args, **kwargs):
+        def secure_import(name: str, *args: object, **kwargs: object) -> object:
             """Prevent automatic import of test.py by future package."""
             if name == "test" and len(args) > 0 and args[0] is not None:
                 args[2] if len(args) > 2 else kwargs.get("fromlist", ())

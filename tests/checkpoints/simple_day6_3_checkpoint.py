@@ -88,7 +88,7 @@ class ProductionReadinessValidator:
             except Exception as e:
                 print(f"  WARNING  Error checking {file_path}: {e}")
 
-        print(f"  ℹ️  Checked {files_checked}/{len(files_to_check)} files")
+        print(f"  i  Checked {files_checked}/{len(files_to_check)} files")
 
         if not placeholders_found:
             print("  OK PASS: No placeholder strings found")

@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import os
 import shutil
 import zipfile
+from pathlib import Path
 
 # Optional imports with graceful fallbacks
 from intellicrack.handlers.pyqt6_handler import (
@@ -170,8 +171,8 @@ else:
             self.app_context = app_context
 
             # Plugin directories
-            self.plugins_dir = os.path.join(os.getcwd(), "plugins")
-            self.temp_dir = os.path.join(os.getcwd(), "temp", "plugins")
+            self.plugins_dir = os.path.join(str(Path.cwd()), "plugins")
+            self.temp_dir = os.path.join(str(Path.cwd()), "temp", "plugins")
             os.makedirs(self.plugins_dir, exist_ok=True)
             os.makedirs(self.temp_dir, exist_ok=True)
 
@@ -687,7 +688,7 @@ else:
                 if os.path.exists(self.plugins_dir):
                     for item in os.listdir(self.plugins_dir):
                         item_path = os.path.join(self.plugins_dir, item)
-                        if os.path.isdir(item_path) or item.endswith(".py"):
+                        if Path(item_path).is_dir() or item.endswith(".py"):
                             plugin_info = self.get_plugin_info(item_path)
                             self.installed_plugins.append(plugin_info)
 
@@ -800,7 +801,7 @@ Description: {plugin_info.get("description", "No description available")}"""
                     try:
                         if os.path.isfile(plugin_info["path"]):
                             os.remove(plugin_info["path"])
-                        elif os.path.isdir(plugin_info["path"]):
+                        elif Path(plugin_info["path"]).is_dir():
                             shutil.rmtree(plugin_info["path"])
 
                         self.load_installed_plugins()  # Refresh list

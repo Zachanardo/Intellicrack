@@ -27,6 +27,7 @@ import os
 import pickle
 import sys
 import traceback
+from pathlib import Path
 from types import TracebackType
 
 logger = logging.getLogger(__name__)
@@ -236,7 +237,7 @@ def _report_error(exc_type: type[BaseException], exc_value: BaseException, exc_t
             "system_info": {
                 "platform": sys.platform,
                 "python_version": sys.version,
-                "working_directory": os.getcwd(),
+                "working_directory": str(Path.cwd()),
             },
         }
 
@@ -453,7 +454,7 @@ def load_ai_model(model_path: str) -> object | None:
 
                 # Additional validation for pickle files
                 if hasattr(os, "stat"):
-                    stat_info = os.stat(model_path)
+                    stat_info = Path(model_path).stat()
                     # Check file permissions - warn if world-writable
                     if stat_info.st_mode & 0o002:
                         logger.warning("Model file is world-writable - potential security risk")

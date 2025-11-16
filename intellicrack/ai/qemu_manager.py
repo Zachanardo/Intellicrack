@@ -95,7 +95,7 @@ class SecureHostKeyPolicy(MissingHostKeyPolicy):
             except Exception as e:
                 logger.warning(f"Could not load known_hosts file: {e}")
 
-    def missing_host_key(self, client: Any, hostname: str, key: Any) -> None:
+    def missing_host_key(self, client: SSHClient, hostname: str, key: paramiko.PKey) -> None:
         """Handle missing host key by checking and storing it securely."""
         # For QEMU VMs on localhost with dynamic ports, we store by port
         # This is acceptable for local VMs in controlled environments
@@ -1681,7 +1681,7 @@ fi
         finally:
             # Clean up local temp file
             try:
-                os.unlink(local_script)
+                Path(local_script).unlink()
             except Exception as e:
                 self.logger.debug("Error removing temp script file: %s", e)
 
@@ -3310,7 +3310,7 @@ exit 0
             # Clean up monitor socket
             if self.monitor_socket and os.path.exists(self.monitor_socket):
                 try:
-                    os.unlink(self.monitor_socket)
+                    Path(self.monitor_socket).unlink()
                 except OSError as e:
                     self.logger.error("OS error in qemu_manager: %s", e)
 

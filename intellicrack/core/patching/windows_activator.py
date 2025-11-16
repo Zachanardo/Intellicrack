@@ -483,7 +483,7 @@ class WindowsActivator:
                     try:
                         for item in os.listdir(base_path):
                             item_path = os.path.join(base_path, item)
-                            if os.path.isdir(item_path):
+                            if Path(item_path).is_dir():
                                 # Check for Office executables
                                 if any(
                                     os.path.exists(os.path.join(item_path, exe)) for exe in ["WINWORD.EXE", "EXCEL.EXE", "POWERPNT.EXE"]

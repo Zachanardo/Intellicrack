@@ -147,7 +147,7 @@ class ModelTestThread(QThread):
 class LLMConfigDialog(BaseDialog):
     """Dialog for configuring LLM models in Intellicrack."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the LLMConfigDialog with default values."""
         # Initialize EnvFileManager
         self.env_manager = EnvFileManager()
@@ -254,7 +254,7 @@ class LLMConfigDialog(BaseDialog):
             if failed > 0:
                 self.status_text.append(f"WARNING Failed to load {failed} models")
 
-    def setup_content(self, layout) -> None:
+    def setup_content(self, layout: QVBoxLayout | None) -> None:
         """Set up the user interface content."""
         if layout is None:
             layout = QVBoxLayout(self.content_widget)
@@ -1784,8 +1784,13 @@ class LLMConfigDialog(BaseDialog):
             QMessageBox.warning(self, "API Key Invalid", message)
             self.status_text.append(f"FAIL {service} API key is invalid: {message}")
 
-    def validate_all_api_keys(self):
-        """Validate all API keys before saving."""
+    def validate_all_api_keys(self) -> tuple[bool, dict[str, str]]:
+        """Validate all API keys before saving.
+
+        Returns:
+            Tuple containing (validation_passed, valid_keys_dict).
+
+        """
         valid_keys = {}
         invalid_keys = []
 
@@ -2019,8 +2024,13 @@ class LLMConfigDialog(BaseDialog):
             logger.error(f"Failed to create LoRA adapter: {e}")
             QMessageBox.critical(self, "Error", f"Failed to create LoRA adapter: {e!s}")
 
-    def closeEvent(self, event) -> None:
-        """Handle dialog close event."""
+    def closeEvent(self, event: "QCloseEvent") -> None:
+        """Handle dialog close event.
+
+        Args:
+            event: The close event triggered when user closes the dialog.
+
+        """
         if self.validation_thread and self.validation_thread.isRunning():
             reply = QMessageBox.question(
                 self,

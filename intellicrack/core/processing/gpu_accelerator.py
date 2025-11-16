@@ -451,11 +451,12 @@ class GPUAccelerator(GPUAccelerationManager):
         """Legacy method for compatibility."""
 
 
-def create_gpu_acceleration_manager():
+def create_gpu_acceleration_manager() -> GPUAccelerationManager | None:
     """Create a GPU acceleration manager.
 
     Returns:
-        GPUAccelerationManager: Configured GPU acceleration manager instance
+        GPUAccelerationManager | None: Configured GPU acceleration manager instance,
+            or None if creation fails.
 
     """
     try:
@@ -465,11 +466,12 @@ def create_gpu_acceleration_manager():
         return None
 
 
-def create_gpu_accelerator():
+def create_gpu_accelerator() -> GPUAccelerator | None:
     """Create a GPU accelerator.
 
     Returns:
-        GPUAccelerator: Configured GPU accelerator instance
+        GPUAccelerator | None: Configured GPU accelerator instance,
+            or None if creation fails.
 
     """
     try:
@@ -479,11 +481,11 @@ def create_gpu_accelerator():
         return None
 
 
-def is_gpu_acceleration_available():
+def is_gpu_acceleration_available() -> bool:
     """Check if GPU acceleration is available on this system.
 
     Returns:
-        bool: True if GPU acceleration is available, False otherwise
+        bool: True if GPU acceleration is available, False otherwise.
 
     """
     try:

@@ -25,8 +25,23 @@ _init_logger = logging.getLogger(__name__)
 _lazy_imports = {}
 
 
-def __getattr__(name):
-    """Lazy load utility module attributes to prevent circular imports."""
+def __getattr__(name: str) -> object:
+    """Lazy load utility module attributes to prevent circular imports.
+
+    This function implements lazy loading for module-level attributes,
+    enabling deferred imports of utility functions and classes to avoid
+    circular dependency issues within the intellicrack.utils package.
+
+    Args:
+        name: The attribute name being accessed on the module.
+
+    Returns:
+        The requested module attribute or None if import fails.
+
+    Raises:
+        AttributeError: If the requested attribute is not found in the import map.
+
+    """
     if name in _lazy_imports:
         return _lazy_imports[name]
 

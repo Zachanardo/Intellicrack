@@ -28,6 +28,7 @@ import os
 from dataclasses import dataclass
 from typing import Any
 
+from ..handlers.lief_handler import Binary
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -346,7 +347,7 @@ class DenuvoAnalyzer:
             logger.error(f"Basic Denuvo analysis failed: {e}")
             return self._create_negative_result(f"Basic analysis error: {e}")
 
-    def _detect_version(self, binary: Any, binary_path: str) -> DenuvoVersion | None:
+    def _detect_version(self, binary: Binary, binary_path: str) -> DenuvoVersion | None:
         """Detect Denuvo version from binary signatures.
 
         Args:
@@ -390,7 +391,7 @@ class DenuvoAnalyzer:
             logger.debug(f"Version detection failed: {e}")
             return None
 
-    def _detect_encrypted_sections(self, binary: Any) -> list[dict[str, Any]]:
+    def _detect_encrypted_sections(self, binary: Binary) -> list[dict[str, Any]]:
         """Detect encrypted sections with high entropy.
 
         Args:
@@ -425,7 +426,7 @@ class DenuvoAnalyzer:
             logger.debug(f"Encrypted section detection failed: {e}")
             return []
 
-    def _detect_vm_regions(self, binary: Any) -> list[VMRegion]:
+    def _detect_vm_regions(self, binary: Binary) -> list[VMRegion]:
         """Detect Denuvo VM-protected regions.
 
         Args:
@@ -475,7 +476,7 @@ class DenuvoAnalyzer:
             logger.debug(f"VM region detection failed: {e}")
             return []
 
-    def _detect_integrity_checks(self, binary: Any) -> list[IntegrityCheck]:
+    def _detect_integrity_checks(self, binary: Binary) -> list[IntegrityCheck]:
         """Detect integrity check routines.
 
         Args:
@@ -529,7 +530,7 @@ class DenuvoAnalyzer:
             logger.debug(f"Integrity check detection failed: {e}")
             return []
 
-    def _detect_timing_checks(self, binary: Any) -> list[TimingCheck]:
+    def _detect_timing_checks(self, binary: Binary) -> list[TimingCheck]:
         """Detect timing-based anti-debugging checks.
 
         Args:
@@ -582,7 +583,7 @@ class DenuvoAnalyzer:
             logger.debug(f"Timing check detection failed: {e}")
             return []
 
-    def _detect_triggers(self, binary: Any) -> list[DenuvoTrigger]:
+    def _detect_triggers(self, binary: Binary) -> list[DenuvoTrigger]:
         """Detect Denuvo activation triggers.
 
         Args:

@@ -96,7 +96,7 @@ class StatisticsWorker(QThread):
 class StatisticsDialog(QDialog):
     """Dialog for displaying statistical analysis."""
 
-    def __init__(self, parent=None, hex_viewer=None) -> None:
+    def __init__(self, parent: object | None = None, hex_viewer: object | None = None) -> None:
         """Initialize statistics dialog.
 
         Args:
@@ -315,8 +315,9 @@ class StatisticsDialog(QDialog):
         patterns = "Repeating Patterns\n"
         patterns += "=" * 50 + "\n\n"
 
-        if "patterns" in results and results["patterns"]:
-            for pattern, count in results["patterns"]:
+        patterns_list = results.get("patterns")
+        if patterns_list:
+            for pattern, count in patterns_list:
                 # Display pattern as hex
                 hex_pattern = " ".join(f"{b:02X}" for b in pattern[:16])
                 if len(pattern) > 16:
@@ -333,9 +334,10 @@ class StatisticsDialog(QDialog):
         file_type = "File Type Analysis\n"
         file_type += "=" * 50 + "\n\n"
 
-        if "file_type_hints" in results and results["file_type_hints"]:
+        file_type_hints = results.get("file_type_hints")
+        if file_type_hints:
             file_type += "Detected Characteristics:\n"
-            for hint in results["file_type_hints"]:
+            for hint in file_type_hints:
                 file_type += f"   {hint}\n"
         else:
             file_type += "No specific file type characteristics detected.\n"

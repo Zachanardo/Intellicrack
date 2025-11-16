@@ -474,7 +474,7 @@ class LargeFileHandler:
     def _init_memory_map(self) -> None:
         """Initialize memory mapping strategy."""
         try:
-            self.file_handle = open(self.file_path, "rb")  # pylint: disable=consider-using-with
+            self.file_handle = open(self.file_path, "rb")  # noqa: SIM115, pylint: disable=consider-using-with
             self.mmap_file = mmap.mmap(
                 self.file_handle.fileno(),
                 length=0,

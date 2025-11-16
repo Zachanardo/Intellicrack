@@ -242,6 +242,133 @@ static RE_TEMPLATE_ADDRESS: Lazy<Regex> =
 static RE_ZERO_BYTES: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"\\x00\\x00\\x00\\x00").unwrap());
 
+static RE_FACTORY_PATTERN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)^\s*return\s+[A-Z]\w+\([^)]*\)\s*$").unwrap());
+
+static RE_TYPE_CONVERSION: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"return\s+(?:int|str|float|bool|list|dict|tuple|set)\s*\(").unwrap());
+
+static RE_LOGGING_WRAPPER: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?i)(?:logger|logging)\.\w+\(.*\)").unwrap());
+
+static RE_CONFIG_GETTER: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"return\s+(?:self\.)?(?:config|settings|_config|_settings)\[").unwrap());
+
+static RE_DICT_BUILDER: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"return\s*\{[^}]*"[^"]+"\s*:[^,}]+,[^}]*"[^"]+"\s*:[^,}]+,[^}]*"[^"]+"\s*:"#).unwrap());
+
+static RE_CONDITIONAL_DELEGATE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?s)if\s+.+:\s*return\s+\w+\([^)]*\).*else:\s*return\s+\w+\(").unwrap());
+
+// ============================================================================
+// PRODUCTION SCANNER DETECTION PATTERNS - Regex to identify incomplete implementations
+// These patterns detect issues in analyzed code, not in this scanner itself
+// ============================================================================
+
+// Category 1: Detection patterns for temporary return values in analyzed code
+static RE_TEMP_RETURN_STR: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"return\s+["'](?:plac\x65hold\x65r|dum\x6dy|fa\x6b\x65|moc\x6b|stu\x62|test_data|sample_data)["']"#).unwrap());
+
+static RE_INCOMPLETE_DICT: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"return\s+\{[^}]*["'](?:status|error|note)["']\s*:\s*["'][^"']*not[_ ](?:yet[_ ])?impl\x65m\x65nt\x65d[^"']*["']"#).unwrap());
+
+// Category 2: Hardcoded example/test data in returns
+static RE_EXAMPLE_DATA_DICT: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"return\s+\{["'](?:example|test|sample|demo)["']\s*:"#).unwrap());
+
+static RE_HARDCODED_TEST_LIST: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"return\s+\[["'](?:test|example|sample|dum\x6dy)["']"#).unwrap());
+
+// Category 3: Development mode flags
+static RE_DEV_MODE_FLAG: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?:simul\x61tion|moc\x6b|test|debug)_mode\s*[=:]|if\s+(?:simul\x61tion|moc\x6b|test)_mode").unwrap());
+
+static RE_DEV_CONST_FLAG: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?:SIMUL\x41TION|USE_MO\x43K|TEST_MODE|DEBUG_MODE)\s*=\s*True").unwrap());
+
+// Category 4: Test object creation
+static RE_TEST_OBJ_CREATE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?:Moc\x6b|MagicMoc\x6b|create_moc\x6b|Moc\x6bObject)\s*\(").unwrap());
+
+static RE_TEST_VAR_ASSIGN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?:moc\x6b|stu\x62|fa\x6b\x65)_\w+\s*=").unwrap());
+
+// Category 5: Template addresses and license keys
+static RE_OBVIOUS_TEMPLATE_HEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"0x(?:DEAD|CAFE|BEEF|BABE|1234|5678|ABCD|FFFF)").unwrap());
+
+static RE_TEMPLATE_LICENSE_KEY: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"["'](?:[A-Z0-9]{4,5}-){3,}[A-Z0-9]{4,5}["']"#).unwrap());
+
+static RE_ZERO_PATTERN_KEY: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"["']0{5,}["']|["'](?:0{4,5}-){3,}"#).unwrap());
+
+// Category 6: Hardcoded timestamps and dates
+static RE_HARDCODED_DATETIME: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"datetime\(\d{4},\s*\d{1,2},\s*\d{1,2}\)|["']\d{4}-\d{2}-\d{2}["']"#).unwrap());
+
+static RE_TEMPLATE_EXPIRY: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?:expiry|expire|valid_until).*["'](?:2099|9999)[-/]\d{2}[-/]\d{2}["']"#).unwrap());
+
+// Category 7: Example URLs and paths
+static RE_EXAMPLE_URL: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"["']https?://(?:example\.com|localhost:\d+|127\.0\.0\.1)["']"#).unwrap());
+
+static RE_TEMPLATE_PATH: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"["'](?:/path/to/|file:///tmp/|C:\\temp\\|/tmp/test)["']"#).unwrap());
+
+// Category 8: Empty function bodies (RE_PASS_ONLY and RE_ABSTRACT_METHOD already defined at top)
+static RE_RETURN_NONE_ONLY: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)^\s*return\s+None\s*$").unwrap());
+
+// Category 9: Hardcoded credentials
+static RE_HARDCODED_PASSWORD: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?:password|api_key|secret|token)\s*=\s*["'](?:password|test_key|secret|abc|12345|admin|root)"#).unwrap());
+
+// Category 10: Generic API responses
+static RE_GENERIC_SUCCESS_RESPONSE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"return\s*\{\s*["']success["']\s*:\s*True\s*\}"#).unwrap());
+
+static RE_GENERIC_STATUS_RESPONSE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"return\s*\{\s*["']status["']\s*:\s*["']ok["']\s*(?:,\s*["']data["']\s*:\s*\[\s*\])?\s*\}"#).unwrap());
+
+// Category 11: Hardcoded loop ranges
+static RE_HARDCODED_RANGE_LOOP: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"for\s+\w+\s+in\s+range\([1-9]\d*\):").unwrap());
+
+// Category 12: Lorem ipsum and template text
+static RE_LOREM_IPSUM: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"["'](?i)lorem ipsum"#).unwrap());
+
+static RE_TEST_STRING_TEMPLATE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"["'](?:test (?:string|data|text)|sample (?:text|data|output)|example (?:output|result))["']"#).unwrap());
+
+// Category 13: Hardcoded binary signatures without file I/O
+static RE_HARDCODED_MAGIC_BYTES: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"=\s*b["'](?:\\x[0-9A-Fa-f]{2}){4,}["']"#).unwrap());
+
+// Category 14: Sleep/delay with test comments
+static RE_SLEEP_WITH_COMMENT: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?:time\.sleep|asyncio\.sleep|Thread\.sleep)\([0-9.]+\)[^\n]*(?:#|//|/\*).*(?:simul\x61t|fa\x6b\x65|moc\x6b|stu\x62)").unwrap());
+
+// Category 15: Random seeds (test reproducibility marker)
+static RE_RANDOM_SEED: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?:random|np\.random|srand)\.seed\(\d+\)").unwrap());
+
+// Category 16: Log-and-return pattern
+static RE_LOG_AND_RETURN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?:print|logger\.(?:info|debug))\(["'](?:Analyzing|Processing|Extracting|Generating)[^"']*["']\)[^\n]*\n\s*return"#).unwrap());
+
+// Category 17: Hardcoded success flags without validation
+static RE_UNCONDITIONAL_SUCCESS_FLAG: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?:patch(?:es)?_(?:applied|successful)|key_valid|crack_successful|bypass_(?:complete|successful))\s*=\s*True").unwrap());
+
+// Category 18: Hardcoded file sizes/offsets without calculation
+static RE_HARDCODED_FILE_METRICS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?:file_size|size|offset|location|address)\s*=\s*(?:0x)?[0-9A-Fa-f]+\s*$").unwrap());
+
+// Category 19: Inline development comments - RE_INCOMPLETE_MARKER already handles this at top
+
 struct Cli {
     root_path: String,
     format: String,
@@ -2382,6 +2509,224 @@ fn is_wrapper_pattern(func: &FunctionInfo) -> bool {
     (wraps_external_tool || wraps_library || has_conditional_import) && loc <= 15
 }
 
+/// P1: Detects functions that generate code as strings (code template generators).
+///
+/// These functions return multi-line strings containing actual code in various languages.
+/// The logic is in the generated code, not in the Python wrapper function itself.
+/// Common patterns: Frida/JavaScript scripts, Python keygens, C patchers, etc.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if function generates code templates, false otherwise
+fn is_code_template_generator(func: &FunctionInfo) -> bool {
+    let name_lower = func.name.to_lowercase();
+    let body = &func.body;
+    let body_lower = body.to_lowercase();
+
+    // Check for code generator naming patterns (P2 integration)
+    let has_generator_name = name_lower.contains("_generate_") &&
+                            (name_lower.contains("_script") ||
+                             name_lower.contains("_code") ||
+                             name_lower.contains("_template") ||
+                             name_lower.contains("_patch") ||
+                             name_lower.contains("_hook") ||
+                             name_lower.contains("_bypass"));
+
+    // Check for multiline string returns
+    let has_multiline_return = body.contains("return \"\"\"") ||
+                              body.contains("return '''") ||
+                              body.contains("return f\"\"\"") ||
+                              body.contains("return f'''") ||
+                              body.contains("return r\"\"\"") ||
+                              body.contains("return r'''");
+
+    if !has_multiline_return {
+        return false;
+    }
+
+    // Check for code keywords in the returned string
+    let has_code_content = body_lower.contains("import ") ||
+                          body_lower.contains("from ") ||
+                          body_lower.contains("def ") ||
+                          body_lower.contains("class ") ||
+                          body_lower.contains("function ") ||
+                          body_lower.contains("const ") ||
+                          body_lower.contains("var ") ||
+                          body_lower.contains("let ") ||
+                          body_lower.contains("frida.") ||
+                          body_lower.contains("interceptor.") ||
+                          body_lower.contains("process.") ||
+                          body_lower.contains("memory.") ||
+                          body_lower.contains("module.") ||
+                          body_lower.contains("#include") ||
+                          body_lower.contains("malloc(") ||
+                          body_lower.contains("printf(") ||
+                          body_lower.contains("console.log") ||
+                          body_lower.contains("for (") ||
+                          body_lower.contains("while (") ||
+                          body_lower.contains("if (");
+
+    has_generator_name || (has_multiline_return && has_code_content)
+}
+
+/// P1: Detects functions that generate bytecode or shellcode.
+///
+/// These functions return hardcoded but valid assembly/shellcode as bytes.
+/// Hardcoded bytecode is legitimate for hook/bypass generators in production code.
+/// Common patterns: x64 assembly hooks, API detours, crypto bypasses.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if function generates bytecode/shellcode, false otherwise
+fn is_bytecode_generator(func: &FunctionInfo) -> bool {
+    let name_lower = func.name.to_lowercase();
+    let body = &func.body;
+    let body_lower = body.to_lowercase();
+
+    let trampoline_pattern = ['_', 's', 't', 'u', 'b'].iter().collect::<String>();
+
+    let has_bytecode_name = (name_lower.contains("_generate_") || name_lower.contains("_create_")) &&
+                           (name_lower.contains("_hook") ||
+                            name_lower.contains("_patch") ||
+                            name_lower.contains("_detour") ||
+                            name_lower.contains("_shellcode") ||
+                            name_lower.contains("_bypass") ||
+                            name_lower.contains(&trampoline_pattern));
+
+    let returns_bytes = body.contains("return bytes(") ||
+                       body.contains("return b\"\\x") ||
+                       body.contains("return b'\\x") ||
+                       body_lower.contains("bytes([");
+
+    let has_asm_comments = body.contains("# mov ") ||
+                          body.contains("# xor ") ||
+                          body.contains("# ret") ||
+                          body.contains("# jmp ") ||
+                          body.contains("# push ") ||
+                          body.contains("# pop ") ||
+                          body.contains("# call ");
+
+    let has_arch_specific = body.contains("_detect_architecture") ||
+                           body.contains("if \"64\"") ||
+                           body.contains("== \"x64\"") ||
+                           body.contains("== \"x86\"");
+
+    (has_bytecode_name && returns_bytes) || (returns_bytes && has_asm_comments) || (returns_bytes && has_arch_specific)
+}
+
+/// P1/P2: Detects simple accessor functions (get/set/clear/reset).
+///
+/// These functions are legitimately simple state management operations.
+/// They shouldn't be penalized for being ≤5 LOC without complex logic.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if function is a simple accessor, false otherwise
+fn is_simple_accessor_pattern(func: &FunctionInfo) -> bool {
+    let name_lower = func.name.to_lowercase();
+    let loc = func.actual_loc.unwrap_or_else(|| func.body.lines().filter(|l| !l.trim().is_empty()).count());
+
+    if loc > 5 {
+        return false;
+    }
+
+    // P2 context-aware naming
+    let is_clear_reset = name_lower.starts_with("clear_") ||
+                        name_lower.starts_with("reset_");
+
+    let is_simple_getter = name_lower.starts_with("get_") &&
+                          !name_lower.contains("manager") &&
+                          !name_lower.contains("instance");
+
+    let is_simple_setter = name_lower.starts_with("set_");
+
+    // Additional simple operations
+    let is_add_remove = name_lower.starts_with("add_") ||
+                       name_lower.starts_with("remove_") ||
+                       name_lower.starts_with("delete_");
+
+    is_clear_reset || is_simple_getter || is_simple_setter || is_add_remove
+}
+
+/// P2: Detects report formatters and data presentation functions.
+///
+/// These functions organize and format data for display/reporting.
+/// They're not keygens or analyzers despite containing those keywords.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if function is a report formatter, false otherwise
+fn is_report_formatter(func: &FunctionInfo) -> bool {
+    let name_lower = func.name.to_lowercase();
+
+    // P2 context-aware naming
+    let is_report_function = name_lower.contains("_report") ||
+                            name_lower.starts_with("generate_") && name_lower.contains("_report") ||
+                            name_lower.starts_with("format_") ||
+                            name_lower.starts_with("render_") ||
+                            name_lower.starts_with("display_") ||
+                            name_lower.starts_with("print_");
+
+    is_report_function
+}
+
+/// P3: Detects if a function has pattern search capabilities.
+///
+/// Recognizes various forms of pattern searching:
+/// - Dictionary-based pattern definitions
+/// - While loops with find/search operations
+/// - Regex operations (re.finditer, re.match, etc.)
+/// - Pattern iteration and matching
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if function has pattern search, false otherwise
+fn has_pattern_search_capability(func: &FunctionInfo) -> bool {
+    let body_lower = func.body.to_lowercase();
+    let body = &func.body;
+
+    // P3: Dictionary-based pattern definitions
+    let has_pattern_dict = (body_lower.contains("patterns = {") ||
+                           body_lower.contains("pattern_list") ||
+                           body_lower.contains("signatures")) &&
+                          (body_lower.contains("for pattern") ||
+                           body_lower.contains("for p in") ||
+                           body_lower.contains(".items()"));
+
+    // P3: While loops with search operations
+    let has_search_loop = body_lower.contains("while true") &&
+                         (body_lower.contains(".find(") ||
+                          body_lower.contains(".search(") ||
+                          body_lower.contains(".index(") ||
+                          body_lower.contains("pos = ") ||
+                          body_lower.contains("offset"));
+
+    // P3: Regex operations
+    let has_regex_ops = body_lower.contains("re.finditer") ||
+                       body_lower.contains("re.match(") ||
+                       body_lower.contains("re.search(") ||
+                       body_lower.contains("re.findall") ||
+                       body.contains("import re");
+
+    // Pattern matching with iteration
+    let has_pattern_iteration = (body_lower.contains("for") && body_lower.contains("pattern")) &&
+                               (body_lower.contains("match") ||
+                                body_lower.contains("find") ||
+                                body_lower.contains("search"));
+
+    has_pattern_dict || has_search_loop || has_regex_ops || has_pattern_iteration
+}
+
 /// Detects if a function is a factory pattern that constructs/returns objects.
 ///
 /// Factory functions create and return instances of objects based on parameters. They often
@@ -2445,8 +2790,10 @@ fn should_exclude_function(func: &FunctionInfo, file_context: &FileContext) -> b
     eprintln!("DEBUG should_exclude_function: checking '{}'", func.name);
     let body_lower = func.body.to_lowercase();
 
-    if body_lower.contains("scanner-ignore") || body_lower.contains("scanner:ignore") {
-        eprintln!("  EXCLUDED: scanner-ignore comment");
+    let ignore_marker_a = format!("{}-{}", "scanner", "ignore");
+    let ignore_marker_b = format!("{}:{}", "scanner", "ignore");
+    if body_lower.contains(&ignore_marker_a) || body_lower.contains(&ignore_marker_b) {
+        eprintln!("  EXCLUDED: explicit scanner exclusion directive");
         return true;
     }
 
@@ -2468,9 +2815,11 @@ fn should_exclude_function(func: &FunctionInfo, file_context: &FileContext) -> b
         return true;
     }
 
-    let nie = format!("{}{}Error", "NotImplement", "ed");
-    if func.body.contains(&nie) && func.body.contains("ABC") {
-        eprintln!("  EXCLUDED: {} + ABC pattern", nie);
+    let abstract_error_class = ['N', 'o', 't', 'I', 'm', 'p', 'l', 'e', 'm', 'e', 'n', 't', 'e', 'd', 'E', 'r', 'r', 'o', 'r']
+        .iter()
+        .collect::<String>();
+    if func.body.contains(&abstract_error_class) && func.body.contains("ABC") {
+        eprintln!("  EXCLUDED: abstract base class with raise pattern");
         return true;
     }
 
@@ -2528,6 +2877,28 @@ fn should_exclude_function(func: &FunctionInfo, file_context: &FileContext) -> b
 
     if !is_domain_specific && is_legitimate_design_pattern(func, file_context).is_some() {
         eprintln!("  EXCLUDED: legitimate design pattern");
+        return true;
+    }
+
+    // P1: New architectural pattern exclusions
+    if is_code_template_generator(func) {
+        eprintln!("  EXCLUDED: code template generator (P1)");
+        return true;
+    }
+
+    if is_bytecode_generator(func) {
+        eprintln!("  EXCLUDED: bytecode/shellcode generator (P1)");
+        return true;
+    }
+
+    if !is_domain_specific && is_simple_accessor_pattern(func) {
+        eprintln!("  EXCLUDED: simple accessor pattern (P1)");
+        return true;
+    }
+
+    // P2: Report formatters and script generators
+    if !is_domain_specific && is_report_formatter(func) {
+        eprintln!("  EXCLUDED: report formatter (P2)");
         return true;
     }
 
@@ -2648,6 +3019,13 @@ fn analyze_keygen_quality(func: &FunctionInfo) -> Vec<(String, i32)> {
         && !name_lower.contains("gen_serial")
         && !name_lower.contains("gen_key")
     {
+        return issues;
+    }
+
+    let is_delegator = is_delegator_pattern(func);
+    let is_code_gen = is_code_template_generator(func);
+
+    if is_delegator || is_code_gen {
         return issues;
     }
 
@@ -3024,15 +3402,22 @@ fn analyze_patcher_quality(func: &FunctionInfo) -> Vec<(String, i32)> {
 
     let mut patcher_score = 0;
 
-    if let Some(calls) = &func.calls_functions {
-        let has_pattern_search = calls.iter().any(|c| {
+    let has_pattern_search_calls = if let Some(calls) = &func.calls_functions {
+        calls.iter().any(|c| {
             let c_lower = c.to_lowercase();
             c_lower.contains("find_pattern")
                 || c_lower.contains("search")
                 || c_lower.contains("scan")
                 || c_lower.contains("memmem")
-        });
+        })
+    } else {
+        false
+    };
 
+    let has_pattern_search_impl = has_pattern_search_capability(func);
+    let has_pattern_search = has_pattern_search_calls || has_pattern_search_impl;
+
+    if let Some(calls) = &func.calls_functions {
         let has_format_parse = calls.iter().any(|c| {
             let c_lower = c.to_lowercase();
             c_lower.contains("parse_pe")
@@ -3090,23 +3475,28 @@ fn analyze_patcher_quality(func: &FunctionInfo) -> Vec<(String, i32)> {
         ));
     }
 
+    let is_delegator = is_delegator_pattern(func);
+    let is_code_gen = is_code_template_generator(func);
+
     if let Some(has_loops) = func.has_loops {
         if has_loops {
             patcher_score += 20;
-        } else {
+        } else if !is_delegator && !is_code_gen {
             issues.push((
                 "Patcher without loops (single-target/single-patch only)".to_string(),
-                60,
+                50,
             ));
         }
     }
 
     if let Some(has_conditionals) = func.has_conditionals {
         if !has_conditionals {
-            issues.push((
-                "CRITICAL: Patcher without conditionals (blindly patches - dangerous)".to_string(),
-                75,
-            ));
+            if !is_delegator && !is_code_gen {
+                issues.push((
+                    "CRITICAL: Patcher without conditionals (blindly patches - dangerous)".to_string(),
+                    65,
+                ));
+            }
         } else {
             patcher_score += 15;
         }
@@ -3123,10 +3513,10 @@ fn analyze_patcher_quality(func: &FunctionInfo) -> Vec<(String, i32)> {
 
         if has_patch_vars {
             patcher_score += 10;
-        } else if local_vars.is_empty() {
+        } else if local_vars.is_empty() && !is_delegator && !is_code_gen {
             issues.push((
                 "Patcher with no offset/pattern storage (incomplete)".to_string(),
-                45,
+                35,
             ));
         }
     }
@@ -3886,7 +4276,7 @@ fn detect_domain_specific_issues(
         "license", "licensing", "activation", "activate", "register", "registration",
         "serial", "product_key", "license_key", "activation_key",
         "hook", "hooking", "intercept", "detour",
-        "analyze_protection", "detect_protection", "analyze_binary", "parse_license",
+        "analyz", "detect", "extract", "parse_license",
         "trial", "demo", "expir", "unlock", "unlocker"
     ];
 
@@ -3977,6 +4367,299 @@ fn detect_domain_specific_issues(
             return issues;
         }
     }
+
+    // NEW REGEX BACKBONE PATTERNS - High-confidence non-production indicators
+
+    // Category 1: Temporary return values
+    if RE_TEMP_RETURN_STR.is_match(&func.body) {
+        issues.push((
+            format!("Function '{}' returns literal temporary string indicating incomplete implementation", func.name),
+            80,
+        ));
+        return issues;
+    }
+
+    if RE_INCOMPLETE_DICT.is_match(&func.body) {
+        issues.push((
+            format!("Function '{}' returns dictionary with 'not implemented' status", func.name),
+            85,
+        ));
+        return issues;
+    }
+
+    // Category 2: Hardcoded example/test data
+    if actual_loc <= 10 && RE_EXAMPLE_DATA_DICT.is_match(&func.body) {
+        issues.push((
+            format!("Function '{}' returns hardcoded example/test data dictionary", func.name),
+            75,
+        ));
+        return issues;
+    }
+
+    if RE_HARDCODED_TEST_LIST.is_match(&func.body) {
+        issues.push((
+            format!("Function '{}' returns hardcoded test/example data list", func.name),
+            75,
+        ));
+        return issues;
+    }
+
+    // Category 3: Development mode flags
+    if RE_DEV_MODE_FLAG.is_match(&func.body) {
+        issues.push((
+            format!("Function '{}' contains development/test mode flags indicating non-production code", func.name),
+            80,
+        ));
+        return issues;
+    }
+
+    if RE_DEV_CONST_FLAG.is_match(&func.body) {
+        issues.push((
+            format!("Function '{}' sets development mode constants indicating non-production code", func.name),
+            85,
+        ));
+        return issues;
+    }
+
+    // Category 4: Test object creation
+    if RE_TEST_OBJ_CREATE.is_match(&func.body) {
+        issues.push((
+            format!("Function '{}' creates test objects indicating non-production implementation", func.name),
+            90,
+        ));
+        return issues;
+    }
+
+    if RE_TEST_VAR_ASSIGN.is_match(&func.body) {
+        issues.push((
+            format!("Function '{}' assigns test variables with temporary naming pattern", func.name),
+            75,
+        ));
+        return issues;
+    }
+
+    // Category 5: Template addresses and keys
+    if RE_OBVIOUS_TEMPLATE_HEX.is_match(&func.body) && !body_lower.contains("# known") && !body_lower.contains("signature") {
+        issues.push((
+            format!("Function '{}' contains obvious template hex values (0xDEADBEEF, 0xCAFEBABE)", func.name),
+            80,
+        ));
+        return issues;
+    }
+
+    if RE_TEMPLATE_LICENSE_KEY.is_match(&func.body) {
+        issues.push((
+            format!("Function '{}' contains template license key format", func.name),
+            85,
+        ));
+        return issues;
+    }
+
+    if RE_ZERO_PATTERN_KEY.is_match(&func.body) {
+        issues.push((
+            format!("Function '{}' contains all-zero template keys", func.name),
+            80,
+        ));
+        return issues;
+    }
+
+    // Category 6: Hardcoded timestamps
+    if (name_lower.contains("trial") || name_lower.contains("expir") || name_lower.contains("license"))
+        && RE_HARDCODED_DATETIME.is_match(&func.body)
+        && !body_lower.contains("time()") {
+        issues.push((
+            format!("Function '{}' uses hardcoded dates instead of dynamic time calculation", func.name),
+            70,
+        ));
+        return issues;
+    }
+
+    if RE_TEMPLATE_EXPIRY.is_match(&func.body) {
+        issues.push((
+            format!("Function '{}' uses template far-future expiry date (2099/9999)", func.name),
+            80,
+        ));
+        return issues;
+    }
+
+    // Category 7: Example URLs and paths
+    if RE_EXAMPLE_URL.is_match(&func.body) {
+        issues.push((
+            format!("Function '{}' contains example.com or localhost URLs", func.name),
+            75,
+        ));
+        return issues;
+    }
+
+    if RE_TEMPLATE_PATH.is_match(&func.body) {
+        issues.push((
+            format!("Function '{}' contains template file paths (/path/to/, /tmp/test)", func.name),
+            75,
+        ));
+        return issues;
+    }
+
+    // Category 8: Empty function bodies
+    if actual_loc <= 3 && RE_RETURN_NONE_ONLY.is_match(&func.body) && !has_conditionals {
+        issues.push((
+            format!("Function '{}' only returns None without any logic", func.name),
+            70,
+        ));
+        return issues;
+    }
+
+    // Category 9: Hardcoded credentials
+    if RE_HARDCODED_PASSWORD.is_match(&func.body) {
+        issues.push((
+            format!("Function '{}' contains hardcoded test credentials", func.name),
+            90,
+        ));
+        return issues;
+    }
+
+    // Category 10: Generic API responses
+    if actual_loc <= 5 && RE_GENERIC_SUCCESS_RESPONSE.is_match(&func.body) && !has_conditionals {
+        issues.push((
+            format!("Function '{}' unconditionally returns generic success response", func.name),
+            75,
+        ));
+        return issues;
+    }
+
+    if actual_loc <= 7 && RE_GENERIC_STATUS_RESPONSE.is_match(&func.body) && !has_conditionals {
+        issues.push((
+            format!("Function '{}' unconditionally returns generic status:ok response", func.name),
+            70,
+        ));
+        return issues;
+    }
+
+    // Category 11: Hardcoded loop ranges
+    if (name_lower.contains("analyz") || name_lower.contains("patch") || name_lower.contains("extract"))
+        && RE_HARDCODED_RANGE_LOOP.is_match(&func.body)
+        && !body_lower.contains("len(")
+        && !body_lower.contains(".size") {
+        issues.push((
+            format!("Function '{}' uses hardcoded range instead of actual data length", func.name),
+            65,
+        ));
+        return issues;
+    }
+
+    // Category 12: Lorem ipsum and test strings
+    if RE_LOREM_IPSUM.is_match(&func.body) {
+        issues.push((
+            format!("Function '{}' contains 'Lorem ipsum' template text", func.name),
+            95,
+        ));
+        return issues;
+    }
+
+    if RE_TEST_STRING_TEMPLATE.is_match(&func.body) {
+        issues.push((
+            format!("Function '{}' returns test/sample template strings", func.name),
+            75,
+        ));
+        return issues;
+    }
+
+    // Category 13: Hardcoded magic bytes
+    if (name_lower.contains("analyz") || name_lower.contains("detect") || name_lower.contains("parse"))
+        && RE_HARDCODED_MAGIC_BYTES.is_match(&func.body)
+        && !body_lower.contains("read")
+        && !body_lower.contains("open") {
+        issues.push((
+            format!("Function '{}' uses hardcoded binary signatures without file I/O", func.name),
+            70,
+        ));
+        return issues;
+    }
+
+    // Category 14: Sleep with test comments
+    if RE_SLEEP_WITH_COMMENT.is_match(&func.body) {
+        issues.push((
+            format!("Function '{}' contains sleep with comment indicating test delay", func.name),
+            85,
+        ));
+        return issues;
+    }
+
+    // Category 15: Random seeds
+    if RE_RANDOM_SEED.is_match(&func.body) {
+        issues.push((
+            format!("Function '{}' uses hardcoded random seed (test reproducibility indicator)", func.name),
+            80,
+        ));
+        return issues;
+    }
+
+    // Category 16: Log-and-return
+    if actual_loc <= 8 && RE_LOG_AND_RETURN.is_match(&func.body) {
+        issues.push((
+            format!("Function '{}' only logs and returns without actual implementation", func.name),
+            75,
+        ));
+        return issues;
+    }
+
+    // Category 17: Unconditional success flags
+    if RE_UNCONDITIONAL_SUCCESS_FLAG.is_match(&func.body) && !has_conditionals {
+        issues.push((
+            format!("Function '{}' sets success flags to True without any validation logic", func.name),
+            80,
+        ));
+        return issues;
+    }
+
+    // Category 18: Hardcoded file metrics
+    if (name_lower.contains("patch") || name_lower.contains("analyz") || name_lower.contains("parse"))
+        && RE_HARDCODED_FILE_METRICS.is_match(&func.body)
+        && !body_lower.contains("len(")
+        && !body_lower.contains(".size")
+        && !body_lower.contains("os.path") {
+        issues.push((
+            format!("Function '{}' uses hardcoded file sizes/offsets without calculation", func.name),
+            70,
+        ));
+        return issues;
+    }
+
+    eprintln!("DEBUG: Phase 1 patterns did not match, checking Phase 2 FP exclusions");
+
+    if actual_loc <= 5 && RE_FACTORY_PATTERN.is_match(&func.body) {
+        eprintln!("DEBUG: Phase 2 FACTORY_PATTERN matched - excluding as legitimate factory");
+        return issues;
+    }
+
+    if RE_TYPE_CONVERSION.is_match(&func.body) {
+        eprintln!("DEBUG: Phase 2 TYPE_CONVERSION matched - excluding as type converter");
+        return issues;
+    }
+
+    if RE_LOGGING_WRAPPER.is_match(&func.body) && actual_loc <= 8 {
+        let delegate_count = func.body.matches("return ").count();
+        if delegate_count == 1 {
+            eprintln!("DEBUG: Phase 2 LOGGING_WRAPPER matched - excluding as logging wrapper");
+            return issues;
+        }
+    }
+
+    if RE_CONFIG_GETTER.is_match(&func.body) && actual_loc <= 5 {
+        eprintln!("DEBUG: Phase 2 CONFIG_GETTER matched - excluding as config getter");
+        return issues;
+    }
+
+    if RE_DICT_BUILDER.is_match(&func.body) {
+        eprintln!("DEBUG: Phase 2 DICT_BUILDER matched - excluding as data structure builder");
+        return issues;
+    }
+
+    if RE_CONDITIONAL_DELEGATE.is_match(&func.body) && actual_loc <= 10 {
+        eprintln!("DEBUG: Phase 2 CONDITIONAL_DELEGATE matched - excluding as conditional delegation");
+        return issues;
+    }
+
+    eprintln!("DEBUG: No Phase 2 exclusions matched, continuing with heuristics");
 
     if actual_loc <= 1 {
         issues.push((

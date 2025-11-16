@@ -26,7 +26,7 @@ import socket
 import sys
 import tempfile
 import threading
-from typing import Any
+from pathlib import Path
 
 from intellicrack.utils.logger import log_all_methods, logger
 from intellicrack.utils.service_utils import get_service_url
@@ -104,7 +104,7 @@ class RemotePluginExecutor:
                 logger.warning(f"Could not store generated secret: {e}")
         self.shared_secret = secret.encode()
 
-    def _serialize_safe(self, data: Any) -> str:
+    def _serialize_safe(self, data: object) -> str:
         """Safely serialize data to JSON only - no pickle allowed for security.
 
         Args:
@@ -133,7 +133,7 @@ class RemotePluginExecutor:
             json_str = json.dumps(str(data))
             return base64.b64encode(json_str.encode("utf-8")).decode("ascii")
 
-    def _deserialize_safe(self, encoded_data: str, expected_type: str = "json") -> Any:
+    def _deserialize_safe(self, encoded_data: str, expected_type: str = "json") -> object:
         """Safely deserialize data - only JSON allowed for security.
 
         Args:
@@ -157,7 +157,13 @@ class RemotePluginExecutor:
             logger.exception(f"Failed to deserialize as JSON: {e}")
             raise ValueError("Invalid JSON data") from e
 
-    def execute_plugin(self, plugin_path: str, method_name: str, *args, **kwargs) -> list[str]:
+    def execute_plugin(
+        self,
+        plugin_path: str,
+        method_name: str,
+        *args: object,
+        **kwargs: object,
+    ) -> list[str]:
         """Execute a plugin on a remote system.
 
         Args:
@@ -376,7 +382,7 @@ class RemotePluginExecutor:
                 finally:
                     # Clean up
                     try:
-                        os.unlink(plugin_path)
+                        Path(plugin_path).unlink()
                     except OSError as e:
                         logger.exception("OS error in remote_executor: %s", e)
 
@@ -474,7 +480,12 @@ class RemotePluginExecutor:
             return False
 
 
-def _run_plugin_in_sandbox(plugin_instance: Any, method_name: str, *args, **kwargs) -> list[str]:
+def _run_plugin_in_sandbox(
+    plugin_instance: object,
+    method_name: str,
+    *args: object,
+    **kwargs: object,
+) -> list[str]:
     """Run plugin method in a sandboxed environment.
 
     Args:

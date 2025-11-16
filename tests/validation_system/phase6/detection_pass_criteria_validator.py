@@ -790,7 +790,7 @@ class DetectionPassCriteriaValidator:
         try:
             data = json.loads(output)
 
-            if 'detects' in data and data['detects']:
+            if data.get('detects'):
                 detect = data['detects'][0]  # Use first detection
 
                 return DetectionResult(

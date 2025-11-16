@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from typing import Any
+
 from .advanced_debugger_bypass import (
     AdvancedDebuggerBypass,
     HypervisorDebugger,
@@ -50,15 +52,15 @@ class AntiAnalysisEngine:
         self.vm_detector = VMDetector()
         self.sandbox_detector = SandboxDetector()
 
-    def detect_virtual_environment(self):
+    def detect_virtual_environment(self) -> dict[str, Any]:
         """Detect if running in a virtual environment."""
         return self.vm_detector.detect_vm()
 
-    def detect_debugger(self):
+    def detect_debugger(self) -> dict[str, Any]:
         """Detect if a debugger is attached."""
         return self.debugger_detector.detect_debugger()
 
-    def detect_sandbox(self):
+    def detect_sandbox(self) -> dict[str, Any]:
         """Detect if running in a sandbox."""
         return self.sandbox_detector.detect_sandbox()
 

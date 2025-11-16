@@ -379,7 +379,7 @@ class GPUMonitorWorker(QObject):
 class GPUStatusWidget(QWidget):
     """GPU status monitoring widget."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize GPU status widget with performance monitoring and GPU detection."""
         super().__init__(parent)
         self.setMinimumWidth(300)
@@ -574,7 +574,7 @@ class GPUStatusWidget(QWidget):
             self.gpu_combo.addItem("No GPU detected")
             self.clear_display()
 
-    def on_gpu_selected(self, index) -> None:
+    def on_gpu_selected(self, index: int) -> None:
         """Handle GPU selection change."""
         self.selected_gpu_index = index
         self.update_display()

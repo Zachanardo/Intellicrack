@@ -88,7 +88,7 @@ class DongleSpec:
     algorithms: list[str] = field(default_factory=list)
     features: dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize dongle specification with cryptographically secure serial number."""
         if not self.serial_number:
             # Generate cryptographically secure serial number based on hardware identifiers
@@ -117,7 +117,7 @@ class DongleMemory:
     read_only_ranges: list[tuple[int, int]] = field(default_factory=list)
     protected_ranges: list[tuple[int, int]] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize dongle memory with empty data if not provided."""
         if not self.data:
             self.data = bytearray(self.size)
@@ -1189,7 +1189,7 @@ class DongleRegistryManager:
 class DongleAPIHooker:
     """Hook dongle-related APIs."""
 
-    def __init__(self, emulator_manager) -> None:
+    def __init__(self, emulator_manager: object) -> None:
         """Initialize dongle API hooker for intercepting hardware dongle calls."""
         self.manager = emulator_manager
         self.logger = logging.getLogger(f"{__name__}.APIHooker")
@@ -1251,7 +1251,7 @@ class DongleAPIHooker:
         except Exception as e:
             self.logger.exception(f"Failed to hook {func_name}: {e}")
 
-    def _hasp_api_handler(self, func_name: str, args: tuple) -> Any:
+    def _hasp_api_handler(self, func_name: str, args: tuple) -> int:
         """Handle HASP API calls."""
         dongles = self.manager.get_dongles_by_type(DongleType.HASP_HL)
         if not dongles:
@@ -1277,7 +1277,7 @@ class DongleAPIHooker:
         # Default success
         return 0
 
-    def _sentinel_api_handler(self, func_name: str, args: tuple) -> Any:
+    def _sentinel_api_handler(self, func_name: str, args: tuple) -> int:
         """Handle Sentinel API calls."""
         dongles = self.manager.get_dongles_by_type(DongleType.SENTINEL_SUPER_PRO)
         if not dongles:
@@ -1587,7 +1587,7 @@ class HardwareDongleEmulator:
 
         return results
 
-    def _test_hasp_features(self, dongle) -> dict:
+    def _test_hasp_features(self, dongle: BaseDongleEmulator) -> dict[str, object]:
         """Test HASP-specific features."""
         results = {}
 
@@ -1618,7 +1618,7 @@ class HardwareDongleEmulator:
 
         return results
 
-    def _test_sentinel_features(self, dongle) -> dict:
+    def _test_sentinel_features(self, dongle: BaseDongleEmulator) -> dict[str, object]:
         """Test Sentinel-specific features."""
         results = {}
 

@@ -28,7 +28,7 @@ import time
 from collections.abc import Callable
 from ctypes import c_int, c_ulong
 from pathlib import Path
-from typing import Any
+from typing import Any, BinaryIO
 
 # Import availability flags from correct handlers
 from intellicrack.handlers.numpy_handler import HAS_NUMPY
@@ -1546,11 +1546,11 @@ def _get_process_state() -> dict[str, Any]:
 # === Data Management Helpers ===
 
 
-def _archive_data(data: Any, archive_path: str) -> bool:
+def _archive_data(data: object, archive_path: str) -> bool:
     """Archive data to a file.
 
     Args:
-        data: Data to archive
+        data: Data to archive (JSON-serializable object)
         archive_path: Path to save archived data
 
     Returns:
@@ -1574,7 +1574,7 @@ def _browse_for_output() -> str | None:
 
     """
     # In non-GUI mode, return current directory
-    return os.getcwd()
+    return str(Path.cwd())
 
 
 def _browse_for_source() -> str | None:
@@ -2712,11 +2712,11 @@ def _manual_gguf_conversion(model_data: dict[str, Any], output_path: str) -> boo
         return False
 
 
-def _write_gguf_metadata(file_handle: Any, metadata: dict[str, Any]) -> None:
+def _write_gguf_metadata(file_handle: BinaryIO, metadata: dict[str, Any]) -> None:
     """Write GGUF metadata.
 
     Args:
-        file_handle: File handle to write metadata to
+        file_handle: Binary file handle to write metadata to
         metadata: Metadata dictionary to write
 
     """
@@ -2736,11 +2736,11 @@ def _write_gguf_metadata(file_handle: Any, metadata: dict[str, Any]) -> None:
         file_handle.write(value_bytes)
 
 
-def _write_gguf_tensor_info(file_handle: Any, tensors: list[dict[str, Any]]) -> None:
+def _write_gguf_tensor_info(file_handle: BinaryIO, tensors: list[dict[str, Any]]) -> None:
     """Write GGUF tensor information.
 
     Args:
-        file_handle: File handle to write tensor info to
+        file_handle: Binary file handle to write tensor info to
         tensors: List of tensor specification dictionaries
 
     """
@@ -2756,14 +2756,14 @@ def _write_gguf_tensor_info(file_handle: Any, tensors: list[dict[str, Any]]) -> 
         # Write dimensions
         dims = tensor.get("dims", [1])
         file_handle.write(struct.pack("I", len(dims)))
-        for dim in dims:
-            file_handle.write(struct.pack("I", dim))
+        packed_dims = b"".join(struct.pack("I", dim) for dim in dims)
+        file_handle.write(packed_dims)
 
         # Write type (simplified)
         file_handle.write(struct.pack("I", 0))  # Float32
 
 
-def _write_realistic_tensor_data(file_handle: Any, tensors: list[dict[str, Any]]) -> None:
+def _write_realistic_tensor_data(file_handle: BinaryIO, tensors: list[dict[str, Any]]) -> None:
     """Write realistic tensor data for ML model files with proper initialization.
 
     This function generates realistic tensor data based on the tensor specifications,
@@ -2771,7 +2771,7 @@ def _write_realistic_tensor_data(file_handle: Any, tensors: list[dict[str, Any]]
     memory-efficient writing for large tensors.
 
     Args:
-        file_handle: File handle to write tensor data to
+        file_handle: Binary file handle to write tensor data to
         tensors: List of tensor specifications with dims, types, and names
 
     """
@@ -3313,12 +3313,12 @@ def _generate_error_response(error: str, code: int = 500) -> dict[str, Any]:
     }
 
 
-def _generate_generic_response(status: str, data: Any = None) -> dict[str, Any]:
+def _generate_generic_response(status: str, data: dict[str, Any] | None = None) -> dict[str, Any]:
     """Generate generic response.
 
     Args:
         status: Response status string
-        data: Optional response data
+        data: Optional response data dictionary
 
     Returns:
         Dict containing response with status, timestamp, and optional data

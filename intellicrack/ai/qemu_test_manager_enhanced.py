@@ -22,6 +22,7 @@ import json
 import os
 import subprocess
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from ..utils.logger import get_logger
@@ -258,7 +259,7 @@ Process.enumerateModules().forEach(module => {{{{
         finally:
             # Clean up temporary script file
             with contextlib.suppress(OSError, FileNotFoundError):
-                os.unlink(script_path)
+                Path(script_path).unlink()
 
     def analyze_binary_for_vm(self, binary_path: str) -> dict[str, Any]:
         """Analyze binary to determine VM requirements."""

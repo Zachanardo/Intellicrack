@@ -29,6 +29,11 @@ from typing import Any, Protocol
 
 from intellicrack.utils.logger import logger
 
+from ...utils.logger import get_logger
+from .radare2_error_handler import get_error_handler, r2_error_context
+from .radare2_json_standardizer import standardize_r2_result
+from .radare2_performance_optimizer import OptimizationStrategy, create_performance_optimizer
+
 
 class R2Session(Protocol):
     """Protocol for r2pipe session interface.
@@ -124,11 +129,6 @@ except ImportError:
 
             """
 
-
-from ...utils.logger import get_logger
-from .radare2_error_handler import get_error_handler, r2_error_context
-from .radare2_json_standardizer import standardize_r2_result
-from .radare2_performance_optimizer import OptimizationStrategy, create_performance_optimizer
 
 """
 Real-time Radare2 Analysis with Live Updating Capabilities

@@ -6,7 +6,7 @@ from typing import Any
 
 from intellicrack.utils.logger import logger
 
-from ...utils.tools.radare2_utils import R2Exception, r2_session
+from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
 from .radare2_imports import R2ImportExportAnalyzer
 from .radare2_strings import R2StringAnalyzer
 
@@ -306,7 +306,7 @@ class R2AIEngine:
             "anti_analysis_api_count": float(len(import_analysis.get("anti_analysis_apis", []))),
         }
 
-    def _extract_graph_features(self, r2, functions: list[dict[str, Any]]) -> dict[str, float]:
+    def _extract_graph_features(self, r2: R2Session, functions: list[dict[str, Any]]) -> dict[str, float]:
         """Extract control flow graph features."""
         total_blocks = 0
         total_edges = 0
@@ -344,7 +344,7 @@ class R2AIEngine:
             "edge_to_block_ratio": float(total_edges / max(1, total_blocks)),
         }
 
-    def _extract_entropy_features(self, r2) -> dict[str, float]:
+    def _extract_entropy_features(self, r2: R2Session) -> dict[str, float]:
         """Extract entropy and complexity features."""
         try:
             # Get sections information

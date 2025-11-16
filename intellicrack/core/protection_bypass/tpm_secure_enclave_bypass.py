@@ -595,12 +595,12 @@ class TPMEmulator:
 
         return TPM_RC.SUCCESS, tpm_key
 
-    def _serialize_public_key(self, public_key) -> bytes:
+    def _serialize_public_key(self, public_key: object) -> bytes:
         from cryptography.hazmat.primitives import serialization
 
         return public_key.public_bytes(encoding=serialization.Encoding.DER, format=serialization.PublicFormat.SubjectPublicKeyInfo)
 
-    def _serialize_private_key(self, private_key) -> bytes:
+    def _serialize_private_key(self, private_key: object) -> bytes:
         from cryptography.hazmat.primitives import serialization
 
         return private_key.private_bytes(
@@ -1186,7 +1186,7 @@ class SecureEnclaveBypass:
         send({type: 'hooks_installed'});
         """
 
-    def _on_message(self, message, data) -> None:
+    def _on_message(self, message: dict[str, object], data: object) -> None:
         """Handle messages from injected script."""
         if message["type"] == "send":
             payload = message["payload"]
@@ -1477,7 +1477,7 @@ class SecureEnclaveBypass:
 
         return signature
 
-    def _load_attestation_key(self):
+    def _load_attestation_key(self) -> object:
         """Load TPM attestation key from system or cache."""
         key_file = Path(__file__).parent / "keys" / "tpm_attestation_key.pem"
 
@@ -1506,7 +1506,7 @@ class SecureEnclaveBypass:
 
         return key
 
-    def _load_sgx_attestation_key(self):
+    def _load_sgx_attestation_key(self) -> object:
         """Load SGX ECDSA attestation key."""
         key_file = Path(__file__).parent / "keys" / "sgx_attestation_key.pem"
 

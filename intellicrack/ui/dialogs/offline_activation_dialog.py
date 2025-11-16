@@ -115,7 +115,7 @@ class ActivationWorker(QThread):
 class OfflineActivationDialog(QDialog):
     """Comprehensive offline activation emulator interface."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the OfflineActivationDialog with an optional parent."""
         super().__init__(parent)
         self.emulator = OfflineActivationEmulator()
@@ -165,7 +165,7 @@ class OfflineActivationDialog(QDialog):
 
         self.setLayout(layout)
 
-    def create_hardware_tab(self):
+    def create_hardware_tab(self) -> QWidget:
         """Create hardware profile tab."""
         widget = QWidget()
         layout = QVBoxLayout()
@@ -234,7 +234,7 @@ class OfflineActivationDialog(QDialog):
         widget.setLayout(layout)
         return widget
 
-    def create_generation_tab(self):
+    def create_generation_tab(self) -> QWidget:
         """Create ID generation tab."""
         widget = QWidget()
         layout = QVBoxLayout()
@@ -324,7 +324,7 @@ class OfflineActivationDialog(QDialog):
         widget.setLayout(layout)
         return widget
 
-    def create_activation_tab(self):
+    def create_activation_tab(self) -> QWidget:
         """Create activation response tab."""
         widget = QWidget()
         layout = QVBoxLayout()
@@ -406,7 +406,7 @@ class OfflineActivationDialog(QDialog):
         widget.setLayout(layout)
         return widget
 
-    def create_algorithms_tab(self):
+    def create_algorithms_tab(self) -> QWidget:
         """Create algorithms configuration tab."""
         widget = QWidget()
         layout = QVBoxLayout()
@@ -478,7 +478,7 @@ class OfflineActivationDialog(QDialog):
         widget.setLayout(layout)
         return widget
 
-    def create_profiles_tab(self):
+    def create_profiles_tab(self) -> QWidget:
         """Create saved profiles tab."""
         widget = QWidget()
         layout = QVBoxLayout()
@@ -523,7 +523,7 @@ class OfflineActivationDialog(QDialog):
         widget.setLayout(layout)
         return widget
 
-    def create_testing_tab(self):
+    def create_testing_tab(self) -> QWidget:
         """Create testing and validation tab."""
         widget = QWidget()
         layout = QVBoxLayout()

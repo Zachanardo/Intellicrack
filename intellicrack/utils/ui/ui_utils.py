@@ -22,7 +22,6 @@ import logging
 from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
-from typing import Any
 
 # Module logger
 logger = logging.getLogger(__name__)
@@ -83,7 +82,7 @@ class ProgressTracker:
         self.is_cancelled = False
 
 
-def show_message(message: str, msg_type: MessageType = MessageType.INFO, title: str | None = None, parent: Any = None) -> None:
+def show_message(message: str, msg_type: MessageType = MessageType.INFO, title: str | None = None, parent: object = None) -> None:
     """Display a message to the user.
 
     Args:
@@ -132,7 +131,7 @@ def show_message(message: str, msg_type: MessageType = MessageType.INFO, title: 
         )
 
 
-def get_user_input(prompt: str, default: str = "", title: str = "Input Required", parent: Any = None) -> str | None:
+def get_user_input(prompt: str, default: str = "", title: str = "Input Required", parent: object = None) -> str | None:
     """Get text input from the user.
 
     Args:
@@ -210,7 +209,7 @@ def update_progress(progress: int, message: str | None = None, callback: Callabl
         print(f"Progress: {progress}%")
 
 
-def confirm_action(message: str, title: str = "Confirm Action", parent: Any = None) -> bool:
+def confirm_action(message: str, title: str = "Confirm Action", parent: object = None) -> bool:
     """Ask user to confirm an action.
 
     Args:
@@ -242,7 +241,7 @@ def select_from_list(
     prompt: str = "Select an item",
     title: str = "Selection",
     allow_multiple: bool = False,
-    parent: Any = None,
+    parent: object = None,
 ) -> list[str] | None:
     """Let user select from a list of items.
 
@@ -304,7 +303,7 @@ def select_from_list(
         return None
 
 
-def create_status_bar_message(message: str, timeout: int = 5000) -> dict[str, Any]:
+def create_status_bar_message(message: str, timeout: int = 5000) -> dict[str, str | int | None]:
     """Create a status bar message configuration.
 
     Args:
@@ -322,7 +321,7 @@ def create_status_bar_message(message: str, timeout: int = 5000) -> dict[str, An
     }
 
 
-def format_table_data(headers: list[str], rows: list[list[Any]], max_width: int = 80) -> str:
+def format_table_data(headers: list[str], rows: list[list[object]], max_width: int = 80) -> str:
     """Format data as a text table.
 
     Args:
@@ -380,13 +379,19 @@ class UIUpdateQueue:
 
     def __init__(self) -> None:
         """Initialize the update queue."""
-        self.updates: list[tuple[str, Any]] = []
+        self.updates: list[tuple[str, object]] = []
 
-    def add_update(self, update_type: str, data: Any) -> None:
-        """Add an update to the queue."""
+    def add_update(self, update_type: str, data: object) -> None:
+        """Add an update to the queue.
+
+        Args:
+            update_type: Type identifier for the update
+            data: Update data payload
+
+        """
         self.updates.append((update_type, data))
 
-    def flush(self, callback: Callable[[str, Any], None]) -> None:
+    def flush(self, callback: Callable[[str, object], None]) -> None:
         """Flush all queued updates.
 
         Args:

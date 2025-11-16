@@ -131,7 +131,7 @@ class SecretsManager:
         # Sync encrypted keys metadata to central config
         self._sync_metadata_to_central_config()
 
-    def _get_central_config(self):
+    def _get_central_config(self) -> Any:
         """Lazy load central config."""
         if self._central_config is None:
             from intellicrack.core.config_manager import get_config
@@ -139,7 +139,7 @@ class SecretsManager:
         return self._central_config
 
     @property
-    def central_config(self):
+    def central_config(self) -> Any:
         """Get central config instance (lazy-loaded)."""
         return self._get_central_config()
 

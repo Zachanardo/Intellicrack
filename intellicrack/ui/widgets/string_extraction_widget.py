@@ -147,7 +147,7 @@ class StringExtractionWidget(QWidget):
     #: export path (type: str)
     strings_exported = pyqtSignal(str)
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize string extraction widget with empty state and UI setup."""
         super().__init__(parent)
         self.file_path: str | None = None
@@ -280,8 +280,7 @@ class StringExtractionWidget(QWidget):
 
         # Search filter
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Filter strings...")
-        self.search_input.setToolTip("Search for specific text within extracted strings")
+        self.search_input.setToolTip("Enter search text to filter displayed strings (substring match)")
         self.search_input.textChanged.connect(self.apply_filters)
         layout.addWidget(QLabel("Filter:"))
         layout.addWidget(self.search_input)
@@ -571,8 +570,13 @@ class StringExtractionWidget(QWidget):
             f"Showing {len(self.filtered_strings)} of {len(self.all_strings)} strings",
         )
 
-    def _show_context_menu(self, position) -> None:
-        """Show context menu for string table."""
+    def _show_context_menu(self, position: object) -> None:
+        """Show context menu for string table.
+
+        Args:
+            position: The position in the table widget where the context menu was requested.
+
+        """
         if not self.string_table.selectedItems():
             return
 

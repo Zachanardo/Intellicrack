@@ -26,7 +26,7 @@ class IntellicrackHexProtectionIntegration(QObject):
     #: Signal to request jumping to a specific section (type: str)
     section_requested = pyqtSignal(str)
 
-    def __init__(self, hex_widget=None) -> None:
+    def __init__(self, hex_widget: object | None = None) -> None:
         """Initialize hex protection integration.
 
         Args:
@@ -108,7 +108,7 @@ class IntellicrackHexProtectionIntegration(QObject):
         except Exception as e:
             logger.error(f"Error opening file in protection viewer: {e}")
 
-    def open_in_icp(self, file_path: str, offset: int | None = None):
+    def open_in_icp(self, file_path: str, offset: int | None = None) -> None:
         """Alias for open_in_protection_viewer to maintain ICP naming consistency."""
         return self.open_in_protection_viewer(file_path, offset)
 
@@ -434,7 +434,7 @@ class IntellicrackHexProtectionIntegration(QObject):
 class ProtectionIntegrationWidget(QWidget):
     """Widget for protection viewer hex viewer integration controls."""
 
-    def __init__(self, hex_widget=None, parent=None) -> None:
+    def __init__(self, hex_widget: object | None = None, parent: object | None = None) -> None:
         """Initialize protection viewer integration widget.
 
         Args:
@@ -509,7 +509,7 @@ class ProtectionIntegrationWidget(QWidget):
                 self.info_label.setText("No file loaded")
 
 
-def create_intellicrack_hex_integration(hex_widget=None) -> IntellicrackHexProtectionIntegration:
+def create_intellicrack_hex_integration(hex_widget: object | None = None) -> IntellicrackHexProtectionIntegration:
     """Create Intellicrack hex viewer integration.
 
     Args:

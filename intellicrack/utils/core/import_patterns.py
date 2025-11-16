@@ -113,13 +113,23 @@ except ImportError:
     logger.debug("psutil not available")
 
 
-def get_pefile():
-    """Get pefile module if available."""
+def get_pefile() -> object | None:
+    """Get pefile module if available.
+
+    Returns:
+        The pefile module if available, None otherwise.
+
+    """
     return pefile
 
 
-def get_capstone():
-    """Get capstone module components if available."""
+def get_capstone() -> dict[str, object]:
+    """Get capstone module components if available.
+
+    Returns:
+        Dictionary containing Capstone disassembler components and availability flag.
+
+    """
     return {
         "Cs": Cs,
         "CS_ARCH_X86": CS_ARCH_X86,
@@ -129,45 +139,75 @@ def get_capstone():
     }
 
 
-def get_lief():
-    """Get lief module if available."""
+def get_lief() -> object | None:
+    """Get lief module if available.
+
+    Returns:
+        The lief module if available, None otherwise.
+
+    """
     return lief
 
 
-def get_elftools():
-    """Get elftools components if available."""
+def get_elftools() -> dict[str, object]:
+    """Get elftools components if available.
+
+    Returns:
+        Dictionary containing ELF file reader and availability flag.
+
+    """
     return {
         "ELFFile": ELFFile,
         "available": PYELFTOOLS_AVAILABLE,
     }
 
 
-def get_macholib():
-    """Get macholib components if available."""
+def get_macholib() -> dict[str, object]:
+    """Get macholib components if available.
+
+    Returns:
+        Dictionary containing Mach-O binary reader and availability flag.
+
+    """
     return {
         "MachO": MachO,
         "available": MACHOLIB_AVAILABLE,
     }
 
 
-def get_zipfile():
-    """Get zipfile module if available."""
+def get_zipfile() -> dict[str, object]:
+    """Get zipfile module if available.
+
+    Returns:
+        Dictionary containing zipfile module and availability flag.
+
+    """
     return {
         "zipfile": zipfile,
         "available": ZIPFILE_AVAILABLE,
     }
 
 
-def get_xml():
-    """Get XML parsing components if available."""
+def get_xml() -> dict[str, object]:
+    """Get XML parsing components if available.
+
+    Returns:
+        Dictionary containing ElementTree XML parser and availability flag.
+
+    """
     return {
         "ET": ET,
         "available": XML_AVAILABLE,
     }
 
 
-def get_psutil():
-    """Get psutil module if available."""
+def get_psutil() -> object | None:
+    """Get psutil module if available.
+
+    Returns:
+        The psutil module if available, None otherwise.
+
+    """
     return psutil
 
 

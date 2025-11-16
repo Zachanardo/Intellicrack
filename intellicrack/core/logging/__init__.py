@@ -64,7 +64,7 @@ def _load_audit_logger() -> None:
         _audit_logger_loaded = True
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> object:
     """Lazy load audit logger attributes."""
     _load_audit_logger()
     if name in _audit_exports:

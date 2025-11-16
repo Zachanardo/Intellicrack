@@ -540,14 +540,14 @@ class DynamicSignatureExtractor:
             return ProtectionCategory.ENCRYPTION
         return ProtectionCategory.CUSTOM
 
-    def _calculate_section_confidence(self, entropy: float, section: Any) -> float:
+    def _calculate_section_confidence(self, entropy: float, section: object) -> float:
         """Calculate confidence score for section-based signature."""
         confidence = min(1.0, entropy / 8.0)
 
         # Adjust based on section characteristics
-        if section.Characteristics & 0x20000000:  # CODE
+        if hasattr(section, "Characteristics") and section.Characteristics & 0x20000000:  # CODE
             confidence *= 1.1
-        if section.Characteristics & 0x80000000:  # WRITE
+        if hasattr(section, "Characteristics") and section.Characteristics & 0x80000000:  # WRITE
             confidence *= 1.15
 
         return min(1.0, confidence)
@@ -589,13 +589,16 @@ class DynamicSignatureExtractor:
             return ProtectionCategory.PROTECTOR
         return ProtectionCategory.CUSTOM
 
-    def _generate_import_pattern(self, pe: Any, apis: set[str]) -> bytes | None:
+    def _generate_import_pattern(self, pe: object, apis: set[str]) -> bytes | None:
         """Generate pattern from import table structure."""
         try:
             # Extract import directory structure
+            if not hasattr(pe, "OPTIONAL_HEADER"):
+                return None
+
             import_dir = pe.OPTIONAL_HEADER.DATA_DIRECTORY[1]
 
-            if import_dir.VirtualAddress == 0:
+            if not hasattr(import_dir, "VirtualAddress") or import_dir.VirtualAddress == 0:
                 return None
 
             # Create pattern from import descriptor
@@ -790,9 +793,7 @@ class DynamicSignatureExtractor:
 
             except Exception as e:
                 # Log the exception with details for debugging
-                import logging
-
-                logging.warning(f"Error processing instruction in call depth analysis: {e}")
+                logger.warning("Error processing instruction in call depth analysis: %s", e)
                 continue
 
         # Return unique depth levels found
@@ -837,9 +838,7 @@ class DynamicSignatureExtractor:
 
             except Exception as e:
                 # Log the exception with details for debugging
-                import logging
-
-                logging.warning(f"Error processing instruction in call target analysis: {e}")
+                logger.warning("Error processing instruction in call target analysis: %s", e)
                 continue
 
         return depths
@@ -1376,7 +1375,7 @@ class EnhancedProtectionScanner:
         return recommendations
 
 
-def run_scan_thread(main_app, binary_path) -> None:
+def run_scan_thread(main_app: object, binary_path: str) -> None:
     """Enhanced scanning logic with dynamic signature extraction."""
     try:
         if hasattr(main_app, "update_output"):
@@ -1425,7 +1424,7 @@ def run_scan_thread(main_app, binary_path) -> None:
             main_app.update_scan_status("Scan complete")
 
 
-def run_enhanced_protection_scan(main_app) -> None:
+def run_enhanced_protection_scan(main_app: object) -> None:
     """Entry point for enhanced protection scanning."""
     if not hasattr(main_app, "current_binary") or not main_app.current_binary:
         if hasattr(main_app, "update_output"):

@@ -463,7 +463,7 @@ class TestVMDetectorInitialization(unittest.TestCase):
             found_categories = []
 
             for category in expected_categories:
-                if category in signatures and signatures[category]:
+                if signatures.get(category):
                     found_categories.append(category)
 
             self.assertGreaterEqual(len(found_categories), 2,

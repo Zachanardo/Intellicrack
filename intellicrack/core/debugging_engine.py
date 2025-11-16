@@ -8,9 +8,9 @@ Licensed under GNU GPL v3.0
 """
 
 import ctypes
-import ctypes.wintypes as wintypes
 import struct
 import threading
+from ctypes import wintypes
 from dataclasses import dataclass
 from enum import IntEnum
 from typing import Any, Callable
@@ -5182,8 +5182,9 @@ class LicenseDebugger:
                 hw_bp = self.hardware_breakpoints[address]
 
                 # Call callback if exists
-                if "callback" in hw_bp and hw_bp["callback"]:
-                    hw_bp["callback"](address, context)
+                callback = hw_bp.get("callback")
+                if callback:
+                    callback(address, context)
 
                 logger.debug(f"VEH: Handled hardware breakpoint at 0x{address:X}")
                 return -1  # EXCEPTION_CONTINUE_EXECUTION
@@ -5232,8 +5233,9 @@ class LicenseDebugger:
                         hw_bp = self.hardware_breakpoints[address]
 
                         # Call callback if exists
-                        if "callback" in hw_bp and hw_bp["callback"]:
-                            hw_bp["callback"](address, context)
+                        callback = hw_bp.get("callback")
+                        if callback:
+                            callback(address, context)
 
                         # Clear DR6 status bit
                         context.Dr6 &= ~(1 << i)

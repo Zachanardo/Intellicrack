@@ -4,6 +4,7 @@ import logging
 import math
 import mmap
 import os
+import types
 from collections.abc import Iterator
 from typing import Any
 
@@ -86,7 +87,7 @@ class MemoryOptimizedBinaryLoader:
             self.close()
 
             # Open file (closed in self.close() method)
-            self.current_file = open(file_path, "rb")  # pylint: disable=consider-using-with
+            self.current_file = open(file_path, "rb")  # noqa: SIM115, pylint: disable=consider-using-with
             self.file_size = os.path.getsize(file_path)
 
             # Memory map the file
@@ -301,11 +302,11 @@ class MemoryOptimizedBinaryLoader:
 
         return format_bytes(size_bytes)
 
-    def __enter__(self):
+    def __enter__(self) -> "MemoryOptimizedBinaryLoader":
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None) -> None:
         """Context manager exit."""
         if exc_type:
             self.logger.error(f"Memory loader exiting due to {exc_type.__name__}: {exc_val}")

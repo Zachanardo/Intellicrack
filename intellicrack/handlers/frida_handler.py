@@ -1222,15 +1222,98 @@ if not HAS_FRIDA:
     DeviceManager = FallbackDeviceManager
     FileMonitor = FallbackFileMonitor
     ScriptMessage = FallbackScriptMessage
-    get_local_device = get_local_device
-    get_remote_device = get_remote_device
-    get_usb_device = get_usb_device
-    get_device_manager = get_device_manager
-    attach = attach
-    spawn = spawn
-    resume = resume
-    kill = kill
-    enumerate_devices = enumerate_devices
+    def get_local_device() -> None:
+        """Get the local device when Frida is unavailable.
+
+        Returns:
+            None in fallback mode.
+
+        """
+        return
+
+    def get_remote_device() -> None:
+        """Get a remote device when Frida is unavailable.
+
+        Returns:
+            None in fallback mode.
+
+        """
+        return
+
+    def get_usb_device() -> None:
+        """Get USB device when Frida is unavailable.
+
+        Returns:
+            None in fallback mode.
+
+        """
+        return
+
+    def get_device_manager() -> None:
+        """Get device manager when Frida is unavailable.
+
+        Returns:
+            None in fallback mode.
+
+        """
+        return
+
+    def attach(*args: object) -> None:
+        """Attach to a process when Frida is unavailable.
+
+        Args:
+            *args: Variable arguments (ignored in fallback mode).
+
+        Returns:
+            None in fallback mode.
+
+        """
+        return
+
+    def spawn(*args: object) -> None:
+        """Spawn a process when Frida is unavailable.
+
+        Args:
+            *args: Variable arguments (ignored in fallback mode).
+
+        Returns:
+            None in fallback mode.
+
+        """
+        return
+
+    def resume(*args: object) -> None:
+        """Resume a process when Frida is unavailable.
+
+        Args:
+            *args: Variable arguments (ignored in fallback mode).
+
+        Returns:
+            None in fallback mode.
+
+        """
+        return
+
+    def kill(*args: object) -> None:
+        """Kill a process when Frida is unavailable.
+
+        Args:
+            *args: Variable arguments (ignored in fallback mode).
+
+        Returns:
+            None in fallback mode.
+
+        """
+        return
+
+    def enumerate_devices() -> list[Any]:
+        """Enumerate all devices when Frida is unavailable.
+
+        Returns:
+            Empty list in fallback mode.
+
+        """
+        return []
 
 
 # Export all Frida objects and availability flag

@@ -28,6 +28,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QFont,
     QLabel,
     QPainter,
+    QPaintEvent,
     QPen,
     Qt,
     QVBoxLayout,
@@ -37,20 +38,45 @@ from intellicrack.handlers.pyqt6_handler import (
 
 
 class DropZoneWidget(QWidget):
-    """A widget that provides a visual drop zone for files."""
+    """A widget that provides a visual drop zone for files.
 
-    #: List of file paths (type: list)
+    This widget enables drag-and-drop functionality for loading binary files
+    and other supported formats for analysis in Intellicrack. It provides
+    visual feedback during drag operations and validates dropped files against
+    supported file types.
+
+    Attributes:
+        files_dropped: PyQt signal emitted when files are dropped, containing
+            a list of file paths to analyze.
+        is_dragging: Internal state flag indicating if a drag operation is active.
+        label: Main instruction label shown to the user.
+        info_label: Secondary label showing supported file types.
+
+    """
+
     files_dropped = pyqtSignal(list)
 
-    def __init__(self, parent=None) -> None:
-        """Initialize drop zone widget with drag and drop file handling capabilities."""
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialize drop zone widget with drag and drop file handling capabilities.
+
+        Args:
+            parent: Parent widget for this drop zone. Defaults to None.
+
+        """
         super().__init__(parent)
+        self.is_dragging: bool = False
+        self.label: QLabel | None = None
+        self.info_label: QLabel | None = None
         self.setAcceptDrops(True)
         self.setMinimumHeight(200)
         self._setup_ui()
 
-    def setup_ui(self) -> None:
-        """Set up the UI."""
+    def _setup_ui(self) -> None:
+        """Set up the user interface components.
+
+        Initializes the layout and UI elements including the main instruction label
+        and information label displaying supported file types.
+        """
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
 
@@ -75,7 +101,12 @@ class DropZoneWidget(QWidget):
         self.update_style()
 
     def update_style(self) -> None:
-        """Update widget style based on state."""
+        """Update widget style based on drag state.
+
+        Changes the visual appearance of the drop zone to reflect whether
+        a drag operation is currently active. When dragging, displays a
+        highlighted blue border and updated label text.
+        """
         if self.is_dragging:
             self.setStyleSheet("""
                 DropZoneWidget {
@@ -99,8 +130,16 @@ class DropZoneWidget(QWidget):
             """)
             self.label.setText("Drop files here for analysis")
 
-    def paintEvent(self, event) -> None:
-        """Customize paint event."""
+    def paintEvent(self, event: QPaintEvent) -> None:
+        """Customize paint event to draw drag highlights.
+
+        Draws a rounded rectangle highlight around the drop zone when
+        a drag operation is active, providing visual feedback to the user.
+
+        Args:
+            event: The paint event object containing region information.
+
+        """
         super().paintEvent(event)
 
         # Draw additional visual elements if needed
@@ -115,7 +154,15 @@ class DropZoneWidget(QWidget):
             painter.drawRoundedRect(self.rect().adjusted(5, 5, -5, -5), 10, 10)
 
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
-        """Handle drag enter."""
+        """Handle drag enter event for file validation.
+
+        Accepts the drag event if at least one of the dragged items is a
+        supported file type, otherwise rejects the drag.
+
+        Args:
+            event: The drag enter event containing mime data about dragged items.
+
+        """
         if event.mimeData().hasUrls():
             # Check if any files are supported
             for url in event.mimeData().urls():
@@ -126,18 +173,34 @@ class DropZoneWidget(QWidget):
                     return
         event.ignore()
 
-    def dragLeaveEvent(self, event) -> None:
-        """Handle drag leave."""
+    def dragLeaveEvent(self, event: QDragEnterEvent) -> None:
+        """Handle drag leave event.
+
+        Resets the dragging state and updates the visual styling when
+        the user drags away from the drop zone.
+
+        Args:
+            event: The drag leave event.
+
+        """
         self.is_dragging = False
         self.update_style()
 
     def dropEvent(self, event: QDropEvent) -> None:
-        """Handle drop."""
+        """Handle file drop event.
+
+        Processes dropped files, validates them against supported file types,
+        and emits the files_dropped signal if any valid files are found.
+
+        Args:
+            event: The drop event containing the mime data of dropped files.
+
+        """
         self.is_dragging = False
         self.update_style()
 
         if event.mimeData().hasUrls():
-            file_paths = []
+            file_paths: list[str] = []
             for url in event.mimeData().urls():
                 if url.isLocalFile():
                     file_path = url.toLocalFile()
@@ -152,12 +215,25 @@ class DropZoneWidget(QWidget):
         event.ignore()
 
     def _is_supported_file(self, file_path: str) -> bool:
-        """Check if file is supported."""
+        """Check if file is supported for binary analysis.
+
+        Validates whether a file has an extension associated with executable
+        formats or other binary types that can be analyzed by Intellicrack.
+        Common supported formats include Windows PE binaries (.exe, .dll),
+        ELF executables (.elf, .so), and mobile application packages (.apk, .ipa).
+
+        Args:
+            file_path: The file path to validate.
+
+        Returns:
+            True if the file exists and has a supported binary file extension,
+            False otherwise.
+
+        """
         if not os.path.exists(file_path):
             return False
 
-        # Supported extensions
-        supported_exts = [
+        supported_exts: list[str] = [
             ".exe",
             ".dll",
             ".so",

@@ -45,7 +45,7 @@ class VirtualizationDetectionBypass:
     - Timing attack mitigation
     """
 
-    def __init__(self, app: Any | None = None) -> None:
+    def __init__(self, app: object | None = None) -> None:
         """Initialize the virtualization detection bypass engine.
 
         Args:
@@ -124,8 +124,8 @@ class VirtualizationDetectionBypass:
         """Get Windows driver path dynamically."""
         # Common driver paths on Windows
         driver_paths = [
-            os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "System32", "drivers", driver_name),
-            os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "SysWOW64", "drivers", driver_name),
+            os.path.join(os.environ.get("SYSTEMROOT", "C:\\Windows"), "System32", "drivers", driver_name),
+            os.path.join(os.environ.get("SYSTEMROOT", "C:\\Windows"), "SysWOW64", "drivers", driver_name),
             os.path.join("C:\\Windows", "System32", "drivers", driver_name),
         ]
         for path in driver_paths:
@@ -704,7 +704,7 @@ class VirtualizationDetectionBypass:
         self.logger.info("Cleared all VM bypass hooks and patches")
 
 
-def bypass_vm_detection(app: Any) -> dict[str, Any]:
+def bypass_vm_detection(app: object) -> dict[str, Any]:
     """Bypass VM detection on an application.
 
     Args:
@@ -730,8 +730,8 @@ class VMDetector:
         """Get Windows VM driver path dynamically for detection."""
         # Common driver paths on Windows
         driver_paths = [
-            os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "System32", "drivers", driver_name),
-            os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "SysWOW64", "drivers", driver_name),
+            os.path.join(os.environ.get("SYSTEMROOT", "C:\\Windows"), "System32", "drivers", driver_name),
+            os.path.join(os.environ.get("SYSTEMROOT", "C:\\Windows"), "SysWOW64", "drivers", driver_name),
             os.path.join("C:\\Windows", "System32", "drivers", driver_name),
         ]
         for path in driver_paths:

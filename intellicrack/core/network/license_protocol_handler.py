@@ -24,6 +24,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 import os
 import secrets
+import socket
 import threading
 from typing import Any
 
@@ -248,7 +249,7 @@ class LicenseProtocolHandler:
             server_socket.close()
             self.logger.info("Proxy server stopped")
 
-    def _handle_client(self, client_socket: Any, client_addr: tuple[str, int]) -> None:
+    def _handle_client(self, client_socket: socket.socket, client_addr: tuple[str, int]) -> None:
         """Handle individual client connection.
 
         Args:
@@ -265,7 +266,7 @@ class LicenseProtocolHandler:
         finally:
             client_socket.close()
 
-    def handle_connection(self, socket: Any, initial_data: bytes) -> None:
+    def handle_connection(self, socket: socket.socket, initial_data: bytes) -> None:
         """Handle a client connection with the specific protocol.
 
         Default implementation logs the request and sends back a generic response.
@@ -411,7 +412,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
             server_socket.close()
             self.logger.info("FlexLM proxy stopped")
 
-    def handle_connection(self, socket: Any, initial_data: bytes) -> None:
+    def handle_connection(self, socket: socket.socket, initial_data: bytes) -> None:
         """Handle FlexLM client connection.
 
         Args:
@@ -430,7 +431,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to send FlexLM response: %s", e)
 
-    def _handle_flexlm_client(self, client_socket, client_addr) -> None:
+    def _handle_flexlm_client(self, client_socket: socket.socket, client_addr: tuple[str, int]) -> None:
         """Handle individual FlexLM client connection.
 
         Args:
@@ -604,7 +605,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
             server_socket.close()
             self.logger.info("HASP proxy stopped")
 
-    def handle_connection(self, socket: Any, initial_data: bytes) -> None:
+    def handle_connection(self, socket: socket.socket, initial_data: bytes) -> None:
         """Handle HASP client connection.
 
         Args:
@@ -622,7 +623,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to send HASP response: %s", e)
 
-    def _handle_hasp_client(self, client_socket, client_addr) -> None:
+    def _handle_hasp_client(self, client_socket: socket.socket, client_addr: tuple[str, int]) -> None:
         """Handle individual HASP client connection.
 
         Args:

@@ -22,9 +22,11 @@ import ctypes
 import ctypes.wintypes
 import logging
 import sys
-from typing import Any
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
+
+ContextStructure = TypeVar("ContextStructure", bound=ctypes.Structure)
 
 # Check Windows availability
 WINDOWS_AVAILABLE = sys.platform == "win32"
@@ -49,7 +51,7 @@ class WindowsContext:
         if STRUCTURES_AVAILABLE:
             self.kernel32 = ctypes.windll.kernel32
 
-    def create_context_structure(self):
+    def create_context_structure(self) -> tuple[type[ctypes.Structure], int] | tuple[None, None]:
         """Create appropriate CONTEXT structure based on architecture."""
         if not STRUCTURES_AVAILABLE:
             return None, None
@@ -142,7 +144,7 @@ class WindowsContext:
             logger.error(f"Failed to create CONTEXT structure: {e}")
             return None, None
 
-    def get_thread_context(self, thread_handle: int) -> Any | None:
+    def get_thread_context(self, thread_handle: int) -> ctypes.Structure | None:
         """Get thread context using shared implementation."""
         if not STRUCTURES_AVAILABLE or not self.kernel32:
             return None
@@ -167,7 +169,7 @@ class WindowsContext:
             logger.error(f"Failed to get thread context: {e}")
             return None
 
-    def set_thread_context(self, thread_handle: int, context: Any) -> bool:
+    def set_thread_context(self, thread_handle: int, context: ctypes.Structure) -> bool:
         """Set thread context using shared implementation."""
         if not STRUCTURES_AVAILABLE or not self.kernel32:
             return False
@@ -183,7 +185,7 @@ class WindowsContext:
             logger.error(f"Failed to set thread context: {e}")
             return False
 
-    def get_entry_point(self, context: Any) -> int:
+    def get_entry_point(self, context: ctypes.Structure) -> int:
         """Get entry point from context."""
         try:
             if ctypes.sizeof(ctypes.c_void_p) == 8:  # 64-bit
@@ -342,7 +344,7 @@ def parse_objdump_line(line: str) -> dict[str, Any] | None:
     return None
 
 
-def create_ssl_certificate_builder():
+def create_ssl_certificate_builder() -> object | None:
     """Create SSL certificate builder configuration - shared between license server and UI."""
     try:
         import datetime

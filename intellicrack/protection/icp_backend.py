@@ -108,7 +108,7 @@ class ICPDetection:
     confidence: float = 1.0  # Default to 100% if not provided
 
     @classmethod
-    def from_icp_result(cls, result) -> "ICPDetection":
+    def from_icp_result(cls, result: object) -> "ICPDetection":
         """Create from ICP Engine scan result."""
         return cls(
             name=getattr(result, "name", "Unknown"),
@@ -545,7 +545,7 @@ class ResultCache:
                 return self.memory_cache[cache_key]
 
             # Get file info
-            stat = os.stat(file_path)
+            stat = Path(file_path).stat()
             file_hash = self.get_file_hash(file_path)
 
             # Check database cache
@@ -604,7 +604,7 @@ class ResultCache:
                     del self.memory_cache[key]
 
             # Get file info
-            stat = os.stat(file_path)
+            stat = Path(file_path).stat()
             file_hash = self.get_file_hash(file_path)
 
             # Store in database
@@ -712,7 +712,7 @@ class ParallelScanner:
         loop = asyncio.get_event_loop()
 
         # Run native scan in thread pool
-        def do_scan():
+        def do_scan() -> ICPScanResult:
             try:
                 # Memory map file for efficient access
                 with open(file_path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ):
@@ -1018,7 +1018,7 @@ class ICPBackend:
             # Add file info if requested
             if show_info and os.path.exists(file_path):
                 try:
-                    stat_info = os.stat(file_path)
+                    stat_info = Path(file_path).stat()
                     if not hasattr(scan_result, "file_info"):
                         scan_result.file_info = {}
                     scan_result.file_info.update(
@@ -1085,7 +1085,7 @@ class ICPBackend:
         """Perform native scan with error handling."""
         loop = asyncio.get_event_loop()
 
-        def native_scan():
+        def native_scan() -> ICPScanResult:
             try:
                 # Use memory-mapped file for efficiency
                 with open(file_path, "rb") as f:

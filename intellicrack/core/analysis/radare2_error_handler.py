@@ -22,7 +22,7 @@ import os
 import threading
 import time
 import traceback
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -180,8 +180,25 @@ class R2ErrorHandler:
         )
 
     @contextmanager
-    def error_context(self, operation_name: str, **context):
-        """Context manager for error handling."""
+    def error_context(self, operation_name: str, **context: object) -> Generator[None, None, None]:
+        """Context manager for error handling.
+
+        Provides automatic error detection, classification, and recovery within
+        a managed context. Records performance metrics and handles exceptions
+        transparently.
+
+        Args:
+            operation_name: Name of the operation being monitored.
+            **context: Additional context information passed to error handlers.
+
+        Yields:
+            None: Control returns to the calling code.
+
+        Raises:
+            Any exception that occurs within the context is logged and processed
+            through the error handling pipeline before being re-raised.
+
+        """
         start_time = time.time()
         try:
             yield
@@ -350,9 +367,41 @@ class R2ErrorHandler:
         return self._execute_recovery_action("graceful_degradation", error_event)
 
     def _execute_user_intervention(self, error_event: ErrorEvent) -> bool:
-        """Execute user intervention recovery."""
-        self.logger.critical(f"User intervention required: {error_event.message}")
-        # In a real implementation, this would notify the user
+        """Execute user intervention recovery.
+
+        Notifies the user of critical errors requiring manual intervention by
+        logging with CRITICAL level severity and recording the intervention
+        requirement in the error context for external monitoring systems.
+
+        Args:
+            error_event: The error event requiring user intervention.
+
+        Returns:
+            bool: False as user intervention is pending external resolution.
+
+        """
+        intervention_message = (
+            f"CRITICAL: User intervention required for {error_event.error_type} "
+            f"in operation {error_event.context.get('operation', 'unknown')}: "
+            f"{error_event.message}"
+        )
+        self.logger.critical(intervention_message)
+
+        # Store intervention requirement for external monitoring and notification systems
+        error_event.context["requires_intervention"] = True
+        error_event.context["intervention_timestamp"] = datetime.now()
+        error_event.context["intervention_message"] = intervention_message
+
+        # Record in session stats for intervention tracking
+        if "interventions_required" not in self.session_stats:
+            self.session_stats["interventions_required"] = []
+        self.session_stats["interventions_required"].append({
+            "timestamp": datetime.now(),
+            "operation": error_event.context.get("operation", "unknown"),
+            "error_type": error_event.error_type,
+            "message": intervention_message,
+        })
+
         return False
 
     def _execute_recovery_action(self, action_name: str, error_event: ErrorEvent) -> bool:
@@ -715,16 +764,19 @@ def get_error_handler() -> R2ErrorHandler:
     return _GLOBAL_ERROR_HANDLER
 
 
-def handle_r2_error(error: Exception, operation_name: str, **context) -> bool:
+def handle_r2_error(error: Exception, operation_name: str, **context: object) -> bool:
     """Handle radare2 errors.
 
+    Processes radare2-related exceptions through the global error handler,
+    applying appropriate recovery strategies based on error classification.
+
     Args:
-        error: The exception that occurred
-        operation_name: Name of the operation that failed
-        **context: Additional context information
+        error: The exception that occurred.
+        operation_name: Name of the operation that failed.
+        **context: Additional context information passed to error handlers.
 
     Returns:
-        bool: True if error was handled successfully, False otherwise
+        bool: True if error was handled successfully, False otherwise.
 
     """
     handler = get_error_handler()
@@ -732,8 +784,25 @@ def handle_r2_error(error: Exception, operation_name: str, **context) -> bool:
 
 
 @contextmanager
-def r2_error_context(operation_name: str, **context):
-    """Context manager for radare2 error handling."""
+def r2_error_context(operation_name: str, **context: object) -> Generator[None, None, None]:
+    """Context manager for radare2 error handling.
+
+    Wraps radare2 operations with automatic error handling and recovery.
+    Integrates with the global error handler to provide consistent error
+    handling across the application.
+
+    Args:
+        operation_name: Name of the radare2 operation being executed.
+        **context: Additional context information for the operation.
+
+    Yields:
+        None: Control returns to the calling code.
+
+    Raises:
+        Any exception occurring within the context is processed through the
+        error handler pipeline before being re-raised.
+
+    """
     handler = get_error_handler()
     with handler.error_context(operation_name, **context):
         yield

@@ -10,6 +10,7 @@ Licensed under GNU General Public License v3.0
 
 import os
 import re
+import time
 from pathlib import Path
 
 from intellicrack.handlers.pyqt6_handler import (
@@ -54,7 +55,7 @@ logger = get_logger(__name__)
 class SignatureSyntaxHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for ICP signature format."""
 
-    def __init__(self, parent) -> None:
+    def __init__(self, parent: QTextDocument) -> None:
         """Initialize the SignatureSyntaxHighlighter with default values."""
         super().__init__(parent)
         self.highlighting_rules = []
@@ -116,7 +117,7 @@ class SignatureSyntaxHighlighter(QSyntaxHighlighter):
             escaped_op = re.escape(op)
             self.highlighting_rules.append((re.compile(escaped_op), operator_format))
 
-    def highlightBlock(self, text) -> None:
+    def highlightBlock(self, text: str) -> None:
         """Apply syntax highlighting to a block of text."""
         for pattern, fmt in self.highlighting_rules:
             for match in pattern.finditer(text):
@@ -127,8 +128,8 @@ class SignatureSyntaxHighlighter(QSyntaxHighlighter):
 class SignatureTestWorker(QThread):
     """Worker thread for testing signatures against files."""
 
-    #: file_path, success, result (type: str, bool, str)
-    test_completed = pyqtSignal(str, bool, str)
+    #: file_path, success, result, execution_time (type: str, bool, str, float)
+    test_completed = pyqtSignal(str, bool, str, float)
     #: progress, current_file (type: int, str)
     progress_update = pyqtSignal(int, str)
 
@@ -138,6 +139,7 @@ class SignatureTestWorker(QThread):
         self.signature_content = signature_content
         self.test_files = test_files
         self.unified_engine = get_unified_engine()
+        self.logger = logger
 
     def run(self) -> None:
         """Run signature tests."""
@@ -150,18 +152,24 @@ class SignatureTestWorker(QThread):
                 # Test signature against file
                 result = self._test_signature_on_file(file_path)
 
-                # Emit result
-                self.test_completed.emit(file_path, result["success"], result["message"])
+                # Emit result with execution time
+                self.test_completed.emit(
+                    file_path,
+                    result["success"],
+                    result["message"],
+                    result.get("execution_time", 0.0),
+                )
 
             except Exception as e:
                 self.logger.error("Exception in signature_editor_dialog: %s", e)
-                self.test_completed.emit(file_path, False, f"Error: {e!s}")
+                self.test_completed.emit(file_path, False, f"Error: {e!s}", 0.0)
 
         # Final progress update
         self.progress_update.emit(100, "Complete")
 
-    def _test_signature_on_file(self, file_path: str) -> dict[str, any]:
+    def _test_signature_on_file(self, file_path: str) -> dict[str, object]:
         """Test signature against a single file."""
+        test_start_time = time.time()
         try:
             # Create temporary signature file
             temp_sig_path = os.path.join(os.path.dirname(file_path), "temp_test_signature.sg")
@@ -182,6 +190,9 @@ class SignatureTestWorker(QThread):
             except Exception as e:
                 logger.debug("Failed to remove temporary signature file: %s", e)
 
+            # Calculate execution time
+            execution_time = time.time() - test_start_time
+
             # Check if signature detected something
             if result and result.icp_analysis:
                 for detection in result.icp_analysis.all_detections:
@@ -189,25 +200,29 @@ class SignatureTestWorker(QThread):
                         return {
                             "success": True,
                             "message": f"Detected: {detection.name} (confidence: {detection.confidence:.1%})",
+                            "execution_time": execution_time,
                         }
 
             return {
                 "success": False,
                 "message": "Signature did not match this file",
+                "execution_time": execution_time,
             }
 
         except Exception as e:
+            execution_time = time.time() - test_start_time
             logger.error("Exception in signature_editor_dialog: %s", e)
             return {
                 "success": False,
                 "message": f"Test failed: {e!s}",
+                "execution_time": execution_time,
             }
 
 
 class SignatureEditorDialog(QDialog):
     """Run signature editor dialog."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the signature editor dialog with UI components and data structures."""
         super().__init__(parent)
         self.setWindowTitle("ICP Signature Editor")
@@ -312,7 +327,7 @@ class SignatureEditorDialog(QDialog):
         search_layout.addWidget(QLabel("Search:"))
         self.search_input = QLineEdit()
         self.search_input.textChanged.connect(self.filter_signatures)
-        self.search_input.setPlaceholderText("Filter signatures...")
+        self.search_input.setToolTip("Enter text to filter signatures by name")
         search_layout.addWidget(self.search_input)
         layout.addLayout(search_layout)
 
@@ -943,7 +958,7 @@ ep:
         if isinstance(parent_widget, QTabWidget):
             parent_widget.setCurrentIndex(2)  # Template tab
 
-    def load_template_category(self, current_item, previous_item) -> None:
+    def load_template_category(self, current_item: QListWidgetItem | None, previous_item: QListWidgetItem | None) -> None:
         """Load templates for selected category."""
         if not current_item:
             return
@@ -1132,8 +1147,8 @@ ep:
 
         self._on_tests_finished()
 
-    @pyqtSlot(str, bool, str)
-    def _on_test_completed(self, file_path: str, success: bool, result: str) -> None:
+    @pyqtSlot(str, bool, str, float)
+    def _on_test_completed(self, file_path: str, success: bool, result: str, execution_time: float) -> None:
         """Handle individual test completion."""
         row = self.test_results_model.rowCount()
         self.test_results_model.insertRow(row)
@@ -1163,8 +1178,17 @@ ep:
         size_item = QStandardItem(size_str)
         self.test_results_model.setItem(row, 3, size_item)
 
-        # Time (placeholder)
-        time_item = QStandardItem("< 1s")
+        # Execution time
+        if execution_time < 1.0:
+            time_str = f"{execution_time * 1000:.1f}ms"
+        elif execution_time < 60.0:
+            time_str = f"{execution_time:.2f}s"
+        else:
+            minutes = int(execution_time // 60)
+            seconds = execution_time % 60
+            time_str = f"{minutes}m {seconds:.1f}s"
+
+        time_item = QStandardItem(time_str)
         self.test_results_model.setItem(row, 4, time_item)
 
     @pyqtSlot(int, str)

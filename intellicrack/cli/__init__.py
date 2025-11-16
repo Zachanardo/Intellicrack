@@ -104,19 +104,19 @@ except ImportError as e:
     progress_manager = None
 
 __all__ = [
-    "main",
-    "interactive_mode",
-    "config_manager",
-    "project_manager",
-    "terminal_dashboard",
-    "pipeline",
     "advanced_export",
     "ai_chat_interface",
     "ai_integration",
     "ascii_charts",
+    "config_manager",
     "hex_viewer_cli",
-    "tutorial_system",
+    "interactive_mode",
+    "main",
+    "pipeline",
     "progress_manager",
+    "project_manager",
+    "terminal_dashboard",
+    "tutorial_system",
 ]
 
 # Filter out None values from __all__

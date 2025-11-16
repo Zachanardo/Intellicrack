@@ -258,14 +258,15 @@ def get_tooltip_definitions() -> dict[str, str]:
     }
 
 
-def apply_tooltips_to_all_elements(parent_widget) -> None:  # noqa: C901
+def apply_tooltips_to_all_elements(parent_widget: object) -> None:
     """Apply tooltips to all UI elements in a widget hierarchy.
 
     Now supports: QPushButton, QLabel, QLineEdit, QComboBox, QCheckBox,
     QSpinBox, QDoubleSpinBox, QTabWidget, and other common UI elements.
 
     Args:
-        parent_widget: The parent widget to search for UI elements
+        parent_widget: The parent widget to search for UI elements. Must have
+            findChildren() method compatible with PyQt6 widget classes.
 
     """
     try:
@@ -573,25 +574,26 @@ def _get_contextual_tooltip(text: str) -> str:
     return ""  # No contextual match found
 
 
-def apply_tooltips_to_buttons(parent_widget) -> None:
+def apply_tooltips_to_buttons(parent_widget: object) -> None:
     """Backward compatibility wrapper for apply_tooltips_to_all_elements.
 
     Args:
-        parent_widget: The parent widget to search for UI elements
+        parent_widget: The parent widget to search for UI elements. Must have
+            findChildren() method compatible with PyQt6 widget classes.
 
     """
     apply_tooltips_to_all_elements(parent_widget)
 
 
-def create_tooltip_with_shortcut(description: str, shortcut: str = None) -> str:
+def create_tooltip_with_shortcut(description: str, shortcut: str | None = None) -> str:
     """Create a formatted tooltip with optional keyboard shortcut.
 
     Args:
-        description: Main tooltip description
-        shortcut: Optional keyboard shortcut
+        description: Main tooltip description for the UI element.
+        shortcut: Optional keyboard shortcut string to append to tooltip.
 
     Returns:
-        Formatted tooltip string
+        Formatted tooltip string with optional shortcut appended.
 
     """
     if shortcut:

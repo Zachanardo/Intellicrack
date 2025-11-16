@@ -30,6 +30,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QLineEdit,
     QSpinBox,
     QVBoxLayout,
+    QWidget,
 )
 
 from .base_dialog import BaseDialog
@@ -44,20 +45,32 @@ class DistributedProcessingConfigDialog(BaseDialog):
     including worker count, chunk sizes, analysis options, and pattern types.
     """
 
-    def __init__(self, binary_path: str, parent=None) -> None:
+    def __init__(self, binary_path: str, parent: QWidget | None = None) -> None:
         """Initialize the distributed processing configuration dialog.
 
+        Sets up the dialog with controls for configuring distributed binary analysis
+        parameters including worker processes, chunk sizes, analysis options, and
+        pattern search configuration.
+
         Args:
-            binary_path: Path to the binary for distributed processing
-            parent: Optional parent widget
+            binary_path: Path to the binary file for distributed processing.
+            parent: Optional parent widget for this dialog window.
 
         """
         super().__init__(parent, "Distributed Processing Configuration")
         self.binary_path = binary_path
         self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
 
-    def setup_content(self, layout) -> None:
-        """Set up the dialog user interface."""
+    def setup_content(self, layout: QVBoxLayout) -> None:
+        """Set up the dialog user interface.
+
+        Configures the layout with processing options, analysis options, pattern type
+        selections, and performance hints for distributed processing configuration.
+
+        Args:
+            layout: Main layout widget to populate with configuration controls.
+
+        """
         if not layout:
             layout = QVBoxLayout()
             self.content_widget.setLayout(layout)
@@ -164,8 +177,8 @@ class DistributedProcessingConfigDialog(BaseDialog):
         pattern_layout.addWidget(self.crypto_check)
 
         self.custom_patterns_edit = QLineEdit()
-        self.custom_patterns_edit.setPlaceholder("Custom patterns (comma-separated)")
-        self.custom_patterns_edit.setToolTip("Enter custom patterns to search for, separated by commas")
+        self.custom_patterns_edit.setText("")
+        self.custom_patterns_edit.setToolTip("Enter custom patterns to search for, separated by commas. Example: 'pattern1, pattern2, pattern3'")
         pattern_layout.addWidget(self.custom_patterns_edit)
 
         pattern_group.setLayout(pattern_layout)
@@ -184,8 +197,28 @@ class DistributedProcessingConfigDialog(BaseDialog):
     def get_config(self) -> dict[str, Any]:
         """Get the configuration from the dialog.
 
+        Collects all configuration values from the dialog controls and returns them
+        as a dictionary suitable for distributed processing execution. Includes worker
+        count, chunk sizes, timeouts, backend selection, analysis options, and pattern
+        search configurations.
+
         Returns:
-            Dictionary containing all configuration parameters
+            Dictionary containing configuration parameters with keys:
+                - num_workers: Number of worker processes (1-32)
+                - chunk_size: Binary chunk size in bytes
+                - window_size_kb: Entropy analysis window size in KB
+                - timeout: Processing timeout in seconds
+                - preferred_backend: Selected backend ('auto', 'ray', 'dask', or 'multiprocessing')
+                - use_convenience_methods: Whether to use convenience methods
+                - run_section_analysis: Enable binary section analysis
+                - run_pattern_search: Enable pattern searching
+                - run_entropy_analysis: Enable entropy analysis
+                - run_symbolic_execution: Enable symbolic execution
+                - search_license_patterns: Search for licensing patterns
+                - search_hardware_patterns: Search for hardware ID patterns
+                - search_crypto_patterns: Search for cryptographic patterns
+                - custom_patterns: List of custom pattern strings
+                - binary_path: Path to the binary file
 
         """
         # Parse any custom patterns
@@ -227,8 +260,13 @@ class DistributedProcessingConfigDialog(BaseDialog):
     def set_defaults(self, config: dict[str, Any]) -> None:
         """Set default values from a configuration dictionary.
 
+        Updates all dialog controls to reflect values from the provided configuration
+        dictionary. This is useful for restoring previously saved settings or applying
+        preset configurations for distributed processing.
+
         Args:
-            config: Configuration dictionary to apply
+            config: Configuration dictionary with optional keys matching get_config()
+                output format. Missing keys are ignored and controls retain their current values.
 
         """
         if "num_workers" in config:
@@ -286,8 +324,12 @@ class DistributedProcessingConfigDialog(BaseDialog):
     def validate_config(self) -> bool:
         """Validate the current configuration.
 
+        Performs basic validation checks on dialog values to ensure distributed
+        processing can proceed. Validates minimum values for workers, chunk size,
+        and timeout, and ensures at least one analysis option is selected.
+
         Returns:
-            True if configuration is valid, False otherwise
+            True if configuration is valid and processing can proceed, False otherwise.
 
         """
         # Basic validation
@@ -311,15 +353,18 @@ class DistributedProcessingConfigDialog(BaseDialog):
         return analysis_selected
 
 
-def create_distributed_config_dialog(binary_path: str, parent=None) -> DistributedProcessingConfigDialog:
+def create_distributed_config_dialog(binary_path: str, parent: QWidget | None = None) -> DistributedProcessingConfigDialog:
     """Create a DistributedProcessingConfigDialog.
 
+    Factory function for instantiating a distributed processing configuration dialog
+    with all necessary controls pre-configured for binary analysis parameter setup.
+
     Args:
-        binary_path: Path to binary for processing
-        parent: Parent widget
+        binary_path: Path to the binary file for distributed processing.
+        parent: Optional parent widget for the dialog window.
 
     Returns:
-        Configured dialog instance
+        Fully initialized DistributedProcessingConfigDialog instance ready for display.
 
     """
     return DistributedProcessingConfigDialog(binary_path, parent)

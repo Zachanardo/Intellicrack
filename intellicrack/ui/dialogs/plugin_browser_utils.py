@@ -18,16 +18,15 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import os
 
-from intellicrack.handlers.pyqt6_handler import QFileDialog
+from intellicrack.handlers.pyqt6_handler import QFileDialog, QWidget
 
-"""
-Plugin Browser Utility Functions
+"""Plugin Browser Utility Functions.
 
 Shared utilities for plugin browsing functionality to eliminate code duplication.
 """
 
 
-def browse_for_plugin(parent_widget, title="Select Plugin") -> str:
+def browse_for_plugin(parent_widget: QWidget | None, title: str = "Select Plugin") -> str:
     """Browse for a plugin file using a file dialog.
 
     Args:

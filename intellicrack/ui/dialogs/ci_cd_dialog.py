@@ -19,7 +19,6 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import json
 import os
 from datetime import datetime
-from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -95,8 +94,8 @@ class PipelineThread(QThread):
         """Run the pipeline."""
         try:
             # Override pipeline methods to emit signals
-            def run_stage_wrapper(stage_name, original_method):
-                def wrapper():
+            def run_stage_wrapper(stage_name: str, original_method: object) -> object:
+                def wrapper() -> object:
                     self.stage_started.emit(stage_name)
                     result = original_method()
                     self.stage_completed.emit(stage_name, result)
@@ -124,7 +123,7 @@ class PipelineThread(QThread):
 class CICDDialog(PluginDialogBase):
     """CI/CD Pipeline Management Dialog."""
 
-    def __init__(self, parent=None, plugin_path=None) -> None:
+    def __init__(self, parent: object | None = None, plugin_path: str | None = None) -> None:
         """Initialize the CICDDialog with default values."""
         self.pipeline_thread = None
         self.stage_widgets = {}
@@ -428,7 +427,7 @@ class CICDDialog(PluginDialogBase):
         self.config_tree.clear()
         self.populate_config_tree(config, self.config_tree.invisibleRootItem())
 
-    def populate_config_tree(self, config: dict[str, Any], parent: QTreeWidgetItem) -> None:
+    def populate_config_tree(self, config: dict[str, object], parent: QTreeWidgetItem) -> None:
         """Populate configuration tree."""
         for key, value in config.items():
             if isinstance(value, dict):
@@ -469,14 +468,14 @@ class CICDDialog(PluginDialogBase):
         QMessageBox.information(self, "Saved", "Configuration saved successfully!")
         self.setWindowTitle("CI/CD Pipeline")
 
-    def build_config_from_tree(self) -> dict[str, Any]:
+    def build_config_from_tree(self) -> dict[str, object]:
         """Build configuration from tree widget."""
         config = {}
 
-        def process_item(item: QTreeWidgetItem) -> Any:
+        def process_item(item: QTreeWidgetItem) -> object:
             if item.childCount() > 0:
                 # Branch node
-                result = {}
+                result: dict[str, object] = {}
                 for i in range(item.childCount()):
                     child = item.child(i)
                     result[child.text(0)] = process_item(child)
@@ -676,7 +675,7 @@ class CICDDialog(PluginDialogBase):
             widget.progress.setRange(0, 0)  # Indeterminate
             widget.setObjectName("pipelineStageRunning")
 
-    def on_stage_completed(self, stage: str, result: dict[str, Any]) -> None:
+    def on_stage_completed(self, stage: str, result: dict[str, object]) -> None:
         """Handle stage completed."""
         success = result.get("success", False)
 
@@ -715,7 +714,7 @@ class CICDDialog(PluginDialogBase):
         """Handle log message."""
         self.console_output.append(message)
 
-    def on_pipeline_finished(self, results: dict[str, Any]) -> None:
+    def on_pipeline_finished(self, results: dict[str, object]) -> None:
         """Handle pipeline finished."""
         # Update UI
         self.run_btn.setEnabled(True)

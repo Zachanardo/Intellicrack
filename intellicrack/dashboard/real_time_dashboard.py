@@ -31,8 +31,7 @@ from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable
 
-if TYPE_CHECKING:
-    from websockets.server import WebSocketServerProtocol
+from websockets.server import WebSocketServerProtocol
 
 try:
     import websockets
@@ -488,7 +487,7 @@ class RealTimeDashboard:
             self.logger.warning("WebSockets not available, skipping WebSocket server")
             return
 
-        async def handle_client(websocket: Any, path: str) -> None:
+        async def handle_client(websocket: WebSocketServerProtocol, path: str) -> None:
             """Handle WebSocket client connection."""
             self.websocket_clients.add(websocket)
             self.logger.info(f"WebSocket client connected: {websocket.remote_address}")
@@ -564,19 +563,19 @@ class RealTimeDashboard:
         CORS(self.flask_app)  # Enable CORS for web clients
 
         @self.flask_app.route("/api/state")
-        def get_state():
+        def get_state() -> object:
             """Get dashboard state endpoint."""
             return jsonify(self.get_dashboard_state())
 
         @self.flask_app.route("/dashboard")
-        def dashboard_view():
+        def dashboard_view() -> object:
             """Render dashboard view using render_template."""
             # Use render_template that was imported
             dashboard_state = self.get_dashboard_state()
             return render_template("dashboard.html", title="Intellicrack Dashboard", dashboard_state=dashboard_state)
 
         @self.flask_app.route("/api/events")
-        def get_events():
+        def get_events() -> object:
             """Get recent events endpoint."""
             limit = request.args.get("limit", 100, type=int)
             with self.events_lock:
@@ -584,24 +583,24 @@ class RealTimeDashboard:
             return jsonify(events)
 
         @self.flask_app.route("/api/metrics")
-        def get_metrics():
+        def get_metrics() -> object:
             """Get current metrics endpoint."""
             with self.metrics_lock:
                 return jsonify(self.metrics.to_dict())
 
         @self.flask_app.route("/api/metrics/history")
-        def get_metrics_history():
+        def get_metrics_history() -> object:
             """Get metrics history endpoint."""
             return jsonify(self.get_metrics_history())
 
         @self.flask_app.route("/api/analyses/active")
-        def get_active_analyses():
+        def get_active_analyses() -> object:
             """Get active analyses endpoint."""
             with self.state_lock:
                 return jsonify(list(self.active_analyses.values()))
 
         @self.flask_app.route("/api/results/<analysis_id>")
-        def get_results(analysis_id: str):
+        def get_results(analysis_id: str) -> object:
             """Get analysis results endpoint."""
             with self.state_lock:
                 if analysis_id in self.analysis_results:

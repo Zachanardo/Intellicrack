@@ -500,7 +500,7 @@ class BaseAgent:
         if result.get("status") == "completed":
             success_patterns.append("completion_success")
 
-        if "result" in result and result["result"]:
+        if result.get("result"):
             success_patterns.append("result_produced")
 
         if result.get("execution_time", 0) > 0:
@@ -1651,7 +1651,7 @@ class StaticAnalysisAgent(BaseAgent):
             logger.error(f"Python AST analysis failed: {e}")
             return {"confidence": 0.5}
 
-    def _check_python_vulnerabilities(self, node: Any) -> list[dict[str, Any]]:
+    def _check_python_vulnerabilities(self, node: object) -> list[dict[str, object]]:
         """Check for vulnerabilities in Python AST node."""
         import ast
 
@@ -2521,7 +2521,7 @@ class DynamicAnalysisAgent(BaseAgent):
 
             script = session.create_script(script_code)
 
-            def on_message(message: dict[str, Any], data: Any) -> None:
+            def on_message(message: dict[str, object], data: object) -> None:
                 if message["type"] == "send":
                     payload = message["payload"]
                     if payload["type"] == "api_call":
@@ -2693,7 +2693,7 @@ class ReverseEngineeringAgent(BaseAgent):
             return await self._analyze_algorithms(input_data)
         raise ValueError(f"Unknown task type: {task_type}")
 
-    def _create_capstone_disassembler(self, architecture: str) -> Any:
+    def _create_capstone_disassembler(self, architecture: str) -> object:
         """Create capstone disassembler for given architecture."""
         from capstone import CS_ARCH_ARM, CS_ARCH_X86, CS_MODE_32, CS_MODE_64, CS_MODE_ARM, Cs
 
@@ -2705,7 +2705,7 @@ class ReverseEngineeringAgent(BaseAgent):
             return Cs(CS_ARCH_ARM, CS_MODE_ARM)
         return Cs(CS_ARCH_X86, CS_MODE_32)
 
-    def _process_capstone_instruction(self, insn: Any, function_boundaries: list, cross_references: list) -> dict[str, Any]:
+    def _process_capstone_instruction(self, insn: object, function_boundaries: list, cross_references: list) -> dict[str, object]:
         """Process a single capstone instruction and update boundaries/references."""
         instruction_info = {"address": hex(insn.address), "instruction": f"{insn.mnemonic} {insn.op_str}", "bytes": insn.bytes.hex()}
 
@@ -3893,7 +3893,7 @@ class KnowledgeManager:
         self.knowledge_graph: dict[str, set[str]] = defaultdict(set)
         self.access_patterns: dict[str, int] = defaultdict(int)
 
-    def store_knowledge(self, category: str, key: str, value: Any, source_agent: str) -> None:
+    def store_knowledge(self, category: str, key: str, value: object, source_agent: str) -> None:
         """Store knowledge from agent."""
         if category not in self.shared_knowledge:
             self.shared_knowledge[category] = {}
@@ -3910,7 +3910,7 @@ class KnowledgeManager:
         # Update knowledge graph
         self.knowledge_graph[source_agent].add(f"{category}:{key}")
 
-    def retrieve_knowledge(self, category: str, key: str, requesting_agent: str) -> Any | None:
+    def retrieve_knowledge(self, category: str, key: str, requesting_agent: str) -> object | None:
         """Retrieve knowledge for agent."""
         if category in self.shared_knowledge and key in self.shared_knowledge[category]:
             knowledge_item = self.shared_knowledge[category][key]

@@ -1,0 +1,1226 @@
+[
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 48,
+      "row": 30
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\headless_training_interface.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 30
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 30,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 34,
+      "row": 34
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ai\\performance_monitor.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 34
+    },
+    "message": "Import from `collections.abc` instead: `Coroutine`",
+    "noqa_row": 34,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 50,
+      "row": 28
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\angr_enhancements.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 28
+    },
+    "message": "Import from `collections.abc` instead: `Sequence`",
+    "noqa_row": 28,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 50,
+      "row": 28
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\angr_enhancements.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 28
+    },
+    "message": "`typing.Dict` is deprecated, use `dict` instead",
+    "noqa_row": 28,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 50,
+      "row": 28
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\angr_enhancements.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 28
+    },
+    "message": "`typing.List` is deprecated, use `list` instead",
+    "noqa_row": 28,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 33,
+      "row": 36
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\behavioral_analysis.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 36
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 36,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 43,
+      "row": 33
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\binary_analyzer.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 33
+    },
+    "message": "Import from `collections.abc` instead: `Callable`, `Iterator`",
+    "noqa_row": 33,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 33,
+      "row": 25
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\concolic_executor.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 25
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 25,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 33,
+      "row": 27
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\frida_script_manager.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 27
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 27,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 33,
+      "row": 31
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\radare2_esil_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 31
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 31,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 33,
+      "row": 29
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\analysis\\stalker_manager.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 29
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 29,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 33,
+      "row": 32
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\advanced_debugger_bypass.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 32
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 32,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 28,
+      "row": 123
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\hook_obfuscation.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 123
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 123,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 33,
+      "row": 16
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\debugging_engine.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 16
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 16,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 44,
+      "row": 17
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\exploitation\\keygen_generator.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 17
+    },
+    "message": "Import from `collections.abc` instead: `Callable`, `Generator`",
+    "noqa_row": 17,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 28,
+      "row": 25
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\integration\\real_tool_communication.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 25
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 25,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 33,
+      "row": 10
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\license\\keygen.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 10
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 10,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 33,
+      "row": 15
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\monitoring\\base_monitor.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 15
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 15,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 33,
+      "row": 14
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\monitoring\\event_aggregator.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 14
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 14,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 33,
+      "row": 10
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\monitoring\\monitoring_session.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 10
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 10,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 33,
+      "row": 34
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\orchestration\\tool_communication_bridge.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 34
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 34,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 43,
+      "row": 32
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\processing\\streaming_analysis_manager.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 32
+    },
+    "message": "Import from `collections.abc` instead: `Callable`, `Iterator`",
+    "noqa_row": 32,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 33,
+      "row": 31
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\protection_bypass\\dongle_emulator.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 31
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 31,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 33,
+      "row": 16
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\protection_bypass\\tpm_bypass.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 16
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 16,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 51,
+      "row": 24
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\resources\\resource_manager.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 24
+    },
+    "message": "Import from `collections.abc` instead: `Generator`",
+    "noqa_row": 24,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 28,
+      "row": 13
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\serial_generator.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 13
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 13,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 28,
+      "row": 28
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\dashboard\\dashboard_integration.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 28
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 28,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 33,
+      "row": 29
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\dashboard\\dashboard_manager.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 29
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 29,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 33,
+      "row": 25
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\dashboard\\live_data_pipeline.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 25
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 25,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 48,
+      "row": 32
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\dashboard\\real_time_dashboard.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 32
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 32,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 33,
+      "row": 30
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\dashboard\\websocket_stream.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 30
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 30,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 67,
+      "row": 28
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\aiohttp_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 28
+    },
+    "message": "Import from `collections.abc` instead: `Awaitable`, `Callable`",
+    "noqa_row": 28,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 67,
+      "row": 28
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\aiohttp_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 28
+    },
+    "message": "`typing.Dict` is deprecated, use `dict` instead",
+    "noqa_row": 28,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 67,
+      "row": 28
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\aiohttp_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 28
+    },
+    "message": "`typing.Tuple` is deprecated, use `tuple` instead",
+    "noqa_row": 28,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 56,
+      "row": 28
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\capstone_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 28
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 28,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 56,
+      "row": 28
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\capstone_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 28
+    },
+    "message": "`typing.List` is deprecated, use `list` instead",
+    "noqa_row": 28,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 45,
+      "row": 25
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\cryptography_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 25
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 25,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 62,
+      "row": 35
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\frida_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 35
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 35,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 62,
+      "row": 35
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\frida_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 35
+    },
+    "message": "`typing.Dict` is deprecated, use `dict` instead",
+    "noqa_row": 35,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 62,
+      "row": 35
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\frida_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 35
+    },
+    "message": "`typing.List` is deprecated, use `list` instead",
+    "noqa_row": 35,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 69,
+      "row": 22
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\matplotlib_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 22
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 22,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 69,
+      "row": 22
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\matplotlib_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 22
+    },
+    "message": "`typing.Dict` is deprecated, use `dict` instead",
+    "noqa_row": 22,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 69,
+      "row": 22
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\matplotlib_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 22
+    },
+    "message": "`typing.List` is deprecated, use `list` instead",
+    "noqa_row": 22,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 69,
+      "row": 22
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\matplotlib_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 22
+    },
+    "message": "`typing.Tuple` is deprecated, use `tuple` instead",
+    "noqa_row": 22,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 42,
+      "row": 22
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\pefile_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 22
+    },
+    "message": "`typing.Tuple` is deprecated, use `tuple` instead",
+    "noqa_row": 22,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 60,
+      "row": 24
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\pyelftools_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 24
+    },
+    "message": "Import from `collections.abc` instead: `Iterator`",
+    "noqa_row": 24,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 52,
+      "row": 27
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\requests_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 27
+    },
+    "message": "Import from `collections.abc` instead: `Generator`",
+    "noqa_row": 27,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 52,
+      "row": 27
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\requests_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 27
+    },
+    "message": "`typing.Dict` is deprecated, use `dict` instead",
+    "noqa_row": 27,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 69,
+      "row": 24
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\sqlite3_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 24
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 24,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 69,
+      "row": 24
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\sqlite3_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 24
+    },
+    "message": "`typing.Dict` is deprecated, use `dict` instead",
+    "noqa_row": 24,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 69,
+      "row": 24
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\sqlite3_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 24
+    },
+    "message": "`typing.List` is deprecated, use `list` instead",
+    "noqa_row": 24,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 69,
+      "row": 24
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\handlers\\sqlite3_handler.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 24
+    },
+    "message": "`typing.Tuple` is deprecated, use `tuple` instead",
+    "noqa_row": 24,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 35,
+      "row": 23
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\hexview\\print_dialog.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 23
+    },
+    "message": "`typing.Tuple` is deprecated, use `tuple` instead",
+    "noqa_row": 23,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 53,
+      "row": 33
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\custom_modules\\success_rate_analyzer.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 33
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 33,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 33,
+      "row": 22
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\plugin_base.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 22
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 22,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 28,
+      "row": 29
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\plugins\\plugin_system.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 29
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 29,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 33,
+      "row": 40
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\protection\\icp_backend.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 40
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 40,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 28,
+      "row": 27
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\config_manager.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 27
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 27,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 52,
+      "row": 25
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dialogs\\common_imports.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 25
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 25,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 52,
+      "row": 25
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dialogs\\common_imports.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 25
+    },
+    "message": "`typing.Tuple` is deprecated, use `tuple` instead",
+    "noqa_row": 25,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 40,
+      "row": 21
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dialogs\\plugin_creation_wizard.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 21
+    },
+    "message": "`typing.Dict` is deprecated, use `dict` instead",
+    "noqa_row": 21,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 40,
+      "row": 21
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dialogs\\plugin_creation_wizard.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 21
+    },
+    "message": "`typing.List` is deprecated, use `list` instead",
+    "noqa_row": 21,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 52,
+      "row": 21
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dialogs\\script_generator_dialog.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 21
+    },
+    "message": "`typing.Dict` is deprecated, use `dict` instead",
+    "noqa_row": 21,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 52,
+      "row": 21
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dialogs\\script_generator_dialog.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 21
+    },
+    "message": "`typing.List` is deprecated, use `list` instead",
+    "noqa_row": 21,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 34,
+      "row": 26
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\tabs\\settings_tab.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 26
+    },
+    "message": "`typing.Dict` is deprecated, use `dict` instead",
+    "noqa_row": 26,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 43,
+      "row": 30
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\analysis\\binary_analysis.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 30
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 30,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 28,
+      "row": 25
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\binary\\pe_common.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 25
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 25,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 37,
+      "row": 26
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\deprecation_warnings.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 26
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 26,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 52,
+      "row": 24
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\log_message.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 24
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 24,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 28,
+      "row": 30
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\runtime\\runner_functions.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 30
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 30,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 28,
+      "row": 16
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\torch_gil_safety.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 16
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 16,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 28,
+      "row": 21
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\ui\\ui_setup_functions.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 21
+    },
+    "message": "Import from `collections.abc` instead: `Callable`",
+    "noqa_row": 21,
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  }
+]

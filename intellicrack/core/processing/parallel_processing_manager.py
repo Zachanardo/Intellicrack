@@ -153,7 +153,7 @@ class ParallelProcessingManager:
 
         if process_func is None:
             # Default processing function (just returns basic info about the chunk)
-            def process_func(chunk, offset):
+            def process_func(chunk: bytes, offset: int) -> dict[str, int]:
                 return {"offset": offset, "size": len(chunk)}
 
         # Get file size
@@ -180,7 +180,7 @@ class ParallelProcessingManager:
         """
 
         # Define function to read and process chunk
-        def read_and_process_chunk(chunk_idx: int) -> Any | dict[str, Any]:
+        def read_and_process_chunk(chunk_idx: int) -> dict[str, Any]:
             """Read a chunk from the binary file and process it.
 
             Args:

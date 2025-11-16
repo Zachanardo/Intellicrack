@@ -62,7 +62,7 @@ logger = get_logger(__name__)
 class DiffSyntaxHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for diff text."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the DiffSyntaxHighlighter with default values."""
         super().__init__(parent)
 
@@ -92,7 +92,7 @@ class DiffSyntaxHighlighter(QSyntaxHighlighter):
         header_format.setFontWeight(QFont.Bold)
         self.formats["header"] = header_format
 
-    def highlightBlock(self, text) -> None:
+    def highlightBlock(self, text: str) -> None:
         """Highlight a block of diff text."""
         if not text:
             return
@@ -137,7 +137,7 @@ class ModificationAnalysisThread(QThread):
 class CodeModificationDialog(QDialog):
     """Dialog for intelligent code modification with diff viewing."""
 
-    def __init__(self, project_root: str = None, parent=None) -> None:
+    def __init__(self, project_root: str | None = None, parent: QWidget | None = None) -> None:
         """Initialize the CodeModificationDialog with default values."""
         super().__init__(parent)
         self.setWindowTitle("Intelligent Code Modification")
@@ -199,7 +199,7 @@ class CodeModificationDialog(QDialog):
 
         layout.addLayout(status_layout)
 
-    def setup_request_tab(self, tab_widget) -> None:
+    def setup_request_tab(self, tab_widget: QWidget) -> None:
         """Set up the modification request tab."""
         layout = QVBoxLayout(tab_widget)
 
@@ -209,7 +209,7 @@ class CodeModificationDialog(QDialog):
 
         self.description_edit = QTextEdit()
         self.description_edit.setMaximumHeight(100)
-        self.description_edit.setPlaceholderText("Describe what modifications you want to make...")
+        self.description_edit.setToolTip("Describe what modifications you want to make...")
         form_layout.addRow("Description:", self.description_edit)
 
         # Target files
@@ -237,13 +237,13 @@ class CodeModificationDialog(QDialog):
         # Requirements
         self.requirements_edit = QTextEdit()
         self.requirements_edit.setMaximumHeight(80)
-        self.requirements_edit.setPlaceholderText("Enter requirements (one per line)...")
+        self.requirements_edit.setToolTip("Enter requirements (one per line)...")
         form_layout.addRow("Requirements:", self.requirements_edit)
 
         # Constraints
         self.constraints_edit = QTextEdit()
         self.constraints_edit.setMaximumHeight(80)
-        self.constraints_edit.setPlaceholderText("Enter constraints (one per line)...")
+        self.constraints_edit.setToolTip("Enter constraints (one per line)...")
         form_layout.addRow("Constraints:", self.constraints_edit)
 
         layout.addWidget(form_group)
@@ -278,7 +278,7 @@ class CodeModificationDialog(QDialog):
 
         layout.addWidget(context_group)
 
-    def setup_changes_tab(self, tab_widget) -> None:
+    def setup_changes_tab(self, tab_widget: QWidget) -> None:
         """Set up the code changes review tab."""
         layout = QVBoxLayout(tab_widget)
 
@@ -399,7 +399,7 @@ class CodeModificationDialog(QDialog):
 
         layout.addWidget(main_splitter)
 
-    def setup_history_tab(self, tab_widget) -> None:
+    def setup_history_tab(self, tab_widget: QWidget) -> None:
         """Set up the modification history tab."""
         layout = QVBoxLayout(tab_widget)
 
@@ -783,7 +783,7 @@ class CodeModificationDialog(QDialog):
             logger.error(f"Error refreshing history: {e}")
             QMessageBox.critical(self, "Error", f"Error refreshing history:\n{e}")
 
-    def closeEvent(self, event) -> None:
+    def closeEvent(self, event: object) -> None:
         """Handle dialog close."""
         # Cancel any running analysis
         if self.analysis_thread and self.analysis_thread.isRunning():

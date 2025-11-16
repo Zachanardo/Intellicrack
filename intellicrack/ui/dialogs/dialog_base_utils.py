@@ -16,18 +16,25 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from typing import Callable
+
 from intellicrack.handlers.pyqt6_handler import QHBoxLayout, QProgressBar, QPushButton
 
 
-def create_standard_control_layout(buttons_config, include_progress=True):
+def create_standard_control_layout(
+    buttons_config: list[tuple[str, bool, Callable[[bool], None] | None]],
+    include_progress: bool = True,
+) -> tuple[QHBoxLayout, dict[str, QPushButton], QProgressBar | None]:
     """Create a standard control layout with buttons and optional progress bar.
 
     Args:
-        buttons_config: List of tuples (text, enabled, callback) for buttons
-        include_progress: Whether to include a progress bar
+        buttons_config: List of tuples containing (button_text, enabled_state, callback_function).
+            Each tuple specifies a button's text, initial enabled state, and optional click callback.
+        include_progress: Whether to include a progress bar in the layout. Defaults to True.
 
     Returns:
-        tuple: (layout, buttons_dict, progress_bar)
+        A tuple containing the control layout, a dictionary mapping button keys to QPushButton objects,
+        and an optional QProgressBar (None if include_progress is False).
 
     """
     control_layout = QHBoxLayout()

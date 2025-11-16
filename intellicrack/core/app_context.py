@@ -22,7 +22,6 @@ configuration, state management, and shared resources across the application.
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import PYQT6_AVAILABLE, QObject, pyqtSignal
 from intellicrack.utils.logger import get_logger
@@ -348,7 +347,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
             self._state["active_tasks"][task_id]["progress"] = progress
             self.task_progress.emit(task_id, progress)
 
-    def complete_task(self, task_id: str, result: Any = None) -> None:
+    def complete_task(self, task_id: str, result: object = None) -> None:
         """Mark a task as completed."""
         if task_id in self._state["active_tasks"]:
             task_info = self._state["active_tasks"].pop(task_id)
@@ -380,7 +379,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
         return self._state["active_tasks"]
 
     # Settings Management
-    def set_setting(self, key: str, value: Any) -> None:
+    def set_setting(self, key: str, value: object) -> None:
         """Update a setting value."""
         old_value = self._state["settings"].get(key)
         self._state["settings"][key] = value
@@ -392,7 +391,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
 
         self.settings_changed.emit(key, value)
 
-    def get_setting(self, key: str, default: Any = None) -> Any:
+    def get_setting(self, key: str, default: object = None) -> object:
         """Get a setting value."""
         return self._state["settings"].get(key, default)
 

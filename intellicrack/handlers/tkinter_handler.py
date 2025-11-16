@@ -1259,7 +1259,7 @@ except ImportError as e:
                 Selected filename path.
 
             """
-            default_file = os.path.join(initialdir or os.getcwd(), "sample_file.txt")
+            default_file = os.path.join(initialdir or str(Path.cwd()), "sample_file.txt")
             logger.info("OPEN FILE Dialog '%s': Would return '%s'", title, default_file)
             return default_file
 
@@ -1277,7 +1277,7 @@ except ImportError as e:
                 Selected filename path.
 
             """
-            default_file = os.path.join(initialdir or os.getcwd(), "output_file.txt")
+            default_file = os.path.join(initialdir or str(Path.cwd()), "output_file.txt")
             logger.info("SAVE FILE Dialog '%s': Would return '%s'", title, default_file)
             return default_file
 
@@ -1294,7 +1294,7 @@ except ImportError as e:
                 Selected directory path.
 
             """
-            default_dir = initialdir or os.getcwd()
+            default_dir = initialdir or str(Path.cwd())
             logger.info("DIRECTORY Dialog '%s': Would return '%s'", title, default_dir)
             return default_dir
 
@@ -1312,7 +1312,7 @@ except ImportError as e:
                 List of selected filename paths.
 
             """
-            default_files = [os.path.join(initialdir or os.getcwd(), "file1.txt"), os.path.join(initialdir or os.getcwd(), "file2.txt")]
+            default_files = [os.path.join(initialdir or str(Path.cwd()), "file1.txt"), os.path.join(initialdir or str(Path.cwd()), "file2.txt")]
             logger.info("OPEN FILES Dialog '%s': Would return %s", title, default_files)
             return default_files
 

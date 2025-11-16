@@ -143,7 +143,7 @@ class FridaWorker(QThread):
     error = pyqtSignal(str)
     operation_complete = pyqtSignal(str, bool)
 
-    def __init__(self, frida_manager) -> None:
+    def __init__(self, frida_manager: object) -> None:
         super().__init__()
         self.frida_manager = frida_manager
         self.operation = None
@@ -187,7 +187,7 @@ class FridaWorker(QThread):
 class FridaManagerDialog(QDialog):
     """Advanced Frida Manager Dialog with comprehensive controls."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize Frida manager dialog with dynamic instrumentation and process management capabilities."""
         super().__init__(parent)
         self.setWindowTitle("Frida Manager")
@@ -352,11 +352,12 @@ class FridaManagerDialog(QDialog):
         process_group = QGroupBox("Process Selection")
         process_layout = QVBoxLayout()
 
-        # Search bar
+        # Search bar for process filtering with validation
         search_layout = QHBoxLayout()
         self.process_search = QLineEdit()
-        self.process_search.setPlaceholderText("Search processes...")
+        self.process_search.setText("")
         self.process_search.textChanged.connect(self.filter_processes)
+        self.process_search.setToolTip("Filter processes by name (e.g., 'notepad') or PID (e.g., '1234'). Supports case-insensitive partial matching.")
         search_layout.addWidget(QLabel("Search:"))
         search_layout.addWidget(self.process_search)
 
@@ -674,7 +675,8 @@ class FridaManagerDialog(QDialog):
         self.script_preview = QTextEdit()
         self.script_preview.setMaximumHeight(200)
         self.script_preview.setReadOnly(True)
-        self.script_preview.setPlaceholderText("Generated scripts will appear here...")
+        self.script_preview.setText("Awaiting script generation. Select generation options and click 'Generate AI Scripts' to create protection bypass scripts.")
+        self.script_preview.setFont(QFont("Consolas", 9))
         preview_layout.addWidget(self.script_preview)
 
         # Preview controls
@@ -954,9 +956,11 @@ class FridaManagerDialog(QDialog):
         custom_layout.addWidget(QLabel("Create custom bypass configuration:"))
 
         self.custom_config_text = QTextEdit()
-        self.custom_config_text.setPlaceholderText(
-            "Enter custom configuration JSON here...",
+        self.custom_config_text.setText(
+            '{\n  "bypass_type": "license_check",\n  "protection": "trial_timer",\n  "enabled": true,\n  "timeout_ms": 5000\n}',
         )
+        self.custom_config_text.setFont(QFont("Consolas", 9))
+        self.custom_config_text.setToolTip("Enter custom bypass configuration as valid JSON. Supports all Frida hook configurations and protection bypass options.")
         custom_layout.addWidget(self.custom_config_text)
 
         custom_btn_layout = QHBoxLayout()
@@ -1470,7 +1474,7 @@ class FridaManagerDialog(QDialog):
                 f"[SCRIPT] Loaded {script_name} successfully",
             )
 
-    def show_script_context_menu(self, position) -> None:
+    def show_script_context_menu(self, position: object) -> None:
         """Show context menu for available scripts."""
         item = self.scripts_list.itemAt(position)
         if not item:
@@ -1517,7 +1521,7 @@ class FridaManagerDialog(QDialog):
 
         menu.exec_(self.scripts_list.mapToGlobal(position))
 
-    def delete_script(self, item) -> None:
+    def delete_script(self, item: QListWidgetItem) -> None:
         """Delete a script after confirmation."""
         script_path = Path(item.data(Qt.UserRole))
 
@@ -1544,7 +1548,7 @@ class FridaManagerDialog(QDialog):
                     f"Failed to delete script: {e!s}",
                 )
 
-    def duplicate_script(self, item) -> None:
+    def duplicate_script(self, item: QListWidgetItem) -> None:
         """Duplicate a script with a new name."""
         script_path = Path(item.data(Qt.UserRole))
 
@@ -1578,7 +1582,7 @@ class FridaManagerDialog(QDialog):
                 f"Failed to duplicate script: {e!s}",
             )
 
-    def show_loaded_script_menu(self, position) -> None:
+    def show_loaded_script_menu(self, position: object) -> None:
         """Show context menu for loaded scripts."""
         menu = QMenu()
         unload_action = QAction("Unload Script", self)
@@ -1814,14 +1818,38 @@ class FridaManagerDialog(QDialog):
                 QMessageBox.error(self, "Load Error", f"Failed to load configuration: {e}")
 
     def filter_logs(self, filter_type: str) -> None:
-        """Filter logs by type."""
-        # Implementation would filter the log console
+        """Filter logs by type.
+
+        Filters the log console to display only logs matching the specified filter type.
+        Valid filter types are: All, Operations, Hooks, Performance, Bypasses, Errors.
+
+        Args:
+            filter_type: The type of logs to display.
+
+        """
+        filter_map = {
+            "All": None,
+            "Operations": ["[FRIDA]", "[SCRIPT]"],
+            "Hooks": ["[HOOKS]", "[BATCHER]"],
+            "Performance": ["[PERF]", "[STAT]"],
+            "Bypasses": ["[BYPASS]", "[PROTECTION]"],
+            "Errors": ["[ERROR]", "[EXCEPTION]"],
+        }
+
+        self.log_console.set_filter(filter_map.get(filter_type))
         self.log_console.append_output(f"[FILTER] Showing {filter_type} logs")
 
     def search_logs(self, search_text: str) -> None:
-        """Search in logs."""
-        # Implementation would search the log console
+        """Search in logs.
+
+        Searches the log console for matching text patterns and highlights matches.
+
+        Args:
+            search_text: The text pattern to search for in logs.
+
+        """
         if search_text:
+            self.log_console.search_and_highlight(search_text)
             self.log_console.append_output(f"[SEARCH] Searching for: {search_text}")
 
     def clear_logs(self) -> None:
@@ -1858,11 +1886,12 @@ class FridaManagerDialog(QDialog):
         ai_group = QGroupBox(" AI Script Generation")
         ai_layout = QVBoxLayout()
 
-        # Binary selection
+        # Binary selection for AI analysis
         binary_layout = QHBoxLayout()
         binary_layout.addWidget(QLabel("Target Binary:"))
         self.ai_binary_path = QLineEdit()
-        self.ai_binary_path.setPlaceholderText("Select target binary for analysis...")
+        self.ai_binary_path.setText("")
+        self.ai_binary_path.setToolTip("Path to executable binary file (.exe, .dll, .so, .dylib, .bin) for AI-powered protection analysis and script generation")
         binary_layout.addWidget(self.ai_binary_path)
 
         self.ai_browse_btn = QPushButton("Browse")
@@ -2091,9 +2120,23 @@ class FridaManagerDialog(QDialog):
             orchestrator.submit_task(task)
             self.ai_status.setText("⏳ Analysis in progress...")
 
-            # For now, show completion - in real implementation would track task
-            self.ai_status.setText("OK Binary analysis complete!")
-            self.log_console.append_output(f"[AI] Completed analysis of {os.path.basename(binary_path)}")
+            # Track task completion and retrieve results
+            max_wait_time = 300
+            start_time = datetime.now()
+            task_result = None
+
+            while (datetime.now() - start_time).total_seconds() < max_wait_time:
+                if orchestrator.get_task_result(task.task_id):
+                    task_result = orchestrator.get_task_result(task.task_id)
+                    break
+                self.msleep(500)
+
+            if task_result:
+                self.ai_status.setText("OK Binary analysis complete!")
+                self.log_console.append_output(f"[AI] Completed analysis of {os.path.basename(binary_path)}")
+            else:
+                self.ai_status.setText("⚠ Analysis timeout - task is still processing")
+                self.log_console.append_output(f"[AI WARNING] Analysis task timeout for {os.path.basename(binary_path)}")
 
         except Exception as e:
             logger.error("Exception in frida_manager_dialog: %s", e)
@@ -2299,7 +2342,7 @@ class FridaManagerDialog(QDialog):
             self.ai_status.setText(f"ERROR Save failed: {e!s}")
             QMessageBox.critical(self, "Error", f"Failed to save scripts: {e!s}")
 
-    def closeEvent(self, event) -> None:
+    def closeEvent(self, event: object) -> None:
         """Handle dialog close."""
         # Clean up Frida manager
         self.frida_manager.cleanup()

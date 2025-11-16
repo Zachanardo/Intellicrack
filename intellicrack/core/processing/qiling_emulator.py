@@ -27,6 +27,7 @@ import threading
 import time
 import traceback
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from intellicrack.utils.logger import logger
@@ -208,7 +209,7 @@ class QilingEmulator:
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         rootfs_dirs = [
             os.path.join(os.path.dirname(__file__), "rootfs", self.ostype),
-            os.path.join(os.getcwd(), "rootfs", self.ostype),
+            os.path.join(str(Path.cwd()), "rootfs", self.ostype),
             os.path.join(project_root, "tools", "qiling", "rootfs", self.ostype),
             os.path.join(os.path.expanduser("~"), ".qiling", "rootfs", self.ostype),
         ]
@@ -249,7 +250,7 @@ class QilingEmulator:
             {
                 "host": host_path,
                 "guest": guest_path,
-                "type": "directory" if os.path.isdir(host_path) else "file",
+                "type": "directory" if Path(host_path).is_dir() else "file",
             },
         )
 
@@ -1024,7 +1025,7 @@ def run_qiling_emulation(binary_path: str, options: dict[str, Any] = None) -> di
         return results
 
     except (OSError, ValueError, RuntimeError) as e:
-        logging.exception("Qiling emulation failed: %s", e)
+        logger.exception("Qiling emulation failed: %s", e)
         return {
             "status": "error",
             "error": str(e),

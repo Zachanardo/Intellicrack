@@ -89,7 +89,7 @@ from intellicrack.core.certificate.api_signatures import (
     get_library_type,
     get_signatures_by_library,
 )
-from intellicrack.core.certificate.binary_scanner import BinaryScanner
+from intellicrack.core.certificate.binary_scanner import BinaryScanner, ContextInfo
 from intellicrack.core.certificate.detection_report import (
     BypassMethod,
     DetectionReport,
@@ -236,7 +236,7 @@ class CertificateValidationDetector:
             if func.confidence >= self.min_confidence
         ]
 
-    def _analyze_licensing_context(self, context) -> bool:
+    def _analyze_licensing_context(self, context: ContextInfo) -> bool:
         """Determine if an API call is in a licensing-related context.
 
         Args:
@@ -266,7 +266,7 @@ class CertificateValidationDetector:
 
         return False
 
-    def _assess_patch_safety(self, address: int, context) -> str:
+    def _assess_patch_safety(self, address: int, context: ContextInfo) -> str:
         """Assess the risk level of patching at a specific address.
 
         Args:

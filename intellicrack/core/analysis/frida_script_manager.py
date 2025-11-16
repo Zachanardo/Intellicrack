@@ -94,8 +94,13 @@ class FridaScriptManager:
         self._load_script_configs()
 
     def _generate_mac_address(self) -> str:
-        """Generate a realistic MAC address."""
-        # Use common OUI (Organizationally Unique Identifier) prefixes
+        """Generate a realistic MAC address for hardware ID spoofing.
+
+        Returns:
+            A valid MAC address string in standard format (XX:XX:XX:XX:XX:XX)
+            with real OUI prefixes from known vendors.
+
+        """
         oui_prefixes = [
             "00:1B:44",  # Cisco
             "00:50:56",  # VMware
@@ -106,31 +111,35 @@ class FridaScriptManager:
             "00:25:90",  # Dell
             "00:1C:42",  # Parallels
         ]
-        # Note: Using random module for generating fake MAC addresses, not cryptographic purposes
         prefix = random.choice(oui_prefixes)  # noqa: S311
-        # Generate random last 3 octets
-        # Note: Using random module for generating fake MAC addresses, not cryptographic purposes
         suffix = ":".join([f"{random.randint(0, 255):02X}" for _ in range(3)])  # noqa: S311
         return f"{prefix}:{suffix}"
 
     def _generate_disk_serial(self) -> str:
-        """Generate a realistic disk serial number."""
-        # Common disk serial formats
+        """Generate a realistic disk serial number for hardware ID spoofing.
+
+        Returns:
+            A formatted disk serial string mimicking real disk manufacturer formats
+            (e.g., WD-1234-ABCDEF12).
+
+        """
         prefixes = ["WD", "ST", "HGST", "TOSHIBA", "SAMSUNG", "INTEL"]
-        # Note: Using random module for generating fake disk serials, not cryptographic purposes
         prefix = random.choice(prefixes)  # noqa: S311
-        # Generate alphanumeric serial
-        # Note: Using random module for generating fake disk serials, not cryptographic purposes
         serial_parts = [prefix, f"{random.randint(1000, 9999)}", "".join(random.choices("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k=8))]  # noqa: S311
         return "-".join(serial_parts)
 
     def _generate_motherboard_id(self) -> str:
-        """Generate a realistic motherboard ID."""
+        """Generate a realistic motherboard ID for hardware ID spoofing.
+
+        Returns:
+            A formatted motherboard identifier string combining manufacturer,
+            model series, chipset, and serial (e.g., ASUS-PRIME-Z790-A1B2C3D4E5F6).
+
+        """
         manufacturers = ["ASUS", "MSI", "GIGABYTE", "ASROCK", "BIOSTAR", "EVGA"]
         models = ["PRIME", "ROG", "TUF", "GAMING", "PRO", "MASTER"]
         chipsets = ["Z790", "B760", "H610", "X670", "B650", "A620"]
 
-        # Note: Using random module for generating fake motherboard IDs, not cryptographic purposes
         manufacturer = random.choice(manufacturers)  # noqa: S311
         model = random.choice(models)  # noqa: S311
         chipset = random.choice(chipsets)  # noqa: S311
@@ -139,8 +148,13 @@ class FridaScriptManager:
         return f"{manufacturer}-{model}-{chipset}-{serial}"
 
     def _generate_cpu_id(self) -> str:
-        """Generate a realistic CPU ID."""
-        # Intel CPU families and models
+        """Generate a realistic CPU ID for hardware ID spoofing.
+
+        Returns:
+            A formatted CPU identifier string combining brand, family, model,
+            and a hash-based serial (e.g., Intel-Core-i9-13900K-A1B2C3D4E5F6G7H8).
+
+        """
         cpu_families = [
             ("Intel", "Core-i9", "13900K"),
             ("Intel", "Core-i7", "13700K"),
@@ -150,10 +164,7 @@ class FridaScriptManager:
             ("AMD", "Ryzen-5", "7600X"),
         ]
 
-        # Note: Using random module for generating fake CPU IDs, not cryptographic purposes
         brand, family, model = random.choice(cpu_families)  # noqa: S311
-        # Generate a CPUID-like string
-        # Note: Using random module for generating fake CPU IDs, not cryptographic purposes
         cpuid_hash = hashlib.sha256(f"{brand}{family}{model}{random.random()}".encode()).hexdigest()[:16].upper()  # noqa: S311
 
         return f"{brand}-{family}-{model}-{cpuid_hash}"
@@ -384,7 +395,7 @@ class FridaScriptManager:
             script = session.create_script(script_content)
 
             # Set up message handler
-            def on_message(message, data) -> None:
+            def on_message(message: dict[str, Any], data: bytes | None) -> None:
                 self._handle_message(result, message, data, output_callback)
 
             script.on("message", on_message)
@@ -435,8 +446,16 @@ class FridaScriptManager:
 
         return "\n".join(js_params)
 
-    def _handle_message(self, result: ScriptResult, message: dict[str, Any], data: Any, callback: Callable | None) -> None:
-        """Handle messages from Frida script."""
+    def _handle_message(self, result: ScriptResult, message: dict[str, Any], data: bytes | None, callback: Callable | None) -> None:
+        """Handle messages from Frida script.
+
+        Args:
+            result: ScriptResult object to accumulate execution results
+            message: Message dictionary from Frida containing type and payload
+            data: Optional binary data attached to the message (e.g., memory dumps)
+            callback: Optional callback function for real-time output handling
+
+        """
         try:
             msg_type = message.get("type")
 

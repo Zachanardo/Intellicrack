@@ -74,8 +74,17 @@ class VMTableModel(QAbstractTableModel):
             parent = QModelIndex()
         return len(self.headers)
 
-    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
-        """Return data for display."""
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> object:
+        """Return data for display.
+
+        Args:
+            index: The model index of the cell to retrieve data for.
+            role: The data role to retrieve (defaults to DisplayRole).
+
+        Returns:
+            The data at the specified index and role, or QVariant() if invalid.
+
+        """
         if not index.isValid() or index.row() >= len(self.vm_data):
             return QVariant()
 
@@ -108,8 +117,18 @@ class VMTableModel(QAbstractTableModel):
 
         return QVariant()
 
-    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
-        """Return header data."""
+    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole) -> object:
+        """Return header data.
+
+        Args:
+            section: The section index for the header.
+            orientation: The orientation of the header (Horizontal or Vertical).
+            role: The data role to retrieve (defaults to DisplayRole).
+
+        Returns:
+            The header text for the section, or QVariant() if invalid.
+
+        """
         if role == Qt.ItemDataRole.DisplayRole and orientation == Qt.Orientation.Horizontal:
             if 0 <= section < len(self.headers):
                 return self.headers[section]
@@ -125,7 +144,7 @@ class VMTableModel(QAbstractTableModel):
 class VMManagerDialog(QDialog):
     """Dialog for managing QEMU virtual machines."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: object | None = None) -> None:
         """Initialize the VM Manager dialog for QEMU virtual machine management."""
         super().__init__(parent)
         self.qemu_manager = QEMUManager()

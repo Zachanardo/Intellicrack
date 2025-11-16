@@ -63,7 +63,7 @@ class InterceptedPacket:
     packet_size: int
     flags: dict[str, bool]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize flags if not provided."""
         if not self.flags:
             self.flags = {"syn": False, "ack": False, "fin": False, "rst": False}
@@ -333,7 +333,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             self.logger.info(f"Starting Scapy capture with filter: {filter_expr}")
 
             # Define packet processing function
-            def process_license_packet(packet, IP, TCP) -> None:
+            def process_license_packet(packet: object, IP: object, TCP: object) -> None:
                 """Process packets for license interception."""
                 if TCP in packet:
                     tcp_layer = packet[TCP]

@@ -583,14 +583,14 @@ class TrialResetEngine:
         for file_path in trial_info.files:
             if os.path.exists(file_path):
                 # Get file timestamps
-                stat = os.stat(file_path)
+                stat = Path(file_path).stat()
                 creation_time = datetime.datetime.fromtimestamp(stat.st_ctime)
                 logger.debug(f"File {file_path} creation time: {creation_time}")
 
                 trial_info.install_date = min(trial_info.install_date, creation_time)
         logger.debug(f"Finished extracting trial details. Final Install Date: {trial_info.install_date}, Trial Days: {trial_info.trial_days}, Usage Count: {trial_info.usage_count}")
 
-    def _parse_date(self, date_value: Any) -> datetime.datetime:
+    def _parse_date(self, date_value: int | str) -> datetime.datetime:
         """Parse various date formats."""
         if isinstance(date_value, int):
             # Unix timestamp
@@ -884,7 +884,7 @@ class TrialResetEngine:
                             logger.debug(f"Successfully deleted common ADS {ads_path}.")
 
                     # Recursively check subdirectories for ADS
-                    if os.path.isdir(base_path):
+                    if Path(base_path).is_dir():
                         logger.debug(f"Recursively clearing ADS in directory: {base_path}")
                         self._clear_directory_ads(base_path, remove_ads_from_file)
 
@@ -906,7 +906,7 @@ class TrialResetEngine:
                     self._clear_directory_ads(dir_path, remove_ads_from_file, max_depth=1)
         logger.debug("Finished clearing alternate data streams.")
 
-    def _clear_directory_ads(self, directory: str, remove_func, max_depth: int = 5) -> None:
+    def _clear_directory_ads(self, directory: str, remove_func: object, max_depth: int = 5) -> None:
         """Recursively clear alternate data streams from directory."""
         try:
             for root, dirs, files in os.walk(directory):
@@ -1211,7 +1211,7 @@ class TimeManipulator:
 
     def freeze_time_for_app(self, process_name: str, frozen_time: datetime.datetime) -> bool:
         """Freeze time for specific application."""
-        import ctypes.wintypes as wintypes
+        from ctypes import wintypes
 
         kernel32 = ctypes.windll.kernel32
 
@@ -1222,7 +1222,7 @@ class TimeManipulator:
         PAGE_EXECUTE_READWRITE = 0x40
 
         # Find target process
-        def find_process_by_name(name):
+        def find_process_by_name(name: str) -> list[int]:
             """Find process ID by name."""
             processes = []
             logger.debug(f"Searching for process '{name}' to freeze time.")
@@ -1262,7 +1262,7 @@ class TimeManipulator:
 
         # Hook code to inject
 
-        def inject_time_hooks(pid, frozen_time) -> bool:
+        def inject_time_hooks(pid: int, frozen_time: datetime.datetime) -> bool:
             """Inject time hooks into target process."""
             logger.debug(f"Injecting time hooks into PID {pid} for frozen time: {frozen_time}")
             # Open process

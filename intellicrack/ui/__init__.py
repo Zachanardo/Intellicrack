@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 _lazy_imports = {}
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> object:
     """Lazy load UI module attributes to prevent circular imports."""
     if name in _lazy_imports:
         return _lazy_imports[name]

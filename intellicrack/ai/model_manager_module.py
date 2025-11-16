@@ -508,7 +508,7 @@ class ModelManager:
         if file_ext == "json" and os.path.exists(model_path.replace(".json", ".bin")):
             return "tensorflow"
 
-        if os.path.isdir(model_path):
+        if Path(model_path).is_dir():
             # Check for TensorFlow SavedModel format
             if os.path.exists(os.path.join(model_path, "saved_model.pb")):
                 return "savedmodel"
@@ -622,7 +622,7 @@ class ModelManager:
         """Create a vulnerability detection model using neural networks."""
         if HAS_TORCH:
             import torch
-            import torch.nn as nn
+            from torch import nn
 
             class VulnerabilityDetector(nn.Module):
                 """Neural network for detecting vulnerabilities in binary code patterns."""
@@ -710,7 +710,7 @@ class ModelManager:
         """Create a protection mechanism classifier model."""
         if HAS_TORCH:
             import torch
-            import torch.nn as nn
+            from torch import nn
 
             class ProtectionClassifier(nn.Module):
                 """Classifies protection mechanisms in binaries."""
@@ -794,7 +794,7 @@ class ModelManager:
     def _create_script_generator_model(self) -> object:
         """Create a model to assist in script generation."""
         if HAS_TORCH:
-            import torch.nn as nn
+            from torch import nn
 
             class ScriptGeneratorModel(nn.Module):
                 """LSTM-based model for generating exploitation scripts."""
@@ -869,7 +869,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
         """Create a comprehensive binary analysis model."""
         if HAS_TORCH:
             import torch
-            import torch.nn as nn
+            from torch import nn
 
             class BinaryAnalyzerModel(nn.Module):
                 """Comprehensive binary analysis using CNN + attention."""
@@ -1000,7 +1000,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
             # Try to create a default model
             if model_type == "pytorch":
                 if HAS_TORCH:
-                    import torch.nn as nn
+                    from torch import nn
 
                     # Create a simple neural network as fallback
                     model = nn.Sequential(nn.Linear(100, 50), nn.ReLU(), nn.Linear(50, 10), nn.Softmax(dim=1))

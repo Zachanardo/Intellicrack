@@ -45,7 +45,7 @@ class PreferencesDialog(BaseDialog):
 
     preferences_changed = pyqtSignal()
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: object | None = None) -> None:
         """Initialize the PreferencesDialog with default values."""
         super().__init__(parent, "Preferences")
         self.config = get_config()
@@ -61,7 +61,7 @@ class PreferencesDialog(BaseDialog):
         self.apply_btn = self.button_box.addButton("Apply", self.button_box.ButtonRole.ApplyRole)
         self.apply_btn.clicked.connect(self.apply_preferences)
 
-    def setup_content(self, layout) -> None:
+    def setup_content(self, layout: object | None) -> None:
         """Set up the preferences UI."""
         if not layout:
             layout = QVBoxLayout()
@@ -78,7 +78,7 @@ class PreferencesDialog(BaseDialog):
         self.tab_widget.addTab(self.create_ai_tab(), "AI Settings")
         self.tab_widget.addTab(self.create_hex_viewer_tab(), "Hex Viewer")
 
-    def create_general_tab(self):
+    def create_general_tab(self) -> QWidget:
         """Create the general preferences tab."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
@@ -110,7 +110,7 @@ class PreferencesDialog(BaseDialog):
         layout.addStretch()
         return widget
 
-    def create_execution_tab(self):
+    def create_execution_tab(self) -> QWidget:
         """Create the script execution preferences tab."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
@@ -168,7 +168,7 @@ class PreferencesDialog(BaseDialog):
         layout.addStretch()
         return widget
 
-    def create_security_tab(self):
+    def create_security_tab(self) -> QWidget:
         """Create the security preferences tab."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
@@ -209,7 +209,7 @@ class PreferencesDialog(BaseDialog):
         layout.addStretch()
         return widget
 
-    def create_ai_tab(self):
+    def create_ai_tab(self) -> QWidget:
         """Create the AI settings tab."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
@@ -231,7 +231,6 @@ class PreferencesDialog(BaseDialog):
 
         self.api_key_edit = QLineEdit()
         self.api_key_edit.setEchoMode(QLineEdit.Password)
-        self.api_key_edit.setPlaceholderText("Enter API key...")
         model_layout.addRow("API Key:", self.api_key_edit)
 
         self.max_tokens_spin = QSpinBox()
@@ -259,7 +258,7 @@ class PreferencesDialog(BaseDialog):
         layout.addStretch()
         return widget
 
-    def create_hex_viewer_tab(self):
+    def create_hex_viewer_tab(self) -> QWidget:
         """Create the Hex Viewer preferences tab."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
@@ -493,11 +492,13 @@ class PreferencesDialog(BaseDialog):
             self.config.get("general_preferences.ai_explain_scripts", True),
         )
 
-    def validate_preferences(self):
+    def validate_preferences(self) -> tuple[bool, str]:
         """Validate preference values before saving.
 
         Returns:
-            tuple: (bool, str) - (is_valid, error_message)
+            tuple[bool, str]: A tuple containing (is_valid, error_message) where is_valid
+                indicates if preferences passed validation and error_message contains
+                concatenated validation errors or empty string if valid.
 
         """
         errors = []

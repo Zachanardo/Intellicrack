@@ -19,8 +19,29 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
-def get_base_html_template(title="Intellicrack Report", custom_css="", custom_js="") -> str:
-    """Get base HTML template with common structure."""
+def get_base_html_template(
+    title: str = "Intellicrack Report",
+    custom_css: str = "",
+    custom_js: str = "",
+) -> str:
+    """Generate base HTML template with common structure.
+
+    Provides a standardized HTML framework with consistent styling for analysis
+    reports, including support for custom CSS and JavaScript injection.
+
+    Args:
+        title: Page title displayed in browser tab and header. Defaults to
+            "Intellicrack Report".
+        custom_css: Additional CSS styles to inject into the document head.
+            Defaults to empty string.
+        custom_js: Additional JavaScript to inject into the document head.
+            Defaults to empty string.
+
+    Returns:
+        HTML string containing the opening tags and structure of the document
+        with applied styles and scripts.
+
+    """
     return f"""<!DOCTYPE html>
 <html>
 <head>
@@ -46,8 +67,21 @@ def get_base_html_template(title="Intellicrack Report", custom_css="", custom_js
 <body>"""
 
 
-def get_cfg_html_template(function_name):
-    """Get CFG-specific HTML template."""
+def get_cfg_html_template(function_name: str) -> str:
+    """Generate HTML template for control flow graph visualization.
+
+    Creates an HTML document configured for rendering D3.js-based control flow
+    graph visualizations with licensing-specific node styling and tooltips.
+
+    Args:
+        function_name: Name of the function being analyzed. Used in the page
+            title and report header.
+
+    Returns:
+        HTML string with D3.js library loaded and CFG visualization styles
+        applied.
+
+    """
     custom_css = """
         body { margin: 0; overflow: hidden; }
         .node { stroke: #fff; stroke-width: 1.5px; }
@@ -69,8 +103,16 @@ def get_cfg_html_template(function_name):
     return get_base_html_template(f"CFG: {function_name}", custom_css, custom_js)
 
 
-def get_traffic_html_template():
-    """Get traffic analysis HTML template."""
+def get_traffic_html_template() -> str:
+    """Generate HTML template for license traffic analysis visualization.
+
+    Creates an HTML document configured for displaying network traffic analysis
+    and license communication protocol visualization with centered image display.
+
+    Returns:
+        HTML string with traffic analysis styling applied.
+
+    """
     custom_css = """
         .visualization { text-align: center; margin: 20px 0; }
         .visualization img { max-width: 100%; border: 1px solid #ddd; }
@@ -78,8 +120,20 @@ def get_traffic_html_template():
     return get_base_html_template("License Traffic Analysis Report", custom_css)
 
 
-def get_report_html_template(binary_name):
-    """Get analysis report HTML template."""
+def get_report_html_template(binary_name: str) -> str:
+    """Generate HTML template for comprehensive analysis report.
+
+    Creates an HTML document configured for displaying detailed binary analysis
+    findings with report-specific color scheme and typography styling.
+
+    Args:
+        binary_name: Name or path of the binary being analyzed. Used in the
+            page title and report header.
+
+    Returns:
+        HTML string with analysis report styling applied.
+
+    """
     custom_css = """
         h1 { color: #2c3e50; }
         h2 { color: #3498db; }

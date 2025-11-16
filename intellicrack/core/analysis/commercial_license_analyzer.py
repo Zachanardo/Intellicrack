@@ -21,6 +21,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
+import contextlib
 import re
 import struct
 import sys
@@ -28,14 +29,13 @@ import time
 from pathlib import Path
 from typing import Any
 
+from ...utils.logger import get_logger
+
 print("[DEBUG commercial_license_analyzer] Starting imports...")
 sys.stdout.flush()
 
 print("[DEBUG commercial_license_analyzer] Importing get_logger...")
 sys.stdout.flush()
-import contextlib
-
-from ...utils.logger import get_logger
 
 print("[DEBUG commercial_license_analyzer] get_logger imported OK")
 sys.stdout.flush()
@@ -43,18 +43,33 @@ sys.stdout.flush()
 print("[DEBUG commercial_license_analyzer] Using lazy imports to avoid circular dependencies")
 sys.stdout.flush()
 
-def _get_protocol_fingerprinter():
-    """Lazy import ProtocolFingerprinter to avoid circular import."""
+def _get_protocol_fingerprinter() -> type:
+    """Lazy import ProtocolFingerprinter to avoid circular import.
+
+    Returns:
+        ProtocolFingerprinter class for lazy loading to avoid circular imports.
+
+    """
     from ..network.protocol_fingerprinter import ProtocolFingerprinter
     return ProtocolFingerprinter
 
-def _get_flexlm_parser():
-    """Lazy import FlexLMProtocolParser to avoid circular import."""
+def _get_flexlm_parser() -> type:
+    """Lazy import FlexLMProtocolParser to avoid circular import.
+
+    Returns:
+        FlexLMProtocolParser class for lazy loading to avoid circular imports.
+
+    """
     from ..network.protocols.flexlm_parser import FlexLMProtocolParser
     return FlexLMProtocolParser
 
-def _get_dongle_emulator():
-    """Lazy import HardwareDongleEmulator to avoid circular import."""
+def _get_dongle_emulator() -> type:
+    """Lazy import HardwareDongleEmulator to avoid circular import.
+
+    Returns:
+        HardwareDongleEmulator class for lazy loading to avoid circular imports.
+
+    """
     from ..protection_bypass.dongle_emulator import HardwareDongleEmulator
     return HardwareDongleEmulator
 
@@ -89,24 +104,39 @@ class CommercialLicenseAnalyzer:
         self.bypass_strategies = {}
 
     @property
-    def flexlm_parser(self):
-        """Lazy load FlexLMProtocolParser."""
+    def flexlm_parser(self) -> object:
+        """Lazy load FlexLMProtocolParser.
+
+        Returns:
+            FlexLMProtocolParser instance for analyzing FlexLM license protocols.
+
+        """
         if self._flexlm_parser is None:
             FlexLMProtocolParser = _get_flexlm_parser()
             self._flexlm_parser = FlexLMProtocolParser()
         return self._flexlm_parser
 
     @property
-    def dongle_emulator(self):
-        """Lazy load HardwareDongleEmulator."""
+    def dongle_emulator(self) -> object:
+        """Lazy load HardwareDongleEmulator.
+
+        Returns:
+            HardwareDongleEmulator instance for emulating hardware protection dongles.
+
+        """
         if self._dongle_emulator is None:
             HardwareDongleEmulator = _get_dongle_emulator()
             self._dongle_emulator = HardwareDongleEmulator()
         return self._dongle_emulator
 
     @property
-    def protocol_fingerprinter(self):
-        """Lazy load ProtocolFingerprinter."""
+    def protocol_fingerprinter(self) -> object:
+        """Lazy load ProtocolFingerprinter.
+
+        Returns:
+            ProtocolFingerprinter instance for identifying commercial license protocols.
+
+        """
         if self._protocol_fingerprinter is None:
             ProtocolFingerprinter = _get_protocol_fingerprinter()
             self._protocol_fingerprinter = ProtocolFingerprinter()

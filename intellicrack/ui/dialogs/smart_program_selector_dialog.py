@@ -108,7 +108,7 @@ class ProgramDiscoveryWorker(QThread):
 class SmartProgramSelectorDialog(QDialog):
     """Smart program selector dialog with intelligent discovery."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: object | None = None) -> None:
         """Initialize the smart program selector dialog with UI components and discovery functionality."""
         super().__init__(parent)
         self.setWindowTitle("Smart Program Selector")
@@ -273,7 +273,7 @@ class SmartProgramSelectorDialog(QDialog):
         return self.selected_program
 
 
-def show_smart_program_selector(parent=None) -> ProgramInfo | None:
+def show_smart_program_selector(parent: object | None = None) -> ProgramInfo | None:
     """Show the smart program selector dialog."""
     if not HAS_QT:
         return None

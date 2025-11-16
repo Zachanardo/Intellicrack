@@ -788,8 +788,7 @@ class HardwareFingerPrintSpoofer:
 
     def _install_registry_hooks(self) -> bool:
         """Install registry query hooks."""
-        import ctypes.wintypes as wintypes
-        from ctypes import POINTER, byref, c_ulong, c_void_p, cast, create_string_buffer
+        from ctypes import POINTER, byref, c_ulong, c_void_p, cast, create_string_buffer, wintypes
 
         # Load advapi32.dll for registry functions
         advapi32 = ctypes.windll.advapi32
@@ -901,8 +900,8 @@ class HardwareFingerPrintSpoofer:
                     else None,
                 }
 
-                if value_name in hardware_values and hardware_values[value_name]:
-                    spoofed_value = hardware_values[value_name]
+                spoofed_value = hardware_values.get(value_name)
+                if spoofed_value:
 
                     # Convert to bytes
                     if isinstance(spoofed_value, str):
@@ -965,8 +964,8 @@ class HardwareFingerPrintSpoofer:
                         "ComputerHardwareId": self.spoofed_hardware.system_uuid if self.spoofed_hardware else None,
                     }
 
-                    if value_name in hardware_values and hardware_values[value_name]:
-                        spoofed_value = hardware_values[value_name]
+                    spoofed_value = hardware_values.get(value_name)
+                    if spoofed_value:
                         value_bytes = spoofed_value.encode("utf-16-le") + b"\x00\x00"
 
                         if pdwType:
@@ -1046,8 +1045,7 @@ class HardwareFingerPrintSpoofer:
 
     def _hook_kernel32_dll(self) -> bool:
         """Install hooks for kernel32.dll hardware detection functions."""
-        import ctypes.wintypes as wintypes
-        from ctypes import POINTER, byref, c_ulong, c_void_p, cast
+        from ctypes import POINTER, byref, c_ulong, c_void_p, cast, wintypes
 
         kernel32 = ctypes.windll.kernel32
 
@@ -1254,8 +1252,7 @@ class HardwareFingerPrintSpoofer:
 
     def _hook_setupapi_dll(self) -> bool:
         """Install hooks for SetupAPI device enumeration functions."""
-        import ctypes.wintypes as wintypes
-        from ctypes import POINTER, byref, c_ulong, c_void_p, cast
+        from ctypes import POINTER, byref, c_ulong, c_void_p, cast, wintypes
 
         try:
             setupapi = ctypes.windll.setupapi
@@ -1452,8 +1449,7 @@ class HardwareFingerPrintSpoofer:
 
     def _hook_iphlpapi_dll(self) -> bool:
         """Install hooks for IP Helper API network adapter detection."""
-        import ctypes.wintypes as wintypes
-        from ctypes import POINTER, byref, c_ulong, c_void_p, cast
+        from ctypes import POINTER, byref, c_ulong, c_void_p, cast, wintypes
 
         try:
             iphlpapi = ctypes.windll.iphlpapi
@@ -1694,8 +1690,7 @@ class HardwareFingerPrintSpoofer:
             List of process IDs for WMI provider processes.
 
         """
-        import ctypes.wintypes as wintypes
-        from ctypes import byref, c_ulong, sizeof
+        from ctypes import byref, c_ulong, sizeof, wintypes
 
         kernel32 = ctypes.windll.kernel32
 
@@ -1822,8 +1817,7 @@ class HardwareFingerPrintSpoofer:
 
         """
         matches: list[int] = []
-        import ctypes.wintypes as wintypes
-        from ctypes import byref, c_void_p, create_string_buffer, sizeof
+        from ctypes import byref, c_void_p, create_string_buffer, sizeof, wintypes
 
         # Get system info for memory ranges
         class SystemInfo(ctypes.Structure):
@@ -1908,8 +1902,7 @@ class HardwareFingerPrintSpoofer:
             True if patch succeeded, False otherwise.
 
         """
-        import ctypes.wintypes as wintypes
-        from ctypes import byref, create_string_buffer
+        from ctypes import byref, create_string_buffer, wintypes
 
         # Read current value to verify
         buffer = create_string_buffer(len(old_value))
@@ -2158,8 +2151,9 @@ class HardwareFingerPrintSpoofer:
     def import_configuration(self, config: dict[str, Any]) -> bool:
         """Import spoofing configuration."""
         try:
-            if "spoofed" in config and config["spoofed"]:
-                self.spoofed_hardware = HardwareIdentifiers(**config["spoofed"])
+            spoofed_config = config.get("spoofed")
+            if spoofed_config:
+                self.spoofed_hardware = HardwareIdentifiers(**spoofed_config)
                 return True
         except (AttributeError, Exception) as e:
             logger.debug(f"Failed to import spoofing configuration: {e}")

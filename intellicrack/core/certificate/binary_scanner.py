@@ -390,10 +390,27 @@ class BinaryScanner:
                 logging.getLogger(__name__).debug(f"Failed to close radare2: {e}")
             self.r2_handle = None
 
-    def __enter__(self):
-        """Enter context manager."""
+    def __enter__(self) -> "BinaryScanner":
+        """Enter context manager.
+
+        Returns:
+            BinaryScanner: This instance for use in a with statement
+
+        """
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Exit context manager."""
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object,
+    ) -> None:
+        """Exit context manager.
+
+        Args:
+            exc_type: Exception type if an error occurred
+            exc_val: Exception value if an error occurred
+            exc_tb: Exception traceback if an error occurred
+
+        """
         self.close()

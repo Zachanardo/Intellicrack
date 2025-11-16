@@ -266,7 +266,7 @@ class ModelPerformanceMonitor:
         batch_size: int = 1,
         sequence_length: int = 0,
         error: str | None = None,
-        **kwargs,
+        **kwargs: object,
     ) -> PerformanceMetrics:
         """End tracking an inference and record metrics.
 
@@ -568,7 +568,7 @@ class ModelPerformanceMonitor:
 
         return comparison
 
-    def optimize_for_monitoring(self, model: Any) -> Any:
+    def optimize_for_monitoring(self, model: object) -> object:
         """Optimize model for performance monitoring.
 
         Args:

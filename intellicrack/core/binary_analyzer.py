@@ -58,8 +58,19 @@ try:
 except ImportError:
     logger.warning("Failed to import detect_file_type from ..utils.system.os_detection, using fallback.")
 
-    def detect_file_type(file_path):
-        """Fallback file type detection."""
+    def detect_file_type(file_path: str | Path) -> str:
+        """Fallback file type detection.
+
+        Detects file type based on file extension when the primary detection
+        function is unavailable.
+
+        Args:
+            file_path: Path to the file to analyze
+
+        Returns:
+            File extension lowercase or "unknown" if no extension found
+
+        """
         _, ext = os.path.splitext(file_path)
         return ext.lower() or "unknown"
 
@@ -744,8 +755,23 @@ class BinaryAnalyzer:
         results["recommendations"] = recommendations
         self.logger.debug(f"Generated {len(recommendations)} recommendations.")
 
-    def create_binary_info(self, file_path: str | Path) -> Any | None:
-        """Create BinaryInfo object from file analysis."""
+    def create_binary_info(self, file_path: str | Path) -> object | None:
+        """Create BinaryInfo object from file analysis.
+
+        Generates a BinaryInfo object from comprehensive binary file analysis.
+        Returns None if BinaryInfo class is not available or analysis fails.
+
+        Args:
+            file_path: Path to the binary file to analyze
+
+        Returns:
+            BinaryInfo object containing structured analysis data, or None if
+            BinaryInfo is unavailable or analysis fails
+
+        Raises:
+            Exception: Logged internally if BinaryInfo creation fails
+
+        """
         if not BinaryInfo:
             return None
 

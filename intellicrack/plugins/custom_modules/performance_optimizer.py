@@ -42,6 +42,9 @@ from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.psutil_handler import psutil
 from intellicrack.handlers.sqlite3_handler import sqlite3
 from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, torch
+from intellicrack.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 """
 Performance Optimizer for Intellicrack Framework
@@ -787,7 +790,7 @@ class DatabaseOptimizer:
                 # Create indices for frequently queried columns
                 for column in where_columns:
                     index_name = f"idx_{table}_{column}"
-                    with contextlib.suppress(sqlite3.Error):
+                    with suppress(sqlite3.Error):
                         cursor.execute(f"CREATE INDEX IF NOT EXISTS {index_name} ON {table}({column})")
 
     def get_stats(self) -> dict[str, object]:
@@ -919,7 +922,7 @@ class PerformanceProfiler:
                 time.sleep(1)  # Sample every second
 
             except Exception as e:
-                logging.exception(f"Error in system monitoring: {e}")
+                logger.exception("Error in system monitoring: %s", e)
                 time.sleep(5)
 
     def _get_metrics_summary(self) -> dict[str, object]:
@@ -1155,7 +1158,7 @@ class PerformanceOptimizer:
                 time.sleep(30)  # Optimize every 30 seconds
 
             except Exception as e:
-                logging.exception(f"Error in background optimization: {e}")
+                logger.exception("Error in background optimization: %s", e)
                 time.sleep(60)  # Wait longer on error
 
     def _calculate_performance_score(self, metrics: dict[str, object]) -> float:
@@ -1238,7 +1241,7 @@ class PerformanceOptimizer:
             after_metrics = self.profiler.get_current_metrics()
 
         except Exception as e:
-            logging.exception(f"Error optimizing {component_type}: {e}")
+            logger.exception("Error optimizing %s: %s", component_type, e)
             after_metrics = before_metrics
 
         result = OptimizationResult(
@@ -1359,8 +1362,12 @@ class PerformanceOptimizer:
             memory_delta = end_metrics.get("memory_usage", 0) - start_metrics.get("memory_usage", 0)
 
             # Log comprehensive performance data
-            logging.info(
-                f"Performance tracking for {component_name}: {duration:.3f}s, CPU Δ: {cpu_delta:.2f}%, Memory Δ: {memory_delta:.2f}%",
+            logger.info(
+                "Performance tracking for %s: %.3fs, CPU Δ: %.2f%%, Memory Δ: %.2f%%",
+                component_name,
+                duration,
+                cpu_delta,
+                memory_delta,
             )
 
 

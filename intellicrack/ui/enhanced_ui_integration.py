@@ -60,7 +60,7 @@ logger = get_logger(__name__)
 class EnhancedAnalysisDashboard(QWidget):
     """Enhanced dashboard integrating all radare2 capabilities."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the enhanced analysis dashboard with UI components and logging."""
         super().__init__(parent)
         self.logger = logger
@@ -648,7 +648,7 @@ class EnhancedMainWindow(QMainWindow):
         )
 
 
-def create_enhanced_application():
+def create_enhanced_application() -> tuple[QApplication, EnhancedMainWindow]:
     """Create and return enhanced Intellicrack application."""
     app = QApplication.instance()
     if app is None:
@@ -663,7 +663,7 @@ def create_enhanced_application():
     return app, window
 
 
-def integrate_enhanced_ui_with_existing_app(existing_app) -> bool | None:
+def integrate_enhanced_ui_with_existing_app(existing_app: object) -> bool | None:
     """Integrate enhanced UI features with existing application."""
     try:
         # Add enhanced dashboard if main app has tab widget

@@ -20,22 +20,18 @@ import logging
 import os
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
-# Get the data directory path
-DATA_DIR = Path(__file__).parent
+DATA_DIR: Path = Path(__file__).parent
 
-# Database paths
-C2_SESSIONS_DB = DATA_DIR / "c2_sessions.db"
-PROTOCOL_SIGNATURES = DATA_DIR / "protocol_signatures.json"
+C2_SESSIONS_DB: Path = DATA_DIR / "c2_sessions.db"
+PROTOCOL_SIGNATURES: Path = DATA_DIR / "protocol_signatures.json"
 
-# Template and signature directories
-SIGNATURES_DIR = DATA_DIR / "signatures"
-TEMPLATES_DIR = DATA_DIR / "templates"
-YARA_RULES_DIR = DATA_DIR / "yara_rules"
+SIGNATURES_DIR: Path = DATA_DIR / "signatures"
+TEMPLATES_DIR: Path = DATA_DIR / "templates"
+YARA_RULES_DIR: Path = DATA_DIR / "yara_rules"
 
-# Available YARA rule files
-YARA_RULES = {
+YARA_RULES: dict[str, Path] = {
     'antidebug': YARA_RULES_DIR / "antidebug.yar",
     'compilers': YARA_RULES_DIR / "compilers.yar",
     'licensing': YARA_RULES_DIR / "licensing.yar",
@@ -43,35 +39,50 @@ YARA_RULES = {
     'protections': YARA_RULES_DIR / "protections.yar",
 }
 
-def get_yara_rule_path(rule_name):
+def get_yara_rule_path(rule_name: str) -> Path | None:
     """Get path to a specific YARA rule file.
 
+    Retrieve the file path for a YARA rule by name. This is used to locate
+    YARA rule files for binary analysis and protection detection.
+
     Args:
-        rule_name (str): Name of the rule (antidebug, compilers, licensing, packers, protections)
+        rule_name: Name of the rule (antidebug, compilers, licensing, packers, protections).
 
     Returns:
-        Path: Path to the YARA rule file, or None if not found
+        Path to the YARA rule file if found, None otherwise.
 
     """
     return YARA_RULES.get(rule_name)
 
-def get_available_yara_rules():
-    """Get list of available YARA rule files."""
-    return [name for name, path in YARA_RULES.items() if path.exists()]
+def get_available_yara_rules() -> list[str]:
+    """Get list of available YARA rule files.
 
-def get_data_file(filename):
-    """Get path to a data file in the data directory.
-
-    Args:
-        filename (str): Name of the file
+    Retrieve a list of all YARA rule names that have corresponding files
+    existing in the YARA rules directory.
 
     Returns:
-        Path: Full path to the file
+        List of available YARA rule names.
+
+    """
+    return [name for name, path in YARA_RULES.items() if path.exists()]
+
+def get_data_file(filename: str) -> Path:
+    """Get path to a data file in the data directory.
+
+    Construct the full path to a data file within the package data directory.
+    This is used to access signature templates, databases, and other resources.
+
+    Args:
+        filename: Name of the file to locate.
+
+    Returns:
+        Full path to the file within the data directory.
 
     """
     return DATA_DIR / filename
 
-# Import signature templates if available
+HAS_SIGNATURE_TEMPLATES: bool
+
 try:
     from .signature_templates import *
     logger.debug("Signature templates loaded successfully")

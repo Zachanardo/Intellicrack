@@ -91,7 +91,7 @@ class TerminalHexViewer:
         self.file_size = os.path.getsize(self.filepath)
 
         try:
-            self.file_handle = open(self.filepath, "r+b")
+            self.file_handle = open(self.filepath, "r+b")  # noqa: SIM115
             if MMAP_AVAILABLE and self.file_size > 0:
                 # Use memory mapping for efficient large file handling
                 self.mmap_file = mmap.mmap(self.file_handle.fileno(), 0)

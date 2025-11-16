@@ -21,7 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import json
 import logging
 import os
-from typing import Any
+from typing import Any, Protocol
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -219,7 +219,7 @@ class R2AnalysisWorker(QThread if QThread is not None else object):
 class R2ConfigurationDialog(QDialog if QDialog is not None else object):
     """Dialog for configuring radare2 analysis options."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the radare2 configuration dialog with UI setup."""
         super().__init__(parent)
         self.setWindowTitle("Radare2 Analysis Configuration")
@@ -331,7 +331,7 @@ class R2ConfigurationDialog(QDialog if QDialog is not None else object):
 class R2ResultsViewer(QWidget if QWidget is not None else object):
     """Widget for displaying comprehensive radare2 analysis results."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the radare2 results viewer with UI components."""
         super().__init__(parent)
         self.results_data = {}
@@ -672,7 +672,7 @@ Validation Methods: {", ".join(license_data.get("validation_methods", []))}
 class R2IntegrationWidget(QWidget if QWidget is not None else object):
     """Run widget for radare2 integration UI."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the radare2 integration widget with UI components and analysis functionality."""
         super().__init__(parent)
         self.logger = logging.getLogger(__name__)
@@ -841,12 +841,19 @@ class R2IntegrationWidget(QWidget if QWidget is not None else object):
         self.current_worker = None
 
 
-def create_radare2_tab(parent=None) -> QWidget:
+def create_radare2_tab(parent: QWidget | None = None) -> QWidget:
     """Create and return the radare2 integration tab widget."""
     return R2IntegrationWidget(parent)
 
 
-def integrate_with_main_app(main_app) -> bool:
+class _MainAppProtocol(Protocol):
+    """Protocol for main application object."""
+
+    tab_widget: object
+    binary_path: str | None
+
+
+def integrate_with_main_app(main_app: _MainAppProtocol) -> bool:
     """Integrate radare2 UI with main application."""
     try:
         # Add radare2 tab to main application

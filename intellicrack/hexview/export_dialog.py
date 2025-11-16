@@ -60,7 +60,7 @@ class ExportDialog(QDialog):
         "Data URI": "uri",
     }
 
-    def __init__(self, parent=None, hex_viewer=None) -> None:
+    def __init__(self, parent: object | None = None, hex_viewer: object | None = None) -> None:
         """Initialize export dialog.
 
         Args:

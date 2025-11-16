@@ -100,7 +100,7 @@ class ChecksumWorker(QThread):
 class ChecksumDialog(QDialog):
     """Dialog for calculating checksums and hashes."""
 
-    def __init__(self, parent=None, hex_viewer=None) -> None:
+    def __init__(self, parent: object | None = None, hex_viewer: object | None = None) -> None:
         """Initialize checksum dialog.
 
         Args:

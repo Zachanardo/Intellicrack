@@ -19,6 +19,7 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
+from pathlib import Path
 
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -26,6 +27,7 @@ from PyQt6.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QLabel,
+    QLayout,
     QLineEdit,
     QMessageBox,
     QProgressBar,
@@ -33,6 +35,7 @@ from PyQt6.QtWidgets import (
     QRadioButton,
     QTextEdit,
     QVBoxLayout,
+    QWidget,
 )
 
 from .base_dialog import BaseDialog
@@ -134,7 +137,7 @@ class NodeJSInstallWorker(QThread):
 class NodeJSSetupDialog(BaseDialog):
     """Dialog for Node.js installation setup."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize Node.js setup dialog."""
         super().__init__(parent=parent, title="Node.js Setup Required", width=600, height=500, resizable=False)
         self.install_worker = None
@@ -143,7 +146,7 @@ class NodeJSSetupDialog(BaseDialog):
         # Customize button text
         self.set_ok_text("Proceed")
 
-    def setup_content(self, layout) -> None:
+    def setup_content(self, layout: QLayout) -> None:
         """Initialize the dialog UI content."""
         # Explanation header
         header_label = QLabel(
@@ -183,15 +186,15 @@ class NodeJSSetupDialog(BaseDialog):
         import os
 
         possible_paths = [
-            os.path.join(os.environ.get("ProgramFiles", "C:\\Program Files"), "nodejs"),
-            os.path.join(os.environ.get("ProgramFiles(x86)", "C:\\Program Files (x86)"), "nodejs"),
+            os.path.join(os.environ.get("PROGRAMFILES", "C:\\Program Files"), "nodejs"),
+            os.path.join(os.environ.get("PROGRAMFILES(X86)", "C:\\Program Files (x86)"), "nodejs"),
             os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "nodejs"),
             "C:\\nodejs",
         ]
         # Find first existing Node.js path
         detected_path = ""
         for path in possible_paths:
-            if os.path.exists(path) and os.path.isdir(path):
+            if os.path.exists(path) and Path(path).is_dir():
                 node_exe = os.path.join(path, "node.exe")
                 if os.path.exists(node_exe):
                     detected_path = path
@@ -304,11 +307,11 @@ class NodeJSSetupDialog(BaseDialog):
         self.install_worker.finished.connect(self.on_install_finished)
         self.install_worker.start()
 
-    def on_install_progress(self, message) -> None:
+    def on_install_progress(self, message: str) -> None:
         """Handle installation progress updates."""
         self.progress_text.append(message)
 
-    def on_install_finished(self, success, message) -> None:
+    def on_install_finished(self, success: bool, message: str) -> None:
         """Handle installation completion."""
         self.progress_bar.setVisible(False)
         self.progress_text.append(f"\n{message}")

@@ -103,7 +103,7 @@ class AdvancedAnalysisThread(QThread):
 class EntropyGraphWidget(FigureCanvas):
     """Widget for displaying entropy graph."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize entropy graph widget with matplotlib figure and parent widget."""
         self.figure = Figure(figsize=(8, 4))
         super().__init__(self.figure)
@@ -174,7 +174,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
     #: file_path (type: str)
     analysis_requested = pyqtSignal(str)
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize advanced protection widget with parent widget and UI components."""
         super().__init__(parent)
         self.current_analysis: AdvancedProtectionAnalysis | None = None
@@ -230,8 +230,9 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
 
         # File selection
         self.file_path_edit = QLineEdit()
-        self.file_path_edit.setPlaceholderText("Select file to analyze...")
+        self.file_path_edit.setText("")
         self.file_path_edit.setReadOnly(True)
+        self.file_path_edit.setToolTip("Path to binary executable (EXE, DLL, SO, APK, etc.) for protection analysis")
         controls_layout.addWidget(self.file_path_edit)
 
         self.browse_btn = QPushButton("Browse")

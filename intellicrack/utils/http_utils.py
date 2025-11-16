@@ -120,7 +120,7 @@ class SecureHTTPClient:
 
         return ssl_verify
 
-    def request(self, method: str, url: str, verify: bool | str | None = None, **kwargs) -> requests.Response:
+    def request(self, method: str, url: str, verify: bool | str | None = None, **kwargs: object) -> requests.Response:
         """Make an HTTP request with configurable SSL verification.
 
         Args:
@@ -159,19 +159,19 @@ class SecureHTTPClient:
             logger.error(f"Request failed for {url}: {e}")
             raise
 
-    def get(self, url: str, **kwargs) -> requests.Response:
+    def get(self, url: str, **kwargs: object) -> requests.Response:
         """Make a GET request."""
         return self.request("GET", url, **kwargs)
 
-    def post(self, url: str, **kwargs) -> requests.Response:
+    def post(self, url: str, **kwargs: object) -> requests.Response:
         """Make a POST request."""
         return self.request("POST", url, **kwargs)
 
-    def put(self, url: str, **kwargs) -> requests.Response:
+    def put(self, url: str, **kwargs: object) -> requests.Response:
         """Make a PUT request."""
         return self.request("PUT", url, **kwargs)
 
-    def delete(self, url: str, **kwargs) -> requests.Response:
+    def delete(self, url: str, **kwargs: object) -> requests.Response:
         """Make a DELETE request."""
         return self.request("DELETE", url, **kwargs)
 
@@ -197,7 +197,7 @@ def get_http_client() -> SecureHTTPClient:
     return _http_client
 
 
-def secure_request(method: str, url: str, verify: bool | str | None = None, **kwargs) -> requests.Response:
+def secure_request(method: str, url: str, verify: bool | str | None = None, **kwargs: object) -> requests.Response:
     """Make secure HTTP requests.
 
     This function uses the global HTTP client with proper SSL configuration.
@@ -216,11 +216,11 @@ def secure_request(method: str, url: str, verify: bool | str | None = None, **kw
     return client.request(method, url, verify=verify, **kwargs)
 
 
-def secure_get(url: str, **kwargs) -> requests.Response:
+def secure_get(url: str, **kwargs: object) -> requests.Response:
     """Make secure GET requests."""
     return secure_request("GET", url, **kwargs)
 
 
-def secure_post(url: str, **kwargs) -> requests.Response:
+def secure_post(url: str, **kwargs: object) -> requests.Response:
     """Make secure POST requests."""
     return secure_request("POST", url, **kwargs)

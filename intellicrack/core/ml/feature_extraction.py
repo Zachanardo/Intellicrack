@@ -407,7 +407,7 @@ class BinaryFeatureExtractor:
                         score += 0.2
                         matches.append(f'high_entropy:{overall_entropy:.2f}')
 
-                if 'last_section_sig' in patterns and patterns['last_section_sig']:
+                if patterns.get('last_section_sig'):
                     if sections:
                         last_section_data = sections[-1].get('data', b'')
                         for pattern in patterns.get('byte_patterns', []):

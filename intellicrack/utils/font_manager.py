@@ -36,13 +36,13 @@ class FontManager:
         """Initialize the font manager with configuration and setup font directories."""
         from intellicrack.core.config_manager import get_config
 
-        self.fonts_dir = get_resource_path("assets/fonts")
-        self.loaded_fonts = []
+        self.fonts_dir: str = get_resource_path("assets/fonts")
+        self.loaded_fonts: list[str] = []
         # Load configuration from central config system
         self.central_config = get_config()
-        self.config = self._load_config()
+        self.config: dict = self._load_config()
 
-    def _load_config(self):
+    def _load_config(self) -> dict:
         """Load font configuration from central config system."""
         try:
             # Get font configuration from central config
@@ -92,7 +92,7 @@ class FontManager:
                 except Exception as e:
                     logger.warning(f"Failed to load font {font_file}: {e}")
 
-    def get_monospace_font(self, size=None):
+    def get_monospace_font(self, size: int | None = None) -> QFont:
         """Get the best available monospace font."""
         if size is None:
             size = self.config.get("font_sizes", {}).get("code_default", 10)
@@ -116,7 +116,7 @@ class FontManager:
         font.setStyleHint(QFont.StyleHint.Monospace)
         return font
 
-    def get_ui_font(self, size=None):
+    def get_ui_font(self, size: int | None = None) -> QFont:
         """Get the best available UI font."""
         if size is None:
             size = self.config.get("font_sizes", {}).get("ui_default", 10)
@@ -138,10 +138,10 @@ class FontManager:
 
 
 # Global font manager instance
-_font_manager = None
+_font_manager: FontManager | None = None
 
 
-def get_font_manager():
+def get_font_manager() -> FontManager:
     """Get or create the global font manager."""
     global _font_manager
     if _font_manager is None:

@@ -999,7 +999,7 @@ class CryptographicRoutineDetector:
                 detection.mode = "Software (T-tables)"
                 detection.confidence = min(1.0, detection.confidence + 0.05)
 
-            if "obfuscated" in detection.details and detection.details["obfuscated"]:
+            if detection.details.get("obfuscated"):
                 detection.details["implementation"] = "obfuscated"
 
     def _fingerprint_rsa(self, detections: list[CryptoDetection]) -> None:

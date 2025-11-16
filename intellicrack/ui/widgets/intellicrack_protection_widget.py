@@ -122,7 +122,7 @@ class IntellicrackProtectionWidget(QWidget):
     #: file_path (type: str)
     analysis_requested = pyqtSignal(str)
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize protection widget with parent widget, AI assistant components, and UI setup."""
         super().__init__(parent)
         self.current_analysis: ProtectionAnalysis | None = None
@@ -456,8 +456,13 @@ class IntellicrackProtectionWidget(QWidget):
             # Display bypass recommendations
             self.display_bypass_recommendations(detection)
 
-    def display_bypass_recommendations(self, detection) -> None:
-        """Display bypass recommendations for selected detection."""
+    def display_bypass_recommendations(self, detection: object) -> None:
+        """Display bypass recommendations for selected detection.
+
+        Args:
+            detection: Detection object containing protection information and bypass recommendations.
+
+        """
         bypass_lines = []
 
         bypass_lines.append(f"=== Bypass Recommendations for {detection.name} ===\n")
@@ -754,7 +759,7 @@ class IntellicrackProtectionWidget(QWidget):
 
         # Question input
         question_input = QLineEdit()
-        question_input.setPlaceholderText("e.g., 'How do I bypass VMProtect?' or 'What is a dongle protection?'")
+        question_input.setToolTip("Enter your question about protection mechanisms, bypassing techniques, or licensing systems")
         layout.addWidget(question_input)
 
         # Response area

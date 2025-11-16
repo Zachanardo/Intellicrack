@@ -63,7 +63,7 @@ class R2UIManager(QObject):
     #: Signal emitted when binary is loaded (str: binary path)
     binary_loaded = pyqtSignal(str)
 
-    def __init__(self, main_app=None) -> None:
+    def __init__(self, main_app: object | None = None) -> None:
         """Initialize the radare2 UI manager with main application integration."""
         super().__init__()
         self.logger = logger
@@ -123,7 +123,7 @@ class R2UIManager(QObject):
         except Exception as e:
             self.logger.error(f"Failed to setup signal connections: {e}")
 
-    def integrate_with_application(self, main_app) -> bool:
+    def integrate_with_application(self, main_app: object) -> bool:
         """Integrate all radare2 UI components with the main application.
 
         Args:
@@ -220,7 +220,7 @@ class R2UIManager(QObject):
             self.logger.error(f"Failed to integrate with application: {e}")
             return False
 
-    def _integrate_menu_items(self, main_app) -> None:
+    def _integrate_menu_items(self, main_app: object) -> None:
         """Integrate radare2 menu items with main application."""
         try:
             if hasattr(main_app, "menuBar") and main_app.menuBar():
@@ -255,7 +255,7 @@ class R2UIManager(QObject):
         except Exception as e:
             self.logger.error(f"Menu integration failed: {e}")
 
-    def _setup_binary_path_sync(self, main_app) -> None:
+    def _setup_binary_path_sync(self, main_app: object) -> None:
         """Set up binary path synchronization."""
         try:
             # Connect to main app's binary path changes
@@ -272,7 +272,7 @@ class R2UIManager(QObject):
         except Exception as e:
             self.logger.error(f"Binary path sync setup failed: {e}")
 
-    def _integrate_status_bar(self, main_app) -> None:
+    def _integrate_status_bar(self, main_app: object) -> None:
         """Integrate with main application status bar."""
         try:
             if hasattr(main_app, "statusBar") and main_app.statusBar():
@@ -512,12 +512,12 @@ class R2UIManager(QObject):
             self.logger.error(f"Cleanup failed: {e}")
 
 
-def create_r2_ui_manager(main_app=None) -> R2UIManager:
+def create_r2_ui_manager(main_app: object | None = None) -> R2UIManager:
     """Create and return configured R2UIManager instance."""
     return R2UIManager(main_app)
 
 
-def integrate_radare2_ui_comprehensive(main_app) -> R2UIManager:
+def integrate_radare2_ui_comprehensive(main_app: object) -> R2UIManager | None:
     """Comprehensive integration of all radare2 UI features with main application.
 
     This is the main entry point for integrating all radare2 functionality
@@ -527,7 +527,7 @@ def integrate_radare2_ui_comprehensive(main_app) -> R2UIManager:
         main_app: The main Intellicrack application instance
 
     Returns:
-        R2UIManager: Configured UI manager instance
+        R2UIManager: Configured UI manager instance, or None if integration fails
 
     """
     try:

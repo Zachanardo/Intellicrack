@@ -322,9 +322,9 @@ class TestHexViewerWidget:
             hex_displays = self.widget.findChildren(QTextEdit)
             for display in hex_displays:
                 cursor = display.textCursor()
-                format = cursor.charFormat()
+                text_format = cursor.charFormat()
                 # Should have some formatting applied
-                assert format is not None
+                assert text_format is not None
 
     def test_context_menu_real_operations(self, qtbot, sample_binary_file):
         """Test REAL context menu operations."""

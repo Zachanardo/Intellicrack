@@ -47,7 +47,7 @@ FRIDA_PRESETS = None
 FridaBypassWizard = None
 
 
-def get_frida_manager():
+def get_frida_manager() -> type | None:
     """Get FridaManager with lazy import to avoid circular dependencies.
 
     This function implements lazy loading for the FridaManager class to prevent
@@ -81,7 +81,7 @@ def get_frida_manager():
     return FridaManager
 
 
-def get_frida_presets():
+def get_frida_presets() -> dict[str, str] | None:
     """Get FRIDA_PRESETS with lazy import to avoid circular dependencies.
 
     This function implements lazy loading for the FRIDA_PRESETS dictionary
@@ -112,7 +112,7 @@ def get_frida_presets():
     return FRIDA_PRESETS
 
 
-def get_frida_bypass_wizard():
+def get_frida_bypass_wizard() -> type | None:
     """Get FridaBypassWizard with lazy import to avoid circular dependencies.
 
     This function implements lazy loading for the FridaBypassWizard class
@@ -147,7 +147,7 @@ def get_frida_bypass_wizard():
 _lazy_modules = {}
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> object:
     """Lazy load module attributes to prevent circular imports."""
     module_names = [
         'analysis', 'binary_analyzer', 'config_migration_handler', 'debugging_engine',
@@ -207,6 +207,7 @@ __all__ = [
     "FRIDA_MODULES_AVAILABLE",
     "PROTECTION_ANALYZER_AVAILABLE",
     "SECURITY_ENFORCEMENT_AVAILABLE",
+    "ProtectionAnalyzer",
     "analysis",
     "binary_analyzer",
     "config_migration_handler",
@@ -231,7 +232,6 @@ __all__ = [
     "processing",
     "protection_analyzer",
     "protection_bypass",
-    "ProtectionAnalyzer",
     "protocols",
     "reporting",
     "security_enforcement",

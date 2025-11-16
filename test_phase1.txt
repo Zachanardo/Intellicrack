@@ -1,0 +1,255 @@
+
+Starting Intellicrack production-readiness scan...
+Root: intellicrack/config.py
+
+Scanning 1 files...
+DEBUG: File queued for scan: "intellicrack/config.py" (Python)
+DEBUG par_iter: Starting to process "intellicrack/config.py"
+DEBUG analyze_file: analyzing "intellicrack/config.py"
+DEBUG analyze_file: extracted 39 functions
+DEBUG analyze_file: processing function '_ensure_config_manager_imported'
+DEBUG should_exclude_function: checking '_ensure_config_manager_imported'
+  is_domain_specific=false
+  EXCLUDED: private function pattern
+DEBUG analyze_file: function '_ensure_config_manager_imported' was excluded
+DEBUG analyze_file: processing function '_get_modern_config'
+DEBUG should_exclude_function: checking '_get_modern_config'
+  is_domain_specific=false
+  EXCLUDED: private function pattern
+DEBUG analyze_file: function '_get_modern_config' was excluded
+DEBUG analyze_file: processing function 'find_tool'
+DEBUG should_exclude_function: checking 'find_tool'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function 'find_tool' passed exclusion checks
+DEBUG analyze_file: function 'find_tool' matched architectural pattern - skipping all checks
+DEBUG analyze_file: processing function 'get_system_path'
+DEBUG should_exclude_function: checking 'get_system_path'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function 'get_system_path' passed exclusion checks
+DEBUG analyze_file: function 'get_system_path' matched architectural pattern - skipping all checks
+DEBUG analyze_file: processing function '__init__'
+DEBUG should_exclude_function: checking '__init__'
+  is_domain_specific=false
+  EXCLUDED: delegator pattern
+DEBUG analyze_file: function '__init__' was excluded
+DEBUG analyze_file: processing function 'config'
+DEBUG should_exclude_function: checking 'config'
+  is_domain_specific=false
+  EXCLUDED: delegator pattern
+DEBUG analyze_file: function 'config' was excluded
+DEBUG analyze_file: processing function '_build_legacy_config'
+DEBUG should_exclude_function: checking '_build_legacy_config'
+  is_domain_specific=false
+  EXCLUDED: private function pattern
+DEBUG analyze_file: function '_build_legacy_config' was excluded
+DEBUG analyze_file: processing function 'load_config'
+DEBUG should_exclude_function: checking 'load_config'
+  is_domain_specific=false
+  EXCLUDED: delegator pattern
+DEBUG analyze_file: function 'load_config' was excluded
+DEBUG analyze_file: processing function 'save_config'
+DEBUG should_exclude_function: checking 'save_config'
+  is_domain_specific=false
+  EXCLUDED: delegator pattern
+DEBUG analyze_file: function 'save_config' was excluded
+DEBUG analyze_file: processing function 'get'
+DEBUG should_exclude_function: checking 'get'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function 'get' passed exclusion checks
+DEBUG analyze_file: function 'get' matched architectural pattern - skipping all checks
+DEBUG analyze_file: processing function 'set'
+DEBUG should_exclude_function: checking 'set'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function 'set' passed exclusion checks
+DEBUG analyze_file: function 'set' matched architectural pattern - skipping all checks
+DEBUG analyze_file: processing function 'update'
+DEBUG should_exclude_function: checking 'update'
+  is_domain_specific=false
+  EXCLUDED: delegator pattern
+DEBUG analyze_file: function 'update' was excluded
+DEBUG analyze_file: processing function 'get_model_repositories'
+DEBUG should_exclude_function: checking 'get_model_repositories'
+  is_domain_specific=false
+  EXCLUDED: short getter pattern
+DEBUG analyze_file: function 'get_model_repositories' was excluded
+DEBUG analyze_file: processing function 'is_repository_enabled'
+DEBUG should_exclude_function: checking 'is_repository_enabled'
+  is_domain_specific=false
+  EXCLUDED: delegator pattern
+DEBUG analyze_file: function 'is_repository_enabled' was excluded
+DEBUG analyze_file: processing function 'get_ghidra_path'
+DEBUG should_exclude_function: checking 'get_ghidra_path'
+  is_domain_specific=false
+  EXCLUDED: short getter pattern
+DEBUG analyze_file: function 'get_ghidra_path' was excluded
+DEBUG analyze_file: processing function 'get_tool_path'
+DEBUG should_exclude_function: checking 'get_tool_path'
+  is_domain_specific=false
+  EXCLUDED: short getter pattern
+DEBUG analyze_file: function 'get_tool_path' was excluded
+DEBUG analyze_file: processing function 'is_tool_available'
+DEBUG should_exclude_function: checking 'is_tool_available'
+  is_domain_specific=false
+  EXCLUDED: delegator pattern
+DEBUG analyze_file: function 'is_tool_available' was excluded
+DEBUG analyze_file: processing function 'get_logs_dir'
+DEBUG should_exclude_function: checking 'get_logs_dir'
+  is_domain_specific=false
+  EXCLUDED: short getter pattern
+DEBUG analyze_file: function 'get_logs_dir' was excluded
+DEBUG analyze_file: processing function 'get_output_dir'
+DEBUG should_exclude_function: checking 'get_output_dir'
+  is_domain_specific=false
+  EXCLUDED: short getter pattern
+DEBUG analyze_file: function 'get_output_dir' was excluded
+DEBUG analyze_file: processing function 'get_cache_dir'
+DEBUG should_exclude_function: checking 'get_cache_dir'
+  is_domain_specific=false
+  EXCLUDED: short getter pattern
+DEBUG analyze_file: function 'get_cache_dir' was excluded
+DEBUG analyze_file: processing function 'validate_config'
+DEBUG should_exclude_function: checking 'validate_config'
+  is_domain_specific=true
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function 'validate_config' passed exclusion checks
+DEBUG detect_domain_specific: checking function 'validate_config'
+  is_domain_function=true
+  Patterns: code_gen=false, orch=false, deleg=false, llm=false, cli=false, bin_analyzer=false, getter=false, kb=false, prompt=false, factory=false, enh_codegen=false, production=true, enh_analyzer=false
+  Domain function matched pattern - still analyzing with Phase 1 regex
+  actual_loc=5
+DEBUG VALIDATOR CHECK for 'validate_config': has_conditionals=false, RE_UNCONDITIONAL_TRUE matches=true, actual_loc=5
+DEBUG VALIDATOR BODY PREVIEW:     def validate_config(self) -> bool: |         """Validate the current configuration.""" |         logger.debug("ConfigManager.validate_config() called (delegating to modern system).")
+DEBUG PHASE 1 PATTERN MATCHED!
+DEBUG: Phase 1 regex matched - using ONLY Phase 1 results, skipping all other detectors
+DEBUG analyze_file: processing function 'items'
+DEBUG should_exclude_function: checking 'items'
+  is_domain_specific=false
+  EXCLUDED: delegator pattern
+DEBUG analyze_file: function 'items' was excluded
+DEBUG analyze_file: processing function 'keys'
+DEBUG should_exclude_function: checking 'keys'
+  is_domain_specific=false
+  EXCLUDED: delegator pattern
+DEBUG analyze_file: function 'keys' was excluded
+DEBUG analyze_file: processing function 'values'
+DEBUG should_exclude_function: checking 'values'
+  is_domain_specific=false
+  EXCLUDED: delegator pattern
+DEBUG analyze_file: function 'values' was excluded
+DEBUG analyze_file: processing function '__getitem__'
+DEBUG should_exclude_function: checking '__getitem__'
+  is_domain_specific=false
+  EXCLUDED: private function pattern
+DEBUG analyze_file: function '__getitem__' was excluded
+DEBUG analyze_file: processing function '__setitem__'
+DEBUG should_exclude_function: checking '__setitem__'
+  is_domain_specific=false
+  EXCLUDED: private function pattern
+DEBUG analyze_file: function '__setitem__' was excluded
+DEBUG analyze_file: processing function '__contains__'
+DEBUG should_exclude_function: checking '__contains__'
+  is_domain_specific=false
+  EXCLUDED: private function pattern
+DEBUG analyze_file: function '__contains__' was excluded
+DEBUG analyze_file: processing function 'load_config'
+DEBUG should_exclude_function: checking 'load_config'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function 'load_config' passed exclusion checks
+DEBUG analyze_file: function 'load_config' matched architectural pattern - skipping all checks
+DEBUG analyze_file: processing function 'get_config'
+DEBUG should_exclude_function: checking 'get_config'
+  is_domain_specific=false
+  EXCLUDED: delegator pattern
+DEBUG analyze_file: function 'get_config' was excluded
+DEBUG analyze_file: processing function 'save_config'
+DEBUG should_exclude_function: checking 'save_config'
+  is_domain_specific=false
+  EXCLUDED: delegator pattern
+DEBUG analyze_file: function 'save_config' was excluded
+DEBUG analyze_file: processing function '__init__'
+DEBUG should_exclude_function: checking '__init__'
+  is_domain_specific=false
+  NOT EXCLUDED - function will be analyzed
+DEBUG analyze_file: function '__init__' passed exclusion checks
+DEBUG detect_domain_specific: checking function '__init__'
+  is_domain_function=false
+  SKIPPED - not a domain function
+DEBUG analyze_file: processing function '_ensure_loaded'
+DEBUG should_exclude_function: checking '_ensure_loaded'
+  is_domain_specific=false
+  EXCLUDED: private function pattern
+DEBUG analyze_file: function '_ensure_loaded' was excluded
+DEBUG analyze_file: processing function '__getitem__'
+DEBUG should_exclude_function: checking '__getitem__'
+  is_domain_specific=false
+  EXCLUDED: private function pattern
+DEBUG analyze_file: function '__getitem__' was excluded
+DEBUG analyze_file: processing function '__setitem__'
+DEBUG should_exclude_function: checking '__setitem__'
+  is_domain_specific=false
+  EXCLUDED: private function pattern
+DEBUG analyze_file: function '__setitem__' was excluded
+DEBUG analyze_file: processing function '__contains__'
+DEBUG should_exclude_function: checking '__contains__'
+  is_domain_specific=false
+  EXCLUDED: private function pattern
+DEBUG analyze_file: function '__contains__' was excluded
+DEBUG analyze_file: processing function 'get'
+DEBUG should_exclude_function: checking 'get'
+  is_domain_specific=false
+  EXCLUDED: delegator pattern
+DEBUG analyze_file: function 'get' was excluded
+DEBUG analyze_file: processing function 'keys'
+DEBUG should_exclude_function: checking 'keys'
+  is_domain_specific=false
+  EXCLUDED: delegator pattern
+DEBUG analyze_file: function 'keys' was excluded
+DEBUG analyze_file: processing function 'values'
+DEBUG should_exclude_function: checking 'values'
+  is_domain_specific=false
+  EXCLUDED: delegator pattern
+DEBUG analyze_file: function 'values' was excluded
+DEBUG analyze_file: processing function 'items'
+DEBUG should_exclude_function: checking 'items'
+  is_domain_specific=false
+  EXCLUDED: delegator pattern
+DEBUG analyze_file: function 'items' was excluded
+Progress: 1/1
+Scan complete!
+Failed to write TODO.md: The system cannot find the path specified. (os error 3)
+Failed to write TODO.xml: The system cannot find the path specified. (os error 3)
+
+# Intellicrack Production-Readiness Issues
+
+**Total Issues:** 1
+
+---
+
+## Python Issues (1 files)
+
+### File: `intellicrack/config.py`
+
+**Issues in this file:** 1
+
+#### 1. [ ] `validate_config()` - HIGH (Line 477)
+
+**Confidence:** 75%
+
+**Issue Type:** `stub_detection`
+
+**Description:** Validator 'validate_config' always returns True without any conditional logic
+
+**Evidence:**
+
+- Validator 'validate_config' always returns True without any conditional logic (+75 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+

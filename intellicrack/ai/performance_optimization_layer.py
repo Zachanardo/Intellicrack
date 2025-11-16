@@ -30,13 +30,13 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, TypeVar
 
-T = TypeVar("T")
-ArgsType = TypeVar("ArgsType")
-KwargsType = TypeVar("KwargsType")
-
 from ..utils.logger import get_logger
 from .learning_engine_simple import get_learning_engine
 from .performance_monitor import profile_ai_operation
+
+T = TypeVar("T")
+ArgsType = TypeVar("ArgsType")
+KwargsType = TypeVar("KwargsType")
 
 logger = get_logger(__name__)
 

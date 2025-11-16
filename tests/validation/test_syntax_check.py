@@ -44,7 +44,8 @@ try:
         print(f"WARNING  Test instantiation issue: {e}")
 
     # Run the summary
-    exec(open('cloud_hooker_test_summary.py').read())
+    with open('cloud_hooker_test_summary.py') as f:
+        exec(f.read())
 
 except Exception as e:
     print(f"FAIL Error: {e}")

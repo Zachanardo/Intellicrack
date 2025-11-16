@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import hashlib
 import json
 import secrets
+import socket
 import struct
 import time
 import xml.etree.ElementTree as ET
@@ -2084,7 +2085,7 @@ class HASPServerEmulator:
             udp_socket.close()
             tcp_socket.close()
 
-    def _handle_udp(self, sock: Any) -> None:
+    def _handle_udp(self, sock: socket.socket) -> None:
         """Handle UDP discovery packets."""
         while self.running:
             try:
@@ -2099,7 +2100,7 @@ class HASPServerEmulator:
                 if self.running:
                     self.logger.error(f"UDP handler error: {e}")
 
-    def _handle_tcp(self, sock: Any) -> None:
+    def _handle_tcp(self, sock: socket.socket) -> None:
         """Handle TCP license requests."""
         while self.running:
             try:

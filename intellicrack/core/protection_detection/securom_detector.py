@@ -11,6 +11,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from intellicrack.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 try:
     import pefile
     PEFILE_AVAILABLE = True
@@ -136,8 +140,7 @@ class SecuROMDetector:
             self._advapi32.CloseServiceHandle.restype = wintypes.BOOL
 
         except Exception as e:
-            import logging
-            logging.debug(f"WinAPI setup failed: {e}")
+            logger.debug("WinAPI setup failed: %s", e)
 
     def _compile_yara_rules(self) -> Any | None:
         """Compile YARA rules for SecuROM signature detection."""
@@ -356,8 +359,7 @@ class SecuROMDetector:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
         except Exception as e:
-            import logging
-            logging.debug(f"Service detection failed: {e}")
+            logger.debug("Service detection failed: %s", e)
 
         return detected
 
@@ -464,8 +466,7 @@ class SecuROMDetector:
             pe.close()
 
         except Exception as e:
-            import logging
-            logging.debug(f"Protected section detection failed: {e}")
+            logger.debug("Protected section detection failed: %s", e)
 
         return detected
 
@@ -521,8 +522,7 @@ class SecuROMDetector:
             pe.close()
 
         except Exception as e:
-            import logging
-            logging.debug(f"Version detection failed: {e}")
+            logger.debug("Version detection failed: %s", e)
 
         return None
 
@@ -562,8 +562,7 @@ class SecuROMDetector:
                 })
 
         except Exception as e:
-            import logging
-            logging.debug(f"YARA matching failed: {e}")
+            logger.debug("YARA matching failed: %s", e)
 
         return matches
 
@@ -665,8 +664,7 @@ class SecuROMDetector:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
         except Exception as e:
-            import logging
-            logging.debug(f"Service status query failed: {e}")
+            logger.debug("Service status query failed: %s", e)
 
         return status_info
 
@@ -726,7 +724,6 @@ class SecuROMDetector:
             pe.close()
 
         except Exception as e:
-            import logging
-            logging.debug(f"Disc authentication detection failed: {e}")
+            logger.debug("Disc authentication detection failed: %s", e)
 
         return False

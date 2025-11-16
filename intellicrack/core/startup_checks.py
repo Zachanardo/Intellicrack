@@ -42,8 +42,14 @@ _tf_available = False
 
 
 @log_function_call
-def _get_tensorflow():
-    """Get TensorFlow module, importing only once."""
+def _get_tensorflow() -> tuple[object, bool]:
+    """Get TensorFlow module, importing only once.
+
+    Returns:
+        A tuple containing the TensorFlow module object (or None if unavailable)
+        and a boolean indicating whether TensorFlow is successfully loaded.
+
+    """
     global _tf_import_attempted, _tf_module, _tf_available
 
     if not _tf_import_attempted:
@@ -92,7 +98,7 @@ def check_dependencies() -> dict[str, bool]:
 
         # Verify Flask can handle basic routing
         @validation_app.route("/test")
-        def validation_route():
+        def validation_route() -> object:
             return flask.jsonify({"status": "ok"})
 
         # Validate the app context

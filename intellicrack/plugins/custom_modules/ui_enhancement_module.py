@@ -2734,7 +2734,7 @@ if __name__ == "__main__":
                         self.root.after(0, lambda: self.log_viewer.add_log("ERROR", f"Ghidra execution failed: {error}", "ScriptExec"))
                 finally:
                     if os.path.exists(script_path):
-                        os.unlink(script_path)
+                        Path(script_path).unlink()
 
             except Exception as e:
                 self.root.after(0, lambda err=str(e): self.log_viewer.add_log("ERROR", f"Ghidra execution failed: {err}", "ScriptExec"))
@@ -2769,7 +2769,7 @@ if __name__ == "__main__":
                         self.root.after(0, lambda: self.log_viewer.add_log("ERROR", f"Radare2 execution failed: {error}", "ScriptExec"))
                 finally:
                     if os.path.exists(script_path):
-                        os.unlink(script_path)
+                        Path(script_path).unlink()
 
             except Exception as e:
                 self.root.after(0, lambda err=str(e): self.log_viewer.add_log("ERROR", f"Radare2 execution failed: {err}", "ScriptExec"))
@@ -2810,7 +2810,7 @@ if __name__ == "__main__":
                         self.root.after(0, lambda: self.log_viewer.add_log("ERROR", f"Script failed:\n{output}", "ScriptExec"))
                 finally:
                     if os.path.exists(script_path):
-                        os.unlink(script_path)
+                        Path(script_path).unlink()
 
             except subprocess.TimeoutExpired:
                 self.root.after(0, lambda: self.log_viewer.add_log("ERROR", "Script execution timed out", "ScriptExec"))

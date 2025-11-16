@@ -506,9 +506,24 @@ class DynamicHookManager:
         return False
 
     def _create_modified_function(self, original_function: Callable, modification: dict[str, Any]) -> Callable:
-        """Create modified function based on modification specification."""
+        """Create modified function based on modification specification.
 
-        def modified_wrapper(*args, **kwargs):
+        Wraps an original function with custom modifications including
+        pre-processing, parameter transformation, post-processing, and
+        result modifications. Tracks hook call statistics.
+
+        Args:
+            original_function: The original callable to wrap with modifications.
+            modification: Dictionary specification for modifications containing
+                optional keys: pre_process, parameter_modifications, post_process,
+                result_modifications, and hook_id.
+
+        Returns:
+            A wrapper function with the modifications applied.
+
+        """
+
+        def modified_wrapper(*args: object, **kwargs: object) -> object:
             # Record hook call
             hook_id = modification.get("hook_id", "unknown")
             self.hook_statistics[hook_id]["calls"] += 1
@@ -571,8 +586,18 @@ class DynamicHookManager:
 
         return args, kwargs
 
-    def _apply_result_modification(self, result: Any, modification: dict[str, Any]) -> Any:
-        """Apply result modification."""
+    def _apply_result_modification(self, result: object, modification: dict[str, Any]) -> object:
+        """Apply result modification.
+
+        Args:
+            result: The result value to modify.
+            modification: Modification specification dictionary containing
+                type, field, value, and/or transform function.
+
+        Returns:
+            The modified result object or original result if no modification applies.
+
+        """
         mod_type = modification.get("type", "")
 
         if mod_type == "replace_result":
@@ -699,7 +724,7 @@ class LiveDebuggingSystem:
         if session_id not in self.active_debug_sessions:
             return False
 
-        breakpoint = {
+        debug_breakpoint = {
             "id": f"bp_{int(datetime.now().timestamp())}",
             "component": component,
             "condition": condition,
@@ -707,7 +732,7 @@ class LiveDebuggingSystem:
             "created_at": datetime.now(),
         }
 
-        self.active_debug_sessions[session_id]["breakpoints"].append(breakpoint)
+        self.active_debug_sessions[session_id]["breakpoints"].append(debug_breakpoint)
         logger.info(f"Added breakpoint to session {session_id}: {component} - {condition}")
 
         return True

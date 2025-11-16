@@ -30,6 +30,7 @@ import re
 import subprocess
 import sys
 import threading
+from pathlib import Path
 
 from intellicrack.handlers.pyqt6_handler import (
     QAction,
@@ -211,7 +212,7 @@ class EmbeddedTerminalWidget(QWidget):
         """Display welcome message and instructions in terminal."""
         welcome_text = (
             "\033[1;36m╔═══════════════════════════════════════════════════════════════╗\033[0m\r\n"
-            "\033[1;36m║\033[0m            \033[1;37mIntелlicrack Terminal Session\033[0m                 \033[1;36m║\033[0m\r\n"
+            "\033[1;36m║\033[0m            \033[1;37mIntellicrack Terminal Session\033[0m                 \033[1;36m║\033[0m\r\n"
             "\033[1;36m╚═══════════════════════════════════════════════════════════════╝\033[0m\r\n"
             "\r\n"
             "\033[1;32mWelcome to the Intellicrack Terminal!\033[0m\r\n"
@@ -653,11 +654,11 @@ class EmbeddedTerminalWidget(QWidget):
         shell_commands = ["cmd", "powershell", "pwsh", "bash", "zsh", "sh"]
 
         if command.lower() in shell_commands:
-            self.start_process([command], cwd=os.getcwd())
+            self.start_process([command], cwd=str(Path.cwd()))
         elif sys.platform == "win32":
-            self.start_process(["cmd", "/c", command], cwd=os.getcwd())
+            self.start_process(["cmd", "/c", command], cwd=str(Path.cwd()))
         else:
-            self.start_process(["sh", "-c", command], cwd=os.getcwd())
+            self.start_process(["sh", "-c", command], cwd=str(Path.cwd()))
 
     def send_input(self, text: str) -> None:
         """Send text input to the running process.

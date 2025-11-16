@@ -39,7 +39,7 @@ class ComparisonWorker(QThread):
     finished = pyqtSignal(list)  # differences list
     error = pyqtSignal(str)  # error message
 
-    def __init__(self, comparer, file1_path: str, file2_path: str) -> None:
+    def __init__(self, comparer: object, file1_path: str, file2_path: str) -> None:
         """Initialize the worker.
 
         Args:
@@ -72,7 +72,7 @@ class ComparisonWorker(QThread):
 class CompareDialog(QDialog):
     """Dialog for selecting and comparing two binary files."""
 
-    def __init__(self, parent=None, initial_file: str | None = None) -> None:
+    def __init__(self, parent: object | None = None, initial_file: str | None = None) -> None:
         """Initialize the compare dialog.
 
         Args:

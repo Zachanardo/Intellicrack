@@ -549,7 +549,7 @@ class ObfuscationAwareConcolicEngine:
     control flow flattening recovery, and VM-based obfuscation handling.
     """
 
-    def __init__(self, base_engine) -> None:
+    def __init__(self, base_engine: object) -> None:
         """Initialize obfuscation-aware enhancements.
 
         Args:
@@ -798,7 +798,7 @@ class ObfuscationAwareConcolicEngine:
         self.string_deobf.decrypted_strings.clear()
 
 
-def create_obfuscation_aware_engine(base_engine) -> ObfuscationAwareConcolicEngine:
+def create_obfuscation_aware_engine(base_engine: object) -> ObfuscationAwareConcolicEngine:
     """Create obfuscation-aware concolic engine.
 
     Args:

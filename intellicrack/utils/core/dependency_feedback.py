@@ -241,7 +241,7 @@ class DependencyFeedback:
         if info["critical"]:
             message_parts.append("   WARNING️  This is a CRITICAL dependency for core functionality.")
         else:
-            message_parts.append("   ℹ️  This is an optional dependency - reduced functionality available.")
+            message_parts.append("   i  This is an optional dependency - reduced functionality available.")
 
         return "\n".join(message_parts)
 

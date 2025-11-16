@@ -19,13 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 from collections.abc import Callable
-from typing import Any
-
-"""
-Base Network Analyzer Module
-
-Provides common functionality for network analysis components.
-"""
+from types import ModuleType
 
 
 class BaseNetworkAnalyzer:
@@ -40,23 +34,24 @@ class BaseNetworkAnalyzer:
 
     def create_packet_handler(
         self,
-        scapy_module: Any,
+        scapy_module: ModuleType,
         is_running_check: Callable[[], bool],
-        process_packet_func: Callable[[Any, Any, Any], None],
-    ) -> Callable:
+        process_packet_func: Callable[[object, object, object], None],
+    ) -> Callable[[object], None]:
         """Create a packet handler function with common functionality.
 
         Args:
-            scapy_module: The scapy module instance
-            is_running_check: Function to check if capture should continue
-            process_packet_func: Function to process valid packets
+            scapy_module: The scapy module instance for layer access.
+            is_running_check: Function to check if capture should continue.
+            process_packet_func: Function to process valid packets with IP/TCP layers.
 
         Returns:
-            Packet handler function
+            Callable that handles individual network packets and processes them
+            if the capture is still running.
 
         """
 
-        def packet_handler(packet) -> None:
+        def packet_handler(packet: object) -> None:
             """Process each captured packet."""
             if not is_running_check():
                 return

@@ -45,14 +45,14 @@ class BaseProviderClient(ABC):
             self._configure_auth()
 
     @abstractmethod
-    def _configure_auth(self):
+    def _configure_auth(self) -> None:
         """Configure authentication headers."""
 
     @abstractmethod
     def fetch_models(self) -> list[ModelInfo]:
         """Fetch available models from the provider."""
 
-    def _make_request(self, method: str, url: str, **kwargs) -> dict | None:
+    def _make_request(self, method: str, url: str, **kwargs: object) -> dict[str, object] | None:
         """Make HTTP request with error handling."""
         try:
             response = self.session.request(method, url, timeout=10, **kwargs)

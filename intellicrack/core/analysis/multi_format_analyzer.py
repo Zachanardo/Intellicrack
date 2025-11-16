@@ -1175,8 +1175,17 @@ class MultiFormatBinaryAnalyzer:
 
         return result
 
-    def _analyze_lief_binary(self, binary) -> dict[str, Any]:
-        """Analyze a binary using LIEF."""
+    def _analyze_lief_binary(self, binary: object) -> dict[str, Any]:
+        """Analyze a binary using LIEF.
+
+        Args:
+            binary: LIEF binary object to analyze.
+
+        Returns:
+            Dictionary containing analyzed binary information including architecture,
+            endianness, and section details.
+
+        """
         result = {}
 
         # Get basic info
@@ -1201,15 +1210,15 @@ class MultiFormatBinaryAnalyzer:
         return result
 
 
-def run_multi_format_analysis(app, binary_path: str | Path | None = None) -> dict[str, Any]:
+def run_multi_format_analysis(app: object, binary_path: str | Path | None = None) -> dict[str, Any]:
     """Run analysis on a binary of any supported format.
 
     Args:
-        app: Application instance with update_output signal
-        binary_path: Optional path to binary (uses app.binary_path if not provided)
+        app: Application instance with update_output signal for logging analysis progress.
+        binary_path: Optional path to binary file to analyze (uses app.binary_path if not provided).
 
     Returns:
-        Analysis results dictionary
+        Analysis results dictionary containing detected format and format-specific analysis data.
 
     """
     from ...utils.logger import log_message

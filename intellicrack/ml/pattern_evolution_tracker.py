@@ -33,7 +33,7 @@ from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, TypeVar, overload
 
 try:
     from sklearn.cluster import DBSCAN, AgglomerativeClustering, KMeans
@@ -359,7 +359,7 @@ class RestrictedUnpickler(pickle.Unpickler):
         raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
 
 
-def secure_pickle_dumps(obj: Any) -> bytes:
+def secure_pickle_dumps(obj: object) -> bytes:
     """Securely serialize object with integrity check.
 
     Args:
@@ -379,7 +379,7 @@ def secure_pickle_dumps(obj: Any) -> bytes:
     return mac + data
 
 
-def secure_pickle_loads(data: bytes) -> Any:
+def secure_pickle_loads(data: bytes) -> object:
     """Securely deserialize object with integrity verification.
 
     Args:

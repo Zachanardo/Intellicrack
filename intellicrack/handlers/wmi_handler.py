@@ -41,7 +41,7 @@ with warnings.catch_warnings():
             def __init__(self) -> None:
                 logger.error("WMI fallback activated due to import failure")
 
-            def __getattr__(self, name):
+            def __getattr__(self, name: str) -> object:
                 logger.debug("WMI fallback: Accessing %s", name)
                 return lambda *args, **kwargs: []
 

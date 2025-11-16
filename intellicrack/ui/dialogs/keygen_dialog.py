@@ -5,6 +5,7 @@ import os
 import platform
 import subprocess
 import time
+from pathlib import Path
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -778,7 +779,7 @@ class KeygenDialog(BaseDialog):
 
         try:
             # Create generated_keys directory if it doesn't exist
-            save_dir = os.path.join(os.getcwd(), "generated_keys")
+            save_dir = os.path.join(str(Path.cwd()), "generated_keys")
             os.makedirs(save_dir, exist_ok=True)
 
             # Get binary name for filename
@@ -994,7 +995,7 @@ class KeygenDialog(BaseDialog):
             return
 
         # Default to generated_keys directory
-        default_dir = os.path.join(os.getcwd(), "generated_keys")
+        default_dir = os.path.join(str(Path.cwd()), "generated_keys")
         os.makedirs(default_dir, exist_ok=True)
 
         default_filename = f"keygen_batch_{int(time.time())}.txt"

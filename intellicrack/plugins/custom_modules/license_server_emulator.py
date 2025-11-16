@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 import base64
+import contextlib
 import ctypes
 import hashlib
 import ipaddress
@@ -38,11 +39,29 @@ from ctypes import wintypes
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
+from pathlib import Path
+
+import defusedxml.ElementTree as DefusedElementTree
+import jwt
+import psutil
+import uvicorn
+from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer
+from pydantic import BaseModel, Field
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text, create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Session, relationship, sessionmaker
+from sqlalchemy.pool import StaticPool
+
+from intellicrack.handlers.cryptography_handler import Cipher, algorithms, hashes, modes, rsa
+from intellicrack.handlers.cryptography_handler import padding as asym_padding
+from intellicrack.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 # Type alias to replace Any with object
 Any = object
-
-import psutil
 
 if platform.system() == 'Windows':
     try:
@@ -74,22 +93,6 @@ try:
 except ImportError:
     pefile = None
     capstone = None
-import contextlib
-
-import defusedxml.ElementTree as DefusedElementTree
-import jwt
-import uvicorn
-from fastapi import FastAPI, HTTPException, Request, Response
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBearer
-from pydantic import BaseModel, Field
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text, create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session, relationship, sessionmaker
-from sqlalchemy.pool import StaticPool
-
-from intellicrack.handlers.cryptography_handler import Cipher, algorithms, hashes, modes, rsa
-from intellicrack.handlers.cryptography_handler import padding as asym_padding
 
 '\nLicense Server Emulator\n\nComprehensive local license server emulator supporting multiple licensing\nprotocols including FlexLM, HASP, Microsoft KMS, Adobe, and custom vendor\nsystems. Provides offline license validation and fallback capabilities.\n\nAuthor: Intellicrack Framework\nVersion: 2.0.0\nLicense: GPL v3\n'
 
@@ -3453,8 +3456,7 @@ class RuntimeKeyExtractor:
                         if test_buffer.raw[:1] == b'h' and test_buffer.raw[5:6] == b'\xe8':
                             vmp_sections.append(addr)
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
             for section_addr in vmp_sections[:10]:
                 try:
@@ -3504,8 +3506,7 @@ class RuntimeKeyExtractor:
                         if b'SE_PROTECT' in test_buffer.raw or b'EMBED_DATA' in test_buffer.raw:
                             secure_sections.append(addr)
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
             for section_addr in secure_sections[:10]:
                 try:
@@ -3540,8 +3541,7 @@ class RuntimeKeyExtractor:
                             obsidium_base = addr
                             break
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
             if obsidium_base:
                 compressed_buffer = ctypes.create_string_buffer(65536)
@@ -3575,8 +3575,7 @@ class RuntimeKeyExtractor:
                         if test_buffer.raw[:4] == b'ASPr':
                             asprotect_sections.append(addr)
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
             for section_addr in asprotect_sections[:5]:
                 encrypted_buffer = ctypes.create_string_buffer(4096)
@@ -3606,8 +3605,7 @@ class RuntimeKeyExtractor:
                             enigma_reg_addr = addr
                             break
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
             if enigma_reg_addr:
                 reg_buffer = ctypes.create_string_buffer(4096)
@@ -3698,8 +3696,7 @@ class RuntimeKeyExtractor:
                             if self._looks_like_license_string(decoded):
                                 keys.append({'type': 'virtualized', 'value': decoded, 'protection': 'vmprotect'})
                         except Exception as e:
-                            import logging
-                            logging.warning('Error decoding potential license string:', extra={'e': e})
+                            logger.warning("Error decoding potential license string: %s", e)
             offset += 1
         return keys
 
@@ -3772,8 +3769,7 @@ class RuntimeKeyExtractor:
                     decrypted = cipher.decrypt(data)
                     break
             except Exception as e:
-                import logging
-                logging.warning('Error during decryption:', extra={'e': e})
+                logger.warning("Error during decryption: %s", e)
         return decrypted
 
     def _is_encrypted_region(self, data: bytes) -> bool:
@@ -3861,12 +3857,10 @@ class RuntimeKeyExtractor:
                                                 if 'license' in api_name.lower() or 'crypt' in api_name.lower():
                                                     keys.append({'type': 'virtualized', 'value': api_name, 'address': base_addr + offset, 'iat_entry': indirect_addr})
                                     except Exception as e:
-                                        import logging
-                                        logging.warning('Error extracting API information:', extra={'e': e})
+                                        logger.warning("Error extracting API information: %s", e)
                                 offset += len(pattern)
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
         except Exception as e:
             self.logger.debug('IAT reconstruction failed:', extra={'e': e})
@@ -3886,8 +3880,7 @@ class RuntimeKeyExtractor:
                         decoded = current_string.decode('utf-8')
                         strings.append(decoded)
                     except Exception as e:
-                        import logging
-                        logging.warning('Error decoding string:', extra={'e': e})
+                        logger.warning("Error decoding string: %s", e)
                 current_string = b''
         return strings
 
@@ -3933,12 +3926,10 @@ class RuntimeKeyExtractor:
                                 wrapped_apis.append({'type': 'virtualized', 'value': f'wrapped_api_0x{api_addr:08x}', 'protection': 'themida', 'thunk_addr': addr + offset})
                             offset += 6
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
         except Exception as e:
-            import logging
-            logging.warning('Error extracting wrapped APIs:', extra={'e': e})
+            logger.warning("Error extracting wrapped APIs: %s", e)
         return wrapped_apis
 
     def _looks_like_api_name(self, data: bytes) -> bool:
@@ -4014,8 +4005,7 @@ class RuntimeKeyExtractor:
                                     if '=' in line or ':' in line:
                                         hooked_data['registry_keys'].append(line.strip())
                             except Exception as e:
-                                import logging
-                                logging.warning('Error extracting registry keys from hook data:', extra={'e': e})
+                                logger.warning("Error extracting registry keys from hook data: %s", e)
         except Exception as e:
             self.logger.error('API hooking failed:', extra={'e': e})
         finally:
@@ -4092,8 +4082,7 @@ class RuntimeKeyExtractor:
                         if test_buffer.raw[:1] == b'h' and test_buffer.raw[5:6] == b'\xe8':
                             vmp_sections.append(addr)
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
             for section_addr in vmp_sections[:10]:
                 try:
@@ -4143,8 +4132,7 @@ class RuntimeKeyExtractor:
                         if b'SE_PROTECT' in test_buffer.raw or b'EMBED_DATA' in test_buffer.raw:
                             secure_sections.append(addr)
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
             for section_addr in secure_sections[:10]:
                 try:
@@ -4179,8 +4167,7 @@ class RuntimeKeyExtractor:
                             obsidium_base = addr
                             break
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
             if obsidium_base:
                 compressed_buffer = ctypes.create_string_buffer(65536)
@@ -4214,8 +4201,7 @@ class RuntimeKeyExtractor:
                         if test_buffer.raw[:4] == b'ASPr':
                             asprotect_sections.append(addr)
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
             for section_addr in asprotect_sections[:5]:
                 encrypted_buffer = ctypes.create_string_buffer(4096)
@@ -4245,8 +4231,7 @@ class RuntimeKeyExtractor:
                             enigma_reg_addr = addr
                             break
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
             if enigma_reg_addr:
                 reg_buffer = ctypes.create_string_buffer(4096)
@@ -4337,8 +4322,7 @@ class RuntimeKeyExtractor:
                             if self._looks_like_license_string(decoded):
                                 keys.append({'type': 'virtualized', 'value': decoded, 'protection': 'vmprotect'})
                         except Exception as e:
-                            import logging
-                            logging.warning('Error decoding potential license string:', extra={'e': e})
+                            logger.warning("Error decoding potential license string: %s", e)
             offset += 1
         return keys
 
@@ -4411,8 +4395,7 @@ class RuntimeKeyExtractor:
                     decrypted = cipher.decrypt(data)
                     break
             except Exception as e:
-                import logging
-                logging.warning('Error during decryption:', extra={'e': e})
+                logger.warning("Error during decryption: %s", e)
         return decrypted
 
     def _is_encrypted_region(self, data: bytes) -> bool:
@@ -4500,12 +4483,10 @@ class RuntimeKeyExtractor:
                                                 if 'license' in api_name.lower() or 'crypt' in api_name.lower():
                                                     keys.append({'type': 'virtualized', 'value': api_name, 'address': base_addr + offset, 'iat_entry': indirect_addr})
                                     except Exception as e:
-                                        import logging
-                                        logging.warning('Error extracting API information:', extra={'e': e})
+                                        logger.warning("Error extracting API information: %s", e)
                                 offset += len(pattern)
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
         except Exception as e:
             self.logger.debug('IAT reconstruction failed:', extra={'e': e})
@@ -4525,8 +4506,7 @@ class RuntimeKeyExtractor:
                         decoded = current_string.decode('utf-8')
                         strings.append(decoded)
                     except Exception as e:
-                        import logging
-                        logging.warning('Error decoding string:', extra={'e': e})
+                        logger.warning("Error decoding string: %s", e)
                 current_string = b''
         return strings
 
@@ -4572,12 +4552,10 @@ class RuntimeKeyExtractor:
                                 wrapped_apis.append({'type': 'virtualized', 'value': f'wrapped_api_0x{api_addr:08x}', 'protection': 'themida', 'thunk_addr': addr + offset})
                             offset += 6
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
         except Exception as e:
-            import logging
-            logging.warning('Error extracting wrapped APIs:', extra={'e': e})
+            logger.warning("Error extracting wrapped APIs: %s", e)
         return wrapped_apis
 
     def _looks_like_api_name(self, data: bytes) -> bool:
@@ -4617,8 +4595,7 @@ class RuntimeKeyExtractor:
                 if any(lic in line.lower() for lic in ['license', 'activation', 'auth']):
                     hooked_data['system_calls'].append(line)
         except Exception as e:
-            import logging
-            logging.warning('Error extracting system calls from hook data:', extra={'e': e})
+            logger.warning("Error extracting system calls from hook data: %s", e)
         return hooked_data
 
         return hooked_data
@@ -4690,8 +4667,7 @@ class RuntimeKeyExtractor:
                         if test_buffer.raw[:1] == b'h' and test_buffer.raw[5:6] == b'\xe8':
                             vmp_sections.append(addr)
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
             for section_addr in vmp_sections[:10]:
                 try:
@@ -4741,8 +4717,7 @@ class RuntimeKeyExtractor:
                         if b'SE_PROTECT' in test_buffer.raw or b'EMBED_DATA' in test_buffer.raw:
                             secure_sections.append(addr)
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
             for section_addr in secure_sections[:10]:
                 try:
@@ -4777,8 +4752,7 @@ class RuntimeKeyExtractor:
                             obsidium_base = addr
                             break
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
             if obsidium_base:
                 compressed_buffer = ctypes.create_string_buffer(65536)
@@ -4812,8 +4786,7 @@ class RuntimeKeyExtractor:
                         if test_buffer.raw[:4] == b'ASPr':
                             asprotect_sections.append(addr)
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
             for section_addr in asprotect_sections[:5]:
                 encrypted_buffer = ctypes.create_string_buffer(4096)
@@ -4843,8 +4816,7 @@ class RuntimeKeyExtractor:
                             enigma_reg_addr = addr
                             break
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
             if enigma_reg_addr:
                 reg_buffer = ctypes.create_string_buffer(4096)
@@ -4935,8 +4907,7 @@ class RuntimeKeyExtractor:
                             if self._looks_like_license_string(decoded):
                                 keys.append({'type': 'virtualized', 'value': decoded, 'protection': 'vmprotect'})
                         except Exception as e:
-                            import logging
-                            logging.warning('Error decoding potential license string:', extra={'e': e})
+                            logger.warning("Error decoding potential license string: %s", e)
             offset += 1
         return keys
 
@@ -5009,8 +4980,7 @@ class RuntimeKeyExtractor:
                     decrypted = cipher.decrypt(data)
                     break
             except Exception as e:
-                import logging
-                logging.warning('Error during decryption:', extra={'e': e})
+                logger.warning("Error during decryption: %s", e)
         return decrypted
 
     def _is_encrypted_region(self, data: bytes) -> bool:
@@ -5098,12 +5068,10 @@ class RuntimeKeyExtractor:
                                                 if 'license' in api_name.lower() or 'crypt' in api_name.lower():
                                                     keys.append({'type': 'virtualized', 'value': api_name, 'address': base_addr + offset, 'iat_entry': indirect_addr})
                                     except Exception as e:
-                                        import logging
-                                        logging.warning('Error extracting API information:', extra={'e': e})
+                                        logger.warning("Error extracting API information: %s", e)
                                 offset += len(pattern)
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
         except Exception as e:
             self.logger.debug('IAT reconstruction failed:', extra={'e': e})
@@ -5123,8 +5091,7 @@ class RuntimeKeyExtractor:
                         decoded = current_string.decode('utf-8')
                         strings.append(decoded)
                     except Exception as e:
-                        import logging
-                        logging.warning('Error decoding string:', extra={'e': e})
+                        logger.warning("Error decoding string: %s", e)
                 current_string = b''
         return strings
 
@@ -5170,12 +5137,10 @@ class RuntimeKeyExtractor:
                                 wrapped_apis.append({'type': 'virtualized', 'value': f'wrapped_api_0x{api_addr:08x}', 'protection': 'themida', 'thunk_addr': addr + offset})
                             offset += 6
                 except Exception as e:
-                    import logging
-                    logging.warning('Error during memory analysis:', extra={'e': e})
+                    logger.warning("Error during memory analysis: %s", e)
                     continue
         except Exception as e:
-            import logging
-            logging.warning('Error extracting wrapped APIs:', extra={'e': e})
+            logger.warning("Error extracting wrapped APIs: %s", e)
         return wrapped_apis
 
     def _looks_like_api_name(self, data: bytes) -> bool:
@@ -5338,8 +5303,7 @@ class FridaKeyExtractor:
             try:
                 session.detach()
             except Exception as e:
-                import logging
-                logging.warning('Error detaching Frida session:', extra={'e': e})
+                logger.warning("Error detaching Frida session: %s", e)
         self.sessions.clear()
         self.scripts.clear()
 
@@ -5691,8 +5655,7 @@ class ProtocolStateMachine:
             if data_elem is not None:
                 write_data = bytes.fromhex(data_elem.text.replace(' ', ''))
         except Exception as e:
-            import logging
-            logging.warning('Error parsing HASP write request:', extra={'e': e})
+            logger.warning("Error parsing HASP write request: %s", e)
         response_root = DefusedElementTree.Element('haspprotocol')
         response_root.set('version', '1.0')
         from datetime import datetime
@@ -5796,8 +5759,7 @@ class ProxyInterceptor:
                 if any(keyword in body_str for keyword in license_keywords):
                     return True
         except Exception as e:
-            import logging
-            logging.warning('Error checking request body for license indicators:', extra={'e': e})
+            logger.warning("Error checking request body for license indicators: %s", e)
         return False
 
     def _generate_bypass_response(self, request: Any, analysis: dict) -> dict:
@@ -6155,8 +6117,7 @@ class ProxyInterceptor:
                     if exe_path and os.path.exists(exe_path):
                         return exe_path
         except Exception as e:
-            import logging
-            logging.warning('Error finding binary by process:', extra={'e': e})
+            logger.warning("Error finding binary by process: %s", e)
         common_paths = [f'C:\\Program Files\\{process_name}', f'C:\\Program Files (x86)\\{process_name}', f'/usr/local/bin/{process_name}', f'/opt/{process_name}', f'/Applications/{process_name}.app/Contents/MacOS/{process_name}']
         for path in common_paths:
             if os.path.exists(path):
@@ -6184,10 +6145,9 @@ class ProxyInterceptor:
                             if os.path.exists(full_path):
                                 return full_path
             except Exception as e:
-                import logging
-                logging.warning('Error walking search path :', extra={'search_path': search_path, 'e': e})
+                logger.warning("Error walking search path %s: %s", search_path, e)
                 continue
-        return os.path.join(os.getcwd(), 'target.exe')
+        return os.path.join(str(Path.cwd()), 'target.exe')
 
     def _generate_hasp_response(self, analysis: dict) -> dict:
         """Generate HASP/Sentinel protocol response using binary analysis."""
@@ -6204,8 +6164,7 @@ class ProxyInterceptor:
                 if sid_elem is not None:
                     self.current_session = sid_elem.text
             except Exception as e:
-                import logging
-                logging.warning('Error parsing session ID from response:', extra={'e': e})
+                logger.warning("Error parsing session ID from response: %s", e)
         return {'content_type': 'text/xml', 'status_code': 200, 'body': response_data}
 
     def _generate_kms_response(self, analysis: dict) -> dict:
@@ -6378,7 +6337,7 @@ class ProxyInterceptor:
             if os.path.exists(path):
                 if os.path.isfile(path):
                     return path
-                if os.path.isdir(path):
+                if Path(path).is_dir():
                     for root, _dirs, files in os.walk(path):
                         for file in files:
                             if file.endswith(('.exe', '.dll')):
@@ -6434,8 +6393,7 @@ class ProxyInterceptor:
                         if 'kms' in arg.lower() and '.' in arg:
                             return arg
         except Exception as e:
-            import logging
-            logging.warning('Error finding KMS server:', extra={'e': e})
+            logger.warning("Error finding KMS server: %s", e)
         return None
 
     def _find_kms_port_from_service(self) -> int:
@@ -6450,12 +6408,10 @@ class ProxyInterceptor:
                         if 'sppsvc' in proc.name().lower():
                             return conn.laddr.port
                     except Exception as e:
-                        import logging
-                        logging.warning('Error accessing process info for connection:', extra={'e': e})
+                        logger.warning("Error accessing process info for connection: %s", e)
                         continue
         except Exception as e:
-            import logging
-            logging.warning('Error finding KMS port from service:', extra={'e': e})
+            logger.warning("Error finding KMS port from service: %s", e)
         return None
 
     def _extract_min_clients_requirement(self) -> int:
@@ -6471,8 +6427,7 @@ class ProxyInterceptor:
                     if match:
                         return int(match.group(1))
         except Exception as e:
-            import logging
-            logging.warning('Error extracting minimum clients requirement:', extra={'e': e})
+            logger.warning("Error extracting minimum clients requirement: %s", e)
         return None
 
     def _detect_kms_protocol_version(self) -> int:
@@ -6490,8 +6445,7 @@ class ProxyInterceptor:
             if major >= 7:
                 return 4
         except Exception as e:
-            import logging
-            logging.warning('Error determining KMS protocol version:', extra={'e': e})
+            logger.warning("Error determining KMS protocol version: %s", e)
         return None
 
     def _generate_kms_confirmation_id(self, client_machine_id: str, application_id: str, kms_data: dict) -> str:
@@ -6682,8 +6636,7 @@ class ProxyInterceptor:
                         try:
                             data[key] = (datetime.utcnow() + timedelta(days=9999)).isoformat()
                         except Exception as e:
-                            import logging
-                            logging.warning('Error extending expiration date for key :', extra={'key': key, 'e': e})
+                            logger.warning("Error extending expiration date for key %s: %s", key, e)
                     if key.lower() in ['valid', 'licensed', 'activated', 'success', 'authorized']:
                         data[key] = True
                     elif key.lower() in ['expired', 'invalid', 'failed']:
@@ -7197,8 +7150,7 @@ class LicenseServerInstance:
                     if self.running:
                         break
         except Exception as e:
-            import logging
-            logging.warning('Error in server main loop:', extra={'e': e})
+            logger.warning("Error in server main loop: %s", e)
         finally:
             if self.server_socket:
                 self.server_socket.close()
@@ -7211,8 +7163,7 @@ class LicenseServerInstance:
                 response = b'\x00\x00\x00\x10\x00\x00\x00\x00SUCCESS\x00'
                 client_socket.send(response)
         except Exception as e:
-            import logging
-            logging.warning('Error handling client connection:', extra={'e': e})
+            logger.warning("Error handling client connection: %s", e)
         finally:
             client_socket.close()
 
@@ -7262,8 +7213,7 @@ class LicenseClientInstance:
             try:
                 self.socket.close()
             except Exception as e:
-                import logging
-                logging.warning('Error closing socket:', extra={'e': e})
+                logger.warning("Error closing socket: %s", e)
         self.connected = False
         self.socket = None
 
@@ -7275,9 +7225,9 @@ def run_network_license_emulator(config: dict=None) -> None:
     try:
         server.start_servers()
     except KeyboardInterrupt:
-        logging.info('License server emulator stopped')
+        logger.info("License server emulator stopped")
     except Exception as e:
-        logging.error('License server error:', extra={'e': e})
+        logger.error("License server error: %s", e)
 
 def main() -> None:
     """Run license server emulator main program."""

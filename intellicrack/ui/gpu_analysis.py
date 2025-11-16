@@ -91,7 +91,7 @@ class GpuAnalysis:
             self.framework_info = {"framework": "cpu", "error": str(e)}
             log_error("GPU infrastructure initialization failed", category="GPU", exception=e)
 
-    def run_gpu_accelerated_analysis(self, app) -> None:
+    def run_gpu_accelerated_analysis(self, app: object) -> None:
         """Run GPU-accelerated binary analysis with UI integration.
 
         Args:
@@ -142,7 +142,7 @@ class GpuAnalysis:
         finally:
             self._hide_progress_dialog()
 
-    def _get_binary_data(self, app) -> bytes | None:
+    def _get_binary_data(self, app: object) -> bytes | None:
         """Extract binary data from application state."""
         try:
             # Check various possible locations for binary data
@@ -174,7 +174,7 @@ class GpuAnalysis:
             self.logger.error(f"Failed to get binary data: {e}")
             return None
 
-    def _show_progress_dialog(self, app) -> None:
+    def _show_progress_dialog(self, app: object) -> None:
         """Show progress dialog for GPU analysis."""
         try:
             if not hasattr(app, "centralWidget") or not app.centralWidget():
@@ -231,7 +231,7 @@ class GpuAnalysis:
         except Exception as e:
             self.logger.error(f"Failed to hide progress dialog: {e}")
 
-    def _process_analysis_results(self, app, results: dict[str, Any]) -> None:
+    def _process_analysis_results(self, app: object, results: dict[str, Any]) -> None:
         """Process and display GPU analysis results."""
         try:
             if not results:
@@ -273,8 +273,8 @@ class GpuAnalysis:
                         app.update_output.emit(f"[GPU] Found {count} high-entropy sections (potentially encrypted/packed)")
 
                 # Device info
-                if "device_info" in results and results["device_info"]:
-                    device_info = results["device_info"]
+                device_info = results.get("device_info")
+                if device_info:
                     device_name = device_info.get("name", "Unknown")
                     app.update_output.emit(f"[GPU] Device: {device_name}")
 

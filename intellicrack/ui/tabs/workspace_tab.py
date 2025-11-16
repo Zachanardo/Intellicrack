@@ -58,14 +58,21 @@ class WorkspaceTab(QWidget):
     binary_loaded = pyqtSignal(str)
     analysis_saved = pyqtSignal(str)
 
-    def __init__(self, shared_context=None, parent=None) -> None:
-        """Initialize workspace tab with project management and activity logging."""
+    def __init__(self, shared_context: dict[str, object] | None = None, parent: QWidget | None = None) -> None:
+        """Initialize workspace tab with project management and activity logging.
+
+        Args:
+            shared_context: Dictionary containing shared application context and state data.
+            parent: Parent QWidget for this tab.
+
+        """
         super().__init__(parent)
         self.shared_context = shared_context
         self.app_context = shared_context.get("app_context") if shared_context else None
         self.config_manager = get_ui_config_manager()
-        self.current_project_path = None
-        self.loaded_binary_path = None
+        self.current_project_path: str | None = None
+        self.loaded_binary_path: str | None = None
+        self.log_entries: list[str] = []
         self.setup_content()
 
         # Subscribe to configuration changes
@@ -119,8 +126,14 @@ class WorkspaceTab(QWidget):
         # Apply initial theme
         self.apply_theme()
 
-    def create_project_management_panel(self):
-        """Create the project management panel."""
+    def create_project_management_panel(self) -> QGroupBox:
+        """Create the project management panel.
+
+        Returns:
+            QGroupBox: A group box containing project management controls including
+                create, open, save, and close project buttons.
+
+        """
         group = QGroupBox("Project Management")
         layout = QVBoxLayout(group)
 
@@ -167,8 +180,13 @@ class WorkspaceTab(QWidget):
 
         return group
 
-    def create_binary_management_panel(self):
-        """Create the binary management panel."""
+    def create_binary_management_panel(self) -> QGroupBox:
+        """Create the binary management panel.
+
+        Returns:
+            QGroupBox: A group box containing binary loading, analysis, and export controls.
+
+        """
         group = QGroupBox("Binary Management")
         layout = QVBoxLayout(group)
 
@@ -229,8 +247,13 @@ class WorkspaceTab(QWidget):
 
         return group
 
-    def create_project_files_panel(self):
-        """Create the project files panel."""
+    def create_project_files_panel(self) -> QGroupBox:
+        """Create the project files panel.
+
+        Returns:
+            QGroupBox: A group box containing a file tree widget and file management buttons.
+
+        """
         group = QGroupBox("Project Files")
         layout = QVBoxLayout(group)
 
@@ -270,8 +293,13 @@ class WorkspaceTab(QWidget):
 
         return group
 
-    def create_activity_log_panel(self):
-        """Create the activity log panel."""
+    def create_activity_log_panel(self) -> QGroupBox:
+        """Create the activity log panel.
+
+        Returns:
+            QGroupBox: A group box containing activity log display with filtering and clearing controls.
+
+        """
         group = QGroupBox("Activity Log")
         layout = QVBoxLayout(group)
 
@@ -280,7 +308,7 @@ class WorkspaceTab(QWidget):
         search_layout.addWidget(QLabel("Filter:"))
 
         self.log_filter = QLineEdit()
-        self.log_filter.setPlaceholderText("Type to filter log entries...")
+        self.log_filter.setText("")
         self.log_filter.setToolTip("Filter log entries by keyword. Matching entries will be highlighted in yellow")
         self.log_filter.textChanged.connect(self.filter_activity_log)
         search_layout.addWidget(self.log_filter)
@@ -326,23 +354,33 @@ class WorkspaceTab(QWidget):
         scrollbar.setValue(scrollbar.maximum())
 
     def filter_activity_log(self, filter_text: str) -> None:
-        """Filter activity log entries based on search text."""
-        # This is a simple implementation - in production, you'd want to
-        # maintain a list of all log entries and filter them
+        """Filter activity log entries based on search text.
+
+        Searches through all maintained log entries and highlights matching text
+        in the activity log display with yellow background. Clears highlighting
+        when filter text is empty.
+
+        Args:
+            filter_text: The text to search for in log entries. Empty string clears filter.
+
+        """
+        cursor = self.activity_log_text.textCursor()
+        cursor.select(cursor.SelectionType.Document)
+        format_clear = cursor.charFormat()
+        format_clear.setBackground(Qt.GlobalColor.white)
+        cursor.setCharFormat(format_clear)
+
         if not filter_text:
             return
 
-        # Highlight matching text
-        cursor = self.activity_log_text.textCursor()
-        cursor.select(cursor.SelectionType.Document)
-        cursor.setCharFormat(cursor.charFormat())
+        cursor.movePosition(cursor.MoveOperation.Start)
+        self.activity_log_text.setTextCursor(cursor)
 
-        # Find and highlight all occurrences
         while self.activity_log_text.find(filter_text):
             cursor = self.activity_log_text.textCursor()
-            format = cursor.charFormat()
-            format.setBackground(Qt.GlobalColor.yellow)
-            cursor.setCharFormat(format)
+            format_highlight = cursor.charFormat()
+            format_highlight.setBackground(Qt.GlobalColor.yellow)
+            cursor.setCharFormat(format_highlight)
 
     def clear_activity_log(self) -> None:
         """Clear the activity log."""
@@ -675,7 +713,7 @@ class WorkspaceTab(QWidget):
                     continue
 
                 file_path = os.path.join(root, file)
-                file_stat = os.stat(file_path)
+                file_stat = Path(file_path).stat()
 
                 # Create tree item
                 item = QTreeWidgetItem(
@@ -698,8 +736,16 @@ class WorkspaceTab(QWidget):
         self.file_tree.expandAll()
         self.log_activity("Project files refreshed")
 
-    def find_or_create_folder(self, folder_path: str):
-        """Find or create a folder item in the tree."""
+    def find_or_create_folder(self, folder_path: str) -> QTreeWidgetItem:
+        """Find or create a folder item in the tree.
+
+        Args:
+            folder_path: The folder path to find or create in the tree structure.
+
+        Returns:
+            QTreeWidgetItem: The tree widget item representing the folder.
+
+        """
         parts = Path(folder_path).parts
         parent = None
 
@@ -771,8 +817,13 @@ class WorkspaceTab(QWidget):
             self.log_activity(f"Removed file: {current_item.text(0)}", "WARNING")
             self.refresh_project_files()
 
-    def show_file_context_menu(self, position) -> None:
-        """Show context menu for file tree."""
+    def show_file_context_menu(self, position: object) -> None:
+        """Show context menu for file tree.
+
+        Args:
+            position: The position where the context menu was requested (typically QPoint).
+
+        """
         item = self.file_tree.itemAt(position)
         if not item:
             return

@@ -22,7 +22,7 @@ sys.path.insert(0, str(project_root))
 # -- Project information -----------------------------------------------------
 
 project = "Intellicrack"
-copyright = f"{datetime.now().year}, Zachary Flint"
+copyright_info = f"{datetime.now().year}, Zachary Flint"
 author = "Zachary Flint"
 
 # Version info - read from package if available
@@ -431,7 +431,7 @@ texinfo_no_detailmenu = False
 epub_title = project
 epub_author = author
 epub_publisher = author
-epub_copyright = copyright
+epub_copyright = copyright_info
 epub_identifier = "com.intellicrack.docs"
 epub_scheme = "URL"
 epub_uid = "intellicrack-docs"

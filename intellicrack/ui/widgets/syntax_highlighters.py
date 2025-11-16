@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from PyQt6.QtCore import QObject
 from PyQt6.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
 
 from intellicrack.handlers.pyqt6_handler import QRegularExpression
@@ -24,7 +25,7 @@ from intellicrack.handlers.pyqt6_handler import QRegularExpression
 class PythonHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for Python code."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QObject | None = None) -> None:
         """Initialize Python syntax highlighter with comprehensive language support."""
         super().__init__(parent)
 
@@ -201,15 +202,15 @@ class PythonHighlighter(QSyntaxHighlighter):
         self.triple_single_quote_format = QTextCharFormat()
         self.triple_single_quote_format.setForeground(QColor("#CE9178"))  # Orange
 
-    def highlightBlock(self, text) -> None:
+    def highlightBlock(self, text: str) -> None:
         """Apply syntax highlighting to block."""
         # Single line rules
-        for pattern, format in self.highlighting_rules:
+        for pattern, text_format in self.highlighting_rules:
             expression = QRegularExpression(pattern)
             match_iterator = expression.globalMatch(text)
             while match_iterator.hasNext():
                 match = match_iterator.next()
-                self.setFormat(match.capturedStart(), match.capturedLength(), format)
+                self.setFormat(match.capturedStart(), match.capturedLength(), text_format)
 
         self.setCurrentBlockState(0)
 
@@ -217,7 +218,7 @@ class PythonHighlighter(QSyntaxHighlighter):
         self.match_multiline_string(text, QRegularExpression('"""'), 1, self.triple_double_quote_format)
         self.match_multiline_string(text, QRegularExpression("'''"), 2, self.triple_single_quote_format)
 
-    def match_multiline_string(self, text, expression, state, format) -> None:
+    def match_multiline_string(self, text: str, expression: QRegularExpression, state: int, format: QTextCharFormat) -> None:
         """Handle multi-line string highlighting."""
         if self.previousBlockState() == state:
             start_index = 0
@@ -249,7 +250,7 @@ class PythonHighlighter(QSyntaxHighlighter):
 class JavaScriptHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for JavaScript/Frida code."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QObject | None = None) -> None:
         """Initialize JavaScript syntax highlighter with ES6+ language support."""
         super().__init__(parent)
 
@@ -447,15 +448,15 @@ class JavaScriptHighlighter(QSyntaxHighlighter):
         self.multiline_comment_format.setForeground(QColor("#6A9955"))  # Green
         self.multiline_comment_format.setFontItalic(True)
 
-    def highlightBlock(self, text) -> None:
+    def highlightBlock(self, text: str) -> None:
         """Apply syntax highlighting to block."""
         # Single line rules
-        for pattern, format in self.highlighting_rules:
+        for pattern, text_format in self.highlighting_rules:
             expression = QRegularExpression(pattern)
             match_iterator = expression.globalMatch(text)
             while match_iterator.hasNext():
                 match = match_iterator.next()
-                self.setFormat(match.capturedStart(), match.capturedLength(), format)
+                self.setFormat(match.capturedStart(), match.capturedLength(), text_format)
 
         self.setCurrentBlockState(0)
 

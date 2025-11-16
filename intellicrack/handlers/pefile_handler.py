@@ -19,7 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import hashlib
 import struct
-from typing import Any, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 
 from intellicrack.utils.logger import log_all_methods, logger
 
@@ -266,6 +266,63 @@ except ImportError as e:
                 return struct.unpack(self.format_str, data[: self.sizeof])
             return ()
 
+    class FileHeader:
+        """Internal representation of PE COFF file header."""
+
+        Machine: int
+        NumberOfSections: int
+        TimeDateStamp: int
+        PointerToSymbolTable: int
+        NumberOfSymbols: int
+        SizeOfOptionalHeader: int
+        Characteristics: int
+
+    class OptionalHeader:
+        """Internal representation of PE optional header."""
+
+        Magic: int
+        MajorLinkerVersion: int
+        MinorLinkerVersion: int
+        SizeOfCode: int
+        SizeOfInitializedData: int
+        SizeOfUninitializedData: int
+        AddressOfEntryPoint: int
+        BaseOfCode: int
+        BaseOfData: int
+        ImageBase: int
+        SectionAlignment: int
+        FileAlignment: int
+        MajorOperatingSystemVersion: int
+        MinorOperatingSystemVersion: int
+        MajorImageVersion: int
+        MinorImageVersion: int
+        MajorSubsystemVersion: int
+        MinorSubsystemVersion: int
+        Reserved1: int
+        SizeOfImage: int
+        SizeOfHeaders: int
+        CheckSum: int
+        Subsystem: int
+        DllCharacteristics: int
+        SizeOfStackReserve: int
+        SizeOfStackCommit: int
+        SizeOfHeapReserve: int
+        SizeOfHeapCommit: int
+        LoaderFlags: int
+        NumberOfRvaAndSizes: int
+        DATA_DIRECTORY: list[object]
+
+    class ImportDescriptor:
+        """Internal representation of import directory entry."""
+
+        OriginalFirstThunk: int
+        TimeDateStamp: int
+        ForwarderChain: int
+        Name: int
+        FirstThunk: int
+        dll: str
+        imports: list[object]
+
     @log_all_methods
     class FallbackPE:
         """Functional PE file parser implementation."""
@@ -354,7 +411,7 @@ except ImportError as e:
                 self._parse_debug()
                 self._parse_relocations()
 
-        def _parse_file_header(self, offset: int) -> Any:
+        def _parse_file_header(self, offset: int) -> FileHeader:
             """Parse COFF file header.
 
             Args:
@@ -365,10 +422,10 @@ except ImportError as e:
 
             """
 
-            class FileHeader:
+            class _FileHeaderImpl:
                 pass
 
-            header = FileHeader()
+            header = _FileHeaderImpl()
             data = self.__data__[offset : offset + 20]
 
             header.Machine = struct.unpack("<H", data[0:2])[0]
@@ -381,7 +438,7 @@ except ImportError as e:
 
             return header
 
-        def _parse_optional_header32(self, offset: int) -> Any:
+        def _parse_optional_header32(self, offset: int) -> OptionalHeader:
             """Parse 32-bit optional header.
 
             Args:
@@ -392,10 +449,10 @@ except ImportError as e:
 
             """
 
-            class OptionalHeader:
+            class _OptionalHeaderImpl:
                 pass
 
-            header = OptionalHeader()
+            header = _OptionalHeaderImpl()
             data = self.__data__[offset:]
 
             header.Magic = struct.unpack("<H", data[0:2])[0]
@@ -446,7 +503,7 @@ except ImportError as e:
 
             return header
 
-        def _parse_optional_header64(self, offset: int) -> Any:
+        def _parse_optional_header64(self, offset: int) -> OptionalHeader:
             """Parse 64-bit optional header.
 
             Args:
@@ -457,10 +514,10 @@ except ImportError as e:
 
             """
 
-            class OptionalHeader:
+            class _OptionalHeaderImpl:
                 pass
 
-            header = OptionalHeader()
+            header = _OptionalHeaderImpl()
             data = self.__data__[offset:]
 
             header.Magic = struct.unpack("<H", data[0:2])[0]
@@ -605,7 +662,7 @@ except ImportError as e:
 
                 offset += 20
 
-        def _parse_import_thunks(self, import_desc: Any, offset: int) -> None:
+        def _parse_import_thunks(self, import_desc: ImportDescriptor, offset: int) -> None:
             """Parse import thunks.
 
             Args:

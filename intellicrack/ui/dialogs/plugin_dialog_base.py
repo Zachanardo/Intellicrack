@@ -36,8 +36,14 @@ from intellicrack.handlers.pyqt6_handler import (
 class PluginDialogBase(QDialog):
     """Base class for dialogs that work with plugins."""
 
-    def __init__(self, parent=None, plugin_path: str = None) -> None:
-        """Initialize the PluginDialogBase with default values."""
+    def __init__(self, parent: QWidget | None = None, plugin_path: str | None = None) -> None:
+        """Initialize the PluginDialogBase with default values.
+
+        Args:
+            parent: The parent widget. Defaults to None.
+            plugin_path: Path to the plugin file. Defaults to None.
+
+        """
         super().__init__(parent)
         self.plugin_path = plugin_path
         self.plugin_label = None
@@ -80,8 +86,13 @@ class PluginDialogBase(QDialog):
         if self.plugin_path:
             self.load_plugin(self.plugin_path)
 
-    def create_plugin_selection_layout(self):
-        """Create the common plugin selection layout."""
+    def create_plugin_selection_layout(self) -> QHBoxLayout:
+        """Create the common plugin selection layout.
+
+        Returns:
+            A horizontal layout containing the plugin selection UI.
+
+        """
         plugin_layout = QHBoxLayout()
         plugin_layout.addWidget(QLabel("Plugin:"))
 

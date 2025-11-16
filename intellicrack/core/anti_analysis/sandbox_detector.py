@@ -373,13 +373,13 @@ class SandboxDetector(BaseDetector):
 
         # Windows paths
         if platform.system() == "Windows":
-            system_drive = os.environ.get("SystemDrive", "C:")
+            system_drive = os.environ.get("SYSTEMDRIVE", "C:")
             dirs.extend(
                 [
                     system_drive + "\\",
-                    os.environ.get("ProgramFiles", "C:\\Program Files"),
-                    os.environ.get("ProgramFiles(x86)", "C:\\Program Files (x86)"),
-                    os.environ.get("ProgramData", "C:\\ProgramData"),
+                    os.environ.get("PROGRAMFILES", "C:\\Program Files"),
+                    os.environ.get("PROGRAMFILES(X86)", "C:\\Program Files (x86)"),
+                    os.environ.get("PROGRAMDATA", "C:\\ProgramData"),
                     os.environ.get("APPDATA", ""),
                     os.environ.get("LOCALAPPDATA", ""),
                     os.environ.get("TEMP", tempfile.gettempdir()),
@@ -1208,10 +1208,10 @@ class SandboxDetector(BaseDetector):
 
             # Check for analysis artifacts
             suspicious_paths = [
-                os.path.join(os.environ.get("SystemDrive", "C:"), "analysis"),
-                os.path.join(os.environ.get("SystemDrive", "C:"), "analyzer"),
-                os.path.join(os.environ.get("SystemDrive", "C:"), "sandbox"),
-                os.path.join(os.environ.get("SystemDrive", "C:"), "analysis"),
+                os.path.join(os.environ.get("SYSTEMDRIVE", "C:"), "analysis"),
+                os.path.join(os.environ.get("SYSTEMDRIVE", "C:"), "analyzer"),
+                os.path.join(os.environ.get("SYSTEMDRIVE", "C:"), "sandbox"),
+                os.path.join(os.environ.get("SYSTEMDRIVE", "C:"), "analysis"),
                 "/tmp/analysis/",  # noqa: S108 - Hardcoded path required for sandbox signature detection
                 "/tmp/cuckoo/",  # noqa: S108 - Hardcoded path required for sandbox signature detection
                 "/opt/sandbox/",

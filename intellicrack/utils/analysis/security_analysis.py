@@ -114,7 +114,7 @@ def check_buffer_overflow(binary_path: str, functions: list[str] | None = None) 
             # Also need DLL names for detailed analysis
             from ..binary.pe_common import iterate_pe_imports_with_dll
 
-            def check_vulnerable_function(dll_name, func_name):
+            def check_vulnerable_function(dll_name: str, func_name: str) -> dict[str, str] | None:
                 if func_name.lower() in [f.lower() for f in unsafe_functions]:
                     return {
                         "function": func_name,

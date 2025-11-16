@@ -9,12 +9,17 @@ Licensed under GNU General Public License v3.0
 
 import json
 from datetime import datetime
+from pathlib import Path
 from typing import Any
+
+from PyQt6.QtWidgets import QLayout, QWidget
 
 try:
     from xml.etree.ElementTree import Element, ElementTree, SubElement
 except ImportError:
     from xml.etree.ElementTree import Element, ElementTree, SubElement
+
+import contextlib
 
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,
@@ -36,7 +41,6 @@ from intellicrack.handlers.pyqt6_handler import (
     QTextEdit,
     QThread,
     QVBoxLayout,
-    QWidget,
     pyqtSignal,
     pyqtSlot,
 )
@@ -462,7 +466,7 @@ class ExportWorker(QThread):
 class ExportDialog(BaseDialog):
     """Export dialog for ICP analysis results."""
 
-    def __init__(self, analysis_results: dict[str, Any] | None = None, parent=None) -> None:
+    def __init__(self, analysis_results: dict[str, Any] | None = None, parent: QWidget | None = None) -> None:
         """Initialize the ExportDialog with default values."""
         super().__init__(parent, "Export ICP Analysis Results")
         self.resize(600, 500)
@@ -476,7 +480,7 @@ class ExportDialog(BaseDialog):
 
         self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
 
-    def setup_content(self, layout) -> None:
+    def setup_content(self, layout: QLayout) -> None:
         """Set up the user interface content."""
         if layout is None:
             layout = QVBoxLayout(self.content_widget)
@@ -638,7 +642,7 @@ class ExportDialog(BaseDialog):
         self.page_format_combo.addItems(["A4", "Letter"])
         self.page_format_combo.setCurrentText(self.export_prefs.get("page_format", "A4"))
         self.page_format_combo.setToolTip(
-            "Choose page size for PDF export:<br>A4: International standard (210×297mm)<br>Letter: US standard (8.5×11 inches)",
+            "Choose page size for PDF export:<br>A4: International standard (210x297mm)<br>Letter: US standard (8.5x11 inches)",
         )
         page_format_layout.addWidget(self.page_format_combo)
 
@@ -827,7 +831,7 @@ class ExportDialog(BaseDialog):
 
                 # Create filtered ICP data
                 class FilteredICPData:
-                    def __init__(self, original, filtered_detections) -> None:
+                    def __init__(self, original: object, filtered_detections: list[object]) -> None:
                         self.file_type = getattr(original, "file_type", "Unknown")
                         self.architecture = getattr(original, "architecture", "Unknown")
                         self.is_protected = getattr(original, "is_protected", False)
@@ -945,14 +949,23 @@ def main() -> None:
     ]
 
     # Generate actual file for analysis
-    test_file_path = tempfile.NamedTemporaryFile(suffix=".exe", delete=False).name
+    import os
+    temp_file_obj = tempfile.NamedTemporaryFile(suffix=".exe", delete=False)  # noqa: SIM115
+    test_file_path = temp_file_obj.name
+    temp_file_obj.close()  # Close handle immediately so we can write to the file
+
     with open(test_file_path, "wb") as f:
         f.write(b"MZ\x90\x00" + b"\x00" * 1000)  # Minimal PE header
 
-    # Calculate real hashes
-    with open(test_file_path, "rb") as f:
-        file_content = f.read()
-        md5_hash = hashlib.md5(file_content).hexdigest()  # noqa: S324 - MD5 for file fingerprinting in security analysis
+    try:
+        # Calculate real hashes
+        with open(test_file_path, "rb") as f:
+            file_content = f.read()
+            md5_hash = hashlib.md5(file_content).hexdigest()  # noqa: S324 - MD5 for file fingerprinting in security analysis
+    finally:
+        # Clean up the temporary file
+        with contextlib.suppress(OSError):
+            Path(test_file_path).unlink()
         sha256_hash = hashlib.sha256(file_content).hexdigest()
 
     analysis_results = {

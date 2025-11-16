@@ -23,7 +23,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 # pylint: disable=cyclic-import
 
 from datetime import datetime
-from typing import Any
 
 try:
     from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
@@ -59,7 +58,7 @@ except ImportError:
             """Return the global thread pool instance."""
             return
 
-    def pyqtSignal(*args) -> None:
+    def pyqtSignal(*args: object) -> None:
         """Fallback pyqtSignal function when PyQt6 is not available."""
         return
 
@@ -108,7 +107,7 @@ try:
 except ImportError:
     import logging
 
-    def get_logger(name: str):
+    def get_logger(name: str) -> logging.Logger:
         """Create a logger instance with the given name.
 
         Args:
@@ -196,7 +195,7 @@ class ReportGeneratorWorker(QRunnable):
 class ReportOptionsDialog(QDialog):
     """Dialog for selecting report generation options."""
 
-    def __init__(self, parent: Any | None = None) -> None:
+    def __init__(self, parent: QObject | None = None) -> None:
         """Initialize the report options dialog.
 
         Args:
@@ -308,7 +307,7 @@ class ReportGenerationHandler(QObject):
     report_error = pyqtSignal(str)
     report_progress = pyqtSignal(str)
 
-    def __init__(self, parent: Any | None = None) -> None:
+    def __init__(self, parent: QObject | None = None) -> None:
         """Initialize the report generation handler.
 
         Args:
@@ -324,7 +323,7 @@ class ReportGenerationHandler(QObject):
         self.current_result = result
         logger.info(f"Report generation handler received analysis for: {result.file_path}")
 
-    def generate_report(self, parent_widget: Any | None = None) -> None:
+    def generate_report(self, parent_widget: QObject | None = None) -> None:
         """Show options dialog and generate report based on user selection."""
         if not self.current_result:
             self.report_error.emit("No analysis result available")

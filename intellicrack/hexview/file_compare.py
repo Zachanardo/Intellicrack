@@ -73,7 +73,7 @@ class BinaryComparer:
         self.differences = []
         self.progress_callback = None
 
-    def set_progress_callback(self, callback) -> None:
+    def set_progress_callback(self, callback: object) -> None:
         """Set callback for progress updates.
 
         Args:
@@ -126,7 +126,7 @@ class BinaryComparer:
 
         return self.differences
 
-    def _compare_streams(self, f1, f2, size1: int, size2: int) -> None:
+    def _compare_streams(self, f1: object, f2: object, size1: int, size2: int) -> None:
         """Compare two file streams block by block.
 
         Args:
@@ -283,7 +283,7 @@ class BinaryComparer:
         if current_diff:
             self.differences.append(current_diff)
 
-    def _trace_lcs(self, data1: bytes, data2: bytes, lcs) -> None:
+    def _trace_lcs(self, data1: bytes, data2: bytes, lcs: object) -> None:
         """Trace LCS table to find differences.
 
         Args:

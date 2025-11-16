@@ -822,7 +822,7 @@ class BinarySimilaritySearch:
             entropies2 = [s.get("entropy", 0) for s in sections2]
 
             # Create entropy buckets for distribution comparison
-            def create_entropy_distribution(entropies: list):
+            def create_entropy_distribution(entropies: list) -> list[float | int]:
                 buckets = [0] * 8  # 8 entropy buckets (0-1, 1-2, ..., 7-8)
                 for entropy in entropies:
                     bucket = min(7, int(entropy))
@@ -892,7 +892,7 @@ class BinarySimilaritySearch:
                 return 0.0
 
             # Calculate relative section sizes
-            def get_size_distribution(sections: list):
+            def get_size_distribution(sections: list) -> list[float]:
                 sizes = [s.get("raw_data_size", 0) for s in sections]
                 total = sum(sizes)
                 return [s / total for s in sizes] if total > 0 else []
@@ -923,7 +923,7 @@ class BinarySimilaritySearch:
                 return 0.0
 
             # Simple LSH approximation using hash-based bucketing
-            def create_hash_signature(features: list, num_hashes: int = 32):
+            def create_hash_signature(features: list, num_hashes: int = 32) -> list[int]:
                 import hashlib
 
                 signature = []
@@ -957,7 +957,7 @@ class BinarySimilaritySearch:
             sample2 = " ".join(strings2[:10])
 
             # Simplified edit distance calculation
-            def edit_distance(s1: Any, s2: Any):
+            def edit_distance(s1: str, s2: str) -> int:
                 if len(s1) < len(s2):
                     s1, s2 = s2, s1
 
@@ -989,8 +989,8 @@ class BinarySimilaritySearch:
         """Calculate cosine similarity for feature vectors."""
         try:
             # Create feature vectors from various attributes
-            def create_feature_vector(features: dict):
-                vector = []
+            def create_feature_vector(features: dict) -> list[float | int]:
+                vector: list[float | int] = []
                 vector.append(features.get("file_size", 0) / 1000000)  # Normalize file size
                 vector.append(features.get("entropy", 0.0))
                 vector.append(len(features.get("sections", [])))

@@ -255,10 +255,10 @@ def create_performance_optimizer(**kwargs) -> R2PerformanceOptimizer:
             optimizer.set_optimization_strategy(OptimizationStrategy('balanced'))
             optimizer.set_analysis_level(AnalysisLevel('deep'))
 
-    if 'cache_enabled' in kwargs and kwargs['cache_enabled']:
+    if kwargs.get('cache_enabled'):
         optimizer.cache = {}
 
-    if 'profiling_enabled' in kwargs and kwargs['profiling_enabled']:
+    if kwargs.get('profiling_enabled'):
         optimizer.performance_profile = PerformanceProfile()
 
     return optimizer

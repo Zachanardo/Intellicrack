@@ -116,7 +116,7 @@ class SharedMemoryIPC:
                 logger.error(f"Failed to initialize shared memory: {conn_err}")
                 raise
 
-    def send_message(self, msg_type: MessageType, data: Any) -> bool:
+    def send_message(self, msg_type: MessageType, data: dict | list | str | int | bool | None) -> bool:
         """Send message through shared memory.
 
         Args:
@@ -213,7 +213,7 @@ class ResultSerializer:
     PROTOCOL_VERSION = "1.0"
 
     @staticmethod
-    def serialize_result(tool_name: str, result: Any, metadata: dict | None = None) -> bytes:
+    def serialize_result(tool_name: str, result: dict | list | str | object, metadata: dict[str, Any] | None = None) -> bytes:
         """Serialize analysis result with metadata.
 
         Args:
@@ -238,7 +238,7 @@ class ResultSerializer:
             package["result"] = result.__dict__
 
         # Convert result to JSON-serializable format by converting datetime objects to strings
-        def make_serializable(obj):
+        def make_serializable(obj: object) -> object:
             if isinstance(obj, (datetime,)):
                 return obj.isoformat()
             if isinstance(obj, dict):
@@ -806,7 +806,7 @@ class UnifiedAnalysisResult:
 class CrossToolOrchestrator:
     """Orchestrates analysis across multiple binary analysis tools."""
 
-    def __init__(self, binary_path: str, main_app=None) -> None:
+    def __init__(self, binary_path: str, main_app: object | None = None) -> None:
         """Initialize the orchestrator.
 
         Args:
@@ -1810,7 +1810,7 @@ class CrossToolOrchestrator:
         self.logger.info("CrossToolOrchestrator cleanup complete")
 
 
-def create_orchestrator(binary_path: str, main_app=None) -> CrossToolOrchestrator:
+def create_orchestrator(binary_path: str, main_app: object | None = None) -> CrossToolOrchestrator:
     """Create orchestrator.
 
     Args:

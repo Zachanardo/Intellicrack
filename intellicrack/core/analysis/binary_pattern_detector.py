@@ -74,7 +74,7 @@ class BinaryPattern:
     position_independent: bool = False
     metadata: dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate pattern configuration."""
         if len(self.pattern_bytes) != len(self.mask):
             raise ValueError(f"Pattern and mask length mismatch for {self.name}")
@@ -805,9 +805,7 @@ class BinaryPatternDetector:
                         break  # Only check first instruction
                 except Exception as e:
                     # Log the exception with details for debugging
-                    import logging
-
-                    logging.warning(f"Error processing instruction at offset {offset}: {e}")
+                    logger.warning("Error processing instruction at offset %s: %s", offset, e)
                     continue
 
         return sorted(set(xrefs))
@@ -845,7 +843,7 @@ class BinaryPatternDetector:
         return disasm
 
     def add_custom_pattern(
-        self, pattern_bytes: str, mask: str, name: str, category: str, match_type: PatternMatchType = PatternMatchType.WILDCARD, **kwargs,
+        self, pattern_bytes: str, mask: str, name: str, category: str, match_type: PatternMatchType = PatternMatchType.WILDCARD, **kwargs: object,
     ) -> bool:
         """Add a custom pattern from hex strings."""
         try:

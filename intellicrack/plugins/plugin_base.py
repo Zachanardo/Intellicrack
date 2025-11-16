@@ -19,13 +19,14 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import os
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Callable
 
 from intellicrack.utils.logger import log_all_methods, logger
 
+from ..utils.analysis.entropy_utils import calculate_byte_entropy
+
 logger.debug("Plugin base module loaded")
 
-from ..utils.analysis.entropy_utils import calculate_byte_entropy
 
 """Base plugin interface for Intellicrack plugin system."""
 
@@ -97,12 +98,27 @@ class PluginConfigManager:
         """
         self.config = default_config.copy()
 
-    def get(self, key: str, default: Any = None) -> Any:
-        """Get configuration value."""
+    def get(self, key: str, default: object = None) -> object:
+        """Get configuration value.
+
+        Args:
+            key: Configuration key
+            default: Default value if key not found
+
+        Returns:
+            Configuration value or default
+
+        """
         return self.config.get(key, default)
 
-    def set(self, key: str, value: Any) -> None:
-        """Set configuration value."""
+    def set(self, key: str, value: object) -> None:
+        """Set configuration value.
+
+        Args:
+            key: Configuration key
+            value: Configuration value to set
+
+        """
         self.config[key] = value
 
     def update(self, updates: dict[str, Any]) -> None:
@@ -206,10 +222,14 @@ class BasePlugin(ABC):
         return calculate_byte_entropy(data)
 
     @abstractmethod
-    def run(self, *args, **kwargs) -> dict[str, Any]:
+    def run(self, *args: object, **kwargs: object) -> dict[str, Any]:
         """Execute the plugin's main functionality.
 
         Must be implemented by subclasses.
+
+        Args:
+            *args: Variable positional arguments
+            **kwargs: Variable keyword arguments
 
         Returns:
             Dictionary containing execution results
@@ -243,19 +263,24 @@ def create_plugin_info(metadata: PluginMetadata, entry_point: str = "register") 
     return info
 
 
-def create_register_function(plugin_class):
+def create_register_function(plugin_class: type[BasePlugin]) -> Callable[[], BasePlugin]:
     """Create a standard register function for a plugin class.
 
     Args:
         plugin_class: Plugin class to register
 
     Returns:
-        Register function
+        Register function that instantiates and returns the plugin
 
     """
 
-    def register():
-        """Register this plugin with Intellicrack."""
+    def register() -> BasePlugin:
+        """Register this plugin with Intellicrack.
+
+        Returns:
+            Instance of the registered plugin class
+
+        """
         return plugin_class()
 
     return register

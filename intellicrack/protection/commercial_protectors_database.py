@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+from pefile import PE
+
 
 class ProtectorCategory(Enum):
     """Categories of protection mechanisms."""
@@ -920,15 +922,18 @@ class CommercialProtectorsDatabase:
             ),
         }
 
-    def detect_protector(self, file_data: bytes, pe_header: Any = None) -> list[tuple[str, ProtectorSignature, float]]:
+    def detect_protector(self, file_data: bytes, pe_header: PE | None = None) -> list[tuple[str, ProtectorSignature, float]]:
         """Detect protectors based on file data and PE header.
 
         Args:
-            file_data: Raw file bytes
-            pe_header: Parsed PE header (if available)
+            file_data: Raw file bytes to analyze for protector signatures.
+            pe_header: Parsed PE header object (if available) for section analysis.
 
         Returns:
-            List of (name, signature, confidence) tuples
+            List of (name, signature, confidence) tuples sorted by confidence descending.
+
+        Raises:
+            No exceptions raised - uses fallback PE parsing if pefile unavailable.
 
         """
         detections = []
@@ -1188,10 +1193,19 @@ class CommercialProtectorsDatabase:
         # Check entropy of sections
         import math
 
-        def calculate_entropy(data):
+        def calculate_entropy(data: bytes) -> float:
+            """Calculate Shannon entropy of binary data.
+
+            Args:
+                data: Binary data chunk to analyze.
+
+            Returns:
+                Entropy value as float (0-8 typically, higher indicates encryption/compression).
+
+            """
             if not data:
-                return 0
-            entropy = 0
+                return 0.0
+            entropy = 0.0
             for x in range(256):
                 p_x = data.count(x) / len(data)
                 if p_x > 0:

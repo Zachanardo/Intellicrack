@@ -34,6 +34,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from threading import Thread
 from typing import Any
+from xml.etree.ElementTree import Element
 
 from intellicrack.core.config_manager import get_config
 from intellicrack.utils.subprocess_security import secure_popen
@@ -202,7 +203,7 @@ class GhidraOutputParser:
         except Exception as e:
             raise ValueError(f"Failed to parse XML output: {e}") from e
 
-    def _parse_xml_function(self, func_elem) -> GhidraFunction:
+    def _parse_xml_function(self, func_elem: Element) -> GhidraFunction:
         """Parse a function element from XML."""
         name = func_elem.get("NAME", "unknown")
         address = int(func_elem.get("ENTRY_POINT", "0"), 16)
@@ -274,7 +275,7 @@ class GhidraOutputParser:
             calling_convention=calling_convention,
         )
 
-    def _parse_xml_datatype(self, dt_elem) -> GhidraDataType:
+    def _parse_xml_datatype(self, dt_elem: Element) -> GhidraDataType:
         """Parse a data type element from XML."""
         name = dt_elem.get("NAME", "unknown")
         size = int(dt_elem.get("SIZE", "0"), 10)
@@ -545,7 +546,7 @@ class GhidraOutputParser:
         )
 
 
-def _run_ghidra_thread(main_app, command, temp_dir) -> None:
+def _run_ghidra_thread(main_app: object, command: list[str], temp_dir: str) -> None:
     """Run the Ghidra command in a background thread and clean up afterward."""
     try:
         main_app.update_output.emit(f"[Ghidra] Running command: {' '.join(command)}")
@@ -792,7 +793,7 @@ class GhidraScriptManager:
         return script_args
 
 
-def run_advanced_ghidra_analysis(main_app, analysis_type: str = "comprehensive", scripts: list[str] | None = None) -> None:
+def run_advanced_ghidra_analysis(main_app: object, analysis_type: str = "comprehensive", scripts: list[str] | None = None) -> None:
     """Launch a Ghidra headless analysis session with intelligent script selection."""
     if not main_app.current_binary:
         main_app.update_output.emit("[Ghidra] Error: No binary loaded.")
@@ -802,7 +803,7 @@ def run_advanced_ghidra_analysis(main_app, analysis_type: str = "comprehensive",
     config = get_config()
     ghidra_install_dir = config.get_tool_path("ghidra")
 
-    if not ghidra_install_dir or not os.path.isdir(ghidra_install_dir):
+    if not ghidra_install_dir or not Path(ghidra_install_dir).is_dir():
         main_app.update_output.emit(f"[Ghidra] Error: Ghidra installation directory not configured or invalid: {ghidra_install_dir}")
         return
 
@@ -943,7 +944,7 @@ def _identify_licensing_functions(result: GhidraAnalysisResult) -> list[tuple[in
     return licensing_functions
 
 
-def export_ghidra_results(result: GhidraAnalysisResult, output_path: str, format: str = "json"):
+def export_ghidra_results(result: GhidraAnalysisResult, output_path: str, format: str = "json") -> Path:
     """Export Ghidra analysis results in various formats."""
     output_path = Path(output_path)
 

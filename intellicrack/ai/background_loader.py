@@ -26,12 +26,12 @@ import os
 import queue
 import threading
 import time
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Optional
 
 from .llm_types import LoadingProgress, LoadingState, ProgressCallback
 
 if TYPE_CHECKING:
-    from .llm_backends import LLMBackend, LLMConfig
+    from .llm_backends import LLMBackend, LLMConfig, LLMManager
 
 logger = logging.getLogger(__name__)
 
@@ -402,7 +402,7 @@ class IntegratedBackgroundLoader:
     Provides seamless integration with lazy loading and model management.
     """
 
-    def __init__(self, llm_manager: Any, max_concurrent_loads: int = 2) -> None:
+    def __init__(self, llm_manager: "LLMManager", max_concurrent_loads: int = 2) -> None:
         """Initialize the integrated background loader.
 
         Args:
@@ -485,8 +485,16 @@ class IntegratedBackgroundLoader:
 _integrated_loader: IntegratedBackgroundLoader | None = None
 
 
-def get_background_loader(llm_manager: Any | None = None) -> IntegratedBackgroundLoader:
-    """Get the global integrated background loader."""
+def get_background_loader(llm_manager: "LLMManager | None" = None) -> IntegratedBackgroundLoader | None:
+    """Get the global integrated background loader.
+
+    Args:
+        llm_manager: Optional LLM manager instance. If not provided, one will be created.
+
+    Returns:
+        The global IntegratedBackgroundLoader instance, or None if background loading is disabled.
+
+    """
     global _integrated_loader
     if _integrated_loader is None:
         # Skip background loader creation during testing

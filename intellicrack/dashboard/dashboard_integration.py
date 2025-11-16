@@ -25,7 +25,7 @@ import threading
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Callable
 
 from .dashboard_manager import create_dashboard_manager
 from .dashboard_widgets import WidgetType, create_widget
@@ -36,10 +36,20 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ToolIntegration:
-    """Tool integration configuration."""
+    """Tool integration configuration.
+
+    Attributes:
+        tool_name: Name of the analysis tool.
+        analyzer_instance: Instance of the analyzer for this tool.
+        event_handler: Optional callback for handling tool events.
+        metrics_provider: Optional callable to retrieve tool metrics.
+        status_provider: Optional callable to retrieve tool status.
+        enabled: Whether the tool integration is enabled.
+
+    """
 
     tool_name: str
-    analyzer_instance: Any
+    analyzer_instance: object
     event_handler: Callable | None = None
     metrics_provider: Callable | None = None
     status_provider: Callable | None = None
@@ -47,13 +57,22 @@ class ToolIntegration:
 
 
 class DashboardIntegration:
-    """Integrates dashboard with all analysis tools."""
+    """Integrates dashboard with all analysis tools.
 
-    def __init__(self, config: dict[str, Any] | None = None) -> None:
+    This class provides unified integration between the real-time dashboard
+    and various binary analysis tools (Ghidra, Frida, Radare2, etc.).
+    It manages event handling, metrics collection, and status monitoring
+    for all integrated tools.
+
+    """
+
+    def __init__(self, config: dict[str, object] | None = None) -> None:
         """Initialize dashboard integration.
 
         Args:
-            config: Integration configuration
+            config: Integration configuration dictionary with keys like
+                'enable_websocket', 'enable_http', 'websocket_port',
+                'http_port', 'max_events', 'metrics_history'.
 
         """
         self.logger = logger
@@ -76,7 +95,7 @@ class DashboardIntegration:
         self.tool_integrations: dict[str, ToolIntegration] = {}
 
         # Analysis tracking
-        self.active_analyses: dict[str, dict[str, Any]] = {}
+        self.active_analyses: dict[str, dict[str, object]] = {}
         self.analysis_lock = threading.Lock()
 
         # Event handlers
@@ -117,11 +136,15 @@ class DashboardIntegration:
             create_widget("analysis_speed", WidgetType.GAUGE, "Analysis Speed", min=0, max=1000, units="ops/sec"),
         )
 
-    def integrate_ghidra(self, ghidra_analyzer: Any) -> None:
+    def integrate_ghidra(self, ghidra_analyzer: object) -> None:
         """Integrate Ghidra analyzer with dashboard.
 
+        Registers the Ghidra analyzer instance with the dashboard and hooks
+        event handlers to monitor analysis progress and collect metrics.
+
         Args:
-            ghidra_analyzer: Ghidra analyzer instance
+            ghidra_analyzer: Ghidra analyzer instance with optional
+                register_callback() method for event handling.
 
         """
         integration = ToolIntegration(
@@ -141,11 +164,15 @@ class DashboardIntegration:
 
         self.logger.info("Integrated Ghidra with dashboard")
 
-    def integrate_frida(self, frida_analyzer: Any) -> None:
+    def integrate_frida(self, frida_analyzer: object) -> None:
         """Integrate Frida analyzer with dashboard.
 
+        Registers the Frida analyzer instance with the dashboard and hooks
+        event handlers to monitor runtime instrumentation and collect metrics.
+
         Args:
-            frida_analyzer: Frida analyzer instance
+            frida_analyzer: Frida analyzer instance with optional
+                set_event_callback() method for event handling.
 
         """
         integration = ToolIntegration(
@@ -165,11 +192,15 @@ class DashboardIntegration:
 
         self.logger.info("Integrated Frida with dashboard")
 
-    def integrate_radare2(self, r2_analyzer: Any) -> None:
+    def integrate_radare2(self, r2_analyzer: object) -> None:
         """Integrate Radare2 analyzer with dashboard.
 
+        Registers the Radare2 analyzer instance with the dashboard and hooks
+        performance monitoring to track static analysis metrics.
+
         Args:
-            r2_analyzer: Radare2 analyzer instance
+            r2_analyzer: Radare2 analyzer instance with optional
+                performance_monitor attribute for metrics collection.
 
         """
         integration = ToolIntegration(
@@ -191,11 +222,15 @@ class DashboardIntegration:
 
         self.logger.info("Integrated Radare2 with dashboard")
 
-    def integrate_cross_tool_orchestrator(self, orchestrator: Any) -> None:
+    def integrate_cross_tool_orchestrator(self, orchestrator: object) -> None:
         """Integrate cross-tool orchestrator with dashboard.
 
+        Registers the cross-tool orchestrator instance with the dashboard
+        to enable correlation analysis and unified findings visualization.
+
         Args:
-            orchestrator: Cross-tool orchestrator instance
+            orchestrator: Cross-tool orchestrator instance for coordinating
+                analysis across multiple tools.
 
         """
         integration = ToolIntegration(
@@ -211,14 +246,17 @@ class DashboardIntegration:
 
         self.logger.info("Integrated cross-tool orchestrator with dashboard")
 
-    def start_analysis_monitoring(self, analysis_id: str, tool: str, target: str, options: dict[str, Any] | None = None) -> None:
+    def start_analysis_monitoring(self, analysis_id: str, tool: str, target: str, options: dict[str, object] | None = None) -> None:
         """Start monitoring an analysis.
 
+        Begins tracking a binary analysis session including tool execution,
+        event collection, and metrics aggregation for dashboard visualization.
+
         Args:
-            analysis_id: Unique analysis identifier
-            tool: Tool name
-            target: Target binary path
-            options: Analysis options
+            analysis_id: Unique analysis identifier.
+            tool: Tool name (ghidra, frida, radare2, etc.).
+            target: Target binary file path.
+            options: Optional analysis configuration parameters.
 
         """
         with self.analysis_lock:
@@ -240,12 +278,16 @@ class DashboardIntegration:
         # Update tool status
         self._update_tool_status(tool, "Running")
 
-    def complete_analysis_monitoring(self, analysis_id: str, results: dict[str, Any]) -> None:
+    def complete_analysis_monitoring(self, analysis_id: str, results: dict[str, object]) -> None:
         """Complete analysis monitoring.
 
+        Finalizes tracking of a binary analysis session and processes results
+        for visualization and reporting.
+
         Args:
-            analysis_id: Analysis identifier
-            results: Analysis results
+            analysis_id: Analysis identifier.
+            results: Analysis results dictionary containing findings, metrics,
+                and other output from the analysis tool.
 
         """
         with self.analysis_lock:
@@ -266,13 +308,16 @@ class DashboardIntegration:
         # Process results for visualization
         self._process_analysis_results(results)
 
-    def report_finding(self, finding_type: str, tool: str, data: dict[str, Any]) -> None:
+    def report_finding(self, finding_type: str, tool: str, data: dict[str, object]) -> None:
         """Report analysis finding to dashboard.
 
+        Submits analysis findings (vulnerabilities, protections, bypasses)
+        to the dashboard for visualization and reporting.
+
         Args:
-            finding_type: Type of finding (vulnerability, protection, bypass)
-            tool: Tool that found it
-            data: Finding data
+            finding_type: Type of finding (vulnerability, protection, bypass).
+            tool: Name of the tool that discovered the finding.
+            data: Finding data dictionary with detailed information.
 
         """
         if finding_type == "vulnerability":
@@ -309,11 +354,14 @@ class DashboardIntegration:
     def export_analysis_report(self, filepath: str) -> None:
         """Export comprehensive analysis report.
 
+        Generates a JSON report containing all analysis data, findings, metrics,
+        and tool status information for archival and further analysis.
+
         Args:
-            filepath: Export file path
+            filepath: Path where the JSON report will be saved.
 
         """
-        report = {
+        report: dict[str, object] = {
             "timestamp": datetime.now().isoformat(),
             "analyses": {},
             "findings": {"vulnerabilities": [], "protections": [], "bypasses": []},
@@ -359,12 +407,15 @@ class DashboardIntegration:
 
     # Event handlers for different tools
 
-    def _handle_ghidra_event(self, event_type: str, data: dict[str, Any]) -> None:
+    def _handle_ghidra_event(self, event_type: str, data: dict[str, object]) -> None:
         """Handle Ghidra event.
 
+        Processes and routes events from the Ghidra analyzer to the dashboard
+        and updates relevant widgets.
+
         Args:
-            event_type: Event type
-            data: Event data
+            event_type: Type of event (function_analyzed, etc.).
+            data: Event data dictionary.
 
         """
         self.dashboard_manager.process_analysis_event(event_type, "ghidra", data)
@@ -373,12 +424,15 @@ class DashboardIntegration:
         if event_type == "function_analyzed":
             self._update_function_analysis("ghidra", data)
 
-    def _handle_frida_event(self, event_type: str, data: dict[str, Any]) -> None:
+    def _handle_frida_event(self, event_type: str, data: dict[str, object]) -> None:
         """Handle Frida event.
 
+        Processes and routes events from the Frida analyzer to the dashboard
+        and updates hook status widgets.
+
         Args:
-            event_type: Event type
-            data: Event data
+            event_type: Type of event (hook_installed, etc.).
+            data: Event data dictionary.
 
         """
         self.dashboard_manager.process_analysis_event(event_type, "frida", data)
@@ -387,12 +441,15 @@ class DashboardIntegration:
         if event_type == "hook_installed":
             self._update_hook_status(data)
 
-    def _handle_r2_event(self, event_type: str, data: dict[str, Any]) -> None:
+    def _handle_r2_event(self, event_type: str, data: dict[str, object]) -> None:
         """Handle Radare2 event.
 
+        Processes and routes events from the Radare2 analyzer to the dashboard
+        and updates graph visualization widgets.
+
         Args:
-            event_type: Event type
-            data: Event data
+            event_type: Type of event (graph_generated, etc.).
+            data: Event data dictionary.
 
         """
         self.dashboard_manager.process_analysis_event(event_type, "radare2", data)
@@ -401,21 +458,26 @@ class DashboardIntegration:
         if event_type == "graph_generated":
             self._update_graph_widget(data)
 
-    def _handle_r2_performance(self, metrics: dict[str, Any]) -> None:
+    def _handle_r2_performance(self, metrics: dict[str, object]) -> None:
         """Handle R2 performance metrics.
 
+        Updates dashboard with performance metrics from Radare2 analysis.
+
         Args:
-            metrics: Performance metrics
+            metrics: Performance metrics dictionary.
 
         """
         self.dashboard_manager.dashboard.update_performance("radare2", metrics)
 
-    def _handle_orchestrator_event(self, event_type: str, data: dict[str, Any]) -> None:
+    def _handle_orchestrator_event(self, event_type: str, data: dict[str, object]) -> None:
         """Handle orchestrator event.
 
+        Processes events from the cross-tool orchestrator and updates
+        correlation matrices and unified findings visualization.
+
         Args:
-            event_type: Event type
-            data: Event data
+            event_type: Type of event (correlation_found, etc.).
+            data: Event data dictionary.
 
         """
         self.dashboard_manager.process_analysis_event(event_type, "cross_tool", data)
@@ -426,11 +488,14 @@ class DashboardIntegration:
 
     # Metrics providers
 
-    def _get_ghidra_metrics(self) -> dict[str, Any]:
+    def _get_ghidra_metrics(self) -> dict[str, object]:
         """Get Ghidra metrics.
 
+        Retrieves analysis metrics from the integrated Ghidra analyzer.
+
         Returns:
-            Ghidra metrics
+            Dictionary of Ghidra metrics (functions analyzed, decompilation
+            success rate, etc.).
 
         """
         integration = self.tool_integrations.get("ghidra")
@@ -446,11 +511,13 @@ class DashboardIntegration:
 
         return metrics
 
-    def _get_frida_metrics(self) -> dict[str, Any]:
+    def _get_frida_metrics(self) -> dict[str, object]:
         """Get Frida metrics.
 
+        Retrieves runtime instrumentation metrics from the integrated Frida analyzer.
+
         Returns:
-            Frida metrics
+            Dictionary of Frida metrics (hooks installed, intercepts, etc.).
 
         """
         integration = self.tool_integrations.get("frida")
@@ -468,11 +535,13 @@ class DashboardIntegration:
 
         return metrics
 
-    def _get_r2_metrics(self) -> dict[str, Any]:
+    def _get_r2_metrics(self) -> dict[str, object]:
         """Get Radare2 metrics.
 
+        Retrieves static analysis metrics from the integrated Radare2 analyzer.
+
         Returns:
-            Radare2 metrics
+            Dictionary of Radare2 metrics (analysis time, functions, etc.).
 
         """
         integration = self.tool_integrations.get("radare2")
@@ -489,11 +558,13 @@ class DashboardIntegration:
 
         return metrics
 
-    def _get_orchestrator_metrics(self) -> dict[str, Any]:
+    def _get_orchestrator_metrics(self) -> dict[str, object]:
         """Get orchestrator metrics.
 
+        Retrieves cross-tool correlation and coordination metrics from the orchestrator.
+
         Returns:
-            Orchestrator metrics
+            Dictionary of orchestrator metrics (correlations, active tools, etc.).
 
         """
         integration = self.tool_integrations.get("cross_tool")
@@ -510,11 +581,14 @@ class DashboardIntegration:
 
     # Status providers
 
-    def _get_ghidra_status(self) -> dict[str, Any]:
+    def _get_ghidra_status(self) -> dict[str, object]:
         """Get Ghidra status.
 
+        Retrieves integration status and metrics for the Ghidra analyzer.
+
         Returns:
-            Ghidra status
+            Dictionary containing status (Active/Disabled/Not integrated) and
+            associated metrics.
 
         """
         integration = self.tool_integrations.get("ghidra")
@@ -523,11 +597,14 @@ class DashboardIntegration:
 
         return {"status": "Active" if integration.enabled else "Disabled", "metrics": self._get_ghidra_metrics()}
 
-    def _get_frida_status(self) -> dict[str, Any]:
+    def _get_frida_status(self) -> dict[str, object]:
         """Get Frida status.
 
+        Retrieves integration status and attachment information for the Frida analyzer.
+
         Returns:
-            Frida status
+            Dictionary containing status (Active/Disabled/Not integrated),
+            attachment status, and metrics.
 
         """
         integration = self.tool_integrations.get("frida")
@@ -542,11 +619,14 @@ class DashboardIntegration:
 
         return status
 
-    def _get_r2_status(self) -> dict[str, Any]:
+    def _get_r2_status(self) -> dict[str, object]:
         """Get Radare2 status.
 
+        Retrieves integration status and metrics for the Radare2 analyzer.
+
         Returns:
-            Radare2 status
+            Dictionary containing status (Active/Disabled/Not integrated) and
+            associated metrics.
 
         """
         integration = self.tool_integrations.get("radare2")
@@ -555,11 +635,14 @@ class DashboardIntegration:
 
         return {"status": "Active" if integration.enabled else "Disabled", "metrics": self._get_r2_metrics()}
 
-    def _get_orchestrator_status(self) -> dict[str, Any]:
+    def _get_orchestrator_status(self) -> dict[str, object]:
         """Get orchestrator status.
 
+        Retrieves integration status and active tools information for the orchestrator.
+
         Returns:
-            Orchestrator status
+            Dictionary containing status (Active/Disabled/Not integrated),
+            active tools list, and metrics.
 
         """
         integration = self.tool_integrations.get("cross_tool")
@@ -621,12 +704,14 @@ class DashboardIntegration:
         if "tool_status" in self.dashboard_manager.widgets:
             self.dashboard_manager.widgets["tool_status"].update_data(widget_data)
 
-    def _update_function_analysis(self, tool: str, data: dict[str, Any]) -> None:
+    def _update_function_analysis(self, tool: str, data: dict[str, object]) -> None:
         """Update function analysis widgets.
 
+        Updates the function analysis chart with new analysis results.
+
         Args:
-            tool: Tool name
-            data: Function data
+            tool: Tool name performing analysis.
+            data: Function analysis data.
 
         """
         from ..dashboard_widgets import WidgetData
@@ -642,11 +727,13 @@ class DashboardIntegration:
             widget_data = WidgetData(timestamp=datetime.now(), values=values)
             widget.update_data(widget_data)
 
-    def _update_hook_status(self, data: dict[str, Any]) -> None:
+    def _update_hook_status(self, data: dict[str, object]) -> None:
         """Update hook status display.
 
+        Displays hook installation events in the dashboard event timeline.
+
         Args:
-            data: Hook data
+            data: Hook data including function name and address.
 
         """
         # Create event for timeline
@@ -661,11 +748,13 @@ class DashboardIntegration:
         )
         self.dashboard_manager.dashboard.add_event(event)
 
-    def _update_graph_widget(self, data: dict[str, Any]) -> None:
+    def _update_graph_widget(self, data: dict[str, object]) -> None:
         """Update graph visualization widget.
 
+        Updates the call graph or control flow graph visualization with new data.
+
         Args:
-            data: Graph data
+            data: Graph data including nodes and edges.
 
         """
         from ..dashboard_widgets import WidgetData
@@ -674,11 +763,13 @@ class DashboardIntegration:
             widget_data = WidgetData(timestamp=datetime.now(), values={"nodes": data.get("nodes", []), "edges": data.get("edges", [])})
             self.dashboard_manager.widgets["call_graph"].update_data(widget_data)
 
-    def _update_correlation_matrix(self, data: dict[str, Any]) -> None:
+    def _update_correlation_matrix(self, data: dict[str, object]) -> None:
         """Update correlation matrix widget.
 
+        Updates the cross-tool correlation heatmap with new analysis correlations.
+
         Args:
-            data: Correlation data
+            data: Correlation data including matrix and tool list.
 
         """
         from ..dashboard_widgets import WidgetData
@@ -690,12 +781,15 @@ class DashboardIntegration:
             widget_data = WidgetData(timestamp=datetime.now(), values={"matrix": matrix}, labels=tools, categories=tools)
             self.dashboard_manager.widgets["correlation_matrix"].update_data(widget_data)
 
-    def _update_finding_widgets(self, finding_type: str, data: dict[str, Any]) -> None:
+    def _update_finding_widgets(self, finding_type: str, data: dict[str, object]) -> None:
         """Update widgets based on findings.
 
+        Updates visualizations with analysis findings (vulnerabilities,
+        protections, bypasses).
+
         Args:
-            finding_type: Type of finding
-            data: Finding data
+            finding_type: Type of finding (vulnerability, protection, bypass).
+            data: Finding data.
 
         """
         from ..dashboard_widgets import WidgetData
@@ -712,11 +806,14 @@ class DashboardIntegration:
             widget_data = WidgetData(timestamp=datetime.now(), values=values)
             widget.update_data(widget_data)
 
-    def _process_analysis_results(self, results: dict[str, Any]) -> None:
+    def _process_analysis_results(self, results: dict[str, object]) -> None:
         """Process analysis results for visualization.
 
+        Processes raw analysis results and distributes them to appropriate
+        widgets and event handlers for dashboard visualization.
+
         Args:
-            results: Analysis results
+            results: Analysis results dictionary.
 
         """
         # Update various widgets based on results
@@ -731,14 +828,18 @@ class DashboardIntegration:
             for prot in results["protections"]:
                 self.report_finding("protection", "analysis", prot)
 
-    def _summarize_results(self, results: dict[str, Any]) -> dict[str, Any]:
+    def _summarize_results(self, results: dict[str, object]) -> dict[str, object]:
         """Summarize analysis results.
 
+        Generates a concise summary of analysis results for report generation
+        and quick visualization.
+
         Args:
-            results: Full results
+            results: Full analysis results dictionary.
 
         Returns:
-            Summary dictionary
+            Summary dictionary with counts of functions, vulnerabilities,
+            protections, imports, and strings.
 
         """
         return {
@@ -750,14 +851,19 @@ class DashboardIntegration:
         }
 
 
-def create_dashboard_integration(config: dict[str, Any] | None = None) -> DashboardIntegration:
+def create_dashboard_integration(config: dict[str, object] | None = None) -> DashboardIntegration:
     """Create dashboard integration.
 
+    Factory function for creating a new DashboardIntegration instance with
+    optional configuration.
+
     Args:
-        config: Integration configuration
+        config: Optional integration configuration dictionary with keys like
+            'enable_websocket', 'enable_http', 'websocket_port', 'http_port',
+            'max_events', 'metrics_history'.
 
     Returns:
-        New DashboardIntegration instance
+        New DashboardIntegration instance ready for tool integration.
 
     """
     return DashboardIntegration(config)

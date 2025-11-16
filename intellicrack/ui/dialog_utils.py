@@ -25,11 +25,18 @@ from .handlers.pyqt6_handler import (
     QLabel,
     QLineEdit,
     QPushButton,
+    QWidget,
 )
 
 
-def setup_footer(dialog, layout) -> None:
-    """Set up standard dialog footer with status and close button."""
+def setup_footer(dialog: QWidget, layout: QHBoxLayout) -> None:
+    """Set up standard dialog footer with status and close button.
+
+    Args:
+        dialog: The dialog window to add footer to.
+        layout: The main layout to add footer layout to.
+
+    """
     footer_layout = QHBoxLayout()
 
     dialog.status_label = QLabel("Ready")
@@ -45,8 +52,14 @@ def setup_footer(dialog, layout) -> None:
     layout.addLayout(footer_layout)
 
 
-def setup_binary_header(dialog, layout) -> None:
-    """Set up header with binary selection."""
+def setup_binary_header(dialog: QWidget, layout: QHBoxLayout) -> None:
+    """Set up header with binary selection.
+
+    Args:
+        dialog: The dialog window to add header to.
+        layout: The main layout to add header to.
+
+    """
     header_group = QGroupBox("Target Binary")
     header_layout = QHBoxLayout(header_group)
 
@@ -75,13 +88,23 @@ def setup_binary_header(dialog, layout) -> None:
     layout.addWidget(header_group)
 
 
-def connect_binary_signals(dialog) -> None:
-    """Connect common binary-related signals."""
+def connect_binary_signals(dialog: QWidget) -> None:
+    """Connect common binary-related signals.
+
+    Args:
+        dialog: The dialog window with binary path edit widget to connect signals for.
+
+    """
     dialog.binary_path_edit.textChanged.connect(dialog.on_binary_path_changed)
 
 
-def browse_binary_file(dialog) -> None:
-    """Browse for binary file using standard file dialog."""
+def browse_binary_file(dialog: QWidget) -> None:
+    """Browse for binary file using standard file dialog.
+
+    Args:
+        dialog: The dialog window with binary path edit widget to update.
+
+    """
     file_path, _ = QFileDialog.getOpenFileName(
         dialog,
         "Select Target Binary",
@@ -93,6 +116,12 @@ def browse_binary_file(dialog) -> None:
         dialog.binary_path = file_path
 
 
-def on_binary_path_changed(dialog, text) -> None:
-    """Handle binary path change."""
+def on_binary_path_changed(dialog: QWidget, text: str) -> None:
+    """Handle binary path change.
+
+    Args:
+        dialog: The dialog window to update with new binary path.
+        text: The new binary path text.
+
+    """
     dialog.binary_path = text

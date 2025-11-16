@@ -1,5 +1,11 @@
 """Torch handler for Intellicrack.
 
+PyTorch Import Handler with Production-Ready Fallbacks.
+
+This module provides a centralized abstraction layer for PyTorch imports.
+When PyTorch is not available, it provides fallback implementations for
+tensor operations used in Intellicrack's ML components.
+
 This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
@@ -15,13 +21,6 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
-"""
-
-"""PyTorch Import Handler with Production-Ready Fallbacks.
-
-This module provides a centralized abstraction layer for PyTorch imports.
-When PyTorch is not available, it provides fallback implementations for
-tensor operations used in Intellicrack's ML components.
 """
 
 import os

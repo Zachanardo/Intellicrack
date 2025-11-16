@@ -10,7 +10,7 @@ import struct
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable
+from typing import Callable
 
 import z3
 from cryptography.hazmat.backends import default_backend
@@ -307,8 +307,17 @@ class SerialNumberGenerator:
         logger.debug(f"Algorithm '{algorithm}' scored {score}/{tests}.")
         return score / tests if tests > 0 else 0.0
 
-    def generate_serial(self, constraints: SerialConstraints, seed: Any | None = None) -> GeneratedSerial:
-        """Generate a serial number based on constraints."""
+    def generate_serial(self, constraints: SerialConstraints, seed: int | str | bytes | None = None) -> GeneratedSerial:
+        """Generate a serial number based on constraints.
+
+        Args:
+            constraints: SerialConstraints object specifying format, length, and other generation rules.
+            seed: Optional seed value (int, str, or bytes) to influence serial generation randomness.
+
+        Returns:
+            GeneratedSerial: The generated serial number with metadata and validation information.
+
+        """
         logger.debug(f"Generating serial with constraints: {constraints}, seed: {seed}")
         if constraints.validation_function:
             logger.debug("Using custom validation function for serial generation.")
@@ -326,8 +335,17 @@ class SerialNumberGenerator:
         # Use constraint solver for complex requirements
         return self._generate_constrained_serial(constraints, seed)
 
-    def _generate_constrained_serial(self, constraints: SerialConstraints, seed: Any | None = None) -> GeneratedSerial:
-        """Generate serial using Z3 constraint solver."""
+    def _generate_constrained_serial(self, constraints: SerialConstraints, seed: int | str | bytes | None = None) -> GeneratedSerial:
+        """Generate serial using Z3 constraint solver.
+
+        Args:
+            constraints: SerialConstraints object with format and generation rules.
+            seed: Optional seed value to influence Z3 solver behavior.
+
+        Returns:
+            GeneratedSerial: The generated serial or fallback random serial if constraints unsatisfiable.
+
+        """
         # Create bit vectors for serial characters
         serial_length = constraints.length
         serial_vars = [z3.BitVec(f"c_{i}", 8) for i in range(serial_length)]
@@ -776,7 +794,18 @@ class SerialNumberGenerator:
     def _generate_feistel_serial(self, length: int = 16) -> str:
         """Generate serial using Feistel network."""
 
-        def feistel_round(left, right, key):
+        def feistel_round(left: int, right: int, key: int) -> tuple[int, int]:
+            """Perform a single Feistel network round.
+
+            Args:
+                left: Left half of the data block.
+                right: Right half of the data block.
+                key: Round key for the transformation.
+
+            Returns:
+                Tuple containing (right, new_right) for the next round.
+
+            """
             # Simple round function
             new_right = left ^ (hashlib.sha256((str(right) + str(key)).encode()).digest()[0] % 256)
             return right, new_right
@@ -871,8 +900,17 @@ class SerialNumberGenerator:
             return str(value)
         return chr(ord("A") + value - 10)
 
-    def _generate_with_validation(self, constraints: SerialConstraints, seed: Any | None = None) -> GeneratedSerial:
-        """Generate serial with custom validation function."""
+    def _generate_with_validation(self, constraints: SerialConstraints, seed: int | str | bytes | None = None) -> GeneratedSerial:
+        """Generate serial with custom validation function.
+
+        Args:
+            constraints: SerialConstraints object with validation function specified.
+            seed: Optional seed value for generation.
+
+        Returns:
+            GeneratedSerial: The generated serial that passes validation, or empty serial if generation fails.
+
+        """
         max_attempts = 1000
         attempts = 0
 

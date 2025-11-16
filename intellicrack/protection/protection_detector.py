@@ -27,40 +27,41 @@ import os
 import sys
 from typing import Any
 
+from ..utils.logger import get_logger
+from ..utils.system.driver_utils import get_driver_path
+from .intellicrack_protection_core import (
+    DetectionResult,
+    ProtectionAnalysis,
+    ProtectionType,
+)
+from .unified_protection_engine import (
+    UnifiedProtectionEngine,
+    UnifiedProtectionResult,
+)
+
 print("[DEBUG protection_detector] Module loading started")
 sys.stdout.flush()
 
 print("[DEBUG protection_detector] Importing get_logger...")
 sys.stdout.flush()
-from ..utils.logger import get_logger
 
 print("[DEBUG protection_detector] get_logger imported OK")
 sys.stdout.flush()
 
 print("[DEBUG protection_detector] Importing get_driver_path...")
 sys.stdout.flush()
-from ..utils.system.driver_utils import get_driver_path
 
 print("[DEBUG protection_detector] get_driver_path imported OK")
 sys.stdout.flush()
 
 print("[DEBUG protection_detector] Importing intellicrack_protection_core...")
 sys.stdout.flush()
-from .intellicrack_protection_core import (
-    DetectionResult,
-    ProtectionAnalysis,
-    ProtectionType,
-)
 
 print("[DEBUG protection_detector] intellicrack_protection_core imported OK")
 sys.stdout.flush()
 
 print("[DEBUG protection_detector] Importing unified_protection_engine...")
 sys.stdout.flush()
-from .unified_protection_engine import (
-    UnifiedProtectionEngine,
-    UnifiedProtectionResult,
-)
 
 print("[DEBUG protection_detector] unified_protection_engine imported OK")
 sys.stdout.flush()

@@ -34,6 +34,11 @@ import r2pipe
 # Third-party imports
 from intellicrack.handlers.capstone_handler import capstone
 
+try:
+    from capstone import CsInsn
+except ImportError:
+    CsInsn = object
+
 """
 Radare2 Keygen Assistant Module
 
@@ -264,7 +269,7 @@ class R2KeygenAssistant:
             if insn.mnemonic in ["call"]:
                 self._analyze_call(insn, flow)
 
-    def _detect_crypto_operation(self, insn) -> CryptoOperation | None:
+    def _detect_crypto_operation(self, insn: CsInsn) -> CryptoOperation | None:
         """Detect cryptographic operations from instruction."""
         # Check for crypto-specific instructions
         crypto_instructions = {
@@ -296,7 +301,7 @@ class R2KeygenAssistant:
 
         return None
 
-    def _analyze_call(self, insn, flow: ValidationFlow) -> None:
+    def _analyze_call(self, insn: CsInsn, flow: ValidationFlow) -> None:
         """Analyze function calls for crypto operations."""
         if insn.operands[0].type == capstone.x86.X86_OP_IMM:
             target = insn.operands[0].imm

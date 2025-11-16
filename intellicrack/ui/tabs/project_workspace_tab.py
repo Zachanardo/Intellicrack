@@ -49,11 +49,21 @@ class DashboardTab(BaseTab):
     binary_selected = pyqtSignal(str)
     analysis_saved = pyqtSignal(str)
 
-    def __init__(self, shared_context=None, parent=None) -> None:
+    def __init__(self, shared_context: object | None = None, parent: object | None = None) -> None:
         """Initialize project workspace tab with file management and workspace overview."""
         super().__init__(shared_context, parent)
-        self.current_binary_path = None
-        self.recent_files = []
+        self.current_binary_path: str | None = None
+        self.recent_files: list[str] = []
+        self.recent_files_menu: QMenu | None = None
+        self.binary_icon_label: QLabel | None = None
+        self.binary_info_label: QLabel | None = None
+        self.file_size_label: QLabel | None = None
+        self.architecture_label: QLabel | None = None
+        self.entry_point_label: QLabel | None = None
+        self.vulns_found_label: QLabel | None = None
+        self.protections_label: QLabel | None = None
+        self.patches_label: QLabel | None = None
+        self.activity_log: QTextEdit | None = None
 
     def setup_content(self) -> None:
         """Set up the complete Project Workspace tab content."""
@@ -75,7 +85,7 @@ class DashboardTab(BaseTab):
 
         main_layout.addWidget(splitter)
 
-    def create_project_controls_panel(self):
+    def create_project_controls_panel(self) -> QWidget:
         """Create the project controls panel."""
         panel = QWidget()
         layout = QVBoxLayout(panel)
@@ -150,7 +160,7 @@ class DashboardTab(BaseTab):
 
         return panel
 
-    def create_dashboard_overview_panel(self):
+    def create_dashboard_overview_panel(self) -> QWidget:
         """Create the dashboard overview panel."""
         panel = QWidget()
         layout = QVBoxLayout(panel)
@@ -220,7 +230,16 @@ class DashboardTab(BaseTab):
     def create_new_project(self) -> None:
         """Create a new project."""
         self.log_activity("Creating new project...")
-        # Implementation would go here
+        self.current_binary_path = None
+        self.recent_files = []
+        self.binary_info_label.setText("No binary loaded")
+        self.file_size_label.setText("File Size: -")
+        self.architecture_label.setText("Architecture: -")
+        self.entry_point_label.setText("Entry Point: -")
+        self.vulns_found_label.setText("Vulnerabilities Found: 0")
+        self.protections_label.setText("Protections Detected: None")
+        self.patches_label.setText("Patches: 0/0 (Applied/Pending)")
+        self.activity_log.clear()
 
     def open_project(self) -> None:
         """Open an existing project."""
@@ -233,7 +252,21 @@ class DashboardTab(BaseTab):
         )
         if project_file:
             self.log_activity(f"Opening project: {project_file}")
-            # Implementation would go here
+            try:
+                import json
+                with open(project_file, encoding='utf-8') as f:
+                    project_data = json.load(f)
+                    if 'binary_path' in project_data:
+                        binary_path = project_data['binary_path']
+                        if os.path.exists(binary_path):
+                            self.load_binary(binary_path)
+                            self.log_activity(f"Project loaded successfully: {project_file}")
+                        else:
+                            QMessageBox.warning(self, "Open Project", f"Binary file not found: {binary_path}")
+                    else:
+                        QMessageBox.warning(self, "Open Project", "Invalid project file: missing binary_path")
+            except (OSError, json.JSONDecodeError) as e:
+                QMessageBox.critical(self, "Open Project", f"Failed to load project: {e!s}")
 
     def save_project(self) -> None:
         """Save the current project."""
@@ -250,7 +283,17 @@ class DashboardTab(BaseTab):
         )
         if project_file:
             self.log_activity(f"Saving project: {project_file}")
-            # Implementation would go here
+            try:
+                import json
+                project_data = {
+                    'binary_path': self.current_binary_path,
+                    'recent_files': self.recent_files,
+                }
+                with open(project_file, 'w', encoding='utf-8') as f:
+                    json.dump(project_data, f, indent=2)
+                    self.log_activity(f"Project saved successfully: {project_file}")
+            except OSError as e:
+                QMessageBox.critical(self, "Save Project", f"Failed to save project: {e!s}")
 
     def select_binary(self) -> None:
         """Select a binary file for analysis."""
@@ -264,7 +307,7 @@ class DashboardTab(BaseTab):
         if binary_file:
             self.load_binary(binary_file)
 
-    def load_binary(self, file_path) -> None:
+    def load_binary(self, file_path: str) -> None:
         """Load a binary file and update the UI."""
         self.current_binary_path = file_path
         self.add_to_recent_files(file_path)
@@ -297,7 +340,7 @@ class DashboardTab(BaseTab):
 
             self.log_activity(f"Closed binary: {file_name}")
 
-    def add_to_recent_files(self, file_path) -> None:
+    def add_to_recent_files(self, file_path: str) -> None:
         """Add file to recent files list."""
         if file_path in self.recent_files:
             self.recent_files.remove(file_path)
@@ -334,8 +377,67 @@ class DashboardTab(BaseTab):
 
     def export_results(self) -> None:
         """Export results in various formats."""
+        if not self.current_binary_path:
+            QMessageBox.information(self, "Export Results", "No binary loaded to export results for.")
+            return
+
         self.log_activity("Exporting results...")
-        # Implementation would go here
+        file_dialog = QFileDialog()
+        export_file, _ = file_dialog.getSaveFileName(
+            self,
+            "Export Analysis Results",
+            "",
+            "CSV Files (*.csv);;JSON Files (*.json);;Text Files (*.txt);;All Files (*)",
+        )
+        if export_file:
+            try:
+                if export_file.endswith('.csv'):
+                    self._export_as_csv(export_file)
+                elif export_file.endswith('.json'):
+                    self._export_as_json(export_file)
+                elif export_file.endswith('.txt'):
+                    self._export_as_text(export_file)
+                else:
+                    self._export_as_text(export_file)
+                self.log_activity(f"Results exported successfully: {export_file}")
+            except OSError as e:
+                QMessageBox.critical(self, "Export Results", f"Failed to export results: {e!s}")
+
+    def _export_as_csv(self, file_path: str) -> None:
+        """Export analysis results as CSV format."""
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write("Analysis Results Export\n")
+            f.write(f"Binary: {self.current_binary_path}\n")
+            f.write(f"File Size: {self.file_size_label.text()}\n")
+            f.write(f"Architecture: {self.architecture_label.text()}\n")
+
+    def _export_as_json(self, file_path: str) -> None:
+        """Export analysis results as JSON format."""
+        import json
+        export_data = {
+            'binary_path': self.current_binary_path,
+            'file_size': self.file_size_label.text(),
+            'architecture': self.architecture_label.text(),
+            'entry_point': self.entry_point_label.text(),
+            'vulnerabilities': self.vulns_found_label.text(),
+            'protections': self.protections_label.text(),
+            'patches': self.patches_label.text(),
+        }
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(export_data, f, indent=2)
+
+    def _export_as_text(self, file_path: str) -> None:
+        """Export analysis results as text format."""
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write("INTELLICRACK ANALYSIS RESULTS\n")
+            f.write("="*50 + "\n\n")
+            f.write(f"Binary Path: {self.current_binary_path}\n")
+            f.write(f"{self.file_size_label.text()}\n")
+            f.write(f"{self.architecture_label.text()}\n")
+            f.write(f"{self.entry_point_label.text()}\n")
+            f.write(f"{self.vulns_found_label.text()}\n")
+            f.write(f"{self.protections_label.text()}\n")
+            f.write(f"{self.patches_label.text()}\n")
 
     def clear_analysis(self) -> None:
         """Clear current analysis results."""
@@ -346,14 +448,20 @@ class DashboardTab(BaseTab):
             QMessageBox.Yes | QMessageBox.No,
         )
         if reply == QMessageBox.Yes:
+            self.binary_info_label.setText("No binary loaded")
+            self.file_size_label.setText("File Size: -")
+            self.architecture_label.setText("Architecture: -")
+            self.entry_point_label.setText("Entry Point: -")
+            self.vulns_found_label.setText("Vulnerabilities Found: 0")
+            self.protections_label.setText("Protections Detected: None")
+            self.patches_label.setText("Patches: 0/0 (Applied/Pending)")
             self.log_activity("Cleared analysis results")
-            # Implementation would go here
 
     def clear_activity_log(self) -> None:
         """Clear the activity log."""
         self.activity_log.clear()
 
-    def log_activity(self, message) -> None:
+    def log_activity(self, message: str) -> None:
         """Log activity to the activity log."""
         from datetime import datetime
 
@@ -363,7 +471,7 @@ class DashboardTab(BaseTab):
         # Also call parent log method
         super().log_activity(message)
 
-    def format_file_size(self, size_bytes) -> str:
+    def format_file_size(self, size_bytes: int) -> str:
         """Format file size in human readable format."""
         if size_bytes == 0:
             return "0 B"

@@ -225,16 +225,31 @@ class FilterStage(PipelineStage):
             format=input_data.format,
         )
 
-    def _matches_filter(self, item: Any) -> bool:
-        """Check if item matches filter."""
-        # Simple keyword matching for now
+    def _matches_filter(self, item: object) -> bool:
+        """Check if item matches filter.
+
+        Args:
+            item: Item to check against filter expression.
+
+        Returns:
+            True if item matches filter keywords, False otherwise.
+
+        """
         keywords = self.filter_expr.split()
         item_str = str(item).lower()
 
         return any(keyword.lower() in item_str for keyword in keywords)
 
-    def _is_high_severity(self, item: Any) -> bool:
-        """Check if item is high severity."""
+    def _is_high_severity(self, item: object) -> bool:
+        """Check if item is high severity.
+
+        Args:
+            item: Item to check for high severity status.
+
+        Returns:
+            True if item has high or critical severity, False otherwise.
+
+        """
         if isinstance(item, dict):
             severity = item.get("severity", "").lower()
             return severity in ["high", "critical"]
@@ -282,8 +297,16 @@ class TransformStage(PipelineStage):
 
         return input_data
 
-    def _to_csv(self, content: Any) -> str:
-        """Convert to CSV format."""
+    def _to_csv(self, content: object) -> str:
+        """Convert to CSV format.
+
+        Args:
+            content: Data to convert to CSV format (dict or list).
+
+        Returns:
+            CSV-formatted string representation of content.
+
+        """
         import csv
         import io
 
@@ -309,8 +332,16 @@ class TransformStage(PipelineStage):
 
         return output.getvalue()
 
-    def _to_table(self, content: Any) -> str:
-        """Convert to table format."""
+    def _to_table(self, content: object) -> str:
+        """Convert to table format.
+
+        Args:
+            content: Data to convert to table format (dict or list).
+
+        Returns:
+            Rendered table as string.
+
+        """
         table = Table(box=box.SIMPLE)
 
         if isinstance(content, dict):
@@ -337,8 +368,16 @@ class TransformStage(PipelineStage):
         console.print(table)
         return string_io.getvalue()
 
-    def _create_summary(self, content: Any) -> str:
-        """Create a summary of the content."""
+    def _create_summary(self, content: object) -> str:
+        """Create a summary of the content.
+
+        Args:
+            content: Data to summarize (dict or list).
+
+        Returns:
+            String summary of content structure and contents.
+
+        """
         lines = []
 
         if isinstance(content, dict):

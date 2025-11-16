@@ -20,6 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import hashlib
 import logging
+import queue
 import tempfile
 import time
 from dataclasses import dataclass
@@ -297,7 +298,7 @@ class AICoordinationLayer:
 
         return result
 
-    def _llm_thread_worker(self, request: AnalysisRequest, llm_queue: Any) -> None:
+    def _llm_thread_worker(self, request: AnalysisRequest, llm_queue: queue.Queue) -> None:
         """Worker function for LLM analysis thread."""
         if self.model_manager:
             try:
@@ -309,10 +310,8 @@ class AICoordinationLayer:
         else:
             llm_queue.put(("unavailable", None))
 
-    def _collect_parallel_results(self, request: AnalysisRequest, result: CoordinatedResult, ml_queue: Any, llm_queue: Any) -> None:
+    def _collect_parallel_results(self, request: AnalysisRequest, result: CoordinatedResult, ml_queue: queue.Queue, llm_queue: queue.Queue) -> None:
         """Collect results from parallel analysis threads."""
-        import queue
-
         try:
             # Get ML results
             ml_status, ml_data = ml_queue.get(timeout=request.max_processing_time / 2)
@@ -485,7 +484,7 @@ class AICoordinationLayer:
 
                         # Check if file exists and is within allowed directories
                         allowed_dirs = [
-                            os.path.realpath(os.getcwd()),
+                            os.path.realpath(Path.cwd()),
                             os.path.realpath(os.path.expanduser("~")),
                             os.path.realpath(tempfile.gettempdir()),
                         ]

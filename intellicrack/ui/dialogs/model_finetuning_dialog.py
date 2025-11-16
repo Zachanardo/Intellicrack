@@ -2167,8 +2167,7 @@ class LicenseAnalysisNeuralNetwork:
         """
         try:
             import torch
-            import torch.nn as nn
-            import torch.optim as optim
+            from torch import nn, optim
             from torch.utils.data import DataLoader, TensorDataset
 
             X_train, y_train = training_data

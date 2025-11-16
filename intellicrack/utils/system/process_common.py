@@ -23,6 +23,7 @@ This module consolidates process creation and management patterns.
 
 import logging
 import subprocess
+from collections.abc import Callable
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,7 @@ def run_subprocess_safely(cmd: list[str], timeout: int = 30, capture_output: boo
         raise
 
 
-def create_popen_safely(cmd: list[str], **kwargs) -> subprocess.Popen:
+def create_popen_safely(cmd: list[str], **kwargs: object) -> subprocess.Popen[str]:
     """Create a Popen process with common patterns.
 
     Args:
@@ -78,7 +79,12 @@ def create_popen_safely(cmd: list[str], **kwargs) -> subprocess.Popen:
     return subprocess.Popen(cmd, **defaults)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
 
 
-def create_suspended_process_with_context(create_func, get_context_func, target_exe: str, logger_instance=None) -> dict[str, Any]:
+def create_suspended_process_with_context(
+    create_func: Callable[[str], dict[str, Any] | None],
+    get_context_func: Callable[[Any], Any],
+    target_exe: str,
+    logger_instance: logging.Logger | None = None,
+) -> dict[str, Any]:
     """Provide pattern for creating suspended process and getting thread context.
 
     Args:

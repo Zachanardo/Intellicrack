@@ -687,7 +687,7 @@ def validate_dataset(dataset_path: str, dataset_type: str = "binary") -> dict[st
     try:
         if dataset_type == "binary":
             # Validate binary dataset
-            if os.path.isdir(dataset_path):
+            if Path(dataset_path).is_dir():
                 files = [f for f in os.listdir(dataset_path) if f.endswith((".exe", ".dll", ".so", ".dylib"))]
                 results["file_count"] = len(files)
 
@@ -819,7 +819,7 @@ def create_sample_plugins() -> dict[str, Any]:
         Dict containing created plugin information
 
     """
-    plugin_dir = os.path.join(os.getcwd(), "intellicrack", "plugins", "samples")
+    plugin_dir = os.path.join(str(Path.cwd()), "intellicrack", "plugins", "samples")
     os.makedirs(plugin_dir, exist_ok=True)
 
     results = {
@@ -2204,7 +2204,7 @@ def _find_ghidra_installation() -> str | None:
         if os.path.exists(path):
             # Look for ghidra subdirectory
             for item in os.listdir(path):
-                if item.startswith("ghidra_") and os.path.isdir(os.path.join(path, item)):
+                if item.startswith("ghidra_") and Path(os.path.join(path, item)).is_dir():
                     return os.path.join(path, item)
 
     return None
