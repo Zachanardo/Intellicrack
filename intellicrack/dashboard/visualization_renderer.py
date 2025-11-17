@@ -53,7 +53,20 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class GraphNode:
-    """Node in a visualization graph."""
+    """Node in a visualization graph.
+
+    Attributes:
+        id: Unique identifier for this node
+        label: Display label for the node
+        x: X-coordinate position (default: 0.0)
+        y: Y-coordinate position (default: 0.0)
+        z: Z-coordinate position for 3D rendering (default: 0.0)
+        size: Node size scaling factor (default: 1.0)
+        color: Hex color code for node visualization (default: "#3498db")
+        shape: Shape of the node: "circle", "square", etc. (default: "circle")
+        data: Associated metadata dictionary (default: None)
+
+    """
 
     id: str
     label: str
@@ -63,10 +76,15 @@ class GraphNode:
     size: float = 1.0
     color: str = "#3498db"
     shape: str = "circle"
-    data: dict[str, Any] = None
+    data: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
+        """Convert node to dictionary representation.
+
+        Returns:
+            Dictionary with node properties and metadata
+
+        """
         return {
             "id": self.id,
             "label": self.label,
@@ -82,7 +100,18 @@ class GraphNode:
 
 @dataclass
 class GraphEdge:
-    """Edge in a visualization graph."""
+    """Edge in a visualization graph.
+
+    Attributes:
+        source: ID of the source node
+        target: ID of the target node
+        weight: Edge weight for layout calculations (default: 1.0)
+        color: Hex color code for edge visualization (default: "#95a5a6")
+        style: Line style: "solid", "dashed", etc. (default: "solid")
+        label: Label to display on the edge (default: "")
+        data: Associated metadata dictionary (default: None)
+
+    """
 
     source: str
     target: str
@@ -90,10 +119,15 @@ class GraphEdge:
     color: str = "#95a5a6"
     style: str = "solid"
     label: str = ""
-    data: dict[str, Any] = None
+    data: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
+        """Convert edge to dictionary representation.
+
+        Returns:
+            Dictionary with edge properties and metadata
+
+        """
         return {
             "source": self.source,
             "target": self.target,
@@ -137,7 +171,12 @@ class VisualizationRenderer:
         self.cache_ttl = self.config.get("cache_ttl", 60)  # seconds
 
     def _load_chart_templates(self) -> dict[str, str]:
-        """Load chart templates for JavaScript rendering."""
+        """Load chart templates for JavaScript rendering.
+
+        Returns:
+            Dictionary mapping template names to JavaScript code templates
+
+        """
         return {
             "d3_force_graph": """
                 const svg = d3.select("#{{container_id}}")
@@ -1113,14 +1152,14 @@ class VisualizationRenderer:
 
         return f"data:image/png;base64,{image_base64}"
 
-    def _get_colormap(self, color_scheme: str):
+    def _get_colormap(self, color_scheme: str) -> str:
         """Get matplotlib colormap.
 
         Args:
             color_scheme: Color scheme name
 
         Returns:
-            Colormap
+            Colormap name string
 
         """
         colormaps = {"heatmap": "RdYlGn_r", "diverging": "RdBu_r", "sequential": "Blues", "categorical": "tab10"}
@@ -1160,7 +1199,7 @@ class VisualizationRenderer:
             return "#f39c12"  # Orange for warm
         return "#95a5a6"  # Gray for cold
 
-    def _create_thumbnail(self, image_data: bytes, size: tuple[int, int] = (100, 100)) -> str:
+    def _create_thumbnail(self, image_data: bytes, size: tuple[int, int] = (100, 100)) -> str | None:
         """Create a thumbnail using PIL.
 
         Args:
@@ -1168,7 +1207,7 @@ class VisualizationRenderer:
             size: Thumbnail size
 
         Returns:
-            Base64 encoded thumbnail
+            Base64 encoded thumbnail or None if PIL unavailable
 
         """
         if not HAS_PIL:

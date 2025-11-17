@@ -23,7 +23,7 @@ import json
 import logging
 import os
 import re
-from typing import Dict, Optional
+from typing import Optional
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -720,7 +720,7 @@ class SettingsTab(BaseTab):
             self.tool_discovery.refresh_discovery()
             self.discover_tools()
 
-    def update_tool_status(self, tool_key: str, tool_info: Dict[str, object]) -> None:
+    def update_tool_status(self, tool_key: str, tool_info: dict[str, object]) -> None:
         """Update the visual status indicator for a tool.
 
         Args:
@@ -1054,11 +1054,11 @@ class SettingsTab(BaseTab):
 
         self.logger.info("Loaded settings from centralized configuration")
 
-    def get_default_settings(self) -> Dict[str, object]:
+    def get_default_settings(self) -> dict[str, object]:
         """Get default settings.
 
         Returns:
-            Dict[str, object]: Dictionary of default settings with all configuration keys and values.
+            dict[str, object]: Dictionary of default settings with all configuration keys and values.
 
         """
         return {

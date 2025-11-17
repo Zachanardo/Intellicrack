@@ -24,9 +24,10 @@ import json
 import os
 import time
 import types
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 try:
     import frida

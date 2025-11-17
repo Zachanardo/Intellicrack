@@ -25,7 +25,6 @@ class GPUAutoLoader:
         self.gpu_info: dict[str, object] = {}
         self._torch: object | None = None
         self._device: object | None = None
-        self._ipex: object | None = None
         self._device_string: str | None = None
 
     def setup(self) -> bool:
@@ -78,32 +77,8 @@ class GPUAutoLoader:
         return False
 
     def _try_intel_xpu(self) -> bool:
-        """Try to use Intel Arc/XPU through Intel Extension for PyTorch."""
+        """Try to use Intel Arc/XPU through native PyTorch."""
         try:
-            # First check if we have a conda environment with Intel Extension
-            conda_envs = self._find_conda_envs_with_ipex()
-            if conda_envs:
-                logger.info(f"Found {len(conda_envs)} conda environment(s) with Intel Extension for PyTorch")
-                # Try to use the first one
-                conda_env = conda_envs[0]
-                python_path = os.path.join(conda_env["path"], "python.exe" if sys.platform == "win32" else "python")
-
-                # Test if we can import from that environment
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                    [
-                        python_path,
-                        "-c",
-                        "import torch; import intel_extension_for_pytorch as ipex; print(torch.xpu.is_available())",
-                    ],
-                    check=False,
-                    capture_output=True,
-                    text=True,
-                    timeout=5,  # 5 second timeout to prevent hanging
-                )
-
-                if result.returncode == 0 and "True" in result.stdout:
-                    # Inject the conda environment's packages
-                    self._inject_conda_packages(conda_env["path"])
 
             # Use thread-safe PyTorch import
             from .torch_gil_safety import safe_torch_import
@@ -114,21 +89,10 @@ class GPUAutoLoader:
 
             self._torch = torch
 
-            # Check for Intel Extension with GIL safety handling
-            try:
-                from intellicrack.handlers.ipex_handler import HAS_IPEX, ipex
-
-                if HAS_IPEX:
-                    self._ipex = ipex
-                    logger.debug("Intel Extension for PyTorch imported successfully via handler")
-                else:
-                    logger.debug("Intel Extension for PyTorch not available (see ipex_handler logs)")
-                    self._ipex = None
-                    return False
-
-            except Exception as e:
-                logger.warning(f"Failed to import Intel Extension handler: {e}")
-                self._ipex = None
+            # Check for XPU support in PyTorch
+            if not hasattr(torch, 'xpu'):
+                logger.debug("PyTorch XPU backend not available")
+                return False
 
             # Check XPU availability with defensive programming
             try:
@@ -319,83 +283,6 @@ class GPUAutoLoader:
             logger.error(f"Even CPU initialization failed: {e}")
             return False
 
-    def _find_conda_envs_with_ipex(self) -> list[dict[str, str]]:
-        """Find conda environments that have Intel Extension for PyTorch installed."""
-        conda_envs = []
-
-        # Common conda locations
-        possible_conda_bases = [
-            os.path.expanduser("~/miniconda3"),
-            os.path.expanduser("~/anaconda3"),
-            "C:\\ProgramData\\miniconda3",
-            "C:\\ProgramData\\anaconda3",
-            "C:\\tools\\miniconda3",
-            "C:\\tools\\anaconda3",
-            os.environ.get("CONDA_PREFIX", ""),
-        ]
-
-        for base in possible_conda_bases:
-            if not base or not os.path.exists(base):
-                continue
-
-            envs_dir = os.path.join(base, "envs")
-            if os.path.exists(envs_dir):
-                for env_name in os.listdir(envs_dir):
-                    env_path = os.path.join(envs_dir, env_name)
-                    # Check for Intel Extension for PyTorch
-                    ipex_indicators = [
-                        os.path.join(env_path, "Lib", "site-packages", "intel_extension_for_pytorch"),
-                        os.path.join(
-                            env_path,
-                            "lib",
-                            "python3.9",
-                            "site-packages",
-                            "intel_extension_for_pytorch",
-                        ),
-                        os.path.join(
-                            env_path,
-                            "lib",
-                            "python3.10",
-                            "site-packages",
-                            "intel_extension_for_pytorch",
-                        ),
-                        os.path.join(
-                            env_path,
-                            "lib",
-                            "python3.11",
-                            "site-packages",
-                            "intel_extension_for_pytorch",
-                        ),
-                    ]
-
-                    for indicator in ipex_indicators:
-                        if os.path.exists(indicator):
-                            conda_envs.append(
-                                {
-                                    "name": env_name,
-                                    "path": env_path,
-                                    "base": base,
-                                },
-                            )
-                            break
-
-        return conda_envs
-
-    def _inject_conda_packages(self, conda_env_path: str) -> None:
-        """Inject conda environment packages into current Python path."""
-        # Add conda environment's site-packages to Python path
-        if sys.platform == "win32":
-            site_packages = os.path.join(conda_env_path, "Lib", "site-packages")
-        else:
-            # Try multiple Python versions
-            for py_ver in ["python3.11", "python3.10", "python3.9", "python3.8"]:
-                site_packages = os.path.join(conda_env_path, "lib", py_ver, "site-packages")
-                if os.path.exists(site_packages):
-                    break
-
-        if os.path.exists(site_packages) and site_packages not in sys.path:
-            sys.path.insert(0, site_packages)
-            logger.info(f"Injected conda packages from: {site_packages}")
 
     def get_device(self) -> object | None:
         """Get the configured device object."""
@@ -405,9 +292,6 @@ class GPUAutoLoader:
         """Get the torch module if available."""
         return self._torch
 
-    def get_ipex(self) -> object | None:
-        """Get the Intel Extension module if available."""
-        return self._ipex
 
     def to_device(self, tensor_or_model: object) -> object:
         """Move a tensor or model to the configured device."""
@@ -421,9 +305,13 @@ class GPUAutoLoader:
 
     def optimize_model(self, model: object) -> object:
         """Optimize model for the current backend."""
-        if self.gpu_type == "intel_xpu" and self._ipex:
-            logger.info("Optimizing model with Intel Extension for PyTorch")
-            return self._ipex.optimize(model)
+        if self.gpu_type == "intel_xpu" and self._torch:
+            logger.info("Optimizing model with PyTorch compilation")
+            try:
+                return self._torch.compile(model)
+            except Exception as e:
+                logger.debug(f"Model compilation not available: {e}")
+                return model
         return model
 
     def get_memory_info(self) -> dict[str, object]:
@@ -622,11 +510,9 @@ def detect_gpu_frameworks() -> dict[str, object]:
     try:
         import torch
 
-        from intellicrack.handlers.ipex_handler import HAS_IPEX, ipex
-
-        if HAS_IPEX and hasattr(torch, "xpu") and torch.xpu.is_available():
+        if hasattr(torch, "xpu") and torch.xpu.is_available():
             frameworks["intel_xpu"] = True
-            frameworks["ipex_version"] = ipex.__version__
+            frameworks["xpu_version"] = torch.__version__
             frameworks["available_frameworks"].append("Intel XPU")
             # Get XPU device info
             for i in range(torch.xpu.device_count()):

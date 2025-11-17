@@ -27,7 +27,7 @@ import math
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 
@@ -42,7 +42,20 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class EntropyWindow:
-    """Represents entropy analysis for a specific window of data."""
+    """Represents entropy analysis for a specific window of data.
+
+    Attributes:
+        offset: Byte offset where window begins in the binary file
+        size: Size of the window in bytes
+        entropy: Shannon entropy value for the window (0-8 bits)
+        byte_distribution: Histogram of byte frequencies in window
+        unique_bytes: Count of distinct byte values present
+        printable_ratio: Proportion of ASCII printable characters (0.0-1.0)
+        null_ratio: Proportion of null bytes (0x00) (0.0-1.0)
+        high_entropy_ratio: Proportion of bytes with value > 127 (0.0-1.0)
+        classification: Human-readable classification of window content
+
+    """
 
     offset: int
     size: int
@@ -56,9 +69,15 @@ class EntropyWindow:
 
 
 class StreamingEntropyAnalyzer(StreamingAnalyzer):
-    """Streaming analyzer for entropy analysis of large binaries."""
+    """Streaming analyzer for entropy analysis of large binaries.
 
-    ENTROPY_THRESHOLDS = {
+    Performs chunk-based entropy calculation on multi-GB files without
+    loading entire binary into memory. Analyzes Shannon entropy, byte
+    distribution, and content classification to identify packed code,
+    encryption, and compression protection mechanisms.
+    """
+
+    ENTROPY_THRESHOLDS: dict[str, float] = {
         "very_low": 2.0,
         "low": 4.0,
         "medium": 6.0,
@@ -70,14 +89,14 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
         """Initialize streaming entropy analyzer.
 
         Args:
-            window_size: Size of sliding window for entropy calculation
-            stride: Step size between windows
+            window_size: Size of sliding window for entropy calculation (default 1MB)
+            stride: Step size between windows (default 512KB)
 
         """
-        self.window_size = window_size
-        self.stride = stride
-        self.global_byte_counts = defaultdict(int)
-        self.total_bytes = 0
+        self.window_size: int = window_size
+        self.stride: int = stride
+        self.global_byte_counts: defaultdict[int, int] = defaultdict(int)
+        self.total_bytes: int = 0
         self.entropy_windows: list[EntropyWindow] = []
         self.high_entropy_regions: list[dict[str, Any]] = []
 
@@ -317,12 +336,16 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
     def _calculate_entropy(self, byte_counts: dict[int, int], total_bytes: int) -> float:
         """Calculate Shannon entropy for byte distribution.
 
+        Computes the Shannon entropy H = -sum(p_i * log2(p_i)) where p_i is
+        the probability of byte value i. Entropy ranges from 0 (all bytes
+        identical) to 8 (perfectly random distribution).
+
         Args:
-            byte_counts: Dictionary of byte values to counts
-            total_bytes: Total number of bytes
+            byte_counts: Dictionary mapping byte values (0-255) to occurrence counts
+            total_bytes: Total number of bytes in the distribution
 
         Returns:
-            Entropy value (0-8)
+            Shannon entropy value between 0.0 and 8.0 bits
 
         """
         if total_bytes == 0:
@@ -337,15 +360,19 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
         return entropy
 
     def _classify_section(self, entropy: float, printable_ratio: float, null_ratio: float) -> str:
-        """Classify section based on entropy and content.
+        """Classify binary section based on entropy and content characteristics.
+
+        Uses heuristics to identify code, data, strings, padding, and encrypted
+        sections based on entropy distribution and byte patterns. Supports
+        detection of packing and encryption protection mechanisms.
 
         Args:
-            entropy: Entropy value
-            printable_ratio: Ratio of printable characters
-            null_ratio: Ratio of null bytes
+            entropy: Shannon entropy value (0.0-8.0 bits)
+            printable_ratio: Proportion of ASCII printable bytes (0.0-1.0)
+            null_ratio: Proportion of null bytes (0.0-1.0)
 
         Returns:
-            Classification string
+            Classification string describing section type
 
         """
         if null_ratio > 0.9:
@@ -363,13 +390,16 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
         return "Mixed Content"
 
     def _calculate_entropy_distribution(self, entropies: list[float]) -> dict[str, int]:
-        """Calculate distribution of entropy values across thresholds.
+        """Calculate distribution of entropy values across predefined thresholds.
+
+        Categorizes entropy measurements into buckets (very_low, low, medium,
+        high, very_high) to provide statistical summary of protection types.
 
         Args:
-            entropies: List of entropy values
+            entropies: List of entropy values from analyzed chunks
 
         Returns:
-            Distribution dictionary
+            Dictionary mapping threshold names to counts of values in each range
 
         """
         distribution = {"very_low": 0, "low": 0, "medium": 0, "high": 0, "very_high": 0}
@@ -389,13 +419,17 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
         return distribution
 
     def _generate_summary(self, results: dict[str, Any]) -> str:
-        """Generate human-readable summary of entropy analysis.
+        """Generate human-readable summary of entropy analysis findings.
+
+        Composes narrative description of entropy patterns detected, including
+        identification of encryption, packing, and compression mechanisms that
+        may be used as licensing protection.
 
         Args:
-            results: Merged analysis results
+            results: Merged analysis results dictionary
 
         Returns:
-            Summary string
+            Human-readable summary string with key findings
 
         """
         global_entropy = results.get("global_entropy", 0.0)
@@ -419,13 +453,17 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
         return summary
 
     def _generate_recommendations(self, results: dict[str, Any]) -> list[str]:
-        """Generate analysis recommendations based on results.
+        """Generate actionable recommendations for further analysis.
+
+        Provides next steps for analyzing identified protection mechanisms,
+        including unpacking strategies, dynamic analysis techniques, and
+        decryption routine examination.
 
         Args:
-            results: Merged analysis results
+            results: Merged analysis results dictionary
 
         Returns:
-            List of recommendation strings
+            List of recommendation strings for further investigation
 
         """
         recommendations = []
@@ -451,18 +489,27 @@ def analyze_entropy_streaming(
     binary_path: Path,
     window_size: int = 1024 * 1024,
     stride: int = 512 * 1024,
-    progress_callback: Any | None = None,
+    progress_callback: Callable[[int, int], None] | None = None,
 ) -> dict[str, Any]:
     """Perform streaming entropy analysis on large binary.
 
+    Analyzes entropy distribution across a binary file without loading it
+    entirely into memory. Detects compression, encryption, packing, and
+    other protection mechanisms by examining Shannon entropy patterns.
+
     Args:
-        binary_path: Path to binary file
-        window_size: Size of sliding window for analysis
-        stride: Step size between windows
-        progress_callback: Optional callback for progress updates
+        binary_path: Path to binary file to analyze
+        window_size: Size of sliding window for entropy calculation (default 1MB)
+        stride: Step size between windows (default 512KB)
+        progress_callback: Optional callback function for progress updates
+            taking (current: int, total: int) parameters
 
     Returns:
-        Complete entropy analysis results
+        Complete entropy analysis results including global entropy, distribution,
+        classification, high-entropy regions, and recommendations
+
+    Raises:
+        Exception: If file not found or analysis encounters errors
 
     """
     try:

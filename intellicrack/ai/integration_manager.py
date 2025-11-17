@@ -29,9 +29,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from queue import Empty, Queue
-from typing import Any
-
-from typing_extensions import Self
+from typing import Any, Self
 
 from ..utils.logger import get_logger
 from .ai_script_generator import AIScriptGenerator

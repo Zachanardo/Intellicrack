@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-from typing import Optional, Tuple
+from typing import Optional
 
 from PyQt6.QtCore import QRectF
 from PyQt6.QtGui import (
@@ -283,7 +283,7 @@ class PrintOptionsDialog(QDialog):
         """
         self.footer_edit.setEnabled(checked)
 
-    def get_print_data(self) -> Tuple[Optional[bytes], int]:
+    def get_print_data(self) -> tuple[Optional[bytes], int]:
         """Get the data to print based on selected range.
 
         Returns:

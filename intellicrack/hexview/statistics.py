@@ -23,7 +23,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import math
 from collections import Counter
-from typing import Any
+from typing import Any, Callable
 
 from ..utils.logger import get_logger
 
@@ -340,7 +340,7 @@ class StatisticsCalculator:
         """Initialize statistics calculator."""
         self.progress_callback = None
 
-    def set_progress_callback(self, callback) -> None:
+    def set_progress_callback(self, callback: Callable[[int, int], None]) -> None:
         """Set callback for progress updates.
 
         Args:

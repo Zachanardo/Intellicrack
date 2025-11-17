@@ -23,7 +23,6 @@ import contextlib
 import curses
 import os
 import sys
-from typing import Any
 
 try:
     import mmap
@@ -43,35 +42,37 @@ class TerminalHexViewer:
             filepath: Path to file to view/edit
 
         """
-        self.filepath = filepath
-        self.file_size = 0
-        self.data = None
-        self.mmap_file = None
-        self.file_handle = None
+        self.filepath: str = filepath
+        self.file_size: int = 0
+        self.data: bytes | bytearray | mmap.mmap | None = None
+        self.mmap_file: mmap.mmap | None = None
+        self.file_handle: object | None = None
 
         # Display settings
-        self.bytes_per_line = 16
-        self.current_offset = 0
-        self.cursor_offset = 0
-        self.edit_mode = False
-        self.hex_edit_mode = True  # True for hex, False for ASCII
-        self.modified = False
-        self.modifications = {}  # offset -> new_byte mapping
+        self.bytes_per_line: int = 16
+        self.current_offset: int = 0
+        self.cursor_offset: int = 0
+        self.edit_mode: bool = False
+        self.hex_edit_mode: bool = True
+        self.modified: bool = False
+        self.modifications: dict[int, int] = {}
 
         # Search functionality
-        self.search_pattern = ""
-        self.search_results = []
-        self.current_search_index = 0
+        self.search_pattern: str = ""
+        self.search_pattern_type: str = ""
+        self.search_results: list[tuple[int, int]] = []
+        self.current_search_index: int = 0
 
         # Display state
-        self.screen_height = 0
-        self.screen_width = 0
-        self.hex_area_height = 0
-        self.status_line = 0
-        self.help_visible = False
+        self.screen_height: int = 0
+        self.screen_width: int = 0
+        self.hex_area_height: int = 0
+        self.status_line: int = 0
+        self.help_visible: bool = False
+        self.stdscr: curses._CursesWindow | None = None
 
         # Color pairs
-        self.colors = {
+        self.colors: dict[str, int] = {
             "normal": 1,
             "cursor": 2,
             "modified": 3,
@@ -127,7 +128,7 @@ class TerminalHexViewer:
         curses.init_pair(self.colors["status"], curses.COLOR_WHITE, curses.COLOR_BLUE)
         curses.init_pair(self.colors["help"], curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
-    def run(self, stdscr: Any) -> None:
+    def run(self, stdscr: curses._CursesWindow) -> None:
         """Run main application loop."""
         self.stdscr = stdscr
         self._setup_colors()

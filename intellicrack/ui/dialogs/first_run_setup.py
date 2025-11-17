@@ -37,6 +37,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QTextEdit,
     QThread,
     QVBoxLayout,
+    QWidget,
     pyqtSignal,
 )
 
@@ -92,7 +93,7 @@ class SetupWorker(QThread):
 class FirstRunSetupDialog(QDialog):
     """Dialog for first-run setup."""
 
-    def __init__(self, missing_components: dict[str, bool], parent=None) -> None:
+    def __init__(self, missing_components: dict[str, bool], parent: QWidget | None = None) -> None:
         """Initialize the FirstRunSetupDialog with default values."""
         super().__init__(parent)
         self.missing_components = missing_components

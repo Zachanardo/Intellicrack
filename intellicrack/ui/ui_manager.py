@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 class UIManager:
     """Manages the creation and layout of the main UI components."""
 
-    def __init__(self, main_window) -> None:
+    def __init__(self, main_window: object) -> None:
         """Initialize the UI Manager.
 
         Args:

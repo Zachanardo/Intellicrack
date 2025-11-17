@@ -43,8 +43,13 @@ class ServiceHealthChecker:
         self.last_check_times = {}
 
     @property
-    def config(self):
-        """Lazy loading of config to avoid circular import."""
+    def config(self) -> dict[str, Any]:
+        """Lazy loading of config to avoid circular import.
+
+        Returns:
+            Configuration dictionary for services.
+
+        """
         if self._config is None:
             try:
                 from intellicrack.core.config_manager import get_config

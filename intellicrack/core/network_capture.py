@@ -29,13 +29,40 @@ logger = logging.getLogger(__name__)
 def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int = 100) -> dict[str, Any]:
     """Capture network packets using Scapy for real-time traffic analysis.
 
+    Performs live packet capture on specified network interface with real-time
+    packet processing, license-related traffic identification, DNS query tracking,
+    port distribution analysis, and license server detection for binary protection
+    analysis and network protocol reverse engineering.
+
     Args:
-        interface: Network interface to capture on ('any' for all)
-        filter_str: BPF filter string (e.g., 'tcp port 80')
-        count: Maximum number of packets to capture
+        interface: Network interface to capture on. Use 'any' for all interfaces
+                   or specific interface name (e.g., 'eth0', 'Wi-Fi').
+        filter_str: Berkeley Packet Filter (BPF) string for traffic filtering
+                    (e.g., 'tcp port 80', 'udp port 53').
+        count: Maximum number of packets to capture before stopping.
 
     Returns:
-        Dictionary with capture results and statistics
+        Dictionary containing:
+        - success: Boolean indicating if capture succeeded
+        - total_packets: Total packets captured
+        - license_packets: Count of license-related packets identified
+        - unique_destinations: Count of unique destination IPs
+        - license_servers: List of detected license server tuples (IP, port)
+        - dns_queries: List of extracted unique DNS query names
+        - top_ports: Top 10 most active destination ports with counts
+        - protocol_distribution: Count of TCP, UDP, and other protocols
+        - packets: First 20 captured packets with detailed information
+        - error: Error message if capture failed (optional)
+        - suggestion: Installation suggestion for missing dependencies (optional)
+
+    Raises:
+        Exception: On packet capture errors (returned in error dictionary).
+
+    Notes:
+        - Automatically detects license-related keywords in packet payloads
+        - Requires administrative/root privileges for live capture
+        - Uses layered packet parsing for IP, TCP, UDP, and DNS
+        - Timeout of 10 seconds between packets before stopping
 
     """
     try:
@@ -49,8 +76,18 @@ def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int 
 
     try:
 
-        def packet_handler(packet) -> None:
-            """Process captured packets in real-time."""
+        def packet_handler(packet: object) -> None:
+            """Process captured packets in real-time.
+
+            Args:
+                packet: Scapy packet object to process and analyze.
+
+            Raises:
+                AttributeError: If packet lacks expected attributes.
+                UnicodeDecodeError: If payload contains non-UTF8 data.
+                TypeError: If payload type is unexpected.
+
+            """
             packet_info = {
                 "timestamp": time.time(),
                 "size": len(packet),
@@ -178,11 +215,30 @@ def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int 
 def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
     """Analyze PCAP file using PyShark for deep packet inspection.
 
+    Performs comprehensive analysis of captured network traffic including protocol
+    identification, conversation tracking, DNS queries, HTTP requests, TLS handshakes,
+    license server identification, and suspicious port detection.
+
     Args:
-        pcap_file: Path to PCAP file to analyze
+        pcap_file: Path to PCAP file to analyze.
 
     Returns:
-        Dictionary with analysis results
+        Dictionary containing:
+        - total_packets: Total packet count
+        - protocols: Protocol distribution dictionary
+        - conversations: Source-destination conversation statistics
+        - dns_queries: Extracted DNS query names
+        - http_requests: HTTP request details
+        - tls_handshakes: TLS server names
+        - suspicious_ports: Detected non-standard port activity
+        - license_traffic: License-related network communications
+        - unique_dns_queries: Count of unique DNS queries
+        - unique_conversations: Count of unique conversations
+        - top_talkers: Top 10 conversation partners by packet count
+
+    Raises:
+        FileNotFoundError: If PCAP file does not exist.
+        Exception: On PyShark analysis errors.
 
     """
     try:
@@ -328,11 +384,34 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
 def parse_pcap_with_dpkt(pcap_file: str) -> dict[str, Any]:
     """Parse PCAP file using dpkt for low-level binary analysis.
 
+    Provides low-level binary packet parsing with detailed connection tracking,
+    protocol statistics, port scanning detection, data exfiltration analysis,
+    and DNS query extraction using the dpkt library.
+
     Args:
-        pcap_file: Path to PCAP file to parse
+        pcap_file: Path to PCAP file to parse.
 
     Returns:
-        Dictionary with parsing results and statistics
+        Dictionary containing:
+        - total_packets: Total number of packets in capture
+        - total_bytes: Total bytes captured
+        - start_time: UNIX timestamp of first packet
+        - end_time: UNIX timestamp of last packet
+        - ip_packets: Count of IPv4 packets
+        - tcp_packets: Count of TCP packets
+        - udp_packets: Count of UDP packets
+        - icmp_packets: Count of ICMP packets
+        - unique_connections: Count of unique source-destination-port tuples
+        - port_scan_indicators: Detected port scanning activity
+        - data_exfiltration_suspects: Connections with >10MB data transfer
+        - duration_seconds: Capture duration in seconds
+        - packets_per_second: Average packet rate
+        - bytes_per_second: Average byte rate
+        - total_port_scans: Count of port scan attempts
+
+    Raises:
+        FileNotFoundError: If PCAP file does not exist.
+        Exception: On dpkt parsing errors.
 
     """
     try:

@@ -19,21 +19,37 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
-DetectionResult = None
-IntellicrackProtectionCore = None
-ProtectionAnalysis = None
-ProtectionType = None
-ProtectionDetector = None
-deep_analyze = None
-get_protection_detector = None
-quick_analyze = None
+DetectionResult: object = None
+IntellicrackProtectionCore: object = None
+ProtectionAnalysis: object = None
+ProtectionType: object = None
+ProtectionDetector: object = None
+deep_analyze: object = None
+get_protection_detector: object = None
+quick_analyze: object = None
 
-_lazy_imports = {}
+_lazy_imports: dict[str, dict[str, object]] = {}
 
-def __getattr__(name: str):
-    """Lazy load protection module components to prevent circular imports."""
+def __getattr__(name: str) -> object:
+    """Lazy load protection module components to prevent circular imports.
+
+    Implements lazy loading for protection detection and analysis components
+    to prevent circular import issues while maintaining backwards compatibility
+    with existing code that imports from this module.
+
+    Args:
+        name: Name of the module attribute to load.
+
+    Returns:
+        Loaded module component or None if import fails.
+
+    Raises:
+        AttributeError: If the requested attribute does not exist in any
+            lazy-loaded module.
+
+    """
     if name in ('DetectionResult', 'IntellicrackProtectionCore', 'ProtectionAnalysis', 'ProtectionType'):
         if 'core_module' not in _lazy_imports:
             try:

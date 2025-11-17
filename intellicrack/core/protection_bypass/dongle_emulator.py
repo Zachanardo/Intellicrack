@@ -25,10 +25,10 @@ import os
 import platform
 import struct
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import IntEnum
 from pathlib import Path
-from typing import Callable
 
 try:
     from Crypto.Cipher import AES, DES, DES3

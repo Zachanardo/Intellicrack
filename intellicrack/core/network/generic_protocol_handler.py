@@ -1,16 +1,8 @@
-"""Provide protocol handler for network communication and data processing."""
+"""Generic License Protocol Handler Implementation.
 
-import socket
-import threading
-import time
-from typing import Any
-
-from intellicrack.utils.logger import logger
-
-from .license_protocol_handler import LicenseProtocolHandler
-
-"""
-Generic License Protocol Handler Implementation.
+Provides a protocol handler for network communication and data processing
+for license verification systems. This module implements basic TCP/UDP
+protocol interactions for handling generic license validation requests.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -30,6 +22,15 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import socket
+import threading
+import time
+from typing import Any
+
+from intellicrack.utils.logger import logger
+
+from .license_protocol_handler import LicenseProtocolHandler
+
 
 class GenericProtocolHandler(LicenseProtocolHandler):
     """Provide implementation of the LicenseProtocolHandler abstract class.
@@ -39,7 +40,15 @@ class GenericProtocolHandler(LicenseProtocolHandler):
     """
 
     def __init__(self, config: dict[str, Any] | None = None) -> None:
-        """Initialize the generic protocol handler."""
+        """Initialize the generic protocol handler.
+
+        Sets up protocol-specific configuration and initializes data structures
+        for tracking network connections and captured request/response data.
+
+        Args:
+            config: Configuration dictionary with protocol settings
+
+        """
         super().__init__(config)
         self.protocol = config.get("protocol", "tcp") if config else "tcp"
         self.captured_requests = []
@@ -59,7 +68,16 @@ class GenericProtocolHandler(LicenseProtocolHandler):
             self._run_tcp_proxy(port)
 
     def _run_tcp_proxy(self, port: int) -> None:
-        """Run TCP proxy server."""
+        """Run TCP proxy server.
+
+        Establishes a TCP server socket listening on the specified port and
+        handles incoming client connections by processing license validation
+        requests and generating appropriate responses.
+
+        Args:
+            port: Port number to listen on
+
+        """
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
@@ -95,7 +113,16 @@ class GenericProtocolHandler(LicenseProtocolHandler):
             self.logger.info("TCP proxy stopped")
 
     def _run_udp_proxy(self, port: int) -> None:
-        """Run UDP proxy server."""
+        """Run UDP proxy server.
+
+        Establishes a UDP server socket listening on the specified port and
+        handles incoming UDP packets from clients by processing license
+        validation requests and responding with generated responses.
+
+        Args:
+            port: Port number to listen on
+
+        """
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
@@ -127,8 +154,17 @@ class GenericProtocolHandler(LicenseProtocolHandler):
             server_socket.close()
             self.logger.info("UDP proxy stopped")
 
-    def _handle_tcp_connection(self, client_socket: socket.socket, client_addr: tuple) -> None:
-        """Handle individual TCP connection."""
+    def _handle_tcp_connection(self, client_socket: socket.socket, client_addr: tuple[str, int]) -> None:
+        """Handle individual TCP connection.
+
+        Manages a single TCP client connection by receiving data, processing
+        license validation requests, and sending back appropriate responses.
+
+        Args:
+            client_socket: Connected client socket
+            client_addr: Tuple of client address (host, port)
+
+        """
         try:
             # Set timeout for client socket
             client_socket.settimeout(self.timeout)
@@ -168,7 +204,7 @@ class GenericProtocolHandler(LicenseProtocolHandler):
             if conn_id in self.active_connections:
                 del self.active_connections[conn_id]
 
-    def handle_connection(self, client_socket: Any, initial_data: bytes) -> None:
+    def handle_connection(self, client_socket: socket.socket, initial_data: bytes) -> None:
         """Handle a client connection with generic protocol processing.
 
         Args:
@@ -225,14 +261,15 @@ class GenericProtocolHandler(LicenseProtocolHandler):
     def generate_response(self, request_data: bytes) -> bytes:
         """Generate a generic protocol response.
 
-        This implementation provides basic responses for common patterns.
-        Subclasses should override for protocol-specific behavior.
+        This implementation provides basic responses for common license
+        verification patterns. Subclasses should override for protocol-specific
+        behavior and custom license response generation.
 
         Args:
             request_data: Raw request data from client
 
         Returns:
-            Generic response data
+            Generic response data as bytes
 
         """
         # Try to detect request type

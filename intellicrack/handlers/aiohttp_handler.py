@@ -25,7 +25,8 @@ import socketserver
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import Any, Awaitable, Callable, Dict, Optional, Tuple
+from collections.abc import Awaitable, Callable
+from typing import Any, Optional
 
 from intellicrack.utils.logger import logger
 
@@ -83,7 +84,7 @@ except ImportError as e:
             self: "ClientResponse",
             url: str,
             status: int = 200,
-            headers: Optional[Dict[str, str]] = None,
+            headers: Optional[dict[str, str]] = None,
             content: bytes = b"",
         ) -> None:
             """Initialize response.
@@ -97,10 +98,10 @@ except ImportError as e:
             """
             self.url: str = url
             self.status: int = status
-            self.headers: Dict[str, str] = headers or {}
+            self.headers: dict[str, str] = headers or {}
             self._content: bytes = content
             self.reason: str = "OK" if status < 400 else "Error"
-            self.cookies: Dict[str, str] = {}
+            self.cookies: dict[str, str] = {}
 
         async def text(self: "ClientResponse", encoding: str = "utf-8") -> str:
             """Get response text.
@@ -245,9 +246,9 @@ except ImportError as e:
             self: "ClientSession",
             connector: Optional["TCPConnector"] = None,
             timeout: Optional["ClientTimeout"] = None,
-            headers: Optional[Dict[str, str]] = None,
-            cookies: Optional[Dict[str, str]] = None,
-            auth: Optional[Tuple[str, str]] = None,
+            headers: Optional[dict[str, str]] = None,
+            cookies: Optional[dict[str, str]] = None,
+            auth: Optional[tuple[str, str]] = None,
             json_serialize: Callable[[Any], str] = json.dumps,
         ) -> None:
             """Initialize session.
@@ -263,9 +264,9 @@ except ImportError as e:
             """
             self.connector: TCPConnector = connector or TCPConnector()
             self.timeout: ClientTimeout = timeout or ClientTimeout()
-            self.headers: Dict[str, str] = headers or {}
-            self.cookies: Dict[str, str] = cookies or {}
-            self.auth: Optional[Tuple[str, str]] = auth
+            self.headers: dict[str, str] = headers or {}
+            self.cookies: dict[str, str] = cookies or {}
+            self.auth: Optional[tuple[str, str]] = auth
             self.json_serialize: Callable[[Any], str] = json_serialize
             self._closed: bool = False
 
@@ -292,10 +293,10 @@ except ImportError as e:
 
             """
             # Extract parameters
-            params: Optional[Dict[str, object]] = kwargs.get("params")
+            params: Optional[dict[str, object]] = kwargs.get("params")
             data: Optional[object] = kwargs.get("data")
             json_data: Optional[object] = kwargs.get("json")
-            headers: Dict[str, str] = kwargs.get("headers", {})
+            headers: dict[str, str] = kwargs.get("headers", {})
             timeout: ClientTimeout = kwargs.get("timeout", self.timeout)
 
             # Build URL with params
@@ -328,7 +329,7 @@ except ImportError as e:
             try:
                 timeout_value = timeout.total if hasattr(timeout, "total") else timeout
 
-                def _execute_request() -> Tuple[str, int, Dict[str, Any], bytes]:
+                def _execute_request() -> tuple[str, int, dict[str, Any], bytes]:
                     with urllib.request.urlopen(req, timeout=timeout_value) as response:  # noqa: S310 - Controlled URL for analysis tooling
                         return (
                             response.geturl(),
@@ -528,7 +529,7 @@ except ImportError as e:
             self: "Request",
             method: str = "GET",
             path: str = "/",
-            headers: Optional[Dict[str, str]] = None,
+            headers: Optional[dict[str, str]] = None,
             body: bytes = b"",
         ) -> None:
             """Initialize request.
@@ -542,11 +543,11 @@ except ImportError as e:
             """
             self.method: str = method
             self.path: str = path
-            self.headers: Dict[str, str] = headers or {}
+            self.headers: dict[str, str] = headers or {}
             self.body: bytes = body
-            self.match_info: Dict[str, Any] = {}
-            self.query: Dict[str, Any] = {}
-            self.cookies: Dict[str, str] = {}
+            self.match_info: dict[str, Any] = {}
+            self.query: dict[str, Any] = {}
+            self.cookies: dict[str, str] = {}
             self.app: Optional[Any] = None
 
         async def text(self: "Request") -> str:
@@ -568,7 +569,7 @@ except ImportError as e:
             text = await self.text()
             return json.loads(text)
 
-        async def post(self: "Request") -> Dict[str, Any]:
+        async def post(self: "Request") -> dict[str, Any]:
             """Get POST data.
 
             Returns:
@@ -586,7 +587,7 @@ except ImportError as e:
             self: "Response",
             text: str = "",
             status: int = 200,
-            headers: Optional[Dict[str, str]] = None,
+            headers: Optional[dict[str, str]] = None,
             content_type: str = "text/plain",
         ) -> None:
             """Initialize response.
@@ -600,7 +601,7 @@ except ImportError as e:
             """
             self.text: str = text
             self.status: int = status
-            self.headers: Dict[str, str] = headers or {}
+            self.headers: dict[str, str] = headers or {}
             self.content_type: str = content_type
             self.body: bytes = text.encode("utf-8") if isinstance(text, str) else text
 
@@ -746,7 +747,7 @@ except ImportError as e:
 
             """
             if not hasattr(self, "_state"):
-                self._state: Dict[str, Any] = {}
+                self._state: dict[str, Any] = {}
             return self._state.get(key)
 
         def __setitem__(self: "Application", key: str, value: object) -> None:
@@ -758,7 +759,7 @@ except ImportError as e:
 
             """
             if not hasattr(self, "_state"):
-                self._state: Dict[str, Any] = {}
+                self._state: dict[str, Any] = {}
             self._state[key] = value
 
         def add_routes(self: "Application", routes: object) -> None:
@@ -879,7 +880,7 @@ except ImportError as e:
     Request: type = FallbackWeb
     Response: type = FallbackWeb
     RouteTableDef: type = FallbackWeb
-    def run_app(app: Any, host: str, port: int, logger: Callable[[str], None]) -> None:
+    def run_app(app: object, host: str, port: int, logger: Callable[[str], None]) -> None:
         """Fallback implementation of run_app that simply prints the intended operation."""
         return print(f"Would run app on {host}:{port}")
 

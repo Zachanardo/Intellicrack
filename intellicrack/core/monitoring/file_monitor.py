@@ -9,7 +9,9 @@ Licensed under GNU General Public License v3.0
 
 import os
 import time
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
@@ -27,7 +29,11 @@ from intellicrack.core.monitoring.base_monitor import (
 class LicenseFileHandler(FileSystemEventHandler):
     """File system event handler for license-related files."""
 
-    def __init__(self, callback, license_extensions: set[str]) -> None:
+    def __init__(
+        self,
+        callback: Callable[[Any, str, str], None],
+        license_extensions: set[str],
+    ) -> None:
         """Initialize file handler.
 
         Args:
@@ -36,9 +42,21 @@ class LicenseFileHandler(FileSystemEventHandler):
 
         """
         super().__init__()
-        self.callback = callback
-        self.license_extensions = license_extensions
-        self.license_keywords = {"license", "licence", "serial", "key", "activation", "register", "trial", "crack", "patch", ".lic", ".key"}
+        self.callback: Callable[[Any, str, str], None] = callback
+        self.license_extensions: set[str] = license_extensions
+        self.license_keywords: set[str] = {
+            "license",
+            "licence",
+            "serial",
+            "key",
+            "activation",
+            "register",
+            "trial",
+            "crack",
+            "patch",
+            ".lic",
+            ".key",
+        }
 
     def _is_license_file(self, path: str) -> bool:
         """Check if file is license-related.
@@ -105,7 +123,11 @@ class FileMonitor(BaseMonitor):
     Complementary to API monitor's file API hooks.
     """
 
-    def __init__(self, process_info: ProcessInfo | None = None, watch_paths: list[str] | None = None) -> None:
+    def __init__(
+        self,
+        process_info: ProcessInfo | None = None,
+        watch_paths: list[str] | None = None,
+    ) -> None:
         """Initialize file monitor.
 
         Args:
@@ -115,8 +137,19 @@ class FileMonitor(BaseMonitor):
         """
         super().__init__("FileMonitor", process_info)
         self.observer: Observer | None = None
-        self.watch_paths = watch_paths or self._get_default_watch_paths()
-        self.license_extensions = {".lic", ".key", ".dat", ".cfg", ".reg", ".ini", ".license", ".licence", ".serial", ".activation"}
+        self.watch_paths: list[str] = watch_paths or self._get_default_watch_paths()
+        self.license_extensions: set[str] = {
+            ".lic",
+            ".key",
+            ".dat",
+            ".cfg",
+            ".reg",
+            ".ini",
+            ".license",
+            ".licence",
+            ".serial",
+            ".activation",
+        }
 
     def _get_default_watch_paths(self) -> list[str]:
         """Get default paths to monitor.

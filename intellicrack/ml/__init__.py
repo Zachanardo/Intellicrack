@@ -37,8 +37,13 @@ except ImportError as e:
     HAS_PATTERN_TRACKER = False
 
 
-def get_ml_capabilities():
-    """Get list of available ML capabilities."""
+def get_ml_capabilities() -> list[str]:
+    """Get list of available ML capabilities.
+
+    Returns:
+        List of available ML capabilities.
+
+    """
     capabilities = []
     if HAS_PATTERN_TRACKER:
         capabilities.append("pattern_evolution")

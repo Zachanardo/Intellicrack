@@ -26,6 +26,7 @@ import struct
 import time
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
+from datetime import UTC
 from enum import IntEnum
 from pathlib import Path
 from typing import Any
@@ -1399,8 +1400,8 @@ class HASPSentinelParser:
         try:
             from datetime import datetime, timezone
 
-            expiry_date = datetime.strptime(feature.expiry, "%d-%b-%Y").replace(tzinfo=timezone.utc)
-            return datetime.now(timezone.utc) > expiry_date
+            expiry_date = datetime.strptime(feature.expiry, "%d-%b-%Y").replace(tzinfo=UTC)
+            return datetime.now(UTC) > expiry_date
         except Exception:
             return False
 
@@ -1416,8 +1417,8 @@ class HASPSentinelParser:
         try:
             from datetime import datetime, timezone
 
-            expiry_date = datetime.strptime(feature.expiry, "%d-%b-%Y").replace(tzinfo=timezone.utc)
-            now = datetime.now(timezone.utc)
+            expiry_date = datetime.strptime(feature.expiry, "%d-%b-%Y").replace(tzinfo=UTC)
+            now = datetime.now(UTC)
             days_remaining = (expiry_date - now).days
 
             return {

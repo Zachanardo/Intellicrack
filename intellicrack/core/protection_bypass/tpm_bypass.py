@@ -10,10 +10,11 @@ import os
 import struct
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 try:
     from Crypto.Cipher import AES

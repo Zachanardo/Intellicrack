@@ -1,0 +1,2044 @@
+warning: `incorrect-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible. Ignoring `incorrect-blank-line-before-class`.
+warning: `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible. Ignoring `multi-line-summary-second-line`.
+[
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 90
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 92
+          },
+          "location": {
+            "column": 1,
+            "row": 92
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 90
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 92,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 451
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 453
+          },
+          "location": {
+            "column": 1,
+            "row": 453
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 451
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 453,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 13,
+      "row": 528
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 531
+          },
+          "location": {
+            "column": 1,
+            "row": 531
+          }
+        }
+      ],
+      "message": "Add blank line after \"Args\""
+    },
+    "location": {
+      "column": 9,
+      "row": 528
+    },
+    "message": "Missing blank line after last section (\"Args\")",
+    "noqa_row": 531,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 13,
+      "row": 548
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 550
+          },
+          "location": {
+            "column": 1,
+            "row": 550
+          }
+        }
+      ],
+      "message": "Add blank line after \"Args\""
+    },
+    "location": {
+      "column": 9,
+      "row": 548
+    },
+    "message": "Missing blank line after last section (\"Args\")",
+    "noqa_row": 550,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 613
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 617
+          },
+          "location": {
+            "column": 1,
+            "row": 617
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 613
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 617,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 639
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 643
+          },
+          "location": {
+            "column": 1,
+            "row": 643
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 639
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 643,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 669
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 672
+          },
+          "location": {
+            "column": 1,
+            "row": 672
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 669
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 672,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 772
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 775
+          },
+          "location": {
+            "column": 1,
+            "row": 775
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 772
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 775,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 834
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 837
+          },
+          "location": {
+            "column": 1,
+            "row": 837
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 834
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 837,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 939
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 942
+          },
+          "location": {
+            "column": 1,
+            "row": 942
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 939
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 942,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 974
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 977
+          },
+          "location": {
+            "column": 1,
+            "row": 977
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 974
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 977,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 1012
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 1015
+          },
+          "location": {
+            "column": 1,
+            "row": 1015
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 1012
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 1015,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 1040
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 1043
+          },
+          "location": {
+            "column": 1,
+            "row": 1043
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 1040
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 1043,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 1144
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 1147
+          },
+          "location": {
+            "column": 1,
+            "row": 1147
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 1144
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 1147,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 1259
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 1262
+          },
+          "location": {
+            "column": 1,
+            "row": 1262
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 1259
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 1262,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 1285
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 1288
+          },
+          "location": {
+            "column": 1,
+            "row": 1288
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 1285
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 1288,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 1382
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 1385
+          },
+          "location": {
+            "column": 1,
+            "row": 1385
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 1382
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 1385,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 1472
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 1475
+          },
+          "location": {
+            "column": 1,
+            "row": 1475
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 1472
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 1475,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 1513
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 1516
+          },
+          "location": {
+            "column": 1,
+            "row": 1516
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 1513
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 1516,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 1546
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 1549
+          },
+          "location": {
+            "column": 1,
+            "row": 1549
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 1546
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 1549,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 1581
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 1584
+          },
+          "location": {
+            "column": 1,
+            "row": 1584
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 1581
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 1584,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 1620
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 1623
+          },
+          "location": {
+            "column": 1,
+            "row": 1623
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 1620
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 1623,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 1652
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 1655
+          },
+          "location": {
+            "column": 1,
+            "row": 1655
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 1652
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 1655,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 1679
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 1682
+          },
+          "location": {
+            "column": 1,
+            "row": 1682
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 1679
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 1682,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 1709
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 1712
+          },
+          "location": {
+            "column": 1,
+            "row": 1712
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 1709
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 1712,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 1741
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 1744
+          },
+          "location": {
+            "column": 1,
+            "row": 1744
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 1741
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 1744,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 1781
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 1783
+          },
+          "location": {
+            "column": 1,
+            "row": 1783
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 1781
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 1783,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 1800
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 1802
+          },
+          "location": {
+            "column": 1,
+            "row": 1802
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 1800
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 1802,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 1893
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 1896
+          },
+          "location": {
+            "column": 1,
+            "row": 1896
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 1893
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 1896,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 16,
+      "row": 1902
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\anti_analysis\\debugger_detector.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 1904
+          },
+          "location": {
+            "column": 1,
+            "row": 1904
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 9,
+      "row": 1902
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 1904,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 138
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 140
+          },
+          "location": {
+            "column": 1,
+            "row": 140
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 138
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 140,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 153
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 155
+          },
+          "location": {
+            "column": 1,
+            "row": 155
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 153
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 155,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 168
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 170
+          },
+          "location": {
+            "column": 1,
+            "row": 170
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 168
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 170,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 183
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 185
+          },
+          "location": {
+            "column": 1,
+            "row": 185
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 183
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 185,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 201
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 203
+          },
+          "location": {
+            "column": 1,
+            "row": 203
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 201
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 203,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 239
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 241
+          },
+          "location": {
+            "column": 1,
+            "row": 241
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 239
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 241,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 254
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 256
+          },
+          "location": {
+            "column": 1,
+            "row": 256
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 254
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 256,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 291
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 293
+          },
+          "location": {
+            "column": 1,
+            "row": 293
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 291
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 293,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 317
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 319
+          },
+          "location": {
+            "column": 1,
+            "row": 319
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 317
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 319,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 337
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 339
+          },
+          "location": {
+            "column": 1,
+            "row": 339
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 337
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 339,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 363
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 365
+          },
+          "location": {
+            "column": 1,
+            "row": 365
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 363
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 365,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 384
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 386
+          },
+          "location": {
+            "column": 1,
+            "row": 386
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 384
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 386,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 399
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 401
+          },
+          "location": {
+            "column": 1,
+            "row": 401
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 399
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 401,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 425
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 427
+          },
+          "location": {
+            "column": 1,
+            "row": 427
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 425
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 427,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 451
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 453
+          },
+          "location": {
+            "column": 1,
+            "row": 453
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 451
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 453,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 463
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 465
+          },
+          "location": {
+            "column": 1,
+            "row": 465
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 463
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 465,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 475
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 477
+          },
+          "location": {
+            "column": 1,
+            "row": 477
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 475
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 477,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 504
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 506
+          },
+          "location": {
+            "column": 1,
+            "row": 506
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 504
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 506,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 537
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 539
+          },
+          "location": {
+            "column": 1,
+            "row": 539
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 537
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 539,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 553
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 555
+          },
+          "location": {
+            "column": 1,
+            "row": 555
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 553
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 555,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "D413",
+    "end_location": {
+      "column": 12,
+      "row": 581
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\certificate\\patch_generators.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "\n    ",
+          "end_location": {
+            "column": 5,
+            "row": 583
+          },
+          "location": {
+            "column": 1,
+            "row": 583
+          }
+        }
+      ],
+      "message": "Add blank line after \"Returns\""
+    },
+    "location": {
+      "column": 5,
+      "row": 581
+    },
+    "message": "Missing blank line after last section (\"Returns\")",
+    "noqa_row": 583,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-last-section"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 67,
+      "row": 83
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\monitoring\\api_monitor.py",
+    "fix": null,
+    "location": {
+      "column": 64,
+      "row": 83
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `data`",
+    "noqa_row": 83,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 51,
+      "row": 207
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\network\\generic_protocol_handler.py",
+    "fix": null,
+    "location": {
+      "column": 48,
+      "row": 207
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `client_socket`",
+    "noqa_row": 207,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 39,
+      "row": 52
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\core\\network_capture.py",
+    "fix": null,
+    "location": {
+      "column": 36,
+      "row": 52
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `packet`",
+    "noqa_row": 52,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 54
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dialogs\\help_documentation_widget.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 54
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 54,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 94,
+      "row": 42
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\dialogs\\qemu_test_dialog.py",
+    "fix": null,
+    "location": {
+      "column": 88,
+      "row": 42
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 42,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 27,
+      "row": 249
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\icon_manager.py",
+    "fix": null,
+    "location": {
+      "column": 21,
+      "row": 249
+    },
+    "message": "Missing type annotation for function argument `button`",
+    "noqa_row": 249,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 36,
+      "row": 48
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\protection_detection_handlers.py",
+    "fix": null,
+    "location": {
+      "column": 29,
+      "row": 48
+    },
+    "message": "Missing type annotation for function argument `message`",
+    "noqa_row": 48,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 35,
+      "row": 56
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\ui_manager.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 56
+    },
+    "message": "Missing type annotation for function argument `main_window`",
+    "noqa_row": 56,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 52
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\ai_assistant_widget.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 52
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 52,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 231
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\batch_analysis_widget.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 231
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 231,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 157
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\cpu_status_widget.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 157
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 157,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 39
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\entropy_visualizer.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 39
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 39,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 48
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\file_metadata_widget.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 48
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 48,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 90
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\icp_analysis_widget.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 90
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 90,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 30,
+      "row": 49
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\ui\\widgets\\structure_visualizer.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 49
+    },
+    "message": "Missing type annotation for function argument `parent`",
+    "noqa_row": 49,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 22,
+      "row": 155
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\core\\misc_utils.py",
+    "fix": null,
+    "location": {
+      "column": 19,
+      "row": 155
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `obj`",
+    "noqa_row": 155,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 13,
+      "row": 35
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\ghidra_common.py",
+    "fix": null,
+    "location": {
+      "column": 10,
+      "row": 35
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `app`",
+    "noqa_row": 35,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 31,
+      "row": 30
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\protection\\certificate_common.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 30
+    },
+    "message": "Missing return type annotation for public function `create_certificate_builder`",
+    "noqa_row": 30,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN401",
+    "end_location": {
+      "column": 44,
+      "row": 25
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\protection_utils.py",
+    "fix": null,
+    "location": {
+      "column": 41,
+      "row": 25
+    },
+    "message": "Dynamically typed expressions (typing.Any) are disallowed in `app`",
+    "noqa_row": 25,
+    "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 15,
+      "row": 46
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\service_health_checker.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 46
+    },
+    "message": "Missing return type annotation for public function `config`",
+    "noqa_row": 46,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN001",
+    "end_location": {
+      "column": 32,
+      "row": 211
+    },
+    "filename": "D:\\Intellicrack\\intellicrack\\utils\\system\\process_utils.py",
+    "fix": null,
+    "location": {
+      "column": 29,
+      "row": 211
+    },
+    "message": "Missing type annotation for function argument `app`",
+    "noqa_row": 211,
+    "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
+  }
+]

@@ -56,7 +56,7 @@ def log_message(message: str, level: str = "INFO") -> None:
         logger.info(message)
 
 
-def log_function_call(func: F) -> F:
+def log_function_call[F: Callable[..., Any]](func: F) -> F:
     """Log function entry, exit, arguments, return value, and exceptions.
 
     Args:
@@ -178,7 +178,7 @@ def log_function_call(func: F) -> F:
     return wrapper
 
 
-def log_all_methods(cls: C) -> C:
+def log_all_methods[C: type](cls: C) -> C:
     """Class decorator to apply log_function_call to all methods of a class.
 
     Args:

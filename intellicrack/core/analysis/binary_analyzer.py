@@ -28,9 +28,10 @@ import json
 import logging
 import mmap
 import struct
+from collections.abc import Callable, Iterator
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Iterator
+from typing import Any
 
 
 class BinaryAnalyzer:

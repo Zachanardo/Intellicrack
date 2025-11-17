@@ -33,35 +33,53 @@ from intellicrack.handlers.pyqt6_handler import (
     QVBoxLayout,
 )
 
-"""QEMU test confirmation dialog."""
-
 
 class QEMUTestDialog(QDialog):
     """Dialog asking user if they want to test script in QEMU first."""
 
-    def __init__(self, script_type: str, target_binary: str, script_preview: str = "", parent=None) -> None:
-        """Initialize the QEMUTestDialog with default values."""
+    def __init__(
+        self,
+        script_type: str,
+        target_binary: str,
+        script_preview: str = "",
+        parent: QDialog | None = None,
+    ) -> None:
+        """Initialize the QEMUTestDialog with default values.
+
+        Args:
+            script_type: Type of script being executed
+            target_binary: Path to the target binary
+            script_preview: Optional preview text of the script
+            parent: Parent widget for the dialog
+
+        """
         super().__init__(parent)
-        self.script_type = script_type
-        self.target_binary = target_binary
-        self.script_preview = script_preview
-        self.user_choice = None
+        self.script_type: str = script_type
+        self.target_binary: str = target_binary
+        self.script_preview: str = script_preview
+        self.user_choice: str | None = None
 
         self.setWindowTitle("Script Execution Safety Check")
         self.setModal(True)
         self.setMinimumWidth(600)
 
+        self.button_group: QButtonGroup
+        self.qemu_test_radio: QRadioButton
+        self.host_run_radio: QRadioButton
+        self.remember_checkbox: QCheckBox
+        self.continue_btn: QPushButton
+
         self._init_ui()
 
     def _init_ui(self) -> None:
         """Initialize the user interface."""
-        layout = QVBoxLayout(self)
+        layout: QVBoxLayout = QVBoxLayout(self)
 
         # Header with icon and warning
-        header_layout = QHBoxLayout()
+        header_layout: QHBoxLayout = QHBoxLayout()
 
         # Warning icon
-        icon_label = QLabel()
+        icon_label: QLabel = QLabel()
         icon_label.setPixmap(
             self.style()
             .standardPixmap(
@@ -72,7 +90,7 @@ class QEMUTestDialog(QDialog):
         header_layout.addWidget(icon_label)
 
         # Warning text
-        warning_text = QLabel(
+        warning_text: QLabel = QLabel(
             f"<b>About to execute {self.script_type.upper()} script</b><br>"
             f"Target: {os.path.basename(self.target_binary)}<br><br>"
             "This script will interact with the target binary. "
@@ -86,10 +104,10 @@ class QEMUTestDialog(QDialog):
 
         # Script preview section
         if self.script_preview:
-            preview_group = QGroupBox("Script Preview")
-            preview_layout = QVBoxLayout(preview_group)
+            preview_group: QGroupBox = QGroupBox("Script Preview")
+            preview_layout: QVBoxLayout = QVBoxLayout(preview_group)
 
-            preview_text = QTextEdit()
+            preview_text: QTextEdit = QTextEdit()
             preview_text.setPlainText(self.script_preview)
             preview_text.setReadOnly(True)
             preview_text.setMaximumHeight(150)
@@ -100,8 +118,8 @@ class QEMUTestDialog(QDialog):
             layout.addSpacing(10)
 
         # Options section
-        options_group = QGroupBox("Execution Options")
-        options_layout = QVBoxLayout(options_group)
+        options_group: QGroupBox = QGroupBox("Execution Options")
+        options_layout: QVBoxLayout = QVBoxLayout(options_group)
 
         self.button_group = QButtonGroup(self)
 
@@ -112,7 +130,7 @@ class QEMUTestDialog(QDialog):
         self.button_group.addButton(self.qemu_test_radio, 0)
         options_layout.addWidget(self.qemu_test_radio)
 
-        qemu_desc = QLabel("    Safe environment to test script behavior before host execution")
+        qemu_desc: QLabel = QLabel("    Safe environment to test script behavior before host execution")
         qemu_desc.setObjectName("optionDescription")
         options_layout.addWidget(qemu_desc)
         options_layout.addSpacing(5)
@@ -123,7 +141,7 @@ class QEMUTestDialog(QDialog):
         self.button_group.addButton(self.host_run_radio, 1)
         options_layout.addWidget(self.host_run_radio)
 
-        host_desc = QLabel("    Execute immediately without testing (experienced users)")
+        host_desc: QLabel = QLabel("    Execute immediately without testing (experienced users)")
         host_desc.setObjectName("optionDescription")
         options_layout.addWidget(host_desc)
 
@@ -135,7 +153,7 @@ class QEMUTestDialog(QDialog):
         layout.addWidget(self.remember_checkbox)
 
         # QEMU benefits info
-        benefits_text = QLabel(
+        benefits_text: QLabel = QLabel(
             "<b>Benefits of QEMU testing:</b><br>"
             " Isolates script execution from host system<br>"
             " Shows script behavior before deployment<br>"
@@ -149,11 +167,11 @@ class QEMUTestDialog(QDialog):
         layout.addStretch()
 
         # Button row
-        button_layout = QHBoxLayout()
+        button_layout: QHBoxLayout = QHBoxLayout()
         button_layout.addStretch()
 
         # Cancel button
-        cancel_btn = QPushButton("Cancel")
+        cancel_btn: QPushButton = QPushButton("Cancel")
         cancel_btn.clicked.connect(self.reject)
         button_layout.addWidget(cancel_btn)
 
@@ -167,7 +185,11 @@ class QEMUTestDialog(QDialog):
         layout.addLayout(button_layout)
 
     def _on_continue(self) -> None:
-        """Handle continue button click."""
+        """Handle continue button click.
+
+        Updates user_choice attribute based on selected radio button and remember preference.
+
+        """
         if self.qemu_test_radio.isChecked():
             if self.remember_checkbox.isChecked():
                 self.user_choice = "always_test"
@@ -181,5 +203,10 @@ class QEMUTestDialog(QDialog):
         self.accept()
 
     def get_user_choice(self) -> str:
-        """Get the user's choice."""
+        """Get the user's choice.
+
+        Returns:
+            User's selected execution choice or "cancelled" if dialog was rejected
+
+        """
         return self.user_choice or "cancelled"

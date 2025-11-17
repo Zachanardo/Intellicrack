@@ -1818,7 +1818,7 @@ class CloudLicenseInterceptor:
                     source="upstream",
                 )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self.logger.exception(f"Upstream request timeout: {request.url}")
             return None
         except Exception as e:

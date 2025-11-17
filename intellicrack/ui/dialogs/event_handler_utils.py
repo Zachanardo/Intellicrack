@@ -24,6 +24,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QDialog,
     QMenu,
     QMessageBox,
+    QPoint,
     QThread,
     QTimer,
     QWidget,
@@ -115,7 +116,7 @@ class DialogEventHandler:
 
         """
 
-        def context_menu_handler(position) -> None:
+        def context_menu_handler(position: QPoint) -> None:
             if condition_check and not condition_check():
                 return
 

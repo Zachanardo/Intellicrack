@@ -2850,7 +2850,7 @@ class LicenseAnalyzer:
         patch = b"\xb8" + days_bytes + b"\xc3"
         return self.patch_bytes(address, patch)
 
-    def manipulate_registry(self, key_path: str, value_name: str, new_value: Any) -> bool:
+    def manipulate_registry(self, key_path: str, value_name: str, new_value: str | int | bytes) -> bool:
         """Manipulate registry entries for license keys."""
         try:
             import winreg

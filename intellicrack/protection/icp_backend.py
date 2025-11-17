@@ -33,11 +33,12 @@ import struct
 import sys
 import threading
 import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from ..utils.logger import get_logger
 
@@ -1111,7 +1112,7 @@ class ICPBackend:
         try:
             result = await asyncio.wait_for(loop.run_in_executor(None, native_scan), timeout=timeout)
             return result
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return ICPScanResult(file_path=str(file_path), error=f"Analysis timed out after {timeout} seconds")
 
     def _scan_large_file(self, file_path: Path, scan_flags: int) -> ICPScanResult:

@@ -22,7 +22,6 @@ import datetime
 import logging
 import re
 from pathlib import Path
-from typing import Any
 
 # Module logger
 logger = logging.getLogger(__name__)
@@ -152,7 +151,7 @@ def truncate_string(text: str, max_length: int = 100, suffix: str = "...") -> st
     return text[: max_length - len(suffix)] + suffix
 
 
-def safe_str(obj: Any, max_length: int = 100) -> str:
+def safe_str(obj: object, max_length: int = 100) -> str:
     """Safely convert an object to string with length limit.
 
     Args:

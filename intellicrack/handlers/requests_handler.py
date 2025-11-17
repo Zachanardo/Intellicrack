@@ -24,7 +24,8 @@ import ssl
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import Dict, Generator, Optional, Union
+from collections.abc import Generator
+from typing import Optional, Union
 
 from intellicrack.utils.logger import logger
 
@@ -210,7 +211,7 @@ except ImportError as e:
         for HTTP headers which are case-insensitive.
         """
 
-        def __init__(self, data: Optional[Dict[object, object]] = None) -> None:
+        def __init__(self, data: Optional[dict[object, object]] = None) -> None:
             """Initialize case-insensitive dictionary.
 
             Args:
@@ -309,19 +310,19 @@ except ImportError as e:
             self.url = ""
             self.headers = CaseInsensitiveDict()
             self.body: Optional[bytes] = None
-            self.hooks: Dict[str, object] = {}
+            self.hooks: dict[str, object] = {}
 
         def prepare(
             self,
             method: Optional[str] = None,
             url: Optional[str] = None,
-            headers: Optional[Dict[str, object]] = None,
+            headers: Optional[dict[str, object]] = None,
             files: Optional[object] = None,
-            data: Optional[Union[Dict[str, object], bytes, str]] = None,
-            params: Optional[Dict[str, object]] = None,
+            data: Optional[Union[dict[str, object], bytes, str]] = None,
+            params: Optional[dict[str, object]] = None,
             auth: Optional[object] = None,
-            cookies: Optional[Dict[str, object]] = None,
-            hooks: Optional[Dict[str, object]] = None,
+            cookies: Optional[dict[str, object]] = None,
+            hooks: Optional[dict[str, object]] = None,
             json: Optional[object] = None,
         ) -> None:
             """Prepare the HTTP request.
@@ -375,12 +376,12 @@ except ImportError as e:
             self.headers: CaseInsensitiveDict = CaseInsensitiveDict()
             self.cookies: RequestsCookieJar = RequestsCookieJar()
             self.auth: Optional[object] = None
-            self.proxies: Dict[str, str] = {}
+            self.proxies: dict[str, str] = {}
             self.verify: Union[bool, str] = True
             self.cert: Optional[str] = None
             self.max_redirects: int = 30
             self.trust_env: bool = True
-            self.adapters: Dict[str, object] = {}
+            self.adapters: dict[str, object] = {}
 
         def request(self, method: str, url: str, **kwargs: object) -> Response:
             """Send HTTP request.

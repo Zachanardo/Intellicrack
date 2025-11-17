@@ -4,10 +4,11 @@ import hashlib
 import logging
 import struct
 import zlib
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import capstone
 import z3
@@ -1019,7 +1020,7 @@ class LicenseKeygen:
     def generate_key_from_algorithm(
         self,
         algorithm_name: str,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> GeneratedSerial:
         """Generate a key from a known algorithm."""
         if algorithm_name == "microsoft":

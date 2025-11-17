@@ -2785,7 +2785,7 @@ cli.add_command(cert_test, name="ct")
 cli.add_command(cert_rollback, name="cr")
 
 
-def main():
+def main() -> None:
     """Run main entry point for CLI."""
     # Check for --gui flag in command line arguments
     if "--gui" in sys.argv:

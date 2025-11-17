@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-from typing import Callable
+from collections.abc import Callable
 
 # Optional imports with graceful fallbacks
 from intellicrack.handlers.pyqt6_handler import HAS_PYQT

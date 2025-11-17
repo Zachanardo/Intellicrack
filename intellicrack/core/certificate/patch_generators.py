@@ -132,8 +132,11 @@ class PatchType(Enum):
 def generate_always_succeed_x86() -> bytes:
     """Generate x86 patch that makes function always return success.
 
+    Generates machine code that moves 1 into the EAX register and returns,
+    making any function appear to succeed immediately.
+
     Returns:
-        Machine code bytes for 'MOV EAX, 1; RET'
+        Machine code bytes for 'MOV EAX, 1; RET' (6 bytes).
 
     """
     return bytes([
@@ -145,8 +148,11 @@ def generate_always_succeed_x86() -> bytes:
 def generate_always_succeed_x64() -> bytes:
     """Generate x64 patch that makes function always return success.
 
+    Generates machine code that moves 1 into the RAX register and returns,
+    making any function appear to succeed immediately on x64 systems.
+
     Returns:
-        Machine code bytes for 'MOV RAX, 1; RET'
+        Machine code bytes for 'MOV RAX, 1; RET' (8 bytes).
 
     """
     return bytes([
@@ -158,8 +164,11 @@ def generate_always_succeed_x64() -> bytes:
 def generate_always_succeed_arm32() -> bytes:
     """Generate ARM32 patch that makes function always return success.
 
+    Generates ARM32 machine code that moves 1 into the R0 register and
+    returns from the function using the BX LR instruction.
+
     Returns:
-        Machine code bytes for 'MOV R0, #1; BX LR'
+        Machine code bytes for 'MOV R0, #1; BX LR' (8 bytes).
 
     """
     return bytes([
@@ -171,8 +180,11 @@ def generate_always_succeed_arm32() -> bytes:
 def generate_always_succeed_arm64() -> bytes:
     """Generate ARM64 patch that makes function always return success.
 
+    Generates ARM64 machine code that moves 1 into the X0 register and
+    returns from the function.
+
     Returns:
-        Machine code bytes for 'MOV X0, #1; RET'
+        Machine code bytes for 'MOV X0, #1; RET' (8 bytes).
 
     """
     return bytes([
@@ -184,13 +196,14 @@ def generate_always_succeed_arm64() -> bytes:
 def generate_conditional_invert_x86(original_bytes: bytes) -> bytes:
     """Generate x86 patch that inverts a conditional jump.
 
-    Converts JZ to JNZ and vice versa by flipping the condition bit.
+    Converts JZ to JNZ and vice versa by flipping the condition bit in the
+    opcode. Supports both short and near jump forms.
 
     Args:
-        original_bytes: Original instruction bytes
+        original_bytes: Original instruction bytes to invert.
 
     Returns:
-        Inverted conditional jump bytes
+        Inverted conditional jump bytes with condition flipped.
 
     """
     if not original_bytes:
@@ -222,13 +235,14 @@ def generate_conditional_invert_x86(original_bytes: bytes) -> bytes:
 def generate_conditional_invert_x64(original_bytes: bytes) -> bytes:
     """Generate x64 patch that inverts a conditional jump.
 
-    x64 uses the same conditional jump opcodes as x86.
+    x64 uses the same conditional jump opcodes as x86, so this delegates
+    to the x86 implementation.
 
     Args:
-        original_bytes: Original instruction bytes
+        original_bytes: Original instruction bytes to invert.
 
     Returns:
-        Inverted conditional jump bytes
+        Inverted conditional jump bytes with condition flipped.
 
     """
     return generate_conditional_invert_x86(original_bytes)
@@ -237,13 +251,14 @@ def generate_conditional_invert_x64(original_bytes: bytes) -> bytes:
 def generate_conditional_invert_arm(original_bytes: bytes) -> bytes:
     """Generate ARM patch that inverts a conditional branch.
 
-    Inverts ARM condition codes by flipping the condition field.
+    Inverts ARM condition codes by flipping the condition field in the
+    high nibble of the instruction's last byte.
 
     Args:
-        original_bytes: Original instruction bytes
+        original_bytes: Original instruction bytes to invert.
 
     Returns:
-        Inverted conditional branch bytes
+        Inverted conditional branch bytes with condition flipped.
 
     """
     if len(original_bytes) < 4:
@@ -273,12 +288,15 @@ def generate_conditional_invert_arm(original_bytes: bytes) -> bytes:
 def generate_nop_sled(size: int, arch: Architecture = Architecture.X86) -> bytes:
     """Generate a NOP sled of specified size.
 
+    Creates a sequence of NOP (No Operation) instructions padded to the
+    specified size. Used for alignment and padding in binary patches.
+
     Args:
-        size: Number of bytes to generate
-        arch: Target architecture
+        size: Number of bytes to generate.
+        arch: Target architecture (determines NOP instruction format).
 
     Returns:
-        NOP instruction bytes
+        NOP instruction bytes forming a sled of the specified size.
 
     """
     if arch in (Architecture.X86, Architecture.X64):
@@ -297,14 +315,15 @@ def generate_nop_sled(size: int, arch: Architecture = Architecture.X86) -> bytes
 def generate_trampoline_x86(target_addr: int, hook_addr: int) -> bytes:
     """Generate x86 trampoline jump.
 
-    Creates a JMP instruction to redirect execution.
+    Creates a relative JMP instruction to redirect execution from the target
+    address to the hook address.
 
     Args:
-        target_addr: Address to patch
-        hook_addr: Address to jump to
+        target_addr: Address where the jump will be placed.
+        hook_addr: Target address to jump to.
 
     Returns:
-        JMP instruction bytes
+        JMP instruction bytes (5 bytes for relative jump).
 
     """
     offset = hook_addr - (target_addr + 5)
@@ -317,14 +336,15 @@ def generate_trampoline_x86(target_addr: int, hook_addr: int) -> bytes:
 def generate_trampoline_x64(target_addr: int, hook_addr: int) -> bytes:
     """Generate x64 trampoline jump.
 
-    Uses absolute 64-bit jump via register.
+    Uses either a relative 32-bit jump (if within range) or an absolute
+    64-bit jump via MOV RAX/JMP RAX instructions.
 
     Args:
-        target_addr: Address to patch
-        hook_addr: Address to jump to
+        target_addr: Address where the jump will be placed.
+        hook_addr: Target address to jump to.
 
     Returns:
-        Absolute jump instruction bytes
+        Absolute or relative jump instruction bytes (5-14 bytes).
 
     """
     offset = hook_addr - (target_addr + 5)
@@ -343,12 +363,15 @@ def generate_trampoline_x64(target_addr: int, hook_addr: int) -> bytes:
 def wrap_patch_stdcall(patch: bytes, arg_count: int = 0) -> bytes:
     """Wrap patch to preserve stdcall calling convention.
 
+    Modifies the patch's return instruction to include stack cleanup bytes
+    appropriate for the stdcall calling convention.
+
     Args:
-        patch: Original patch bytes
-        arg_count: Number of arguments (for stack cleanup)
+        patch: Original patch bytes.
+        arg_count: Number of arguments (for stack cleanup amount).
 
     Returns:
-        Wrapped patch with stack preservation
+        Wrapped patch with modified RET instruction for stack cleanup.
 
     """
     if arg_count == 0:
@@ -363,13 +386,14 @@ def wrap_patch_stdcall(patch: bytes, arg_count: int = 0) -> bytes:
 def wrap_patch_cdecl(patch: bytes) -> bytes:
     """Wrap patch to preserve cdecl calling convention.
 
-    cdecl has caller cleanup, so no modification needed.
+    In cdecl, the caller is responsible for stack cleanup, so the patch
+    requires no modification.
 
     Args:
-        patch: Original patch bytes
+        patch: Original patch bytes.
 
     Returns:
-        Unmodified patch
+        Unmodified patch (cdecl requires no special wrapping).
 
     """
     return patch
@@ -378,13 +402,14 @@ def wrap_patch_cdecl(patch: bytes) -> bytes:
 def wrap_patch_fastcall(patch: bytes) -> bytes:
     """Wrap patch to preserve fastcall calling convention.
 
-    Preserves RCX and RDX registers.
+    Wraps the patch with PUSH/POP instructions to preserve RCX and RDX
+    registers which are used for the first two integer arguments.
 
     Args:
-        patch: Original patch bytes
+        patch: Original patch bytes.
 
     Returns:
-        Wrapped patch with register preservation
+        Wrapped patch with RCX and RDX register preservation.
 
     """
     push_regs = bytes([
@@ -403,13 +428,15 @@ def wrap_patch_fastcall(patch: bytes) -> bytes:
 def wrap_patch_x64_convention(patch: bytes) -> bytes:
     """Wrap patch to preserve x64 calling convention.
 
-    Preserves RCX, RDX, R8, R9 registers.
+    Wraps the patch with PUSH/POP instructions to preserve RCX, RDX, R8,
+    and R9 registers which are used for the first four integer arguments
+    in the x64 Microsoft calling convention.
 
     Args:
-        patch: Original patch bytes
+        patch: Original patch bytes.
 
     Returns:
-        Wrapped patch with register preservation
+        Wrapped patch with RCX, RDX, R8, R9 register preservation.
 
     """
     push_regs = bytes([
@@ -432,8 +459,11 @@ def wrap_patch_x64_convention(patch: bytes) -> bytes:
 def generate_register_save_x86() -> bytes:
     """Generate x86 code to save all general-purpose registers.
 
+    Generates a PUSHAD instruction which pushes all eight 32-bit general-
+    purpose registers onto the stack.
+
     Returns:
-        PUSHAD instruction bytes
+        PUSHAD instruction bytes (1 byte).
 
     """
     return bytes([0x60])
@@ -442,8 +472,11 @@ def generate_register_save_x86() -> bytes:
 def generate_register_restore_x86() -> bytes:
     """Generate x86 code to restore all general-purpose registers.
 
+    Generates a POPAD instruction which pops all eight 32-bit general-
+    purpose registers from the stack in reverse order.
+
     Returns:
-        POPAD instruction bytes
+        POPAD instruction bytes (1 byte).
 
     """
     return bytes([0x61])
@@ -452,8 +485,11 @@ def generate_register_restore_x86() -> bytes:
 def generate_register_save_x64() -> bytes:
     """Generate x64 code to save all general-purpose registers.
 
+    Generates a series of PUSH instructions to save all 16 general-purpose
+    registers (RAX through R15) onto the stack.
+
     Returns:
-        Series of PUSH instructions for all registers
+        Series of PUSH instruction bytes for all x64 registers (32 bytes).
 
     """
     return bytes([
@@ -479,8 +515,11 @@ def generate_register_save_x64() -> bytes:
 def generate_register_restore_x64() -> bytes:
     """Generate x64 code to restore all general-purpose registers.
 
+    Generates a series of POP instructions to restore all 16 general-purpose
+    registers (R15 through RAX) from the stack in reverse order.
+
     Returns:
-        Series of POP instructions for all registers
+        Series of POP instruction bytes for all x64 registers (32 bytes).
 
     """
     return bytes([
@@ -506,12 +545,15 @@ def generate_register_restore_x64() -> bytes:
 def validate_patch_size(patch: bytes, max_size: int) -> bool:
     """Validate that patch fits within maximum size.
 
+    Checks if the generated patch can fit within the available space at
+    the target location.
+
     Args:
-        patch: Patch bytes to validate
-        max_size: Maximum allowed size
+        patch: Patch bytes to validate.
+        max_size: Maximum allowed size in bytes.
 
     Returns:
-        True if patch fits, False otherwise
+        True if patch fits within max_size, False otherwise.
 
     """
     return len(patch) <= max_size
@@ -520,12 +562,15 @@ def validate_patch_size(patch: bytes, max_size: int) -> bool:
 def validate_patch_alignment(patch: bytes, address: int) -> bool:
     """Validate that patch maintains proper alignment.
 
+    Checks if the patch and its target address satisfy alignment requirements
+    for the architecture.
+
     Args:
-        patch: Patch bytes to validate
-        address: Target address
+        patch: Patch bytes to validate.
+        address: Target address where patch will be placed.
 
     Returns:
-        True if properly aligned
+        True if patch is properly aligned, False otherwise.
 
     """
     if len(patch) == 0:
@@ -540,17 +585,21 @@ def validate_patch_alignment(patch: bytes, address: int) -> bool:
 def get_patch_for_architecture(
     arch: Architecture,
     patch_type: PatchType,
-    **kwargs,
+    **kwargs: int | bytes | object,
 ) -> bytes | None:
     """Get appropriate patch for target architecture.
 
+    Selects and generates the correct patch type for the specified architecture.
+
     Args:
-        arch: Target architecture
-        patch_type: Type of patch to generate
-        **kwargs: Additional parameters for patch generation
+        arch: Target architecture.
+        patch_type: Type of patch to generate.
+        **kwargs: Additional parameters for specific patch generators
+            (e.g., size for NOP_SLED, original_bytes for conditional inversion,
+            target_addr/hook_addr for trampolines).
 
     Returns:
-        Generated patch bytes or None if unsupported
+        Generated patch bytes or None if the combination is unsupported.
 
     """
     if patch_type == PatchType.ALWAYS_SUCCEED:

@@ -46,7 +46,7 @@ class StructureVisualizerWidget(QWidget):
     #: header_type, field_name, value (type: str, str, Any)
     header_field_selected = pyqtSignal(str, str, Any)
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize structure visualizer widget with binary structure analysis capabilities."""
         super().__init__(parent)
         self.current_binary = None

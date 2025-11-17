@@ -19,7 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import hashlib
 import struct
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 from intellicrack.utils.logger import log_all_methods, logger
 
@@ -252,7 +252,7 @@ except ImportError as e:
             self.sizeof = struct.calcsize(format_str) if format_str else 0
             self.fields = []
 
-        def unpack(self, data: bytes) -> Tuple[Any, ...]:
+        def unpack(self, data: bytes) -> tuple[Any, ...]:
             """Unpack binary data.
 
             Args:

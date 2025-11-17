@@ -40,12 +40,16 @@ user-mode and kernel-mode debuggers.
 """
 
 # Linux ptrace constants
-PTRACE_TRACEME = 0
-PTRACE_DETACH = 17
+PTRACE_TRACEME: int = 0
+PTRACE_DETACH: int = 17
 
 
 class DebuggerDetector(BaseDetector):
     """Comprehensive debugger detection using multiple techniques."""
+
+    logger: logging.Logger
+    detection_methods: dict[str, object]
+    debugger_signatures: dict[str, dict[str, list[str]]]
 
     def __init__(self) -> None:
         """Initialize the debugger detector with platform-specific detection methods."""
@@ -84,8 +88,13 @@ class DebuggerDetector(BaseDetector):
         # Monitor for new debuggers
         self._update_signatures_from_system()
 
-    def _build_dynamic_signatures(self) -> dict:
-        """Build debugger signatures dynamically based on system analysis."""
+    def _build_dynamic_signatures(self) -> dict[str, dict[str, list[str]]]:
+        """Build debugger signatures dynamically based on system analysis.
+
+        Returns:
+            Dictionary mapping platforms to signature categories.
+
+        """
         import json
         import os
 
@@ -388,7 +397,11 @@ class DebuggerDetector(BaseDetector):
         return signatures
 
     def _update_signatures_from_system(self) -> None:
-        """Scan system for additional debugger signatures."""
+        """Scan system for additional debugger signatures.
+
+        This method scans running processes to discover additional debugger
+        signatures and dynamically updates the detection signatures.
+        """
         import re
 
         import psutil
@@ -431,8 +444,19 @@ class DebuggerDetector(BaseDetector):
         except Exception as e:
             self.logger.debug(f"Error updating signatures: {e}")
 
-    def _verify_debugger_capabilities(self, process) -> bool:
-        """Verify if a process has debugger capabilities."""
+    def _verify_debugger_capabilities(self, process: psutil.Process) -> bool:
+        """Verify if a process has debugger capabilities.
+
+        Analyzes process handles, memory usage, and capabilities to determine
+        if the process is likely a debugger.
+
+        Args:
+            process: The psutil.Process object to analyze.
+
+        Returns:
+            True if the process shows debugger capabilities, False otherwise.
+
+        """
         try:
             # Check for debug privileges
             if platform.system() == "Windows":
@@ -504,8 +528,14 @@ class DebuggerDetector(BaseDetector):
 
         return False
 
-    def update_signatures(self, custom_signatures: dict = None) -> None:
-        """Update debugger signatures with custom entries."""
+    def update_signatures(self, custom_signatures: dict[str, dict[str, list[str]]] | None = None) -> None:
+        """Update debugger signatures with custom entries.
+
+        Args:
+            custom_signatures: Custom signature dictionary to merge with existing
+                signatures, organized by platform and type.
+
+        """
         if custom_signatures:
             current_platform = "windows" if platform.system() == "Windows" else "linux"
 
@@ -516,8 +546,16 @@ class DebuggerDetector(BaseDetector):
         # Re-scan system for new debuggers
         self._update_signatures_from_system()
 
-    def save_signatures(self, path: str = None) -> None:
-        """Save current signatures to file for future use."""
+    def save_signatures(self, path: str | None = None) -> None:
+        """Save current signatures to file for future use.
+
+        Serializes the current debugger signatures dictionary to a JSON file
+        for persistence across sessions.
+
+        Args:
+            path: File path to save signatures. If None, uses default data directory.
+
+        """
         import json
         import os
 
@@ -574,9 +612,19 @@ class DebuggerDetector(BaseDetector):
 
     # Windows-specific detection methods
 
-    def _check_isdebuggerpresent(self) -> tuple[bool, float, dict]:
-        """Check using IsDebuggerPresent API."""
-        details = {"api_result": False}
+    def _check_isdebuggerpresent(self) -> tuple[bool, float, dict[str, bool]]:
+        """Check using IsDebuggerPresent API.
+
+        Uses the Windows IsDebuggerPresent API to detect if the current process
+        is being debugged.
+
+        Returns:
+            Tuple of (detected, confidence, details) where detected is True if
+            a debugger is found, confidence is a float 0.0-1.0, and details
+            contains debug information.
+
+        """
+        details: dict[str, bool] = {"api_result": False}
 
         try:
             kernel32 = ctypes.windll.kernel32
@@ -591,9 +639,19 @@ class DebuggerDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_remote_debugger(self) -> tuple[bool, float, dict]:
-        """Check using CheckRemoteDebuggerPresent API."""
-        details = {"remote_debugger": False}
+    def _check_remote_debugger(self) -> tuple[bool, float, dict[str, bool]]:
+        """Check using CheckRemoteDebuggerPresent API.
+
+        Uses the Windows CheckRemoteDebuggerPresent API to detect if another
+        debugger is attached to the current process.
+
+        Returns:
+            Tuple of (detected, confidence, details) where detected is True if
+            a debugger is found, confidence is a float 0.0-1.0, and details
+            contains debug information.
+
+        """
+        details: dict[str, bool] = {"remote_debugger": False}
 
         try:
             kernel32 = ctypes.windll.kernel32
@@ -612,9 +670,18 @@ class DebuggerDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_peb_flags(self) -> tuple[bool, float, dict]:
-        """Check Process Environment Block flags."""
-        details = {"being_debugged": False, "nt_global_flag": 0}
+    def _check_peb_flags(self) -> tuple[bool, float, dict[str, bool | int]]:
+        """Check Process Environment Block flags.
+
+        Reads the PEB structure to examine the BeingDebugged flag and
+        NtGlobalFlag for debug heap indicators.
+
+        Returns:
+            Tuple of (detected, confidence, details) containing PEB debug
+            flag information.
+
+        """
+        details: dict[str, bool | int] = {"being_debugged": False, "nt_global_flag": 0}
 
         try:
             # Real PEB flags detection implementation
@@ -704,8 +771,20 @@ class DebuggerDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_non_windows_debug_indicators(self, details: dict) -> tuple[bool, float, dict]:
-        """Check for debugging indicators on non-Windows platforms."""
+    def _check_non_windows_debug_indicators(self, details: dict[str, bool | int | str]) -> tuple[bool, float, dict[str, bool | int | str]]:
+        """Check for debugging indicators on non-Windows platforms.
+
+        Examines Linux/Unix proc filesystem and process attributes to detect
+        attached debuggers.
+
+        Args:
+            details: Mutable dictionary to store debugging indicator results.
+
+        Returns:
+            Tuple of (detected, confidence, details) containing non-Windows
+            debug detection results.
+
+        """
         try:
             debug_detected = False
             confidence = 0.0
@@ -758,9 +837,18 @@ class DebuggerDetector(BaseDetector):
             self.logger.debug(f"Non-Windows debug check failed: {e}")
             return False, 0.0, details
 
-    def _check_ntglobalflag(self) -> tuple[bool, float, dict]:
-        """Check NtGlobalFlag for debug heap flags."""
-        details = {"flags": 0}
+    def _check_ntglobalflag(self) -> tuple[bool, float, dict[str, int | list[str] | bool]]:
+        """Check NtGlobalFlag for debug heap flags.
+
+        Examines the NtGlobalFlag field in the PEB to detect debug heap
+        flags and other debugging indicators.
+
+        Returns:
+            Tuple of (detected, confidence, details) containing NtGlobalFlag
+            analysis results.
+
+        """
+        details: dict[str, int | list[str] | bool] = {"flags": 0}
 
         try:
             # Real NtGlobalFlag analysis implementation
@@ -855,9 +943,18 @@ class DebuggerDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_heap_flags(self) -> tuple[bool, float, dict]:
-        """Check heap flags for debug heap."""
-        details = {"heap_flags": 0, "force_flags": 0}
+    def _check_heap_flags(self) -> tuple[bool, float, dict[str, int]]:
+        """Check heap flags for debug heap.
+
+        Examines the process heap flags to detect debug heap configuration
+        which indicates a debugger has modified the heap.
+
+        Returns:
+            Tuple of (detected, confidence, details) containing heap flag
+            analysis results.
+
+        """
+        details: dict[str, int] = {"heap_flags": 0, "force_flags": 0}
 
         try:
             # Get default heap
@@ -873,18 +970,27 @@ class DebuggerDetector(BaseDetector):
                 self.logger.debug(f"Process heap handle: 0x{heap:x}")
                 # Try to detect debug heap characteristics
                 # Note: This is a simplified check
-                return heap != 0  # Non-zero heap suggests normal execution
+                return bool(heap != 0), 0.0, details  # Non-zero heap suggests normal execution
             self.logger.warning("Failed to get process heap handle")
-            return True  # Assume debugger if heap access fails
+            return True, 0.0, details  # Assume debugger if heap access fails
 
         except Exception as e:
             self.logger.debug(f"Heap flags check failed: {e}")
 
         return False, 0.0, details
 
-    def _check_debug_port(self) -> tuple[bool, float, dict]:
-        """Check debug port using NtQueryInformationProcess."""
-        details = {"debug_port": 0}
+    def _check_debug_port(self) -> tuple[bool, float, dict[str, int]]:
+        """Check debug port using NtQueryInformationProcess.
+
+        Uses the NtQueryInformationProcess API with ProcessDebugPort class
+        to detect if a debugger is attached.
+
+        Returns:
+            Tuple of (detected, confidence, details) containing debug port
+            information.
+
+        """
+        details: dict[str, int] = {"debug_port": 0}
 
         try:
             # ProcessDebugPort = 7
@@ -912,9 +1018,18 @@ class DebuggerDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_hardware_breakpoints(self) -> tuple[bool, float, dict]:
-        """Check for hardware breakpoints in debug registers."""
-        details = {"dr_registers": [], "breakpoints_found": 0, "active_registers": []}
+    def _check_hardware_breakpoints(self) -> tuple[bool, float, dict[str, list[str] | int | str]]:
+        """Check for hardware breakpoints in debug registers.
+
+        Examines CPU debug registers (DR0-DR7) to detect hardware breakpoints
+        set by debuggers.
+
+        Returns:
+            Tuple of (detected, confidence, details) containing hardware
+            breakpoint information.
+
+        """
+        details: dict[str, list[str] | int | str] = {"dr_registers": [], "breakpoints_found": 0, "active_registers": []}
         start_time = time.time()
 
         try:
@@ -929,8 +1044,20 @@ class DebuggerDetector(BaseDetector):
         elapsed = time.time() - start_time
         return False, elapsed, details
 
-    def _check_hardware_breakpoints_windows(self, details: dict) -> tuple[bool, float, dict]:
-        """Check for hardware breakpoints on Windows using debug registers."""
+    def _check_hardware_breakpoints_windows(self, details: dict[str, list[str] | int | str | dict[str, bool | list[int]] | bool]) -> tuple[bool, float, dict[str, list[str] | int | str | dict[str, bool | list[int]] | bool]]:
+        """Check for hardware breakpoints on Windows using debug registers.
+
+        Reads the CONTEXT structure to access debug registers and analyze
+        their settings for active breakpoints.
+
+        Args:
+            details: Mutable dictionary to store breakpoint detection results.
+
+        Returns:
+            Tuple of (detected, confidence, details) containing Windows debug
+            register analysis.
+
+        """
         start_time = time.time()
 
         try:
@@ -1022,8 +1149,20 @@ class DebuggerDetector(BaseDetector):
         elapsed = time.time() - start_time
         return False, elapsed, details
 
-    def _check_hardware_breakpoints_linux(self, details: dict) -> tuple[bool, float, dict]:
-        """Check for hardware breakpoints on Linux using ptrace."""
+    def _check_hardware_breakpoints_linux(self, details: dict[str, list[str] | int | str | dict[str, str] | bool]) -> tuple[bool, float, dict[str, list[str] | int | str | dict[str, str] | bool]]:
+        """Check for hardware breakpoints on Linux using ptrace.
+
+        Uses ptrace and /proc filesystem to detect debug registers and
+        debugger attachment on Linux systems.
+
+        Args:
+            details: Mutable dictionary to store breakpoint detection results.
+
+        Returns:
+            Tuple of (detected, confidence, details) containing Linux debug
+            register analysis.
+
+        """
         start_time = time.time()
 
         try:
@@ -1129,9 +1268,18 @@ class DebuggerDetector(BaseDetector):
         elapsed = time.time() - start_time
         return False, elapsed, details
 
-    def _check_int3_scan(self) -> tuple[bool, float, dict]:
-        """Scan for INT3 (0xCC) breakpoints in code."""
-        details = {"int3_count": 0, "locations": []}
+    def _check_int3_scan(self) -> tuple[bool, float, dict[str, int | list[str]]]:
+        """Scan for INT3 (0xCC) breakpoints in code.
+
+        Scans executable memory regions for INT3 (0xCC) software breakpoint
+        instructions indicating debugger breakpoints.
+
+        Returns:
+            Tuple of (detected, confidence, details) containing INT3 scan
+            results.
+
+        """
+        details: dict[str, int | list[str]] = {"int3_count": 0, "locations": []}
 
         try:
             # Real INT3 breakpoint scanning implementation
@@ -1144,8 +1292,20 @@ class DebuggerDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _scan_int3_windows(self, details: dict) -> tuple[bool, float, dict]:
-        """Scan for INT3 breakpoints on Windows systems."""
+    def _scan_int3_windows(self, details: dict[str, int | list[str]]) -> tuple[bool, float, dict[str, int | list[str]]]:
+        """Scan for INT3 breakpoints on Windows systems.
+
+        Iterates through process memory regions to locate INT3 (0xCC)
+        instructions in executable memory.
+
+        Args:
+            details: Mutable dictionary to store scan results.
+
+        Returns:
+            Tuple of (detected, confidence, details) containing INT3
+            breakpoint locations.
+
+        """
         try:
             kernel32 = ctypes.windll.kernel32
 
@@ -1230,8 +1390,20 @@ class DebuggerDetector(BaseDetector):
             self.logger.debug(f"Windows INT3 scan error: {e}")
             return False, 0.0, details
 
-    def _scan_int3_linux(self, details: dict) -> tuple[bool, float, dict]:
-        """Scan for INT3 breakpoints on Linux systems."""
+    def _scan_int3_linux(self, details: dict[str, int | list[str] | bool]) -> tuple[bool, float, dict[str, int | list[str] | bool]]:
+        """Scan for INT3 breakpoints on Linux systems.
+
+        Uses /proc/self/maps and /proc/self/mem to scan executable memory
+        regions for INT3 (0xCC) instructions.
+
+        Args:
+            details: Mutable dictionary to store scan results.
+
+        Returns:
+            Tuple of (detected, confidence, details) containing INT3
+            breakpoint locations.
+
+        """
         try:
             int3_count = 0
             locations = []
@@ -1312,9 +1484,18 @@ class DebuggerDetector(BaseDetector):
             self.logger.debug(f"Linux INT3 scan error: {e}")
             return False, 0.0, details
 
-    def _check_timing(self) -> tuple[bool, float, dict]:
-        """Use timing checks to detect debuggers."""
-        details = {"timing_anomaly": False, "execution_time": 0}
+    def _check_timing(self) -> tuple[bool, float, dict[str, bool | float | int]]:
+        """Use timing checks to detect debuggers.
+
+        Measures execution time of simple operations. Debuggers typically
+        slow down execution significantly.
+
+        Returns:
+            Tuple of (detected, confidence, details) containing timing
+            analysis results.
+
+        """
+        details: dict[str, bool | float | int] = {"timing_anomaly": False, "execution_time": 0}
 
         try:
             # Measure execution time of operations
@@ -1345,9 +1526,18 @@ class DebuggerDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_parent_process(self) -> tuple[bool, float, dict]:
-        """Check if parent process is a known debugger."""
-        details = {"parent_process": None}
+    def _check_parent_process(self) -> tuple[bool, float, dict[str, str | None]]:
+        """Check if parent process is a known debugger.
+
+        Compares the parent process name against known debugger signatures
+        to detect debugger attachment.
+
+        Returns:
+            Tuple of (detected, confidence, details) containing parent process
+            analysis results.
+
+        """
+        details: dict[str, str | None] = {"parent_process": None}
 
         try:
             # Get parent process name
@@ -1370,9 +1560,18 @@ class DebuggerDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_debug_privileges(self) -> tuple[bool, float, dict]:
-        """Check for debug privileges in current process."""
-        details = {"has_debug_privilege": False}
+    def _check_debug_privileges(self) -> tuple[bool, float, dict[str, bool]]:
+        """Check for debug privileges in current process.
+
+        Verifies if the process has SeDebugPrivilege, which is often enabled
+        by debuggers to analyze other processes.
+
+        Returns:
+            Tuple of (detected, confidence, details) containing privilege
+            check results.
+
+        """
+        details: dict[str, bool] = {"has_debug_privilege": False}
 
         try:
             # Check if process has SeDebugPrivilege
@@ -1397,9 +1596,18 @@ class DebuggerDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_exception_handling(self) -> tuple[bool, float, dict]:
-        """Use exception handling to detect debuggers."""
-        details = {"exception_handled": False}
+    def _check_exception_handling(self) -> tuple[bool, float, dict[str, bool]]:
+        """Use exception handling to detect debuggers.
+
+        Tests exception handling behavior which may be modified by debuggers
+        that intercept and manage exceptions.
+
+        Returns:
+            Tuple of (detected, confidence, details) containing exception
+            handling test results.
+
+        """
+        details: dict[str, bool] = {"exception_handled": False}
 
         try:
             # Debuggers often handle exceptions differently
@@ -1418,7 +1626,7 @@ class DebuggerDetector(BaseDetector):
             # Log that exception testing is available but don't actually run
             self.logger.debug("Exception handling test function defined")
             details["exception_test_available"] = True
-            _ = test_exception  # Reference the function to avoid unused variable warning
+            _func: object = test_exception  # Reference the function to avoid unused variable warning
             # as it could crash the process
 
         except Exception as e:
@@ -1428,9 +1636,18 @@ class DebuggerDetector(BaseDetector):
 
     # Linux-specific detection methods
 
-    def _check_ptrace(self) -> tuple[bool, float, dict]:
-        """Check if process is being traced (Linux)."""
-        details = {"ptrace_result": -1}
+    def _check_ptrace(self) -> tuple[bool, float, dict[str, int]]:
+        """Check if process is being traced (Linux).
+
+        Uses the PTRACE_TRACEME operation to determine if the process is
+        already being debugged via ptrace.
+
+        Returns:
+            Tuple of (detected, confidence, details) containing ptrace
+            detection results.
+
+        """
+        details: dict[str, int] = {"ptrace_result": -1}
 
         try:
             # Load libc
@@ -1452,9 +1669,18 @@ class DebuggerDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_proc_status(self) -> tuple[bool, float, dict]:
-        """Check /proc/self/status for TracerPid (Linux)."""
-        details = {"tracer_pid": 0}
+    def _check_proc_status(self) -> tuple[bool, float, dict[str, int]]:
+        """Check /proc/self/status for TracerPid (Linux).
+
+        Reads the TracerPid field from /proc/self/status to detect attached
+        debuggers on Linux systems.
+
+        Returns:
+            Tuple of (detected, confidence, details) containing TracerPid
+            information.
+
+        """
+        details: dict[str, int] = {"tracer_pid": 0}
 
         try:
             with open("/proc/self/status") as f:
@@ -1471,9 +1697,18 @@ class DebuggerDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_parent_process_linux(self) -> tuple[bool, float, dict]:
-        """Check if parent process is a known debugger (Linux)."""
-        details = {"parent_process": None}
+    def _check_parent_process_linux(self) -> tuple[bool, float, dict[str, str | None]]:
+        """Check if parent process is a known debugger (Linux).
+
+        Reads the parent process name from /proc and compares against known
+        debugger signatures on Linux systems.
+
+        Returns:
+            Tuple of (detected, confidence, details) containing parent process
+            information.
+
+        """
+        details: dict[str, str | None] = {"parent_process": None}
 
         try:
             # Get parent process name
@@ -1493,9 +1728,18 @@ class DebuggerDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_breakpoints_linux(self) -> tuple[bool, float, dict]:
-        """Check for breakpoints in memory (Linux)."""
-        details = {"breakpoint_found": False}
+    def _check_breakpoints_linux(self) -> tuple[bool, float, dict[str, bool]]:
+        """Check for breakpoints in memory (Linux).
+
+        Scans executable memory regions in /proc/self/maps for software
+        breakpoint instructions indicating debugger attachment.
+
+        Returns:
+            Tuple of (detected, confidence, details) containing breakpoint
+            detection results.
+
+        """
+        details: dict[str, bool] = {"breakpoint_found": False}
 
         try:
             # Read /proc/self/maps and check executable regions
@@ -1514,7 +1758,20 @@ class DebuggerDetector(BaseDetector):
         return False, 0.0, details
 
     def _identify_debugger_type(self, detections: dict[str, Any]) -> str:
-        """Identify the specific debugger based on detections."""
+        """Identify the specific debugger based on detections.
+
+        Analyzes detection patterns to classify the type of debugger that
+        is likely attached.
+
+        Args:
+            detections: Dictionary containing detection results from various
+                tests.
+
+        Returns:
+            String identifying the debugger type (e.g., "OllyDbg", "GDB",
+            "Kernel Debugger").
+
+        """
         # Analyze detection patterns to identify debugger
 
         # Strong indicators for specific debuggers
@@ -1542,15 +1799,39 @@ class DebuggerDetector(BaseDetector):
         return "User-mode Debugger"
 
     def _calculate_antidebug_score(self, detections: dict[str, Any]) -> int:
-        """Calculate effectiveness of anti-debug techniques."""
+        """Calculate effectiveness of anti-debug techniques.
+
+        Scores the anti-debug effectiveness based on which detection methods
+        succeeded, weighting strong methods higher than weaker ones.
+
+        Args:
+            detections: Dictionary containing detection results from various
+                tests.
+
+        Returns:
+            Integer score (0-100) representing anti-debug effectiveness.
+
+        """
         # Methods that are hard to bypass
         strong_methods = ["debug_port", "ptrace", "proc_status"]
         medium_methods = ["isdebuggerpresent", "checkremotedebuggerpresent", "heap_flags"]
 
         return self.calculate_detection_score(detections, strong_methods, medium_methods)
 
-    def generate_antidebug_code(self, techniques: list[str] = None) -> str:
-        """Generate anti-debugging code."""
+    def generate_antidebug_code(self, techniques: list[str] | None = None) -> str:
+        """Generate anti-debugging code.
+
+        Generates C code implementing multiple anti-debugging techniques that
+        can be compiled and integrated into protected applications.
+
+        Args:
+            techniques: List of specific techniques to include. If None or
+                contains "all", generates code for all techniques.
+
+        Returns:
+            String containing C code implementing anti-debugging functions.
+
+        """
         if not techniques:
             techniques = ["all"]
 
@@ -1639,9 +1920,20 @@ if (IsBeingDebugged()) {
         return code
 
     def get_aggressive_methods(self) -> list[str]:
-        """Get list of method names that are considered aggressive."""
+        """Get list of method names that are considered aggressive.
+
+        Returns:
+            List of method names that are considered more aggressive or
+            potentially disruptive to debugger operations.
+
+        """
         return ["timing_checks", "exception_handling"]
 
     def get_detection_type(self) -> str:
-        """Get the type of detection this class performs."""
+        """Get the type of detection this class performs.
+
+        Returns:
+            String identifying this as a debugger detection system.
+
+        """
         return "debugger"

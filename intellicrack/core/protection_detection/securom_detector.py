@@ -66,7 +66,7 @@ class SecuROMDetection:
     protected_sections: list[str]
     activation_state: SecuROMActivation | None
     confidence: float
-    details: dict[str, any]
+    details: dict[str, Any]
 
 
 class SecuROMDetector:
@@ -115,13 +115,21 @@ class SecuROMDetector:
 
     def __init__(self) -> None:
         """Initialize SecuROM detector."""
-        self._advapi32 = None
-        self._kernel32 = None
+        self._advapi32: Any = None
+        self._kernel32: Any = None
         self._setup_winapi()
-        self._yara_rules = self._compile_yara_rules() if YARA_AVAILABLE else None
+        self._yara_rules: Any | None = self._compile_yara_rules() if YARA_AVAILABLE else None
 
     def _setup_winapi(self) -> None:
-        """Set up Windows API functions with proper signatures."""
+        """Set up Windows API functions with proper signatures.
+
+        Initializes WinAPI function pointers for service control manager access.
+        Safely handles failures if WinAPI initialization is not possible.
+
+        Raises:
+            None: Exceptions are caught and logged as debug messages.
+
+        """
         try:
             self._advapi32 = ctypes.WinDLL('advapi32', use_last_error=True)
             self._kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
@@ -142,8 +150,19 @@ class SecuROMDetector:
         except Exception as e:
             logger.debug("WinAPI setup failed: %s", e)
 
-    def _compile_yara_rules(self) -> Any | None:
-        """Compile YARA rules for SecuROM signature detection."""
+    def _compile_yara_rules(self) -> object | None:
+        """Compile YARA rules for SecuROM signature detection.
+
+        Compiles YARA rules for identifying SecuROM v7.x, v8.x signatures,
+        loader patterns, disc authentication, and activation systems.
+
+        Returns:
+            Compiled YARA rules object or None if YARA is unavailable or compilation fails.
+
+        Raises:
+            None: Exceptions are caught and None is returned.
+
+        """
         if not YARA_AVAILABLE:
             return None
 
@@ -250,11 +269,21 @@ class SecuROMDetector:
     def detect(self, target_path: Path) -> SecuROMDetection:
         """Perform comprehensive SecuROM detection.
 
+        Analyzes target executable for SecuROM copy protection by scanning
+        kernel drivers, Windows services, registry keys, PE sections, and
+        YARA signatures. Calculates composite confidence score combining all
+        detection indicators.
+
         Args:
-            target_path: Path to executable to analyze
+            target_path: Path to executable to analyze for SecuROM protection.
 
         Returns:
-            SecuROMDetection results with confidence score
+            SecuROMDetection: Detection results containing version info, detected
+                drivers/services/registry keys, confidence score, and detailed
+                analysis metadata.
+
+        Raises:
+            None: All exceptions are caught and handled gracefully.
 
         """
         drivers = self._detect_drivers()
@@ -301,7 +330,18 @@ class SecuROMDetector:
         )
 
     def _detect_drivers(self) -> list[str]:
-        """Detect SecuROM kernel drivers."""
+        """Detect SecuROM kernel drivers.
+
+        Scans System32/drivers directory for known SecuROM driver files
+        and verifies them by checking for SecuROM-specific indicators.
+
+        Returns:
+            List of detected SecuROM driver names present on the system.
+
+        Raises:
+            None: All exceptions are handled gracefully.
+
+        """
         detected = []
 
         system_root = Path(r'C:\Windows\System32\drivers')
@@ -315,7 +355,21 @@ class SecuROMDetector:
         return detected
 
     def _is_securom_driver(self, driver_path: Path) -> bool:
-        """Verify if driver is actually a SecuROM driver."""
+        """Verify if driver is actually a SecuROM driver.
+
+        Checks driver file for SecuROM-specific string indicators like
+        "Sony DADC", "SecuROM", "UserAccess", "SR7", "SR8".
+
+        Args:
+            driver_path: Path to driver file to verify.
+
+        Returns:
+            True if driver contains SecuROM indicators, False otherwise.
+
+        Raises:
+            None: All exceptions are caught and False is returned.
+
+        """
         try:
             with open(driver_path, 'rb') as f:
                 data = f.read(8192)
@@ -334,7 +388,18 @@ class SecuROMDetector:
             return False
 
     def _detect_services(self) -> list[str]:
-        """Detect SecuROM Windows services."""
+        """Detect SecuROM Windows services.
+
+        Uses Windows Service Control Manager API to enumerate installed
+        services and identify SecuROM-related services.
+
+        Returns:
+            List of detected SecuROM service names installed on the system.
+
+        Raises:
+            None: All exceptions are caught and empty list is returned.
+
+        """
         if not self._advapi32:
             return []
 
@@ -364,7 +429,18 @@ class SecuROMDetector:
         return detected
 
     def _detect_registry_keys(self) -> list[str]:
-        """Detect SecuROM registry keys."""
+        """Detect SecuROM registry keys.
+
+        Scans Windows registry for SecuROM configuration and activation keys
+        in HKEY_LOCAL_MACHINE.
+
+        Returns:
+            List of detected SecuROM registry key paths present on the system.
+
+        Raises:
+            None: Registry errors are caught and processing continues.
+
+        """
         detected = []
 
         for key_path in self.REGISTRY_KEYS:
@@ -386,7 +462,19 @@ class SecuROMDetector:
         return detected
 
     def _detect_activation_state(self) -> SecuROMActivation | None:
-        """Detect SecuROM activation state from registry."""
+        """Detect SecuROM activation state from registry.
+
+        Queries Windows registry for SecuROM activation status, product key,
+        machine identifier, and activation count information.
+
+        Returns:
+            SecuROMActivation object with activation details if registry key
+            exists, None otherwise.
+
+        Raises:
+            None: Registry errors are caught and processing continues.
+
+        """
         for key_path in self.ACTIVATION_KEYS:
             try:
                 key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_READ)
@@ -440,7 +528,21 @@ class SecuROMDetector:
         return None
 
     def _detect_protected_sections(self, target_path: Path) -> list[str]:
-        """Detect SecuROM protected PE sections."""
+        """Detect SecuROM protected PE sections.
+
+        Analyzes PE executable sections for SecuROM indicators: known section
+        names, encrypted sections, and high entropy sections indicating encryption.
+
+        Args:
+            target_path: Path to PE executable to analyze.
+
+        Returns:
+            List of protected/encrypted section names found in the executable.
+
+        Raises:
+            None: All exceptions are caught and empty list is returned.
+
+        """
         if not PEFILE_AVAILABLE:
             return []
 
@@ -471,7 +573,21 @@ class SecuROMDetector:
         return detected
 
     def _calculate_section_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy of section data."""
+        """Calculate Shannon entropy of section data.
+
+        Computes Shannon entropy value for binary data to detect encryption
+        or obfuscation. Higher entropy (>7.5) typically indicates encryption.
+
+        Args:
+            data: Binary data bytes to analyze.
+
+        Returns:
+            Shannon entropy value as float between 0.0 and 8.0.
+
+        Raises:
+            None: All exceptions are handled gracefully.
+
+        """
         if not data:
             return 0.0
 
@@ -489,7 +605,21 @@ class SecuROMDetector:
         return entropy
 
     def _detect_version(self, target_path: Path) -> SecuROMVersion | None:
-        """Detect SecuROM version from executable."""
+        """Detect SecuROM version from executable.
+
+        Analyzes PE version info and embedded signatures to determine SecuROM
+        version (7.x vs 8.x) and variant (standard vs PA with Product Activation).
+
+        Args:
+            target_path: Path to PE executable to analyze.
+
+        Returns:
+            SecuROMVersion with detected version and variant, or None if detection fails.
+
+        Raises:
+            None: All exceptions are caught and None is returned.
+
+        """
         if not PEFILE_AVAILABLE:
             return None
 
@@ -527,7 +657,21 @@ class SecuROMDetector:
         return None
 
     def _parse_version_string(self, version_str: str) -> SecuROMVersion | None:
-        """Parse version string to extract SecuROM version."""
+        """Parse version string to extract SecuROM version.
+
+        Extracts version numbers and variant information from SecuROM version
+        strings using regular expression matching.
+
+        Args:
+            version_str: Version string to parse (e.g., "SecuROM 7.50.0").
+
+        Returns:
+            SecuROMVersion with parsed version info, or None if parsing fails.
+
+        Raises:
+            None: All exceptions are handled gracefully.
+
+        """
         import re
 
         pattern = r'SecuROM[^\d]*(\d+)\.(\d+)\.?(\d*)'
@@ -545,7 +689,22 @@ class SecuROMDetector:
         return None
 
     def _yara_scan(self, target_path: Path) -> list[dict[str, str]]:
-        """Scan executable with YARA rules."""
+        """Scan executable with YARA rules.
+
+        Runs compiled YARA rules against target executable to detect SecuROM
+        signatures, patterns, and behavioral indicators.
+
+        Args:
+            target_path: Path to executable file to scan.
+
+        Returns:
+            List of dictionaries containing matched YARA rules with metadata
+            (rule name, version, description).
+
+        Raises:
+            None: All exceptions are caught and empty list is returned.
+
+        """
         if not self._yara_rules:
             return []
 
@@ -575,7 +734,27 @@ class SecuROMDetector:
         yara_matches: list[dict[str, str]],
         activation_state: SecuROMActivation | None,
     ) -> float:
-        """Calculate detection confidence score."""
+        """Calculate detection confidence score.
+
+        Combines detection indicators with weighted scoring: drivers (30%),
+        services (25%), registry keys (20%), sections (15%), YARA matches (5%),
+        and activation state (5%).
+
+        Args:
+            drivers: List of detected SecuROM driver names.
+            services: List of detected SecuROM service names.
+            registry_keys: List of detected SecuROM registry key paths.
+            sections: List of detected protected PE sections.
+            yara_matches: List of YARA rule matches found.
+            activation_state: SecuROMActivation object or None.
+
+        Returns:
+            Confidence score as float between 0.0 and 1.0.
+
+        Raises:
+            None: All exceptions are handled gracefully.
+
+        """
         score = 0.0
 
         if drivers:
@@ -599,7 +778,20 @@ class SecuROMDetector:
         return min(score, 1.0)
 
     def _get_driver_paths(self, drivers: list[str]) -> dict[str, str]:
-        """Get full paths for detected drivers."""
+        """Get full paths for detected drivers.
+
+        Maps driver names to their full filesystem paths on the system.
+
+        Args:
+            drivers: List of detected driver names.
+
+        Returns:
+            Dictionary mapping driver names to full System32/drivers paths.
+
+        Raises:
+            None: All exceptions are handled gracefully.
+
+        """
         paths = {}
         system_root = Path(r'C:\Windows\System32\drivers')
 
@@ -611,7 +803,21 @@ class SecuROMDetector:
         return paths
 
     def _get_service_status(self, services: list[str]) -> dict[str, str]:
-        """Get status information for detected services."""
+        """Get status information for detected services.
+
+        Queries Windows Service Control Manager to retrieve current state
+        (STOPPED, RUNNING, etc.) for each detected service.
+
+        Args:
+            services: List of service names to query.
+
+        Returns:
+            Dictionary mapping service names to their current status strings.
+
+        Raises:
+            None: All exceptions are caught and empty dict is returned.
+
+        """
         if not self._advapi32:
             return {}
 
@@ -620,6 +826,23 @@ class SecuROMDetector:
         SERVICE_QUERY_STATUS = 0x0004
 
         class SERVICE_STATUS(ctypes.Structure):  # noqa: N801
+            """Windows SERVICE_STATUS structure for service state information.
+
+            Used by Windows Service Control Manager to report service state,
+            controls accepted, exit codes, and checkpoint information.
+
+            Attributes:
+                dwServiceType: Type of service (SHARE_PROCESS, WIN32_OWN_PROCESS, etc).
+                dwCurrentState: Current service state (STOPPED, RUNNING, etc).
+
+                dwControlsAccepted: Control codes accepted by the service.
+                dwWin32ExitCode: Win32 exit code from service.
+                dwServiceSpecificExitCode: Service-specific exit code.
+                dwCheckPoint: Checkpoint value for pending operations.
+                dwWaitHint: Estimated wait time in milliseconds.
+
+            """
+
             _fields_ = [
                 ('dwServiceType', wintypes.DWORD),
                 ('dwCurrentState', wintypes.DWORD),
@@ -669,7 +892,21 @@ class SecuROMDetector:
         return status_info
 
     def _detect_disc_authentication(self, target_path: Path) -> bool:
-        """Detect presence of disc authentication mechanisms."""
+        """Detect presence of disc authentication mechanisms.
+
+        Scans executable for disc authentication API calls and signature
+        verification routines typical of SecuROM's anti-piracy scheme.
+
+        Args:
+            target_path: Path to executable to analyze.
+
+        Returns:
+            True if disc authentication indicators are found, False otherwise.
+
+        Raises:
+            None: All exceptions are caught and False is returned.
+
+        """
         try:
             with open(target_path, 'rb') as f:
                 data = f.read()
@@ -688,7 +925,21 @@ class SecuROMDetector:
             return False
 
     def _detect_online_activation(self, target_path: Path) -> bool:
-        """Detect presence of online activation mechanisms."""
+        """Detect presence of online activation mechanisms.
+
+        Scans executable for online activation endpoints, challenge-response
+        protocols, and activation server communication routines.
+
+        Args:
+            target_path: Path to executable to analyze.
+
+        Returns:
+            True if 2 or more online activation indicators are found, False otherwise.
+
+        Raises:
+            None: All exceptions are caught and False is returned.
+
+        """
         try:
             with open(target_path, 'rb') as f:
                 data = f.read()
@@ -708,7 +959,21 @@ class SecuROMDetector:
             return False
 
     def _detect_encryption(self, target_path: Path) -> bool:
-        """Detect presence of SecuROM encryption."""
+        """Detect presence of SecuROM encryption.
+
+        Analyzes PE sections for high entropy values (>7.8) indicating
+        encrypted or obfuscated code typical of SecuROM protection.
+
+        Args:
+            target_path: Path to PE executable to analyze.
+
+        Returns:
+            True if high-entropy encrypted section is detected, False otherwise.
+
+        Raises:
+            None: All exceptions are caught and False is returned.
+
+        """
         if not PEFILE_AVAILABLE:
             return False
 

@@ -39,10 +39,16 @@ def get_cache_path(binary_path: str) -> Path:
     return cache_dir / f"{file_hash}.json"
 
 
-def run_incremental_analysis(main_app) -> None:
+def run_incremental_analysis(main_app: object) -> None:
     """Run analysis on the target binary, using cached results if available.
 
-    to speed up the process. This is a production-ready implementation.
+    Performs incremental caching of analysis results based on file modification
+    time and size to speed up the process. This is a production-ready implementation
+    that integrates with the main application's analysis pipeline.
+
+    Args:
+        main_app: Main application instance with update_output and other signal emitters
+
     """
     if not main_app.current_binary:
         main_app.update_output.emit("[Incremental] Error: No binary loaded.")

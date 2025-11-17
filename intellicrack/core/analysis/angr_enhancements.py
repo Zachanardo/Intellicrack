@@ -25,7 +25,8 @@ import hashlib
 import logging
 import time
 from collections import defaultdict
-from typing import Dict, List, Optional, Sequence
+from collections.abc import Sequence
+from typing import Optional
 
 try:
     import angr
@@ -431,7 +432,7 @@ class StateMerger(ExplorationTechnique):
 
         return simgr
 
-    def _identify_mergeable_states(self, states: object) -> List[list]:
+    def _identify_mergeable_states(self, states: object) -> list[list]:
         """Identify groups of states that can be merged.
 
         Groups execution states by their current address and returns groups
@@ -1551,7 +1552,7 @@ class LicenseValidationDetector:
             "online_check": [b"server", b"validate", b"authenticate", b"verify"],
         }
 
-    def analyze_state(self, state: object) -> Dict[str, Any]:
+    def analyze_state(self, state: object) -> dict[str, Any]:
         """Analyze state for license validation indicators.
 
         Examines memory and constraints to identify indicators of license validation
@@ -1589,7 +1590,7 @@ class LicenseValidationDetector:
 
         return results
 
-    def _search_memory_pattern(self, state: object, pattern: bytes) -> List[str]:
+    def _search_memory_pattern(self, state: object, pattern: bytes) -> list[str]:
         """Search memory for specific patterns.
 
         Scans memory regions for licensing-related keyword patterns and returns
@@ -1603,7 +1604,7 @@ class LicenseValidationDetector:
             List of memory addresses where pattern was found
 
         """
-        matches: List[str] = []
+        matches: list[str] = []
         try:
             for region_start in range(0x400000, 0x500000, 0x1000):
                 try:

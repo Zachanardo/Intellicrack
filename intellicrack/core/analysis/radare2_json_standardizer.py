@@ -23,7 +23,7 @@ import json
 import os
 import shutil
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any
 
 from ...utils.logger import get_logger
@@ -65,7 +65,7 @@ class R2JSONStandardizer:
         """
         self.logger = logger
         self.analysis_id = str(uuid.uuid4())
-        self.timestamp = datetime.now(timezone.utc).isoformat()
+        self.timestamp = datetime.now(UTC).isoformat()
 
     def standardize_analysis_result(
         self,

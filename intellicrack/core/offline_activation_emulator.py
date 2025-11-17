@@ -15,7 +15,7 @@ import time
 import uuid
 import winreg
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any
 
@@ -234,7 +234,15 @@ class OfflineActivationEmulator:
         return profile
 
     def _get_cpu_id(self) -> str:
-        """Get CPU ID from system."""
+        """Retrieve CPU identifier from system BIOS or DMI table.
+
+        Queries WMI on Windows or dmidecode on Linux/Unix for processor ID.
+        Falls back to SHA256 hash of platform processor string on failure.
+
+        Returns:
+            16-character hexadecimal CPU identifier string.
+
+        """
         try:
             if platform.system() == "Windows" and self.wmi_client:
                 for cpu in self.wmi_client.Win32_Processor():
@@ -252,7 +260,15 @@ class OfflineActivationEmulator:
         return hashlib.sha256(platform.processor().encode()).hexdigest()[:16].upper()
 
     def _get_motherboard_serial(self) -> str:
-        """Get motherboard serial number."""
+        """Retrieve motherboard serial number from system firmware.
+
+        Queries WMI on Windows or dmidecode on Linux for baseboard serial number.
+        Falls back to SHA256 hash of system hostname on failure.
+
+        Returns:
+            Motherboard serial number string, uppercased.
+
+        """
         try:
             if platform.system() == "Windows" and self.wmi_client:
                 for board in self.wmi_client.Win32_BaseBoard():
@@ -268,7 +284,15 @@ class OfflineActivationEmulator:
         return hashlib.sha256(socket.gethostname().encode()).hexdigest()[:16].upper()
 
     def _get_disk_serial(self) -> str:
-        """Get primary disk serial number."""
+        """Retrieve primary disk serial number from storage device.
+
+        Queries WMI on Windows or hdparm on Linux for physical media serial.
+        Falls back to generated random serial on failure.
+
+        Returns:
+            Disk serial number string with SER prefix.
+
+        """
         try:
             if platform.system() == "Windows" and self.wmi_client:
                 for disk in self.wmi_client.Win32_PhysicalMedia():
@@ -287,7 +311,15 @@ class OfflineActivationEmulator:
         return f"SER{serial_part}"
 
     def _get_mac_addresses(self) -> list[str]:
-        """Get all MAC addresses."""
+        """Retrieve MAC addresses from all network interfaces.
+
+        Queries system for active network adapter MAC addresses on Windows/Linux.
+        Falls back to UUID-based MAC generation on failure.
+
+        Returns:
+            List of MAC address strings, up to 4 addresses.
+
+        """
         macs = []
         system = platform.system()
         if system == "Windows" and self.wmi_client:
@@ -301,14 +333,32 @@ class OfflineActivationEmulator:
         return macs[:4]  # Return up to 4 MACs
 
     def _get_windows_macs(self) -> list[str]:
-        macs = []
+        """Retrieve MAC addresses from Windows network adapters.
+
+        Queries WMI for all enabled network adapter configurations and extracts
+        their MAC addresses, removing colon separators for standardized format.
+
+        Returns:
+            List of MAC addresses from enabled network adapters on Windows.
+
+        """
+        macs: list[str] = []
         for nic in self.wmi_client.Win32_NetworkAdapterConfiguration(IPEnabled=True):
             if nic.MACAddress:
                 macs.append(nic.MACAddress.replace(":", ""))
         return macs
 
     def _get_non_windows_macs(self) -> list[str]:
-        macs = []
+        """Retrieve MAC addresses from non-Windows network interfaces.
+
+        Uses netifaces library to query network interface addresses on Unix-like
+        systems, extracting link-layer addresses and standardizing their format.
+
+        Returns:
+            List of MAC addresses from all network interfaces on Unix-like systems.
+
+        """
+        macs: list[str] = []
         import netifaces
 
         for interface in netifaces.interfaces():
@@ -320,13 +370,29 @@ class OfflineActivationEmulator:
         return macs
 
     def _get_fallback_mac(self) -> list[str]:
-        # Fallback to uuid-based MAC
+        """Generate fallback MAC address from system UUID.
+
+        When standard MAC address retrieval fails, derives a MAC address from
+        the system's UUID node identifier using hexadecimal formatting.
+
+        Returns:
+            List containing a single fallback MAC address derived from system UUID.
+
+        """
         node = uuid.getnode()
         mac = ":".join((f"{node:012X}")[i : i + 2] for i in range(0, 12, 2))
         return [mac.replace(":", "")]
 
     def _get_bios_serial(self) -> str:
-        """Get BIOS serial number."""
+        """Retrieve BIOS serial number from system firmware.
+
+        Queries WMI on Windows or dmidecode on Linux for BIOS serial identifier.
+        Falls back to SHA256 hash of system node name on failure.
+
+        Returns:
+            BIOS serial number string, uppercased.
+
+        """
         try:
             if platform.system() == "Windows" and self.wmi_client:
                 for bios in self.wmi_client.Win32_BIOS():
@@ -342,7 +408,15 @@ class OfflineActivationEmulator:
         return hashlib.sha256(platform.node().encode()).hexdigest()[:16].upper()
 
     def _get_system_uuid(self) -> str:
-        """Get system UUID."""
+        """Retrieve system UUID from firmware or generate random UUID.
+
+        Queries WMI on Windows or dmidecode on Linux for system UUID.
+        Generates UUID4 on failure.
+
+        Returns:
+            System UUID string, uppercased.
+
+        """
         try:
             if platform.system() == "Windows" and self.wmi_client:
                 for system in self.wmi_client.Win32_ComputerSystemProduct():
@@ -356,7 +430,15 @@ class OfflineActivationEmulator:
         return str(uuid.uuid4()).upper()
 
     def _get_volume_serial(self) -> str:
-        """Get system volume serial number."""
+        """Retrieve system volume serial number from primary partition.
+
+        Queries vol command on Windows or blkid on Linux for volume UUID.
+        Falls back to random hash on failure.
+
+        Returns:
+            Volume serial number string, uppercased.
+
+        """
         try:
             if platform.system() == "Windows":
                 result = subprocess.run(["vol", "C:"], capture_output=True, text=True)
@@ -372,7 +454,15 @@ class OfflineActivationEmulator:
         return hashlib.sha256(os.urandom(8)).hexdigest()[:8].upper()
 
     def _get_machine_guid(self) -> str:
-        """Get Windows machine GUID or equivalent."""
+        r"""Retrieve Windows machine GUID from Registry or machine-id file.
+
+        Queries Windows Registry HKLM\SOFTWARE\Microsoft\Cryptography on Windows.
+        On Linux, reads /etc/machine-id file. Generates UUID4 on failure.
+
+        Returns:
+            Machine GUID string, uppercased.
+
+        """
         try:
             if platform.system() == "Windows":
                 with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography") as key:
@@ -460,7 +550,19 @@ class OfflineActivationEmulator:
         return formatted
 
     def _custom_hardware_id(self, profile: HardwareProfile) -> str:
-        """Generate custom hardware ID."""
+        """Generate custom hardware ID using PBKDF2 key derivation.
+
+        Creates a hardware identifier by deriving a cryptographic key from the
+        system's CPU ID and motherboard serial using PBKDF2. This ID is used
+        for protecting activations against hardware spoofing and cloning attacks.
+
+        Args:
+            profile: Hardware profile containing system identifiers.
+
+        Returns:
+            Base64-encoded hardware ID string derived from PBKDF2 key derivation.
+
+        """
         # Use PBKDF2 for key derivation
         from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC as PBKDF2
 
@@ -476,7 +578,20 @@ class OfflineActivationEmulator:
             return hashlib.sha256((profile.cpu_id + profile.motherboard_serial).encode()).hexdigest()[:32]
 
     def generate_installation_id(self, product_id: str, hardware_id: str) -> str:
-        """Generate installation ID for product."""
+        """Generate installation ID binding product to hardware.
+
+        Creates an installation identifier by computing HMAC-SHA256 of the
+        hardware ID using the product ID as the key. This ties the license
+        to specific hardware and prevents unauthorized license transfer.
+
+        Args:
+            product_id: Commercial software product identifier.
+            hardware_id: System hardware identifier from current or spoofed hardware.
+
+        Returns:
+            Formatted installation ID with groups of 6 hexadecimal characters.
+
+        """
         logger.debug(f"Generating installation ID for product '{product_id}' with hardware ID '{hardware_id}'.")
         # Combine product and hardware
 
@@ -492,7 +607,19 @@ class OfflineActivationEmulator:
         return formatted_install_id
 
     def generate_request_code(self, installation_id: str) -> str:
-        """Generate activation request code."""
+        """Generate offline activation request code from installation ID.
+
+        Transforms an installation ID into a numeric request code suitable for
+        phone activation or offline activation scenarios. Converts SHA256 hash
+        to decimal representation and formats in 6-digit groups.
+
+        Args:
+            installation_id: Installation identifier bound to hardware and product.
+
+        Returns:
+            Numeric request code formatted as groups of 6 digits separated by hyphens.
+
+        """
         logger.debug(f"Generating request code for installation ID: {installation_id}")
         # Hash installation ID
         h = hashlib.sha256(installation_id.encode())
@@ -509,8 +636,22 @@ class OfflineActivationEmulator:
         logger.debug(f"Generated request code: {formatted_request_code}")
         return formatted_request_code
 
-    def generate_activation_response(self, request: ActivationRequest, product_key: str = None) -> ActivationResponse:
-        """Generate activation response for request."""
+    def generate_activation_response(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+        """Generate activation response for offline activation request.
+
+        Analyzes the activation request, detects the appropriate algorithm based
+        on product ID, and generates a valid activation response including
+        license key, activation code, and digital signature. Supports multiple
+        commercial software activation schemes.
+
+        Args:
+            request: Activation request containing product, hardware, and request codes.
+            product_key: Optional pre-generated product key; generates if None.
+
+        Returns:
+            ActivationResponse object with activation code, license key, and signature.
+
+        """
         logger.debug(f"Generating activation response for product ID: {request.product_id}")
         # Determine activation algorithm
         algorithm = self._detect_activation_algorithm(request.product_id)
@@ -526,7 +667,19 @@ class OfflineActivationEmulator:
         return response
 
     def _detect_activation_algorithm(self, product_id: str) -> str:
-        """Detect which activation algorithm to use."""
+        """Detect appropriate activation algorithm from product identifier.
+
+        Maps product identifiers to known vendor-specific activation algorithms
+        (Microsoft, Adobe, Autodesk, VMware, MATLAB, SolidWorks). Falls back to
+        RSA-based algorithm for unknown products.
+
+        Args:
+            product_id: Product identifier string to analyze.
+
+        Returns:
+            Algorithm identifier string for activation implementation.
+
+        """
         product_lower = product_id.lower()
 
         if "microsoft" in product_lower or "office" in product_lower:
@@ -546,8 +699,22 @@ class OfflineActivationEmulator:
         logger.debug(f"Detected activation algorithm for product '{product_id}': {detected_algo}")
         return detected_algo
 
-    def _microsoft_activation(self, request: ActivationRequest, product_key: str = None) -> ActivationResponse:
-        """Microsoft-style activation (simplified MAK/KMS emulation)."""
+    def _microsoft_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+        """Generate Microsoft Office activation response with MAK/KMS emulation.
+
+        Emulates Microsoft's Multiple Activation Key (MAK) or Key Management
+        Service (KMS) activation by deriving confirmation IDs from installation
+        IDs using Microsoft-compatible algorithms. Produces hardware-locked
+        responses with extended trial periods.
+
+        Args:
+            request: Activation request from Microsoft Office product.
+            product_key: Optional pre-defined product key for Office edition.
+
+        Returns:
+            ActivationResponse with confirmation ID, license key, and expiry.
+
+        """
         # Parse installation ID
         install_id_parts = request.installation_id.replace("-", "")
 
@@ -582,8 +749,21 @@ class OfflineActivationEmulator:
             signature=None,
         )
 
-    def _adobe_activation(self, request: ActivationRequest, product_key: str = None) -> ActivationResponse:
-        """Adobe-style activation."""
+    def _adobe_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+        """Generate Adobe Creative Cloud activation response.
+
+        Produces Adobe activation codes by hashing request codes with hardware
+        identifiers, then formats as Adobe-compatible response codes. Generates
+        signed XML license files for offline activation.
+
+        Args:
+            request: Activation request from Adobe Creative Cloud product.
+            product_key: Optional pre-defined Adobe license key.
+
+        Returns:
+            ActivationResponse with Adobe-formatted code, license key, and signature.
+
+        """
         # Generate response based on request code
         request_bytes = request.request_code.encode()
 
@@ -613,7 +793,20 @@ class OfflineActivationEmulator:
         )
 
     def _generate_adobe_license(self, request: ActivationRequest, response_code: str) -> bytes:
-        """Generate Adobe license file content."""
+        """Generate Adobe Creative Cloud XML license file content.
+
+        Creates XML license structure with product, version, serial number,
+        hardware ID, activation/expiry dates, and feature list compatible with
+        Adobe's offline license validation.
+
+        Args:
+            request: Activation request with product and hardware identifiers.
+            response_code: Generated Adobe response/serial code.
+
+        Returns:
+            XML license file content in UTF-8 bytes format.
+
+        """
         root = ET.Element("License")
 
         # Add license elements
@@ -643,8 +836,21 @@ class OfflineActivationEmulator:
 
         return ET.tostring(root, encoding="utf-8")
 
-    def _autodesk_activation(self, request: ActivationRequest, product_key: str = None) -> ActivationResponse:
-        """Autodesk-style activation."""
+    def _autodesk_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+        """Generate Autodesk activation response with XOR-based transformation.
+
+        Creates Autodesk AutoCAD or Inventor activation codes using XOR operations
+        with magic constants derived from Autodesk's protection schemes.
+        Produces hardware-locked responses for design software.
+
+        Args:
+            request: Activation request from Autodesk design software.
+            product_key: Optional pre-defined Autodesk product key.
+
+        Returns:
+            ActivationResponse with Autodesk-formatted code and license key.
+
+        """
         # Autodesk uses specific XOR-based algorithm
         request_numeric = "".join(c for c in request.request_code if c.isdigit())
 
@@ -673,8 +879,21 @@ class OfflineActivationEmulator:
             signature=None,
         )
 
-    def _vmware_activation(self, request: ActivationRequest, product_key: str = None) -> ActivationResponse:
-        """VMware-style activation."""
+    def _vmware_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+        """Generate VMware vSphere activation response.
+
+        Creates VMware license keys by encoding hardware hash values using
+        base32-compatible character sets. Produces perpetual licenses suitable
+        for ESXi and vCenter deployments.
+
+        Args:
+            request: Activation request from VMware virtualization platform.
+            product_key: Optional pre-defined VMware license key.
+
+        Returns:
+            ActivationResponse with perpetual VMware license code.
+
+        """
         # VMware uses specific format
         chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # pragma: allowlist secret
 
@@ -700,8 +919,21 @@ class OfflineActivationEmulator:
             signature=None,
         )
 
-    def _matlab_activation(self, request: ActivationRequest, product_key: str = None) -> ActivationResponse:
-        """MATLAB-style activation."""
+    def _matlab_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+        """Generate MATLAB activation response with license file generation.
+
+        Creates MathWorks MATLAB activation codes and associated license files
+        using HMAC and license server emulation. Produces signed license files
+        compatible with FLEXlm-based MATLAB licensing.
+
+        Args:
+            request: Activation request from MathWorks MATLAB product.
+            product_key: Optional pre-defined MATLAB license key.
+
+        Returns:
+            ActivationResponse with MATLAB activation code and signed license file.
+
+        """
         # MATLAB uses file installation key and license file
 
         # Generate activation key
@@ -727,7 +959,18 @@ class OfflineActivationEmulator:
         )
 
     def _generate_matlab_license(self, request: ActivationRequest) -> bytes:
-        """Generate MATLAB license file."""
+        """Generate MATLAB FLEXlm-compatible license file content.
+
+        Creates license file in FLEXlm format with SERVER, DAEMON, and FEATURE
+        lines suitable for MATLAB offline licensing with floating-point licensing.
+
+        Args:
+            request: Activation request with product and hardware identifiers.
+
+        Returns:
+            License file content in UTF-8 bytes format.
+
+        """
         lines = [
             "# MATLAB license file",
             f"SERVER {socket.gethostname()} {request.hardware_id} 27000",
@@ -743,8 +986,21 @@ class OfflineActivationEmulator:
 
         return "\n".join(lines).encode()
 
-    def _solidworks_activation(self, request: ActivationRequest, product_key: str = None) -> ActivationResponse:
-        """SolidWorks-style activation."""
+    def _solidworks_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+        """Generate SolidWorks activation response with proprietary algorithm.
+
+        Creates Dassault Systèmes SolidWorks activation codes using multiplication
+        and modulo arithmetic on request code components. Produces hardware-locked
+        responses for CAD/CAM software.
+
+        Args:
+            request: Activation request from SolidWorks CAD software.
+            product_key: Optional pre-defined SolidWorks license key.
+
+        Returns:
+            ActivationResponse with SolidWorks-formatted code and license key.
+
+        """
         # SolidWorks uses specific activation format
 
         # Process request code
@@ -771,8 +1027,21 @@ class OfflineActivationEmulator:
             signature=None,
         )
 
-    def _rsa_based_activation(self, request: ActivationRequest, product_key: str = None) -> ActivationResponse:
-        """RSA signature-based activation."""
+    def _rsa_based_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+        """Generate RSA 2048-bit signature-based activation response.
+
+        Creates cryptographic activation codes by generating RSA key pairs and
+        signing activation data with PSS padding. Suitable for custom licensing
+        systems using RSA cryptography.
+
+        Args:
+            request: Activation request for RSA-protected software.
+            product_key: Optional pre-defined product key.
+
+        Returns:
+            ActivationResponse with RSA-signed activation code and key.
+
+        """
         # Generate RSA key pair
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=self.backend)
 
@@ -804,8 +1073,21 @@ class OfflineActivationEmulator:
             signature=signature,
         )
 
-    def _aes_based_activation(self, request: ActivationRequest, product_key: str = None) -> ActivationResponse:
-        """AES encryption-based activation."""
+    def _aes_based_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+        """Generate AES 256-bit encryption-based activation response.
+
+        Creates encrypted activation codes using AES-CBC mode with random
+        initialization vectors. Suitable for licensing systems using symmetric
+        encryption for activation protection.
+
+        Args:
+            request: Activation request for AES-encrypted licensing system.
+            product_key: Optional pre-defined product key.
+
+        Returns:
+            ActivationResponse with AES-encrypted activation code.
+
+        """
         import os
 
         from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -838,8 +1120,21 @@ class OfflineActivationEmulator:
             signature=None,
         )
 
-    def _ecc_based_activation(self, request: ActivationRequest, product_key: str = None) -> ActivationResponse:
-        """ECC signature-based activation."""
+    def _ecc_based_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+        """Generate ECDSA P-256 signature-based activation response.
+
+        Creates elliptic curve cryptography-based activation codes using
+        ECDSA with SHA256 hashing. Suitable for modern licensing systems
+        using efficient elliptic curve signatures.
+
+        Args:
+            request: Activation request for ECDSA-protected software.
+            product_key: Optional pre-defined product key.
+
+        Returns:
+            ActivationResponse with ECDSA-signed activation code.
+
+        """
         from cryptography.hazmat.primitives.asymmetric import ec
 
         # Generate ECC key pair
@@ -864,8 +1159,21 @@ class OfflineActivationEmulator:
             signature=signature,
         )
 
-    def _default_activation(self, request: ActivationRequest, product_key: str = None) -> ActivationResponse:
-        """Perform default activation for unknown products."""
+    def _default_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+        """Generate default activation response for unrecognized products.
+
+        Provides fallback activation mechanism using SHA256-based code generation
+        when a specific product algorithm cannot be detected. Suitable for reverse
+        engineering unknown licensing schemes.
+
+        Args:
+            request: Activation request from unrecognized product.
+            product_key: Optional pre-defined product key.
+
+        Returns:
+            ActivationResponse with hash-based activation code.
+
+        """
         # Simple hash-based activation
         h = hashlib.sha256()
         h.update(request.installation_id.encode())
@@ -886,7 +1194,19 @@ class OfflineActivationEmulator:
         )
 
     def _generate_product_key(self, product_type: str) -> str:
-        """Generate product key for specific product type."""
+        """Generate product license key matching vendor format specifications.
+
+        Creates product keys in format-specific patterns for major vendors including
+        Microsoft (25 alphanumeric), Adobe (24 numeric), and Autodesk (11 digit).
+        Keys are cryptographically random and follow standard commercial patterns.
+
+        Args:
+            product_type: Vendor identifier (microsoft, adobe, autodesk, or custom).
+
+        Returns:
+            Formatted license key string matching specified product vendor pattern.
+
+        """
         if product_type == "microsoft":
             # Microsoft format: 5 groups of 5 chars (BCDFG-HJKMP-QRTVW-XY234-6789B)
             chars = "BCDFGHJKMPQRTVWXY2346789"  # pragma: allowlist secret
@@ -918,7 +1238,19 @@ class OfflineActivationEmulator:
         return formatted_key
 
     def _sign_license_data(self, data: bytes) -> bytes:
-        """Sign license data with private key."""
+        """Sign license data using RSA 2048-bit private key with PSS padding.
+
+        Generates cryptographic signatures for license files using RSA
+        private key operations with PSS padding and SHA256 hashing. Creates
+        verifiable digital signatures for offline license files.
+
+        Args:
+            data: License file data in bytes format (XML, JSON, or binary).
+
+        Returns:
+            RSA PSS signature bytes suitable for license file embedding.
+
+        """
         # Generate signing key
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=self.backend)
 
@@ -930,7 +1262,20 @@ class OfflineActivationEmulator:
         return signature
 
     def create_license_file(self, response: ActivationResponse, format: str = "xml") -> bytes:
-        """Create license file in specified format."""
+        """Create offline license file in XML, JSON, binary, or text format.
+
+        Generates license files compatible with various commercial licensing
+        systems from activation response data. Supports multiple output formats
+        for maximum compatibility with different license verification mechanisms.
+
+        Args:
+            response: Activation response containing license and activation codes.
+            format: Output format (xml, json, binary, or text).
+
+        Returns:
+            License file data in bytes format ready for deployment.
+
+        """
         logger.debug(f"Creating license file in format: {format}")
         if format == "xml":
             return self._create_xml_license(response)
@@ -941,7 +1286,19 @@ class OfflineActivationEmulator:
         return self._create_text_license(response)
 
     def _create_xml_license(self, response: ActivationResponse) -> bytes:
-        """Create XML license file."""
+        """Create XML-formatted license file with digital signature.
+
+        Generates XML license file containing activation codes, features,
+        hardware lock status, and digital signature. Compatible with
+        commercial licensing systems that use XML-based license files.
+
+        Args:
+            response: Activation response with license and signature data.
+
+        Returns:
+            XML license file in UTF-8 bytes format.
+
+        """
         root = ET.Element("License")
 
         key = ET.SubElement(root, "LicenseKey")
@@ -969,7 +1326,19 @@ class OfflineActivationEmulator:
         return ET.tostring(root, encoding="utf-8")
 
     def _create_json_license(self, response: ActivationResponse) -> bytes:
-        """Create JSON license file."""
+        """Create JSON-formatted license file with structured metadata.
+
+        Generates JSON license file containing all activation response data
+        in structured format. Suitable for modern licensing systems using
+        JSON for configuration and license file storage.
+
+        Args:
+            response: Activation response with license data and signature.
+
+        Returns:
+            JSON license file in UTF-8 bytes format.
+
+        """
         license_data = {
             "license_key": response.license_key,
             "activation_code": response.activation_code,
@@ -982,7 +1351,19 @@ class OfflineActivationEmulator:
         return json.dumps(license_data, indent=2).encode()
 
     def _create_binary_license(self, response: ActivationResponse) -> bytes:
-        """Create binary license file."""
+        """Create binary-format license file with packed structure.
+
+        Generates compact binary license file using struct packing. Includes
+        magic header, license key, activation code, expiry timestamp, features,
+        and signature. Suitable for proprietary licensing systems.
+
+        Args:
+            response: Activation response with complete license data.
+
+        Returns:
+            Binary license file in compact packed format.
+
+        """
         # Binary format with magic header
         data = b"LICX"  # Magic
         data += struct.pack("<I", 1)  # Version
@@ -1023,7 +1404,19 @@ class OfflineActivationEmulator:
         return data
 
     def _create_text_license(self, response: ActivationResponse) -> bytes:
-        """Create text license file."""
+        """Create human-readable text format license file.
+
+        Generates plaintext license file with readable formatting for debugging
+        and manual inspection. Suitable for text-based licensing systems or
+        human review of license contents.
+
+        Args:
+            response: Activation response with license information.
+
+        Returns:
+            Text format license file in UTF-8 bytes format.
+
+        """
         lines = [
             "LICENSE INFORMATION",
             "=" * 50,
@@ -1050,7 +1443,19 @@ class OfflineActivationEmulator:
         return "\n".join(lines).encode()
 
     def emulate_phone_activation(self, installation_id: str) -> str:
-        """Emulate phone activation system."""
+        """Generate phone activation confirmation ID from installation ID.
+
+        Transforms installation ID into 9-group numeric confirmation code
+        suitable for phone-based activation systems. Performs custom base-36
+        transformation on installation ID groups and pads with random data.
+
+        Args:
+            installation_id: Installation identifier from activation request.
+
+        Returns:
+            9-group confirmation code in hyphen-separated format for phone entry.
+
+        """
         # Convert installation ID to numeric groups
         id_numeric = "".join(c for c in installation_id if c.isalnum())
 
@@ -1077,7 +1482,21 @@ class OfflineActivationEmulator:
         return "-".join(confirmation_groups[:9])
 
     def bypass_trial_restrictions(self, product_id: str) -> dict[str, Any]:
-        """Generate data to bypass trial restrictions."""
+        """Generate comprehensive trial restriction bypass data package.
+
+        Creates multi-vector trial reset data including file deletion targets,
+        registry key modifications, date manipulation settings, and network
+        blocking rules. Provides complete toolkit for defeating trial limitations
+        and expiration checks in commercial software.
+
+        Args:
+            product_id: Commercial software product identifier to target.
+
+        Returns:
+            Dictionary containing trial reset, registry keys, license files,
+            date bypass, and network bypass strategies.
+
+        """
         logger.debug(f"Generating trial restriction bypass data for product: {product_id}")
         bypass_data = {
             "trial_reset": self._generate_trial_reset_data(product_id),
@@ -1090,7 +1509,19 @@ class OfflineActivationEmulator:
         return bypass_data
 
     def _generate_trial_reset_data(self, product_id: str) -> dict[str, Any]:
-        """Generate trial reset data."""
+        """Generate trial expiration reset payload for target product.
+
+        Identifies Windows Registry keys and configuration files used by
+        commercial software to track trial status and expiration. Provides
+        deletion targets and machine ID spoofing data for trial reset attacks.
+
+        Args:
+            product_id: Target software product identifier.
+
+        Returns:
+            Dictionary with file paths, registry keys, and spoofing GUIDs.
+
+        """
         return {
             "delete_files": [
                 f"C:\\ProgramData\\{product_id}\\trial.dat",
@@ -1105,7 +1536,19 @@ class OfflineActivationEmulator:
         }
 
     def _generate_registry_keys(self, product_id: str) -> dict[str, str]:
-        """Generate registry keys for activation."""
+        """Generate Windows Registry keys for product activation emulation.
+
+        Creates Registry entries in HKEY_LOCAL_MACHINE and HKEY_CURRENT_USER hives
+        that commercial software checks during licensing validation. Includes
+        license keys, activation dates, expiration dates, and feature flags.
+
+        Args:
+            product_id: Target software product identifier.
+
+        Returns:
+            Dictionary mapping Registry paths to activation values.
+
+        """
         return {
             f"HKEY_LOCAL_MACHINE\\SOFTWARE\\{product_id}\\License": "Activated",
             f"HKEY_LOCAL_MACHINE\\SOFTWARE\\{product_id}\\LicenseKey": self._generate_product_key("default"),
@@ -1115,7 +1558,19 @@ class OfflineActivationEmulator:
         }
 
     def _generate_license_files(self, product_id: str) -> dict[str, bytes]:
-        """Generate license files for product."""
+        """Generate multi-format license files for offline activation.
+
+        Produces complete license file set in XML, JSON, binary, and text formats
+        using the standard activation flow. Suitable for deploying to product
+        license directories.
+
+        Args:
+            product_id: Target software product identifier.
+
+        Returns:
+            Dictionary mapping filename to license file bytes (XML, JSON, DAT, TXT).
+
+        """
         # Generate proper activation response
         hardware_id = self.generate_hardware_id()
         installation_id = self.generate_installation_id(product_id, hardware_id)
@@ -1143,9 +1598,18 @@ class OfflineActivationEmulator:
         }
 
     def _generate_date_bypass_data(self) -> dict[str, Any]:
-        """Generate date manipulation bypass data."""
+        """Generate system date manipulation tactics for trial bypass.
+
+        Creates configuration for freezing or spoofing system time to defeat
+        trial expiration checks. Includes NTP override targets and date values
+        suitable for resetting trial evaluation periods.
+
+        Returns:
+            Dictionary with system time freeze dates and NTP override configuration.
+
+        """
         from datetime import timezone
-        utc_tz = timezone.utc
+        utc_tz = UTC
         return {
             "system_time_freeze": datetime(2020, 1, 1, tzinfo=utc_tz),
             "trial_start_date": datetime(2020, 1, 1, tzinfo=utc_tz),
@@ -1155,7 +1619,16 @@ class OfflineActivationEmulator:
         }
 
     def _generate_network_bypass_data(self) -> dict[str, Any]:
-        """Generate network validation bypass data."""
+        """Generate network blocking configuration for license validation bypass.
+
+        Creates Windows Firewall rules, hosts file entries, and proxy configurations
+        to prevent software from contacting activation/licensing servers. Includes
+        common activation domains for major software vendors.
+
+        Returns:
+            Dictionary with hosts entries, firewall rules, and proxy configuration.
+
+        """
         return {
             "hosts_file_entries": [
                 "127.0.0.1 activation.adobe.com",
@@ -1172,10 +1645,20 @@ class OfflineActivationEmulator:
             "proxy_config": {"http": "http://127.0.0.1:8888", "https": "http://127.0.0.1:8888"},
         }
 
-    # Methods merged from exploitation/offline_activation_emulator.py
-
     def _generate_machine_profile(self) -> MachineProfile:
-        """Generate realistic machine profile."""
+        """Generate complete machine profile for activation request generation.
+
+        Constructs a comprehensive hardware and system profile by gathering CPU ID,
+        motherboard serial, disk serial, MAC address, and OS information from
+        the current system. Applies fallback mechanisms when system queries fail.
+        This profile is used for crafting activation requests and bypassing
+        hardware-locked activation schemes.
+
+        Returns:
+            MachineProfile object containing complete system identification data
+            for activation request generation and license bypass operations.
+
+        """
         hostname = socket.gethostname()
 
         # Get MAC address
@@ -1217,7 +1700,17 @@ class OfflineActivationEmulator:
         )
 
     def _generate_realistic_mac(self) -> str:
-        """Generate realistic MAC address."""
+        """Generate MAC address using realistic manufacturer OUI prefixes.
+
+        Constructs a MAC address by combining legitimate Organizationally Unique
+        Identifier (OUI) prefixes from known hardware manufacturers with random
+        device identifiers. Used for generating authentic-looking hardware profiles
+        for activation request crafting and hardware-locked license bypasses.
+
+        Returns:
+            MAC address string in standard colon-separated hexadecimal format.
+
+        """
         # Real OUI prefixes from major manufacturers
         oui_prefixes = [
             "00:1B:44",  # Cisco
@@ -1237,7 +1730,19 @@ class OfflineActivationEmulator:
         return f"{prefix}:{suffix}"
 
     def _load_product_database(self) -> dict[str, dict[str, Any]]:
-        """Load known product activation patterns."""
+        """Load database of known commercial product activation patterns.
+
+        Provides a reference database of activation scheme characteristics for
+        major commercial software products including Adobe, Autodesk, Microsoft,
+        and VMware. Contains information about request formats, encryption methods,
+        signature algorithms, and machine binding mechanisms used by these products.
+
+        Returns:
+            Dictionary mapping product identifiers to their activation pattern
+            specifications including request format, encryption, signatures, and
+            validation mechanisms.
+
+        """
         return {
             "adobe_cc": {
                 "request_format": RequestFormat.XML,
@@ -1270,7 +1775,21 @@ class OfflineActivationEmulator:
         }
 
     def generate_activation_request(self, product_id: str, serial_number: str, format: RequestFormat = RequestFormat.XML) -> str:
-        """Generate offline activation request."""
+        """Generate offline activation request in specified format.
+
+        Creates activation request containing product ID, machine profile, serial
+        number, and request timestamp. Formats output as XML, JSON, base64, or
+        binary for compatibility with various licensing server implementations.
+
+        Args:
+            product_id: Target software product identifier.
+            serial_number: Software product serial number or license code.
+            format: Request output format (XML, JSON, BASE64, or BINARY).
+
+        Returns:
+            Activation request string in specified format, ready for server submission.
+
+        """
         logger.debug(f"Generating activation request for product '{product_id}' with serial '{serial_number}' in format: {format.value}")
         # Generate machine profile if not exists
         if not hasattr(self, "machine_profile"):
@@ -1300,7 +1819,18 @@ class OfflineActivationEmulator:
         return self._format_binary_request(request)
 
     def _format_xml_request(self, request: ExtendedActivationRequest) -> str:
-        """Format activation request as XML."""
+        """Format activation request as XML with digital signature.
+
+        Encodes activation request data into XML format with embedded RSA
+        signature for tamper detection. Compatible with XML-based licensing servers.
+
+        Args:
+            request: Extended activation request containing all machine and product data.
+
+        Returns:
+            XML-formatted activation request string with signature element.
+
+        """
         root = ET.Element("ActivationRequest")
 
         # Add request metadata
@@ -1331,7 +1861,18 @@ class OfflineActivationEmulator:
         return ET.tostring(root, encoding="unicode")
 
     def _format_json_request(self, request: ExtendedActivationRequest) -> str:
-        """Format activation request as JSON."""
+        """Format activation request as JSON with RSA signature.
+
+        Encodes activation request into JSON format with signed metadata.
+        Suitable for modern licensing systems using JSON APIs.
+
+        Args:
+            request: Extended activation request with machine profile.
+
+        Returns:
+            JSON-formatted activation request string with signature field.
+
+        """
         data = {
             "request_id": request.request_id,
             "product_id": request.product_id,
@@ -1360,7 +1901,19 @@ class OfflineActivationEmulator:
         return json.dumps(data, indent=2)
 
     def _format_base64_request(self, request: ExtendedActivationRequest) -> str:
-        """Format activation request as base64."""
+        """Format activation request as base64-encoded binary structure.
+
+        Packs activation request into binary format using struct operations,
+        appends RSA signature, and encodes result as base64. Suitable for
+        binary activation protocols.
+
+        Args:
+            request: Extended activation request with packed binary data.
+
+        Returns:
+            Base64-encoded activation request with embedded signature.
+
+        """
         # Pack data into binary format
         data = struct.pack(
             ">16s16s16s16s6s32s32s",
@@ -1384,7 +1937,19 @@ class OfflineActivationEmulator:
         return base64.b64encode(data).decode("ascii")
 
     def _format_binary_request(self, request: ExtendedActivationRequest) -> str:
-        """Format activation request as binary."""
+        """Format activation request as binary with magic header and signature.
+
+        Constructs compact binary activation request with ACTREQ01 magic header,
+        packed request ID, product hash, machine fingerprint, and RSA signature.
+        Returns hex-encoded representation for transmission.
+
+        Args:
+            request: Extended activation request for binary packing.
+
+        Returns:
+            Hexadecimal string representation of binary activation request.
+
+        """
         # Create binary packet
         packet = bytearray()
 
@@ -1417,7 +1982,18 @@ class OfflineActivationEmulator:
         return packet.hex()
 
     def _sign_request(self, data: bytes) -> bytes:
-        """Sign activation request data."""
+        """Sign activation request data using RSA 2048 private key.
+
+        Generates RSA PSS signatures for activation request data with SHA256
+        hashing. Used for tamper-proof request transmission to servers.
+
+        Args:
+            data: Raw activation request data to sign.
+
+        Returns:
+            RSA PSS signature bytes.
+
+        """
         # Generate signing key
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 
@@ -1429,7 +2005,18 @@ class OfflineActivationEmulator:
         return signature
 
     def _generate_license_key(self, request: ExtendedActivationRequest) -> str:
-        """Generate license key for activation."""
+        """Generate license key using PBKDF2 derivation from request data.
+
+        Creates product license key from activation request data using PBKDF2
+        with 100,000 iterations. Key format: 5-character groups separated by hyphens.
+
+        Args:
+            request: Extended activation request with product and machine identifiers.
+
+        Returns:
+            Formatted license key string derived from request cryptographic material.
+
+        """
         # Create license data
         data = f"{request.product_id}:{request.machine_profile.machine_id}:{request.serial_number}"
 
@@ -1446,7 +2033,18 @@ class OfflineActivationEmulator:
         return formatted
 
     def _generate_activation_code(self, request: ExtendedActivationRequest) -> str:
-        """Generate activation code."""
+        """Generate activation code using HMAC-SHA256 from machine and serial data.
+
+        Creates activation confirmation code by computing HMAC of machine
+        identifiers using serial number as key. Format: 5-character groups.
+
+        Args:
+            request: Extended activation request with machine profile and serial.
+
+        Returns:
+            Formatted activation code string from HMAC computation.
+
+        """
         # Combine machine identifiers
         machine_data = f"{request.machine_profile.cpu_id}{request.machine_profile.disk_serial}{request.machine_profile.mac_address}"
 
@@ -1456,8 +2054,21 @@ class OfflineActivationEmulator:
         code = h.hexdigest()[:20].upper()
         return "-".join(code[i : i + 4] for i in range(0, 20, 4))
 
-    def create_activation_file(self, response: ActivationResponse, output_path: str):
-        """Create activation file for file-based activation."""
+    def create_activation_file(self, response: ActivationResponse, output_path: str) -> str:
+        """Create encrypted activation file with magic header and AES encryption.
+
+        Generates offline activation file by AES-encrypting activation response
+        data with the license key as key material. Writes binary file with
+        ACTFILE1 magic header and IV for offline deployment.
+
+        Args:
+            response: Activation response with license key and codes.
+            output_path: File system path where activation file will be written.
+
+        Returns:
+            Path to created activation file.
+
+        """
         data = {
             "version": "1.0",
             "response": {
@@ -1494,7 +2105,19 @@ class OfflineActivationEmulator:
         return output_path
 
     def bypass_challenge_response(self, challenge: str) -> str:
-        """Generate valid response for challenge-based activation."""
+        """Generate valid response for challenge-response activation mechanism.
+
+        Decodes challenge data and generates cryptographically valid response
+        using SHA256 hash of nonce and challenge data combined with machine
+        profile identifiers. Suitable for defeating challenge-response activation.
+
+        Args:
+            challenge: Challenge string from licensing server (base64 or raw bytes).
+
+        Returns:
+            Base64-encoded response suitable for server validation.
+
+        """
         logger.debug(f"Bypassing challenge-response for challenge: {challenge}")
         # Decode challenge
         try:

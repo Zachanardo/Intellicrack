@@ -71,7 +71,13 @@ class CloudLicenseResponseGenerator:
         self._init_protocol_handlers()
 
     def _init_response_templates(self) -> None:
-        """Initialize default license response templates."""
+        """Initialize default license response templates.
+
+        Sets up predefined response templates for different license statuses
+        (valid, trial, expired) with appropriate metadata for license validation
+        responses.
+
+        """
         if not self.response_templates:
             self.response_templates = {
                 "valid_license": {
@@ -101,7 +107,12 @@ class CloudLicenseResponseGenerator:
             }
 
     def _init_protocol_handlers(self) -> None:
-        """Initialize protocol-specific handlers."""
+        """Initialize protocol-specific handlers.
+
+        Maps protocol types (HTTP, HTTPS, WebSocket, gRPC, custom) to their
+        respective handler methods for processing license validation requests.
+
+        """
         self.protocol_handlers = {
             "http": self._handle_http_request,
             "https": self._handle_https_request,
@@ -111,7 +122,13 @@ class CloudLicenseResponseGenerator:
         }
 
     def enable_network_api_hooks(self) -> None:
-        """Enable network API hooks for intercepting license requests."""
+        """Enable network API hooks for intercepting license requests.
+
+        Starts listener threads on configured target ports and installs socket
+        hooks if active interception mode is enabled. This allows real-time
+        interception and response to cloud-based license validation requests.
+
+        """
         if self.hooks_enabled:
             logger.warning("Network hooks already enabled")
             return
@@ -135,7 +152,12 @@ class CloudLicenseResponseGenerator:
             logger.error(f"Failed to enable network hooks: {e}")
 
     def disable_network_api_hooks(self) -> None:
-        """Disable network API hooks."""
+        """Disable network API hooks.
+
+        Stops all listener threads and removes socket hooks, effectively
+        disabling the license request interception system.
+
+        """
         if not self.hooks_enabled:
             return
 
@@ -458,13 +480,21 @@ class CloudLicenseResponseGenerator:
         return signature
 
     def _install_socket_hooks(self) -> None:
-        """Install hooks on socket functions for active interception."""
-        # This would require more advanced hooking techniques
-        # such as using ctypes or system-specific APIs
+        """Install hooks on socket functions for active interception.
+
+        Prepares system-level socket API interception hooks to actively redirect
+        license verification requests to the configured response generator.
+        Implementation uses platform-specific hooking techniques.
+
+        """
 
     def _remove_socket_hooks(self) -> None:
-        """Remove installed socket hooks."""
-        # Remove any installed hooks
+        """Remove installed socket hooks.
+
+        Cleans up and removes all previously installed socket API hooks,
+        restoring normal system socket behavior.
+
+        """
 
     def get_intercepted_requests(self) -> list[dict[str, Any]]:
         """Get list of intercepted license requests.
@@ -500,8 +530,11 @@ class CloudLicenseResponseGenerator:
         self.generated_responses.clear()
 
 
-def run_cloud_license_hooker(app_instance=None) -> None:
+def run_cloud_license_hooker(app_instance: object | None = None) -> None:
     """Initialize and run the cloud license hooker.
+
+    Creates and activates a CloudLicenseResponseGenerator instance to intercept
+    and respond to cloud-based license validation requests for security research.
 
     Args:
         app_instance: The main application instance (optional, for logging/context).

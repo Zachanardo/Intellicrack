@@ -22,7 +22,8 @@ This module centralizes common PyQt6 imports to avoid duplication.
 """
 
 import os
-from typing import Callable, Optional, Tuple, Union
+from collections.abc import Callable
+from typing import Optional, Union
 
 from ...utils.logger import get_logger
 
@@ -82,7 +83,7 @@ try:
             return QIcon(path_or_pixmap)
         return QIcon()
 
-    def create_pixmap_from_file(path: str, size: Optional[Tuple[int, int]] = None) -> QPixmap:
+    def create_pixmap_from_file(path: str, size: Optional[tuple[int, int]] = None) -> QPixmap:
         """Create a QPixmap from a file.
 
         Args:
@@ -98,7 +99,7 @@ try:
             pixmap = pixmap.scaled(size[0], size[1], Qt.KeepAspectRatio, Qt.SmoothTransformation)
         return pixmap
 
-    def get_user_input(parent: QWidget, title: str, label: str, default: str = "", password: bool = False) -> Tuple[str, bool]:
+    def get_user_input(parent: QWidget, title: str, label: str, default: str = "", password: bool = False) -> tuple[str, bool]:
         """Get user input using QInputDialog.
 
         Args:
@@ -213,7 +214,7 @@ except ImportError as e:
         """
         return
 
-    def create_pixmap_from_file(path: str, size: Optional[Tuple[int, int]] = None) -> None:
+    def create_pixmap_from_file(path: str, size: Optional[tuple[int, int]] = None) -> None:
         """Create pixmap fallback when PyQt6 is unavailable.
 
         Args:
@@ -226,7 +227,7 @@ except ImportError as e:
         """
         return
 
-    def get_user_input(parent: object, title: str, label: str, default: str = "", password: bool = False) -> Tuple[str, bool]:
+    def get_user_input(parent: object, title: str, label: str, default: str = "", password: bool = False) -> tuple[str, bool]:
         """Get user input fallback when PyQt6 is unavailable.
 
         Args:

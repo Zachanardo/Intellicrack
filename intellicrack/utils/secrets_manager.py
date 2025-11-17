@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from intellicrack.core.config_manager import IntellicrackConfig
+
 from .logger import get_logger
 
 logger = get_logger(__name__)

@@ -18,7 +18,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import os
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 from intellicrack.ai.code_analysis_tools import AIAssistant
 from intellicrack.handlers.pyqt6_handler import (
@@ -315,7 +315,7 @@ class TestScriptDialog(BaseDialog):
         # Default fallback
         return "unknown"
 
-    def validate_python_syntax(self) -> Dict[str, Any]:
+    def validate_python_syntax(self) -> dict[str, Any]:
         """Validate Python script syntax.
 
         Returns:
@@ -323,7 +323,7 @@ class TestScriptDialog(BaseDialog):
             parse_errors, warnings, imports, functions, classes, tests.
 
         """
-        validation_results: Dict[str, Any] = {
+        validation_results: dict[str, Any] = {
             "syntax_valid": False,
             "parse_errors": [],
             "warnings": [],
@@ -364,7 +364,7 @@ class TestScriptDialog(BaseDialog):
 
         return validation_results
 
-    def validate_javascript_syntax(self) -> Dict[str, Any]:
+    def validate_javascript_syntax(self) -> dict[str, Any]:
         """Validate JavaScript/Frida script syntax.
 
         Returns:
@@ -372,7 +372,7 @@ class TestScriptDialog(BaseDialog):
             warnings, frida_patterns, security_features, tests.
 
         """
-        validation_results: Dict[str, Any] = {"syntax_valid": True, "warnings": [], "frida_patterns": [], "security_features": []}
+        validation_results: dict[str, Any] = {"syntax_valid": True, "warnings": [], "frida_patterns": [], "security_features": []}
 
         # Check for common Frida patterns
         frida_patterns = [
@@ -401,7 +401,7 @@ class TestScriptDialog(BaseDialog):
 
         return validation_results
 
-    def validate_powershell_syntax(self) -> Dict[str, Any]:
+    def validate_powershell_syntax(self) -> dict[str, Any]:
         """Validate PowerShell script syntax.
 
         Returns:
@@ -409,7 +409,7 @@ class TestScriptDialog(BaseDialog):
             cmdlets, variables, warnings, tests.
 
         """
-        validation_results: Dict[str, Any] = {"syntax_valid": True, "cmdlets": [], "variables": [], "warnings": []}
+        validation_results: dict[str, Any] = {"syntax_valid": True, "cmdlets": [], "variables": [], "warnings": []}
 
         lines = self.script_content.split("\n")
         for line in lines:
@@ -433,7 +433,7 @@ class TestScriptDialog(BaseDialog):
 
         return validation_results
 
-    def perform_generic_syntax_checks(self) -> Dict[str, Any]:
+    def perform_generic_syntax_checks(self) -> dict[str, Any]:
         """Perform language-agnostic syntax checks.
 
         Returns:
@@ -441,7 +441,7 @@ class TestScriptDialog(BaseDialog):
             character_count, contains_comments, contains_strings, suspicious_patterns.
 
         """
-        checks: Dict[str, Any] = {
+        checks: dict[str, Any] = {
             "line_count": len(self.script_content.split("\n")),
             "character_count": len(self.script_content),
             "contains_comments": False,
@@ -604,7 +604,7 @@ class TestScriptDialog(BaseDialog):
         self.test_results["effectiveness_testing"] = effectiveness_results
         self.update_effectiveness_display()
 
-    def analyze_bypass_effectiveness(self) -> Dict[str, Any]:
+    def analyze_bypass_effectiveness(self) -> dict[str, Any]:
         """Analyze bypass script effectiveness.
 
         Returns:
@@ -612,7 +612,7 @@ class TestScriptDialog(BaseDialog):
             capabilities, missing_features.
 
         """
-        analysis: Dict[str, Any] = {"effectiveness_score": 0, "capabilities": [], "missing_features": []}
+        analysis: dict[str, Any] = {"effectiveness_score": 0, "capabilities": [], "missing_features": []}
 
         # Check for bypass techniques
         bypass_techniques = {
@@ -646,7 +646,7 @@ class TestScriptDialog(BaseDialog):
         analysis["effectiveness_score"] = min(score, 100)
         return analysis
 
-    def analyze_exploit_effectiveness(self) -> Dict[str, Any]:
+    def analyze_exploit_effectiveness(self) -> dict[str, Any]:
         """Analyze exploit script effectiveness.
 
         Returns:
@@ -654,7 +654,7 @@ class TestScriptDialog(BaseDialog):
             capabilities, missing_features.
 
         """
-        analysis: Dict[str, Any] = {"effectiveness_score": 0, "capabilities": [], "missing_features": []}
+        analysis: dict[str, Any] = {"effectiveness_score": 0, "capabilities": [], "missing_features": []}
 
         # Check for exploit components
         exploit_components = {
@@ -674,7 +674,7 @@ class TestScriptDialog(BaseDialog):
         analysis["effectiveness_score"] = min(score, 100)
         return analysis
 
-    def analyze_strategy_effectiveness(self) -> Dict[str, Any]:
+    def analyze_strategy_effectiveness(self) -> dict[str, Any]:
         """Analyze strategy document effectiveness.
 
         Returns:
@@ -682,7 +682,7 @@ class TestScriptDialog(BaseDialog):
             capabilities, missing_features.
 
         """
-        analysis: Dict[str, Any] = {"effectiveness_score": 0, "capabilities": [], "missing_features": []}
+        analysis: dict[str, Any] = {"effectiveness_score": 0, "capabilities": [], "missing_features": []}
 
         # Check for strategy components
         strategy_components = {
@@ -1087,7 +1087,7 @@ class ScriptGeneratorWorker(QThread):
     script_generated = pyqtSignal(dict)
     error_occurred = pyqtSignal(str)
 
-    def __init__(self, binary_path: str, script_type: str, **kwargs: Union[str, int, bool, List[str]]) -> None:
+    def __init__(self, binary_path: str, script_type: str, **kwargs: Union[str, int, bool, list[str]]) -> None:
         """Initialize the ScriptGeneratorWorker with default values.
 
         Args:
@@ -1599,14 +1599,14 @@ class ScriptGeneratorDialog(BaseDialog):
         self.worker.error_occurred.connect(self.on_error)
         self.worker.start()
 
-    def get_bypass_config(self) -> Dict[str, Any]:
+    def get_bypass_config(self) -> dict[str, Any]:
         """Get bypass script configuration.
 
         Returns:
             Dictionary containing bypass configuration with keys: language, methods, output_format.
 
         """
-        methods: List[str] = []
+        methods: list[str] = []
         if self.method_patch.isChecked():
             methods.append("patch")
         if self.method_loader.isChecked():
@@ -1624,7 +1624,7 @@ class ScriptGeneratorDialog(BaseDialog):
             "output_format": self.bypass_output.currentText().lower(),
         }
 
-    def get_exploit_config(self) -> Dict[str, Any]:
+    def get_exploit_config(self) -> dict[str, Any]:
         """Get exploit script configuration.
 
         Returns:
@@ -1639,7 +1639,7 @@ class ScriptGeneratorDialog(BaseDialog):
             "include_anti_detection": self.exploit_advanced.isChecked(),
         }
 
-    def get_strategy_config(self) -> Dict[str, Any]:
+    def get_strategy_config(self) -> dict[str, Any]:
         """Get strategy configuration.
 
         Returns:
@@ -1656,7 +1656,7 @@ class ScriptGeneratorDialog(BaseDialog):
             "include_persistence": self.include_persistence.isChecked(),
         }
 
-    def on_script_generated(self, result: Dict[str, Any]) -> None:
+    def on_script_generated(self, result: dict[str, Any]) -> None:
         """Handle script generation completion.
 
         Args:
@@ -1806,7 +1806,7 @@ class ScriptGeneratorDialog(BaseDialog):
             QMessageBox.critical(self, "Error", f"Failed to analyze script: {e!s}")
             self.status_label.setText("Error occurred")
 
-    def _format_analysis_results(self, analysis_result: Dict[str, Any]) -> str:
+    def _format_analysis_results(self, analysis_result: dict[str, Any]) -> str:
         """Format code analysis results for display.
 
         Args:
@@ -1816,7 +1816,7 @@ class ScriptGeneratorDialog(BaseDialog):
             Formatted string representation of the analysis results.
 
         """
-        lines: List[str] = ["Script Analysis Results", "=" * 50, ""]
+        lines: list[str] = ["Script Analysis Results", "=" * 50, ""]
 
         # Basic info
         lines.append(f"Language: {analysis_result.get('language', 'Unknown')}")

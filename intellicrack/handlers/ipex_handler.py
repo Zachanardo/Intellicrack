@@ -21,10 +21,17 @@ HAS_IPEX = False
 ipex = None
 
 
-def _preload_critical_dlls(dll_dirs) -> bool | None:
+def _preload_critical_dlls(dll_dirs: list[str]) -> bool | None:
     """Pre-load critical DLLs in the correct dependency order.
 
     This is required for esimd_kernels.dll and unified runtime adapters to load successfully.
+
+    Args:
+        dll_dirs: List of directory paths to search for DLL files.
+
+    Returns:
+        True if DLLs were preloaded successfully, False otherwise, or None if skipped.
+
     """
     if os.environ.get("INTELLICRACK_TEST_MODE") or os.environ.get("INTELLICRACK_DISABLE_GPU"):
         logger.debug("Skipping DLL preload in test/disabled mode")

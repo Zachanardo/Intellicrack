@@ -26,7 +26,7 @@ import signal
 import sys
 import tempfile
 import traceback
-from typing import Callable
+from collections.abc import Callable
 
 from PyQt6.QtWidgets import QInputDialog, QMessageBox
 

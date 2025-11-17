@@ -26,8 +26,9 @@ import math
 import os
 import threading
 import time
+from collections.abc import Callable
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     import numpy as np

@@ -786,7 +786,7 @@ payload = exploit.generate_payload()
             )
             try:
                 stdout, stderr = await asyncio.wait_for(validation_process.communicate(), timeout=5)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 validation_process.kill()
                 await validation_process.communicate()
                 raise
@@ -795,7 +795,7 @@ payload = exploit.generate_payload()
                 "validation_output": stdout.decode().strip() if stdout else "",
                 "validation_errors": stderr.decode().strip() if stderr else "",
             }
-        except (asyncio.TimeoutError, subprocess.SubprocessError, FileNotFoundError):
+        except (TimeoutError, subprocess.SubprocessError, FileNotFoundError):
             script_validation_result = {"syntax_check": "skipped", "reason": "validation_unavailable"}
 
         if script_type == "frida":

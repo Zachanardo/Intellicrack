@@ -19,7 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,

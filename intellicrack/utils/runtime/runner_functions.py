@@ -26,8 +26,8 @@ import subprocess
 import tempfile
 import threading
 import traceback
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 from intellicrack.handlers.psutil_handler import PSUTIL_AVAILABLE
 

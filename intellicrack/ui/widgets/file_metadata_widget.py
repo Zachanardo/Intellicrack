@@ -45,8 +45,13 @@ class FileMetadataWidget(QWidget):
     # Signal emitted when a file is analyzed
     file_analyzed = pyqtSignal(str, dict)
 
-    def __init__(self, parent=None) -> None:
-        """Initialize the file metadata widget."""
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialize the file metadata widget.
+
+        Args:
+            parent: Parent widget or None for top-level widget
+
+        """
         super().__init__(parent)
         self.current_file = None
         self.init_ui()

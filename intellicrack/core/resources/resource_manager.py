@@ -17,11 +17,11 @@ import threading
 import time
 import types
 from collections import defaultdict
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Generator, ParamSpec, cast
+from typing import Any, ParamSpec, cast
 
 from intellicrack.handlers.psutil_handler import psutil
 

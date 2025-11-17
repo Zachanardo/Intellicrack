@@ -7,7 +7,7 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-from typing import Any, Callable
+from collections.abc import Callable
 
 from intellicrack.core.monitoring.api_monitor import APIMonitor
 from intellicrack.core.monitoring.base_monitor import MonitorEvent, ProcessInfo
@@ -58,7 +58,7 @@ class MonitoringSession:
         self.process_info = ProcessInfo(pid=pid, name=self._get_process_name(process_path), path=process_path)
 
         self.aggregator = EventAggregator()
-        self.monitors: dict[str, Any] = {}
+        self.monitors: dict[str, object] = {}
         self.frida_server = FridaServerManager()
         self._running = False
 
@@ -141,7 +141,7 @@ class MonitoringSession:
         """
         return self._running
 
-    def get_stats(self) -> dict[str, Any]:
+    def get_stats(self) -> dict[str, object]:
         """Get monitoring statistics.
 
         Returns:
@@ -172,7 +172,7 @@ class MonitoringSession:
         """
         self.aggregator.on_event(callback)
 
-    def on_stats_update(self, callback: Callable[[dict[str, Any]], None]) -> None:
+    def on_stats_update(self, callback: Callable[[dict[str, object]], None]) -> None:
         """Register callback for statistics updates.
 
         Args:
@@ -206,7 +206,7 @@ class MonitoringSession:
         """
         return self.aggregator.get_history(limit)
 
-    def _start_monitor(self, name: str, monitor: Any) -> bool:
+    def _start_monitor(self, name: str, monitor: object) -> bool:
         """Start a monitor and connect it to aggregator.
 
         Args:

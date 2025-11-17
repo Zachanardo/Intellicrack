@@ -8,6 +8,7 @@ Licensed under GNU General Public License v3.0
 """
 
 import time
+from collections.abc import Callable
 from typing import Any
 
 import frida
@@ -37,7 +38,7 @@ class APIMonitor(BaseMonitor):
 
         """
         super().__init__("APIMonitor", process_info)
-        self.pid = pid
+        self.pid: int = pid
         self.session: frida.core.Session | None = None
         self.script: frida.core.Script | None = None
 
@@ -79,7 +80,7 @@ class APIMonitor(BaseMonitor):
                 print(f"[APIMonitor] Error detaching session: {e}")
             self.session = None
 
-    def _on_frida_message(self, message: dict[str, Any], data: Any) -> None:
+    def _on_frida_message(self, message: dict[str, Any], data: bytes | None) -> None:
         """Handle messages from Frida script.
 
         Args:

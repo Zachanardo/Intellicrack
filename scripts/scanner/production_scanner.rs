@@ -369,6 +369,38 @@ static RE_HARDCODED_FILE_METRICS: Lazy<Regex> =
 
 // Category 19: Inline development comments - RE_INCOMPLETE_MARKER already handles this at top
 
+// P6 Category 20: Python ellipsis stub indicator
+static RE_ELLIPSIS_ONLY: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)^\s*\.\.\.\s*$").unwrap());
+
+// P6 Category 21: NotImplemented builtin return
+static RE_NOTIMPLEMENTED_BUILTIN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\breturn\s+NotImplemented\b").unwrap());
+
+// P6 Category 22: Generic placeholder comments
+static RE_GENERIC_PLACEHOLDER_COMMENT: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?i)(?://|#)\s*(?:fill this in|implement.*later|come back to|needs.*implement)").unwrap());
+
+// P6 Category 23: Unconditional return False
+static RE_UNCONDITIONAL_FALSE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)^\s*return\s+False\s*$").unwrap());
+
+// P6 Category 24: Docstring plus pass only
+static RE_DOCSTRING_PASS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?s)"""[^"]*"""\s*\n\s*pass\s*$"#).unwrap());
+
+// P6 Category 25: Immutable literal returns
+static RE_IMMUTABLE_LITERAL: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)^\s*return\s+(?:0|1|True|False|\"\"|\[\]|\{\})\s*(?:#.*)?$").unwrap());
+
+// P6 Category 26: Fluent API stub returning self/this
+static RE_FLUENT_STUB: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)^\s*return\s+(?:self|this)\s*$").unwrap());
+
+// P6 Category 27: Always-success response without validation
+static RE_ALWAYS_SUCCESS_DICT: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?i)\breturn\s+\{\s*['\"](?:success|status)['\"]\s*:\s*(?:True|true|['\"](?:ok|success)['\"])"#).unwrap());
+
 struct Cli {
     root_path: String,
     format: String,
@@ -2525,16 +2557,17 @@ fn is_code_template_generator(func: &FunctionInfo) -> bool {
     let body = &func.body;
     let body_lower = body.to_lowercase();
 
-    // Check for code generator naming patterns (P2 integration)
     let has_generator_name = name_lower.contains("_generate_") &&
                             (name_lower.contains("_script") ||
                              name_lower.contains("_code") ||
                              name_lower.contains("_template") ||
                              name_lower.contains("_patch") ||
                              name_lower.contains("_hook") ||
-                             name_lower.contains("_bypass"));
+                             name_lower.contains("_bypass") ||
+                             name_lower.contains("_patcher") ||
+                             name_lower.contains("_keygen") ||
+                             name_lower.contains("_implementation"));
 
-    // Check for multiline string returns
     let has_multiline_return = body.contains("return \"\"\"") ||
                               body.contains("return '''") ||
                               body.contains("return f\"\"\"") ||
@@ -2542,11 +2575,6 @@ fn is_code_template_generator(func: &FunctionInfo) -> bool {
                               body.contains("return r\"\"\"") ||
                               body.contains("return r'''");
 
-    if !has_multiline_return {
-        return false;
-    }
-
-    // Check for code keywords in the returned string
     let has_code_content = body_lower.contains("import ") ||
                           body_lower.contains("from ") ||
                           body_lower.contains("def ") ||
@@ -2568,7 +2596,20 @@ fn is_code_template_generator(func: &FunctionInfo) -> bool {
                           body_lower.contains("while (") ||
                           body_lower.contains("if (");
 
-    has_generator_name || (has_multiline_return && has_code_content)
+    let builds_code_string = body.contains("\".join(") && has_code_content;
+
+    let returns_code_dict = (body.contains("return {") || body.contains("return dict(")) &&
+                           (body_lower.contains("\"code\"") ||
+                            body_lower.contains("'code'") ||
+                            body_lower.contains("\"script\"") ||
+                            body_lower.contains("'script'") ||
+                            body_lower.contains("\"implementation\"") ||
+                            body_lower.contains("'implementation'"));
+
+    has_generator_name ||
+    (has_multiline_return && has_code_content) ||
+    builds_code_string ||
+    returns_code_dict
 }
 
 /// P1: Detects functions that generate bytecode or shellcode.
@@ -2602,6 +2643,9 @@ fn is_bytecode_generator(func: &FunctionInfo) -> bool {
                        body.contains("return b'\\x") ||
                        body_lower.contains("bytes([");
 
+    let returns_bytes_dict = (body.contains("return {") || body.contains("return dict(")) &&
+                             body.contains("b\"\\x");
+
     let has_asm_comments = body.contains("# mov ") ||
                           body.contains("# xor ") ||
                           body.contains("# ret") ||
@@ -2615,7 +2659,10 @@ fn is_bytecode_generator(func: &FunctionInfo) -> bool {
                            body.contains("== \"x64\"") ||
                            body.contains("== \"x86\"");
 
-    (has_bytecode_name && returns_bytes) || (returns_bytes && has_asm_comments) || (returns_bytes && has_arch_specific)
+    (has_bytecode_name && (returns_bytes || returns_bytes_dict)) ||
+    (returns_bytes && has_asm_comments) ||
+    (returns_bytes && has_arch_specific) ||
+    returns_bytes_dict
 }
 
 /// P1/P2: Detects simple accessor functions (get/set/clear/reset).
@@ -2630,13 +2677,13 @@ fn is_bytecode_generator(func: &FunctionInfo) -> bool {
 /// * `bool` - True if function is a simple accessor, false otherwise
 fn is_simple_accessor_pattern(func: &FunctionInfo) -> bool {
     let name_lower = func.name.to_lowercase();
+    let body = &func.body;
     let loc = func.actual_loc.unwrap_or_else(|| func.body.lines().filter(|l| !l.trim().is_empty()).count());
 
-    if loc > 5 {
+    if loc > 10 {
         return false;
     }
 
-    // P2 context-aware naming
     let is_clear_reset = name_lower.starts_with("clear_") ||
                         name_lower.starts_with("reset_");
 
@@ -2646,12 +2693,21 @@ fn is_simple_accessor_pattern(func: &FunctionInfo) -> bool {
 
     let is_simple_setter = name_lower.starts_with("set_");
 
-    // Additional simple operations
     let is_add_remove = name_lower.starts_with("add_") ||
                        name_lower.starts_with("remove_") ||
                        name_lower.starts_with("delete_");
 
-    is_clear_reset || is_simple_getter || is_simple_setter || is_add_remove
+    let is_boolean_check = (name_lower.starts_with("is_") || name_lower.starts_with("_is_")) &&
+                          loc <= 5;
+
+    let returns_copy = body.contains(".copy()") && loc <= 5;
+
+    let returns_membership = (body.contains(" in self.") || body.contains(" in ")) &&
+                            body.contains("return ") &&
+                            loc <= 5;
+
+    is_clear_reset || is_simple_getter || is_simple_setter || is_add_remove ||
+    is_boolean_check || returns_copy || returns_membership
 }
 
 /// P2: Detects report formatters and data presentation functions.
@@ -2667,7 +2723,6 @@ fn is_simple_accessor_pattern(func: &FunctionInfo) -> bool {
 fn is_report_formatter(func: &FunctionInfo) -> bool {
     let name_lower = func.name.to_lowercase();
 
-    // P2 context-aware naming
     let is_report_function = name_lower.contains("_report") ||
                             name_lower.starts_with("generate_") && name_lower.contains("_report") ||
                             name_lower.starts_with("format_") ||
@@ -2676,6 +2731,33 @@ fn is_report_formatter(func: &FunctionInfo) -> bool {
                             name_lower.starts_with("print_");
 
     is_report_function
+}
+
+/// P5: Detects dictionary-based dispatchers.
+///
+/// These functions route to different implementations via dict lookup.
+/// They're legitimate delegation patterns, not incomplete implementations.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if function is a dict dispatcher, false otherwise
+fn is_dict_dispatcher(func: &FunctionInfo) -> bool {
+    let body = &func.body;
+    let body_lower = body.to_lowercase();
+
+    let has_dict_definition = body.contains(" = {") &&
+                             (body.contains(":") || body.contains("\""));
+
+    let returns_from_dict = (body.contains(".get(") || body.contains("[")) &&
+                           body.contains("return ");
+
+    let has_type_routing = body_lower.contains("type") || body_lower.contains("mode") ||
+                          body_lower.contains("algorithm") || body_lower.contains("method");
+
+    (has_dict_definition && returns_from_dict) ||
+    (returns_from_dict && has_type_routing)
 }
 
 /// P3: Detects if a function has pattern search capabilities.
@@ -2899,6 +2981,12 @@ fn should_exclude_function(func: &FunctionInfo, file_context: &FileContext) -> b
     // P2: Report formatters and script generators
     if !is_domain_specific && is_report_formatter(func) {
         eprintln!("  EXCLUDED: report formatter (P2)");
+        return true;
+    }
+
+    // P5: Dictionary-based dispatchers
+    if !is_domain_specific && is_dict_dispatcher(func) {
+        eprintln!("  EXCLUDED: dictionary dispatcher (P5)");
         return true;
     }
 

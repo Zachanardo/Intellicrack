@@ -601,11 +601,11 @@ class TrialResetEngine:
 
             for fmt in formats:
                 try:
-                    return datetime.datetime.strptime(date_value, fmt).replace(tzinfo=datetime.timezone.utc)
+                    return datetime.datetime.strptime(date_value, fmt).replace(tzinfo=datetime.UTC)
                 except (ValueError, TypeError):
                     continue
 
-        return datetime.datetime.now(datetime.timezone.utc)
+        return datetime.datetime.now(datetime.UTC)
 
     def _check_trial_expired(self, trial_info: TrialInfo) -> bool:
         """Check if trial has expired."""
@@ -1311,7 +1311,7 @@ class TimeManipulator:
 
                 # Calculate frozen tick count (milliseconds since system start)
                 from datetime import timezone
-                tick_count = int((frozen_time - datetime.datetime(2025, 1, 1, tzinfo=timezone.utc)).total_seconds() * 1000)
+                tick_count = int((frozen_time - datetime.datetime(2025, 1, 1, tzinfo=datetime.UTC)).total_seconds() * 1000)
                 logger.debug(f"Frozen tick count: {tick_count}")
 
                 # Calculate performance counter

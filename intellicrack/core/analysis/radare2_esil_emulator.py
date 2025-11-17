@@ -24,11 +24,12 @@ import json
 import logging
 import struct
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable
+from typing import Any
 
 try:
     import r2pipe

@@ -24,7 +24,7 @@ import os
 import shutil
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -267,7 +267,7 @@ class ReportGenerationThread(QThread):
 
         content = f"""# Intellicrack Analysis Report
 
-Generated: {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")}
+Generated: {datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")}
 Report Type: {config.get("type", "Unknown")}
 Binary: {config.get("binary_path", "N/A")}
 
@@ -763,7 +763,7 @@ class ReportManagerDialog(BaseDialog):
                 try:
                     # Convert string date to date object if needed
                     if isinstance(report_date, str):
-                        report_date_obj = datetime.strptime(report_date, "%Y-%m-%d").replace(tzinfo=timezone.utc).date()
+                        report_date_obj = datetime.strptime(report_date, "%Y-%m-%d").replace(tzinfo=UTC).date()
                     else:
                         report_date_obj = report_date
 

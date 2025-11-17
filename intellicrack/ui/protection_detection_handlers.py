@@ -45,8 +45,13 @@ class ProtectionDetectionHandlers:
         """Initialize protection detection handlers."""
         self.binary_path = None
 
-    def update_status(self, message) -> None:
-        """Update status - should be overridden by parent class."""
+    def update_status(self, message: str) -> None:
+        """Update status - should be overridden by parent class.
+
+        Args:
+            message: Status message to log and update.
+
+        """
         logger.info(message)
 
     def run_commercial_protection_scan(self) -> None:

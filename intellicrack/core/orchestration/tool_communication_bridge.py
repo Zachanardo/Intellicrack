@@ -29,9 +29,10 @@ import threading
 import time
 import uuid
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 import msgpack
 import zmq
@@ -273,7 +274,7 @@ class ToolCommunicationBridge:
                 response = await asyncio.wait_for(future, timeout=timeout)
                 del self.pending_responses[msg_id]
                 return response
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning(f"Timeout waiting for response to {msg_id}")
                 del self.pending_responses[msg_id]
                 return None

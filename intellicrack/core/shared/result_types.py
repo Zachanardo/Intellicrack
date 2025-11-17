@@ -22,7 +22,20 @@ from typing import Any
 
 
 class AnalysisType(Enum):
-    """Types of analysis that can be performed."""
+    """Types of analysis that can be performed on binaries.
+
+    Enumeration of different analysis categories available for binary examination:
+    - STATIC: Static code analysis without execution
+    - DYNAMIC: Runtime behavior analysis and execution tracing
+    - ENTROPY: Shannon entropy and compression analysis
+    - STRUCTURE: Binary structure and PE/ELF format analysis
+    - VULNERABILITY: Vulnerability detection and exploitation analysis
+    - PATTERN: Signature and pattern matching analysis
+    - BINARY_INFO: Metadata and version information extraction
+    - MEMORY: Memory layout and section analysis
+    - NETWORK: Network protocol and communication analysis
+    - FIRMWARE: Firmware-specific analysis for embedded systems
+    """
 
     STATIC = "static"
     DYNAMIC = "dynamic"
@@ -38,17 +51,38 @@ class AnalysisType(Enum):
 
 @dataclass
 class AnalysisResult:
-    """Result of an analysis operation."""
+    """Result of an analysis operation.
+
+    Represents the output of a binary analysis operation with success status,
+    analysis type, data results, and optional error/warning information.
+
+    Attributes:
+        success: Whether analysis completed successfully.
+        analysis_type: Type of analysis performed (static, dynamic, etc.).
+        data: Dictionary containing analysis results and findings.
+        errors: List of error messages encountered during analysis.
+        warnings: List of warning messages from analysis.
+        metadata: Optional dictionary with analysis metadata and context.
+
+    """
 
     success: bool
     analysis_type: AnalysisType
     data: dict[str, Any]
-    errors: list[str] = None
-    warnings: list[str] = None
+    errors: list[str] | None = None
+    warnings: list[str] | None = None
     metadata: dict[str, Any] | None = None
 
-    def __post_init__(self):
-        """Initialize default values for mutable fields after dataclass creation."""
+    def __post_init__(self) -> None:
+        """Initialize default values for mutable fields after dataclass creation.
+
+        Converts None default values to empty lists for errors and warnings
+        to avoid mutable default issues in dataclasses.
+
+        Raises:
+            None: All operations complete successfully.
+
+        """
         if self.errors is None:
             self.errors = []
         if self.warnings is None:

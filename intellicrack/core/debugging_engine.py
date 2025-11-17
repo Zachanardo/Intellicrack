@@ -10,10 +10,11 @@ Licensed under GNU GPL v3.0
 import ctypes
 import struct
 import threading
+from collections.abc import Callable
 from ctypes import wintypes
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Any, Callable
+from typing import Any
 
 from ..utils.logger import get_logger
 

@@ -228,7 +228,7 @@ class BatchAnalysisWidget(QWidget):
     #: file_path for detailed analysis (type: str)
     analysis_requested = pyqtSignal(str)
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the batch analysis widget with UI components and analysis functionality."""
         super().__init__(parent)
         self.results: list[BatchAnalysisResult] = []

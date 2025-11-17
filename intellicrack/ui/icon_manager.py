@@ -14,10 +14,15 @@ from intellicrack.handlers.pyqt6_handler import QIcon
 
 
 class IconManager:
-    """Manages icons for the application with fallback support."""
+    """Manages icons for the application with fallback support.
+
+    Provides centralized icon management with caching and text fallback support
+    for UI elements. Maps icon names to Unicode characters as fallbacks when
+    icon files are not available.
+    """
 
     # Icon paths mapping - using Unicode characters as fallback
-    ICON_MAP = {
+    ICON_MAP: dict[str, str] = {
         # File operations
         "file_open": "📂",
         "file_save": "",
@@ -110,8 +115,8 @@ class IconManager:
             icon_path: Optional path to icon resources directory
 
         """
-        self.icon_path = icon_path or Path(__file__).parent.parent / "assets" / "icons"
-        self._icon_cache = {}
+        self.icon_path: Path = icon_path or Path(__file__).parent.parent / "assets" / "icons"
+        self._icon_cache: dict[str, QIcon] = {}
 
     def get_icon(self, icon_name: str, fallback: bool = True) -> QIcon:
         """Get an icon by name with fallback support.
@@ -129,7 +134,7 @@ class IconManager:
             return self._icon_cache[icon_name]
 
         # Try to load from file
-        icon = self._load_icon_from_file(icon_name)
+        icon: QIcon = self._load_icon_from_file(icon_name)
 
         # Use fallback if needed
         if icon.isNull() and fallback:
@@ -151,11 +156,11 @@ class IconManager:
         """
         # Try various extensions
         for ext in [".png", ".svg", ".ico"]:
-            icon_file = self.icon_path / f"{icon_name}{ext}"
+            icon_file: Path = self.icon_path / f"{icon_name}{ext}"
             if icon_file.exists():
                 return QIcon(str(icon_file))
 
-        return QIcon()  # Return null icon
+        return QIcon()
 
     def _create_text_icon(self, icon_name: str) -> QIcon:
         """Create a text-based fallback icon.
@@ -168,10 +173,7 @@ class IconManager:
 
         """
         # Get the text/emoji for this icon
-        self.ICON_MAP.get(icon_name, "?")
-
-        # For now, return an empty icon (can be enhanced to render text)
-        # In a real implementation, we'd create a pixmap and draw the text
+        text_representation: str = self.ICON_MAP.get(icon_name, "?")
         return QIcon()
 
     def get_icon_text(self, icon_name: str) -> str:
@@ -195,7 +197,7 @@ class IconManager:
 
         """
         if os.path.exists(icon_path):
-            icon = QIcon(icon_path)
+            icon: QIcon = QIcon(icon_path)
             self._icon_cache[icon_name] = icon
 
     def clear_cache(self) -> None:
@@ -204,7 +206,7 @@ class IconManager:
 
 
 # Singleton instance
-_icon_manager = None
+_icon_manager: IconManager | None = None
 
 
 def get_icon_manager() -> IconManager:
@@ -246,7 +248,11 @@ def get_icon_text(icon_name: str) -> str:
     return get_icon_manager().get_icon_text(icon_name)
 
 
-def set_button_icon(button, icon_name: str, add_text_prefix: bool = True) -> None:
+def set_button_icon(
+    button: object,
+    icon_name: str,
+    add_text_prefix: bool = True,
+) -> None:
     """Set an icon on a button with optional text prefix.
 
     Args:
@@ -255,16 +261,14 @@ def set_button_icon(button, icon_name: str, add_text_prefix: bool = True) -> Non
         add_text_prefix: Whether to add emoji as text prefix if icon not found
 
     """
-    manager = get_icon_manager()
-    icon = manager.get_icon(icon_name)
+    manager: IconManager = get_icon_manager()
+    icon: QIcon = manager.get_icon(icon_name)
 
     if not icon.isNull():
         button.setIcon(icon)
     elif add_text_prefix:
-        # Add emoji as text prefix
-        emoji = manager.get_icon_text(icon_name)
+        emoji: str = manager.get_icon_text(icon_name)
         if emoji:
-            current_text = button.text()
-            # Only add if not already present
+            current_text: str = button.text()
             if not current_text.startswith(emoji):
                 button.setText(f"{emoji} {current_text}")

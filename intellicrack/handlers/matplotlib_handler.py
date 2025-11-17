@@ -19,7 +19,8 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import traceback
 import types
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from collections.abc import Callable
+from typing import Any, Optional, Union
 
 from intellicrack.utils.logger import logger
 
@@ -126,7 +127,7 @@ try:
 
                 """
                 self.figure: object = figure
-                self._size_policy: Optional[Tuple[object, ...]] = None
+                self._size_policy: Optional[tuple[object, ...]] = None
 
             def draw(self) -> None:
                 """Draw the Qt canvas using fallback rendering."""
@@ -165,7 +166,7 @@ except ImportError as e:
 
         def __init__(
             self,
-            figsize: Tuple[float, float] = (8, 6),
+            figsize: tuple[float, float] = (8, 6),
             dpi: int = 100,
             facecolor: str = "white",
             edgecolor: str = "black",
@@ -179,11 +180,11 @@ except ImportError as e:
                 edgecolor: Edge color of the figure border.
 
             """
-            self.figsize: Tuple[float, float] = figsize
+            self.figsize: tuple[float, float] = figsize
             self.dpi: int = dpi
             self.facecolor: str = facecolor
             self.edgecolor: str = edgecolor
-            self.axes: List[Any] = []
+            self.axes: list[Any] = []
             self._suptitle: str = ""
             self._current_axes: Optional[Any] = None
             self._layout: str = "tight"
@@ -209,7 +210,7 @@ except ImportError as e:
             self._current_axes = ax
             return ax
 
-        def add_axes(self, rect: Tuple[float, float, float, float], **kwargs: object) -> "FallbackAxes":
+        def add_axes(self, rect: tuple[float, float, float, float], **kwargs: object) -> "FallbackAxes":
             """Add axes at the given position.
 
             Args:
@@ -269,7 +270,7 @@ except ImportError as e:
 
             """
             if not hasattr(self, "_subplot_params"):
-                self._subplot_params: Dict[str, float] = {}
+                self._subplot_params: dict[str, float] = {}
 
             if left is not None:
                 self._subplot_params["left"] = left
@@ -380,7 +381,7 @@ except ImportError as e:
                     import struct
                     import zlib
 
-                    def generate_png(width: int, height: int, pixels: Dict[Tuple[int, int], Tuple[int, int, int]]) -> bytes:
+                    def generate_png(width: int, height: int, pixels: dict[tuple[int, int], tuple[int, int, int]]) -> bytes:
                         """Generate complete PNG file from raw pixel data.
 
                         Args:
@@ -460,7 +461,7 @@ except ImportError as e:
                         f.write(png_bytes)
 
                 else:
-                    def generate_bmp(width: int, height: int, pixels: Dict[Tuple[int, int], Tuple[int, int, int]]) -> bytes:
+                    def generate_bmp(width: int, height: int, pixels: dict[tuple[int, int], tuple[int, int, int]]) -> bytes:
                         """Generate BMP file from pixel data.
 
                         Args:
@@ -523,7 +524,7 @@ except ImportError as e:
             self._current_axes = None
             self._suptitle = ""
 
-        def get_axes(self) -> List[Any]:
+        def get_axes(self) -> list[Any]:
             """Get all axes.
 
             Returns:
@@ -547,7 +548,7 @@ except ImportError as e:
         """Functional axes implementation for plotting."""
 
         def __init__(
-            self, figure: object, nrows: int = 1, ncols: int = 1, index: int = 1, rect: Optional[Tuple[float, float, float, float]] = None, **kwargs: object,
+            self, figure: object, nrows: int = 1, ncols: int = 1, index: int = 1, rect: Optional[tuple[float, float, float, float]] = None, **kwargs: object,
         ) -> None:
             """Initialize axes.
 
@@ -564,21 +565,21 @@ except ImportError as e:
             self.nrows: int = nrows
             self.ncols: int = ncols
             self.index: int = index
-            self.rect: Optional[Tuple[float, float, float, float]] = rect
+            self.rect: Optional[tuple[float, float, float, float]] = rect
 
-            self.lines: List[Dict[str, object]] = []
-            self.bars: List[Dict[str, object]] = []
-            self.patches: List[Dict[str, object]] = []
-            self.texts: List[Dict[str, object]] = []
-            self.images: List[Dict[str, object]] = []
-            self.scatter_data: List[Dict[str, object]] = []
+            self.lines: list[dict[str, object]] = []
+            self.bars: list[dict[str, object]] = []
+            self.patches: list[dict[str, object]] = []
+            self.texts: list[dict[str, object]] = []
+            self.images: list[dict[str, object]] = []
+            self.scatter_data: list[dict[str, object]] = []
 
             self.title: str = ""
             self.xlabel_text: str = ""
             self.ylabel_text: str = ""
-            self.xlim: Optional[Tuple[float, float]] = None
-            self.ylim: Optional[Tuple[float, float]] = None
-            self.legend_items: List[Tuple[str, str]] = []
+            self.xlim: Optional[tuple[float, float]] = None
+            self.ylim: Optional[tuple[float, float]] = None
+            self.legend_items: list[tuple[str, str]] = []
             self.grid_enabled: bool = False
 
         def plot(self, x: Optional[object] = None, y: Optional[object] = None, *args: object, **kwargs: object) -> None:
@@ -676,7 +677,7 @@ except ImportError as e:
 
             self._update_limits(x, height)
 
-        def hist(self, x: object, bins: int = 10, range: Optional[Tuple[float, float]] = None, density: bool = False, color: str = "blue", label: str = "", **kwargs: object) -> None:
+        def hist(self, x: object, bins: int = 10, range: Optional[tuple[float, float]] = None, density: bool = False, color: str = "blue", label: str = "", **kwargs: object) -> None:
             """Create histogram on the axes.
 
             Args:
@@ -757,7 +758,7 @@ except ImportError as e:
             """
             self.texts.append({"x": x, "y": y, "text": str(s), "fontsize": fontsize, "color": color, "ha": ha, "va": va})
 
-        def annotate(self, text: str, xy: Tuple[float, float], xytext: Optional[Tuple[float, float]] = None, arrowprops: Optional[Dict[str, object]] = None, **kwargs: object) -> None:
+        def annotate(self, text: str, xy: tuple[float, float], xytext: Optional[tuple[float, float]] = None, arrowprops: Optional[dict[str, object]] = None, **kwargs: object) -> None:
             """Add annotation with optional arrow to the axes.
 
             Args:
@@ -768,7 +769,7 @@ except ImportError as e:
                 **kwargs: Additional keyword arguments.
 
             """
-            annotation: Dict[str, object] = {"text": text, "xy": xy, "xytext": xytext or xy, "arrow": arrowprops is not None}
+            annotation: dict[str, object] = {"text": text, "xy": xy, "xytext": xytext or xy, "arrow": arrowprops is not None}
             self.texts.append(annotation)
 
         def set_title(self, title: str, fontsize: int = 14, **kwargs: object) -> None:
@@ -834,7 +835,7 @@ except ImportError as e:
             elif top is not None:
                 self.ylim = (self.ylim[0] if self.ylim else top - 1, top)
 
-        def legend(self, labels: Optional[List[str]] = None, loc: str = "best", **kwargs: object) -> None:
+        def legend(self, labels: Optional[list[str]] = None, loc: str = "best", **kwargs: object) -> None:
             """Add legend to axes.
 
             Args:
@@ -1110,7 +1111,7 @@ except ImportError as e:
                 *args: Size policy arguments.
 
             """
-            self._size_policy: Tuple[object, ...] = args
+            self._size_policy: tuple[object, ...] = args
             logger.debug("Qt canvas setSizePolicy called with: %s", args)
 
     class FallbackFigureCanvasTkAgg:
@@ -1149,7 +1150,7 @@ except ImportError as e:
                 **kwargs: Tkinter pack layout options.
 
             """
-            self._pack_params: Dict[str, object] = kwargs
+            self._pack_params: dict[str, object] = kwargs
             logger.debug("Tk canvas pack() called with: %s", kwargs)
 
         def grid(self, **kwargs: object) -> None:
@@ -1159,13 +1160,13 @@ except ImportError as e:
                 **kwargs: Tkinter grid layout options.
 
             """
-            self._grid_params: Dict[str, object] = kwargs
+            self._grid_params: dict[str, object] = kwargs
             logger.debug("Tk canvas grid() called with: %s", kwargs)
 
     class FallbackRectangle:
         """Rectangle patch implementation."""
 
-        def __init__(self, xy: Tuple[float, float], width: float, height: float, angle: float = 0.0, **kwargs: object) -> None:
+        def __init__(self, xy: tuple[float, float], width: float, height: float, angle: float = 0.0, **kwargs: object) -> None:
             """Initialize rectangle.
 
             Args:
@@ -1176,7 +1177,7 @@ except ImportError as e:
                 **kwargs: Additional properties like facecolor, edgecolor, linewidth, alpha.
 
             """
-            self.xy: Tuple[float, float] = xy
+            self.xy: tuple[float, float] = xy
             self.width: float = width
             self.height: float = height
             self.angle: float = angle
@@ -1188,7 +1189,7 @@ except ImportError as e:
     class FallbackCircle:
         """Circle patch implementation."""
 
-        def __init__(self, xy: Tuple[float, float], radius: float, **kwargs: object) -> None:
+        def __init__(self, xy: tuple[float, float], radius: float, **kwargs: object) -> None:
             """Initialize circle.
 
             Args:
@@ -1197,7 +1198,7 @@ except ImportError as e:
                 **kwargs: Additional properties like facecolor, edgecolor, linewidth, alpha.
 
             """
-            self.xy: Tuple[float, float] = xy
+            self.xy: tuple[float, float] = xy
             self.radius: float = radius
             self.facecolor: str = kwargs.get("facecolor", "blue")
             self.edgecolor: str = kwargs.get("edgecolor", "black")
@@ -1251,7 +1252,7 @@ except ImportError as e:
     class FallbackMaxNLocator:
         """Maximum number of ticks locator."""
 
-        def __init__(self, nbins: Optional[Union[int, str]] = None, steps: Optional[List[int]] = None, min_n_ticks: int = 2, prune: Optional[str] = None, **kwargs: object) -> None:
+        def __init__(self, nbins: Optional[Union[int, str]] = None, steps: Optional[list[int]] = None, min_n_ticks: int = 2, prune: Optional[str] = None, **kwargs: object) -> None:
             """Initialize locator.
 
             Args:
@@ -1263,7 +1264,7 @@ except ImportError as e:
 
             """
             self.nbins: Union[int, str] = nbins or "auto"
-            self.steps: Optional[List[int]] = steps
+            self.steps: Optional[list[int]] = steps
             self.min_n_ticks: int = min_n_ticks
             self.prune: Optional[str] = prune
             self.integer: bool = kwargs.get("integer", False)
@@ -1271,7 +1272,7 @@ except ImportError as e:
     class FallbackPdfPages:
         """Functional multi-page PDF writer for matplotlib figures."""
 
-        def __init__(self, filename: Union[str, object], keep_empty: bool = True, metadata: Optional[Dict[str, object]] = None) -> None:
+        def __init__(self, filename: Union[str, object], keep_empty: bool = True, metadata: Optional[dict[str, object]] = None) -> None:
             """Initialize PDF writer.
 
             Args:
@@ -1282,8 +1283,8 @@ except ImportError as e:
             """
             self.filename: Union[str, object] = filename
             self.keep_empty: bool = keep_empty
-            self.metadata: Dict[str, object] = metadata or {}
-            self.pages: List[Dict[str, object]] = []
+            self.metadata: dict[str, object] = metadata or {}
+            self.pages: list[dict[str, object]] = []
             self.closed: bool = False
 
         def __enter__(self) -> "FallbackPdfPages":
@@ -1327,7 +1328,7 @@ except ImportError as e:
             else:
                 pdf_stream = self._generate_basic_pdf_stream()
 
-            page_data: Dict[str, object] = {"figure": figure, "timestamp": self._get_timestamp(), "kwargs": kwargs, "pdf_stream": pdf_stream}
+            page_data: dict[str, object] = {"figure": figure, "timestamp": self._get_timestamp(), "kwargs": kwargs, "pdf_stream": pdf_stream}
             self.pages.append(page_data)
 
         def close(self) -> None:
@@ -1480,11 +1481,11 @@ startxref
 
         def __init__(self) -> None:
             """Initialize pyplot interface."""
-            self._figures: Dict[int, object] = {}
+            self._figures: dict[int, object] = {}
             self._current_figure: Optional[object] = None
             self._figure_counter: int = 0
 
-        def figure(self, num: Optional[int] = None, figsize: Tuple[float, float] = (8, 6), dpi: int = 100, **kwargs: object) -> object:
+        def figure(self, num: Optional[int] = None, figsize: tuple[float, float] = (8, 6), dpi: int = 100, **kwargs: object) -> object:
             """Create or activate a figure.
 
             Args:
@@ -1543,7 +1544,7 @@ startxref
             fig = self.gcf()
             return fig.add_subplot(nrows, ncols, index)
 
-        def subplots(self, nrows: int = 1, ncols: int = 1, figsize: Tuple[float, float] = (8, 6), **kwargs: object) -> Union[Tuple[object, object], Tuple[object, List[object]], Tuple[object, List[List[object]]]]:
+        def subplots(self, nrows: int = 1, ncols: int = 1, figsize: tuple[float, float] = (8, 6), **kwargs: object) -> Union[tuple[object, object], tuple[object, list[object]], tuple[object, list[list[object]]]]:
             """Create figure and subplots.
 
             Args:
@@ -1675,7 +1676,7 @@ startxref
             ax = self.gca()
             ax.set_ylabel(label, **kwargs)
 
-        def xlim(self, *args: object, **kwargs: object) -> Optional[Tuple[float, float]]:
+        def xlim(self, *args: object, **kwargs: object) -> Optional[tuple[float, float]]:
             """Set xlim of current axes.
 
             Args:
@@ -1691,7 +1692,7 @@ startxref
                 ax.set_xlim(*args, **kwargs)
             return ax.xlim
 
-        def ylim(self, *args: object, **kwargs: object) -> Optional[Tuple[float, float]]:
+        def ylim(self, *args: object, **kwargs: object) -> Optional[tuple[float, float]]:
             """Set ylim of current axes.
 
             Args:

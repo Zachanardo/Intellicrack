@@ -18,7 +18,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import json
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Optional
 
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,
@@ -105,9 +105,9 @@ class PluginCreationWizard(QWizard):
 
     def generate_code_from_template(
         self,
-        info: Dict[str, str],
-        template: Optional[Dict[str, Any]],
-        features: List[str],
+        info: dict[str, str],
+        template: Optional[dict[str, Any]],
+        features: list[str],
     ) -> str:
         """Generate plugin code from template.
 
@@ -128,9 +128,9 @@ class PluginCreationWizard(QWizard):
 
     def generate_python_code(
         self,
-        info: Dict[str, str],
-        template: Optional[Dict[str, Any]],
-        features: List[str],
+        info: dict[str, str],
+        template: Optional[dict[str, Any]],
+        features: list[str],
     ) -> str:
         """Generate Python plugin code.
 
@@ -155,7 +155,7 @@ Created: {datetime.now().strftime("%Y-%m-%d")}
 
 import os
 import sys
-from typing import Dict, Any, List
+from typing import Any
 
 class {info["name"].replace(" ", "")}Plugin:
     """Main plugin class for {info["name"]}"""
@@ -166,7 +166,7 @@ class {info["name"].replace(" ", "")}Plugin:
         self.description = "{info["description"]}"
         self.author = "{info["author"]}"
 
-    def get_metadata(self) -> Dict[str, Any]:
+    def get_metadata(self) -> dict[str, Any]:
         """Return plugin metadata"""
         return {{
             'name': self.name,
@@ -176,7 +176,7 @@ class {info["name"].replace(" ", "")}Plugin:
             'capabilities': {features}
         }}
 
-    def run(self, binary_path: str, options: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    def run(self, binary_path: str, options: dict[str, Any] | None = None) -> dict[str, Any]:
         """Run plugin execution method"""
         results = {{
             'status': 'success',
@@ -202,9 +202,9 @@ def get_plugin() -> Any:
 
     def generate_frida_code(
         self,
-        info: Dict[str, str],
-        template: Optional[Dict[str, Any]],
-        features: List[str],
+        info: dict[str, str],
+        template: Optional[dict[str, Any]],
+        features: list[str],
     ) -> str:
         """Generate Frida script code.
 
@@ -253,9 +253,9 @@ function hexdump(buffer, options) {{
 
     def generate_ghidra_code(
         self,
-        info: Dict[str, str],
-        template: Optional[Dict[str, Any]],
-        features: List[str],
+        info: dict[str, str],
+        template: Optional[dict[str, Any]],
+        features: list[str],
     ) -> str:
         """Generate Ghidra script code.
 
@@ -299,7 +299,7 @@ class {info["name"].replace(" ", "")}(GhidraScript):
 '''
         return code
 
-    def _generate_feature_code(self, features: List[str]) -> str:
+    def _generate_feature_code(self, features: list[str]) -> str:
         """Generate code snippets for selected features.
 
         Args:
@@ -309,7 +309,7 @@ class {info["name"].replace(" ", "")}(GhidraScript):
             Python code snippets for feature implementations.
 
         """
-        code_snippets: List[str] = []
+        code_snippets: list[str] = []
 
         if "binary_analysis" in features:
             code_snippets.append("""
@@ -333,7 +333,7 @@ class {info["name"].replace(" ", "")}(GhidraScript):
 
         return "\n".join(code_snippets)
 
-    def _generate_frida_feature_code(self, features: List[str]) -> str:
+    def _generate_frida_feature_code(self, features: list[str]) -> str:
         """Generate Frida code for features.
 
         Args:
@@ -343,7 +343,7 @@ class {info["name"].replace(" ", "")}(GhidraScript):
             Frida JavaScript code snippets for feature implementations.
 
         """
-        code_snippets: List[str] = []
+        code_snippets: list[str] = []
 
         if "function_hooking" in features:
             code_snippets.append("""
@@ -365,7 +365,7 @@ class {info["name"].replace(" ", "")}(GhidraScript):
 
         return "\n".join(code_snippets)
 
-    def _generate_ghidra_feature_code(self, features: List[str]) -> str:
+    def _generate_ghidra_feature_code(self, features: list[str]) -> str:
         """Generate Ghidra code for features.
 
         Args:
@@ -375,7 +375,7 @@ class {info["name"].replace(" ", "")}(GhidraScript):
             Ghidra Python code snippets for feature implementations.
 
         """
-        code_snippets: List[str] = []
+        code_snippets: list[str] = []
 
         if "function_analysis" in features:
             code_snippets.append("""
@@ -407,7 +407,7 @@ class {info["name"].replace(" ", "")}(GhidraScript):
             self.plugin_created.emit(plugin_data)
             super().accept()
 
-    def save_plugin(self, plugin_data: Dict[str, Any]) -> bool:
+    def save_plugin(self, plugin_data: dict[str, Any]) -> bool:
         """Save the plugin to disk.
 
         Args:
@@ -509,7 +509,7 @@ class PluginInfoPage(QWizardPage):
         self.registerField("pluginName*", self.name_edit)
         self.registerField("pluginAuthor*", self.author_edit)
 
-    def get_plugin_info(self) -> Dict[str, str]:
+    def get_plugin_info(self) -> dict[str, str]:
         """Get the plugin information.
 
         Returns:
@@ -568,7 +568,7 @@ class TemplateSelectionPage(QWizardPage):
             item.setData(Qt.UserRole, template)
             self.template_list.addItem(item)
 
-    def get_templates_for_type(self, plugin_type: str) -> List[Dict[str, Any]]:
+    def get_templates_for_type(self, plugin_type: str) -> list[dict[str, Any]]:
         """Get available templates for plugin type.
 
         Args:
@@ -644,7 +644,7 @@ class TemplateSelectionPage(QWizardPage):
             template = current.data(Qt.UserRole)
             self.description_label.setText(template["description"])
 
-    def get_selected_template(self) -> Optional[Dict[str, Any]]:
+    def get_selected_template(self) -> Optional[dict[str, Any]]:
         """Get the selected template.
 
         Returns:
@@ -668,7 +668,7 @@ class PluginFeaturesPage(QWizardPage):
 
         layout = QVBoxLayout()
 
-        self.feature_checks: Dict[str, QCheckBox] = {}
+        self.feature_checks: dict[str, QCheckBox] = {}
 
         features = [
             ("binary_analysis", "Binary structure analysis"),
@@ -702,14 +702,14 @@ class PluginFeaturesPage(QWizardPage):
 
         self.setLayout(layout)
 
-    def get_selected_features(self) -> List[str]:
+    def get_selected_features(self) -> list[str]:
         """Get list of selected features.
 
         Returns:
             List of selected feature identifiers.
 
         """
-        features: List[str] = []
+        features: list[str] = []
         for feature_id, checkbox in self.feature_checks.items():
             if checkbox.isChecked():
                 features.append(feature_id)
@@ -815,7 +815,7 @@ class SummaryPage(QWizardPage):
 
         self.setLayout(layout)
 
-    def update_summary(self, info: Dict[str, str], template: Optional[Dict[str, Any]], features: List[str], code: str) -> None:
+    def update_summary(self, info: dict[str, str], template: Optional[dict[str, Any]], features: list[str], code: str) -> None:
         """Update the summary display.
 
         Args:

@@ -24,6 +24,8 @@ from typing import Any
 
 logger = logging.getLogger("Intellicrack.HexView")
 
+__all__ = ["HighlightType", "HexHighlight", "HexHighlighter"]
+
 
 class HighlightType(Enum):
     """Enum for different highlight types."""
@@ -44,6 +46,8 @@ class HexHighlight:
     its position, appearance, and metadata.
     """
 
+    _id_counter: int = 0
+
     def __init__(
         self,
         start: int,
@@ -52,15 +56,35 @@ class HexHighlight:
         color: str = "#FFFF00",
         alpha: int = 128,
         priority: int = 0,
+        description: str = "",
+        metadata: dict[str, Any] | None = None,
     ) -> None:
-        """Initialize the HexHighlight with start, end, type, color, alpha, and priority."""
-        self.start = start
-        self.end = end
-        self.highlight_type = highlight_type
-        self.color = color
-        self.alpha = alpha
-        self.priority = priority
-        self.description = ""
+        """Initialize the HexHighlight with start, end, type, color, alpha, and priority.
+
+        Args:
+            start: Starting offset of the highlight region
+            end: Ending offset of the highlight region
+            highlight_type: Type of highlight (selection, search, bookmark, etc.)
+            color: Hex color code for the highlight (default: "#FFFF00")
+            alpha: Alpha transparency value from 0-255 (default: 128)
+            priority: Priority level for rendering (higher = more visible) (default: 0)
+            description: Human-readable description of the highlight (default: "")
+            metadata: Additional metadata dictionary for the highlight (default: None)
+
+        Raises:
+            ValueError: If color format is invalid, alpha is out of range, or range is invalid
+
+        """
+        self.id: int = HexHighlight._id_counter
+        HexHighlight._id_counter += 1
+        self.start: int = start
+        self.end: int = end
+        self.highlight_type: HighlightType = highlight_type
+        self.color: str = color
+        self.alpha: int = alpha
+        self.priority: int = priority
+        self.description: str = description
+        self.metadata: dict[str, Any] = metadata or {}
 
         # Validate color format
         if not color.startswith("#"):
@@ -175,8 +199,11 @@ class HexHighlighter:
         if start > end:
             start, end = end, start
 
+        # Convert alpha from 0.0-1.0 to 0-255
+        alpha_int = int(alpha * 255)
+
         # Create and add the highlight
-        highlight = HexHighlight(start, end, highlight_type, color, alpha, description, metadata)
+        highlight = HexHighlight(start, end, highlight_type, color, alpha_int, 0, description, metadata)
         self.highlights.append(highlight)
 
         logger.debug("Added highlight ID %s: %s-%s, type: %s", highlight.id, start, end, highlight_type.name)
@@ -280,7 +307,7 @@ class HexHighlighter:
 
         return sum(1 for h in self.highlights if h.highlight_type == highlight_type)
 
-    def update_highlight(self, highlight_id: int, **kwargs) -> bool:
+    def update_highlight(self, highlight_id: int, **kwargs: object) -> bool:
         """Update an existing highlight's properties.
 
         Args:

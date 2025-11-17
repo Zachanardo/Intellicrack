@@ -21,7 +21,8 @@ import json
 import os
 import re
 import types
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from collections.abc import Callable
+from typing import Any, Optional, Union
 
 from intellicrack.utils.logger import logger
 
@@ -104,7 +105,7 @@ except ImportError as e:
 
         """
 
-        def __init__(self, name: str, columns: List[Tuple[str, str, str]]) -> None:
+        def __init__(self, name: str, columns: list[tuple[str, str, str]]) -> None:
             """Initialize table.
 
             Args:
@@ -116,11 +117,11 @@ except ImportError as e:
 
             """
             self.name: str = name
-            self.columns: List[Tuple[str, str, str]] = columns
-            self.rows: List[Dict[str, Any]] = []
+            self.columns: list[tuple[str, str, str]] = columns
+            self.rows: list[dict[str, Any]] = []
             self.primary_key: Optional[str] = None
-            self.indexes: Dict[str, Any] = {}
-            self.constraints: List[Tuple[str, str]] = []
+            self.indexes: dict[str, Any] = {}
+            self.constraints: list[tuple[str, str]] = []
 
             # Parse columns for constraints
             for col_name, _col_type, constraints in columns:
@@ -131,7 +132,7 @@ except ImportError as e:
                 if "NOT NULL" in constraints:
                     self.constraints.append(("NOT NULL", col_name))
 
-        def insert(self, values: List[Any]) -> int:
+        def insert(self, values: list[Any]) -> int:
             """Insert row into table.
 
             Args:
@@ -192,11 +193,11 @@ except ImportError as e:
 
         def select(
             self,
-            columns: Optional[List[str]] = None,
-            where: Optional[Tuple[str, str, Any]] = None,
-            order_by: Optional[Tuple[str, str]] = None,
+            columns: Optional[list[str]] = None,
+            where: Optional[tuple[str, str, Any]] = None,
+            order_by: Optional[tuple[str, str]] = None,
             limit: Optional[int] = None,
-        ) -> List[Tuple[Any, ...]]:
+        ) -> list[tuple[Any, ...]]:
             """Select rows from table.
 
             Args:
@@ -240,8 +241,8 @@ except ImportError as e:
 
         def update(
             self,
-            set_values: Dict[str, Any],
-            where: Optional[Tuple[str, str, Any]] = None,
+            set_values: dict[str, Any],
+            where: Optional[tuple[str, str, Any]] = None,
         ) -> int:
             """Update rows in table.
 
@@ -265,7 +266,7 @@ except ImportError as e:
 
             return updated_count
 
-        def delete(self, where: Optional[Tuple[str, str, Any]] = None) -> int:
+        def delete(self, where: Optional[tuple[str, str, Any]] = None) -> int:
             """Delete rows from table.
 
             Args:
@@ -294,8 +295,8 @@ except ImportError as e:
 
         def _evaluate_where(
             self,
-            row: Dict[str, Any],
-            where: Tuple[str, str, Any],
+            row: dict[str, Any],
+            where: tuple[str, str, Any],
         ) -> bool:
             """Evaluate WHERE clause for a row.
 
@@ -378,16 +379,16 @@ except ImportError as e:
 
             """
             self.path: str = path
-            self.tables: Dict[str, FallbackTable] = {}
-            self.views: Dict[str, Any] = {}
-            self.transactions: List[Any] = []
+            self.tables: dict[str, FallbackTable] = {}
+            self.views: dict[str, Any] = {}
+            self.transactions: list[Any] = []
             self.in_transaction: bool = False
 
             # Load from file if not in-memory
             if path != ":memory:" and os.path.exists(path):
                 self._load_from_file()
 
-        def create_table(self, name: str, columns: List[Tuple[str, str, str]]) -> None:
+        def create_table(self, name: str, columns: list[tuple[str, str, str]]) -> None:
             """Create a new table.
 
             Args:
@@ -428,7 +429,7 @@ except ImportError as e:
 
             del self.tables[name]
 
-        def execute_sql(self, sql: str, params: Optional[List[Any]] = None) -> List[Tuple[Any, ...]] | None:
+        def execute_sql(self, sql: str, params: Optional[list[Any]] = None) -> list[tuple[Any, ...]] | None:
             """Execute SQL statement.
 
             Args:
@@ -533,7 +534,7 @@ except ImportError as e:
             table_name = match.group(1)
             self.drop_table(table_name)
 
-        def _execute_insert(self, sql: str, params: Optional[List[Any]]) -> None:
+        def _execute_insert(self, sql: str, params: Optional[list[Any]]) -> None:
             """Execute INSERT statement.
 
             Args:
@@ -585,7 +586,7 @@ except ImportError as e:
 
             self.tables[table_name].insert(values)
 
-        def _execute_select(self, sql: str, params: Optional[List[Any]]) -> List[Tuple[Any, ...]]:
+        def _execute_select(self, sql: str, params: Optional[list[Any]]) -> list[tuple[Any, ...]]:
             """Execute SELECT statement.
 
             Args:
@@ -670,7 +671,7 @@ except ImportError as e:
 
             return self.tables[table_name].select(columns, where, order_by, limit)
 
-        def _execute_update(self, sql: str, params: Optional[List[Any]]) -> int:
+        def _execute_update(self, sql: str, params: Optional[list[Any]]) -> int:
             """Execute UPDATE statement.
 
             Args:
@@ -728,7 +729,7 @@ except ImportError as e:
 
             return self.tables[table_name].update(set_values, where)
 
-        def _execute_delete(self, sql: str, params: Optional[List[Any]]) -> int:
+        def _execute_delete(self, sql: str, params: Optional[list[Any]]) -> int:
             """Execute DELETE statement.
 
             Args:
@@ -778,7 +779,7 @@ except ImportError as e:
             """
             if self.path != ":memory:":
                 try:
-                    tables_data: Dict[str, Dict[str, Any]] = {}
+                    tables_data: dict[str, dict[str, Any]] = {}
                     for name, table in self.tables.items():
                         tables_data[name] = {
                             "name": table.name,
@@ -789,7 +790,7 @@ except ImportError as e:
                             "constraints": table.constraints,
                         }
 
-                    serialized_data: Dict[str, Any] = {"tables": tables_data, "views": self.views}
+                    serialized_data: dict[str, Any] = {"tables": tables_data, "views": self.views}
 
                     with open(self.path, "w", encoding="utf-8") as f:
                         json.dump(serialized_data, f, indent=2)
@@ -849,14 +850,14 @@ except ImportError as e:
 
             """
             self.connection: Connection = connection
-            self.description: Optional[List[Tuple[str, ...]]] = None
+            self.description: Optional[list[tuple[str, ...]]] = None
             self.rowcount: int = -1
             self.lastrowid: Optional[int] = None
-            self._results: List[Tuple[Any, ...]] = []
+            self._results: list[tuple[Any, ...]] = []
             self._result_index: int = 0
 
         def execute(
-            self, sql: str, params: Optional[List[Any]] = None,
+            self, sql: str, params: Optional[list[Any]] = None,
         ) -> "Cursor":
             """Execute SQL statement.
 
@@ -892,7 +893,7 @@ except ImportError as e:
                 logger.error(error_msg)
                 raise DatabaseError(error_msg) from e
 
-        def executemany(self, sql: str, params_list: List[List[Any]]) -> "Cursor":
+        def executemany(self, sql: str, params_list: list[list[Any]]) -> "Cursor":
             """Execute SQL with multiple parameter sets.
 
             Args:
@@ -907,7 +908,7 @@ except ImportError as e:
                 self.execute(sql, params)
             return self
 
-        def fetchone(self) -> Optional[Tuple[Any, ...]]:
+        def fetchone(self) -> Optional[tuple[Any, ...]]:
             """Fetch one row.
 
             Args:
@@ -923,7 +924,7 @@ except ImportError as e:
                 return row
             return None
 
-        def fetchall(self) -> List[Tuple[Any, ...]]:
+        def fetchall(self) -> list[tuple[Any, ...]]:
             """Fetch all remaining rows.
 
             Args:
@@ -937,7 +938,7 @@ except ImportError as e:
             self._result_index = len(self._results)
             return rows
 
-        def fetchmany(self, size: Optional[int] = None) -> List[Tuple[Any, ...]]:
+        def fetchmany(self, size: Optional[int] = None) -> list[tuple[Any, ...]]:
             """Fetch multiple rows.
 
             Args:
@@ -950,7 +951,7 @@ except ImportError as e:
             if size is None:
                 size = 1
 
-            rows: List[Tuple[Any, ...]] = []
+            rows: list[tuple[Any, ...]] = []
             for _ in range(size):
                 row = self.fetchone()
                 if row is None:
@@ -1035,7 +1036,7 @@ except ImportError as e:
             """
             return Cursor(self)
 
-        def execute(self, sql: str, params: Optional[List[Any]] = None) -> Cursor:
+        def execute(self, sql: str, params: Optional[list[Any]] = None) -> Cursor:
             """Execute SQL directly.
 
             Args:
@@ -1049,7 +1050,7 @@ except ImportError as e:
             cursor = self.cursor()
             return cursor.execute(sql, params)
 
-        def executemany(self, sql: str, params_list: List[List[Any]]) -> Cursor:
+        def executemany(self, sql: str, params_list: list[list[Any]]) -> Cursor:
             """Execute SQL with multiple parameter sets.
 
             Args:
@@ -1147,7 +1148,7 @@ except ImportError as e:
 
         """
 
-        def __init__(self, cursor: Cursor, row: Tuple[Any, ...]) -> None:
+        def __init__(self, cursor: Cursor, row: tuple[Any, ...]) -> None:
             """Initialize row.
 
             Args:
@@ -1159,7 +1160,7 @@ except ImportError as e:
 
             """
             self.cursor: Cursor = cursor
-            self.row: Tuple[Any, ...] = row
+            self.row: tuple[Any, ...] = row
 
         def __getitem__(self, key: int | str) -> object:
             """Get item by index or column name.
@@ -1184,7 +1185,7 @@ except ImportError as e:
                 logger.error(error_msg)
                 raise KeyError(error_msg)
 
-        def keys(self) -> List[str]:
+        def keys(self) -> list[str]:
             """Get column names.
 
             Args:

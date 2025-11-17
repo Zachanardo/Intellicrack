@@ -26,8 +26,9 @@ import struct
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Protocol
+from typing import Any, Protocol
 
 from intellicrack.utils.subprocess_security import secure_run
 

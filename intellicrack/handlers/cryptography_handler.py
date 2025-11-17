@@ -22,7 +22,8 @@ import hashlib
 import hmac
 import os
 import struct
-from typing import Callable, Optional, Union
+from collections.abc import Callable
+from typing import Optional, Union
 
 from intellicrack.utils.logger import logger
 

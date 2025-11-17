@@ -138,7 +138,7 @@ _lazy_imports: dict[str, tuple[str, list[str]]] = {
 _lazy_loaded: dict[str, Any] = {}
 
 
-def __getattr__(name: str) -> Any:  # noqa: PLR0912
+def __getattr__(name: str) -> object:
     """Lazy load heavy analysis modules on demand."""
     if name in _lazy_loaded:
         return _lazy_loaded[name]

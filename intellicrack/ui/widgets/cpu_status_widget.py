@@ -53,20 +53,31 @@ class CPUMonitorWorker(QObject):
     def __init__(self) -> None:
         """Initialize CPU monitor worker with performance tracking capabilities."""
         super().__init__()
-        self.running = True
-        self.update_interval = 1000  # Default 1 second
+        self.running: bool = True
+        self.update_interval: int = 1000
 
     def start_monitoring(self) -> None:
-        """Start the monitoring process."""
+        """Start the monitoring process.
+
+        Initiates continuous CPU metrics collection and begins emitting
+        cpu_data_ready signals with collected metrics.
+        """
         self.running = True
         self._monitor_loop()
 
     def stop_monitoring(self) -> None:
-        """Stop the monitoring process."""
+        """Stop the monitoring process.
+
+        Halts continuous CPU metrics collection and stops signal emission.
+        """
         self.running = False
 
     def _monitor_loop(self) -> None:
-        """Run monitoring loop."""
+        """Run monitoring loop.
+
+        Continuously collects CPU data and emits signals at configured intervals.
+        Handles exceptions gracefully by emitting error_occurred signals.
+        """
         while self.running:
             try:
                 cpu_data = self._collect_cpu_data()
@@ -79,7 +90,14 @@ class CPUMonitorWorker(QObject):
                 self.thread().msleep(self.update_interval)
 
     def _collect_cpu_data(self) -> dict[str, Any]:
-        """Collect comprehensive CPU data."""
+        """Collect comprehensive CPU data.
+
+        Returns:
+            A dictionary containing CPU metrics including physical/logical core counts,
+            CPU percentages per core, frequency, CPU statistics, load average,
+            CPU time distribution, and top CPU-consuming processes.
+
+        """
         # Get CPU info
         cpu_info = {
             "cpu_count_physical": psutil.cpu_count(logical=False),
@@ -124,7 +142,15 @@ class CPUMonitorWorker(QObject):
         return cpu_info
 
     def _get_cpu_model(self) -> str:
-        """Get CPU model name."""
+        """Get CPU model name.
+
+        Retrieves the CPU model name from platform-specific sources.
+        Supports Windows (WMI), Linux (/proc/cpuinfo), and macOS (sysctl).
+
+        Returns:
+            The CPU model name string, or "Unknown CPU" if retrieval fails.
+
+        """
         try:
             if platform.system() == "Windows":
                 import wmi
@@ -152,20 +178,36 @@ class CPUMonitorWorker(QObject):
 
 
 class CPUStatusWidget(QWidget):
-    """CPU status monitoring widget."""
+    """CPU status monitoring widget for real-time system performance monitoring.
 
-    def __init__(self, parent=None) -> None:
-        """Initialize CPU status widget with performance monitoring and CPU detection."""
+    Displays comprehensive CPU metrics including per-core usage, frequency,
+    load average, CPU time distribution, and top CPU-consuming processes.
+    """
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialize CPU status widget with performance monitoring and CPU detection.
+
+        Args:
+            parent: Optional parent widget for Qt object hierarchy.
+
+        """
         super().__init__(parent)
         self.setMinimumWidth(250)
         self.setMinimumHeight(400)
-        self.core_bars = []  # Initialize core bars list
+        self.core_bars: list[tuple[QProgressBar, QLabel]] = []
+        self.cpu_data: dict[str, Any] = {}
+        self.monitor_thread: QThread | None = None
+        self.monitor_worker: CPUMonitorWorker | None = None
         self.setup_ui()
         self.setup_monitoring()
         self.start_monitoring()
 
     def setup_ui(self) -> None:
-        """Set up the user interface."""
+        """Set up the user interface.
+
+        Creates and configures all UI components including CPU information display,
+        usage bars for each core, CPU time distribution, and top processes table.
+        """
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -263,7 +305,11 @@ class CPUStatusWidget(QWidget):
         main_layout.addWidget(scroll_area)
 
     def setup_monitoring(self) -> None:
-        """Set up CPU monitoring thread."""
+        """Set up CPU monitoring thread.
+
+        Configures the monitoring worker thread and connects signals/slots
+        for data updates and error handling.
+        """
         self.monitor_thread = QThread()
         self.monitor_worker = CPUMonitorWorker()
         self.monitor_worker.moveToThread(self.monitor_thread)
@@ -274,24 +320,41 @@ class CPUStatusWidget(QWidget):
         self.monitor_worker.error_occurred.connect(self.handle_error)
 
     def start_monitoring(self) -> None:
-        """Start CPU monitoring."""
-        if not self.monitor_thread.isRunning():
+        """Start CPU monitoring.
+
+        Initiates the monitoring thread if not already running.
+        """
+        if self.monitor_thread and not self.monitor_thread.isRunning():
             self.monitor_thread.start()
 
     def stop_monitoring(self) -> None:
-        """Stop CPU monitoring."""
-        if self.monitor_thread.isRunning():
-            self.monitor_worker.stop_monitoring()
+        """Stop CPU monitoring.
+
+        Gracefully stops the monitoring worker and waits for thread cleanup.
+        """
+        if self.monitor_thread and self.monitor_thread.isRunning():
+            if self.monitor_worker:
+                self.monitor_worker.stop_monitoring()
             self.monitor_thread.quit()
             self.monitor_thread.wait()
 
     def set_refresh_interval(self, interval_ms: int) -> None:
-        """Set the refresh interval for CPU monitoring."""
-        if hasattr(self, "monitor_worker"):
+        """Set the refresh interval for CPU monitoring.
+
+        Args:
+            interval_ms: Refresh interval in milliseconds.
+
+        """
+        if self.monitor_worker:
             self.monitor_worker.update_interval = interval_ms
 
     def update_cpu_data(self, data: dict[str, Any]) -> None:
-        """Update CPU data from monitor."""
+        """Update CPU data from monitor.
+
+        Args:
+            data: Dictionary containing CPU metrics from the monitoring worker.
+
+        """
         self.cpu_data = data
 
         # Update CPU info
@@ -327,7 +390,12 @@ class CPUStatusWidget(QWidget):
         self.update_processes_table(data.get("top_processes", []))
 
     def update_core_usage(self, core_percents: list[float]) -> None:
-        """Update per-core CPU usage display."""
+        """Update per-core CPU usage display.
+
+        Args:
+            core_percents: List of CPU usage percentages for each core.
+
+        """
         # Create core bars if needed
         while len(self.core_bars) < len(core_percents):
             row = len(self.core_bars) // 2
@@ -353,7 +421,15 @@ class CPUStatusWidget(QWidget):
                 self._set_bar_color(bar, percent)
 
     def update_processes_table(self, processes: list[dict[str, Any]]) -> None:
-        """Update top processes table."""
+        """Update top processes table.
+
+        Updates the table with the top CPU-consuming processes, applying
+        color coding based on CPU usage thresholds.
+
+        Args:
+            processes: List of process dictionaries with pid, name, cpu_percent, and memory_percent.
+
+        """
         self.processes_table.setRowCount(len(processes))
 
         for i, proc in enumerate(processes):
@@ -370,7 +446,16 @@ class CPUStatusWidget(QWidget):
             self.processes_table.setItem(i, 3, QTableWidgetItem(f"{proc['memory_percent']:.1f}"))
 
     def _set_bar_color(self, bar: QProgressBar, value: float) -> None:
-        """Set progress bar color based on value."""
+        """Set progress bar color based on value.
+
+        Applies color coding to progress bars: red for >= 90%, yellow for >= 70%,
+        and green for lower values.
+
+        Args:
+            bar: The progress bar widget to color.
+            value: The percentage value used for color selection.
+
+        """
         if value >= 90:
             bar.setStyleSheet("QProgressBar::chunk { background-color: #dc3545; }")
         elif value >= 70:
@@ -379,5 +464,10 @@ class CPUStatusWidget(QWidget):
             bar.setStyleSheet("QProgressBar::chunk { background-color: #28a745; }")
 
     def handle_error(self, error_msg: str) -> None:
-        """Handle monitoring errors."""
-        print(f"CPU monitoring error: {error_msg}")
+        """Handle monitoring errors.
+
+        Args:
+            error_msg: Error message from the monitoring worker.
+
+        """
+        logger.error(f"CPU monitoring error: {error_msg}")

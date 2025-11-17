@@ -25,7 +25,8 @@ implementations for essential architectures used in Intellicrack.
 
 import struct
 import warnings
-from typing import Any, Callable, List, Optional, Union
+from collections.abc import Callable
+from typing import Any, Optional, Union
 
 from intellicrack.utils.logger import logger
 
@@ -155,13 +156,13 @@ except ImportError as e:
             self.op_str: str = op_str
             self.bytes: bytes = bytes_data
             self.id: int = 0
-            self.groups: List[int] = []
+            self.groups: list[int] = []
             self.reg_name: Callable[[int], str] = self._reg_name
             self.insn_name: Callable[[], str] = self._insn_name
             self.group: Callable[[int], bool] = self._group
-            self.regs_read: List[int] = []
-            self.regs_write: List[int] = []
-            self.operands: List[Any] = []
+            self.regs_read: list[int] = []
+            self.regs_write: list[int] = []
+            self.operands: list[Any] = []
 
         def _reg_name(self, reg_id: int) -> str:
             """Get register name.
@@ -246,7 +247,7 @@ except ImportError as e:
             self.is_32bit: bool = (mode & CS_MODE_32) != 0
             self.is_16bit: bool = (mode & CS_MODE_16) != 0
 
-        def disasm(self, code: bytes, offset: int) -> List[CsInsn]:
+        def disasm(self, code: bytes, offset: int) -> list[CsInsn]:
             """Disassemble x86 code.
 
             Args:
@@ -257,7 +258,7 @@ except ImportError as e:
                 List of decoded instructions.
 
             """
-            instructions: List[CsInsn] = []
+            instructions: list[CsInsn] = []
             idx: int = 0
 
             while idx < len(code):
@@ -506,7 +507,7 @@ except ImportError as e:
                 Decoded PUSH instruction.
 
             """
-            reg_names: List[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
+            reg_names: list[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
             if self.is_64bit:
                 reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
                 if rex and (rex & 0x01):
@@ -527,7 +528,7 @@ except ImportError as e:
                 Decoded POP instruction.
 
             """
-            reg_names: List[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
+            reg_names: list[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
             if self.is_64bit:
                 reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
                 if rex and (rex & 0x01):
@@ -553,7 +554,7 @@ except ImportError as e:
             reg: int = (modrm >> 3) & 0x07
             rm: int = modrm & 0x07
 
-            reg_names: List[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
+            reg_names: list[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
             if self.is_64bit:
                 reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
 
@@ -581,7 +582,7 @@ except ImportError as e:
             reg: int = (modrm >> 3) & 0x07
             rm: int = modrm & 0x07
 
-            reg_names: List[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
+            reg_names: list[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
             if self.is_64bit:
                 reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
 
@@ -605,7 +606,7 @@ except ImportError as e:
 
             """
             reg_idx: int = opcode - 0xB8
-            reg_names: List[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
+            reg_names: list[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
 
             if self.is_64bit:
                 if rex and (rex & 0x08):
@@ -651,7 +652,7 @@ except ImportError as e:
             reg: int = (modrm >> 3) & 0x07
             rm: int = modrm & 0x07
 
-            reg_names: List[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
+            reg_names: list[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
             if self.is_64bit:
                 reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
 
@@ -728,7 +729,7 @@ except ImportError as e:
             self.is_thumb: bool = (mode & CS_MODE_THUMB) != 0
             self.is_big_endian: bool = (mode & CS_MODE_BIG_ENDIAN) != 0
 
-        def disasm(self, code: bytes, offset: int) -> List[CsInsn]:
+        def disasm(self, code: bytes, offset: int) -> list[CsInsn]:
             """Disassemble ARM code.
 
             Args:
@@ -739,7 +740,7 @@ except ImportError as e:
                 List of decoded instructions.
 
             """
-            instructions: List[CsInsn] = []
+            instructions: list[CsInsn] = []
             idx: int = 0
 
             if self.is_thumb:
@@ -904,7 +905,7 @@ except ImportError as e:
             else:
                 self._disasm_impl = None
 
-        def disasm(self, code: Union[bytes, str], offset: int, count: int = 0) -> List[CsInsn]:
+        def disasm(self, code: Union[bytes, str], offset: int, count: int = 0) -> list[CsInsn]:
             """Disassemble code.
 
             Args:
@@ -925,7 +926,7 @@ except ImportError as e:
             elif not isinstance(code, bytes):
                 code = bytes(code)
 
-            instructions: List[CsInsn] = self._disasm_impl.disasm(code, offset)
+            instructions: list[CsInsn] = self._disasm_impl.disasm(code, offset)
 
             if count > 0:
                 instructions = instructions[:count]
@@ -971,7 +972,7 @@ except ImportError as e:
                     self.mode: int = arm64_mode
                     self.is_big_endian: bool = (arm64_mode & CS_MODE_BIG_ENDIAN) != 0
 
-                def disasm(self, code: bytes, offset: int) -> List[CsInsn]:
+                def disasm(self, code: bytes, offset: int) -> list[CsInsn]:
                     """Disassemble ARM64 code.
 
                     Args:
@@ -982,7 +983,7 @@ except ImportError as e:
                         List of decoded instructions.
 
                     """
-                    instructions: List[CsInsn] = []
+                    instructions: list[CsInsn] = []
                     idx: int = 0
 
                     while idx < len(code) - 3:
@@ -1023,7 +1024,7 @@ except ImportError as e:
 
             return ARM64Disassembler(mode)
 
-    def cs_disasm_quick(arch: int, mode: int, code: Union[bytes, str], offset: int, count: int = 0) -> List[CsInsn]:
+    def cs_disasm_quick(arch: int, mode: int, code: Union[bytes, str], offset: int, count: int = 0) -> list[CsInsn]:
         """Quick disassembly function.
 
         Args:
@@ -1114,7 +1115,7 @@ except ImportError as e:
         CsInsn: type = CsInsn
         CsError: type = CsError
 
-        cs_disasm_quick: Callable[[int, int, Union[bytes, str], int, int], List[CsInsn]] = staticmethod(cs_disasm_quick)
+        cs_disasm_quick: Callable[[int, int, Union[bytes, str], int, int], list[CsInsn]] = staticmethod(cs_disasm_quick)
         cs_version: Callable[[], tuple[int, int, int]] = staticmethod(cs_version)
         version_bind: Callable[[], tuple[int, int, int]] = staticmethod(version_bind)
         debug: Callable[[], None] = staticmethod(debug)

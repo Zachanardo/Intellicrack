@@ -19,7 +19,8 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import os
 from abc import ABC, abstractmethod
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from intellicrack.utils.logger import log_all_methods, logger
 

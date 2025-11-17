@@ -29,7 +29,7 @@ import platform
 import threading
 import time
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import TypedDict
@@ -156,7 +156,7 @@ class AuditEvent:
 
         """
         self.event_id = self._generate_event_id()
-        self.timestamp = datetime.now(timezone.utc)
+        self.timestamp = datetime.now(UTC)
         self.event_type = event_type
         self.severity = severity
         self.description = description

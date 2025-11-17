@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <intellicrack_scan_results>
   <summary>
-    <total_issues>789</total_issues>
+    <total_issues>714</total_issues>
     <total_languages>3</total_languages>
-    <critical>464</critical>
-    <high>156</high>
-    <medium>169</medium>
+    <critical>419</critical>
+    <high>141</high>
+    <medium>154</medium>
     <low>0</low>
   </summary>
   <languages>
@@ -34,11 +34,11 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\intellicrack\ai\interactive_assistant.py" issue_count="3">
+      <file path="D:\Intellicrack\intellicrack\ai\interactive_assistant.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_detect_protections</function_name>
-          <line>614</line>
+          <line>615</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>295</confidence>
@@ -68,39 +68,8 @@
         </issue>
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>_apply_patch</function_name>
-          <line>659</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>77</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>6 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher without backup capability (destructive without safety)
-            </item>
-            <item points="+50">
-              Patcher without loops (single-target/single-patch only)
-            </item>
-            <item points="+80">
-              Patcher sophistication: 15% (DANGEROUS - will break on updates)
-            </item>
-            <item points="-180">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
-        </issue>
-        <issue id="3" completed="false">
-          <checkbox>[ ]</checkbox>
           <function_name>_suggest_patches</function_name>
-          <line>634</line>
+          <line>635</line>
           <column>5</column>
           <severity>MEDIUM</severity>
           <confidence>70</confidence>
@@ -189,37 +158,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\intellicrack\ai\script_generation_prompts.py" issue_count="1">
-        <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_build_patching_objectives</function_name>
-          <line>376</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>275</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher without backup capability (destructive without safety)
-            </item>
-            <item points="+80">
-              Patcher sophistication: 35% (DANGEROUS - will break on updates)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
-        </issue>
-      </file>
-      <file path="D:\Intellicrack\intellicrack\ai\vulnerability_research_integration.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\ai\vulnerability_research_integration.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_analyze_protection_trends</function_name>
@@ -238,28 +177,6 @@
             </item>
             <item points="+40">
               Analysis/processing function without loops or conditionals (incomplete)
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_bypass_steps</function_name>
-          <line>588</line>
-          <column>5</column>
-          <severity>MEDIUM</severity>
-          <confidence>65</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+40">
-              Keygen without crypto/random operations (likely trivial)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -428,30 +345,8 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\intellicrack\core\analysis\automated_patch_agent.py" issue_count="5">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\automated_patch_agent.py" issue_count="3">
         <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_create_memory_patches</function_name>
-          <line>144</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>130</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+65">
-              Patch/hook function &apos;_create_memory_patches&apos; contains template addresses without binary analysis
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+30">
-              Patcher/modifier with no local variables (incomplete)
-            </item>
-          </evidence>
-          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_find_patch_points</function_name>
           <line>200</line>
@@ -470,26 +365,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="3" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_create_hook_detours</function_name>
-          <line>124</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>100</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>2 production issues detected</description>
-          <evidence>
-            <item points="+65">
-              Patch/hook function &apos;_create_hook_detours&apos; contains template addresses without binary analysis
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="4" completed="false">
+        <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>run_automated_patch_agent</function_name>
           <line>406</line>
@@ -517,7 +393,7 @@
           </evidence>
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
-        <issue id="5" completed="false">
+        <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>generate_keygen</function_name>
           <line>267</line>
@@ -540,47 +416,11 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\intellicrack\core\analysis\commercial_license_analyzer.py" issue_count="1">
-        <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_hasp_decrypt_patch</function_name>
-          <line>1003</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>195</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>7 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Domain function &apos;_generate_hasp_decrypt_patch&apos; is ≤3 LOC with no logic (likely incomplete)
-            </item>
-            <item points="+45">
-              Generator/creator function with no local variables (no state/computation)
-            </item>
-            <item points="+50">
-              Patcher function with no loops and no file I/O (incomplete)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+30">
-              Very short domain-specific function (≤3 LOC - likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-            <item points="-50">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
-        </issue>
-      </file>
       <file path="D:\Intellicrack\intellicrack\core\analysis\concolic_executor.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>add_hook</function_name>
-          <line>225</line>
+          <line>228</line>
           <column>13</column>
           <severity>HIGH</severity>
           <confidence>75</confidence>
@@ -652,7 +492,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\intellicrack\core\analysis\control_flow_deobfuscation.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\control_flow_deobfuscation.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_detect_dispatchers</function_name>
@@ -715,77 +555,6 @@
           </evidence>
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
-        <issue id="3" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_classify_dispatcher_type</function_name>
-          <line>623</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>285</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher without backup capability (destructive without safety)
-            </item>
-            <item points="+80">
-              Patcher sophistication: 35% (DANGEROUS - will break on updates)
-            </item>
-          </evidence>
-          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
-        </issue>
-        <issue id="4" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_patch_information</function_name>
-          <line>1120</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>135</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher sophistication: 50% (FRAGILE - limited reliability)
-            </item>
-            <item points="-70">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
-        </issue>
-      </file>
-      <file path="D:\Intellicrack\intellicrack\core\analysis\frida_protection_bypass.py" issue_count="1">
-        <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>generate_bypass_report</function_name>
-          <line>1468</line>
-          <column>5</column>
-          <severity>MEDIUM</severity>
-          <confidence>55</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>2 production issues detected</description>
-          <evidence>
-            <item points="+40">
-              Keygen without crypto/random operations (likely trivial)
-            </item>
-            <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
       </file>
       <file path="D:\Intellicrack\intellicrack\core\analysis\ghidra_binary_integration.py" issue_count="1">
         <issue id="1" completed="false">
@@ -847,36 +616,8 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\intellicrack\core\analysis\radare2_advanced_patcher.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\radare2_advanced_patcher.py" issue_count="1">
         <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_c_patcher</function_name>
-          <line>1239</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>350</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher without backup capability (destructive without safety)
-            </item>
-            <item points="+65">
-              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
-            </item>
-            <item points="+80">
-              Patcher sophistication: 20% (DANGEROUS - will break on updates)
-            </item>
-          </evidence>
-          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>generate_patch_script</function_name>
           <line>1180</line>
@@ -948,39 +689,8 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\intellicrack\core\analysis\radare2_bypass_generator.py" issue_count="20">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\radare2_bypass_generator.py" issue_count="4">
         <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_hash_based_keygen</function_name>
-          <line>691</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>310</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>6 production issues detected</description>
-          <evidence>
-            <item points="+90">
-              CRITICAL: Keygen lacks cryptographic operations (insufficient for production)
-            </item>
-            <item points="+75">
-              CRITICAL: Keygen without loops or conditionals (linear execution only)
-            </item>
-            <item points="+50">
-              Keygen with trivial complexity (insufficient for production)
-            </item>
-            <item points="+70">
-              Keygen sophistication score: 16% (INSUFFICIENT)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_is_already_patched</function_name>
           <line>3775</line>
@@ -1008,63 +718,7 @@
           </evidence>
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
-        <issue id="3" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_hash_keygen_code</function_name>
-          <line>720</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>190</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+90">
-              CRITICAL: Keygen lacks cryptographic operations (insufficient for production)
-            </item>
-            <item points="+40">
-              Keygen missing loops OR conditionals (limited sophistication)
-            </item>
-            <item points="+70">
-              Keygen sophistication score: 26% (INSUFFICIENT)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="4" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_direct_patch_implementation</function_name>
-          <line>1477</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>160</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>6 production issues detected</description>
-          <evidence>
-            <item points="+40">
-              Keygen without crypto/random operations (likely trivial)
-            </item>
-            <item points="+45">
-              Patcher without binary file manipulation
-            </item>
-            <item points="+15">
-              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="5" completed="false">
+        <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_detect_license_format</function_name>
           <line>2125</line>
@@ -1089,328 +743,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="6" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_memory_patches</function_name>
-          <line>1330</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>135</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher sophistication: 50% (FRAGILE - limited reliability)
-            </item>
-            <item points="-70">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
-        </issue>
-        <issue id="7" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_generic_keygen</function_name>
-          <line>944</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>115</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+40">
-              Keygen without crypto/random operations (likely trivial)
-            </item>
-            <item points="+15">
-              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="8" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_crypto_bypass_implementation</function_name>
-          <line>1487</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>115</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+40">
-              Keygen without crypto/random operations (likely trivial)
-            </item>
-            <item points="+15">
-              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="9" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_time_bypass_implementation</function_name>
-          <line>1679</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>115</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+40">
-              Keygen without crypto/random operations (likely trivial)
-            </item>
-            <item points="+15">
-              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="10" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_stack_patch</function_name>
-          <line>3401</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>100</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>6 production issues detected</description>
-          <evidence>
-            <item points="+40">
-              Keygen without crypto/random operations (likely trivial)
-            </item>
-            <item points="+45">
-              Patcher without binary file manipulation
-            </item>
-            <item points="+15">
-              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-            <item points="-70">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="11" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_flow_redirect_patch</function_name>
-          <line>3415</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>100</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>6 production issues detected</description>
-          <evidence>
-            <item points="+40">
-              Keygen without crypto/random operations (likely trivial)
-            </item>
-            <item points="+45">
-              Patcher without binary file manipulation
-            </item>
-            <item points="+15">
-              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-            <item points="-70">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="12" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_memory_override_patch</function_name>
-          <line>3429</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>100</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>6 production issues detected</description>
-          <evidence>
-            <item points="+40">
-              Keygen without crypto/random operations (likely trivial)
-            </item>
-            <item points="+45">
-              Patcher without binary file manipulation
-            </item>
-            <item points="+15">
-              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-            <item points="-70">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="13" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_return_injection_patch</function_name>
-          <line>3443</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>100</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>6 production issues detected</description>
-          <evidence>
-            <item points="+40">
-              Keygen without crypto/random operations (likely trivial)
-            </item>
-            <item points="+45">
-              Patcher without binary file manipulation
-            </item>
-            <item points="+15">
-              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-            <item points="-70">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="14" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_license_value</function_name>
-          <line>1853</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>80</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>Function &apos;_generate_license_value&apos; contains obvious template hex values (0xDEADBEEF, 0xCAFEBABE)</description>
-          <evidence>
-            <item points="+80">
-              Function &apos;_generate_license_value&apos; contains obvious template hex values (0xDEADBEEF, 0xCAFEBABE)
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="15" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_patch_instruction</function_name>
-          <line>2827</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>75</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Patcher function with no loops and no file I/O (incomplete)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="16" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_patch_bytes_for_method</function_name>
-          <line>2852</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>75</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Patcher function with no loops and no file I/O (incomplete)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="17" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_automated_patches</function_name>
-          <line>498</line>
-          <column>5</column>
-          <severity>MEDIUM</severity>
-          <confidence>72</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher without backup capability (destructive without safety)
-            </item>
-            <item points="+80">
-              Patcher sophistication: 35% (DANGEROUS - will break on updates)
-            </item>
-            <item points="-140">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
-        </issue>
-        <issue id="18" completed="false">
+        <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_recommend_bypass_approach</function_name>
           <line>1463</line>
@@ -1435,7 +768,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="19" completed="false">
+        <issue id="4" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>generate_license_bypass</function_name>
           <line>3784</line>
@@ -1450,28 +783,6 @@
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="20" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_aes_keygen</function_name>
-          <line>877</line>
-          <column>5</column>
-          <severity>MEDIUM</severity>
-          <confidence>60</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
             </item>
             <item points="-10">
               Deductions for production patterns
@@ -1845,36 +1156,8 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\intellicrack\core\analysis\radare2_vulnerability_engine.py" issue_count="3">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\radare2_vulnerability_engine.py" issue_count="1">
         <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_license_patches</function_name>
-          <line>1398</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>245</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher without backup capability (destructive without safety)
-            </item>
-            <item points="+50">
-              Patcher sophistication: 45% (FRAGILE - limited reliability)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_analyze_license_bypass_methods</function_name>
           <line>1376</line>
@@ -1892,34 +1175,6 @@
             </item>
             <item points="+70">
               Analyzer sophistication: 35% (WEAK - misses most protections)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="3" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_format_string_patch</function_name>
-          <line>1712</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>145</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+40">
-              Keygen without crypto/random operations (likely trivial)
-            </item>
-            <item points="+45">
-              Patcher without binary file manipulation
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
             </item>
             <item points="-10">
               Deductions for production patterns
@@ -1996,27 +1251,6 @@
             </item>
             <item points="+70">
               Analyzer sophistication: 35% (WEAK - misses most protections)
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-      </file>
-      <file path="D:\Intellicrack\intellicrack\core\analysis\vmprotect_detector.py" issue_count="1">
-        <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_bypass_recommendations</function_name>
-          <line>778</line>
-          <column>5</column>
-          <severity>MEDIUM</severity>
-          <confidence>70</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>2 production issues detected</description>
-          <evidence>
-            <item points="+40">
-              Keygen without crypto/random operations (likely trivial)
-            </item>
-            <item points="+30">
-              &apos;Simple&apos; implementation confirmed: no iteration logic
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -2562,7 +1796,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_detect_protection_signatures</function_name>
-          <line>1276</line>
+          <line>1277</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>105</confidence>
@@ -2586,7 +1820,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>hook_mem_write</function_name>
-          <line>2789</line>
+          <line>2790</line>
           <column>13</column>
           <severity>CRITICAL</severity>
           <confidence>165</confidence>
@@ -2643,7 +1877,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_validate_rsa_key</function_name>
-          <line>1108</line>
+          <line>1109</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>215</confidence>
@@ -2674,7 +1908,7 @@
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_verify_key</function_name>
-          <line>639</line>
+          <line>640</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>185</confidence>
@@ -2699,7 +1933,7 @@
         <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_validate_pattern_key</function_name>
-          <line>1114</line>
+          <line>1115</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>185</confidence>
@@ -2724,7 +1958,7 @@
         <issue id="4" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>generate_keygen</function_name>
-          <line>1004</line>
+          <line>1005</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>100</confidence>
@@ -2746,7 +1980,7 @@
         <issue id="5" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_validate_checksum_key</function_name>
-          <line>1090</line>
+          <line>1091</line>
           <column>5</column>
           <severity>HIGH</severity>
           <confidence>75</confidence>
@@ -2766,7 +2000,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\intellicrack\core\hardware_spoofer.py" issue_count="9">
+      <file path="D:\Intellicrack\intellicrack\core\hardware_spoofer.py" issue_count="5">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_patch_memory_value</function_name>
@@ -2825,68 +2059,6 @@
         </issue>
         <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>_generate_bios_serial</function_name>
-          <line>395</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>145</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>6 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Domain function &apos;_generate_bios_serial&apos; is ≤3 LOC with no logic (likely incomplete)
-            </item>
-            <item points="+45">
-              Generator/creator function with no local variables (no state/computation)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+30">
-              Very short domain-specific function (≤3 LOC - likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-            <item points="-50">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="4" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_volume_serial</function_name>
-          <line>449</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>145</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>6 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Domain function &apos;_generate_volume_serial&apos; is ≤3 LOC with no logic (likely incomplete)
-            </item>
-            <item points="+45">
-              Generator/creator function with no local variables (no state/computation)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+30">
-              Very short domain-specific function (≤3 LOC - likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-            <item points="-50">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="5" completed="false">
-          <checkbox>[ ]</checkbox>
           <function_name>_patch_smbios_tables</function_name>
           <line>1933</line>
           <column>5</column>
@@ -2916,60 +2088,7 @@
           </evidence>
           <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
         </issue>
-        <issue id="6" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_ram_serials</function_name>
-          <line>496</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>95</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+45">
-              Generator/creator function with no local variables (no state/computation)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+30">
-              Very short domain-specific function (≤3 LOC - likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-            <item points="-50">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="7" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_mb_serial</function_name>
-          <line>385</line>
-          <column>5</column>
-          <severity>MEDIUM</severity>
-          <confidence>65</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Domain function &apos;_generate_mb_serial&apos; is ≤3 LOC with no logic (likely incomplete)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+30">
-              Very short domain-specific function (≤3 LOC - likely incomplete)
-            </item>
-            <item points="-50">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="8" completed="false">
+        <issue id="4" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_install_deviceiocontrol_hooks</function_name>
           <line>1042</line>
@@ -2994,7 +2113,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="9" completed="false">
+        <issue id="5" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_remove_hooks</function_name>
           <line>2116</line>
@@ -3024,7 +2143,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>crc32_validate</function_name>
-          <line>708</line>
+          <line>709</line>
           <column>9</column>
           <severity>CRITICAL</severity>
           <confidence>185</confidence>
@@ -3052,7 +2171,7 @@
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>hash_validate</function_name>
-          <line>729</line>
+          <line>730</line>
           <column>9</column>
           <severity>CRITICAL</severity>
           <confidence>165</confidence>
@@ -3080,7 +2199,7 @@
         <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>reverse_engineer_keygen</function_name>
-          <line>1160</line>
+          <line>1161</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>150</confidence>
@@ -3108,7 +2227,7 @@
         <issue id="4" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>multiplicative_validate</function_name>
-          <line>742</line>
+          <line>743</line>
           <column>9</column>
           <severity>MEDIUM</severity>
           <confidence>70</confidence>
@@ -3127,7 +2246,7 @@
         <issue id="5" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_find_patch_points</function_name>
-          <line>418</line>
+          <line>419</line>
           <column>5</column>
           <severity>MEDIUM</severity>
           <confidence>65</confidence>
@@ -3150,63 +2269,11 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\intellicrack\core\network\cloud_license_hooker.py" issue_count="2">
-        <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_install_socket_hooks</function_name>
-          <line>460</line>
-          <column>5</column>
-          <severity>MEDIUM</severity>
-          <confidence>65</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Domain function &apos;_install_socket_hooks&apos; is ≤3 LOC with no logic (likely incomplete)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+30">
-              Very short domain-specific function (≤3 LOC - likely incomplete)
-            </item>
-            <item points="-50">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_remove_socket_hooks</function_name>
-          <line>465</line>
-          <column>5</column>
-          <severity>MEDIUM</severity>
-          <confidence>65</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Domain function &apos;_remove_socket_hooks&apos; is ≤3 LOC with no logic (likely incomplete)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+30">
-              Very short domain-specific function (≤3 LOC - likely incomplete)
-            </item>
-            <item points="-50">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-      </file>
-      <file path="D:\Intellicrack\intellicrack\core\offline_activation_emulator.py" issue_count="8">
+      <file path="D:\Intellicrack\intellicrack\core\offline_activation_emulator.py" issue_count="3">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_detect_activation_algorithm</function_name>
-          <line>528</line>
+          <line>605</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>220</confidence>
@@ -3233,86 +2300,8 @@
         </issue>
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>_generate_network_bypass_data</function_name>
-          <line>1157</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>140</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+40">
-              Keygen without crypto/random operations (likely trivial)
-            </item>
-            <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="3" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_matlab_license</function_name>
-          <line>729</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>105</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+40">
-              Keygen without crypto/random operations (likely trivial)
-            </item>
-            <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="4" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_license_key</function_name>
-          <line>1431</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>105</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+40">
-              Keygen without crypto/random operations (likely trivial)
-            </item>
-            <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="5" completed="false">
-          <checkbox>[ ]</checkbox>
           <function_name>_generate_license_files</function_name>
-          <line>1117</line>
+          <line>1221</line>
           <column>5</column>
           <severity>HIGH</severity>
           <confidence>95</confidence>
@@ -3337,32 +2326,10 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="6" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_date_bypass_data</function_name>
-          <line>1145</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>90</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+40">
-              Keygen without crypto/random operations (likely trivial)
-            </item>
-            <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="7" completed="false">
+        <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_generate_adobe_license</function_name>
-          <line>615</line>
+          <line>719</line>
           <column>5</column>
           <severity>MEDIUM</severity>
           <confidence>70</confidence>
@@ -3380,28 +2347,6 @@
             </item>
             <item points="-10">
               Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="8" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_activation_code</function_name>
-          <line>1448</line>
-          <column>5</column>
-          <severity>MEDIUM</severity>
-          <confidence>65</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -3456,7 +2401,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>coordinate_patch_operation</function_name>
-          <line>445</line>
+          <line>446</line>
           <column>5</column>
           <severity>HIGH</severity>
           <confidence>82</confidence>
@@ -3482,39 +2427,8 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\intellicrack\core\patching\license_check_remover.py" issue_count="3">
+      <file path="D:\Intellicrack\intellicrack\core\patching\license_check_remover.py" issue_count="2">
         <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_patch</function_name>
-          <line>1799</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>325</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>6 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher without backup capability (destructive without safety)
-            </item>
-            <item points="+50">
-              Patcher without loops (single-target/single-patch only)
-            </item>
-            <item points="+80">
-              Patcher sophistication: 25% (DANGEROUS - will break on updates)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>select_optimal_patch_points</function_name>
           <line>1161</line>
@@ -3542,7 +2456,7 @@
           </evidence>
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
-        <issue id="3" completed="false">
+        <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_get_patch_strategy</function_name>
           <line>1933</line>
@@ -3984,10 +2898,10 @@
               Function name implies file I/O but no file operations detected
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -4025,10 +2939,10 @@
           <description>3 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -4050,10 +2964,10 @@
               Function name implies file I/O but no file operations detected
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="-10">
               Deductions for production patterns
@@ -4062,73 +2976,11 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\intellicrack\core\protection_bypass\hardware_id_spoofer.py" issue_count="3">
+      <file path="D:\Intellicrack\intellicrack\core\protection_bypass\hardware_id_spoofer.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>_generate_random_disk_serial</function_name>
-          <line>862</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>160</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>6 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Function has no meaningful content (≤1 line)
-            </item>
-            <item points="+60">
-              Domain function &apos;_generate_random_disk_serial&apos; is only 1 line (trivial/incomplete)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+30">
-              Very short domain-specific function (≤3 LOC - likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-            <item points="-50">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_random_serial</function_name>
-          <line>937</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>160</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>6 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Function has no meaningful content (≤1 line)
-            </item>
-            <item points="+60">
-              Domain function &apos;_generate_random_serial&apos; is only 1 line (trivial/incomplete)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+30">
-              Very short domain-specific function (≤3 LOC - likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-            <item points="-50">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="3" completed="false">
-          <checkbox>[ ]</checkbox>
           <function_name>_restore_disk_serial</function_name>
-          <line>1139</line>
+          <line>1134</line>
           <column>5</column>
           <severity>MEDIUM</severity>
           <confidence>55</confidence>
@@ -4264,10 +3116,10 @@
               Weak encryption detected (XOR, character-by-character)
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;capstone&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;capstone&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -4564,7 +3416,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>init_bypass_components</function_name>
-          <line>304</line>
+          <line>305</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>115</confidence>
@@ -4630,10 +3482,10 @@
           <description>3 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -4773,30 +3625,6 @@
               Low complexity for domain-specific function (likely incomplete)
             </item>
             <item points="-80">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-      </file>
-      <file path="D:\Intellicrack\intellicrack\core\serial_generator.py" issue_count="1">
-        <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_crc32_serial</function_name>
-          <line>645</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>75</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+80">
-              Function &apos;_generate_crc32_serial&apos; contains obvious template hex values (0xDEADBEEF, 0xCAFEBABE)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="-40">
               Deductions for production patterns
             </item>
           </evidence>
@@ -5048,7 +3876,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>patch_applied</function_name>
-          <line>674</line>
+          <line>675</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>105</confidence>
@@ -5073,7 +3901,7 @@
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>license_check_found</function_name>
-          <line>665</line>
+          <line>666</line>
           <column>5</column>
           <severity>HIGH</severity>
           <confidence>80</confidence>
@@ -5097,7 +3925,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>patch</function_name>
-          <line>427</line>
+          <line>428</line>
           <column>9</column>
           <severity>CRITICAL</severity>
           <confidence>105</confidence>
@@ -5124,7 +3952,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>patch</function_name>
-          <line>441</line>
+          <line>442</line>
           <column>9</column>
           <severity>CRITICAL</severity>
           <confidence>105</confidence>
@@ -5149,7 +3977,7 @@
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>patch</function_name>
-          <line>790</line>
+          <line>791</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>105</confidence>
@@ -5524,7 +4352,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>detect_serial_protection</function_name>
-          <line>1473</line>
+          <line>1474</line>
           <column>9</column>
           <severity>HIGH</severity>
           <confidence>92</confidence>
@@ -5629,7 +4457,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>invalidate_cache_for_file</function_name>
-          <line>739</line>
+          <line>767</line>
           <column>5</column>
           <severity>HIGH</severity>
           <confidence>80</confidence>
@@ -5649,11 +4477,11 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\intellicrack\scripts\radare2\radare2_keygen_assistant.py" issue_count="5">
+      <file path="D:\Intellicrack\intellicrack\scripts\radare2\radare2_keygen_assistant.py" issue_count="3">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_from_license_functions</function_name>
-          <line>1127</line>
+          <line>1132</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>230</confidence>
@@ -5681,7 +4509,7 @@
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_detect_serial_format</function_name>
-          <line>350</line>
+          <line>355</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>195</confidence>
@@ -5706,7 +4534,7 @@
         <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>generate_keygens</function_name>
-          <line>653</line>
+          <line>658</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>130</confidence>
@@ -5725,78 +4553,9 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="4" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_keygen_template</function_name>
-          <line>673</line>
-          <column>5</column>
-          <severity>MEDIUM</severity>
-          <confidence>70</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+45">
-              Generator/creator function with no local variables (no state/computation)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="5" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_cpp_keygen</function_name>
-          <line>845</line>
-          <column>5</column>
-          <severity>MEDIUM</severity>
-          <confidence>70</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>2 production issues detected</description>
-          <evidence>
-            <item points="+80">
-              Function &apos;_generate_cpp_keygen&apos; contains obvious template hex values (0xDEADBEEF, 0xCAFEBABE)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Implement cryptographic key generation using RSA/ECDSA from Crypto library</suggested_fix>
-        </issue>
       </file>
-      <file path="D:\Intellicrack\intellicrack\scripts\radare2\radare2_license_analyzer.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\scripts\radare2\radare2_license_analyzer.py" issue_count="1">
         <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_patches</function_name>
-          <line>762</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>225</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher without backup capability (destructive without safety)
-            </item>
-            <item points="+80">
-              Patcher sophistication: 35% (DANGEROUS - will break on updates)
-            </item>
-            <item points="-60">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_find_patch_location</function_name>
           <line>806</line>
@@ -5853,7 +4612,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_input</function_name>
-          <line>516</line>
+          <line>519</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>110</confidence>
@@ -5885,10 +4644,10 @@
               Trivial implementation: no loops, conditionals, or local vars despite multiple lines
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -5904,10 +4663,10 @@
           <description>3 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -5916,61 +4675,11 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\intellicrack\ui\dialogs\guided_workflow_wizard.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\guided_workflow_wizard.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>_build_patching_section</function_name>
-          <line>817</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>285</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher without backup capability (destructive without safety)
-            </item>
-            <item points="+80">
-              Patcher sophistication: 35% (DANGEROUS - will break on updates)
-            </item>
-          </evidence>
-          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_build_patch_targets_section</function_name>
-          <line>835</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>285</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher without backup capability (destructive without safety)
-            </item>
-            <item points="+80">
-              Patcher sophistication: 35% (DANGEROUS - will break on updates)
-            </item>
-          </evidence>
-          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
-        </issue>
-        <issue id="3" completed="false">
-          <checkbox>[ ]</checkbox>
           <function_name>create_protection_detection_page</function_name>
-          <line>211</line>
+          <line>213</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>210</confidence>
@@ -5995,10 +4704,10 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="4" completed="false">
+        <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>create_patching_options_page</function_name>
-          <line>352</line>
+          <line>354</line>
           <column>5</column>
           <severity>HIGH</severity>
           <confidence>85</confidence>
@@ -6130,9 +4839,9 @@
           <line>607</line>
           <column>5</column>
           <severity>CRITICAL</severity>
-          <confidence>205</confidence>
+          <confidence>195</confidence>
           <issue_type>naive_implementation</issue_type>
-          <description>3 production issues detected</description>
+          <description>4 production issues detected</description>
           <evidence>
             <item points="+60">
               Protection analyzer without signature database (weak detection)
@@ -6142,6 +4851,9 @@
             </item>
             <item points="+70">
               Analyzer sophistication: 35% (WEAK - misses most protections)
+            </item>
+            <item points="-10">
+              Deductions for production patterns
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -6203,7 +4915,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>populate_patch_list</function_name>
-          <line>242</line>
+          <line>244</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>255</confidence>
@@ -6228,7 +4940,7 @@
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_patches</function_name>
-          <line>532</line>
+          <line>539</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>255</confidence>
@@ -6253,7 +4965,7 @@
         <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>get_patches</function_name>
-          <line>578</line>
+          <line>585</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>115</confidence>
@@ -6275,7 +4987,7 @@
         <issue id="4" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>add_new_patch</function_name>
-          <line>455</line>
+          <line>462</line>
           <column>5</column>
           <severity>HIGH</severity>
           <confidence>85</confidence>
@@ -6294,7 +5006,7 @@
         <issue id="5" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>clear_patch_form</function_name>
-          <line>289</line>
+          <line>296</line>
           <column>5</column>
           <severity>MEDIUM</severity>
           <confidence>55</confidence>
@@ -6505,7 +5217,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\intellicrack\ui\tabs\exploitation_tab.py" issue_count="6">
+      <file path="D:\Intellicrack\intellicrack\ui\tabs\exploitation_tab.py" issue_count="5">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_patches</function_name>
@@ -6608,31 +5320,6 @@
         </issue>
         <issue id="5" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>generate_license_bypass_shellcode</function_name>
-          <line>2331</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>75</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+40">
-              Keygen without crypto/random operations (likely trivial)
-            </item>
-            <item points="+30">
-              Weak encryption detected (XOR, character-by-character)
-            </item>
-            <item points="+25">
-              Many local variables (14) - consider refactoring
-            </item>
-            <item points="-20">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="6" completed="false">
-          <checkbox>[ ]</checkbox>
           <function_name>create_memory_patching_tab</function_name>
           <line>262</line>
           <column>5</column>
@@ -6706,36 +5393,6 @@
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-      </file>
-      <file path="D:\Intellicrack\intellicrack\ui\widgets\intellicrack_advanced_protection_widget.py" issue_count="1">
-        <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>create_detections_widget</function_name>
-          <line>343</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>237</confidence>
-          <issue_type>naive_implementation</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+60">
-              Protection analyzer without signature database (weak detection)
-            </item>
-            <item points="+75">
-              CRITICAL: Analyzer without binary format parsing (string matching only)
-            </item>
-            <item points="+55">
-              Analyzer without loops (single pattern check only)
-            </item>
-            <item points="+70">
-              Analyzer sophistication: 10% (WEAK - misses most protections)
-            </item>
-            <item points="-23">
-              Deductions for production patterns
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -6818,7 +5475,7 @@
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>process_request</function_name>
-          <line>44</line>
+          <line>45</line>
           <column>5</column>
           <severity>MEDIUM</severity>
           <confidence>60</confidence>
@@ -6838,7 +5495,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\intellicrack\utils\core\final_utilities.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\utils\core\final_utilities.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>patches_reordered</function_name>
@@ -6863,34 +5520,6 @@
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>display_patch_validation_results</function_name>
-          <line>2576</line>
-          <column>1</column>
-          <severity>MEDIUM</severity>
-          <confidence>72</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher without backup capability (destructive without safety)
-            </item>
-            <item points="+80">
-              Patcher sophistication: 35% (DANGEROUS - will break on updates)
-            </item>
-            <item points="-140">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
       <file path="D:\Intellicrack\intellicrack\utils\core\internal_helpers.py" issue_count="2">
@@ -6993,7 +5622,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\intellicrack\utils\exploitation\exploitation.py" issue_count="3">
+      <file path="D:\Intellicrack\intellicrack\utils\exploitation\exploitation.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_identify_license_protocol</function_name>
@@ -7026,34 +5655,6 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
         <issue id="2" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_patch_instructions</function_name>
-          <line>1182</line>
-          <column>1</column>
-          <severity>CRITICAL</severity>
-          <confidence>125</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+45">
-              Generator/creator function with no local variables (no state/computation)
-            </item>
-            <item points="+50">
-              Patcher function with no loops and no file I/O (incomplete)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-            <item points="-40">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_for_patches</function_name>
           <line>3630</line>
@@ -7253,42 +5854,6 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\intellicrack\utils\protection_utils.py" issue_count="1">
-        <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>inject_comprehensive_api_hooks</function_name>
-          <line>25</line>
-          <column>1</column>
-          <severity>CRITICAL</severity>
-          <confidence>112</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>7 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher without backup capability (destructive without safety)
-            </item>
-            <item points="+50">
-              Patcher without loops (single-target/single-patch only)
-            </item>
-            <item points="+80">
-              Patcher sophistication: 15% (DANGEROUS - will break on updates)
-            </item>
-            <item points="+20">
-              Very long function (249 lines total)
-            </item>
-            <item points="-130">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
-        </issue>
-      </file>
       <file path="D:\Intellicrack\intellicrack\utils\qemu_image_discovery.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
@@ -7346,70 +5911,8 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\intellicrack\utils\runtime\runner_functions.py" issue_count="6">
+      <file path="D:\Intellicrack\intellicrack\utils\runtime\runner_functions.py" issue_count="3">
         <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_license_patch</function_name>
-          <line>3065</line>
-          <column>1</column>
-          <severity>CRITICAL</severity>
-          <confidence>160</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>6 production issues detected</description>
-          <evidence>
-            <item points="+40">
-              Keygen without crypto/random operations (likely trivial)
-            </item>
-            <item points="+45">
-              Patcher without binary file manipulation
-            </item>
-            <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_patch_statistics</function_name>
-          <line>3236</line>
-          <column>1</column>
-          <severity>CRITICAL</severity>
-          <confidence>160</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>6 production issues detected</description>
-          <evidence>
-            <item points="+40">
-              Keygen without crypto/random operations (likely trivial)
-            </item>
-            <item points="+45">
-              Patcher without binary file manipulation
-            </item>
-            <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>run_custom_patching</function_name>
           <line>1623</line>
@@ -7437,7 +5940,7 @@
           </evidence>
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
-        <issue id="4" completed="false">
+        <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>run_ai_guided_patching</function_name>
           <line>740</line>
@@ -7468,35 +5971,7 @@
           </evidence>
           <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
         </issue>
-        <issue id="5" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_autonomous_generate_patches</function_name>
-          <line>3001</line>
-          <column>1</column>
-          <severity>MEDIUM</severity>
-          <confidence>72</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher without backup capability (destructive without safety)
-            </item>
-            <item points="+80">
-              Patcher sophistication: 35% (DANGEROUS - will break on updates)
-            </item>
-            <item points="-140">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
-        </issue>
-        <issue id="6" completed="false">
+        <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_autonomous_apply_patches</function_name>
           <line>3101</line>
@@ -8129,7 +6604,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\tests\exploitation\test_license_key_generation.py" issue_count="4">
+      <file path="D:\Intellicrack\tests\exploitation\test_license_key_generation.py" issue_count="3">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_create_realistic_license_binary</function_name>
@@ -8170,37 +6645,6 @@
         </issue>
         <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>test_generate_keygen_batch_performance</function_name>
-          <line>315</line>
-          <column>5</column>
-          <severity>MEDIUM</severity>
-          <confidence>62</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>6 production issues detected</description>
-          <evidence>
-            <item points="+90">
-              CRITICAL: Keygen lacks cryptographic operations (insufficient for production)
-            </item>
-            <item points="+40">
-              Keygen missing loops OR conditionals (limited sophistication)
-            </item>
-            <item points="+50">
-              Keygen with trivial complexity (insufficient for production)
-            </item>
-            <item points="+70">
-              Keygen sophistication score: 25% (INSUFFICIENT)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="-160">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="4" completed="false">
-          <checkbox>[ ]</checkbox>
           <function_name>test_validate_key_mathematics_consistency</function_name>
           <line>595</line>
           <column>5</column>
@@ -8222,61 +6666,8 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\tests\exploitation\test_patch_analysis_automation.py" issue_count="7">
+      <file path="D:\Intellicrack\tests\exploitation\test_patch_analysis_automation.py" issue_count="5">
         <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>test_generate_patch_instructions_complexity_levels</function_name>
-          <line>850</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>285</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher without backup capability (destructive without safety)
-            </item>
-            <item points="+80">
-              Patcher sophistication: 35% (DANGEROUS - will break on updates)
-            </item>
-          </evidence>
-          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>test_generate_patch_instructions_software_specific</function_name>
-          <line>810</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>235</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher without backup capability (destructive without safety)
-            </item>
-            <item points="+80">
-              Patcher sophistication: 35% (DANGEROUS - will break on updates)
-            </item>
-            <item points="-50">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
-        </issue>
-        <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_create_license_check_binary</function_name>
           <line>1074</line>
@@ -8298,7 +6689,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="4" completed="false">
+        <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_analyze_for_patches_detection_accuracy</function_name>
           <line>936</line>
@@ -8332,7 +6723,7 @@
           </evidence>
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
-        <issue id="5" completed="false">
+        <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_analyze_for_patches_performance</function_name>
           <line>986</line>
@@ -8366,7 +6757,7 @@
           </evidence>
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
-        <issue id="6" completed="false">
+        <issue id="4" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_create_license_protected_binary</function_name>
           <line>355</line>
@@ -8385,7 +6776,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="7" completed="false">
+        <issue id="5" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_run_simulate_patch_behavioral_analysis</function_name>
           <line>543</line>
@@ -8973,7 +7364,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\tests\integration\simple_day4_test.py" issue_count="3">
+      <file path="D:\Intellicrack\tests\integration\simple_day4_test.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_enhanced_patch_instructions</function_name>
@@ -9004,50 +7395,6 @@
             </item>
           </evidence>
           <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_patch_instruction</function_name>
-          <line>9</line>
-          <column>1</column>
-          <severity>HIGH</severity>
-          <confidence>75</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Patcher function with no loops and no file I/O (incomplete)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="3" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_patch_bytes_for_method</function_name>
-          <line>34</line>
-          <column>1</column>
-          <severity>HIGH</severity>
-          <confidence>75</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Patcher function with no loops and no file I/O (incomplete)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
       <file path="D:\Intellicrack\tests\integration\simple_day5_2_test.py" issue_count="1">
@@ -9153,7 +7500,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\tests\integration\test_day4_2_integration.py" issue_count="5">
+      <file path="D:\Intellicrack\tests\integration\test_day4_2_integration.py" issue_count="3">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_convert_r2_to_binary_patches</function_name>
@@ -9205,71 +7552,6 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
         <issue id="3" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_automated_patches</function_name>
-          <line>48</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>240</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>8 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Domain function &apos;_generate_automated_patches&apos; is ≤3 LOC with no logic (likely incomplete)
-            </item>
-            <item points="+45">
-              Generator/creator function with no local variables (no state/computation)
-            </item>
-            <item points="+50">
-              Patcher function with no loops and no file I/O (incomplete)
-            </item>
-            <item points="+45">
-              Keygen function with no crypto/random operations (trivial algorithm)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+30">
-              Very short domain-specific function (≤3 LOC - likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-            <item points="-50">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
-        </issue>
-        <issue id="4" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>_generate_memory_patches</function_name>
-          <line>52</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>210</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+45">
-              Generator/creator function with no local variables (no state/computation)
-            </item>
-            <item points="+50">
-              Patcher function with no loops and no file I/O (incomplete)
-            </item>
-            <item points="+45">
-              Keygen function with no crypto/random operations (trivial algorithm)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="+35">
-              Keygen/generator with no local variables (no state)
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="5" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>_is_valid_patch</function_name>
           <line>154</line>
@@ -9335,39 +7617,6 @@
             </item>
             <item points="+70">
               Analyzer sophistication: 25% (WEAK - misses most protections)
-            </item>
-            <item points="-13">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-      </file>
-      <file path="D:\Intellicrack\tests\integration\test_legacy_system_migration.py" issue_count="1">
-        <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>detect_conflict</function_name>
-          <line>117</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>292</confidence>
-          <issue_type>naive_implementation</issue_type>
-          <description>6 production issues detected</description>
-          <evidence>
-            <item points="+60">
-              Protection analyzer without signature database (weak detection)
-            </item>
-            <item points="+75">
-              CRITICAL: Analyzer without binary format parsing (string matching only)
-            </item>
-            <item points="+55">
-              Analyzer without loops (single pattern check only)
-            </item>
-            <item points="+45">
-              Analyzer with no result storage (incomplete analysis)
-            </item>
-            <item points="+70">
-              Analyzer sophistication: 10% (WEAK - misses most protections)
             </item>
             <item points="-13">
               Deductions for production patterns
@@ -11445,7 +9694,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\tests\unit\core\analysis\test_radare2_bypass_generator.py" issue_count="14">
+      <file path="D:\Intellicrack\tests\unit\core\analysis\test_radare2_bypass_generator.py" issue_count="8">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>patchable_generator</function_name>
@@ -11485,34 +9734,6 @@
         </issue>
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>test_generate_automated_patches_comprehensive</function_name>
-          <line>502</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>235</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher without backup capability (destructive without safety)
-            </item>
-            <item points="+80">
-              Patcher sophistication: 35% (DANGEROUS - will break on updates)
-            </item>
-            <item points="-50">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
-        </issue>
-        <issue id="3" completed="false">
-          <checkbox>[ ]</checkbox>
           <function_name>test_determine_patch_strategy_intelligent_selection</function_name>
           <line>718</line>
           <column>5</column>
@@ -11539,35 +9760,7 @@
           </evidence>
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
-        <issue id="4" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>test_generate_register_patch_architecture_specific</function_name>
-          <line>747</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>235</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher without backup capability (destructive without safety)
-            </item>
-            <item points="+80">
-              Patcher sophistication: 35% (DANGEROUS - will break on updates)
-            </item>
-            <item points="-50">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
-        </issue>
-        <issue id="5" completed="false">
+        <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_analyze_license_strings_extracts_patterns</function_name>
           <line>158</line>
@@ -11592,7 +9785,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="6" completed="false">
+        <issue id="4" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_analyze_validation_apis_identifies_system_calls</function_name>
           <line>180</line>
@@ -11617,7 +9810,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="7" completed="false">
+        <issue id="5" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_analyze_crypto_implementation_detailed_analysis</function_name>
           <line>366</line>
@@ -11642,7 +9835,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="8" completed="false">
+        <issue id="6" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_analyze_control_flow_graph_comprehensive</function_name>
           <line>656</line>
@@ -11667,32 +9860,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="9" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>test_generate_memory_patches_instruction_level</function_name>
-          <line>529</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>95</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher sophistication: 60% (FRAGILE - limited reliability)
-            </item>
-            <item points="-110">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
-        </issue>
-        <issue id="10" completed="false">
+        <issue id="7" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_create_binary_patch_precise_patching</function_name>
           <line>593</line>
@@ -11717,51 +9885,7 @@
           </evidence>
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
-        <issue id="11" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>test_generate_keygen_algorithms_multiple_types</function_name>
-          <line>335</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>90</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+90">
-              CRITICAL: Keygen lacks cryptographic operations (insufficient for production)
-            </item>
-            <item points="+50">
-              Keygen sophistication score: 33% (WEAK implementation)
-            </item>
-            <item points="-50">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="12" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>test_generate_hash_based_keygen_working_implementation</function_name>
-          <line>395</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>90</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+90">
-              CRITICAL: Keygen lacks cryptographic operations (insufficient for production)
-            </item>
-            <item points="+50">
-              Keygen sophistication score: 33% (WEAK implementation)
-            </item>
-            <item points="-50">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="13" completed="false">
+        <issue id="8" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_analyze_license_mechanisms_comprehensive</function_name>
           <line>102</line>
@@ -11782,28 +9906,6 @@
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="14" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>test_generate_aes_keygen_with_proper_implementation</function_name>
-          <line>425</line>
-          <column>5</column>
-          <severity>MEDIUM</severity>
-          <confidence>60</confidence>
-          <issue_type>naive_implementation</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+60">
-              Keygen with weak crypto implementation (score: 30%)
-            </item>
-            <item points="+50">
-              Keygen sophistication score: 43% (WEAK implementation)
-            </item>
-            <item points="-50">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Replace XOR/simple encryption with AES/RSA from cryptography library</suggested_fix>
         </issue>
       </file>
       <file path="D:\Intellicrack\tests\unit\core\analysis\test_radare2_decompiler.py" issue_count="3">
@@ -12033,7 +10135,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\tests\unit\core\analysis\test_radare2_scripting.py" issue_count="5">
+      <file path="D:\Intellicrack\tests\unit\core\analysis\test_radare2_scripting.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_execute_patch_script</function_name>
@@ -12073,37 +10175,6 @@
         </issue>
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>generate_patch_script</function_name>
-          <line>135</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>290</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>6 production issues detected</description>
-          <evidence>
-            <item points="+85">
-              CRITICAL: Patcher without pattern search (hardcoded offsets only)
-            </item>
-            <item points="+70">
-              Patcher without format parsing (not PE/ELF aware - dangerous)
-            </item>
-            <item points="+50">
-              Patcher without backup capability (destructive without safety)
-            </item>
-            <item points="+65">
-              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
-            </item>
-            <item points="+80">
-              Patcher sophistication: 30% (DANGEROUS - will break on updates)
-            </item>
-            <item points="-60">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
-        </issue>
-        <issue id="3" completed="false">
-          <checkbox>[ ]</checkbox>
           <function_name>test_validate_safe_script</function_name>
           <line>479</line>
           <column>5</column>
@@ -12127,7 +10198,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="4" completed="false">
+        <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_validate_dangerous_script</function_name>
           <line>483</line>
@@ -12146,7 +10217,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="5" completed="false">
+        <issue id="4" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_patch_generation_and_execution</function_name>
           <line>706</line>
@@ -13738,30 +11809,8 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\tests\unit\core\anti_analysis\test_vm_detector.py" issue_count="9">
+      <file path="D:\Intellicrack\tests\unit\core\anti_analysis\test_vm_detector.py" issue_count="8">
         <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>test_generate_bypass_virtualbox_specific_techniques</function_name>
-          <line>1817</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>90</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+40">
-              Keygen without crypto/random operations (likely trivial)
-            </item>
-            <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>OpenKey</function_name>
           <line>1200</line>
@@ -13780,7 +11829,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="3" completed="false">
+        <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>simulate_no_files</function_name>
           <line>1265</line>
@@ -13799,7 +11848,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="4" completed="false">
+        <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>strip</function_name>
           <line>1520</line>
@@ -13818,7 +11867,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="5" completed="false">
+        <issue id="4" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>failing_cpuid_method</function_name>
           <line>2041</line>
@@ -13837,7 +11886,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="6" completed="false">
+        <issue id="5" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>failing_registry_method</function_name>
           <line>2044</line>
@@ -13856,7 +11905,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="7" completed="false">
+        <issue id="6" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>failing_bios_method</function_name>
           <line>2047</line>
@@ -13875,7 +11924,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="8" completed="false">
+        <issue id="7" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>simulate_resource_error</function_name>
           <line>2089</line>
@@ -13894,7 +11943,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="9" completed="false">
+        <issue id="8" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>simulate_permission_error</function_name>
           <line>2111</line>
@@ -14709,39 +12758,8 @@
           <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\tests\unit\core\exploitation\test_keygen_generator.py" issue_count="29">
+      <file path="D:\Intellicrack\tests\unit\core\exploitation\test_keygen_generator.py" issue_count="28">
         <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>test_generate_keygen_selects_highest_confidence_algorithm</function_name>
-          <line>1075</line>
-          <column>5</column>
-          <severity>CRITICAL</severity>
-          <confidence>310</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>6 production issues detected</description>
-          <evidence>
-            <item points="+90">
-              CRITICAL: Keygen lacks cryptographic operations (insufficient for production)
-            </item>
-            <item points="+75">
-              CRITICAL: Keygen without loops or conditionals (linear execution only)
-            </item>
-            <item points="+50">
-              Keygen with trivial complexity (insufficient for production)
-            </item>
-            <item points="+70">
-              Keygen sophistication score: 16% (INSUFFICIENT)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-            <item points="-10">
-              Deductions for production patterns
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validator</function_name>
           <line>858</line>
@@ -14769,7 +12787,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="3" completed="false">
+        <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validator</function_name>
           <line>869</line>
@@ -14797,7 +12815,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="4" completed="false">
+        <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validator</function_name>
           <line>881</line>
@@ -14825,7 +12843,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="5" completed="false">
+        <issue id="4" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validator</function_name>
           <line>892</line>
@@ -14853,7 +12871,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="6" completed="false">
+        <issue id="5" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validator</function_name>
           <line>903</line>
@@ -14881,7 +12899,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="7" completed="false">
+        <issue id="6" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validator</function_name>
           <line>930</line>
@@ -14909,7 +12927,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="8" completed="false">
+        <issue id="7" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validator</function_name>
           <line>1266</line>
@@ -14937,7 +12955,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="9" completed="false">
+        <issue id="8" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validator</function_name>
           <line>847</line>
@@ -14965,7 +12983,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="10" completed="false">
+        <issue id="9" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validator</function_name>
           <line>915</line>
@@ -14993,7 +13011,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="11" completed="false">
+        <issue id="10" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validator</function_name>
           <line>1235</line>
@@ -15021,7 +13039,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="12" completed="false">
+        <issue id="11" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validator</function_name>
           <line>1250</line>
@@ -15049,7 +13067,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="13" completed="false">
+        <issue id="12" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validator</function_name>
           <line>1363</line>
@@ -15077,7 +13095,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="14" completed="false">
+        <issue id="13" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validator</function_name>
           <line>1395</line>
@@ -15105,7 +13123,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="15" completed="false">
+        <issue id="14" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_validate_checksum_key_identifies_crc32</function_name>
           <line>1096</line>
@@ -15127,7 +13145,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="16" completed="false">
+        <issue id="15" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_validate_pattern_key_matches_constraint</function_name>
           <line>1126</line>
@@ -15149,7 +13167,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="17" completed="false">
+        <issue id="16" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_analyze_instruction_patterns_counts_xor</function_name>
           <line>231</line>
@@ -15168,7 +13186,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="18" completed="false">
+        <issue id="17" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_analyze_instruction_patterns_counts_add</function_name>
           <line>239</line>
@@ -15187,7 +13205,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="19" completed="false">
+        <issue id="18" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_analyze_instruction_patterns_counts_sub</function_name>
           <line>247</line>
@@ -15206,7 +13224,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="20" completed="false">
+        <issue id="19" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_analyze_instruction_patterns_counts_mul</function_name>
           <line>255</line>
@@ -15225,7 +13243,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="21" completed="false">
+        <issue id="20" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_analyze_instruction_patterns_counts_div</function_name>
           <line>263</line>
@@ -15244,7 +13262,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="22" completed="false">
+        <issue id="21" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_analyze_instruction_patterns_counts_cmp</function_name>
           <line>271</line>
@@ -15263,7 +13281,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="23" completed="false">
+        <issue id="22" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_analyze_instruction_patterns_counts_call</function_name>
           <line>279</line>
@@ -15282,7 +13300,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="24" completed="false">
+        <issue id="23" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_analyze_instruction_patterns_counts_jumps</function_name>
           <line>287</line>
@@ -15301,7 +13319,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="25" completed="false">
+        <issue id="24" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_validate_rsa_key_validates_minimum_length</function_name>
           <line>1116</line>
@@ -15320,7 +13338,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="26" completed="false">
+        <issue id="25" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_keygen_with_checksum_constraint_integration</function_name>
           <line>1319</line>
@@ -15339,7 +13357,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="27" completed="false">
+        <issue id="26" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_verify_key_checks_all_constraints</function_name>
           <line>759</line>
@@ -15358,7 +13376,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="28" completed="false">
+        <issue id="27" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_verify_checksum_validates_luhn</function_name>
           <line>697</line>
@@ -15377,7 +13395,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="29" completed="false">
+        <issue id="28" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_comprehensive_keygen_workflow</function_name>
           <line>1375</line>
@@ -15527,7 +13545,7 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path="D:\Intellicrack\tests\unit\core\mitigation_bypass\test_cfi_bypass.py" issue_count="8">
+      <file path="D:\Intellicrack\tests\unit\core\mitigation_bypass\test_cfi_bypass.py" issue_count="7">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_cfi_marker_detection</function_name>
@@ -15636,25 +13654,6 @@
         </issue>
         <issue id="5" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>test_generate_bypass_payload_with_rop</function_name>
-          <line>156</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>80</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>2 production issues detected</description>
-          <evidence>
-            <item points="+45">
-              Keygen function with no crypto/random operations (trivial algorithm)
-            </item>
-            <item points="+35">
-              Low complexity for domain-specific function (likely incomplete)
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="6" completed="false">
-          <checkbox>[ ]</checkbox>
           <function_name>cfi_bypass</function_name>
           <line>19</line>
           <column>5</column>
@@ -15672,7 +13671,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="7" completed="false">
+        <issue id="6" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>cfi_bypass</function_name>
           <line>566</line>
@@ -15691,7 +13690,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="8" completed="false">
+        <issue id="7" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>cfi_bypass</function_name>
           <line>681</line>
@@ -15991,13 +13990,13 @@
               Function has no meaningful content (≤1 line)
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
               Imports &apos;Crypto&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -16019,10 +14018,10 @@
               Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -16085,13 +14084,13 @@
           <description>4 production issues detected</description>
           <evidence>
             <item points="+15">
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+15">
               Imports &apos;Crypto&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
               Imports &apos;cryptography&apos; but doesn&apos;t use it in function
-            </item>
-            <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -16135,10 +14134,10 @@
           <description>3 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -16157,10 +14156,10 @@
           <description>3 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;Crypto&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -17490,10 +15489,10 @@
           <description>3 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)
@@ -17512,10 +15511,10 @@
           <description>3 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               Low complexity for domain-specific function (likely incomplete)

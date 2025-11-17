@@ -24,6 +24,7 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 import json
 import logging
 import traceback
+from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
@@ -110,7 +111,7 @@ class MigrationValidator:
         errors = []
 
         # Check for None values in critical fields
-        def check_none_values(data: Any, path: str = "") -> None:
+        def check_none_values(data: object, path: str = "") -> None:
             if isinstance(data, dict):
                 for key, value in data.items():
                     new_path = f"{path}.{key}" if path else key
@@ -224,7 +225,7 @@ class ConfigMigrationHandler:
         self.migration_status = MigrationStatus.NOT_STARTED
 
     def migrate_with_recovery(
-        self, config_data: dict[str, Any], migration_func: callable, migration_name: str,
+        self, config_data: dict[str, Any], migration_func: Callable, migration_name: str,
     ) -> tuple[bool, dict[str, Any]]:
         """Execute migration with error handling and recovery.
 
@@ -285,7 +286,7 @@ class ConfigMigrationHandler:
                 # Return original data as last resort
                 return False, config_data
 
-    def handle_partial_migration(self, config_data: dict[str, Any], migrations: dict[str, callable]) -> dict[str, Any]:
+    def handle_partial_migration(self, config_data: dict[str, Any], migrations: dict[str, Callable]) -> dict[str, Any]:
         """Handle multiple migrations with partial success support.
 
         Args:
@@ -375,7 +376,7 @@ class SafeMigrationWrapper:
     """Wrap to safely execute migration functions with timeout and resource limits."""
 
     @staticmethod
-    def migrate_with_timeout(migration_func: callable, config_data: dict[str, Any], timeout: int = 30) -> dict[str, Any]:
+    def migrate_with_timeout(migration_func: Callable, config_data: dict[str, Any], timeout: int = 30) -> dict[str, Any]:
         """Execute migration with timeout protection.
 
         Args:

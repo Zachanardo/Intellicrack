@@ -462,7 +462,7 @@ class GhidraProjectManager:
 
         return intersection / union if union > 0 else 0.0
 
-    def export_project(self, project_id: str, export_path: str, include_all_versions: bool = False):
+    def export_project(self, project_id: str, export_path: str, include_all_versions: bool = False) -> Path:
         """Export project to a portable archive."""
         project = self.load_project(project_id)
         if not project:

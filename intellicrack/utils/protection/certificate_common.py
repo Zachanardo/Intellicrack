@@ -27,7 +27,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def create_certificate_builder():
+def create_certificate_builder() -> object:
     """Create a certificate builder with common settings.
 
     Returns:

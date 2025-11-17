@@ -22,7 +22,7 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 logger: logging.Logger = logging.getLogger(__name__)
 

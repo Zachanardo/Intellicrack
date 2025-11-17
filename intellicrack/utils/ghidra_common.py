@@ -20,7 +20,6 @@ import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +31,7 @@ def run_ghidra_plugin(
     binary_path: str,
     script_dir: str,
     script_name: str,
-    app: Any = None,
+    app: object = None,
     overwrite: bool = True,
     timeout: int = 300,
 ) -> tuple[int, str, str]:

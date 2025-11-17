@@ -22,9 +22,12 @@ import logging
 import os
 import re
 import traceback
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.utils.logger import logger
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # Manticore is no longer supported (Windows-only focus)
 Plugin = None

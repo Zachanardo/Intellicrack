@@ -22,10 +22,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import logging
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Callable
 
 from .dashboard_manager import create_dashboard_manager
 from .dashboard_widgets import WidgetType, create_widget

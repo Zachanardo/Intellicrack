@@ -42,7 +42,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Callable
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -409,7 +409,7 @@ class JSONFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         """Format log record as JSON structure."""
         log_entry = {
-            "timestamp": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
+            "timestamp": datetime.fromtimestamp(record.created, tz=UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -971,7 +971,7 @@ class GhidraPlugin(AbstractPlugin):
             error_msg = stderr.decode("utf-8", errors="ignore")
             raise Exception(f"Ghidra execution failed: {error_msg}")
 
-        except asyncio.TimeoutError as timeout_error:
+        except TimeoutError as timeout_error:
             if process:
                 try:
                     # Use signal to gracefully terminate process
@@ -1658,7 +1658,7 @@ class EventBus:
                 self.stats["events_processed"] += 1
                 self.stats["queue_size"] = self.event_queue.qsize()
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # Continue processing
                 continue
             except Exception as e:
@@ -1724,7 +1724,7 @@ class EventBus:
                                 self.logger.exception(
                                     f"Handler {i} ({handler_types[i].__name__}) failed for event {event.event_type}: {result}",
                                 )
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     if self.logger:
                         self.logger.warning(f"Handler execution timed out after {handler_timeout}")
                     # Cancel remaining tasks
@@ -2705,7 +2705,7 @@ class WorkflowEngine:
             duration = (datetime.utcnow() - start_time).total_seconds()
             self.logger.info(f"Step {step.step_id} completed in {duration:.2f}s")
 
-        except asyncio.TimeoutError as timeout_error:
+        except TimeoutError as timeout_error:
             error_msg = f"Step {step.step_id} timed out"
             context["errors"].append(error_msg)
 
@@ -2917,7 +2917,7 @@ class AnalysisCoordinator:
 
                 await self._start_analysis(analysis_context)
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # Continue processing
                 continue
             except Exception as e:

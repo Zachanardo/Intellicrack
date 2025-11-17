@@ -25,9 +25,10 @@ import logging
 import time
 import uuid
 from collections import deque
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 import websockets
 from websockets.server import WebSocketServerProtocol

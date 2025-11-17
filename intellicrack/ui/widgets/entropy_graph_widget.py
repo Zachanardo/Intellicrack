@@ -7,7 +7,8 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QHBoxLayout,

@@ -19,9 +19,10 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 import threading
+from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, TypedDict, Unpack
+from typing import Any, TypedDict, Unpack
 
 from intellicrack.utils.logger import logger as main_logger
 

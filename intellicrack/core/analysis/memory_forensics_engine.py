@@ -834,8 +834,21 @@ class MemoryForensicsEngine:
         except Exception as e:
             logger.error(f"Hidden process detection failed: {e}")
 
-    def _is_module_suspicious(self, module_data: Any) -> bool:
-        """Check if a module appears suspicious."""
+    def _is_module_suspicious(self, module_data: object) -> bool:
+        """Check if a module appears suspicious.
+
+        Analyzes module metadata to detect suspicious characteristics such as
+        known malicious keywords, DLL masquerading, unusual locations, and
+        unsigned system modules that may indicate code injection or protection
+        bypass mechanisms.
+
+        Args:
+            module_data: Volatility3 module object with attributes like BaseDllName, FullDllName
+
+        Returns:
+            True if module exhibits suspicious characteristics, False otherwise
+
+        """
         try:
             module_name = getattr(module_data, "BaseDllName", "").lower()
             module_path = getattr(module_data, "FullDllName", "").lower()

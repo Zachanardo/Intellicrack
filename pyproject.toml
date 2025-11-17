@@ -91,8 +91,10 @@ dependencies = [
   "httpie>=3.2.4,<4",
 
   # ML Frameworks
-  # torch/torchvision/torchaudio installed via pixi (Intel XPU for local, CPU for CI)
-  "dpctl==0.20.2",
+  "torch",
+  "torchvision",
+  "torchaudio",
+  "dpctl",
   "pyopencl>=2025.2.6,<2026",
   "tensorflow>=2.20.0,<3",
   "numba==0.62.1",
@@ -313,7 +315,16 @@ dependencies = [
   "ruff>=0.14.1,<0.15",
   "bandit>=1.8.6,<2",
   "vulture>=2.14,<3",
+  "pyupgrade",
   "pydocstyle>=6.3.0,<7",
+  "sourcery",
+  "wemake-python-styleguide",
+  "darglint",
+  "pyroma",
+  "mypy-extensions",
+  "dead",
+  "pygount",
+  "pytest-deadfixtures",
   "mypy>=1.18.2,<2",
   "pyright>=1.1.406,<2",
   "mccabe>=0.7.0,<0.8",
@@ -504,6 +515,18 @@ norecursedirs = [
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+
+[tool.pytest-deadfixtures]
+show_count = true
+
+[tool.pygount]
+# Configuration for pygount code counting
+format = "summary"
+sort = "code"
+
+[tool.pyupgrade]
+# Target Python version for syntax upgrades
+py312-plus = true
 
 [tool.black]
 line-length = 100
@@ -857,7 +880,7 @@ ignored-classes = [
 
 [tool.ruff]
 line-length = 140
-target-version = "py310"
+target-version = "py312"
 exclude = [
   "tests/",
   "test/",
@@ -1070,6 +1093,18 @@ classmethod-decorators = ["classmethod", "pydantic.validator"]
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
+
+[tool.darglint]
+# Strict docstring checking following Google conventions
+strictness = "full"
+docstring_style = "google"
+ignore_regex = "^(test_|_)"
+
+[tool.wemake-python-styleguide]
+# Strict code style following wemake guidelines
+ignore = [
+  "W503",  # line break before binary operator (contradicts Black)
+]
 
 [tool.vulture]
 exclude = [

@@ -49,7 +49,7 @@ class AIAssistantWidget(QWidget):
     code_generated = pyqtSignal(str)
     script_generated = pyqtSignal(str, str)  # script_type, content
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the AI Assistant Widget."""
         super().__init__(parent)
 

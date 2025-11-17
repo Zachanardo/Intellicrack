@@ -96,7 +96,7 @@ class VMContext:
     memory: dict[int, bytes] = field(default_factory=dict)
     flags: dict[str, bool] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize VM context with default registers and flags if not provided."""
         if not self.registers:
             # Initialize x86 registers
@@ -926,7 +926,19 @@ class VMAnalyzer:
         return sections
 
     def _find_section_end(self, vm_data: bytes, start_offset: int) -> int:
-        """Find end of VM section."""
+        """Find end of VM section by detecting termination markers.
+
+        Scans for null bytes or repeated patterns indicating section boundaries,
+        with a maximum section size limit to prevent runaway scanning.
+
+        Args:
+            vm_data: Complete binary data containing the VM section.
+            start_offset: Starting offset to search from.
+
+        Returns:
+            Absolute offset of the section end boundary.
+
+        """
         # Look for section end markers or entropy changes
         max_section_size = 0x10000  # 64KB max
         end_offset = min(start_offset + max_section_size, len(vm_data))
@@ -1316,7 +1328,19 @@ class VMProtectionUnwrapper:
         return bytes(reconstructed)
 
     def _parse_vm_instructions_with_context(self, vm_data: bytes, vm_analysis: dict[str, Any]) -> list[VMInstruction]:
-        """Parse VM instructions with contextual awareness."""
+        """Parse VM instructions with contextual awareness.
+
+        Parses VM instructions while tracking metadata about previous instructions,
+        identifying common instruction patterns for optimization during conversion.
+
+        Args:
+            vm_data: Binary data containing encoded VM instructions.
+            vm_analysis: Analysis results from struct analysis containing context.
+
+        Returns:
+            List of parsed VMInstruction objects with pattern metadata.
+
+        """
         instructions = []
         offset = 0
         protection_type = self.analyzer.detect_vm_protection(vm_data)
@@ -1351,7 +1375,20 @@ class VMProtectionUnwrapper:
         return instructions
 
     def _optimize_vm_instructions(self, instructions: list[VMInstruction]) -> list[VMInstruction]:
-        """Optimize VM instruction stream by removing redundancy."""
+        """Optimize VM instruction stream by removing redundancy.
+
+        Performs pattern-based optimization to reduce instruction count:
+        - Removes PUSH/POP pairs that cancel out
+        - Eliminates consecutive NOP instructions
+        - Removes redundant move operations
+
+        Args:
+            instructions: List of VMInstruction objects to optimize.
+
+        Returns:
+            Optimized instruction list with reduced redundancy.
+
+        """
         optimized = []
         i = 0
 
@@ -1392,7 +1429,20 @@ class VMProtectionUnwrapper:
         return optimized
 
     def _advanced_vm_to_x86(self, vm_instructions: list[VMInstruction], vm_analysis: dict[str, Any]) -> bytes:
-        """Convert VM instructions to x86 with advanced pattern recognition."""
+        """Convert VM instructions to x86 with advanced pattern recognition.
+
+        Performs context-aware conversion using compound pattern detection and
+        Keystone assembler. Detects function prologues, epilogues, and loop
+        constructs for more efficient code generation.
+
+        Args:
+            vm_instructions: List of parsed VM instructions to convert.
+            vm_analysis: Binary analysis results containing structural information.
+
+        Returns:
+            Binary x86 machine code implementing VM instruction semantics.
+
+        """
         x86_code = bytearray()
 
         # Initialize Keystone assembler
@@ -1431,7 +1481,19 @@ class VMProtectionUnwrapper:
         return bytes(x86_code)
 
     def _detect_compound_pattern(self, instructions: list[VMInstruction], start: int) -> bytes | None:
-        """Detect and convert compound VM patterns to x86."""
+        """Detect and convert compound VM patterns to x86.
+
+        Recognizes multi-instruction patterns such as function prologues,
+        epilogues, and loops, converting them to optimized x86 bytecode.
+
+        Args:
+            instructions: List of VMInstruction objects to analyze.
+            start: Starting index for pattern matching.
+
+        Returns:
+            Compiled x86 bytecode for the pattern, or None if no pattern matches.
+
+        """
         if start + 2 >= len(instructions):
             return None
 
@@ -1575,7 +1637,18 @@ class VMProtectionUnwrapper:
         return None
 
     def _fallback_vm_to_x86(self, vm_instructions: list[VMInstruction]) -> bytes:
-        """Fallback conversion using pre-compiled patterns."""
+        """Fallback conversion using pre-compiled x86 opcode patterns.
+
+        Provides an alternative conversion mechanism when Keystone is unavailable,
+        using a lookup table of pre-compiled instruction sequences.
+
+        Args:
+            vm_instructions: List of VMInstruction objects to convert.
+
+        Returns:
+            Binary x86 code assembled from pre-compiled patterns.
+
+        """
         x86_code = bytearray()
 
         # Pre-compiled x86 opcodes for common operations
@@ -1627,7 +1700,18 @@ class VMProtectionUnwrapper:
         return bytes(x86_code)
 
     def _post_process_x86_code(self, x86_code: bytes) -> bytes:
-        """Post-process x86 code for coherent execution flow."""
+        """Post-process x86 code for coherent execution flow.
+
+        Validates and corrects relative jump/call offsets and ensures proper
+        instruction alignment with NOP padding.
+
+        Args:
+            x86_code: Binary x86 code to post-process.
+
+        Returns:
+            Post-processed x86 code with corrected offsets and alignment.
+
+        """
         code = bytearray(x86_code)
 
         # Fix relative jumps and calls
@@ -1662,7 +1746,18 @@ class VMProtectionUnwrapper:
         return bytes(code)
 
     def _parse_vm_instructions(self, vm_data: bytes) -> list[VMInstruction]:
-        """Parse VM instructions from data."""
+        """Parse VM instructions from binary data.
+
+        Iterates through binary data and extracts VM instructions sequentially.
+        Handles parsing failures gracefully by skipping invalid instructions.
+
+        Args:
+            vm_data: Binary data containing VM instructions.
+
+        Returns:
+            List of parsed VMInstruction objects.
+
+        """
         instructions = []
         offset = 0
 
@@ -1685,7 +1780,18 @@ class VMProtectionUnwrapper:
         return instructions
 
     def _vm_to_x86(self, vm_instructions: list[VMInstruction]) -> bytes:
-        """Convert VM instructions to x86 machine code."""
+        """Convert VM instructions to x86 machine code.
+
+        Translates a sequence of parsed VM instructions into executable x86 bytecode
+        using Keystone assembler. Falls back to pre-compiled patterns if assembly fails.
+
+        Args:
+            vm_instructions: List of VMInstruction objects to convert.
+
+        Returns:
+            Binary x86 machine code.
+
+        """
         x86_code = bytearray()
 
         # Initialize Keystone for assembly
@@ -1717,7 +1823,18 @@ class VMProtectionUnwrapper:
         return bytes(x86_code)
 
     def _vm_instruction_to_asm(self, instruction: VMInstruction) -> str | None:
-        """Convert VM instruction to x86 assembly."""
+        """Convert VM instruction to x86 assembly mnemonic.
+
+        Maps a single VM instruction to an equivalent x86 assembly instruction
+        string, handling operand encoding and register allocation.
+
+        Args:
+            instruction: VMInstruction object to convert.
+
+        Returns:
+            X86 assembly string (e.g., "push eax") or None for unknown instructions.
+
+        """
         mnemonic = instruction.mnemonic
 
         # Stack operations

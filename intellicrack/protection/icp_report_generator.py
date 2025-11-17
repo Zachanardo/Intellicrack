@@ -35,14 +35,24 @@ logger = get_logger(__name__)
 
 @dataclass
 class ReportOptions:
-    """Options for report generation."""
+    """Options for report generation.
+
+    Attributes:
+        include_raw_json: Whether to include raw JSON analysis data in report
+        include_bypass_methods: Whether to include bypass method recommendations
+        include_entropy_graph: Whether to include entropy analysis graphs
+        include_recommendations: Whether to include analysis recommendations
+        include_technical_details: Whether to include technical details section
+        output_format: Report output format (html, pdf, text, or json)
+
+    """
 
     include_raw_json: bool = False
     include_bypass_methods: bool = True
     include_entropy_graph: bool = True
     include_recommendations: bool = True
     include_technical_details: bool = True
-    output_format: str = "html"  # html, pdf, text, json
+    output_format: str = "html"
 
 
 class ICPReportGenerator:
@@ -62,11 +72,15 @@ class ICPReportGenerator:
         """Generate a comprehensive report from analysis results.
 
         Args:
-            result: Unified protection analysis result
-            options: Report generation options
+            result: Unified protection analysis result containing all detected
+                protections and analysis data.
+            options: Report generation options. If None, defaults are used.
 
         Returns:
-            Path to generated report file
+            Path to generated report file as string.
+
+        Raises:
+            ValueError: If output format specified in options is unsupported.
 
         """
         if options is None:
@@ -94,7 +108,20 @@ class ICPReportGenerator:
         options: ReportOptions,
         report_name: str,
     ) -> str:
-        """Generate HTML report."""
+        """Generate HTML formatted protection analysis report.
+
+        Creates a comprehensive HTML report with styled sections including
+        protection detections, analysis recommendations, and bypass strategies.
+
+        Args:
+            result: Unified protection analysis result to include in report.
+            options: Report generation options controlling which sections to include.
+            report_name: Base filename for the report (without extension).
+
+        Returns:
+            Path to generated HTML report file as string.
+
+        """
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -259,7 +286,15 @@ class ICPReportGenerator:
         return str(report_path)
 
     def _generate_summary_section(self, result: UnifiedProtectionResult) -> str:
-        """Generate summary section HTML."""
+        """Generate summary section HTML content.
+
+        Args:
+            result: Unified protection analysis result for creating summary.
+
+        Returns:
+            HTML string containing executive summary section.
+
+        """
         confidence_class = "high" if result.confidence_score >= 80 else "medium" if result.confidence_score >= 50 else "low"
 
         return f"""
@@ -278,7 +313,15 @@ class ICPReportGenerator:
         """
 
     def _generate_file_info_section(self, result: UnifiedProtectionResult) -> str:
-        """Generate file information section."""
+        """Generate file information section HTML.
+
+        Args:
+            result: Unified protection analysis result containing file metadata.
+
+        Returns:
+            HTML string containing file information table.
+
+        """
         file_path = Path(result.file_path)
         file_size = file_path.stat().st_size if file_path.exists() else 0
 
@@ -309,8 +352,21 @@ class ICPReportGenerator:
         html += "</table>"
         return html
 
-    def _generate_protections_section(self, result: UnifiedProtectionResult, options: ReportOptions) -> str:
-        """Generate detected protections section."""
+    def _generate_protections_section(
+        self,
+        result: UnifiedProtectionResult,
+        options: ReportOptions,
+    ) -> str:
+        """Generate detected protections section HTML.
+
+        Args:
+            result: Unified protection analysis result containing detections.
+            options: Report generation options controlling bypass recommendations display.
+
+        Returns:
+            HTML string containing detected protections section with details.
+
+        """
         if not result.protections:
             return "<h2>Detected Protections</h2><p>No protections detected.</p>"
 
@@ -344,7 +400,15 @@ class ICPReportGenerator:
         return html
 
     def _generate_icp_analysis_section(self, result: UnifiedProtectionResult) -> str:
-        """Generate ICP engine analysis section."""
+        """Generate ICP engine analysis section HTML.
+
+        Args:
+            result: Unified protection analysis result containing ICP engine data.
+
+        Returns:
+            HTML string containing ICP engine analysis section.
+
+        """
         if not result.icp_analysis:
             return ""
 
@@ -377,7 +441,15 @@ class ICPReportGenerator:
         return html
 
     def _generate_recommendations_section(self, result: UnifiedProtectionResult) -> str:
-        """Generate recommendations section."""
+        """Generate analysis recommendations section HTML.
+
+        Args:
+            result: Unified protection analysis result for generating recommendations.
+
+        Returns:
+            HTML string containing analysis recommendations section.
+
+        """
         html = "<h2>Analysis Recommendations</h2>"
 
         recommendations = []
@@ -424,7 +496,15 @@ class ICPReportGenerator:
         return html
 
     def _generate_bypass_methods_section(self, result: UnifiedProtectionResult) -> str:
-        """Generate bypass methods section."""
+        """Generate bypass strategies section HTML.
+
+        Args:
+            result: Unified protection analysis result containing bypass strategies.
+
+        Returns:
+            HTML string containing bypass strategies section.
+
+        """
         if not result.bypass_strategies:
             return ""
 
@@ -449,7 +529,15 @@ class ICPReportGenerator:
         return html
 
     def _generate_technical_details_section(self, result: UnifiedProtectionResult) -> str:
-        """Generate technical details section."""
+        """Generate technical details section HTML.
+
+        Args:
+            result: Unified protection analysis result containing technical details.
+
+        Returns:
+            HTML string containing technical details and feature status table.
+
+        """
         html = "<h2>Technical Details</h2>"
 
         # Add entropy information if available
@@ -481,7 +569,15 @@ class ICPReportGenerator:
         return html
 
     def _generate_raw_data_section(self, result: UnifiedProtectionResult) -> str:
-        """Generate raw data section."""
+        """Generate raw analysis data section HTML.
+
+        Args:
+            result: Unified protection analysis result containing raw JSON data.
+
+        Returns:
+            HTML string containing raw data section.
+
+        """
         html = "<h2>Raw Analysis Data</h2>"
 
         if result.icp_analysis and result.icp_analysis.raw_json:
@@ -496,7 +592,17 @@ class ICPReportGenerator:
         options: ReportOptions,
         report_name: str,
     ) -> str:
-        """Generate plain text report."""
+        """Generate plain text formatted protection analysis report.
+
+        Args:
+            result: Unified protection analysis result to include in report.
+            options: Report generation options controlling which sections to include.
+            report_name: Base filename for the report (without extension).
+
+        Returns:
+            Path to generated text report file as string.
+
+        """
         lines = []
         lines.append("=" * 80)
         lines.append("INTELLICRACK PROTECTION ANALYSIS REPORT")
@@ -562,7 +668,17 @@ class ICPReportGenerator:
         options: ReportOptions,
         report_name: str,
     ) -> str:
-        """Generate JSON report."""
+        """Generate JSON formatted protection analysis report.
+
+        Args:
+            result: Unified protection analysis result to include in report.
+            options: Report generation options controlling which sections to include.
+            report_name: Base filename for the report (without extension).
+
+        Returns:
+            Path to generated JSON report file as string.
+
+        """
         report_data = {
             "metadata": {
                 "generated": datetime.datetime.now().isoformat(),
@@ -627,7 +743,15 @@ class ICPReportGenerator:
         return str(report_path)
 
     def _get_severity_class(self, protection_type: str) -> str:
-        """Get CSS class for protection severity."""
+        """Get CSS class for protection severity level.
+
+        Args:
+            protection_type: Type of protection mechanism.
+
+        Returns:
+            CSS class name corresponding to severity level.
+
+        """
         severity_map = {
             "protector": "critical",
             "license": "high",
@@ -640,15 +764,31 @@ class ICPReportGenerator:
         return severity_map.get(protection_type.lower(), "low")
 
     def _format_size(self, size: int) -> str:
-        """Format file size in human readable format."""
+        """Format file size in human readable format.
+
+        Args:
+            size: File size in bytes.
+
+        Returns:
+            Human readable file size string with units (B, KB, MB, GB, TB).
+
+        """
         for unit in ["B", "KB", "MB", "GB"]:
             if size < 1024.0:
                 return f"{size:.2f} {unit}"
             size /= 1024.0
         return f"{size:.2f} TB"
 
-    def _format_details(self, details: Any) -> str:
-        """Format details object for display."""
+    def _format_details(self, details: object) -> str:
+        """Format details object for display in reports.
+
+        Args:
+            details: Details object (dict, list, or string) to format.
+
+        Returns:
+            Formatted string representation suitable for display.
+
+        """
         if isinstance(details, dict):
             items = []
             for key, value in details.items():
@@ -657,7 +797,12 @@ class ICPReportGenerator:
         return str(details)
 
     def _get_version(self) -> str:
-        """Get Intellicrack version."""
+        """Get Intellicrack version string.
+
+        Returns:
+            Version string from package metadata or default version.
+
+        """
         try:
             import intellicrack
 

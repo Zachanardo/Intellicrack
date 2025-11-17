@@ -32,7 +32,8 @@ import shutil
 import subprocess
 import sys
 import time
-from typing import Any, Callable, Dict, List, Optional, Union
+from collections.abc import Callable
+from typing import Any, Optional, Union
 
 from intellicrack.utils.logger import log_all_methods, logger
 
@@ -97,10 +98,10 @@ except ImportError as e:
             self.id = device_id
             self.name = name
             self.type = device_type
-            self._processes: List[Any] = []
-            self._attached_sessions: Dict[int, Any] = {}
+            self._processes: list[Any] = []
+            self._attached_sessions: dict[int, Any] = {}
 
-        def enumerate_processes(self, use_terminal: bool = False) -> List[Any]:
+        def enumerate_processes(self, use_terminal: bool = False) -> list[Any]:
             """Enumerate running processes using platform-specific methods.
 
             Uses WMIC on Windows or ps on Unix-like systems to enumerate
@@ -226,10 +227,10 @@ except ImportError as e:
 
         def spawn(
             self,
-            program: Union[str, List[str]],
-            argv: Optional[List[str]] = None,
-            envp: Optional[Dict[str, str]] = None,
-            env: Optional[Dict[str, str]] = None,
+            program: Union[str, list[str]],
+            argv: Optional[list[str]] = None,
+            envp: Optional[dict[str, str]] = None,
+            env: Optional[dict[str, str]] = None,
             cwd: Optional[str] = None,
             use_terminal: bool = False,
         ) -> int:
@@ -240,7 +241,7 @@ except ImportError as e:
             application's licensing validation routines.
 
             Args:
-                program: Program path (str) or command list (List[str]).
+                program: Program path (str) or command list (list[str]).
                 argv: Program arguments as list (optional, legacy parameter).
                 envp: Environment variables dict (optional, legacy parameter).
                 env: Environment variables dict (optional).
@@ -380,7 +381,7 @@ except ImportError as e:
                     return process
             return None
 
-        def inject_library_file(self, pid: int, path: str, entrypoint: str, data: Union[Dict[str, Any], bytes, None]) -> bool:
+        def inject_library_file(self, pid: int, path: str, entrypoint: str, data: Union[dict[str, Any], bytes, None]) -> bool:
             """Inject library into process (fallback returns success).
 
             Fallback implementation that logs library injection attempts
@@ -399,7 +400,7 @@ except ImportError as e:
             logger.info("Library injection fallback for PID %d: %s", pid, path)
             return True
 
-        def inject_library_blob(self, pid: int, blob: bytes, entrypoint: str, data: Union[Dict[str, Any], bytes, None]) -> bool:
+        def inject_library_blob(self, pid: int, blob: bytes, entrypoint: str, data: Union[dict[str, Any], bytes, None]) -> bool:
             """Inject library blob into process (fallback returns success).
 
             Fallback implementation for binary blob injection that logs
@@ -483,7 +484,7 @@ except ImportError as e:
             self._resumed = False
             self.parameters = self._get_process_parameters()
 
-        def _get_process_parameters(self) -> Dict[str, str]:
+        def _get_process_parameters(self) -> dict[str, str]:
             """Get process parameters like architecture.
 
             Determines process architecture and platform information for
@@ -494,7 +495,7 @@ except ImportError as e:
                 and "os" (windows/linux/darwin).
 
             """
-            params: Dict[str, str] = {
+            params: dict[str, str] = {
                 "arch": "x64" if sys.maxsize > 2**32 else "x86",
                 "platform": sys.platform,
                 "os": "windows" if sys.platform == "win32" else "linux" if sys.platform.startswith("linux") else "darwin",
@@ -529,8 +530,8 @@ except ImportError as e:
             """
             self.process = process
             self.device = device
-            self._scripts: List[FallbackScript] = []
-            self._on_detached_handlers: List[Callable[[str, Any], None]] = []
+            self._scripts: list[FallbackScript] = []
+            self._on_detached_handlers: list[Callable[[str, Any], None]] = []
             self._detached = False
 
         def create_script(self, source: str, name: Optional[str] = None, runtime: str = "v8") -> "FallbackScript":
@@ -675,10 +676,10 @@ except ImportError as e:
             self.session = session
             self.name = name or "script"
             self.runtime = runtime
-            self._message_handlers: List[Callable[[Dict[str, Any], Any], None]] = []
+            self._message_handlers: list[Callable[[dict[str, Any], Any], None]] = []
             self._loaded = False
-            self._exports: Dict[str, Callable[..., Dict[str, Any]]] = {}
-            self._pending_messages: List[Dict[str, Any]] = []
+            self._exports: dict[str, Callable[..., dict[str, Any]]] = {}
+            self._pending_messages: list[dict[str, Any]] = []
 
         def load(self) -> None:
             """Load the script into the process.
@@ -698,7 +699,7 @@ except ImportError as e:
             """
             self._loaded = False
 
-        def on(self, event: str, handler: Callable[[Dict[str, Any], Any], None]) -> None:
+        def on(self, event: str, handler: Callable[[dict[str, Any], Any], None]) -> None:
             """Register message handler.
 
             Registers a callback for script messages and processes any
@@ -716,7 +717,7 @@ except ImportError as e:
                     msg = self._pending_messages.pop(0)
                     handler(msg, None)
 
-        def post(self, message: Union[Dict[str, Any], str, int], data: Optional[Union[bytes, Dict[str, Any]]] = None) -> None:
+        def post(self, message: Union[dict[str, Any], str, int], data: Optional[Union[bytes, dict[str, Any]]] = None) -> None:
             """Post message to script.
 
             Sends a message to the loaded script and processes its response,
@@ -735,7 +736,7 @@ except ImportError as e:
             if response:
                 self._send_internal_message(response)
 
-        def exports(self) -> Dict[str, Callable[..., Dict[str, Any]]]:
+        def exports(self) -> dict[str, Callable[..., dict[str, Any]]]:
             """Get script exports.
 
             Returns:
@@ -769,7 +770,7 @@ except ImportError as e:
                 for method in methods:
                     self._exports[method] = self._create_rpc_method(method)
 
-        def _create_rpc_method(self, method_name: str) -> Callable[..., Dict[str, Any]]:
+        def _create_rpc_method(self, method_name: str) -> Callable[..., dict[str, Any]]:
             """Create an RPC method callable for fallback implementation.
 
             Generates a callable RPC method that logs invocations and returns
@@ -782,13 +783,13 @@ except ImportError as e:
                 Callable RPC method.
 
             """
-            def rpc_method(*args: Union[str, int, bool, Dict[str, Any]], **kwargs: Union[str, int, bool, Dict[str, Any]]) -> Dict[str, Any]:
+            def rpc_method(*args: Union[str, int, bool, dict[str, Any]], **kwargs: Union[str, int, bool, dict[str, Any]]) -> dict[str, Any]:
                 logger.info("RPC call to %s with args: %s, kwargs: %s", method_name, args, kwargs)
                 return {"status": "success", "method": method_name, "fallback": True, "args": args, "kwargs": kwargs}
 
             return rpc_method
 
-        def _process_message(self, message: Union[Dict[str, Any], str, int], data: Optional[Union[bytes, Dict[str, Any]]]) -> Optional[Dict[str, Any]]:
+        def _process_message(self, message: Union[dict[str, Any], str, int], data: Optional[Union[bytes, dict[str, Any]]]) -> Optional[dict[str, Any]]:
             """Process incoming message from host.
 
             Handles different message types like ping and evaluate requests,
@@ -815,7 +816,7 @@ except ImportError as e:
 
             return None
 
-        def _send_internal_message(self, message: Dict[str, Any]) -> None:
+        def _send_internal_message(self, message: dict[str, Any]) -> None:
             """Send message to registered handlers.
 
             Invokes all registered message handlers with the given message,
@@ -834,7 +835,7 @@ except ImportError as e:
             else:
                 self._pending_messages.append(message)
 
-        def enumerate_ranges(self, protection: str) -> List[Dict[str, Any]]:
+        def enumerate_ranges(self, protection: str) -> list[dict[str, Any]]:
             """Enumerate memory ranges with given protection.
 
             Returns typical executable memory layout for analysis matching
@@ -847,7 +848,7 @@ except ImportError as e:
                 List of memory range dicts with base address, size, and protection.
 
             """
-            ranges: List[Dict[str, Any]] = [
+            ranges: list[dict[str, Any]] = [
                 {"base": "0x400000", "size": 4096, "protection": protection},
                 {"base": "0x401000", "size": 8192, "protection": protection},
             ]
@@ -865,11 +866,11 @@ except ImportError as e:
 
             Sets up the local device and device registry for management.
             """
-            self._devices: Dict[str, Any] = {}
+            self._devices: dict[str, Any] = {}
             self._local_device = FallbackDevice("local", "Local System", "local")
             self._devices["local"] = self._local_device
 
-        def enumerate_devices(self) -> List["FallbackDevice"]:
+        def enumerate_devices(self) -> list["FallbackDevice"]:
             """Enumerate available devices.
 
             Returns all registered devices (local, remote, and USB).
@@ -982,7 +983,7 @@ except ImportError as e:
             """
             self.path = path
             self._monitoring = False
-            self._callbacks: List[Callable[[str, Any], None]] = []
+            self._callbacks: list[Callable[[str, Any], None]] = []
 
         def enable(self) -> None:
             """Enable monitoring.
@@ -1020,7 +1021,7 @@ except ImportError as e:
         supporting RPC calls and data transfer for dynamic analysis.
         """
 
-        def __init__(self, message_type: str, payload: Dict[str, Any], data: Optional[bytes] = None) -> None:
+        def __init__(self, message_type: str, payload: dict[str, Any], data: Optional[bytes] = None) -> None:
             """Initialize script message.
 
             Args:
@@ -1117,10 +1118,10 @@ except ImportError as e:
         raise TypeError(error_msg)
 
     def spawn(
-        program: Union[str, List[str]],
-        argv: Optional[List[str]] = None,
-        envp: Optional[Dict[str, str]] = None,
-        env: Optional[Dict[str, str]] = None,
+        program: Union[str, list[str]],
+        argv: Optional[list[str]] = None,
+        envp: Optional[dict[str, str]] = None,
+        env: Optional[dict[str, str]] = None,
         cwd: Optional[str] = None,
     ) -> int:
         """Spawn a new process.
@@ -1166,7 +1167,7 @@ except ImportError as e:
         device = get_local_device()
         return device.kill(pid)
 
-    def enumerate_devices() -> List["FallbackDevice"]:
+    def enumerate_devices() -> list["FallbackDevice"]:
         """Enumerate all devices.
 
         Returns:

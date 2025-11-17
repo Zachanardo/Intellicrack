@@ -13,8 +13,9 @@ import ctypes.wintypes
 import json
 import subprocess
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     PYQT6_AVAILABLE,

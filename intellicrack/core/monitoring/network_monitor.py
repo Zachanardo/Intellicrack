@@ -24,10 +24,12 @@ from intellicrack.core.monitoring.base_monitor import (
 
 try:
     from scapy.all import IP, TCP, UDP, Raw, sniff
+    from scapy.packet import Packet
 
     SCAPY_AVAILABLE = True
 except ImportError:
     SCAPY_AVAILABLE = False
+    Packet = object
 
 
 class NetworkMonitor(BaseMonitor):
@@ -95,7 +97,7 @@ class NetworkMonitor(BaseMonitor):
         except Exception as e:
             self._handle_error(e)
 
-    def _process_packet(self, packet) -> None:
+    def _process_packet(self, packet: Packet) -> None:
         """Process captured packet.
 
         Args:

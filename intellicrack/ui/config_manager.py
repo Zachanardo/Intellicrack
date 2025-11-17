@@ -23,8 +23,8 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import contextlib
 import logging
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
-from typing import Callable
 
 logger = logging.getLogger(__name__)
 

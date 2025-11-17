@@ -29,26 +29,41 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
+from intellicrack.utils.logger import logger
 
 
 class EntropyVisualizer(QWidget):
-    """Widget for visualizing file entropy."""
+    """Widget for visualizing file entropy.
+
+    Displays Shannon entropy calculations across blocks of binary data,
+    identifying packed, encrypted, or compressed sections. Useful for
+    analyzing software protection mechanisms in binary files.
+    """
 
     entropy_calculated = pyqtSignal(list, list)
 
-    def __init__(self, parent=None) -> None:
-        """Initialize entropy visualizer widget with binary entropy analysis and visualization."""
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialize entropy visualizer widget with binary entropy analysis and visualization.
+
+        Args:
+            parent: Optional parent widget for Qt object hierarchy.
+
+        """
         super().__init__(parent)
         self.setMinimumHeight(200)
         self.setMinimumWidth(400)
-        self.current_data = None
-        self.file_data = None
-        self.entropy_data = []
-        self.block_positions = []
+        self.current_data: object = None
+        self.file_data: bytes | None = None
+        self.entropy_data: list[float] = []
+        self.block_positions: list[float] = []
         self._setup_ui()
 
     def _setup_ui(self) -> None:
-        """Set up the entropy visualization UI."""
+        """Set up the entropy visualization UI.
+
+        Creates plot widgets with entropy curve, threshold lines, and
+        high/low entropy regions for visual analysis of binary data.
+        """
         layout = QVBoxLayout(self)
 
         # Create plot widget
@@ -106,8 +121,22 @@ class EntropyVisualizer(QWidget):
         layout.addWidget(self.plot_widget)
         layout.addWidget(self.info_label)
 
-    def calculate_entropy(self, data: bytes, block_size: int = 1024) -> tuple:
-        """Calculate Shannon entropy for data blocks."""
+    def calculate_entropy(self, data: bytes, block_size: int = 1024) -> tuple[list[float], list[float]]:
+        """Calculate Shannon entropy for data blocks.
+
+        Divides binary data into fixed-size blocks and calculates Shannon entropy
+        for each block, identifying patterns indicating compression or encryption.
+
+        Args:
+            data: Binary data to analyze.
+            block_size: Size of each analysis block in bytes.
+
+        Returns:
+            Tuple containing (positions, entropy_values) where positions are
+            percentages through the file and entropy_values are Shannon entropy
+            calculations ranging from 0 to 8.
+
+        """
         if not data:
             return [], []
 
@@ -136,7 +165,20 @@ class EntropyVisualizer(QWidget):
         return positions, entropy_values
 
     def load_data(self, data: bytes, block_size: int = 1024) -> None:
-        """Load binary data and calculate entropy with comprehensive error handling."""
+        """Load binary data and calculate entropy with comprehensive error handling.
+
+        Validates input data, calculates entropy statistics, and updates the
+        visualization with proper error recovery.
+
+        Args:
+            data: Binary data to load and analyze.
+            block_size: Size of each analysis block in bytes.
+
+        Raises:
+            TypeError: If data is not bytes type.
+            ValueError: If data is empty or block_size is non-positive.
+
+        """
         try:
             if not isinstance(data, bytes):
                 error_msg = f"Expected bytes data, got {type(data)}"
@@ -168,7 +210,11 @@ class EntropyVisualizer(QWidget):
             self.entropy_curve.setData([], [])
 
     def update_plot(self) -> None:
-        """Update the entropy plot with comprehensive error handling."""
+        """Update the entropy plot with comprehensive error handling.
+
+        Renders entropy data on the plot, calculates statistics, identifies
+        suspicious regions, and emits signals for connected widgets.
+        """
         try:
             if not self.entropy_data:
                 self.info_label.setText("No entropy data available")
@@ -227,8 +273,17 @@ class EntropyVisualizer(QWidget):
             if hasattr(self, "entropy_curve") and self.entropy_curve:
                 self.entropy_curve.setData([], [])
 
-    def find_suspicious_regions(self) -> list[tuple]:
-        """Find regions with suspicious entropy patterns."""
+    def find_suspicious_regions(self) -> list[tuple[float, str, str]]:
+        """Find regions with suspicious entropy patterns.
+
+        Identifies regions in the binary that may indicate encryption,
+        compression, or padding based on entropy fluctuations and values.
+
+        Returns:
+            List of tuples (position_percent, description, details) for each
+            suspicious region found.
+
+        """
         suspicious = []
 
         if len(self.entropy_data) < 2:
@@ -268,7 +323,10 @@ class EntropyVisualizer(QWidget):
         return suspicious
 
     def clear(self) -> None:
-        """Clear the visualization."""
+        """Clear the visualization.
+
+        Resets all entropy data, clears the plot, and restores initial state.
+        """
         self.file_data = None
         self.entropy_data = []
         self.block_positions = []

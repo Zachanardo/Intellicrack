@@ -26,11 +26,12 @@ import threading
 import time
 import warnings
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, ParamSpec, TypeVar
+from typing import Any, ParamSpec, TypeVar
 
 from scipy import stats
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor

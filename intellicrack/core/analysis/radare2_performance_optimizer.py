@@ -203,7 +203,13 @@ class R2PerformanceOptimizer:
         self.logger.info(f"R2PerformanceOptimizer initialized with {strategy.value} strategy")
 
     def _get_system_info(self) -> dict[str, Any]:
-        """Get comprehensive system information."""
+        """Get comprehensive system information.
+
+        Returns:
+            Dictionary containing CPU count, memory total, available, percent,
+            CPU percent, and disk usage information.
+
+        """
         return {
             "cpu_count": multiprocessing.cpu_count(),
             "memory_total": psutil.virtual_memory().total,
@@ -217,10 +223,12 @@ class R2PerformanceOptimizer:
         """Create optimized configuration for specific binary.
 
         Args:
-            binary_path: Path to binary file
+            binary_path: Path to binary file for optimization.
 
         Returns:
-            Dict containing optimized configuration
+            Dictionary containing optimized configuration with analysis level,
+            memory limits, timeout, worker count, chunk size, caching settings,
+            and radare2 flags.
 
         """
         try:
@@ -254,7 +262,16 @@ class R2PerformanceOptimizer:
             return self._get_safe_default_config()
 
     def _analyze_binary_characteristics(self, binary_path: str) -> dict[str, Any]:
-        """Analyze binary file characteristics for optimization."""
+        """Analyze binary file characteristics for optimization.
+
+        Args:
+            binary_path: Path to binary file to analyze.
+
+        Returns:
+            Dictionary containing file size, type, architecture, packing status,
+            symbol status, section count, import count, and complexity estimate.
+
+        """
         characteristics = {
             "file_size": 0,
             "file_type": "unknown",
@@ -302,7 +319,15 @@ class R2PerformanceOptimizer:
         return characteristics
 
     def _estimate_complexity(self, characteristics: dict[str, Any]) -> str:
-        """Estimate binary complexity for optimization purposes."""
+        """Estimate binary complexity for optimization purposes.
+
+        Args:
+            characteristics: Dictionary of analyzed binary characteristics.
+
+        Returns:
+            Complexity level as string: "low", "medium", "high", or "very_high".
+
+        """
         size = characteristics["file_size"]
         section_count = characteristics["section_count"]
         import_count = characteristics["import_count"]
@@ -342,7 +367,15 @@ class R2PerformanceOptimizer:
         return "low"
 
     def _select_performance_profile(self, binary_info: dict[str, Any]) -> PerformanceProfile:
-        """Select appropriate performance profile based on binary characteristics."""
+        """Select appropriate performance profile based on binary characteristics.
+
+        Args:
+            binary_info: Dictionary of analyzed binary characteristics.
+
+        Returns:
+            PerformanceProfile object matching the binary size and complexity.
+
+        """
         file_size = binary_info["file_size"]
 
         for profile_name, profile in self.PERFORMANCE_PROFILES.items():
@@ -355,8 +388,19 @@ class R2PerformanceOptimizer:
         # Default to huge files profile
         return self.PERFORMANCE_PROFILES["huge_files"]
 
-    def _customize_profile_for_system(self, profile: PerformanceProfile, binary_info: dict[str, Any]) -> dict[str, Any]:
-        """Customize profile based on current system resources."""
+    def _customize_profile_for_system(
+        self, profile: PerformanceProfile, binary_info: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Customize profile based on current system resources.
+
+        Args:
+            profile: Base performance profile to customize.
+            binary_info: Dictionary of analyzed binary characteristics.
+
+        Returns:
+            Customized configuration dictionary adapted to current system state.
+
+        """
         system_info = self._get_system_info()
 
         config = {
@@ -396,7 +440,16 @@ class R2PerformanceOptimizer:
         return config
 
     def _apply_strategy_optimizations(self, config: dict[str, Any], binary_info: dict[str, Any]) -> dict[str, Any]:
-        """Apply strategy-specific optimizations."""
+        """Apply strategy-specific optimizations.
+
+        Args:
+            config: Base configuration to optimize.
+            binary_info: Dictionary of analyzed binary characteristics.
+
+        Returns:
+            Configuration dictionary with strategy-specific optimizations applied.
+
+        """
         if self.strategy == OptimizationStrategy.MEMORY_CONSERVATIVE:
             config = self._apply_memory_conservative_optimizations(config)
         elif self.strategy == OptimizationStrategy.SPEED_OPTIMIZED:
@@ -408,7 +461,15 @@ class R2PerformanceOptimizer:
         return config
 
     def _apply_memory_conservative_optimizations(self, config: dict[str, Any]) -> dict[str, Any]:
-        """Apply memory-conservative optimizations."""
+        """Apply memory-conservative optimizations.
+
+        Args:
+            config: Base configuration to optimize for memory conservation.
+
+        Returns:
+            Configuration with reduced memory footprint and single-threaded execution.
+
+        """
         # Reduce memory usage
         config["memory_limit"] = int(config["memory_limit"] * 0.7)
         config["parallel_workers"] = 1  # Single threaded to save memory
@@ -434,7 +495,15 @@ class R2PerformanceOptimizer:
         return config
 
     def _apply_speed_optimizations(self, config: dict[str, Any]) -> dict[str, Any]:
-        """Apply speed-focused optimizations."""
+        """Apply speed-focused optimizations.
+
+        Args:
+            config: Base configuration to optimize for speed.
+
+        Returns:
+            Configuration with increased parallelism, caching, and reduced timeouts.
+
+        """
         # Increase parallel workers if system allows
         system_info = self._get_system_info()
         if system_info["memory_available"] > 4 * 1024 * 1024 * 1024:  # >4GB available
@@ -462,7 +531,16 @@ class R2PerformanceOptimizer:
         return config
 
     def _apply_large_file_optimizations(self, config: dict[str, Any], binary_info: dict[str, Any]) -> dict[str, Any]:
-        """Apply optimizations specifically for large files."""
+        """Apply optimizations specifically for large files.
+
+        Args:
+            config: Base configuration to optimize for large files.
+            binary_info: Dictionary of analyzed binary characteristics.
+
+        Returns:
+            Configuration optimized for handling large binaries with minimal analysis depth.
+
+        """
         file_size = binary_info["file_size"]
 
         # Use memory mapping for very large files
@@ -495,7 +573,12 @@ class R2PerformanceOptimizer:
         return config
 
     def _get_safe_default_config(self) -> dict[str, Any]:
-        """Get safe default configuration for fallback."""
+        """Get safe default configuration for fallback.
+
+        Returns:
+            Safe configuration dictionary with conservative settings.
+
+        """
         return {
             "analysis_level": "aa",
             "memory_limit": 500,
@@ -509,7 +592,12 @@ class R2PerformanceOptimizer:
         }
 
     def start_monitoring(self, interval: float = 1.0) -> None:
-        """Start resource monitoring."""
+        """Start resource monitoring.
+
+        Args:
+            interval: Monitoring interval in seconds. Defaults to 1.0.
+
+        """
         if not self._monitoring:
             self._monitoring = True
             self._monitor_thread = threading.Thread(
@@ -529,7 +617,12 @@ class R2PerformanceOptimizer:
             self.logger.info("Resource monitoring stopped")
 
     def _monitor_resources(self, interval: float) -> None:
-        """Monitor system resources during analysis."""
+        """Monitor system resources during analysis.
+
+        Args:
+            interval: Monitoring interval in seconds.
+
+        """
         while self._monitoring:
             try:
                 # Get current resource usage
@@ -568,7 +661,12 @@ class R2PerformanceOptimizer:
                 time.sleep(interval * 2)
 
     def _trigger_emergency_optimization(self, reason: str) -> None:
-        """Trigger emergency optimization due to resource pressure."""
+        """Trigger emergency optimization due to resource pressure.
+
+        Args:
+            reason: Reason for emergency optimization (e.g., "memory_critical", "cpu_high").
+
+        """
         self.logger.warning(f"Emergency optimization triggered: {reason}")
 
         if reason == "memory_critical":
@@ -585,8 +683,14 @@ class R2PerformanceOptimizer:
             # Throttle operations
             time.sleep(1)
 
-    def optimize_r2_session(self, r2_session, config: dict[str, Any]) -> None:
-        """Apply optimizations to active r2 session."""
+    def optimize_r2_session(self, r2_session: object, config: dict[str, Any]) -> None:
+        """Apply optimizations to active r2 session.
+
+        Args:
+            r2_session: Active radare2 session object.
+            config: Configuration dictionary with optimization flags.
+
+        """
         try:
             # Apply configuration flags
             for i in range(0, len(config["r2_flags"]), 2):
@@ -603,7 +707,13 @@ class R2PerformanceOptimizer:
             self.logger.error(f"Failed to optimize r2 session: {e}")
 
     def _track_profile_usage(self, profile_name: str, file_size: int) -> None:
-        """Track profile usage for optimization insights."""
+        """Track profile usage for optimization insights.
+
+        Args:
+            profile_name: Name of the performance profile used.
+            file_size: Size of the analyzed binary in bytes.
+
+        """
         if not hasattr(self, "profile_usage_stats"):
             self.profile_usage_stats = {}
 
@@ -622,7 +732,12 @@ class R2PerformanceOptimizer:
         self.logger.debug(f"Profile {profile_name} used {stats['usage_count']} times, avg file size: {stats['avg_file_size']:.2f} bytes")
 
     def get_performance_report(self) -> dict[str, Any]:
-        """Generate comprehensive performance report."""
+        """Generate comprehensive performance report.
+
+        Returns:
+            Dictionary containing system info, strategy, metrics, and recommendations.
+
+        """
         report = {
             "system_info": self._get_system_info(),
             "strategy": self.strategy.value,
@@ -650,7 +765,12 @@ class R2PerformanceOptimizer:
         return report
 
     def _generate_recommendations(self) -> list[str]:
-        """Generate performance optimization recommendations."""
+        """Generate performance optimization recommendations.
+
+        Returns:
+            List of optimization recommendation strings.
+
+        """
         recommendations = []
 
         # Memory recommendations
@@ -673,7 +793,17 @@ class R2PerformanceOptimizer:
         return recommendations
 
     def benchmark_analysis_types(self, binary_path: str, analysis_types: list[str]) -> dict[str, dict[str, float]]:
-        """Benchmark different analysis types for performance comparison."""
+        """Benchmark different analysis types for performance comparison.
+
+        Args:
+            binary_path: Path to binary file for benchmarking.
+            analysis_types: List of analysis type names to benchmark.
+
+        Returns:
+            Dictionary mapping analysis types to performance metrics (duration,
+            memory delta, memory peak).
+
+        """
         results = {}
 
         for analysis_type in analysis_types:
@@ -715,7 +845,11 @@ class R2PerformanceOptimizer:
         return results
 
     def cleanup(self) -> None:
-        """Cleanup optimizer resources."""
+        """Cleanup optimizer resources.
+
+        Stops monitoring, clears caches, and resets metrics.
+
+        """
         try:
             self.stop_monitoring()
             self._config_cache.clear()
@@ -739,7 +873,15 @@ class R2PerformanceOptimizer:
 def create_performance_optimizer(
     strategy: OptimizationStrategy = OptimizationStrategy.BALANCED,
 ) -> R2PerformanceOptimizer:
-    """Create performance optimizer instance."""
+    """Create performance optimizer instance.
+
+    Args:
+        strategy: The optimization strategy to use. Defaults to BALANCED.
+
+    Returns:
+        Initialized R2PerformanceOptimizer instance.
+
+    """
     return R2PerformanceOptimizer(strategy)
 
 
@@ -747,10 +889,10 @@ def optimize_for_large_binary(binary_path: str) -> dict[str, Any]:
     """Quick optimization for large binary files.
 
     Args:
-        binary_path: Path to binary file
+        binary_path: Path to binary file for optimization.
 
     Returns:
-        Optimized configuration
+        Optimized configuration dictionary with large-file-specialized settings.
 
     """
     optimizer = create_performance_optimizer(OptimizationStrategy.LARGE_FILE_SPECIALIZED)

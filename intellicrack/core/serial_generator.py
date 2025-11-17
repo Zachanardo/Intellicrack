@@ -8,9 +8,9 @@ import random
 import re
 import struct
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable
 
 import z3
 from cryptography.hazmat.backends import default_backend

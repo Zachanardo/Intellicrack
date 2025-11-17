@@ -25,7 +25,7 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 try:
     import yara
@@ -45,7 +45,18 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class StreamingYaraMatch:
-    """Represents a YARA match found during streaming analysis."""
+    """Represents a YARA match found during streaming analysis.
+
+    Attributes:
+        rule_name: Name of the YARA rule that matched
+        namespace: YARA rule namespace if defined
+        offset: Byte offset in binary where match occurred
+        matched_data: Hex string of matched data (truncated to 100 chars)
+        string_identifier: YARA string identifier (e.g., $s1, $regex1)
+        tags: List of YARA rule tags (protection, licensing, crypto, etc.)
+        meta: Dictionary of rule metadata from YARA definition
+
+    """
 
     rule_name: str
     namespace: str
@@ -57,7 +68,13 @@ class StreamingYaraMatch:
 
 
 class StreamingYaraScanner(StreamingAnalyzer):
-    """Streaming YARA scanner for memory-efficient analysis of large binaries."""
+    """Streaming YARA scanner for memory-efficient analysis of large binaries.
+
+    Scans multi-GB binaries with YARA rules without loading entire file into
+    memory. Detects licensing protection patterns, encryption signatures,
+    cryptographic routines, and anti-analysis mechanisms relevant to software
+    protection systems.
+    """
 
     def __init__(
         self,
@@ -68,26 +85,35 @@ class StreamingYaraScanner(StreamingAnalyzer):
         """Initialize streaming YARA scanner.
 
         Args:
-            rules_path: Path to YARA rules file
+            rules_path: Path to YARA rules file (optional)
             rules_source: YARA rules as string (alternative to rules_path)
-            max_matches_per_rule: Maximum matches to collect per rule
+            max_matches_per_rule: Maximum matches to collect per rule (default 1000)
+
+        Raises:
+            ImportError: If yara-python module is not installed
 
         """
         if not YARA_AVAILABLE:
             raise ImportError("YARA is not available. Install with: pip install yara-python")
 
-        self.rules_path = rules_path
-        self.rules_source = rules_source
-        self.max_matches_per_rule = max_matches_per_rule
-        self.rules = None
+        self.rules_path: Path | None = rules_path
+        self.rules_source: str | None = rules_source
+        self.max_matches_per_rule: int = max_matches_per_rule
+        self.rules: Any = None
         self.match_offsets: set[int] = set()
         self.rule_match_counts: dict[str, int] = defaultdict(int)
 
     def initialize_analysis(self, file_path: Path) -> None:
         """Initialize YARA rules before scanning begins.
 
+        Loads YARA rules from file, source string, or defaults. Compiles rules
+        into YARA rule object for efficient matching during streaming analysis.
+
         Args:
             file_path: Path to binary being analyzed
+
+        Raises:
+            Exception: If YARA rule compilation fails
 
         """
         try:
@@ -112,11 +138,15 @@ class StreamingYaraScanner(StreamingAnalyzer):
     def analyze_chunk(self, context: ChunkContext) -> dict[str, Any]:
         """Scan a single chunk with YARA rules.
 
+        Matches data in chunk against compiled YARA rules. Handles overlapping
+        regions between chunks to avoid missing matches that span chunk
+        boundaries. Deduplicates matches and enforces per-rule limits.
+
         Args:
-            context: Chunk context with data and metadata
+            context: Chunk context containing data, offset, and overlap regions
 
         Returns:
-            Matches found in this chunk
+            Dictionary with chunk offset, size, matches found, and error status
 
         """
         try:
@@ -182,11 +212,14 @@ class StreamingYaraScanner(StreamingAnalyzer):
     def merge_results(self, results: list[dict[str, Any]]) -> dict[str, Any]:
         """Merge YARA matches from all chunks.
 
+        Aggregates matches across all chunks, eliminates duplicates, calculates
+        rule distribution, and computes coverage statistics for the scan.
+
         Args:
             results: List of partial results from each chunk
 
         Returns:
-            Merged YARA scanning results
+            Merged dictionary with total matches, rule distribution, and coverage
 
         """
         try:
@@ -243,11 +276,15 @@ class StreamingYaraScanner(StreamingAnalyzer):
     def finalize_analysis(self, merged_results: dict[str, Any]) -> dict[str, Any]:
         """Finalize YARA analysis with categorization and insights.
 
+        Categorizes matches into protection, licensing, cryptographic, and
+        anti-analysis types based on rule tags and names. Generates summary
+        for user consumption.
+
         Args:
             merged_results: Merged results from all chunks
 
         Returns:
-            Final analysis results with enhancements
+            Final analysis results with categorized matches and summary
 
         """
         try:
@@ -304,12 +341,15 @@ class StreamingYaraScanner(StreamingAnalyzer):
     def _generate_summary(self, results: dict[str, Any], license_matches: list[dict[str, Any]]) -> str:
         """Generate human-readable summary of YARA scan results.
 
+        Composes narrative describing detected patterns including licensing,
+        protection, and cryptographic signatures. Highlights most common rules.
+
         Args:
-            results: Merged scan results
-            license_matches: List of licensing-related matches
+            results: Merged scan results dictionary
+            license_matches: List of licensing-related matches from analysis
 
         Returns:
-            Summary string
+            Human-readable summary string with key findings
 
         """
         total = results.get("total_matches", 0)
@@ -330,8 +370,12 @@ class StreamingYaraScanner(StreamingAnalyzer):
     def _get_default_rules(self) -> str:
         """Get default YARA rules for licensing protection detection.
 
+        Provides built-in rules for detecting common software protection
+        mechanisms including FlexLM, HASP, Denuvo, VMProtect, Themida,
+        RSA keys, and license validation functions.
+
         Returns:
-            Default YARA rules as string
+            YARA rule definitions as string
 
         """
         return """
@@ -446,18 +490,27 @@ def scan_binary_streaming(
     binary_path: Path,
     rules_path: Path | None = None,
     rules_source: str | None = None,
-    progress_callback: Any | None = None,
+    progress_callback: Callable[[int, int], None] | None = None,
 ) -> dict[str, Any]:
     """Perform streaming YARA scan on large binary.
 
+    Scans large binary files with YARA rules for licensing protection,
+    encryption, packing, and anti-analysis patterns without loading entire
+    file into memory. Supports custom rules or default licensing detection.
+
     Args:
-        binary_path: Path to binary file
+        binary_path: Path to binary file to scan
         rules_path: Optional path to YARA rules file
         rules_source: Optional YARA rules as string
-        progress_callback: Optional callback for progress updates
+        progress_callback: Optional callback function for progress updates
+            taking (current: int, total: int) parameters
 
     Returns:
-        Complete YARA scan results
+        Complete YARA scan results including matches, categorization, coverage,
+        and summary of detected protection patterns
+
+    Raises:
+        Exception: If file not found or scanning encounters errors
 
     """
     try:

@@ -356,18 +356,19 @@ def analyze_crypto_streaming(
     binary_path: Path,
     quick_mode: bool = False,
     use_radare2: bool = False,
-    progress_callback: Any | None = None,
+    progress_callback: object | None = None,
 ) -> dict[str, Any]:
     """Perform streaming cryptographic analysis on large binary.
 
     Args:
-        binary_path: Path to binary file
-        quick_mode: Skip expensive analysis for faster processing
-        use_radare2: Enable radare2 integration
-        progress_callback: Optional callback for progress updates
+        binary_path: Path to binary file for cryptographic analysis.
+        quick_mode: Skip expensive analysis for faster processing. Defaults to False.
+        use_radare2: Enable radare2 integration for enhanced analysis. Defaults to False.
+        progress_callback: Optional callback object for progress updates. Defaults to None.
 
     Returns:
-        Complete cryptographic analysis results
+        Dictionary containing complete cryptographic analysis results with detections,
+        algorithm distribution, and complexity scoring.
 
     """
     try:

@@ -119,8 +119,8 @@ import logging
 import random
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 logger = logging.getLogger(__name__)
 

@@ -17,6 +17,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import hashlib
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -52,7 +53,7 @@ except ImportError:
 class ProtectionAnalyzer:
     """Comprehensive protection analysis engine for binary files."""
 
-    def __init__(self, logger=None) -> None:
+    def __init__(self, logger: logging.Logger | None = None) -> None:
         """Initialize protection analyzer."""
         self.logger = logger or get_logger(__name__)
         self.protection_signatures = self._load_protection_signatures()

@@ -10,9 +10,10 @@ Licensed under GNU General Public License v3.0
 import threading
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 
 class EventSource(Enum):

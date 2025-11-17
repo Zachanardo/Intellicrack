@@ -19,6 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+import re
 from enum import Enum
 from typing import Any
 
@@ -36,7 +37,8 @@ class PromptType(Enum):
 class ScriptGenerationPrompts:
     """Comprehensive prompt library for AI script generation.
 
-    All prompts enforce zero placeholder policy.
+    Manages specialized prompts for automated protection bypass script generation,
+    enforcing strict standards for functional completeness and production-ready code.
     """
 
     def __init__(self) -> None:
@@ -49,14 +51,27 @@ class ScriptGenerationPrompts:
         self.prompts = self._initialize_prompts()
 
     def _initialize_prompts(self) -> dict[PromptType, dict[str, str]]:
-        """Initialize all prompt templates."""
+        """Initialize all prompt templates.
+
+        Constructs a comprehensive dictionary of prompt templates for all supported
+        prompt types (FRIDA, GHIDRA, ANALYSIS, REFINEMENT, VALIDATION), each with
+        'system' and 'user_template' keys containing specialized instructions and
+        template strings for AI script generation across different binary analysis
+        and exploitation domains.
+
+        Returns:
+            Dictionary mapping PromptType enum values to prompt data dictionaries,
+            each containing 'system' (expert instructions) and 'user_template'
+            (parameterized prompt template) strings.
+
+        """
         return {
             PromptType.FRIDA: {
                 "system": """You are an autonomous senior Frida expert specializing in complex protection bypass and advanced hooking techniques.
 
 CRITICAL REQUIREMENTS:
-- Generate ONLY real, functional Frida JavaScript code
-- NO placeholders, stubs, TODOs, or incomplete functions
+- Generate ONLY complete, functional Frida JavaScript code
+- Every implementation must be fully operational and executable
 - Every Interceptor.attach() must have complete onEnter and onLeave implementations
 - All API calls must be correct Frida API usage
 - Scripts must be production-ready and immediately executable
@@ -120,8 +135,8 @@ Return ONLY the complete Frida script code.""",
                 "system": """You are a senior Ghidra developer specializing in complex binary analysis, advanced patching, and automated reverse engineering workflows.
 
 CRITICAL REQUIREMENTS:
-- Generate ONLY real, functional Ghidra Python code
-- NO placeholders, stubs, TODOs, or incomplete functions
+- Generate ONLY complete, functional Ghidra Python code
+- Every implementation must be fully operational and executable
 - Use correct Ghidra API calls and proper syntax
 - Include proper error handling and validation
 - Scripts must work with headless Ghidra analysis
@@ -214,8 +229,8 @@ Return analysis in structured JSON format.""",
                 "system": """You are an autonomous script debugging and optimization expert.
 
 CRITICAL REQUIREMENTS:
-- Generate ONLY real, functional code improvements
-- NO placeholders, stubs, TODOs, or incomplete fixes
+- Generate ONLY complete, functional code improvements
+- Every fix must be fully operational and immediately deployable
 - Fix all identified errors and issues
 - Improve script reliability and robustness
 - Maintain original functionality while enhancing performance
@@ -275,8 +290,27 @@ Return validation results in structured JSON format.""",
             },
         }
 
-    def get_prompt(self, prompt_type: PromptType, **kwargs) -> dict[str, str]:
-        """Get formatted prompt for specific type."""
+    def get_prompt(self, prompt_type: PromptType, **kwargs: object) -> dict[str, str]:
+        """Get formatted prompt for specific type.
+
+        Retrieves and formats a prompt template for the specified prompt type,
+        substituting any provided keyword arguments into the template.
+
+        Args:
+            prompt_type: The type of prompt to retrieve (FRIDA, GHIDRA, ANALYSIS,
+                REFINEMENT, or VALIDATION).
+            **kwargs: Variable keyword arguments used to format the user template
+                with substitution values.
+
+        Returns:
+            A dictionary containing 'system' and 'user_template' keys with
+            formatted prompt strings.
+
+        Raises:
+            ValueError: If the prompt_type is not recognized or does not exist
+                in the prompts dictionary.
+
+        """
         if prompt_type not in self.prompts:
             raise ValueError(f"Unknown prompt type: {prompt_type}")
 
@@ -288,13 +322,31 @@ Return validation results in structured JSON format.""",
                 prompt_data["user_template"] = prompt_data["user_template"].format(**kwargs)
             except KeyError as e:
                 self.logger.error("Key error in script_generation_prompts: %s", e)
-                # If a required key is missing, return the template with placeholders
-                # This allows the caller to see what keys are needed
 
         return prompt_data
 
-    def build_context_data(self, binary_analysis: dict[str, Any], protection_types: list[str] = None) -> dict[str, str]:
-        """Build context data for prompt formatting."""
+    def build_context_data(self, binary_analysis: dict[str, Any], protection_types: list[str] | None = None) -> dict[str, str]:
+        """Build context data for prompt formatting.
+
+        Constructs a comprehensive context dictionary from binary analysis data and
+        protection types, extracting relevant information about binary structure,
+        functions, imports, and license-related strings to populate prompt templates.
+
+        Args:
+            binary_analysis: Dictionary containing analyzed binary information with
+                keys like 'binary_info', 'functions', 'imports', 'strings', and
+                'protections'.
+            protection_types: Optional list of protection mechanism types to analyze
+                (e.g., "license", "trial", "network", "debug"). If None, defaults
+                to ["license_check"].
+
+        Returns:
+            Dictionary mapping context variable names (strings) to their values
+            (strings) for template substitution, including binary name, architecture,
+            platform, key functions, imports, license strings, and protection
+            analysis summaries.
+
+        """
         context = {
             "binary_name": binary_analysis.get("binary_info", {}).get("name", "unknown"),
             "architecture": binary_analysis.get("binary_info", {}).get("arch", "x64"),
@@ -328,7 +380,21 @@ Return validation results in structured JSON format.""",
         return context
 
     def _summarize_analysis(self, analysis: dict[str, Any]) -> str:
-        """Create a summary of binary analysis."""
+        """Create a summary of binary analysis.
+
+        Generates a human-readable summary of detected protection mechanisms and
+        their confidence levels from the binary analysis results.
+
+        Args:
+            analysis: Dictionary containing analysis data with a 'protections' key
+                that holds a list of protection dictionaries, each containing 'type'
+                and 'confidence' fields.
+
+        Returns:
+            Formatted string describing detected protections with confidence levels,
+            or a default message if no protections are detected.
+
+        """
         protections = analysis.get("protections", [])
         summary_parts = []
 
@@ -343,7 +409,23 @@ Return validation results in structured JSON format.""",
         return f"Detected protections: {', '.join(summary_parts)}"
 
     def _build_functionality_requirements(self, protection_types: list[str]) -> str:
-        """Build functionality requirements based on protection types."""
+        """Build functionality requirements based on protection types.
+
+        Generates a formatted list of specific script functionality requirements
+        tailored to the detected protection mechanisms, specifying how each protection
+        type should be bypassed (e.g., license validation, trial timers, network
+        checks, anti-debugging measures).
+
+        Args:
+            protection_types: List of protection mechanism types (e.g., "license",
+                "trial", "network", "debug") to generate requirements for.
+
+        Returns:
+            Newline-separated string listing specific functionality requirements
+            for bypassing the identified protections, or default generic requirements
+            if the protection types list is empty.
+
+        """
         requirements = []
 
         for ptype in protection_types:
@@ -357,7 +439,7 @@ Return validation results in structured JSON format.""",
                 requirements.append("- Monitor trial timer mechanisms")
             elif "network" in ptype.lower():
                 requirements.append("- Intercept network validation calls")
-                requirements.append("- Provide fake license server responses")
+                requirements.append("- Inject custom license server responses")
                 requirements.append("- Block outbound license verification")
             elif "debug" in ptype.lower():
                 requirements.append("- Bypass debugger detection mechanisms")
@@ -374,7 +456,24 @@ Return validation results in structured JSON format.""",
         return "\n".join(requirements)
 
     def _build_patching_objectives(self, protection_types: list[str]) -> str:
-        """Build patching objectives for Ghidra scripts."""
+        """Build patching objectives for Ghidra scripts.
+
+        Creates a formatted list of binary patching objectives tailored to specific
+        protection mechanisms, specifying how conditional jumps, comparisons, and
+        validation logic should be modified to bypass protections using Ghidra-based
+        binary patching techniques.
+
+        Args:
+            protection_types: List of protection mechanism types (e.g., "license",
+                "trial", "network") to generate patching objectives for.
+
+        Returns:
+            Newline-separated string listing specific binary patching objectives
+            including jump modifications, instruction replacements, and validation
+            bypasses, or default generic objectives if the protection types list
+            is empty.
+
+        """
         objectives = []
 
         for ptype in protection_types:
@@ -401,21 +500,40 @@ Return validation results in structured JSON format.""",
         return "\n".join(objectives)
 
     def get_available_prompt_types(self) -> list[str]:
-        """Get list of available prompt types."""
+        """Get list of available prompt types.
+
+        Returns the string values of all prompt types that can be used with the
+        get_prompt method.
+
+        Returns:
+            List of prompt type strings: ["frida", "ghidra", "analysis",
+            "refinement", "validation"].
+
+        """
         return [pt.value for pt in PromptType]
 
     def get_prompt_requirements(self, prompt_type: PromptType) -> list[str]:
-        """Get required parameters for a prompt type."""
+        """Get required parameters for a prompt type.
+
+        Extracts all format parameter names (template variables) from the user
+        template of a given prompt type, which should be provided as keyword
+        arguments to the get_prompt method.
+
+        Args:
+            prompt_type: The prompt type to analyze for required parameters.
+
+        Returns:
+            List of unique parameter names required to format the prompt template.
+            Returns an empty list if the prompt type is not found or has no
+            parameters.
+
+        """
         if prompt_type not in self.prompts:
             return []
 
         template = self.prompts[prompt_type].get("user_template", "")
-
-        # Extract format placeholders
-        import re
-
-        placeholders = re.findall(r"{(\w+)}", template)
-        return list(set(placeholders))
+        parameters = re.findall(r"{(\w+)}", template)
+        return list(set(parameters))
 
 
 # Global prompt manager instance
@@ -423,7 +541,16 @@ _PROMPT_MANAGER = None
 
 
 def get_prompt_manager() -> ScriptGenerationPrompts:
-    """Get the global prompt manager instance."""
+    """Get the global prompt manager instance.
+
+    Returns a singleton instance of ScriptGenerationPrompts, lazily initializing
+    it on first call. Subsequent calls return the same instance.
+
+    Returns:
+        The global ScriptGenerationPrompts instance for managing AI script
+        generation prompts.
+
+    """
     global _PROMPT_MANAGER
     if _PROMPT_MANAGER is None:
         _PROMPT_MANAGER = ScriptGenerationPrompts()

@@ -155,7 +155,7 @@ class APIClient:
                     # Parse response
                     return await response.json()
 
-            except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+            except (TimeoutError, aiohttp.ClientError) as e:
                 logger.warning(f"API request attempt {attempt + 1} failed: {e}")
 
                 # Don't retry on last attempt

@@ -342,7 +342,7 @@ class DataInterpreter:
                 second = (dos_time & 0x1F) * 2
 
                 from datetime import timezone
-                dt = datetime.datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
+                dt = datetime.datetime(year, month, day, hour, minute, second, tzinfo=datetime.UTC)
                 return dt.strftime("%Y-%m-%d %H:%M:%S")
             except (ValueError, OSError) as e:
                 logger.error("Error in data_inspector: %s", e)
@@ -464,36 +464,50 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
     #: Signal emitted when user wants to modify data (type: bytes)
     data_modified = pyqtSignal(bytes) if PYQT6_AVAILABLE else None
 
-    def __init__(self, parent=None) -> None:
-        """Initialize the data inspector widget."""
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialize the data inspector widget.
+
+        Args:
+            parent: Parent widget (default: None)
+
+        """
         if not PYQT6_AVAILABLE:
             logger.warning("PyQt6 not available, DataInspector cannot be created")
             return
 
         super().__init__(parent)
-        self.current_data = b""
-        self.current_offset = 0
+        self.current_data: bytes = b""
+        self.current_offset: int = 0
 
         # Initialize UI attributes
-        self.integer_table = None
-        self.float_table = None
-        self.ascii_edit = None
-        self.utf8_edit = None
-        self.utf16le_edit = None
-        self.utf16be_edit = None
-        self.hex_edit = None
-        self.binary_edit = None
-        self.time_table = None
-        self.special_table = None
-        self.input_type_combo = None
-        self.value_edit = None
-        self.apply_button = None
-        self.clear_button = None
+        self.integer_table: QTableWidget | None = None
+        self.float_table: QTableWidget | None = None
+        self.ascii_edit: QLineEdit | None = None
+        self.utf8_edit: QLineEdit | None = None
+        self.utf16le_edit: QLineEdit | None = None
+        self.utf16be_edit: QLineEdit | None = None
+        self.hex_edit: QLineEdit | None = None
+        self.binary_edit: QLineEdit | None = None
+        self.time_table: QTableWidget | None = None
+        self.special_table: QTableWidget | None = None
+        self.input_type_combo: QComboBox | None = None
+        self.value_edit: QLineEdit | None = None
+        self.apply_button: QPushButton | None = None
+        self.clear_button: QPushButton | None = None
+        self.offset_label: QLabel | None = None
+        self.size_label: QLabel | None = None
+        self.checksum_label: QLabel | None = None
+        self.tab_widget: QTabWidget | None = None
 
         self.setup_ui()
 
     def setup_ui(self) -> None:
-        """Set up the user interface."""
+        """Set up the user interface.
+
+        Initializes all UI components including tabs, tables, and input controls
+        for data interpretation and modification.
+
+        """
         layout = QVBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
         layout.setSpacing(4)
@@ -536,7 +550,12 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
         self.create_modification_controls()
 
     def create_integer_tab(self) -> None:
-        """Create the integer interpretations tab."""
+        """Create the integer interpretations tab.
+
+        Initializes the integer interpretation tab with a table displaying
+        various integer format interpretations (signed/unsigned, LE/BE).
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -566,7 +585,12 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
         self.tab_widget.addTab(tab, "Integers")
 
     def create_float_tab(self) -> None:
-        """Create the floating point interpretations tab."""
+        """Create the floating point interpretations tab.
+
+        Initializes the floating-point interpretation tab with a table
+        displaying 32-bit and 64-bit float interpretations in LE/BE formats.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -586,7 +610,12 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
         self.tab_widget.addTab(tab, "Floats")
 
     def create_string_tab(self) -> None:
-        """Create the string interpretations tab."""
+        """Create the string interpretations tab.
+
+        Initializes the string interpretation tab with input fields for ASCII,
+        UTF-8, UTF-16 encodings and raw hex/binary representations.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -628,7 +657,12 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
         self.tab_widget.addTab(tab, "Strings")
 
     def create_time_tab(self) -> None:
-        """Create the time interpretations tab."""
+        """Create the time interpretations tab.
+
+        Initializes the time interpretation tab with a table displaying various
+        timestamp format interpretations (Unix, Windows FILETIME, DOS datetime).
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -653,7 +687,12 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
         self.tab_widget.addTab(tab, "Time")
 
     def create_special_tab(self) -> None:
-        """Create the special interpretations tab."""
+        """Create the special interpretations tab.
+
+        Initializes the special interpretation tab with a table displaying
+        special format interpretations (GUID, IPv4, IPv6, MAC address).
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -678,7 +717,12 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
         self.tab_widget.addTab(tab, "Special")
 
     def create_modification_controls(self) -> None:
-        """Create controls for modifying data."""
+        """Create controls for modifying data.
+
+        Initializes the data modification section with input type selection,
+        value input field, and apply/clear buttons for modifying selected data.
+
+        """
         mod_frame = QFrame()
         mod_frame.setFrameStyle(QFrame.StyledPanel)
         mod_layout = QVBoxLayout(mod_frame)
@@ -709,7 +753,7 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
         # Value input
         value_layout = QHBoxLayout()
         self.value_edit = QLineEdit()
-        self.value_edit.setPlaceholderText("Enter new value...")
+        self.value_edit.setText("")
         value_layout.addWidget(QLabel("Value:"))
         value_layout.addWidget(self.value_edit)
 
@@ -740,7 +784,7 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
 
         Args:
             data: Binary data to inspect
-            offset: Starting offset of the data
+            offset: Starting offset of the data (default: 0)
 
         """
         self.current_data = data
@@ -748,7 +792,12 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
         self.update_display()
 
     def update_display(self) -> None:
-        """Update all displays with current data."""
+        """Update all displays with current data.
+
+        Refreshes all data interpretation tables, string displays, and
+        modification controls based on the currently selected binary data.
+
+        """
         if not self.current_data:
             self.clear_display()
             return
@@ -780,7 +829,12 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
         self.apply_button.setEnabled(len(self.current_data) > 0)
 
     def update_integer_table(self) -> None:
-        """Update the integer interpretations table."""
+        """Update the integer interpretations table.
+
+        Interprets the current data as various integer formats and updates
+        the integer table display.
+
+        """
         integer_types = [
             (DataType.UINT8, None),
             (DataType.INT8, None),
@@ -805,7 +859,12 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
                 self.integer_table.setItem(i, 2, QTableWidgetItem("N/A"))
 
     def update_float_table(self) -> None:
-        """Update the floating point interpretations table."""
+        """Update the floating point interpretations table.
+
+        Interprets the current data as various floating-point formats and
+        updates the float table display.
+
+        """
         float_types = [
             (DataType.FLOAT32_LE, DataType.FLOAT32_BE),
             (DataType.FLOAT64_LE, DataType.FLOAT64_BE),
@@ -819,7 +878,12 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
             self.float_table.setItem(i, 2, QTableWidgetItem(be_value))
 
     def update_string_displays(self) -> None:
-        """Update the string interpretation displays."""
+        """Update the string interpretation displays.
+
+        Interprets the current data as various string encodings and raw
+        formats, updating the respective display fields.
+
+        """
         self.ascii_edit.setText(DataInterpreter.interpret(self.current_data, DataType.ASCII))
         self.utf8_edit.setText(DataInterpreter.interpret(self.current_data, DataType.UTF8))
         self.utf16le_edit.setText(DataInterpreter.interpret(self.current_data, DataType.UTF16_LE))
@@ -828,7 +892,12 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
         self.binary_edit.setText(DataInterpreter.interpret(self.current_data, DataType.BINARY))
 
     def update_time_table(self) -> None:
-        """Update the time interpretations table."""
+        """Update the time interpretations table.
+
+        Interprets the current data as various timestamp formats and updates
+        the time table display.
+
+        """
         time_types = [
             DataType.UNIX_TIMESTAMP_32,
             DataType.UNIX_TIMESTAMP_64,
@@ -841,7 +910,12 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
             self.time_table.setItem(i, 1, QTableWidgetItem(value))
 
     def update_special_table(self) -> None:
-        """Update the special interpretations table."""
+        """Update the special interpretations table.
+
+        Interprets the current data as special types (GUID, IPv4, IPv6, MAC)
+        and updates the special table display.
+
+        """
         special_types = [
             DataType.GUID,
             DataType.IPV4_ADDRESS,
@@ -854,7 +928,12 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
             self.special_table.setItem(i, 1, QTableWidgetItem(value))
 
     def clear_display(self) -> None:
-        """Clear all displays."""
+        """Clear all displays.
+
+        Resets all interpretation tables and string displays to empty/default
+        state when no data is selected.
+
+        """
         self.offset_label.setText("No selection")
         self.size_label.setText("0 bytes")
         self.checksum_label.setText("-")
@@ -885,12 +964,25 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
         self.apply_button.setEnabled(False)
 
     def on_value_changed(self) -> None:
-        """Handle value input changes."""
+        """Handle value input changes.
+
+        Enables the apply button when valid input is present and data is selected.
+
+        """
         text = self.value_edit.text().strip()
         self.apply_button.setEnabled(len(text) > 0 and len(self.current_data) > 0)
 
     def apply_modification(self) -> None:
-        """Apply the modification to the selected data."""
+        """Apply the modification to the selected data.
+
+        Parses the user input based on the selected input type (Hex, Decimal,
+        ASCII, UTF-8, Binary) and emits the data_modified signal with the
+        converted bytes.
+
+        Raises:
+            ValueError: If the input format is invalid for the selected type
+
+        """
         input_type = self.input_type_combo.currentText()
         value_text = self.value_edit.text().strip()
 
@@ -950,5 +1042,9 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
             logger.warning("Error parsing input value: %s", e)
 
     def clear_modification(self) -> None:
-        """Clear the modification input."""
+        """Clear the modification input.
+
+        Resets the value input field to empty state.
+
+        """
         self.value_edit.clear()

@@ -23,10 +23,11 @@ import json
 import logging
 import threading
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 from .dashboard_widgets import DashboardWidget, WidgetData, WidgetType, create_widget
 from .real_time_dashboard import DashboardEvent, DashboardEventType, create_dashboard
@@ -48,7 +49,19 @@ class DataSourceType(Enum):
 
 @dataclass
 class DataSource:
-    """Data source configuration."""
+    """Data source configuration.
+
+    Attributes:
+        source_id: Unique identifier for this data source
+        source_type: Type of data source (GHIDRA, FRIDA, etc.)
+        name: Human-readable name for the data source
+        poll_interval: Time in seconds between polling attempts (default: 5.0)
+        enabled: Whether this data source is active (default: True)
+        config: Configuration dictionary for data source parameters (default: empty dict)
+        last_poll: Timestamp of last successful poll (default: None)
+        data_callback: Callable to invoke for data collection (default: None)
+
+    """
 
     source_id: str
     source_type: DataSourceType
@@ -57,12 +70,23 @@ class DataSource:
     enabled: bool = True
     config: dict[str, Any] = field(default_factory=dict)
     last_poll: datetime | None = None
-    data_callback: Callable | None = None
+    data_callback: Callable[[], dict[str, Any]] | None = None
 
 
 @dataclass
 class DashboardLayout:
-    """Dashboard layout configuration."""
+    """Dashboard layout configuration.
+
+    Attributes:
+        layout_id: Unique identifier for this layout
+        name: Human-readable name for the layout
+        rows: Number of grid rows (default: 3)
+        columns: Number of grid columns (default: 4)
+        widgets: List of widget placement configurations (default: empty list)
+        theme: Visual theme name (default: "dark")
+        refresh_rate: UI refresh rate in seconds (default: 1.0)
+
+    """
 
     layout_id: str
     name: str
@@ -106,7 +130,7 @@ class DashboardManager:
         self.update_lock = threading.Lock()
 
         # Tool integrations
-        self.tool_handlers: dict[str, Any] = {}
+        self.tool_handlers: dict[str, object] = {}
 
         # Initialize default components
         self._initialize_default_layout()
@@ -264,7 +288,7 @@ class DashboardManager:
         self.source_subscriptions[widget_id].append(source_id)
         self.logger.debug(f"Subscribed widget {widget_id} to source {source_id}")
 
-    def integrate_tool(self, tool_name: str, handler: Any) -> None:
+    def integrate_tool(self, tool_name: str, handler: object) -> None:
         """Integrate analysis tool with dashboard.
 
         Args:

@@ -49,8 +49,8 @@ class IntellicrackShell(cmd.Cmd):
     def __init__(self) -> None:
         """Initialize the interactive shell."""
         super().__init__()
-        self.current_file = None
-        self.analysis_results = None
+        self.current_file: Path | None = None
+        self.analysis_results: dict[str, Any] | None = None
 
     def do_load(self, arg: str) -> None:
         """Load a binary file for analysis: load <filepath>."""
@@ -328,7 +328,7 @@ class IntellicrackShell(cmd.Cmd):
             print()
 
 
-def main():
+def main() -> int:
     """Launch interactive mode."""
     shell = IntellicrackShell()
     try:

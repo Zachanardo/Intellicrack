@@ -22,7 +22,7 @@ This module provides common functions for PE file import parsing.
 """
 
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 

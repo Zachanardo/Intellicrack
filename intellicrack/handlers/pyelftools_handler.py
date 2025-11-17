@@ -21,9 +21,12 @@ from __future__ import annotations
 
 import io
 import struct
-from typing import Any, BinaryIO, Iterator, Optional, Union
+from typing import TYPE_CHECKING, Any, BinaryIO, Optional, Union
 
 from intellicrack.utils.logger import logger
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 """
 PyElfTools Import Handler with Production-Ready Fallbacks
@@ -43,11 +46,27 @@ try:
     except ImportError:
         # Fallback for newer versions without py3compat
         def bytes2str(b: Union[bytes, str]) -> str:
-            """Convert bytes to string."""
+            """Convert bytes to string.
+
+            Args:
+                b: Bytes or string to convert.
+
+            Returns:
+                String representation.
+
+            """
             return b.decode("utf-8", errors="replace") if isinstance(b, bytes) else b
 
         def str2bytes(s: Union[str, bytes]) -> bytes:
-            """Convert string to bytes."""
+            """Convert string to bytes.
+
+            Args:
+                s: String or bytes to convert.
+
+            Returns:
+                Bytes representation.
+
+            """
             return s.encode("utf-8") if isinstance(s, str) else s
 
     from elftools.construct import Container, Struct
@@ -85,15 +104,15 @@ try:
     )
     from elftools.elf.segments import InterpSegment, NoteSegment, Segment
 
-    HAS_PYELFTOOLS = True
+    HAS_PYELFTOOLS: bool = True
     import elftools
 
-    PYELFTOOLS_VERSION = getattr(elftools, "__version__", "unknown")
+    PYELFTOOLS_VERSION: str = getattr(elftools, "__version__", "unknown")
 
 except ImportError as e:
     logger.error("PyElfTools not available, using fallback implementations: %s", e)
-    HAS_PYELFTOOLS = False
-    PYELFTOOLS_VERSION = None
+    HAS_PYELFTOOLS: bool = False
+    PYELFTOOLS_VERSION: str | None = None
 
     # Production-ready fallback ELF parsing implementations
 
@@ -199,13 +218,29 @@ except ImportError as e:
 
     # Utility functions
     def bytes2str(data: Union[bytes, str]) -> str:
-        """Convert bytes to string."""
+        """Convert bytes to string.
+
+        Args:
+            data: Bytes or string to convert.
+
+        Returns:
+            String representation.
+
+        """
         if isinstance(data, bytes):
             return data.decode("latin-1")
         return data
 
     def str2bytes(data: Union[str, bytes]) -> bytes:
-        """Convert string to bytes."""
+        """Convert string to bytes.
+
+        Args:
+            data: String or bytes to convert.
+
+        Returns:
+            Bytes representation.
+
+        """
         if isinstance(data, str):
             return data.encode("latin-1")
         return data
@@ -214,16 +249,30 @@ except ImportError as e:
     class Container(dict):
         """Container for parsed structures."""
 
-        def __init__(self, **kwargs: Any) -> None:
-            """Initialize container with keyword arguments as both dict entries and attributes."""
+        def __init__(self, **kwargs: object) -> None:
+            """Initialize container with keyword arguments as both dict entries and attributes.
+
+            Args:
+                **kwargs: Arbitrary keyword arguments to store as dict entries and object attributes.
+
+            """
             super().__init__(**kwargs)
             self.__dict__.update(kwargs)
 
     class Struct:
         """Structure parser."""
 
+        name: str
+        fields: tuple[Any, ...]
+
         def __init__(self, name: str, *fields: tuple[Any, ...]) -> None:
-            """Initialize structure parser with name and field definitions."""
+            """Initialize structure parser with name and field definitions.
+
+            Args:
+                name: Name of the structure.
+                *fields: Variable-length field definitions.
+
+            """
             self.name = name
             self.fields = fields
 
@@ -257,7 +306,12 @@ except ImportError as e:
             self._parse_section_headers()
 
         def _parse_elf_header(self) -> None:
-            """Parse ELF header."""
+            """Parse ELF header.
+
+            Raises:
+                ELFParseError: If the ELF file is invalid or malformed.
+
+            """
             self.stream.seek(0)
 
             # Read ELF magic and class
@@ -348,7 +402,12 @@ except ImportError as e:
             )
 
         def _parse_program_headers(self) -> None:
-            """Parse program headers."""
+            """Parse program headers.
+
+            Raises:
+                ELFParseError: If program headers cannot be parsed.
+
+            """
             if not self.header or self.header.e_phoff == 0:
                 return
 
@@ -388,7 +447,12 @@ except ImportError as e:
                 self._segments.append(segment)
 
         def _parse_section_headers(self) -> None:
-            """Parse section headers."""
+            """Parse section headers.
+
+            Raises:
+                ELFParseError: If section headers cannot be parsed.
+
+            """
             if not self.header or self.header.e_shoff == 0:
                 return
 
@@ -455,7 +519,15 @@ except ImportError as e:
                 self._sections.append(section)
 
         def _get_string(self, offset: int) -> str:
-            """Get string from string table."""
+            """Get string from string table.
+
+            Args:
+                offset: Byte offset in the string table.
+
+            Returns:
+                Null-terminated string at the specified offset.
+
+            """
             if not self._string_table or offset >= len(self._string_table):
                 return ""
 
@@ -466,55 +538,114 @@ except ImportError as e:
             return self._string_table[offset:end].decode("latin-1", errors="ignore")
 
         def num_sections(self) -> int:
-            """Get number of sections."""
+            """Get number of sections.
+
+            Returns:
+                Total number of sections in the ELF file.
+
+            """
             return len(self._sections)
 
         def num_segments(self) -> int:
-            """Get number of segments."""
+            """Get number of segments.
+
+            Returns:
+                Total number of segments in the ELF file.
+
+            """
             return len(self._segments)
 
         def get_section(self, n: int) -> Optional[FallbackSection]:
-            """Get section by index."""
+            """Get section by index.
+
+            Args:
+                n: Section index.
+
+            Returns:
+                Section object at the specified index, or None if not found.
+
+            """
             if 0 <= n < len(self._sections):
                 return self._sections[n]
             return None
 
         def get_section_by_name(self, name: str) -> Optional[FallbackSection]:
-            """Get section by name."""
+            """Get section by name.
+
+            Args:
+                name: Section name to search for.
+
+            Returns:
+                Section object with the specified name, or None if not found.
+
+            """
             for section in self._sections:
                 if section.name == name:
                     return section
             return None
 
         def get_segment(self, n: int) -> Optional[FallbackSegment]:
-            """Get segment by index."""
+            """Get segment by index.
+
+            Args:
+                n: Segment index.
+
+            Returns:
+                Segment object at the specified index, or None if not found.
+
+            """
             if 0 <= n < len(self._segments):
                 return self._segments[n]
             return None
 
         def iter_sections(self) -> Iterator[Any]:
-            """Iterate over sections."""
+            """Iterate over sections.
+
+            Returns:
+                Iterator yielding all sections in the file.
+
+            """
             return iter(self._sections)
 
         def iter_segments(self) -> Iterator[Any]:
-            """Iterate over segments."""
+            """Iterate over segments.
+
+            Returns:
+                Iterator yielding all segments in the file.
+
+            """
             return iter(self._segments)
 
         def has_dwarf_info(self) -> bool:
-            """Check if file has DWARF debug info."""
+            """Check if file has DWARF debug info.
+
+            Returns:
+                True if the file contains DWARF debug sections, False otherwise.
+
+            """
             for section in self._sections:
                 if section.name.startswith(".debug_"):
                     return True
             return False
 
         def get_dwarf_info(self) -> Optional[FallbackDWARFInfo]:
-            """Get DWARF info (basic fallback)."""
+            """Get DWARF info (basic fallback).
+
+            Returns:
+                FallbackDWARFInfo object if debug info is present, None otherwise.
+
+            """
             if not self.has_dwarf_info():
                 return None
             return FallbackDWARFInfo(self)
 
         def get_machine_arch(self) -> str:
-            """Get machine architecture."""
+            """Get machine architecture.
+
+            Returns:
+                Human-readable machine architecture string.
+
+            """
             if not self.header:
                 return "unknown"
 
@@ -537,31 +668,59 @@ except ImportError as e:
             self._data = None
 
         def data(self) -> bytes:
-            """Get section data."""
+            """Get section data.
+
+            Returns:
+                Raw binary data from the section.
+
+            """
             if self._data is None and self.header.sh_type != ENUM_SH_TYPE.SHT_NOBITS:
                 self.stream.seek(self.header.sh_offset)
                 self._data = self.stream.read(self.header.sh_size)
             return self._data or b""
 
         def is_null(self) -> bool:
-            """Check if section is null."""
+            """Check if section is null.
+
+            Returns:
+                True if section type is SHT_NULL, False otherwise.
+
+            """
             return self.header.sh_type == ENUM_SH_TYPE.SHT_NULL
 
         @property
         def data_size(self) -> int:
-            """Get data size."""
+            """Get data size.
+
+            Returns:
+                Size of the section data in bytes.
+
+            """
             return self.header.sh_size
 
         @property
         def data_alignment(self) -> int:
-            """Get data alignment."""
+            """Get data alignment.
+
+            Returns:
+                Alignment requirement for the section in bytes.
+
+            """
             return self.header.sh_addralign
 
     class FallbackStringTableSection(FallbackSection):
         """String table section."""
 
         def get_string(self, offset: int) -> str:
-            """Get string at offset."""
+            """Get string at offset.
+
+            Args:
+                offset: Byte offset within the string table.
+
+            Returns:
+                String at the specified offset.
+
+            """
             data = self.data()
             if offset >= len(data):
                 return ""
@@ -625,7 +784,12 @@ except ImportError as e:
             self._parse_symbols()
 
         def _parse_symbols(self) -> None:
-            """Parse symbol table."""
+            """Parse symbol table.
+
+            Raises:
+                struct.error: If symbol table cannot be parsed.
+
+            """
             data = self.data()
             if not data:
                 return
@@ -667,17 +831,35 @@ except ImportError as e:
                 offset += entry_size
 
         def get_symbol(self, index: int) -> Optional[FallbackSymbol]:
-            """Get symbol by index."""
+            """Get symbol by index.
+
+            Args:
+                index: Symbol index.
+
+            Returns:
+                Symbol object at the specified index, or None if not found.
+
+            """
             if 0 <= index < len(self._symbols):
                 return self._symbols[index]
             return None
 
         def num_symbols(self) -> int:
-            """Get number of symbols."""
+            """Get number of symbols.
+
+            Returns:
+                Total number of symbols in the symbol table.
+
+            """
             return len(self._symbols)
 
         def iter_symbols(self) -> Iterator[FallbackSymbol]:
-            """Iterate over symbols."""
+            """Iterate over symbols.
+
+            Returns:
+                Iterator yielding all symbols in the table.
+
+            """
             return iter(self._symbols)
 
     class FallbackRelocation:
@@ -722,7 +904,12 @@ except ImportError as e:
             self._parse_relocations()
 
         def _parse_relocations(self) -> None:
-            """Parse relocations."""
+            """Parse relocations.
+
+            Raises:
+                struct.error: If relocations cannot be parsed.
+
+            """
             data = self.data()
             if not data:
                 return
@@ -752,17 +939,35 @@ except ImportError as e:
                 offset += entry_size
 
         def num_relocations(self) -> int:
-            """Get number of relocations."""
+            """Get number of relocations.
+
+            Returns:
+                Total number of relocations in the section.
+
+            """
             return len(self._relocations)
 
         def get_relocation(self, index: int) -> Optional[FallbackRelocation]:
-            """Get relocation by index."""
+            """Get relocation by index.
+
+            Args:
+                index: Relocation index.
+
+            Returns:
+                Relocation object at the specified index, or None if not found.
+
+            """
             if 0 <= index < len(self._relocations):
                 return self._relocations[index]
             return None
 
         def iter_relocations(self) -> Iterator[FallbackRelocation]:
-            """Iterate over relocations."""
+            """Iterate over relocations.
+
+            Returns:
+                Iterator yielding all relocations in the section.
+
+            """
             return iter(self._relocations)
 
     class FallbackDynamic:
@@ -795,7 +1000,12 @@ except ImportError as e:
             self._parse_dynamics()
 
         def _parse_dynamics(self) -> None:
-            """Parse dynamic entries."""
+            """Parse dynamic entries.
+
+            Raises:
+                struct.error: If dynamic entries cannot be parsed.
+
+            """
             data = self.data()
             if not data:
                 return
@@ -823,11 +1033,24 @@ except ImportError as e:
                 offset += entry_size
 
         def iter_tags(self) -> Iterator[FallbackDynamic]:
-            """Iterate over dynamic tags."""
+            """Iterate over dynamic tags.
+
+            Returns:
+                Iterator yielding all dynamic entries.
+
+            """
             return iter(self._dynamics)
 
         def get_tag(self, tag: int) -> Optional[FallbackDynamic]:
-            """Get dynamic entry by tag."""
+            """Get dynamic entry by tag.
+
+            Args:
+                tag: Dynamic tag value to search for.
+
+            Returns:
+                Dynamic entry matching the tag, or None if not found.
+
+            """
             for dyn in self._dynamics:
                 if dyn.d_tag == tag:
                     return dyn
@@ -837,7 +1060,12 @@ except ImportError as e:
         """Note section."""
 
         def iter_notes(self) -> Iterator[Container]:
-            """Iterate over notes."""
+            """Iterate over notes in the note section.
+
+            Returns:
+                Iterator yielding Container objects for each note.
+
+            """
             data = self.data()
             offset = 0
 
@@ -879,7 +1107,12 @@ except ImportError as e:
             self._data = None
 
         def data(self) -> bytes:
-            """Get segment data."""
+            """Get segment data.
+
+            Returns:
+                Raw binary data from the segment.
+
+            """
             if self._data is None and self.header.p_filesz > 0:
                 self.stream.seek(self.header.p_offset)
                 self._data = self.stream.read(self.header.p_filesz)
@@ -887,49 +1120,94 @@ except ImportError as e:
 
         @property
         def p_type(self) -> int:
-            """Get segment type."""
+            """Get segment type.
+
+            Returns:
+                Segment type value.
+
+            """
             return self.header.p_type
 
         @property
         def p_flags(self) -> int:
-            """Get segment flags."""
+            """Get segment flags.
+
+            Returns:
+                Segment flags value.
+
+            """
             return self.header.p_flags
 
         @property
         def p_offset(self) -> int:
-            """Get file offset."""
+            """Get file offset.
+
+            Returns:
+                Offset in file where segment data begins.
+
+            """
             return self.header.p_offset
 
         @property
         def p_vaddr(self) -> int:
-            """Get virtual address."""
+            """Get virtual address.
+
+            Returns:
+                Virtual address where segment should be loaded.
+
+            """
             return self.header.p_vaddr
 
         @property
         def p_paddr(self) -> int:
-            """Get physical address."""
+            """Get physical address.
+
+            Returns:
+                Physical address for segment loading.
+
+            """
             return self.header.p_paddr
 
         @property
         def p_filesz(self) -> int:
-            """Get file size."""
+            """Get file size.
+
+            Returns:
+                Size of segment data in file.
+
+            """
             return self.header.p_filesz
 
         @property
         def p_memsz(self) -> int:
-            """Get memory size."""
+            """Get memory size.
+
+            Returns:
+                Size of segment in memory.
+
+            """
             return self.header.p_memsz
 
         @property
         def p_align(self) -> int:
-            """Get alignment."""
+            """Get alignment.
+
+            Returns:
+                Alignment requirement for the segment.
+
+            """
             return self.header.p_align
 
     class FallbackInterpSegment(FallbackSegment):
         """Interpreter segment."""
 
         def get_interp_name(self) -> str:
-            """Get interpreter name."""
+            """Get interpreter name.
+
+            Returns:
+                Path to the program interpreter (e.g., /lib64/ld-linux-x86-64.so.2).
+
+            """
             data = self.data()
             if data:
                 return data.rstrip(b"\x00").decode("latin-1", errors="ignore")
@@ -939,7 +1217,12 @@ except ImportError as e:
         """Note segment."""
 
         def iter_notes(self) -> Iterator[Container]:
-            """Iterate over notes."""
+            """Iterate over notes in the note segment.
+
+            Returns:
+                Iterator yielding Container objects for each note.
+
+            """
             data = self.data()
             offset = 0
 
@@ -973,15 +1256,33 @@ except ImportError as e:
         elffile: FallbackELFFile
 
         def __init__(self, elffile: FallbackELFFile) -> None:
-            """Initialize DWARF info."""
+            """Initialize DWARF info.
+
+            Args:
+                elffile: ELF file object to associate with this DWARF info.
+
+            """
             self.elffile = elffile
 
         def iter_CUs(self) -> Iterator[Any]:
-            """Iterate over compilation units (empty for fallback)."""
+            """Iterate over compilation units (empty for fallback).
+
+            Returns:
+                Empty iterator as fallback does not support DWARF parsing.
+
+            """
             return iter([])
 
         def get_DIE_from_refaddr(self, refaddr: int) -> None:
-            """Get DIE from reference address."""
+            """Get DIE from reference address.
+
+            Args:
+                refaddr: Reference address (unused in fallback).
+
+            Returns:
+                None as fallback does not support DWARF parsing.
+
+            """
             return
 
     class FallbackDIE:
@@ -991,20 +1292,44 @@ except ImportError as e:
         attributes: dict[str, Any]
 
         def __init__(self, tag: int, attributes: Optional[dict[str, Any]] = None) -> None:
-            """Initialize DIE."""
+            """Initialize DIE.
+
+            Args:
+                tag: DIE tag value.
+                attributes: Optional dictionary of DIE attributes.
+
+            """
             self.tag = tag
             self.attributes = attributes or {}
 
         def get_parent(self) -> None:
-            """Get parent DIE."""
+            """Get parent DIE.
+
+            Returns:
+                None as fallback does not support parent DIE traversal.
+
+            """
             return
 
         def iter_children(self) -> Iterator[Any]:
-            """Iterate over children."""
+            """Iterate over children.
+
+            Returns:
+                Empty iterator as fallback does not support child DIE traversal.
+
+            """
             return iter([])
 
     def describe_e_type(e_type: int) -> str:
-        """Describe ELF type."""
+        """Describe ELF file type.
+
+        Args:
+            e_type: ELF file type value.
+
+        Returns:
+            Human-readable description of the ELF file type.
+
+        """
         types = {
             ENUM_E_TYPE.ET_NONE: "NONE (No file type)",
             ENUM_E_TYPE.ET_REL: "REL (Relocatable file)",
@@ -1015,12 +1340,28 @@ except ImportError as e:
         return types.get(e_type, f"Unknown type {e_type}")
 
     def describe_p_type(p_type: int) -> str:
-        """Describe program header type."""
+        """Describe program header type.
+
+        Args:
+            p_type: Program header type value.
+
+        Returns:
+            Human-readable description of the program header type.
+
+        """
         types: dict[int, str] = {0: "PT_NULL", 1: "PT_LOAD", 2: "PT_DYNAMIC", 3: "PT_INTERP", 4: "PT_NOTE", 5: "PT_SHLIB", 6: "PT_PHDR", 7: "PT_TLS"}
         return types.get(p_type, f"Unknown type {p_type}")
 
     def describe_sh_type(sh_type: int) -> str:
-        """Describe section type."""
+        """Describe section header type.
+
+        Args:
+            sh_type: Section header type value.
+
+        Returns:
+            Human-readable description of the section header type.
+
+        """
         types = {
             ENUM_SH_TYPE.SHT_NULL: "NULL",
             ENUM_SH_TYPE.SHT_PROGBITS: "PROGBITS",
@@ -1067,6 +1408,9 @@ except ImportError as e:
     elffile = ELFFile  # Alias for compatibility
 
 # Ensure exports are available at module level
+elftools: Any
+elffile: type[ELFFile]
+
 if not HAS_PYELFTOOLS:
     elftools = elftools if "elftools" in locals() else None
     elffile = ELFFile

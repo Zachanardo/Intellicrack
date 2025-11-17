@@ -154,6 +154,10 @@ def calculate_checksum_chunked(file_path: str, algorithm: str, chunk_size: int =
     Returns:
         Checksum/hash result as string
 
+    Raises:
+        ValueError: If the algorithm is not supported.
+        IOError: If the file cannot be read.
+
     """
     algorithm = algorithm.upper()
 
@@ -211,6 +215,9 @@ def calculate_checksum_chunked(file_path: str, algorithm: str, chunk_size: int =
 class ChecksumCalculator:
     """Helper class for managing checksum calculations with progress tracking."""
 
+    algorithms: dict[str, object]
+    progress_callback: object | None
+
     def __init__(self) -> None:
         """Initialize checksum calculator."""
         self.algorithms = {
@@ -223,7 +230,7 @@ class ChecksumCalculator:
         }
         self.progress_callback = None
 
-    def set_progress_callback(self, callback) -> None:
+    def set_progress_callback(self, callback: object) -> None:
         """Set callback for progress updates.
 
         Args:
@@ -241,6 +248,9 @@ class ChecksumCalculator:
 
         Returns:
             Checksum/hash result as string
+
+        Raises:
+            ValueError: If the algorithm is not supported.
 
         """
         algorithm = algorithm.upper()

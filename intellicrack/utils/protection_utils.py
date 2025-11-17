@@ -22,12 +22,12 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-def inject_comprehensive_api_hooks(app: Any, hook_types: list[str] = None) -> str:
+def inject_comprehensive_api_hooks(app: object, hook_types: list[str] | None = None) -> str:
     """Inject comprehensive API hooks for various protection mechanisms.
 
     Args:
         app: Application instance
-        hook_types: List of hook types to inject
+        hook_types: List of hook types to inject, or None to use defaults
 
     Returns:
         Generated script content for API hooking
@@ -394,7 +394,7 @@ def generate_bypass_strategy(protections: dict[str, Any]) -> list[str]:
     if protections.get("hardware_fingerprinting"):
         strategies.append("Implement hardware fingerprint spoofing")
         strategies.append("Hook GetVolumeInformation and GetSystemInfo")
-        strategies.append("Use consistent fake hardware IDs")
+        strategies.append("Use consistent spoofed hardware identifiers")
 
     if protections.get("time_checks"):
         strategies.append("Implement time manipulation hooks")
@@ -558,7 +558,7 @@ def emulate_hardware_dongle(config: dict[str, Any]) -> dict[str, Any]:
     """Emulate hardware dongle for license bypass.
 
     This function creates a virtual hardware dongle emulation configuration
-    that can bypass hardware-based license checks by simulating the presence
+    that can bypass hardware-based license checks by emulating the presence
     and responses of common hardware protection devices.
 
     Args:
