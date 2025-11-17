@@ -55,7 +55,7 @@ dependencies = [
 
   "volatility3>=2.26.2,<3",
   "yara-python>=4.5.4,<5",
-  "ppdeep==20250625",
+  "ppdeep==20251115",
   "py-tlsh==4.7.2",
   "lief>=0.17.0,<0.18",
   "pefile>=2024.8.26,<2025",
