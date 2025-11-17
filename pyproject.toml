@@ -351,7 +351,7 @@ dependencies = [
   "coverage",
   "freezegun>=1.5.5,<2",
   "responses>=0.25.8,<0.26",
-  "faker>=37.11.0,<38",
+  "faker>=37.11.0,<39",
 
   # Code Metrics & Complexity
   "radon>=6.0.1,<7",
