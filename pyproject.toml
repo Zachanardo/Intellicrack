@@ -41,7 +41,7 @@ dependencies = [
   "transformers>=4.57.1,<5",
   "huggingface-hub>=0.35.3,<1.2",
   "safetensors>=0.6.2,<0.7",
-  "peft==0.17.1",
+  "peft==0.18.0",
   # "auto-gptq>=0.7.0",  # Requires NVIDIA CUDA - not compatible with Intel GPU
   "bitsandbytes==0.48.1",
 
