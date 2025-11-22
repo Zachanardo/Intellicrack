@@ -27,6 +27,7 @@ import struct
 
 from PIL import Image
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -89,20 +90,17 @@ def extract_pe_icon(pe_path: str, output_path: str | None = None) -> Image.Image
 
         # Find .rsrc section
         for section in pe.sections:
-            if section.Name.startswith(b".rsrc\x00"):
-                # Get resource directory
-                if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
-                    icon_data = extract_icon_from_resources(pe)
-                    if icon_data:
-                        # Create PIL Image from icon data
-                        icon_image = create_image_from_icon_data(icon_data)
+            if section.Name.startswith(b".rsrc\x00") and hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
+                if icon_data := extract_icon_from_resources(pe):
+                    # Create PIL Image from icon data
+                    icon_image = create_image_from_icon_data(icon_data)
 
-                        if icon_image and output_path:
-                            # Save the icon
-                            icon_image.save(output_path, format="PNG")
-                            logger.info(f"Icon extracted and saved to {output_path}")
+                    if icon_image and output_path:
+                        # Save the icon
+                        icon_image.save(output_path, format="PNG")
+                        logger.info(f"Icon extracted and saved to {output_path}")
 
-                        return icon_image
+                    return icon_image
 
         logger.debug("No icon resource found in PE file")
         return None
@@ -133,9 +131,8 @@ def extract_icon_from_resources(pe: object) -> bytes | None:
         # Extract icon groups and individual icons
         for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
             if hasattr(resource_type, "id"):
-                if resource_type.id == RT_GROUP_ICON:
-                    # Found icon group
-                    for resource_id in resource_type.directory.entries:
+                for resource_id in resource_type.directory.entries:
+                    if resource_type.id == RT_GROUP_ICON:
                         if hasattr(resource_id, "directory"):
                             for resource_lang in resource_id.directory.entries:
                                 data_rva = resource_lang.data.struct.OffsetToData
@@ -143,9 +140,7 @@ def extract_icon_from_resources(pe: object) -> bytes | None:
                                 data = pe.get_memory_mapped_image()[data_rva : data_rva + size]
                                 icon_groups[resource_id.id] = data
 
-                elif resource_type.id == RT_ICON:
-                    # Found individual icon
-                    for resource_id in resource_type.directory.entries:
+                    elif resource_type.id == RT_ICON:
                         if hasattr(resource_id, "directory"):
                             for resource_lang in resource_id.directory.entries:
                                 data_rva = resource_lang.data.struct.OffsetToData
@@ -284,11 +279,11 @@ def extract_all_pe_icons(pe_path: str, output_dir: str) -> list[str]:
         # Ensure output directory exists
         os.makedirs(output_dir, exist_ok=True)
 
-        # Extract all icons
-        RT_ICON = 3
-        icon_index = 0
-
         if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
+            # Extract all icons
+            RT_ICON = 3
+            icon_index = 0
+
             for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
                 if hasattr(resource_type, "id") and resource_type.id == RT_ICON:
                     for resource_id in resource_type.directory.entries:
@@ -297,13 +292,17 @@ def extract_all_pe_icons(pe_path: str, output_dir: str) -> list[str]:
                                 try:
                                     data_rva = resource_lang.data.struct.OffsetToData
                                     size = resource_lang.data.struct.Size
-                                    icon_data = pe.get_memory_mapped_image()[data_rva : data_rva + size]
+                                    icon_data = pe.get_memory_mapped_image()[
+                                        data_rva : data_rva + size
+                                    ]
 
-                                    # Create image from icon data
-                                    icon_image = create_image_from_icon_data(icon_data)
-                                    if icon_image:
+                                    if icon_image := create_image_from_icon_data(
+                                        icon_data
+                                    ):
                                         # Save icon
-                                        icon_path = os.path.join(output_dir, f"{base_name}_icon_{icon_index}.png")
+                                        icon_path = os.path.join(
+                                            output_dir, f"{base_name}_icon_{icon_index}.png"
+                                        )
                                         icon_image.save(icon_path, format="PNG")
                                         saved_icons.append(icon_path)
                                         icon_index += 1
@@ -346,13 +345,13 @@ def get_pe_icon_info(pe_path: str) -> dict[str, object]:
 
         pe = pefile.PE(pe_path)
 
-        RT_ICON = 3
-        RT_GROUP_ICON = 14
-
         if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
             icon_count = 0
             group_count = 0
             icon_sizes = []
+
+            RT_ICON = 3
+            RT_GROUP_ICON = 14
 
             for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
                 if hasattr(resource_type, "id"):
@@ -363,10 +362,10 @@ def get_pe_icon_info(pe_path: str) -> dict[str, object]:
                                 icon_count += len(resource_id.directory.entries)
 
                                 # Get icon sizes
-                                for resource_lang in resource_id.directory.entries:
-                                    size = resource_lang.data.struct.Size
-                                    icon_sizes.append(size)
-
+                                icon_sizes.extend(
+                                    resource_lang.data.struct.Size
+                                    for resource_lang in resource_id.directory.entries
+                                )
                     elif resource_type.id == RT_GROUP_ICON:
                         # Count icon groups
                         group_count += len(resource_type.directory.entries)
@@ -411,7 +410,7 @@ class PEAnalyzer:
 
             pe = pefile.PE(file_path)
 
-            results = {
+            return {
                 "imports": self._extract_imports(pe),
                 "exports": self._extract_exports(pe),
                 "sections": get_pe_sections_info(pe),
@@ -426,9 +425,6 @@ class PEAnalyzer:
                 "checksum": pe.OPTIONAL_HEADER.CheckSum,
                 "entry_point": pe.OPTIONAL_HEADER.AddressOfEntryPoint,
             }
-
-            return results
-
         except Exception as e:
             self.logger.error(f"PE analysis failed for {file_path}: {e}")
             return {"error": str(e)}
@@ -449,14 +445,15 @@ class PEAnalyzer:
             if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
                     dll_name = entry.dll.decode("utf-8", errors="ignore")
-                    functions = []
-
-                    for imp in entry.imports:
-                        if imp.name:
-                            functions.append(
-                                {"name": imp.name.decode("utf-8", errors="ignore"), "address": imp.address, "ordinal": imp.ordinal},
-                            )
-
+                    functions = [
+                        {
+                            "name": imp.name.decode("utf-8", errors="ignore"),
+                            "address": imp.address,
+                            "ordinal": imp.ordinal,
+                        }
+                        for imp in entry.imports
+                        if imp.name
+                    ]
                     imports.append({"dll": dll_name, "functions": functions})
         except Exception as e:
             self.logger.debug(f"Import extraction failed: {e}")
@@ -477,14 +474,18 @@ class PEAnalyzer:
 
         try:
             if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
-                for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
-                    exports.append(
-                        {
-                            "name": exp.name.decode("utf-8", errors="ignore") if exp.name else None,
-                            "address": exp.address,
-                            "ordinal": exp.ordinal,
-                        },
-                    )
+                exports.extend(
+                    {
+                        "name": (
+                            exp.name.decode("utf-8", errors="ignore")
+                            if exp.name
+                            else None
+                        ),
+                        "address": exp.address,
+                        "ordinal": exp.ordinal,
+                    }
+                    for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols
+                )
         except Exception as e:
             self.logger.debug(f"Export extraction failed: {e}")
 
@@ -551,7 +552,12 @@ class PEAnalyzer:
                 for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
                     if hasattr(resource_type, "id"):
                         resources["resource_types"].append(
-                            {"type_id": resource_type.id, "name": resource_type.name if hasattr(resource_type, "name") else None},
+                            {
+                                "type_id": resource_type.id,
+                                "name": resource_type.name
+                                if hasattr(resource_type, "name")
+                                else None,
+                            },
                         )
                         resources["total_resources"] += 1
         except Exception as e:
@@ -598,9 +604,7 @@ class PEAnalyzer:
                 0x01C0: "ARM",  # IMAGE_FILE_MACHINE_ARM
                 0xAA64: "ARM64",  # IMAGE_FILE_MACHINE_ARM64
             }
-            if machine_type in architecture_map:
-                return architecture_map[machine_type]
-            return f"Unknown (0x{machine_type:04x})"
+            return architecture_map.get(machine_type, f"Unknown (0x{machine_type:04x})")
         except Exception as e:
             self.logger.debug(f"Architecture detection failed: {e}")
             return "Unknown"

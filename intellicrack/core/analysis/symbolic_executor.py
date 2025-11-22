@@ -11,6 +11,7 @@ from typing import Any, Optional
 
 from intellicrack.utils.logger import logger
 
+
 """
 Symbolic Execution Engine for Automatic Vulnerability Discovery
 
@@ -52,7 +53,9 @@ class SymbolicExecutionEngine:
     and identifying conditions that could lead to security issues.
     """
 
-    def __init__(self, binary_path: str, max_paths: int = 100, timeout: int = 300, memory_limit: int = 4096) -> None:
+    def __init__(
+        self, binary_path: str, max_paths: int = 100, timeout: int = 300, memory_limit: int = 4096
+    ) -> None:
         """Initialize the symbolic execution engine with path exploration and memory configuration."""
         self.binary_path = binary_path
         self.max_paths = max_paths
@@ -76,9 +79,13 @@ class SymbolicExecutionEngine:
         if not os.path.exists(binary_path):
             raise FileNotFoundError(f"Binary file not found: {binary_path}")
 
-        self.logger.info(f"Symbolic execution engine initialized for {binary_path} with {max_paths} max paths")
+        self.logger.info(
+            f"Symbolic execution engine initialized for {binary_path} with {max_paths} max paths"
+        )
 
-    def _setup_symbolic_execution_project(self, vulnerability_types: list[str]) -> tuple[Any, Any, Any]:
+    def _setup_symbolic_execution_project(
+        self, vulnerability_types: list[str]
+    ) -> tuple[Any, Any, Any]:
         """Set up angr project and initial state for symbolic execution."""
         project = angr.Project(self.binary_path, auto_load_libs=False)
 
@@ -107,12 +114,17 @@ class SymbolicExecutionEngine:
             self._setup_heap_tracking(initial_state)
 
         # Set up taint tracking for data flow analysis
-        if any(v in vulnerability_types for v in ["command_injection", "sql_injection", "path_traversal"]):
+        if any(
+            v in vulnerability_types
+            for v in ["command_injection", "sql_injection", "path_traversal"]
+        ):
             self._setup_taint_tracking(initial_state)
 
         return project, initial_state, symbolic_args
 
-    def _configure_exploration_techniques(self, simgr: object, vulnerability_types: list[str]) -> None:
+    def _configure_exploration_techniques(
+        self, simgr: object, vulnerability_types: list[str]
+    ) -> None:
         """Configure advanced exploration techniques for path exploration.
 
         Args:
@@ -123,7 +135,9 @@ class SymbolicExecutionEngine:
         # Add advanced exploration techniques
         if "buffer_overflow" in vulnerability_types:
             simgr.use_technique(angr.exploration_techniques.Spiller())
-            simgr.use_technique(angr.exploration_techniques.LengthLimiter(max_length=self.max_paths))
+            simgr.use_technique(
+                angr.exploration_techniques.LengthLimiter(max_length=self.max_paths)
+            )
             if hasattr(angr.exploration_techniques, "MemoryLimiter"):
                 simgr.use_technique(angr.exploration_techniques.MemoryLimiter(self.memory_limit))
             else:
@@ -159,12 +173,14 @@ class SymbolicExecutionEngine:
                 find_addrs.append(func.addr)
 
         simgr.explore(
-            find=find_addrs if find_addrs else None,
-            avoid=avoid_addrs if avoid_addrs else None,
+            find=find_addrs or None,
+            avoid=avoid_addrs or None,
             timeout=self.timeout,
         )
 
-    def _analyze_integer_overflows(self, simgr: object, vulnerabilities: list[dict[str, Any]]) -> None:
+    def _analyze_integer_overflows(
+        self, simgr: object, vulnerabilities: list[dict[str, Any]]
+    ) -> None:
         """Analyze states for integer overflow vulnerabilities.
 
         Args:
@@ -175,18 +191,19 @@ class SymbolicExecutionEngine:
         for _state in simgr.deadended + simgr.active:
             # Look for arithmetic operations with insufficient bounds checking
             for _constraint in _state.solver.constraints:
-                if "mul" in str(_constraint) or "add" in str(_constraint):
-                    if self._check_integer_overflow(_state, _constraint):
-                        vuln = {
-                            "type": "integer_overflow",
-                            "address": hex(_state.addr),
-                            "description": "Potential integer overflow detected",
-                            "constraint": str(_constraint),
-                            "severity": "high",
-                        }
-                        vulnerabilities.append(vuln)
+                if ("mul" in str(_constraint) or "add" in str(_constraint)) and self._check_integer_overflow(_state, _constraint):
+                    vuln = {
+                        "type": "integer_overflow",
+                        "address": hex(_state.addr),
+                        "description": "Potential integer overflow detected",
+                        "constraint": str(_constraint),
+                        "severity": "high",
+                    }
+                    vulnerabilities.append(vuln)
 
-    def _analyze_format_string_vulns(self, simgr: object, project: object, vulnerabilities: list[dict[str, Any]]) -> None:
+    def _analyze_format_string_vulns(
+        self, simgr: object, project: object, vulnerabilities: list[dict[str, Any]]
+    ) -> None:
         """Analyze states for format string vulnerabilities.
 
         Args:
@@ -206,7 +223,9 @@ class SymbolicExecutionEngine:
                 }
                 vulnerabilities.append(vuln)
 
-    def _analyze_memory_vulns(self, simgr: object, vulnerability_types: list[str], vulnerabilities: list[dict[str, Any]]) -> None:
+    def _analyze_memory_vulns(
+        self, simgr: object, vulnerability_types: list[str], vulnerabilities: list[dict[str, Any]]
+    ) -> None:
         """Analyze states for use-after-free and double-free vulnerabilities.
 
         Args:
@@ -253,7 +272,12 @@ class SymbolicExecutionEngine:
                         freed_ptrs[ptr] = info["freed_at"]
 
     def _analyze_injection_and_race_vulns(
-        self, simgr: object, project: object, initial_state: object, vulnerability_types: list[str], vulnerabilities: list[dict[str, Any]],
+        self,
+        simgr: object,
+        project: object,
+        initial_state: object,
+        vulnerability_types: list[str],
+        vulnerabilities: list[dict[str, Any]],
     ) -> None:
         """Analyze states for race conditions and command injection vulnerabilities.
 
@@ -278,7 +302,11 @@ class SymbolicExecutionEngine:
                     vulnerabilities.append(vuln)
 
         # Check for command injection via taint analysis
-        if "command_injection" in vulnerability_types and hasattr(initial_state, "plugins") and "taint" in initial_state.plugins:
+        if (
+            "command_injection" in vulnerability_types
+            and hasattr(initial_state, "plugins")
+            and "taint" in initial_state.plugins
+        ):
             for _state in simgr.active + simgr.deadended:
                 # Check if tainted data reaches system/exec calls
                 for func_name in ["system", "exec", "execve", "popen"]:
@@ -294,13 +322,19 @@ class SymbolicExecutionEngine:
                                         "type": "command_injection",
                                         "address": hex(_state.addr),
                                         "description": f"Command injection: tainted data reaches {func_name}",
-                                        "taint_source": _state.plugins.taint.get_taint_source(arg_val),
+                                        "taint_source": _state.plugins.taint.get_taint_source(
+                                            arg_val
+                                        ),
                                         "severity": "critical",
                                     }
                                     vulnerabilities.append(vuln)
 
     def _analyze_type_confusion_vulns(
-        self, simgr: object, project: object, vulnerability_types: list[str], vulnerabilities: list[dict[str, Any]],
+        self,
+        simgr: object,
+        project: object,
+        vulnerability_types: list[str],
+        vulnerabilities: list[dict[str, Any]],
     ) -> None:
         """Analyze states for type confusion vulnerabilities.
 
@@ -322,7 +356,9 @@ class SymbolicExecutionEngine:
                     }
                     vulnerabilities.append(vuln)
 
-    def discover_vulnerabilities(self, vulnerability_types: list[str] | None = None) -> list[dict[str, Any]]:
+    def discover_vulnerabilities(
+        self, vulnerability_types: list[str] | None = None
+    ) -> list[dict[str, Any]]:
         """Perform symbolic execution to discover vulnerabilities.
 
         Args:
@@ -357,7 +393,9 @@ class SymbolicExecutionEngine:
 
         try:
             # Setup project and initial state
-            project, initial_state, _symbolic_args = self._setup_symbolic_execution_project(vulnerability_types)
+            project, initial_state, _symbolic_args = self._setup_symbolic_execution_project(
+                vulnerability_types
+            )
 
             # Set up exploration technique
             simgr = project.factory.analysis_manager(initial_state)
@@ -385,11 +423,18 @@ class SymbolicExecutionEngine:
             if "use_after_free" in vulnerability_types or "double_free" in vulnerability_types:
                 self._analyze_memory_vulns(simgr, vulnerability_types, vulnerabilities)
 
-            if "race_condition" in vulnerability_types or "command_injection" in vulnerability_types:
-                self._analyze_injection_and_race_vulns(simgr, project, initial_state, vulnerability_types, vulnerabilities)
+            if (
+                "race_condition" in vulnerability_types
+                or "command_injection" in vulnerability_types
+            ):
+                self._analyze_injection_and_race_vulns(
+                    simgr, project, initial_state, vulnerability_types, vulnerabilities
+                )
 
             if "type_confusion" in vulnerability_types:
-                self._analyze_type_confusion_vulns(simgr, project, vulnerability_types, vulnerabilities)
+                self._analyze_type_confusion_vulns(
+                    simgr, project, vulnerability_types, vulnerabilities
+                )
 
             self.logger.info(
                 "Symbolic execution completed. Found %d potential vulnerabilities.",
@@ -421,21 +466,18 @@ class SymbolicExecutionEngine:
                 constraint_str,
                 state.addr,
             )
-            if "+" in constraint_str or "*" in constraint_str:
-                # Try to find cases where large values are possible
-                if state.solver.satisfiable(extra_constraints=[constraint]):
-                    # Check if we can satisfy with very large values
-                    for _var in state.solver.variables:
-                        try:
-                            max_val = state.solver.max(_var)
-                            if max_val > 2**30:  # Large value threshold
-                                self.logger.info(
-                                    "Potential integer overflow identified due to large variable value for '%s'",
-                                    _var,
-                                )
-                                return True
-                        except (AttributeError, ValueError, RuntimeError) as e:
-                            self.logger.debug("Failed to analyze variable for overflow: %s", e)
+            if ("+" in constraint_str or "*" in constraint_str) and state.solver.satisfiable(extra_constraints=[constraint]):
+                for _var in state.solver.variables:
+                    try:
+                        max_val = state.solver.max(_var)
+                        if max_val > 2**30:  # Large value threshold
+                            self.logger.info(
+                                "Potential integer overflow identified due to large variable value for '%s'",
+                                _var,
+                            )
+                            return True
+                    except (AttributeError, ValueError, RuntimeError) as e:
+                        self.logger.debug("Failed to analyze variable for overflow: %s", e)
             return False
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.warning("Error during integer overflow check: %s", e, exc_info=False)
@@ -460,11 +502,17 @@ class SymbolicExecutionEngine:
                     function = project.kb.functions.get_by_addr(_addr)
                     if function and function.name:
                         self.logger.debug("Found call to %s at 0x%d", function.name, _addr)
-                        if "printf" in function.name or "sprintf" in function.name or "fprintf" in function.name:
+                        if (
+                            "printf" in function.name
+                            or "sprintf" in function.name
+                            or "fprintf" in function.name
+                        ):
                             # Check if first argument (format string) is symbolic
                             for _var in state.solver.variables:
                                 var_name = str(_var)
-                                if "arg" in var_name and "%" in state.solver.eval(_var, cast_to=bytes).decode("latin-1", errors="ignore"):
+                                if "arg" in var_name and "%" in state.solver.eval(
+                                    _var, cast_to=bytes
+                                ).decode("latin-1", errors="ignore"):
                                     self.logger.info(
                                         "Potential format string vulnerability: Symbolic format string for %s controlled by '%s'",
                                         function.name,
@@ -612,9 +660,6 @@ class SymbolicExecutionEngine:
         module_size = process_info.get("module_size", 0x1000000)
         aslr_enabled = process_info.get("aslr_enabled", True)
 
-        # Generate UAF trigger sequence
-        exploit_sequence = []
-
         # Step 1: Heap grooming with controlled spray pattern
         spray_payload = bytearray()
         spray_count = 32 if object_size <= 0x100 else 16
@@ -628,16 +673,15 @@ class SymbolicExecutionEngine:
             spray_payload += marker
             spray_payload += struct.pack("<Q", gadget_addr)
 
-        exploit_sequence.append(
+        exploit_sequence = [
             {
                 "action": "spray",
                 "data": spray_payload.hex(),
                 "count": spray_count,
                 "size": object_size,
                 "pattern": "controlled_allocation",
-            },
-        )
-
+            }
+        ]
         # Step 2: Trigger free of target object
         target_id = uaf_info.get("target_id", 0)
         exploit_sequence.append(
@@ -654,9 +698,7 @@ class SymbolicExecutionEngine:
         if vtable_offset:
             # Dynamic vtable address calculation
             if aslr_enabled:
-                # Use leaked or predicted addresses from process
-                leaked_addr = process_info.get("leaked_address", 0)
-                if leaked_addr:
+                if leaked_addr := process_info.get("leaked_address", 0):
                     # Calculate vtable location based on leak
                     vtable_addr = (leaked_addr & 0xFFFFFFFFF000) + 0x10000
                 else:
@@ -675,11 +717,9 @@ class SymbolicExecutionEngine:
             # Generate dynamic vtable with ROP chain or shellcode addresses
             vtable_data = bytearray()
 
-            # Analyze available gadgets from process
-            gadgets = process_info.get("gadgets", [])
-            if gadgets:
+            if gadgets := process_info.get("gadgets", []):
                 # Use discovered gadgets for vtable entries
-                for _i, gadget in enumerate(gadgets[:10]):
+                for gadget in gadgets[:10]:
                     vtable_data += struct.pack("<Q", gadget["address"])
             else:
                 # Generate vtable entries based on common patterns
@@ -784,20 +824,27 @@ class SymbolicExecutionEngine:
     def _find_stack_pivot(self, process_info: dict[str, Any]) -> int | None:
         """Find stack pivot gadget in process."""
         gadgets = process_info.get("gadgets", [])
-        for gadget in gadgets:
-            # Look for xchg esp/rsp patterns
-            if "xchg" in gadget.get("instruction", "") and "sp" in gadget.get("instruction", ""):
-                return gadget["offset"]
-        return None
+        return next(
+            (
+                gadget["offset"]
+                for gadget in gadgets
+                if "xchg" in gadget.get("instruction", "")
+                and "sp" in gadget.get("instruction", "")
+            ),
+            None,
+        )
 
     def _find_pop_gadget(self, process_info: dict[str, Any]) -> int | None:
         """Find pop register gadget in process."""
         gadgets = process_info.get("gadgets", [])
-        for gadget in gadgets:
-            # Look for pop patterns
-            if gadget.get("instruction", "").startswith("pop"):
-                return gadget["offset"]
-        return None
+        return next(
+            (
+                gadget["offset"]
+                for gadget in gadgets
+                if gadget.get("instruction", "").startswith("pop")
+            ),
+            None,
+        )
 
     def _calculate_exploit_reliability(self, vulnerability: dict[str, Any]) -> float:
         """Calculate exploit reliability score."""
@@ -962,7 +1009,9 @@ int main() {{
         # Source object (typically smaller or with different layout)
         source_size = class_info["source"]["size"]
         source_vtable = class_info["source"]["vtable_addr"]
-        source_layout = self._build_class_layout(class_info["source"], source_vtable, source_size, process_info)
+        source_layout = self._build_class_layout(
+            class_info["source"], source_vtable, source_size, process_info
+        )
 
         exploit_data["setup"].append(
             {
@@ -980,7 +1029,9 @@ int main() {{
         target_vtable = class_info["target"]["vtable_addr"]
 
         # Build exploitable target layout
-        target_layout = self._build_exploitable_layout(class_info["target"], target_vtable, target_size, process_info, confusion_info)
+        target_layout = self._build_exploitable_layout(
+            class_info["target"], target_vtable, target_size, process_info, confusion_info
+        )
 
         exploit_data["setup"].append(
             {
@@ -1046,9 +1097,7 @@ int main() {{
         # Combined payload for direct injection
         exploit_data["payload"] = source_layout + target_layout
 
-        # Add post-exploitation payload
-        shellcode = self._generate_shellcode(process_info)
-        if shellcode:
+        if shellcode := self._generate_shellcode(process_info):
             exploit_data["shellcode"] = shellcode.hex()
             exploit_data["shellcode_addr"] = self._allocate_shellcode_addr(process_info)
 
@@ -1057,7 +1106,12 @@ int main() {{
             "exploit_data": exploit_data,
             "payload": exploit_data["payload"].hex(),
             "instructions": self._generate_exploit_instructions(
-                source_type, target_type, source_size, target_size, trigger_method, class_info,
+                source_type,
+                target_type,
+                source_size,
+                target_size,
+                trigger_method,
+                class_info,
             ),
             "confusion_details": {
                 "source_type": source_type,
@@ -1068,10 +1122,14 @@ int main() {{
                 "vtable_hijack": controlled_vtable is not None,
                 "class_hierarchy": self._analyze_class_hierarchy(class_info),
             },
-            "reliability": self._calculate_confusion_reliability(class_info, process_info, confusion_info),
+            "reliability": self._calculate_confusion_reliability(
+                class_info, process_info, confusion_info
+            ),
         }
 
-    def _extract_class_info(self, process_info: dict[str, Any], source_type: str, target_type: str) -> dict[str, Any]:
+    def _extract_class_info(
+        self, process_info: dict[str, Any], source_type: str, target_type: str
+    ) -> dict[str, Any]:
         """Extract actual class information from binary."""
         rtti_info = process_info.get("rtti", {})
         symbols = process_info.get("symbols", {})
@@ -1107,12 +1165,18 @@ int main() {{
             class_info["target"]["constructor_addr"] = symbols.get(target_constructor, 0)
 
         # Extract virtual function tables
-        class_info["source"]["vfuncs"] = self._extract_vfuncs(class_info["source"]["vtable_addr"], process_info)
-        class_info["target"]["vfuncs"] = self._extract_vfuncs(class_info["target"]["vtable_addr"], process_info)
+        class_info["source"]["vfuncs"] = self._extract_vfuncs(
+            class_info["source"]["vtable_addr"], process_info
+        )
+        class_info["target"]["vfuncs"] = self._extract_vfuncs(
+            class_info["target"]["vtable_addr"], process_info
+        )
 
         return class_info
 
-    def _build_class_layout(self, class_data: dict[str, Any], vtable_addr: int, size: int, process_info: dict[str, Any]) -> bytearray:
+    def _build_class_layout(
+        self, class_data: dict[str, Any], vtable_addr: int, size: int, process_info: dict[str, Any]
+    ) -> bytearray:
         """Build actual class memory layout."""
         layout = bytearray()
 
@@ -1153,7 +1217,12 @@ int main() {{
         return layout[:size]
 
     def _build_exploitable_layout(
-        self, class_data: dict[str, Any], vtable_addr: int, size: int, process_info: dict[str, Any], confusion_info: dict[str, Any],
+        self,
+        class_data: dict[str, Any],
+        vtable_addr: int,
+        size: int,
+        process_info: dict[str, Any],
+        confusion_info: dict[str, Any],
     ) -> bytearray:
         """Build target class layout with exploitation primitives."""
         layout = bytearray()
@@ -1169,7 +1238,9 @@ int main() {{
             # Set up for field overflow
             layout += struct.pack("<Q", vtable_addr)
             # Add overflow trigger values
-            overflow_data = b"A" * 0x10 + struct.pack("<Q", process_info.get("target_addr", 0x41414141))
+            overflow_data = b"A" * 0x10 + struct.pack(
+                "<Q", process_info.get("target_addr", 0x41414141)
+            )
             layout += overflow_data
         else:
             # Standard vtable
@@ -1185,9 +1256,7 @@ int main() {{
             if current_len < exploitable_offset:
                 layout += b"\x00" * (exploitable_offset - current_len)
 
-            # Insert exploitation primitive
-            rop_chain = self._build_rop_chain(process_info)
-            if rop_chain:
+            if rop_chain := self._build_rop_chain(process_info):
                 for gadget in rop_chain[:3]:  # Limit to fit
                     if len(layout) < size - 8:
                         layout += struct.pack("<Q", gadget)
@@ -1202,7 +1271,10 @@ int main() {{
         return layout[:size]
 
     def _create_controlled_vtable(
-        self, class_info: dict[str, Any], process_info: dict[str, Any], confusion_info: dict[str, Any],
+        self,
+        class_info: dict[str, Any],
+        process_info: dict[str, Any],
+        confusion_info: dict[str, Any],
     ) -> dict[str, Any] | None:
         """Create controlled vtable for hijacking."""
         if not confusion_info.get("vtable_hijack", True):
@@ -1274,9 +1346,7 @@ int main() {{
         # Estimate based on class complexity
         if "Base" in class_name or "Simple" in class_name:
             return 0x20
-        if "Complex" in class_name or "Manager" in class_name:
-            return 0x100
-        return 0x40
+        return 0x100 if "Complex" in class_name or "Manager" in class_name else 0x40
 
     def _extract_vfuncs(self, vtable_addr: int, process_info: dict[str, Any]) -> list[int]:
         """Extract virtual function addresses from vtable."""
@@ -1286,29 +1356,21 @@ int main() {{
         # Would need memory reading capability
         # For now, estimate based on common patterns
         base = process_info.get("base_address", 0x400000)
-        vfuncs = []
-        for i in range(10):  # Typical vtable size
-            vfuncs.append(base + 0x1000 + (i * 0x100))
-        return vfuncs
+        return [base + 0x1000 + (i * 0x100) for i in range(10)]
 
     def _find_exploitable_vfunc(self, class_data: dict[str, Any]) -> str:
         """Find best virtual function to exploit."""
-        vfuncs = class_data.get("vfuncs", [])
-        if not vfuncs:
+        if vfuncs := class_data.get("vfuncs", []):
+            # Look for interesting functions
+            # In practice, would analyze function behavior
+            return f"virtual_function_{len(vfuncs) - 1}"
+        else:
             return "virtual_function_0"
-
-        # Look for interesting functions
-        # In practice, would analyze function behavior
-        return f"virtual_function_{len(vfuncs) - 1}"
 
     def _find_best_vfunc_index(self, class_info: dict[str, Any]) -> int:
         """Find best virtual function index for exploitation."""
         target_vfuncs = class_info["target"].get("vfuncs", [])
-        if not target_vfuncs:
-            return 0
-
-        # Prefer functions at the end (often less protected)
-        return len(target_vfuncs) - 1
+        return len(target_vfuncs) - 1 if target_vfuncs else 0
 
     def _get_cast_operation(self, class_info: dict[str, Any]) -> str:
         """Determine cast operation for type confusion."""
@@ -1326,11 +1388,7 @@ int main() {{
         target_size = class_info["target"]["size"]
 
         # Look for offset where source ends but target continues
-        if source_size < target_size:
-            return source_size  # Right after source object ends
-
-        # Default to after vtable
-        return 8
+        return source_size if source_size < target_size else 8
 
     def _analyze_class_hierarchy(self, class_info: dict[str, Any]) -> dict[str, Any]:
         """Analyze class inheritance hierarchy."""
@@ -1338,7 +1396,9 @@ int main() {{
             "source_bases": class_info["source"].get("base_classes", []),
             "target_bases": class_info["target"].get("base_classes", []),
             "common_base": self._find_common_base(class_info),
-            "polymorphic": bool(class_info["source"].get("vfuncs") or class_info["target"].get("vfuncs")),
+            "polymorphic": bool(
+                class_info["source"].get("vfuncs") or class_info["target"].get("vfuncs")
+            ),
         }
 
     def _find_common_base(self, class_info: dict[str, Any]) -> str | None:
@@ -1367,12 +1427,9 @@ int main() {{
             addr = gadget.get("address", 0)
 
             if "pop rdi" in instr:
-                rop_chain.append(addr)
-                # Argument for system/WinExec
-                rop_chain.append(self._get_cmd_string_addr(process_info))
+                rop_chain.extend((addr, self._get_cmd_string_addr(process_info)))
             elif "pop rsi" in instr and len(rop_chain) < 10:
-                rop_chain.append(addr)
-                rop_chain.append(0)  # NULL for second arg
+                rop_chain.extend((addr, 0))
             elif instr == "ret" and len(rop_chain) < 2:
                 rop_chain.append(addr)  # Stack align
 
@@ -1388,7 +1445,7 @@ int main() {{
             # Jump to shellcode
             rop_chain.append(self._allocate_shellcode_addr(process_info))
 
-        return rop_chain if rop_chain else [base + 0x1000, base + 0x2000, base + 0x3000]
+        return rop_chain or [base + 0x1000, base + 0x2000, base + 0x3000]
 
     def _get_cmd_string_addr(self, process_info: dict[str, Any]) -> int:
         """Get address of command string."""
@@ -1405,18 +1462,20 @@ int main() {{
 
     def _find_ret_gadget(self, gadgets: list[dict[str, Any]]) -> int | None:
         """Find simple ret gadget."""
-        for gadget in gadgets:
-            if gadget.get("instruction") == "ret":
-                return gadget.get("address")
-        return None
+        return next(
+            (
+                gadget.get("address")
+                for gadget in gadgets
+                if gadget.get("instruction") == "ret"
+            ),
+            None,
+        )
 
     def _allocate_shellcode_addr(self, process_info: dict[str, Any]) -> int:
         """Allocate address for shellcode."""
         # Check for executable heap
         if process_info.get("nx_enabled", True):
-            # Need RWX region
-            rwx_regions = process_info.get("rwx_regions", [])
-            if rwx_regions:
+            if rwx_regions := process_info.get("rwx_regions", []):
                 return rwx_regions[0]["address"] + 0x100
 
         # Use heap with hope of execute permission
@@ -1529,12 +1588,18 @@ int main() {{
         return None
 
     def _generate_exploit_instructions(
-        self, source_type: str, target_type: str, source_size: int, target_size: int, trigger_method: str, class_info: dict[str, Any],
+        self,
+        source_type: str,
+        target_type: str,
+        source_size: int,
+        target_size: int,
+        trigger_method: str,
+        class_info: dict[str, Any],
     ) -> str:
         """Generate detailed exploitation instructions."""
-        instructions = []
-        instructions.append(f"Type confusion between {source_type} ({source_size} bytes) and {target_type} ({target_size} bytes)")
-
+        instructions = [
+            f"Type confusion between {source_type} ({source_size} bytes) and {target_type} ({target_size} bytes)"
+        ]
         if trigger_method == "cast":
             instructions.append("Trigger: Unsafe type cast between incompatible types")
         elif trigger_method == "container":
@@ -1555,7 +1620,10 @@ int main() {{
         return " | ".join(instructions)
 
     def _calculate_confusion_reliability(
-        self, class_info: dict[str, Any], process_info: dict[str, Any], confusion_info: dict[str, Any],
+        self,
+        class_info: dict[str, Any],
+        process_info: dict[str, Any],
+        confusion_info: dict[str, Any],
     ) -> float:
         """Calculate type confusion exploit reliability."""
         reliability = 0.6  # Base reliability for type confusion
@@ -1693,7 +1761,11 @@ int main() {{
                                         ]
                                     ):
                                         # Check if arguments are symbolic
-                                        for reg in ["rdi", "rsi", "rdx"] if state.arch.bits == 64 else ["eax", "ebx", "ecx"]:
+                                        for reg in (
+                                            ["rdi", "rsi", "rdx"]
+                                            if state.arch.bits == 64
+                                            else ["eax", "ebx", "ecx"]
+                                        ):
                                             if hasattr(state.regs, reg):
                                                 arg = getattr(state.regs, reg)
                                                 if arg.symbolic:
@@ -1730,19 +1802,17 @@ int main() {{
             # Look for heap metadata corruption indicators
             heap_chunks = getattr(state.heap, "_chunks", {})
             for chunk_info in heap_chunks.values():
-                if hasattr(chunk_info, "size") and hasattr(chunk_info, "data"):
-                    # Check if chunk size is symbolic and can be made very large
-                    if chunk_info.size.symbolic:
-                        try:
-                            max_size = state.solver.max(chunk_info.size)
-                            if max_size > 0x100000:  # 1MB threshold
-                                self.logger.info(
-                                    "Potential heap overflow: chunk size can be %d bytes",
-                                    max_size,
-                                )
-                                return True
-                        except (RuntimeError, ValueError) as e:
-                            self.logger.debug("Failed to analyze heap operation: %s", e)
+                if hasattr(chunk_info, "size") and hasattr(chunk_info, "data") and chunk_info.size.symbolic:
+                    try:
+                        max_size = state.solver.max(chunk_info.size)
+                        if max_size > 0x100000:  # 1MB threshold
+                            self.logger.info(
+                                "Potential heap overflow: chunk size can be %d bytes",
+                                max_size,
+                            )
+                            return True
+                    except (RuntimeError, ValueError) as e:
+                        self.logger.debug("Failed to analyze heap operation: %s", e)
         except (AttributeError, TypeError) as e:
             self.logger.debug("Failed to analyze heap buffer overflow: %s", e)
 
@@ -1781,7 +1851,9 @@ int main() {{
             self.logger.warning("Error during buffer overflow check: %s", e, exc_info=False)
             return False
 
-    def _analyze_vulnerable_paths(self, simgr: object, vulnerability_types: list[str], project: object) -> list[dict[str, Any]]:
+    def _analyze_vulnerable_paths(
+        self, simgr: object, vulnerability_types: list[str], project: object
+    ) -> list[dict[str, Any]]:
         """Analyze execution manager paths for vulnerabilities with enhanced detection.
 
         Args:
@@ -1797,7 +1869,11 @@ int main() {{
 
         try:
             # Get binary information from project
-            binary_name = project.loader.main_object.binary if project and project.loader.main_object else "unknown"
+            binary_name = (
+                project.loader.main_object.binary
+                if project and project.loader.main_object
+                else "unknown"
+            )
 
             # Enhanced buffer overflow detection
             if "buffer_overflow" in vulnerability_types:
@@ -1817,7 +1893,9 @@ int main() {{
 
                 # Check active and deadended states for potential overflows
                 for state in simgr.active + simgr.deadended:
-                    if self._check_buffer_overflow(state, getattr(simgr, "project", None) or getattr(simgr, "_project", None)):
+                    if self._check_buffer_overflow(
+                        state, getattr(simgr, "project", None) or getattr(simgr, "_project", None)
+                    ):
                         vuln = {
                             "type": "buffer_overflow",
                             "address": hex(state.addr),
@@ -1834,7 +1912,9 @@ int main() {{
             self.logger.error("Error analyzing vulnerable paths: %s", e)
             return vulnerabilities
 
-    def _native_vulnerability_discovery(self, vulnerability_types: list[str] | None = None) -> list[dict[str, Any]]:
+    def _native_vulnerability_discovery(
+        self, vulnerability_types: list[str] | None = None
+    ) -> list[dict[str, Any]]:
         """Native vulnerability discovery implementation without angr dependency.
 
         Performs comprehensive static and heuristic analysis to identify potential
@@ -2000,7 +2080,9 @@ int main() {{
                 code_sections = self._find_code_sections(binary_data)
 
                 for section_offset, section_data in code_sections:
-                    for instruction in cs.disasm(section_data[: min(4096, len(section_data))], section_offset):
+                    for instruction in cs.disasm(
+                        section_data[: min(4096, len(section_data))], section_offset
+                    ):
                         inst_info = {
                             "address": instruction.address,
                             "mnemonic": instruction.mnemonic,
@@ -2111,13 +2193,17 @@ int main() {{
 
         return patterns
 
-    def _detect_buffer_overflow_patterns(self, binary_data: bytes, strings: list[dict], disasm_info: dict) -> list[dict[str, Any]]:
+    def _detect_buffer_overflow_patterns(
+        self, binary_data: bytes, strings: list[dict], disasm_info: dict
+    ) -> list[dict[str, Any]]:
         """Detect potential buffer overflow vulnerabilities."""
         vulnerabilities = []
 
         # Log analysis context
         self.logger.debug(f"Analyzing {len(binary_data)} bytes of binary data")
-        self.logger.debug(f"Found {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
+        self.logger.debug(
+            f"Found {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions"
+        )
 
         # Check for dangerous function usage in strings
         dangerous_functions = [
@@ -2164,8 +2250,9 @@ int main() {{
                 # Extract immediate value for stack allocation
                 import re
 
-                immediate = re.search(r"0x([0-9a-fA-F]+)", instruction["op_str"])
-                if immediate:
+                if immediate := re.search(
+                    r"0x([0-9a-fA-F]+)", instruction["op_str"]
+                ):
                     stack_size = int(immediate.group(1), 16)
                     if stack_size > 1024:  # Large stack allocation
                         vuln = {
@@ -2180,13 +2267,17 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_format_string_vulns(self, binary_data: bytes, strings: list[dict], disasm_info: dict) -> list[dict[str, Any]]:
+    def _detect_format_string_vulns(
+        self, binary_data: bytes, strings: list[dict], disasm_info: dict
+    ) -> list[dict[str, Any]]:
         """Detect potential format string vulnerabilities."""
         vulnerabilities = []
 
         # Log analysis context
         self.logger.debug(f"Analyzing {len(binary_data)} bytes for format string vulnerabilities")
-        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
+        self.logger.debug(
+            f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions"
+        )
 
         # Look for format string patterns
         format_patterns = ["%s", "%d", "%x", "%n", "%p", "%%"]
@@ -2218,30 +2309,32 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_integer_overflow_patterns(self, binary_data: bytes, strings: list[dict], disasm_info: dict) -> list[dict[str, Any]]:
+    def _detect_integer_overflow_patterns(
+        self, binary_data: bytes, strings: list[dict], disasm_info: dict
+    ) -> list[dict[str, Any]]:
         """Detect potential integer overflow vulnerabilities."""
         vulnerabilities = []
 
         # Log analysis context
         self.logger.debug(f"Analyzing {len(binary_data)} bytes for integer overflow patterns")
-        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
+        self.logger.debug(
+            f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions"
+        )
 
         # Look for arithmetic operations without bounds checking
         arithmetic_ops = ["add", "mul", "imul", "shl", "sal"]
 
         for instruction in disasm_info.get("instructions", []):
-            if instruction["mnemonic"] in arithmetic_ops:
-                # Look for operations on user-controlled data
-                if "eax" in instruction["op_str"] or "rax" in instruction["op_str"]:
-                    vuln = {
-                        "type": "integer_overflow",
-                        "severity": "medium",
-                        "address": hex(instruction["address"]),
-                        "description": f"Arithmetic operation without bounds checking: {instruction['mnemonic']}",
-                        "instruction": f"{instruction['mnemonic']} {instruction['op_str']}",
-                        "detection_method": "instruction_analysis",
-                    }
-                    vulnerabilities.append(vuln)
+            if instruction["mnemonic"] in arithmetic_ops and ("eax" in instruction["op_str"] or "rax" in instruction["op_str"]):
+                vuln = {
+                    "type": "integer_overflow",
+                    "severity": "medium",
+                    "address": hex(instruction["address"]),
+                    "description": f"Arithmetic operation without bounds checking: {instruction['mnemonic']}",
+                    "instruction": f"{instruction['mnemonic']} {instruction['op_str']}",
+                    "detection_method": "instruction_analysis",
+                }
+                vulnerabilities.append(vuln)
 
         # Check for size calculations in strings
         size_keywords = ["size", "length", "count", "num", "malloc", "calloc"]
@@ -2260,13 +2353,17 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_command_injection_patterns(self, binary_data: bytes, strings: list[dict], disasm_info: dict) -> list[dict[str, Any]]:
+    def _detect_command_injection_patterns(
+        self, binary_data: bytes, strings: list[dict], disasm_info: dict
+    ) -> list[dict[str, Any]]:
         """Detect potential command injection vulnerabilities."""
         vulnerabilities = []
 
         # Log analysis context
         self.logger.debug(f"Analyzing {len(binary_data)} bytes for command injection patterns")
-        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
+        self.logger.debug(
+            f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions"
+        )
 
         # Look for system command execution
         dangerous_functions = ["system", "exec", "popen", "CreateProcess", "ShellExecute"]
@@ -2287,9 +2384,9 @@ int main() {{
                     }
                     vulnerabilities.append(vuln)
 
-            # Check for command injection characters
-            injection_chars = [char for char in command_chars if char in string["value"]]
-            if injection_chars:
+            if injection_chars := [
+                char for char in command_chars if char in string["value"]
+            ]:
                 vuln = {
                     "type": "command_injection",
                     "severity": "medium",
@@ -2308,27 +2405,30 @@ int main() {{
                 op_str = instruction.get("op_str", "")
 
                 # Look for calls to dangerous functions
-                if mnemonic in ["call", "jmp"]:
-                    if any(func.lower() in op_str.lower() for func in dangerous_functions):
-                        vuln = {
-                            "type": "command_injection",
-                            "severity": "high",
-                            "address": hex(instruction.get("address", 0)),
-                            "description": f"Direct call to dangerous function in {op_str}",
-                            "instruction": f"{mnemonic} {op_str}",
-                            "detection_method": "disassembly_analysis",
-                        }
-                        vulnerabilities.append(vuln)
+                if mnemonic in ["call", "jmp"] and any(func.lower() in op_str.lower() for func in dangerous_functions):
+                    vuln = {
+                        "type": "command_injection",
+                        "severity": "high",
+                        "address": hex(instruction.get("address", 0)),
+                        "description": f"Direct call to dangerous function in {op_str}",
+                        "instruction": f"{mnemonic} {op_str}",
+                        "detection_method": "disassembly_analysis",
+                    }
+                    vulnerabilities.append(vuln)
 
         return vulnerabilities
 
-    def _detect_use_after_free_patterns(self, binary_data: bytes, strings: list[dict], disasm_info: dict) -> list[dict[str, Any]]:
+    def _detect_use_after_free_patterns(
+        self, binary_data: bytes, strings: list[dict], disasm_info: dict
+    ) -> list[dict[str, Any]]:
         """Detect potential use-after-free vulnerabilities."""
         vulnerabilities = []
 
         # Log analysis context
         self.logger.debug(f"Analyzing {len(binary_data)} bytes for use-after-free patterns")
-        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
+        self.logger.debug(
+            f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions"
+        )
 
         # Look for malloc/free patterns
         memory_functions = ["malloc", "free", "calloc", "realloc", "new", "delete"]
@@ -2349,13 +2449,17 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_path_traversal_patterns(self, binary_data: bytes, strings: list[dict], disasm_info: dict) -> list[dict[str, Any]]:
+    def _detect_path_traversal_patterns(
+        self, binary_data: bytes, strings: list[dict], disasm_info: dict
+    ) -> list[dict[str, Any]]:
         """Detect potential path traversal vulnerabilities."""
         vulnerabilities = []
 
         # Log analysis context
         self.logger.debug(f"Analyzing {len(binary_data)} bytes for path traversal patterns")
-        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
+        self.logger.debug(
+            f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions"
+        )
 
         # Look for path traversal patterns
         traversal_patterns = ["../", "..\\", "%2e%2e%2f", "%2e%2e%5c"]
@@ -2376,21 +2480,27 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_sql_injection_patterns(self, binary_data: bytes, strings: list[dict], disasm_info: dict) -> list[dict[str, Any]]:
+    def _detect_sql_injection_patterns(
+        self, binary_data: bytes, strings: list[dict], disasm_info: dict
+    ) -> list[dict[str, Any]]:
         """Detect potential SQL injection vulnerabilities."""
         vulnerabilities = []
 
         # Log analysis context
         self.logger.debug(f"Analyzing {len(binary_data)} bytes for SQL injection patterns")
-        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
+        self.logger.debug(
+            f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions"
+        )
 
         # Look for SQL keywords and injection patterns
         sql_keywords = ["SELECT", "INSERT", "UPDATE", "DELETE", "DROP", "UNION", "OR", "AND"]
         injection_patterns = ["'", '"', "--", "/*", "*/", "UNION SELECT", "' OR '1'='1"]
 
         for string in strings:
-            sql_count = sum(1 for keyword in sql_keywords if keyword in string["value"].upper())
-            injection_count = sum(1 for pattern in injection_patterns if pattern in string["value"])
+            sql_count = sum(bool(keyword in string["value"].upper())
+                        for keyword in sql_keywords)
+            injection_count = sum(bool(pattern in string["value"])
+                              for pattern in injection_patterns)
 
             if sql_count > 0 or injection_count > 0:
                 severity = "high" if injection_count > 0 else "medium"
@@ -2408,13 +2518,17 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_memory_leak_patterns(self, binary_data: bytes, strings: list[dict], disasm_info: dict) -> list[dict[str, Any]]:
+    def _detect_memory_leak_patterns(
+        self, binary_data: bytes, strings: list[dict], disasm_info: dict
+    ) -> list[dict[str, Any]]:
         """Detect potential memory leak vulnerabilities."""
         vulnerabilities = []
 
         # Log analysis context
         self.logger.debug(f"Analyzing {len(binary_data)} bytes for memory leak patterns")
-        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
+        self.logger.debug(
+            f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions"
+        )
 
         # Look for memory allocation without corresponding free
         alloc_functions = ["malloc", "calloc", "realloc", "new", "LocalAlloc", "GlobalAlloc"]
@@ -2435,7 +2549,9 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_null_pointer_patterns(self, binary_data: bytes, strings: list[dict], disasm_info: dict) -> list[dict[str, Any]]:
+    def _detect_null_pointer_patterns(
+        self, binary_data: bytes, strings: list[dict], disasm_info: dict
+    ) -> list[dict[str, Any]]:
         """Detect potential null pointer dereference vulnerabilities."""
         vulnerabilities = []
 
@@ -2508,7 +2624,9 @@ int main() {{
 
         return vulnerabilities
 
-    def _deduplicate_and_rank_vulnerabilities(self, vulnerabilities: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _deduplicate_and_rank_vulnerabilities(
+        self, vulnerabilities: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Remove duplicates and rank vulnerabilities by severity."""
         # Remove duplicates based on type and address
         seen = set()
@@ -2573,11 +2691,11 @@ int main() {{
         # Get write address and data
         addr = state.inspect.mem_write_address
         _ = state.inspect.mem_write_expr
-        length = state.inspect.mem_write_length
-
         if addr is not None:
             # Check if writing to freed memory (UAF)
             concrete_addr = state.solver.eval_one(addr)
+            length = state.inspect.mem_write_length
+
             if concrete_addr in state.heap["freed"]:
                 # Detected use-after-free write
                 state.heap["vulnerabilities"] = state.heap.get("vulnerabilities", [])
@@ -2720,9 +2838,8 @@ int main() {{
         for i in range(len(state.solver.constraints)):
             constraint = state.solver.constraints[i]
             for var in constraint.variables:
-                if "arg" in str(var) or "stdin" in str(var):
-                    if hasattr(state.plugins, "taint"):
-                        state.plugins.taint.add_taint(var, "user_input")
+                if ("arg" in str(var) or "stdin" in str(var)) and hasattr(state.plugins, "taint"):
+                    state.plugins.taint.add_taint(var, "user_input")
 
     def _check_race_condition(self, state: object, project: object) -> bool:
         """Check for potential race conditions.
@@ -2738,11 +2855,14 @@ int main() {{
         try:
             # Look for multi-threading indicators
             threading_funcs = ["pthread_create", "CreateThread", "fork", "clone"]
-            for func in threading_funcs:
-                if func in project.kb.functions:
-                    # Check if shared resources are accessed without synchronization
-                    return self._analyze_synchronization(state, project)
-            return False
+            return next(
+                (
+                    self._analyze_synchronization(state, project)
+                    for func in threading_funcs
+                    if func in project.kb.functions
+                ),
+                False,
+            )
         except Exception as e:
             self.logger.debug(f"Race condition check failed: {e}")
             return False
@@ -2765,7 +2885,8 @@ int main() {{
             "EnterCriticalSection",
             "LeaveCriticalSection",
         ]
-        sync_count = sum(1 for f in sync_funcs if f in project.kb.functions)
+        sync_count = sum(bool(f in project.kb.functions)
+                     for f in sync_funcs)
 
         # Check if state has accessed shared memory without locks
         try:
@@ -2827,7 +2948,9 @@ int main() {{
 
         return project, initial_state
 
-    def _setup_symbolic_stdin_for_exploration(self, initial_state: object, symbolic_stdin: bool, **kwargs: object) -> None:
+    def _setup_symbolic_stdin_for_exploration(
+        self, initial_state: object, symbolic_stdin: bool, **kwargs: object
+    ) -> None:
         """Set up symbolic stdin if requested.
 
         Args:
@@ -2842,7 +2965,9 @@ int main() {{
             initial_state.posix.stdin.content = stdin_content
             self.logger.info(f"Created symbolic stdin of size {stdin_size}")
 
-    def _apply_concrete_values_for_exploration(self, initial_state: object, concrete_values: dict[int, Any]) -> None:
+    def _apply_concrete_values_for_exploration(
+        self, initial_state: object, concrete_values: dict[int, Any]
+    ) -> None:
         """Apply concrete values if provided.
 
         Args:
@@ -2905,13 +3030,17 @@ int main() {{
                         # Extract concrete input that reaches this target
                         if hasattr(state, "posix") and state.posix.stdin.content:
                             try:
-                                concrete_input = state.solver.eval(state.posix.stdin.content, cast_to=bytes)
+                                concrete_input = state.solver.eval(
+                                    state.posix.stdin.content, cast_to=bytes
+                                )
                                 results["interesting_values"][hex(state.addr)] = {
                                     "input": concrete_input.hex(),
                                     "constraints": len(state.solver.constraints),
                                 }
                             except Exception as e:
-                                self.logger.debug(f"Error extracting concrete input at {hex(state.addr)}: {e}")
+                                self.logger.debug(
+                                    f"Error extracting concrete input at {hex(state.addr)}: {e}"
+                                )
 
             return simgr.step()
 
@@ -2962,11 +3091,19 @@ int main() {{
             # Check for vulnerabilities in active states
             if steps % 10 == 0:  # Check every 10 steps for performance
                 for state in simgr.active:
-                    vuln = self._check_state_for_vulnerabilities(state, project)
-                    if vuln:
+                    if vuln := self._check_state_for_vulnerabilities(
+                        state, project
+                    ):
                         results["vulnerabilities"].extend(vuln)
 
-    def _analyze_exploration_results(self, simgr: object, project: object, start_address: int, covered_blocks: set[int], results: dict[str, Any]) -> None:
+    def _analyze_exploration_results(
+        self,
+        simgr: object,
+        project: object,
+        start_address: int,
+        covered_blocks: set[int],
+        results: dict[str, Any],
+    ) -> None:
         """Analyze final exploration results.
 
         Args:
@@ -3001,7 +3138,9 @@ int main() {{
                 }
                 results["constraints"].append(constraint_info)
 
-    def _extract_interesting_test_cases(self, simgr: object, find_addresses: list[int], start_address: int, results: dict[str, Any]) -> None:
+    def _extract_interesting_test_cases(
+        self, simgr: object, find_addresses: list[int], start_address: int, results: dict[str, Any]
+    ) -> None:
         """Extract interesting test cases from exploration results.
 
         Args:
@@ -3019,7 +3158,9 @@ int main() {{
                     concrete_input = state.solver.eval(state.posix.stdin.content, cast_to=bytes)
                     results["interesting_values"][f"state_{hex(state.addr)}"] = {
                         "input": concrete_input.hex(),
-                        "path_length": len(state.history.bbl_addrs) if hasattr(state, "history") else 0,
+                        "path_length": len(state.history.bbl_addrs)
+                        if hasattr(state, "history")
+                        else 0,
                         "reached_from": hex(start_address),
                     }
             except Exception as e:
@@ -3105,14 +3246,30 @@ int main() {{
 
             # Create custom step function to track execution
             custom_step = self._create_custom_step_function(
-                results, find_addresses, track_constraints, covered_blocks, path_constraints, execution_paths,
+                results,
+                find_addresses,
+                track_constraints,
+                covered_blocks,
+                path_constraints,
+                execution_paths,
             )
 
             # Execute main exploration loop
-            self._execute_exploration_loop(simgr, custom_step, max_depth, timeout, find_addresses, avoid_addresses, project, results)
+            self._execute_exploration_loop(
+                simgr,
+                custom_step,
+                max_depth,
+                timeout,
+                find_addresses,
+                avoid_addresses,
+                project,
+                results,
+            )
 
             # Analyze final results
-            self._analyze_exploration_results(simgr, project, start_address, covered_blocks, results)
+            self._analyze_exploration_results(
+                simgr, project, start_address, covered_blocks, results
+            )
 
             # Extract interesting test cases
             self._extract_interesting_test_cases(simgr, find_addresses, start_address, results)
@@ -3185,8 +3342,9 @@ int main() {{
 
             # Generate pseudo-constraints based on conditional jumps
             for path in paths[:10]:  # Limit to first 10 paths
-                constraints = self._extract_path_constraints(path, disasm_info)
-                if constraints:
+                if constraints := self._extract_path_constraints(
+                    path, disasm_info
+                ):
                     results["constraints"].append(
                         {
                             "path": [hex(addr) for addr in path],
@@ -3202,7 +3360,9 @@ int main() {{
             results["error"] = str(e)
             return results
 
-    def _check_state_for_vulnerabilities(self, state: object, project: object) -> list[dict[str, Any]]:
+    def _check_state_for_vulnerabilities(
+        self, state: object, project: object
+    ) -> list[dict[str, Any]]:
         """Check a single state for various vulnerability patterns.
 
         Args:
@@ -3295,7 +3455,7 @@ int main() {{
         instructions = []
         basic_blocks = {}
 
-        if not binary_data or len(binary_data) == 0:
+        if not binary_data:
             return {
                 "instructions": instructions,
                 "basic_blocks": basic_blocks,
@@ -3344,7 +3504,9 @@ int main() {{
                     # Check if we have enough bytes for the instruction
                     if offset + 4 < len(binary_data):
                         # Read 4-byte relative offset
-                        rel_offset = int.from_bytes(binary_data[offset + 1 : offset + 5], "little", signed=True)
+                        rel_offset = int.from_bytes(
+                            binary_data[offset + 1 : offset + 5], "little", signed=True
+                        )
                         target = offset + 5 + rel_offset
 
                         instructions.append(
@@ -3357,8 +3519,8 @@ int main() {{
                             },
                         )
 
+                        successors.append(target)
                         if instr_type == "jmp":
-                            successors.append(target)
                             # End of basic block for unconditional jump
                             basic_blocks[current_block_start] = {
                                 "size": current_block_size + 5,
@@ -3369,7 +3531,6 @@ int main() {{
                             current_block_size = 0
                             successors.clear()
                         else:  # call
-                            successors.append(target)  # Call target
                             successors.append(offset + 5)  # Return address
                             current_block_size += 5
 
@@ -3387,7 +3548,9 @@ int main() {{
                     0x7F,
                 ]:  # Conditional jumps
                     if offset + 1 < len(binary_data):
-                        rel_offset = int.from_bytes([binary_data[offset + 1]], "little", signed=True)
+                        rel_offset = int.from_bytes(
+                            [binary_data[offset + 1]], "little", signed=True
+                        )
                         target = offset + 2 + rel_offset
 
                         jump_names = {
@@ -3471,14 +3634,17 @@ int main() {{
             block_addr = block.get("start_address", start_address)
             node_id = hex(block_addr)
 
-            # Extract instructions for this block
-            block_instructions = []
-            for instr in instructions:
-                if instr.get("address") and block.get("start_address") <= instr["address"] <= block.get(
-                    "end_address", block.get("start_address", 0),
-                ):
-                    block_instructions.append(instr)
-
+            block_instructions = [
+                instr
+                for instr in instructions
+                if instr.get("address")
+                and block.get("start_address")
+                <= instr["address"]
+                <= block.get(
+                    "end_address",
+                    block.get("start_address", 0),
+                )
+            ]
             nodes[node_id] = {
                 "type": block.get("type", "basic"),
                 "address": block_addr,
@@ -3491,15 +3657,12 @@ int main() {{
         # Analyze control flow from instructions
         for i, instr in enumerate(instructions):
             instr_addr = instr.get("address", start_address + i * 4)
-            instr_bytes = instr.get("bytes", b"")
-
-            # Identify control flow instructions
-            if instr_bytes:
+            if instr_bytes := instr.get("bytes", b""):
                 # Jump instructions (simplified detection)
                 if b"\xe9" in instr_bytes or b"\xeb" in instr_bytes:  # JMP
-                    # Extract jump target if available
-                    target = self._extract_jump_target(instr_bytes, instr_addr)
-                    if target:
+                    if target := self._extract_jump_target(
+                        instr_bytes, instr_addr
+                    ):
                         edges.append(
                             {
                                 "from": hex(instr_addr),
@@ -3508,10 +3671,12 @@ int main() {{
                             },
                         )
 
-                # Conditional jumps
-                elif any(pattern in instr_bytes for pattern in [b"\x74", b"\x75", b"\x70", b"\x71"]):  # JZ, JNZ, JO, JNO
-                    target = self._extract_jump_target(instr_bytes, instr_addr)
-                    if target:
+                elif any(
+                    pattern in instr_bytes for pattern in [b"\x74", b"\x75", b"\x70", b"\x71"]
+                ):  # JZ, JNZ, JO, JNO
+                    if target := self._extract_jump_target(
+                        instr_bytes, instr_addr
+                    ):
                         edges.append(
                             {
                                 "from": hex(instr_addr),
@@ -3530,10 +3695,10 @@ int main() {{
                         },
                     )
 
-                # Call instructions
                 elif b"\xe8" in instr_bytes:  # CALL
-                    target = self._extract_jump_target(instr_bytes, instr_addr)
-                    if target:
+                    if target := self._extract_jump_target(
+                        instr_bytes, instr_addr
+                    ):
                         edges.append(
                             {
                                 "from": hex(instr_addr),
@@ -3573,7 +3738,9 @@ int main() {{
             },
         }
 
-        self.logger.info(f"Built CFG with {len(nodes)} nodes and {len(edges)} edges from disasm_info")
+        self.logger.info(
+            f"Built CFG with {len(nodes)} nodes and {len(edges)} edges from disasm_info"
+        )
         return cfg
 
     def _extract_jump_target(self, instr_bytes: bytes, instr_addr: int) -> int | None:
@@ -3591,9 +3758,8 @@ int main() {{
                     return instr_addr + len(instr_bytes) + offset
 
             elif instr_bytes[0] == 0xEB:  # JMP rel8
-                if len(instr_bytes) >= 2:
-                    offset = struct.unpack("<b", instr_bytes[1:2])[0]
-                    return instr_addr + len(instr_bytes) + offset
+                offset = struct.unpack("<b", instr_bytes[1:2])[0]
+                return instr_addr + len(instr_bytes) + offset
 
             elif instr_bytes[0] == 0xE8:  # CALL rel32
                 if len(instr_bytes) >= 5:
@@ -3602,14 +3768,11 @@ int main() {{
                     offset = struct.unpack("<i", instr_bytes[1:5])[0]
                     return instr_addr + len(instr_bytes) + offset
 
-            # Conditional jumps (0x70-0x7F series)
             elif 0x70 <= instr_bytes[0] <= 0x7F:  # Jcc rel8
-                if len(instr_bytes) >= 2:
-                    offset = struct.unpack("<b", instr_bytes[1:2])[0]
-                    return instr_addr + len(instr_bytes) + offset
+                offset = struct.unpack("<b", instr_bytes[1:2])[0]
+                return instr_addr + len(instr_bytes) + offset
 
-            # Two-byte conditional jumps (0x0F 0x80-0x8F)
-            elif len(instr_bytes) >= 2 and instr_bytes[0] == 0x0F and 0x80 <= instr_bytes[1] <= 0x8F:
+            elif instr_bytes[0] == 0x0F and 0x80 <= instr_bytes[1] <= 0x8F:
                 if len(instr_bytes) >= 6:
                     import struct
 
@@ -3717,10 +3880,14 @@ int main() {{
             except Exception:
                 paths = [[start_address], [start_address, start_address + 16]]
 
-        self.logger.info(f"Found {len(paths)} execution paths from CFG analysis (max_depth={max_depth})")
+        self.logger.info(
+            f"Found {len(paths)} execution paths from CFG analysis (max_depth={max_depth})"
+        )
         return paths
 
-    def _analyze_path_for_vulnerabilities(self, path: list[int], binary_data: bytes) -> list[dict[str, Any]]:
+    def _analyze_path_for_vulnerabilities(
+        self, path: list[int], binary_data: bytes
+    ) -> list[dict[str, Any]]:
         """Analyze a specific execution path for vulnerabilities."""
         vulnerabilities = []
 
@@ -3782,41 +3949,45 @@ int main() {{
         unique_vulns.sort(key=lambda v: severity_order.get(v.get("severity", "low"), 3))
 
         if vulnerabilities:
-            self.logger.info(f"Found {len(unique_vulns)} potential vulnerabilities in execution path of length {len(path)}")
+            self.logger.info(
+                f"Found {len(unique_vulns)} potential vulnerabilities in execution path of length {len(path)}"
+            )
 
         return unique_vulns[:10]  # Limit to top 10 vulnerabilities
 
-    def _check_buffer_overflow_path(self, addr: int, path_idx: int, path: list[int], instr_window: bytes) -> dict[str, Any] | None:
+    def _check_buffer_overflow_path(
+        self, addr: int, path_idx: int, path: list[int], instr_window: bytes
+    ) -> dict[str, Any] | None:
         """Check for buffer overflow patterns in instruction window."""
         try:
             # Look for buffer operations and unchecked bounds
-            if b"\xc7\x45" in instr_window or b"\x89\x45" in instr_window:  # mov to stack
-                if b"\xff\xd0" in instr_window or b"\xff\x15" in instr_window:  # call patterns
-                    # Check if there's a pattern in the path that increases vulnerability
-                    path_depth = len(path)
-                    loop_count = len([a for a in path[:path_idx] if a == addr])
+            if (b"\xc7\x45" in instr_window or b"\x89\x45" in instr_window) and (b"\xff\xd0" in instr_window or b"\xff\x15" in instr_window):
+                path_depth = len(path)
+                loop_count = len([a for a in path[:path_idx] if a == addr])
 
-                    severity = "high"
-                    if loop_count > 1:
-                        severity = "critical"  # Loop makes overflow more likely
-                    elif path_depth > 20:
-                        severity = "high"  # Deep execution path
+                severity = "high"
+                if loop_count > 1:
+                    severity = "critical"  # Loop makes overflow more likely
+                elif path_depth > 20:
+                    severity = "high"  # Deep execution path
 
-                    return {
-                        "type": "buffer_overflow",
-                        "severity": severity,
-                        "address": hex(addr),
-                        "path_position": path_idx,
-                        "path_depth": path_depth,
-                        "loop_count": loop_count,
-                        "description": f"Potential buffer overflow - unchecked stack operations (path depth: {path_depth})",
-                        "evidence": f"Stack operations at {hex(addr)} in {path_depth}-step execution path",
-                    }
+                return {
+                    "type": "buffer_overflow",
+                    "severity": severity,
+                    "address": hex(addr),
+                    "path_position": path_idx,
+                    "path_depth": path_depth,
+                    "loop_count": loop_count,
+                    "description": f"Potential buffer overflow - unchecked stack operations (path depth: {path_depth})",
+                    "evidence": f"Stack operations at {hex(addr)} in {path_depth}-step execution path",
+                }
         except Exception as e:
             self.logger.debug(f"Buffer overflow detection failed at {hex(addr)}: {e}")
         return None
 
-    def _check_integer_overflow_path(self, addr: int, path_idx: int, path: list[int], instr_window: bytes) -> dict[str, Any] | None:
+    def _check_integer_overflow_path(
+        self, addr: int, path_idx: int, path: list[int], instr_window: bytes
+    ) -> dict[str, Any] | None:
         """Check for integer overflow patterns."""
         try:
             # Look for arithmetic operations without overflow checks
@@ -3826,7 +3997,8 @@ int main() {{
 
                 # Analyze path context for overflow likelihood
                 path_depth = len(path)
-                arithmetic_ops_in_path = sum(1 for i, a in enumerate(path[:path_idx]) if i % 4 == 0)  # Estimate arithmetic density
+                arithmetic_ops_in_path = sum(bool(i % 4 == 0)
+                                         for i, a in enumerate(path[:path_idx]))  # Estimate arithmetic density
 
                 severity = "medium"
                 if arithmetic_ops_in_path > 5 or path_depth > 15:
@@ -3846,25 +4018,29 @@ int main() {{
             self.logger.debug(f"Integer overflow detection failed at {hex(addr)}: {e}")
         return None
 
-    def _check_use_after_free_path(self, addr: int, path_idx: int, path: list[int], instr_window: bytes) -> dict[str, Any] | None:
+    def _check_use_after_free_path(
+        self, addr: int, path_idx: int, path: list[int], instr_window: bytes
+    ) -> dict[str, Any] | None:
         """Check for use-after-free patterns."""
         try:
             # Look for memory access after potential free operations
             if path_idx > 0 and b"\xff\x15" in instr_window:  # call instruction
                 # Check if previous addresses in path might be free operations
                 prev_addrs = path[:path_idx]
-                potential_frees = len([a for a in prev_addrs if (a % 16) == 0])  # Estimate free-like calls
-
                 # Simplified check - would need more sophisticated analysis
                 if b"\x8b" in instr_window:  # mov instruction (potential use)
                     path_distance = path_idx  # Distance from start of path
+                    potential_frees = len(
+                        [a for a in prev_addrs if (a % 16) == 0]
+                    )  # Estimate free-like calls
+
                     severity = "critical" if potential_frees > 0 and path_distance > 3 else "high"
 
                     return {
                         "type": "use_after_free",
                         "severity": severity,
                         "address": hex(addr),
-                        "path_position": path_idx,
+                        "path_position": path_distance,
                         "path_distance": path_distance,
                         "potential_frees": potential_frees,
                         "description": f"Potential use-after-free pattern detected (path distance: {path_distance}, potential frees: {potential_frees})",
@@ -3874,7 +4050,9 @@ int main() {{
             self.logger.debug(f"Use-after-free detection failed at {hex(addr)}: {e}")
         return None
 
-    def _check_format_string_path(self, addr: int, path_idx: int, path: list[int], instr_window: bytes) -> dict[str, Any] | None:
+    def _check_format_string_path(
+        self, addr: int, path_idx: int, path: list[int], instr_window: bytes
+    ) -> dict[str, Any] | None:
         """Check for format string vulnerabilities."""
         try:
             # Look for printf-like function calls with format strings
@@ -3901,14 +4079,18 @@ int main() {{
             self.logger.debug(f"Format string detection failed at {hex(addr)}: {e}")
         return None
 
-    def _check_null_deref_path(self, addr: int, path_idx: int, path: list[int], instr_window: bytes) -> dict[str, Any] | None:
+    def _check_null_deref_path(
+        self, addr: int, path_idx: int, path: list[int], instr_window: bytes
+    ) -> dict[str, Any] | None:
         """Check for null pointer dereference."""
         try:
             # Look for memory access without null checks
             if b"\x8b\x00" in instr_window or b"\x89\x00" in instr_window:  # mov [reg], reg
                 # Check path context for null check patterns
                 prev_addrs = path[:path_idx]
-                null_check_candidates = len([a for a in prev_addrs if (a & 0xF) == 0])  # Potential null checks
+                null_check_candidates = len(
+                    [a for a in prev_addrs if (a & 0xF) == 0]
+                )  # Potential null checks
                 path_complexity = len(set(path[:path_idx]))  # Unique addresses in path
 
                 severity = "medium"
@@ -3929,7 +4111,9 @@ int main() {{
             self.logger.debug(f"Null dereference detection failed at {hex(addr)}: {e}")
         return None
 
-    def _check_race_condition_path(self, addr: int, path_idx: int, path: list[int], instr_window: bytes) -> dict[str, Any] | None:
+    def _check_race_condition_path(
+        self, addr: int, path_idx: int, path: list[int], instr_window: bytes
+    ) -> dict[str, Any] | None:
         """Check for race condition patterns."""
         try:
             # Look for shared memory access without proper synchronization
@@ -3942,10 +4126,7 @@ int main() {{
                 )  # Large jumps might indicate threading
                 concurrent_likelihood = min(path_branches / 5.0, 1.0)
 
-                severity = "medium"
-                if concurrent_likelihood > 0.6:
-                    severity = "high"  # Higher likelihood of concurrent access
-
+                severity = "high" if concurrent_likelihood > 0.6 else "medium"
                 return {
                     "type": "race_condition",
                     "severity": severity,
@@ -3979,7 +4160,9 @@ int main() {{
             self.logger.debug(f"Loop analysis failed: {e}")
         return None
 
-    def _analyze_path_memory_access(self, path: list[int], binary_data: bytes) -> dict[str, Any] | None:
+    def _analyze_path_memory_access(
+        self, path: list[int], binary_data: bytes
+    ) -> dict[str, Any] | None:
         """Analyze memory access patterns in the path."""
         try:
             # Check for out-of-bounds access patterns
@@ -3997,13 +4180,15 @@ int main() {{
                         # Assume addresses are file offsets for simple analysis
                         current_addr = path[i]
                         # Convert virtual address to file offset (simplified)
-                        file_offset = current_addr - 0x400000 if current_addr > 0x400000 else current_addr
+                        file_offset = (
+                            current_addr - 0x400000 if current_addr > 0x400000 else current_addr
+                        )
 
                         if file_offset < 0 or file_offset >= binary_size:
                             out_of_bounds_accesses += 1
 
                 # Check for unusually large jumps that might indicate corruption
-                max_jump = max(addr_jumps) if addr_jumps else 0
+                max_jump = max(addr_jumps, default=0)
                 avg_jump = sum(addr_jumps) / len(addr_jumps) if addr_jumps else 0
 
                 # Enhanced analysis using binary_data
@@ -4024,14 +4209,16 @@ int main() {{
                     issues.append("Potential memory scanning pattern detected")
 
                 # Analyze binary data at path addresses for additional context
-                if binary_data and len(issues) > 0:
+                if binary_data and issues:
                     executable_regions = 0
                     for addr in path[:10]:  # Check first 10 addresses
                         file_offset = addr - 0x400000 if addr > 0x400000 else addr
                         if 0 <= file_offset < len(binary_data) - 4:
                             # Check for executable code patterns
                             data_window = binary_data[file_offset : file_offset + 4]
-                            if b"\x48\x89" in data_window or b"\xff\x25" in data_window:  # Common x64 patterns
+                            if (
+                                b"\x48\x89" in data_window or b"\xff\x25" in data_window
+                            ):  # Common x64 patterns
                                 executable_regions += 1
 
                     if executable_regions == 0:
@@ -4133,7 +4320,7 @@ class TaintTracker:
         """
         return str(data) in self.tainted_data
 
-    def get_taint_source(self, data: object) -> Optional[str]:
+    def get_taint_source(self, data: object) -> str | None:
         """Get the source of taint for data.
 
         Args:

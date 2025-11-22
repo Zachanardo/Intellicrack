@@ -34,13 +34,13 @@ class BinaryIntegrityValidator:
     Detects any modifications or tampering attempts.
     """
 
-    def __init__(self, binary_path: Path, whitelist_hashes: List[str] = None):
+    def __init__(self, binary_path: Path, whitelist_hashes: list[str] = None):
         self.binary_path = binary_path
         self.whitelist_hashes = whitelist_hashes or []
         self.initial_hash = None
         self.initial_metadata = None
 
-    def capture_initial_state(self) -> Dict[str, Any]:
+    def capture_initial_state(self) -> dict[str, Any]:
         """Capture the initial state of the binary for later comparison."""
         if not self.binary_path.exists():
             raise FileNotFoundError(f"Binary not found: {self.binary_path}")
@@ -65,7 +65,7 @@ class BinaryIntegrityValidator:
                 sha256_hash.update(chunk)
         return sha256_hash.hexdigest()
 
-    def verify_integrity(self) -> Tuple[bool, Dict[str, Any]]:
+    def verify_integrity(self) -> tuple[bool, dict[str, Any]]:
         """
         Verify the binary hasn't been modified.
         Returns (is_valid, verification_details).
@@ -113,7 +113,7 @@ class BinaryIntegrityValidator:
 
         return is_valid, verification_result
 
-    def detect_patches(self) -> List[Dict[str, Any]]:
+    def detect_patches(self) -> list[dict[str, Any]]:
         """
         Detect common patching techniques.
         Looks for signs of binary modification.
@@ -164,7 +164,7 @@ class ChallengeGenerator:
         """Generate cryptographically secure random input."""
         return os.urandom(size)
 
-    def generate_time_based_challenge(self) -> Dict[str, Any]:
+    def generate_time_based_challenge(self) -> dict[str, Any]:
         """
         Generate a time-based challenge that can't be pre-computed.
         Includes timestamp and cryptographic nonce.
@@ -232,7 +232,7 @@ class ProcessMonitor:
         self.monitor_thread = None
         self.event_queue = queue.Queue()
 
-    def start_monitoring(self, target_process: Optional[str] = None):
+    def start_monitoring(self, target_process: str | None = None):
         """Start monitoring process activities."""
         self.monitoring_active = True
         self.monitor_thread = threading.Thread(target=self._monitor_loop, args=(target_process,))
@@ -247,7 +247,7 @@ class ProcessMonitor:
             self.monitor_thread.join(timeout=5)
         logger.info("Process monitoring stopped")
 
-    def _monitor_loop(self, target_process: Optional[str]):
+    def _monitor_loop(self, target_process: str | None):
         """Main monitoring loop running in separate thread."""
         debugger_indicators = [
             "x64dbg", "x32dbg", "ollydbg",
@@ -300,7 +300,7 @@ class ProcessMonitor:
                 logger.error(f"Process monitoring error: {e}")
                 time.sleep(5)
 
-    def detect_anti_analysis(self) -> List[Dict[str, Any]]:
+    def detect_anti_analysis(self) -> list[dict[str, Any]]:
         """Detect anti-analysis techniques being used."""
         detections = []
 
@@ -348,7 +348,7 @@ class ProcessMonitor:
 
         return detections
 
-    def get_suspicious_events(self) -> List[Dict[str, Any]]:
+    def get_suspicious_events(self) -> list[dict[str, Any]]:
         """Get all suspicious events detected during monitoring."""
         events = []
         while not self.event_queue.empty():
@@ -371,7 +371,7 @@ class StatisticalValidator:
         self.test_results = defaultdict(list)
 
     def add_test_result(self, test_name: str, success: bool, duration: float,
-                       metadata: Dict[str, Any] = None):
+                       metadata: dict[str, Any] = None):
         """Record a test result for statistical analysis."""
         self.test_results[test_name].append({
             "success": success,
@@ -380,7 +380,7 @@ class StatisticalValidator:
             "timestamp": datetime.now().isoformat()
         })
 
-    def calculate_confidence_interval(self, test_name: str) -> Dict[str, Any]:
+    def calculate_confidence_interval(self, test_name: str) -> dict[str, Any]:
         """
         Calculate confidence interval for test success rate.
         Uses Student's t-distribution for small samples.
@@ -422,7 +422,7 @@ class StatisticalValidator:
 
         return confidence_interval
 
-    def perform_hypothesis_test(self, test_name: str, null_hypothesis: float = 0.5) -> Dict[str, Any]:
+    def perform_hypothesis_test(self, test_name: str, null_hypothesis: float = 0.5) -> dict[str, Any]:
         """
         Perform hypothesis testing on test results.
         Tests if success rate is significantly different from null hypothesis.
@@ -453,7 +453,7 @@ class StatisticalValidator:
         """Approximate normal CDF using error function."""
         return 0.5 * (1 + math.erf(z / math.sqrt(2)))
 
-    def validate_success_rate(self, test_name: str, required_rate: float = 0.95) -> Tuple[bool, Dict[str, Any]]:
+    def validate_success_rate(self, test_name: str, required_rate: float = 0.95) -> tuple[bool, dict[str, Any]]:
         """
         Validate if test meets required success rate with confidence.
         Returns (meets_requirement, validation_details).
@@ -489,7 +489,7 @@ class EnvironmentIsolationManager:
     Implements QEMU VM snapshots, network isolation, process sandboxing, and filesystem isolation.
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         self.config = config
         self.vm_snapshot_name = config.get("global_settings", {}).get("qemu_snapshot_name", "clean_win11_snapshot")
         self.network_isolation = config.get("security_settings", {}).get("network_isolation", True)
@@ -764,7 +764,7 @@ class EnvironmentIsolationManager:
             logger.error(f"Isolation deactivation failed: {e}")
             return False
 
-    def get_isolation_status(self) -> Dict[str, Any]:
+    def get_isolation_status(self) -> dict[str, Any]:
         """Get current isolation status and metrics."""
         return {
             "isolation_active": self.isolation_active,
@@ -829,9 +829,9 @@ class ValidationTestRunner:
         logger.info("Validation Test Runner initialized")
         logger.info(f"Configuration loaded from: {self.config_path}")
 
-    def load_config(self) -> Dict[str, Any]:
+    def load_config(self) -> dict[str, Any]:
         """Load and validate configuration with JSON schema checking."""
-        with open(self.config_path, 'r') as f:
+        with open(self.config_path) as f:
             config = json.load(f)
 
         required_keys = ["global_settings", "security_settings", "test_cases"]
@@ -871,7 +871,7 @@ class ValidationTestRunner:
             logger.error(f"Binary integrity check failed: {e}")
             return False
 
-    def initialize_forensics(self) -> Dict[str, Any]:
+    def initialize_forensics(self) -> dict[str, Any]:
         """Initialize forensic evidence collection."""
         forensics_config = {
             "collection_level": self.config["security_settings"]["forensic_collection_level"],
@@ -888,7 +888,7 @@ class ValidationTestRunner:
 
         return forensics_config
 
-    def run_anti_gaming_checks(self) -> Dict[str, Any]:
+    def run_anti_gaming_checks(self) -> dict[str, Any]:
         """Run anti-gaming checks to ensure test validity."""
         checks_result = {
             "timestamp": datetime.now().isoformat(),
@@ -924,7 +924,7 @@ class ValidationTestRunner:
 
         return checks_result
 
-    def _check_vm_artifacts(self) -> List[str]:
+    def _check_vm_artifacts(self) -> list[str]:
         """Check for virtual machine artifacts."""
         artifacts = []
 
@@ -959,7 +959,7 @@ class ValidationTestRunner:
 
         return artifacts
 
-    def _check_timing_anomalies(self) -> Optional[Dict[str, Any]]:
+    def _check_timing_anomalies(self) -> dict[str, Any] | None:
         """Check for timing anomalies that might indicate debugging."""
         measurements = []
 
@@ -983,7 +983,7 @@ class ValidationTestRunner:
 
         return None
 
-    def execute_test_case(self, test_case: Dict[str, Any]) -> Dict[str, Any]:
+    def execute_test_case(self, test_case: dict[str, Any]) -> dict[str, Any]:
         """
         Execute a single test case with full validation.
         This is where actual testing would integrate with Intellicrack.
@@ -1079,7 +1079,7 @@ class ValidationTestRunner:
 
         return result
 
-    def run_validation_suite(self) -> Dict[str, Any]:
+    def run_validation_suite(self) -> dict[str, Any]:
         """Run the complete validation suite."""
         logger.info("Starting validation suite execution")
 
@@ -1134,7 +1134,7 @@ class ValidationTestRunner:
 
         return suite_result
 
-    def _save_validation_report(self, suite_result: Dict[str, Any]):
+    def _save_validation_report(self, suite_result: dict[str, Any]):
         """Save the validation report with cryptographic proof."""
         report_dir = self.base_dir / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)

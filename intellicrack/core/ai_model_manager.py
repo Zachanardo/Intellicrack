@@ -31,6 +31,7 @@ from intellicrack.ai.model_cache_manager import get_cache_manager
 from intellicrack.ai.model_performance_monitor import get_performance_monitor
 from intellicrack.utils.logger import get_logger, log_all_methods
 
+
 logger = get_logger(__name__)
 
 
@@ -88,11 +89,41 @@ class AIModelManager:
         """Get default model configuration."""
         return {
             "models": {
-                "gpt-4": {"provider": "openai", "enabled": False, "api_key": "", "max_tokens": 4096, "temperature": 0.7},
-                "claude-3": {"provider": "anthropic", "enabled": False, "api_key": "", "max_tokens": 4096, "temperature": 0.7},
-                "gemini-pro": {"provider": "google", "enabled": False, "api_key": "", "max_tokens": 4096, "temperature": 0.7},
-                "llama3": {"provider": "local", "enabled": True, "model_path": "", "max_tokens": 2048, "temperature": 0.7},
-                "codellama": {"provider": "local", "enabled": True, "model_path": "", "max_tokens": 2048, "temperature": 0.7},
+                "gpt-4": {
+                    "provider": "openai",
+                    "enabled": False,
+                    "api_key": "",
+                    "max_tokens": 4096,
+                    "temperature": 0.7,
+                },
+                "claude-3": {
+                    "provider": "anthropic",
+                    "enabled": False,
+                    "api_key": "",
+                    "max_tokens": 4096,
+                    "temperature": 0.7,
+                },
+                "gemini-pro": {
+                    "provider": "google",
+                    "enabled": False,
+                    "api_key": "",
+                    "max_tokens": 4096,
+                    "temperature": 0.7,
+                },
+                "llama3": {
+                    "provider": "local",
+                    "enabled": True,
+                    "model_path": "",
+                    "max_tokens": 2048,
+                    "temperature": 0.7,
+                },
+                "codellama": {
+                    "provider": "local",
+                    "enabled": True,
+                    "model_path": "",
+                    "max_tokens": 2048,
+                    "temperature": 0.7,
+                },
             },
             "default_model": "llama3",
             "cache_enabled": True,
@@ -243,8 +274,7 @@ class AIModelManager:
 
         # Check cache first
         if self.config.get("cache_enabled", True):
-            cached_model = self.cache_manager.get_model(name)
-            if cached_model:
+            if cached_model := self.cache_manager.get_model(name):
                 logger.info(f"Loaded model {name} from cache")
                 return cached_model
 
@@ -298,7 +328,9 @@ class AIModelManager:
                 return {"model": model, "tokenizer": None}
             except ImportError:
                 logger.error("No local model backend available")
-                raise RuntimeError("No local model backend available (install transformers or llama-cpp-python)") from None
+                raise RuntimeError(
+                    "No local model backend available (install transformers or llama-cpp-python)"
+                ) from None
 
     def set_active_model(self, name: str) -> None:
         """Set the active model.
@@ -410,13 +442,14 @@ class AIModelManager:
             Performance statistics
 
         """
-        model_name = name or self.active_model
-        if not model_name:
+        if model_name := name or self.active_model:
+            return (
+                self.performance_monitor.get_stats(model_name)
+                if self.config.get("performance_monitoring", True)
+                else {"message": "Performance monitoring disabled"}
+            )
+        else:
             raise ValueError("No model specified and no active model set")
-
-        if self.config.get("performance_monitoring", True):
-            return self.performance_monitor.get_stats(model_name)
-        return {"message": "Performance monitoring disabled"}
 
     def cleanup(self) -> None:
         """Cleanup resources."""

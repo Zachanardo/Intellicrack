@@ -41,10 +41,10 @@ class InstructionNode:
     """Normalized instruction representation for semantic analysis."""
 
     semantic_class: str
-    operand_types: Tuple[str, ...]
-    data_dependencies: Set[str] = field(default_factory=set)
-    control_dependencies: Set[str] = field(default_factory=set)
-    side_effects: Set[str] = field(default_factory=set)
+    operand_types: tuple[str, ...]
+    data_dependencies: set[str] = field(default_factory=set)
+    control_dependencies: set[str] = field(default_factory=set)
+    side_effects: set[str] = field(default_factory=set)
     semantic_hash: str = ""
 
     def __post_init__(self):
@@ -63,12 +63,12 @@ class PolymorphicAnalysis:
     """Complete analysis result for polymorphic code."""
 
     engine_type: PolymorphicEngine
-    mutation_types: List[MutationType]
-    behavior_patterns: List[Any]
-    invariant_features: Dict[str, Any]
-    decryption_routine: Optional[Any] = None
+    mutation_types: list[MutationType]
+    behavior_patterns: list[Any]
+    invariant_features: dict[str, Any]
+    decryption_routine: Any | None = None
     mutation_complexity: float = 0.0
-    evasion_techniques: List[str] = field(default_factory=list)
+    evasion_techniques: list[str] = field(default_factory=list)
 
 
 def test_enumerations():

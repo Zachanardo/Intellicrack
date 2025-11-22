@@ -24,6 +24,7 @@ import threading
 
 from intellicrack.utils.logger import logger
 
+
 """
 TensorFlow Import Handler with Production-Ready Fallbacks
 
@@ -105,7 +106,16 @@ def _safe_tensorflow_import(
 
 def ensure_tensorflow_loaded() -> None:
     """Ensure TensorFlow is loaded (lazy loading)."""
-    global _tf_initialized, HAS_TENSORFLOW, TENSORFLOW_VERSION, tf, keras, layers, models, optimizers, tensorflow
+    global \
+        _tf_initialized, \
+        HAS_TENSORFLOW, \
+        TENSORFLOW_VERSION, \
+        tf, \
+        keras, \
+        layers, \
+        models, \
+        optimizers, \
+        tensorflow
 
     if _tf_initialized:
         return
@@ -115,28 +125,28 @@ def ensure_tensorflow_loaded() -> None:
     try:
         success, modules, error = _safe_tensorflow_import()
 
-        if success and modules:
-            tf = modules["tf"]
-            keras = modules["keras"]
-            layers = modules["layers"]
-            models = modules["models"]
-            optimizers = modules["optimizers"]
-            tensorflow = tf
-
-            try:
-                gpus = tf.config.experimental.list_physical_devices("GPU")
-                if gpus:
-                    for gpu in gpus:
-                        tf.config.experimental.set_memory_growth(gpu, True)
-            except Exception as gpu_config_error:
-                logger.info(f"GPU configuration warning: {gpu_config_error}")
-
-            HAS_TENSORFLOW = True
-            TENSORFLOW_VERSION = tf.__version__
-            logger.info(f"TensorFlow {TENSORFLOW_VERSION} imported successfully with universal GPU compatibility")
-        else:
+        if not success or not modules:
             raise error or ImportError("TensorFlow import failed")
 
+        tf = modules["tf"]
+        keras = modules["keras"]
+        layers = modules["layers"]
+        models = modules["models"]
+        optimizers = modules["optimizers"]
+        tensorflow = tf
+
+        try:
+            if gpus := tf.config.experimental.list_physical_devices("GPU"):
+                for gpu in gpus:
+                    tf.config.experimental.set_memory_growth(gpu, True)
+        except Exception as gpu_config_error:
+            logger.info(f"GPU configuration warning: {gpu_config_error}")
+
+        HAS_TENSORFLOW = True
+        TENSORFLOW_VERSION = tf.__version__
+        logger.info(
+            f"TensorFlow {TENSORFLOW_VERSION} imported successfully with universal GPU compatibility"
+        )
     except Exception as e:
         logger.info(f"Using TensorFlow fallbacks due to import issue: {e}")
         HAS_TENSORFLOW = False
@@ -161,7 +171,9 @@ class FallbackTensor:
     operations, and reshaping for fallback TensorFlow implementations.
     """
 
-    def __init__(self, data: object, shape: tuple[int, ...] | None = None, dtype: str = "float32") -> None:
+    def __init__(
+        self, data: object, shape: tuple[int, ...] | None = None, dtype: str = "float32"
+    ) -> None:
         """Initialize tensor with data.
 
         Args:
@@ -170,16 +182,8 @@ class FallbackTensor:
             dtype: Data type string, defaults to 'float32'.
 
         """
-        if hasattr(data, "__iter__"):
-            self.data: list[object] = list(self._flatten(data))
-        else:
-            self.data = [data]
-
-        if shape is None:
-            self.shape: tuple[int, ...] = self._infer_shape(data)
-        else:
-            self.shape = tuple(shape)
-
+        self.data = list(self._flatten(data)) if hasattr(data, "__iter__") else [data]
+        self.shape = self._infer_shape(data) if shape is None else tuple(shape)
         self.dtype: str = dtype
         self.ndim: int = len(self.shape)
         self.size: int = self._calculate_size()
@@ -335,7 +339,9 @@ class FallbackVariable:
     capabilities for fallback TensorFlow implementations.
     """
 
-    def __init__(self, initial_value: object, trainable: bool = True, name: str | None = None) -> None:
+    def __init__(
+        self, initial_value: object, trainable: bool = True, name: str | None = None
+    ) -> None:
         """Initialize variable.
 
         Args:
@@ -344,7 +350,9 @@ class FallbackVariable:
             name: Optional name identifier for the variable.
 
         """
-        self.value: FallbackTensor = FallbackTensor(initial_value) if not isinstance(initial_value, FallbackTensor) else initial_value
+        self.value: FallbackTensor = (
+            initial_value if isinstance(initial_value, FallbackTensor) else FallbackTensor(initial_value)
+        )
         self.trainable: bool = trainable
         self.name: str = name or "Variable"
         self.gradient: object = None
@@ -356,7 +364,9 @@ class FallbackVariable:
             new_value: New value to assign (scalar, list, or FallbackTensor).
 
         """
-        self.value = FallbackTensor(new_value) if not isinstance(new_value, FallbackTensor) else new_value
+        self.value = (
+            new_value if isinstance(new_value, FallbackTensor) else FallbackTensor(new_value)
+        )
 
     def numpy(self) -> object:
         """Get numpy value.
@@ -375,7 +385,13 @@ class FallbackDenseLayer:
     activation functions for fallback TensorFlow implementations.
     """
 
-    def __init__(self, units: int, activation: str | None = None, use_bias: bool = True, name: str | None = None) -> None:
+    def __init__(
+        self,
+        units: int,
+        activation: str | None = None,
+        use_bias: bool = True,
+        name: str | None = None,
+    ) -> None:
         """Initialize dense layer.
 
         Args:
@@ -406,7 +422,9 @@ class FallbackDenseLayer:
         input_dim: int = input_shape[-1] if isinstance(input_shape, tuple) else input_shape
 
         scale: float = math.sqrt(2.0 / (input_dim + self.units))
-        weight_data: list[list[float]] = [[random.gauss(0, scale) for _ in range(self.units)] for _ in range(input_dim)]
+        weight_data: list[list[float]] = [
+            [random.gauss(0, scale) for _ in range(self.units)] for _ in range(input_dim)
+        ]
         self.weights = FallbackVariable(weight_data, name=f"{self.name}/kernel")
 
         if self.use_bias:
@@ -468,7 +486,15 @@ class FallbackConv2DLayer:
     strides, and padding for neural network feature extraction.
     """
 
-    def __init__(self, filters: int, kernel_size: int | tuple[int, int], strides: int | tuple[int, int] = 1, padding: str = "valid", activation: str | None = None, name: str | None = None) -> None:
+    def __init__(
+        self,
+        filters: int,
+        kernel_size: int | tuple[int, int],
+        strides: int | tuple[int, int] = 1,
+        padding: str = "valid",
+        activation: str | None = None,
+        name: str | None = None,
+    ) -> None:
         """Initialize conv layer.
 
         Args:
@@ -481,8 +507,12 @@ class FallbackConv2DLayer:
 
         """
         self.filters: int = filters
-        self.kernel_size: tuple[int, int] = kernel_size if isinstance(kernel_size, tuple) else (kernel_size, kernel_size)
-        self.strides: tuple[int, int] = strides if isinstance(strides, tuple) else (strides, strides)
+        self.kernel_size: tuple[int, int] = (
+            kernel_size if isinstance(kernel_size, tuple) else (kernel_size, kernel_size)
+        )
+        self.strides: tuple[int, int] = (
+            strides if isinstance(strides, tuple) else (strides, strides)
+        )
         self.padding: str = padding
         self.activation: str | None = activation
         self.name: str = name or "conv2d"
@@ -558,7 +588,11 @@ class FallbackConv2DLayer:
                                 input_w: int = w_start + kw
 
                                 if 0 <= input_h < height and 0 <= input_w < width:
-                                    input_idx: int = b * height * width * in_channels + input_h * width * in_channels + input_w * in_channels
+                                    input_idx: int = (
+                                        b * height * width * in_channels
+                                        + input_h * width * in_channels
+                                        + input_w * in_channels
+                                    )
 
                                     if input_idx < len(inputs.data):
                                         conv_sum += inputs.data[input_idx] * self.kernel[f][kh][kw]
@@ -608,7 +642,12 @@ class FallbackModel:
         """
         self.layers.append(layer)
 
-    def compile(self, optimizer: str = "adam", loss: str = "categorical_crossentropy", metrics: list[str] | None = None) -> None:
+    def compile(
+        self,
+        optimizer: str = "adam",
+        loss: str = "categorical_crossentropy",
+        metrics: list[str] | None = None,
+    ) -> None:
         """Compile model.
 
         Args:
@@ -622,7 +661,16 @@ class FallbackModel:
         self.metrics = metrics or []
         self.compiled = True
 
-    def fit(self, x: object, y: object, batch_size: int = 32, epochs: int = 1, validation_data: tuple[object, object] | None = None, callbacks: list[object] | None = None, verbose: int = 1) -> object:
+    def fit(
+        self,
+        x: object,
+        y: object,
+        batch_size: int = 32,
+        epochs: int = 1,
+        validation_data: tuple[object, object] | None = None,
+        callbacks: list[object] | None = None,
+        verbose: int = 1,
+    ) -> object:
         """Train model.
 
         Args:
@@ -668,16 +716,22 @@ class FallbackModel:
                 batch_x: object = x[start_idx:end_idx] if hasattr(x, "__getitem__") else x
                 batch_y: object = y[start_idx:end_idx] if hasattr(y, "__getitem__") else y
 
-                predictions: object = self.predict(batch_x, batch_size=end_idx - start_idx, verbose=0)
+                predictions: object = self.predict(
+                    batch_x, batch_size=end_idx - start_idx, verbose=0
+                )
 
                 if hasattr(predictions, "data") and hasattr(batch_y, "__iter__"):
                     batch_loss: float = 0.0
-                    pred_data: list[object] = predictions.data if hasattr(predictions, "data") else [predictions]
-                    target_data: list[object] = batch_y if hasattr(batch_y, "__iter__") else [batch_y]
+                    pred_data: list[object] = (
+                        predictions.data if hasattr(predictions, "data") else [predictions]
+                    )
+                    target_data: list[object] = (
+                        batch_y if hasattr(batch_y, "__iter__") else [batch_y]
+                    )
 
-                    for _i, (pred, target) in enumerate(zip(pred_data[: len(target_data)], target_data, strict=False)):
+                    for pred, target in zip(pred_data[: len(target_data)], target_data, strict=False):
                         diff: float = abs(float(pred) - float(target))
-                        batch_loss += diff * diff
+                        batch_loss += diff**2
 
                     batch_loss /= len(target_data)
                     epoch_loss += batch_loss
@@ -733,7 +787,11 @@ class FallbackModel:
         else:
             output_shape = (batch_size, 10)
 
-        return current_output if hasattr(current_output, "data") else FallbackTensor(current_output, shape=output_shape)
+        return (
+            current_output
+            if hasattr(current_output, "data")
+            else FallbackTensor(current_output, shape=output_shape)
+        )
 
     def evaluate(self, x: object, y: object, batch_size: int = 32, verbose: int = 0) -> object:
         """Evaluate model.
@@ -765,7 +823,9 @@ class FallbackModel:
             predictions: object = self.predict(batch_x, batch_size=end_idx - start_idx, verbose=0)
 
             if hasattr(predictions, "data") and hasattr(batch_y, "__iter__"):
-                pred_data: list[object] = predictions.data if hasattr(predictions, "data") else [predictions]
+                pred_data: list[object] = (
+                    predictions.data if hasattr(predictions, "data") else [predictions]
+                )
                 target_data: list[object] = batch_y if hasattr(batch_y, "__iter__") else [batch_y]
 
                 batch_loss: float = 0.0
@@ -773,7 +833,7 @@ class FallbackModel:
 
                 for i in range(batch_size_actual):
                     diff: float = abs(float(pred_data[i]) - float(target_data[i]))
-                    batch_loss += diff * diff
+                    batch_loss += diff**2
 
                 if batch_size_actual > 0:
                     batch_loss /= batch_size_actual
@@ -785,7 +845,9 @@ class FallbackModel:
                         metric_totals[j] += accuracy
 
         final_loss: float = total_loss / max(total_samples, 1)
-        final_metrics: list[float] = [metric_total / max(batch_count, 1) for metric_total in metric_totals]
+        final_metrics: list[float] = [
+            metric_total / max(batch_count, 1) for metric_total in metric_totals
+        ]
 
         if verbose:
             logger.info("Evaluation - loss: %.4f", final_loss)
@@ -793,7 +855,7 @@ class FallbackModel:
                 if i < len(final_metrics):
                     logger.info("%s: %.4f", metric_name, final_metrics[i])
 
-        if len(final_metrics) > 0:
+        if final_metrics:
             return [final_loss, *final_metrics]
         return final_loss
 
@@ -985,7 +1047,13 @@ class FallbackKerasLayers:
         Applies 2D maximum pooling over input feature maps for downsampling.
         """
 
-        def __init__(self, pool_size: int | tuple[int, int] = 2, strides: tuple[int, int] | None = None, padding: str = "valid", name: str | None = None) -> None:
+        def __init__(
+            self,
+            pool_size: int | tuple[int, int] = 2,
+            strides: tuple[int, int] | None = None,
+            padding: str = "valid",
+            name: str | None = None,
+        ) -> None:
             """Initialize max pooling layer.
 
             Args:
@@ -995,7 +1063,9 @@ class FallbackKerasLayers:
                 name: Optional name identifier for the layer.
 
             """
-            self.pool_size: tuple[int, int] = pool_size if isinstance(pool_size, tuple) else (pool_size, pool_size)
+            self.pool_size: tuple[int, int] = (
+                pool_size if isinstance(pool_size, tuple) else (pool_size, pool_size)
+            )
             self.strides: tuple[int, int] = strides or self.pool_size
             self.padding: str = padding
             self.name: str = name or "maxpool2d"
@@ -1011,7 +1081,9 @@ class FallbackKerasLayers:
 
             """
             if hasattr(inputs, "data") and hasattr(inputs, "shape"):
-                input_data: list[object] = inputs.data if isinstance(inputs.data, list) else [inputs.data]
+                input_data: list[object] = (
+                    inputs.data if isinstance(inputs.data, list) else [inputs.data]
+                )
                 input_shape: tuple[int, ...] = inputs.shape
             else:
                 input_data = inputs if isinstance(inputs, list) else [inputs]
@@ -1020,7 +1092,7 @@ class FallbackKerasLayers:
             batch: int = input_shape[0] if len(input_shape) > 3 else 1
             height: int = input_shape[1] if len(input_shape) > 2 else 28
             width: int = input_shape[2] if len(input_shape) > 1 else 28
-            channels: int = input_shape[3] if len(input_shape) > 0 else 1
+            channels: int = input_shape[3] if input_shape else 1
 
             out_height: int = height // self.pool_size[0]
             out_width: int = width // self.pool_size[1]
@@ -1053,7 +1125,12 @@ class FallbackKerasLayers:
                                     w_idx: int = ow * self.strides[1] + pw
 
                                     if h_idx < height and w_idx < width:
-                                        idx = b * height * width * channels + h_idx * width * channels + w_idx * channels + c
+                                        idx = (
+                                            b * height * width * channels
+                                            + h_idx * width * channels
+                                            + w_idx * channels
+                                            + c
+                                        )
                                         if idx < len(input_data):
                                             val: object = input_data[idx]
                                             if isinstance(val, (int, float)):
@@ -1208,7 +1285,12 @@ class FallbackSavedModel:
         return False
 
 
-def constant(value: object, dtype: str | None = None, shape: tuple[int, ...] | None = None, name: str | None = None) -> FallbackTensor:
+def constant(
+    value: object,
+    dtype: str | None = None,
+    shape: tuple[int, ...] | None = None,
+    name: str | None = None,
+) -> FallbackTensor:
     """Create constant tensor.
 
     Args:
@@ -1224,7 +1306,9 @@ def constant(value: object, dtype: str | None = None, shape: tuple[int, ...] | N
     return FallbackTensor(value, shape=shape, dtype=dtype or "float32")
 
 
-def Variable(initial_value: object, trainable: bool = True, name: str | None = None) -> FallbackVariable:
+def Variable(
+    initial_value: object, trainable: bool = True, name: str | None = None
+) -> FallbackVariable:
     """Create variable.
 
     Args:
@@ -1273,7 +1357,9 @@ def ones(shape: tuple[int, ...], dtype: str = "float32") -> FallbackTensor:
     return FallbackTensor([1] * size, shape=shape, dtype=dtype)
 
 
-def random_normal(shape: tuple[int, ...], mean: float = 0.0, stddev: float = 1.0, dtype: str = "float32") -> FallbackTensor:
+def random_normal(
+    shape: tuple[int, ...], mean: float = 0.0, stddev: float = 1.0, dtype: str = "float32"
+) -> FallbackTensor:
     """Create random normal tensor.
 
     Args:
@@ -1293,7 +1379,9 @@ def random_normal(shape: tuple[int, ...], mean: float = 0.0, stddev: float = 1.0
     return FallbackTensor(data, shape=shape, dtype=dtype)
 
 
-def random_uniform(shape: tuple[int, ...], minval: float = 0, maxval: float = 1, dtype: str = "float32") -> FallbackTensor:
+def random_uniform(
+    shape: tuple[int, ...], minval: float = 0, maxval: float = 1, dtype: str = "float32"
+) -> FallbackTensor:
     """Create random uniform tensor.
 
     Args:
@@ -1423,7 +1511,9 @@ class FallbackTensorFlow:
     random_uniform: object = staticmethod(random_uniform)
 
     @staticmethod
-    def reduce_sum(tensor: object, axis: int | None = None, keepdims: bool = False) -> FallbackTensor:
+    def reduce_sum(
+        tensor: object, axis: int | None = None, keepdims: bool = False
+    ) -> FallbackTensor:
         """Calculate sum of tensor elements in a production-ready way.
 
         Args:
@@ -1463,17 +1553,13 @@ optimizers: FallbackKerasOptimizers = FallbackKerasOptimizers()
 
 # Export all TensorFlow objects and availability flag
 __all__ = [
-    # Availability flags
     "HAS_TENSORFLOW",
     "TENSORFLOW_VERSION",
-    # Main modules
-    "tf",
-    "tensorflow",
+    "ensure_tensorflow_loaded",
     "keras",
-    # Submodules
     "layers",
     "models",
     "optimizers",
-    # Lazy loading function
-    "ensure_tensorflow_loaded",
+    "tensorflow",
+    "tf",
 ]

@@ -33,8 +33,6 @@ from pathlib import Path
 
 from intellicrack.handlers.pyqt6_handler import (
     HAS_PYQT as PYQT6_AVAILABLE,
-)
-from intellicrack.handlers.pyqt6_handler import (
     QApplication,
     QCheckBox,
     QComboBox,
@@ -66,8 +64,10 @@ from intellicrack.handlers.pyqt6_handler import (
 )
 from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, nn, torch
 
+
 if TORCH_AVAILABLE and torch is not None:
     import torch as torch_module
+
     TorchTensor = torch_module.Tensor
     TorchModule = torch_module.nn.Module
     TorchOptimizer = torch_module.optim.Optimizer
@@ -81,17 +81,17 @@ else:
 try:
     import numpy as np
     import numpy.typing as npt
+
     NumpyArray = npt.NDArray[np.float64]
 except ImportError:
     NumpyArray = object
 
 from intellicrack.utils.logger import logger
 
+
 # Try to import enhanced training interface components
 try:
-    from ...ai.enhanced_training_interface import (
-        TrainingConfiguration as EnhancedTrainingConfiguration,
-    )
+    from ...ai.enhanced_training_interface import TrainingConfiguration as EnhancedTrainingConfiguration
 
     ENHANCED_TRAINING_AVAILABLE = True
 except ImportError as e:
@@ -131,11 +131,7 @@ except ImportError as e:
     GPU_AUTOLOADER_AVAILABLE = False
 
 try:
-    from transformers import (
-        AutoModelForCausalLM,
-        AutoTokenizer,
-        TrainingArguments,
-    )
+    from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
 
     TRANSFORMERS_AVAILABLE = True
 except ImportError as e:
@@ -398,16 +394,26 @@ class TrainingThread(QThread):
                 )
 
                 if model_type == "gpt":
-                    self.model = self._create_gpt_model(vocab_size, hidden_size, num_layers, num_heads)
+                    self.model = self._create_gpt_model(
+                        vocab_size, hidden_size, num_layers, num_heads
+                    )
                 elif model_type == "bert":
-                    self.model = self._create_bert_model(vocab_size, hidden_size, num_layers, num_heads)
+                    self.model = self._create_bert_model(
+                        vocab_size, hidden_size, num_layers, num_heads
+                    )
                 elif model_type == "roberta":
-                    self.model = self._create_roberta_model(vocab_size, hidden_size, num_layers, num_heads)
+                    self.model = self._create_roberta_model(
+                        vocab_size, hidden_size, num_layers, num_heads
+                    )
                 elif model_type == "llama":
-                    self.model = self._create_llama_model(vocab_size, hidden_size, num_layers, num_heads)
+                    self.model = self._create_llama_model(
+                        vocab_size, hidden_size, num_layers, num_heads
+                    )
                 else:
                     # Default transformer model with enhanced features
-                    self.model = self._create_enhanced_transformer_model(vocab_size, hidden_size, num_layers, num_heads)
+                    self.model = self._create_enhanced_transformer_model(
+                        vocab_size, hidden_size, num_layers, num_heads
+                    )
 
                 # Create tokenizer
                 self.tokenizer = self._create_tokenizer(vocab_size)
@@ -435,7 +441,9 @@ class TrainingThread(QThread):
             self.tokenizer = None
             raise
 
-    def _create_gpt_model(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int) -> TorchModule:
+    def _create_gpt_model(
+        self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int
+    ) -> TorchModule:
         """Create a GPT-style autoregressive transformer model.
 
         Args:
@@ -448,7 +456,6 @@ class TrainingThread(QThread):
             GPTModel instance with causal attention masking and proper positional encoding.
 
         """
-
         class GPTModel(nn.Module):
             """GPT-style autoregressive transformer for language modeling.
 
@@ -456,7 +463,9 @@ class TrainingThread(QThread):
             encoding, and layer normalization placement following GPT architecture.
             """
 
-            def __init__(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int) -> None:
+            def __init__(
+                self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int
+            ) -> None:
                 """Initialize GPT model architecture with specified parameters."""
                 super().__init__()
                 self.hidden_size = hidden_size
@@ -468,7 +477,9 @@ class TrainingThread(QThread):
                 self.position_embedding = nn.Embedding(self.max_position_embeddings, hidden_size)
 
                 # Transformer blocks
-                self.transformer_blocks = nn.ModuleList([self._create_gpt_block(hidden_size, num_heads) for _ in range(num_layers)])
+                self.transformer_blocks = nn.ModuleList(
+                    [self._create_gpt_block(hidden_size, num_heads) for _ in range(num_layers)]
+                )
 
                 # Final layer norm and output projection
                 self.final_layer_norm = nn.LayerNorm(hidden_size)
@@ -510,7 +521,9 @@ class TrainingThread(QThread):
                         self.ln1 = nn.LayerNorm(hidden_size)
                         self.ln2 = nn.LayerNorm(hidden_size)
 
-                    def forward(self, x: TorchTensor, attention_mask: TorchTensor | None = None) -> TorchTensor:
+                    def forward(
+                        self, x: TorchTensor, attention_mask: TorchTensor | None = None
+                    ) -> TorchTensor:
                         """Forward pass through the GPT block.
 
                         Args:
@@ -523,7 +536,9 @@ class TrainingThread(QThread):
                         """
                         # Pre-norm attention
                         normed_x = self.ln1(x)
-                        attn_out, _ = self.attention(normed_x, normed_x, normed_x, attn_mask=attention_mask, is_causal=True)
+                        attn_out, _ = self.attention(
+                            normed_x, normed_x, normed_x, attn_mask=attention_mask, is_causal=True
+                        )
                         x = x + attn_out
 
                         # Pre-norm feed forward
@@ -535,7 +550,9 @@ class TrainingThread(QThread):
 
                 return GPTBlock(hidden_size, num_heads)
 
-            def forward(self, input_ids: TorchTensor, attention_mask: TorchTensor | None = None) -> TorchTensor:
+            def forward(
+                        self, input_ids: TorchTensor, attention_mask: TorchTensor | None = None
+                    ) -> TorchTensor:
                 """Forward pass through the model.
 
                 Args:
@@ -565,13 +582,14 @@ class TrainingThread(QThread):
 
                 # Final processing
                 x = self.final_layer_norm(x)
-                logits = self.lm_head(x)
+                return self.lm_head(x)
 
-                return logits
 
         return GPTModel(vocab_size, hidden_size, num_layers, num_heads)
 
-    def _create_bert_model(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int) -> TorchModule:
+    def _create_bert_model(
+        self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int
+    ) -> TorchModule:
         """Create a BERT-style bidirectional transformer model.
 
         Args:
@@ -592,7 +610,9 @@ class TrainingThread(QThread):
             and masked language modeling head.
             """
 
-            def __init__(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int) -> None:
+            def __init__(
+                self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int
+            ) -> None:
                 """Initialize BERT model architecture with specified parameters."""
                 super().__init__()
                 self.hidden_size = hidden_size
@@ -625,7 +645,12 @@ class TrainingThread(QThread):
                 # Pooler for classification tasks
                 self.pooler = nn.Linear(hidden_size, hidden_size)
 
-            def forward(self, input_ids: TorchTensor, token_type_ids: TorchTensor | None = None, attention_mask: TorchTensor | None = None) -> dict[str, TorchTensor]:
+            def forward(
+                self,
+                input_ids: TorchTensor,
+                token_type_ids: TorchTensor | None = None,
+                attention_mask: TorchTensor | None = None,
+            ) -> dict[str, TorchTensor]:
                 """Forward pass through the BERT model.
 
                 Args:
@@ -671,7 +696,9 @@ class TrainingThread(QThread):
 
         return BERTModel(vocab_size, hidden_size, num_layers, num_heads)
 
-    def _create_roberta_model(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int) -> TorchModule:
+    def _create_roberta_model(
+        self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int
+    ) -> TorchModule:
         """Create a RoBERTa-style model (BERT without token type embeddings).
 
         Args:
@@ -688,7 +715,9 @@ class TrainingThread(QThread):
         model.token_type_embedding = nn.Embedding(1, hidden_size)
         return model
 
-    def _create_llama_model(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int) -> TorchModule:
+    def _create_llama_model(
+        self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int
+    ) -> TorchModule:
         """Create a LLaMA-style model with RMSNorm and SwiGLU.
 
         Args:
@@ -701,7 +730,6 @@ class TrainingThread(QThread):
             LlamaModel instance with RMSNorm and SwiGLU activation.
 
         """
-
         class LlamaModel(nn.Module):
             """LLaMA-style transformer with RMSNorm and SwiGLU activation.
 
@@ -709,7 +737,9 @@ class TrainingThread(QThread):
             RMSNorm, SwiGLU activation, and rotary positional embeddings.
             """
 
-            def __init__(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int) -> None:
+            def __init__(
+                self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int
+            ) -> None:
                 """Initialize LLaMA model architecture with specified parameters."""
                 super().__init__()
                 self.hidden_size = hidden_size
@@ -719,7 +749,9 @@ class TrainingThread(QThread):
                 self.token_embedding = nn.Embedding(vocab_size, hidden_size)
 
                 # Transformer layers
-                self.layers = nn.ModuleList([self._create_llama_layer(hidden_size, num_heads) for _ in range(num_layers)])
+                self.layers = nn.ModuleList(
+                    [self._create_llama_layer(hidden_size, num_heads) for _ in range(num_layers)]
+                )
 
                 # Final norm and output
                 self.final_norm = self._create_rms_norm(hidden_size)
@@ -792,7 +824,9 @@ class TrainingThread(QThread):
                         self.up_proj = nn.Linear(hidden_size, hidden_size * 4, bias=False)
                         self.down_proj = nn.Linear(hidden_size * 4, hidden_size, bias=False)
 
-                    def forward(self, x: TorchTensor, attention_mask: TorchTensor | None = None) -> TorchTensor:
+                    def forward(
+                        self, x: TorchTensor, attention_mask: TorchTensor | None = None
+                    ) -> TorchTensor:
                         """Forward pass through LLaMA layer with attention and SwiGLU FFN.
 
                         Args:
@@ -804,7 +838,9 @@ class TrainingThread(QThread):
 
                         """
                         normed_x = self.attention_norm(x)
-                        attn_out, _ = self.attention(normed_x, normed_x, normed_x, attn_mask=attention_mask, is_causal=True)
+                        attn_out, _ = self.attention(
+                            normed_x, normed_x, normed_x, attn_mask=attention_mask, is_causal=True
+                        )
                         x = x + attn_out
 
                         normed_x = self.ffn_norm(x)
@@ -818,7 +854,9 @@ class TrainingThread(QThread):
                 parent = self
                 return LlamaLayer(hidden_size, num_heads)
 
-            def forward(self, input_ids: TorchTensor, attention_mask: TorchTensor | None = None) -> TorchTensor:
+            def forward(
+                        self, input_ids: TorchTensor, attention_mask: TorchTensor | None = None
+                    ) -> TorchTensor:
                 """Forward pass through the LLaMA model.
 
                 Args:
@@ -840,13 +878,14 @@ class TrainingThread(QThread):
                     x = layer(x, attention_mask)
 
                 x = self.final_norm(x)
-                logits = self.lm_head(x)
+                return self.lm_head(x)
 
-                return logits
 
         return LlamaModel(vocab_size, hidden_size, num_layers, num_heads)
 
-    def _create_enhanced_transformer_model(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int) -> TorchModule:
+    def _create_enhanced_transformer_model(
+        self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int
+    ) -> TorchModule:
         """Create an enhanced transformer model with modern improvements.
 
         Args:
@@ -859,7 +898,6 @@ class TrainingThread(QThread):
             EnhancedTransformerModel instance with modern architectural improvements.
 
         """
-
         class EnhancedTransformerModel(nn.Module):
             """Enhanced transformer model with modern architectural improvements.
 
@@ -867,7 +905,9 @@ class TrainingThread(QThread):
             and optional techniques like gradient checkpointing support.
             """
 
-            def __init__(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int) -> None:
+            def __init__(
+                self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int
+            ) -> None:
                 """Initialize enhanced transformer with modern architectural improvements."""
                 super().__init__()
                 self.hidden_size = hidden_size
@@ -879,7 +919,9 @@ class TrainingThread(QThread):
                 self.position_embedding = nn.Embedding(self.max_seq_len, hidden_size)
 
                 # Transformer layers with pre-norm and improvements
-                self.layers = nn.ModuleList([self._create_enhanced_layer(hidden_size, num_heads) for _ in range(num_layers)])
+                self.layers = nn.ModuleList(
+                    [self._create_enhanced_layer(hidden_size, num_heads) for _ in range(num_layers)]
+                )
 
                 # Output processing
                 self.final_norm = nn.LayerNorm(hidden_size)
@@ -888,7 +930,9 @@ class TrainingThread(QThread):
                 # Dropout
                 self.embedding_dropout = nn.Dropout(0.1)
 
-            def _create_enhanced_layer(self, hidden_size: int, num_heads: int) -> "EnhancedTransformerLayer":
+            def _create_enhanced_layer(
+                self, hidden_size: int, num_heads: int
+            ) -> "EnhancedTransformerLayer":
                 """Create enhanced transformer layer with modern improvements.
 
                 Args:
@@ -924,7 +968,9 @@ class TrainingThread(QThread):
                             nn.Dropout(0.1),
                         )
 
-                    def forward(self, x: TorchTensor, attention_mask: TorchTensor | None = None) -> TorchTensor:
+                    def forward(
+                        self, x: TorchTensor, attention_mask: TorchTensor | None = None
+                    ) -> TorchTensor:
                         """Forward pass through enhanced transformer layer.
 
                         Args:
@@ -954,7 +1000,12 @@ class TrainingThread(QThread):
 
                 return EnhancedTransformerLayer(hidden_size, num_heads)
 
-            def forward(self, input_ids: TorchTensor, attention_mask: TorchTensor | None = None, return_attention: bool = False) -> TorchTensor | dict[str, TorchTensor]:
+            def forward(
+                        self,
+                        input_ids: TorchTensor,
+                        attention_mask: TorchTensor | None = None,
+                        return_attention: bool = False,
+                    ) -> TorchTensor | dict[str, TorchTensor]:
                 """Forward pass through the enhanced transformer model.
 
                 Args:
@@ -977,7 +1028,6 @@ class TrainingThread(QThread):
                     attention_mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool()
                     attention_mask = attention_mask.to(input_ids.device)
 
-                attention_weights = [] if return_attention else None
                 for layer in self.layers:
                     x = layer(x, attention_mask)
 
@@ -985,8 +1035,10 @@ class TrainingThread(QThread):
                 logits = self.output_projection(x)
 
                 if return_attention:
+                    attention_weights = [] if return_attention else None
                     return logits, attention_weights
                 return logits
+
 
         return EnhancedTransformerModel(vocab_size, hidden_size, num_layers, num_heads)
 
@@ -1000,7 +1052,6 @@ class TrainingThread(QThread):
             MinimalTokenizer instance with encoding/decoding capabilities.
 
         """
-
         class MinimalTokenizer:
             """Functional tokenizer implementation for testing and demonstration.
 
@@ -1096,9 +1147,7 @@ class TrainingThread(QThread):
 
                 # Add single characters
                 for i in range(26):
-                    vocab.append(chr(ord("a") + i))
-                    vocab.append(chr(ord("A") + i))
-
+                    vocab.extend((chr(ord("a") + i), chr(ord("A") + i)))
                 # Add digits
                 for i in range(10):
                     vocab.append(str(i))
@@ -1113,7 +1162,13 @@ class TrainingThread(QThread):
 
                 return vocab[:vocab_size]
 
-            def encode(self, text: str | list[str], add_special_tokens: bool = True, max_length: int | None = None, padding: bool = False) -> dict[str, list[int] | list[list[int]]]:
+            def encode(
+                        self,
+                        text: str | list[str],
+                        add_special_tokens: bool = True,
+                        max_length: int | None = None,
+                        padding: bool = False,
+                    ) -> dict[str, list[int] | list[list[int]]]:
                 """Encode text to token IDs.
 
                 Args:
@@ -1126,11 +1181,7 @@ class TrainingThread(QThread):
                     Token IDs or list of token ID sequences.
 
                 """
-                if isinstance(text, str):
-                    texts = [text]
-                else:
-                    texts = text
-
+                texts = [text] if isinstance(text, str) else text
                 encoded_sequences = []
                 for single_text in texts:
                     tokens = single_text.lower().split()
@@ -1147,7 +1198,7 @@ class TrainingThread(QThread):
                         token_ids.append(self.eos_token_id)
 
                     if max_length and len(token_ids) > max_length:
-                        token_ids = [*token_ids[:max_length - 1], self.eos_token_id]
+                        token_ids = [*token_ids[: max_length - 1], self.eos_token_id]
 
                     encoded_sequences.append(token_ids)
 
@@ -1162,7 +1213,9 @@ class TrainingThread(QThread):
 
                 return encoded_sequences[0] if isinstance(text, str) else encoded_sequences
 
-            def decode(self, token_ids: list[int] | list[list[int]], skip_special_tokens: bool = True) -> str:
+            def decode(
+                self, token_ids: list[int] | list[list[int]], skip_special_tokens: bool = True
+            ) -> str:
                 """Decode token IDs to text.
 
                 Args:
@@ -1194,6 +1247,7 @@ class TrainingThread(QThread):
             def __len__(self) -> int:
                 return self.vocab_size
 
+
         return MinimalTokenizer(vocab_size)
 
     def _initialize_model_weights(self) -> None:
@@ -1224,7 +1278,9 @@ class TrainingThread(QThread):
         self.model.apply(init_weights)
         self.logger.info("Model weights initialized with Xavier/normal initialization")
 
-    def _add_model_metadata(self, model_type: str, vocab_size: int, hidden_size: int, num_layers: int) -> None:
+    def _add_model_metadata(
+        self, model_type: str, vocab_size: int, hidden_size: int, num_layers: int
+    ) -> None:
         """Add comprehensive metadata to the model."""
         if not hasattr(self.model, "config"):
             self.model.config = {}
@@ -1236,7 +1292,9 @@ class TrainingThread(QThread):
                 "hidden_size": hidden_size,
                 "num_layers": num_layers,
                 "num_parameters": sum(p.numel() for p in self.model.parameters()),
-                "trainable_parameters": sum(p.numel() for p in self.model.parameters() if p.requires_grad),
+                "trainable_parameters": sum(
+                    p.numel() for p in self.model.parameters() if p.requires_grad
+                ),
                 "created_timestamp": time.time(),
                 "framework": "pytorch",
                 "version": "1.0.0",
@@ -1257,9 +1315,7 @@ class TrainingThread(QThread):
         # Rough estimation for transformer models
         embedding_params = vocab_size * hidden_size * 2  # Token + position embeddings
         layer_params = num_layers * (
-            hidden_size * hidden_size * 4 * 3  # Attention (Q, K, V projections + output)
-            + hidden_size * hidden_size * 4 * 2  # FFN (up and down projections)
-            + hidden_size * 4  # Layer norms and biases
+            (hidden_size**2 * 4 * 3 + hidden_size**2 * 4 * 2) + hidden_size * 4
         )
         output_params = hidden_size * vocab_size  # Output projection
 
@@ -1416,7 +1472,10 @@ class LicenseAnalysisNeuralNetwork:
             layer_idx = i + 1
 
             # Linear transformation
-            z = self.np.dot(current_input, self.weights[f"W{layer_idx}"]) + self.biases[f"b{layer_idx}"]
+            z = (
+                self.np.dot(current_input, self.weights[f"W{layer_idx}"])
+                + self.biases[f"b{layer_idx}"]
+            )
 
             # Apply activation function
             if layer_idx <= len(self.config["hidden_layers"]):
@@ -1424,7 +1483,9 @@ class LicenseAnalysisNeuralNetwork:
                 a = self._relu(z)
                 # Apply dropout during training
                 if self.training:
-                    dropout_mask = (self.np.random.rand(*a.shape) > self.config["dropout_rate"]).astype(float)
+                    dropout_mask = (
+                        self.np.random.rand(*a.shape) > self.config["dropout_rate"]
+                    ).astype(float)
                     a = a * dropout_mask / (1 - self.config["dropout_rate"])
             else:
                 # Output layer uses softmax
@@ -1436,7 +1497,9 @@ class LicenseAnalysisNeuralNetwork:
 
         return current_input
 
-    def backward(self, x: NumpyArray, y_true: NumpyArray, y_pred: NumpyArray) -> dict[str, NumpyArray]:
+    def backward(
+        self, x: NumpyArray, y_true: NumpyArray, y_pred: NumpyArray
+    ) -> dict[str, NumpyArray]:
         """Backpropagation algorithm for weight updates.
 
         Args:
@@ -1455,7 +1518,9 @@ class LicenseAnalysisNeuralNetwork:
         output_layer = len(self.config["hidden_layers"]) + 1
         dz = y_pred - y_true
 
-        gradients[f"dW{output_layer}"] = (1 / m) * self.np.dot(self.activations[f"a{output_layer - 1}"].T, dz)
+        gradients[f"dW{output_layer}"] = (1 / m) * self.np.dot(
+            self.activations[f"a{output_layer - 1}"].T, dz
+        )
         gradients[f"db{output_layer}"] = (1 / m) * self.np.sum(dz, axis=0, keepdims=True)
 
         da = self.np.dot(dz, self.weights[f"W{output_layer}"].T)
@@ -1463,9 +1528,9 @@ class LicenseAnalysisNeuralNetwork:
         for i in range(len(self.config["hidden_layers"]), 0, -1):
             dz = da * self._relu_derivative(self.activations[f"z{i}"])
 
-            gradients[f"dW{i}"] = (1 / m) * self.np.dot(self.activations[f"a{i - 1}"].T, dz) + self.config[
-                "l2_regularization"
-            ] * self.weights[f"W{i}"]
+            gradients[f"dW{i}"] = (1 / m) * self.np.dot(
+                self.activations[f"a{i - 1}"].T, dz
+            ) + self.config["l2_regularization"] * self.weights[f"W{i}"]
             gradients[f"db{i}"] = (1 / m) * self.np.sum(dz, axis=0, keepdims=True)
 
             if i > 1:
@@ -1487,14 +1552,22 @@ class LicenseAnalysisNeuralNetwork:
         m = y_true.shape[0]
         cross_entropy = -self.np.sum(y_true * self.np.log(y_pred + 1e-8)) / m
 
-        l2_penalty = 0
-        for weight_matrix in self.weights.values():
-            l2_penalty += self.np.sum(weight_matrix**2)
+        l2_penalty = sum(
+            self.np.sum(weight_matrix**2)
+            for weight_matrix in self.weights.values()
+        )
         l2_penalty *= self.config["l2_regularization"] / 2
 
         return cross_entropy + l2_penalty
 
-    def train(self, x_train: NumpyArray, y_train: NumpyArray, epochs: int = 10, batch_size: int = 32, validation_data: tuple[NumpyArray, NumpyArray] | None = None) -> dict[str, list[float]]:
+    def train(
+        self,
+        x_train: NumpyArray,
+        y_train: NumpyArray,
+        epochs: int = 10,
+        batch_size: int = 32,
+        validation_data: tuple[NumpyArray, NumpyArray] | None = None,
+    ) -> dict[str, list[float]]:
         """Production-ready training with sophisticated optimization.
 
         Args:
@@ -1524,13 +1597,19 @@ class LicenseAnalysisNeuralNetwork:
         }
 
         for epoch in range(epochs):
-            epoch_loss, epoch_accuracy = self._train_epoch(x_train, y_train, n_batches, batch_size, epoch, epochs, training_metrics)
+            epoch_loss, epoch_accuracy = self._train_epoch(
+                x_train, y_train, n_batches, batch_size, epoch, epochs, training_metrics
+            )
 
             # Validation
             if validation_data:
-                self._validate_epoch(validation_data, training_metrics, epoch, epochs, epoch_loss, epoch_accuracy)
+                self._validate_epoch(
+                    validation_data, training_metrics, epoch, epochs, epoch_loss, epoch_accuracy
+                )
             else:
-                self.logger.info(f"Epoch {epoch + 1}/{epochs}: Loss={epoch_loss:.4f}, Accuracy={epoch_accuracy:.4f}")
+                self.logger.info(
+                    f"Epoch {epoch + 1}/{epochs}: Loss={epoch_loss:.4f}, Accuracy={epoch_accuracy:.4f}"
+                )
 
         self.training = False
         self.loss_history = training_metrics["loss_history"]
@@ -1544,7 +1623,16 @@ class LicenseAnalysisNeuralNetwork:
             "message": "Sophisticated license analysis training completed successfully",
         }
 
-    def _train_epoch(self, x_train: NumpyArray, y_train: NumpyArray, n_batches: int, batch_size: int, epoch: int, epochs: int, training_metrics: dict[str, list[float]]) -> tuple[float, float]:
+    def _train_epoch(
+        self,
+        x_train: NumpyArray,
+        y_train: NumpyArray,
+        n_batches: int,
+        batch_size: int,
+        epoch: int,
+        epochs: int,
+        training_metrics: dict[str, list[float]],
+    ) -> tuple[float, float]:
         """Train one epoch and return average loss and accuracy.
 
         Args:
@@ -1563,7 +1651,9 @@ class LicenseAnalysisNeuralNetwork:
         epoch_loss = 0
         epoch_accuracy = 0
 
-        current_lr = self.config["learning_rate"] * (0.5 * (1 + self.np.cos(self.np.pi * epoch / epochs)))
+        current_lr = self.config["learning_rate"] * (
+            0.5 * (1 + self.np.cos(self.np.pi * epoch / epochs))
+        )
         training_metrics["learning_rate_schedule"].append(current_lr)
 
         n_samples = x_train.shape[0]
@@ -1600,7 +1690,15 @@ class LicenseAnalysisNeuralNetwork:
 
         return avg_loss, avg_accuracy
 
-    def _validate_epoch(self, validation_data: tuple[NumpyArray, NumpyArray], training_metrics: dict[str, list[float]], epoch: int, epochs: int, epoch_loss: float, epoch_accuracy: float) -> None:
+    def _validate_epoch(
+        self,
+        validation_data: tuple[NumpyArray, NumpyArray],
+        training_metrics: dict[str, list[float]],
+        epoch: int,
+        epochs: int,
+        epoch_loss: float,
+        epoch_accuracy: float,
+    ) -> None:
         """Run validation for one epoch.
 
         Args:
@@ -1638,7 +1736,9 @@ class LicenseAnalysisNeuralNetwork:
             self.momentum = {}
             for key in self.weights:
                 self.momentum[f"m_dW{key[1:]}"] = self.np.zeros_like(self.weights[key])
-                self.momentum[f"m_db{key[1:]}"] = self.np.zeros_like(self.biases[key.replace("W", "b")])
+                self.momentum[f"m_db{key[1:]}"] = self.np.zeros_like(
+                    self.biases[key.replace("W", "b")]
+                )
 
         beta = 0.9
 
@@ -1646,13 +1746,17 @@ class LicenseAnalysisNeuralNetwork:
             weight_key = f"W{layer_idx}"
             momentum_key = f"m_dW{layer_idx}"
 
-            self.momentum[momentum_key] = beta * self.momentum[momentum_key] + (1 - beta) * gradients[f"dW{layer_idx}"]
+            self.momentum[momentum_key] = (
+                beta * self.momentum[momentum_key] + (1 - beta) * gradients[f"dW{layer_idx}"]
+            )
             self.weights[weight_key] -= learning_rate * self.momentum[momentum_key]
 
             bias_key = f"b{layer_idx}"
             momentum_bias_key = f"m_db{layer_idx}"
 
-            self.momentum[momentum_bias_key] = beta * self.momentum[momentum_bias_key] + (1 - beta) * gradients[f"db{layer_idx}"]
+            self.momentum[momentum_bias_key] = (
+                beta * self.momentum[momentum_bias_key] + (1 - beta) * gradients[f"db{layer_idx}"]
+            )
             self.biases[bias_key] -= learning_rate * self.momentum[momentum_bias_key]
 
     def eval(self) -> dict[str, Any]:
@@ -1670,7 +1774,9 @@ class LicenseAnalysisNeuralNetwork:
             "trained_epochs": len(self.loss_history),
         }
 
-    def predict_license_protection(self, binary_features: NumpyArray) -> dict[str, NumpyArray | int | float]:
+    def predict_license_protection(
+        self, binary_features: NumpyArray
+    ) -> dict[str, NumpyArray | int | float]:
         """Analyze binary features for license protection mechanisms.
 
         Args:
@@ -1690,15 +1796,13 @@ class LicenseAnalysisNeuralNetwork:
 
         predictions = self.forward(binary_features)
 
-        protection_analysis = {
+        return {
             "hardware_binding": float(self.np.max(predictions[:, :8])),
             "registry_validation": float(self.np.max(predictions[:, 8:16])),
             "activation_complexity": float(self.np.max(predictions[:, 16:24])),
             "bypass_difficulty": float(self.np.max(predictions[:, 24:32])),
             "confidence_scores": predictions[0].tolist(),
         }
-
-        return protection_analysis
 
     def parameters(self) -> list[float]:
         """Return all trainable parameters for the neural network.
@@ -1794,7 +1898,9 @@ class LicenseAnalysisNeuralNetwork:
             elif dataset_format == "txt":
                 with open(dataset_path, encoding="utf-8") as f:
                     lines = f.readlines()
-                    data = [{"input": _line.strip(), "output": ""} for _line in lines if _line.strip()]
+                    data = [
+                        {"input": _line.strip(), "output": ""} for _line in lines if _line.strip()
+                    ]
 
             if PYQT6_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit(
@@ -1872,11 +1978,13 @@ class LicenseAnalysisNeuralNetwork:
             if hasattr(self.model, "train") and callable(self.model.train):
                 # Use the sophisticated neural network training
                 if hasattr(self.model, "np"):  # Our custom neural network
-                    self.logger.info("Starting license protection model training with custom neural network")
+                    self.logger.info(
+                        "Starting license protection model training with custom neural network"
+                    )
 
                     # Extract training features and labels
                     X_train, y_train = training_data
-                    X_val, y_val = validation_data if validation_data else (None, None)
+                    X_val, y_val = validation_data or (None, None)
 
                     # Advanced training with real optimization
                     validation_tuple = (X_val, y_val) if X_val is not None else None
@@ -1894,7 +2002,9 @@ class LicenseAnalysisNeuralNetwork:
                         metrics = training_results["metrics"]
 
                         # Emit progress for each epoch with real data
-                        for epoch, (loss, acc) in enumerate(zip(metrics["loss_history"], metrics["accuracy_history"], strict=False)):
+                        for epoch, (loss, acc) in enumerate(
+                            zip(metrics["loss_history"], metrics["accuracy_history"], strict=False)
+                        ):
                             if self.is_stopped:
                                 break
 
@@ -2157,7 +2267,11 @@ class LicenseAnalysisNeuralNetwork:
 
         return labels
 
-    def _train_pytorch_license_model(self, training_data: tuple[TorchTensor, TorchTensor], validation_data: tuple[TorchTensor, TorchTensor] | None) -> None:
+    def _train_pytorch_license_model(
+        self,
+        training_data: tuple[TorchTensor, TorchTensor],
+        validation_data: tuple[TorchTensor, TorchTensor] | None,
+    ) -> None:
         """Advanced PyTorch training implementation for license protection analysis.
 
         Args:
@@ -2171,14 +2285,16 @@ class LicenseAnalysisNeuralNetwork:
             from torch.utils.data import DataLoader, TensorDataset
 
             X_train, y_train = training_data
-            X_val, y_val = validation_data if validation_data else (None, None)
+            X_val, y_val = validation_data or (None, None)
 
             # Convert to PyTorch tensors
             X_train_tensor = torch.FloatTensor(X_train)
             y_train_tensor = torch.FloatTensor(y_train)
 
             train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
-            train_loader = DataLoader(train_dataset, batch_size=self.config.batch_size, shuffle=True)
+            train_loader = DataLoader(
+                train_dataset, batch_size=self.config.batch_size, shuffle=True
+            )
 
             # Setup validation if available
             val_loader = None
@@ -2186,11 +2302,15 @@ class LicenseAnalysisNeuralNetwork:
                 X_val_tensor = torch.FloatTensor(X_val)
                 y_val_tensor = torch.FloatTensor(y_val)
                 val_dataset = TensorDataset(X_val_tensor, y_val_tensor)
-                val_loader = DataLoader(val_dataset, batch_size=self.config.batch_size, shuffle=False)
+                val_loader = DataLoader(
+                    val_dataset, batch_size=self.config.batch_size, shuffle=False
+                )
 
             # Setup loss function and optimizer for multi-label classification
             criterion = nn.BCEWithLogitsLoss()  # Better for multi-label
-            optimizer = optim.AdamW(self.model.parameters(), lr=self.config.learning_rate, weight_decay=1e-4)
+            optimizer = optim.AdamW(
+                self.model.parameters(), lr=self.config.learning_rate, weight_decay=1e-4
+            )
 
             # Learning rate scheduler
             scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.config.epochs)
@@ -2318,8 +2438,12 @@ class LicenseAnalysisNeuralNetwork:
                     {
                         "status": "PyTorch license protection training completed",
                         "step": len(self.training_history),
-                        "final_loss": self.training_history[-1]["loss"] if self.training_history else 0,
-                        "final_accuracy": self.training_history[-1]["accuracy"] if self.training_history else 0,
+                        "final_loss": self.training_history[-1]["loss"]
+                        if self.training_history
+                        else 0,
+                        "final_accuracy": self.training_history[-1]["accuracy"]
+                        if self.training_history
+                        else 0,
                         "message": "Advanced license analysis model training completed successfully",
                     },
                 )
@@ -2497,7 +2621,9 @@ class ModelFinetuningDialog(QDialog):
             self.training_device = "cpu"
             self.gpu_info = {"available": False, "devices": []}
 
-    def _move_to_device(self, tensor_or_model: TorchTensor | TorchModule) -> TorchTensor | TorchModule:
+    def _move_to_device(
+        self, tensor_or_model: TorchTensor | TorchModule
+    ) -> TorchTensor | TorchModule:
         """Move tensor or model to the appropriate device.
 
         Args:
@@ -2952,9 +3078,7 @@ class ModelFinetuningDialog(QDialog):
 
     def _browse_dataset(self) -> None:
         """Browse for dataset file."""
-        file_filter = (
-            "Dataset Files (*.json *.jsonl *.csv *.txt);;JSON Files (*.json *.jsonl);;CSV Files (*.csv);;Text Files (*.txt);;All Files (*)"
-        )
+        file_filter = "Dataset Files (*.json *.jsonl *.csv *.txt);;JSON Files (*.json *.jsonl);;CSV Files (*.csv);;Text Files (*.txt);;All Files (*)"
 
         path, _ = QFileDialog.getOpenFileName(
             self,
@@ -3143,7 +3267,11 @@ class ModelFinetuningDialog(QDialog):
             }
 
             # Add model state dictionary if model exists
-            if self.training_thread and hasattr(self.training_thread, "model") and self.training_thread.model:
+            if (
+                self.training_thread
+                and hasattr(self.training_thread, "model")
+                and self.training_thread.model
+            ):
                 try:
                     if TORCH_AVAILABLE and hasattr(self.training_thread.model, "state_dict"):
                         # Save PyTorch model state
@@ -3184,14 +3312,12 @@ class ModelFinetuningDialog(QDialog):
                 progress.setValue(75)
                 QApplication.processEvents()
 
-            # Verify file was saved and get file size
-            if os.path.exists(save_path):
-                file_size = os.path.getsize(save_path)
-                self.logger.info("Model file saved with size: %d bytes", file_size)
-                progress.setValue(100)
-            else:
+            if not os.path.exists(save_path):
                 raise OSError(f"Failed to write model file to {save_path}")
 
+            file_size = os.path.getsize(save_path)
+            self.logger.info("Model file saved with size: %d bytes", file_size)
+            progress.setValue(100)
             QApplication.processEvents()
 
             progress.close()
@@ -3282,9 +3408,7 @@ class ModelFinetuningDialog(QDialog):
 
     def _truncate_text(self, text: str, max_length: int = 100) -> str:
         """Truncate text to maximum length."""
-        if len(text) > max_length:
-            return text[:max_length] + "..."
-        return text
+        return f"{text[:max_length]}..." if len(text) > max_length else text
 
     def _create_dataset(self) -> None:
         """Create a new dataset from templates or examples."""
@@ -3533,7 +3657,9 @@ class ModelFinetuningDialog(QDialog):
                 techniques.append("random_deletion")
 
             if not techniques:
-                QMessageBox.warning(self, "No Techniques", "Please select at least one augmentation technique.")
+                QMessageBox.warning(
+                    self, "No Techniques", "Please select at least one augmentation technique."
+                )
                 return
 
             # Load sample data
@@ -3602,11 +3728,9 @@ class ModelFinetuningDialog(QDialog):
                 result_words = []
                 for _word in words:
                     if random.random() < 0.3:  # noqa: S311 - ML data augmentation probability, 30% chance to replace
-                        synsets = wordnet.synsets(_word)
-                        if synsets:
+                        if synsets := wordnet.synsets(_word):
                             synonyms = [_lemma.name() for _lemma in synsets[0].lemmas()]
-                            synonyms = [_s for _s in synonyms if _s != _word]
-                            if synonyms:
+                            if synonyms := [_s for _s in synonyms if _s != _word]:
                                 result_words.append(random.choice(synonyms))  # noqa: S311 - ML data augmentation synonym selection
                                 continue
                     result_words.append(_word)
@@ -3654,7 +3778,9 @@ class ModelFinetuningDialog(QDialog):
                 techniques.append("random_deletion")
 
             if not techniques:
-                QMessageBox.warning(self, "No Techniques", "Please select at least one augmentation technique.")
+                QMessageBox.warning(
+                    self, "No Techniques", "Please select at least one augmentation technique."
+                )
                 return
 
             aug_per_sample = self.aug_per_sample_spin.value()
@@ -3787,7 +3913,9 @@ class ModelFinetuningDialog(QDialog):
                     # Export as CSV
                     with open(save_path, "w", newline="", encoding="utf-8") as f:
                         if self.training_thread.training_history:
-                            writer = csv.DictWriter(f, fieldnames=self.training_thread.training_history[0].keys())
+                            writer = csv.DictWriter(
+                                f, fieldnames=self.training_thread.training_history[0].keys()
+                            )
                             writer.writeheader()
                             writer.writerows(self.training_thread.training_history)
                 else:
@@ -3877,9 +4005,7 @@ class ModelFinetuningDialog(QDialog):
 
             # Get current configuration
             current_config = self._get_current_config()
-            enhanced_config = current_config.to_enhanced_config()
-
-            if enhanced_config:
+            if enhanced_config := current_config.to_enhanced_config():
                 # Import and show enhanced training interface
                 from ...ai.enhanced_training_interface import create_enhanced_training_interface
 
@@ -3900,7 +4026,9 @@ class ModelFinetuningDialog(QDialog):
 
         except (ImportError, AttributeError, OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error opening enhanced training interface: %s", e)
-            QMessageBox.critical(self, "Enhanced Training Error", f"Error opening enhanced training interface:\n{e}")
+            QMessageBox.critical(
+                self, "Enhanced Training Error", f"Error opening enhanced training interface:\n{e}"
+            )
 
     def _get_current_config(self) -> TrainingConfig:
         """Get current training configuration from UI."""

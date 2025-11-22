@@ -29,6 +29,7 @@ from intellicrack.handlers.requests_handler import requests
 
 from .interface import DownloadProgressCallback, ModelInfo, ModelRepositoryInterface
 
+
 """
 Base Implementation for API Model Repositories
 
@@ -125,8 +126,7 @@ class CacheManager:
 
         try:
             with open(cache_file) as f:
-                data = json.load(f)
-                return data
+                return json.load(f)
         except (OSError, json.JSONDecodeError) as e:
             logger.warning(f"Failed to read cache file for {key}: {e}")
             self._remove_entry(key)
@@ -192,7 +192,11 @@ class CacheManager:
     def _cleanup_expired(self) -> None:
         """Remove expired cache entries."""
         current_time = time.time()
-        expired_keys = [key for key, entry in self.cache_index.items() if entry.get("expiry_time", 0) < current_time]
+        expired_keys = [
+            key
+            for key, entry in self.cache_index.items()
+            if entry.get("expiry_time", 0) < current_time
+        ]
 
         for key in expired_keys:
             self._remove_entry(key)
@@ -381,7 +385,9 @@ class APIRepositoryBase(ModelRepositoryInterface):
 
         # Initialize cache manager
         cache_params = cache_config or {}
-        cache_dir = cache_params.get("cache_dir", os.path.join(os.path.dirname(__file__), "..", "cache", repository_name))
+        cache_dir = cache_params.get(
+            "cache_dir", os.path.join(os.path.dirname(__file__), "..", "cache", repository_name)
+        )
         ttl_seconds = cache_params.get("ttl", 3600)
         max_size_mb = cache_params.get("max_size_mb", 100)
         self.cache_manager = CacheManager(cache_dir, ttl_seconds, max_size_mb)
@@ -439,9 +445,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
             ]
             cache_key = hashlib.sha256(":".join(cache_key_parts).encode()).hexdigest()
 
-            # Check the cache
-            cached_data = self.cache_manager.get_cached_item(cache_key)
-            if cached_data:
+            if cached_data := self.cache_manager.get_cached_item(cache_key):
                 logger.debug(f"Cache hit for {url}")
                 return True, cached_data, ""
 
@@ -463,7 +467,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
 
         # Update with custom headers
         if headers:
-            request_headers.update(headers)
+            request_headers |= headers
 
         try:
             # Make the request
@@ -561,17 +565,17 @@ class APIRepositoryBase(ModelRepositoryInterface):
                                 progress_callback.on_progress(downloaded_bytes, total_size)
 
                 # If we have a checksum, verify the download
-                if model_details.checksum:
-                    if not self._verify_checksum(temp_path, model_details.checksum):
-                        if progress_callback:
-                            progress_callback.on_complete(False, "Checksum verification failed")
-                        os.remove(temp_path)
-                        return False, "Checksum verification failed"
+                if model_details.checksum and not self._verify_checksum(temp_path, model_details.checksum):
+                    if progress_callback:
+                        progress_callback.on_complete(False, "Checksum verification failed")
+                    os.remove(temp_path)
+                    return False, "Checksum verification failed"
 
                 # Move the temporary file to the final destination
                 if os.path.exists(destination_path):
                     os.remove(destination_path)
                 from pathlib import Path
+
                 Path(temp_path).rename(destination_path)
 
                 # Update model details with local path

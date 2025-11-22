@@ -340,7 +340,7 @@ class TestLicenseStringScanning:
 
         results = analyzer.scan_for_license_strings_streaming(test_file)
 
-        patterns_found = set(r["pattern_matched"] for r in results if isinstance(r, dict) and "pattern_matched" in r)
+        patterns_found = {r["pattern_matched"] for r in results if isinstance(r, dict) and "pattern_matched" in r}
 
         assert len(patterns_found) > 0
 

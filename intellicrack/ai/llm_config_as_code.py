@@ -30,6 +30,7 @@ from ..utils.logger import get_logger
 from .llm_backends import LLMManager
 from .llm_fallback_chains import FallbackManager
 
+
 logger = get_logger(__name__)
 
 HAS_YAML = False
@@ -77,7 +78,9 @@ else:
                 _BasicValidator._validate_recursive(instance, schema, [])  # scanner-ignore
 
             @staticmethod
-            def _validate_recursive(instance: object, schema: dict[str, object], path: list[str]) -> None:
+            def _validate_recursive(
+                instance: object, schema: dict[str, object], path: list[str]
+            ) -> None:
                 """Recursively validate instance against schema."""
                 if "type" in schema:
                     expected_type = schema["type"]
@@ -94,52 +97,64 @@ else:
                     if expected_type in type_map:
                         expected_python_type = type_map[expected_type]
                         if not isinstance(instance, expected_python_type):
-                            raise _BasicValidator.ValidationError(f"Expected type {expected_type}, got {type(instance).__name__}", path)
+                            raise _BasicValidator.ValidationError(
+                                f"Expected type {expected_type}, got {type(instance).__name__}",
+                                path,
+                            )
 
                 if "properties" in schema and isinstance(instance, dict):
                     for prop_name, prop_schema in schema["properties"].items():
                         if prop_name in instance:
-                            _BasicValidator._validate_recursive(instance[prop_name], prop_schema, [*path, prop_name])
+                            _BasicValidator._validate_recursive(
+                                instance[prop_name], prop_schema, [*path, prop_name]
+                            )
 
                     if "required" in schema:
                         for required_prop in schema["required"]:
                             if required_prop not in instance:
-                                raise _BasicValidator.ValidationError(f"Missing required property: {required_prop}", path)
+                                raise _BasicValidator.ValidationError(
+                                    f"Missing required property: {required_prop}", path
+                                )
 
                 if "items" in schema and isinstance(instance, list):
                     item_schema = schema["items"]
                     for i, item in enumerate(instance):
                         _BasicValidator._validate_recursive(item, item_schema, [*path, str(i)])
 
-                if "enum" in schema:
-                    if instance not in schema["enum"]:
-                        raise _BasicValidator.ValidationError(f"Value {instance} not in allowed values: {schema['enum']}", path)
+                if "enum" in schema and instance not in schema["enum"]:
+                    raise _BasicValidator.ValidationError(
+                        f"Value {instance} not in allowed values: {schema['enum']}", path
+                    )
 
-                if "minLength" in schema and isinstance(instance, str):
-                    if len(instance) < schema["minLength"]:
-                        raise _BasicValidator.ValidationError(
-                            f"String length {len(instance)} less than minimum {schema['minLength']}", path,
-                        )
+                if "minLength" in schema and isinstance(instance, str) and len(instance) < schema["minLength"]:
+                    raise _BasicValidator.ValidationError(
+                        f"String length {len(instance)} less than minimum {schema['minLength']}",
+                        path,
+                    )
 
-                if "maxLength" in schema and isinstance(instance, str):
-                    if len(instance) > schema["maxLength"]:
-                        raise _BasicValidator.ValidationError(
-                            f"String length {len(instance)} greater than maximum {schema['maxLength']}", path,
-                        )
+                if "maxLength" in schema and isinstance(instance, str) and len(instance) > schema["maxLength"]:
+                    raise _BasicValidator.ValidationError(
+                        f"String length {len(instance)} greater than maximum {schema['maxLength']}",
+                        path,
+                    )
 
-                if "minimum" in schema and isinstance(instance, (int, float)):
-                    if instance < schema["minimum"]:
-                        raise _BasicValidator.ValidationError(f"Value {instance} less than minimum {schema['minimum']}", path)
+                if "minimum" in schema and isinstance(instance, (int, float)) and instance < schema["minimum"]:
+                    raise _BasicValidator.ValidationError(
+                        f"Value {instance} less than minimum {schema['minimum']}", path
+                    )
 
-                if "maximum" in schema and isinstance(instance, (int, float)):
-                    if instance > schema["maximum"]:
-                        raise _BasicValidator.ValidationError(f"Value {instance} greater than maximum {schema['maximum']}", path)
+                if "maximum" in schema and isinstance(instance, (int, float)) and instance > schema["maximum"]:
+                    raise _BasicValidator.ValidationError(
+                        f"Value {instance} greater than maximum {schema['maximum']}", path
+                    )
 
                 if "pattern" in schema and isinstance(instance, str):
                     import re
 
                     if not re.match(schema["pattern"], instance):
-                        raise _BasicValidator.ValidationError(f"String does not match pattern {schema['pattern']}", path)
+                        raise _BasicValidator.ValidationError(
+                            f"String does not match pattern {schema['pattern']}", path
+                        )
 
         jsonschema = _BasicValidator()
 
@@ -171,42 +186,53 @@ class ConfigAsCodeManager:
 
     def _load_schemas(self) -> dict[str, dict[str, Any]]:
         """Load JSON schemas for validation."""
-        schemas = {}
-
-        # LLM Model Configuration Schema
-        schemas["llm_model"] = {
-            "type": "object",
-            "properties": {
-                "provider": {
-                    "type": "string",
-                    "enum": [
-                        "openai",
-                        "anthropic",
-                        "llamacpp",
-                        "ollama",
-                        "huggingface",
-                        "local_api",
-                        "local_gguf",
-                        "pytorch",
-                        "tensorflow",
-                        "onnx",
-                        "safetensors",
-                        "gptq",
-                        "huggingface_local",
-                    ],
+        schemas = {
+            "llm_model": {
+                "type": "object",
+                "properties": {
+                    "provider": {
+                        "type": "string",
+                        "enum": [
+                            "openai",
+                            "anthropic",
+                            "llamacpp",
+                            "ollama",
+                            "huggingface",
+                            "local_api",
+                            "local_gguf",
+                            "pytorch",
+                            "tensorflow",
+                            "onnx",
+                            "safetensors",
+                            "gptq",
+                            "huggingface_local",
+                        ],
+                    },
+                    "model_name": {"type": "string"},
+                    "api_key": {"type": ["string", "null"]},
+                    "api_base": {"type": ["string", "null"]},
+                    "model_path": {"type": ["string", "null"]},
+                    "context_length": {
+                        "type": "integer",
+                        "minimum": 512,
+                        "maximum": 2000000,
+                    },
+                    "temperature": {
+                        "type": "number",
+                        "minimum": 0.0,
+                        "maximum": 2.0,
+                    },
+                    "max_tokens": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 100000,
+                    },
+                    "tools_enabled": {"type": "boolean"},
+                    "custom_params": {"type": "object"},
                 },
-                "model_name": {"type": "string"},
-                "api_key": {"type": ["string", "null"]},
-                "api_base": {"type": ["string", "null"]},
-                "model_path": {"type": ["string", "null"]},
-                "context_length": {"type": "integer", "minimum": 512, "maximum": 2000000},
-                "temperature": {"type": "number", "minimum": 0.0, "maximum": 2.0},
-                "max_tokens": {"type": "integer", "minimum": 1, "maximum": 100000},
-                "tools_enabled": {"type": "boolean"},
-                "custom_params": {"type": "object"},
-            },
-            "required": ["provider", "model_name"],
-            "additionalProperties": True,
+                "required": ["provider", "model_name"],
+                "additionalProperties": True,
+            }
         }
 
         # Fallback Chain Configuration Schema
@@ -358,7 +384,7 @@ class ConfigAsCodeManager:
 
         try:
             with open(file_path, encoding="utf-8") as f:
-                if suffix in [".yaml", ".yml"]:
+                if suffix in {".yaml", ".yml"}:
                     if not HAS_YAML:
                         raise ConfigValidationError("YAML support not available - install PyYAML")
                     config = yaml.safe_load(f)
@@ -373,7 +399,9 @@ class ConfigAsCodeManager:
                         config = json.load(f)
                     else:
                         if not HAS_YAML:
-                            raise ConfigValidationError("Could not determine file format and YAML not available")
+                            raise ConfigValidationError(
+                                "Could not determine file format and YAML not available"
+                            )
                         config = yaml.safe_load(f)
 
             logger.info(f"Loaded configuration from: {file_path}")
@@ -423,13 +451,10 @@ class ConfigAsCodeManager:
         # Determine format
         if format_type is None:
             suffix = file_path.suffix.lower()
-            if suffix in [".yaml", ".yml"]:
+            if suffix in {".yaml", ".yml"} or suffix != ".json":
                 format_type = "yaml"
-            elif suffix == ".json":
-                format_type = "json"
             else:
-                format_type = "yaml"  # Default to YAML
-
+                format_type = "json"
         # Ensure directory exists
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -463,9 +488,7 @@ class ConfigAsCodeManager:
             return {key: self._substitute_env_vars(value) for key, value in obj.items()}
         if isinstance(obj, list):
             return [self._substitute_env_vars(item) for item in obj]
-        if isinstance(obj, str):
-            return self._substitute_string_vars(obj)
-        return obj
+        return self._substitute_string_vars(obj) if isinstance(obj, str) else obj
 
     def _substitute_string_vars(self, text: str) -> str:
         """Substitute environment variables in a string."""
@@ -491,7 +514,7 @@ class ConfigAsCodeManager:
         """
         from datetime import datetime
 
-        template = {
+        return {
             "version": "1.0",
             "environment": environment,
             "metadata": {
@@ -609,8 +632,6 @@ class ConfigAsCodeManager:
             },
         }
 
-        return template
-
     def export_current_config(
         self,
         llm_manager: LLMManager | None = None,
@@ -655,8 +676,7 @@ class ConfigAsCodeManager:
 
         # Export LLM models
         for llm_id in llm_manager.get_available_llms():
-            info = llm_manager.get_llm_info(llm_id)
-            if info:
+            if info := llm_manager.get_llm_info(llm_id):
                 model_config = {
                     "provider": info["provider"],
                     "model_name": info["model_name"],
@@ -728,7 +748,9 @@ class ConfigAsCodeManager:
         except Exception as e:
             logger.error(f"Failed to apply fallback chains: {e}")
 
-    def generate_config_files(self, output_dir: str | None = None, environments: list[str] = None) -> list[Path]:
+    def generate_config_files(
+        self, output_dir: str | None = None, environments: list[str] = None
+    ) -> list[Path]:
         """Generate configuration files for multiple environments.
 
         Args:
@@ -739,11 +761,7 @@ class ConfigAsCodeManager:
             List of generated file paths
 
         """
-        if output_dir is None:
-            output_dir = self.config_dir
-        else:
-            output_dir = Path(output_dir)
-
+        output_dir = self.config_dir if output_dir is None else Path(output_dir)
         if environments is None:
             environments = ["development", "staging", "production"]
 
@@ -785,7 +803,9 @@ def get_config_as_code_manager() -> ConfigAsCodeManager:
     return _CONFIG_AS_CODE_MANAGER
 
 
-def load_config_file(file_path: str | Path, apply_to_system: bool = True, validate: bool = True) -> dict[str, Any]:
+def load_config_file(
+    file_path: str | Path, apply_to_system: bool = True, validate: bool = True
+) -> dict[str, Any]:
     """Load and optionally apply configuration.
 
     Args:

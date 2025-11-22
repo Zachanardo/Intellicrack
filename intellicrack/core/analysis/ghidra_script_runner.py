@@ -26,6 +26,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -74,7 +75,9 @@ class GhidraScriptRunner:
     def _discover_all_scripts(self) -> None:
         """Dynamically discover all Ghidra scripts from intellicrack scripts directory."""
         if not self.intellicrack_scripts_dir.exists():
-            logger.warning(f"Intellicrack scripts directory not found: {self.intellicrack_scripts_dir}")
+            logger.warning(
+                f"Intellicrack scripts directory not found: {self.intellicrack_scripts_dir}"
+            )
             return
 
         for script_file in self.intellicrack_scripts_dir.glob("*.[pj][ya][vt][ah]*"):
@@ -98,7 +101,9 @@ class GhidraScriptRunner:
                 description=metadata.get("description", f"{script_file.stem} Ghidra script"),
             )
 
-        logger.info(f"Discovered {len(self.discovered_scripts)} Ghidra scripts from {self.intellicrack_scripts_dir}")
+        logger.info(
+            f"Discovered {len(self.discovered_scripts)} Ghidra scripts from {self.intellicrack_scripts_dir}"
+        )
 
     def _parse_script_metadata(self, script_path: Path) -> dict[str, Any]:
         """Parse metadata from script header comments.
@@ -115,14 +120,17 @@ class GhidraScriptRunner:
             for line in lines[:100]:
                 line_stripped = line.strip()
 
-                if line_stripped.startswith("#") or line_stripped.startswith("//") or line_stripped.startswith("*"):
+                if (
+                    line_stripped.startswith("#")
+                    or line_stripped.startswith("//")
+                    or line_stripped.startswith("*")
+                ):
                     content = line_stripped.lstrip("#/*").strip()
 
-                    if content.startswith("@"):
-                        if ":" in content:
-                            key_value = content[1:]
-                            key, value = key_value.split(":", 1)
-                            metadata[key.strip().lower()] = value.strip()
+                    if content.startswith("@") and ":" in content:
+                        key_value = content[1:]
+                        key, value = key_value.split(":", 1)
+                        metadata[key.strip().lower()] = value.strip()
 
             return metadata
 
@@ -213,11 +221,11 @@ class GhidraScriptRunner:
                 terminal_mgr = get_terminal_manager()
 
                 # Show script execution in terminal
-                session_id = terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=True, cwd=str(temp_dir))
+                session_id = terminal_mgr.execute_command(
+                    command=cmd, capture_output=False, auto_switch=True, cwd=str(temp_dir)
+                )
 
-                # For terminal execution, return session info
-                # Results will be available in terminal output and log file
-                results = {
+                return {
                     "execution": {
                         "script": script_name,
                         "binary": str(binary_path),
@@ -227,16 +235,24 @@ class GhidraScriptRunner:
                         "message": "Script running in terminal",
                     },
                 }
-                return results
             # Standard execution with captured output
             # Validate that cmd contains only safe, expected commands
             if not isinstance(cmd, list) or not all(isinstance(arg, str) for arg in cmd):
                 raise ValueError(f"Unsafe command: {cmd}")
             temp_dir_path = str(temp_dir).replace(";", "").replace("|", "").replace("&", "")
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=script.timeout, cwd=temp_dir_path, shell=False)
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=script.timeout,
+                cwd=temp_dir_path,
+                shell=False,
+            )
 
             # Parse results based on output format
-            results = self._parse_script_output(output_dir, script.output_format, result.stdout, result.stderr)
+            results = self._parse_script_output(
+                output_dir, script.output_format, result.stdout, result.stderr
+            )
 
             # Add execution metadata
             results["execution"] = {
@@ -261,7 +277,13 @@ class GhidraScriptRunner:
             if not project_path and temp_dir.exists():
                 shutil.rmtree(temp_dir, ignore_errors=True)
 
-    def run_script_chain(self, binary_path: Path, script_names: list[str], output_dir: Path, share_project: bool = True) -> dict[str, Any]:
+    def run_script_chain(
+        self,
+        binary_path: Path,
+        script_names: list[str],
+        output_dir: Path,
+        share_project: bool = True,
+    ) -> dict[str, Any]:
         """Run multiple scripts in sequence, optionally sharing project."""
         results = {}
         project_path = None
@@ -279,7 +301,10 @@ class GhidraScriptRunner:
                 script_output_dir.mkdir(parents=True, exist_ok=True)
 
                 result = self.run_script(
-                    binary_path=binary_path, script_name=script_name, output_dir=script_output_dir, project_path=project_path,
+                    binary_path=binary_path,
+                    script_name=script_name,
+                    output_dir=script_output_dir,
+                    project_path=project_path,
                 )
 
                 results[script_name] = result
@@ -297,7 +322,11 @@ class GhidraScriptRunner:
                 shutil.rmtree(project_path, ignore_errors=True)
 
     def create_custom_script(
-        self, name: str, code: str, language: str = "python", parameters: dict[str, Any] | None = None,
+        self,
+        name: str,
+        code: str,
+        language: str = "python",
+        parameters: dict[str, Any] | None = None,
     ) -> GhidraScript:
         """Create a custom Ghidra script."""
         # Create custom scripts directory
@@ -368,7 +397,9 @@ class GhidraScriptRunner:
         logger.warning(f"Script not found: {name}")
         return None
 
-    def _parse_script_output(self, output_dir: Path, format: str, stdout: str, stderr: str) -> dict[str, Any]:
+    def _parse_script_output(
+        self, output_dir: Path, format: str, stdout: str, stderr: str
+    ) -> dict[str, Any]:
         """Parse script output based on format."""
         results = {"stdout": stdout, "stderr": stderr, "files": []}
 
@@ -379,41 +410,35 @@ class GhidraScriptRunner:
 
         # Parse based on format
         if format == "json":
-            # Look for JSON output file
-            json_files = list(output_dir.glob("*.json"))
-            if json_files:
+            if json_files := list(output_dir.glob("*.json")):
                 with open(json_files[0]) as f:
                     results["data"] = json.load(f)
 
-        elif format == "xml":
-            # Look for XML output file
-            xml_files = list(output_dir.glob("*.xml"))
-            if xml_files:
-                results["xml_file"] = str(xml_files[0])
-
         elif format == "text":
-            # Collect all text output
-            text_files = list(output_dir.glob("*.txt"))
-            if text_files:
+            if text_files := list(output_dir.glob("*.txt")):
                 results["text_files"] = [str(f) for f in text_files]
+
+        elif format == "xml":
+            if xml_files := list(output_dir.glob("*.xml")):
+                results["xml_file"] = str(xml_files[0])
 
         return results
 
     def list_available_scripts(self) -> list[dict[str, str]]:
         """List all dynamically discovered scripts."""
-        scripts = []
-
-        for name, script in self.discovered_scripts.items():
-            scripts.append({
+        return [
+            {
                 "name": name,
                 "actual_name": script.name,
                 "language": script.language,
                 "description": script.description,
-                "path": str(script.path.relative_to(self.intellicrack_scripts_dir)),
+                "path": str(
+                    script.path.relative_to(self.intellicrack_scripts_dir)
+                ),
                 "timeout": script.timeout,
-            })
-
-        return scripts
+            }
+            for name, script in self.discovered_scripts.items()
+        ]
 
     def validate_script(self, script_path: Path) -> bool:
         """Validate a Ghidra script."""
@@ -428,8 +453,7 @@ class GhidraScriptRunner:
 
             # Try to parse for basic syntax (Python only)
             if script_path.suffix == ".py":
-                with open(script_path) as f:
-                    code = f.read()
+                code = Path(script_path).read_text()
                 compile(code, str(script_path), "exec")
 
             return True

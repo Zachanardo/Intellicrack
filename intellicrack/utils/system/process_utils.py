@@ -26,6 +26,7 @@ import subprocess
 import sys
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -64,10 +65,14 @@ def find_process_by_name(process_name: str, exact_match: bool = False) -> int | 
                     proc_name_lower = proc.info["name"].lower()
                     if exact_match:
                         if proc_name_lower == target_name:
-                            logger.info(f"Found exact process match: {process_name} with PID: {proc.info['pid']}")
+                            logger.info(
+                                f"Found exact process match: {process_name} with PID: {proc.info['pid']}"
+                            )
                             return proc.info["pid"]
                     elif target_name in proc_name_lower:
-                        logger.info(f"Found process match: {process_name} with PID: {proc.info['pid']}")
+                        logger.info(
+                            f"Found process match: {process_name} with PID: {proc.info['pid']}"
+                        )
                         return proc.info["pid"]
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                 logger.error("Error in process_utils: %s", e)
@@ -124,7 +129,9 @@ def find_processes_matching_names(target_names: list[str]) -> list[str]:
         return []
 
     try:
-        running_processes = [p.info["name"] for p in psutil.process_iter(["name"]) if p.info["name"]]
+        running_processes = [
+            p.info["name"] for p in psutil.process_iter(["name"]) if p.info["name"]
+        ]
         target_names_lower = [name.lower() for name in target_names]
 
         matches = []
@@ -221,8 +228,6 @@ def detect_hardware_dongles(app: object = None) -> list[str]:
 
     """
     logger.info("Starting hardware dongle detection.")
-    results = []
-
     # Update app instance with progress if provided
     if app and hasattr(app, "update_output"):
         progress_message = "Starting hardware dongle detection..."
@@ -251,7 +256,7 @@ def detect_hardware_dongles(app: object = None) -> list[str]:
         _get_system_path("windows_drivers"),
     ]
 
-    results.append("Scanning for hardware dongle drivers...")
+    results = ["Scanning for hardware dongle drivers..."]
     found_dongles = set()
 
     for dir_path in system_dirs:
@@ -276,16 +281,16 @@ def detect_hardware_dongles(app: object = None) -> list[str]:
                         elif callable(app.update_output):
                             app.update_output(f"DETECTED: {detection_message}")
 
-    # Check running processes for dongle service processes
-    dongle_processes = {
-        "SafeNet": ["hasplmd.exe", "hasplms.exe", "aksmon.exe"],
-        "CodeMeter": ["codemeter.exe", "CodeMeterCC.exe"],
-        "HASP": ["nhsrvice.exe", "hasplms.exe"],
-        "WibuKey": ["wibukey.exe", "WkSvc.exe"],
-    }
-
     if psutil:
         results.append("Checking for dongle service processes...")
+        # Check running processes for dongle service processes
+        dongle_processes = {
+            "SafeNet": ["hasplmd.exe", "hasplms.exe", "aksmon.exe"],
+            "CodeMeter": ["codemeter.exe", "CodeMeterCC.exe"],
+            "HASP": ["nhsrvice.exe", "hasplms.exe"],
+            "WibuKey": ["wibukey.exe", "WkSvc.exe"],
+        }
+
         try:
             # Get all process names
             all_processes = get_all_processes(["name"])
@@ -337,7 +342,9 @@ def detect_hardware_dongles(app: object = None) -> list[str]:
             results.append("winreg not available - cannot check registry")
 
     if found_dongles:
-        results.append(f"\nSummary: Found {len(found_dongles)} dongle types: {', '.join(found_dongles)}")
+        results.append(
+            f"\nSummary: Found {len(found_dongles)} dongle types: {', '.join(found_dongles)}"
+        )
     else:
         results.append("No hardware dongles detected")
 
@@ -371,8 +378,7 @@ def detect_tpm_protection() -> dict[str, Any]:
 
                 c = wmi.WMI()
 
-                tpm_instances = c.Win32_Tpm()
-                if tpm_instances:
+                if tpm_instances := c.Win32_Tpm():
                     results["tpm_present"] = True
                     results["detection_methods"].append("WMI Win32_Tpm")
 
@@ -389,7 +395,6 @@ def detect_tpm_protection() -> dict[str, Any]:
             except (OSError, ValueError, RuntimeError) as e:
                 logger.warning("WMI TPM detection failed: %s", e)
 
-        # Check TPM device files on Linux
         elif sys.platform.startswith("linux"):
             tpm_devices = ["/dev/tpm0", "/dev/tpmrm0"]
             for device in tpm_devices:
@@ -402,7 +407,9 @@ def detect_tpm_protection() -> dict[str, Any]:
         if psutil:
             tpm_processes = ["tpm2-abrmd", "tcsd", "trousers"]
             for proc in psutil.process_iter(["name"]):
-                if proc.info["name"] and any(tmp_proc_name in proc.info["name"].lower() for tmp_proc_name in tpm_processes):
+                if proc.info["name"] and any(
+                    tmp_proc_name in proc.info["name"].lower() for tmp_proc_name in tpm_processes
+                ):
                     results["detection_methods"].append(f"TPM process: {proc.info['name']}")
 
         # Check for TPM kernel modules on Linux

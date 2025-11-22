@@ -24,6 +24,7 @@ from pathlib import Path
 
 from intellicrack.utils.logger import logger
 
+
 """
 Tkinter Import Handler with Production-Ready Fallbacks
 
@@ -321,7 +322,18 @@ except ImportError as e:
             """
             return self
 
-        def grid(self, row: int = 0, column: int = 0, rowspan: int = 1, columnspan: int = 1, sticky: str = "", padx: int = 0, pady: int = 0, ipadx: int = 0, ipady: int = 0) -> None:
+        def grid(
+            self,
+            row: int = 0,
+            column: int = 0,
+            rowspan: int = 1,
+            columnspan: int = 1,
+            sticky: str = "",
+            padx: int = 0,
+            pady: int = 0,
+            ipadx: int = 0,
+            ipady: int = 0,
+        ) -> None:
             """Grid geometry manager.
 
             Args:
@@ -358,7 +370,17 @@ except ImportError as e:
             """
             return self.grid_info_dict
 
-        def pack(self, side: str = "top", fill: str = "none", expand: bool = False, padx: int = 0, pady: int = 0, ipadx: int = 0, ipady: int = 0, anchor: str = "center") -> None:
+        def pack(
+            self,
+            side: str = "top",
+            fill: str = "none",
+            expand: bool = False,
+            padx: int = 0,
+            pady: int = 0,
+            ipadx: int = 0,
+            ipady: int = 0,
+            anchor: str = "center",
+        ) -> None:
             """Pack geometry manager.
 
             Args:
@@ -393,7 +415,18 @@ except ImportError as e:
             """
             return self.pack_info_dict
 
-        def place(self, x: int = 0, y: int = 0, width: int | None = None, height: int | None = None, anchor: str = "nw", relx: int = 0, rely: int = 0, relwidth: int | None = None, relheight: int | None = None) -> None:
+        def place(
+            self,
+            x: int = 0,
+            y: int = 0,
+            width: int | None = None,
+            height: int | None = None,
+            anchor: str = "nw",
+            relx: int = 0,
+            rely: int = 0,
+            relwidth: int | None = None,
+            relheight: int | None = None,
+        ) -> None:
             """Place geometry manager.
 
             Args:
@@ -586,7 +619,7 @@ except ImportError as e:
             """
             self.protocol_bindings[name] = func
             # For WM_DELETE_WINDOW and similar, queue for immediate processing
-            if name in ["WM_DELETE_WINDOW", "WM_SAVE_YOURSELF", "WM_TAKE_FOCUS"]:
+            if name in {"WM_DELETE_WINDOW", "WM_SAVE_YOURSELF", "WM_TAKE_FOCUS"}:
                 if not hasattr(self, "_pending_protocols"):
                     self._pending_protocols = []
                 self._pending_protocols.append((name, func))
@@ -766,8 +799,6 @@ except ImportError as e:
             """
             if end is None:
                 end = "end"
-            if start == "1.0" and end == "end":
-                return self.content
             return self.content
 
         def insert(self, index: str, chars: str) -> None:
@@ -778,10 +809,7 @@ except ImportError as e:
                 chars: Text to insert.
 
             """
-            if index == "end":
-                self.content += chars
-            else:
-                self.content += chars
+            self.content += chars
             logger.debug("Text %s: Inserted text", self.widget_id)
 
         def delete(self, start: str, end: str | None = None) -> None:
@@ -892,10 +920,7 @@ except ImportError as e:
                 last: End position or None.
 
             """
-            if last is None:
-                self.selection = [first]
-            else:
-                self.selection = list(range(first, last + 1))
+            self.selection = [first] if last is None else list(range(first, last + 1))
             logger.debug("Listbox %s: Selection set", self.widget_id)
 
     class FallbackCheckbutton(FallbackWidget):
@@ -1049,7 +1074,7 @@ except ImportError as e:
                 value: Initial string value.
 
             """
-            super().__init__(master, str(value))
+            super().__init__(master, value)
 
         def set(self, value: object) -> None:
             """Set string value.
@@ -1071,7 +1096,7 @@ except ImportError as e:
                 value: Initial integer value.
 
             """
-            super().__init__(master, int(value))
+            super().__init__(master, value)
 
         def set(self, value: object) -> None:
             """Set integer value.
@@ -1093,7 +1118,7 @@ except ImportError as e:
                 value: Initial float value.
 
             """
-            super().__init__(master, float(value))
+            super().__init__(master, value)
 
         def set(self, value: object) -> None:
             """Set double value.
@@ -1115,7 +1140,7 @@ except ImportError as e:
                 value: Initial boolean value.
 
             """
-            super().__init__(master, bool(value))
+            super().__init__(master, value)
 
         def set(self, value: object) -> None:
             """Set boolean value.
@@ -1246,7 +1271,12 @@ except ImportError as e:
         """File dialog functions."""
 
         @staticmethod
-        def askopenfilename(title: str = "", initialdir: str = "", filetypes: list[tuple[str, str]] | None = None, **kwargs: object) -> str:
+        def askopenfilename(
+            title: str = "",
+            initialdir: str = "",
+            filetypes: list[tuple[str, str]] | None = None,
+            **kwargs: object,
+        ) -> str:
             """Ask for open filename.
 
             Args:
@@ -1264,7 +1294,12 @@ except ImportError as e:
             return default_file
 
         @staticmethod
-        def asksaveasfilename(title: str = "", initialdir: str = "", filetypes: list[tuple[str, str]] | None = None, **kwargs: object) -> str:
+        def asksaveasfilename(
+            title: str = "",
+            initialdir: str = "",
+            filetypes: list[tuple[str, str]] | None = None,
+            **kwargs: object,
+        ) -> str:
             """Ask for save filename.
 
             Args:
@@ -1299,7 +1334,12 @@ except ImportError as e:
             return default_dir
 
         @staticmethod
-        def askopenfilenames(title: str = "", initialdir: str = "", filetypes: list[tuple[str, str]] | None = None, **kwargs: object) -> list[str]:
+        def askopenfilenames(
+            title: str = "",
+            initialdir: str = "",
+            filetypes: list[tuple[str, str]] | None = None,
+            **kwargs: object,
+        ) -> list[str]:
             """Ask for multiple open filenames.
 
             Args:
@@ -1312,7 +1352,10 @@ except ImportError as e:
                 List of selected filename paths.
 
             """
-            default_files = [os.path.join(initialdir or str(Path.cwd()), "file1.txt"), os.path.join(initialdir or str(Path.cwd()), "file2.txt")]
+            default_files = [
+                os.path.join(initialdir or str(Path.cwd()), "file1.txt"),
+                os.path.join(initialdir or str(Path.cwd()), "file2.txt"),
+            ]
             logger.info("OPEN FILES Dialog '%s': Would return %s", title, default_files)
             return default_files
 
@@ -1320,7 +1363,9 @@ except ImportError as e:
         """Color chooser dialog."""
 
         @staticmethod
-        def askcolor(color: str | None = None, title: str = "", **kwargs: object) -> tuple[tuple[int, int, int], str]:
+        def askcolor(
+            color: str | None = None, title: str = "", **kwargs: object
+        ) -> tuple[tuple[int, int, int], str]:
             """Ask for color.
 
             Args:
@@ -1334,14 +1379,23 @@ except ImportError as e:
             """
             default_rgb = (128, 128, 128)
             default_hex = "#808080"
-            logger.info("COLOR Dialog '%s': Would return %s ('%s')", title, default_rgb, default_hex)
+            logger.info(
+                "COLOR Dialog '%s': Would return %s ('%s')", title, default_rgb, default_hex
+            )
             return (default_rgb, default_hex)
 
     # Font handling
     class FallbackFont:
         """Font class."""
 
-        def __init__(self, family: str = "TkDefaultFont", size: int = 9, weight: str = "normal", slant: str = "roman", **kwargs: object) -> None:
+        def __init__(
+            self,
+            family: str = "TkDefaultFont",
+            size: int = 9,
+            weight: str = "normal",
+            slant: str = "roman",
+            **kwargs: object,
+        ) -> None:
             """Initialize font.
 
             Args:
@@ -1542,7 +1596,9 @@ except ImportError as e:
                 self.next_item_id = 1
                 logger.debug("Treeview created: %s", self.widget_id)
 
-            def insert(self, parent: str, index: int | str, iid: str | None = None, **kwargs: object) -> str:
+            def insert(
+                self, parent: str, index: int | str, iid: str | None = None, **kwargs: object
+            ) -> str:
                 """Insert item.
 
                 Args:
@@ -1590,11 +1646,7 @@ except ImportError as e:
                     List of child item IDs.
 
                 """
-                children = []
-                for iid, data in self.items.items():
-                    if data["parent"] == item:
-                        children.append(iid)
-                return children
+                return [iid for iid, data in self.items.items() if data["parent"] == item]
 
             def selection(self) -> tuple[str, ...]:
                 """Get selection.
@@ -1613,7 +1665,9 @@ except ImportError as e:
                     **kwargs: Heading options.
 
                 """
-                logger.debug("Treeview %s: Heading for column %s configured", self.widget_id, column)
+                logger.debug(
+                    "Treeview %s: Heading for column %s configured", self.widget_id, column
+                )
 
             def column(self, column: str, **kwargs: object) -> None:
                 """Configure column.
@@ -1766,56 +1820,49 @@ except ImportError as e:
 
 # Export all tkinter objects and availability flag
 __all__ = [
-    # Availability flags
-    "HAS_TKINTER",
-    "TKINTER_VERSION",
-    # Main module
-    "tk",
-    "tkinter",
-    # Core widgets
-    "Tk",
-    "Frame",
-    "Label",
-    "Button",
-    "Entry",
-    "Text",
-    "Listbox",
-    "Checkbutton",
-    "Radiobutton",
-    "Scale",
-    # Variables
-    "StringVar",
-    "IntVar",
-    "DoubleVar",
-    "BooleanVar",
-    # Sub-modules
-    "ttk",
-    "messagebox",
-    "filedialog",
-    "colorchooser",
-    "scrolledtext",
-    # Utilities
-    "Font",
-    "ScrolledText",
-    # Constants
-    "NORMAL",
-    "DISABLED",
     "ACTIVE",
-    "END",
     "BOTH",
-    "X",
-    "Y",
-    "TOP",
     "BOTTOM",
-    "LEFT",
-    "RIGHT",
+    "BooleanVar",
+    "Button",
     "CENTER",
-    "N",
-    "S",
+    "Checkbutton",
+    "DISABLED",
+    "DoubleVar",
     "E",
-    "W",
+    "END",
+    "Entry",
+    "Font",
+    "Frame",
+    "HAS_TKINTER",
+    "IntVar",
+    "LEFT",
+    "Label",
+    "Listbox",
+    "N",
     "NE",
+    "NORMAL",
     "NW",
+    "RIGHT",
+    "Radiobutton",
+    "S",
     "SE",
     "SW",
+    "Scale",
+    "ScrolledText",
+    "StringVar",
+    "TKINTER_VERSION",
+    "TOP",
+    "Text",
+    "Tk",
+    "W",
+    "X",
+    "Y",
+    "colorchooser",
+    "filedialog",
+    "messagebox",
+    "scrolledtext",
+    "tk",
+    "tkinter",
+    "ttk",
 ]

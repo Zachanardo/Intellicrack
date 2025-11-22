@@ -24,6 +24,7 @@ with consistent error handling and availability flags.
 
 import logging
 
+
 logger = logging.getLogger(__name__)
 
 # Binary analysis tools
@@ -217,17 +218,17 @@ __all__ = [
     "CS_ARCH_X86",
     "CS_MODE_32",
     "CS_MODE_64",
+    "Cs",
+    "ELFFile",
     "ET",
     "LIEF_AVAILABLE",
     "MACHOLIB_AVAILABLE",
+    "MachO",
     "PEFILE_AVAILABLE",
     "PSUTIL_AVAILABLE",
     "PYELFTOOLS_AVAILABLE",
     "XML_AVAILABLE",
     "ZIPFILE_AVAILABLE",
-    "Cs",
-    "ELFFile",
-    "MachO",
     "get_capstone",
     "get_elftools",
     "get_lief",

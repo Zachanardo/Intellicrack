@@ -16,6 +16,7 @@ from intellicrack.core.config_manager import IntellicrackConfig
 
 from .logger import get_logger
 
+
 logger = get_logger(__name__)
 
 IMPORT_ERROR_MSG = "Import error in secrets_manager: %s"
@@ -137,6 +138,7 @@ class SecretsManager:
         """Lazy load central config."""
         if self._central_config is None:
             from intellicrack.core.config_manager import get_config
+
             self._central_config = get_config()
         return self._central_config
 
@@ -540,7 +542,9 @@ class SecretsManager:
             metadata = {
                 "total_keys": len(self._cache),
                 "encrypted_keys": [],
-                "last_sync": self.secrets_file.stat().st_mtime if self.secrets_file.exists() else None,
+                "last_sync": self.secrets_file.stat().st_mtime
+                if self.secrets_file.exists()
+                else None,
             }
 
             # Add key names (but not values) to metadata

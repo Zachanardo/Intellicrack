@@ -48,16 +48,16 @@ class EvidenceIntegrityReport:
     integrity_score: float
     authenticity_verified: bool
     temporal_consistency: bool
-    cryptographic_verification: Dict[str, Any]
-    memory_address_validation: Dict[str, Any]
-    disassembly_verification: Dict[str, Any]
-    import_table_validation: Dict[str, Any]
-    string_analysis_validation: Dict[str, Any]
-    entropy_verification: Dict[str, Any]
-    cross_reference_validation: Dict[str, Any]
-    anomaly_detection: List[str]
+    cryptographic_verification: dict[str, Any]
+    memory_address_validation: dict[str, Any]
+    disassembly_verification: dict[str, Any]
+    import_table_validation: dict[str, Any]
+    string_analysis_validation: dict[str, Any]
+    entropy_verification: dict[str, Any]
+    cross_reference_validation: dict[str, Any]
+    anomaly_detection: list[str]
     confidence_assessment: str
-    verification_metadata: Dict[str, Any]
+    verification_metadata: dict[str, Any]
 
 
 @dataclass
@@ -79,7 +79,7 @@ class EvidenceVerifier:
     Ensures that collected evidence is genuine, unmodified, and cryptographically sound.
     """
 
-    def __init__(self, config: Optional[EvidenceVerificationConfig] = None, logger: Optional[logging.Logger] = None):
+    def __init__(self, config: EvidenceVerificationConfig | None = None, logger: logging.Logger | None = None):
         """Initialize evidence verifier with comprehensive validation capabilities."""
         self.config = config or EvidenceVerificationConfig()
         self.logger = logger or get_logger(__name__)
@@ -104,7 +104,7 @@ class EvidenceVerifier:
 
         self.logger.info("EvidenceVerifier initialized successfully")
 
-    async def verify_evidence_integrity(self, evidence_data: Dict[str, Any],
+    async def verify_evidence_integrity(self, evidence_data: dict[str, Any],
                                       binary_path: Path) -> EvidenceIntegrityReport:
         """
         Perform comprehensive verification of evidence integrity and authenticity.
@@ -218,8 +218,8 @@ class EvidenceVerifier:
                 verification_metadata={'error': str(e), 'verification_time': time.time() - start_time}
             )
 
-    async def _verify_cryptographic_integrity(self, evidence_data: Dict[str, Any],
-                                            binary_path: Path) -> Dict[str, Any]:
+    async def _verify_cryptographic_integrity(self, evidence_data: dict[str, Any],
+                                            binary_path: Path) -> dict[str, Any]:
         """Verify cryptographic integrity of evidence data."""
         if not self.config.cryptographic_verification:
             return {'verification_skipped': True}
@@ -269,7 +269,7 @@ class EvidenceVerifier:
             self.logger.error(f"Cryptographic verification failed: {str(e)}")
             return {'error': str(e), 'cryptographic_score': 0.0}
 
-    def _verify_temporal_consistency(self, evidence_data: Dict[str, Any]) -> bool:
+    def _verify_temporal_consistency(self, evidence_data: dict[str, Any]) -> bool:
         """Verify temporal consistency of evidence timestamps."""
         try:
             current_time = datetime.now(timezone.utc)
@@ -299,8 +299,8 @@ class EvidenceVerifier:
             self.logger.error(f"Temporal consistency verification failed: {str(e)}")
             return False
 
-    async def _validate_memory_addresses(self, evidence_data: Dict[str, Any],
-                                       binary_path: Path) -> Dict[str, Any]:
+    async def _validate_memory_addresses(self, evidence_data: dict[str, Any],
+                                       binary_path: Path) -> dict[str, Any]:
         """Validate authenticity of memory addresses in evidence."""
         try:
             validation_result = {
@@ -358,8 +358,8 @@ class EvidenceVerifier:
             self.logger.error(f"Memory address validation failed: {str(e)}")
             return {'error': str(e), 'validation_score': 0.0}
 
-    async def _verify_disassembly_evidence(self, evidence_data: Dict[str, Any],
-                                         binary_path: Path) -> Dict[str, Any]:
+    async def _verify_disassembly_evidence(self, evidence_data: dict[str, Any],
+                                         binary_path: Path) -> dict[str, Any]:
         """Verify authenticity of disassembly evidence."""
         try:
             verification_result = {
@@ -426,8 +426,8 @@ class EvidenceVerifier:
             self.logger.error(f"Disassembly verification failed: {str(e)}")
             return {'error': str(e), 'verification_score': 0.0}
 
-    async def _validate_import_analysis(self, evidence_data: Dict[str, Any],
-                                      binary_path: Path) -> Dict[str, Any]:
+    async def _validate_import_analysis(self, evidence_data: dict[str, Any],
+                                      binary_path: Path) -> dict[str, Any]:
         """Validate import analysis evidence against actual binary imports."""
         try:
             validation_result = {
@@ -483,8 +483,8 @@ class EvidenceVerifier:
             self.logger.error(f"Import analysis validation failed: {str(e)}")
             return {'error': str(e), 'validation_score': 0.0}
 
-    async def _validate_string_analysis(self, evidence_data: Dict[str, Any],
-                                      binary_path: Path) -> Dict[str, Any]:
+    async def _validate_string_analysis(self, evidence_data: dict[str, Any],
+                                      binary_path: Path) -> dict[str, Any]:
         """Validate string analysis evidence against actual binary strings."""
         try:
             validation_result = {
@@ -501,7 +501,7 @@ class EvidenceVerifier:
             # Get actual strings from binary
             with r2pipe.open(str(binary_path)) as r2:
                 actual_strings = r2.cmdj('izj') or []
-                actual_string_set = set(s.get('string', '') for s in actual_strings if s.get('string'))
+                actual_string_set = {s.get('string', '') for s in actual_strings if s.get('string')}
 
                 protection_evidence = evidence_data.get('protection_evidence', {})
 
@@ -531,8 +531,8 @@ class EvidenceVerifier:
             self.logger.error(f"String analysis validation failed: {str(e)}")
             return {'error': str(e), 'validation_score': 0.0}
 
-    async def _verify_entropy_analysis(self, evidence_data: Dict[str, Any],
-                                     binary_path: Path) -> Dict[str, Any]:
+    async def _verify_entropy_analysis(self, evidence_data: dict[str, Any],
+                                     binary_path: Path) -> dict[str, Any]:
         """Verify entropy analysis calculations."""
         try:
             verification_result = {
@@ -575,7 +575,7 @@ class EvidenceVerifier:
             self.logger.error(f"Entropy verification failed: {str(e)}")
             return {'error': str(e), 'verification_score': 0.0}
 
-    async def _validate_cross_references(self, evidence_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _validate_cross_references(self, evidence_data: dict[str, Any]) -> dict[str, Any]:
         """Validate cross-references between different evidence types."""
         if not self.config.cross_reference_validation:
             return {'validation_skipped': True}
@@ -598,8 +598,8 @@ class EvidenceVerifier:
                 string_analysis = protection_data.get('string_analysis', {})
 
                 # Cross-reference memory addresses with disassembly
-                memory_addrs = set(addr.get('address', 0) for addr in memory_addresses)
-                disasm_addrs = set(proof.get('address', 0) for proof in disassembly_proof)
+                memory_addrs = {addr.get('address', 0) for addr in memory_addresses}
+                disasm_addrs = {proof.get('address', 0) for proof in disassembly_proof}
 
                 common_addrs = memory_addrs & disasm_addrs
                 validation_result['memory_to_disasm_refs'] += len(common_addrs)
@@ -610,8 +610,8 @@ class EvidenceVerifier:
                 suspicious_imports = import_analysis.get('suspicious_imports', [])
                 suspicious_strings = string_analysis.get('suspicious_strings', [])
 
-                import_names = set(imp.get('function', '') for imp in suspicious_imports)
-                string_values = set(str_info.get('string', '') for str_info in suspicious_strings)
+                import_names = {imp.get('function', '') for imp in suspicious_imports}
+                string_values = {str_info.get('string', '') for str_info in suspicious_strings}
 
                 # Check if any import names appear in strings
                 import_string_matches = sum(1 for imp_name in import_names if any(imp_name in s for s in string_values))
@@ -633,7 +633,7 @@ class EvidenceVerifier:
             self.logger.error(f"Cross-reference validation failed: {str(e)}")
             return {'error': str(e), 'validation_score': 0.0}
 
-    async def _detect_anomalies(self, evidence_data: Dict[str, Any], binary_path: Path) -> List[str]:
+    async def _detect_anomalies(self, evidence_data: dict[str, Any], binary_path: Path) -> list[str]:
         """Detect anomalies in evidence data that might indicate tampering or errors."""
         if not self.config.anomaly_detection_enabled:
             return []
@@ -703,11 +703,11 @@ class EvidenceVerifier:
             self.logger.error(f"Anomaly detection failed: {str(e)}")
             return [f"Anomaly detection error: {str(e)}"]
 
-    def _calculate_integrity_score(self, crypto_verification: Dict[str, Any],
-                                 temporal_consistency: bool, memory_validation: Dict[str, Any],
-                                 disassembly_verification: Dict[str, Any], import_validation: Dict[str, Any],
-                                 string_validation: Dict[str, Any], entropy_verification: Dict[str, Any],
-                                 cross_ref_validation: Dict[str, Any], anomalies: List[str]) -> float:
+    def _calculate_integrity_score(self, crypto_verification: dict[str, Any],
+                                 temporal_consistency: bool, memory_validation: dict[str, Any],
+                                 disassembly_verification: dict[str, Any], import_validation: dict[str, Any],
+                                 string_validation: dict[str, Any], entropy_verification: dict[str, Any],
+                                 cross_ref_validation: dict[str, Any], anomalies: list[str]) -> float:
         """Calculate overall integrity score from all verification components."""
         try:
             score_components = []
@@ -770,7 +770,7 @@ class EvidenceVerifier:
             self.logger.error(f"Integrity score calculation failed: {str(e)}")
             return 0.0
 
-    def _determine_authenticity(self, integrity_score: float, anomalies: List[str]) -> bool:
+    def _determine_authenticity(self, integrity_score: float, anomalies: list[str]) -> bool:
         """Determine if evidence is authentic based on integrity score and anomalies."""
         if integrity_score < self.config.minimum_integrity_threshold:
             return False
@@ -828,7 +828,7 @@ class EvidenceVerifier:
         except Exception:
             return ''
 
-    def _calculate_evidence_hash(self, evidence_data: Dict[str, Any]) -> str:
+    def _calculate_evidence_hash(self, evidence_data: dict[str, Any]) -> str:
         """Calculate hash of evidence data for integrity verification."""
         try:
             # Create deterministic JSON string
@@ -837,7 +837,7 @@ class EvidenceVerifier:
         except Exception:
             return ''
 
-    def _generate_evidence_id(self, evidence_data: Dict[str, Any], binary_path: Path) -> str:
+    def _generate_evidence_id(self, evidence_data: dict[str, Any], binary_path: Path) -> str:
         """Generate unique evidence ID for tracking."""
         try:
             timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -859,7 +859,7 @@ class EvidenceVerifier:
 
         self.verification_stats['anomalies_detected'] += anomaly_count
 
-    def get_verification_statistics(self) -> Dict[str, Any]:
+    def get_verification_statistics(self) -> dict[str, Any]:
         """Get current verification statistics."""
         total = self.verification_stats['total_verifications']
         return {
@@ -894,7 +894,7 @@ async def main():
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     # Load evidence data
-    with open(evidence_json_path, 'r', encoding='utf-8') as f:
+    with open(evidence_json_path, encoding='utf-8') as f:
         evidence_data = json.load(f)
 
     # Create verifier

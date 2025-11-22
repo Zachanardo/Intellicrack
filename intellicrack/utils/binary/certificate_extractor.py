@@ -14,12 +14,14 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
+
 try:
     from cryptography.hazmat.backends import Backend
 except ImportError:
     Backend = object
 
 from ..logger import get_logger
+
 
 logger = get_logger(__name__)
 
@@ -87,9 +89,7 @@ class CodeSigningInfo:
     @property
     def signing_certificate(self) -> CertificateInfo | None:
         """Get the primary signing certificate."""
-        if self.certificates:
-            return self.certificates[0]
-        return None
+        return self.certificates[0] if self.certificates else None
 
 
 class CertificateExtractor:
@@ -178,12 +178,7 @@ class CertificateExtractor:
         offset = 0
 
         try:
-            while offset < len(cert_data):
-                # Read WIN_CERTIFICATE structure
-                if offset + 8 > len(cert_data):
-                    break
-
-                # dwLength (4 bytes) + wRevision (2 bytes) + wCertificateType (2 bytes)
+            while offset < len(cert_data) and not offset + 8 > len(cert_data):
                 length, _revision, cert_type = struct.unpack("<LHH", cert_data[offset : offset + 8])
 
                 if length < 8 or offset + length > len(cert_data):
@@ -227,12 +222,13 @@ class CertificateExtractor:
                 try:
                     # Read length (simplified - assumes short form)
                     if cert_pos + 4 < len(pkcs7_data):
-                        cert_len = struct.unpack(">H", pkcs7_data[cert_pos + 2 : cert_pos + 4])[0] + 4
+                        cert_len = (
+                            struct.unpack(">H", pkcs7_data[cert_pos + 2 : cert_pos + 4])[0] + 4
+                        )
 
                         if cert_pos + cert_len <= len(pkcs7_data):
                             cert_der = pkcs7_data[cert_pos : cert_pos + cert_len]
-                            cert_info = self._parse_x509_certificate(cert_der)
-                            if cert_info:
+                            if cert_info := self._parse_x509_certificate(cert_der):
                                 certificates.append(cert_info)
 
                 except Exception as e:
@@ -375,7 +371,9 @@ class CertificateExtractor:
 
             try:
                 # Extended key usage
-                eku = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.EXTENDED_KEY_USAGE).value
+                eku = cert.extensions.get_extension_for_oid(
+                    x509.oid.ExtensionOID.EXTENDED_KEY_USAGE
+                ).value
                 for usage in eku:
                     usage_name = usage._name if hasattr(usage, "_name") else str(usage)
                     extended_key_usage.append(usage_name)
@@ -389,7 +387,9 @@ class CertificateExtractor:
 
             try:
                 # Subject Alternative Names
-                san = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME).value
+                san = cert.extensions.get_extension_for_oid(
+                    x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME
+                ).value
                 for name in san:
                     subject_alt_names.append(str(name))
 
@@ -446,7 +446,9 @@ class CertificateExtractor:
 
         return ", ".join(parts) if parts else str(name)
 
-    def _analyze_signing_info(self, cert_data: bytes, certificates: list[CertificateInfo]) -> dict[str, Any]:
+    def _analyze_signing_info(
+        self, cert_data: bytes, certificates: list[CertificateInfo]
+    ) -> dict[str, Any]:
         """Analyze signing information and trust status."""
         info = {
             "chain_valid": False,
@@ -526,10 +528,7 @@ class CertificateExtractor:
             certificates = []
             offset = 0
 
-            while offset < len(cert_data):
-                if offset + 8 > len(cert_data):
-                    break
-
+            while offset < len(cert_data) and not offset + 8 > len(cert_data):
                 length, _revision, cert_type = struct.unpack("<LHH", cert_data[offset : offset + 8])
                 if length < 8 or offset + length > len(cert_data):
                     break
@@ -548,7 +547,12 @@ class CertificateExtractor:
 
                         try:
                             if cert_pos + 4 < len(cert_content):
-                                cert_len = struct.unpack(">H", cert_content[cert_pos + 2 : cert_pos + 4])[0] + 4
+                                cert_len = (
+                                    struct.unpack(">H", cert_content[cert_pos + 2 : cert_pos + 4])[
+                                        0
+                                    ]
+                                    + 4
+                                )
 
                                 if cert_pos + cert_len <= len(cert_content):
                                     cert_der = cert_content[cert_pos : cert_pos + cert_len]

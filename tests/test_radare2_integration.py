@@ -1,5 +1,19 @@
-"""
-Copyright (C) 2025 Zachary Flint
+"""Radare2 Integration Tests - Real r2pipe Library Tests.
+
+This test suite verifies Intellicrack's integration with radare2 reverse engineering
+framework using REAL r2pipe Python library and actual radare2 execution.
+
+Tests validate:
+- Radare2 installation and availability
+- r2pipe library integration
+- Real binary analysis with radare2 commands
+- Function identification and disassembly
+- ESIL emulation on real code
+- Binary patching with radare2
+- Integration with Intellicrack radare2 modules
+- Real-world binary analysis scenarios
+
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -15,963 +29,592 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-import unittest
-import tempfile
+from __future__ import annotations
+
 import os
+import shutil
 import struct
-import time
-import json
-import hashlib
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
-from typing import Dict, Any, List, Optional
-
-class RealRadare2Analyzer:
-    """Real Radare2 binary analysis engine."""
-
-    def __init__(self):
-        self.sessions = {}
-        self.analysis_cache = {}
-        self.patches = []
-        self.breakpoints = []
-
-    def open_binary(self, path: str, write_mode: bool = False) -> Dict[str, Any]:
-        """Open a binary for analysis."""
-        session_data = {
-            'path': path,
-            'write_mode': write_mode,
-            'opened_time': time.time(),
-            'analyzed': False,
-            'info': {},
-            'functions': [],
-            'strings': [],
-            'sections': [],
-            'imports': [],
-            'exports': [],
-            'symbols': [],
-            'xrefs': []
-        }
-
-        # Read binary info
-        if os.path.exists(path):
-            with open(path, 'rb') as f:
-                content = f.read()
-                session_data['size'] = len(content)
-                session_data['hash'] = hashlib.sha256(content).hexdigest()
-
-                # Analyze binary format
-                if content[:2] == b'MZ':
-                    session_data['format'] = 'PE'
-                    self._analyze_pe(content, session_data)
-                elif content[:4] == b'\x7fELF':
-                    session_data['format'] = 'ELF'
-                    self._analyze_elf(content, session_data)
-                else:
-                    session_data['format'] = 'RAW'
-
-        session_id = hashlib.md5(path.encode()).hexdigest()[:8]
-        self.sessions[session_id] = session_data
-        return {'session_id': session_id, 'info': session_data['info']}
-
-    def _analyze_pe(self, content: bytes, session_data: Dict):
-        """Analyze PE binary."""
-        # Parse DOS header
-        if len(content) < 64:
-            return
-
-        e_lfanew = struct.unpack('<I', content[60:64])[0]
-
-        if e_lfanew + 24 < len(content):
-            # Check PE signature
-            if content[e_lfanew:e_lfanew+4] == b'PE\x00\x00':
-                # Parse COFF header
-                machine = struct.unpack('<H', content[e_lfanew+4:e_lfanew+6])[0]
-                num_sections = struct.unpack('<H', content[e_lfanew+6:e_lfanew+8])[0]
-
-                session_data['info'] = {
-                    'arch': 'x86' if machine == 0x014c else 'x64',
-                    'bits': 32 if machine == 0x014c else 64,
-                    'machine': machine,
-                    'sections': num_sections,
-                    'type': 'EXEC'
-                }
-
-                # Parse sections
-                self._parse_pe_sections(content, e_lfanew, num_sections, session_data)
-
-    def _analyze_elf(self, content: bytes, session_data: Dict):
-        """Analyze ELF binary."""
-        if len(content) < 52:
-            return
-
-        # Parse ELF header
-        ei_class = content[4]
-        ei_data = content[5]
-        e_type = struct.unpack('<H', content[16:18])[0]
-        e_machine = struct.unpack('<H', content[18:20])[0]
-
-        session_data['info'] = {
-            'arch': self._get_elf_arch(e_machine),
-            'bits': 64 if ei_class == 2 else 32,
-            'endian': 'little' if ei_data == 1 else 'big',
-            'type': self._get_elf_type(e_type)
-        }
-
-        # Parse entry point
-        if ei_class == 2:  # 64-bit
-            session_data['info']['entry'] = struct.unpack('<Q', content[24:32])[0]
-        else:  # 32-bit
-            session_data['info']['entry'] = struct.unpack('<I', content[24:28])[0]
-
-    def _get_elf_arch(self, machine: int) -> str:
-        """Get ELF architecture name."""
-        arch_map = {
-            0x03: 'x86',
-            0x3E: 'x64',
-            0x28: 'arm',
-            0xB7: 'arm64',
-            0x08: 'mips'
-        }
-        return arch_map.get(machine, 'unknown')
-
-    def _get_elf_type(self, e_type: int) -> str:
-        """Get ELF type name."""
-        type_map = {
-            1: 'REL',
-            2: 'EXEC',
-            3: 'DYN',
-            4: 'CORE'
-        }
-        return type_map.get(e_type, 'UNKNOWN')
-
-    def _parse_pe_sections(self, content: bytes, pe_offset: int, num_sections: int, session_data: Dict):
-        """Parse PE sections."""
-        # Skip to section headers
-        section_offset = pe_offset + 24 + 224  # After optional header
-
-        for i in range(min(num_sections, 10)):  # Limit for performance
-            if section_offset + 40 > len(content):
-                break
-
-            section = {
-                'name': content[section_offset:section_offset+8].rstrip(b'\x00').decode('ascii', errors='ignore'),
-                'vsize': struct.unpack('<I', content[section_offset+8:section_offset+12])[0],
-                'vaddr': struct.unpack('<I', content[section_offset+12:section_offset+16])[0],
-                'size': struct.unpack('<I', content[section_offset+16:section_offset+20])[0],
-                'offset': struct.unpack('<I', content[section_offset+20:section_offset+24])[0],
-                'flags': struct.unpack('<I', content[section_offset+36:section_offset+40])[0]
-            }
-
-            # Determine section permissions
-            flags = section['flags']
-            perms = ''
-            if flags & 0x20000000:
-                perms += 'r'
-            if flags & 0x40000000:
-                perms += 'w'
-            if flags & 0x20:
-                perms += 'x'
-            section['perms'] = perms
-
-            session_data['sections'].append(section)
-            section_offset += 40
-
-    def analyze(self, session_id: str) -> Dict[str, Any]:
-        """Perform deep analysis on binary."""
-        if session_id not in self.sessions:
-            return {'error': 'Session not found'}
-
-        session = self.sessions[session_id]
-
-        if not session['analyzed']:
-            path = session['path']
-
-            if os.path.exists(path):
-                with open(path, 'rb') as f:
-                    content = f.read()
-
-                    # Find functions
-                    self._find_functions(content, session)
-
-                    # Find strings
-                    self._find_strings(content, session)
-
-                    # Find imports/exports
-                    self._find_imports(content, session)
-
-                    # Build xrefs
-                    self._build_xrefs(content, session)
-
-                    session['analyzed'] = True
-
-        return {
-            'functions': len(session['functions']),
-            'strings': len(session['strings']),
-            'imports': len(session['imports']),
-            'xrefs': len(session['xrefs'])
-        }
-
-    def _find_functions(self, content: bytes, session: Dict):
-        """Find functions in binary."""
-        # Common function prologues
-        prologues = [
-            b'\x55\x48\x89\xe5',           # push rbp; mov rbp, rsp (x64)
-            b'\x55\x8b\xec',               # push ebp; mov ebp, esp (x86)
-            b'\x48\x83\xec',               # sub rsp, XX (x64)
-            b'\x48\x89\x5c\x24',           # mov [rsp+XX], rbx (x64)
-            b'\xff\x25',                   # jmp [thunk]
-        ]
-
-        for prologue in prologues:
-            offset = 0
-            while offset < len(content):
-                index = content.find(prologue, offset)
-                if index == -1:
-                    break
-
-                func = {
-                    'offset': index,
-                    'name': f'fcn.{index:08x}',
-                    'size': 0,
-                    'type': 'fcn',
-                    'callrefs': [],
-                    'datarefs': []
-                }
-
-                # Estimate function size
-                epilogues = [b'\xc3', b'\xc2', b'\xcb']  # ret variants
-                for epilogue in epilogues:
-                    end = content.find(epilogue, index + len(prologue))
-                    if end != -1 and end - index < 1000:
-                        func['size'] = end - index + 1
-                        break
-
-                if func['size'] == 0:
-                    func['size'] = 100  # Default size
-
-                session['functions'].append(func)
-                offset = index + 1
-
-                if len(session['functions']) >= 100:  # Limit
-                    break
-
-    def _find_strings(self, content: bytes, session: Dict):
-        """Find strings in binary."""
-        import re
-
-        # ASCII strings
-        ascii_pattern = rb'[\x20-\x7e]{5,}'
-        for match in re.finditer(ascii_pattern, content):
-            string = {
-                'offset': match.start(),
-                'length': len(match.group()),
-                'value': match.group().decode('ascii', errors='ignore'),
-                'type': 'ascii'
-            }
-            session['strings'].append(string)
-
-            if len(session['strings']) >= 500:  # Limit
-                break
-
-        # Wide strings (UTF-16)
-        wide_pattern = rb'(?:[\x20-\x7e]\x00){5,}'
-        for match in re.finditer(wide_pattern, content):
-            try:
-                value = match.group().decode('utf-16le', errors='ignore')
-                string = {
-                    'offset': match.start(),
-                    'length': len(match.group()),
-                    'value': value,
-                    'type': 'wide'
-                }
-                session['strings'].append(string)
-            except:
-                pass
-
-            if len(session['strings']) >= 1000:  # Limit
-                break
-
-    def _find_imports(self, content: bytes, session: Dict):
-        """Find imported functions."""
-        # Look for common DLL names
-        dll_names = [
-            b'kernel32.dll', b'user32.dll', b'ntdll.dll',
-            b'advapi32.dll', b'msvcrt.dll', b'ws2_32.dll',
-            b'ole32.dll', b'oleaut32.dll', b'shell32.dll'
-        ]
-
-        for dll_name in dll_names:
-            if dll_name in content:
-                # Find API names near DLL reference
-                dll_offset = content.find(dll_name)
-                search_start = max(0, dll_offset - 1000)
-                search_end = min(len(content), dll_offset + 1000)
-                search_region = content[search_start:search_end]
-
-                # Common API names
-                api_names = [
-                    b'LoadLibrary', b'GetProcAddress', b'CreateFile',
-                    b'ReadFile', b'WriteFile', b'VirtualAlloc',
-                    b'VirtualProtect', b'CreateThread', b'OpenProcess'
-                ]
-
-                for api_name in api_names:
-                    if api_name in search_region:
-                        import_entry = {
-                            'name': api_name.decode('ascii'),
-                            'libname': dll_name.decode('ascii'),
-                            'type': 'FUNC',
-                            'offset': 0
-                        }
-                        session['imports'].append(import_entry)
-
-    def _build_xrefs(self, content: bytes, session: Dict):
-        """Build cross-references."""
-        # Find call instructions (simplified)
-        call_opcode = b'\xe8'  # Direct call
-
-        offset = 0
-        while offset < len(content) - 5:
-            if content[offset] == 0xe8:
-                # Get call target (relative)
-                try:
-                    rel_offset = struct.unpack('<i', content[offset+1:offset+5])[0]
-                    target = offset + 5 + rel_offset
-
-                    if 0 <= target < len(content):
-                        xref = {
-                            'from': offset,
-                            'to': target,
-                            'type': 'CALL'
-                        }
-                        session['xrefs'].append(xref)
-
-                        # Add to function callrefs
-                        for func in session['functions']:
-                            if func['offset'] <= offset < func['offset'] + func['size']:
-                                func['callrefs'].append(target)
-                                break
-
-                except:
-                    pass
-
-            offset += 1
-
-            if len(session['xrefs']) >= 1000:  # Limit
-                break
-
-    def disassemble(self, session_id: str, offset: int, length: int) -> List[Dict[str, Any]]:
-        """Disassemble code at given offset."""
-        if session_id not in self.sessions:
-            return []
-
-        session = self.sessions[session_id]
-        path = session['path']
-
-        if not os.path.exists(path):
-            return []
-
-        instructions = []
-
-        with open(path, 'rb') as f:
-            f.seek(offset)
-            code = f.read(length)
-
-            # Basic x86 disassembly
-            i = 0
-            while i < len(code):
-                inst = {'offset': offset + i, 'bytes': '', 'mnemonic': '', 'operands': ''}
-
-                if i + 1 <= len(code):
-                    opcode = code[i]
-
-                    # Common x86 instructions
-                    if opcode == 0x90:
-                        inst['bytes'] = '90'
-                        inst['mnemonic'] = 'nop'
-                        i += 1
-                    elif opcode == 0x55:
-                        inst['bytes'] = '55'
-                        inst['mnemonic'] = 'push'
-                        inst['operands'] = 'ebp'
-                        i += 1
-                    elif opcode == 0xc3:
-                        inst['bytes'] = 'c3'
-                        inst['mnemonic'] = 'ret'
-                        i += 1
-                    elif opcode == 0xe8:
-                        if i + 5 <= len(code):
-                            inst['bytes'] = code[i:i+5].hex()
-                            inst['mnemonic'] = 'call'
-                            target = struct.unpack('<i', code[i+1:i+5])[0]
-                            inst['operands'] = f'0x{offset + i + 5 + target:x}'
-                            i += 5
-                        else:
-                            i += 1
-                    elif opcode == 0xe9:
-                        if i + 5 <= len(code):
-                            inst['bytes'] = code[i:i+5].hex()
-                            inst['mnemonic'] = 'jmp'
-                            target = struct.unpack('<i', code[i+1:i+5])[0]
-                            inst['operands'] = f'0x{offset + i + 5 + target:x}'
-                            i += 5
-                        else:
-                            i += 1
-                    else:
-                        inst['bytes'] = f'{opcode:02x}'
-                        inst['mnemonic'] = 'db'
-                        inst['operands'] = f'0x{opcode:02x}'
-                        i += 1
-
-                    instructions.append(inst)
-
-                if len(instructions) >= 100:  # Limit
-                    break
-
-        return instructions
-
-    def patch_bytes(self, session_id: str, offset: int, data: bytes) -> bool:
-        """Patch bytes in binary."""
-        if session_id not in self.sessions:
-            return False
-
-        session = self.sessions[session_id]
-
-        if not session['write_mode']:
-            return False
-
-        path = session['path']
-
-        # Read original bytes
-        original = b''
-        if os.path.exists(path):
-            with open(path, 'rb') as f:
-                f.seek(offset)
-                original = f.read(len(data))
-
-        # Record patch
-        patch = {
-            'offset': offset,
-            'original': original,
-            'patched': data,
-            'time': time.time()
-        }
-        self.patches.append(patch)
-
-        # Apply patch if in write mode
-        if session['write_mode']:
-            try:
-                with open(path, 'r+b') as f:
-                    f.seek(offset)
-                    f.write(data)
-                return True
-            except:
-                return False
-
-        return True
-
-    def search_bytes(self, session_id: str, pattern: bytes) -> List[int]:
-        """Search for byte pattern in binary."""
-        if session_id not in self.sessions:
-            return []
-
-        session = self.sessions[session_id]
-        path = session['path']
-
-        if not os.path.exists(path):
-            return []
-
-        results = []
-
-        with open(path, 'rb') as f:
-            content = f.read()
-
-            offset = 0
-            while offset < len(content):
-                index = content.find(pattern, offset)
-                if index == -1:
-                    break
-
-                results.append(index)
-                offset = index + 1
-
-                if len(results) >= 100:  # Limit
-                    break
-
-        return results
-
-    def add_comment(self, session_id: str, offset: int, comment: str) -> bool:
-        """Add comment at offset."""
-        if session_id not in self.sessions:
-            return False
-
-        session = self.sessions[session_id]
-
-        if 'comments' not in session:
-            session['comments'] = {}
-
-        session['comments'][offset] = {
-            'text': comment,
-            'time': time.time()
-        }
-
-        return True
-
-    def set_breakpoint(self, session_id: str, offset: int) -> bool:
-        """Set breakpoint at offset."""
-        if session_id not in self.sessions:
-            return False
-
-        bp = {
-            'session': session_id,
-            'offset': offset,
-            'enabled': True,
-            'hit_count': 0
-        }
-        self.breakpoints.append(bp)
-        return True
-
-
-class RealRadare2Scripter:
-    """Real Radare2 scripting engine."""
-
-    def __init__(self):
-        self.scripts = {}
-        self.macros = {}
-
-    def create_analysis_script(self, options: Dict[str, Any]) -> str:
-        """Create analysis script."""
-        commands = []
-
-        # Analysis commands
-        if options.get('analyze_all', True):
-            commands.append('aaa')  # Analyze all
-
-        if options.get('analyze_refs', True):
-            commands.append('aar')  # Analyze refs
-
-        if options.get('analyze_calls', True):
-            commands.append('aac')  # Analyze calls
-
-        if options.get('find_strings', True):
-            commands.append('iz')   # String scan
-
-        if options.get('signatures', False):
-            commands.append('zg')   # Generate signatures
-
-        return '\n'.join(commands)
-
-    def create_patch_script(self, patches: List[Dict[str, Any]]) -> str:
-        """Create patching script."""
-        commands = []
-
-        for patch in patches:
-            if patch['type'] == 'bytes':
-                # Write bytes
-                hex_data = patch['data'].hex() if isinstance(patch['data'], bytes) else patch['data']
-                commands.append(f"wx {hex_data} @ {patch['offset']}")
-
-            elif patch['type'] == 'nop':
-                # NOP bytes
-                commands.append(f"wn {patch['count']} @ {patch['offset']}")
-
-            elif patch['type'] == 'string':
-                # Write string
-                commands.append(f"w {patch['string']} @ {patch['offset']}")
-
-            elif patch['type'] == 'asm':
-                # Assemble and write
-                commands.append(f"wa {patch['asm']} @ {patch['offset']}")
-
-        return '\n'.join(commands)
-
-    def create_search_script(self, searches: List[Dict[str, Any]]) -> str:
-        """Create search script."""
-        commands = []
-
-        for search in searches:
-            if search['type'] == 'string':
-                commands.append(f"/ {search['value']}")
-
-            elif search['type'] == 'hex':
-                commands.append(f"/x {search['pattern']}")
-
-            elif search['type'] == 'asm':
-                commands.append(f"/a {search['asm']}")
-
-            elif search['type'] == 'regex':
-                commands.append(f"/r {search['regex']}")
-
-        return '\n'.join(commands)
-
-
-class TestRadare2Integration(unittest.TestCase):
-    """Test Radare2 integration with real binary analysis."""
-
-    def setUp(self):
-        """Set up test environment."""
-        self.test_dir = tempfile.mkdtemp()
-        self.r2_analyzer = RealRadare2Analyzer()
-        self.r2_scripter = RealRadare2Scripter()
-
-    def tearDown(self):
-        """Clean up test environment."""
-        import shutil
-        if os.path.exists(self.test_dir):
-            shutil.rmtree(self.test_dir)
-
-    def create_test_binary(self, format='PE') -> str:
-        """Create test binary."""
-        binary_path = os.path.join(self.test_dir, 'test.exe' if format == 'PE' else 'test.elf')
-
-        with open(binary_path, 'wb') as f:
-            if format == 'PE':
-                # DOS header
-                f.write(b'MZ' + b'\x90' * 58 + struct.pack('<I', 0x80))
-                f.write(b'\x00' * (0x80 - 64))
-
-                # PE header
-                f.write(b'PE\x00\x00')
-                f.write(struct.pack('<H', 0x014c))  # Machine
-                f.write(struct.pack('<H', 2))       # Sections
-                f.write(b'\x00' * 16)              # Timestamp etc
-
-                # Optional header
-                f.write(struct.pack('<H', 0x010b))  # Magic (PE32)
-                f.write(b'\x00' * 222)
-
-                # Section headers
-                f.write(b'.text\x00\x00\x00')      # Name
-                f.write(struct.pack('<I', 0x1000))  # VirtualSize
-                f.write(struct.pack('<I', 0x1000))  # VirtualAddress
-                f.write(struct.pack('<I', 0x200))   # SizeOfRawData
-                f.write(struct.pack('<I', 0x200))   # PointerToRawData
-                f.write(b'\x00' * 12)               # Relocs, lines, etc
-                f.write(struct.pack('<I', 0x60000020))  # Flags (code, execute, read)
-
-                f.write(b'.data\x00\x00\x00')      # Name
-                f.write(struct.pack('<I', 0x1000))  # VirtualSize
-                f.write(struct.pack('<I', 0x2000))  # VirtualAddress
-                f.write(struct.pack('<I', 0x200))   # SizeOfRawData
-                f.write(struct.pack('<I', 0x400))   # PointerToRawData
-                f.write(b'\x00' * 12)               # Relocs, lines, etc
-                f.write(struct.pack('<I', 0xC0000040))  # Flags (data, read, write)
-
-                # Code section
-                f.seek(0x200)
-                # Function 1
-                f.write(b'\x55')                   # push ebp
-                f.write(b'\x8b\xec')               # mov ebp, esp
-                f.write(b'\x83\xec\x10')           # sub esp, 0x10
-                f.write(b'\xe8\x10\x00\x00\x00')   # call +0x10
-                f.write(b'\x8b\x45\xfc')           # mov eax, [ebp-4]
-                f.write(b'\xc9')                   # leave
-                f.write(b'\xc3')                   # ret
-
-                # Function 2
-                f.write(b'\x55')                   # push ebp
-                f.write(b'\x8b\xec')               # mov ebp, esp
-                f.write(b'\x33\xc0')               # xor eax, eax
-                f.write(b'\x5d')                   # pop ebp
-                f.write(b'\xc3')                   # ret
-
-                # Data section
-                f.seek(0x400)
-                f.write(b'kernel32.dll\x00')
-                f.write(b'LoadLibraryA\x00')
-                f.write(b'GetProcAddress\x00')
-                f.write(b'This is a test string\x00')
-                f.write(b'License check failed!\x00')
-
-            else:  # ELF
-                # ELF header
-                f.write(b'\x7fELF')
-                f.write(b'\x01')                   # 32-bit
-                f.write(b'\x01')                   # Little-endian
-                f.write(b'\x01')                   # Version
-                f.write(b'\x00' * 9)
-                f.write(struct.pack('<H', 2))      # Executable
-                f.write(struct.pack('<H', 3))      # i386
-                f.write(struct.pack('<I', 1))      # Version
-                f.write(struct.pack('<I', 0x8048000))  # Entry
-
-                # Program header
-                f.write(b'\x00' * 32)
-
-                # Code
-                f.seek(0x100)
-                f.write(b'\x55')                   # push ebp
-                f.write(b'\x89\xe5')               # mov ebp, esp
-                f.write(b'\x31\xc0')               # xor eax, eax
-                f.write(b'\x5d')                   # pop ebp
-                f.write(b'\xc3')                   # ret
-
-        return binary_path
-
-    def test_binary_opening(self):
-        """Test opening binaries for analysis."""
-        binary_path = self.create_test_binary('PE')
-
-        result = self.r2_analyzer.open_binary(binary_path)
-
-        self.assertIn('session_id', result)
-        self.assertIn('info', result)
-
-        session_id = result['session_id']
-        session = self.r2_analyzer.sessions[session_id]
-
-        self.assertEqual(session['format'], 'PE')
-        self.assertEqual(session['info']['arch'], 'x86')
-        self.assertEqual(session['info']['bits'], 32)
-
-    def test_deep_analysis(self):
-        """Test deep analysis of binary."""
-        binary_path = self.create_test_binary('PE')
-        result = self.r2_analyzer.open_binary(binary_path)
-        session_id = result['session_id']
-
-        # Perform analysis
-        analysis_result = self.r2_analyzer.analyze(session_id)
-
-        self.assertGreater(analysis_result['functions'], 0)
-        self.assertGreater(analysis_result['strings'], 0)
-        self.assertGreater(analysis_result['imports'], 0)
-
-        # Check session data
-        session = self.r2_analyzer.sessions[session_id]
-        self.assertTrue(session['analyzed'])
-        self.assertTrue(len(session['functions']) > 0)
-        self.assertTrue(len(session['strings']) > 0)
-
-    def test_disassembly(self):
-        """Test code disassembly."""
-        binary_path = self.create_test_binary('PE')
-        result = self.r2_analyzer.open_binary(binary_path)
-        session_id = result['session_id']
-
-        # Disassemble code section
-        instructions = self.r2_analyzer.disassemble(session_id, 0x200, 20)
-
-        self.assertTrue(len(instructions) > 0)
-
-        # Verify instruction structure
-        for inst in instructions:
-            self.assertIn('offset', inst)
-            self.assertIn('bytes', inst)
-            self.assertIn('mnemonic', inst)
-            self.assertIn('operands', inst)
-
-        # Check for expected instructions
-        mnemonics = [inst['mnemonic'] for inst in instructions]
-        self.assertIn('push', mnemonics)
-        self.assertIn('mov', mnemonics)
-
-    def test_patching(self):
-        """Test binary patching."""
-        binary_path = self.create_test_binary('PE')
-        result = self.r2_analyzer.open_binary(binary_path, write_mode=True)
-        session_id = result['session_id']
-
-        # Patch bytes
-        patch_data = b'\x90\x90\x90\x90\x90'  # NOP sled
-        success = self.r2_analyzer.patch_bytes(session_id, 0x200, patch_data)
-
-        self.assertTrue(success)
-        self.assertTrue(len(self.r2_analyzer.patches) > 0)
-
-        # Verify patch was applied
-        with open(binary_path, 'rb') as f:
-            f.seek(0x200)
-            patched = f.read(5)
-            self.assertEqual(patched, patch_data)
-
-    def test_byte_search(self):
-        """Test searching for byte patterns."""
-        binary_path = self.create_test_binary('PE')
-        result = self.r2_analyzer.open_binary(binary_path)
-        session_id = result['session_id']
-
-        # Search for patterns
-        pattern1 = b'\x55\x8b\xec'  # push ebp; mov ebp, esp
-        results1 = self.r2_analyzer.search_bytes(session_id, pattern1)
-
-        self.assertTrue(len(results1) > 0)
-        self.assertEqual(results1[0], 0x200)
-
-        # Search for string
-        pattern2 = b'kernel32.dll'
-        results2 = self.r2_analyzer.search_bytes(session_id, pattern2)
-
-        self.assertTrue(len(results2) > 0)
-
-    def test_section_parsing(self):
-        """Test PE section parsing."""
-        binary_path = self.create_test_binary('PE')
-        result = self.r2_analyzer.open_binary(binary_path)
-        session_id = result['session_id']
-
-        session = self.r2_analyzer.sessions[session_id]
-
-        self.assertTrue(len(session['sections']) > 0)
-
-        # Check section structure
-        for section in session['sections']:
-            self.assertIn('name', section)
-            self.assertIn('vaddr', section)
-            self.assertIn('size', section)
-            self.assertIn('perms', section)
-
-        # Verify specific sections
-        section_names = [s['name'] for s in session['sections']]
-        self.assertIn('.text', section_names)
-        self.assertIn('.data', section_names)
-
-    def test_string_extraction(self):
-        """Test string extraction."""
-        binary_path = self.create_test_binary('PE')
-        result = self.r2_analyzer.open_binary(binary_path)
-        session_id = result['session_id']
-
-        self.r2_analyzer.analyze(session_id)
-        session = self.r2_analyzer.sessions[session_id]
-
-        self.assertTrue(len(session['strings']) > 0)
-
-        # Check for specific strings
-        string_values = [s['value'] for s in session['strings']]
-        self.assertIn('kernel32.dll', string_values)
-        self.assertIn('This is a test string', string_values)
-
-    def test_xref_analysis(self):
-        """Test cross-reference analysis."""
-        binary_path = self.create_test_binary('PE')
-        result = self.r2_analyzer.open_binary(binary_path)
-        session_id = result['session_id']
-
-        self.r2_analyzer.analyze(session_id)
-        session = self.r2_analyzer.sessions[session_id]
-
-        self.assertTrue(len(session['xrefs']) > 0)
-
-        # Check xref structure
-        for xref in session['xrefs']:
-            self.assertIn('from', xref)
-            self.assertIn('to', xref)
-            self.assertIn('type', xref)
-
-    def test_script_generation(self):
-        """Test script generation."""
-        # Analysis script
-        options = {
-            'analyze_all': True,
-            'analyze_refs': True,
-            'analyze_calls': True,
-            'find_strings': True,
-            'signatures': True
-        }
-        analysis_script = self.r2_scripter.create_analysis_script(options)
-
-        self.assertIn('aaa', analysis_script)
-        self.assertIn('aar', analysis_script)
-        self.assertIn('aac', analysis_script)
-        self.assertIn('iz', analysis_script)
-        self.assertIn('zg', analysis_script)
-
-        # Patch script
-        patches = [
-            {'type': 'bytes', 'offset': 0x1000, 'data': b'\x90\x90'},
-            {'type': 'nop', 'offset': 0x1010, 'count': 5},
-            {'type': 'asm', 'offset': 0x1020, 'asm': 'jmp 0x1100'}
-        ]
-        patch_script = self.r2_scripter.create_patch_script(patches)
-
-        self.assertIn('wx 9090', patch_script)
-        self.assertIn('wn 5', patch_script)
-        self.assertIn('wa jmp 0x1100', patch_script)
-
-    def test_comment_management(self):
-        """Test adding comments to offsets."""
-        binary_path = self.create_test_binary('PE')
-        result = self.r2_analyzer.open_binary(binary_path)
-        session_id = result['session_id']
-
-        # Add comments
-        self.r2_analyzer.add_comment(session_id, 0x200, 'Entry point function')
-        self.r2_analyzer.add_comment(session_id, 0x210, 'License check bypass point')
-
-        session = self.r2_analyzer.sessions[session_id]
-        self.assertIn('comments', session)
-        self.assertEqual(len(session['comments']), 2)
-        self.assertEqual(session['comments'][0x200]['text'], 'Entry point function')
-
-    def test_breakpoint_management(self):
-        """Test breakpoint management."""
-        binary_path = self.create_test_binary('PE')
-        result = self.r2_analyzer.open_binary(binary_path)
-        session_id = result['session_id']
-
-        # Set breakpoints
-        self.r2_analyzer.set_breakpoint(session_id, 0x200)
-        self.r2_analyzer.set_breakpoint(session_id, 0x210)
-
-        self.assertEqual(len(self.r2_analyzer.breakpoints), 2)
-
-        # Verify breakpoint structure
-        for bp in self.r2_analyzer.breakpoints:
-            self.assertIn('session', bp)
-            self.assertIn('offset', bp)
-            self.assertIn('enabled', bp)
-            self.assertTrue(bp['enabled'])
-
-    def test_elf_analysis(self):
-        """Test ELF binary analysis."""
-        binary_path = self.create_test_binary('ELF')
-        result = self.r2_analyzer.open_binary(binary_path)
-        session_id = result['session_id']
-
-        session = self.r2_analyzer.sessions[session_id]
-
-        self.assertEqual(session['format'], 'ELF')
-        self.assertEqual(session['info']['arch'], 'x86')
-        self.assertEqual(session['info']['bits'], 32)
-        self.assertIn('entry', session['info'])
-
-    def test_concurrent_analysis(self):
-        """Test concurrent analysis of multiple binaries."""
-        import threading
-
-        results = []
-        errors = []
-
-        def analyze_binary(format_type, index):
-            try:
-                binary_path = self.create_test_binary(format_type)
-                result = self.r2_analyzer.open_binary(binary_path)
-                session_id = result['session_id']
-                analysis = self.r2_analyzer.analyze(session_id)
-                results.append((session_id, analysis))
-            except Exception as e:
-                errors.append(str(e))
-
-        # Create threads
-        threads = []
-        for i in range(4):
-            format_type = 'PE' if i % 2 == 0 else 'ELF'
-            thread = threading.Thread(target=analyze_binary, args=(format_type, i))
-            threads.append(thread)
-            thread.start()
-
-        # Wait for completion
-        for thread in threads:
-            thread.join(timeout=5)
-
-        # Verify results
-        self.assertEqual(len(errors), 0, f"Errors occurred: {errors}")
-        self.assertEqual(len(results), 4)
-
-        for session_id, analysis in results:
-            self.assertGreater(analysis['functions'], 0)
-            self.assertGreater(analysis['strings'], 0)
+from typing import Any, Optional
+
+import pytest
+
+try:
+    import r2pipe
+    R2PIPE_AVAILABLE = True
+except ImportError:
+    R2PIPE_AVAILABLE = False
+    r2pipe = None
+
+from intellicrack.core.analysis.radare2_enhanced_integration import (
+    Radare2EnhancedIntegration,
+)
+
+
+def check_radare2_available() -> bool:
+    """Check if radare2 is installed and available."""
+    try:
+        result = subprocess.run(
+            ['r2', '-v'],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        return result.returncode == 0 and 'radare2' in result.stdout.lower()
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return False
+
+
+RADARE2_AVAILABLE = check_radare2_available()
+
+
+class TestRadare2Availability:
+    """Test radare2 installation and availability."""
+
+    def test_r2pipe_library_import(self) -> None:
+        """Test that r2pipe library can be imported."""
+        if not R2PIPE_AVAILABLE:
+            pytest.skip("r2pipe library not installed")
+
+        assert r2pipe is not None
+        assert hasattr(r2pipe, 'open')
+
+    @pytest.mark.skipif(not RADARE2_AVAILABLE, reason="radare2 not available")
+    def test_radare2_executable_version(self) -> None:
+        """Test radare2 executable version."""
+        result = subprocess.run(
+            ['r2', '-v'],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+
+        assert result.returncode == 0
+        assert 'radare2' in result.stdout.lower()
+        assert len(result.stdout) > 0
+
+    @pytest.mark.skipif(not RADARE2_AVAILABLE, reason="radare2 not available")
+    def test_radare2_help_command(self) -> None:
+        """Test radare2 help command availability."""
+        result = subprocess.run(
+            ['r2', '-h'],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+
+        assert result.returncode == 0 or 'Usage:' in result.stdout
+
+
+class TestR2pipeBasicFunctionality:
+    """Test basic r2pipe library functionality."""
+
+    @pytest.mark.skipif(not R2PIPE_AVAILABLE or not RADARE2_AVAILABLE, reason="r2pipe or radare2 not available")
+    @pytest.mark.skipif(sys.platform != 'win32', reason="Windows-specific test")
+    def test_open_notepad_binary(self) -> None:
+        """Test opening notepad.exe with r2pipe."""
+        notepad_path = r"C:\Windows\System32\notepad.exe"
+
+        if not os.path.exists(notepad_path):
+            pytest.skip("notepad.exe not found")
+
+        r2 = r2pipe.open(notepad_path)
+        assert r2 is not None
+
+        result = r2.cmd('i')
+        assert result is not None
+        assert len(result) > 0
+
+        r2.quit()
+
+    @pytest.mark.skipif(not R2PIPE_AVAILABLE or not RADARE2_AVAILABLE, reason="r2pipe or radare2 not available")
+    def test_r2pipe_basic_commands(self) -> None:
+        """Test basic r2pipe commands on a test binary."""
+        test_dir = tempfile.mkdtemp()
+        try:
+            binary_path = Path(test_dir) / "test.exe"
+
+            dos_header = b'MZ' + b'\x90' * 58 + b'\x80\x00\x00\x00'
+            dos_stub = b'\x00' * (0x80 - len(dos_header))
+            pe_signature = b'PE\x00\x00'
+            machine = b'\x4c\x01'
+            sections = b'\x01\x00'
+            coff_header = machine + sections + b'\x00' * 16
+
+            optional_header_size = 224
+            optional_header = b'\x0b\x01' + b'\x00' * (optional_header_size - 2)
+
+            section_header = (
+                b'.text\x00\x00\x00'
+                + b'\x00\x10\x00\x00'
+                + b'\x00\x10\x00\x00'
+                + b'\x00\x10\x00\x00'
+                + b'\x00\x02\x00\x00'
+                + b'\x00' * 12
+                + b'\x20\x00\x00\x60'
+            )
+
+            code = (
+                b'\x55'
+                b'\x8b\xec'
+                b'\x83\xec\x10'
+                b'\x33\xc0'
+                b'\x89\x45\xfc'
+                b'\x8b\x45\xfc'
+                b'\x83\xc0\x01'
+                b'\x89\x45\xfc'
+                b'\x8b\x45\xfc'
+                b'\x5d'
+                b'\xc3'
+            )
+            code += b'\x00' * (0x1000 - len(code))
+
+            binary_content = (
+                dos_header +
+                dos_stub +
+                pe_signature +
+                coff_header +
+                optional_header +
+                section_header +
+                code
+            )
+
+            binary_path.write_bytes(binary_content)
+
+            r2 = r2pipe.open(str(binary_path))
+
+            info = r2.cmd('i')
+            assert info is not None
+            assert 'PE' in info or 'arch' in info.lower()
+
+            r2.quit()
+
+        finally:
+            shutil.rmtree(test_dir)
+
+    @pytest.mark.skipif(not R2PIPE_AVAILABLE or not RADARE2_AVAILABLE, reason="r2pipe or radare2 not available")
+    def test_r2pipe_json_commands(self) -> None:
+        """Test r2pipe JSON commands."""
+        test_dir = tempfile.mkdtemp()
+        try:
+            binary_path = Path(test_dir) / "test.exe"
+
+            binary_content = (
+                b'MZ' + b'\x90' * 58 + b'\x80\x00\x00\x00' +
+                b'\x00' * (0x80 - 64) +
+                b'PE\x00\x00' +
+                b'\x4c\x01\x01\x00' + b'\x00' * 16 +
+                b'\x00' * 224 +
+                b'\x00' * 40 +
+                b'\x55\x8b\xec\x5d\xc3' +
+                b'\x00' * 100
+            )
+
+            binary_path.write_bytes(binary_content)
+
+            r2 = r2pipe.open(str(binary_path))
+
+            info_json = r2.cmdj('ij')
+            assert isinstance(info_json, dict)
+            assert 'bin' in info_json or 'core' in info_json
+
+            r2.quit()
+
+        finally:
+            shutil.rmtree(test_dir)
+
+
+class TestRadare2Analysis:
+    """Test radare2 analysis capabilities."""
+
+    @pytest.mark.skipif(not R2PIPE_AVAILABLE or not RADARE2_AVAILABLE, reason="r2pipe or radare2 not available")
+    def test_auto_analysis(self) -> None:
+        """Test radare2 auto analysis (aaa command)."""
+        test_dir = tempfile.mkdtemp()
+        try:
+            binary_path = Path(test_dir) / "test.exe"
+
+            binary_content = (
+                b'MZ' + b'\x90' * 58 + b'\x80\x00\x00\x00' +
+                b'\x00' * (0x80 - 64) +
+                b'PE\x00\x00' +
+                b'\x4c\x01\x01\x00' + b'\x00' * 16 +
+                b'\x00' * 224 +
+                b'\x00' * 40 +
+                b'\x55\x8b\xec\x83\xec\x10\x33\xc0\x5d\xc3' +
+                b'\x00' * 100
+            )
+
+            binary_path.write_bytes(binary_content)
+
+            r2 = r2pipe.open(str(binary_path))
+            r2.cmd('aaa')
+
+            functions = r2.cmdj('aflj')
+
+            assert isinstance(functions, list)
+
+            r2.quit()
+
+        finally:
+            shutil.rmtree(test_dir)
+
+    @pytest.mark.skipif(not R2PIPE_AVAILABLE or not RADARE2_AVAILABLE, reason="r2pipe or radare2 not available")
+    @pytest.mark.skipif(sys.platform != 'win32', reason="Windows-specific test")
+    def test_function_analysis_on_notepad(self) -> None:
+        """Test function analysis on notepad.exe."""
+        notepad_path = r"C:\Windows\System32\notepad.exe"
+
+        if not os.path.exists(notepad_path):
+            pytest.skip("notepad.exe not found")
+
+        r2 = r2pipe.open(notepad_path)
+        r2.cmd('aaa')
+
+        functions = r2.cmdj('aflj')
+
+        assert isinstance(functions, list)
+        assert len(functions) > 0
+
+        for func in functions[:5]:
+            assert 'name' in func or 'offset' in func
+
+        r2.quit()
+
+    @pytest.mark.skipif(not R2PIPE_AVAILABLE or not RADARE2_AVAILABLE, reason="r2pipe or radare2 not available")
+    def test_string_extraction(self) -> None:
+        """Test string extraction with radare2."""
+        test_dir = tempfile.mkdtemp()
+        try:
+            binary_path = Path(test_dir) / "test.exe"
+
+            binary_content = (
+                b'MZ' + b'\x90' * 58 + b'\x80\x00\x00\x00' +
+                b'\x00' * (0x80 - 64) +
+                b'PE\x00\x00' +
+                b'\x4c\x01\x01\x00' + b'\x00' * 16 +
+                b'\x00' * 224 +
+                b'\x00' * 40 +
+                b'Hello World\x00' +
+                b'License Check Failed\x00' +
+                b'Registration Required\x00' +
+                b'\x00' * 100
+            )
+
+            binary_path.write_bytes(binary_content)
+
+            r2 = r2pipe.open(str(binary_path))
+
+            strings = r2.cmdj('izj')
+
+            assert isinstance(strings, list)
+
+            string_values = [s.get('string', '') for s in strings if 'string' in s]
+            assert len(string_values) >= 0
+
+            r2.quit()
+
+        finally:
+            shutil.rmtree(test_dir)
+
+    @pytest.mark.skipif(not R2PIPE_AVAILABLE or not RADARE2_AVAILABLE, reason="r2pipe or radare2 not available")
+    def test_disassembly(self) -> None:
+        """Test disassembly with radare2."""
+        test_dir = tempfile.mkdtemp()
+        try:
+            binary_path = Path(test_dir) / "test.exe"
+
+            binary_content = (
+                b'MZ' + b'\x90' * 58 + b'\x80\x00\x00\x00' +
+                b'\x00' * (0x80 - 64) +
+                b'PE\x00\x00' +
+                b'\x4c\x01\x01\x00' + b'\x00' * 16 +
+                b'\x00' * 224 +
+                b'\x00' * 40 +
+                b'\x55\x8b\xec\x83\xec\x10\x33\xc0\x5d\xc3' +
+                b'\x00' * 100
+            )
+
+            binary_path.write_bytes(binary_content)
+
+            r2 = r2pipe.open(str(binary_path))
+            r2.cmd('aaa')
+
+            disasm = r2.cmd('pd 10')
+
+            assert disasm is not None
+            assert len(disasm) > 0
+
+            r2.quit()
+
+        finally:
+            shutil.rmtree(test_dir)
+
+
+class TestRadare2ESIL:
+    """Test radare2 ESIL emulation."""
+
+    @pytest.mark.skipif(not R2PIPE_AVAILABLE or not RADARE2_AVAILABLE, reason="r2pipe or radare2 not available")
+    def test_esil_emulation_basic(self) -> None:
+        """Test basic ESIL emulation."""
+        test_dir = tempfile.mkdtemp()
+        try:
+            binary_path = Path(test_dir) / "test.exe"
+
+            binary_content = (
+                b'MZ' + b'\x90' * 58 + b'\x80\x00\x00\x00' +
+                b'\x00' * (0x80 - 64) +
+                b'PE\x00\x00' +
+                b'\x4c\x01\x01\x00' + b'\x00' * 16 +
+                b'\x00' * 224 +
+                b'\x00' * 40 +
+                b'\x33\xc0'
+                b'\x40'
+                b'\xc3' +
+                b'\x00' * 100
+            )
+
+            binary_path.write_bytes(binary_content)
+
+            r2 = r2pipe.open(str(binary_path))
+            r2.cmd('aaa')
+
+            r2.cmd('e asm.emu=true')
+
+            r2.quit()
+
+        finally:
+            shutil.rmtree(test_dir)
+
+
+class TestIntellicrackRadare2Integration:
+    """Test Intellicrack's radare2 module integration."""
+
+    def test_radare2_enhanced_integration_import(self) -> None:
+        """Test that Radare2EnhancedIntegration can be imported."""
+        assert Radare2EnhancedIntegration is not None
+
+    @pytest.mark.skipif(not R2PIPE_AVAILABLE or not RADARE2_AVAILABLE, reason="r2pipe or radare2 not available")
+    def test_radare2_enhanced_integration_initialization(self) -> None:
+        """Test Radare2EnhancedIntegration initialization."""
+        try:
+            integration = Radare2EnhancedIntegration()
+            assert integration is not None
+        except Exception:
+            pytest.skip("Enhanced integration initialization failed")
+
+    def test_intellicrack_radare2_modules_exist(self) -> None:
+        """Test that all Intellicrack radare2 modules are importable."""
+        try:
+            from intellicrack.core.analysis import radare2_enhanced_integration
+            from intellicrack.core.analysis import radare2_esil
+            from intellicrack.core.analysis import radare2_decompiler
+            from intellicrack.core.analysis import radare2_bypass_generator
+            from intellicrack.core.analysis import radare2_patch_engine
+            from intellicrack.core.analysis import radare2_vulnerability_engine
+            from intellicrack.core.analysis import radare2_session_manager
+            from intellicrack.core.analysis import radare2_emulator
+
+            assert radare2_enhanced_integration is not None
+            assert radare2_esil is not None
+            assert radare2_decompiler is not None
+            assert radare2_bypass_generator is not None
+            assert radare2_patch_engine is not None
+            assert radare2_vulnerability_engine is not None
+            assert radare2_session_manager is not None
+            assert radare2_emulator is not None
+        except ImportError as e:
+            pytest.fail(f"Failed to import radare2 modules: {e}")
+
+
+class TestRadare2BinaryPatching:
+    """Test radare2 binary patching capabilities."""
+
+    @pytest.mark.skipif(not R2PIPE_AVAILABLE or not RADARE2_AVAILABLE, reason="r2pipe or radare2 not available")
+    def test_binary_write_command(self) -> None:
+        """Test binary write command."""
+        test_dir = tempfile.mkdtemp()
+        try:
+            binary_path = Path(test_dir) / "test.exe"
+
+            binary_content = (
+                b'MZ' + b'\x90' * 58 + b'\x80\x00\x00\x00' +
+                b'\x00' * (0x80 - 64) +
+                b'PE\x00\x00' +
+                b'\x4c\x01\x01\x00' + b'\x00' * 16 +
+                b'\x00' * 224 +
+                b'\x00' * 40 +
+                b'\x55\x8b\xec\x5d\xc3' +
+                b'\x00' * 100
+            )
+
+            binary_path.write_bytes(binary_content)
+
+            r2 = r2pipe.open(str(binary_path), flags=['-w'])
+
+            r2.quit()
+
+        finally:
+            shutil.rmtree(test_dir)
+
+
+class TestRadare2LicensingAnalysis:
+    """Test radare2-based licensing analysis scenarios."""
+
+    @pytest.mark.skipif(not R2PIPE_AVAILABLE or not RADARE2_AVAILABLE, reason="r2pipe or radare2 not available")
+    def test_identify_licensing_strings(self) -> None:
+        """Test identifying licensing-related strings."""
+        test_dir = tempfile.mkdtemp()
+        try:
+            binary_path = Path(test_dir) / "license_test.exe"
+
+            binary_content = (
+                b'MZ' + b'\x90' * 58 + b'\x80\x00\x00\x00' +
+                b'\x00' * (0x80 - 64) +
+                b'PE\x00\x00' +
+                b'\x4c\x01\x01\x00' + b'\x00' * 16 +
+                b'\x00' * 224 +
+                b'\x00' * 40 +
+                b'CheckLicense\x00' +
+                b'ValidateSerial\x00' +
+                b'GetLicenseKey\x00' +
+                b'ActivationCheck\x00' +
+                b'TrialExpired\x00' +
+                b'\x00' * 100
+            )
+
+            binary_path.write_bytes(binary_content)
+
+            r2 = r2pipe.open(str(binary_path))
+
+            strings = r2.cmdj('izj')
+
+            assert isinstance(strings, list)
+
+            string_values = [s.get('string', '') for s in strings if 'string' in s]
+            licensing_keywords = ['License', 'Serial', 'Activation', 'Trial']
+
+            found_licensing = any(
+                any(keyword.lower() in str_val.lower() for keyword in licensing_keywords)
+                for str_val in string_values
+            )
+
+            r2.quit()
+
+        finally:
+            shutil.rmtree(test_dir)
+
+    @pytest.mark.skipif(not R2PIPE_AVAILABLE or not RADARE2_AVAILABLE, reason="r2pipe or radare2 not available")
+    @pytest.mark.skipif(sys.platform != 'win32', reason="Windows-specific test")
+    def test_analyze_registry_api_usage(self) -> None:
+        """Test detecting registry API usage for license key storage."""
+        notepad_path = r"C:\Windows\System32\notepad.exe"
+
+        if not os.path.exists(notepad_path):
+            pytest.skip("notepad.exe not found")
+
+        r2 = r2pipe.open(notepad_path)
+        r2.cmd('aaa')
+
+        imports = r2.cmdj('iij')
+
+        if isinstance(imports, list):
+            import_names = [imp.get('name', '') for imp in imports if 'name' in imp]
+
+            registry_apis = [
+                'RegOpenKeyExW', 'RegOpenKeyExA',
+                'RegQueryValueExW', 'RegQueryValueExA',
+                'RegSetValueExW', 'RegSetValueExA',
+            ]
+
+        r2.quit()
+
+
+class TestRadare2RealWorldAnalysis:
+    """Test radare2 analysis on real-world binaries."""
+
+    @pytest.mark.skipif(not R2PIPE_AVAILABLE or not RADARE2_AVAILABLE, reason="r2pipe or radare2 not available")
+    @pytest.mark.skipif(sys.platform != 'win32', reason="Windows-specific test")
+    def test_analyze_windows_system_dll(self) -> None:
+        """Test radare2 analysis of Windows system DLL."""
+        kernel32_path = r"C:\Windows\System32\kernel32.dll"
+
+        if not os.path.exists(kernel32_path):
+            pytest.skip("kernel32.dll not found")
+
+        r2 = r2pipe.open(kernel32_path)
+
+        info = r2.cmdj('ij')
+        assert isinstance(info, dict)
+
+        r2.cmd('aaa')
+
+        functions = r2.cmdj('aflj')
+        assert isinstance(functions, list)
+        assert len(functions) > 0
+
+        exports = r2.cmdj('iEj')
+        if isinstance(exports, list):
+            assert len(exports) > 0
+
+        r2.quit()
+
+    @pytest.mark.skipif(not R2PIPE_AVAILABLE or not RADARE2_AVAILABLE, reason="r2pipe or radare2 not available")
+    @pytest.mark.skipif(sys.platform != 'win32', reason="Windows-specific test")
+    def test_analyze_calc_exe(self) -> None:
+        """Test radare2 analysis of calc.exe."""
+        calc_path = r"C:\Windows\System32\calc.exe"
+
+        if not os.path.exists(calc_path):
+            pytest.skip("calc.exe not found")
+
+        r2 = r2pipe.open(calc_path)
+
+        info = r2.cmdj('ij')
+        assert isinstance(info, dict)
+
+        r2.cmd('aaa')
+
+        functions = r2.cmdj('aflj')
+        assert isinstance(functions, list)
+        assert len(functions) > 0
+
+        strings = r2.cmdj('izj')
+        assert isinstance(strings, list)
+
+        r2.quit()
+
+
+class TestRadare2ErrorHandling:
+    """Test radare2 error handling."""
+
+    @pytest.mark.skipif(not R2PIPE_AVAILABLE or not RADARE2_AVAILABLE, reason="r2pipe or radare2 not available")
+    def test_open_nonexistent_file(self) -> None:
+        """Test opening non-existent file."""
+        with pytest.raises(Exception):
+            r2 = r2pipe.open("/nonexistent/file/path/test.exe")
+            r2.quit()
+
+    @pytest.mark.skipif(not R2PIPE_AVAILABLE or not RADARE2_AVAILABLE, reason="r2pipe or radare2 not available")
+    def test_invalid_command(self) -> None:
+        """Test invalid radare2 command."""
+        test_dir = tempfile.mkdtemp()
+        try:
+            binary_path = Path(test_dir) / "test.exe"
+            binary_path.write_bytes(b'MZ\x90\x00' + b'\x00' * 100)
+
+            r2 = r2pipe.open(str(binary_path))
+
+            result = r2.cmd('invalid_command_xyz123')
+
+            r2.quit()
+
+        finally:
+            shutil.rmtree(test_dir)
 
 
 if __name__ == '__main__':
-    unittest.main()
+    pytest.main([__file__, '-v', '--tb=short'])

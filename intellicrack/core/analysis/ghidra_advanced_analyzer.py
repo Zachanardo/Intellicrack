@@ -138,12 +138,10 @@ class GhidraAdvancedAnalyzer:
 
     def recover_variables(self, function: GhidraFunction) -> list[RecoveredVariable]:
         """Recover variables with type propagation."""
-        variables = []
         stack_vars = {}
 
         if not function.assembly_code:
-            return variables
-
+            return []
         # Parse assembly to track stack operations and type hints
         instructions = function.assembly_code.split("\n")
 
@@ -163,12 +161,12 @@ class GhidraAdvancedAnalyzer:
                     with contextlib.suppress(ValueError):
                         int(inst_parts[2].replace("0x", ""), 16)
 
-            # Detect local variables from stack accesses
             elif "[" in inst_line and ("bp" in inst_line.lower() or "sp" in inst_line.lower()):
-                var_match = re.search(r"\[(r|e)?([bs]p)([+-])0x([0-9a-f]+)\]", inst_line.lower())
-                if var_match:
-                    offset = int(var_match.group(4), 16)
-                    if var_match.group(3) == "-":
+                if var_match := re.search(
+                    r"\[(r|e)?([bs]p)([+-])0x([0-9a-f]+)\]", inst_line.lower()
+                ):
+                    offset = int(var_match[4], 16)
+                    if var_match[3] == "-":
                         offset = -offset
 
                     # Determine variable type from instruction
@@ -210,19 +208,20 @@ class GhidraAdvancedAnalyzer:
         # Size indicators
         if "qword" in inst_lower:
             base_type = "uint64_t"
-        elif "dword" in inst_lower:
+        elif (
+            "dword" in inst_lower
+            or ("word" not in inst_lower
+            and "byte" not in inst_lower)
+        ):
             base_type = "uint32_t"
         elif "word" in inst_lower:
             base_type = "uint16_t"
-        elif "byte" in inst_lower:
-            base_type = "uint8_t"
         else:
-            base_type = "uint32_t"  # Default
-
+            base_type = "uint8_t"
         # Type hints from instructions
-        if mnemonic in ["fld", "fstp", "fadd", "fmul"]:
+        if mnemonic in {"fld", "fstp", "fadd", "fmul"}:
             return "float" if "dword" in inst_lower else "double"
-        if mnemonic in ["lea"]:
+        if mnemonic in {"lea"}:
             return base_type + "*"  # Pointer
         if "str" in mnemonic or "stos" in mnemonic:
             return "char*"  # String operations
@@ -255,27 +254,36 @@ class GhidraAdvancedAnalyzer:
         base_type = type_str.replace("*", "").strip()
         return type_sizes.get(base_type, 4)
 
-    def _propagate_types(self, variables: dict[int, RecoveredVariable], function: GhidraFunction) -> None:
+    def _propagate_types(
+        self, variables: dict[int, RecoveredVariable], function: GhidraFunction
+    ) -> None:
         """Propagate types through data flow analysis."""
         # Analyze function parameters from calling convention
-        if function.calling_convention in ["__stdcall", "__cdecl", "__fastcall"]:
-            # x86/x64 calling conventions
-            param_regs = ["rcx", "rdx", "r8", "r9"] if "64" in function.signature else ["ecx", "edx"]
+        if function.calling_convention not in [
+            "__stdcall",
+            "__cdecl",
+            "__fastcall",
+        ]:
+            return
+        # x86/x64 calling conventions
+        param_regs = (
+            ["rcx", "rdx", "r8", "r9"] if "64" in function.signature else ["ecx", "edx"]
+        )
 
-            len(function.parameters)
-            for i, (param_type, param_name) in enumerate(function.parameters):
-                # Match stack parameters
-                for offset, var in variables.items():
-                    if var.scope == "parameter":
-                        if i < len(param_regs):
-                            # Register parameters
-                            continue
-                        # Stack parameters
-                        stack_param_idx = i - len(param_regs)
-                        expected_offset = 8 + (stack_param_idx * 8)  # Adjust for architecture
-                        if abs(offset - expected_offset) < 16:
-                            var.type = param_type
-                            var.name = param_name if param_name else var.name
+        len(function.parameters)
+        for i, (param_type, param_name) in enumerate(function.parameters):
+            # Match stack parameters
+            for offset, var in variables.items():
+                if var.scope == "parameter":
+                    if i < len(param_regs):
+                        # Register parameters
+                        continue
+                    # Stack parameters
+                    stack_param_idx = i - len(param_regs)
+                    expected_offset = 8 + (stack_param_idx * 8)  # Adjust for architecture
+                    if abs(offset - expected_offset) < 16:
+                        var.type = param_type
+                        var.name = param_name or var.name
 
     def recover_structures(self, analysis_result: GhidraAnalysisResult) -> list[RecoveredStructure]:
         """Recover structure definitions from binary."""
@@ -290,7 +298,11 @@ class GhidraAdvancedAnalyzer:
                 if len(offsets) > 2:  # Likely a structure if multiple offsets
                     struct_key = frozenset(offsets.keys())
                     if struct_key not in struct_candidates:
-                        struct_candidates[struct_key] = {"offsets": offsets, "usage_count": 1, "functions": [func.name]}
+                        struct_candidates[struct_key] = {
+                            "offsets": offsets,
+                            "usage_count": 1,
+                            "functions": [func.name],
+                        }
                     else:
                         struct_candidates[struct_key]["usage_count"] += 1
                         struct_candidates[struct_key]["functions"].append(func.name)
@@ -304,12 +316,19 @@ class GhidraAdvancedAnalyzer:
             offsets = sorted(info["offsets"].items())
             struct_size = 0
 
-            for _j, (offset, access_info) in enumerate(offsets):
+            for offset, access_info in offsets:
                 member_name = f"field_{offset:x}"
                 member_type = access_info["type"]
                 member_size = access_info["size"]
 
-                members.append({"name": member_name, "type": member_type, "offset": offset, "size": member_size})
+                members.append(
+                    {
+                        "name": member_name,
+                        "type": member_type,
+                        "offset": offset,
+                        "size": member_size,
+                    }
+                )
 
                 struct_size = max(struct_size, offset + member_size)
 
@@ -340,12 +359,12 @@ class GhidraAdvancedAnalyzer:
         instructions = function.assembly_code.split("\n")
 
         for inst_line in instructions:
-            # Look for indirect memory accesses
-            access_match = re.search(r"(\w+)\s+.*\[(r\w+)\+0x([0-9a-f]+)\]", inst_line.lower())
-            if access_match:
-                mnemonic = access_match.group(1)
-                base_reg = access_match.group(2)
-                offset = int(access_match.group(3), 16)
+            if access_match := re.search(
+                r"(\w+)\s+.*\[(r\w+)\+0x([0-9a-f]+)\]", inst_line.lower()
+            ):
+                mnemonic = access_match[1]
+                base_reg = access_match[2]
+                offset = int(access_match[3], 16)
 
                 if base_reg not in struct_accesses:
                     struct_accesses[base_reg] = {}
@@ -354,7 +373,11 @@ class GhidraAdvancedAnalyzer:
                 access_type = self._infer_type_from_instruction(mnemonic, inst_line)
                 access_size = self._get_size_from_type(access_type)
 
-                struct_accesses[base_reg][offset] = {"type": access_type, "size": access_size, "instruction": mnemonic}
+                struct_accesses[base_reg][offset] = {
+                    "type": access_type,
+                    "size": access_size,
+                    "instruction": mnemonic,
+                }
 
         return struct_accesses
 
@@ -373,16 +396,15 @@ class GhidraAdvancedAnalyzer:
         for func in analysis_result.functions.values():
             if "ctor" in func.name.lower() or "constructor" in func.name.lower():
                 vtable_inits = self._analyze_vtable_init(func)
-                for vtable_addr, func_addrs in vtable_inits.items():
-                    vtables.append(
-                        VTableInfo(
-                            address=vtable_addr,
-                            class_name=f"class_{vtable_addr:08x}",
-                            functions=func_addrs,
-                            destructor_addr=self._find_destructor(func_addrs),
-                        ),
+                vtables.extend(
+                    VTableInfo(
+                        address=vtable_addr,
+                        class_name=f"class_{vtable_addr:08x}",
+                        functions=func_addrs,
+                        destructor_addr=self._find_destructor(func_addrs),
                     )
-
+                    for vtable_addr, func_addrs in vtable_inits.items()
+                )
         # Analyze RTTI information if present
         if self.pe:
             rtti_vtables = self._analyze_rtti()
@@ -416,7 +438,13 @@ class GhidraAdvancedAnalyzer:
 
             # If we found 3+ consecutive function pointers, it's likely a vtable
             if len(ptrs) >= 3:
-                vtables.append(VTableInfo(address=base_address + i, class_name=f"class_{base_address + i:08x}", functions=ptrs))
+                vtables.append(
+                    VTableInfo(
+                        address=base_address + i,
+                        class_name=f"class_{base_address + i:08x}",
+                        functions=ptrs,
+                    )
+                )
                 i = j
             else:
                 i += ptr_size
@@ -428,12 +456,18 @@ class GhidraAdvancedAnalyzer:
         if not self.pe:
             return False
 
-        for section in self.pe.sections:
-            if section.VirtualAddress <= address < section.VirtualAddress + section.Misc_VirtualSize:
-                # Check if section has execute permissions
-                return bool(section.Characteristics & 0x20000000)
-
-        return False
+        return next(
+            (
+                bool(section.Characteristics & 0x20000000)
+                for section in self.pe.sections
+                if (
+                    section.VirtualAddress
+                    <= address
+                    < section.VirtualAddress + section.Misc_VirtualSize
+                )
+            ),
+            False,
+        )
 
     def _analyze_vtable_init(self, function: GhidraFunction) -> dict[int, list[int]]:
         """Analyze vtable initialization in constructor."""
@@ -448,9 +482,10 @@ class GhidraAdvancedAnalyzer:
         for inst_line in instructions:
             # Look for vtable assignment patterns
             if "lea" in inst_line.lower():
-                vtable_match = re.search(r"lea\s+\w+,\s*\[0x([0-9a-f]+)\]", inst_line.lower())
-                if vtable_match:
-                    current_vtable = int(vtable_match.group(1), 16)
+                if vtable_match := re.search(
+                    r"lea\s+\w+,\s*\[0x([0-9a-f]+)\]", inst_line.lower()
+                ):
+                    current_vtable = int(vtable_match[1], 16)
 
             elif "mov" in inst_line.lower() and current_vtable:
                 # Look for storing vtable pointer to object
@@ -467,7 +502,11 @@ class GhidraAdvancedAnalyzer:
         if self.pe:
             # Find the section containing the vtable
             for section in self.pe.sections:
-                if section.VirtualAddress <= vtable_addr < section.VirtualAddress + section.Misc_VirtualSize:
+                if (
+                    section.VirtualAddress
+                    <= vtable_addr
+                    < section.VirtualAddress + section.Misc_VirtualSize
+                ):
                     offset = vtable_addr - section.VirtualAddress
                     data = section.get_data()[offset:]
                     ptr_size = 8 if self.md and self.md.mode == CS_MODE_64 else 4
@@ -490,9 +529,7 @@ class GhidraAdvancedAnalyzer:
     def _find_destructor(self, func_addrs: list[int]) -> int | None:
         """Identify destructor in vtable functions."""
         # Usually first or second function in vtable
-        if len(func_addrs) >= 2:
-            return func_addrs[1]  # Common convention
-        return None
+        return func_addrs[1] if len(func_addrs) >= 2 else None
 
     def _analyze_rtti(self) -> list[VTableInfo]:
         """Analyze RTTI (Run-Time Type Information)."""
@@ -520,7 +557,10 @@ class GhidraAdvancedAnalyzer:
 
                             vtables.append(
                                 VTableInfo(
-                                    address=vtable_addr, class_name=class_name, functions=[], rtti_address=section.VirtualAddress + i,
+                                    address=vtable_addr,
+                                    class_name=class_name,
+                                    functions=[],
+                                    rtti_address=section.VirtualAddress + i,
                                 ),
                             )
 
@@ -533,7 +573,9 @@ class GhidraAdvancedAnalyzer:
         # This would need proper RTTI parsing
         return f"rtti_class_{hash(rtti_data) & 0xFFFFFF:06x}"
 
-    def extract_exception_handlers(self, analysis_result: GhidraAnalysisResult) -> list[ExceptionHandlerInfo]:
+    def extract_exception_handlers(
+        self, analysis_result: GhidraAnalysisResult
+    ) -> list[ExceptionHandlerInfo]:
         """Extract exception handler information."""
         handlers = []
 
@@ -552,12 +594,7 @@ class GhidraAdvancedAnalyzer:
 
     def _extract_seh(self) -> list[ExceptionHandlerInfo]:
         """Extract SEH handlers from x86 binaries."""
-        handlers = []
-
-        # SEH is stored in stack frames
-        # Would need to analyze functions for __try/__except blocks
-
-        return handlers
+        return []
 
     def _extract_cpp_eh(self) -> list[ExceptionHandlerInfo]:
         """Extract C++ exception handling information."""
@@ -580,7 +617,11 @@ class GhidraAdvancedAnalyzer:
 
                     handlers.append(
                         ExceptionHandlerInfo(
-                            type="C++", handler_address=unwind_info, try_start=begin_addr, try_end=end_addr, catch_blocks=[],
+                            type="C++",
+                            handler_address=unwind_info,
+                            try_start=begin_addr,
+                            try_end=end_addr,
+                            catch_blocks=[],
                         ),
                     )
 
@@ -590,12 +631,7 @@ class GhidraAdvancedAnalyzer:
 
     def _extract_veh(self) -> list[ExceptionHandlerInfo]:
         """Extract VEH handlers."""
-        handlers = []
-
-        # VEH handlers are registered at runtime
-        # Would need dynamic analysis or pattern matching
-
-        return handlers
+        return []
 
     def parse_debug_symbols(self, analysis_result: GhidraAnalysisResult) -> DebugSymbolInfo | None:
         """Parse debug symbol information."""
@@ -628,7 +664,14 @@ class GhidraAdvancedAnalyzer:
                     pdb_path = data[24:].decode("utf-8", errors="ignore").rstrip("\x00")
 
                     return DebugSymbolInfo(
-                        type="PDB", path=pdb_path, guid=guid, age=age, symbols={}, types={}, source_files=[], line_numbers={},
+                        type="PDB",
+                        path=pdb_path,
+                        guid=guid,
+                        age=age,
+                        symbols={},
+                        types={},
+                        source_files=[],
+                        line_numbers={},
                     )
 
         return None
@@ -636,7 +679,16 @@ class GhidraAdvancedAnalyzer:
     def _parse_dwarf_info(self) -> DebugSymbolInfo | None:
         """Parse DWARF debug information from ELF."""
         # Would require full DWARF parser implementation
-        return DebugSymbolInfo(type="DWARF", path=None, guid=None, age=None, symbols={}, types={}, source_files=[], line_numbers={})
+        return DebugSymbolInfo(
+            type="DWARF",
+            path=None,
+            guid=None,
+            age=None,
+            symbols={},
+            types={},
+            source_files=[],
+            line_numbers={},
+        )
 
     def create_custom_datatypes(self, structures: list[RecoveredStructure]) -> list[GhidraDataType]:
         """Create custom data types for Ghidra."""
@@ -647,7 +699,7 @@ class GhidraAdvancedAnalyzer:
             ghidra_type = GhidraDataType(
                 name=struct_obj.name,
                 size=struct_obj.size,
-                category="struct" if not struct_obj.is_union else "union",
+                category="union" if struct_obj.is_union else "struct",
                 members=struct_obj.members,
                 alignment=struct_obj.alignment,
             )
@@ -666,14 +718,19 @@ class GhidraAdvancedAnalyzer:
             # Create array types for common sizes
             for array_size in [10, 100, 256]:
                 array_type = GhidraDataType(
-                    name=f"{struct.name}[{array_size}]", size=struct.size * array_size, category="array", base_type=struct.name,
+                    name=f"{struct.name}[{array_size}]",
+                    size=struct.size * array_size,
+                    category="array",
+                    base_type=struct.name,
                 )
                 custom_types.append(array_type)
 
         return custom_types
 
 
-def apply_advanced_analysis(analysis_result: GhidraAnalysisResult, binary_path: str) -> GhidraAnalysisResult:
+def apply_advanced_analysis(
+    analysis_result: GhidraAnalysisResult, binary_path: str
+) -> GhidraAnalysisResult:
     """Apply advanced analysis features to existing Ghidra results."""
     analyzer = GhidraAdvancedAnalyzer(binary_path)
 
@@ -692,7 +749,11 @@ def apply_advanced_analysis(analysis_result: GhidraAnalysisResult, binary_path: 
     structures = analyzer.recover_structures(analysis_result)
     for struct_obj in structures:
         ghidra_type = GhidraDataType(
-            name=struct_obj.name, size=struct_obj.size, category="struct", members=struct_obj.members, alignment=struct_obj.alignment,
+            name=struct_obj.name,
+            size=struct_obj.size,
+            category="struct",
+            members=struct_obj.members,
+            alignment=struct_obj.alignment,
         )
         analysis_result.data_types[struct_obj.name] = ghidra_type
 
@@ -705,13 +766,20 @@ def apply_advanced_analysis(analysis_result: GhidraAnalysisResult, binary_path: 
     handlers = analyzer.extract_exception_handlers(analysis_result)
     for handler in handlers:
         analysis_result.exception_handlers.append(
-            {"type": handler.type, "address": handler.handler_address, "try_start": handler.try_start, "try_end": handler.try_end},
+            {
+                "type": handler.type,
+                "address": handler.handler_address,
+                "try_start": handler.try_start,
+                "try_end": handler.try_end,
+            },
         )
 
-    # Parse debug symbols
-    debug_info = analyzer.parse_debug_symbols(analysis_result)
-    if debug_info:
-        analysis_result.metadata["debug_info"] = {"type": debug_info.type, "path": debug_info.path, "guid": debug_info.guid}
+    if debug_info := analyzer.parse_debug_symbols(analysis_result):
+        analysis_result.metadata["debug_info"] = {
+            "type": debug_info.type,
+            "path": debug_info.path,
+            "guid": debug_info.guid,
+        }
 
     # Create custom data types
     custom_types = analyzer.create_custom_datatypes(structures)

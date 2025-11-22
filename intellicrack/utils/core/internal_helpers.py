@@ -38,6 +38,7 @@ from intellicrack.handlers.tensorflow_handler import HAS_TENSORFLOW
 from intellicrack.handlers.torch_handler import HAS_TORCH
 from intellicrack.utils.logger import logger, setup_logger
 
+
 """
 Internal helper functions for Intellicrack.
 
@@ -86,9 +87,7 @@ if HAS_TENSORFLOW:
 
     os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-    from intellicrack.handlers.tensorflow_handler import (
-        tensorflow as tf,  # pylint: disable=import-error
-    )
+    from intellicrack.handlers.tensorflow_handler import tensorflow as tf  # pylint: disable=import-error
 else:
     tf = None
 
@@ -99,7 +98,9 @@ logger = setup_logger(__name__)
 # === Protocol and Network Helpers ===
 
 
-def _add_protocol_fingerprinter_results(results: dict[str, Any], fingerprints: dict[str, Any]) -> None:
+def _add_protocol_fingerprinter_results(
+    results: dict[str, Any], fingerprints: dict[str, Any]
+) -> None:
     """Add protocol fingerprinter results to analysis results.
 
     Args:
@@ -250,7 +251,10 @@ def _handle_check_license(request_data: dict[str, Any]) -> dict[str, Any]:
             "Trial license expires soon",
             "Upgrade to full license for continued access",
         ]
-    elif (datetime.strptime(expiry_date, "%Y-%m-%d").replace(tzinfo=timezone.utc) - datetime.now(timezone.utc)).days < 30:
+    elif (
+        datetime.strptime(expiry_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        - datetime.now(timezone.utc)
+    ).days < 30:
         response["notices"] = ["License expires within 30 days", "Please renew your license"]
 
     return response
@@ -290,10 +294,7 @@ def _handle_decrypt(data: bytes, key: bytes) -> bytes:
         # Decrypt and remove padding
         padded_plaintext = decryptor.update(data) + decryptor.finalize()
         unpadder = padding.PKCS7(128).unpadder()
-        plaintext = unpadder.update(padded_plaintext) + unpadder.finalize()
-
-        return plaintext
-
+        return unpadder.update(padded_plaintext) + unpadder.finalize()
     except ImportError:
         # Fallback to XOR if cryptography not available
         logger.warning("cryptography library not available - using weak XOR decryption")
@@ -341,10 +342,7 @@ def _handle_encrypt(data: bytes, key: bytes) -> bytes:
             backend=default_backend(),
         )
         encryptor = cipher.encryptor()
-        ciphertext = encryptor.update(padded_data) + encryptor.finalize()
-
-        return ciphertext
-
+        return encryptor.update(padded_data) + encryptor.finalize()
     except ImportError:
         # Fallback to XOR if cryptography not available
         logger.warning("cryptography library not available - using weak XOR encryption")
@@ -392,7 +390,7 @@ def _handle_get_info() -> dict[str, Any]:
         try:
             with open("/proc/uptime") as f:
                 uptime_seconds = int(float(f.readline().split()[0]))
-        except (OSError, FileNotFoundError):
+        except OSError:
             # Fallback to boot time
             import psutil
 
@@ -664,7 +662,9 @@ def _handle_get_license(license_id: str) -> dict[str, Any]:
         import winreg
 
         try:
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Intellicrack\Licenses", 0, winreg.KEY_READ) as key:
+            with winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER, r"Software\Intellicrack\Licenses", 0, winreg.KEY_READ
+            ) as key:
                 last_checkin_str = winreg.QueryValueEx(key, f"last_check_{license_id}")[0]
                 last_checkin = datetime.fromisoformat(last_checkin_str)
         except (OSError, KeyError):
@@ -675,7 +675,9 @@ def _handle_get_license(license_id: str) -> dict[str, Any]:
         if config_path.exists():
             with open(config_path) as f:
                 activity = json.load(f)
-                last_checkin_str = activity.get(f"last_check_{license_id}", datetime.now().isoformat())
+                last_checkin_str = activity.get(
+                    f"last_check_{license_id}", datetime.now().isoformat()
+                )
                 last_checkin = datetime.fromisoformat(last_checkin_str)
         else:
             last_checkin = datetime.now()
@@ -701,8 +703,12 @@ def _handle_get_license(license_id: str) -> dict[str, Any]:
         "support_level": support_level,
         "billing_cycle": billing_cycle,
         "cost_per_month": cost_per_month,
-        "seat_utilization": f"{(current_users / max_users * 100):.1f}%" if max_users > 0 else "0.0%",
-        "compliance_status": "compliant" if status == "active" and current_users <= max_users else "non_compliant",
+        "seat_utilization": f"{(current_users / max_users * 100):.1f}%"
+        if max_users > 0
+        else "0.0%",
+        "compliance_status": "compliant"
+        if status == "active" and current_users <= max_users
+        else "non_compliant",
         "license_server": f"license-server-{int(license_hash[22:24], 16) % 10 + 1}.{os.environ.get('BASE_DOMAIN', 'internal')}",
         "contact_email": f"{user_id}@{organization.lower().replace(' ', '')}.com",
         "notes": f"License {license_id} - {status.title()} {license_type} license",
@@ -797,8 +803,6 @@ def _handle_license_query(query: dict[str, Any]) -> list[dict[str, Any]]:
         user_types = ["individual", "corporate", "educational", "government"]
         user_type = user_types[i % len(user_types)]
 
-        # Determine license status
-        statuses = ["active", "expired", "suspended", "trial"]
         if status_filter:
             license_status = status_filter
         else:
@@ -812,6 +816,8 @@ def _handle_license_query(query: dict[str, Any]) -> list[dict[str, Any]]:
                 if rand_val <= cumulative:
                     status_index = idx
                     break
+            # Determine license status
+            statuses = ["active", "expired", "suspended", "trial"]
             license_status = statuses[status_index]
 
         # Generate dates based on status
@@ -844,11 +850,15 @@ def _handle_license_query(query: dict[str, Any]) -> list[dict[str, Any]]:
             continue
 
         # Generate license ID with realistic format
-        license_hash = hashlib.sha256(f"{template['product']}_{user_id}_{i}".encode()).hexdigest()[:8]
+        license_hash = hashlib.sha256(f"{template['product']}_{user_id}_{i}".encode()).hexdigest()[
+            :8
+        ]
         license_id = f"LIC-{license_hash.upper()}-{i + 1:04d}"
 
         # Calculate usage statistics
-        current_users = min(template["max_users"], max(1, (hash(f"usage_{i}") % template["max_users"]) + 1))
+        current_users = min(
+            template["max_users"], max(1, (hash(f"usage_{i}") % template["max_users"]) + 1)
+        )
 
         license_data = {
             "id": license_id,
@@ -864,12 +874,18 @@ def _handle_license_query(query: dict[str, Any]) -> list[dict[str, Any]]:
             "features": template["features"],
             "organization": f"{user_type.title()} Organization {(i % 10) + 1}",
             "license_server": f"license-{(i % 5) + 1}.{os.environ.get('BASE_DOMAIN', 'internal')}",
-            "last_checkin": (datetime.now() - timedelta(hours=hash(f"checkin_{i}") % 48)).strftime("%Y-%m-%d %H:%M:%S"),
+            "last_checkin": (datetime.now() - timedelta(hours=hash(f"checkin_{i}") % 48)).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
             "version": f"{((i % 5) + 1)}.{(i % 10)}.{(i % 20)}",
             "platform": ["Windows", "macOS", "Linux"][i % 3],
             "maintenance_expires": (expiry_date + timedelta(days=90)).strftime("%Y-%m-%d"),
-            "seat_utilization": f"{(current_users / template['max_users'] * 100):.1f}%" if template["max_users"] > 0 else "0.0%",
-            "compliance_status": "compliant" if license_status == "active" and current_users <= template["max_users"] else "non_compliant",
+            "seat_utilization": f"{(current_users / template['max_users'] * 100):.1f}%"
+            if template["max_users"] > 0
+            else "0.0%",
+            "compliance_status": "compliant"
+            if license_status == "active" and current_users <= template["max_users"]
+            else "non_compliant",
             "billing_cycle": "monthly" if template["type"] == "subscription" else "one_time",
             "cost_center": f"CC-{(i % 20) + 1:03d}",
             "contact_email": f"{user_id}@{os.environ.get('EMAIL_DOMAIN', 'internal.local')}",
@@ -913,7 +929,9 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
     if current_license.get("status") == "active":
         last_checkin_str = current_license.get("last_checkin", "")
         try:
-            last_checkin = datetime.strptime(last_checkin_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+            last_checkin = datetime.strptime(last_checkin_str, "%Y-%m-%d %H:%M:%S").replace(
+                tzinfo=timezone.utc
+            )
             session_duration = release_datetime - last_checkin
             session_hours = session_duration.total_seconds() / 3600
         except (ValueError, TypeError) as e:
@@ -943,22 +961,32 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
         release_reason = "normal_user_logout"
 
     # Calculate billing information for the session
-    cost_per_hour = current_license.get("cost_per_month", 99.99) / (30 * 24)  # Approximate hourly cost
+    cost_per_hour = current_license.get("cost_per_month", 99.99) / (
+        30 * 24
+    )  # Approximate hourly cost
     session_cost = round(session_hours * cost_per_hour, 4)
 
     # Generate compliance and audit information
     compliance_check = {
         "license_valid": current_license.get("status") == "active",
-        "within_user_limit": current_license.get("current_users", 0) <= current_license.get("max_users", 1),
-        "features_authorized": all(feature in current_license.get("features", []) for feature in features_used),
-        "maintenance_current": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d").replace(tzinfo=timezone.utc) > release_datetime,
+        "within_user_limit": current_license.get("current_users", 0)
+        <= current_license.get("max_users", 1),
+        "features_authorized": all(
+            feature in current_license.get("features", []) for feature in features_used
+        ),
+        "maintenance_current": datetime.strptime(
+            current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d"
+        ).replace(tzinfo=timezone.utc)
+        > release_datetime,
     }
 
     compliance_status = "compliant" if all(compliance_check.values()) else "violation_detected"
 
     # Generate next available license slot information
     max_users = current_license.get("max_users", 1)
-    current_users = max(0, current_license.get("current_users", 1) - 1)  # Decrease by 1 after release
+    current_users = max(
+        0, current_license.get("current_users", 1) - 1
+    )  # Decrease by 1 after release
 
     return {
         "id": license_id,
@@ -980,7 +1008,9 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
             "seats_available": max_users - current_users,
             "seats_total": max_users,
             "seats_used": current_users,
-            "utilization_percentage": round((current_users / max_users * 100), 1) if max_users > 0 else 0,
+            "utilization_percentage": round((current_users / max_users * 100), 1)
+            if max_users > 0
+            else 0,
         },
         "user_information": {
             "user_id": current_license.get("user_id", "unknown"),
@@ -999,8 +1029,14 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
         "next_actions": {
             "license_available_for_reuse": True,
             "requires_compliance_review": compliance_status != "compliant",
-            "maintenance_due": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d").replace(tzinfo=timezone.utc) < release_datetime,
-            "renewal_recommended": datetime.fromtimestamp(current_license.get("expires", 0), tz=timezone.utc) < release_datetime + timedelta(days=30),
+            "maintenance_due": datetime.strptime(
+                current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d"
+            ).replace(tzinfo=timezone.utc)
+            < release_datetime,
+            "renewal_recommended": datetime.fromtimestamp(
+                current_license.get("expires", 0), tz=timezone.utc
+            )
+            < release_datetime + timedelta(days=30),
         },
         "confirmation": {
             "message": f"License {license_id} has been successfully released",
@@ -1097,10 +1133,13 @@ def _handle_read_memory(address: int, size: int) -> bytes:
         buffer = (c_char * size)()
         bytes_read = wintypes.SIZE_T()
 
-        # Read process memory
-        result = kernel32.ReadProcessMemory(current_process, ctypes.c_void_p(address), buffer, size, ctypes.byref(bytes_read))
-
-        if result:
+        if result := kernel32.ReadProcessMemory(
+            current_process,
+            ctypes.c_void_p(address),
+            buffer,
+            size,
+            ctypes.byref(bytes_read),
+        ):
             return bytes(buffer[: bytes_read.value])
         # Memory not accessible, return zeros
         return b"\x00" * size
@@ -1109,7 +1148,7 @@ def _handle_read_memory(address: int, size: int) -> bytes:
         with open("/proc/self/mem", "rb") as mem:
             mem.seek(address)
             data = mem.read(size)
-            return data if data else b"\x00" * size
+            return data or b"\x00" * size
     except OSError:
         # Fallback - try ptrace or process_vm_readv
         import os
@@ -1123,7 +1162,14 @@ def _handle_read_memory(address: int, size: int) -> bytes:
 
             libc = CDLL("libc.so.6")
             process_vm_readv = libc.process_vm_readv
-            process_vm_readv.argtypes = [c_int, POINTER(iovec), c_ulong, POINTER(iovec), c_ulong, c_ulong]
+            process_vm_readv.argtypes = [
+                c_int,
+                POINTER(iovec),
+                c_ulong,
+                POINTER(iovec),
+                c_ulong,
+                c_ulong,
+            ]
             process_vm_readv.restype = c_ssize_t
 
             pid = os.getpid()
@@ -1136,7 +1182,9 @@ def _handle_read_memory(address: int, size: int) -> bytes:
             remote_iov.iov_base = address
             remote_iov.iov_len = size
 
-            result = process_vm_readv(pid, ctypes.byref(local_iov), 1, ctypes.byref(remote_iov), 1, 0)
+            result = process_vm_readv(
+                pid, ctypes.byref(local_iov), 1, ctypes.byref(remote_iov), 1, 0
+            )
 
             if result > 0:
                 return bytes(local_buf[:result])
@@ -1168,8 +1216,7 @@ def _handle_request(request_type: str, data: dict[str, Any]) -> dict[str, Any]:
         "logout": lambda d: _handle_logout(d.get("token", "")),
     }
 
-    handler = handlers.get(request_type)
-    if handler:
+    if handler := handlers.get(request_type):
         return handler(data)
     return {"error": f"Unknown request type: {request_type}"}
 
@@ -1220,7 +1267,13 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
         bytes_written = wintypes.SIZE_T()
 
         # Write to process memory
-        result = kernel32.WriteProcessMemory(current_process, ctypes.c_void_p(address), buffer, len(data), ctypes.byref(bytes_written))
+        result = kernel32.WriteProcessMemory(
+            current_process,
+            ctypes.c_void_p(address),
+            buffer,
+            len(data),
+            ctypes.byref(bytes_written),
+        )
 
         return bool(result) and bytes_written.value == len(data)
     # Unix-like systems - use ptrace or process_vm_writev
@@ -1242,7 +1295,14 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
 
             libc = CDLL("libc.so.6")
             process_vm_writev = libc.process_vm_writev
-            process_vm_writev.argtypes = [c_int, POINTER(iovec), c_ulong, POINTER(iovec), c_ulong, c_ulong]
+            process_vm_writev.argtypes = [
+                c_int,
+                POINTER(iovec),
+                c_ulong,
+                POINTER(iovec),
+                c_ulong,
+                c_ulong,
+            ]
             process_vm_writev.restype = c_ssize_t
 
             pid = os.getpid()
@@ -1260,7 +1320,9 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
             remote_iov.iov_base = address
             remote_iov.iov_len = len(data)
 
-            result = process_vm_writev(pid, ctypes.byref(local_iov), 1, ctypes.byref(remote_iov), 1, 0)
+            result = process_vm_writev(
+                pid, ctypes.byref(local_iov), 1, ctypes.byref(remote_iov), 1, 0
+            )
 
             return result == len(data)
         except (ValueError, TypeError, AttributeError):
@@ -1272,7 +1334,9 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
 # === Analysis and Comparison Helpers ===
 
 
-def _analyze_snapshot_differences(snapshot1: dict[str, Any], snapshot2: dict[str, Any]) -> dict[str, Any]:
+def _analyze_snapshot_differences(
+    snapshot1: dict[str, Any], snapshot2: dict[str, Any]
+) -> dict[str, Any]:
     """Analyze differences between two snapshots.
 
     Args:
@@ -1283,7 +1347,7 @@ def _analyze_snapshot_differences(snapshot1: dict[str, Any], snapshot2: dict[str
         Dict containing differences in filesystem, memory, network, and processes
 
     """
-    differences = {
+    return {
         "filesystem": _compare_filesystem_state(
             snapshot1.get("filesystem", {}),
             snapshot2.get("filesystem", {}),
@@ -1301,7 +1365,6 @@ def _analyze_snapshot_differences(snapshot1: dict[str, Any], snapshot2: dict[str
             snapshot2.get("processes", {}),
         ),
     }
-    return differences
 
 
 def _compare_filesystem_state(state1: dict[str, Any], state2: dict[str, Any]) -> dict[str, Any]:
@@ -1321,7 +1384,8 @@ def _compare_filesystem_state(state1: dict[str, Any], state2: dict[str, Any]) ->
         "modified_files": [
             f
             for f in state1.get("files", [])
-            if f in state2.get("files", []) and state1.get("hashes", {}).get(f) != state2.get("hashes", {}).get(f)
+            if f in state2.get("files", [])
+            and state1.get("hashes", {}).get(f) != state2.get("hashes", {}).get(f)
         ],
     }
 
@@ -1356,8 +1420,12 @@ def _compare_mmap_state(state1: dict[str, Any], state2: dict[str, Any]) -> dict[
 
     """
     return {
-        "new_mappings": [m for m in state2.get("mappings", []) if m not in state1.get("mappings", [])],
-        "removed_mappings": [m for m in state1.get("mappings", []) if m not in state2.get("mappings", [])],
+        "new_mappings": [
+            m for m in state2.get("mappings", []) if m not in state1.get("mappings", [])
+        ],
+        "removed_mappings": [
+            m for m in state1.get("mappings", []) if m not in state2.get("mappings", [])
+        ],
     }
 
 
@@ -1432,7 +1500,7 @@ def _get_filesystem_state() -> dict[str, Any]:
                 try:
                     with open(filepath, "rb") as f:
                         state["hashes"][filepath] = hashlib.sha256(f.read(1024)).hexdigest()
-                except (OSError, PermissionError) as e:
+                except OSError as e:
                     logger.error("Error in internal_helpers: %s", e)
             break  # Only process current directory
     except (OSError, ValueError, RuntimeError) as e:
@@ -1453,15 +1521,15 @@ def _get_memory_regions() -> list[dict[str, Any]]:
     if HAS_PSUTIL:
         try:
             process = psutil.Process()
-            for mmap in process.memory_maps():
-                regions.append(
-                    {
-                        "path": mmap.path,
-                        "rss": mmap.rss,
-                        "size": mmap.size,
-                        "perm": mmap.perms,
-                    },
-                )
+            regions.extend(
+                {
+                    "path": mmap.path,
+                    "rss": mmap.rss,
+                    "size": mmap.size,
+                    "perm": mmap.perms,
+                }
+                for mmap in process.memory_maps()
+            )
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error getting memory regions: %s", e)
 
@@ -1738,14 +1806,13 @@ def _match_pattern(data: bytes, pattern: bytes) -> list[int]:
         List of byte offsets where pattern matches occur
 
     """
-    matches = []
     pattern_len = len(pattern)
 
-    for i in range(len(data) - pattern_len + 1):
-        if data[i : i + pattern_len] == pattern:
-            matches.append(i)
-
-    return matches
+    return [
+        i
+        for i in range(len(data) - pattern_len + 1)
+        if data[i : i + pattern_len] == pattern
+    ]
 
 
 def _preview_dataset(dataset: list[dict[str, Any]], limit: int = 10) -> list[dict[str, Any]]:
@@ -1827,15 +1894,17 @@ def _calculate_hash_opencl(data: bytes, algorithm: str = "sha256") -> str | None
             # Use first available GPU device, fallback to CPU
             device = None
             for platform in platforms:
-                devices = platform.get_devices(device_type=cl.device_type.GPU)
-                if devices:
+                if devices := platform.get_devices(
+                    device_type=cl.device_type.GPU
+                ):
                     device = devices[0]
                     break
 
             if not device:
                 for platform in platforms:
-                    devices = platform.get_devices(device_type=cl.device_type.CPU)
-                    if devices:
+                    if devices := platform.get_devices(
+                        device_type=cl.device_type.CPU
+                    ):
                         device = devices[0]
                         break
 
@@ -2053,7 +2122,13 @@ def _cuda_hash_calculation(data: bytes, algorithm: str = "sha256") -> str | None
 
             # Execute kernel
             func = mod.get_function("sha256_transform")
-            func(data_gpu, np.int32(len(data)), hash_gpu, block=(256, 1, 1), grid=((len(data) + 63) // 64, 1))
+            func(
+                data_gpu,
+                np.int32(len(data)),
+                hash_gpu,
+                block=(256, 1, 1),
+                grid=((len(data) + 63) // 64, 1),
+            )
 
             # Copy result back
             cuda.memcpy_dtoh(hash_output, hash_gpu)
@@ -2121,7 +2196,9 @@ def _gpu_entropy_calculation(data: bytes) -> float:
         count_func = mod.get_function("count_bytes")
         block_size = 256
         grid_size = (len(data) + block_size - 1) // block_size
-        count_func(data_gpu, np.int32(len(data)), counts_gpu, block=(block_size, 1, 1), grid=(grid_size, 1))
+        count_func(
+            data_gpu, np.int32(len(data)), counts_gpu, block=(block_size, 1, 1), grid=(grid_size, 1)
+        )
 
         # Calculate entropy
         entropy_val = np.array([0.0], dtype=np.float32)
@@ -2225,13 +2302,11 @@ def _pytorch_pattern_matching(data: bytes, pattern: bytes) -> list[int]:
         data_tensor = torch.tensor(list(data), dtype=torch.uint8)
         pattern_tensor = torch.tensor(list(pattern), dtype=torch.uint8)
 
-        # Sliding window comparison
-        matches = []
-        for i in range(len(data) - len(pattern) + 1):
-            if torch.equal(data_tensor[i : i + len(pattern)], pattern_tensor):
-                matches.append(i)
-
-        return matches
+        return [
+            i
+            for i in range(len(data) - len(pattern) + 1)
+            if torch.equal(data_tensor[i : i + len(pattern)], pattern_tensor)
+        ]
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("PyTorch pattern matching failed: %s", e)
         return _match_pattern(data, pattern)
@@ -2362,7 +2437,9 @@ def _tf_convolution_search(data_array: "np.ndarray", pattern_array: "np.ndarray"
         # Reshape data for TensorFlow convolution
         # TensorFlow expects [batch, height, width, channels] format
         data_tensor = tf.expand_dims(tf.expand_dims(tf.cast(data_array, tf.float32), 0), -1)
-        pattern_tensor = tf.expand_dims(tf.expand_dims(tf.cast(pattern_array[::-1], tf.float32), -1), -1)
+        pattern_tensor = tf.expand_dims(
+            tf.expand_dims(tf.cast(pattern_array[::-1], tf.float32), -1), -1
+        )
 
         # Perform 1D convolution
         convolution_result = tf.nn.conv1d(
@@ -2432,17 +2509,14 @@ def _sliding_window_search(data_array: "np.ndarray", pattern_array: "np.ndarray"
 
     """
     try:
-        matches = []
         pattern_len = len(pattern_array)
         data_len = len(data_array)
 
-        # Optimized sliding window using NumPy vectorization
-        for i in range(data_len - pattern_len + 1):
-            if np.array_equal(data_array[i : i + pattern_len], pattern_array):
-                matches.append(i)
-
-        return matches
-
+        return [
+            i
+            for i in range(data_len - pattern_len + 1)
+            if np.array_equal(data_array[i : i + pattern_len], pattern_array)
+        ]
     except Exception as e:
         logger.debug("Sliding window search error: %s", e)
         return []
@@ -2457,10 +2531,11 @@ def _match_pattern(data: bytes, pattern: bytes) -> list[int]:
         return matches
 
     # Simple byte-by-byte search
-    for i in range(len(data) - pattern_len + 1):
-        if data[i : i + pattern_len] == pattern:
-            matches.append(i)
-
+    matches.extend(
+        i
+        for i in range(len(data) - pattern_len + 1)
+        if data[i : i + pattern_len] == pattern
+    )
     return matches
 
 
@@ -2485,8 +2560,7 @@ def _validate_gpu_memory(required_mb: int) -> bool:
     # Check TensorFlow
     if HAS_TENSORFLOW:
         try:
-            gpus = tf.config.list_physical_devices("GPU")
-            if gpus:
+            if gpus := tf.config.list_physical_devices("GPU"):
                 return True  # Assume sufficient memory if GPU available
         except (RuntimeError, AttributeError) as e:
             logger.error("Error in internal_helpers: %s", e)
@@ -2532,7 +2606,11 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
             tensors = {}
 
             # Try to detect and parse model format
-            if model_path.endswith(".bin") or model_path.endswith(".pt") or model_path.endswith(".pth"):
+            if (
+                model_path.endswith(".bin")
+                or model_path.endswith(".pt")
+                or model_path.endswith(".pth")
+            ):
                 # PyTorch format
                 try:
                     import torch
@@ -2636,7 +2714,7 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
 
                 # Dimensions
                 if hasattr(tensor_data, "shape"):
-                    packed_dims = b''.join(struct.pack("<Q", dim) for dim in tensor_data.shape)
+                    packed_dims = b"".join(struct.pack("<Q", dim) for dim in tensor_data.shape)
                     f.write(packed_dims)
                 else:
                     f.write(struct.pack("<Q", len(tensor_data)))
@@ -2923,7 +3001,12 @@ def _generate_weight_data(dims: list[int], data_type: str, total_elements: int) 
         # For 1D tensors, use a small standard deviation
         std_dev = 0.02
 
-    if data_type == "float32":
+    if data_type == "float16":
+        for _i in range(total_elements):
+            weight = random.gauss(0, std_dev * 0.8)  # Slightly smaller for fp16
+            data.extend(struct.pack("e", weight))
+
+    elif data_type == "float32":
         for _i in range(total_elements):
             # Generate weight with proper initialization
             weight = random.gauss(0, std_dev)
@@ -2934,12 +3017,6 @@ def _generate_weight_data(dims: list[int], data_type: str, total_elements: int) 
 
             data.extend(struct.pack("f", weight))
 
-    elif data_type == "float16":
-        for _i in range(total_elements):
-            weight = random.gauss(0, std_dev * 0.8)  # Slightly smaller for fp16
-            data.extend(struct.pack("e", weight))
-
-    # Integer weights (quantized models)
     elif data_type == "int8":
         for _i in range(total_elements):
             # Quantized weights typically in range [-128, 127]
@@ -2980,7 +3057,30 @@ def _generate_bias_data(dims: list[int], data_type: str, total_elements: int) ->
 
     data = bytearray()
 
-    if data_type == "float32":
+    if data_type == "float16":
+        # Similar initialization for float16
+        bias_array = np.zeros(total_elements, dtype=np.float16)
+
+        if total_elements % 4 == 0:
+            # LSTM forget gate initialization
+            forget_start = total_elements // 4
+            bias_array[forget_start:total_elements // 2] = np.float16(1.0)
+        elif total_elements % 3 == 0:
+            # GRU reset gate initialization
+            reset_start = total_elements // 3
+            reset_end = 2 * total_elements // 3
+            bias_array[reset_start:reset_end] = np.float16(-1.0)
+
+        # Add small perturbation for numerical stability
+        if fan_out < 256:
+            noise = np.random.normal(0, 0.005, total_elements).astype(np.float16)
+            bias_array += noise
+
+        # Convert to bytes
+        for bias_val in bias_array:
+            data.extend(struct.pack("e", bias_val))
+
+    elif data_type == "float32":
         # Create bias array with proper initialization
         bias_array = np.zeros(total_elements, dtype=np.float32)
 
@@ -3007,30 +3107,6 @@ def _generate_bias_data(dims: list[int], data_type: str, total_elements: int) ->
         # Convert to bytes
         for bias_val in bias_array:
             data.extend(struct.pack("f", bias_val))
-
-    elif data_type == "float16":
-        # Similar initialization for float16
-        bias_array = np.zeros(total_elements, dtype=np.float16)
-
-        if total_elements % 4 == 0:
-            # LSTM forget gate initialization
-            forget_start = total_elements // 4
-            forget_end = total_elements // 2
-            bias_array[forget_start:forget_end] = np.float16(1.0)
-        elif total_elements % 3 == 0:
-            # GRU reset gate initialization
-            reset_start = total_elements // 3
-            reset_end = 2 * total_elements // 3
-            bias_array[reset_start:reset_end] = np.float16(-1.0)
-
-        # Add small perturbation for numerical stability
-        if fan_out < 256:
-            noise = np.random.normal(0, 0.005, total_elements).astype(np.float16)
-            bias_array += noise
-
-        # Convert to bytes
-        for bias_val in bias_array:
-            data.extend(struct.pack("e", bias_val))
 
     elif data_type == "int8":
         # Quantized bias initialization
@@ -3073,21 +3149,17 @@ def _generate_norm_data(dims: list[int], data_type: str, total_elements: int) ->
     """
     data = bytearray()
 
-    if data_type == "float32":
-        for _i in range(total_elements):
-            # Layer norm weights typically initialized to 1.0
-            # Layer norm biases typically initialized to 0.0
-            if "weight" in str(dims) or _i % 2 == 0:  # Assume alternating weight/bias
-                val = 1.0  # Weight parameter
-            else:
-                val = 0.0  # Bias parameter
-
-            data.extend(struct.pack("f", val))
-
-    elif data_type == "float16":
+    if data_type == "float16":
         for _i in range(total_elements):
             val = 1.0 if _i % 2 == 0 else 0.0
             data.extend(struct.pack("e", val))
+
+    elif data_type == "float32":
+        for _i in range(total_elements):
+            # Layer norm weights typically initialized to 1.0
+            # Layer norm biases typically initialized to 0.0
+            val = 1.0 if "weight" in str(dims) or _i % 2 == 0 else 0.0
+            data.extend(struct.pack("f", val))
 
     else:
         data.extend(b"\x00" * (total_elements * 4))
@@ -3119,7 +3191,12 @@ def _generate_attention_data(dims: list[int], data_type: str, total_elements: in
     else:
         scale_factor = 0.02
 
-    if data_type == "float32":
+    if data_type == "float16":
+        for _i in range(total_elements):
+            weight = random.gauss(0, scale_factor * 0.9)
+            data.extend(struct.pack("e", weight))
+
+    elif data_type == "float32":
         for _i in range(total_elements):
             # Query/Key/Value projection weights
             weight = random.gauss(0, scale_factor)
@@ -3129,11 +3206,6 @@ def _generate_attention_data(dims: list[int], data_type: str, total_elements: in
                 weight *= 0.9
 
             data.extend(struct.pack("f", weight))
-
-    elif data_type == "float16":
-        for _i in range(total_elements):
-            weight = random.gauss(0, scale_factor * 0.9)
-            data.extend(struct.pack("e", weight))
 
     else:
         data.extend(b"\x00" * (total_elements * 4))
@@ -3191,14 +3263,18 @@ def _generate_generic_tensor_data(dims: list[int], data_type: str, total_element
         limit = np.sqrt(6.0 / (fan_in + fan_out))
 
         # Generate with slightly reduced variance for float16 stability
-        tensor_data = np.random.uniform(-limit * 0.8, limit * 0.8, total_elements).astype(np.float16)
+        tensor_data = np.random.uniform(-limit * 0.8, limit * 0.8, total_elements).astype(
+            np.float16
+        )
 
         # Apply smoothing for larger tensors
         if total_elements > 100:
             kernel_size = min(3, total_elements // 30)
             if kernel_size > 1:
                 kernel = np.ones(kernel_size) / kernel_size
-                tensor_data = np.convolve(tensor_data.astype(np.float32), kernel, mode="same").astype(np.float16)
+                tensor_data = np.convolve(
+                    tensor_data.astype(np.float32), kernel, mode="same"
+                ).astype(np.float16)
                 # Rescale
                 std = np.std(tensor_data)
                 if std > 0:
@@ -3405,12 +3481,11 @@ if __name__ == '__main__':
     main()
 """
 
-    script = script_template.format(
+    return script_template.format(
         target_host=target_host,
         target_port=target_port,
         listen_port=target_port + 1000,
     )
-    return script
 
 
 # === Data Augmentation Helpers ===
@@ -3447,10 +3522,6 @@ def _perform_augmentation(data: dict[str, Any], augmentation_type: str) -> dict[
             if isinstance(value, str):
                 for word, synonym in synonyms.items():
                     augmented[key] = value.replace(word, synonym)
-
-    elif augmentation_type == "duplicate":
-        # Just return a copy
-        pass
 
     return augmented
 
@@ -3511,7 +3582,9 @@ def _run_ghidra_thread(ghidra_path: str, script: str, binary: str) -> threading.
     return thread
 
 
-def _run_report_generation_thread(report_func: Callable, report_data: dict[str, Any]) -> threading.Thread:
+def _run_report_generation_thread(
+    report_func: Callable, report_data: dict[str, Any]
+) -> threading.Thread:
     """Run report generation in a thread.
 
     Args:
@@ -3532,10 +3605,35 @@ def _run_report_generation_thread(report_func: Callable, report_data: dict[str, 
 
 # Export all functions
 __all__ = [
-    # Protocol and Network Helpers
     "_add_protocol_fingerprinter_results",
     "_analyze_requests",
+    "_analyze_snapshot_differences",
+    "_archive_data",
+    "_browse_for_output",
+    "_browse_for_source",
     "_build_cm_packet",
+    "_build_knowledge_index",
+    "_calculate_hash_opencl",
+    "_compare_filesystem_state",
+    "_compare_memory_dumps",
+    "_compare_mmap_state",
+    "_compare_network_state",
+    "_compare_process_state",
+    "_convert_to_gguf",
+    "_cpu_hash_calculation",
+    "_cuda_hash_calculation",
+    "_dump_memory_region",
+    "_export_validation_report",
+    "_fix_dataset_issues",
+    "_generate_error_response",
+    "_generate_generic_response",
+    "_generate_mitm_script",
+    "_get_filesystem_state",
+    "_get_memory_regions",
+    "_get_mmap_state",
+    "_get_network_state",
+    "_get_process_state",
+    "_gpu_entropy_calculation",
     "_handle_check_license",
     "_handle_decrypt",
     "_handle_encrypt",
@@ -3551,59 +3649,26 @@ __all__ = [
     "_handle_request",
     "_handle_return_license",
     "_handle_write_memory",
-    # Analysis and Comparison Helpers
-    "_analyze_snapshot_differences",
-    "_compare_filesystem_state",
-    "_compare_memory_dumps",
-    "_compare_mmap_state",
-    "_compare_network_state",
-    "_compare_process_state",
-    "_get_filesystem_state",
-    "_get_memory_regions",
-    "_get_mmap_state",
-    "_get_network_state",
-    "_get_process_state",
-    # Data Management Helpers
-    "_archive_data",
-    "_browse_for_output",
-    "_browse_for_source",
-    "_build_knowledge_index",
-    "_dump_memory_region",
-    "_export_validation_report",
-    "_fix_dataset_issues",
     "_init_response_templates",
     "_learn_pattern",
+    "_manual_gguf_conversion",
     "_match_pattern",
-    "_preview_dataset",
-    "_release_buffer",
-    "_save_patterns",
-    # GPU/Hardware Acceleration Helpers
-    "_calculate_hash_opencl",
-    "_cpu_hash_calculation",
-    "_cuda_hash_calculation",
-    "_gpu_entropy_calculation",
     "_opencl_entropy_calculation",
     "_opencl_hash_calculation",
+    "_perform_augmentation",
+    "_preview_dataset",
     "_pytorch_entropy_calculation",
     "_pytorch_hash_calculation",
     "_pytorch_pattern_matching",
+    "_release_buffer",
+    "_run_autonomous_patching_thread",
+    "_run_ghidra_thread",
+    "_run_report_generation_thread",
+    "_save_patterns",
     "_tensorflow_entropy_calculation",
     "_tensorflow_hash_calculation",
     "_tensorflow_pattern_matching",
     "_validate_gpu_memory",
-    # Model Conversion Helpers
-    "_convert_to_gguf",
-    "_manual_gguf_conversion",
     "_write_gguf_metadata",
     "_write_gguf_tensor_info",
-    # Response Generation Helpers
-    "_generate_error_response",
-    "_generate_generic_response",
-    "_generate_mitm_script",
-    # Data Augmentation Helpers
-    "_perform_augmentation",
-    # Thread Functions
-    "_run_autonomous_patching_thread",
-    "_run_ghidra_thread",
-    "_run_report_generation_thread",
 ]

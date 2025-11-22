@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import List, Tuple
 
 
-def fix_file(filepath: Path, fixes: List[Tuple[str, str]]) -> int:
+def fix_file(filepath: Path, fixes: list[tuple[str, str]]) -> int:
     """Apply fixes to a file."""
     content = filepath.read_text()
     original = content

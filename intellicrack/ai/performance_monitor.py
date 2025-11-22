@@ -33,6 +33,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -82,7 +83,7 @@ class PerformanceMonitor:
                         in history
 
         """
-        self.logger = logging.getLogger(__name__ + ".PerformanceMonitor")
+        self.logger = logging.getLogger(f"{__name__}.PerformanceMonitor")
         self.max_history = max_history
         self.metrics: dict[str, deque] = defaultdict(lambda: deque(maxlen=max_history))
         self.profiles: deque = deque(maxlen=max_history)
@@ -184,7 +185,7 @@ class PerformanceMonitor:
 
     def _trigger_optimization(self, metric_name: str, level: str, value: float) -> None:
         """Trigger optimization based on threshold breach."""
-        if metric_name == "memory_growth" and level in ["warning", "critical"]:
+        if metric_name == "memory_growth" and level in {"warning", "critical"}:
             logger.info("Triggering garbage collection due to memory growth")
             gc.collect()
 
@@ -216,7 +217,9 @@ class PerformanceMonitor:
 
     @contextmanager
     def profile_operation(
-        self, operation_name: str, metadata: dict[str, Any] | None = None,
+        self,
+        operation_name: str,
+        metadata: dict[str, Any] | None = None,
     ) -> Generator[str, None, None]:
         """Profile an operation with automatic performance metric collection.
 
@@ -279,7 +282,9 @@ class PerformanceMonitor:
             self.profiles.append(profile)
 
             # Record individual metrics
-            self.record_metric(f"operation.{operation_name}.execution_time", execution_time, "seconds")
+            self.record_metric(
+                f"operation.{operation_name}.execution_time", execution_time, "seconds"
+            )
             self.record_metric(f"operation.{operation_name}.memory_usage", memory_usage, "bytes")
             self.record_metric(f"operation.{operation_name}.cpu_usage", cpu_usage, "percent")
 
@@ -288,7 +293,8 @@ class PerformanceMonitor:
                 del self.active_operations[operation_id]
 
     def time_function(
-        self, func_name: str | None = None,
+        self,
+        func_name: str | None = None,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Create a decorator that profiles function execution time.
 
@@ -330,9 +336,9 @@ class PerformanceMonitor:
 
         # Metrics summary
         for metric_name, metric_list in self.metrics.items():
-            recent_metrics = [m for m in metric_list if m.timestamp >= cutoff_time]
-
-            if recent_metrics:
+            if recent_metrics := [
+                m for m in metric_list if m.timestamp >= cutoff_time
+            ]:
                 values = [m.value for m in recent_metrics]
                 summary["metrics"][metric_name] = {
                     "count": len(values),
@@ -353,7 +359,8 @@ class PerformanceMonitor:
         for op_name, profiles in operation_stats.items():
             exec_times = [p.execution_time for p in profiles]
             memory_usage = [p.memory_usage for p in profiles]
-            success_rate = sum(1 for p in profiles if p.success) / len(profiles)
+            success_rate = sum(bool(p.success)
+                           for p in profiles) / len(profiles)
 
             summary["operation_summary"][op_name] = {
                 "count": len(profiles),
@@ -408,7 +415,11 @@ class PerformanceMonitor:
 
             return {
                 "score": max(0, health_score),
-                "status": "healthy" if health_score > 80 else "degraded" if health_score > 50 else "critical",
+                "status": "healthy"
+                if health_score > 80
+                else "degraded"
+                if health_score > 50
+                else "critical",
                 "issues": issues,
                 "current_memory_mb": current_memory / 1024 / 1024,
                 "memory_growth_mb": memory_growth / 1024 / 1024,
@@ -437,15 +448,21 @@ class PerformanceMonitor:
 
         # CPU recommendations
         if summary["system_health"]["cpu_usage"] > 80:
-            recommendations.append("High CPU usage detected - consider optimizing algorithms or reducing workload")
+            recommendations.append(
+                "High CPU usage detected - consider optimizing algorithms or reducing workload"
+            )
 
         # Operation-specific recommendations
         for op_name, stats in summary.get("operation_summary", {}).items():
             if stats["avg_execution_time"] > 10.0:
-                recommendations.append(f"Operation '{op_name}' is slow (avg: {stats['avg_execution_time']:.2f}s)")
+                recommendations.append(
+                    f"Operation '{op_name}' is slow (avg: {stats['avg_execution_time']:.2f}s)"
+                )
 
             if stats["success_rate"] < 0.9:
-                recommendations.append(f"Operation '{op_name}' has low success rate ({stats['success_rate']:.1%})")
+                recommendations.append(
+                    f"Operation '{op_name}' has low success rate ({stats['success_rate']:.1%})"
+                )
 
         return recommendations
 
@@ -454,12 +471,11 @@ class PerformanceMonitor:
         try:
             summary = self.get_metrics_summary(timedelta(hours=24))
 
-            if format == "json":
-                with open(file_path, "w") as f:
-                    json.dump(summary, f, indent=2, default=str)
-            else:
+            if format != "json":
                 raise ValueError(f"Unsupported format: {format}")
 
+            with open(file_path, "w") as f:
+                json.dump(summary, f, indent=2, default=str)
             logger.info(f"Metrics exported to {file_path}")
 
         except Exception as e:
@@ -468,7 +484,11 @@ class PerformanceMonitor:
     def optimize_cache(self) -> None:
         """Optimize performance cache."""
         current_time = time.time()
-        expired_keys = [key for key, (timestamp, _) in self.performance_cache.items() if current_time - timestamp > self.cache_ttl]
+        expired_keys = [
+            key
+            for key, (timestamp, _) in self.performance_cache.items()
+            if current_time - timestamp > self.cache_ttl
+        ]
 
         for key in expired_keys:
             del self.performance_cache[key]
@@ -554,7 +574,9 @@ class PerformanceMonitor:
             # Log performance data before exit for debugging
             self._log_final_metrics()
             if exc_tb:
-                logger.debug(f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
+                logger.debug(
+                    f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}"
+                )
         self.stop_monitoring()
         return False  # Don't suppress exceptions
 
@@ -651,12 +673,14 @@ class AsyncPerformanceMonitor:
                          operations to
 
         """
-        self.logger = logging.getLogger(__name__ + ".AsyncPerformanceMonitor")
+        self.logger = logging.getLogger(f"{__name__}.AsyncPerformanceMonitor")
         self.base_monitor = base_monitor
         self.async_operations: dict[str, dict[str, Any]] = {}
 
     async def profile_async_operation(
-        self, operation_name: str, coro: Coroutine[None, None, object],
+        self,
+        operation_name: str,
+        coro: Coroutine[None, None, object],
     ) -> object:
         """Profile an async operation with performance metrics.
 
@@ -683,8 +707,7 @@ class AsyncPerformanceMonitor:
         error_message = None
 
         try:
-            result = await coro
-            return result
+            return await coro
         except Exception as e:
             self.logger.error("Exception in performance_monitor: %s", e)
             success = False
@@ -709,7 +732,8 @@ class AsyncPerformanceMonitor:
             self.base_monitor.profiles.append(profile)
 
     def profile_async(
-        self, operation_name: str | None = None,
+        self,
+        operation_name: str | None = None,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Create a decorator that profiles async function execution.
 
@@ -725,7 +749,9 @@ class AsyncPerformanceMonitor:
 
         """
 
-        def decorator(func: Callable[..., Coroutine[None, None, object]]) -> Callable[..., Coroutine[None, None, object]]:
+        def decorator(
+            func: Callable[..., Coroutine[None, None, object]],
+        ) -> Callable[..., Coroutine[None, None, object]]:
             name = operation_name or func.__name__
 
             @functools.wraps(func)

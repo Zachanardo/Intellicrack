@@ -23,10 +23,10 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Phase25TestResult:
     """Result of Phase 2.5 testing."""
-    cross_version_results: List[Dict[str, Any]]
-    unknown_pattern_results: List[Dict[str, Any]]
-    dynamic_mutation_results: List[Dict[str, Any]]
-    variant_generation_results: List[Dict[str, Any]]
+    cross_version_results: list[dict[str, Any]]
+    unknown_pattern_results: list[dict[str, Any]]
+    dynamic_mutation_results: list[dict[str, Any]]
+    variant_generation_results: list[dict[str, Any]]
     overall_success: bool
     timestamp: str = None
 
@@ -39,8 +39,8 @@ class Phase25TestResult:
 class Phase25Report:
     """Comprehensive report of Phase 2.5 validation."""
     test_results: Phase25TestResult
-    summary: Dict[str, Any]
-    recommendations: List[str]
+    summary: dict[str, Any]
+    recommendations: list[str]
     overall_status: str
     timestamp: str = None
 
@@ -66,7 +66,7 @@ class Phase25Orchestrator:
 
         logger.info("Phase 2.5 Orchestrator initialized")
 
-    def run_cross_version_testing(self) -> List[Dict[str, Any]]:
+    def run_cross_version_testing(self) -> list[dict[str, Any]]:
         """
         Run cross-version testing on all available binaries.
         """
@@ -103,7 +103,7 @@ class Phase25Orchestrator:
 
         return results
 
-    def run_unknown_pattern_testing(self) -> List[Dict[str, Any]]:
+    def run_unknown_pattern_testing(self) -> list[dict[str, Any]]:
         """
         Run unknown pattern testing on available binaries.
         """
@@ -139,7 +139,7 @@ class Phase25Orchestrator:
 
         return results
 
-    def run_dynamic_mutation_testing(self) -> List[Dict[str, Any]]:
+    def run_dynamic_mutation_testing(self) -> list[dict[str, Any]]:
         """
         Run dynamic mutation testing on available binaries.
         """
@@ -179,7 +179,7 @@ class Phase25Orchestrator:
 
         return results
 
-    def run_variant_generation_testing(self) -> List[Dict[str, Any]]:
+    def run_variant_generation_testing(self) -> list[dict[str, Any]]:
         """
         Run protection variant generation testing.
         """

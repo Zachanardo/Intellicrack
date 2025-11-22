@@ -78,7 +78,9 @@ class MLAnalysisIntegration:
         self.sample_database: SampleDatabase | None = None
         if enable_sample_database:
             self.sample_database = SampleDatabase()
-            self.logger.info("Sample database initialized at %s", self.sample_database.database_path)
+            self.logger.info(
+                "Sample database initialized at %s", self.sample_database.database_path
+            )
 
     def classify_binary(
         self,
@@ -97,8 +99,8 @@ class MLAnalysisIntegration:
         """
         if not self.enabled:
             return {
-                'enabled': False,
-                'error': 'ML classifier not available',
+                "enabled": False,
+                "error": "ML classifier not available",
             }
 
         try:
@@ -107,23 +109,23 @@ class MLAnalysisIntegration:
             confidence_level = self._get_confidence_level(result.confidence)
 
             classification = {
-                'enabled': True,
-                'primary_protection': result.primary_protection,
-                'confidence': result.confidence,
-                'confidence_level': confidence_level,
-                'model_version': result.model_version,
-                'reliable': confidence_level in ['high', 'very_high'],
+                "enabled": True,
+                "primary_protection": result.primary_protection,
+                "confidence": result.confidence,
+                "confidence_level": confidence_level,
+                "model_version": result.model_version,
+                "reliable": confidence_level in ["high", "very_high"],
             }
 
             if include_alternatives:
-                classification['alternatives'] = [
-                    {'protection': prot, 'confidence': conf}
+                classification["alternatives"] = [
+                    {"protection": prot, "confidence": conf}
                     for prot, conf in result.top_predictions
                 ]
 
-            if confidence_level == 'low':
-                classification['warning'] = (
-                    'Low confidence prediction - manual verification recommended'
+            if confidence_level == "low":
+                classification["warning"] = (
+                    "Low confidence prediction - manual verification recommended"
                 )
 
             return classification
@@ -131,8 +133,8 @@ class MLAnalysisIntegration:
         except Exception as e:
             self.logger.error("Classification failed for %s: %s", binary_path, e)
             return {
-                'enabled': True,
-                'error': str(e),
+                "enabled": True,
+                "error": str(e),
             }
 
     def analyze_with_ml(self, binary_path: str | Path) -> dict[str, Any]:
@@ -148,19 +150,19 @@ class MLAnalysisIntegration:
         binary_path = Path(binary_path)
 
         results = {
-            'binary_path': str(binary_path),
-            'ml_enabled': self.enabled,
+            "binary_path": str(binary_path),
+            "ml_enabled": self.enabled,
         }
 
         if not self.enabled:
             return results
 
         classification = self.classify_binary(binary_path)
-        results['classification'] = classification
+        results["classification"] = classification
 
-        if classification.get('reliable'):
-            results['recommended_tools'] = self._get_recommended_tools(
-                classification['primary_protection'],
+        if classification.get("reliable"):
+            results["recommended_tools"] = self._get_recommended_tools(
+                classification["primary_protection"],
             )
 
         if self.incremental_learner:
@@ -170,14 +172,14 @@ class MLAnalysisIntegration:
             )
 
             if any(str(path) == str(binary_path) for path, _ in uncertain):
-                results['active_learning'] = {
-                    'requires_labeling': True,
-                    'reason': 'Model is uncertain about this sample',
+                results["active_learning"] = {
+                    "requires_labeling": True,
+                    "reason": "Model is uncertain about this sample",
                 }
 
         if self.sample_database:
             db_stats = self.sample_database.get_statistics()
-            results['database_stats'] = db_stats
+            results["database_stats"] = db_stats
 
         return results
 
@@ -207,7 +209,7 @@ class MLAnalysisIntegration:
                 binary_path=binary_path,
                 protection_type=protection_type,
                 confidence=1.0,
-                source='manual',
+                source="manual",
                 verified=verified,
                 notes=notes,
             )
@@ -221,8 +223,8 @@ class MLAnalysisIntegration:
                 binary_path=binary_path,
                 protection_type=protection_type,
                 confidence=1.0,
-                source='manual',
-                metadata={'verified': verified, 'notes': notes},
+                source="manual",
+                metadata={"verified": verified, "notes": notes},
             )
 
             if not learner_success:
@@ -256,7 +258,7 @@ class MLAnalysisIntegration:
 
         """
         if not self.enabled:
-            return {'error': 'ML classifier not available'}
+            return {"error": "ML classifier not available"}
 
         if use_database and self.sample_database:
             self.logger.info("Retraining from sample database")
@@ -267,8 +269,8 @@ class MLAnalysisIntegration:
 
             if len(X) < 50:
                 return {
-                    'error': f'Insufficient samples ({len(X)}) for training',
-                    'minimum_required': 50,
+                    "error": f"Insufficient samples ({len(X)}) for training",
+                    "minimum_required": 50,
                 }
 
             results = self.classifier.train(
@@ -289,7 +291,7 @@ class MLAnalysisIntegration:
                 n_estimators=n_estimators,
             )
 
-        return {'error': 'No training data available'}
+        return {"error": "No training data available"}
 
     def get_learning_statistics(self) -> dict[str, Any]:
         """Get statistics about the learning system.
@@ -299,21 +301,23 @@ class MLAnalysisIntegration:
 
         """
         stats: dict[str, Any] = {
-            'ml_enabled': self.enabled,
+            "ml_enabled": self.enabled,
         }
 
         if self.enabled and self.classifier.model:
-            stats['model_info'] = {
-                'version': self.classifier.MODEL_VERSION,
-                'n_features': len(self.classifier.feature_extractor.feature_names),
-                'classes': self.classifier.label_encoder.classes_.tolist() if self.classifier.label_encoder else [],
+            stats["model_info"] = {
+                "version": self.classifier.MODEL_VERSION,
+                "n_features": len(self.classifier.feature_extractor.feature_names),
+                "classes": self.classifier.label_encoder.classes_.tolist()
+                if self.classifier.label_encoder
+                else [],
             }
 
         if self.incremental_learner:
-            stats['incremental_learning'] = self.incremental_learner.get_buffer_statistics()
+            stats["incremental_learning"] = self.incremental_learner.get_buffer_statistics()
 
         if self.sample_database:
-            stats['sample_database'] = self.sample_database.get_statistics()
+            stats["sample_database"] = self.sample_database.get_statistics()
 
         return stats
 
@@ -328,14 +332,12 @@ class MLAnalysisIntegration:
 
         """
         if confidence >= 0.90:
-            return 'very_high'
+            return "very_high"
         if confidence >= self.HIGH_CONFIDENCE_THRESHOLD:
-            return 'high'
+            return "high"
         if confidence >= self.MEDIUM_CONFIDENCE_THRESHOLD:
-            return 'medium'
-        if confidence >= self.LOW_CONFIDENCE_THRESHOLD:
-            return 'low'
-        return 'very_low'
+            return "medium"
+        return "low" if confidence >= self.LOW_CONFIDENCE_THRESHOLD else "very_low"
 
     def _get_recommended_tools(self, protection: str) -> dict[str, list[str]]:
         """Get recommended tools for a protection scheme.
@@ -348,29 +350,32 @@ class MLAnalysisIntegration:
 
         """
         tool_recommendations = {
-            'VMProtect': {
-                'unpackers': ['VMProtect Unpacker', 'Scylla Dumper'],
-                'analyzers': ['Ghidra', 'IDA Pro with VMP plugin'],
-                'techniques': ['ESIL emulation', 'Control flow deobfuscation'],
+            "VMProtect": {
+                "unpackers": ["VMProtect Unpacker", "Scylla Dumper"],
+                "analyzers": ["Ghidra", "IDA Pro with VMP plugin"],
+                "techniques": ["ESIL emulation", "Control flow deobfuscation"],
             },
-            'Themida': {
-                'unpackers': ['Themida Unpacker', 'Manual OEP finder'],
-                'analyzers': ['x64dbg', 'Ghidra'],
-                'techniques': ['Anti-debug bypass', 'VM detection bypass'],
+            "Themida": {
+                "unpackers": ["Themida Unpacker", "Manual OEP finder"],
+                "analyzers": ["x64dbg", "Ghidra"],
+                "techniques": ["Anti-debug bypass", "VM detection bypass"],
             },
-            'Enigma': {
-                'unpackers': ['Enigma Unpacker'],
-                'analyzers': ['Ghidra', 'x64dbg'],
-                'techniques': ['Resource extraction', 'License check removal'],
+            "Enigma": {
+                "unpackers": ["Enigma Unpacker"],
+                "analyzers": ["Ghidra", "x64dbg"],
+                "techniques": ["Resource extraction", "License check removal"],
             },
-            'UPX': {
-                'unpackers': ['UPX -d', 'Generic PE unpacker'],
-                'analyzers': ['Any disassembler'],
-                'techniques': ['Standard unpacking'],
+            "UPX": {
+                "unpackers": ["UPX -d", "Generic PE unpacker"],
+                "analyzers": ["Any disassembler"],
+                "techniques": ["Standard unpacking"],
             },
         }
 
-        return tool_recommendations.get(protection, {
-            'analyzers': ['Ghidra', 'radare2'],
-            'techniques': ['Standard analysis'],
-        })
+        return tool_recommendations.get(
+            protection,
+            {
+                "analyzers": ["Ghidra", "radare2"],
+                "techniques": ["Standard analysis"],
+            },
+        )

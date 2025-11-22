@@ -98,7 +98,7 @@ class TestCentralConfigUsage(IntellicrackTestBase):
     def analyze_file(self, file_path):
         """Analyze a Python file for configuration access patterns."""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             tree = ast.parse(content)
@@ -232,7 +232,7 @@ class TestCentralConfigUsage(IntellicrackTestBase):
         for file_path in key_files:
             if file_path.exists():
                 files_checked += 1
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, encoding='utf-8') as f:
                     content = f.read()
 
                 # Check for proper central config imports
@@ -354,7 +354,7 @@ class TestCentralConfigUsage(IntellicrackTestBase):
                     if file == 'config_manager.py':
                         continue
 
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, encoding='utf-8') as f:
                         content = f.read()
 
                         for i, line in enumerate(content.split('\n'), 1):

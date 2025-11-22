@@ -29,7 +29,8 @@ import threading
 import time
 from collections import deque
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any, Callable
+from typing import Dict, List, Optional, Tuple, Any
+from collections.abc import Callable
 
 import psutil
 
@@ -49,7 +50,7 @@ except ImportError:
 class IntelPTTracer:
     """Intel Processor Trace based instruction tracing for modern CPUs."""
 
-    def __init__(self, target_pid: int, output_dir: Optional[str] = None):
+    def __init__(self, target_pid: int, output_dir: str | None = None):
         """Initialize Intel PT tracer.
 
         Args:
@@ -156,7 +157,7 @@ class IntelPTTracer:
         # Requires administrative privileges
         pass
 
-    def _read_trace_packet(self) -> Optional[bytes]:
+    def _read_trace_packet(self) -> bytes | None:
         """Read trace packet from Intel PT buffer.
 
         Returns:
@@ -180,7 +181,7 @@ class IntelPTTracer:
         """Cleanup ETW tracing resources."""
         pass
 
-    def stop_tracing(self) -> List[Dict]:
+    def stop_tracing(self) -> list[dict]:
         """Stop tracing and return collected trace.
 
         Returns:
@@ -207,7 +208,7 @@ class IntelPTTracer:
 class DynamoRIOTracer:
     """DynamoRIO-based dynamic binary instrumentation tracer."""
 
-    def __init__(self, target_binary: str, output_dir: Optional[str] = None):
+    def __init__(self, target_binary: str, output_dir: str | None = None):
         """Initialize DynamoRIO tracer.
 
         Args:
@@ -244,7 +245,7 @@ class DynamoRIOTracer:
         self.api_calls = []
         self.branch_history = []
 
-    def _find_dynamorio(self) -> Optional[Path]:
+    def _find_dynamorio(self) -> Path | None:
         """Find DynamoRIO installation.
 
         Returns:
@@ -525,7 +526,7 @@ static dr_emit_flags_t event_bb_insert(void *drcontext, void *tag,
             # Return pre-built client if compilation fails
             return self.dynamorio_path / "samples" / "bin64" / "instrace.dll"
 
-    def trace_execution(self, args: List[str] = None, timeout: int = 60) -> Dict:
+    def trace_execution(self, args: list[str] = None, timeout: int = 60) -> dict:
         """Trace binary execution with DynamoRIO.
 
         Args:
@@ -591,7 +592,7 @@ static dr_emit_flags_t event_bb_insert(void *drcontext, void *tag,
             self.logger.error(f"Trace execution failed: {e}")
             return {"status": "error", "error": str(e)}
 
-    def _parse_trace_output(self, trace_file: Path) -> Dict:
+    def _parse_trace_output(self, trace_file: Path) -> dict:
         """Parse DynamoRIO trace output.
 
         Args:
@@ -618,7 +619,7 @@ static dr_emit_flags_t event_bb_insert(void *drcontext, void *tag,
         # Read text trace if available
         trace_txt = f"{trace_file}.txt"
         if Path(trace_txt).exists():
-            with open(trace_txt, 'r') as f:
+            with open(trace_txt) as f:
                 for line in f:
                     # Parse trace lines
                     if line.startswith("INST:"):
@@ -648,7 +649,7 @@ static dr_emit_flags_t event_bb_insert(void *drcontext, void *tag,
 
         return trace_data
 
-    def _analyze_trace(self, trace_data: Dict) -> Dict:
+    def _analyze_trace(self, trace_data: dict) -> dict:
         """Analyze execution trace for patterns and anomalies.
 
         Args:
@@ -773,7 +774,7 @@ class RuntimeInstructionTracer:
         self.logger.info("Using Windows debugging API as fallback")
         return "windbg"
 
-    def start_tracing(self, duration: Optional[int] = None) -> bool:
+    def start_tracing(self, duration: int | None = None) -> bool:
         """Start runtime instruction tracing.
 
         Args:
@@ -847,7 +848,7 @@ class RuntimeInstructionTracer:
 
         return False
 
-    def stop_tracing(self) -> Dict:
+    def stop_tracing(self) -> dict:
         """Stop tracing and collect results.
 
         Returns:
@@ -879,7 +880,7 @@ class RuntimeInstructionTracer:
         self.trace_results = results
         return results
 
-    def _analyze_combined_traces(self, traces: Dict) -> Dict:
+    def _analyze_combined_traces(self, traces: dict) -> dict:
         """Analyze combined traces from multiple sources.
 
         Args:
@@ -935,7 +936,7 @@ class RuntimeInstructionTracer:
 
         return analysis
 
-    def _check_protection_indicators(self, trace: Any, indicators: List[str]) -> bool:
+    def _check_protection_indicators(self, trace: Any, indicators: list[str]) -> bool:
         """Check if trace contains protection indicators.
 
         Args:
@@ -953,7 +954,7 @@ class RuntimeInstructionTracer:
 
         return False
 
-    def _detect_licensing_mechanisms(self, results: Dict) -> List[Dict]:
+    def _detect_licensing_mechanisms(self, results: dict) -> list[dict]:
         """Detect licensing mechanisms from runtime traces.
 
         Args:
@@ -1035,7 +1036,7 @@ class RuntimeInstructionTracer:
 
         return detections
 
-    def _trace_contains_api(self, results: Dict, api: str) -> bool:
+    def _trace_contains_api(self, results: dict, api: str) -> bool:
         """Check if API call appears in trace.
 
         Args:
@@ -1048,7 +1049,7 @@ class RuntimeInstructionTracer:
         results_str = str(results).lower()
         return api.lower() in results_str
 
-    def _trace_contains_file(self, results: Dict, filename: str) -> bool:
+    def _trace_contains_file(self, results: dict, filename: str) -> bool:
         """Check if file access appears in trace.
 
         Args:
@@ -1061,7 +1062,7 @@ class RuntimeInstructionTracer:
         results_str = str(results).lower()
         return filename.lower() in results_str
 
-    def _trace_contains_network(self, results: Dict, port: int) -> bool:
+    def _trace_contains_network(self, results: dict, port: int) -> bool:
         """Check if network port appears in trace.
 
         Args:

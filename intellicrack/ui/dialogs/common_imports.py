@@ -27,6 +27,7 @@ from typing import Optional, Union
 
 from ...utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 # Common PyQt6 imports
@@ -69,7 +70,7 @@ try:
     HAS_PYQT = True
 
     # Utility functions for unused imports
-    def create_icon(path_or_pixmap: Union[str, QPixmap]) -> QIcon:
+    def create_icon(path_or_pixmap: str | QPixmap) -> QIcon:
         """Create a QIcon from a path or pixmap.
 
         Args:
@@ -83,7 +84,7 @@ try:
             return QIcon(path_or_pixmap)
         return QIcon()
 
-    def create_pixmap_from_file(path: str, size: Optional[tuple[int, int]] = None) -> QPixmap:
+    def create_pixmap_from_file(path: str, size: tuple[int, int] | None = None) -> QPixmap:
         """Create a QPixmap from a file.
 
         Args:
@@ -99,7 +100,9 @@ try:
             pixmap = pixmap.scaled(size[0], size[1], Qt.KeepAspectRatio, Qt.SmoothTransformation)
         return pixmap
 
-    def get_user_input(parent: QWidget, title: str, label: str, default: str = "", password: bool = False) -> tuple[str, bool]:
+    def get_user_input(
+        parent: QWidget, title: str, label: str, default: str = "", password: bool = False
+    ) -> tuple[str, bool]:
         """Get user input using QInputDialog.
 
         Args:
@@ -114,12 +117,18 @@ try:
 
         """
         if password:
-            text, ok = QInputDialog.getText(parent, title, label, QLineEdit.EchoMode.Password, default)
+            text, ok = QInputDialog.getText(
+                parent, title, label, QLineEdit.EchoMode.Password, default
+            )
         else:
-            text, ok = QInputDialog.getText(parent, title, label, QLineEdit.EchoMode.Normal, default)
+            text, ok = QInputDialog.getText(
+                parent, title, label, QLineEdit.EchoMode.Normal, default
+            )
         return text, ok
 
-    def create_horizontal_slider(min_val: int = 0, max_val: int = 100, value: int = 50, tick_interval: int = 10) -> QSlider:
+    def create_horizontal_slider(
+        min_val: int = 0, max_val: int = 100, value: int = 50, tick_interval: int = 10
+    ) -> QSlider:
         """Create a configured horizontal slider.
 
         Args:
@@ -202,7 +211,7 @@ except ImportError as e:
     QWidget = None
 
     # Fallback functions for non-PyQt environments
-    def create_icon(path_or_pixmap: Union[str, object]) -> None:
+    def create_icon(path_or_pixmap: str | object) -> None:
         """Create icon fallback when PyQt6 is unavailable.
 
         Args:
@@ -214,7 +223,7 @@ except ImportError as e:
         """
         return
 
-    def create_pixmap_from_file(path: str, size: Optional[tuple[int, int]] = None) -> None:
+    def create_pixmap_from_file(path: str, size: tuple[int, int] | None = None) -> None:
         """Create pixmap fallback when PyQt6 is unavailable.
 
         Args:
@@ -227,7 +236,9 @@ except ImportError as e:
         """
         return
 
-    def get_user_input(parent: object, title: str, label: str, default: str = "", password: bool = False) -> tuple[str, bool]:
+    def get_user_input(
+        parent: object, title: str, label: str, default: str = "", password: bool = False
+    ) -> tuple[str, bool]:
         """Get user input fallback when PyQt6 is unavailable.
 
         Args:
@@ -243,7 +254,9 @@ except ImportError as e:
         """
         return default, True
 
-    def create_horizontal_slider(min_val: int = 0, max_val: int = 100, value: int = 50, tick_interval: int = 10) -> "FallbackSlider":
+    def create_horizontal_slider(
+        min_val: int = 0, max_val: int = 100, value: int = 50, tick_interval: int = 10
+    ) -> "FallbackSlider":
         """Create slider fallback when PyQt6 is unavailable.
 
         Args:
@@ -347,54 +360,48 @@ class FallbackSlider:
 
 # Export all imports and utilities
 __all__ = [
-    # Availability flag
+    "FallbackSlider",
     "HAS_PYQT",
-    # Core imports
-    "Qt",
-    "QThread",
-    "QTimer",
-    "pyqtSignal",
-    # GUI imports
-    "QFont",
-    "QIcon",
-    "QPixmap",
-    "QTextCursor",
-    # Test imports
-    "QTest",
-    # Widget imports
     "QApplication",
     "QCheckBox",
     "QComboBox",
     "QDialog",
     "QFileDialog",
+    "QFont",
     "QFormLayout",
     "QGraphicsView",
     "QGroupBox",
     "QHBoxLayout",
     "QHeaderView",
+    "QIcon",
     "QInputDialog",
     "QLabel",
     "QLineEdit",
     "QListWidget",
     "QListWidgetItem",
     "QMessageBox",
+    "QPixmap",
     "QProgressBar",
     "QPushButton",
     "QSlider",
     "QSpinBox",
     "QSplitter",
+    "QTabWidget",
     "QTableWidget",
     "QTableWidgetItem",
-    "QTabWidget",
+    "QTest",
+    "QTextCursor",
     "QTextEdit",
+    "QThread",
+    "QTimer",
     "QTreeWidget",
     "QTreeWidgetItem",
     "QVBoxLayout",
     "QWidget",
-    # Utility functions
+    "Qt",
+    "create_horizontal_slider",
     "create_icon",
     "create_pixmap_from_file",
     "get_user_input",
-    "create_horizontal_slider",
-    "FallbackSlider",
+    "pyqtSignal",
 ]

@@ -21,15 +21,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from intellicrack.handlers.pyqt6_handler import (
-    QDialog,
-    QGridLayout,
-    QGroupBox,
-    QLabel,
-    QProgressBar,
-    Qt,
-    QVBoxLayout,
-)
+from intellicrack.handlers.pyqt6_handler import QDialog, QGridLayout, QGroupBox, QLabel, QProgressBar, Qt, QVBoxLayout
 from intellicrack.utils.log_message import log_error, log_info, log_warning
 
 
@@ -76,12 +68,16 @@ class GpuAnalysis:
             # Detect available frameworks
             try:
                 frameworks = detect_gpu_frameworks()
-                self.framework_info.update(frameworks)
+                self.framework_info |= frameworks
             except Exception as e:
                 self.logger.debug(f"Framework detection failed: {e}")
 
             if self.gpu_available:
-                log_info(f"GPU Analysis initialized with {self.accelerator.framework}", category="GPU", context=self.device_info)
+                log_info(
+                    f"GPU Analysis initialized with {self.accelerator.framework}",
+                    category="GPU",
+                    context=self.device_info,
+                )
             else:
                 log_warning("GPU Analysis initialized in CPU fallback mode", category="GPU")
 
@@ -162,11 +158,10 @@ class GpuAnalysis:
                     return file_path.read_bytes()
 
             # Check if there's a selected file in file browser
-            if hasattr(app, "file_browser") and hasattr(app.file_browser, "selected_file"):
-                if app.file_browser.selected_file:
-                    file_path = Path(app.file_browser.selected_file)
-                    if file_path.exists() and file_path.is_file():
-                        return file_path.read_bytes()
+            if hasattr(app, "file_browser") and hasattr(app.file_browser, "selected_file") and app.file_browser.selected_file:
+                file_path = Path(app.file_browser.selected_file)
+                if file_path.is_file():
+                    return file_path.read_bytes()
 
             return None
 
@@ -247,7 +242,9 @@ class GpuAnalysis:
                 gpu_available = results.get("gpu_available", False)
 
                 app.update_output.emit(f"[GPU] Analysis completed using {framework}")
-                app.update_output.emit(f"[GPU] GPU acceleration: {'enabled' if gpu_available else 'disabled'}")
+                app.update_output.emit(
+                    f"[GPU] GPU acceleration: {'enabled' if gpu_available else 'disabled'}"
+                )
 
                 # Display analysis results
                 analyses = results.get("analyses", {})
@@ -257,7 +254,9 @@ class GpuAnalysis:
                     pattern_results = analyses["pattern_search"]
                     total_patterns = len(pattern_results)
                     total_matches = sum(r.get("match_count", 0) for r in pattern_results)
-                    app.update_output.emit(f"[GPU] Pattern search: {total_matches} matches across {total_patterns} patterns")
+                    app.update_output.emit(
+                        f"[GPU] Pattern search: {total_matches} matches across {total_patterns} patterns"
+                    )
 
                 # Entropy analysis results
                 if "entropy" in analyses:
@@ -267,14 +266,13 @@ class GpuAnalysis:
 
                 # High entropy sections
                 if "high_entropy_sections" in analyses:
-                    high_entropy = analyses["high_entropy_sections"]
-                    if high_entropy:
+                    if high_entropy := analyses["high_entropy_sections"]:
                         count = len(high_entropy)
-                        app.update_output.emit(f"[GPU] Found {count} high-entropy sections (potentially encrypted/packed)")
+                        app.update_output.emit(
+                            f"[GPU] Found {count} high-entropy sections (potentially encrypted/packed)"
+                        )
 
-                # Device info
-                device_info = results.get("device_info")
-                if device_info:
+                if device_info := results.get("device_info"):
                     device_name = device_info.get("name", "Unknown")
                     app.update_output.emit(f"[GPU] Device: {device_name}")
 

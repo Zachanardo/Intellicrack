@@ -20,6 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 
+
 # Set up package logger
 logger = logging.getLogger(__name__)
 

@@ -50,6 +50,7 @@ from intellicrack.utils.logger import get_logger
 
 from .common_types import ExecutionResult
 
+
 logger = get_logger(__name__)
 audit_logger = get_audit_logger()
 resource_manager = get_resource_manager()
@@ -107,7 +108,9 @@ class SecureHostKeyPolicy(MissingHostKeyPolicy):
             # Key exists but doesn't match - potential security issue
             stored_key = existing_keys[key.get_name()]
             if stored_key != key:
-                raise paramiko.SSHException(f"Host key verification failed for {key_identifier}. Key fingerprint has changed!")
+                raise paramiko.SSHException(
+                    f"Host key verification failed for {key_identifier}. Key fingerprint has changed!"
+                )
 
         # Store the new key
         self.host_keys.add(key_identifier, key.get_name(), key)
@@ -136,7 +139,7 @@ class QEMUManager:
         """
         from intellicrack.core.config_manager import get_config
 
-        self.logger = logging.getLogger(__name__ + ".QEMUManager")
+        self.logger = logging.getLogger(f"{__name__}.QEMUManager")
         self.snapshots = {}
 
         # Initialize central configuration
@@ -179,8 +182,12 @@ class QEMUManager:
 
         # Circuit breaker for SSH connections from config
         self.ssh_circuit_breaker = {}  # vm_name -> {'failures': int, 'last_failure': datetime, 'open': bool}
-        self.circuit_breaker_threshold = self.config.get("vm_framework.ssh.circuit_breaker_threshold", 5)
-        self.circuit_breaker_timeout = self.config.get("vm_framework.ssh.circuit_breaker_timeout", 60)
+        self.circuit_breaker_threshold = self.config.get(
+            "vm_framework.ssh.circuit_breaker_threshold", 5
+        )
+        self.circuit_breaker_timeout = self.config.get(
+            "vm_framework.ssh.circuit_breaker_timeout", 60
+        )
 
         # Port allocation from config
         self.next_ssh_port = self.config.get("vm_framework.qemu_defaults.ssh_port_start", 22222)
@@ -283,14 +290,10 @@ class QEMUManager:
 
     def _find_qemu_executable(self) -> str:
         """Find QEMU executable on the system."""
-        # First, try to get path from config
-        config_path = self.config.get_tool_path("qemu-system-x86_64")
-        if config_path:
+        if config_path := self.config.get_tool_path("qemu-system-x86_64"):
             return config_path
 
-        # Otherwise fallback to shutil.which
-        fallback_path = shutil.which("qemu-system-x86_64")
-        if fallback_path:
+        if fallback_path := shutil.which("qemu-system-x86_64"):
             return fallback_path
 
         # If still not found, return default as last resort
@@ -314,8 +317,7 @@ class QEMUManager:
                 )
                 return None
 
-            client = self._get_existing_connection(pool_key)
-            if client:
+            if client := self._get_existing_connection(pool_key):
                 return client
 
             return self._create_new_connection(snapshot, pool_key, retries)
@@ -342,7 +344,9 @@ class QEMUManager:
         except Exception as e:
             self.logger.debug("Error closing SSH client: %s", e)
 
-    def _create_new_connection(self, snapshot: QEMUSnapshot, pool_key: tuple, retries: int) -> SSHClient | None:
+    def _create_new_connection(
+        self, snapshot: QEMUSnapshot, pool_key: tuple, retries: int
+    ) -> SSHClient | None:
         """Attempt to create a new SSH connection with retries."""
         for attempt in range(retries):
             try:
@@ -380,21 +384,29 @@ class QEMUManager:
         )
         return client
 
-    def _handle_connection_exception(self, vm_name: str, exception: Exception, attempt: int, retries: int) -> None:
+    def _handle_connection_exception(
+        self, vm_name: str, exception: Exception, attempt: int, retries: int
+    ) -> None:
         """Handle exceptions during SSH connection attempts."""
         if isinstance(exception, TimeoutError):
-            logger.warning("SSH connection timeout (attempt %s/%s): %s", attempt + 1, retries, exception)
+            logger.warning(
+                "SSH connection timeout (attempt %s/%s): %s", attempt + 1, retries, exception
+            )
         elif isinstance(exception, paramiko.AuthenticationException):
             logger.error("SSH authentication failed for %s: %s", vm_name, exception)
         elif isinstance(exception, paramiko.SSHException):
-            logger.warning("SSH connection error (attempt %s/%s): %s", attempt + 1, retries, exception)
+            logger.warning(
+                "SSH connection error (attempt %s/%s): %s", attempt + 1, retries, exception
+            )
         else:
             logger.exception("Unexpected SSH connection error: %s", exception)
         self._record_connection_failure(vm_name)
         if attempt < retries - 1:
             time.sleep(self.ssh_retry_delay)
 
-    def download_file_from_vm(self, snapshot: QEMUSnapshot, remote_path: str, local_path: str) -> bool:
+    def download_file_from_vm(
+        self, snapshot: QEMUSnapshot, remote_path: str, local_path: str
+    ) -> bool:
         """Download file from VM using SFTP.
 
         Args:
@@ -440,7 +452,9 @@ class QEMUManager:
             return False
 
         except Exception as e:
-            logger.exception("Unexpected error downloading %s from %s: %s", remote_path, snapshot.vm_name, e)
+            logger.exception(
+                "Unexpected error downloading %s from %s: %s", remote_path, snapshot.vm_name, e
+            )
             return False
 
         finally:
@@ -450,7 +464,9 @@ class QEMUManager:
                 except Exception as e:
                     self.logger.debug("Error closing SFTP client: %s", e)
 
-    def get_modified_binary(self, snapshot_id: str, remote_binary_path: str, local_download_dir: str) -> str | None:
+    def get_modified_binary(
+        self, snapshot_id: str, remote_binary_path: str, local_download_dir: str
+    ) -> str | None:
         """Download modified binary from VM and return local path.
 
         Args:
@@ -474,10 +490,9 @@ class QEMUManager:
         # Construct local download path
         local_path = Path(local_download_dir) / filename
 
-        # Download the file
-        success = self.download_file_from_vm(snapshot, remote_binary_path, str(local_path))
-
-        if success:
+        if success := self.download_file_from_vm(
+            snapshot, remote_binary_path, str(local_path)
+        ):
             logger.info("Modified binary downloaded to %s", local_path)
             return str(local_path)
         logger.error("Failed to download modified binary from %s", snapshot_id)
@@ -676,12 +691,20 @@ class QEMUManager:
 
                 # Decode safely for logging
                 try:
-                    stdout_decoded = stdout.decode(errors="replace") if isinstance(stdout, (bytes, bytearray)) else str(stdout)
+                    stdout_decoded = (
+                        stdout.decode(errors="replace")
+                        if isinstance(stdout, (bytes, bytearray))
+                        else str(stdout)
+                    )
                 except Exception:
                     stdout_decoded = "<unreadable stdout>"
 
                 try:
-                    stderr_decoded = stderr.decode(errors="replace") if isinstance(stderr, (bytes, bytearray)) else str(stderr)
+                    stderr_decoded = (
+                        stderr.decode(errors="replace")
+                        if isinstance(stderr, (bytes, bytearray))
+                        else str(stderr)
+                    )
                 except Exception:
                     stderr_decoded = "<unreadable stderr>"
 
@@ -703,9 +726,7 @@ class QEMUManager:
 
         start_time = time.time()
         while time.time() - start_time < timeout:
-            # Try to establish SSH connection
-            ssh_client = self._get_ssh_connection(snapshot, retries=1)
-            if ssh_client:
+            if ssh_client := self._get_ssh_connection(snapshot, retries=1):
                 try:
                     # Test command execution
                     result = self._execute_command_in_vm(snapshot, "echo ready", timeout=5)
@@ -757,7 +778,9 @@ class QEMUManager:
             msg = f"Failed to upload file: {e}"
             raise RuntimeError(msg) from e
 
-    def _upload_binary_to_vm(self, snapshot: QEMUSnapshot, local_binary: str, remote_path: str) -> None:
+    def _upload_binary_to_vm(
+        self, snapshot: QEMUSnapshot, local_binary: str, remote_path: str
+    ) -> None:
         """Upload binary file to VM."""
         # Get SSH connection
         ssh_client = self._get_ssh_connection(snapshot)
@@ -880,7 +903,7 @@ class QEMUManager:
                 return False
 
         # If no clear indicators, consider success if no stderr
-        return len(stderr.strip()) == 0
+        return not stderr.strip()
 
     def _analyze_ghidra_output(self, stdout: str, stderr: str) -> bool:
         """Analyze Ghidra output to determine success/failure."""
@@ -918,7 +941,7 @@ class QEMUManager:
                 return False
 
         # Default to success if analysis completed without errors
-        return "Analysis finished" in stdout or len(stderr.strip()) == 0
+        return "Analysis finished" in stdout or not stderr.strip()
 
     def cleanup_snapshot(self, snapshot_id: str) -> None:
         """Clean up a test snapshot and stop associated VM."""
@@ -1052,7 +1075,8 @@ class QEMUManager:
                 "created_at": snapshot.created_at.isoformat(),
                 "ssh_port": snapshot.ssh_port,
                 "vnc_port": getattr(snapshot, "vnc_port", "N/A"),
-                "vm_running": snapshot.vm_process is not None and snapshot.vm_process.poll() is None,
+                "vm_running": snapshot.vm_process is not None
+                and snapshot.vm_process.poll() is None,
                 "version": getattr(snapshot, "version", "v1.0"),
                 "parent_snapshot": getattr(snapshot, "parent_snapshot", None),
                 "children_snapshots": getattr(snapshot, "children_snapshots", []),
@@ -1178,9 +1202,7 @@ class QEMUManager:
         from intellicrack.utils.qemu_image_discovery import get_qemu_discovery
 
         discovery = get_qemu_discovery()
-        windows_images = discovery.get_images_by_os("windows")
-
-        if windows_images:
+        if windows_images := discovery.get_images_by_os("windows"):
             selected_image = windows_images[0]
             self.logger.info("Found Windows base image: %s", selected_image.path)
             return selected_image.path
@@ -1192,8 +1214,7 @@ class QEMUManager:
                 self.logger.info("Found Windows image from config: %s", path)
                 return path
 
-        all_images = discovery.discover_images()
-        if all_images:
+        if all_images := discovery.discover_images():
             selected_image = all_images[0]
             self.logger.warning(
                 "No Windows-specific images found. Using first available image: %s (format: %s)",
@@ -1219,9 +1240,7 @@ class QEMUManager:
         from intellicrack.utils.qemu_image_discovery import get_qemu_discovery
 
         discovery = get_qemu_discovery()
-        linux_images = discovery.get_images_by_os("linux")
-
-        if linux_images:
+        if linux_images := discovery.get_images_by_os("linux"):
             selected_image = linux_images[0]
             self.logger.info("Found Linux base image: %s", selected_image.path)
             return str(selected_image.path)
@@ -1233,8 +1252,7 @@ class QEMUManager:
                 self.logger.info("Found Linux image from config: %s", path)
                 return str(path)
 
-        all_images = discovery.discover_images()
-        if all_images:
+        if all_images := discovery.discover_images():
             selected_image = all_images[0]
             self.logger.warning(
                 "No Linux-specific images found. Using first available image: %s (format: %s)",
@@ -1258,10 +1276,7 @@ class QEMUManager:
         """Detect operating system type from binary."""
         if binary_path.lower().endswith((".exe", ".dll")):
             return "windows"
-        if binary_path.lower().endswith((".so", ".elf")):
-            return "linux"
-        # Default to windows for unknown types
-        return "windows"
+        return "linux" if binary_path.lower().endswith((".so", ".elf")) else "windows"
 
     def create_snapshot(self, binary_path: str) -> str:
         """Create a QEMU snapshot for testing."""
@@ -1333,16 +1348,20 @@ class QEMUManager:
         try:
             # Create qcow2 image with size based on OS type from config
             if os_type.lower() == "windows":
-                windows_size_gb = self.config.get("vm_framework.base_images.default_windows_size_gb", 2)
+                windows_size_gb = self.config.get(
+                    "vm_framework.base_images.default_windows_size_gb", 2
+                )
                 image_size = f"{windows_size_gb}G"
                 logger.info("Creating Windows test image (%s)", image_size)
-            elif os_type.lower() in ["linux", "debian", "ubuntu"]:
+            elif os_type.lower() in {"linux", "debian", "ubuntu"}:
                 linux_size_gb = self.config.get("vm_framework.base_images.default_linux_size_gb", 1)
                 image_size = f"{linux_size_gb}G"
                 logger.info("Creating Linux test image (%s)", image_size)
             else:
                 # Default to Linux size for unknown OS types
-                default_size_gb = self.config.get("vm_framework.base_images.default_linux_size_gb", 1)
+                default_size_gb = self.config.get(
+                    "vm_framework.base_images.default_linux_size_gb", 1
+                )
                 image_size = f"{default_size_gb}G"
                 logger.info("Creating generic test image for %s (%s)", os_type, image_size)
 
@@ -1453,7 +1472,9 @@ class QEMUManager:
             # Start the VM
             # Launch QEMU process and capture output to determine success/failure
             process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
             )
             _stdout, stderr = process.communicate()
             if process.returncode == 0:
@@ -1463,7 +1484,10 @@ class QEMUManager:
                 return True
 
             # Use the shared constant for the error message
-            logger.error(FAILED_START_VM, stderr.decode() if isinstance(stderr, (bytes, bytearray)) else str(stderr))
+            logger.error(
+                FAILED_START_VM,
+                stderr.decode() if isinstance(stderr, (bytes, bytearray)) else str(stderr),
+            )
             return False
 
         except Exception as e:
@@ -1554,7 +1578,7 @@ fi
             return ExecutionResult(
                 success=False,
                 output="",
-                error="Frida test failed: " + str(e),
+                error=f"Frida test failed: {e!s}",
                 exit_code=-1,
                 runtime_ms=runtime_ms,
             )
@@ -1635,7 +1659,7 @@ fi
             return ExecutionResult(
                 success=False,
                 output="",
-                error="Ghidra test failed: " + str(e),
+                error=f"Ghidra test failed: {e!s}",
                 exit_code=-1,
                 runtime_ms=runtime_ms,
             )
@@ -1659,15 +1683,19 @@ fi
             self._upload_file_to_vm(snapshot, script_content, remote_script)
 
             # Make script executable
-            chmod_result = self._execute_command_in_vm(snapshot, "chmod +x " + remote_script)
+            chmod_result = self._execute_command_in_vm(
+                snapshot, f"chmod +x {remote_script}"
+            )
             if chmod_result["exit_code"] != 0:
                 logger.error("Failed to make script executable: %s", chmod_result["stderr"])
 
             # Execute script
-            exec_result = self._execute_command_in_vm(snapshot, "bash " + remote_script, timeout=60)
+            exec_result = self._execute_command_in_vm(
+                snapshot, f"bash {remote_script}", timeout=60
+            )
 
             # Clean up remote script
-            self._execute_command_in_vm(snapshot, "rm -f " + remote_script)
+            self._execute_command_in_vm(snapshot, f"rm -f {remote_script}")
 
             return exec_result
 
@@ -1676,7 +1704,7 @@ fi
             return {
                 "exit_code": -1,
                 "stdout": "",
-                "stderr": "VM execution error: " + str(e),
+                "stderr": f"VM execution error: {e!s}",
             }
         finally:
             # Clean up local temp file
@@ -1773,7 +1801,10 @@ fi
             AuditEvent(
                 event_type=AuditEventType.VM_SNAPSHOT,
                 severity=AuditSeverity.INFO,
-                description="Created versioned snapshot " + snapshot_id + " from " + parent_snapshot_id,
+                description="Created versioned snapshot "
+                + snapshot_id
+                + " from "
+                + parent_snapshot_id,
                 target=snapshot_id,
             ),
         )
@@ -1792,14 +1823,18 @@ fi
         logger.info("Comparing snapshots: %s vs %s", snapshot_id1, snapshot_id2)
 
         # Calculate disk usage differences
-        disk1_size = os.path.getsize(snapshot1.disk_path) if os.path.exists(snapshot1.disk_path) else 0
-        disk2_size = os.path.getsize(snapshot2.disk_path) if os.path.exists(snapshot2.disk_path) else 0
+        disk1_size = (
+            os.path.getsize(snapshot1.disk_path) if os.path.exists(snapshot1.disk_path) else 0
+        )
+        disk2_size = (
+            os.path.getsize(snapshot2.disk_path) if os.path.exists(snapshot2.disk_path) else 0
+        )
 
         # Compare test results
         results1 = snapshot1.test_results
         results2 = snapshot2.test_results
 
-        comparison = {
+        return {
             "snapshot1": {
                 "id": snapshot_id1,
                 "version": snapshot1.version,
@@ -1818,12 +1853,14 @@ fi
                 "disk_size_diff": disk2_size - disk1_size,
                 "test_count_diff": len(results2) - len(results1),
                 "version_diff": snapshot2.version - snapshot1.version,
-                "time_diff": (snapshot2.created_at - snapshot1.created_at).total_seconds(),
+                "time_diff": (
+                    snapshot2.created_at - snapshot1.created_at
+                ).total_seconds(),
             },
-            "relationship": self._determine_snapshot_relationship(snapshot1, snapshot2),
+            "relationship": self._determine_snapshot_relationship(
+                snapshot1, snapshot2
+            ),
         }
-
-        return comparison
 
     def _determine_snapshot_relationship(
         self,
@@ -1832,11 +1869,14 @@ fi
     ) -> str:
         """Determine the relationship between two snapshots."""
         if snapshot1.parent_snapshot == snapshot2.snapshot_id:
-            return snapshot1.snapshot_id + " is child of " + snapshot2.snapshot_id
+            return f"{snapshot1.snapshot_id} is child of {snapshot2.snapshot_id}"
         if snapshot2.parent_snapshot == snapshot1.snapshot_id:
-            return snapshot2.snapshot_id + " is child of " + snapshot1.snapshot_id
+            return f"{snapshot2.snapshot_id} is child of {snapshot1.snapshot_id}"
         if snapshot1.parent_snapshot == snapshot2.parent_snapshot and snapshot1.parent_snapshot:
-            return "Both are siblings (share parent: " + str(snapshot1.parent_snapshot) + ")"
+            return (
+                f"Both are siblings (share parent: {snapshot1.parent_snapshot!s}"
+                 ")"
+            )
         return "No direct relationship"
 
     def rollback_snapshot(self, snapshot_id: str, target_state: str | None = None) -> bool:
@@ -1872,7 +1912,9 @@ fi
                 target_snapshot = self.snapshots[target_state]
 
                 # Create new overlay based on target
-                rollback_disk = self.working_dir / f"{snapshot_id}_rollback_{int(time.time())}.qcow2"
+                rollback_disk = (
+                    self.working_dir / f"{snapshot_id}_rollback_{int(time.time())}.qcow2"
+                )
                 cmd = [
                     "qemu-img",
                     "create",
@@ -1896,7 +1938,7 @@ fi
 
                 logger.info("Rolled back %s to state of %s", snapshot_id, target_state)
 
-                rollback_type = "to snapshot " + target_state
+                rollback_type = f"to snapshot {target_state}"
             else:
                 # Rollback to clean state (recreate from base)
                 os_type = self._detect_os_type(snapshot.binary_path)
@@ -1939,10 +1981,13 @@ fi
                 AuditEvent(
                     event_type=AuditEventType.VM_SNAPSHOT,
                     severity=AuditSeverity.MEDIUM,
-                    description="Rolled back snapshot " + snapshot_id + " " + rollback_type,
-                    details={"target_state": target_state, "new_version": snapshot.version},
+                    description=f"Rolled back snapshot {snapshot_id} {rollback_type}",
+                    details={
+                        "target_state": target_state,
+                        "new_version": snapshot.version,
+                    },
                     target=snapshot_id,
-                ),
+                )
             )
 
             # Restart VM if it was running
@@ -1974,10 +2019,10 @@ fi
                 AuditEvent(
                     event_type=AuditEventType.ERROR,
                     severity=AuditSeverity.HIGH,
-                    description="Snapshot rollback failed for " + snapshot_id,
+                    description=f"Snapshot rollback failed for {snapshot_id}",
                     details={"error": str(e), "target_state": target_state},
                     target=snapshot_id,
-                ),
+                )
             )
 
             return False
@@ -1992,7 +2037,9 @@ fi
 
         try:
             # Get disk usage
-            disk_size = os.path.getsize(snapshot.disk_path) if os.path.exists(snapshot.disk_path) else 0
+            disk_size = (
+                os.path.getsize(snapshot.disk_path) if os.path.exists(snapshot.disk_path) else 0
+            )
 
             # Get memory usage from VM if running
             memory_usage = 0
@@ -2022,7 +2069,8 @@ fi
                 "disk_usage_bytes": disk_size,
                 "memory_usage_bytes": memory_usage,
                 "cpu_usage_percent": cpu_usage,
-                "vm_running": snapshot.vm_process is not None and snapshot.vm_process.poll() is None,
+                "vm_running": snapshot.vm_process is not None
+                and snapshot.vm_process.poll() is None,
                 "test_count": len(snapshot.test_results),
                 "uptime_seconds": (datetime.now() - snapshot.created_at).total_seconds(),
             }
@@ -2048,7 +2096,9 @@ fi
 
         if snapshot.vm_process and snapshot.vm_process.poll() is None:
             # Apply network isolation to running VM
-            isolation_cmd = "iptables -A OUTPUT -j DROP" if isolated else "iptables -D OUTPUT -j DROP"
+            isolation_cmd = (
+                "iptables -A OUTPUT -j DROP" if isolated else "iptables -D OUTPUT -j DROP"
+            )
 
             try:
                 self._execute_command_in_vm(snapshot, isolation_cmd)
@@ -2123,7 +2173,7 @@ fi
             return ExecutionResult(
                 success=False,
                 output="",
-                error="VM test failed: " + str(e),
+                error=f"VM test failed: {e!s}",
                 exit_code=-1,
                 runtime_ms=0,
             )
@@ -2151,7 +2201,9 @@ fi
             # Upload binary to VM with secure temp path
             import uuid
 
-            remote_binary = f"{tempfile.gettempdir()}/{uuid.uuid4().hex[:8]}_{Path(binary_path).name}"
+            remote_binary = (
+                f"{tempfile.gettempdir()}/{uuid.uuid4().hex[:8]}_{Path(binary_path).name}"
+            )
             self._upload_binary_to_vm(snapshot, binary_path, remote_binary)
 
             # Create wrapper script
@@ -2181,7 +2233,7 @@ exit 0
             return ExecutionResult(
                 success=False,
                 output="",
-                error="Generic test failed: " + str(e),
+                error=f"Generic test failed: {e!s}",
                 exit_code=-1,
                 runtime_ms=runtime_ms,
             )
@@ -2234,7 +2286,7 @@ exit 0
 
                     # Check if file exists
                     if not os.path.exists(snapshot.disk_path):
-                        warning = "Snapshot file not found: " + snapshot.disk_path
+                        warning = f"Snapshot file not found: {snapshot.disk_path}"
                         optimization_results["warnings"].append(warning)
                         logger.warning(warning)
                         continue
@@ -2244,7 +2296,7 @@ exit 0
 
                     # Skip non-qcow2 images
                     if not snapshot.disk_path.endswith(".qcow2"):
-                        warning = "Skipping non-qcow2 snapshot: " + snapshot_id
+                        warning = f"Skipping non-qcow2 snapshot: {snapshot_id}"
                         optimization_results["warnings"].append(warning)
                         continue
 
@@ -2319,6 +2371,7 @@ exit 0
                                         backup_path = f"{snapshot.disk_path}.backup"
                                         try:
                                             from pathlib import Path
+
                                             Path(snapshot.disk_path).rename(backup_path)
                                             Path(str(temp_path)).rename(snapshot.disk_path)
                                             os.remove(backup_path)
@@ -2333,7 +2386,9 @@ exit 0
 
                                             # Update snapshot metadata
                                             snapshot.metadata["optimized"] = True
-                                            snapshot.metadata["optimization_date"] = datetime.now().isoformat()
+                                            snapshot.metadata["optimization_date"] = (
+                                                datetime.now().isoformat()
+                                            )
                                             snapshot.metadata["original_size"] = original_size
                                             snapshot.metadata["optimized_size"] = new_size
 
@@ -2341,7 +2396,9 @@ exit 0
                                             # Restore backup on error
                                             if os.path.exists(backup_path):
                                                 Path(backup_path).rename(snapshot.disk_path)
-                                            raise Exception(f"Failed to replace snapshot file: {e}") from e
+                                            raise Exception(
+                                                f"Failed to replace snapshot file: {e}"
+                                            ) from e
                                     else:
                                         raise Exception(
                                             f"Integrity check failed: {check_result.stderr}",
@@ -2378,7 +2435,9 @@ exit 0
 
         # Calculate final statistics
         optimization_results["processing_time_seconds"] = time.time() - start_time
-        optimization_results["space_saved_mb"] = optimization_results["space_saved_bytes"] / (1024 * 1024)
+        optimization_results["space_saved_mb"] = optimization_results["space_saved_bytes"] / (
+            1024 * 1024
+        )
 
         # Log completion
         audit_logger.log_event(
@@ -2475,7 +2534,7 @@ exit 0
         # Determine which snapshots to remove
         snapshots_to_remove = []
 
-        for _parent, versions in versions_by_parent.items():
+        for versions in versions_by_parent.values():
             for idx, (_version, snapshot_id, snapshot) in enumerate(versions):
                 # Check if snapshot is too old
                 age = current_time - snapshot.created_at
@@ -2487,11 +2546,10 @@ exit 0
                 # Check if snapshot has children (don't delete if it has active children)
                 has_children = bool(snapshot.children_snapshots)
 
-                # Check if VM is currently running
-                is_running = snapshot.vm_process and snapshot.vm_process.poll() is None
-
-                # Decision logic
-                if is_running:
+                if (
+                    is_running := snapshot.vm_process
+                    and snapshot.vm_process.poll() is None
+                ):
                     cleanup_results["warnings"].append(
                         f"Skipping {snapshot_id}: VM is currently running",
                     )
@@ -2701,7 +2759,9 @@ exit 0
         summary = {
             "snapshots_remaining": len(self.snapshots),
             "total_disk_usage_mb": sum(
-                os.path.getsize(s.disk_path) / (1024 * 1024) for s in self.snapshots.values() if os.path.exists(s.disk_path)
+                os.path.getsize(s.disk_path) / (1024 * 1024)
+                for s in self.snapshots.values()
+                if os.path.exists(s.disk_path)
             ),
             "tasks_completed": len(maintenance_results["tasks_performed"]),
             "errors_encountered": len(maintenance_results["errors"]),
@@ -2822,10 +2882,9 @@ exit 0
         discovery = get_qemu_discovery()
         discovered_images = discovery.discover_images()
 
-        # Filter images by architecture
-        matching_images = [img for img in discovered_images if img.architecture == architecture]
-
-        if matching_images:
+        if matching_images := [
+            img for img in discovered_images if img.architecture == architecture
+        ]:
             return matching_images[0].path
 
         # Fallback: search by filename pattern
@@ -2852,10 +2911,14 @@ exit 0
             "cpu_cores": self.config.get("vm_framework.qemu_defaults.cpu_cores", 2),
             "enable_kvm": self.config.get("vm_framework.qemu_defaults.enable_kvm", True),
             "network_enabled": self.config.get("vm_framework.qemu_defaults.network_enabled", True),
-            "graphics_enabled": self.config.get("vm_framework.qemu_defaults.graphics_enabled", False),
+            "graphics_enabled": self.config.get(
+                "vm_framework.qemu_defaults.graphics_enabled", False
+            ),
             "monitor_port": self.config.get("vm_framework.qemu_defaults.monitor_port", 55555),
             "timeout": self.config.get("vm_framework.qemu_defaults.timeout", 300),
-            "shared_folder_name": self.config.get("vm_framework.qemu_defaults.shared_folder_name", "intellicrack_shared_folder"),
+            "shared_folder_name": self.config.get(
+                "vm_framework.qemu_defaults.shared_folder_name", "intellicrack_shared_folder"
+            ),
         }
 
         # For each key-value pair, call self.config.set() to update actual config
@@ -2875,13 +2938,10 @@ exit 0
         from intellicrack.utils.path_resolver import get_qemu_images_dir
         from intellicrack.utils.qemu_image_discovery import get_qemu_discovery
 
-        image_path = self._get_image_for_architecture(architecture)
-
-        if image_path:
+        if image_path := self._get_image_for_architecture(architecture):
             return str(image_path)
 
-        rootfs_dir = self.config.get("rootfs_directory", None)
-        if rootfs_dir:
+        if rootfs_dir := self.config.get("rootfs_directory", None):
             from pathlib import Path
 
             project_root = Path(__file__).parent.parent.parent
@@ -2894,9 +2954,7 @@ exit 0
                 return str(rootfs_path)
 
         discovery = get_qemu_discovery()
-        all_images = discovery.discover_images()
-
-        if all_images:
+        if all_images := discovery.discover_images():
             selected_image = all_images[0]
             self.logger.warning(
                 "No architecture-specific image found for %s. Using first available: %s",
@@ -2955,8 +3013,6 @@ exit 0
         except subprocess.TimeoutExpired as e:
             logger.error(SUBPROCESS_TIMEOUT_MSG, e)
             raise RuntimeError(f"QEMU binary check timed out: {qemu_path}") from e
-            raise RuntimeError(f"QEMU binary check timed out: {qemu_path}") from e
-
         # Check if rootfs exists (optional for some use cases)
         rootfs_path = getattr(self, "rootfs_path", None)
         if rootfs_path and not os.path.exists(rootfs_path):
@@ -3025,9 +3081,7 @@ exit 0
         monitor_socket = os.path.join(temp_dir, f"qemu_monitor_{os.getpid()}.sock")
         cmd.extend(["-monitor", f"unix:{monitor_socket},server,nowait"])
 
-        # Shared folder for file transfer
-        shared_folder = self.config.get("shared_folder")
-        if shared_folder:
+        if shared_folder := self.config.get("shared_folder"):
             cmd.extend(
                 [
                     "-virtfs",
@@ -3242,10 +3296,7 @@ exit 0
                 text=True,
             )
 
-            # Wait for system to boot
-            boot_success = self._wait_for_boot()
-
-            if boot_success:
+            if boot_success := self._wait_for_boot():
                 self.logger.info("QEMU system started successfully")
                 return True
             self.logger.error("QEMU system failed to boot properly")

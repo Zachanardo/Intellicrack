@@ -24,6 +24,7 @@ import curses
 import os
 import sys
 
+
 try:
     import mmap
 
@@ -216,12 +217,7 @@ class TerminalHexViewer:
 
             # Highlight cursor position
             if byte_offset == self.cursor_offset:
-                if self.edit_mode:
-                    color = self.colors["cursor"]
-                else:
-                    color = self.colors["search"]
-
-            # Highlight search results
+                color = self.colors["cursor"] if self.edit_mode else self.colors["search"]
             elif byte_offset in [r[0] for r in self.search_results]:
                 color = self.colors["search"]
 
@@ -233,10 +229,7 @@ class TerminalHexViewer:
                 self.stdscr.addstr(y, hex_pos, hex_str, curses.color_pair(color))
 
             # Prepare ASCII representation
-            if 32 <= byte_val <= 126:
-                ascii_char = chr(byte_val)
-            else:
-                ascii_char = "."
+            ascii_char = chr(byte_val) if 32 <= byte_val <= 126 else "."
             ascii_line += ascii_char
 
         # Draw ASCII representation
@@ -255,11 +248,13 @@ class TerminalHexViewer:
         modified_str = "*" if self.modified else ""
 
         status = f" {mode_str}({edit_type}) | Offset: 0x{self.cursor_offset:08X} | "
-        status += f"Size: {self.file_size} bytes | File: {os.path.basename(self.filepath)}{modified_str}"
+        status += (
+            f"Size: {self.file_size} bytes | File: {os.path.basename(self.filepath)}{modified_str}"
+        )
 
         # Truncate if too long
         if len(status) > self.screen_width:
-            status = status[: self.screen_width - 3] + "..."
+            status = f"{status[:self.screen_width - 3]}..."
 
         # Pad to full width
         status = status.ljust(self.screen_width)
@@ -345,10 +340,7 @@ class TerminalHexViewer:
     def _handle_view_input(self, key: int) -> bool:
         """Handle input in view mode."""
         if key == ord("q"):
-            if self.modified:
-                if not self._confirm_exit():
-                    return True
-            return False
+            return bool(self.modified and not self._confirm_exit())
 
         if key == ord("e"):
             self.edit_mode = True
@@ -404,13 +396,12 @@ class TerminalHexViewer:
         elif key == ord("\t"):  # TAB
             self.hex_edit_mode = not self.hex_edit_mode
 
-        elif key == ord("\n") or key == ord("\r"):  # ENTER
+        elif key in [ord("\n"), ord("\r")]:  # ENTER
             self.edit_mode = False
 
         elif key == curses.KEY_F1:
             self.help_visible = True
 
-        # Navigation (same as view mode)
         elif key == curses.KEY_UP:
             self._move_cursor(-self.bytes_per_line)
         elif key == curses.KEY_DOWN:
@@ -420,7 +411,6 @@ class TerminalHexViewer:
         elif key == curses.KEY_RIGHT:
             self._move_cursor(1)
 
-        # Edit input
         else:
             self._handle_edit_character(key)
 
@@ -509,9 +499,11 @@ class TerminalHexViewer:
         # Get input from user
         try:
             input_subwin.clear()
-            pattern_input = input_subwin.getstr(0, 0, input_width - 6).decode("utf-8").strip()
-
-            if pattern_input:
+            if (
+                pattern_input := input_subwin.getstr(0, 0, input_width - 6)
+                .decode("utf-8")
+                .strip()
+            ):
                 # Determine if it's hex or text
                 if all(c in "0123456789ABCDEFabcdef " for c in pattern_input):
                     # Hex pattern - remove spaces
@@ -562,7 +554,7 @@ class TerminalHexViewer:
                 clean_hex = self.search_pattern.replace(" ", "").replace("\n", "")
                 # Ensure even number of hex digits
                 if len(clean_hex) % 2 != 0:
-                    clean_hex = "0" + clean_hex
+                    clean_hex = f"0{clean_hex}"
                 pattern_bytes = bytes.fromhex(clean_hex)
 
             # Search through data
@@ -587,7 +579,7 @@ class TerminalHexViewer:
                 self.search_results.append((pos, len(pattern_bytes)))
                 search_start = pos + 1
 
-        except (ValueError, UnicodeDecodeError):
+        except ValueError:
             # Invalid pattern - could show error but for now just clear results
             self.search_results = []
 
@@ -648,9 +640,11 @@ class TerminalHexViewer:
         # Get input from user
         try:
             input_subwin.clear()
-            offset_input = input_subwin.getstr(0, 0, input_width - 6).decode("utf-8").strip()
-
-            if offset_input:
+            if (
+                offset_input := input_subwin.getstr(0, 0, input_width - 6)
+                .decode("utf-8")
+                .strip()
+            ):
                 # Parse offset (support hex with 0x prefix and decimal)
                 try:
                     if offset_input.lower().startswith("0x"):

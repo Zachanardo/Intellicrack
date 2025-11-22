@@ -31,6 +31,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+
 # Add parent directories to path
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(script_dir, "..", ".."))
@@ -252,7 +253,9 @@ class IntellicrackAIInterface:
 
         return impacts
 
-    def _create_action(self, args: list[str], description: str, ai_reasoning: str | None = None) -> PendingAction:
+    def _create_action(
+        self, args: list[str], description: str, ai_reasoning: str | None = None
+    ) -> PendingAction:
         """Create a pending action for confirmation."""
         import uuid
 
@@ -267,7 +270,9 @@ class IntellicrackAIInterface:
             ai_reasoning=ai_reasoning,
         )
 
-    def execute_command(self, args: list[str], description: str, ai_reasoning: str | None = None) -> dict[str, Any]:
+    def execute_command(
+        self, args: list[str], description: str, ai_reasoning: str | None = None
+    ) -> dict[str, Any]:
         """Execute an Intellicrack CLI command with confirmation.
 
         Args:
@@ -386,8 +391,10 @@ class IntellicrackAIInterface:
         return {
             "session_id": self.session_id,
             "total_actions": len(self.confirmation_manager.action_history),
-            "approved_actions": sum(1 for h in self.confirmation_manager.action_history if h["approved"]),
-            "declined_actions": sum(1 for h in self.confirmation_manager.action_history if not h["approved"]),
+            "approved_actions": sum(bool(h["approved"])
+                                for h in self.confirmation_manager.action_history),
+            "declined_actions": sum(bool(not h["approved"])
+                                for h in self.confirmation_manager.action_history),
             "action_history": self.confirmation_manager.action_history,
         }
 

@@ -53,9 +53,7 @@ class FridaServerManager:
 
         """
         if platform.system() == "Windows":
-            base_dir = Path(os.getenv("LOCALAPPDATA", ""))
-            if not base_dir:
-                base_dir = Path.home() / "AppData" / "Local"
+            base_dir = Path(os.getenv("LOCALAPPDATA", "")) or Path.home() / "AppData" / "Local"
         else:
             base_dir = Path.home() / ".local" / "share"
 
@@ -68,9 +66,7 @@ class FridaServerManager:
             Executable filename.
 
         """
-        if self._platform == "windows":
-            return "frida-server.exe"
-        return "frida-server"
+        return "frida-server.exe" if self._platform == "windows" else "frida-server"
 
     def _get_server_path(self) -> Path:
         """Get full path to frida-server executable.
@@ -149,6 +145,7 @@ class FridaServerManager:
 
             with open(compressed_path, "wb") as f:
                 import shutil
+
                 shutil.copyfileobj(response.raw, f)
 
             print("[FridaServerManager] Decompressing frida-server...")
@@ -180,7 +177,9 @@ class FridaServerManager:
             with lzma.open(input_path, "rb") as f_in, open(output_path, "wb") as f_out:
                 f_out.write(f_in.read())
         except ImportError:
-            raise RuntimeError("lzma module not available - cannot decompress frida-server") from None
+            raise RuntimeError(
+                "lzma module not available - cannot decompress frida-server"
+            ) from None
 
     def _ensure_server_installed(self) -> bool:
         """Ensure frida-server is installed and available.
@@ -249,7 +248,9 @@ class FridaServerManager:
                     creationflags=subprocess.CREATE_NO_WINDOW,
                 )
             else:
-                self.server_process = subprocess.Popen([str(server_path)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                self.server_process = subprocess.Popen(
+                    [str(server_path)], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                )
 
             for _attempt in range(10):
                 time.sleep(0.5)

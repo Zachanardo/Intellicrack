@@ -33,11 +33,13 @@ import json
 import sys
 from pathlib import Path
 
+
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from intellicrack.core.config_manager import IntellicrackConfig
 from intellicrack.utils.logger import get_logger
+
 
 logger = get_logger(__name__)
 
@@ -59,51 +61,54 @@ class ConfigManager:
     def _migrate_if_needed(self) -> None:
         """One-time migration from old JSON file to central config."""
         # Check if we need to migrate
-        if self.config_file.exists() and not self.central_config.get("cli_configuration.migrated", False):
-            try:
-                logger.info(f"Migrating CLI config from {self.config_file} to central config")
+        if not self.config_file.exists() or self.central_config.get(
+            "cli_configuration.migrated", False
+        ):
+            return
+        try:
+            logger.info(f"Migrating CLI config from {self.config_file} to central config")
 
-                # Load old config
-                with open(self.config_file) as f:
-                    old_config = json.load(f)
+            # Load old config
+            with open(self.config_file) as f:
+                old_config = json.load(f)
 
-                # Get current CLI config
-                cli_config = self.central_config.get("cli_configuration", {})
+            # Get current CLI config
+            cli_config = self.central_config.get("cli_configuration", {})
 
-                # Merge old config into CLI section (old values take precedence for first migration)
-                for key, value in old_config.items():
-                    # Map to appropriate subsection or direct field
-                    if key == "profiles" and isinstance(value, dict):
-                        # Merge profiles
-                        current_profiles = cli_config.get("profiles", {})
-                        current_profiles.update(value)
-                        cli_config["profiles"] = current_profiles
-                    elif key == "aliases" and isinstance(value, dict):
-                        cli_config["aliases"] = value
-                    elif key == "custom_commands" and isinstance(value, dict):
-                        cli_config["custom_commands"] = value
-                    elif key == "startup_commands" and isinstance(value, list):
-                        cli_config["startup_commands"] = value
-                    else:
-                        # Direct field mapping
-                        cli_config[key] = value
+            # Merge old config into CLI section (old values take precedence for first migration)
+            for key, value in old_config.items():
+                # Map to appropriate subsection or direct field
+                if key == "profiles" and isinstance(value, dict):
+                    # Merge profiles
+                    current_profiles = cli_config.get("profiles", {})
+                    current_profiles.update(value)
+                    cli_config["profiles"] = current_profiles
+                elif key == "aliases" and isinstance(value, dict):
+                    cli_config["aliases"] = value
+                elif key == "custom_commands" and isinstance(value, dict):
+                    cli_config["custom_commands"] = value
+                elif key == "startup_commands" and isinstance(value, list):
+                    cli_config["startup_commands"] = value
+                else:
+                    # Direct field mapping
+                    cli_config[key] = value
 
-                # Mark as migrated
-                cli_config["migrated"] = True
+            # Mark as migrated
+            cli_config["migrated"] = True
 
-                # Save to central config
-                self.central_config.set("cli_configuration", cli_config)
-                self.central_config.save()
+            # Save to central config
+            self.central_config.set("cli_configuration", cli_config)
+            self.central_config.save()
 
-                logger.info("Successfully migrated CLI configuration to central config")
+            logger.info("Successfully migrated CLI configuration to central config")
 
-                # Optionally rename old file to .backup
-                backup_file = self.config_file.with_suffix(".json.backup")
-                self.config_file.rename(backup_file)
-                logger.info(f"Renamed old config to {backup_file}")
+            # Optionally rename old file to .backup
+            backup_file = self.config_file.with_suffix(".json.backup")
+            self.config_file.rename(backup_file)
+            logger.info(f"Renamed old config to {backup_file}")
 
-            except Exception as e:
-                logger.error(f"Failed to migrate CLI config: {e}")
+        except Exception as e:
+            logger.error(f"Failed to migrate CLI config: {e}")
                 # Continue without migration, use defaults
 
     def load_config(self) -> None:

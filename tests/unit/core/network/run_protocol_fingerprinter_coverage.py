@@ -143,7 +143,7 @@ def validate_test_quality():
     test_file_path = os.path.join(os.path.dirname(__file__), "test_protocol_fingerprinter.py")
 
     try:
-        with open(test_file_path, 'r', encoding='utf-8') as f:
+        with open(test_file_path, encoding='utf-8') as f:
             test_content = f.read()
 
         # Check for real data usage

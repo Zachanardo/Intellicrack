@@ -96,10 +96,7 @@ def safe_entropy_calculation(data: bytes, max_entropy: float = None) -> float:
 
     entropy = calculate_byte_entropy(data)
 
-    if max_entropy is not None:
-        return min(entropy, max_entropy)
-
-    return entropy
+    return min(entropy, max_entropy) if max_entropy is not None else entropy
 
 
 def calculate_frequency_distribution(data: bytes | str) -> dict:
@@ -121,15 +118,13 @@ def calculate_frequency_distribution(data: bytes | str) -> dict:
 
     data_len = len(data)
 
-    # Convert to probabilities
-    distribution = {}
-    for item, count in freq.items():
-        distribution[item] = {
+    return {
+        item: {
             "count": count,
             "probability": count / data_len,
         }
-
-    return distribution
+        for item, count in freq.items()
+    }
 
 
 def is_high_entropy(data: bytes | str, threshold: float = 7.0) -> bool:

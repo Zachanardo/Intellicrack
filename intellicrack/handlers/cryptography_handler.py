@@ -27,6 +27,7 @@ from typing import Optional, Union
 
 from intellicrack.utils.logger import logger
 
+
 """
 Cryptography Import Handler with Production-Ready Fallbacks
 
@@ -41,8 +42,10 @@ try:
     from cryptography.fernet import Fernet
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives import hashes, padding, serialization
-    from cryptography.hazmat.primitives.asymmetric import padding as asym_padding
-    from cryptography.hazmat.primitives.asymmetric import rsa
+    from cryptography.hazmat.primitives.asymmetric import (
+        padding as asym_padding,
+        rsa,
+    )
     from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
     from cryptography.hazmat.primitives.serialization import load_pem_private_key
@@ -359,7 +362,9 @@ except ImportError as e:
             ciphertext = bytearray(16)
             for i in range(16):
                 key_byte = self.key[i % len(self.key)]
-                ciphertext[i] = plaintext[i] ^ key_byte ^ self.S_BOX[(plaintext[i] + key_byte) % 256]
+                ciphertext[i] = (
+                    plaintext[i] ^ key_byte ^ self.S_BOX[(plaintext[i] + key_byte) % 256]
+                )
             return bytes(ciphertext)
 
         def decrypt_block(self, ciphertext: bytes) -> bytes:
@@ -402,8 +407,8 @@ except ImportError as e:
             """
             self.algorithm = algorithm
             self.mode = mode
-            self.encryptor_obj: Optional[object] = None
-            self.decryptor_obj: Optional[object] = None
+            self.encryptor_obj: object | None = None
+            self.decryptor_obj: object | None = None
 
         def encryptor(self) -> "FallbackEncryptor":
             """Get encryptor.
@@ -551,7 +556,7 @@ except ImportError as e:
     class FallbackFernet:
         """Fernet symmetric encryption implementation."""
 
-        def __init__(self, key: Optional[Union[bytes, str]] = None) -> None:
+        def __init__(self, key: bytes | str | None = None) -> None:
             """Initialize Fernet.
 
             Args:
@@ -579,7 +584,7 @@ except ImportError as e:
             """
             return base64.urlsafe_b64encode(os.urandom(32))
 
-        def encrypt(self, data: Union[bytes, str]) -> bytes:
+        def encrypt(self, data: bytes | str) -> bytes:
             """Encrypt data.
 
             Args:
@@ -614,11 +619,9 @@ except ImportError as e:
 
             # Add HMAC
             h = hmac.new(self._signing_key, payload, hashlib.sha256)
-            token = base64.urlsafe_b64encode(payload + h.digest())
+            return base64.urlsafe_b64encode(payload + h.digest())
 
-            return token
-
-        def decrypt(self, token: Union[bytes, str]) -> bytes:
+        def decrypt(self, token: bytes | str) -> bytes:
             """Decrypt token.
 
             Args:
@@ -668,7 +671,9 @@ except ImportError as e:
         """RSA key generation and operations."""
 
         @staticmethod
-        def generate_private_key(public_exponent: int = 65537, key_size: int = 2048, backend: Optional[object] = None) -> "FallbackRSAPrivateKey":
+        def generate_private_key(
+            public_exponent: int = 65537, key_size: int = 2048, backend: object | None = None
+        ) -> "FallbackRSAPrivateKey":
             """Generate RSA private key."""
             # Simplified RSA key generation
             logger.info("Generating RSA key pair (fallback mode)")
@@ -734,7 +739,9 @@ except ImportError as e:
             """
             return FallbackRSAPublicKey(self.n, self.e)
 
-        def private_bytes(self, encoding: object, format: object, encryption_algorithm: object) -> bytes:
+        def private_bytes(
+            self, encoding: object, format: object, encryption_algorithm: object
+        ) -> bytes:
             """Export private key."""
             # Simplified PEM format
             key_data = f"""-----BEGIN RSA PRIVATE KEY-----
@@ -782,7 +789,9 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             c_int = pow(m_int, self.e, self.n)
             return c_int.to_bytes((c_int.bit_length() + 7) // 8, "big")
 
-        def verify(self, signature: bytes, message: bytes, padding_obj: object, algorithm: object) -> bool:
+        def verify(
+            self, signature: bytes, message: bytes, padding_obj: object, algorithm: object
+        ) -> bool:
             """Verify signature."""
             # Simplified verification
             s_int = int.from_bytes(signature, "big")
@@ -799,7 +808,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             length: int,
             salt: bytes,
             iterations: int,
-            backend: Optional[object] = None,
+            backend: object | None = None,
         ) -> None:
             """Initialize PBKDF2."""
             self.algorithm = algorithm
@@ -810,7 +819,9 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
         def derive(self, key_material: bytes) -> bytes:
             """Derive key from material."""
             # Use Python's hashlib.pbkdf2_hmac
-            return hashlib.pbkdf2_hmac("sha256", key_material, self.salt, self.iterations, dklen=self.length)
+            return hashlib.pbkdf2_hmac(
+                "sha256", key_material, self.salt, self.iterations, dklen=self.length
+            )
 
         def verify(self, key_material: bytes, expected_key: bytes) -> None:
             """Verify key material produces expected key."""
@@ -948,7 +959,9 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
         return FallbackBackend()
 
     # X.509 certificate handling
-    def load_pem_x509_certificate(data: bytes, backend: Optional[object] = None) -> "FallbackX509Certificate":
+    def load_pem_x509_certificate(
+        data: bytes, backend: object | None = None
+    ) -> "FallbackX509Certificate":
         """Load PEM certificate."""
         # Parse PEM format (simplified)
         lines = data.decode().split("\n")
@@ -967,7 +980,9 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
         cert_bytes = base64.b64decode(cert_data)
         return FallbackX509Certificate(cert_bytes)
 
-    def load_pem_private_key(data: Union[bytes, str], password: Optional[bytes] = None, backend: Optional[object] = None) -> "FallbackRSAPrivateKey":
+    def load_pem_private_key(
+        data: bytes | str, password: bytes | None = None, backend: object | None = None
+    ) -> "FallbackRSAPrivateKey":
         """Load PEM private key."""
         # Parse PEM format (simplified)
         lines = data.decode() if isinstance(data, bytes) else data
@@ -1034,9 +1049,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
 
         def _extract_issuer_from_der(self) -> str:
             """Extract issuer name from DER data."""
-            if len(self.data) > 64:
-                return f"CN=Issuer{self.data[48:52].hex()}"
-            return "CN=CA"
+            return f"CN=Issuer{self.data[48:52].hex()}" if len(self.data) > 64 else "CN=CA"
 
         def _extract_serial_from_der(self) -> int:
             """Extract serial number from DER structure."""
@@ -1084,7 +1097,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             modulus_start = max(50, len(self.data) - 256)
             modulus_end = modulus_start + 256
             modulus = int.from_bytes(
-                self.data[modulus_start:min(modulus_end, len(self.data))],
+                self.data[modulus_start : min(modulus_end, len(self.data))],
                 "big",
                 signed=False,
             )
@@ -1093,7 +1106,9 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             exp_end = min(exp_start + 4, len(self.data))
             if exp_end > exp_start:
                 exponent = int.from_bytes(
-                    self.data[exp_start:exp_end], "big", signed=False,
+                    self.data[exp_start:exp_end],
+                    "big",
+                    signed=False,
                 )
             else:
                 exponent = 65537
@@ -1123,7 +1138,9 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
 
                 class Padding:
                     class OAEP:
-                        def __init__(self, mgf: object, algorithm: object, label: Optional[bytes] = None) -> None:
+                        def __init__(
+                            self, mgf: object, algorithm: object, label: bytes | None = None
+                        ) -> None:
                             self.mgf = mgf
                             self.algorithm = algorithm
                             self.label = label
@@ -1215,30 +1232,23 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
 
 # Export all cryptography objects and availability flag
 __all__ = [
-    # Availability flags
-    "HAS_CRYPTOGRAPHY",
     "CRYPTOGRAPHY_VERSION",
-    # Main classes
-    "Fernet",
     "Cipher",
-    # Hazmat modules
-    "hazmat",
-    "default_backend",
-    # Primitives
-    "hashes",
-    "padding",
-    "serialization",
-    "algorithms",
-    "modes",
-    # Asymmetric
-    "rsa",
-    "asym_padding",
-    # KDF
+    "Fernet",
+    "HAS_CRYPTOGRAPHY",
+    "NameOID",
     "PBKDF2",
     "PBKDF2HMAC",
-    # X.509
-    "x509",
-    "load_pem_x509_certificate",
-    "NameOID",
+    "algorithms",
+    "asym_padding",
+    "default_backend",
+    "hashes",
+    "hazmat",
     "load_pem_private_key",
+    "load_pem_x509_certificate",
+    "modes",
+    "padding",
+    "rsa",
+    "serialization",
+    "x509",
 ]

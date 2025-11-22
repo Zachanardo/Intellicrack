@@ -47,7 +47,7 @@ print(f"\n1. TARGET MODULE ANALYSIS")
 print("-" * 40)
 
 try:
-    with open(target_module, 'r') as f:
+    with open(target_module) as f:
         target_content = f.read()
 
     target_tree = ast.parse(target_content)
@@ -93,7 +93,7 @@ print(f"\n2. TEST SUITE ANALYSIS")
 print("-" * 40)
 
 try:
-    with open(test_file, 'r') as f:
+    with open(test_file) as f:
         test_content = f.read()
 
     test_tree = ast.parse(test_content)

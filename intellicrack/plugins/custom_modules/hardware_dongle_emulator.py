@@ -35,6 +35,7 @@ from typing import Any
 
 from intellicrack.utils.logger import log_all_methods
 
+
 """
 Hardware Dongle Emulator
 
@@ -97,7 +98,9 @@ class DongleSpec:
             random_bytes = os.urandom(8)  # Cryptographically secure random bytes
 
             # Create unique identifier combining all components
-            serial_data = struct.pack(">HH", self.vendor_id, self.product_id) + timestamp_bytes + random_bytes
+            serial_data = (
+                struct.pack(">HH", self.vendor_id, self.product_id) + timestamp_bytes + random_bytes
+            )
 
             # Generate deterministic hash-based serial number
             serial_hash = hashlib.sha256(serial_data).hexdigest()[:16].upper()
@@ -136,7 +139,7 @@ class DongleMemory:
 
         # Check read-only ranges
         for start, end in self.read_only_ranges:
-            if not (address + len(data) <= start or address >= end):
+            if address + len(data) > start and address < end:
                 return False  # Attempting to write to read-only memory
 
         self.data[address : address + len(data)] = data
@@ -156,12 +159,12 @@ class CryptoEngine:
         key_ints = struct.unpack(">4I", key[:16])
         result = bytearray()
 
+        delta = 0x9E3779B9
+
         for i in range(0, len(data), 8):
             v0, v1 = struct.unpack(">2I", data[i : i + 8])
 
             total = 0
-            delta = 0x9E3779B9
-
             for _ in range(32):
                 total += delta
                 v0 += ((v1 << 4) + key_ints[0]) ^ (v1 + total) ^ ((v1 >> 5) + key_ints[1])
@@ -179,12 +182,12 @@ class CryptoEngine:
         key_ints = struct.unpack(">4I", key[:16])
         result = bytearray()
 
+        delta = 0x9E3779B9
+
         for i in range(0, len(data), 8):
             v0, v1 = struct.unpack(">2I", data[i : i + 8])
 
             total = 0xC6EF3720  # delta * 32
-            delta = 0x9E3779B9
-
             for _ in range(32):
                 v1 -= ((v0 << 4) + key_ints[2]) ^ (v0 + total) ^ ((v0 >> 5) + key_ints[3])
                 v1 &= 0xFFFFFFFF
@@ -563,13 +566,10 @@ class USBDongleDriver:
         # Try to find real USB device
         if self.usb_backend == "pyusb":
             try:
-                # Find USB device by vendor/product ID
-                device = self.usb.core.find(
+                if device := self.usb.core.find(
                     idVendor=dongle.spec.vendor_id,
                     idProduct=dongle.spec.product_id,
-                )
-
-                if device:
+                ):
                     # Store real device reference
                     dongle._usb_device = device
                     self.logger.info(f"Found real USB device for {device_id}")
@@ -601,7 +601,9 @@ class USBDongleDriver:
             del self.dongles[device_id]
             self.logger.info(f"Unregistered USB dongle {device_id}")
 
-    def find_dongles(self, vendor_id: int | None = None, product_id: int | None = None) -> list[BaseDongleEmulator]:
+    def find_dongles(
+        self, vendor_id: int | None = None, product_id: int | None = None
+    ) -> list[BaseDongleEmulator]:
         """Find USB dongles matching criteria."""
         found = []
 
@@ -706,7 +708,7 @@ class USBDongleDriver:
             return json.dumps(info).encode()
 
         if request == 0x04:  # Crypto operation
-            if len(data) >= 1:
+            if data:
                 operation = data[0]
                 payload = data[1:]
 
@@ -719,18 +721,20 @@ class USBDongleDriver:
                 return b"\xff"  # Unknown operation
             return b"\xff"  # Invalid data length
 
-        if request == 0x05:  # Get hardware ID
-            # Real hardware ID from USB device
-            if hasattr(dongle, "_usb_device") and dongle._usb_device:
-                device = dongle._usb_device
-                hw_id = f"{device.idVendor:04X}:{device.idProduct:04X}:{device.bus}:{device.address}"
-                return hw_id.encode()
-            return b"EMULATED:0000:0000:00:00"
-
-        else:
+        if request != 0x05:
             return b"\xff"  # Unknown request
+        # Real hardware ID from USB device
+        if hasattr(dongle, "_usb_device") and dongle._usb_device:
+            device = dongle._usb_device
+            hw_id = (
+                f"{device.idVendor:04X}:{device.idProduct:04X}:{device.bus}:{device.address}"
+            )
+            return hw_id.encode()
+        return b"EMULATED:0000:0000:00:00"
 
-    def bulk_transfer(self, vendor_id: int, product_id: int, endpoint: int, data: bytes = None, length: int = 0) -> bytes:
+    def bulk_transfer(
+        self, vendor_id: int, product_id: int, endpoint: int, data: bytes = None, length: int = 0
+    ) -> bytes:
         """Perform USB bulk transfer for high-speed data."""
         dongles = self.find_dongles(vendor_id, product_id)
         if not dongles:
@@ -753,9 +757,7 @@ class USBDongleDriver:
                 self.logger.debug(f"Bulk transfer failed: {e}")
 
         # Fallback for emulated dongles
-        if data:
-            return struct.pack("<I", len(data))
-        return b"\x00" * (length or 512)  # Unknown request
+        return struct.pack("<I", len(data)) if data else b"\x00" * (length or 512)
 
 
 @log_all_methods
@@ -874,13 +876,11 @@ class ParallelPortEmulator:
             return self.data_register
         if port == self.port_address + 1:  # Status port
             return self.status_register
-        if port == self.port_address + 2:  # Control port
-            return self.control_register
-        return 0xFF
+        return self.control_register if port == self.port_address + 2 else 0xFF
 
     def write_port(self, port: int, value: int) -> None:
         """Write to parallel port."""
-        value = value & 0xFF  # Ensure 8-bit value
+        value &= 0xFF
 
         # Write to real hardware if available
         if self.port_backend:
@@ -939,7 +939,14 @@ class ParallelPortEmulator:
                 libc = ctypes.CDLL(None)
                 mmap_func = libc.mmap
                 mmap_func.restype = ctypes.c_void_p
-                mmap_func.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_off_t]
+                mmap_func.argtypes = [
+                    ctypes.c_void_p,
+                    ctypes.c_size_t,
+                    ctypes.c_int,
+                    ctypes.c_int,
+                    ctypes.c_int,
+                    ctypes.c_off_t,
+                ]
 
                 # Allocate executable memory page
                 PROT_READ = 0x1
@@ -948,7 +955,14 @@ class ParallelPortEmulator:
                 MAP_PRIVATE = 0x02
                 MAP_ANONYMOUS = 0x20
 
-                exec_mem = mmap_func(0, len(asm_code), PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)
+                exec_mem = mmap_func(
+                    0,
+                    len(asm_code),
+                    PROT_READ | PROT_WRITE | PROT_EXEC,
+                    MAP_PRIVATE | MAP_ANONYMOUS,
+                    -1,
+                    0,
+                )
 
                 if exec_mem == -1:
                     return 0xFF  # Return default value on allocation failure
@@ -1066,10 +1080,10 @@ class ParallelPortEmulator:
             # Complete pending command
             cmd, addr = self._pending_command
             if cmd == "read_mem":
-                # Complete address and read
-                full_addr = addr | value
                 if self.dongles:
                     dongle = next(iter(self.dongles.values()))
+                    # Complete address and read
+                    full_addr = addr | value
                     data = dongle.read_memory(full_addr, 1)
                     self.status_register = data[0] if data else 0xFF
             elif cmd == "write_mem":
@@ -1093,16 +1107,12 @@ class ParallelPortEmulator:
         # Bit 4: Enable IRQ
         # Bit 5: Enable bidirectional
 
-        if value & 0x01:  # Strobe signal
-            # Latch current data
-            if hasattr(self, "_latched_data"):
-                self._process_latched_command()
+        if value & 0x01 and hasattr(self, "_latched_data"):
+            self._process_latched_command()
 
-        if value & 0x04:  # Initialize signal
-            # Reset dongle
-            if self.dongles:
-                for dongle in self.dongles.values():
-                    dongle.__init__(dongle.spec)  # Reset dongle state
+        if value & 0x04 and self.dongles:
+            for dongle in self.dongles.values():
+                dongle.__init__(dongle.spec)  # Reset dongle state
 
         if value & 0x20:  # Bidirectional mode
             # Enable bidirectional communication
@@ -1138,10 +1148,14 @@ class DongleRegistryManager:
 
         try:
             # Create device key
-            key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, f"SYSTEM\\CurrentControlSet\\Enum\\{device_key}")
+            key = winreg.CreateKey(
+                winreg.HKEY_LOCAL_MACHINE, f"SYSTEM\\CurrentControlSet\\Enum\\{device_key}"
+            )
 
             # Set device description
-            winreg.SetValueEx(key, "DeviceDesc", 0, winreg.REG_SZ, f"{spec.dongle_type.value} Dongle")
+            winreg.SetValueEx(
+                key, "DeviceDesc", 0, winreg.REG_SZ, f"{spec.dongle_type.value} Dongle"
+            )
 
             # Set hardware ID
             winreg.SetValueEx(key, "HardwareID", 0, winreg.REG_MULTI_SZ, [device_key])
@@ -1159,13 +1173,17 @@ class DongleRegistryManager:
         try:
             # HASP entries
             if spec.dongle_type in [DongleType.HASP_HL, DongleType.HASP_4]:
-                hasp_key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Aladdin Knowledge Systems\HASP")
+                hasp_key = winreg.CreateKey(
+                    winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Aladdin Knowledge Systems\HASP"
+                )
                 winreg.SetValueEx(hasp_key, "InstallPath", 0, winreg.REG_SZ, r"C:\Windows\System32")
                 winreg.CloseKey(hasp_key)
 
             # Sentinel entries
             elif spec.dongle_type.value.startswith("Sentinel"):
-                sent_key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Rainbow Technologies\Sentinel")
+                sent_key = winreg.CreateKey(
+                    winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Rainbow Technologies\Sentinel"
+                )
                 winreg.SetValueEx(sent_key, "InstallPath", 0, winreg.REG_SZ, r"C:\Windows\System32")
                 winreg.CloseKey(sent_key)
 
@@ -1179,7 +1197,9 @@ class DongleRegistryManager:
 
             # Remove USB entries
             with contextlib.suppress(FileNotFoundError):
-                winreg.DeleteKey(winreg.HKEY_LOCAL_MACHINE, f"SYSTEM\\CurrentControlSet\\Enum\\{device_key}")
+                winreg.DeleteKey(
+                    winreg.HKEY_LOCAL_MACHINE, f"SYSTEM\\CurrentControlSet\\Enum\\{device_key}"
+                )
 
         except Exception as e:
             self.logger.exception(f"Failed to remove registry entries: {e}")
@@ -1253,9 +1273,7 @@ class DongleAPIHooker:
 
     def _hasp_api_handler(self, func_name: str, args: tuple) -> int:
         """Handle HASP API calls."""
-        dongles = self.manager.get_dongles_by_type(DongleType.HASP_HL)
-        if not dongles:
-            dongles = self.manager.get_dongles_by_type(DongleType.HASP_4)
+        dongles = self.manager.get_dongles_by_type(DongleType.HASP_HL) or self.manager.get_dongles_by_type(DongleType.HASP_4)
 
         if not dongles:
             return 0x00000001  # HASP_DONGLE_NOT_FOUND
@@ -1660,7 +1678,9 @@ def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="Hardware Dongle Emulator")
-    parser.add_argument("--create", choices=[dt.value for dt in DongleType], help="Create dongle emulation")
+    parser.add_argument(
+        "--create", choices=[dt.value for dt in DongleType], help="Create dongle emulation"
+    )
     parser.add_argument("--list", action="store_true", help="List active dongles")
     parser.add_argument("--test", help="Test dongle by ID")
     parser.add_argument("--export", help="Export dongle configurations")
@@ -1709,12 +1729,9 @@ def main() -> None:
 
             # Keep running to maintain hooks
             print("Press Ctrl+C to exit...")
-            try:
+            with contextlib.suppress(KeyboardInterrupt):
                 while True:
                     time.sleep(1)
-            except KeyboardInterrupt:
-                pass
-
     finally:
         emulator.shutdown()
 

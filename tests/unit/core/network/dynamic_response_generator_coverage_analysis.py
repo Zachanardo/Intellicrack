@@ -50,7 +50,7 @@ class DynamicResponseGeneratorCoverageAnalyzer:
     def analyze_test_coverage(self, test_file_path: Path) -> dict:
         """Analyze test coverage against identified methods."""
 
-        with open(test_file_path, 'r', encoding='utf-8') as f:
+        with open(test_file_path, encoding='utf-8') as f:
             test_content = f.read()
 
         coverage_results = {}

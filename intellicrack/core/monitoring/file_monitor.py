@@ -16,14 +16,7 @@ from typing import Any
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
-from intellicrack.core.monitoring.base_monitor import (
-    BaseMonitor,
-    EventSeverity,
-    EventSource,
-    EventType,
-    MonitorEvent,
-    ProcessInfo,
-)
+from intellicrack.core.monitoring.base_monitor import BaseMonitor, EventSeverity, EventSource, EventType, MonitorEvent, ProcessInfo
 
 
 class LicenseFileHandler(FileSystemEventHandler):
@@ -73,7 +66,7 @@ class LicenseFileHandler(FileSystemEventHandler):
         if any(ext in path_lower for ext in self.license_extensions):
             return True
 
-        return bool(any(keyword in path_lower for keyword in self.license_keywords))
+        return any(keyword in path_lower for keyword in self.license_keywords)
 
     def on_created(self, event: FileSystemEvent) -> None:
         """Handle file creation.
@@ -112,7 +105,9 @@ class LicenseFileHandler(FileSystemEventHandler):
             event: File system event.
 
         """
-        if not event.is_directory and (self._is_license_file(event.src_path) or self._is_license_file(event.dest_path)):
+        if not event.is_directory and (
+            self._is_license_file(event.src_path) or self._is_license_file(event.dest_path)
+        ):
             self.callback(EventType.MODIFY, f"{event.src_path} -> {event.dest_path}", "file_moved")
 
 
@@ -160,20 +155,16 @@ class FileMonitor(BaseMonitor):
         """
         paths = []
 
-        appdata = os.getenv("APPDATA")
-        if appdata:
+        if appdata := os.getenv("APPDATA"):
             paths.append(appdata)
 
-        programdata = os.getenv("PROGRAMDATA")
-        if programdata:
+        if programdata := os.getenv("PROGRAMDATA"):
             paths.append(programdata)
 
-        localappdata = os.getenv("LOCALAPPDATA")
-        if localappdata:
+        if localappdata := os.getenv("LOCALAPPDATA"):
             paths.append(localappdata)
 
-        temp = os.getenv("TEMP")
-        if temp:
+        if temp := os.getenv("TEMP"):
             paths.append(temp)
 
         if self.process_info and self.process_info.path:
@@ -239,7 +230,11 @@ class FileMonitor(BaseMonitor):
             source=EventSource.FILE,
             event_type=event_type,
             severity=severity,
-            details={"file_path": path, "operation": description, "file_name": os.path.basename(path)},
+            details={
+                "file_path": path,
+                "operation": description,
+                "file_name": os.path.basename(path),
+            },
             process_info=self.process_info,
         )
 

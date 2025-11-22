@@ -19,6 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 from intellicrack.utils.logger import logger
 
+
 """
 PyQt6 Import Handler
 
@@ -322,7 +323,7 @@ except ImportError as e:
                 str: The current widget text, or empty string if destroyed.
 
             """
-            return self._text if not self._destroyed else ""
+            return "" if self._destroyed else self._text
 
         def setValue(self, value: object) -> bool:
             """Set the widget value.
@@ -348,7 +349,7 @@ except ImportError as e:
                 object: The current widget value, or None if destroyed.
 
             """
-            return self._value if not self._destroyed else None
+            return None if self._destroyed else self._value
 
         def setGeometry(self, x: int, y: int, w: int, h: int) -> bool:
             """Set the widget geometry.
@@ -375,7 +376,9 @@ except ImportError as e:
                 dict: Dictionary with x, y, width, height keys, or empty dict if destroyed.
 
             """
-            return self._geometry.copy() if not self._destroyed else {"x": 0, "y": 0, "width": 0, "height": 0}
+            return (
+                {"x": 0, "y": 0, "width": 0, "height": 0} if self._destroyed else self._geometry.copy()
+            )
 
         def addWidget(self, widget: object, *args: object) -> bool:
             """Add a widget to this widget.
@@ -433,7 +436,7 @@ except ImportError as e:
                     self.processEvents()
                     time.sleep(0.01)
 
-                return 1 if not self._destroyed else 0
+                return 0 if self._destroyed else 1
             except KeyboardInterrupt:
                 logger.info("Application interrupted (headless mode)")
                 return 0
@@ -484,9 +487,7 @@ except ImportError as e:
                 object: None if destroyed, else self.
 
             """
-            if self._destroyed:
-                return None
-            return self
+            return None if self._destroyed else self
 
         def __int__(self) -> int:
             """Convert widget to integer.
@@ -528,8 +529,7 @@ except ImportError as e:
                     if isinstance(inst, cls) and not inst._destroyed:
                         return inst
 
-            instance = cls()
-            return instance
+            return cls()
 
         def processEvents(self) -> None:
             """Process pending events and timers."""
@@ -696,6 +696,7 @@ except ImportError as e:
                 object: A callable method.
 
             """
+
             def method(*args: object, **kwargs: object) -> object:
                 """Dynamic method implementation.
 
@@ -716,6 +717,7 @@ except ImportError as e:
 
         def deleteLater(self) -> None:
             """Schedule the widget for deletion."""
+
             def cleanup() -> None:
                 """Clean up the widget."""
                 self._cleanup()
@@ -932,7 +934,7 @@ except ImportError as e:
                 return self._enum_values[name]
 
             if name not in self._sub_namespaces:
-                if name in (
+                if name in {
                     "ItemDataRole",
                     "Orientation",
                     "KeyboardModifier",
@@ -947,7 +949,7 @@ except ImportError as e:
                     "LayoutDirection",
                     "Alignment",
                     "Key",
-                ):
+                }:
                     self._sub_namespaces[name] = FallbackQtEnum(name)
                 else:
                     return FallbackWidget()
@@ -1046,7 +1048,13 @@ except ImportError as e:
                 "Desktop": 0x00000010,
                 "SubWindow": 0x00000012,
             },
-            "FocusPolicy": {"NoFocus": 0, "TabFocus": 1, "ClickFocus": 2, "StrongFocus": 11, "WheelFocus": 15},
+            "FocusPolicy": {
+                "NoFocus": 0,
+                "TabFocus": 1,
+                "ClickFocus": 2,
+                "StrongFocus": 11,
+                "WheelFocus": 15,
+            },
             "TextFormat": {"PlainText": 0, "RichText": 1, "AutoText": 2, "MarkdownText": 3},
             "SortOrder": {"AscendingOrder": 0, "DescendingOrder": 1},
             "CheckState": {"Unchecked": 0, "PartiallyChecked": 1, "Checked": 2},
@@ -1197,9 +1205,7 @@ except ImportError as e:
                 int: The other value if it's an int, 0 otherwise.
 
             """
-            if isinstance(other, int):
-                return other
-            return 0
+            return other if isinstance(other, int) else 0
 
         def __and__(self, other: object) -> int:
             """Bitwise AND operation.
@@ -1211,9 +1217,7 @@ except ImportError as e:
                 int: The other value if it's an int, 0 otherwise.
 
             """
-            if isinstance(other, int):
-                return other
-            return 0
+            return other if isinstance(other, int) else 0
 
         def __xor__(self, other: object) -> int:
             """Bitwise XOR operation.
@@ -1225,9 +1229,7 @@ except ImportError as e:
                 int: The other value if it's an int, 0 otherwise.
 
             """
-            if isinstance(other, int):
-                return other
-            return 0
+            return other if isinstance(other, int) else 0
 
         def __invert__(self) -> int:
             """Bitwise NOT operation.
@@ -1502,7 +1504,9 @@ except ImportError as e:
                     logger.debug(f"All callbacks disconnected from signal {self._name}")
                 elif callback in self._callbacks:
                     self._callbacks.remove(callback)
-                    logger.debug(f"Callback {callback.__name__} disconnected from signal {self._name}")
+                    logger.debug(
+                        f"Callback {callback.__name__} disconnected from signal {self._name}"
+                    )
 
             def emit(self, *args: object) -> None:
                 """Emit this signal to all connected callbacks.
@@ -1639,10 +1643,10 @@ except ImportError as e:
                 int: The RGBA color value as a 32-bit integer.
 
             """
-            r = max(0, min(255, int(r)))
-            g = max(0, min(255, int(g)))
-            b = max(0, min(255, int(b)))
-            a = max(0, min(255, int(a)))
+            r = max(0, min(255, r))
+            g = max(0, min(255, g))
+            b = max(0, min(255, b))
+            a = max(0, min(255, a))
 
             return (a << 24) | (r << 16) | (g << 8) | b
     else:
@@ -1705,82 +1709,37 @@ except ImportError as e:
 
 # Export all PyQt6 classes and availability flag
 __all__ = [
-    # Availability flag
     "HAS_PYQT",
     "PYQT6_AVAILABLE",
-    # QtCore imports
     "PYQT_VERSION_STR",
     "QAbstractItemModel",
-    "QBuffer",
-    "QCoreApplication",
-    "QDateTime",
-    "QFileInfo",
-    "QFileSystemWatcher",
-    "QIODevice",
-    "QMetaObject",
-    "QModelIndex",
-    "QObject",
-    "QPoint",
-    "QProcess",
-    "QRect",
-    "QRegularExpression",
-    "QRunnable",
-    "QSize",
-    "QT_VERSION_STR",
-    "QThread",
-    "QThreadPool",
-    "QTimer",
-    "QUrl",
-    "QVariant",
-    "Qt",
-    "pyqtSignal",
-    "pyqtSlot",
-    # QtGui imports
-    "QAction",
-    "QBrush",
-    "QCloseEvent",
-    "QColor",
-    "QDesktopServices",
-    "QDragEnterEvent",
-    "QDropEvent",
-    "QFont",
-    "QFontDatabase",
-    "QFontMetrics",
-    "QIcon",
-    "QImage",
-    "QKeyEvent",
-    "QKeySequence",
-    "QMouseEvent",
-    "QOpenGLContext",
-    "QPaintEvent",
-    "QPainter",
-    "QPalette",
-    "QPen",
-    "QPixmap",
-    "QResizeEvent",
-    "QShortcut",
-    "QStandardItem",
-    "QStandardItemModel",
-    "QSurfaceFormat",
-    "QSyntaxHighlighter",
-    "QTextCharFormat",
-    "QTextCursor",
-    "QTextDocument",
-    "QTextFormat",
-    "qRgba",
-    # QtWidgets imports
     "QAbstractItemView",
     "QAbstractScrollArea",
+    "QAction",
     "QApplication",
+    "QBrush",
+    "QBuffer",
     "QButtonGroup",
     "QCheckBox",
+    "QCloseEvent",
+    "QColor",
     "QColorDialog",
     "QComboBox",
+    "QCoreApplication",
+    "QDateTime",
+    "QDesktopServices",
     "QDialog",
     "QDialogButtonBox",
     "QDoubleSpinBox",
+    "QDragEnterEvent",
+    "QDropEvent",
     "QFileDialog",
     "QFileIconProvider",
+    "QFileInfo",
+    "QFileSystemWatcher",
+    "QFont",
+    "QFontDatabase",
+    "QFontMetrics",
     "QFormLayout",
     "QFrame",
     "QGraphicsView",
@@ -1788,7 +1747,12 @@ __all__ = [
     "QGroupBox",
     "QHBoxLayout",
     "QHeaderView",
+    "QIODevice",
+    "QIcon",
+    "QImage",
     "QInputDialog",
+    "QKeyEvent",
+    "QKeySequence",
     "QLabel",
     "QLineEdit",
     "QListView",
@@ -1798,13 +1762,36 @@ __all__ = [
     "QMenu",
     "QMenuBar",
     "QMessageBox",
+    "QMetaObject",
+    "QModelIndex",
+    "QMouseEvent",
+    "QObject",
+    "QOpenGLContext",
+    "QOpenGLWidget",
+    "QPaintEvent",
+    "QPainter",
+    "QPalette",
+    "QPdfDocument",
+    "QPdfView",
+    "QPen",
+    "QPixmap",
     "QPlainTextEdit",
+    "QPoint",
+    "QPrintDialog",
+    "QPrinter",
+    "QProcess",
     "QProgressBar",
     "QProgressDialog",
     "QPushButton",
     "QRadioButton",
+    "QRect",
+    "QRegularExpression",
+    "QResizeEvent",
+    "QRunnable",
     "QScrollArea",
     "QScrollBar",
+    "QShortcut",
+    "QSize",
     "QSizePolicy",
     "QSlider",
     "QSpacerItem",
@@ -1812,28 +1799,40 @@ __all__ = [
     "QSplashScreen",
     "QSplitter",
     "QStackedWidget",
+    "QStandardItem",
+    "QStandardItemModel",
     "QStatusBar",
     "QStyle",
+    "QSurfaceFormat",
+    "QSyntaxHighlighter",
+    "QT_VERSION_STR",
     "QTabWidget",
     "QTableView",
     "QTableWidget",
     "QTableWidgetItem",
+    "QTest",
     "QTextBrowser",
+    "QTextCharFormat",
+    "QTextCursor",
+    "QTextDocument",
     "QTextEdit",
+    "QTextFormat",
+    "QThread",
+    "QThreadPool",
+    "QTimer",
     "QToolBar",
     "QTreeView",
     "QTreeWidget",
     "QTreeWidgetItem",
+    "QUrl",
     "QVBoxLayout",
+    "QVariant",
+    "QWebEngineView",
     "QWidget",
     "QWizard",
     "QWizardPage",
-    # Optional imports
-    "QPrintDialog",
-    "QPrinter",
-    "QWebEngineView",
-    "QPdfDocument",
-    "QPdfView",
-    "QTest",
-    "QOpenGLWidget",
+    "Qt",
+    "pyqtSignal",
+    "pyqtSlot",
+    "qRgba",
 ]

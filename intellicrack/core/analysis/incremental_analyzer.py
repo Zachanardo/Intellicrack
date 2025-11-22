@@ -67,15 +67,22 @@ def run_incremental_analysis(main_app: object) -> None:
             with open(cache_file, encoding="utf-8") as f:
                 cached_data = json.load(f)
 
-            if cached_data.get("mtime") == current_mtime and cached_data.get("size") == current_size:
-                main_app.update_output.emit(f"[Incremental] Loading cached results for {os.path.basename(binary_path)}.")
+            if (
+                cached_data.get("mtime") == current_mtime
+                and cached_data.get("size") == current_size
+            ):
+                main_app.update_output.emit(
+                    f"[Incremental] Loading cached results for {os.path.basename(binary_path)}."
+                )
                 results = cached_data.get("results", {})
                 main_app.update_analysis_results.emit(json.dumps(results, indent=2))
                 if hasattr(main_app, "analysis_completed"):
                     main_app.analysis_completed.emit("Incremental Analysis (Cached)")
                 return
 
-        main_app.update_output.emit(f"[Incremental] No valid cache. Running full analysis for {os.path.basename(binary_path)}.")
+        main_app.update_output.emit(
+            f"[Incremental] No valid cache. Running full analysis for {os.path.basename(binary_path)}."
+        )
 
         # If no valid cache, run a new comprehensive analysis.
         # This function is assumed to be on the main_app instance and to be blocking or threaded.
@@ -85,7 +92,9 @@ def run_incremental_analysis(main_app: object) -> None:
             main_app.run_selected_analysis_partial("comprehensive")
             # The caching of the *new* result should be handled by the analysis completion signal handler.
         else:
-            main_app.update_output.emit("[Incremental] Error: The 'run_selected_analysis_partial' function is not available.")
+            main_app.update_output.emit(
+                "[Incremental] Error: The 'run_selected_analysis_partial' function is not available."
+            )
 
     except Exception as e:
         main_app.update_output.emit(f"[Incremental] An error occurred: {e}")

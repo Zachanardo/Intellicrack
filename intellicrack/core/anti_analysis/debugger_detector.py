@@ -32,6 +32,7 @@ from intellicrack.utils.logger import logger
 
 from .base_detector import BaseDetector
 
+
 """
 Debugger Detection
 
@@ -115,7 +116,9 @@ class DebuggerDetector(BaseDetector):
         }
 
         # Load base signatures from configuration
-        config_path = os.path.join(os.path.dirname(__file__), "..", "..", "data", "debugger_signatures.json")
+        config_path = os.path.join(
+            os.path.dirname(__file__), "..", "..", "data", "debugger_signatures.json"
+        )
 
         try:
             if os.path.exists(config_path):
@@ -126,7 +129,9 @@ class DebuggerDetector(BaseDetector):
                         if platform_key in base_sigs:
                             for sig_type in platform_signatures:
                                 if sig_type in base_sigs[platform_key]:
-                                    platform_signatures[sig_type].extend(base_sigs[platform_key][sig_type])
+                                    platform_signatures[sig_type].extend(
+                                        base_sigs[platform_key][sig_type]
+                                    )
         except (OSError, json.JSONDecodeError):
             pass  # Use dynamic detection only
 
@@ -384,7 +389,7 @@ class DebuggerDetector(BaseDetector):
             signatures["linux"]["symbols"].extend(symbol_patterns)
 
         # Remove duplicates while preserving order
-        for _platform_key, platform_signatures in signatures.items():
+        for platform_signatures in signatures.values():
             for sig_type in platform_signatures:
                 seen = set()
                 unique_list = []
@@ -431,11 +436,14 @@ class DebuggerDetector(BaseDetector):
                     for pattern in debug_patterns:
                         if pattern.match(proc_name) or pattern.match(proc_exe):
                             # Check if it's not already in our list
-                            if proc_name not in [p.lower() for p in self.debugger_signatures[current_platform]["processes"]]:
-                                # Verify it's actually a debugger by checking its capabilities
-                                if self._verify_debugger_capabilities(proc):
-                                    self.debugger_signatures[current_platform]["processes"].append(proc_name)
-                                    self.logger.info(f"Discovered new debugger: {proc_name}")
+                            if proc_name not in [
+                                                            p.lower()
+                                                            for p in self.debugger_signatures[current_platform]["processes"]
+                                                        ] and self._verify_debugger_capabilities(proc):
+                                self.debugger_signatures[current_platform]["processes"].append(
+                                    proc_name
+                                )
+                                self.logger.info(f"Discovered new debugger: {proc_name}")
                             break
 
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
@@ -468,15 +476,17 @@ class DebuggerDetector(BaseDetector):
                     # Get process handle
                     PROCESS_QUERY_INFORMATION = 0x0400
                     kernel32 = ctypes.windll.kernel32
-                    handle = kernel32.OpenProcess(PROCESS_QUERY_INFORMATION, False, process.pid)
-
-                    if handle:
+                    if handle := kernel32.OpenProcess(
+                        PROCESS_QUERY_INFORMATION, False, process.pid
+                    ):
                         # Check token privileges
                         advapi32 = ctypes.windll.advapi32
                         token_handle = wintypes.HANDLE()
                         TOKEN_QUERY = 0x0008
 
-                        if advapi32.OpenProcessToken(handle, TOKEN_QUERY, ctypes.byref(token_handle)):
+                        if advapi32.OpenProcessToken(
+                            handle, TOKEN_QUERY, ctypes.byref(token_handle)
+                        ):
                             # Would check for SeDebugPrivilege here
                             kernel32.CloseHandle(token_handle)
                             kernel32.CloseHandle(handle)
@@ -499,8 +509,11 @@ class DebuggerDetector(BaseDetector):
                             status = f.read()
                             # Check for TracerPid or capabilities
                             if "TracerPid" in status or "CapEff" in status:
-                                cap_line = [line for line in status.split("\n") if "CapEff" in line]
-                                if cap_line:
+                                if cap_line := [
+                                    line
+                                    for line in status.split("\n")
+                                    if "CapEff" in line
+                                ]:
                                     # Check for CAP_SYS_PTRACE capability
                                     cap_value = int(cap_line[0].split()[1], 16)
                                     CAP_SYS_PTRACE = 1 << 19
@@ -509,9 +522,7 @@ class DebuggerDetector(BaseDetector):
                 except Exception as e:
                     logger.debug(f"Ptrace capability check failed: {e}")
 
-            # Check if process has child processes (debuggers often spawn debuggees)
-            children = process.children()
-            if children:
+            if children := process.children():
                 # Check if children have different names (sign of debugging)
                 child_names = {child.name() for child in children}
                 if len(child_names) > 1:
@@ -528,7 +539,9 @@ class DebuggerDetector(BaseDetector):
 
         return False
 
-    def update_signatures(self, custom_signatures: dict[str, dict[str, list[str]]] | None = None) -> None:
+    def update_signatures(
+        self, custom_signatures: dict[str, dict[str, list[str]]] | None = None
+    ) -> None:
         """Update debugger signatures with custom entries.
 
         Args:
@@ -541,7 +554,9 @@ class DebuggerDetector(BaseDetector):
 
             for sig_type in custom_signatures.get(current_platform, {}):
                 if sig_type in self.debugger_signatures[current_platform]:
-                    self.debugger_signatures[current_platform][sig_type].extend(custom_signatures[current_platform][sig_type])
+                    self.debugger_signatures[current_platform][sig_type].extend(
+                        custom_signatures[current_platform][sig_type]
+                    )
 
         # Re-scan system for new debuggers
         self._update_signatures_from_system()
@@ -560,7 +575,9 @@ class DebuggerDetector(BaseDetector):
         import os
 
         if not path:
-            path = os.path.join(os.path.dirname(__file__), "..", "..", "data", "debugger_signatures.json")
+            path = os.path.join(
+                os.path.dirname(__file__), "..", "..", "data", "debugger_signatures.json"
+            )
 
         os.makedirs(os.path.dirname(path), exist_ok=True)
 
@@ -592,7 +609,7 @@ class DebuggerDetector(BaseDetector):
             detection_results = self.run_detection_loop(aggressive, self.get_aggressive_methods())
 
             # Merge results
-            results.update(detection_results)
+            results |= detection_results
 
             # Calculate overall results
             if detection_results["detection_count"] > 0:
@@ -603,7 +620,9 @@ class DebuggerDetector(BaseDetector):
             # Calculate anti-debug effectiveness score
             results["anti_debug_score"] = self._calculate_antidebug_score(results["detections"])
 
-            self.logger.info(f"Debugger detection complete: {results['is_debugged']} (confidence: {results['confidence']:.2f})")
+            self.logger.info(
+                f"Debugger detection complete: {results['is_debugged']} (confidence: {results['confidence']:.2f})"
+            )
             return results
 
         except Exception as e:
@@ -730,7 +749,11 @@ class DebuggerDetector(BaseDetector):
             bytes_read = ctypes.c_size_t()
 
             success = kernel32.ReadProcessMemory(
-                current_process, being_debugged_addr, ctypes.byref(being_debugged), 1, ctypes.byref(bytes_read),
+                current_process,
+                being_debugged_addr,
+                ctypes.byref(being_debugged),
+                1,
+                ctypes.byref(bytes_read),
             )
 
             if success and bytes_read.value == 1:
@@ -744,7 +767,11 @@ class DebuggerDetector(BaseDetector):
             nt_global_flag = ctypes.c_ulong()
 
             success = kernel32.ReadProcessMemory(
-                current_process, nt_global_flag_addr, ctypes.byref(nt_global_flag), 4, ctypes.byref(bytes_read),
+                current_process,
+                nt_global_flag_addr,
+                ctypes.byref(nt_global_flag),
+                4,
+                ctypes.byref(bytes_read),
             )
 
             if success and bytes_read.value == 4:
@@ -771,7 +798,9 @@ class DebuggerDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_non_windows_debug_indicators(self, details: dict[str, bool | int | str]) -> tuple[bool, float, dict[str, bool | int | str]]:
+    def _check_non_windows_debug_indicators(
+        self, details: dict[str, bool | int | str]
+    ) -> tuple[bool, float, dict[str, bool | int | str]]:
         """Check for debugging indicators on non-Windows platforms.
 
         Examines Linux/Unix proc filesystem and process attributes to detect
@@ -808,8 +837,7 @@ class DebuggerDetector(BaseDetector):
                     import subprocess
 
                     try:
-                        ps_path = shutil.which("ps")
-                        if ps_path:
+                        if ps_path := shutil.which("ps"):
                             ps_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                                 [ps_path, "aux"],
                                 capture_output=True,
@@ -900,7 +928,11 @@ class DebuggerDetector(BaseDetector):
             bytes_read = ctypes.c_size_t()
 
             success = kernel32.ReadProcessMemory(
-                current_process, nt_global_flag_addr, ctypes.byref(nt_global_flag), 4, ctypes.byref(bytes_read),
+                current_process,
+                nt_global_flag_addr,
+                ctypes.byref(nt_global_flag),
+                4,
+                ctypes.byref(bytes_read),
             )
 
             if success and bytes_read.value == 4:
@@ -931,7 +963,8 @@ class DebuggerDetector(BaseDetector):
                 if debug_detected:
                     # Higher confidence for heap debugging flags
                     heap_flags = [0x10, 0x20, 0x40]
-                    heap_debug_count = sum(1 for flag in heap_flags if flag_value & flag)
+                    heap_debug_count = sum(bool(flag_value & flag)
+                                       for flag in heap_flags)
                     confidence = min(0.9, 0.3 + (heap_debug_count * 0.2))
 
                     return True, confidence, details
@@ -970,7 +1003,7 @@ class DebuggerDetector(BaseDetector):
                 self.logger.debug(f"Process heap handle: 0x{heap:x}")
                 # Try to detect debug heap characteristics
                 # Note: This is a simplified check
-                return bool(heap != 0), 0.0, details  # Non-zero heap suggests normal execution
+                return heap != 0, 0.0, details
             self.logger.warning("Failed to get process heap handle")
             return True, 0.0, details  # Assume debugger if heap access fails
 
@@ -1029,7 +1062,11 @@ class DebuggerDetector(BaseDetector):
             breakpoint information.
 
         """
-        details: dict[str, list[str] | int | str] = {"dr_registers": [], "breakpoints_found": 0, "active_registers": []}
+        details: dict[str, list[str] | int | str] = {
+            "dr_registers": [],
+            "breakpoints_found": 0,
+            "active_registers": [],
+        }
         start_time = time.time()
 
         try:
@@ -1044,7 +1081,9 @@ class DebuggerDetector(BaseDetector):
         elapsed = time.time() - start_time
         return False, elapsed, details
 
-    def _check_hardware_breakpoints_windows(self, details: dict[str, list[str] | int | str | dict[str, bool | list[int]] | bool]) -> tuple[bool, float, dict[str, list[str] | int | str | dict[str, bool | list[int]] | bool]]:
+    def _check_hardware_breakpoints_windows(
+        self, details: dict[str, list[str] | int | str | dict[str, bool | list[int]] | bool]
+    ) -> tuple[bool, float, dict[str, list[str] | int | str | dict[str, bool | list[int]] | bool]]:
         """Check for hardware breakpoints on Windows using debug registers.
 
         Reads the CONTEXT structure to access debug registers and analyze
@@ -1065,7 +1104,6 @@ class DebuggerDetector(BaseDetector):
             kernel32 = ctypes.windll.kernel32
             current_thread = kernel32.GetCurrentThread()
 
-            # Define CONTEXT structure for debug register access
             class CONTEXT(ctypes.Structure):
                 _fields_ = [
                     ("ContextFlags", ctypes.c_uint32),
@@ -1085,10 +1123,9 @@ class DebuggerDetector(BaseDetector):
             context = CONTEXT()
             context.ContextFlags = CONTEXT_DEBUG_REGISTERS
 
-            # Get thread context with debug registers
-            success = kernel32.GetThreadContext(current_thread, ctypes.byref(context))
-
-            if success:
+            if success := kernel32.GetThreadContext(
+                current_thread, ctypes.byref(context)
+            ):
                 # Check debug registers DR0-DR3 for addresses
                 debug_addresses = [context.Dr0, context.Dr1, context.Dr2, context.Dr3]
                 dr6_status = context.Dr6
@@ -1149,7 +1186,9 @@ class DebuggerDetector(BaseDetector):
         elapsed = time.time() - start_time
         return False, elapsed, details
 
-    def _check_hardware_breakpoints_linux(self, details: dict[str, list[str] | int | str | dict[str, str] | bool]) -> tuple[bool, float, dict[str, list[str] | int | str | dict[str, str] | bool]]:
+    def _check_hardware_breakpoints_linux(
+        self, details: dict[str, list[str] | int | str | dict[str, str] | bool]
+    ) -> tuple[bool, float, dict[str, list[str] | int | str | dict[str, str] | bool]]:
         """Check for hardware breakpoints on Linux using ptrace.
 
         Uses ptrace and /proc filesystem to detect debug registers and
@@ -1194,15 +1233,21 @@ class DebuggerDetector(BaseDetector):
                 # Use ptrace to attempt reading debug registers
                 import ctypes.util
 
-                libc_path = ctypes.util.find_library("c")
-                if libc_path:
+                if libc_path := ctypes.util.find_library("c"):
                     libc = ctypes.CDLL(libc_path)
 
                     # Define ptrace constants
                     PTRACE_PEEKUSER = 3
 
                     # Debug register offsets (x86_64)
-                    DR_OFFSETS = {"DR0": 0x350, "DR1": 0x358, "DR2": 0x360, "DR3": 0x368, "DR6": 0x370, "DR7": 0x378}
+                    DR_OFFSETS = {
+                        "DR0": 0x350,
+                        "DR1": 0x358,
+                        "DR2": 0x360,
+                        "DR3": 0x368,
+                        "DR6": 0x370,
+                        "DR7": 0x378,
+                    }
 
                     # Try to read debug registers (requires permissions)
                     debug_regs = {}
@@ -1218,7 +1263,8 @@ class DebuggerDetector(BaseDetector):
                     details["ptrace_available"] = True
 
                     # Count potentially active registers
-                    accessible_count = sum(1 for v in debug_regs.values() if v not in {"inaccessible", "0x0"})
+                    accessible_count = sum(bool(v not in {"inaccessible", "0x0"})
+                                       for v in debug_regs.values())
                     if accessible_count > 0:
                         details["accessible_registers"] = accessible_count
 
@@ -1292,7 +1338,9 @@ class DebuggerDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _scan_int3_windows(self, details: dict[str, int | list[str]]) -> tuple[bool, float, dict[str, int | list[str]]]:
+    def _scan_int3_windows(
+        self, details: dict[str, int | list[str]]
+    ) -> tuple[bool, float, dict[str, int | list[str]]]:
         """Scan for INT3 breakpoints on Windows systems.
 
         Iterates through process memory regions to locate INT3 (0xCC)
@@ -1331,7 +1379,12 @@ class DebuggerDetector(BaseDetector):
             PAGE_EXECUTE_READWRITE = 0x40
             PAGE_EXECUTE_WRITECOPY = 0x80
 
-            executable_pages = [PAGE_EXECUTE, PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE, PAGE_EXECUTE_WRITECOPY]
+            executable_pages = [
+                PAGE_EXECUTE,
+                PAGE_EXECUTE_READ,
+                PAGE_EXECUTE_READWRITE,
+                PAGE_EXECUTE_WRITECOPY,
+            ]
 
             int3_count = 0
             locations = []
@@ -1341,19 +1394,31 @@ class DebuggerDetector(BaseDetector):
             # Scan memory regions
             while address < max_address:
                 mbi = MEMORY_BASIC_INFORMATION()
-                result = kernel32.VirtualQueryEx(current_process, ctypes.c_void_p(address), ctypes.byref(mbi), ctypes.sizeof(mbi))
+                result = kernel32.VirtualQueryEx(
+                    current_process, ctypes.c_void_p(address), ctypes.byref(mbi), ctypes.sizeof(mbi)
+                )
 
                 if result == 0:
                     break
 
                 # Check if this is executable memory
-                if mbi.State == MEM_COMMIT and mbi.Protect in executable_pages and mbi.RegionSize > 0:
+                if (
+                    mbi.State == MEM_COMMIT
+                    and mbi.Protect in executable_pages
+                    and mbi.RegionSize > 0
+                ):
                     # Read memory region
                     buffer_size = min(mbi.RegionSize, 0x10000)  # Limit to 64KB chunks
                     buffer = ctypes.create_string_buffer(buffer_size)
                     bytes_read = ctypes.c_size_t()
 
-                    success = kernel32.ReadProcessMemory(current_process, mbi.BaseAddress, buffer, buffer_size, ctypes.byref(bytes_read))
+                    success = kernel32.ReadProcessMemory(
+                        current_process,
+                        mbi.BaseAddress,
+                        buffer,
+                        buffer_size,
+                        ctypes.byref(bytes_read),
+                    )
 
                     if success and bytes_read.value > 0:
                         # Scan for INT3 (0xCC) instructions
@@ -1390,7 +1455,9 @@ class DebuggerDetector(BaseDetector):
             self.logger.debug(f"Windows INT3 scan error: {e}")
             return False, 0.0, details
 
-    def _scan_int3_linux(self, details: dict[str, int | list[str] | bool]) -> tuple[bool, float, dict[str, int | list[str] | bool]]:
+    def _scan_int3_linux(
+        self, details: dict[str, int | list[str] | bool]
+    ) -> tuple[bool, float, dict[str, int | list[str] | bool]]:
         """Scan for INT3 breakpoints on Linux systems.
 
         Uses /proc/self/maps and /proc/self/mem to scan executable memory
@@ -1503,12 +1570,7 @@ class DebuggerDetector(BaseDetector):
 
             start = time.perf_counter()
 
-            # Perform operations that should be fast
-            result_sum = 0
-            for _ in range(1000000):
-                x = 1 + 1
-                result_sum += x  # Use the computed value
-
+            result_sum = sum(1 + 1 for _ in range(1000000))
             end = time.perf_counter()
             execution_time = (end - start) * 1000  # milliseconds
 
@@ -1544,9 +1606,7 @@ class DebuggerDetector(BaseDetector):
             from intellicrack.handlers.psutil_handler import psutil
 
             current_process = psutil.Process()
-            parent = current_process.parent()
-
-            if parent:
+            if parent := current_process.parent():
                 parent_name = parent.name().lower()
                 details["parent_process"] = parent_name
 
@@ -1626,7 +1686,9 @@ class DebuggerDetector(BaseDetector):
             # Log that exception testing is available but don't actually run
             self.logger.debug("Exception handling test function defined")
             details["exception_test_available"] = True
-            _func: object = test_exception  # Reference the function to avoid unused variable warning
+            _func: object = (
+                test_exception  # Reference the function to avoid unused variable warning
+            )
             # as it could crash the process
 
         except Exception as e:
@@ -1791,12 +1853,12 @@ class DebuggerDetector(BaseDetector):
         kernel_debugger_methods = ["debug_port", "hardware_breakpoints"]
         user_debugger_methods = ["isdebuggerpresent", "checkremotedebuggerpresent"]
 
-        kernel_count = sum(1 for m in kernel_debugger_methods if m in detections and detections[m]["detected"])
-        user_count = sum(1 for m in user_debugger_methods if m in detections and detections[m]["detected"])
+        kernel_count = sum(bool(m in detections and detections[m]["detected"])
+                       for m in kernel_debugger_methods)
+        user_count = sum(bool(m in detections and detections[m]["detected"])
+                     for m in user_debugger_methods)
 
-        if kernel_count > user_count:
-            return "Kernel Debugger"
-        return "User-mode Debugger"
+        return "Kernel Debugger" if kernel_count > user_count else "User-mode Debugger"
 
     def _calculate_antidebug_score(self, detections: dict[str, Any]) -> int:
         """Calculate effectiveness of anti-debug techniques.
@@ -1835,7 +1897,7 @@ class DebuggerDetector(BaseDetector):
         if not techniques:
             techniques = ["all"]
 
-        code = """
+        return """
 // Anti-Debugging Code
 #include <windows.h>
 #include <intrin.h>
@@ -1917,7 +1979,6 @@ if (IsBeingDebugged()) {
     while(1) { Sleep(1000); }
 }
 """
-        return code
 
     def get_aggressive_methods(self) -> list[str]:
         """Get list of method names that are considered aggressive.

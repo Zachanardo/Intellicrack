@@ -29,6 +29,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+
 try:
     import pyqtgraph as pg
 
@@ -248,18 +249,28 @@ class StructureVisualizerWidget(QWidget):
             file_data = pe_data.get("file_header", {})
 
             QTreeWidgetItem(file_header, ["Machine", f"0x{file_data.get('machine', 0):04X}"])
-            QTreeWidgetItem(file_header, ["Number of Sections", str(file_data.get("number_of_sections", 0))])
-            QTreeWidgetItem(file_header, ["Time Date Stamp", str(file_data.get("time_date_stamp", 0))])
+            QTreeWidgetItem(
+                file_header, ["Number of Sections", str(file_data.get("number_of_sections", 0))]
+            )
+            QTreeWidgetItem(
+                file_header, ["Time Date Stamp", str(file_data.get("time_date_stamp", 0))]
+            )
 
             # Optional Header
             opt_header = QTreeWidgetItem(pe_item, ["Optional Header"])
             opt_data = pe_data.get("optional_header", {})
 
             QTreeWidgetItem(opt_header, ["Magic", f"0x{opt_data.get('magic', 0):04X}"])
-            QTreeWidgetItem(opt_header, ["Entry Point", f"0x{opt_data.get('address_of_entry_point', 0):08X}"])
+            QTreeWidgetItem(
+                opt_header, ["Entry Point", f"0x{opt_data.get('address_of_entry_point', 0):08X}"]
+            )
             QTreeWidgetItem(opt_header, ["Image Base", f"0x{opt_data.get('image_base', 0):08X}"])
-            QTreeWidgetItem(opt_header, ["Section Alignment", f"0x{opt_data.get('section_alignment', 0):08X}"])
-            QTreeWidgetItem(opt_header, ["File Alignment", f"0x{opt_data.get('file_alignment', 0):08X}"])
+            QTreeWidgetItem(
+                opt_header, ["Section Alignment", f"0x{opt_data.get('section_alignment', 0):08X}"]
+            )
+            QTreeWidgetItem(
+                opt_header, ["File Alignment", f"0x{opt_data.get('file_alignment', 0):08X}"]
+            )
 
         # Data Directories
         if "data_directories" in self.structure_data:
@@ -278,15 +289,20 @@ class StructureVisualizerWidget(QWidget):
             for section in self.structure_data["sections"]:
                 section_item = QTreeWidgetItem(sections_item, [section.get("name", "Unknown")])
 
-                QTreeWidgetItem(section_item, ["Virtual Address", f"0x{section.get('virtual_address', 0):08X}"])
-                QTreeWidgetItem(section_item, ["Virtual Size", f"0x{section.get('virtual_size', 0):08X}"])
-                QTreeWidgetItem(section_item, ["Raw Address", f"0x{section.get('raw_address', 0):08X}"])
+                QTreeWidgetItem(
+                    section_item, ["Virtual Address", f"0x{section.get('virtual_address', 0):08X}"]
+                )
+                QTreeWidgetItem(
+                    section_item, ["Virtual Size", f"0x{section.get('virtual_size', 0):08X}"]
+                )
+                QTreeWidgetItem(
+                    section_item, ["Raw Address", f"0x{section.get('raw_address', 0):08X}"]
+                )
                 QTreeWidgetItem(section_item, ["Raw Size", f"0x{section.get('raw_size', 0):08X}"])
 
                 # Highlight suspicious sections
-                if self.highlight_suspicious_cb.isChecked():
-                    if self._is_suspicious_section(section):
-                        section_item.setForeground(0, QBrush(QColor(255, 100, 100)))
+                if self.highlight_suspicious_cb.isChecked() and self._is_suspicious_section(section):
+                    section_item.setForeground(0, QBrush(QColor(255, 100, 100)))
 
         self.tree_view.expandAll()
 
@@ -411,13 +427,19 @@ class StructureVisualizerWidget(QWidget):
 
                 self.headers_table.insertRow(row)
                 self.headers_table.setItem(row, 0, QTableWidgetItem("Machine"))
-                self.headers_table.setItem(row, 1, QTableWidgetItem(f"0x{fh.get('machine', 0):04X}"))
-                self.headers_table.setItem(row, 2, QTableWidgetItem(self._get_machine_name(fh.get("machine", 0))))
+                self.headers_table.setItem(
+                    row, 1, QTableWidgetItem(f"0x{fh.get('machine', 0):04X}")
+                )
+                self.headers_table.setItem(
+                    row, 2, QTableWidgetItem(self._get_machine_name(fh.get("machine", 0)))
+                )
                 row += 1
 
                 self.headers_table.insertRow(row)
                 self.headers_table.setItem(row, 0, QTableWidgetItem("Number of Sections"))
-                self.headers_table.setItem(row, 1, QTableWidgetItem(str(fh.get("number_of_sections", 0))))
+                self.headers_table.setItem(
+                    row, 1, QTableWidgetItem(str(fh.get("number_of_sections", 0)))
+                )
                 self.headers_table.setItem(row, 2, QTableWidgetItem("Total section count"))
                 row += 1
             # Optional header
@@ -426,20 +448,26 @@ class StructureVisualizerWidget(QWidget):
 
                 self.headers_table.insertRow(row)
                 self.headers_table.setItem(row, 0, QTableWidgetItem("Entry Point"))
-                self.headers_table.setItem(row, 1, QTableWidgetItem(f"0x{oh.get('address_of_entry_point', 0):08X}"))
+                self.headers_table.setItem(
+                    row, 1, QTableWidgetItem(f"0x{oh.get('address_of_entry_point', 0):08X}")
+                )
                 self.headers_table.setItem(row, 2, QTableWidgetItem("Program entry point RVA"))
                 row += 1
 
                 self.headers_table.insertRow(row)
                 self.headers_table.setItem(row, 0, QTableWidgetItem("Image Base"))
-                self.headers_table.setItem(row, 1, QTableWidgetItem(f"0x{oh.get('image_base', 0):08X}"))
+                self.headers_table.setItem(
+                    row, 1, QTableWidgetItem(f"0x{oh.get('image_base', 0):08X}")
+                )
                 self.headers_table.setItem(row, 2, QTableWidgetItem("Preferred load address"))
                 row += 1
 
                 self.headers_table.insertRow(row)
                 self.headers_table.setItem(row, 0, QTableWidgetItem("Subsystem"))
                 self.headers_table.setItem(row, 1, QTableWidgetItem(str(oh.get("subsystem", 0))))
-                self.headers_table.setItem(row, 2, QTableWidgetItem(self._get_subsystem_name(oh.get("subsystem", 0))))
+                self.headers_table.setItem(
+                    row, 2, QTableWidgetItem(self._get_subsystem_name(oh.get("subsystem", 0)))
+                )
                 row += 1
 
     def _update_sections_view(self) -> None:
@@ -477,12 +505,10 @@ class StructureVisualizerWidget(QWidget):
             chars = section.get("characteristics", 0)
             self.sections_table.setItem(row, 5, QTableWidgetItem(f"0x{chars:08X}"))
             # Highlight suspicious sections
-            if self.highlight_suspicious_cb.isChecked():
-                if self._is_suspicious_section(section):
-                    for col in range(6):
-                        item = self.sections_table.item(row, col)
-                        if item:
-                            item.setBackground(QBrush(QColor(255, 200, 200)))
+            if self.highlight_suspicious_cb.isChecked() and self._is_suspicious_section(section):
+                for col in range(6):
+                    if item := self.sections_table.item(row, col):
+                        item.setBackground(QBrush(QColor(255, 200, 200)))
 
     def _update_imports_exports_view(self) -> None:
         """Update imports/exports view."""
@@ -500,15 +526,15 @@ class StructureVisualizerWidget(QWidget):
                     self.imports_table.insertRow(row)
                     self.imports_table.setItem(row, 0, QTableWidgetItem(dll_name))
                     self.imports_table.setItem(row, 1, QTableWidgetItem(func.get("name", "")))
-                    self.imports_table.setItem(row, 2, QTableWidgetItem(str(func.get("ordinal", ""))))
+                    self.imports_table.setItem(
+                        row, 2, QTableWidgetItem(str(func.get("ordinal", "")))
+                    )
 
                     # Highlight suspicious imports
-                    if self.highlight_suspicious_cb.isChecked():
-                        if self._is_suspicious_import(func.get("name", "")):
-                            for col in range(3):
-                                item = self.imports_table.item(row, col)
-                                if item:
-                                    item.setForeground(QBrush(QColor(255, 100, 100)))
+                    if self.highlight_suspicious_cb.isChecked() and self._is_suspicious_import(func.get("name", "")):
+                        for col in range(3):
+                            if item := self.imports_table.item(row, col):
+                                item.setForeground(QBrush(QColor(255, 100, 100)))
                     row += 1
         # Populate exports
         if "exports" in self.structure_data:
@@ -518,7 +544,9 @@ class StructureVisualizerWidget(QWidget):
                 self.exports_table.insertRow(row)
                 self.exports_table.setItem(row, 0, QTableWidgetItem(str(export.get("ordinal", ""))))
                 self.exports_table.setItem(row, 1, QTableWidgetItem(export.get("name", "")))
-                self.exports_table.setItem(row, 2, QTableWidgetItem(f"0x{export.get('address', 0):08X}"))
+                self.exports_table.setItem(
+                    row, 2, QTableWidgetItem(f"0x{export.get('address', 0):08X}")
+                )
                 self.exports_table.setItem(row, 3, QTableWidgetItem(export.get("forwarded", "")))
 
     def _update_memory_map(self) -> None:
@@ -577,8 +605,10 @@ class StructureVisualizerWidget(QWidget):
             sections = self.structure_data["sections"]
             details += f"Total Sections: {len(sections)}\n"
 
-            exec_count = sum(1 for s in sections if self._is_executable_section(s))
-            write_count = sum(1 for s in sections if self._is_writable_section(s))
+            exec_count = sum(bool(self._is_executable_section(s))
+                         for s in sections)
+            write_count = sum(bool(self._is_writable_section(s))
+                          for s in sections)
 
             details += f"Executable Sections: {exec_count}\n"
             details += f"Writable Sections: {write_count}\n\n"
@@ -586,17 +616,19 @@ class StructureVisualizerWidget(QWidget):
         suspicious = []
 
         if "sections" in self.structure_data:
-            for section in self.structure_data["sections"]:
-                if self._is_suspicious_section(section):
-                    suspicious.append(f"Section '{section.get('name', '')}' has suspicious characteristics")
-
+            suspicious.extend(
+                f"Section '{section.get('name', '')}' has suspicious characteristics"
+                for section in self.structure_data["sections"]
+                if self._is_suspicious_section(section)
+            )
         if "imports" in self.structure_data:
             imports = self.structure_data["imports"]
             for _dll, funcs in imports.items():
-                for func in funcs:
-                    if self._is_suspicious_import(func.get("name", "")):
-                        suspicious.append(f"Suspicious import: {func.get('name', '')}")
-
+                suspicious.extend(
+                    f"Suspicious import: {func.get('name', '')}"
+                    for func in funcs
+                    if self._is_suspicious_import(func.get("name", ""))
+                )
         if suspicious:
             details += "WARNING️ Suspicious Indicators:\n"
             for item in suspicious[:10]:  # Show first 10
@@ -663,10 +695,7 @@ class StructureVisualizerWidget(QWidget):
 
         if self.binary_format == "PE":
             return bool(chars & 0x20000000)  # IMAGE_SCN_MEM_EXECUTE
-        if self.binary_format == "ELF":
-            return bool(chars & 0x1)  # PF_X
-
-        return False
+        return bool(chars & 0x1) if self.binary_format == "ELF" else False
 
     def _is_writable_section(self, section: dict[str, Any]) -> bool:
         """Check if section is writable."""
@@ -674,10 +703,7 @@ class StructureVisualizerWidget(QWidget):
 
         if self.binary_format == "PE":
             return bool(chars & 0x80000000)  # IMAGE_SCN_MEM_WRITE
-        if self.binary_format == "ELF":
-            return bool(chars & 0x2)  # PF_W
-
-        return False
+        return bool(chars & 0x2) if self.binary_format == "ELF" else False
 
     def _get_machine_name(self, machine: int) -> str:
         """Get machine type name."""
@@ -711,29 +737,27 @@ class StructureVisualizerWidget(QWidget):
 
     def _populate_elf_headers(self) -> None:
         """Populate ELF headers in table."""
-        row = 0
+        if "elf_header" not in self.structure_data:
+            return
+        header = self.structure_data["elf_header"]
 
-        if "elf_header" in self.structure_data:
-            header = self.structure_data["elf_header"]
+        # Add ELF header fields
+        fields = [
+            ("Magic", header.get("magic", ""), "ELF file signature"),
+            ("Class", header.get("class", ""), "32-bit or 64-bit"),
+            ("Data", header.get("data", ""), "Endianness"),
+            ("Version", str(header.get("version", 0)), "ELF version"),
+            ("OS/ABI", header.get("os_abi", ""), "Target OS ABI"),
+            ("Type", header.get("type", ""), "File type"),
+            ("Machine", header.get("machine", ""), "Target architecture"),
+            ("Entry Point", f"0x{header.get('entry', 0):08X}", "Program entry point"),
+        ]
 
-            # Add ELF header fields
-            fields = [
-                ("Magic", header.get("magic", ""), "ELF file signature"),
-                ("Class", header.get("class", ""), "32-bit or 64-bit"),
-                ("Data", header.get("data", ""), "Endianness"),
-                ("Version", str(header.get("version", 0)), "ELF version"),
-                ("OS/ABI", header.get("os_abi", ""), "Target OS ABI"),
-                ("Type", header.get("type", ""), "File type"),
-                ("Machine", header.get("machine", ""), "Target architecture"),
-                ("Entry Point", f"0x{header.get('entry', 0):08X}", "Program entry point"),
-            ]
-
-            for field, value, desc in fields:
-                self.headers_table.insertRow(row)
-                self.headers_table.setItem(row, 0, QTableWidgetItem(field))
-                self.headers_table.setItem(row, 1, QTableWidgetItem(value))
-                self.headers_table.setItem(row, 2, QTableWidgetItem(desc))
-                row += 1
+        for row, (field, value, desc) in enumerate(fields):
+            self.headers_table.insertRow(row)
+            self.headers_table.setItem(row, 0, QTableWidgetItem(field))
+            self.headers_table.setItem(row, 1, QTableWidgetItem(value))
+            self.headers_table.setItem(row, 2, QTableWidgetItem(desc))
 
     def _populate_generic_headers(self) -> None:
         """Populate generic headers."""
@@ -750,8 +774,7 @@ class StructureVisualizerWidget(QWidget):
 
     def _on_tree_selection(self) -> None:
         """Handle tree item selection."""
-        items = self.tree_view.selectedItems()
-        if items:
+        if items := self.tree_view.selectedItems():
             item = items[0]
             # Get path to item
             path = []
@@ -762,12 +785,13 @@ class StructureVisualizerWidget(QWidget):
 
             # Emit signal with path
             if len(path) > 1:
-                self.header_field_selected.emit(path[0], path[-1], item.text(1) if item.columnCount() > 1 else "")
+                self.header_field_selected.emit(
+                    path[0], path[-1], item.text(1) if item.columnCount() > 1 else ""
+                )
 
     def _on_section_selection(self) -> None:
         """Handle section selection."""
-        items = self.sections_table.selectedItems()
-        if items:
+        if items := self.sections_table.selectedItems():
             row = items[0].row()
             if row < len(self.structure_data.get("sections", [])):
                 section = self.structure_data["sections"][row]
@@ -798,7 +822,9 @@ class StructureVisualizerWidget(QWidget):
 
                 # Show success message
 
-                QMessageBox.information(self, "Export Complete", f"Structure exported to {filename}")
+                QMessageBox.information(
+                    self, "Export Complete", f"Structure exported to {filename}"
+                )
 
             except Exception as e:
                 QMessageBox.critical(self, "Export Error", f"Failed to export: {e!s}")

@@ -29,6 +29,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -37,6 +38,7 @@ from rich import box
 from rich.console import Console
 from rich.syntax import Syntax
 from rich.table import Table
+
 
 """
 Pipeline Support for Intellicrack CLI
@@ -107,14 +109,12 @@ class PipelineStage(ABC):
         elif input_data.format == "binary":
             # For binary format, content should be bytes or have a path
             if not isinstance(input_data.content, (bytes, bytearray)):
-                # Check if it's a valid file path
-                if isinstance(input_data.content, (str, Path)):
-                    path = Path(input_data.content)
-                    if not path.exists() or not path.is_file():
-                        return False
-                else:
+                if not isinstance(input_data.content, (str, Path)):
                     return False
 
+                path = Path(input_data.content)
+                if not path.exists() or not path.is_file():
+                    return False
         elif input_data.format == "text":
             # For text format, content should be string-like
             if not isinstance(input_data.content, (str, bytes)):
@@ -134,7 +134,11 @@ class PipelineStage(ABC):
         if isinstance(input_data.content, (str, Path)):
             try:
                 path_str = str(input_data.content)
-                if ".." in path_str or path_str.startswith("/etc/") or path_str.startswith("/root/"):
+                if (
+                    ".." in path_str
+                    or path_str.startswith("/etc/")
+                    or path_str.startswith("/root/")
+                ):
                     return False
             except (AttributeError, TypeError):
                 pass
@@ -396,9 +400,12 @@ class TransformStage(PipelineStage):
             lines.append(f"Data Type: List with {len(content)} items")
 
             if content and isinstance(content[0], dict):
-                lines.append("  Item type: Dictionary")
-                lines.append(f"  Keys: {', '.join(content[0].keys())}")
-
+                lines.extend(
+                    (
+                        "  Item type: Dictionary",
+                        f"  Keys: {', '.join(content[0].keys())}",
+                    )
+                )
         return "\n".join(lines)
 
 
@@ -460,7 +467,9 @@ class Pipeline:
 
         # Execute each stage
         for i, stage in enumerate(self.stages):
-            self.console.print(f"[cyan]Executing stage {i + 1}/{len(self.stages)}: {stage.name}[/cyan]")
+            self.console.print(
+                f"[cyan]Executing stage {i + 1}/{len(self.stages)}: {stage.name}[/cyan]"
+            )
 
             try:
                 # Validate input
@@ -472,7 +481,9 @@ class Pipeline:
 
                 # Check for errors
                 if isinstance(data.content, dict) and "error" in data.content:
-                    self.console.print(f"[red]Error in stage {stage.name}: {data.content['error']}[/red]")
+                    self.console.print(
+                        f"[red]Error in stage {stage.name}: {data.content['error']}[/red]"
+                    )
                     if not data.metadata.get("continue_on_error", False):
                         break
 
@@ -555,7 +566,9 @@ def parse_pipeline_command(command: str) -> Pipeline:
                     path_str = str(path)
                     for sensitive_dir in sensitive_dirs:
                         if path_str.startswith(sensitive_dir):
-                            raise ValueError(f"Cannot write to sensitive directory: {sensitive_dir}")
+                            raise ValueError(
+                                f"Cannot write to sensitive directory: {sensitive_dir}"
+                            )
                 except Exception as e:
                     raise ValueError(f"Invalid output path: {e}") from e
                 pipeline.add_stage(OutputStage(output_path))

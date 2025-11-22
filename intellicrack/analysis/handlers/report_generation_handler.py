@@ -24,25 +24,16 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 from datetime import datetime
 
+
 try:
     from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
-    from PyQt6.QtWidgets import (
-        QCheckBox,
-        QComboBox,
-        QDialog,
-        QFileDialog,
-        QGroupBox,
-        QHBoxLayout,
-        QPushButton,
-        QVBoxLayout,
-    )
+    from PyQt6.QtWidgets import QCheckBox, QComboBox, QDialog, QFileDialog, QGroupBox, QHBoxLayout, QPushButton, QVBoxLayout
 
     PYQT6_AVAILABLE = True
 except ImportError:
     # Fallback classes when PyQt6 is not available
     class QObject:
         """Fallback QObject class when PyQt6 is not available."""
-
 
     class QRunnable:
         """Fallback QRunnable class when PyQt6 is not available."""
@@ -66,34 +57,26 @@ except ImportError:
     class QCheckBox:
         """Fallback QCheckBox class when PyQt6 is not available."""
 
-
     class QComboBox:
         """Fallback QComboBox class when PyQt6 is not available."""
-
 
     class QDialog:
         """Fallback QDialog class when PyQt6 is not available."""
 
-
     class QFileDialog:
         """Fallback QFileDialog class when PyQt6 is not available."""
-
 
     class QGroupBox:
         """Fallback QGroupBox class when PyQt6 is not available."""
 
-
     class QHBoxLayout:
         """Fallback QHBoxLayout class when PyQt6 is not available."""
-
 
     class QPushButton:
         """Fallback QPushButton class when PyQt6 is not available."""
 
-
     class QVBoxLayout:
         """Fallback QVBoxLayout class when PyQt6 is not available."""
-
 
     PYQT6_AVAILABLE = False
 
@@ -135,7 +118,9 @@ class ReportGeneratorWorkerSignals(QObject):
 class ReportGeneratorWorker(QRunnable):
     """Worker thread for report generation."""
 
-    def __init__(self, result: UnifiedProtectionResult, format_type: str, output_path: str, options: dict) -> None:
+    def __init__(
+        self, result: UnifiedProtectionResult, format_type: str, output_path: str, options: dict
+    ) -> None:
         """Initialize the report generator worker.
 
         Args:

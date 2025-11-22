@@ -22,6 +22,7 @@ import json
 from dataclasses import dataclass, field
 from enum import Enum
 
+
 """
 Protection Knowledge Base
 
@@ -98,97 +99,132 @@ class ProtectionKnowledgeBase:
 
     def _initialize_protection_schemes(self) -> dict[str, ProtectionSchemeInfo]:
         """Initialize comprehensive protection scheme database with production-ready bypass strategies."""
-        schemes = {}
-
-        # Sentinel HASP/HL
-        schemes["sentinel_hasp"] = ProtectionSchemeInfo(
-            name="Sentinel HASP/HL",
-            vendor="Thales (formerly SafeNet)",
-            category=ProtectionCategory.HARDWARE_DONGLE,
-            description="Hardware-based protection using USB dongles with AES encryption and secure communication",
-            versions=["HL Pro", "SL", "SRM", "LDK 7.x", "LDK 8.x"],
-            common_applications=["AutoCAD", "SolidWorks", "MATLAB", "MasterCAM", "CATIA", "Siemens NX", "ANSYS"],
-            detection_signatures=[
-                "hasp_login",
-                "hasp_login_scope",
-                "hasp_encrypt",
-                "hasp_decrypt",
-                "hasplms.exe",
-                "aksusbd.sys",
-                "aksfridge.sys",
-                "hardlock.sys",
-                "HASP HL",
-                "Sentinel",
-                "vendorcode",
-                "haspdinst.exe",
-                "hasp_get_sessioninfo",
-                "hasp_update",
-                "hasp_get_rtc",
-            ],
-            bypass_difficulty=BypassDifficulty.HIGH,
-            bypass_techniques=[
-                BypassTechnique(
-                    name="Complete Dongle Emulation",
-                    description="Create perfect virtual dongle with memory dump and crypto keys",
-                    difficulty=BypassDifficulty.HIGH,
-                    tools_required=["HASP Dumper", "Dongle Emulator", "API Monitor", "WinAPIOverride"],
-                    success_rate=0.85,
-                    time_estimate="2-4 days",
-                    risks=["Anti-emulation checks", "Time-based validations"],
-                    prerequisites=["Physical dongle access", "Driver RE skills", "Crypto knowledge"],
-                ),
-                BypassTechnique(
-                    name="Advanced API Redirection",
-                    description="Redirect all HASP APIs through custom DLL with full emulation",
-                    difficulty=BypassDifficulty.MEDIUM,
-                    tools_required=["x64dbg", "API Monitor", "Detours", "Custom DLL injector"],
-                    success_rate=0.9,
-                    time_estimate="6-12 hours",
-                    risks=["Integrity checks", "Hidden API calls"],
-                    prerequisites=["Windows API expertise", "DLL injection knowledge"],
-                ),
-                BypassTechnique(
-                    name="Driver-Level Bypass",
-                    description="Replace HASP driver with custom implementation",
-                    difficulty=BypassDifficulty.VERY_HIGH,
-                    tools_required=["WinDbg", "IDA Pro", "Driver signing tools"],
-                    success_rate=0.75,
-                    time_estimate="1 week",
-                    risks=["System instability", "Driver signature requirements"],
-                    prerequisites=["Kernel programming", "Driver development"],
-                ),
-                BypassTechnique(
-                    name="Memory Surgery",
-                    description="Surgical memory patches at all validation points",
-                    difficulty=BypassDifficulty.MEDIUM,
-                    tools_required=["x64dbg", "Cheat Engine", "Process Hacker"],
-                    success_rate=0.7,
-                    time_estimate="4-8 hours",
-                    risks=["CRC checks", "Self-modifying code"],
-                    prerequisites=["Assembly mastery", "Debugging expertise"],
-                ),
-            ],
-            analysis_tips=[
-                "Hook hasp_login to capture feature IDs and vendor codes",
-                "Monitor aksusbd.sys IOCTL communications",
-                "Trace hasp_encrypt/decrypt for crypto operations",
-                "Check for network HASP via port 1947",
-                "Analyze vendor daemon for custom checks",
-                "Look for time-bomb and expiration logic",
-            ],
-            common_mistakes=[
-                "Not emulating all HASP API functions",
-                "Missing network license scenarios",
-                "Incomplete vendor code emulation",
-                "Ignoring RTC (real-time clock) checks",
-                "Not handling feature expiration",
-            ],
-            resources=[
-                "HASP HL API documentation",
-                "USB protocol analysis tools",
-                "Driver reverse engineering guides",
-            ],
-        )
+        schemes = {
+            "sentinel_hasp": ProtectionSchemeInfo(
+                name="Sentinel HASP/HL",
+                vendor="Thales (formerly SafeNet)",
+                category=ProtectionCategory.HARDWARE_DONGLE,
+                description="Hardware-based protection using USB dongles with AES encryption and secure communication",
+                versions=["HL Pro", "SL", "SRM", "LDK 7.x", "LDK 8.x"],
+                common_applications=[
+                    "AutoCAD",
+                    "SolidWorks",
+                    "MATLAB",
+                    "MasterCAM",
+                    "CATIA",
+                    "Siemens NX",
+                    "ANSYS",
+                ],
+                detection_signatures=[
+                    "hasp_login",
+                    "hasp_login_scope",
+                    "hasp_encrypt",
+                    "hasp_decrypt",
+                    "hasplms.exe",
+                    "aksusbd.sys",
+                    "aksfridge.sys",
+                    "hardlock.sys",
+                    "HASP HL",
+                    "Sentinel",
+                    "vendorcode",
+                    "haspdinst.exe",
+                    "hasp_get_sessioninfo",
+                    "hasp_update",
+                    "hasp_get_rtc",
+                ],
+                bypass_difficulty=BypassDifficulty.HIGH,
+                bypass_techniques=[
+                    BypassTechnique(
+                        name="Complete Dongle Emulation",
+                        description="Create perfect virtual dongle with memory dump and crypto keys",
+                        difficulty=BypassDifficulty.HIGH,
+                        tools_required=[
+                            "HASP Dumper",
+                            "Dongle Emulator",
+                            "API Monitor",
+                            "WinAPIOverride",
+                        ],
+                        success_rate=0.85,
+                        time_estimate="2-4 days",
+                        risks=["Anti-emulation checks", "Time-based validations"],
+                        prerequisites=[
+                            "Physical dongle access",
+                            "Driver RE skills",
+                            "Crypto knowledge",
+                        ],
+                    ),
+                    BypassTechnique(
+                        name="Advanced API Redirection",
+                        description="Redirect all HASP APIs through custom DLL with full emulation",
+                        difficulty=BypassDifficulty.MEDIUM,
+                        tools_required=[
+                            "x64dbg",
+                            "API Monitor",
+                            "Detours",
+                            "Custom DLL injector",
+                        ],
+                        success_rate=0.9,
+                        time_estimate="6-12 hours",
+                        risks=["Integrity checks", "Hidden API calls"],
+                        prerequisites=[
+                            "Windows API expertise",
+                            "DLL injection knowledge",
+                        ],
+                    ),
+                    BypassTechnique(
+                        name="Driver-Level Bypass",
+                        description="Replace HASP driver with custom implementation",
+                        difficulty=BypassDifficulty.VERY_HIGH,
+                        tools_required=[
+                            "WinDbg",
+                            "IDA Pro",
+                            "Driver signing tools",
+                        ],
+                        success_rate=0.75,
+                        time_estimate="1 week",
+                        risks=[
+                            "System instability",
+                            "Driver signature requirements",
+                        ],
+                        prerequisites=["Kernel programming", "Driver development"],
+                    ),
+                    BypassTechnique(
+                        name="Memory Surgery",
+                        description="Surgical memory patches at all validation points",
+                        difficulty=BypassDifficulty.MEDIUM,
+                        tools_required=[
+                            "x64dbg",
+                            "Cheat Engine",
+                            "Process Hacker",
+                        ],
+                        success_rate=0.7,
+                        time_estimate="4-8 hours",
+                        risks=["CRC checks", "Self-modifying code"],
+                        prerequisites=["Assembly mastery", "Debugging expertise"],
+                    ),
+                ],
+                analysis_tips=[
+                    "Hook hasp_login to capture feature IDs and vendor codes",
+                    "Monitor aksusbd.sys IOCTL communications",
+                    "Trace hasp_encrypt/decrypt for crypto operations",
+                    "Check for network HASP via port 1947",
+                    "Analyze vendor daemon for custom checks",
+                    "Look for time-bomb and expiration logic",
+                ],
+                common_mistakes=[
+                    "Not emulating all HASP API functions",
+                    "Missing network license scenarios",
+                    "Incomplete vendor code emulation",
+                    "Ignoring RTC (real-time clock) checks",
+                    "Not handling feature expiration",
+                ],
+                resources=[
+                    "HASP HL API documentation",
+                    "USB protocol analysis tools",
+                    "Driver reverse engineering guides",
+                ],
+            )
+        }
 
         # FlexLM/FlexNet Publisher
         schemes["flexlm"] = ProtectionSchemeInfo(
@@ -197,7 +233,15 @@ class ProtectionKnowledgeBase:
             category=ProtectionCategory.NETWORK_LICENSE,
             description="Enterprise floating license management with client-server architecture",
             versions=["11.16.x", "2019.x", "2020.x", "2021.x", "2022.x"],
-            common_applications=["ANSYS", "Cadence", "Synopsys", "MATLAB", "Mentor Graphics", "Autodesk", "PTC Creo"],
+            common_applications=[
+                "ANSYS",
+                "Cadence",
+                "Synopsys",
+                "MATLAB",
+                "Mentor Graphics",
+                "Autodesk",
+                "PTC Creo",
+            ],
             detection_signatures=[
                 "lmgrd",
                 "lmutil",
@@ -291,7 +335,12 @@ class ProtectionKnowledgeBase:
             category=ProtectionCategory.SOFTWARE_PROTECTION,
             description="Multi-layered protection with code virtualization, anti-debugging, and license management",
             versions=["3.0.x", "3.1.x", "3.2.x"],
-            common_applications=["Commercial software", "Games", "Security tools", "Industrial software"],
+            common_applications=[
+                "Commercial software",
+                "Games",
+                "Security tools",
+                "Industrial software",
+            ],
             detection_signatures=[
                 "WinLicense",
                 "Themida",
@@ -378,7 +427,12 @@ class ProtectionKnowledgeBase:
             category=ProtectionCategory.VIRTUALIZATION,
             description="Industry-leading code virtualization with custom VM architecture and mutations",
             versions=["3.5.x", "3.6.x", "3.7.x", "3.8.x"],
-            common_applications=["High-value software", "DRM systems", "Anti-cheat engines", "Cryptographic tools"],
+            common_applications=[
+                "High-value software",
+                "DRM systems",
+                "Anti-cheat engines",
+                "Cryptographic tools",
+            ],
             detection_signatures=[
                 "VMProtect",
                 ".vmp0",
@@ -402,7 +456,11 @@ class ProtectionKnowledgeBase:
                     success_rate=0.3,
                     time_estimate="1-2 months",
                     risks=["Incomplete conversion", "Logic errors", "Mutations"],
-                    prerequisites=["VM internals expertise", "Compiler theory", "Pattern recognition"],
+                    prerequisites=[
+                        "VM internals expertise",
+                        "Compiler theory",
+                        "Pattern recognition",
+                    ],
                 ),
                 BypassTechnique(
                     name="Symbolic Execution Engine",
@@ -504,7 +562,11 @@ class ProtectionKnowledgeBase:
                     name="DLC and Workshop Unlock",
                     description="Enable all DLC and workshop content",
                     difficulty=BypassDifficulty.LOW,
-                    tools_required=["CreamAPI_4.5.0.0", "SteamWorkshopDownloader", "DepotDownloader"],
+                    tools_required=[
+                        "CreamAPI_4.5.0.0",
+                        "SteamWorkshopDownloader",
+                        "DepotDownloader",
+                    ],
                     success_rate=0.9,
                     time_estimate="15 minutes",
                     risks=["Version mismatches", "Missing content"],
@@ -623,7 +685,13 @@ class ProtectionKnowledgeBase:
             category=ProtectionCategory.ENTERPRISE,
             description="Multi-method activation including KMS, MAK, OEM, and digital licenses",
             versions=["Windows 10/11", "Server 2016-2022", "Office 2016-2021/365"],
-            common_applications=["Windows OS", "Microsoft Office", "Visual Studio", "SQL Server", "Exchange"],
+            common_applications=[
+                "Windows OS",
+                "Microsoft Office",
+                "Visual Studio",
+                "SQL Server",
+                "Exchange",
+            ],
             detection_signatures=[
                 "SLMgr.vbs",
                 "OSPP.vbs",
@@ -709,7 +777,14 @@ class ProtectionKnowledgeBase:
             category=ProtectionCategory.HARDWARE_DONGLE,
             description="Hardware and software licensing for pro audio/video applications",
             versions=["iLok 2", "iLok 3", "PACE Eden", "iLok Cloud"],
-            common_applications=["Pro Tools", "Cubase", "Logic Pro", "Adobe CC", "Waves plugins", "Native Instruments"],
+            common_applications=[
+                "Pro Tools",
+                "Cubase",
+                "Logic Pro",
+                "Adobe CC",
+                "Waves plugins",
+                "Native Instruments",
+            ],
             detection_signatures=[
                 "iLok License Manager",
                 "PACE License Support",
@@ -767,7 +842,12 @@ class ProtectionKnowledgeBase:
             category=ProtectionCategory.HARDWARE_DONGLE,
             description="Comprehensive protection with hardware dongles and software activation",
             versions=["CodeMeter 7.x", "CodeMeter 8.x"],
-            common_applications=["Siemens software", "Rockwell Automation", "CAD/CAM tools", "Industrial software"],
+            common_applications=[
+                "Siemens software",
+                "Rockwell Automation",
+                "CAD/CAM tools",
+                "Industrial software",
+            ],
             detection_signatures=[
                 "CodeMeter.exe",
                 "CodeMeter Runtime Server",
@@ -825,7 +905,13 @@ class ProtectionKnowledgeBase:
             category=ProtectionCategory.SOFTWARE_PROTECTION,
             description="Disc-based copy protection with online activation and virtual machine obfuscation",
             versions=["SecuROM 7.x", "SecuROM 8.x", "SecuROM PA"],
-            common_applications=["Games (2005-2010 era)", "BioShock", "Mass Effect", "GTA IV", "Spore"],
+            common_applications=[
+                "Games (2005-2010 era)",
+                "BioShock",
+                "Mass Effect",
+                "GTA IV",
+                "Spore",
+            ],
             detection_signatures=[
                 "SecuROM",
                 "paul.dll",
@@ -899,7 +985,12 @@ class ProtectionKnowledgeBase:
             category=ProtectionCategory.SOFTWARE_PROTECTION,
             description="Driver-level protection with anti-debugging, encryption, and disc checks",
             versions=["StarForce 3", "StarForce 4", "StarForce 5", "StarForce ProActive"],
-            common_applications=["Splinter Cell: Chaos Theory", "King Kong", "Trackmania", "X3: Reunion"],
+            common_applications=[
+                "Splinter Cell: Chaos Theory",
+                "King Kong",
+                "Trackmania",
+                "X3: Reunion",
+            ],
             detection_signatures=[
                 "StarForce",
                 "protect.dll",
@@ -973,7 +1064,12 @@ class ProtectionKnowledgeBase:
             category=ProtectionCategory.SOFTWARE_PROTECTION,
             description="Advanced application protection with code obfuscation, anti-tamper, and white-box cryptography",
             versions=["TransformIT 5.x", "GuardIT 4.x", "EnsureIT"],
-            common_applications=["Financial apps", "Healthcare software", "Gaming", "Enterprise applications"],
+            common_applications=[
+                "Financial apps",
+                "Healthcare software",
+                "Gaming",
+                "Enterprise applications",
+            ],
             detection_signatures=[
                 "Arxan",
                 "TransformIT",
@@ -1107,7 +1203,16 @@ class ProtectionKnowledgeBase:
             description="Compression and protection with anti-debugging and CRC checking",
             versions=["ASProtect 2.x", "ASPack 2.x"],
             common_applications=["Shareware", "Cracking tools", "Small utilities"],
-            detection_signatures=["ASProtect", "ASPack", ".aspack", ".adata", ".aspr", "aspr_ide.dll", "ASProtect SKE", "CRC Check"],
+            detection_signatures=[
+                "ASProtect",
+                "ASPack",
+                ".aspack",
+                ".adata",
+                ".aspr",
+                "aspr_ide.dll",
+                "ASProtect SKE",
+                "CRC Check",
+            ],
             bypass_difficulty=BypassDifficulty.LOW,
             bypass_techniques=[
                 BypassTechnique(
@@ -1156,7 +1261,14 @@ class ProtectionKnowledgeBase:
             description="Software protection with strong encryption, anti-debugging, and licensing",
             versions=["1.6.x", "1.7.x"],
             common_applications=["Commercial software", "Games", "Professional tools"],
-            detection_signatures=["Obsidium", "obsidium.dll", ".obsidium", "Obsidium©", "OBSIDIUM_SECTION", "obsidium_vm"],
+            detection_signatures=[
+                "Obsidium",
+                "obsidium.dll",
+                ".obsidium",
+                "Obsidium©",
+                "OBSIDIUM_SECTION",
+                "obsidium_vm",
+            ],
             bypass_difficulty=BypassDifficulty.HIGH,
             bypass_techniques=[
                 BypassTechnique(
@@ -1205,7 +1317,11 @@ class ProtectionKnowledgeBase:
             category=ProtectionCategory.SOFTWARE_PROTECTION,
             description="Professional protection with nanomites, code splicing, and strategic code mutation",
             versions=["8.x", "9.x"],
-            common_applications=["Professional software", "Engineering tools", "Security applications"],
+            common_applications=[
+                "Professional software",
+                "Engineering tools",
+                "Security applications",
+            ],
             detection_signatures=[
                 "Armadillo",
                 "SoftwarePassport",
@@ -1372,8 +1488,7 @@ class ProtectionKnowledgeBase:
 
     def get_bypass_techniques(self, protection_name: str) -> list[BypassTechnique]:
         """Get bypass techniques for a specific protection."""
-        info = self.get_protection_info(protection_name)
-        if info:
+        if info := self.get_protection_info(protection_name):
             return info.bypass_techniques
         return []
 
@@ -1516,9 +1631,7 @@ if __name__ == "__main__":
     # Example usage
     kb = get_protection_knowledge_base()
 
-    # Get info about Sentinel HASP
-    hasp_info = kb.get_protection_info("Sentinel HASP")
-    if hasp_info:
+    if hasp_info := kb.get_protection_info("Sentinel HASP"):
         print(f"Protection: {hasp_info.name}")
         print(f"Vendor: {hasp_info.vendor}")
         print(f"Difficulty: {hasp_info.bypass_difficulty.value}")

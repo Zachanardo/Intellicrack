@@ -41,16 +41,16 @@ class ForensicEvidence:
     binary_path: str
     binary_hash: str
     test_timestamp: str
-    memory_dumps: List[str]
-    api_calls: List[Dict[str, Any]]
+    memory_dumps: list[str]
+    api_calls: list[dict[str, Any]]
     network_traffic: str
-    registry_changes: List[Dict[str, Any]]
-    file_system_changes: List[Dict[str, Any]]
-    process_list: List[Dict[str, Any]]
-    screen_recordings: List[str]
+    registry_changes: list[dict[str, Any]]
+    file_system_changes: list[dict[str, Any]]
+    process_list: list[dict[str, Any]]
+    screen_recordings: list[str]
     evidence_package_hash: str
-    chain_of_custody: Dict[str, Any]
-    error_messages: List[str]
+    chain_of_custody: dict[str, Any]
+    error_messages: list[str]
     timestamp: str = None
 
     def __post_init__(self):
@@ -184,7 +184,7 @@ class ForensicCollector:
             logger.error(f"Failed to capture memory dump: {e}")
             return ""
 
-    def _start_api_monitoring(self) -> Optional[subprocess.Popen]:
+    def _start_api_monitoring(self) -> subprocess.Popen | None:
         """
         Start real API call monitoring using Process Monitor.
         """
@@ -264,7 +264,7 @@ class ForensicCollector:
             logger.error(f"Failed to start API monitoring: {e}")
             return self._start_wpt_tracing(trace_file)
 
-    def _start_wpt_tracing(self, trace_file: Path) -> Optional[subprocess.Popen]:
+    def _start_wpt_tracing(self, trace_file: Path) -> subprocess.Popen | None:
         """
         Fallback: Start Windows Performance Toolkit tracing for API monitoring.
         """
@@ -295,7 +295,7 @@ class ForensicCollector:
             logger.error(f"WPT tracing also failed: {wpt_error}")
             return None
 
-    def _stop_api_monitoring(self, process: Optional[subprocess.Popen]) -> List[Dict[str, Any]]:
+    def _stop_api_monitoring(self, process: subprocess.Popen | None) -> list[dict[str, Any]]:
         """
         Stop API monitoring and return captured data.
         """
@@ -343,7 +343,7 @@ class ForensicCollector:
 
         return api_calls
 
-    def _start_network_capture(self) -> Optional[subprocess.Popen]:
+    def _start_network_capture(self) -> subprocess.Popen | None:
         """
         Start real network traffic capture using netsh trace.
         """
@@ -404,7 +404,7 @@ class ForensicCollector:
             logger.error(f"Failed to start network capture: {e}")
             return None
 
-    def _start_powershell_capture(self, capture_file: Path) -> Optional[subprocess.Popen]:
+    def _start_powershell_capture(self, capture_file: Path) -> subprocess.Popen | None:
         """
         Fallback: Start network capture using PowerShell NetEventSession.
         """
@@ -437,7 +437,7 @@ class ForensicCollector:
             logger.error(f"PowerShell capture also failed: {ps_error}")
             return None
 
-    def _stop_network_capture(self, capture_file: Optional[str]) -> str:
+    def _stop_network_capture(self, capture_file: str | None) -> str:
         """
         Stop network capture and return capture file path.
         """
@@ -507,7 +507,7 @@ class ForensicCollector:
 
                     if result.returncode == 0 and temp_file.exists():
                         # Append to combined file
-                        with open(temp_file, 'r', encoding='utf-16le', errors='ignore') as temp_reg:
+                        with open(temp_file, encoding='utf-16le', errors='ignore') as temp_reg:
                             content = temp_reg.read()
                             # Skip the header for subsequent files
                             if successful_exports > 0:
@@ -561,7 +561,7 @@ class ForensicCollector:
             logger.error(f"Failed to capture registry snapshot: {e}")
             return ""
 
-    def _monitor_file_system(self) -> Optional[subprocess.Popen]:
+    def _monitor_file_system(self) -> subprocess.Popen | None:
         """
         Start real file system monitoring using Windows auditing.
         """
@@ -678,7 +678,7 @@ class ForensicCollector:
             logger.error(f"Failed to start file system monitoring: {e}")
             return None
 
-    def _start_procmon_file_monitoring(self, log_file: Path) -> Optional[subprocess.Popen]:
+    def _start_procmon_file_monitoring(self, log_file: Path) -> subprocess.Popen | None:
         """
         Fallback: Start file system monitoring using Process Monitor.
         """
@@ -725,7 +725,7 @@ class ForensicCollector:
             logger.error(f"Process Monitor file monitoring failed: {procmon_error}")
             return None
 
-    def _stop_file_system_monitoring(self, log_file: Optional[str]) -> List[Dict[str, Any]]:
+    def _stop_file_system_monitoring(self, log_file: str | None) -> list[dict[str, Any]]:
         """
         Stop file system monitoring and return captured data.
         """
@@ -777,7 +777,7 @@ class ForensicCollector:
 
         return file_changes
 
-    def _capture_process_list(self) -> List[Dict[str, Any]]:
+    def _capture_process_list(self) -> list[dict[str, Any]]:
         """
         Capture current process list.
         """
@@ -828,7 +828,7 @@ class ForensicCollector:
 
         return process_list
 
-    def _start_screen_recording(self) -> Optional[subprocess.Popen]:
+    def _start_screen_recording(self) -> subprocess.Popen | None:
         """
         Start real screen recording using FFmpeg or Windows PowerShell.
         """
@@ -915,7 +915,7 @@ class ForensicCollector:
             logger.error(f"Failed to start screen recording: {e}")
             return None
 
-    def _start_powershell_screen_recording(self, recording_file: Path) -> Optional[subprocess.Popen]:
+    def _start_powershell_screen_recording(self, recording_file: Path) -> subprocess.Popen | None:
         """
         Fallback: Start screen recording using PowerShell and .NET Graphics.
         """
@@ -1022,7 +1022,7 @@ class ForensicCollector:
             logger.error(f"PowerShell screen recording failed: {ps_error}")
             return None
 
-    def _stop_screen_recording(self, recording_file: Optional[str]) -> str:
+    def _stop_screen_recording(self, recording_file: str | None) -> str:
         """
         Stop screen recording and return recording file path.
         """
@@ -1178,7 +1178,7 @@ class ForensicCollector:
 
         return evidence
 
-    def collect_all_forensic_evidence(self) -> List[ForensicEvidence]:
+    def collect_all_forensic_evidence(self) -> list[ForensicEvidence]:
         """
         Collect forensic evidence for all available binaries.
         """
@@ -1328,7 +1328,7 @@ class ForensicCollector:
             logger.error(f"Failed to package evidence: {e}")
             return ""
 
-    def generate_report(self, evidence_list: List[ForensicEvidence]) -> str:
+    def generate_report(self, evidence_list: list[ForensicEvidence]) -> str:
         """
         Generate a comprehensive report of forensic evidence collection.
         """
@@ -1388,7 +1388,7 @@ class ForensicCollector:
 
         return "\n".join(report_lines)
 
-    def save_report(self, evidence_list: List[ForensicEvidence], filename: Optional[str] = None) -> str:
+    def save_report(self, evidence_list: list[ForensicEvidence], filename: str | None = None) -> str:
         """
         Save the forensic evidence report to a file.
         """

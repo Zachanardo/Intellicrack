@@ -31,6 +31,7 @@ from typing import Any
 from ..utils.logger import get_logger
 from .performance_monitor import performance_monitor
 
+
 logger = get_logger(__name__)
 
 try:
@@ -207,7 +208,9 @@ class OptimizationManager:
         time_since_last = datetime.now() - rule.last_triggered
         return time_since_last.total_seconds() >= rule.cooldown_seconds
 
-    def _execute_optimization(self, rule: OptimizationRule, metric_name: str, level: str, value: float) -> None:
+    def _execute_optimization(
+        self, rule: OptimizationRule, metric_name: str, level: str, value: float
+    ) -> None:
         """Execute optimization action."""
         with self.lock:
             try:
@@ -276,7 +279,9 @@ class OptimizationManager:
 
         logger.info(f"Cleared {cleared_entries} cache entries")
 
-    def _execute_logging(self, rule: OptimizationRule, metric_name: str, level: str, value: float) -> None:
+    def _execute_logging(
+        self, rule: OptimizationRule, metric_name: str, level: str, value: float
+    ) -> None:
         """Execute logging optimization action."""
         log_message = f"Performance alert - {rule.name}: {metric_name}={value} ({level})"
 
@@ -390,13 +395,11 @@ class OptimizationManager:
             baseline_memory = process.memory_info().rss
             baseline_objects = len(gc.get_objects())
 
-            logger.debug(f"Baseline measurement: {baseline_memory} bytes memory, {baseline_objects} objects")
+            logger.debug(
+                f"Baseline measurement: {baseline_memory} bytes memory, {baseline_objects} objects"
+            )
 
-            # Create memory load for optimization measurement
-            memory_load_data = []
-            for i in range(1000):
-                memory_load_data.append({f"key_{i}": f"value_{i}" * 100})
-
+            memory_load_data = [{f"key_{i}": f"value_{i}" * 100} for i in range(1000)]
             # Measure before optimization
             before_memory = process.memory_info().rss
             before_objects = len(gc.get_objects())
@@ -485,7 +488,9 @@ class OptimizationManager:
             self.config.max_history_size = config_data.get("max_history_size", 1000)
             self.config.enable_gc_optimization = config_data.get("enable_gc_optimization", True)
             self.config.gc_threshold_mb = config_data.get("gc_threshold_mb", 100.0)
-            self.config.enable_cache_optimization = config_data.get("enable_cache_optimization", True)
+            self.config.enable_cache_optimization = config_data.get(
+                "enable_cache_optimization", True
+            )
 
             # Update cache config
             cache_config = config_data.get("cache_config", {})
@@ -524,7 +529,9 @@ class OptimizationManager:
 
         # Memory recommendations
         if self.gc_stats["memory_freed_mb"] > 50:
-            recommendations.append("Consider increasing GC frequency - significant memory is being freed")
+            recommendations.append(
+                "Consider increasing GC frequency - significant memory is being freed"
+            )
 
         # Cache recommendations
         cache_stats = summary["cache_stats"]
@@ -541,10 +548,11 @@ class OptimizationManager:
             recommendations.append("System health is degraded - consider running optimizations")
 
         # Rule-specific recommendations
-        for rule_name, stats in self.optimization_stats.items():
-            if stats["executed"] > 10:
-                recommendations.append(f"Rule '{rule_name}' is triggering frequently - consider adjusting thresholds")
-
+        recommendations.extend(
+            f"Rule '{rule_name}' is triggering frequently - consider adjusting thresholds"
+            for rule_name, stats in self.optimization_stats.items()
+            if stats["executed"] > 10
+        )
         return recommendations
 
 

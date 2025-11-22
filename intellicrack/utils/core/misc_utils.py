@@ -23,6 +23,7 @@ import logging
 import re
 from pathlib import Path
 
+
 # Module logger
 logger = logging.getLogger(__name__)
 
@@ -124,11 +125,7 @@ def sanitize_filename(filename: str, replacement: str = "_") -> str:
     sanitized = re.sub(invalid_chars, replacement, filename)
 
     # Remove leading/trailing spaces and dots
-    sanitized = sanitized.strip(". ")
-
-    # Ensure filename is not empty
-    if not sanitized:
-        sanitized = "unnamed"
+    sanitized = sanitized.strip(". ") or "unnamed"
 
     return sanitized
 
@@ -202,8 +199,8 @@ def parse_size_string(size_str: str) -> int:
         logger.error(error_msg)
         raise ValueError(error_msg)
 
-    number = float(match.group(1))
-    unit = match.group(2) or "B"
+    number = float(match[1])
+    unit = match[2] or "B"
 
     if unit not in units:
         error_msg = f"Unknown unit: {unit}"

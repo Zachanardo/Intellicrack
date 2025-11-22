@@ -23,9 +23,11 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
+
 
 try:
     import yara
@@ -34,11 +36,8 @@ try:
 except ImportError:
     YARA_AVAILABLE = False
 
-from intellicrack.core.processing.streaming_analysis_manager import (
-    ChunkContext,
-    StreamingAnalysisManager,
-    StreamingAnalyzer,
-)
+from intellicrack.core.processing.streaming_analysis_manager import ChunkContext, StreamingAnalysisManager, StreamingAnalyzer
+
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +150,11 @@ class StreamingYaraScanner(StreamingAnalyzer):
         """
         try:
             if not self.rules:
-                return {"chunk_offset": context.offset, "matches": [], "error": "YARA rules not loaded"}
+                return {
+                    "chunk_offset": context.offset,
+                    "matches": [],
+                    "error": "YARA rules not loaded",
+                }
 
             search_data = context.overlap_before + context.data + context.overlap_after
             effective_offset = context.offset - len(context.overlap_before)
@@ -168,7 +171,10 @@ class StreamingYaraScanner(StreamingAnalyzer):
                     for instance in string_match.instances:
                         actual_offset = effective_offset + instance.offset
 
-                        if actual_offset < context.offset or actual_offset >= context.offset + context.size:
+                        if (
+                            actual_offset < context.offset
+                            or actual_offset >= context.offset + context.size
+                        ):
                             continue
 
                         if actual_offset in self.match_offsets:
@@ -235,8 +241,7 @@ class StreamingYaraScanner(StreamingAnalyzer):
                     )
                     continue
 
-                matches = chunk_result.get("matches", [])
-                if matches:
+                if matches := chunk_result.get("matches", []):
                     chunks_with_matches += 1
                     all_matches.extend(matches)
                     rules_matched.update(m["rule"] for m in matches)
@@ -308,22 +313,19 @@ class StreamingYaraScanner(StreamingAnalyzer):
                 elif any(tag in ["anti_debug", "anti_vm", "anti_analysis"] for tag in tags):
                     anti_analysis_matches.append(match)
 
-                if "license" in rule or "serial" in rule or "activation" in rule:
-                    if match not in license_matches:
-                        license_matches.append(match)
+                if ("license" in rule or "serial" in rule or "activation" in rule) and match not in license_matches:
+                    license_matches.append(match)
 
-            merged_results.update(
-                {
-                    "categorized_matches": {
-                        "protection": protection_matches,
-                        "licensing": license_matches,
-                        "cryptographic": crypto_matches,
-                        "anti_analysis": anti_analysis_matches,
-                    },
-                    "licensing_protection_detected": len(license_matches) > 0,
-                    "summary": self._generate_summary(merged_results, license_matches),
+            merged_results |= {
+                "categorized_matches": {
+                    "protection": protection_matches,
+                    "licensing": license_matches,
+                    "cryptographic": crypto_matches,
+                    "anti_analysis": anti_analysis_matches,
                 },
-            )
+                "licensing_protection_detected": len(license_matches) > 0,
+                "summary": self._generate_summary(merged_results, license_matches),
+            }
 
             logger.info(
                 f"Finalized YARA analysis: "
@@ -338,7 +340,9 @@ class StreamingYaraScanner(StreamingAnalyzer):
             merged_results["finalization_error"] = str(e)
             return merged_results
 
-    def _generate_summary(self, results: dict[str, Any], license_matches: list[dict[str, Any]]) -> str:
+    def _generate_summary(
+        self, results: dict[str, Any], license_matches: list[dict[str, Any]]
+    ) -> str:
         """Generate human-readable summary of YARA scan results.
 
         Composes narrative describing detected patterns including licensing,
@@ -360,8 +364,7 @@ class StreamingYaraScanner(StreamingAnalyzer):
         if license_matches:
             summary += f"Detected {len(license_matches)} licensing-related patterns. "
 
-        dist = results.get("rule_distribution", [])
-        if dist:
+        if dist := results.get("rule_distribution", []):
             top_rule = dist[0]
             summary += f"Most common rule: {top_rule['rule']} ({top_rule['count']} matches). "
 
@@ -526,10 +529,7 @@ def scan_binary_streaming(
         if progress_callback:
             manager.register_progress_callback(progress_callback)
 
-        results = manager.analyze_streaming(binary_path, scanner)
-
-        return results
-
+        return manager.analyze_streaming(binary_path, scanner)
     except Exception as e:
         logger.error(f"Streaming YARA scan failed: {e}")
         return {"error": str(e), "status": "failed"}

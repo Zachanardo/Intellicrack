@@ -3355,7 +3355,7 @@ const DynamicScriptGenerator = {
                 for (let i = 0; i < str.length; i++) {
                     const char = str.charCodeAt(i);
                     hash = (hash << 5) - hash + char;
-                    hash = hash & hash;
+                    hash &= hash;
                 }
                 return Math.abs(hash);
             },
@@ -5693,25 +5693,24 @@ const DynamicScriptGenerator = {
             },
 
             addRuntimeProtection: function (code) {
-                const protectionWrapper = `
-                    (function() {
-                        var __start = Date.now();
-                        var __checks = 0;
-
-                        setInterval(function() {
-                            __checks++;
-                            if(Date.now() - __start > 3600000) { // 1 hour timeout
-                                throw new Error("Session expired");
-                            }
-                            if(__checks > 10000) { // Max check limit
-                                throw new Error("Check limit exceeded");
-                            }
-                        }, 5000);
-
-                        ${code}
-                    })();
-                `;
-                return protectionWrapper;
+                return `
+                                    (function() {
+                                        var __start = Date.now();
+                                        var __checks = 0;
+                
+                                        setInterval(function() {
+                                            __checks++;
+                                            if(Date.now() - __start > 3600000) { // 1 hour timeout
+                                                throw new Error("Session expired");
+                                            }
+                                            if(__checks > 10000) { // Max check limit
+                                                throw new Error("Check limit exceeded");
+                                            }
+                                        }, 5000);
+                
+                                        ${code}
+                                    })();
+                                `;
             },
 
             xorEncrypt: function (str, key) {
@@ -5726,7 +5725,7 @@ const DynamicScriptGenerator = {
                 let hash = 0;
                 for (let i = 0; i < code.length; i++) {
                     hash = (hash << 5) - hash + code.charCodeAt(i);
-                    hash = hash & hash;
+                    hash &= hash;
                 }
                 return Math.abs(hash);
             },

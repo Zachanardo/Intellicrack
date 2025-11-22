@@ -15,7 +15,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
+
 from typing import NoReturn
+
 
 """Anti-Analysis Technique Detector.
 
@@ -64,9 +66,9 @@ except ImportError:
             graceful handling when no subclass override is available by logging
             a diagnostic message.
             """
-            script_name = getattr(self, 'script_name', self.__class__.__name__)
+            script_name = getattr(self, "script_name", self.__class__.__name__)
             message = f"Script execution initiated for {script_name} (base implementation)"
-            if hasattr(self, 'println'):
+            if hasattr(self, "println"):
                 self.println(message)
             else:
                 print(message)
@@ -158,7 +160,7 @@ except ImportError:
                 args: List of arguments
 
             """
-            self._script_args = args if args else []
+            self._script_args = args or []
 
         def getScriptFile(self) -> str:
             """Get the script file path.
@@ -368,9 +370,7 @@ def get_current_program() -> object:
         The current Ghidra program object, or None if unavailable.
 
     """
-    if not GHIDRA_AVAILABLE:
-        return None
-    return globals().get("current_program")
+    return globals().get("current_program") if GHIDRA_AVAILABLE else None
 
 
 class AntiAnalysisDetector(GhidraScript):
@@ -506,8 +506,9 @@ class AntiAnalysisDetector(GhidraScript):
             symbols = symbol_table.getSymbols(api)
 
             for symbol in symbols:
-                refs = safe_ghidra_call("getReferencesTo", symbol.getAddress())
-                if refs:
+                if refs := safe_ghidra_call(
+                    "getReferencesTo", symbol.getAddress()
+                ):
                     for ref in refs:
                         if ref.getReferenceType().isCall():
                             findings["anti_debug"].append(
@@ -519,7 +520,9 @@ class AntiAnalysisDetector(GhidraScript):
                                 },
                             )
                             print(f"  [+] Found {api} at {ref.getFromAddress()}")
-                            safe_ghidra_call("createBookmark", ref.getFromAddress(), "AntiDebug", f"{api} call")
+                            safe_ghidra_call(
+                                "createBookmark", ref.getFromAddress(), "AntiDebug", f"{api} call"
+                            )
 
     def find_vm_artifacts(self, findings: dict[str, list[dict[str, object]]]) -> None:
         """Search for VM-related strings and artifacts.
@@ -536,7 +539,9 @@ class AntiAnalysisDetector(GhidraScript):
             # Get all memory blocks to search
             for block in memory.getBlocks():
                 if block.isInitialized():
-                    addresses = safe_ghidra_call("findBytes", block.getStart(), artifact.encode(), 50)
+                    addresses = safe_ghidra_call(
+                        "findBytes", block.getStart(), artifact.encode(), 50
+                    )
 
                     for addr in addresses:
                         if addr:
@@ -549,7 +554,9 @@ class AntiAnalysisDetector(GhidraScript):
                                 },
                             )
                             print(f"  [+] Found VM artifact '{artifact}' at {addr}")
-                            safe_ghidra_call("createBookmark", addr, "AntiVM", f"VM artifact: {artifact}")
+                            safe_ghidra_call(
+                                "createBookmark", addr, "AntiVM", f"VM artifact: {artifact}"
+                            )
 
     def find_detection_instructions(self, findings: dict[str, list[dict[str, object]]]) -> None:
         """Find CPU instructions used for detection.
@@ -576,7 +583,9 @@ class AntiAnalysisDetector(GhidraScript):
                     },
                 )
                 print(f"  [+] Found {mnemonic} instruction at {instr.getAddress()}")
-                safe_ghidra_call("createBookmark", instr.getAddress(), "Detection", f"{mnemonic} instruction")
+                safe_ghidra_call(
+                    "createBookmark", instr.getAddress(), "Detection", f"{mnemonic} instruction"
+                )
 
     def find_timing_checks(self, findings: dict[str, list[dict[str, object]]]) -> None:
         """Find potential timing-based anti-analysis.

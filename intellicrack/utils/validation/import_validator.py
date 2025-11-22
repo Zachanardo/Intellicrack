@@ -83,10 +83,11 @@ class ImportValidator:
             success, warnings = ImportValidator.validate_imports_from_code(code)
 
             # Extract just the missing module names from warnings
-            for warning in warnings:
-                if warning.startswith("Module not found: "):
-                    missing.append(warning.replace("Module not found: ", ""))
-
+            missing.extend(
+                warning.replace("Module not found: ", "")
+                for warning in warnings
+                if warning.startswith("Module not found: ")
+            )
             return {"missing": missing, "success": success}
 
         except Exception as e:
@@ -111,16 +112,15 @@ class ImportValidator:
 
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
-                    for alias in node.names:
-                        imports.append(
-                            {
-                                "type": "import",
-                                "module": alias.name,
-                                "alias": alias.asname,
-                                "line": node.lineno,
-                            },
-                        )
-
+                    imports.extend(
+                        {
+                            "type": "import",
+                            "module": alias.name,
+                            "alias": alias.asname,
+                            "line": node.lineno,
+                        }
+                        for alias in node.names
+                    )
                 elif isinstance(node, ast.ImportFrom):
                     if node.module:
                         names = [alias.name for alias in node.names]
@@ -229,7 +229,7 @@ class PluginStructureValidator:
             for method in missing_methods:
                 errors.append(f"Missing required '{method}' method")
 
-            return len(errors) == 0, errors
+            return not errors, errors
 
         except Exception as e:
             logger.error("Exception in import_validator: %s", e)
@@ -284,11 +284,7 @@ class PluginStructureValidator:
 
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
-                    # Get function arguments
-                    args = []
-                    for arg in node.args.args:
-                        args.append(arg.arg)
-
+                    args = [arg.arg for arg in node.args.args]
                     functions.append(
                         {
                             "name": node.name,
@@ -301,10 +297,7 @@ class PluginStructureValidator:
                     # Get methods from classes
                     for item in node.body:
                         if isinstance(item, ast.FunctionDef):
-                            args = []
-                            for arg in item.args.args:
-                                args.append(arg.arg)
-
+                            args = [arg.arg for arg in item.args.args]
                             functions.append(
                                 {
                                     "name": item.name,

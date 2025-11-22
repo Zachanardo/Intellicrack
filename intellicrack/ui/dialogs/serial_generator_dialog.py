@@ -41,7 +41,9 @@ class SerialGeneratorWorker(QThread):
     result = pyqtSignal(dict)
     error = pyqtSignal(str)
 
-    def __init__(self, generator: SerialNumberGenerator, operation: str, params: dict[str, Any]) -> None:
+    def __init__(
+        self, generator: SerialNumberGenerator, operation: str, params: dict[str, Any]
+    ) -> None:
         """Initialize the SerialGeneratorWorker with a generator, operation, and parameters."""
         super().__init__()
         self.generator = generator
@@ -100,14 +102,22 @@ class SerialGeneratorWorker(QThread):
 
                     # Check checksum if specified
                     if constraints.checksum_algorithm:
-                        checksum_func = self.generator.checksum_functions.get(constraints.checksum_algorithm)
-                        if checksum_func:
+                        if checksum_func := self.generator.checksum_functions.get(
+                            constraints.checksum_algorithm
+                        ):
                             checksum_valid = self.generator._verify_checksum(serial, checksum_func)
                             is_valid = is_valid and checksum_valid
                             validation_details["checksum_check"] = checksum_valid
 
                 self.result.emit(
-                    {"operation": "validation", "data": {"serial": serial, "is_valid": is_valid, "details": validation_details}},
+                    {
+                        "operation": "validation",
+                        "data": {
+                            "serial": serial,
+                            "is_valid": is_valid,
+                            "details": validation_details,
+                        },
+                    },
                 )
 
             elif self.operation == "crack_pattern":
@@ -131,7 +141,12 @@ class SerialGeneratorWorker(QThread):
                         serial = self.generator.generate_serial(constraints)
                         test_serials.append(serial)
 
-                    self.result.emit({"operation": "pattern_crack", "data": {"analysis": analysis, "generated_serials": test_serials}})
+                    self.result.emit(
+                        {
+                            "operation": "pattern_crack",
+                            "data": {"analysis": analysis, "generated_serials": test_serials},
+                        }
+                    )
 
         except Exception as e:
             self.error.emit(str(e))
@@ -246,7 +261,20 @@ class SerialGeneratorDialog(QDialog):
         checksum_layout.addWidget(QLabel("Algorithm:"))
         self.checksum_combo = QComboBox()
         self.checksum_combo.addItems(
-            ["none", "luhn", "verhoeff", "damm", "crc16", "crc32", "fletcher16", "fletcher32", "adler32", "mod11", "mod37", "mod97"],
+            [
+                "none",
+                "luhn",
+                "verhoeff",
+                "damm",
+                "crc16",
+                "crc32",
+                "fletcher16",
+                "fletcher32",
+                "adler32",
+                "mod11",
+                "mod37",
+                "mod97",
+            ],
         )
         self.checksum_combo.setEnabled(False)
         self.enable_checksum.toggled.connect(self.checksum_combo.setEnabled)
@@ -487,7 +515,9 @@ class SerialGeneratorDialog(QDialog):
         method_layout = QHBoxLayout()
         method_layout.addWidget(QLabel("Validation Method:"))
         self.validation_method = QComboBox()
-        self.validation_method.addItems(["Auto-detect", "Luhn", "Verhoeff", "Damm", "CRC32", "Mod97", "Custom Pattern"])
+        self.validation_method.addItems(
+            ["Auto-detect", "Luhn", "Verhoeff", "Damm", "CRC32", "Mod97", "Custom Pattern"]
+        )
         method_layout.addWidget(self.validation_method)
 
         self.btn_validate = QPushButton("Validate")
@@ -682,7 +712,9 @@ class SerialGeneratorDialog(QDialog):
         try:
             constraints = self.build_constraints()
 
-            self.worker = SerialGeneratorWorker(self.generator, "generate_single", {"constraints": constraints})
+            self.worker = SerialGeneratorWorker(
+                self.generator, "generate_single", {"constraints": constraints}
+            )
             self.worker.progress.connect(self.log)
             self.worker.result.connect(self.handle_worker_result)
             self.worker.error.connect(self.handle_worker_error)
@@ -759,7 +791,9 @@ class SerialGeneratorDialog(QDialog):
             checksum_algorithm=self.analyzed_pattern.get("checksum", {}).get("algorithm"),
         )
 
-        self.worker = SerialGeneratorWorker(self.generator, "generate_batch", {"constraints": constraints, "count": 10})
+        self.worker = SerialGeneratorWorker(
+            self.generator, "generate_batch", {"constraints": constraints, "count": 10}
+        )
         self.worker.progress.connect(self.log)
         self.worker.result.connect(self.handle_worker_result)
         self.worker.error.connect(self.handle_worker_error)
@@ -809,7 +843,9 @@ class SerialGeneratorDialog(QDialog):
                 checksum_algorithm=method.lower() if method != "Custom Pattern" else None,
             )
 
-        self.worker = SerialGeneratorWorker(self.generator, "validate", {"serial": serial, "constraints": constraints})
+        self.worker = SerialGeneratorWorker(
+            self.generator, "validate", {"serial": serial, "constraints": constraints}
+        )
         self.worker.progress.connect(self.log)
         self.worker.result.connect(self.handle_worker_result)
         self.worker.error.connect(self.handle_worker_error)
@@ -817,8 +853,7 @@ class SerialGeneratorDialog(QDialog):
 
     def copy_serial(self) -> None:
         """Copy generated serial to clipboard."""
-        serial = self.serial_output.text()
-        if serial:
+        if serial := self.serial_output.text():
             clipboard = QApplication.clipboard()
             clipboard.setText(serial)
             self.log("Serial copied to clipboard")
@@ -830,7 +865,10 @@ class SerialGeneratorDialog(QDialog):
             return
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save Serial", f"serial_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt", "Text Files (*.txt);;All Files (*.*)",
+            self,
+            "Save Serial",
+            f"serial_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+            "Text Files (*.txt);;All Files (*.*)",
         )
 
         if file_path:
@@ -873,7 +911,9 @@ class SerialGeneratorDialog(QDialog):
 
     def load_sample_serials(self) -> None:
         """Load sample serials from file."""
-        file_path, _ = QFileDialog.getOpenFileName(self, "Load Sample Serials", "", "Text Files (*.txt);;All Files (*.*)")
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Load Sample Serials", "", "Text Files (*.txt);;All Files (*.*)"
+        )
 
         if file_path:
             try:
@@ -886,7 +926,9 @@ class SerialGeneratorDialog(QDialog):
 
     def load_validation_batch(self) -> None:
         """Load serials for batch validation."""
-        file_path, _ = QFileDialog.getOpenFileName(self, "Load Serials for Validation", "", "Text Files (*.txt);;All Files (*.*)")
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Load Serials for Validation", "", "Text Files (*.txt);;All Files (*.*)"
+        )
 
         if file_path:
             try:
@@ -941,18 +983,18 @@ class SerialGeneratorDialog(QDialog):
 
     def export_patterns(self) -> None:
         """Export patterns to file."""
-        patterns = []
-        for row in range(self.patterns_table.rowCount()):
-            patterns.append(
-                {
-                    "software": self.patterns_table.item(row, 0).text(),
-                    "format": self.patterns_table.item(row, 1).text(),
-                    "length": self.patterns_table.item(row, 2).text(),
-                    "algorithm": self.patterns_table.item(row, 3).text(),
-                },
-            )
-
-        file_path, _ = QFileDialog.getSaveFileName(self, "Export Patterns", "serial_patterns.json", "JSON Files (*.json);;All Files (*.*)")
+        patterns = [
+            {
+                "software": self.patterns_table.item(row, 0).text(),
+                "format": self.patterns_table.item(row, 1).text(),
+                "length": self.patterns_table.item(row, 2).text(),
+                "algorithm": self.patterns_table.item(row, 3).text(),
+            }
+            for row in range(self.patterns_table.rowCount())
+        ]
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Export Patterns", "serial_patterns.json", "JSON Files (*.json);;All Files (*.*)"
+        )
 
         if file_path:
             try:
@@ -964,7 +1006,9 @@ class SerialGeneratorDialog(QDialog):
 
     def import_patterns(self) -> None:
         """Import patterns from file."""
-        file_path, _ = QFileDialog.getOpenFileName(self, "Import Patterns", "", "JSON Files (*.json);;All Files (*.*)")
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Import Patterns", "", "JSON Files (*.json);;All Files (*.*)"
+        )
 
         if file_path:
             try:
@@ -1083,7 +1127,10 @@ class SerialGeneratorDialog(QDialog):
         name = current_item.text()
 
         reply = QMessageBox.question(
-            self, "Confirm Delete", f"Delete preset '{name}'?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            self,
+            "Confirm Delete",
+            f"Delete preset '{name}'?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
         if reply == QMessageBox.StandardButton.Yes:
@@ -1180,10 +1227,7 @@ Confidence: {data["confidence"]:.1%}
             serials = data
             self.generated_serials = serials
 
-            output = []
-            for i, serial in enumerate(serials, 1):
-                output.append(f"{i:04d}: {serial.serial}")
-
+            output = [f"{i:04d}: {serial.serial}" for i, serial in enumerate(serials, 1)]
             self.batch_output.setPlainText("\n".join(output))
             self.batch_stats.setText(f"Generated {len(serials)} unique serials")
             self.btn_export_batch.setEnabled(True)

@@ -27,6 +27,7 @@ from typing import Any
 
 import numpy as np
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -78,7 +79,10 @@ class LiveDataPipeline:
         self.logger = logger
 
         # Event queues by priority
-        self.event_queues = {priority: queue.PriorityQueue(maxsize=self.config.get("queue_size", 10000)) for priority in DataPriority}
+        self.event_queues = {
+            priority: queue.PriorityQueue(maxsize=self.config.get("queue_size", 10000))
+            for priority in DataPriority
+        }
 
         # Buffering configuration
         self.buffer_size = self.config.get("buffer_size", 100)
@@ -294,7 +298,9 @@ class LiveDataPipeline:
         current_time = time.time()
 
         # Clean old timestamps
-        while self.event_timestamps and current_time - self.event_timestamps[0] > self.throttle_window:
+        while (
+            self.event_timestamps and current_time - self.event_timestamps[0] > self.throttle_window
+        ):
             self.event_timestamps.popleft()
 
         # Check rate
@@ -343,7 +349,9 @@ class LiveDataPipeline:
         latency = time.time() - event.timestamp
         with self.metrics_lock:
             self.metrics["events_processed"] += 1
-            self.metrics["avg_latency"] = self.metrics["avg_latency"] * 0.9 + latency * 0.1  # Exponential moving average
+            self.metrics["avg_latency"] = (
+                self.metrics["avg_latency"] * 0.9 + latency * 0.1
+            )  # Exponential moving average
 
         # Check for alerts
         self._check_alerts(event, latency)
@@ -400,11 +408,17 @@ class LiveDataPipeline:
                     for event_type, events in event_types.items():
                         if events:
                             # Filter old events
-                            recent_events = [e for e in events if current_time - e.timestamp <= self.aggregation_window]
+                            recent_events = [
+                                e
+                                for e in events
+                                if current_time - e.timestamp <= self.aggregation_window
+                            ]
 
                             if recent_events:
                                 # Calculate aggregates
-                                aggregated = self._calculate_aggregates(source, event_type, recent_events)
+                                aggregated = self._calculate_aggregates(
+                                    source, event_type, recent_events
+                                )
 
                                 # Send aggregated data
                                 self._send_aggregated_data(aggregated)
@@ -412,7 +426,9 @@ class LiveDataPipeline:
                             # Keep only recent events
                             event_types[event_type] = recent_events
 
-    def _calculate_aggregates(self, source: str, event_type: str, events: list[DataEvent]) -> dict[str, Any]:
+    def _calculate_aggregates(
+        self, source: str, event_type: str, events: list[DataEvent]
+    ) -> dict[str, Any]:
         """Calculate aggregates for events.
 
         Args:
@@ -427,10 +443,11 @@ class LiveDataPipeline:
         # Extract numeric values from events
         numeric_values = []
         for event in events:
-            for _key, value in event.data.items():
-                if isinstance(value, (int, float)):
-                    numeric_values.append(value)
-
+            numeric_values.extend(
+                value
+                for _key, value in event.data.items()
+                if isinstance(value, (int, float))
+            )
         aggregated = {
             "source": source,
             "event_type": event_type,
@@ -441,16 +458,14 @@ class LiveDataPipeline:
         }
 
         if numeric_values:
-            aggregated.update(
-                {
-                    "min": float(np.min(numeric_values)),
-                    "max": float(np.max(numeric_values)),
-                    "mean": float(np.mean(numeric_values)),
-                    "median": float(np.median(numeric_values)),
-                    "std": float(np.std(numeric_values)),
-                    "p95": float(np.percentile(numeric_values, 95)),
-                },
-            )
+            aggregated |= {
+                "min": float(np.min(numeric_values)),
+                "max": float(np.max(numeric_values)),
+                "mean": float(np.mean(numeric_values)),
+                "median": float(np.median(numeric_values)),
+                "std": float(np.std(numeric_values)),
+                "p95": float(np.percentile(numeric_values, 95)),
+            }
 
         return aggregated
 
@@ -471,11 +486,14 @@ class LiveDataPipeline:
             with self.metrics_lock:
                 # Calculate throughput
                 self.metrics["throughput"] = self.metrics["events_processed"] / max(
-                    1, time.time() - self.metrics.get("start_time", time.time()),
+                    1,
+                    time.time() - self.metrics.get("start_time", time.time()),
                 )
 
                 # Update queue sizes
-                self.metrics["queue_sizes"] = {priority.name: self.event_queues[priority].qsize() for priority in DataPriority}
+                self.metrics["queue_sizes"] = {
+                    priority.name: self.event_queues[priority].qsize() for priority in DataPriority
+                }
 
                 # Store metrics in database
                 self._store_metrics()
@@ -507,17 +525,16 @@ class LiveDataPipeline:
             )
 
         # Check queue sizes
-        for priority, queue_obj in self.event_queues.items():
-            if queue_obj.qsize() > self.alert_thresholds.get("queue_size", 5000):
-                alerts.append(
-                    {
-                        "type": "queue_overflow",
-                        "priority": priority.name,
-                        "size": queue_obj.qsize(),
-                        "threshold": self.alert_thresholds["queue_size"],
-                    },
-                )
-
+        alerts.extend(
+            {
+                "type": "queue_overflow",
+                "priority": priority.name,
+                "size": queue_obj.qsize(),
+                "threshold": self.alert_thresholds["queue_size"],
+            }
+            for priority, queue_obj in self.event_queues.items()
+            if queue_obj.qsize() > self.alert_thresholds.get("queue_size", 5000)
+        )
         # Send alerts
         for alert in alerts:
             self._send_alert(alert)
@@ -543,7 +560,11 @@ class LiveDataPipeline:
     def _send_metrics_update(self) -> None:
         """Send metrics update to clients."""
         with self.metrics_lock:
-            message = {"type": "metrics_update", "timestamp": time.time(), "metrics": self.metrics.copy()}
+            message = {
+                "type": "metrics_update",
+                "timestamp": time.time(),
+                "metrics": self.metrics.copy(),
+            }
 
         self._broadcast_to_websockets(message)
 
@@ -563,7 +584,9 @@ class LiveDataPipeline:
 
             for connection in self.websocket_connections:
                 try:
-                    asyncio.run_coroutine_threadsafe(connection.send(message_json), asyncio.get_event_loop())
+                    asyncio.run_coroutine_threadsafe(
+                        connection.send(message_json), asyncio.get_event_loop()
+                    )
                 except Exception as e:
                     self.logger.error(f"Error sending to WebSocket: {e}")
                     disconnected.add(connection)
@@ -667,7 +690,11 @@ class LiveDataPipeline:
         self.alert_callbacks.append(callback)
 
     def get_historical_events(
-        self, start_time: float, end_time: float, source: str | None = None, event_type: str | None = None,
+        self,
+        start_time: float,
+        end_time: float,
+        source: str | None = None,
+        event_type: str | None = None,
     ) -> list[dict[str, Any]]:
         """Get historical events from database.
 
@@ -705,20 +732,18 @@ class LiveDataPipeline:
             cursor.execute(query, params)
             rows = cursor.fetchall()
 
-            events = []
-            for row in rows:
-                events.append(
-                    {
-                        "timestamp": row[0],
-                        "source": row[1],
-                        "event_type": row[2],
-                        "data": json.loads(row[3]),
-                        "priority": row[4],
-                        "sequence_id": row[5],
-                        "correlation_id": row[6],
-                    },
-                )
-
+            events = [
+                {
+                    "timestamp": row[0],
+                    "source": row[1],
+                    "event_type": row[2],
+                    "data": json.loads(row[3]),
+                    "priority": row[4],
+                    "sequence_id": row[5],
+                    "correlation_id": row[6],
+                }
+                for row in rows
+            ]
             conn.close()
             return events
 
@@ -726,7 +751,9 @@ class LiveDataPipeline:
             self.logger.error(f"Error getting historical events: {e}")
             return []
 
-    def get_metrics_history(self, start_time: float, end_time: float, metric_name: str | None = None) -> list[dict[str, Any]]:
+    def get_metrics_history(
+        self, start_time: float, end_time: float, metric_name: str | None = None
+    ) -> list[dict[str, Any]]:
         """Get metrics history from database.
 
         Args:
@@ -758,10 +785,14 @@ class LiveDataPipeline:
             cursor.execute(query, params)
             rows = cursor.fetchall()
 
-            metrics = []
-            for row in rows:
-                metrics.append({"timestamp": row[0], "metric_name": row[1], "metric_value": row[2]})
-
+            metrics = [
+                {
+                    "timestamp": row[0],
+                    "metric_name": row[1],
+                    "metric_value": row[2],
+                }
+                for row in rows
+            ]
             conn.close()
             return metrics
 

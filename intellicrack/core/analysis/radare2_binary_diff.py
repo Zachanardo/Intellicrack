@@ -24,6 +24,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
+
 try:
     import r2pipe
 except ImportError:
@@ -197,13 +198,15 @@ class R2BinaryDiff:
                     )
                     diffs.append(diff)
 
-                elif primary_func and secondary_func:
+                elif primary_func:
                     # Function exists in both - check for modifications
                     primary_size = primary_func.get("size", 0)
                     secondary_size = secondary_func.get("size", 0)
 
                     # Get detailed comparison
-                    similarity = self._calculate_function_similarity(func_name, primary_func, secondary_func)
+                    similarity = self._calculate_function_similarity(
+                        func_name, primary_func, secondary_func
+                    )
 
                     status = "unchanged" if similarity > 0.95 else "modified"
 
@@ -272,10 +275,13 @@ class R2BinaryDiff:
                     # Compare the blocks
                     diff = BasicBlockDiff(
                         address=primary_addr,
-                        status="modified" if self._blocks_differ(primary_bb, secondary_bb) else "unchanged",
+                        status="modified"
+                        if self._blocks_differ(primary_bb, secondary_bb)
+                        else "unchanged",
                         primary_size=primary_bb.get("size", 0),
                         secondary_size=secondary_bb.get("size", 0),
-                        instruction_count_diff=len(secondary_bb.get("ops", [])) - len(primary_bb.get("ops", [])),
+                        instruction_count_diff=len(secondary_bb.get("ops", []))
+                        - len(primary_bb.get("ops", [])),
                     )
 
                     # Analyze edge changes
@@ -294,13 +300,17 @@ class R2BinaryDiff:
             # Find added blocks
             for addr, bb in secondary_by_addr.items():
                 if addr not in list(matched_blocks.values()):
-                    diff = BasicBlockDiff(address=addr, status="added", secondary_size=bb.get("size", 0))
+                    diff = BasicBlockDiff(
+                        address=addr, status="added", secondary_size=bb.get("size", 0)
+                    )
                     diffs.append(diff)
 
             # Find removed blocks
             for addr, bb in primary_by_addr.items():
                 if addr not in matched_blocks:
-                    diff = BasicBlockDiff(address=addr, status="removed", primary_size=bb.get("size", 0))
+                    diff = BasicBlockDiff(
+                        address=addr, status="removed", primary_size=bb.get("size", 0)
+                    )
                     diffs.append(diff)
 
             self.logger.info(f"Found {len(diffs)} basic block differences in {function_name}")
@@ -347,7 +357,9 @@ class R2BinaryDiff:
                         value=string_val,
                         status="removed",
                         primary_address=primary_str.get("vaddr", 0),
-                        xrefs_primary=self._get_string_xrefs(self.r2_primary, primary_str.get("vaddr", 0)),
+                        xrefs_primary=self._get_string_xrefs(
+                            self.r2_primary, primary_str.get("vaddr", 0)
+                        ),
                     )
                     diffs.append(diff)
 
@@ -357,14 +369,20 @@ class R2BinaryDiff:
                         value=string_val,
                         status="added",
                         secondary_address=secondary_str.get("vaddr", 0),
-                        xrefs_secondary=self._get_string_xrefs(self.r2_secondary, secondary_str.get("vaddr", 0)),
+                        xrefs_secondary=self._get_string_xrefs(
+                            self.r2_secondary, secondary_str.get("vaddr", 0)
+                        ),
                     )
                     diffs.append(diff)
 
-                elif primary_str and secondary_str:
+                elif primary_str:
                     # String exists in both - check xrefs
-                    primary_xrefs = self._get_string_xrefs(self.r2_primary, primary_str.get("vaddr", 0))
-                    secondary_xrefs = self._get_string_xrefs(self.r2_secondary, secondary_str.get("vaddr", 0))
+                    primary_xrefs = self._get_string_xrefs(
+                        self.r2_primary, primary_str.get("vaddr", 0)
+                    )
+                    secondary_xrefs = self._get_string_xrefs(
+                        self.r2_secondary, secondary_str.get("vaddr", 0)
+                    )
 
                     if set(primary_xrefs) != set(secondary_xrefs):
                         diff = StringDiff(
@@ -402,8 +420,12 @@ class R2BinaryDiff:
             secondary_imports = json.loads(self.r2_secondary.cmd("iij"))
 
             # Create lookup by name
-            primary_by_name = {f"{i.get('libname', '')}::{i.get('name', '')}": i for i in primary_imports}
-            secondary_by_name = {f"{i.get('libname', '')}::{i.get('name', '')}": i for i in secondary_imports}
+            primary_by_name = {
+                f"{i.get('libname', '')}::{i.get('name', '')}": i for i in primary_imports
+            }
+            secondary_by_name = {
+                f"{i.get('libname', '')}::{i.get('name', '')}": i for i in secondary_imports
+            }
 
             all_imports = set(primary_by_name.keys()) | set(secondary_by_name.keys())
 
@@ -412,9 +434,21 @@ class R2BinaryDiff:
                     continue
 
                 if import_name in primary_by_name and import_name not in secondary_by_name:
-                    diffs.append({"name": import_name, "status": "removed", "details": primary_by_name[import_name]})
+                    diffs.append(
+                        {
+                            "name": import_name,
+                            "status": "removed",
+                            "details": primary_by_name[import_name],
+                        }
+                    )
                 elif import_name not in primary_by_name and import_name in secondary_by_name:
-                    diffs.append({"name": import_name, "status": "added", "details": secondary_by_name[import_name]})
+                    diffs.append(
+                        {
+                            "name": import_name,
+                            "status": "added",
+                            "details": secondary_by_name[import_name],
+                        }
+                    )
 
         except Exception as e:
             self.logger.error(f"Failed to get import diffs: {e}")
@@ -442,7 +476,9 @@ class R2BinaryDiff:
             },
         }
 
-    def _calculate_function_similarity(self, func_name: str, primary_func: dict, secondary_func: dict) -> float:
+    def _calculate_function_similarity(
+        self, func_name: str, primary_func: dict, secondary_func: dict
+    ) -> float:
         """Calculate similarity score between two functions.
 
         Args:
@@ -477,10 +513,7 @@ class R2BinaryDiff:
             distance = self._levenshtein_distance(primary_opcodes, secondary_opcodes)
             max_len = max(len(primary_opcodes), len(secondary_opcodes))
 
-            similarity = 1.0 - (distance / max_len) if max_len > 0 else 1.0
-
-            return similarity
-
+            return 1.0 - (distance / max_len) if max_len > 0 else 1.0
         except Exception as e:
             self.logger.error(f"Failed to calculate similarity: {e}")
             return 0.0
@@ -490,7 +523,7 @@ class R2BinaryDiff:
         if len(s1) < len(s2):
             return self._levenshtein_distance(s2, s1)
 
-        if len(s2) == 0:
+        if not s2:
             return len(s1)
 
         previous_row = range(len(s2) + 1)
@@ -529,12 +562,8 @@ class R2BinaryDiff:
             primary_opcodes = [op.get("opcode", "") for op in primary_ops.get("ops", [])]
             secondary_opcodes = [op.get("opcode", "") for op in secondary_ops.get("ops", [])]
 
-            # Count differences
-            changes = 0
-            for i in range(min(len(primary_opcodes), len(secondary_opcodes))):
-                if primary_opcodes[i] != secondary_opcodes[i]:
-                    changes += 1
-
+            changes = sum(bool(primary_opcodes[i] != secondary_opcodes[i])
+                      for i in range(min(len(primary_opcodes), len(secondary_opcodes))))
             # Add difference in lengths
             changes += abs(len(primary_opcodes) - len(secondary_opcodes))
 
@@ -557,35 +586,34 @@ class R2BinaryDiff:
             secondary_calls = json.loads(secondary_calls) if secondary_calls else []
 
             # Extract call targets
-            primary_targets = {c.get("ref", "") for c in primary_calls if c.get("type", "") == "call"}
-            secondary_targets = {c.get("ref", "") for c in secondary_calls if c.get("type", "") == "call"}
+            primary_targets = {
+                c.get("ref", "") for c in primary_calls if c.get("type", "") == "call"
+            }
+            secondary_targets = {
+                c.get("ref", "") for c in secondary_calls if c.get("type", "") == "call"
+            }
 
             # Find differences
             added = secondary_targets - primary_targets
             removed = primary_targets - secondary_targets
 
-            changes = []
-            for target in added:
-                changes.append(f"added: {target}")
-            for target in removed:
-                changes.append(f"removed: {target}")
-
+            changes = [f"added: {target}" for target in added]
+            changes.extend(f"removed: {target}" for target in removed)
             return changes
 
         except Exception as e:
             self.logger.error(f"Failed to get call changes: {e}")
             return []
 
-    def _match_basic_blocks(self, primary_blocks: list[dict], secondary_blocks: list[dict]) -> dict[int, int]:
+    def _match_basic_blocks(
+        self, primary_blocks: list[dict], secondary_blocks: list[dict]
+    ) -> dict[int, int]:
         """Match basic blocks between two versions of a function."""
-        matches = {}
-
-        # Simple matching by relative position for now
-        for i, primary_bb in enumerate(primary_blocks):
-            if i < len(secondary_blocks):
-                matches[primary_bb.get("addr", 0)] = secondary_blocks[i].get("addr", 0)
-
-        return matches
+        return {
+            primary_bb.get("addr", 0): secondary_blocks[i].get("addr", 0)
+            for i, primary_bb in enumerate(primary_blocks)
+            if i < len(secondary_blocks)
+        }
 
     def _blocks_differ(self, bb1: dict, bb2: dict) -> bool:
         """Check if two basic blocks differ significantly."""

@@ -29,6 +29,7 @@ import aiohttp
 
 from intellicrack.core.exceptions import ConfigurationError
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -94,17 +95,17 @@ class ServiceHealthChecker:
             logger.debug(f"Port check failed for {host}:{port}: {e}")
             return False
 
-    async def check_http_endpoint(self, url: str, timeout: float = 5.0) -> dict[str, Any]:
+    async def check_http_endpoint(self, url: str) -> dict[str, Any]:
         """Check if an HTTP endpoint is accessible.
 
         Args:
             url: URL to check
-            timeout: Request timeout in seconds
 
         Returns:
             Dictionary with health check results
 
         """
+        default_timeout = 5.0
         result = {
             "url": url,
             "healthy": False,
@@ -116,14 +117,21 @@ class ServiceHealthChecker:
 
         try:
             start_time = time.time()
-            async with aiohttp.ClientSession() as session, session.get(
-                url,
-                timeout=aiohttp.ClientTimeout(total=timeout),
-            ) as response:
-                result["status_code"] = response.status
-                result["response_time"] = time.time() - start_time
-                result["healthy"] = 200 <= response.status < 400
+            async with asyncio.timeout(default_timeout):
+                async with (
+                    aiohttp.ClientSession() as session,
+                    session.get(
+                        url,
+                        timeout=aiohttp.ClientTimeout(total=default_timeout),
+                    ) as response,
+                ):
+                    result["status_code"] = response.status
+                    result["response_time"] = time.time() - start_time
+                    result["healthy"] = 200 <= response.status < 400
 
+        except TimeoutError:
+            result["error"] = f"Request timed out after {default_timeout} seconds"
+            logger.debug(f"HTTP check timed out for {url}")
         except aiohttp.ClientError as e:
             result["error"] = str(e)
             logger.debug(f"HTTP check failed for {url}: {e}")
@@ -133,17 +141,17 @@ class ServiceHealthChecker:
 
         return result
 
-    async def check_websocket_endpoint(self, url: str, timeout: float = 5.0) -> dict[str, Any]:
+    async def check_websocket_endpoint(self, url: str) -> dict[str, Any]:
         """Check if a WebSocket endpoint is accessible.
 
         Args:
             url: WebSocket URL to check
-            timeout: Connection timeout in seconds
 
         Returns:
             Dictionary with health check results
 
         """
+        default_timeout = 5.0
         result = {
             "url": url,
             "healthy": False,
@@ -155,12 +163,19 @@ class ServiceHealthChecker:
 
         try:
             start_time = time.time()
-            async with aiohttp.ClientSession() as session, session.ws_connect(url, timeout=timeout) as ws:
-                result["connected"] = True
-                result["response_time"] = time.time() - start_time
-                result["healthy"] = True
-                await ws.close()
+            async with asyncio.timeout(default_timeout):
+                async with (
+                    aiohttp.ClientSession() as session,
+                    session.ws_connect(url, timeout=default_timeout) as ws,
+                ):
+                    result["connected"] = True
+                    result["response_time"] = time.time() - start_time
+                    result["healthy"] = True
+                    await ws.close()
 
+        except TimeoutError:
+            result["error"] = f"WebSocket connection timed out after {default_timeout} seconds"
+            logger.debug(f"WebSocket check timed out for {url}")
         except Exception as e:
             result["error"] = str(e)
             logger.debug(f"WebSocket check failed for {url}: {e}")
@@ -208,11 +223,10 @@ class ServiceHealthChecker:
         # Perform appropriate health check based on URL scheme
         if parsed.scheme in ["http", "https"]:
             check_result = await self.check_http_endpoint(service_url)
-            result.update(check_result)
+            result |= check_result
         elif parsed.scheme in ["ws", "wss"]:
             check_result = await self.check_websocket_endpoint(service_url)
             result.update(check_result)
-        # For non-HTTP services, just check if port is open
         elif parsed.hostname and parsed.port:
             is_open = self.check_port_open(parsed.hostname, parsed.port)
             result["healthy"] = is_open
@@ -288,7 +302,11 @@ class ServiceHealthChecker:
 
         """
         health_data = self.config.get("service_health.last_check", {})
-        return [service_name for service_name, status in health_data.items() if status.get("healthy", False)]
+        return [
+            service_name
+            for service_name, status in health_data.items()
+            if status.get("healthy", False)
+        ]
 
     def get_unhealthy_services(self) -> list[str]:
         """Get list of services that failed health checks.
@@ -298,32 +316,38 @@ class ServiceHealthChecker:
 
         """
         health_data = self.config.get("service_health.last_check", {})
-        return [service_name for service_name, status in health_data.items() if not status.get("healthy", False)]
+        return [
+            service_name
+            for service_name, status in health_data.items()
+            if not status.get("healthy", False)
+        ]
 
-    async def wait_for_service(self, service_name: str, timeout: float = 30.0, check_interval: float = 2.0) -> bool:
+    async def wait_for_service(self, service_name: str, check_interval: float = 2.0) -> bool:
         """Wait for a service to become available.
 
         Args:
             service_name: Name of the service to wait for
-            timeout: Maximum time to wait in seconds
             check_interval: Time between checks in seconds
 
         Returns:
             True if service became available, False if timeout
 
         """
-        start_time = time.time()
+        default_timeout = 30.0
+        try:
+            async with asyncio.timeout(default_timeout):
+                while True:
+                    result = await self.check_service(service_name)
+                    if result.get("healthy", False):
+                        logger.info(f"Service {service_name} is now available")
+                        return True
 
-        while time.time() - start_time < timeout:
-            result = await self.check_service(service_name)
-            if result.get("healthy", False):
-                logger.info(f"Service {service_name} is now available")
-                return True
-
-            await asyncio.sleep(check_interval)
-
-        logger.warning(f"Service {service_name} did not become available within {timeout} seconds")
-        return False
+                    await asyncio.sleep(check_interval)
+        except TimeoutError:
+            logger.warning(
+                f"Service {service_name} did not become available within {default_timeout} seconds"
+            )
+            return False
 
     def get_service_endpoint(self, service_name: str) -> str:
         """Get service endpoint from configuration.

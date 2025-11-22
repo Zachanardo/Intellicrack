@@ -10,6 +10,7 @@ from typing import Any
 
 from intellicrack.utils.logger import logger
 
+
 """
 Memory Optimizer
 
@@ -62,7 +63,9 @@ class MemoryOptimizer:
         """
         self.app = app_instance
         self.enabled: bool = False
-        self.threshold_percentage: float = 80.0  # Default threshold to start optimization (80% memory usage)
+        self.threshold_percentage: float = (
+            80.0  # Default threshold to start optimization (80% memory usage)
+        )
         self.last_usage_check: float = 0.0
         self.check_interval: float = 5.0  # Check every 5 seconds by default
 
@@ -112,7 +115,9 @@ class MemoryOptimizer:
 
                 self.app.update_output.emit(log_message("[Memory] Memory optimization enabled"))
             except ImportError as e:
-                self.logger.debug("UI utilities not available for memory optimization UI updates: %s", e)
+                self.logger.debug(
+                    "UI utilities not available for memory optimization UI updates: %s", e
+                )
         self.logger.info("Memory optimization enabled")
 
     def disable(self) -> None:
@@ -124,7 +129,9 @@ class MemoryOptimizer:
 
                 self.app.update_output.emit(log_message("[Memory] Memory optimization disabled"))
             except ImportError as e:
-                self.logger.debug("UI utilities not available for memory optimization UI updates: %s", e)
+                self.logger.debug(
+                    "UI utilities not available for memory optimization UI updates: %s", e
+                )
         self.logger.info("Memory optimization disabled")
 
     def configure(
@@ -158,7 +165,9 @@ class MemoryOptimizer:
 
                 self.app.update_output.emit(log_message(config_message))
             except ImportError as e:
-                self.logger.debug("UI utilities not available for memory configuration UI updates: %s", e)
+                self.logger.debug(
+                    "UI utilities not available for memory configuration UI updates: %s", e
+                )
 
         self.logger.info(config_message)
 
@@ -187,7 +196,9 @@ class MemoryOptimizer:
 
             # Update statistics
             self.optimization_stats["current_memory_usage"] = used_memory
-            self.optimization_stats["peak_memory_usage"] = max(self.optimization_stats["peak_memory_usage"], used_memory)
+            self.optimization_stats["peak_memory_usage"] = max(
+                self.optimization_stats["peak_memory_usage"], used_memory
+            )
 
             return (used_memory, total_memory, usage_percentage)
 
@@ -266,7 +277,8 @@ class MemoryOptimizer:
             # Calculate average memory saved
             if self.optimization_stats["total_optimizations"] > 0:
                 self.optimization_stats["average_memory_saved"] = (
-                    self.optimization_stats["memory_saved"] / self.optimization_stats["total_optimizations"]
+                    self.optimization_stats["memory_saved"]
+                    / self.optimization_stats["total_optimizations"]
                 )
 
             # Log optimization results
@@ -279,7 +291,9 @@ class MemoryOptimizer:
 
                     self.app.update_output.emit(log_message(optimization_message))
                 except ImportError as e:
-                    self.logger.debug("UI utilities not available for memory optimization UI updates: %s", e)
+                    self.logger.debug(
+                        "UI utilities not available for memory optimization UI updates: %s", e
+                    )
 
             self.logger.info(optimization_message)
 
@@ -313,7 +327,9 @@ class MemoryOptimizer:
             optimizations_applied.extend(self._optimize_caches())
 
             if optimizations_applied:
-                self.logger.debug("Data structure optimizations applied: %s", ", ".join(optimizations_applied))
+                self.logger.debug(
+                    "Data structure optimizations applied: %s", ", ".join(optimizations_applied)
+                )
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error during data structure optimization: %s", e)
@@ -326,11 +342,9 @@ class MemoryOptimizer:
             # Clear analysis result caches that may be large
             if hasattr(self.app, "analysis_cache"):
                 old_size = len(getattr(self.app.analysis_cache, "cache", {}))
-                if old_size > 100:  # If cache has more than 100 entries
-                    # Keep only the 50 most recent entries
-                    if hasattr(self.app.analysis_cache, "clear_old_entries"):
-                        self.app.analysis_cache.clear_old_entries(50)
-                        optimizations.append(f"analysis_cache_trimmed({old_size}->50)")
+                if old_size > 100 and hasattr(self.app.analysis_cache, "clear_old_entries"):
+                    self.app.analysis_cache.clear_old_entries(50)
+                    optimizations.append(f"analysis_cache_trimmed({old_size}->50)")
 
             # Optimize binary data buffers
             if hasattr(self.app, "binary_data_cache"):
@@ -354,7 +368,9 @@ class MemoryOptimizer:
             for attr_name in ["temp_analysis_results", "temp_scan_data", "temp_network_data"]:
                 if hasattr(self.app, attr_name):
                     temp_data = getattr(self.app, attr_name, [])
-                    if hasattr(temp_data, "clear") or (isinstance(temp_data, list) and len(temp_data) > 0):
+                    if hasattr(temp_data, "clear") or (
+                        isinstance(temp_data, list) and len(temp_data) > 0
+                    ):
                         temp_data.clear()
                         optimizations.append(f"{attr_name}_cleared")
 
@@ -405,10 +421,8 @@ class MemoryOptimizer:
             empty_cleared = 0
             for obj in all_objects[:1000]:  # Limit scope for performance
                 try:
-                    if isinstance(obj, (list, dict, set)) and len(obj) == 0:
-                        # Only clear if it's safe to do so
-                        if hasattr(obj, "clear"):
-                            empty_cleared += 1
+                    if isinstance(obj, (list, dict, set)) and len(obj) == 0 and hasattr(obj, "clear"):
+                        empty_cleared += 1
                 except (TypeError, AttributeError) as e:
                     logger.error("Error in memory_optimizer: %s", e)
                     continue
@@ -459,13 +473,11 @@ class MemoryOptimizer:
             import sys
 
             if hasattr(sys, "modules"):
-                # Don't actually clear sys.modules as it would break imports
-                # But we can clean up __pycache__ references
-                modules_with_cache = []
-                for module_name, module in sys.modules.items():
-                    if module and hasattr(module, "__pycache__"):
-                        modules_with_cache.append(module_name)
-
+                modules_with_cache = [
+                    module_name
+                    for module_name, module in sys.modules.items()
+                    if module and hasattr(module, "__pycache__")
+                ]
                 if modules_with_cache:
                     optimizations.append(f"module_caches_identified({len(modules_with_cache)})")
 
@@ -476,13 +488,11 @@ class MemoryOptimizer:
             for obj in all_objects[:500]:  # Limit for performance
                 try:
                     # Look for objects with cache_clear method (from functools.lru_cache)
-                    if hasattr(obj, "cache_clear") and callable(obj.cache_clear):
-                        # Check if it has cache_info to confirm it's an LRU cache
-                        if hasattr(obj, "cache_info"):
-                            cache_info = obj.cache_info()
-                            if hasattr(cache_info, "currsize") and cache_info.currsize > 10:
-                                obj.cache_clear()
-                                cache_clears += 1
+                    if hasattr(obj, "cache_clear") and callable(obj.cache_clear) and hasattr(obj, "cache_info"):
+                        cache_info = obj.cache_info()
+                        if hasattr(cache_info, "currsize") and cache_info.currsize > 10:
+                            obj.cache_clear()
+                            cache_clears += 1
                 except (AttributeError, TypeError, ValueError) as e:
                     logger.error("Error in memory_optimizer: %s", e)
                     continue
@@ -507,7 +517,6 @@ class MemoryOptimizer:
 
         """
         try:
-            leak_details = []
             critical_issues = []
 
             # 1. Garbage Collection Analysis
@@ -516,8 +525,7 @@ class MemoryOptimizer:
             gc_after = len(gc.get_objects())
             collected = gc_before - gc_after
 
-            leak_details.append(f"GC: {gc_before}→{gc_after} objects (collected {collected})")
-
+            leak_details = [f"GC: {gc_before}→{gc_after} objects (collected {collected})"]
             # 2. Check for uncollectable objects (circular references)
             uncollectable = len(gc.garbage)
             if uncollectable > 0:
@@ -535,7 +543,9 @@ class MemoryOptimizer:
             # Check for high memory usage relative to system
             if usage_percentage > 80:
                 critical_issues.append(f"High memory usage: {usage_percentage:.1f}%")
-                leak_details.append(f"Using {current_memory:.1f}MB of {total_memory:.1f}MB available")
+                leak_details.append(
+                    f"Using {current_memory:.1f}MB of {total_memory:.1f}MB available"
+                )
 
             # Track memory growth over time
             self._memory_history.append(current_memory)
@@ -554,11 +564,11 @@ class MemoryOptimizer:
 
                     # Add system context to growth analysis
                     if usage_percentage > 60:
-                        leak_details.append(f"Growth is concerning given {usage_percentage:.1f}% system usage")
+                        leak_details.append(
+                            f"Growth is concerning given {usage_percentage:.1f}% system usage"
+                        )
 
-            # 4. Large object detection
-            large_objects = self._find_large_objects()
-            if large_objects:
+            if large_objects := self._find_large_objects():
                 leak_details.append(f"Large objects: {len(large_objects)}")
                 for obj_type, count, size_mb in large_objects[:3]:  # Top 3
                     leak_details.append(f"  {obj_type}: {count} objects, {size_mb:.1f}MB")
@@ -569,14 +579,10 @@ class MemoryOptimizer:
                 critical_issues.append(f"{cycles} reference cycles")
                 leak_details.append("Potential circular references detected")
 
-            # 6. Application-specific leak detection
-            app_leaks = self._check_application_leaks()
-            if app_leaks:
+            if app_leaks := self._check_application_leaks():
                 leak_details.extend(app_leaks)
 
-            # 7. Thread and file handle leak detection
-            resource_leaks = self._check_resource_leaks()
-            if resource_leaks:
+            if resource_leaks := self._check_resource_leaks():
                 leak_details.extend(resource_leaks)
 
             # 8. Generate summary
@@ -596,7 +602,9 @@ class MemoryOptimizer:
 
                     self.app.update_output.emit(ui_log(log_message))
                 except ImportError as e:
-                    self.logger.debug("UI utilities not available for memory leak detection UI updates: %s", e)
+                    self.logger.debug(
+                        "UI utilities not available for memory leak detection UI updates: %s", e
+                    )
 
             getattr(self.logger, log_level)(log_message)
 
@@ -778,7 +786,8 @@ class MemoryOptimizer:
                 "enabled": self.enabled,
                 "threshold_percentage": self.threshold_percentage,
                 "check_interval": self.check_interval,
-                "techniques_enabled": sum(1 for enabled in self.optimization_techniques.values() if enabled),
+                "techniques_enabled": sum(bool(enabled)
+                                      for enabled in self.optimization_techniques.values()),
                 "total_techniques": len(self.optimization_techniques),
             },
         )
@@ -796,7 +805,7 @@ class MemoryOptimizer:
             used_memory, total_memory, usage_percentage = self.get_current_memory_usage()
             stats = self.get_optimization_stats()
 
-            report = {
+            return {
                 "timestamp": time.time(),
                 "memory_usage": {
                     "used_bytes": used_memory,
@@ -814,18 +823,20 @@ class MemoryOptimizer:
                     "total_optimizations": stats["total_optimizations"],
                     "memory_saved_bytes": stats["memory_saved"],
                     "memory_saved_mb": stats["memory_saved"] / (1024 * 1024),
-                    "average_saved_mb": stats["average_memory_saved"] / (1024 * 1024),
+                    "average_saved_mb": stats["average_memory_saved"]
+                    / (1024 * 1024),
                     "last_optimization": stats["last_optimization_time"],
                 },
                 "system": {
                     "psutil_available": PSUTIL_AVAILABLE,
                     "gc_enabled": gc.isenabled(),
-                    "gc_thresholds": gc.get_threshold() if hasattr(gc, "get_threshold") else None,
+                    "gc_thresholds": (
+                        gc.get_threshold()
+                        if hasattr(gc, "get_threshold")
+                        else None
+                    ),
                 },
             }
-
-            return report
-
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error generating memory report: %s", e)
             return {"error": str(e)}
@@ -841,8 +852,7 @@ class MemoryOptimizer:
         self.enabled = True
 
         try:
-            memory_saved = self.optimize_memory()
-            return memory_saved
+            return self.optimize_memory()
         finally:
             self.enabled = old_enabled
 
@@ -873,7 +883,9 @@ class MemoryOptimizer:
         """
         if technique in self.optimization_techniques:
             self.optimization_techniques[technique] = enabled
-            self.logger.info(f"Optimization technique '{technique}' {'enabled' if enabled else 'disabled'}")
+            self.logger.info(
+                f"Optimization technique '{technique}' {'enabled' if enabled else 'disabled'}"
+            )
             return True
         self.logger.warning("Unknown optimization technique: %s", technique)
         return False
@@ -905,7 +917,9 @@ class MemoryOptimizer:
         if exc_type:
             self.logger.error(f"Memory optimizer exiting due to {exc_type.__name__}: {exc_val}")
             if exc_tb:
-                self.logger.debug(f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
+                self.logger.debug(
+                    f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}"
+                )
         self.disable()
 
 

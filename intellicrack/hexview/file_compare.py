@@ -27,6 +27,7 @@ from enum import Enum
 
 from ..utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 
@@ -165,7 +166,11 @@ class BinaryComparer:
                 # Start new difference
                 diff_type = self._determine_diff_type(block1, block2)
                 current_diff = DifferenceBlock(
-                    offset1=offset, offset2=offset, length1=len(block1), length2=len(block2), diff_type=diff_type,
+                    offset1=offset,
+                    offset2=offset,
+                    length1=len(block1),
+                    length2=len(block2),
+                    diff_type=diff_type,
                 )
 
             offset += self.block_size
@@ -192,9 +197,7 @@ class BinaryComparer:
         """
         if not block1:
             return DifferenceType.INSERTED
-        if not block2:
-            return DifferenceType.DELETED
-        return DifferenceType.MODIFIED
+        return DifferenceType.MODIFIED if block2 else DifferenceType.DELETED
 
     def _find_differences_lcs(self, data1: bytes, data2: bytes) -> None:
         """Find differences using LCS algorithm for smaller data.
@@ -244,7 +247,11 @@ class BinaryComparer:
                     if current_diff:
                         self.differences.append(current_diff)
                     current_diff = DifferenceBlock(
-                        offset1=i, offset2=j, length1=0, length2=len(data2) - j, diff_type=DifferenceType.INSERTED,
+                        offset1=i,
+                        offset2=j,
+                        length1=0,
+                        length2=len(data2) - j,
+                        diff_type=DifferenceType.INSERTED,
                     )
                 break
 
@@ -256,7 +263,11 @@ class BinaryComparer:
                     if current_diff:
                         self.differences.append(current_diff)
                     current_diff = DifferenceBlock(
-                        offset1=i, offset2=j, length1=len(data1) - i, length2=0, diff_type=DifferenceType.DELETED,
+                        offset1=i,
+                        offset2=j,
+                        length1=len(data1) - i,
+                        length2=0,
+                        diff_type=DifferenceType.DELETED,
                     )
                 break
 
@@ -265,9 +276,6 @@ class BinaryComparer:
                 if current_diff:
                     self.differences.append(current_diff)
                     current_diff = None
-                i += 1
-                j += 1
-
             else:
                 # Bytes differ
                 if current_diff and current_diff.diff_type == DifferenceType.MODIFIED:
@@ -276,10 +284,16 @@ class BinaryComparer:
                 else:
                     if current_diff:
                         self.differences.append(current_diff)
-                    current_diff = DifferenceBlock(offset1=i, offset2=j, length1=1, length2=1, diff_type=DifferenceType.MODIFIED)
-                i += 1
-                j += 1
+                    current_diff = DifferenceBlock(
+                        offset1=i,
+                        offset2=j,
+                        length1=1,
+                        length2=1,
+                        diff_type=DifferenceType.MODIFIED,
+                    )
+            j += 1
 
+            i += 1
         if current_diff:
             self.differences.append(current_diff)
 
@@ -297,12 +311,26 @@ class BinaryComparer:
         while i > 0 or j > 0:
             if i == 0:
                 # Insertion in data2
-                self.differences.insert(0, DifferenceBlock(offset1=0, offset2=0, length1=0, length2=j, diff_type=DifferenceType.INSERTED))
+                self.differences.insert(
+                    0,
+                    DifferenceBlock(
+                        offset1=0,
+                        offset2=0,
+                        length1=0,
+                        length2=j,
+                        diff_type=DifferenceType.INSERTED,
+                    ),
+                )
                 break
 
             if j == 0:
                 # Deletion from data1
-                self.differences.insert(0, DifferenceBlock(offset1=0, offset2=0, length1=i, length2=0, diff_type=DifferenceType.DELETED))
+                self.differences.insert(
+                    0,
+                    DifferenceBlock(
+                        offset1=0, offset2=0, length1=i, length2=0, diff_type=DifferenceType.DELETED
+                    ),
+                )
                 break
 
             if data1[i - 1] == data2[j - 1]:
@@ -317,7 +345,14 @@ class BinaryComparer:
                     i -= 1
 
                 self.differences.insert(
-                    0, DifferenceBlock(offset1=i - 1, offset2=j, length1=start_i - i + 1, length2=0, diff_type=DifferenceType.DELETED),
+                    0,
+                    DifferenceBlock(
+                        offset1=i - 1,
+                        offset2=j,
+                        length1=start_i - i + 1,
+                        length2=0,
+                        diff_type=DifferenceType.DELETED,
+                    ),
                 )
                 i -= 1
 
@@ -328,7 +363,14 @@ class BinaryComparer:
                     j -= 1
 
                 self.differences.insert(
-                    0, DifferenceBlock(offset1=i, offset2=j - 1, length1=0, length2=start_j - j + 1, diff_type=DifferenceType.INSERTED),
+                    0,
+                    DifferenceBlock(
+                        offset1=i,
+                        offset2=j - 1,
+                        length1=0,
+                        length2=start_j - j + 1,
+                        diff_type=DifferenceType.INSERTED,
+                    ),
                 )
                 j -= 1
 
@@ -345,7 +387,11 @@ class BinaryComparer:
 
         for diff in self.differences[1:]:
             # Check if adjacent and same type
-            if current.end1 == diff.offset1 and current.end2 == diff.offset2 and current.diff_type == diff.diff_type:
+            if (
+                current.end1 == diff.offset1
+                and current.end2 == diff.offset2
+                and current.diff_type == diff.diff_type
+            ):
                 # Merge
                 current.length1 += diff.length1
                 current.length2 += diff.length2

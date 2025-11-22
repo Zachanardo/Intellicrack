@@ -47,7 +47,10 @@ class DependencyFeedback:
             "name": "Ghidra",
             "description": "NSA's reverse engineering framework",
             "install_commands": {
-                "Windows": ["Download from NSA GitHub releases", "Set GHIDRA_INSTALL_DIR environment variable"],
+                "Windows": [
+                    "Download from NSA GitHub releases",
+                    "Set GHIDRA_INSTALL_DIR environment variable",
+                ],
                 "Linux": ["sudo apt-get install ghidra", "Download from NSA GitHub releases"],
                 "macOS": ["brew install ghidra", "Download from NSA GitHub releases"],
             },
@@ -58,7 +61,11 @@ class DependencyFeedback:
         "pefile": {
             "name": "pefile",
             "description": "PE file format analysis library",
-            "install_commands": {"Windows": ["pip install pefile"], "Linux": ["pip3 install pefile"], "macOS": ["pip3 install pefile"]},
+            "install_commands": {
+                "Windows": ["pip install pefile"],
+                "Linux": ["pip3 install pefile"],
+                "macOS": ["pip3 install pefile"],
+            },
             "alternatives": ["lief", "pyelftools for ELF files"],
             "critical": True,
             "category": "binary_analysis",
@@ -66,7 +73,11 @@ class DependencyFeedback:
         "lief": {
             "name": "LIEF",
             "description": "Library for Instrumentation of Executable Formats",
-            "install_commands": {"Windows": ["pip install lief"], "Linux": ["pip3 install lief"], "macOS": ["pip3 install lief"]},
+            "install_commands": {
+                "Windows": ["pip install lief"],
+                "Linux": ["pip3 install lief"],
+                "macOS": ["pip3 install lief"],
+            },
             "alternatives": ["pefile for PE files", "pyelftools for ELF files"],
             "critical": False,
             "category": "binary_analysis",
@@ -98,7 +109,11 @@ class DependencyFeedback:
         "psutil": {
             "name": "psutil",
             "description": "System and process monitoring library",
-            "install_commands": {"Windows": ["pip install psutil"], "Linux": ["pip3 install psutil"], "macOS": ["pip3 install psutil"]},
+            "install_commands": {
+                "Windows": ["pip install psutil"],
+                "Linux": ["pip3 install psutil"],
+                "macOS": ["pip3 install psutil"],
+            },
             "alternatives": ["Built-in system tools", "manual process monitoring"],
             "critical": False,
             "category": "system_monitoring",
@@ -118,7 +133,11 @@ class DependencyFeedback:
         "numpy": {
             "name": "NumPy",
             "description": "Numerical computing library",
-            "install_commands": {"Windows": ["pip install numpy"], "Linux": ["pip3 install numpy"], "macOS": ["pip3 install numpy"]},
+            "install_commands": {
+                "Windows": ["pip install numpy"],
+                "Linux": ["pip3 install numpy"],
+                "macOS": ["pip3 install numpy"],
+            },
             "alternatives": ["Built-in Python math", "reduced functionality"],
             "critical": False,
             "category": "numerical",
@@ -171,7 +190,12 @@ class DependencyFeedback:
     def get_dependency_status(self, dependency_name: str) -> dict:
         """Get comprehensive status information for a dependency."""
         if dependency_name not in self.DEPENDENCY_INFO:
-            return {"available": False, "info": None, "message": f"Unknown dependency: {dependency_name}", "alternatives": []}
+            return {
+                "available": False,
+                "info": None,
+                "message": f"Unknown dependency: {dependency_name}",
+                "alternatives": [],
+            }
 
         info = self.DEPENDENCY_INFO[dependency_name]
 
@@ -220,17 +244,15 @@ class DependencyFeedback:
         if available:
             return f"OK {info['name']} is available and ready to use."
 
-        message_parts = []
-        message_parts.append(f"ERROR {info['name']} is not available.")
-        message_parts.append(f"   Purpose: {info['description']}")
-
+        message_parts = [
+            f"ERROR {info['name']} is not available.",
+            f"   Purpose: {info['description']}",
+        ]
         # Installation instructions
         if self.system in info["install_commands"]:
             commands = info["install_commands"][self.system]
             message_parts.append(f"   Installation for {self.system}:")
-            for cmd in commands:
-                message_parts.append(f"      {cmd}")
-
+            message_parts.extend(f"      {cmd}" for cmd in commands)
         # Alternatives
         if info["alternatives"]:
             message_parts.append("   Alternatives:")
@@ -239,9 +261,13 @@ class DependencyFeedback:
 
         # Criticality
         if info["critical"]:
-            message_parts.append("   WARNING️  This is a CRITICAL dependency for core functionality.")
+            message_parts.append(
+                "   WARNING️  This is a CRITICAL dependency for core functionality."
+            )
         else:
-            message_parts.append("   i  This is an optional dependency - reduced functionality available.")
+            message_parts.append(
+                "   i  This is an optional dependency - reduced functionality available."
+            )
 
         return "\n".join(message_parts)
 
@@ -327,15 +353,16 @@ class DependencyFeedback:
 
         # Critical dependencies
         if critical_deps:
-            report_lines.append("🔴 CRITICAL MISSING DEPENDENCIES:")
-            report_lines.append("These are required for core functionality.")
-            report_lines.append("")
-
+            report_lines.extend(
+                (
+                    "🔴 CRITICAL MISSING DEPENDENCIES:",
+                    "These are required for core functionality.",
+                    "",
+                )
+            )
             for dep_name in critical_deps:
                 status = self.get_dependency_status(dep_name)
-                report_lines.append(status["message"])
-                report_lines.append("")
-
+                report_lines.extend((status["message"], ""))
         # Optional dependencies
         if optional_deps:
             report_lines.append("🟡 OPTIONAL MISSING DEPENDENCIES:")
@@ -347,11 +374,13 @@ class DependencyFeedback:
                 report_lines.append(status["message"])
                 report_lines.append("")
 
-        # Installation script
-        report_lines.append("📜 BATCH INSTALLATION SCRIPT:")
-        report_lines.append("-" * 40)
-        report_lines.append(self.get_installation_batch_script(missing_deps))
-
+        report_lines.extend(
+            (
+                "📜 BATCH INSTALLATION SCRIPT:",
+                "-" * 40,
+                self.get_installation_batch_script(missing_deps),
+            )
+        )
         return "\n".join(report_lines)
 
     def suggest_alternatives(self, missing_dep: str, task_context: str = "") -> str:
@@ -367,21 +396,20 @@ class DependencyFeedback:
 
         suggestion_lines = [
             f" ALTERNATIVES FOR {info['name'].upper()}:",
-            f"Since {info['name']} is not available" + (f" for {task_context}" if task_context else "") + ", try:",
+            f"Since {info['name']} is not available"
+            + (f" for {task_context}" if task_context else "")
+            + ", try:",
         ]
 
-        for alt in alternatives:
-            suggestion_lines.append(f"   {alt}")
-
-        # Add category-specific alternatives
-        category_alts = self.get_category_alternatives(info.get("category", ""))
-        if category_alts:
-            additional_alts = [alt for alt in category_alts if alt not in alternatives]
-            if additional_alts:
+        suggestion_lines.extend(f"   {alt}" for alt in alternatives)
+        if category_alts := self.get_category_alternatives(
+            info.get("category", "")
+        ):
+            if additional_alts := [
+                alt for alt in category_alts if alt not in alternatives
+            ]:
                 suggestion_lines.append("  Additional options in this category:")
-                for alt in additional_alts[:3]:  # Limit to top 3
-                    suggestion_lines.append(f"    ◦ {alt}")
-
+                suggestion_lines.extend(f"    ◦ {alt}" for alt in additional_alts[:3])
         return "\n".join(suggestion_lines)
 
     def log_dependency_status(self, dep_name: str, context: str = "") -> None:
@@ -405,11 +433,13 @@ class DependencyFeedback:
 
         # Add quick fix suggestion
         if not status["available"]:
-            alternatives = status.get("alternatives", [])
-            if alternatives:
-                error_lines.append(f" QUICK FIX: Try using {alternatives[0]} instead")
-                error_lines.append(f"   Or install {dep_name} using the commands above")
-
+            if alternatives := status.get("alternatives", []):
+                error_lines.extend(
+                    (
+                        f" QUICK FIX: Try using {alternatives[0]} instead",
+                        f"   Or install {dep_name} using the commands above",
+                    )
+                )
         return "\n".join(error_lines)
 
 

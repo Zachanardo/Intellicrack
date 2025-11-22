@@ -27,7 +27,7 @@ def validate_ssl_interceptor_tests():
 
     # Read and analyze test file
     try:
-        with open(test_file, 'r', encoding='utf-8') as f:
+        with open(test_file, encoding='utf-8') as f:
             content = f.read()
 
         # Count test methods

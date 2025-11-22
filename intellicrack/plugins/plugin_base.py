@@ -26,6 +26,7 @@ from intellicrack.utils.logger import log_all_methods, logger
 
 from ..utils.analysis.entropy_utils import calculate_byte_entropy
 
+
 logger.debug("Plugin base module loaded")
 
 
@@ -138,7 +139,9 @@ class BasePlugin(ABC):
     Provides standard initialization, validation, and utility methods.
     """
 
-    def __init__(self, metadata: PluginMetadata, default_config: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, metadata: PluginMetadata, default_config: dict[str, Any] | None = None
+    ) -> None:
         """Initialize base plugin.
 
         Args:
@@ -314,10 +317,10 @@ DEFAULT_NETWORK_CONFIG = {
 
 
 __all__ = [
+    "BasePlugin",
     "DEFAULT_ANALYSIS_CONFIG",
     "DEFAULT_BINARY_CONFIG",
     "DEFAULT_NETWORK_CONFIG",
-    "BasePlugin",
     "PluginConfigManager",
     "PluginMetadata",
     "create_plugin_info",

@@ -7,6 +7,7 @@ import ctypes
 import sys
 from pathlib import Path
 
+
 # Add project root to sys.path so we can import intellicrack from scripts/ directory
 _SCRIPT_DIR = Path(__file__).parent
 _PROJECT_ROOT = _SCRIPT_DIR.parent

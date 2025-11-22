@@ -25,17 +25,7 @@ to reduce code duplication across dialog implementations.
 from collections.abc import Callable
 from typing import Any
 
-from PyQt6.QtWidgets import (
-    QGroupBox,
-    QHBoxLayout,
-    QLineEdit,
-    QListWidget,
-    QPushButton,
-    QTextEdit,
-    QTreeWidget,
-    QVBoxLayout,
-    QWidget,
-)
+from PyQt6.QtWidgets import QGroupBox, QHBoxLayout, QLineEdit, QListWidget, QPushButton, QTextEdit, QTreeWidget, QVBoxLayout, QWidget
 
 from intellicrack.handlers.pyqt6_handler import QFont, Qt
 

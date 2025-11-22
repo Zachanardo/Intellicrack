@@ -8,6 +8,7 @@ from typing import Any
 
 from intellicrack.utils.logger import logger
 
+
 """
 Hex data rendering module for the hex viewer/editor.
 
@@ -63,7 +64,7 @@ class HexViewRenderer:
         self.group_size = group_size
         self.show_ascii = show_ascii
         self.show_address = show_address
-        self.logger = logging.getLogger(__name__ + ".HexViewRenderer")
+        self.logger = logging.getLogger(f"{__name__}.HexViewRenderer")
 
         # Validate and adjust the group_size
         if group_size not in (1, 2, 4, 8):
@@ -95,7 +96,7 @@ class HexViewRenderer:
             group_size: Number of bytes to group together (1, 2, 4, or 8)
 
         """
-        if group_size in (1, 2, 4, 8):
+        if group_size in {1, 2, 4, 8}:
             self.group_size = group_size
             # Adjust bytes_per_row to be a multiple of group_size
             self.bytes_per_row = (self.bytes_per_row // self.group_size) * self.group_size
@@ -130,11 +131,7 @@ class HexViewRenderer:
             line_offset = offset + i
 
             # Start with the address/offset
-            if self.show_address:
-                line = f"{line_offset:08X}: "
-            else:
-                line = ""
-
+            line = f"{line_offset:08X}: " if self.show_address else ""
             # Process the hex part based on grouping
             hex_parts = []
             for j in range(0, len(chunk), self.group_size):
@@ -148,15 +145,15 @@ class HexViewRenderer:
                     for start, end, color in highlight_ranges:
                         if start <= current_pos < end:
                             # Apply highlighting (using ANSI color codes or markers)
-                            if color == "red":
-                                highlight_prefix = "["
-                                highlight_suffix = "]"
-                            elif color == "blue":
+                            if color == "blue":
                                 highlight_prefix = "<"
                                 highlight_suffix = ">"
                             elif color == "green":
                                 highlight_prefix = "{"
                                 highlight_suffix = "}"
+                            elif color == "red":
+                                highlight_prefix = "["
+                                highlight_suffix = "]"
                             break
 
                 # Format the group based on its size
@@ -168,9 +165,7 @@ class HexViewRenderer:
                 elif self.group_size == 4 and len(group) == 4:
                     group_str = f"{group[0]:02X}{group[1]:02X}{group[2]:02X}{group[3]:02X}"
                 elif self.group_size == 8 and len(group) == 8:
-                    group_str = (
-                        f"{group[0]:02X}{group[1]:02X}{group[2]:02X}{group[3]:02X}{group[4]:02X}{group[5]:02X}{group[6]:02X}{group[7]:02X}"
-                    )
+                    group_str = f"{group[0]:02X}{group[1]:02X}{group[2]:02X}{group[3]:02X}{group[4]:02X}{group[5]:02X}{group[6]:02X}{group[7]:02X}"
                 else:
                     # Handle incomplete groups at the end
                     group_str = "".join(f"{b:02X}" for b in group)
@@ -189,7 +184,7 @@ class HexViewRenderer:
             # Add ASCII part if enabled
             if self.show_ascii:
                 ascii_part = "".join(chr(b) if 32 <= b <= 126 else "." for b in chunk)
-                line += " | " + ascii_part
+                line += f" | {ascii_part}"
 
             result.append(line)
 
@@ -217,11 +212,7 @@ class HexViewRenderer:
             line_offset = offset + i
 
             # Start with the address/offset
-            if self.show_address:
-                line = f"{line_offset:08d}: "
-            else:
-                line = ""
-
+            line = f"{line_offset:08d}: " if self.show_address else ""
             # Process the decimal part based on grouping
             dec_parts = []
             for j in range(0, len(chunk), self.group_size):
@@ -258,9 +249,11 @@ class HexViewRenderer:
             # Add ASCII part if enabled
             if self.show_ascii:
                 # Add padding to align ASCII part
-                padding = " " * (self.bytes_per_row * 4 - len(line) + (8 if self.show_address else 0))
+                padding = " " * (
+                    self.bytes_per_row * 4 - len(line) + (8 if self.show_address else 0)
+                )
                 ascii_part = "".join(chr(b) if 32 <= b <= 126 else "." for b in chunk)
-                line += padding + " | " + ascii_part
+                line += f"{padding} | {ascii_part}"
 
             result.append(line)
 
@@ -291,16 +284,8 @@ class HexViewRenderer:
             line_offset = offset + _i
 
             # Start with the address/offset
-            if self.show_address:
-                line = f"{line_offset:08X}: "
-            else:
-                line = ""
-
-            # Process the binary part
-            bin_parts = []
-            for b in chunk:
-                bin_parts.append(f"{b:08b}")
-
+            line = f"{line_offset:08X}: " if self.show_address else ""
+            bin_parts = [f"{b:08b}" for b in chunk]
             # Join binary parts with spaces
             line += " ".join(bin_parts)
 
@@ -309,13 +294,15 @@ class HexViewRenderer:
                 # Add padding to align ASCII part
                 padding = " " * (bytes_per_binary_row * 9 - len(" ".join(bin_parts)))
                 ascii_part = "".join(chr(b) if 32 <= b <= 126 else "." for b in chunk)
-                line += padding + " | " + ascii_part
+                line += f"{padding} | {ascii_part}"
 
             result.append(line)
 
         return "\n".join(result)
 
-    def render_structure_view(self, data: bytes, structure_def: dict[str, Any], offset: int = 0) -> str:
+    def render_structure_view(
+        self, data: bytes, structure_def: dict[str, Any], offset: int = 0
+    ) -> str:
         """Render data according to a structure definition.
 
         Args:
@@ -330,13 +317,12 @@ class HexViewRenderer:
         if not data or not structure_def:
             return "No data or structure definition"
 
-        result = []
         current_offset = 0
 
-        # Add header
-        result.append("Offset      | Type     | Name                 | Value")
-        result.append("-----------+----------+----------------------+-------------------------")
-
+        result = [
+            "Offset      | Type     | Name                 | Value",
+            "-----------+----------+----------------------+-------------------------",
+        ]
         # Process each field in the structure
         for field_name, field_info in structure_def.items():
             field_type = field_info.get("type", "uint8")
@@ -433,7 +419,9 @@ class HexViewRenderer:
             return f"<error: {e!s}>"
 
 
-def parse_hex_view(hex_view: str, bytes_per_row: int = 16, offset_radix: int = 16) -> tuple[int, bytes]:  # pylint: disable=unused-argument
+def parse_hex_view(
+    hex_view: str, bytes_per_row: int = 16, offset_radix: int = 16
+) -> tuple[int, bytes]:    # pylint: disable=unused-argument
     """Parse a hex view string back to binary data.
 
     Args:
@@ -455,8 +443,7 @@ def parse_hex_view(hex_view: str, bytes_per_row: int = 16, offset_radix: int = 1
         line_pattern = re.compile(r"^(\d+):\s+((?:[0-9A-Fa-f]{2}\s*)+)")
 
     for line in hex_view.splitlines():
-        match = line_pattern.match(line)
-        if match:
+        if match := line_pattern.match(line):
             # Extract offset and hex data
             offset_str, hex_data_str = match.groups()
 

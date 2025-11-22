@@ -29,6 +29,7 @@ from pathlib import Path
 
 from ..resource_helper import get_resource_path
 
+
 _logger = logging.getLogger(__name__)
 
 
@@ -255,9 +256,7 @@ def list_frida_scripts() -> list[Path]:
 
     """
     frida_dir = get_frida_scripts_dir()
-    if frida_dir.exists():
-        return list(frida_dir.glob("*.js"))
-    return []
+    return list(frida_dir.glob("*.js")) if frida_dir.exists() else []
 
 
 def list_ghidra_scripts() -> list[Path]:
@@ -302,12 +301,12 @@ def find_script_by_name(script_name: str, script_type: str = "auto") -> Path | N
     # Remove extension if present
     base_name = Path(script_name).stem
 
-    if script_type in ("frida", "auto"):
+    if script_type in {"frida", "auto"}:
         frida_path = get_frida_scripts_dir() / f"{base_name}.js"
         if frida_path.exists():
             return frida_path
 
-    if script_type in ("ghidra", "auto"):
+    if script_type in {"ghidra", "auto"}:
         ghidra_dir = get_ghidra_scripts_dir()
         for ext in [".java", ".py"]:
             for script_path in ghidra_dir.rglob(f"{base_name}{ext}"):

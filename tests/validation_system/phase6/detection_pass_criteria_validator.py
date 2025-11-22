@@ -39,9 +39,9 @@ class DetectionResult:
     protection_name: str
     version: str
     confidence_score: float
-    memory_addresses: List[str]
-    entry_points: List[str]
-    algorithm_details: Dict[str, Any]
+    memory_addresses: list[str]
+    entry_points: list[str]
+    algorithm_details: dict[str, Any]
     source: str
     timestamp: float
     evidence_hash: str
@@ -51,8 +51,8 @@ class DetectionResult:
 class ValidationResults:
     """Results of detection validation."""
     passed: bool
-    criteria_results: Dict[str, bool]
-    failure_reasons: List[str]
+    criteria_results: dict[str, bool]
+    failure_reasons: list[str]
     confidence_score: float
     consensus_rate: float
     evidence_count: int
@@ -72,7 +72,7 @@ class DetectionPassCriteriaValidator:
     - Cross-validation consensus ≥ 80%
     """
 
-    def __init__(self, ground_truth_path: str, tools_config: Optional[Dict] = None):
+    def __init__(self, ground_truth_path: str, tools_config: dict | None = None):
         """
         Initialize the validator.
 
@@ -118,12 +118,12 @@ class DetectionPassCriteriaValidator:
 
         return logger
 
-    def _load_ground_truth(self) -> Dict[str, Any]:
+    def _load_ground_truth(self) -> dict[str, Any]:
         """Load certified ground truth data."""
         if not self.ground_truth_path.exists():
             raise FileNotFoundError(f"Ground truth file not found: {self.ground_truth_path}")
 
-        with open(self.ground_truth_path, 'r', encoding='utf-8') as f:
+        with open(self.ground_truth_path, encoding='utf-8') as f:
             ground_truth = json.load(f)
 
         # Verify ground truth integrity
@@ -131,7 +131,7 @@ class DetectionPassCriteriaValidator:
 
         return ground_truth
 
-    def _verify_ground_truth_integrity(self, ground_truth: Dict[str, Any]) -> None:
+    def _verify_ground_truth_integrity(self, ground_truth: dict[str, Any]) -> None:
         """Verify ground truth data integrity and completeness."""
         required_fields = [
             'protections', 'signatures', 'verification_hash',
@@ -162,7 +162,7 @@ class DetectionPassCriteriaValidator:
         cs.skipdata = True
         return cs
 
-    def _load_yara_rules(self) -> Optional[yara.Rules]:
+    def _load_yara_rules(self) -> yara.Rules | None:
         """Load YARA rules for protection detection."""
         rules_path = Path(__file__).parent / 'yara_rules' / 'protection_patterns.yar'
 
@@ -225,7 +225,7 @@ class DetectionPassCriteriaValidator:
 
     def validate_detection(self,
                          binary_path: str,
-                         detection_results: List[DetectionResult]) -> ValidationResults:
+                         detection_results: list[DetectionResult]) -> ValidationResults:
         """
         Validate detection results against all Phase 6.1 criteria.
 
@@ -307,7 +307,7 @@ class DetectionPassCriteriaValidator:
         with open(file_path, 'rb') as f:
             return hashlib.sha256(f.read()).hexdigest()
 
-    def _get_ground_truth_for_binary(self, binary_hash: str) -> Optional[Dict[str, Any]]:
+    def _get_ground_truth_for_binary(self, binary_hash: str) -> dict[str, Any] | None:
         """Get ground truth protection data for a specific binary."""
         for protection_id, protection_data in self.ground_truth.get('protections', {}).items():
             if protection_data.get('binary_hash') == binary_hash:
@@ -315,9 +315,9 @@ class DetectionPassCriteriaValidator:
         return None
 
     def _validate_exact_version_match(self,
-                                    detection_results: List[DetectionResult],
-                                    ground_truth: Dict[str, Any],
-                                    failure_reasons: List[str]) -> bool:
+                                    detection_results: list[DetectionResult],
+                                    ground_truth: dict[str, Any],
+                                    failure_reasons: list[str]) -> bool:
         """Validate exact version matching with ground truth."""
         expected_name = ground_truth.get('name', '')
         expected_version = ground_truth.get('version', '')
@@ -333,9 +333,9 @@ class DetectionPassCriteriaValidator:
         return False
 
     def _validate_memory_addresses(self,
-                                 detection_results: List[DetectionResult],
+                                 detection_results: list[DetectionResult],
                                  binary_path: str,
-                                 failure_reasons: List[str]) -> bool:
+                                 failure_reasons: list[str]) -> bool:
         """Validate memory addresses point to actual protection code."""
         valid_addresses_found = False
 
@@ -425,10 +425,10 @@ class DetectionPassCriteriaValidator:
             return False
 
     def _validate_independent_sources(self,
-                                    detection_results: List[DetectionResult],
-                                    failure_reasons: List[str]) -> bool:
+                                    detection_results: list[DetectionResult],
+                                    failure_reasons: list[str]) -> bool:
         """Validate minimum 3 independent sources confirm detection."""
-        unique_sources = set(result.source for result in detection_results)
+        unique_sources = {result.source for result in detection_results}
 
         if len(unique_sources) < self.min_sources:
             failure_reasons.append(
@@ -439,9 +439,9 @@ class DetectionPassCriteriaValidator:
         return True
 
     def _validate_algorithm_details(self,
-                                  detection_results: List[DetectionResult],
-                                  ground_truth: Dict[str, Any],
-                                  failure_reasons: List[str]) -> bool:
+                                  detection_results: list[DetectionResult],
+                                  ground_truth: dict[str, Any],
+                                  failure_reasons: list[str]) -> bool:
         """Validate protection algorithm details are documented."""
         required_details = ['key_size', 'encryption_type', 'hash_algorithm']
 
@@ -465,8 +465,8 @@ class DetectionPassCriteriaValidator:
         return False
 
     def _verify_algorithm_details_match(self,
-                                      detected: Dict[str, Any],
-                                      ground_truth: Dict[str, Any]) -> bool:
+                                      detected: dict[str, Any],
+                                      ground_truth: dict[str, Any]) -> bool:
         """Verify detected algorithm details match ground truth."""
         key_fields = ['key_size', 'encryption_type', 'hash_algorithm']
 
@@ -481,8 +481,8 @@ class DetectionPassCriteriaValidator:
         return True
 
     def _validate_entry_points(self,
-                             detection_results: List[DetectionResult],
-                             failure_reasons: List[str]) -> bool:
+                             detection_results: list[DetectionResult],
+                             failure_reasons: list[str]) -> bool:
         """Validate entry points are identified with hexadecimal addresses."""
         hex_pattern = re.compile(r'^0x[0-9a-fA-F]+$')
 
@@ -501,7 +501,7 @@ class DetectionPassCriteriaValidator:
         failure_reasons.append("No valid hexadecimal entry points found")
         return False
 
-    def _calculate_confidence_score(self, detection_results: List[DetectionResult]) -> float:
+    def _calculate_confidence_score(self, detection_results: list[DetectionResult]) -> float:
         """Calculate overall confidence score from all detection results."""
         if not detection_results:
             return 0.0
@@ -531,7 +531,7 @@ class DetectionPassCriteriaValidator:
 
     def _validate_confidence_score(self,
                                  confidence_score: float,
-                                 failure_reasons: List[str]) -> bool:
+                                 failure_reasons: list[str]) -> bool:
         """Validate confidence score meets minimum threshold."""
         if confidence_score < self.min_confidence:
             failure_reasons.append(
@@ -542,8 +542,8 @@ class DetectionPassCriteriaValidator:
         return True
 
     def _calculate_consensus_rate(self,
-                                detection_results: List[DetectionResult],
-                                ground_truth: Dict[str, Any]) -> float:
+                                detection_results: list[DetectionResult],
+                                ground_truth: dict[str, Any]) -> float:
         """Calculate consensus rate between sources."""
         if not detection_results:
             return 0.0
@@ -561,7 +561,7 @@ class DetectionPassCriteriaValidator:
 
     def _validate_consensus_rate(self,
                                consensus_rate: float,
-                               failure_reasons: List[str]) -> bool:
+                               failure_reasons: list[str]) -> bool:
         """Validate consensus rate meets minimum threshold."""
         if consensus_rate < self.min_consensus:
             failure_reasons.append(
@@ -571,7 +571,7 @@ class DetectionPassCriteriaValidator:
 
         return True
 
-    def run_cross_validation(self, binary_path: str) -> List[DetectionResult]:
+    def run_cross_validation(self, binary_path: str) -> list[DetectionResult]:
         """
         Run cross-validation using multiple independent sources.
 
@@ -610,7 +610,7 @@ class DetectionPassCriteriaValidator:
         self.logger.info(f"Cross-validation completed with {len(results)} results")
         return results
 
-    def _run_intellicrack_detection(self, binary_path: str) -> Optional[DetectionResult]:
+    def _run_intellicrack_detection(self, binary_path: str) -> DetectionResult | None:
         """Run Intellicrack's internal detection engine."""
         try:
             # This would integrate with actual Intellicrack detection
@@ -641,7 +641,7 @@ class DetectionPassCriteriaValidator:
 
         return None
 
-    def _analyze_pe_structure(self, pe: pefile.PE) -> Dict[str, Any]:
+    def _analyze_pe_structure(self, pe: pefile.PE) -> dict[str, Any]:
         """Analyze PE structure for protection indicators."""
         indicators = {
             'protection_detected': False,
@@ -703,7 +703,7 @@ class DetectionPassCriteriaValidator:
         else:
             return 'Unknown Packer'
 
-    def _run_peid_detection(self, binary_path: str) -> Optional[DetectionResult]:
+    def _run_peid_detection(self, binary_path: str) -> DetectionResult | None:
         """Run PEiD detection."""
         try:
             if not Path(self.external_tools['peid']).exists():
@@ -724,7 +724,7 @@ class DetectionPassCriteriaValidator:
 
         return None
 
-    def _parse_peid_output(self, output: str, binary_path: str) -> Optional[DetectionResult]:
+    def _parse_peid_output(self, output: str, binary_path: str) -> DetectionResult | None:
         """Parse PEiD output into detection result."""
         lines = output.strip().split('\n')
 
@@ -765,7 +765,7 @@ class DetectionPassCriteriaValidator:
 
         return ''
 
-    def _run_die_detection(self, binary_path: str) -> Optional[DetectionResult]:
+    def _run_die_detection(self, binary_path: str) -> DetectionResult | None:
         """Run Detect It Easy (DIE) detection."""
         try:
             if not Path(self.external_tools['die']).exists():
@@ -785,7 +785,7 @@ class DetectionPassCriteriaValidator:
 
         return None
 
-    def _parse_die_output(self, output: str, binary_path: str) -> Optional[DetectionResult]:
+    def _parse_die_output(self, output: str, binary_path: str) -> DetectionResult | None:
         """Parse DIE JSON output into detection result."""
         try:
             data = json.loads(output)
@@ -810,7 +810,7 @@ class DetectionPassCriteriaValidator:
 
         return None
 
-    def _run_protectionid_detection(self, binary_path: str) -> Optional[DetectionResult]:
+    def _run_protectionid_detection(self, binary_path: str) -> DetectionResult | None:
         """Run Protection ID detection."""
         try:
             if not Path(self.external_tools['protectionid']).exists():
@@ -830,7 +830,7 @@ class DetectionPassCriteriaValidator:
 
         return None
 
-    def _parse_protectionid_output(self, output: str, binary_path: str) -> Optional[DetectionResult]:
+    def _parse_protectionid_output(self, output: str, binary_path: str) -> DetectionResult | None:
         """Parse Protection ID output into detection result."""
         lines = output.strip().split('\n')
 
@@ -852,7 +852,7 @@ class DetectionPassCriteriaValidator:
 
         return None
 
-    def _run_behavioral_analysis(self, binary_path: str) -> Optional[DetectionResult]:
+    def _run_behavioral_analysis(self, binary_path: str) -> DetectionResult | None:
         """Run behavioral analysis for protection detection."""
         try:
             # Analyze file behavior patterns
@@ -879,7 +879,7 @@ class DetectionPassCriteriaValidator:
 
         return None
 
-    def _analyze_protection_behaviors(self, pe: pefile.PE) -> Dict[str, Any]:
+    def _analyze_protection_behaviors(self, pe: pefile.PE) -> dict[str, Any]:
         """Analyze PE file for protection-related behaviors."""
         behaviors = {
             'protection_detected': False,
@@ -947,7 +947,7 @@ class DetectionPassCriteriaValidator:
 
         return behaviors
 
-    def _run_yara_detection(self, binary_path: str) -> Optional[DetectionResult]:
+    def _run_yara_detection(self, binary_path: str) -> DetectionResult | None:
         """Run YARA rule-based detection."""
         try:
             if not self.yara_rules:
@@ -979,7 +979,7 @@ class DetectionPassCriteriaValidator:
 
     def generate_validation_report(self,
                                  binary_path: str,
-                                 validation_results: ValidationResults) -> Dict[str, Any]:
+                                 validation_results: ValidationResults) -> dict[str, Any]:
         """Generate comprehensive validation report."""
         report = {
             'validation_summary': {

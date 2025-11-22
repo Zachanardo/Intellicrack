@@ -28,6 +28,7 @@ import winreg
 from enum import Enum
 from pathlib import Path
 
+
 try:
     import wmi
 except ImportError:
@@ -35,6 +36,7 @@ except ImportError:
 
 from ...utils.logger import get_logger
 from ...utils.system.system_utils import is_admin
+
 
 try:
     from ...utils.system.subprocess_utils import run_subprocess_check
@@ -72,7 +74,9 @@ class WindowsActivator:
 
     def __init__(self) -> None:
         """Initialize the Windows activator with script path and temporary directory setup."""
-        self.script_path = Path(__file__).parent.parent.parent / "ui" / "Windows_Patch" / "WindowsActivator.cmd"
+        self.script_path = (
+            Path(__file__).parent.parent.parent / "ui" / "Windows_Patch" / "WindowsActivator.cmd"
+        )
         self.temp_dir = Path(tempfile.gettempdir()) / "intellicrack_activation"
         self.logger = get_logger(__name__)
         self.last_validation_time = None
@@ -127,21 +131,34 @@ class WindowsActivator:
 
             # CPU info
             for processor in c.Win32_Processor():
-                hardware_info.append(processor.ProcessorId.strip() if processor.ProcessorId else "")
-                hardware_info.append(str(processor.NumberOfCores))
-                hardware_info.append(processor.Name.strip() if processor.Name else "")
-
+                hardware_info.extend(
+                    (
+                        (
+                            processor.ProcessorId.strip()
+                            if processor.ProcessorId
+                            else ""
+                        ),
+                        str(processor.NumberOfCores),
+                        processor.Name.strip() if processor.Name else "",
+                    )
+                )
             # Motherboard info
             for board in c.Win32_BaseBoard():
-                hardware_info.append(board.SerialNumber.strip() if board.SerialNumber else "")
-                hardware_info.append(board.Manufacturer.strip() if board.Manufacturer else "")
-                hardware_info.append(board.Product.strip() if board.Product else "")
-
+                hardware_info.extend(
+                    (
+                        board.SerialNumber.strip() if board.SerialNumber else "",
+                        board.Manufacturer.strip() if board.Manufacturer else "",
+                        board.Product.strip() if board.Product else "",
+                    )
+                )
             # BIOS info
             for bios in c.Win32_BIOS():
-                hardware_info.append(bios.SerialNumber.strip() if bios.SerialNumber else "")
-                hardware_info.append(bios.Manufacturer.strip() if bios.Manufacturer else "")
-
+                hardware_info.extend(
+                    (
+                        bios.SerialNumber.strip() if bios.SerialNumber else "",
+                        bios.Manufacturer.strip() if bios.Manufacturer else "",
+                    )
+                )
             # Network adapter MAC addresses (physical adapters only)
             for nic in c.Win32_NetworkAdapterConfiguration(IPEnabled=True):
                 if nic.MACAddress:
@@ -211,7 +228,7 @@ class WindowsActivator:
         if not is_admin():
             issues.append("Administrator privileges required for activation")
 
-        return len(issues) == 0, issues
+        return not issues, issues
 
     def get_activation_status(self) -> dict[str, str]:
         """Get current Windows activation status.
@@ -483,18 +500,17 @@ class WindowsActivator:
                     try:
                         for item in os.listdir(base_path):
                             item_path = os.path.join(base_path, item)
-                            if Path(item_path).is_dir():
-                                # Check for Office executables
-                                if any(
-                                    os.path.exists(os.path.join(item_path, exe)) for exe in ["WINWORD.EXE", "EXCEL.EXE", "POWERPNT.EXE"]
-                                ):
-                                    if "Office16" in item or "16.0" in item:
-                                        detected_versions.append("2016")
-                                    elif "Office15" in item or "15.0" in item:
-                                        detected_versions.append("2013")
-                                    elif "Office14" in item or "14.0" in item:
-                                        detected_versions.append("2010")
-                    except (OSError, PermissionError) as e:
+                            if Path(item_path).is_dir() and any(
+                                                                os.path.exists(os.path.join(item_path, exe))
+                                                                for exe in ["WINWORD.EXE", "EXCEL.EXE", "POWERPNT.EXE"]
+                                                            ):
+                                if "Office16" in item or "16.0" in item:
+                                    detected_versions.append("2016")
+                                elif "Office15" in item or "15.0" in item:
+                                    detected_versions.append("2013")
+                                elif "Office14" in item or "14.0" in item:
+                                    detected_versions.append("2010")
+                    except OSError as e:
                         logger.error("Error in windows_activator: %s", e)
                         continue
 
@@ -619,12 +635,7 @@ class WindowsActivator:
                 r"C:\Program Files (x86)\Microsoft Office\Office15\OSPP.VBS",
             ]
 
-            ospp_script = None
-            for path in ospp_paths:
-                if os.path.exists(path):
-                    ospp_script = path
-                    break
-
+            ospp_script = next((path for path in ospp_paths if os.path.exists(path)), None)
             if not ospp_script:
                 return {
                     "success": False,
@@ -676,7 +687,11 @@ class WindowsActivator:
             logger.info("Activating Office using MSI method")
 
             result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                activate_cmd, capture_output=True, text=True, timeout=120, check=False,
+                activate_cmd,
+                capture_output=True,
+                text=True,
+                timeout=120,
+                check=False,
             )
 
             success = result.returncode == 0
@@ -722,12 +737,7 @@ class WindowsActivator:
                 r"C:\Program Files (x86)\Microsoft Office\Office15\OSPP.VBS",
             ]
 
-            ospp_script = None
-            for path in ospp_paths:
-                if os.path.exists(path):
-                    ospp_script = path
-                    break
-
+            ospp_script = next((path for path in ospp_paths if os.path.exists(path)), None)
             if not ospp_script:
                 return {
                     "status": "unknown",

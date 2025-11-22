@@ -27,6 +27,7 @@ import os
 
 from intellicrack.utils.logger import logger
 
+
 # PyTorch availability detection and import handling with Intel Arc B580 compatibility
 
 # Initialize variables
@@ -67,7 +68,9 @@ def _detect_and_fix_intel_arc() -> bool:
     """
     # Check if UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS is set (Intel Arc indicator)
     if os.environ.get("UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS") == "1":
-        logger.info("Intel Arc GPU environment detected - using CPU mode for PyTorch to prevent GIL issues")
+        logger.info(
+            "Intel Arc GPU environment detected - using CPU mode for PyTorch to prevent GIL issues"
+        )
         os.environ["CUDA_VISIBLE_DEVICES"] = ""  # Empty string = no CUDA devices
         return True
 
@@ -83,7 +86,9 @@ def _detect_and_fix_intel_arc() -> bool:
 _is_intel_arc = _detect_and_fix_intel_arc()
 
 
-def _safe_torch_import(timeout: float = 10.0) -> tuple[bool, dict[str, object] | None, Exception | None]:
+def _safe_torch_import(
+    timeout: float = 10.0,
+) -> tuple[bool, dict[str, object] | None, Exception | None]:
     """Safely import PyTorch with Intel Arc workaround applied.
 
     Attempts to import PyTorch and all necessary submodules. Returns a tuple
@@ -126,7 +131,9 @@ def _safe_torch_import(timeout: float = 10.0) -> tuple[bool, dict[str, object] |
 
 # Attempt safe PyTorch import - skip entirely if Intel Arc detected
 if _is_intel_arc:
-    logger.info("Intel Arc GPU detected - skipping PyTorch import to prevent GIL crashes, using fallbacks")
+    logger.info(
+        "Intel Arc GPU detected - skipping PyTorch import to prevent GIL crashes, using fallbacks"
+    )
     HAS_TORCH = False
     TORCH_AVAILABLE = False
     TORCH_VERSION = None
@@ -150,7 +157,9 @@ else:
             HAS_TORCH = True
             TORCH_AVAILABLE = True
             TORCH_VERSION = torch_temp.__version__
-            logger.info(f"PyTorch {TORCH_VERSION} imported successfully with universal GPU compatibility")
+            logger.info(
+                f"PyTorch {TORCH_VERSION} imported successfully with universal GPU compatibility"
+            )
         else:
             error_msg = "PyTorch import failed"
             logger.error(error_msg)
@@ -174,7 +183,12 @@ if not HAS_TORCH:
         with PyTorch code when the actual library cannot be imported.
         """
 
-        def __init__(self, data: object | None = None, dtype: object | None = None, device: object | None = None) -> None:
+        def __init__(
+            self,
+            data: object | None = None,
+            dtype: object | None = None,
+            device: object | None = None,
+        ) -> None:
             """Initialize fallback tensor.
 
             Args:
@@ -290,7 +304,6 @@ if not HAS_TORCH:
 
         pass
 
-
     # Assign fallback objects
     torch = None
     Tensor = FallbackTensor
@@ -347,21 +360,17 @@ if not HAS_TORCH:
 
 # Export all PyTorch objects and availability flag
 __all__ = [
-    # Availability flags
     "HAS_TORCH",
     "TORCH_AVAILABLE",
     "TORCH_VERSION",
-    # Main module
-    "torch",
-    # Classes and objects
     "Tensor",
     "cuda",
     "device",
     "dtype",
+    "load",
     "nn",
     "optim",
-    # Functions
-    "tensor",
     "save",
-    "load",
+    "tensor",
+    "torch",
 ]

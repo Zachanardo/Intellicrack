@@ -21,6 +21,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
+
 """
 Base Snapshot Handler
 
@@ -80,7 +81,7 @@ class BaseSnapshotHandler(ABC):
 
             # Let subclasses add their specific comparison logic
             platform_specific = self._perform_platform_specific_comparison(s1, s2)
-            base_comparison.update(platform_specific)
+            base_comparison |= platform_specific
 
             return base_comparison
 
@@ -89,7 +90,9 @@ class BaseSnapshotHandler(ABC):
             return {"error": f"Comparison failed: {e!s}"}
 
     @abstractmethod
-    def _perform_platform_specific_comparison(self, s1: dict[str, Any], s2: dict[str, Any]) -> dict[str, Any]:
+    def _perform_platform_specific_comparison(
+        self, s1: dict[str, Any], s2: dict[str, Any]
+    ) -> dict[str, Any]:
         """Perform platform-specific snapshot comparison logic.
 
         Args:

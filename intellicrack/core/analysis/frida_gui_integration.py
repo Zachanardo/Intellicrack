@@ -246,11 +246,7 @@ class FridaScriptParameterWidget(QDialog):
 
             elif isinstance(widget, QLineEdit):
                 text = widget.text()
-                if text in {"", "None"}:
-                    parameters[param_name] = None
-                else:
-                    parameters[param_name] = text
-
+                parameters[param_name] = None if text in {"", "None"} else text
         # Add advanced options
         parameters["timeout"] = self.timeout_spin.value()
         parameters["output_format"] = self.output_combo.currentText().lower()
@@ -263,7 +259,9 @@ class FridaScriptParameterWidget(QDialog):
         try:
             params = self.get_parameters()
             QMessageBox.information(
-                self, "Parameters Valid", f"Parameters validated successfully:\n{json.dumps(params, indent=2)[:500]}...",
+                self,
+                "Parameters Valid",
+                f"Parameters validated successfully:\n{json.dumps(params, indent=2)[:500]}...",
             )
         except Exception as e:
             QMessageBox.warning(self, "Validation Error", f"Parameter validation failed: {e}")
@@ -287,7 +285,9 @@ class FridaScriptParameterWidget(QDialog):
         preset_dir = Path.home() / ".intellicrack" / "frida_presets"
         preset_dir.mkdir(parents=True, exist_ok=True)
 
-        file_path, _ = QFileDialog.getOpenFileName(self, "Load Preset", str(preset_dir), "JSON Files (*.json)")
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Load Preset", str(preset_dir), "JSON Files (*.json)"
+        )
 
         if file_path:
             with open(file_path) as f:
@@ -345,8 +345,7 @@ class FridaScriptOutputWidget(QWidget):
 
     def close_tab(self, index: int) -> None:
         """Close output tab."""
-        widget = self.tab_widget.widget(index)
-        if widget:
+        if widget := self.tab_widget.widget(index):
             session_id = widget.session_id
             if session_id in self.script_outputs:
                 del self.script_outputs[session_id]
@@ -444,7 +443,9 @@ class ScriptOutputTab(QWidget):
         cursor.insertText(formatted + "\n", text_format)
 
         # Auto-scroll to bottom
-        self.output_text.verticalScrollBar().setValue(self.output_text.verticalScrollBar().maximum())
+        self.output_text.verticalScrollBar().setValue(
+            self.output_text.verticalScrollBar().maximum()
+        )
 
         # Update data tree if message contains data
         if isinstance(message, dict) and "data" in message:
@@ -527,10 +528,17 @@ class ScriptOutputTab(QWidget):
 
     def export_output(self) -> None:
         """Export output to file."""
-        file_path, _ = QFileDialog.getSaveFileName(self, "Export Output", f"{self.script_name}_output.json", "JSON Files (*.json)")
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Export Output", f"{self.script_name}_output.json", "JSON Files (*.json)"
+        )
 
         if file_path:
-            export_data = {"script_name": self.script_name, "session_id": self.session_id, "messages": self.messages, "data": self.data}
+            export_data = {
+                "script_name": self.script_name,
+                "session_id": self.session_id,
+                "messages": self.messages,
+                "data": self.data,
+            }
 
             with open(file_path, "w") as f:
                 json.dump(export_data, f, indent=2)
@@ -588,7 +596,9 @@ class FridaScriptDebuggerWidget(QWidget):
         # Breakpoints
         self.breakpoints_widget = QTableWidget()
         self.breakpoints_widget.setColumnCount(4)
-        self.breakpoints_widget.setHorizontalHeaderLabels(["Line", "Function", "Condition", "Hit Count"])
+        self.breakpoints_widget.setHorizontalHeaderLabels(
+            ["Line", "Function", "Condition", "Hit Count"]
+        )
         debug_tabs.addTab(self.breakpoints_widget, "Breakpoints")
 
         # Watch expressions
@@ -619,10 +629,7 @@ class FridaScriptDebuggerWidget(QWidget):
 
         # Add line numbers
         lines = content.split("\n")
-        numbered = []
-        for i, line in enumerate(lines, 1):
-            numbered.append(f"{i:4d} | {line}")
-
+        numbered = [f"{i:4d} | {line}" for i, line in enumerate(lines, 1)]
         self.code_editor.setPlainText("\n".join(numbered))
 
     def add_breakpoint(self, line: int, condition: str = "") -> None:
@@ -1101,7 +1108,9 @@ send({ type: 'ready', payload: 'Memory scanner initialized' });
             QMessageBox.warning(self, "Error", "Please enter a script name")
             return
 
-        file_path, _ = QFileDialog.getSaveFileName(self, "Save Script", f"{name}.js", "JavaScript Files (*.js)")
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Save Script", f"{name}.js", "JavaScript Files (*.js)"
+        )
 
         if file_path:
             # Add metadata header
@@ -1176,7 +1185,9 @@ def show_parameter_dialog(main_app: object) -> None:
         return
 
     # Select script
-    script_name, ok = QInputDialog.getItem(main_app, "Select Script", "Choose a script to configure:", script_names, 0, False)
+    script_name, ok = QInputDialog.getItem(
+        main_app, "Select Script", "Choose a script to configure:", script_names, 0, False
+    )
 
     if ok and script_name:
         config = manager.get_script_config(script_name)
@@ -1186,22 +1197,27 @@ def show_parameter_dialog(main_app: object) -> None:
                 params = dialog.get_parameters()
 
                 # Get target
-                target, ok = QInputDialog.getText(main_app, "Target Process", "Enter target process (path for spawn, PID/name for attach):")
+                target, ok = QInputDialog.getText(
+                    main_app,
+                    "Target Process",
+                    "Enter target process (path for spawn, PID/name for attach):",
+                )
 
-                if ok and target:
-                    # Create output tab
-                    if hasattr(main_app, "frida_output_widget"):
-                        session_id = f"{script_name}_{target}_{time.time()}"
-                        main_app.frida_output_widget.add_script_output(script_name, session_id)
+                if ok and target and hasattr(main_app, "frida_output_widget"):
+                    session_id = f"{script_name}_{target}_{time.time()}"
+                    main_app.frida_output_widget.add_script_output(script_name, session_id)
 
-                        # Execute script in background
-                        def output_callback(message: object) -> None:
-                            main_app.frida_output_widget.update_output(session_id, message)
+                    # Execute script in background
+                    def output_callback(message: object) -> None:
+                        main_app.frida_output_widget.update_output(session_id, message)
 
-                        # Run in thread
-                        thread = Thread(target=manager.execute_script, args=(script_name, target, "spawn", params, output_callback))
-                        thread.daemon = True
-                        thread.start()
+                    # Run in thread
+                    thread = Thread(
+                        target=manager.execute_script,
+                        args=(script_name, target, "spawn", params, output_callback),
+                    )
+                    thread.daemon = True
+                    thread.start()
 
 
 def show_output_viewer(main_app: object) -> None:

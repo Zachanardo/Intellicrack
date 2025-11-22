@@ -24,6 +24,7 @@ This module consolidates certificate creation patterns.
 import datetime
 import logging
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -89,6 +90,6 @@ def get_certificate_validity_dates(
         Tuple of (not_valid_before, not_valid_after) datetimes
 
     """
-    not_valid_before = datetime.datetime.utcnow()
+    not_valid_before = datetime.datetime.now(datetime.UTC)
     not_valid_after = not_valid_before + datetime.timedelta(days=valid_days)
     return not_valid_before, not_valid_after

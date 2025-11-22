@@ -44,7 +44,7 @@ def validate_production_readiness_checkpoint3():
     try:
         # Read the AI integration file
         from intellicrack.utils.path_resolver import get_project_root
-        with open(get_project_root() / "intellicrack/core/analysis/radare2_ai_integration.py", "r", encoding="utf-8") as f:
+        with open(get_project_root() / "intellicrack/core/analysis/radare2_ai_integration.py", encoding="utf-8") as f:
             ai_source = f.read()
 
         # Extract both training data methods

@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING, Any
 
 import yara
 
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -166,7 +167,13 @@ class YaraScanner:
         self._matches: list[YaraMatch] = []
         self._match_lock = threading.Lock()
         self._scan_progress_lock = threading.Lock()
-        self._scan_progress: dict[str, Any] = {"status": "idle", "scanned": 0, "total": 0, "matches": 0, "current_region": None}
+        self._scan_progress: dict[str, Any] = {
+            "status": "idle",
+            "scanned": 0,
+            "total": 0,
+            "matches": 0,
+            "current_region": None,
+        }
 
         # Initialize rule categories
         self._rule_categories: dict[str, RuleCategory] = {}
@@ -865,7 +872,9 @@ rule Delphi_Compiler {
             except Exception as e:
                 logger.error(f"Failed to load rule {rule_file}: {e}")
 
-    def scan_file(self, file_path: Path, categories: list[RuleCategory] | None = None) -> list[YaraMatch]:
+    def scan_file(
+        self, file_path: Path, categories: list[RuleCategory] | None = None
+    ) -> list[YaraMatch]:
         """Scan a file with YARA rules.
 
         Args:
@@ -880,7 +889,9 @@ rule Delphi_Compiler {
 
         # Determine which rules to use
         if categories:
-            rules_to_scan = {cat: self.compiled_rules[cat] for cat in categories if cat in self.compiled_rules}
+            rules_to_scan = {
+                cat: self.compiled_rules[cat] for cat in categories if cat in self.compiled_rules
+            }
         else:
             rules_to_scan = self.compiled_rules
 
@@ -926,7 +937,9 @@ rule Delphi_Compiler {
 
         return matches
 
-    def scan_memory(self, pid: int, categories: list[RuleCategory] | None = None) -> list[YaraMatch]:
+    def scan_memory(
+        self, pid: int, categories: list[RuleCategory] | None = None
+    ) -> list[YaraMatch]:
         """Scan process memory with YARA rules.
 
         Args:
@@ -941,7 +954,9 @@ rule Delphi_Compiler {
 
         # Determine which rules to use
         if categories:
-            rules_to_scan = {cat: self.compiled_rules[cat] for cat in categories if cat in self.compiled_rules}
+            rules_to_scan = {
+                cat: self.compiled_rules[cat] for cat in categories if cat in self.compiled_rules
+            }
         else:
             rules_to_scan = self.compiled_rules
 
@@ -977,7 +992,14 @@ rule Delphi_Compiler {
             Dictionary of detected protections
 
         """
-        protections = {"packers": [], "protectors": [], "crypto": [], "license": [], "anti_debug": [], "compiler": None}
+        protections = {
+            "packers": [],
+            "protectors": [],
+            "crypto": [],
+            "license": [],
+            "anti_debug": [],
+            "compiler": None,
+        }
 
         # Scan with protection-related categories
         matches = self.scan_file(
@@ -995,18 +1017,54 @@ rule Delphi_Compiler {
         # Organize matches by category
         for match in matches:
             if match.category == RuleCategory.PACKER:
-                protections["packers"].append({"name": match.rule_name, "confidence": match.confidence, "offset": match.offset})
+                protections["packers"].append(
+                    {
+                        "name": match.rule_name,
+                        "confidence": match.confidence,
+                        "offset": match.offset,
+                    }
+                )
             elif match.category == RuleCategory.PROTECTOR:
-                protections["protectors"].append({"name": match.rule_name, "confidence": match.confidence, "offset": match.offset})
+                protections["protectors"].append(
+                    {
+                        "name": match.rule_name,
+                        "confidence": match.confidence,
+                        "offset": match.offset,
+                    }
+                )
             elif match.category == RuleCategory.CRYPTO:
-                protections["crypto"].append({"algorithm": match.rule_name, "confidence": match.confidence, "offset": match.offset})
+                protections["crypto"].append(
+                    {
+                        "algorithm": match.rule_name,
+                        "confidence": match.confidence,
+                        "offset": match.offset,
+                    }
+                )
             elif match.category == RuleCategory.LICENSE:
-                protections["license"].append({"type": match.rule_name, "confidence": match.confidence, "offset": match.offset})
+                protections["license"].append(
+                    {
+                        "type": match.rule_name,
+                        "confidence": match.confidence,
+                        "offset": match.offset,
+                    }
+                )
             elif match.category == RuleCategory.ANTI_DEBUG:
-                protections["anti_debug"].append({"technique": match.rule_name, "confidence": match.confidence, "offset": match.offset})
+                protections["anti_debug"].append(
+                    {
+                        "technique": match.rule_name,
+                        "confidence": match.confidence,
+                        "offset": match.offset,
+                    }
+                )
             elif match.category == RuleCategory.COMPILER:
-                if protections["compiler"] is None or match.confidence > protections["compiler"]["confidence"]:
-                    protections["compiler"] = {"name": match.rule_name, "confidence": match.confidence}
+                if (
+                    protections["compiler"] is None
+                    or match.confidence > protections["compiler"]["confidence"]
+                ):
+                    protections["compiler"] = {
+                        "name": match.rule_name,
+                        "confidence": match.confidence,
+                    }
 
         # Also check with signature-based detection
         sig_detections = self._detect_by_signatures(file_path)
@@ -1052,14 +1110,22 @@ rule Delphi_Compiler {
                             confidence += 40
 
                     if detected:
-                        detections.append({"name": name, "category": signature.category, "confidence": min(confidence, 95)})
+                        detections.append(
+                            {
+                                "name": name,
+                                "category": signature.category,
+                                "confidence": min(confidence, 95),
+                            }
+                        )
 
         except Exception as e:
             logger.error(f"Failed to perform signature-based detection: {e}")
 
         return detections
 
-    def create_custom_rule(self, rule_name: str, rule_content: str, category: RuleCategory = RuleCategory.CUSTOM) -> bool:
+    def create_custom_rule(
+        self, rule_name: str, rule_content: str, category: RuleCategory = RuleCategory.CUSTOM
+    ) -> bool:
         """Create and compile a custom YARA rule.
 
         Args:
@@ -1099,7 +1165,9 @@ rule Delphi_Compiler {
 
         try:
             # Generate hash of current rules for caching
-            rules_hash = hashlib.sha256("".join(sorted(self.builtin_rules.values())).encode()).hexdigest()
+            rules_hash = hashlib.sha256(
+                "".join(sorted(self.builtin_rules.values())).encode()
+            ).hexdigest()
 
             # Check if rules haven't changed (use cached compilation)
             if hasattr(self, "_rules_hash") and self._rules_hash == rules_hash:
@@ -1132,7 +1200,9 @@ rule Delphi_Compiler {
             # Add performance hints
             if len(valid_rules) > 100:
                 # For large rule sets, compile with includes to reduce memory
-                self.compiled_rules = yara.compile(source=all_rules, includes=True, error_on_warning=False)
+                self.compiled_rules = yara.compile(
+                    source=all_rules, includes=True, error_on_warning=False
+                )
             else:
                 self.compiled_rules = yara.compile(source=all_rules)
 
@@ -1157,7 +1227,11 @@ rule Delphi_Compiler {
             return False
 
     def add_rule(
-        self, rule_name: str, rule_content: str, category: RuleCategory = RuleCategory.LICENSE, validate_syntax: bool = True,
+        self,
+        rule_name: str,
+        rule_content: str,
+        category: RuleCategory = RuleCategory.LICENSE,
+        validate_syntax: bool = True,
     ) -> bool:
         """Add a new YARA rule with validation and categorization."""
         import re
@@ -1190,7 +1264,8 @@ rule Delphi_Compiler {
                 for i, line in enumerate(lines):
                     if "{" in line:
                         lines.insert(
-                            i + 1, f'    meta:\n        category = "{category.value}"\n        added_date = "{os.environ.get("DATE", "")}"',
+                            i + 1,
+                            f'    meta:\n        category = "{category.value}"\n        added_date = "{os.environ.get("DATE", "")}"',
                         )
                         break
                 rule_content = "\n".join(lines)
@@ -1233,7 +1308,11 @@ rule Delphi_Compiler {
             return False
 
     def scan_process(
-        self, pid: int, categories: list[RuleCategory] | None = None, scan_dlls: bool = True, scan_heap: bool = True,
+        self,
+        pid: int,
+        categories: list[RuleCategory] | None = None,
+        scan_dlls: bool = True,
+        scan_heap: bool = True,
     ) -> list[YaraMatch]:
         """Scan a running process memory with advanced options."""
         import ctypes
@@ -1262,22 +1341,79 @@ rule Delphi_Compiler {
             PROCESS_QUERY_INFORMATION = 0x0400
 
             kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-            process_handle = kernel32.OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, False, pid)
+            if process_handle := kernel32.OpenProcess(
+                PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, False, pid
+            ):
+                # Enhanced scanning with handle
+                logger.info(f"Enhanced scanning of process {pid} with handle")
 
-            if not process_handle:
+                class MEMORY_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
+                    _fields_ = [
+                        ("BaseAddress", ctypes.c_void_p),
+                        ("AllocationBase", ctypes.c_void_p),
+                        ("AllocationProtect", wintypes.DWORD),
+                        ("RegionSize", ctypes.c_size_t),
+                        ("State", wintypes.DWORD),
+                        ("Protect", wintypes.DWORD),
+                        ("Type", wintypes.DWORD),
+                    ]
+
+                mbi = MEMORY_BASIC_INFORMATION()
+                address = 0
+                MEM_COMMIT = 0x1000
+                PAGE_EXECUTE_READWRITE = 0x40
+
+                while address < 0x7FFFFFFF0000:
+                    result = kernel32.VirtualQueryEx(
+                        process_handle,
+                        ctypes.c_void_p(address),
+                        ctypes.byref(mbi),
+                        ctypes.sizeof(mbi),
+                    )
+
+                    if not result:
+                        break
+
+                    # Scan committed memory with appropriate permissions
+                    if mbi.State == MEM_COMMIT and (
+                        scan_heap or mbi.Protect in [PAGE_EXECUTE_READWRITE]
+                    ):
+                        # Read memory region
+                        buffer = ctypes.create_string_buffer(mbi.RegionSize)
+                        bytes_read = ctypes.c_size_t()
+
+                        if kernel32.ReadProcessMemory(
+                            process_handle,
+                            mbi.BaseAddress,
+                            buffer,
+                            mbi.RegionSize,
+                            ctypes.byref(bytes_read),
+                        ):
+                            # Scan this memory region
+                            region_matches = self._scan_memory_region(
+                                buffer.raw[: bytes_read.value], mbi.BaseAddress, categories
+                            )
+                            matches.extend(region_matches)
+
+                    address = mbi.BaseAddress + mbi.RegionSize
+
+                kernel32.CloseHandle(process_handle)
+
+            else:
                 # Try using YARA's built-in process scanning
                 logger.info(f"Using YARA built-in scanning for process {pid}")
                 try:
                     # Filter rules by category
-                    if categories:
-                        filtered_rules = self._filter_rules_by_category(categories)
-                        if filtered_rules:
-                            compiled = yara.compile(source=filtered_rules)
-                        else:
-                            compiled = self.compiled_rules
-                    else:
-                        compiled = self.compiled_rules
-
+                    compiled = (
+                        yara.compile(source=filtered_rules)
+                        if categories
+                        and (
+                            filtered_rules := self._filter_rules_by_category(
+                                categories
+                            )
+                        )
+                        else self.compiled_rules
+                    )
                     # Scan process
                     yara_matches = compiled.match(pid=pid)
 
@@ -1297,48 +1433,6 @@ rule Delphi_Compiler {
 
                 except Exception as e:
                     logger.error(f"YARA process scan failed: {e}")
-            else:
-                # Enhanced scanning with handle
-                logger.info(f"Enhanced scanning of process {pid} with handle")
-
-                # Enumerate memory regions
-                class MEMORY_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
-                    _fields_ = [
-                        ("BaseAddress", ctypes.c_void_p),
-                        ("AllocationBase", ctypes.c_void_p),
-                        ("AllocationProtect", wintypes.DWORD),
-                        ("RegionSize", ctypes.c_size_t),
-                        ("State", wintypes.DWORD),
-                        ("Protect", wintypes.DWORD),
-                        ("Type", wintypes.DWORD),
-                    ]
-
-                mbi = MEMORY_BASIC_INFORMATION()
-                address = 0
-                MEM_COMMIT = 0x1000
-                PAGE_EXECUTE_READWRITE = 0x40
-
-                while address < 0x7FFFFFFF0000:
-                    result = kernel32.VirtualQueryEx(process_handle, ctypes.c_void_p(address), ctypes.byref(mbi), ctypes.sizeof(mbi))
-
-                    if not result:
-                        break
-
-                    # Scan committed memory with appropriate permissions
-                    if mbi.State == MEM_COMMIT and (scan_heap or mbi.Protect in [PAGE_EXECUTE_READWRITE]):
-                        # Read memory region
-                        buffer = ctypes.create_string_buffer(mbi.RegionSize)
-                        bytes_read = ctypes.c_size_t()
-
-                        if kernel32.ReadProcessMemory(process_handle, mbi.BaseAddress, buffer, mbi.RegionSize, ctypes.byref(bytes_read)):
-                            # Scan this memory region
-                            region_matches = self._scan_memory_region(buffer.raw[: bytes_read.value], mbi.BaseAddress, categories)
-                            matches.extend(region_matches)
-
-                    address = mbi.BaseAddress + mbi.RegionSize
-
-                kernel32.CloseHandle(process_handle)
-
             # Store matches
             with self._match_lock:
                 self._matches.extend(matches)
@@ -1351,7 +1445,12 @@ rule Delphi_Compiler {
             return matches
 
     def generate_rule(
-        self, name: str, strings: list[str], condition: str = "any of them", add_wildcards: bool = True, add_case_variations: bool = True,
+        self,
+        name: str,
+        strings: list[str],
+        condition: str = "any of them",
+        add_wildcards: bool = True,
+        add_case_variations: bool = True,
     ) -> str:
         """Generate sophisticated YARA rules for licensing protection detection."""
         import re
@@ -1468,37 +1567,38 @@ rule Delphi_Compiler {
             self._matches = []
             logger.debug("Cleared all stored matches")
 
-    def _scan_memory_region(self, data: bytes, base_address: int, categories: list[RuleCategory] | None) -> list[YaraMatch]:
+    def _scan_memory_region(
+        self, data: bytes, base_address: int, categories: list[RuleCategory] | None
+    ) -> list[YaraMatch]:
         """Scan a memory region with filtered rules."""
         matches = []
 
         try:
             # Filter rules by category if specified
-            if categories:
-                filtered_rules = self._filter_rules_by_category(categories)
-                if filtered_rules:
-                    compiled = yara.compile(source=filtered_rules)
-                else:
-                    compiled = self.compiled_rules
+            if categories and (
+                filtered_rules := self._filter_rules_by_category(categories)
+            ):
+                compiled = yara.compile(source=filtered_rules)
             else:
                 compiled = self.compiled_rules
-
             # Scan memory region
             yara_matches = compiled.match(data=data)
 
-            for match in yara_matches:
-                matches.append(
-                    YaraMatch(
-                        rule_name=match.rule,
-                        category=self._get_rule_category(match.rule),
-                        matched_data=f"Memory at 0x{base_address:X}",
-                        metadata={
-                            "base_address": base_address,
-                            "strings": [(s.offset + base_address, s.matched_data) for s in match.strings],
-                        },
-                    ),
+            matches.extend(
+                YaraMatch(
+                    rule_name=match.rule,
+                    category=self._get_rule_category(match.rule),
+                    matched_data=f"Memory at 0x{base_address:X}",
+                    metadata={
+                        "base_address": base_address,
+                        "strings": [
+                            (s.offset + base_address, s.matched_data)
+                            for s in match.strings
+                        ],
+                    },
                 )
-
+                for match in yara_matches
+            )
         except Exception as e:
             logger.error(f"Memory region scan error: {e}")
 
@@ -1508,9 +1608,8 @@ rule Delphi_Compiler {
         """Filter rules by category."""
         filtered = []
         for name, content in self.builtin_rules.items():
-            if name in self._rule_categories:
-                if self._rule_categories[name] in categories:
-                    filtered.append(content)
+            if name in self._rule_categories and self._rule_categories[name] in categories:
+                filtered.append(content)
 
         return "\n\n".join(filtered)
 
@@ -1609,7 +1708,11 @@ rule Delphi_Compiler {
 
             # Prepare YARA rules
             if categories:
-                rules_to_scan = {cat: self.compiled_rules[cat] for cat in categories if cat in self.compiled_rules}
+                rules_to_scan = {
+                    cat: self.compiled_rules[cat]
+                    for cat in categories
+                    if cat in self.compiled_rules
+                }
             else:
                 rules_to_scan = self.compiled_rules
 
@@ -1617,7 +1720,9 @@ rule Delphi_Compiler {
             for region in filtered_regions:
                 try:
                     # Read memory region using LicenseAnalyzer
-                    memory_data = license_analyzer.read_process_memory(region["base_address"], region["size"])
+                    memory_data = license_analyzer.read_process_memory(
+                        region["base_address"], region["size"]
+                    )
                     if not memory_data:
                         continue
 
@@ -1629,7 +1734,11 @@ rule Delphi_Compiler {
                             matches.extend(cached_matches)
                             scanned_regions += 1
                             if progress_callback:
-                                progress_callback(scanned_regions, total_regions, f"Scanning region 0x{region['base_address']:X} (cached)")
+                                progress_callback(
+                                    scanned_regions,
+                                    total_regions,
+                                    f"Scanning region 0x{region['base_address']:X} (cached)",
+                                )
                             continue
 
                     # Scan with each rule set
@@ -1642,7 +1751,9 @@ rule Delphi_Compiler {
                                 yara_match = YaraMatch(
                                     rule_name=match.rule,
                                     category=category,
-                                    offset=region["base_address"] + match.strings[0][0] if match.strings else region["base_address"],
+                                    offset=region["base_address"] + match.strings[0][0]
+                                    if match.strings
+                                    else region["base_address"],
                                     matched_strings=[(s[0], s[1], s[2]) for s in match.strings],
                                     tags=match.tags,
                                     meta=match.meta,
@@ -1663,7 +1774,11 @@ rule Delphi_Compiler {
 
                     scanned_regions += 1
                     if progress_callback:
-                        progress_callback(scanned_regions, total_regions, f"Scanned region 0x{region['base_address']:X}")
+                        progress_callback(
+                            scanned_regions,
+                            total_regions,
+                            f"Scanned region 0x{region['base_address']:X}",
+                        )
 
                 except Exception as e:
                     logger.error(f"Failed to scan region at 0x{region['base_address']:X}: {e}")
@@ -1673,7 +1788,9 @@ rule Delphi_Compiler {
             for rule_name, rules in self.custom_rules.items():
                 for region in filtered_regions:
                     try:
-                        memory_data = license_analyzer.read_process_memory(region["base_address"], region["size"])
+                        memory_data = license_analyzer.read_process_memory(
+                            region["base_address"], region["size"]
+                        )
                         if not memory_data:
                             continue
 
@@ -1683,7 +1800,9 @@ rule Delphi_Compiler {
                             yara_match = YaraMatch(
                                 rule_name=match.rule,
                                 category=RuleCategory.CUSTOM,
-                                offset=region["base_address"] + match.strings[0][0] if match.strings else region["base_address"],
+                                offset=region["base_address"] + match.strings[0][0]
+                                if match.strings
+                                else region["base_address"],
                                 matched_strings=[(s[0], s[1], s[2]) for s in match.strings],
                                 tags=match.tags,
                                 meta=match.meta,
@@ -1695,7 +1814,9 @@ rule Delphi_Compiler {
                         logger.error(f"Failed to scan with custom rule {rule_name}: {e}")
 
             if progress_callback:
-                progress_callback(total_regions, total_regions, f"Scan complete - found {len(matches)} matches")
+                progress_callback(
+                    total_regions, total_regions, f"Scan complete - found {len(matches)} matches"
+                )
 
             logger.info(f"YARA scan complete: {len(matches)} matches in {scanned_regions} regions")
             return matches
@@ -1727,9 +1848,8 @@ rule Delphi_Compiler {
         """Check if memory region belongs to heap."""
         try:
             # Check for typical heap characteristics
-            if region.get("protect") in [0x04, 0x08]:  # PAGE_READWRITE or PAGE_WRITECOPY
-                if region.get("type") == 0x20000:  # MEM_PRIVATE
-                    return True
+            if region.get("protect") in [0x04, 0x08] and region.get("type") == 0x20000:
+                return True
 
         except Exception as e:
             logger.debug(f"Heap region analysis failed: {e}")
@@ -1746,7 +1866,11 @@ rule Delphi_Compiler {
         return f"{data_hash}_{cat_str}"
 
     def scan_memory_concurrent(
-        self, pid: int, categories: list[RuleCategory] | None = None, max_workers: int = 4, chunk_size: int = 1024 * 1024,
+        self,
+        pid: int,
+        categories: list[RuleCategory] | None = None,
+        max_workers: int = 4,
+        chunk_size: int = 1024 * 1024,
     ) -> list[YaraMatch]:
         """Perform concurrent YARA scanning of process memory.
 
@@ -1789,7 +1913,11 @@ rule Delphi_Compiler {
 
                     # Scan with rules
                     if categories:
-                        rules_to_scan = {cat: self.compiled_rules[cat] for cat in categories if cat in self.compiled_rules}
+                        rules_to_scan = {
+                            cat: self.compiled_rules[cat]
+                            for cat in categories
+                            if cat in self.compiled_rules
+                        }
                     else:
                         rules_to_scan = self.compiled_rules
 
@@ -1800,7 +1928,9 @@ rule Delphi_Compiler {
                             yara_match = YaraMatch(
                                 rule_name=match.rule,
                                 category=category,
-                                offset=base_addr + match.strings[0][0] if match.strings else base_addr,
+                                offset=base_addr + match.strings[0][0]
+                                if match.strings
+                                else base_addr,
                                 matched_strings=[(s[0], s[1], s[2]) for s in match.strings],
                                 tags=match.tags,
                                 meta=match.meta,
@@ -1817,7 +1947,9 @@ rule Delphi_Compiler {
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 # Submit scanning tasks
                 future_to_region = {
-                    executor.submit(scan_region_chunk, region): region for region in memory_regions if region["state"] == 0x1000
+                    executor.submit(scan_region_chunk, region): region
+                    for region in memory_regions
+                    if region["state"] == 0x1000
                 }
 
                 # Collect results
@@ -1827,7 +1959,9 @@ rule Delphi_Compiler {
                         region_matches = future.result(timeout=30)
                         matches.extend(region_matches)
                     except Exception as e:
-                        logger.error(f"Scanning failed for region 0x{region['base_address']:X}: {e}")
+                        logger.error(
+                            f"Scanning failed for region 0x{region['base_address']:X}: {e}"
+                        )
 
             analyzer.detach_from_process()
             logger.info(f"Concurrent scan found {len(matches)} matches")
@@ -1967,10 +2101,11 @@ rule Delphi_Compiler {
                 # Recompile rules with optimization flags
                 optimized_rules = {}
                 for category, _ in self.compiled_rules.items():
-                    rule_source = self._get_rule_source(category)
-                    if rule_source:
+                    if rule_source := self._get_rule_source(category):
                         # Compile with fast matching
-                        optimized_rules[category] = yara.compile(source=rule_source, fast_matching=True)
+                        optimized_rules[category] = yara.compile(
+                            source=rule_source, fast_matching=True
+                        )
 
                 self.compiled_rules = optimized_rules
                 logger.info("Rules optimized for large memory scanning")
@@ -1993,12 +2128,14 @@ rule Delphi_Compiler {
             RuleCategory.COMPILER: self._create_compiler_rules,
         }
 
-        if category in source_methods:
-            return source_methods[category]()
-        return None
+        return source_methods[category]() if category in source_methods else None
 
     def convert_pattern_to_yara(
-        self, pattern: bytes, name: str = "auto_pattern", add_wildcards: bool = True, context_bytes: int = 16,
+        self,
+        pattern: bytes,
+        name: str = "auto_pattern",
+        add_wildcards: bool = True,
+        context_bytes: int = 16,
     ) -> str:
         """Convert binary pattern to YARA rule.
 
@@ -2121,12 +2258,10 @@ rule Delphi_Compiler {
                 if keyword.lower() in s.lower():
                     return True
             # Check for high entropy (encrypted/packed)
-            if len(set(s)) / len(s) > 0.7:
-                return True
-            return len(s) >= min_length * 2  # Longer strings are more interesting
+            return True if len(set(s)) / len(s) > 0.7 else len(s) >= min_length * 2
 
         # Extract ASCII strings
-        if encoding in ["auto", "ascii"]:
+        if encoding in {"auto", "ascii"}:
             ascii_pattern = rb"[\x20-\x7E]{%d,}" % min_length
             for match in re.finditer(ascii_pattern, data):
                 s = match.group().decode("ascii", errors="ignore")
@@ -2134,7 +2269,7 @@ rule Delphi_Compiler {
                     extracted.add(s)
 
         # Extract UTF-16LE strings (common in Windows)
-        if encoding in ["auto", "utf16le"]:
+        if encoding in {"auto", "utf16le"}:
             utf16_pattern = rb"(?:[\x20-\x7E]\x00){%d,}" % min_length
             for match in re.finditer(utf16_pattern, data):
                 try:
@@ -2145,7 +2280,7 @@ rule Delphi_Compiler {
                     pass
 
         # Extract UTF-16BE strings
-        if encoding in ["auto", "utf16be"]:
+        if encoding in {"auto", "utf16be"}:
             utf16be_pattern = rb"(?:\x00[\x20-\x7E]){%d,}" % min_length
             for match in re.finditer(utf16be_pattern, data):
                 try:
@@ -2178,7 +2313,9 @@ rule Delphi_Compiler {
 
         return sorted(extracted)
 
-    def generate_hex_patterns(self, data: bytes, pattern_size: int = 16, step: int = 1, unique_only: bool = True) -> list[str]:
+    def generate_hex_patterns(
+        self, data: bytes, pattern_size: int = 16, step: int = 1, unique_only: bool = True
+    ) -> list[str]:
         """Generate hex patterns from binary data.
 
         Args:
@@ -2256,18 +2393,18 @@ rule Delphi_Compiler {
             conditions.append(f"{min_matches} of them")
 
         # Special conditions for specific types
-        if rule_type == "license":
+        if rule_type == "crypto":
+            # For crypto, require multiple matches
+            if num_strings > 2:
+                conditions.append(f"({min(3, num_strings)} of them)")
+
+        elif rule_type == "license":
             # For license rules, also check for specific sections
             conditions.append("(any of them)")
 
         elif rule_type == "packer":
             # For packers, check entry point
             conditions.append("($pattern at entrypoint or any of them)")
-
-        elif rule_type == "crypto":
-            # For crypto, require multiple matches
-            if num_strings > 2:
-                conditions.append(f"({min(3, num_strings)} of them)")
 
         # Combine conditions
         if len(conditions) == 1:
@@ -2331,24 +2468,33 @@ rule Delphi_Compiler {
             if hasattr(pe, "DIRECTORY_ENTRY_DEBUG"):
                 for debug in pe.DIRECTORY_ENTRY_DEBUG:
                     if hasattr(debug.entry, "PdbFileName"):
-                        metadata["pdb_path"] = debug.entry.PdbFileName.decode("utf-8", errors="ignore")
+                        metadata["pdb_path"] = debug.entry.PdbFileName.decode(
+                            "utf-8", errors="ignore"
+                        )
                         break
 
             # Get version info
-            if hasattr(pe, "VS_VERSIONINFO"):
-                if hasattr(pe, "FileInfo"):
-                    for file_info in pe.FileInfo:
-                        if hasattr(file_info, "StringTable"):
-                            for st in file_info.StringTable:
-                                for k, v in st.entries.items():
-                                    if k == b"OriginalFilename":
-                                        metadata["original_filename"] = v.decode("utf-8", errors="ignore")
-                                    elif k == b"CompanyName":
-                                        metadata["company_name"] = v.decode("utf-8", errors="ignore")
-                                    elif k == b"ProductName":
-                                        metadata["product_name"] = v.decode("utf-8", errors="ignore")
-                                    elif k == b"FileVersion":
-                                        metadata["file_version"] = v.decode("utf-8", errors="ignore")
+            if hasattr(pe, "VS_VERSIONINFO") and hasattr(pe, "FileInfo"):
+                for file_info in pe.FileInfo:
+                    if hasattr(file_info, "StringTable"):
+                        for st in file_info.StringTable:
+                            for k, v in st.entries.items():
+                                if k == b"OriginalFilename":
+                                    metadata["original_filename"] = v.decode(
+                                        "utf-8", errors="ignore"
+                                    )
+                                elif k == b"CompanyName":
+                                    metadata["company_name"] = v.decode(
+                                        "utf-8", errors="ignore"
+                                    )
+                                elif k == b"ProductName":
+                                    metadata["product_name"] = v.decode(
+                                        "utf-8", errors="ignore"
+                                    )
+                                elif k == b"FileVersion":
+                                    metadata["file_version"] = v.decode(
+                                        "utf-8", errors="ignore"
+                                    )
 
             # Get sections
             for section in pe.sections:
@@ -2380,7 +2526,9 @@ rule Delphi_Compiler {
 
         return metadata
 
-    def optimize_rule(self, rule_content: str, remove_redundant: bool = True, simplify_conditions: bool = True) -> str:
+    def optimize_rule(
+        self, rule_content: str, remove_redundant: bool = True, simplify_conditions: bool = True
+    ) -> str:
         """Optimize YARA rule for better performance.
 
         Args:
@@ -2404,9 +2552,7 @@ rule Delphi_Compiler {
 
             for line in lines:
                 if "$" in line and "=" in line:
-                    # Extract string definition
-                    match = re.match(r"\s*(\$\w+)\s*=\s*(.+)", line)
-                    if match:
+                    if match := re.match(r"\s*(\$\w+)\s*=\s*(.+)", line):
                         match.group(1)
                         value = match.group(2).strip()
                         if value not in seen_strings:
@@ -2477,15 +2623,15 @@ rule Delphi_Compiler {
         metadata = self.extract_metadata(file_path) if advanced_analysis else {}
 
         # Extract strings
-        strings = self.extract_strings_automatic(data, min_length=6, extract_urls=True, extract_paths=True)
+        strings = self.extract_strings_automatic(
+            data, min_length=6, extract_urls=True, extract_paths=True
+        )
 
         # Generate hex patterns from interesting sections
         hex_patterns = []
-        if advanced_analysis:
-            # Look for entry point patterns
-            if len(data) > 1024:
-                entry_patterns = self.generate_hex_patterns(data[:512], pattern_size=16, step=16)
-                hex_patterns.extend(entry_patterns[:3])  # Take first 3 patterns
+        if advanced_analysis and len(data) > 1024:
+            entry_patterns = self.generate_hex_patterns(data[:512], pattern_size=16, step=16)
+            hex_patterns.extend(entry_patterns[:3])  # Take first 3 patterns
 
         # Build rule
         rule = f"""rule {safe_name} {{
@@ -2703,7 +2849,9 @@ rule Delphi_Compiler {
 
         logger.info("Patch database initialized with %d rule patterns", len(self.patch_database))
 
-    def get_patch_suggestions(self, matches: list[YaraMatch], min_confidence: float = 0.70) -> list[dict[str, Any]]:
+    def get_patch_suggestions(
+        self, matches: list[YaraMatch], min_confidence: float = 0.70
+    ) -> list[dict[str, Any]]:
         """Get patch suggestions based on YARA matches.
 
         Args:
@@ -2786,7 +2934,9 @@ rule Delphi_Compiler {
         elif patch["patch_type"] == "api_hook":
             patch_data["api_name"] = patch["target_api"]
             patch_data["return_value"] = patch.get("return_value", 0)
-            patch_data["hook_code"] = self._generate_hook_code(patch["target_api"], patch.get("return_value", 0))
+            patch_data["hook_code"] = self._generate_hook_code(
+                patch["target_api"], patch.get("return_value", 0)
+            )
 
         elif patch["patch_type"] == "dll_hijack":
             patch_data["target_dll"] = patch["target_dll"]
@@ -2859,15 +3009,13 @@ extern "C" {{
         """
         high_risk_types = ["dll_hijack", "process_patch", "section_decrypt"]
         medium_risk_types = ["api_hook", "iat_hook", "function_bypass"]
-        low_risk_types = ["string_replace", "nop_sequence", "conditional_jump"]
-
         if patch["patch_type"] in high_risk_types:
             return "high"
         if patch["patch_type"] in medium_risk_types:
             return "medium"
-        if patch["patch_type"] in low_risk_types:
-            return "low"
-        return "unknown"
+        low_risk_types = ["string_replace", "nop_sequence", "conditional_jump"]
+
+        return "low" if patch["patch_type"] in low_risk_types else "unknown"
 
     def _assess_patch_complexity(self, patch: dict[str, Any]) -> str:
         """Assess complexity of applying a patch.
@@ -2881,17 +3029,17 @@ extern "C" {{
         """
         simple_types = ["string_replace", "nop_sequence", "conditional_jump"]
         moderate_types = ["api_hook", "instruction_patch"]
-        complex_types = ["dll_hijack", "iat_hook", "section_decrypt", "process_patch"]
-
         if patch["patch_type"] in simple_types:
             return "simple"
         if patch["patch_type"] in moderate_types:
             return "moderate"
-        if patch["patch_type"] in complex_types:
-            return "complex"
-        return "unknown"
+        complex_types = ["dll_hijack", "iat_hook", "section_decrypt", "process_patch"]
 
-    def recommend_patch_sequence(self, suggestions: list[dict[str, Any]], target_success_rate: float = 0.80) -> list[dict[str, Any]]:
+        return "complex" if patch["patch_type"] in complex_types else "unknown"
+
+    def recommend_patch_sequence(
+        self, suggestions: list[dict[str, Any]], target_success_rate: float = 0.80
+    ) -> list[dict[str, Any]]:
         """Recommend optimal patch sequence based on confidence and dependencies.
 
         Args:
@@ -2937,7 +3085,9 @@ extern "C" {{
             # Add patches from this category
             if category in categorized:
                 # Sort by confidence within category
-                category_patches = sorted(categorized[category], key=lambda x: x["confidence"], reverse=True)
+                category_patches = sorted(
+                    categorized[category], key=lambda x: x["confidence"], reverse=True
+                )
 
                 # Add until we reach target success rate
                 cumulative_confidence = 1.0
@@ -2971,21 +3121,21 @@ extern "C" {{
                 current_bytes = f.read(len(patch_data.get("original", b"")))
 
             # Check if current bytes match expected
-            if "original" in patch_data:
-                if current_bytes != patch_data["original"]:
-                    return False, "Original bytes don't match"
+            if "original" in patch_data and current_bytes != patch_data["original"]:
+                return False, "Original bytes don't match"
 
             # Check if patch size is valid
-            if "replacement" in patch_data:
-                if len(patch_data["replacement"]) > len(patch_data["original"]):
-                    return False, "Replacement larger than original"
+            if "replacement" in patch_data and len(patch_data["replacement"]) > len(patch_data["original"]):
+                return False, "Replacement larger than original"
 
             return True, ""
 
         except Exception as e:
             return False, str(e)
 
-    def apply_patch(self, patch_data: dict[str, Any], target_file: Path, backup: bool = True) -> bool:
+    def apply_patch(
+        self, patch_data: dict[str, Any], target_file: Path, backup: bool = True
+    ) -> bool:
         """Apply a patch to target file.
 
         Args:
@@ -3002,7 +3152,7 @@ extern "C" {{
         try:
             # Create backup if requested
             if backup:
-                backup_path = target_file.with_suffix(target_file.suffix + ".bak")
+                backup_path = target_file.with_suffix(f"{target_file.suffix}.bak")
                 shutil.copy2(target_file, backup_path)
                 logger.info(f"Created backup: {backup_path}")
 
@@ -3018,7 +3168,9 @@ extern "C" {{
                     f.write(patch_data["nop_bytes"])
 
             else:
-                logger.warning(f"Patch type {patch_data['type']} requires additional implementation")
+                logger.warning(
+                    f"Patch type {patch_data['type']} requires additional implementation"
+                )
                 return False
 
             self.patch_statistics["successful_patches"] += 1
@@ -3042,7 +3194,7 @@ extern "C" {{
         """
         import shutil
 
-        backup_path = target_file.with_suffix(target_file.suffix + ".bak")
+        backup_path = target_file.with_suffix(f"{target_file.suffix}.bak")
 
         if not backup_path.exists():
             logger.error("No backup file found")
@@ -3070,7 +3222,9 @@ extern "C" {{
 
         import time
 
-        self._patch_history.append({"patch_id": patch_id, "timestamp": time.time(), "success": success, "notes": notes})
+        self._patch_history.append(
+            {"patch_id": patch_id, "timestamp": time.time(), "success": success, "notes": notes}
+        )
 
         # Update statistics
         if success:
@@ -3089,7 +3243,8 @@ extern "C" {{
             return {"success_rate": 0, "total_patches": 0}
 
         total = len(self._patch_history)
-        successful = sum(1 for p in self._patch_history if p["success"])
+        successful = sum(bool(p["success"])
+                     for p in self._patch_history)
 
         return {
             "success_rate": successful / total if total > 0 else 0,
@@ -3111,7 +3266,10 @@ extern "C" {{
         logger.info("Connected to debugger for breakpoint integration")
 
     def set_breakpoints_from_matches(
-        self, matches: list[YaraMatch], auto_enable: bool = True, conditional: bool = False,
+        self,
+        matches: list[YaraMatch],
+        auto_enable: bool = True,
+        conditional: bool = False,
     ) -> list[dict[str, Any]]:
         """Set breakpoints at YARA match locations.
 
@@ -3158,7 +3316,9 @@ extern "C" {{
             try:
                 if bp_type == "hardware":
                     # Use hardware breakpoint for critical matches
-                    bp_id = self.debugger.set_hardware_breakpoint(match.offset, condition=condition if condition else "exec", size=1)
+                    bp_id = self.debugger.set_hardware_breakpoint(
+                        match.offset, condition=condition or "exec", size=1
+                    )
                 else:
                     # Use software breakpoint
                     bp_id = self.debugger.set_breakpoint(match.offset)
@@ -3199,11 +3359,7 @@ extern "C" {{
 
         # Use memory breakpoints for data access
         memory_rules = ["Hardware_ID_Check", "License_File_Patterns"]
-        if match.rule_name in memory_rules:
-            return "memory"
-
-        # Default to software breakpoints
-        return "software"
+        return "memory" if match.rule_name in memory_rules else "software"
 
     def _generate_breakpoint_condition(self, match: YaraMatch) -> str:
         """Generate conditional breakpoint expression.
@@ -3260,28 +3416,30 @@ extern "C" {{
             List of actions
 
         """
-        actions = []
-
-        # Log the hit
-        actions.append({"type": "log", "message": f"Hit {match.rule_name} at {{EIP}}"})
+        actions = [{"type": "log", "message": f"Hit {match.rule_name} at {{EIP}}"}]
 
         # Category-specific actions
         if match.category == RuleCategory.LICENSE:
-            # Dump license-related data
-            actions.append({"type": "dump_registers", "registers": ["EAX", "EBX", "ECX", "EDX"]})
-
-            actions.append({"type": "dump_stack", "size": 32})
-
+            actions.extend(
+                (
+                    {
+                        "type": "dump_registers",
+                        "registers": ["EAX", "EBX", "ECX", "EDX"],
+                    },
+                    {"type": "dump_stack", "size": 32},
+                )
+            )
             if "serial" in match.rule_name.lower():
                 # Capture serial number from memory
                 actions.append({"type": "dump_memory", "address": "ECX", "size": 32})
 
         elif match.category == RuleCategory.ANTI_DEBUG:
-            # Bypass anti-debug
-            actions.append({"type": "modify_register", "register": "EAX", "value": 0})
-
-            actions.append({"type": "skip_instruction"})
-
+            actions.extend(
+                (
+                    {"type": "modify_register", "register": "EAX", "value": 0},
+                    {"type": "skip_instruction"},
+                )
+            )
         elif match.category == RuleCategory.CRYPTO:
             # Capture crypto keys
             actions.append({"type": "dump_memory", "address": "ESI", "size": 256})
@@ -3304,7 +3462,10 @@ extern "C" {{
             try:
                 # Set trace point
                 self.debugger.trace_thread_execution(
-                    start_address=match.offset, num_instructions=trace_depth, log_registers=True, log_memory_access=True,
+                    start_address=match.offset,
+                    num_instructions=trace_depth,
+                    log_registers=True,
+                    log_memory_access=True,
                 )
 
                 logger.info(f"Enabled tracing at 0x{match.offset:X} for {match.rule_name}")
@@ -3348,7 +3509,9 @@ extern "C" {{
         # Also write to debug log
         logger.debug(f"Match execution: {json.dumps(log_entry, indent=2)}")
 
-    def set_match_triggered_action(self, rule_name: str, action_callback: Callable[[YaraMatch, dict[str, Any]], object]) -> None:
+    def set_match_triggered_action(
+        self, rule_name: str, action_callback: Callable[[YaraMatch, dict[str, Any]], object]
+    ) -> None:
         """Set a callback to execute when specific rule matches are hit.
 
         Args:
@@ -3388,7 +3551,9 @@ extern "C" {{
 
         return None
 
-    def correlate_matches(self, matches: list[YaraMatch], time_window: float = 1.0) -> list[dict[str, Any]]:
+    def correlate_matches(
+        self, matches: list[YaraMatch], time_window: float = 1.0
+    ) -> list[dict[str, Any]]:
         """Correlate YARA matches to identify related detections.
 
         Args:
@@ -3413,9 +3578,7 @@ extern "C" {{
                 if j in processed:
                     continue
 
-                # Check for correlation
-                correlation = self._check_match_correlation(match1, match2)
-                if correlation:
+                if correlation := self._check_match_correlation(match1, match2):
                     group["related"].append(match2)
                     group["correlation_type"] = correlation
                     processed.add(j)
@@ -3475,19 +3638,26 @@ extern "C" {{
             Pattern analysis results
 
         """
-        patterns = {"licensing_scheme": None, "protection_layers": 0, "complexity": "low"}
-
         # Count protection layers
-        protection_categories = {RuleCategory.PACKER, RuleCategory.PROTECTOR, RuleCategory.ANTI_DEBUG}
-        protection_count = sum(
-            1
-            for group in correlations
-            if group["primary"].category in protection_categories or any(m.category in protection_categories for m in group["related"])
-        )
-        patterns["protection_layers"] = protection_count
-
+        protection_categories = {
+            RuleCategory.PACKER,
+            RuleCategory.PROTECTOR,
+            RuleCategory.ANTI_DEBUG,
+        }
+        protection_count = sum(bool(group["primary"].category in protection_categories
+                                       or any(m.category in protection_categories for m in group["related"]))
+                           for group in correlations)
+        patterns = {
+            "licensing_scheme": None,
+            "complexity": "low",
+            "protection_layers": protection_count,
+        }
         # Identify licensing scheme
-        license_indicators = {"flexlm": ["FlexLM", "lc_checkout"], "hasp": ["HASP", "hasp_login"], "custom": ["Serial_Number", "Trial_"]}
+        license_indicators = {
+            "flexlm": ["FlexLM", "lc_checkout"],
+            "hasp": ["HASP", "hasp_login"],
+            "custom": ["Serial_Number", "Trial_"],
+        }
 
         for scheme, indicators in license_indicators.items():
             for group in correlations:
@@ -3518,8 +3688,7 @@ extern "C" {{
         script = []
 
         if script_type == "gdb":
-            script.append("# GDB Breakpoint Script")
-            script.append("# Generated from YARA matches")
+            script.extend(("# GDB Breakpoint Script", "# Generated from YARA matches"))
             script.append("")
 
             for match in matches:
@@ -3527,9 +3696,7 @@ extern "C" {{
                 script.append(f"# Rule: {match.rule_name}")
                 script.append(f"break *0x{match.offset:X}")
 
-                # Add commands
-                condition = self._generate_breakpoint_condition(match)
-                if condition:
+                if condition := self._generate_breakpoint_condition(match):
                     script.append(f"condition $bpnum {condition}")
 
                 script.append("commands")
@@ -3549,9 +3716,7 @@ extern "C" {{
                 script.append(f"$$ Rule: {match.rule_name}")
                 script.append(f"bp 0x{match.offset:X}")
 
-                # Add conditional breakpoint
-                condition = self._generate_breakpoint_condition(match)
-                if condition:
+                if condition := self._generate_breakpoint_condition(match):
                     # Convert to WinDbg syntax
                     condition = condition.replace("EAX", "@eax").replace("&&", "and")
                     script.append(f'bp 0x{match.offset:X} "{condition}"')
@@ -3571,7 +3736,9 @@ extern "C" {{
 
         return "\n".join(script)
 
-    def export_breakpoint_config(self, breakpoints: list[dict[str, Any]], output_path: Path) -> None:
+    def export_breakpoint_config(
+        self, breakpoints: list[dict[str, Any]], output_path: Path
+    ) -> None:
         """Export breakpoint configuration to file.
 
         Args:
@@ -3585,7 +3752,11 @@ extern "C" {{
             "version": "1.0",
             "timestamp": output_path.parent.stat().st_mtime if output_path.parent.exists() else 0,
             "breakpoints": breakpoints,
-            "statistics": {"total": len(breakpoints), "hardware": sum(1 for bp in breakpoints if bp["type"] == "hardware")},
+            "statistics": {
+                "total": len(breakpoints),
+                "hardware": sum(bool(bp["type"] == "hardware")
+                            for bp in breakpoints),
+            },
         }
 
         with open(output_path, "w") as f:

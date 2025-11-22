@@ -25,9 +25,11 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     import torch
     from torch import nn
+
     TorchDtype = torch.dtype
     TorchModel = torch.nn.Module
     TorchDevice = torch.device
@@ -39,6 +41,7 @@ else:
     TorchTensor = object
 
 from ..utils.logger import get_logger
+
 
 logger = get_logger(__name__)
 
@@ -52,13 +55,7 @@ try:
 
     # Import unified GPU system
     try:
-        from ..utils.gpu_autoloader import (
-            get_device,
-            get_gpu_info,
-            gpu_autoloader,
-            optimize_for_gpu,
-            to_device,
-        )
+        from ..utils.gpu_autoloader import get_device, get_gpu_info, gpu_autoloader, optimize_for_gpu, to_device
 
         GPU_AUTOLOADER_AVAILABLE = True
     except ImportError:
@@ -71,13 +68,7 @@ except ImportError:
 
 # Try importing accelerate for advanced model parallelism
 try:
-    from accelerate import (
-        Accelerator,
-        dispatch_model,
-        infer_auto_device_map,
-        init_empty_weights,
-        load_checkpoint_and_dispatch,
-    )
+    from accelerate import Accelerator, dispatch_model, infer_auto_device_map, init_empty_weights, load_checkpoint_and_dispatch
 
     HAS_ACCELERATE = True
 except ImportError as e:
@@ -91,11 +82,7 @@ except ImportError as e:
 
 # Try importing transformers for model loading
 try:
-    from transformers import (
-        AutoConfig,
-        AutoModel,
-        AutoModelForCausalLM,
-    )
+    from transformers import AutoConfig, AutoModel, AutoModelForCausalLM
 
     HAS_TRANSFORMERS = True
 except ImportError as e:
@@ -117,7 +104,9 @@ class ModelShardingManager:
 
         if self.device_count > 0 and HAS_TORCH:
             self._initialize_device_properties()
-            logger.info(f"Initialized sharding manager with {self.device_count} {self.gpu_type} devices")
+            logger.info(
+                f"Initialized sharding manager with {self.device_count} {self.gpu_type} devices"
+            )
         else:
             logger.info("No GPUs detected, sharding disabled")
 
@@ -125,11 +114,15 @@ class ModelShardingManager:
         """Initialize GPU device information."""
         if GPU_AUTOLOADER_AVAILABLE:
             gpu_info = get_gpu_info()
-            self.device_count = gpu_info["info"].get("device_count", 0) if gpu_info["available"] else 0
+            self.device_count = (
+                gpu_info["info"].get("device_count", 0) if gpu_info["available"] else 0
+            )
             self.gpu_type = gpu_info["type"]
             self.unified_device = get_device()
         else:
-            self.device_count = torch.cuda.device_count() if HAS_TORCH and torch.cuda.is_available() else 0
+            self.device_count = (
+                torch.cuda.device_count() if HAS_TORCH and torch.cuda.is_available() else 0
+            )
             self.gpu_type = "cuda" if self.device_count > 0 else "cpu"
             self.unified_device = None
 
@@ -155,7 +148,9 @@ class ModelShardingManager:
     def _initialize_intel_xpu_device_properties(self, device_id: int) -> None:
         """Initialize Intel XPU device properties."""
         self.device_properties[device_id] = {
-            "name": torch.xpu.get_device_name(device_id) if hasattr(torch.xpu, "get_device_name") else f"Intel XPU {device_id}",
+            "name": torch.xpu.get_device_name(device_id)
+            if hasattr(torch.xpu, "get_device_name")
+            else f"Intel XPU {device_id}",
             "total_memory": 0,
             "device_type": "xpu",
         }
@@ -195,7 +190,9 @@ class ModelShardingManager:
         torch.cuda.set_device(device_id)
         info["devices"][device_id]["allocated_memory"] = torch.cuda.memory_allocated(device_id)
         info["devices"][device_id]["reserved_memory"] = torch.cuda.memory_reserved(device_id)
-        info["devices"][device_id]["free_memory"] = info["devices"][device_id]["total_memory"] - torch.cuda.memory_allocated(device_id)
+        info["devices"][device_id]["free_memory"] = info["devices"][device_id][
+            "total_memory"
+        ] - torch.cuda.memory_allocated(device_id)
 
     def _add_intel_xpu_memory_info(self, info: dict[str, object], device_id: int) -> None:
         """Add Intel XPU memory information to device info."""
@@ -211,14 +208,11 @@ class ModelShardingManager:
         if GPU_AUTOLOADER_AVAILABLE and self.unified_device:
             # Extract device index from unified device
             device_str = str(self.unified_device)
-            if ":" in device_str:
-                return int(device_str.split(":")[1])
-            return 0
+            return int(device_str.split(":")[1]) if ":" in device_str else 0
         if self.gpu_type == "nvidia_cuda" and torch.cuda.is_available():
             return torch.cuda.current_device()
-        if self.gpu_type == "intel_xpu" and hasattr(torch, "xpu"):
-            if hasattr(torch.xpu, "current_device"):
-                return torch.xpu.current_device()
+        if self.gpu_type == "intel_xpu" and hasattr(torch, "xpu") and hasattr(torch.xpu, "current_device"):
+            return torch.xpu.current_device()
         return 0
 
     def create_device_map(
@@ -346,7 +340,9 @@ class ModelShardingManager:
 
         model = self._apply_pre_sharding_optimizations(model)
 
-        return self._dispatch_model_across_devices(model, device_map, max_memory, offload_folder, offload_state_dict)
+        return self._dispatch_model_across_devices(
+            model, device_map, max_memory, offload_folder, offload_state_dict
+        )
 
     def _shard_model_without_accelerate(self, model: TorchModel) -> TorchModel:
         """Shard model without accelerate library."""
@@ -441,10 +437,17 @@ class ModelShardingManager:
             device_map = self._create_simple_device_map()
 
         return self._load_and_dispatch_checkpoint(
-            model, checkpoint, device_map, max_memory, no_split_module_classes, dtype,
+            model,
+            checkpoint,
+            device_map,
+            max_memory,
+            no_split_module_classes,
+            dtype,
         )
 
-    def _load_checkpoint_without_accelerate(self, model: TorchModel, checkpoint: str | Path) -> TorchModel:
+    def _load_checkpoint_without_accelerate(
+        self, model: TorchModel, checkpoint: str | Path
+    ) -> TorchModel:
         """Load checkpoint without accelerate."""
         logger.warning("Accelerate not available, loading normally")
         if HAS_TORCH:
@@ -452,7 +455,9 @@ class ModelShardingManager:
             return self._apply_gpu_optimizations(model)
         return model
 
-    def _load_checkpoint_single_device(self, model: TorchModel, checkpoint: str | Path) -> TorchModel:
+    def _load_checkpoint_single_device(
+        self, model: TorchModel, checkpoint: str | Path
+    ) -> TorchModel:
         """Load checkpoint for a single device."""
         logger.info("Single GPU - loading normally")
         if HAS_TORCH:
@@ -575,7 +580,9 @@ class ModelShardingManager:
             "total_memory_bytes": total_memory,
             "memory_per_device": total_memory // max(self.device_count, 1),
             "device_distribution": device_distribution,
-            "fits_in_memory": all(d["usage_percent"] < 90 for d in device_distribution.values()) if device_distribution else False,
+            "fits_in_memory": all(d["usage_percent"] < 90 for d in device_distribution.values())
+            if device_distribution
+            else False,
         }
 
     def optimize_device_map(
@@ -628,7 +635,9 @@ class ModelShardingManager:
         optimized_map["pooler"] = last_device
         optimized_map["lm_head"] = last_device
 
-        logger.info(f"Optimized device map for {num_layers} layers across {self.device_count} devices")
+        logger.info(
+            f"Optimized device map for {num_layers} layers across {self.device_count} devices"
+        )
         return optimized_map
 
     def monitor_memory_usage(self) -> dict[int, dict[str, object]]:
@@ -672,7 +681,9 @@ class ModelShardingManager:
             reserved = torch.xpu.memory_reserved(device_id) / (1024**3)
             memory_info["reserved_gb"] = reserved
 
-        if device_id in self.device_properties and self.device_properties[device_id].get("total_memory"):
+        if device_id in self.device_properties and self.device_properties[device_id].get(
+            "total_memory"
+        ):
             total = self.device_properties[device_id]["total_memory"] / (1024**3)
             memory_info["total_gb"] = total
             if "allocated_gb" in memory_info:
@@ -728,9 +739,7 @@ class ModelShardingManager:
 
         # Normalize to 0-1 (lower std_dev = higher score)
         max_std_dev = avg_count  # Worst case: all on one device
-        balance_score = 1 - (std_dev / max_std_dev) if max_std_dev > 0 else 1.0
-
-        return balance_score
+        return 1 - (std_dev / max_std_dev) if max_std_dev > 0 else 1.0
 
     def create_pipeline_parallel_groups(
         self,
@@ -813,7 +822,12 @@ class ModelShardingManager:
         end_memory, peak_memory = self._get_final_memory(start_memory)
 
         return self._compile_profiling_results(
-            device_map, forward_times, memory_usage, start_memory, end_memory, peak_memory,
+            device_map,
+            forward_times,
+            memory_usage,
+            start_memory,
+            end_memory,
+            peak_memory,
         )
 
     def _prepare_inputs_for_profiling(self, sample_input: TorchTensor) -> TorchTensor:
@@ -838,7 +852,9 @@ class ModelShardingManager:
             return sum(torch.cuda.memory_allocated(i) for i in range(self.device_count))
         return 0
 
-    def _profile_single_iteration(self, model: TorchModel, inputs: TorchTensor, iteration: int) -> dict[str, object]:
+    def _profile_single_iteration(
+        self, model: TorchModel, inputs: TorchTensor, iteration: int
+    ) -> dict[str, object]:
         """Profile a single forward pass iteration."""
         iter_start_memory = self._measure_memory_before_forward()
         forward_time = self._measure_forward_pass(model, inputs)
@@ -911,7 +927,7 @@ class ModelShardingManager:
 
         memory_deltas = [usage["memory_delta"] for usage in memory_usage]
         avg_memory_delta = sum(memory_deltas) / len(memory_deltas) if memory_deltas else 0
-        max_memory_delta = max(memory_deltas) if memory_deltas else 0
+        max_memory_delta = max(memory_deltas, default=0)
 
         results = {
             "device_map": device_map,

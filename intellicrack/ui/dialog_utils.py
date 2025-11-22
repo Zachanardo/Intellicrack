@@ -18,15 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-from .handlers.pyqt6_handler import (
-    QFileDialog,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QWidget,
-)
+from .handlers.pyqt6_handler import QFileDialog, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QWidget
 
 
 def setup_footer(dialog: QWidget, layout: QHBoxLayout) -> None:
@@ -65,7 +57,7 @@ def setup_binary_header(dialog: QWidget, layout: QHBoxLayout) -> None:
 
     # Set up binary path input field with initial value
     current_path = getattr(dialog, "binary_path", "")
-    dialog.binary_path_edit = QLineEdit(current_path if current_path else "")
+    dialog.binary_path_edit = QLineEdit(current_path or "")
 
     # Set tooltip to guide users on expected file types
     dialog.binary_path_edit.setToolTip(

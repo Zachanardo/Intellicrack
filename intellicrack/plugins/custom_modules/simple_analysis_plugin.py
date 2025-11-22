@@ -41,15 +41,14 @@ class SimpleAnalysisPlugin:
             A list of analysis results as strings.
 
         """
-        results: list[str] = []
-        results.append(f"Analyzing: {binary_path}")
-
         # Your analysis code here
         import os
 
         file_size = os.path.getsize(binary_path)
-        results.append(f"File size: {file_size:,} bytes")
-
+        results: list[str] = [
+            f"Analyzing: {binary_path}",
+            f"File size: {file_size:,} bytes",
+        ]
         return results
 
 

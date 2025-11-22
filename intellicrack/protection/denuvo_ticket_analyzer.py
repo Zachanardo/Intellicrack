@@ -33,6 +33,7 @@ from typing import Any
 
 from ..utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 try:
@@ -185,7 +186,12 @@ class DenuvoTicketAnalyzer:
                 return None
 
             magic = ticket_data[:4]
-            if magic not in [self.TICKET_MAGIC_V4, self.TICKET_MAGIC_V5, self.TICKET_MAGIC_V6, self.TICKET_MAGIC_V7]:
+            if magic not in [
+                self.TICKET_MAGIC_V4,
+                self.TICKET_MAGIC_V5,
+                self.TICKET_MAGIC_V6,
+                self.TICKET_MAGIC_V7,
+            ]:
                 logger.error(f"Invalid ticket magic: {magic.hex()}")
                 return None
 
@@ -208,8 +214,7 @@ class DenuvoTicketAnalyzer:
                 ticket.is_valid = True
                 logger.info("Ticket signature valid")
 
-            decrypted_payload = self._decrypt_payload(ticket)
-            if decrypted_payload:
+            if decrypted_payload := self._decrypt_payload(ticket):
                 ticket.payload = decrypted_payload
                 logger.info("Ticket payload decrypted successfully")
 
@@ -249,12 +254,14 @@ class DenuvoTicketAnalyzer:
             machine_id = token_data[offset : offset + 32]
             offset += 32
 
-            activation_time, expiration_time, license_type, features = struct.unpack("<QQII", token_data[offset : offset + 24])
+            activation_time, expiration_time, license_type, features = struct.unpack(
+                "<QQII", token_data[offset : offset + 24]
+            )
             offset += 24
 
             signature = token_data[offset:]
 
-            token = ActivationToken(
+            return ActivationToken(
                 token_id=token_id,
                 game_id=game_id,
                 ticket_hash=ticket_hash,
@@ -265,9 +272,6 @@ class DenuvoTicketAnalyzer:
                 features_enabled=features,
                 signature=signature,
             )
-
-            return token
-
         except Exception as e:
             logger.error(f"Token parsing failed: {e}")
             return None
@@ -493,7 +497,9 @@ class DenuvoTicketAnalyzer:
                 return None
 
             new_ticket = self._rebuild_ticket(ticket.header, new_encrypted)
-            logger.info(f"Spoofed machine ID: {original_id.hex()[:16]} -> {target_machine_id.hex()[:16]}")
+            logger.info(
+                f"Spoofed machine ID: {original_id.hex()[:16]} -> {target_machine_id.hex()[:16]}"
+            )
             return new_ticket
 
         except Exception as e:
@@ -537,8 +543,9 @@ class DenuvoTicketAnalyzer:
                             continue
 
                         if self._is_activation_traffic(tcp.data):
-                            session = self._parse_activation_session(tcp.data, timestamp)
-                            if session:
+                            if session := self._parse_activation_session(
+                                tcp.data, timestamp
+                            ):
                                 sessions.append(session)
 
                     except Exception as e:
@@ -662,8 +669,7 @@ class DenuvoTicketAnalyzer:
                         continue
 
                     if decrypted:
-                        payload = self._parse_payload(decrypted)
-                        if payload:
+                        if payload := self._parse_payload(decrypted):
                             ticket.decryption_key = key_info.get("aes_key")
                             return payload
 
@@ -682,8 +688,7 @@ class DenuvoTicketAnalyzer:
         """Decrypt AES-256-CBC encrypted data."""
         try:
             cipher = AES.new(key, AES.MODE_CBC, iv)
-            decrypted = unpad(cipher.decrypt(data), AES.block_size)
-            return decrypted
+            return unpad(cipher.decrypt(data), AES.block_size)
         except Exception:
             return None
 
@@ -691,8 +696,7 @@ class DenuvoTicketAnalyzer:
         """Decrypt AES-128-CBC encrypted data."""
         try:
             cipher = AES.new(key, AES.MODE_CBC, iv)
-            decrypted = unpad(cipher.decrypt(data), AES.block_size)
-            return decrypted
+            return unpad(cipher.decrypt(data), AES.block_size)
         except Exception:
             return None
 
@@ -742,19 +746,17 @@ class DenuvoTicketAnalyzer:
             )
 
             token_data = data[offset : offset + 128]
-            token = self.parse_token(token_data)
-            if not token:
-                token = ActivationToken(
-                    token_id=os.urandom(16),
-                    game_id=game_id,
-                    ticket_hash=b"\x00" * 32,
-                    machine_id=combined_hash,
-                    activation_time=int(time.time()),
-                    expiration_time=int(time.time()) + (365 * 86400),
-                    license_type=self.LICENSE_FULL,
-                    features_enabled=0xFFFFFFFF,
-                    signature=b"\x00" * 256,
-                )
+            token = self.parse_token(token_data) or ActivationToken(
+                                token_id=os.urandom(16),
+                                game_id=game_id,
+                                ticket_hash=b"\x00" * 32,
+                                machine_id=combined_hash,
+                                activation_time=int(time.time()),
+                                expiration_time=int(time.time()) + (365 * 86400),
+                                license_type=self.LICENSE_FULL,
+                                features_enabled=0xFFFFFFFF,
+                                signature=b"\x00" * 256,
+                            )
             offset += 128
 
             license_type = struct.unpack("<I", data[offset : offset + 4])[0]
@@ -827,9 +829,7 @@ class DenuvoTicketAnalyzer:
                 key = self.known_keys[0].get("aes_key", os.urandom(32))
                 iv = self.known_keys[0].get("iv", os.urandom(16))
                 cipher = AES.new(key, AES.MODE_CBC, iv)
-                encrypted = cipher.encrypt(pad(bytes(data), AES.block_size))
-                return encrypted
-
+                return cipher.encrypt(pad(bytes(data), AES.block_size))
             return bytes(data)
 
         except Exception as e:
@@ -933,9 +933,7 @@ class DenuvoTicketAnalyzer:
             integrity_seed=os.urandom(32),
         )
 
-        encrypted_payload = self._encrypt_payload(payload, header)
-        if not encrypted_payload:
-            encrypted_payload = b"\x00" * 1664
+        encrypted_payload = self._encrypt_payload(payload, header) or b"\x00" * 1664
 
         return self._rebuild_ticket(header, encrypted_payload)
 
@@ -976,9 +974,7 @@ class DenuvoTicketAnalyzer:
     def _extract_game_id(self, request_data: bytes) -> bytes:
         """Extract game ID from activation request."""
         try:
-            if len(request_data) >= 32:
-                return request_data[16:32]
-            return os.urandom(16)
+            return request_data[16:32] if len(request_data) >= 32 else os.urandom(16)
         except Exception:
             return os.urandom(16)
 
@@ -1016,11 +1012,7 @@ class DenuvoTicketAnalyzer:
 
         data_lower = data.lower() if isinstance(data, str) else data
 
-        for pattern in activation_patterns:
-            if pattern.lower() in data_lower:
-                return True
-
-        return False
+        return any(pattern.lower() in data_lower for pattern in activation_patterns)
 
     def _parse_activation_session(
         self,
@@ -1037,8 +1029,7 @@ class DenuvoTicketAnalyzer:
 
             if self.TICKET_MAGIC_V7 in data or self.TICKET_MAGIC_V6 in data:
                 session["type"] = "ticket"
-                ticket = self.parse_ticket(data)
-                if ticket:
+                if ticket := self.parse_ticket(data):
                     session["ticket"] = {
                         "version": ticket.header.version,
                         "timestamp": ticket.header.timestamp,
@@ -1047,8 +1038,7 @@ class DenuvoTicketAnalyzer:
 
             elif self.TOKEN_MAGIC in data:
                 session["type"] = "token"
-                token = self.parse_token(data)
-                if token:
+                if token := self.parse_token(data):
                     session["token"] = {
                         "game_id": token.game_id.hex(),
                         "license_type": token.license_type,
@@ -1065,31 +1055,43 @@ class DenuvoTicketAnalyzer:
 
     def _load_known_keys(self) -> list[dict[str, Any]]:
         """Load known encryption/signing keys."""
-        keys = [
+        return [
             {
                 "type": "hmac",
                 "key": hashlib.sha256(b"denuvo_master_key_v7").digest(),
-                "aes_key": hashlib.sha256(b"denuvo_aes_key_v7_extended_master").digest(),
-                "iv": hashlib.md5(b"denuvo_iv_v7").digest(),  # noqa: S324 - MD5 used for compatibility with existing license schemes
-                "nonce": hashlib.md5(b"denuvo_nonce_v7").digest()[:12],  # noqa: S324 - MD5 used for compatibility with existing license schemes
+                "aes_key": hashlib.sha256(
+                    b"denuvo_aes_key_v7_extended_master"
+                ).digest(),
+                "iv": hashlib.md5(
+                    b"denuvo_iv_v7"
+                ).digest(),
+                "nonce": hashlib.md5(b"denuvo_nonce_v7").digest()[
+                    :12
+                ],
             },
             {
                 "type": "hmac",
                 "key": hashlib.sha256(b"denuvo_master_key_v6").digest(),
-                "aes_key": hashlib.sha256(b"denuvo_aes_key_v6_extended_master").digest(),
-                "iv": hashlib.md5(b"denuvo_iv_v6").digest(),  # noqa: S324 - MD5 used for compatibility with existing license schemes
-                "nonce": hashlib.md5(b"denuvo_nonce_v6").digest()[:12],  # noqa: S324 - MD5 used for compatibility with existing license schemes
+                "aes_key": hashlib.sha256(
+                    b"denuvo_aes_key_v6_extended_master"
+                ).digest(),
+                "iv": hashlib.md5(
+                    b"denuvo_iv_v6"
+                ).digest(),
+                "nonce": hashlib.md5(b"denuvo_nonce_v6").digest()[
+                    :12
+                ],
             },
             {
                 "type": "hmac",
                 "key": hashlib.sha256(b"denuvo_fallback_key").digest(),
-                "aes_key": hashlib.sha256(b"denuvo_aes_fallback_extended").digest(),
+                "aes_key": hashlib.sha256(
+                    b"denuvo_aes_fallback_extended"
+                ).digest(),
                 "iv": b"\x00" * 16,
                 "nonce": b"\x00" * 12,
             },
         ]
-
-        return keys
 
     def _load_server_endpoints(self) -> list[str]:
         """Load known activation server endpoints."""

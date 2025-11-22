@@ -33,7 +33,7 @@ def check_tests():
         if test_path.exists():
             found_count += 1
             # Count test methods
-            with open(test_path, 'r') as f:
+            with open(test_path) as f:
                 content = f.read()
                 test_count = content.count('def test_')
                 test_stats.append((module_name, test_count))

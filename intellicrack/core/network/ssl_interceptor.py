@@ -11,6 +11,7 @@ from intellicrack.utils.logger import logger
 
 from ...utils.resource_helper import get_resource_path
 
+
 """
 SSL/TLS Interception System for Encrypted License Verification
 
@@ -75,7 +76,7 @@ class SSLTLSInterceptor:
 
         # Update with provided configuration
         if config:
-            self.config.update(config)
+            self.config |= config
 
         # Initialize components
         self.proxy_server = None
@@ -98,15 +99,13 @@ class SSLTLSInterceptor:
         try:
             from ...utils.protection.certificate_utils import generate_self_signed_cert
 
-            cert_result = generate_self_signed_cert(
+            if cert_result := generate_self_signed_cert(
                 common_name="Intellicrack Root CA",
                 organization="Intellicrack CA",
                 state="California",
                 locality="San Francisco",
                 valid_days=3650,
-            )
-
-            if cert_result:
+            ):
                 return cert_result
             self.logger.error("Failed to generate CA certificate")
             return None, None
@@ -125,12 +124,16 @@ class SSLTLSInterceptor:
         """
         try:
             # Generate CA certificate if needed
-            if not os.path.exists(self.config["ca_cert_path"]) or not os.path.exists(self.config["ca_key_path"]):
+            if not os.path.exists(self.config["ca_cert_path"]) or not os.path.exists(
+                self.config["ca_key_path"]
+            ):
                 self.logger.info("Generating CA certificate...")
                 cert_pem, key_pem = self.generate_ca_certificate()
                 if cert_pem and key_pem:
                     # Create directory if it doesn't exist
-                    os.makedirs(os.path.dirname(os.path.abspath(self.config["ca_cert_path"])), exist_ok=True)
+                    os.makedirs(
+                        os.path.dirname(os.path.abspath(self.config["ca_cert_path"])), exist_ok=True
+                    )
 
                     # Save certificate and key
                     with open(self.config["ca_cert_path"], "wb") as f:
@@ -143,9 +146,7 @@ class SSLTLSInterceptor:
                     self.logger.error("Failed to generate CA certificate")
                     return False
 
-            # Check if mitmproxy is available
-            mitmdump_path = self._find_executable("mitmdump")
-            if mitmdump_path:
+            if mitmdump_path := self._find_executable("mitmdump"):
                 # Create script for intercepting license verification
                 script_fd, script_path = tempfile.mkstemp(suffix=".py", prefix="intellicrack_mitm_")
                 with os.fdopen(script_fd, "w", encoding="utf-8") as f:
@@ -249,8 +250,6 @@ def response(flow: http.HTTPFlow) -> None:
                 self.logger.info("mitmproxy started with PID %s", self.proxy_process.pid)
             else:
                 self.logger.warning("mitmproxy not found. SSL/TLS interception will be limited.")
-                # Implement a basic proxy server here if needed
-
             self.logger.info(
                 "SSL/TLS interceptor started on %s:%s",
                 self.config["listen_ip"],
@@ -308,9 +307,7 @@ def response(flow: http.HTTPFlow) -> None:
         """
         from ...utils.core.path_discovery import find_tool
 
-        # Try to find using path_discovery first
-        path = find_tool(executable)
-        if path:
+        if path := find_tool(executable):
             return path
 
         # Fallback to simple PATH search for tools not in path_discovery specs
@@ -390,8 +387,7 @@ def response(flow: http.HTTPFlow) -> None:
                 "inject_headers",
             }
 
-            invalid_keys = set(config.keys()) - valid_keys
-            if invalid_keys:
+            if invalid_keys := set(config.keys()) - valid_keys:
                 self.logger.warning(f"Ignoring invalid configuration keys: {invalid_keys}")
 
             # Validate specific settings
@@ -412,10 +408,9 @@ def response(flow: http.HTTPFlow) -> None:
                     self.logger.error(f"Invalid IP address: {ip}")
                     return False
 
-            if "target_hosts" in config:
-                if not isinstance(config["target_hosts"], list):
-                    self.logger.error("target_hosts must be a list")
-                    return False
+            if "target_hosts" in config and not isinstance(config["target_hosts"], list):
+                self.logger.error("target_hosts must be a list")
+                return False
 
             # Check if interceptor is running
             was_running = self.proxy_process is not None
@@ -430,7 +425,9 @@ def response(flow: http.HTTPFlow) -> None:
             # Validate certificate paths if changed
             if "ca_cert_path" in config or "ca_key_path" in config:
                 if not os.path.exists(self.config["ca_cert_path"]):
-                    self.logger.warning(f"CA certificate not found at {self.config['ca_cert_path']}")
+                    self.logger.warning(
+                        f"CA certificate not found at {self.config['ca_cert_path']}"
+                    )
                     # Generate new certificate if needed
                     self.logger.info("Generating new CA certificate")
                     cert, key = self.generate_ca_certificate()
@@ -493,7 +490,9 @@ def response(flow: http.HTTPFlow) -> None:
 
         # Redact sensitive information
         if "ca_key_path" in safe_config:
-            safe_config["ca_key_path"] = "<redacted>" if os.path.exists(self.config["ca_key_path"]) else "not found"
+            safe_config["ca_key_path"] = (
+                "<redacted>" if os.path.exists(self.config["ca_key_path"]) else "not found"
+            )
 
         # Add runtime status
         safe_config["status"] = {

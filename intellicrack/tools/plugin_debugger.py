@@ -50,9 +50,9 @@ class Breakpoint:
     id: int
     type: BreakpointType
     file: str
-    line: Optional[int] = None
-    function: Optional[str] = None
-    condition: Optional[str] = None
+    line: int | None = None
+    function: str | None = None
+    condition: str | None = None
     enabled: bool = True
     hit_count: int = 0
     ignore_count: int = 0
@@ -65,8 +65,8 @@ class StackFrame:
     filename: str
     lineno: int
     function: str
-    locals: Dict[str, Any]
-    globals: Dict[str, Any]
+    locals: dict[str, Any]
+    globals: dict[str, Any]
     code: str
 
 
@@ -86,7 +86,7 @@ class PluginDebugger:
     def __init__(self):
         """Initialize plugin debugger with state tracking, breakpoints, and trace monitoring."""
         self.logger = logger  # Use the imported logger from line 1
-        self.breakpoints: Dict[int, Breakpoint] = {}
+        self.breakpoints: dict[int, Breakpoint] = {}
         self.next_breakpoint_id = 1
         self.state = DebuggerState.IDLE
         self.current_frame = None
@@ -112,7 +112,7 @@ class PluginDebugger:
     def load_plugin(self, plugin_path: str):
         """Load a plugin for debugging"""
         # Read plugin code
-        with open(plugin_path, "r") as f:
+        with open(plugin_path) as f:
             code = f.read()
 
         # Compile with debugging info
@@ -170,7 +170,7 @@ class PluginDebugger:
         """Enable/disable break on exceptions"""
         self.exception_breakpoint = enabled
 
-    def run(self, binary_path: str = None, options: Dict[str, Any] = None):
+    def run(self, binary_path: str = None, options: dict[str, Any] = None):
         """Run the plugin with debugging"""
         self.state = DebuggerState.RUNNING
 
@@ -234,15 +234,13 @@ class PluginDebugger:
         lineno = frame.f_lineno
 
         # Use arg to enhance trace information
-        if arg is not None:
-            # Log trace data if verbose mode
-            if hasattr(self, "verbose") and self.verbose:
-                self.output_queue.put(
-                    (
-                        "trace",
-                        {"event": "line", "filename": filename, "lineno": lineno, "arg": str(arg)},
-                    )
+        if arg is not None and (hasattr(self, "verbose") and self.verbose):
+            self.output_queue.put(
+                (
+                    "trace",
+                    {"event": "line", "filename": filename, "lineno": lineno, "arg": str(arg)},
                 )
+            )
 
         # Check breakpoints
         for bp in self.breakpoints.values():
@@ -270,18 +268,13 @@ class PluginDebugger:
                         logger.debug("Failed to evaluate breakpoint condition: %s", e)
 
         # Handle stepping
-        if self.state == DebuggerState.STEPPING:
-            if self.step_mode == "over":
-                # Step over - pause at next line in same frame
-                if len(self.call_stack) <= 1:
-                    self._pause_execution(frame)
-            elif self.step_mode == "into":
-                # Step into - pause at any line
-                self._pause_execution(frame)
-            elif self.step_mode == "out":
-                # Step out - handled in return event
-                pass
-
+        if self.state == DebuggerState.STEPPING and (
+                        self.step_mode == "over"
+                        and len(self.call_stack) <= 1
+                        or self.step_mode != "over"
+                        and self.step_mode == "into"
+                    ):
+            self._pause_execution(frame)
         return self._trace_dispatch
 
     def _trace_call(self, frame, arg):
@@ -313,11 +306,10 @@ class PluginDebugger:
             if not bp.enabled:
                 continue
 
-            if bp.type == BreakpointType.FUNCTION:
-                if bp.function == func_name and bp.file == filename:
-                    bp.hit_count += 1
-                    self._pause_at_breakpoint(frame, bp)
-                    break
+            if bp.function == func_name and bp.file == filename and bp.type == BreakpointType.FUNCTION:
+                bp.hit_count += 1
+                self._pause_at_breakpoint(frame, bp)
+                break
 
         return self._trace_dispatch
 
@@ -332,7 +324,7 @@ class PluginDebugger:
                 "function": frame.f_code.co_name,
                 "file": frame.f_code.co_filename,
                 "line": frame.f_lineno,
-                "return_value": repr(arg) if not isinstance(arg, (bytes, bytearray)) else f"<{type(arg).__name__}: {len(arg)} bytes>",
+                "return_value": f"<{type(arg).__name__}: {len(arg)} bytes>" if isinstance(arg, (bytes, bytearray)) else repr(arg),
                 "type": type(arg).__name__,
             }
 
@@ -351,9 +343,8 @@ class PluginDebugger:
                         self.output_queue.put(("watched_return", {"pattern": pattern, "value": return_info}))
 
         # Handle step out
-        if self.state == DebuggerState.STEPPING and self.step_mode == "out":
-            if len(self.call_stack) == 0:
-                self._pause_execution(frame)
+        if self.state == DebuggerState.STEPPING and self.step_mode == "out" and len(self.call_stack) == 0:
+            self._pause_execution(frame)
 
         return self._trace_dispatch
 
@@ -438,7 +429,7 @@ class PluginDebugger:
                 logger.debug("No commands in queue during pause")
                 continue
 
-    def _handle_command(self, command: Dict[str, Any]):
+    def _handle_command(self, command: dict[str, Any]):
         """Handle debugger command"""
         cmd_type = command.get("type")
 
@@ -614,47 +605,48 @@ class PluginDebugger:
         else:
             return repr(value)
 
-    def get_source_code(self, filename: str, start_line: int = 1, end_line: int = None) -> List[str]:
+    def get_source_code(self, filename: str, start_line: int = 1, end_line: int = None) -> list[str]:
         """Get source code lines"""
         lines = []
 
         if os.path.exists(filename):
-            with open(filename, "r") as f:
+            with open(filename) as f:
                 all_lines = f.readlines()
 
             if end_line is None:
                 end_line = len(all_lines)
 
-            for i in range(max(0, start_line - 1), min(len(all_lines), end_line)):
-                lines.append(
-                    {
-                        "line": i + 1,
-                        "code": all_lines[i].rstrip(),
-                        "breakpoint": any(bp.file == filename and bp.line == i + 1 and bp.enabled for bp in self.breakpoints.values()),
-                    }
+            lines.extend(
+                {
+                    "line": i + 1,
+                    "code": all_lines[i].rstrip(),
+                    "breakpoint": any(
+                        bp.file == filename and bp.line == i + 1 and bp.enabled
+                        for bp in self.breakpoints.values()
+                    ),
+                }
+                for i in range(
+                    max(0, start_line - 1), min(len(all_lines), end_line)
                 )
-
+            )
         return lines
 
-    def get_variables(self, frame_index: int = 0) -> Dict[str, Any]:
+    def get_variables(self, frame_index: int = 0) -> dict[str, Any]:
         """Get variables for a specific frame"""
         if frame_index >= len(self.stack_frames):
             return {}
 
         frame = self.stack_frames[frame_index]
 
-        # Combine locals and globals, preferring locals
-        variables = {}
-
-        # Add globals first
-        for name, value in frame.globals.items():
-            if not name.startswith("__"):
-                variables[name] = {
-                    "value": self._serialize_value(value),
-                    "type": type(value).__name__,
-                    "scope": "global",
-                }
-
+        variables = {
+            name: {
+                "value": self._serialize_value(value),
+                "type": type(value).__name__,
+                "scope": "global",
+            }
+            for name, value in frame.globals.items()
+            if not name.startswith("__")
+        }
         # Override with locals
         for name, value in frame.locals.items():
             variables[name] = {
@@ -674,7 +666,7 @@ class DebuggerThread(threading.Thread):
         debugger: PluginDebugger,
         plugin_path: str,
         binary_path: str = None,
-        options: Dict[str, Any] = None,
+        options: dict[str, Any] = None,
     ):
         """Initialize debugger thread with plugin path, binary path, and execution options."""
         super().__init__()

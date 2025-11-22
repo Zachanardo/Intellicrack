@@ -168,7 +168,7 @@ function activateGenericBypass() {
             const exports = module.enumerateExports();
             exports.forEach(function (exp) {
                 if (exp.type === 'function') {
-                    const name = exp.name;
+                    const {name} = exp;
 
                     const isLikelyCertFunc = commonValidationPatterns.some(
                         (pattern) =>

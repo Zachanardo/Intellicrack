@@ -26,6 +26,7 @@ from typing import Any
 
 from intellicrack.utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 
@@ -273,7 +274,9 @@ class FlexLMProtocolParser:
                 additional_data=additional_data,
             )
 
-            self.logger.info(f"Parsed FlexLM {self.FLEXLM_COMMANDS.get(command, 'UNKNOWN')} request for feature '{feature}'")
+            self.logger.info(
+                f"Parsed FlexLM {self.FLEXLM_COMMANDS.get(command, 'UNKNOWN')} request for feature '{feature}'"
+            )
             return request
 
         except Exception as e:
@@ -287,7 +290,7 @@ class FlexLMProtocolParser:
             if end == -1:
                 end = len(data)
             return data[offset:end].decode("utf-8", errors="ignore")
-        except (UnicodeDecodeError, IndexError, Exception) as e:
+        except Exception as e:
             self.logger.error("Error in flexlm_parser: %s", e)
             return ""
 
@@ -361,9 +364,9 @@ class FlexLMProtocolParser:
 
         # Check if feature exists
         if feature not in self.server_features:
-            # Try to find partial match
-            matches = [f for f in self.server_features if feature in f or f in feature]
-            if matches:
+            if matches := [
+                f for f in self.server_features if feature in f or f in feature
+            ]:
                 feature = matches[0]
             else:
                 return FlexLMResponse(
@@ -412,10 +415,7 @@ class FlexLMProtocolParser:
 
         if checkout_id in self.active_checkouts:
             del self.active_checkouts[checkout_id]
-            status = 0x00  # SUCCESS
-        else:
-            status = 0x00  # SUCCESS (allow checkin even if not tracked)
-
+        status = 0x00  # SUCCESS
         return FlexLMResponse(
             status=status,
             sequence=request.sequence,
@@ -576,11 +576,11 @@ class FlexLMProtocolParser:
 
         # Add feature-specific prefix for debugging
         if feature_type == "premium":
-            key = "P" + key[1:]
+            key = f"P{key[1:]}"
         elif feature_type == "trial":
-            key = "T" + key[1:]
+            key = f"T{key[1:]}"
         else:
-            key = "S" + key[1:]  # Standard
+            key = f"S{key[1:]}"
 
         return key
 
@@ -689,7 +689,9 @@ class FlexLMProtocolParser:
 
         """
         if signature is None:
-            signature = hashlib.sha256(f"{name}:{version}:{vendor}".encode()).hexdigest()[:40].upper()
+            signature = (
+                hashlib.sha256(f"{name}:{version}:{vendor}".encode()).hexdigest()[:40].upper()
+            )
 
         self.server_features[name.upper()] = {
             "version": version,
@@ -760,7 +762,13 @@ class FlexLMTrafficCapture:
         self.server_endpoints: set[tuple[str, int]] = set()
         self.client_endpoints: set[tuple[str, int]] = set()
 
-    def capture_packet(self, data: bytes, source: tuple[str, int], dest: tuple[str, int], timestamp: float | None = None) -> bool:
+    def capture_packet(
+        self,
+        data: bytes,
+        source: tuple[str, int],
+        dest: tuple[str, int],
+        timestamp: float | None = None,
+    ) -> bool:
         """Capture FlexLM network packet.
 
         Args:
@@ -776,8 +784,7 @@ class FlexLMTrafficCapture:
         if timestamp is None:
             timestamp = time.time()
 
-        request = self.parser.parse_request(data)
-        if request:
+        if request := self.parser.parse_request(data):
             self.captured_requests.append((timestamp, request, data))
             self.client_endpoints.add(source)
             self.server_endpoints.add(dest)
@@ -828,7 +835,10 @@ class FlexLMTrafficCapture:
             "top_commands": top_commands,
             "top_features": top_features,
             "hourly_distribution": hourly_distribution,
-            "capture_duration": max(ts for ts, _, _ in self.captured_requests) - min(ts for ts, _, _ in self.captured_requests) if len(self.captured_requests) > 1 else 0,
+            "capture_duration": max(ts for ts, _, _ in self.captured_requests)
+            - min(ts for ts, _, _ in self.captured_requests)
+            if len(self.captured_requests) > 1
+            else 0,
         }
 
     def extract_license_info(self) -> list[dict[str, Any]]:
@@ -937,11 +947,11 @@ class FlexLMLicenseGenerator:
             License file content as string
 
         """
-        lines = []
-
-        lines.append(f"SERVER {server_host} ANY {server_port}")
-        lines.append(f"VENDOR {vendor_daemon} PORT={vendor_port}")
-        lines.append("")
+        lines = [
+            f"SERVER {server_host} ANY {server_port}",
+            f"VENDOR {vendor_daemon} PORT={vendor_port}",
+            "",
+        ]
 
         for feature in features:
             name = feature.get("name", "FEATURE")
@@ -952,8 +962,7 @@ class FlexLMLicenseGenerator:
             signature = feature.get("signature", self._generate_signature(name, version))
 
             license_line = (
-                f'FEATURE {name} {vendor} {version} {expiry} {count} '
-                f'HOSTID=ANY SIGN="{signature}"'
+                f'FEATURE {name} {vendor} {version} {expiry} {count} HOSTID=ANY SIGN="{signature}"'
             )
             lines.append(license_line)
 
@@ -1002,11 +1011,13 @@ class FlexLMLicenseGenerator:
 
             if keyword == "SERVER":
                 if len(parts) >= 3:
-                    license_data["servers"].append({
-                        "hostname": parts[1],
-                        "hostid": parts[2],
-                        "port": int(parts[3]) if len(parts) > 3 else 27000,
-                    })
+                    license_data["servers"].append(
+                        {
+                            "hostname": parts[1],
+                            "hostid": parts[2],
+                            "port": int(parts[3]) if len(parts) > 3 else 27000,
+                        }
+                    )
 
             elif keyword == "VENDOR":
                 vendor_info = {"name": parts[1] if len(parts) > 1 else ""}

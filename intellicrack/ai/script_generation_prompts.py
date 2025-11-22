@@ -47,7 +47,7 @@ class ScriptGenerationPrompts:
         Sets up prompts for various script generation tasks including
         Frida, Ghidra, and other dynamic analysis tools.
         """
-        self.logger = logging.getLogger(__name__ + ".ScriptGenerationPrompts")
+        self.logger = logging.getLogger(f"{__name__}.ScriptGenerationPrompts")
         self.prompts = self._initialize_prompts()
 
     def _initialize_prompts(self) -> dict[PromptType, dict[str, str]]:
@@ -325,7 +325,9 @@ Return validation results in structured JSON format.""",
 
         return prompt_data
 
-    def build_context_data(self, binary_analysis: dict[str, Any], protection_types: list[str] | None = None) -> dict[str, str]:
+    def build_context_data(
+        self, binary_analysis: dict[str, Any], protection_types: list[str] | None = None
+    ) -> dict[str, str]:
         """Build context data for prompt formatting.
 
         Constructs a comprehensive context dictionary from binary analysis data and
@@ -347,37 +349,51 @@ Return validation results in structured JSON format.""",
             analysis summaries.
 
         """
-        context = {
-            "binary_name": binary_analysis.get("binary_info", {}).get("name", "unknown"),
-            "architecture": binary_analysis.get("binary_info", {}).get("arch", "x64"),
-            "platform": binary_analysis.get("binary_info", {}).get("platform", "windows"),
+        return {
+            "binary_name": binary_analysis.get("binary_info", {}).get(
+                "name", "unknown"
+            ),
+            "architecture": binary_analysis.get("binary_info", {}).get(
+                "arch", "x64"
+            ),
+            "platform": binary_analysis.get("binary_info", {}).get(
+                "platform", "windows"
+            ),
             "file_type": binary_analysis.get("binary_info", {}).get("type", "PE"),
             "entry_point": "0x401000",  # Default
             "protection_types": ", ".join(protection_types or ["license_check"]),
-            "key_functions": ", ".join([f["name"] for f in binary_analysis.get("functions", [])[:10]]),
+            "key_functions": ", ".join(
+                [f["name"] for f in binary_analysis.get("functions", [])[:10]]
+            ),
             "imports": ", ".join(binary_analysis.get("imports", [])[:15]),
             "license_strings": ", ".join(
                 [
                     s
                     for s in binary_analysis.get("strings", [])
-                    if any(keyword in s.lower() for keyword in ["license", "trial", "demo", "expire"])
+                    if any(
+                        keyword in s.lower()
+                        for keyword in ["license", "trial", "demo", "expire"]
+                    )
                 ],
             ),
             "analysis_summary": self._summarize_analysis(binary_analysis),
-            "functionality_requirements": self._build_functionality_requirements(protection_types or []),
+            "functionality_requirements": self._build_functionality_requirements(
+                protection_types or []
+            ),
             # Example addresses
             "key_addresses": "0x401000, 0x401200, 0x401400",
             "protection_functions": ", ".join(
                 [
                     f["name"]
                     for f in binary_analysis.get("functions", [])
-                    if "license" in f.get("name", "").lower() or "check" in f.get("name", "").lower()
+                    if "license" in f.get("name", "").lower()
+                    or "check" in f.get("name", "").lower()
                 ],
             ),
-            "patching_objectives": self._build_patching_objectives(protection_types or []),
+            "patching_objectives": self._build_patching_objectives(
+                protection_types or []
+            ),
         }
-
-        return context
 
     def _summarize_analysis(self, analysis: dict[str, Any]) -> str:
         """Create a summary of binary analysis.
@@ -430,16 +446,28 @@ Return validation results in structured JSON format.""",
 
         for ptype in protection_types:
             if "license" in ptype.lower():
-                requirements.append("- Hook license validation functions and force success")
-                requirements.append("- Monitor registry/file access for license storage")
-                requirements.append("- Bypass string comparison checks")
+                requirements.extend(
+                    (
+                        "- Hook license validation functions and force success",
+                        "- Monitor registry/file access for license storage",
+                        "- Bypass string comparison checks",
+                    )
+                )
             elif "trial" in ptype.lower() or "time" in ptype.lower():
-                requirements.append("- Hook time-related functions (GetSystemTime, etc.)")
-                requirements.append("- Manipulate time values to prevent expiration")
-                requirements.append("- Monitor trial timer mechanisms")
+                requirements.extend(
+                    (
+                        "- Hook time-related functions (GetSystemTime, etc.)",
+                        "- Manipulate time values to prevent expiration",
+                        "- Monitor trial timer mechanisms",
+                    )
+                )
             elif "network" in ptype.lower():
-                requirements.append("- Intercept network validation calls")
-                requirements.append("- Inject custom license server responses")
+                requirements.extend(
+                    (
+                        "- Intercept network validation calls",
+                        "- Inject custom license server responses",
+                    )
+                )
                 requirements.append("- Block outbound license verification")
             elif "debug" in ptype.lower():
                 requirements.append("- Bypass debugger detection mechanisms")
@@ -478,16 +506,28 @@ Return validation results in structured JSON format.""",
 
         for ptype in protection_types:
             if "license" in ptype.lower():
-                objectives.append("- Patch license check jumps to always succeed")
-                objectives.append("- Modify string comparisons to return equal")
-                objectives.append("- Replace license validation with NOP instructions")
+                objectives.extend(
+                    (
+                        "- Patch license check jumps to always succeed",
+                        "- Modify string comparisons to return equal",
+                        "- Replace license validation with NOP instructions",
+                    )
+                )
             elif "trial" in ptype.lower():
-                objectives.append("- Patch time check comparisons")
-                objectives.append("- Modify trial expiration logic")
-                objectives.append("- Replace time-based jumps with unconditional success")
+                objectives.extend(
+                    (
+                        "- Patch time check comparisons",
+                        "- Modify trial expiration logic",
+                        "- Replace time-based jumps with unconditional success",
+                    )
+                )
             elif "network" in ptype.lower():
-                objectives.append("- Patch network calls to return success")
-                objectives.append("- Modify validation responses")
+                objectives.extend(
+                    (
+                        "- Patch network calls to return success",
+                        "- Modify validation responses",
+                    )
+                )
                 objectives.append("- Bypass online license requirements")
 
         if not objectives:

@@ -235,7 +235,7 @@ echo "Modification complete"
                               "Modified binary created at OUTPUT_PATH")
 
                 # Verify content
-                with open(test_output_path, "r") as f:
+                with open(test_output_path) as f:
                     content = f.read()
                     self.assertIn("Modified binary content", content)
             else:

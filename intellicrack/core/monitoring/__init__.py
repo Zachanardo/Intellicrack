@@ -10,6 +10,7 @@ Licensed under GNU General Public License v3.0
 
 import logging
 
+
 logger = logging.getLogger(__name__)
 
 # Import monitoring modules with error handling
@@ -40,9 +41,9 @@ except ImportError as e:
 
 __all__ = [
     "BaseMonitor",
-    "MonitorEvent",
     "EventAggregator",
     "FridaServerManager",
+    "MonitorEvent",
     "MonitoringSession",
 ]
 

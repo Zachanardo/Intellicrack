@@ -23,6 +23,7 @@ from typing import Any
 
 from ..utils.logger import get_logger, log_all_methods
 
+
 try:
     from intellicrack.handlers.pefile_handler import pefile
 
@@ -62,18 +63,28 @@ class ProtectionAnalyzer:
 
     def _load_protection_signatures(self) -> dict[str, dict[str, Any]]:
         """Load known protection system signatures."""
-        signatures = {
+        return {
             "upx": {
                 "name": "UPX Packer",
                 "type": "packer",
-                "signatures": [b"UPX0", b"UPX1", b"UPX2", b"UPX!", b"\x55\x50\x58\x30", b"\x55\x50\x58\x31"],
+                "signatures": [
+                    b"UPX0",
+                    b"UPX1",
+                    b"UPX2",
+                    b"UPX!",
+                    b"\x55\x50\x58\x30",
+                    b"\x55\x50\x58\x31",
+                ],
                 "strings": ["UPX", "upx"],
                 "severity": "medium",
             },
             "vmprotect": {
                 "name": "VMProtect",
                 "type": "protector",
-                "signatures": [b"VMProtect", b"\x60\xe8\x00\x00\x00\x00\x5d\x50\x51\x52\x53\x56\x57"],
+                "signatures": [
+                    b"VMProtect",
+                    b"\x60\xe8\x00\x00\x00\x00\x5d\x50\x51\x52\x53\x56\x57",
+                ],
                 "strings": ["VMProtect", "VMP"],
                 "entropy_indicators": True,
                 "severity": "high",
@@ -81,21 +92,30 @@ class ProtectionAnalyzer:
             "themida": {
                 "name": "Themida",
                 "type": "protector",
-                "signatures": [b"Themida", b"\xeb\x10\x00\x00\x00\x56\x69\x72\x74\x75\x61\x6c\x41\x6c\x6c\x6f\x63"],
+                "signatures": [
+                    b"Themida",
+                    b"\xeb\x10\x00\x00\x00\x56\x69\x72\x74\x75\x61\x6c\x41\x6c\x6c\x6f\x63",
+                ],
                 "strings": ["Themida", "Oreans"],
                 "severity": "high",
             },
             "asprotect": {
                 "name": "ASProtect",
                 "type": "protector",
-                "signatures": [b"ASProtect", b"\x68\x00\x00\x00\x00\x64\xff\x35\x00\x00\x00\x00"],
+                "signatures": [
+                    b"ASProtect",
+                    b"\x68\x00\x00\x00\x00\x64\xff\x35\x00\x00\x00\x00",
+                ],
                 "strings": ["ASProtect"],
                 "severity": "medium",
             },
             "armadillo": {
                 "name": "Armadillo",
                 "type": "protector",
-                "signatures": [b"Armadillo", b"\x55\x8b\xec\x6a\xff\x68\x00\x00\x00\x00"],
+                "signatures": [
+                    b"Armadillo",
+                    b"\x55\x8b\xec\x6a\xff\x68\x00\x00\x00\x00",
+                ],
                 "strings": ["Armadillo"],
                 "severity": "medium",
             },
@@ -109,19 +129,26 @@ class ProtectionAnalyzer:
             "dotfuscator": {
                 "name": ".NET Reactor/Dotfuscator",
                 "type": "obfuscator",
-                "signatures": [b"Dotfuscator", b".NET Reactor", b"Eziriz", b"ConfuserEx"],
+                "signatures": [
+                    b"Dotfuscator",
+                    b".NET Reactor",
+                    b"Eziriz",
+                    b"ConfuserEx",
+                ],
                 "strings": [".NET Reactor", "Dotfuscator", "ConfuserEx"],
                 "severity": "medium",
             },
             "safengine": {
                 "name": "SafeEngine Protector",
                 "type": "protector",
-                "signatures": [b"SafeEngine", b"\x60\xe8\x00\x00\x00\x00\x5d\x81\xed"],
+                "signatures": [
+                    b"SafeEngine",
+                    b"\x60\xe8\x00\x00\x00\x00\x5d\x81\xed",
+                ],
                 "strings": ["SafeEngine"],
                 "severity": "medium",
             },
         }
-        return signatures
 
     def analyze(self, file_path: str | Path) -> dict[str, Any]:
         """Perform comprehensive protection analysis on a binary file."""
@@ -168,13 +195,18 @@ class ProtectionAnalyzer:
 
             self.logger.info("Step 7: Generating recommendations.")
             recommendations = self._generate_recommendations(
-                detected_protections, entropy_analysis, section_analysis, anti_analysis,
+                detected_protections,
+                entropy_analysis,
+                section_analysis,
+                anti_analysis,
             )
             self.logger.info(f"Generated {len(recommendations)} recommendation(s).")
             self.logger.info("Step 7: Completed.")
 
             self.logger.info("Step 8: Calculating risk score.")
-            risk_score = self._calculate_risk_score(detected_protections, entropy_analysis, anti_analysis)
+            risk_score = self._calculate_risk_score(
+                detected_protections, entropy_analysis, anti_analysis
+            )
             self.logger.info(f"Calculated risk score: {risk_score}")
             self.logger.info("Step 8: Completed.")
 
@@ -192,7 +224,9 @@ class ProtectionAnalyzer:
             }
 
         except Exception as e:
-            self.logger.exception(f"An unexpected error occurred during protection analysis for {file_path}: {e}")
+            self.logger.exception(
+                f"An unexpected error occurred during protection analysis for {file_path}: {e}"
+            )
             return {"error": str(e)}
 
     def _get_file_info(self, file_path: Path, file_data: bytes) -> dict[str, Any]:
@@ -216,7 +250,12 @@ class ProtectionAnalyzer:
             return "PE"
         if file_data[:4] == b"\x7fELF":
             return "ELF"
-        if file_data[:4] in (b"\xfe\xed\xfa\xce", b"\xfe\xed\xfa\xcf", b"\xce\xfa\xed\xfe", b"\xcf\xfa\xed\xfe"):
+        if file_data[:4] in (
+            b"\xfe\xed\xfa\xce",
+            b"\xfe\xed\xfa\xcf",
+            b"\xce\xfa\xed\xfe",
+            b"\xcf\xfa\xed\xfe",
+        ):
             return "Mach-O"
 
         return "Unknown"
@@ -228,12 +267,14 @@ class ProtectionAnalyzer:
         for _prot_key, prot_info in self.protection_signatures.items():
             for sig in prot_info["signatures"]:
                 if sig in file_data:
-                    detections.append({
-                        "name": prot_info["name"],
-                        "type": prot_info["type"],
-                        "severity": prot_info["severity"],
-                        "signatures_matched": [sig.hex() if isinstance(sig, bytes) else sig],
-                    })
+                    detections.append(
+                        {
+                            "name": prot_info["name"],
+                            "type": prot_info["type"],
+                            "severity": prot_info["severity"],
+                            "signatures_matched": [sig.hex() if isinstance(sig, bytes) else sig],
+                        }
+                    )
                     break
 
         return detections
@@ -273,15 +314,17 @@ class ProtectionAnalyzer:
         if HAS_PEFILE and file_data[:2] == b"MZ":
             try:
                 pe = pefile.PE(data=file_data)
-                for section in pe.sections:
-                    sections.append({
+                sections.extend(
+                    {
                         "name": section.Name.decode().rstrip("\x00"),
                         "virtual_address": section.VirtualAddress,
                         "virtual_size": section.Misc_VirtualSize,
                         "raw_size": section.SizeOfRawData,
                         "entropy": section.get_entropy(),
                         "characteristics": section.Characteristics,
-                    })
+                    }
+                    for section in pe.sections
+                )
             except Exception as e:
                 self.logger.warning(f"Failed to parse PE sections: {e}")
 
@@ -296,9 +339,14 @@ class ProtectionAnalyzer:
         suspicious_imports = []
 
         suspicious_apis = [
-            "VirtualAlloc", "VirtualProtect", "CreateRemoteThread",
-            "WriteProcessMemory", "IsDebuggerPresent", "CheckRemoteDebuggerPresent",
-            "NtQueryInformationProcess", "ZwQueryInformationProcess",
+            "VirtualAlloc",
+            "VirtualProtect",
+            "CreateRemoteThread",
+            "WriteProcessMemory",
+            "IsDebuggerPresent",
+            "CheckRemoteDebuggerPresent",
+            "NtQueryInformationProcess",
+            "ZwQueryInformationProcess",
         ]
 
         if HAS_PEFILE and file_data[:2] == b"MZ":
@@ -309,7 +357,9 @@ class ProtectionAnalyzer:
                         dll_name = entry.dll.decode() if isinstance(entry.dll, bytes) else entry.dll
                         for imp in entry.imports:
                             if imp.name:
-                                func_name = imp.name.decode() if isinstance(imp.name, bytes) else imp.name
+                                func_name = (
+                                    imp.name.decode() if isinstance(imp.name, bytes) else imp.name
+                                )
                                 imports.append(f"{dll_name}!{func_name}")
                                 if any(api in func_name for api in suspicious_apis):
                                     suspicious_imports.append(f"{dll_name}!{func_name}")
@@ -324,8 +374,6 @@ class ProtectionAnalyzer:
 
     def _detect_anti_analysis(self, file_data: bytes) -> dict[str, Any]:
         """Detect anti-analysis and anti-debugging techniques."""
-        techniques = []
-
         anti_debug_signatures = {
             "IsDebuggerPresent": b"IsDebuggerPresent",
             "CheckRemoteDebuggerPresent": b"CheckRemoteDebuggerPresent",
@@ -334,10 +382,11 @@ class ProtectionAnalyzer:
             "RDTSC timing": b"\x0f\x31",
         }
 
-        for technique, signature in anti_debug_signatures.items():
-            if signature in file_data:
-                techniques.append(technique)
-
+        techniques = [
+            technique
+            for technique, signature in anti_debug_signatures.items()
+            if signature in file_data
+        ]
         return {
             "anti_debug_detected": len(techniques) > 0,
             "techniques": techniques,
@@ -356,13 +405,19 @@ class ProtectionAnalyzer:
 
         if detected_protections:
             prot_names = [p["name"] for p in detected_protections]
-            recommendations.append(f"Binary is protected with: {', '.join(prot_names)}")
-            recommendations.append("Consider using specialized unpacking tools for detected protections")
-
+            recommendations.extend(
+                (
+                    f"Binary is protected with: {', '.join(prot_names)}",
+                    "Consider using specialized unpacking tools for detected protections",
+                )
+            )
         if entropy_analysis.get("overall_entropy", 0) > self.entropy_threshold_high:
-            recommendations.append("High entropy detected - binary likely encrypted or compressed")
-            recommendations.append("Attempt unpacking before static analysis")
-
+            recommendations.extend(
+                (
+                    "High entropy detected - binary likely encrypted or compressed",
+                    "Attempt unpacking before static analysis",
+                )
+            )
         if section_analysis.get("suspicious_sections"):
             recommendations.append("Suspicious high-entropy sections detected")
 
@@ -370,7 +425,9 @@ class ProtectionAnalyzer:
             recommendations.append("Anti-debugging techniques detected - use stealth debugging")
 
         if not recommendations:
-            recommendations.append("No significant protections detected - proceed with standard analysis")
+            recommendations.append(
+                "No significant protections detected - proceed with standard analysis"
+            )
 
         return recommendations
 
@@ -384,7 +441,9 @@ class ProtectionAnalyzer:
         risk_score = 0
 
         risk_score += len(detected_protections) * 15
-        risk_score += min(len([p for p in detected_protections if p.get("severity") == "high"]) * 10, 30)
+        risk_score += min(
+            len([p for p in detected_protections if p.get("severity") == "high"]) * 10, 30
+        )
 
         entropy = entropy_analysis.get("overall_entropy", 0)
         if entropy > self.entropy_threshold_high:
@@ -400,4 +459,5 @@ class ProtectionAnalyzer:
     def _get_protection_timestamp(self) -> str:
         """Get current timestamp for analysis."""
         from datetime import datetime
-        return datetime.utcnow().isoformat() + "Z"
+
+        return f"{datetime.utcnow().isoformat()}Z"

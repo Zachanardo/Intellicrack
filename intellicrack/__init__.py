@@ -41,6 +41,7 @@ Usage:
 # Set basic threading safety environment variables immediately
 import os
 
+
 os.environ.setdefault("OMP_NUM_THREADS", "1")
 os.environ.setdefault("MKL_NUM_THREADS", "1")
 os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
@@ -48,6 +49,7 @@ os.environ.setdefault("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1")
 
 # Standard library imports
 import logging
+
 
 # GIL safety will be initialized lazily if needed
 _gil_safety_initialized = False
@@ -86,13 +88,13 @@ def _initialize_gpu() -> str:
             os.environ.setdefault("MKL_NUM_THREADS", "1")
             os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
 
-            from .utils.gpu_autoloader import get_device, get_gpu_info, gpu_autoloader
+            from .utils.gpu_autoloader import get_gpu_info, gpu_autoloader
 
             gpu_autoloader.setup()
 
             gpu_info = get_gpu_info()
             if gpu_info.get("available", False):
-                _default_device = get_device()
+                _default_device = gpu_autoloader.get_device_string()
         except (ImportError, OSError, RuntimeError):
             _default_device = "cpu"
         _gpu_initialized = True
@@ -124,19 +126,17 @@ def _initialize_gpu_with_timeout(timeout_seconds: int = 5) -> str:
         """Worker thread for GPU initialization."""
         try:
             import os
+
             os.environ.setdefault("OMP_NUM_THREADS", "1")
             os.environ.setdefault("MKL_NUM_THREADS", "1")
             os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
 
-            from .utils.gpu_autoloader import get_device, get_gpu_info, gpu_autoloader
+            from .utils.gpu_autoloader import get_gpu_info, gpu_autoloader
 
             gpu_autoloader.setup()
 
             gpu_info = get_gpu_info()
-            if gpu_info.get("available", False):
-                result["device"] = get_device()
-            else:
-                result["device"] = "cpu"
+            result["device"] = gpu_autoloader.get_device_string() if gpu_info.get("available", False) else "cpu"
         except (ImportError, OSError, RuntimeError) as e:
             result["error"] = str(e)
             result["device"] = "cpu"
@@ -147,7 +147,9 @@ def _initialize_gpu_with_timeout(timeout_seconds: int = 5) -> str:
     init_thread.join(timeout=timeout_seconds)
 
     if init_thread.is_alive():
-        logger.warning("GPU initialization timed out after %ds - using CPU fallback", timeout_seconds)
+        logger.warning(
+            "GPU initialization timed out after %ds - using CPU fallback", timeout_seconds
+        )
         _default_device = "cpu"
     else:
         if result["error"]:
@@ -366,9 +368,14 @@ def get_version() -> str:
     Example:
         .. code-block:: python
 
-            from intellicrack import get_version
+            from intellicrack import (
+                get_version,
+            )
+
             version = get_version()
-            print(f"Running Intellicrack v{version}")
+            print(
+                f"Running Intellicrack v{version}"
+            )
             # Output: Running Intellicrack v1.0.0
 
     """
@@ -395,7 +402,10 @@ def create_app() -> object:
     Example:
         .. code-block:: python
 
-            from intellicrack import create_app
+            from intellicrack import (
+                create_app,
+            )
+
             app = create_app()
             app.show()
 
@@ -430,7 +440,10 @@ def run_app() -> int:
     Example:
         .. code-block:: python
 
-            from intellicrack import run_app
+            from intellicrack import (
+                run_app,
+            )
+
             exit_code = run_app()
             sys.exit(exit_code)
 
@@ -461,9 +474,14 @@ def get_default_device() -> str:
     Example:
         .. code-block:: python
 
-            from intellicrack import get_default_device
+            from intellicrack import (
+                get_default_device,
+            )
+
             device = get_default_device()
-            print(f"Using device: {device}")
+            print(
+                f"Using device: {device}"
+            )
             # Output: Using device: cuda:0
 
     """

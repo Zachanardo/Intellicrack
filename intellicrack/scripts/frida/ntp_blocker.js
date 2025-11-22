@@ -368,30 +368,25 @@ const NtpBlocker = {
                 onLeave: function (retval) {
                     if (retval.toInt32() > 0 && this.buf) {
                         var data = this.buf.readUtf8String(retval.toInt32());
-                        if (data) {
-                            // Check for NMEA sentences with time data
-                            if (
-                                data.includes('$GPRMC') ||
-                                data.includes('$GPGGA') ||
-                                data.includes('$GPZDA') ||
-                                data.includes('$GNGGA')
-                            ) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'ntp_blocker',
-                                    action: 'gps_time_data_blocked',
-                                    nmea_type: data.substring(0, 6),
-                                });
-
-                                // Corrupt GPS time data
-                                var corrupted = data
-                                    .replace(/\d{2}:\d{2}:\d{2}/g, '00:00:00')
-                                    .replace(/\d{6}\.\d+/g, '000000.000')
-                                    .replace(/\d{4},\d{2},\d{2}/g, '0000,00,00');
-
-                                Memory.writeUtf8String(this.buf, corrupted);
-                                self.stats.connectionsBlocked++;
-                            }
+                        if (data && (data.includes('$GPRMC') ||
+                                                        data.includes('$GPGGA') ||
+                                                        data.includes('$GPZDA') ||
+                                                        data.includes('$GNGGA'))) {
+                              send({
+                                  type: 'bypass',
+                                  target: 'ntp_blocker',
+                                  action: 'gps_time_data_blocked',
+                                  nmea_type: data.substring(0, 6),
+                              });
+                        
+                              // Corrupt GPS time data
+                              var corrupted = data
+                                  .replace(/\d{2}:\d{2}:\d{2}/g, '00:00:00')
+                                  .replace(/\d{6}\.\d+/g, '000000.000')
+                                  .replace(/\d{4},\d{2},\d{2}/g, '0000,00,00');
+                        
+                              Memory.writeUtf8String(this.buf, corrupted);
+                              self.stats.connectionsBlocked++;
                         }
                     }
                 },

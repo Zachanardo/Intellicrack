@@ -57,8 +57,8 @@ class ComprehensiveValidationReport:
     total_processing_time: float
 
     # Validation results
-    detection_results: List[ValidationResult]
-    evidence_integrity_reports: List[EvidenceIntegrityReport]
+    detection_results: list[ValidationResult]
+    evidence_integrity_reports: list[EvidenceIntegrityReport]
 
     # Aggregate metrics
     overall_success_rate: float
@@ -68,19 +68,19 @@ class ComprehensiveValidationReport:
     total_evidence_points_collected: int
 
     # Performance benchmarks
-    performance_benchmarks: Dict[str, Any]
+    performance_benchmarks: dict[str, Any]
 
     # Quality assessment
     validation_quality_score: float
-    confidence_distribution: Dict[str, int]
-    anomaly_summary: Dict[str, int]
+    confidence_distribution: dict[str, int]
+    anomaly_summary: dict[str, int]
 
     # Recommendations
-    improvement_recommendations: List[str]
-    remediation_actions: List[str]
+    improvement_recommendations: list[str]
+    remediation_actions: list[str]
 
     # Metadata
-    validation_metadata: Dict[str, Any]
+    validation_metadata: dict[str, Any]
 
 
 class ValidationOrchestrator:
@@ -89,7 +89,7 @@ class ValidationOrchestrator:
     Coordinates all Phase 2 validation components to provide complete validation coverage.
     """
 
-    def __init__(self, config: Optional[ComprehensiveValidationConfig] = None, logger: Optional[logging.Logger] = None):
+    def __init__(self, config: ComprehensiveValidationConfig | None = None, logger: logging.Logger | None = None):
         """Initialize validation orchestrator with comprehensive configuration."""
         # Initialize configuration
         if config is None:
@@ -105,8 +105,8 @@ class ValidationOrchestrator:
         self.evidence_verifier = EvidenceVerifier(self.config.evidence_verification_config, self.logger)
 
         # Initialize utilities (with optional components)
-        self.report_generator: Optional[ReportGenerator] = None
-        self.config_manager: Optional[ConfigManager] = None
+        self.report_generator: ReportGenerator | None = None
+        self.config_manager: ConfigManager | None = None
 
         try:
             self.report_generator = ReportGenerator()
@@ -130,9 +130,9 @@ class ValidationOrchestrator:
 
         self.logger.info("ValidationOrchestrator initialized successfully")
 
-    async def orchestrate_comprehensive_validation(self, binary_paths: List[Path],
-                                                 expected_protections: Optional[Dict[str, Set[str]]] = None,
-                                                 validation_name: Optional[str] = None) -> ComprehensiveValidationReport:
+    async def orchestrate_comprehensive_validation(self, binary_paths: list[Path],
+                                                 expected_protections: dict[str, set[str]] | None = None,
+                                                 validation_name: str | None = None) -> ComprehensiveValidationReport:
         """
         Orchestrate comprehensive validation across all Phase 2 components.
 
@@ -220,7 +220,7 @@ class ValidationOrchestrator:
             )
 
     async def orchestrate_single_binary_validation(self, binary_path: Path,
-                                                 expected_protections: Optional[Set[str]] = None) -> ComprehensiveValidationReport:
+                                                 expected_protections: set[str] | None = None) -> ComprehensiveValidationReport:
         """
         Orchestrate comprehensive validation for a single binary.
 
@@ -236,8 +236,8 @@ class ValidationOrchestrator:
             {str(binary_path): expected_protections} if expected_protections else None
         )
 
-    async def _orchestrate_detection_validation(self, binary_paths: List[Path],
-                                              expected_protections: Optional[Dict[str, Set[str]]]) -> List[ValidationResult]:
+    async def _orchestrate_detection_validation(self, binary_paths: list[Path],
+                                              expected_protections: dict[str, set[str]] | None) -> list[ValidationResult]:
         """Orchestrate detection validation across all binaries."""
         if self.config.batch_processing_enabled and len(binary_paths) > 1:
             # Use batch processing
@@ -251,8 +251,8 @@ class ValidationOrchestrator:
                 results.append(result)
             return results
 
-    async def _orchestrate_evidence_verification(self, detection_results: List[ValidationResult],
-                                               binary_paths: List[Path]) -> List[EvidenceIntegrityReport]:
+    async def _orchestrate_evidence_verification(self, detection_results: list[ValidationResult],
+                                               binary_paths: list[Path]) -> list[EvidenceIntegrityReport]:
         """Orchestrate evidence integrity verification for all detection results."""
         evidence_reports = []
 
@@ -293,8 +293,8 @@ class ValidationOrchestrator:
 
         return evidence_reports
 
-    async def _generate_performance_benchmarks(self, detection_results: List[ValidationResult],
-                                             evidence_reports: List[EvidenceIntegrityReport]) -> Dict[str, Any]:
+    async def _generate_performance_benchmarks(self, detection_results: list[ValidationResult],
+                                             evidence_reports: list[EvidenceIntegrityReport]) -> dict[str, Any]:
         """Generate comprehensive performance benchmarks."""
         if not self.config.performance_benchmarking:
             return {'benchmarking_disabled': True}
@@ -321,7 +321,7 @@ class ValidationOrchestrator:
             self.logger.error(f"Performance benchmarking failed: {str(e)}")
             return {'error': str(e)}
 
-    def _benchmark_detection_performance(self, detection_results: List[ValidationResult]) -> Dict[str, Any]:
+    def _benchmark_detection_performance(self, detection_results: list[ValidationResult]) -> dict[str, Any]:
         """Benchmark detection validation performance."""
         if not detection_results:
             return {'no_results': True}
@@ -350,7 +350,7 @@ class ValidationOrchestrator:
             'total_binaries_processed': len(detection_results)
         }
 
-    def _benchmark_evidence_performance(self, evidence_reports: List[EvidenceIntegrityReport]) -> Dict[str, Any]:
+    def _benchmark_evidence_performance(self, evidence_reports: list[EvidenceIntegrityReport]) -> dict[str, Any]:
         """Benchmark evidence verification performance."""
         if not evidence_reports:
             return {'no_reports': True}
@@ -375,7 +375,7 @@ class ValidationOrchestrator:
             'total_evidence_reports': len(evidence_reports)
         }
 
-    def _benchmark_memory_usage(self) -> Dict[str, Any]:
+    def _benchmark_memory_usage(self) -> dict[str, Any]:
         """Benchmark memory usage during validation."""
         try:
             import psutil
@@ -392,8 +392,8 @@ class ValidationOrchestrator:
         except Exception as e:
             return {'error': str(e)}
 
-    def _benchmark_scalability(self, detection_results: List[ValidationResult],
-                             evidence_reports: List[EvidenceIntegrityReport]) -> Dict[str, Any]:
+    def _benchmark_scalability(self, detection_results: list[ValidationResult],
+                             evidence_reports: list[EvidenceIntegrityReport]) -> dict[str, Any]:
         """Benchmark scalability metrics."""
         return {
             'binaries_processed': len(detection_results),
@@ -403,8 +403,8 @@ class ValidationOrchestrator:
             'scalability_rating': self._assess_scalability_rating(detection_results)
         }
 
-    def _benchmark_accuracy(self, detection_results: List[ValidationResult],
-                          evidence_reports: List[EvidenceIntegrityReport]) -> Dict[str, Any]:
+    def _benchmark_accuracy(self, detection_results: list[ValidationResult],
+                          evidence_reports: list[EvidenceIntegrityReport]) -> dict[str, Any]:
         """Benchmark accuracy metrics."""
         consensus_scores = [r.consensus_score for r in detection_results]
         integrity_scores = [r.integrity_score for r in evidence_reports]
@@ -419,8 +419,8 @@ class ValidationOrchestrator:
             )
         }
 
-    def _benchmark_throughput(self, detection_results: List[ValidationResult],
-                            evidence_reports: List[EvidenceIntegrityReport]) -> Dict[str, Any]:
+    def _benchmark_throughput(self, detection_results: list[ValidationResult],
+                            evidence_reports: list[EvidenceIntegrityReport]) -> dict[str, Any]:
         """Benchmark throughput metrics."""
         total_processing_time = sum(
             r.performance_metrics.get('total_processing_time', 0) for r in detection_results
@@ -433,8 +433,8 @@ class ValidationOrchestrator:
             'validations_per_hour': len(detection_results) * 3600 / max(1, total_processing_time)
         }
 
-    def _calculate_aggregate_metrics(self, detection_results: List[ValidationResult],
-                                   evidence_reports: List[EvidenceIntegrityReport]) -> Dict[str, Any]:
+    def _calculate_aggregate_metrics(self, detection_results: list[ValidationResult],
+                                   evidence_reports: list[EvidenceIntegrityReport]) -> dict[str, Any]:
         """Calculate aggregate metrics across all validation results."""
         if not detection_results:
             return {
@@ -476,8 +476,8 @@ class ValidationOrchestrator:
             'total_validations': len(detection_results)
         }
 
-    def _assess_validation_quality(self, detection_results: List[ValidationResult],
-                                 evidence_reports: List[EvidenceIntegrityReport]) -> Dict[str, Any]:
+    def _assess_validation_quality(self, detection_results: list[ValidationResult],
+                                 evidence_reports: list[EvidenceIntegrityReport]) -> dict[str, Any]:
         """Assess overall validation quality."""
         if not detection_results:
             return {'validation_quality_score': 0.0, 'quality_rating': 'NO_DATA'}
@@ -488,13 +488,13 @@ class ValidationOrchestrator:
         success_rate_quality = sum(1 for r in detection_results if r.validation_passed) / len(detection_results)
 
         # Confidence distribution
-        confidence_distribution: Dict[str, int] = {}
+        confidence_distribution: dict[str, int] = {}
         for result in detection_results:
             confidence = result.confidence_level
             confidence_distribution[confidence] = confidence_distribution.get(confidence, 0) + 1
 
         # Anomaly summary
-        anomaly_summary: Dict[str, int] = {}
+        anomaly_summary: dict[str, int] = {}
         for report in evidence_reports:
             for anomaly in report.anomaly_detection:
                 category = anomaly.split(':')[0] if ':' in anomaly else 'general'
@@ -529,9 +529,9 @@ class ValidationOrchestrator:
             'anomaly_summary': anomaly_summary
         }
 
-    def _generate_recommendations(self, detection_results: List[ValidationResult],
-                                evidence_reports: List[EvidenceIntegrityReport],
-                                quality_assessment: Dict[str, Any]) -> Tuple[List[str], List[str]]:
+    def _generate_recommendations(self, detection_results: list[ValidationResult],
+                                evidence_reports: list[EvidenceIntegrityReport],
+                                quality_assessment: dict[str, Any]) -> tuple[list[str], list[str]]:
         """Generate improvement recommendations and remediation actions."""
         improvement_recommendations = []
         remediation_actions = []
@@ -577,13 +577,13 @@ class ValidationOrchestrator:
 
         return improvement_recommendations, remediation_actions
 
-    def _create_comprehensive_report(self, validation_id: str, binary_paths: List[Path],
-                                   detection_results: List[ValidationResult],
-                                   evidence_reports: List[EvidenceIntegrityReport],
-                                   performance_benchmarks: Dict[str, Any],
-                                   aggregate_metrics: Dict[str, Any],
-                                   quality_assessment: Dict[str, Any],
-                                   recommendations: Tuple[List[str], List[str]],
+    def _create_comprehensive_report(self, validation_id: str, binary_paths: list[Path],
+                                   detection_results: list[ValidationResult],
+                                   evidence_reports: list[EvidenceIntegrityReport],
+                                   performance_benchmarks: dict[str, Any],
+                                   aggregate_metrics: dict[str, Any],
+                                   quality_assessment: dict[str, Any],
+                                   recommendations: tuple[list[str], list[str]],
                                    processing_time: float) -> ComprehensiveValidationReport:
         """Create comprehensive validation report."""
         improvement_recommendations, remediation_actions = recommendations
@@ -647,23 +647,23 @@ class ValidationOrchestrator:
         except Exception as e:
             self.logger.error(f"Failed to store comprehensive results: {str(e)}")
 
-    def _calculate_average_processing_time(self, detection_results: List[ValidationResult]) -> float:
+    def _calculate_average_processing_time(self, detection_results: list[ValidationResult]) -> float:
         """Calculate average processing time from detection results."""
-        processing_times: List[float] = [
+        processing_times: list[float] = [
             float(r.performance_metrics.get('total_processing_time', 0))
             for r in detection_results
             if r.performance_metrics.get('total_processing_time', 0) > 0
         ]
         return float(sum(processing_times) / max(1, len(processing_times)))
 
-    def _estimate_hourly_throughput(self, detection_results: List[ValidationResult]) -> float:
+    def _estimate_hourly_throughput(self, detection_results: list[ValidationResult]) -> float:
         """Estimate hourly throughput based on current performance."""
         avg_time = self._calculate_average_processing_time(detection_results)
         if avg_time > 0:
             return 3600 / avg_time  # Binaries per hour
         return 0.0
 
-    def _assess_scalability_rating(self, detection_results: List[ValidationResult]) -> str:
+    def _assess_scalability_rating(self, detection_results: list[ValidationResult]) -> str:
         """Assess scalability rating based on performance metrics."""
         avg_time = self._calculate_average_processing_time(detection_results)
 
@@ -678,7 +678,7 @@ class ValidationOrchestrator:
         else:
             return "POOR"
 
-    def _calculate_evidence_throughput(self, evidence_reports: List[EvidenceIntegrityReport],
+    def _calculate_evidence_throughput(self, evidence_reports: list[EvidenceIntegrityReport],
                                      total_time: float) -> float:
         """Calculate evidence points processed per minute."""
         total_evidence_checks = sum(
@@ -709,7 +709,7 @@ class ValidationOrchestrator:
             self.orchestration_metrics['total_orchestrations']
         )
 
-    def _generate_validation_id(self, validation_name: Optional[str]) -> str:
+    def _generate_validation_id(self, validation_name: str | None) -> str:
         """Generate unique validation ID."""
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         if validation_name:
@@ -718,7 +718,7 @@ class ValidationOrchestrator:
         else:
             return f"COMP_{timestamp}_{hashlib.md5(str(timestamp).encode()).hexdigest()[:8]}"  # noqa: S324
 
-    def get_orchestration_statistics(self) -> Dict[str, Any]:
+    def get_orchestration_statistics(self) -> dict[str, Any]:
         """Get current orchestration performance statistics."""
         total = self.orchestration_metrics['total_orchestrations']
         return {

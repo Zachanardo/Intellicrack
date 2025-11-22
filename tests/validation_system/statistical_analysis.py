@@ -40,9 +40,9 @@ class StatisticalTestResult:
     run_duration_seconds: float
     test_passed: bool
     random_seed: int
-    environment_variation: Dict[str, Any]
+    environment_variation: dict[str, Any]
     success_rate: float
-    error_message: Optional[str] = None
+    error_message: str | None = None
     timestamp: str = None
 
     def __post_init__(self):
@@ -65,14 +65,14 @@ class StatisticalAnalysisResult:
     confidence_interval_99_upper: float
     hypothesis_test_p_value: float
     hypothesis_test_result: str  # "REJECT_H0" or "FAIL_TO_REJECT_H0"
-    outliers_detected: List[int]
-    outlier_details: List[Dict[str, Any]]
-    runs_data: List[StatisticalTestResult]
+    outliers_detected: list[int]
+    outlier_details: list[dict[str, Any]]
+    runs_data: list[StatisticalTestResult]
     mean_duration: float
     duration_std_dev: float
-    environment_variations: List[Dict[str, Any]]
+    environment_variations: list[dict[str, Any]]
     statistical_power: float
-    error_messages: List[str]
+    error_messages: list[str]
     timestamp: str = None
 
     def __post_init__(self):
@@ -106,7 +106,7 @@ class StatisticalAnalysis:
                 sha256.update(chunk)
         return sha256.hexdigest()
 
-    def _apply_intellicrack_to_binary(self, binary_path: str, random_seed: int) -> Tuple[bool, str]:
+    def _apply_intellicrack_to_binary(self, binary_path: str, random_seed: int) -> tuple[bool, str]:
         """
         Apply Intellicrack to a binary with a specific random seed.
 
@@ -206,7 +206,7 @@ class StatisticalAnalysis:
             logger.error(f"Failed to test cracked binary {binary_path}: {e}")
             return False
 
-    def _vary_environment(self, base_variation: int = 0) -> Dict[str, Any]:
+    def _vary_environment(self, base_variation: int = 0) -> dict[str, Any]:
         """
         Create slight environmental variations for test runs.
         """
@@ -225,7 +225,7 @@ class StatisticalAnalysis:
             "security_software_active": security_software_active
         }
 
-    def _calculate_confidence_interval_t(self, data: List[float], confidence_level: float = 0.99) -> Tuple[float, float]:
+    def _calculate_confidence_interval_t(self, data: list[float], confidence_level: float = 0.99) -> tuple[float, float]:
         """
         Calculate confidence interval using t-distribution.
         """
@@ -249,7 +249,7 @@ class StatisticalAnalysis:
 
         return (mean_val - margin_of_error, mean_val + margin_of_error)
 
-    def _perform_hypothesis_test(self, success_rates: List[float], null_hypothesis: float = 0.95) -> Tuple[float, str]:
+    def _perform_hypothesis_test(self, success_rates: list[float], null_hypothesis: float = 0.95) -> tuple[float, str]:
         """
         Perform one-sample t-test with H0: mean >= null_hypothesis.
         Returns p-value and test result.
@@ -287,7 +287,7 @@ class StatisticalAnalysis:
 
         return (p_value, result)
 
-    def _detect_outliers(self, data: List[float]) -> Tuple[List[int], List[Dict[str, Any]]]:
+    def _detect_outliers(self, data: list[float]) -> tuple[list[int], list[dict[str, Any]]]:
         """
         Detect outliers using IQR method.
         """
@@ -327,7 +327,7 @@ class StatisticalAnalysis:
 
     def run_statistical_test(self, binary_path: str, software_name: str, test_type: str = "general",
                            run_number: int = 1, random_seed: int = 1,
-                           environment_variation: Optional[Dict[str, Any]] = None) -> StatisticalTestResult:
+                           environment_variation: dict[str, Any] | None = None) -> StatisticalTestResult:
         """
         Run a single statistical test on a software binary.
 
@@ -510,7 +510,7 @@ class StatisticalAnalysis:
 
         return result
 
-    def run_all_statistical_analyses(self) -> List[StatisticalAnalysisResult]:
+    def run_all_statistical_analyses(self) -> list[StatisticalAnalysisResult]:
         """
         Run statistical analysis on all available binaries.
         """
@@ -583,7 +583,7 @@ class StatisticalAnalysis:
         logger.info(f"Completed statistical analysis for {len(results)} binaries")
         return results
 
-    def generate_report(self, results: List[StatisticalAnalysisResult]) -> str:
+    def generate_report(self, results: list[StatisticalAnalysisResult]) -> str:
         """
         Generate a comprehensive report of statistical analysis results.
         """
@@ -637,7 +637,7 @@ class StatisticalAnalysis:
 
         return "\n".join(report_lines)
 
-    def save_report(self, results: List[StatisticalAnalysisResult], filename: Optional[str] = None) -> str:
+    def save_report(self, results: list[StatisticalAnalysisResult], filename: str | None = None) -> str:
         """
         Save the statistical analysis report to a file.
         """

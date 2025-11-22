@@ -53,15 +53,15 @@ class ProtectionVersionInfo:
     """Detailed protection version and configuration information."""
     protection_name: str
     version: str
-    build_number: Optional[str]
-    release_date: Optional[str]
-    configuration: Dict[str, Any]
-    features_enabled: List[str]
-    features_disabled: List[str]
+    build_number: str | None
+    release_date: str | None
+    configuration: dict[str, Any]
+    features_enabled: list[str]
+    features_disabled: list[str]
     detection_confidence: float
     version_signature: str
     detection_method: str
-    additional_metadata: Dict[str, Any]
+    additional_metadata: dict[str, Any]
 
 
 @dataclass
@@ -72,25 +72,25 @@ class DetectionDepthReport:
     timestamp: str
 
     # Version detection results
-    protection_versions: List[ProtectionVersionInfo]
+    protection_versions: list[ProtectionVersionInfo]
     version_detection_accuracy: float
     configuration_completeness: float
 
     # Signature analysis
-    signature_matches: Dict[str, List[str]]
-    custom_signatures_detected: List[str]
+    signature_matches: dict[str, list[str]]
+    custom_signatures_detected: list[str]
     signature_database_version: str
 
     # Feature analysis
-    protection_features: Dict[str, List[str]]
-    feature_interaction_analysis: Dict[str, Any]
-    compatibility_matrix: Dict[str, Dict[str, bool]]
+    protection_features: dict[str, list[str]]
+    feature_interaction_analysis: dict[str, Any]
+    compatibility_matrix: dict[str, dict[str, bool]]
 
     # Advanced analysis
-    binary_modification_detection: Dict[str, Any]
-    packer_layer_analysis: List[Dict[str, Any]]
-    obfuscation_techniques: List[str]
-    anti_analysis_features: List[str]
+    binary_modification_detection: dict[str, Any]
+    packer_layer_analysis: list[dict[str, Any]]
+    obfuscation_techniques: list[str]
+    anti_analysis_features: list[str]
 
     # Depth metrics
     detection_depth_score: float
@@ -98,12 +98,12 @@ class DetectionDepthReport:
     analysis_completeness: float
 
     # Validation metadata
-    validation_evidence: Dict[str, Any]
-    confidence_assessment: Dict[str, float]
-    analysis_metadata: Dict[str, Any]
+    validation_evidence: dict[str, Any]
+    confidence_assessment: dict[str, float]
+    analysis_metadata: dict[str, Any]
 
     # Phase 2.2.3: Entry points and critical functions validation
-    entry_point_function_validation: Dict[str, Any] = None
+    entry_point_function_validation: dict[str, Any] = None
 
 
 @dataclass
@@ -120,7 +120,7 @@ class DetectionDepthConfig:
     custom_patterns_path: Path = Path("custom_patterns")
     analysis_timeout_seconds: int = 300
     deep_analysis_enabled: bool = True
-    version_fingerprint_database: Optional[Path] = None
+    version_fingerprint_database: Path | None = None
 
 
 class DetectionDepthValidator:
@@ -129,7 +129,7 @@ class DetectionDepthValidator:
     Provides granular analysis beyond simple protection presence detection.
     """
 
-    def __init__(self, config: Optional[DetectionDepthConfig] = None, logger: Optional[logging.Logger] = None):
+    def __init__(self, config: DetectionDepthConfig | None = None, logger: logging.Logger | None = None):
         """Initialize detection depth validator with advanced analysis capabilities."""
         self.config = config or DetectionDepthConfig()
         self.logger = logger or get_logger(__name__)
@@ -164,7 +164,7 @@ class DetectionDepthValidator:
         self.logger.info("DetectionDepthValidator initialized successfully")
 
     async def analyze_detection_depth(self, binary_path: Path,
-                                    basic_detection_results: Optional[Dict[str, Any]] = None) -> DetectionDepthReport:
+                                    basic_detection_results: dict[str, Any] | None = None) -> DetectionDepthReport:
         """
         Perform comprehensive detection depth analysis for version and configuration identification.
 
@@ -294,7 +294,7 @@ class DetectionDepthValidator:
                 analysis_metadata={'error': str(e), 'processing_time': processing_time}
             )
 
-    async def _perform_enhanced_detection(self, binary_path: Path) -> Dict[str, Any]:
+    async def _perform_enhanced_detection(self, binary_path: Path) -> dict[str, Any]:
         """Perform enhanced protection detection with additional analysis."""
         if not self.protection_analyzer:
             return {'detected_protections': [], 'error': 'ProtectionAnalyzer unavailable'}
@@ -319,7 +319,7 @@ class DetectionDepthValidator:
             return {'detected_protections': [], 'error': str(e)}
 
     async def _identify_protection_versions(self, binary_path: Path,
-                                         detection_results: Dict[str, Any]) -> List[ProtectionVersionInfo]:
+                                         detection_results: dict[str, Any]) -> list[ProtectionVersionInfo]:
         """Identify specific versions of detected protections."""
         if not self.config.enable_version_detection:
             return []
@@ -359,7 +359,7 @@ class DetectionDepthValidator:
             self.logger.error(f"Version identification failed: {str(e)}")
             return []
 
-    async def _extract_version_strings(self, binary_path: Path, protection_name: str) -> Dict[str, Any]:
+    async def _extract_version_strings(self, binary_path: Path, protection_name: str) -> dict[str, Any]:
         """Extract version strings from binary using multiple methods."""
         version_data = {'strings': [], 'confidence': 0.0}
 
@@ -402,7 +402,7 @@ class DetectionDepthValidator:
 
         return version_data
 
-    async def _match_version_signatures(self, binary_path: Path, protection_name: str) -> Dict[str, Any]:
+    async def _match_version_signatures(self, binary_path: Path, protection_name: str) -> dict[str, Any]:
         """Match binary signatures to identify specific protection versions."""
         signature_data = {'version': None, 'confidence': 0.0, 'signature_match': None}
 
@@ -440,7 +440,7 @@ class DetectionDepthValidator:
 
         return signature_data
 
-    async def _detect_version_from_features(self, binary_path: Path, protection_name: str) -> Dict[str, Any]:
+    async def _detect_version_from_features(self, binary_path: Path, protection_name: str) -> dict[str, Any]:
         """Detect version based on feature analysis."""
         feature_data = {'version': None, 'confidence': 0.0, 'features': []}
 
@@ -470,7 +470,7 @@ class DetectionDepthValidator:
 
         return feature_data
 
-    async def _detect_version_from_structure(self, binary_path: Path, protection_name: str) -> Dict[str, Any]:
+    async def _detect_version_from_structure(self, binary_path: Path, protection_name: str) -> dict[str, Any]:
         """Detect version from binary structure analysis."""
         structural_data = {'version': None, 'confidence': 0.0, 'structural_indicators': []}
 
@@ -505,9 +505,9 @@ class DetectionDepthValidator:
 
         return structural_data
 
-    def _combine_version_detection_results(self, protection_name: str, version_strings: Dict[str, Any],
-                                         signature_version: Dict[str, Any], feature_version: Dict[str, Any],
-                                         structural_version: Dict[str, Any]) -> Optional[ProtectionVersionInfo]:
+    def _combine_version_detection_results(self, protection_name: str, version_strings: dict[str, Any],
+                                         signature_version: dict[str, Any], feature_version: dict[str, Any],
+                                         structural_version: dict[str, Any]) -> ProtectionVersionInfo | None:
         """Combine multiple version detection results into final version information."""
         try:
             # Collect all version candidates with confidence scores
@@ -587,7 +587,7 @@ class DetectionDepthValidator:
             return None
 
     async def _analyze_protection_configurations(self, binary_path: Path,
-                                               protection_versions: List[ProtectionVersionInfo]) -> Dict[str, Any]:
+                                               protection_versions: list[ProtectionVersionInfo]) -> dict[str, Any]:
         """Analyze detailed protection configurations."""
         if not self.config.enable_configuration_analysis:
             return {}
@@ -629,7 +629,7 @@ class DetectionDepthValidator:
 
         return configuration_analysis
 
-    async def _analyze_configuration_settings(self, binary_path: Path, protection_name: str, version: str) -> Dict[str, Any]:
+    async def _analyze_configuration_settings(self, binary_path: Path, protection_name: str, version: str) -> dict[str, Any]:
         """Analyze detailed configuration settings including trial/full mode detection."""
         config_settings = {
             'license_type': 'unknown',
@@ -797,7 +797,7 @@ class DetectionDepthValidator:
 
         return config_settings
 
-    async def _analyze_protection_parameters(self, binary_path: Path, protection_name: str, version: str) -> Dict[str, Any]:
+    async def _analyze_protection_parameters(self, binary_path: Path, protection_name: str, version: str) -> dict[str, Any]:
         """Analyze protection-specific parameters and settings."""
         protection_params = {
             'encryption_strength': 'unknown',
@@ -944,7 +944,7 @@ class DetectionDepthValidator:
 
         return protection_params
 
-    async def _analyze_encryption_configuration(self, binary_path: Path, protection_name: str, version: str) -> Dict[str, Any]:
+    async def _analyze_encryption_configuration(self, binary_path: Path, protection_name: str, version: str) -> dict[str, Any]:
         """Analyze encryption configuration and cryptographic implementations."""
         encryption_config = {
             'primary_algorithm': 'unknown',
@@ -1135,7 +1135,7 @@ class DetectionDepthValidator:
 
         return encryption_config
 
-    async def _detect_protection_specific_config(self, binary_data: bytes, protection_name: str, version: str) -> Dict[str, Any]:
+    async def _detect_protection_specific_config(self, binary_data: bytes, protection_name: str, version: str) -> dict[str, Any]:
         """Detect protection-specific configuration when general patterns fail."""
         config_updates = {}
 
@@ -1198,7 +1198,7 @@ class DetectionDepthValidator:
 
         return config_updates
 
-    async def _analyze_license_files_and_registry(self, config_settings: Dict[str, Any], protection_name: str):
+    async def _analyze_license_files_and_registry(self, config_settings: dict[str, Any], protection_name: str):
         """Analyze license files and registry entries for additional configuration info."""
         try:
             import winreg
@@ -1240,7 +1240,7 @@ class DetectionDepthValidator:
         except Exception as e:
             self.logger.debug(f"License file/registry analysis skipped: {e}")
 
-    async def _perform_signature_analysis(self, binary_path: Path) -> Dict[str, Any]:
+    async def _perform_signature_analysis(self, binary_path: Path) -> dict[str, Any]:
         """Perform comprehensive signature analysis."""
         if not self.config.enable_signature_analysis:
             return {'signature_matches': {}, 'custom_signatures': [], 'database_version': 'disabled'}
@@ -1294,7 +1294,7 @@ class DetectionDepthValidator:
             return {'error': str(e)}
 
     async def _detect_protection_features(self, binary_path: Path,
-                                        protection_versions: List[ProtectionVersionInfo]) -> Dict[str, Any]:
+                                        protection_versions: list[ProtectionVersionInfo]) -> dict[str, Any]:
         """Detect specific protection features and capabilities."""
         if not self.config.enable_feature_detection:
             return {'features': {}, 'interactions': {}}
@@ -1345,7 +1345,7 @@ class DetectionDepthValidator:
             self.logger.error(f"Feature detection failed: {str(e)}")
             return {'error': str(e)}
 
-    async def _analyze_packer_layers(self, binary_path: Path) -> List[Dict[str, Any]]:
+    async def _analyze_packer_layers(self, binary_path: Path) -> list[dict[str, Any]]:
         """Analyze packer layers and nested protections."""
         if not self.config.enable_packer_analysis:
             return []
@@ -1373,7 +1373,7 @@ class DetectionDepthValidator:
 
         return packer_layers
 
-    async def _detect_obfuscation_techniques(self, binary_path: Path) -> Dict[str, Any]:
+    async def _detect_obfuscation_techniques(self, binary_path: Path) -> dict[str, Any]:
         """Detect obfuscation and anti-analysis techniques."""
         if not self.config.enable_obfuscation_detection:
             return {'techniques': [], 'anti_analysis': []}
@@ -1412,12 +1412,12 @@ class DetectionDepthValidator:
             self.logger.error(f"Obfuscation detection failed: {str(e)}")
             return {'error': str(e)}
 
-    def _calculate_detection_depth_metrics(self, protection_versions: List[ProtectionVersionInfo],
-                                         configuration_analysis: Dict[str, Any],
-                                         signature_analysis: Dict[str, Any],
-                                         feature_analysis: Dict[str, Any],
-                                         packer_analysis: List[Dict[str, Any]],
-                                         obfuscation_analysis: Dict[str, Any]) -> Dict[str, Any]:
+    def _calculate_detection_depth_metrics(self, protection_versions: list[ProtectionVersionInfo],
+                                         configuration_analysis: dict[str, Any],
+                                         signature_analysis: dict[str, Any],
+                                         feature_analysis: dict[str, Any],
+                                         packer_analysis: list[dict[str, Any]],
+                                         obfuscation_analysis: dict[str, Any]) -> dict[str, Any]:
         """Calculate comprehensive detection depth metrics."""
         try:
             metrics = {
@@ -1501,7 +1501,7 @@ class DetectionDepthValidator:
         if self.config.signature_database_path.exists():
             try:
                 for db_file in self.config.signature_database_path.glob('*.json'):
-                    with open(db_file, 'r', encoding='utf-8') as f:
+                    with open(db_file, encoding='utf-8') as f:
                         db_data = json.load(f)
                         self.signature_databases[db_file.stem] = db_data.get('signatures', [])
 
@@ -1515,7 +1515,7 @@ class DetectionDepthValidator:
 
         if self.config.version_fingerprint_database and self.config.version_fingerprint_database.exists():
             try:
-                with open(self.config.version_fingerprint_database, 'r', encoding='utf-8') as f:
+                with open(self.config.version_fingerprint_database, encoding='utf-8') as f:
                     self.version_fingerprints = json.load(f)
 
                 self.logger.info(f"Loaded version fingerprints for {len(self.version_fingerprints)} protections")
@@ -1529,7 +1529,7 @@ class DetectionDepthValidator:
         if self.config.custom_patterns_path.exists():
             try:
                 for pattern_file in self.config.custom_patterns_path.glob('*.json'):
-                    with open(pattern_file, 'r', encoding='utf-8') as f:
+                    with open(pattern_file, encoding='utf-8') as f:
                         patterns = json.load(f)
                         if isinstance(patterns, list):
                             self.custom_patterns.extend(patterns)
@@ -1542,7 +1542,7 @@ class DetectionDepthValidator:
 
     # Advanced analysis methods with production-ready implementations
 
-    async def _detect_enhanced_signatures(self, binary_path: Path) -> List[Dict[str, Any]]:
+    async def _detect_enhanced_signatures(self, binary_path: Path) -> list[dict[str, Any]]:
         """Detect enhanced signatures beyond basic protection detection."""
         enhanced_signatures = []
 
@@ -1657,7 +1657,7 @@ class DetectionDepthValidator:
 
         return enhanced_signatures
 
-    async def _perform_structural_analysis(self, binary_path: Path) -> Dict[str, Any]:
+    async def _perform_structural_analysis(self, binary_path: Path) -> dict[str, Any]:
         """Perform structural analysis of binary file."""
         structural_analysis = {
             'file_characteristics': {},
@@ -1833,7 +1833,7 @@ class DetectionDepthValidator:
                 len(features) for features in report.protection_features.values()
             )
 
-    def _get_analysis_methods_used(self) -> List[str]:
+    def _get_analysis_methods_used(self) -> list[str]:
         """Get list of analysis methods that were used."""
         methods = ['enhanced_detection', 'version_identification']
 
@@ -1851,7 +1851,7 @@ class DetectionDepthValidator:
         return methods
 
     async def _validate_entry_points_and_critical_functions(self, binary_path: Path,
-                                                            protection_versions: List[ProtectionVersionInfo]) -> Dict[str, Any]:
+                                                            protection_versions: list[ProtectionVersionInfo]) -> dict[str, Any]:
         """
         Validate identification of protection entry points and critical functions.
 
@@ -1914,7 +1914,7 @@ class DetectionDepthValidator:
             return validation_results
 
     async def _perform_comprehensive_entry_point_validation(self, binary_path: Path,
-                                                           protection_versions: List[ProtectionVersionInfo]) -> Dict[str, Any]:
+                                                           protection_versions: list[ProtectionVersionInfo]) -> dict[str, Any]:
         """Perform comprehensive entry point validation with detailed analysis."""
         entry_point_validation = {
             'entry_points_identified': [],
@@ -1993,7 +1993,7 @@ class DetectionDepthValidator:
             entry_point_validation['validation_criteria_met']['analysis_completed'] = False
             return entry_point_validation
 
-    async def _enhanced_entry_point_analysis(self, pe, binary_path: Path, protection_name: str, version: str) -> Dict[str, Any]:
+    async def _enhanced_entry_point_analysis(self, pe, binary_path: Path, protection_name: str, version: str) -> dict[str, Any]:
         """Enhanced entry point analysis with detailed characteristics."""
         analysis = {
             'section_name': 'unknown',
@@ -2065,7 +2065,7 @@ class DetectionDepthValidator:
             self.logger.debug(f"Enhanced entry point analysis error: {e}")
             return analysis
 
-    def _get_protection_entry_patterns(self, protection_name: str, version: str) -> Dict[str, bytes]:
+    def _get_protection_entry_patterns(self, protection_name: str, version: str) -> dict[str, bytes]:
         """Get protection-specific entry point patterns for detailed analysis."""
         patterns = {}
 
@@ -2106,7 +2106,7 @@ class DetectionDepthValidator:
         return patterns
 
     async def _perform_critical_function_validation(self, binary_path: Path,
-                                                   protection_versions: List[ProtectionVersionInfo]) -> Dict[str, Any]:
+                                                   protection_versions: list[ProtectionVersionInfo]) -> dict[str, Any]:
         """Perform comprehensive critical function identification and validation."""
         function_validation = {
             'critical_functions_identified': {},
@@ -2173,7 +2173,7 @@ class DetectionDepthValidator:
             function_validation['validation_criteria_met']['analysis_completed'] = False
             return function_validation
 
-    async def _identify_critical_protection_functions(self, binary_path: Path, protection_name: str, version: str) -> Dict[str, Any]:
+    async def _identify_critical_protection_functions(self, binary_path: Path, protection_name: str, version: str) -> dict[str, Any]:
         """Identify critical protection functions through comprehensive analysis."""
         critical_functions = {
             'licensing_functions': [],
@@ -2285,7 +2285,7 @@ class DetectionDepthValidator:
             self.logger.debug(f"Critical function identification error: {e}")
             return critical_functions
 
-    def _categorize_critical_functions(self, identified_functions: Dict[str, Any]) -> Dict[str, List[str]]:
+    def _categorize_critical_functions(self, identified_functions: dict[str, Any]) -> dict[str, list[str]]:
         """Categorize identified critical functions by protection and type."""
         categories = {}
 
@@ -2299,7 +2299,7 @@ class DetectionDepthValidator:
         return categories
 
     async def _analyze_api_call_patterns(self, binary_path: Path,
-                                        protection_versions: List[ProtectionVersionInfo]) -> Dict[str, Any]:
+                                        protection_versions: list[ProtectionVersionInfo]) -> dict[str, Any]:
         """Analyze API call patterns for critical function validation."""
         api_analysis = {
             'call_patterns': {},
@@ -2343,9 +2343,9 @@ class DetectionDepthValidator:
             return api_analysis
 
     async def _cross_validate_entry_points_and_functions(self, binary_path: Path,
-                                                        entry_point_results: Dict[str, Any],
-                                                        critical_function_results: Dict[str, Any],
-                                                        protection_versions: List[ProtectionVersionInfo]) -> Dict[str, Any]:
+                                                        entry_point_results: dict[str, Any],
+                                                        critical_function_results: dict[str, Any],
+                                                        protection_versions: list[ProtectionVersionInfo]) -> dict[str, Any]:
         """Cross-validate entry points against critical functions for consistency."""
         cross_validation = {
             'consistency_score': 0.0,
@@ -2415,9 +2415,9 @@ class DetectionDepthValidator:
             cross_validation['validation_issues'].append(f"Cross-validation error: {str(e)}")
             return cross_validation
 
-    def _calculate_entry_point_function_validation_score(self, entry_point_results: Dict[str, Any],
-                                                        critical_function_results: Dict[str, Any],
-                                                        cross_validation_results: Dict[str, Any]) -> float:
+    def _calculate_entry_point_function_validation_score(self, entry_point_results: dict[str, Any],
+                                                        critical_function_results: dict[str, Any],
+                                                        cross_validation_results: dict[str, Any]) -> float:
         """Calculate comprehensive validation score for Phase 2.2.3."""
         try:
             # Component scores
@@ -2434,9 +2434,9 @@ class DetectionDepthValidator:
             self.logger.error(f"Score calculation failed: {e}")
             return 0.0
 
-    def _generate_validation_details(self, entry_point_results: Dict[str, Any],
-                                   critical_function_results: Dict[str, Any],
-                                   cross_validation_results: Dict[str, Any]) -> List[str]:
+    def _generate_validation_details(self, entry_point_results: dict[str, Any],
+                                   critical_function_results: dict[str, Any],
+                                   cross_validation_results: dict[str, Any]) -> list[str]:
         """Generate detailed validation report for Phase 2.2.3."""
         details = []
 
@@ -2477,7 +2477,7 @@ class DetectionDepthValidator:
             self.logger.error(f"Validation details generation failed: {e}")
             return [f"Error generating validation details: {str(e)}"]
 
-    def get_depth_analysis_statistics(self) -> Dict[str, Any]:
+    def get_depth_analysis_statistics(self) -> dict[str, Any]:
         """Get current depth analysis statistics."""
         return {
             'depth_analysis_stats': self.depth_analysis_stats.copy(),
@@ -2498,7 +2498,7 @@ class DetectionDepthValidator:
     # Placeholder implementations for additional analysis methods
     # These methods would contain full implementation logic in production
 
-    def _match_advanced_signature(self, binary_data: bytes, signature: Dict[str, Any]) -> bool:
+    def _match_advanced_signature(self, binary_data: bytes, signature: dict[str, Any]) -> bool:
         """Match advanced signature with offset and mask using comprehensive pattern matching."""
         try:
             # Extract signature components
@@ -2605,7 +2605,7 @@ class DetectionDepthValidator:
 
         return False
 
-    async def _analyze_version_specific_imports(self, binary_path: Path, protection_name: str) -> List[str]:
+    async def _analyze_version_specific_imports(self, binary_path: Path, protection_name: str) -> list[str]:
         """Analyze version-specific import patterns using comprehensive binary analysis."""
         version_specific_imports = []
 
@@ -2723,7 +2723,7 @@ class DetectionDepthValidator:
 
         return sorted(list(set(version_specific_imports)))
 
-    async def _analyze_version_specific_patterns(self, binary_path: Path, protection_name: str) -> List[str]:
+    async def _analyze_version_specific_patterns(self, binary_path: Path, protection_name: str) -> list[str]:
         """Analyze version-specific code patterns through comprehensive binary pattern detection."""
         version_patterns = []
 
@@ -2856,7 +2856,7 @@ class DetectionDepthValidator:
 
         return sorted(list(set(version_patterns)))
 
-    async def _analyze_version_specific_resources(self, binary_path: Path, protection_name: str) -> List[str]:
+    async def _analyze_version_specific_resources(self, binary_path: Path, protection_name: str) -> list[str]:
         """Analyze version-specific resource patterns through comprehensive PE resource analysis."""
         version_resources = []
 
@@ -2995,7 +2995,7 @@ class DetectionDepthValidator:
             # Feature detection may fail for various reasons, return False
         return False
 
-    def _map_features_to_version(self, protection_name: str, features: List[str]) -> Optional[Dict[str, Any]]:
+    def _map_features_to_version(self, protection_name: str, features: list[str]) -> dict[str, Any] | None:
         """Map feature combination to specific version using comprehensive feature analysis."""
         if not features or not protection_name:
             return None
@@ -3128,7 +3128,7 @@ class DetectionDepthValidator:
                 'error': str(e)
             }
 
-    def _categorize_features(self, features: List[str]) -> Dict[str, List[str]]:
+    def _categorize_features(self, features: list[str]) -> dict[str, list[str]]:
         """Categorize features by type for analysis."""
         categories = {
             'licensing': [],
@@ -3159,7 +3159,7 @@ class DetectionDepthValidator:
 
         return {k: v for k, v in categories.items() if v}
 
-    def _analyze_version_specific_sections(self, pe, protection_name: str) -> List[str]:
+    def _analyze_version_specific_sections(self, pe, protection_name: str) -> list[str]:
         """Analyze version-specific PE section characteristics through comprehensive section analysis."""
         section_indicators = []
 
@@ -3303,7 +3303,7 @@ class DetectionDepthValidator:
 
         return entropy
 
-    def _analyze_version_specific_entry_point(self, pe, protection_name: str) -> List[str]:
+    def _analyze_version_specific_entry_point(self, pe, protection_name: str) -> list[str]:
         """Analyze version-specific entry point patterns through comprehensive entry point analysis."""
         indicators = []
 
@@ -3429,7 +3429,7 @@ class DetectionDepthValidator:
             self.logger.error(f"Entry point analysis error: {e}")
             return indicators
 
-    def _analyze_version_specific_overlay(self, binary_path: Path, pe, protection_name: str) -> List[str]:
+    def _analyze_version_specific_overlay(self, binary_path: Path, pe, protection_name: str) -> list[str]:
         """Analyze version-specific overlay characteristics through comprehensive overlay analysis."""
         indicators = []
 
@@ -3577,7 +3577,7 @@ class DetectionDepthValidator:
             self.logger.error(f"Overlay analysis error: {e}")
             return indicators
 
-    def _map_structure_to_version(self, protection_name: str, indicators: List[str]) -> Optional[Dict[str, Any]]:
+    def _map_structure_to_version(self, protection_name: str, indicators: list[str]) -> dict[str, Any] | None:
         """Map structural indicators to specific version through comprehensive mapping analysis."""
         if not indicators or not protection_name:
             return None
@@ -3752,7 +3752,7 @@ class DetectionDepthValidator:
             self.logger.error(f"Structure to version mapping error: {e}")
             return None
 
-    def _generate_version_configuration(self, protection_name: str, version: str, *args) -> Dict[str, Any]:
+    def _generate_version_configuration(self, protection_name: str, version: str, *args) -> dict[str, Any]:
         """Generate configuration information for detected version."""
         config = {
             'protection_name': protection_name,
@@ -3832,7 +3832,7 @@ class DetectionDepthValidator:
 
         return config
 
-    def _extract_build_number(self, version_strings: Dict[str, Any], signature_version: Dict[str, Any]) -> Optional[str]:
+    def _extract_build_number(self, version_strings: dict[str, Any], signature_version: dict[str, Any]) -> str | None:
         """Extract build number from version detection results."""
         try:
             # Priority 1: Extract from version strings
@@ -3888,7 +3888,7 @@ class DetectionDepthValidator:
             self.logger.error(f"Build number extraction failed: {str(e)}")
             return None
 
-    def _estimate_release_date(self, protection_name: str, version: str) -> Optional[str]:
+    def _estimate_release_date(self, protection_name: str, version: str) -> str | None:
         """Estimate release date for protection version."""
         try:
             # Known release date mappings for common protections
@@ -3992,7 +3992,7 @@ class DetectionDepthValidator:
             self.logger.error(f"Release date estimation failed: {str(e)}")
             return None
 
-    def _identify_enabled_features(self, protection_name: str, version: str, feature_version: Dict[str, Any]) -> List[str]:
+    def _identify_enabled_features(self, protection_name: str, version: str, feature_version: dict[str, Any]) -> list[str]:
         """Identify features enabled in this version through comprehensive analysis."""
         enabled_features = []
 
@@ -4102,7 +4102,7 @@ class DetectionDepthValidator:
 
         return enabled_features
 
-    def _identify_disabled_features(self, protection_name: str, version: str, feature_version: Dict[str, Any]) -> List[str]:
+    def _identify_disabled_features(self, protection_name: str, version: str, feature_version: dict[str, Any]) -> list[str]:
         """Identify features disabled in this version through comprehensive analysis."""
         disabled_features = []
 
@@ -4191,7 +4191,7 @@ class DetectionDepthValidator:
 
         return sorted(disabled_features)
 
-    def _generate_version_signature(self, protection_name: str, version: str, signature_version: Dict[str, Any]) -> str:
+    def _generate_version_signature(self, protection_name: str, version: str, signature_version: dict[str, Any]) -> str:
         """Generate cryptographic version signature for validation."""
         import hashlib
 
@@ -4220,7 +4220,7 @@ class DetectionDepthValidator:
 
         return f"{protection_name}_{version}_{signature_hash[:16]}"
 
-    async def _analyze_configuration_settings(self, binary_path: Path, protection_name: str, version: str) -> Dict[str, Any]:
+    async def _analyze_configuration_settings(self, binary_path: Path, protection_name: str, version: str) -> dict[str, Any]:
         """Analyze detailed configuration settings."""
         config_data = {}
 
@@ -4295,7 +4295,7 @@ class DetectionDepthValidator:
 
         return config_data
 
-    async def _analyze_protection_parameters(self, binary_path: Path, protection_name: str, version: str) -> Dict[str, Any]:
+    async def _analyze_protection_parameters(self, binary_path: Path, protection_name: str, version: str) -> dict[str, Any]:
         """Analyze protection parameters."""
         parameters = {
             'algorithm_type': 'unknown',
@@ -4399,7 +4399,7 @@ class DetectionDepthValidator:
 
         return parameters
 
-    async def _analyze_encryption_configuration(self, binary_path: Path, protection_name: str, version: str) -> Dict[str, Any]:
+    async def _analyze_encryption_configuration(self, binary_path: Path, protection_name: str, version: str) -> dict[str, Any]:
         """Analyze encryption configuration settings."""
         encryption_config = {
             'primary_algorithm': 'unknown',
@@ -4558,9 +4558,9 @@ class DetectionDepthValidator:
 
         return encryption_config
 
-    def _calculate_configuration_completeness(self, config_settings: Dict[str, Any],
-                                            protection_params: Dict[str, Any],
-                                            encryption_config: Dict[str, Any]) -> float:
+    def _calculate_configuration_completeness(self, config_settings: dict[str, Any],
+                                            protection_params: dict[str, Any],
+                                            encryption_config: dict[str, Any]) -> float:
         """Calculate configuration analysis completeness."""
         try:
             total_score = 0.0
@@ -4656,7 +4656,7 @@ class DetectionDepthValidator:
             self.logger.error(f"Configuration completeness calculation failed: {str(e)}")
             return 0.0
 
-    def _check_signature_match(self, binary_data: bytes, signature: Dict[str, Any]) -> bool:
+    def _check_signature_match(self, binary_data: bytes, signature: dict[str, Any]) -> bool:
         """Check if signature matches binary data."""
         try:
             if not signature or not binary_data:
@@ -4728,7 +4728,7 @@ class DetectionDepthValidator:
             self.logger.error(f"Signature matching failed: {str(e)}")
             return False
 
-    def _find_signature_offset(self, binary_data: bytes, signature: Dict[str, Any]) -> int:
+    def _find_signature_offset(self, binary_data: bytes, signature: dict[str, Any]) -> int:
         """Find offset of signature match in binary."""
         try:
             if not signature or not binary_data:
@@ -4792,7 +4792,7 @@ class DetectionDepthValidator:
             self.logger.error(f"Signature offset finding failed: {str(e)}")
             return -1
 
-    def _check_custom_pattern_match(self, binary_data: bytes, pattern: Dict[str, Any]) -> bool:
+    def _check_custom_pattern_match(self, binary_data: bytes, pattern: dict[str, Any]) -> bool:
         """Check if custom pattern matches binary data."""
         try:
             if not pattern or not binary_data:
@@ -4873,7 +4873,7 @@ class DetectionDepthValidator:
             self.logger.error(f"Custom pattern matching failed: {str(e)}")
             return False
 
-    async def _detect_anti_debugging_features(self, binary_path: Path, protection_name: str) -> List[str]:
+    async def _detect_anti_debugging_features(self, binary_path: Path, protection_name: str) -> list[str]:
         """Detect anti-debugging features."""
         features = []
 
@@ -4981,7 +4981,7 @@ class DetectionDepthValidator:
 
         return features
 
-    async def _detect_anti_analysis_features(self, binary_path: Path, protection_name: str) -> List[str]:
+    async def _detect_anti_analysis_features(self, binary_path: Path, protection_name: str) -> list[str]:
         """Detect anti-analysis features."""
         features = []
 
@@ -5085,7 +5085,7 @@ class DetectionDepthValidator:
 
         return features
 
-    async def _detect_encryption_features(self, binary_path: Path, protection_name: str) -> List[str]:
+    async def _detect_encryption_features(self, binary_path: Path, protection_name: str) -> list[str]:
         """Detect encryption features."""
         features = []
 
@@ -5231,7 +5231,7 @@ class DetectionDepthValidator:
 
         return features
 
-    async def _detect_integrity_features(self, binary_path: Path, protection_name: str) -> List[str]:
+    async def _detect_integrity_features(self, binary_path: Path, protection_name: str) -> list[str]:
         """Detect integrity checking features."""
         features = []
 
@@ -5386,7 +5386,7 @@ class DetectionDepthValidator:
 
         return features
 
-    async def _detect_virtualization_features(self, binary_path: Path, protection_name: str) -> List[str]:
+    async def _detect_virtualization_features(self, binary_path: Path, protection_name: str) -> list[str]:
         """Detect virtualization features."""
         features = []
 
@@ -5564,7 +5564,7 @@ class DetectionDepthValidator:
 
         return features
 
-    def _analyze_feature_interactions(self, *feature_lists) -> Dict[str, Any]:
+    def _analyze_feature_interactions(self, *feature_lists) -> dict[str, Any]:
         """Analyze interactions between different features."""
         interactions = {
             'synergistic_features': [],
@@ -5742,7 +5742,7 @@ class DetectionDepthValidator:
 
         return interactions
 
-    async def _detect_outermost_packer(self, binary_path: Path) -> Optional[Dict[str, Any]]:
+    async def _detect_outermost_packer(self, binary_path: Path) -> dict[str, Any] | None:
         """Detect outermost packer layer."""
         try:
             with open(binary_path, 'rb') as f:
@@ -5954,7 +5954,7 @@ class DetectionDepthValidator:
             self.logger.error(f"Outermost packer detection failed: {str(e)}")
             return None
 
-    async def _detect_nested_packers(self, binary_path: Path, outer_packer: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def _detect_nested_packers(self, binary_path: Path, outer_packer: dict[str, Any]) -> list[dict[str, Any]]:
         """Detect nested packer layers."""
         nested_layers = []
 
@@ -6005,7 +6005,7 @@ class DetectionDepthValidator:
 
         return nested_layers
 
-    def _analyze_packer_characteristics(self, binary_path: Path, layer: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_packer_characteristics(self, binary_path: Path, layer: dict[str, Any]) -> dict[str, Any]:
         """Analyze packer characteristics."""
         characteristics = {
             'compression_ratio': 0.0,
@@ -6068,7 +6068,7 @@ class DetectionDepthValidator:
 
         return characteristics
 
-    def _assess_unpacking_complexity(self, layer: Dict[str, Any]) -> str:
+    def _assess_unpacking_complexity(self, layer: dict[str, Any]) -> str:
         """Assess complexity of unpacking this layer."""
         try:
             complexity_score = 0
@@ -6111,7 +6111,7 @@ class DetectionDepthValidator:
             self.logger.error(f"Unpacking complexity assessment failed: {str(e)}")
             return "MEDIUM"
 
-    async def _detect_code_obfuscation(self, binary_path: Path) -> List[str]:
+    async def _detect_code_obfuscation(self, binary_path: Path) -> list[str]:
         """Detect code obfuscation techniques."""
         obfuscation_techniques = []
 
@@ -6146,7 +6146,7 @@ class DetectionDepthValidator:
 
         return obfuscation_techniques
 
-    async def _detect_data_obfuscation(self, binary_path: Path) -> List[str]:
+    async def _detect_data_obfuscation(self, binary_path: Path) -> list[str]:
         """Detect data obfuscation techniques."""
         data_obfuscation = []
 
@@ -6178,7 +6178,7 @@ class DetectionDepthValidator:
 
         return data_obfuscation
 
-    async def _detect_control_flow_obfuscation(self, binary_path: Path) -> List[str]:
+    async def _detect_control_flow_obfuscation(self, binary_path: Path) -> list[str]:
         """Detect control flow obfuscation techniques."""
         cf_obfuscation = []
 
@@ -6210,7 +6210,7 @@ class DetectionDepthValidator:
 
         return cf_obfuscation
 
-    async def _detect_anti_analysis_techniques(self, binary_path: Path) -> List[str]:
+    async def _detect_anti_analysis_techniques(self, binary_path: Path) -> list[str]:
         """Detect anti-analysis techniques."""
         techniques = []
 
@@ -6243,7 +6243,7 @@ class DetectionDepthValidator:
 
         return techniques
 
-    async def _detect_binary_modifications(self, binary_path: Path, protection_versions: List[ProtectionVersionInfo]) -> Dict[str, Any]:
+    async def _detect_binary_modifications(self, binary_path: Path, protection_versions: list[ProtectionVersionInfo]) -> dict[str, Any]:
         """Detect binary modifications and tampering."""
         modifications = {
             'pe_header_modifications': [],
@@ -6291,7 +6291,7 @@ class DetectionDepthValidator:
 
         return modifications
 
-    async def _analyze_protection_compatibility(self, protection_versions: List[ProtectionVersionInfo]) -> Dict[str, Dict[str, bool]]:
+    async def _analyze_protection_compatibility(self, protection_versions: list[ProtectionVersionInfo]) -> dict[str, dict[str, bool]]:
         """Analyze compatibility between different protections."""
         compatibility_matrix = {}
 
@@ -6334,8 +6334,8 @@ class DetectionDepthValidator:
         return compatibility_matrix
 
     async def _generate_depth_validation_evidence(self, binary_path: Path,
-                                                protection_versions: List[ProtectionVersionInfo],
-                                                signature_analysis: Dict[str, Any]) -> Dict[str, Any]:
+                                                protection_versions: list[ProtectionVersionInfo],
+                                                signature_analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate validation evidence for depth analysis."""
         return {
             'binary_hash': hashlib.sha256(binary_path.read_bytes()).hexdigest() if binary_path.exists() else '',
@@ -6345,21 +6345,21 @@ class DetectionDepthValidator:
             'evidence_integrity': True
         }
 
-    def _calculate_signature_score(self, signature_analysis: Dict[str, Any]) -> float:
+    def _calculate_signature_score(self, signature_analysis: dict[str, Any]) -> float:
         """Calculate signature analysis score."""
         matches = signature_analysis.get('signature_matches', {})
         return min(1.0, len(matches) * 0.2) if matches else 0.0
 
-    def _calculate_feature_score(self, feature_analysis: Dict[str, Any]) -> float:
+    def _calculate_feature_score(self, feature_analysis: dict[str, Any]) -> float:
         """Calculate feature analysis score."""
         features = feature_analysis.get('features', {})
         return min(1.0, len(features) * 0.1) if features else 0.0
 
-    def _calculate_packer_score(self, packer_analysis: List[Dict[str, Any]]) -> float:
+    def _calculate_packer_score(self, packer_analysis: list[dict[str, Any]]) -> float:
         """Calculate packer analysis score."""
         return min(1.0, len(packer_analysis) * 0.3) if packer_analysis else 0.0
 
-    def _calculate_obfuscation_score(self, obfuscation_analysis: Dict[str, Any]) -> float:
+    def _calculate_obfuscation_score(self, obfuscation_analysis: dict[str, Any]) -> float:
         """Calculate obfuscation analysis score."""
         techniques = obfuscation_analysis.get('techniques', [])
         return min(1.0, len(techniques) * 0.2) if techniques else 0.0
@@ -6390,7 +6390,7 @@ async def main():
 
     # Load configuration
     if config_file and config_file.exists():
-        with open(config_file, 'r', encoding='utf-8') as f:
+        with open(config_file, encoding='utf-8') as f:
             config_data = json.load(f)
         config = DetectionDepthConfig(**config_data)
     else:

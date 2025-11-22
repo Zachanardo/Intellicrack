@@ -23,11 +23,13 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from intellicrack.utils.logger import get_logger
 from intellicrack.utils.runtime.runner_functions import run_comprehensive_analysis
+
 
 logger = get_logger(__name__)
 
@@ -114,7 +116,9 @@ class IntellicrackShell(cmd.Cmd):
             if results and results.get("vulnerabilities"):
                 print(f"\nFound {len(results['vulnerabilities'])} vulnerabilities:")
                 for vuln in results["vulnerabilities"]:
-                    print(f"  - {vuln.get('type', 'Unknown')}: {vuln.get('description', 'No description')}")
+                    print(
+                        f"  - {vuln.get('type', 'Unknown')}: {vuln.get('description', 'No description')}"
+                    )
                     print(f"    Severity: {vuln.get('severity', 'Unknown')}")
             else:
                 print("No vulnerabilities found.")
@@ -134,9 +138,7 @@ class IntellicrackShell(cmd.Cmd):
             from intellicrack.cli.analysis_cli import _extract_strings
 
             print(f"Extracting strings (min length: {min_length})...")
-            strings = _extract_strings(str(self.current_file), min_length)
-
-            if strings:
+            if strings := _extract_strings(str(self.current_file), min_length):
                 print(f"\nFound {len(strings)} strings:")
                 for s in strings[:50]:  # Show first 50
                     print(f"  {s}")
@@ -173,7 +175,9 @@ class IntellicrackShell(cmd.Cmd):
 
             # Ensure analysis results exist before attempting export
             if not self.analysis_results:
-                print("Error: No analysis results available. Run 'analyze' on a loaded binary first.")
+                print(
+                    "Error: No analysis results available. Run 'analyze' on a loaded binary first."
+                )
                 return
 
             binary_path = str(self.current_file)
@@ -232,9 +236,7 @@ class IntellicrackShell(cmd.Cmd):
             from intellicrack.protection.protection_detector import detect_all_protections as analyze_protections
 
             print(f"Analyzing protections in {self.current_file}...")
-            protections = analyze_protections(str(self.current_file))
-
-            if protections:
+            if protections := analyze_protections(str(self.current_file)):
                 print("\nDetected protections:")
                 for protection, details in protections.items():
                     if details.get("detected"):

@@ -30,8 +30,10 @@ from pathlib import Path
 from queue import Empty, Queue
 from typing import Any
 
+
 try:
     import r2pipe
+
     R2PIPE_AVAILABLE = True
 except ImportError:
     R2PIPE_AVAILABLE = False
@@ -171,11 +173,7 @@ class R2SessionWrapper:
 
             start_time = time.time()
             try:
-                if expect_json:
-                    result = self.r2.cmdj(command)
-                else:
-                    result = self.r2.cmd(command)
-
+                result = self.r2.cmdj(command) if expect_json else self.r2.cmd(command)
                 execution_time = time.time() - start_time
                 self.metrics.commands_executed += 1
                 self.metrics.last_command_time = execution_time
@@ -253,8 +251,8 @@ class R2SessionWrapper:
 
         """
         with self._lock:
-            avg_execution_time = (
-                self.metrics.total_execution_time / max(1, self.metrics.commands_executed)
+            avg_execution_time = self.metrics.total_execution_time / max(
+                1, self.metrics.commands_executed
             )
 
             return {
@@ -388,8 +386,8 @@ class R2SessionPool:
             if len(self._sessions) >= self.max_sessions:
                 self._cleanup_idle_sessions(force=True)
 
-                if len(self._sessions) >= self.max_sessions:
-                    raise RuntimeError(f"Session limit reached ({self.max_sessions})")
+            if len(self._sessions) >= self.max_sessions:
+                raise RuntimeError(f"Session limit reached ({self.max_sessions})")
 
             session_id = self._generate_session_id(binary_path, flags)
             session = R2SessionWrapper(
@@ -453,12 +451,12 @@ class R2SessionPool:
 
         """
         with self._lock:
-            sessions_to_remove = []
-
-            for session_id, session in self._sessions.items():
-                if session.idle_time > self.max_idle_time or (force and session.state == SessionState.IDLE):
-                    sessions_to_remove.append(session_id)
-
+            sessions_to_remove = [
+                session_id
+                for session_id, session in self._sessions.items()
+                if session.idle_time > self.max_idle_time
+                or (force and session.state == SessionState.IDLE)
+            ]
             if force and not sessions_to_remove and self._sessions:
                 oldest_session = min(
                     self._sessions.values(),
@@ -525,22 +523,14 @@ class R2SessionPool:
 
         """
         with self._lock:
-            active_sessions = sum(
-                1 for s in self._sessions.values()
-                if s.state == SessionState.ACTIVE
-            )
+            active_sessions = sum(bool(s.state == SessionState.ACTIVE)
+                              for s in self._sessions.values())
 
-            total_commands = sum(
-                s.metrics.commands_executed for s in self._sessions.values()
-            )
+            total_commands = sum(s.metrics.commands_executed for s in self._sessions.values())
 
-            total_errors = sum(
-                s.metrics.errors_count for s in self._sessions.values()
-            )
+            total_errors = sum(s.metrics.errors_count for s in self._sessions.values())
 
-            available_count = sum(
-                q.qsize() for q in self._available_sessions.values()
-            )
+            available_count = sum(q.qsize() for q in self._available_sessions.values())
 
             return {
                 "total_sessions": len(self._sessions),
@@ -662,10 +652,10 @@ def shutdown_global_pool() -> None:
 
 
 __all__ = [
-    "SessionState",
-    "SessionMetrics",
-    "R2SessionWrapper",
     "R2SessionPool",
+    "R2SessionWrapper",
+    "SessionMetrics",
+    "SessionState",
     "get_global_pool",
     "r2_session_pooled",
     "shutdown_global_pool",

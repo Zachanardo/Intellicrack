@@ -35,6 +35,7 @@ from intellicrack.handlers.pyqt6_handler import (
 
 from .base_dialog import BaseDialog
 
+
 __all__ = ["DistributedProcessingConfigDialog"]
 
 
@@ -126,7 +127,9 @@ class DistributedProcessingConfigDialog(BaseDialog):
         # Convenience methods
         self.convenience_check = QCheckBox("Use convenience methods")
         self.convenience_check.setChecked(True)
-        self.convenience_check.setToolTip("Use built-in convenience methods instead of task queue for common operations")
+        self.convenience_check.setToolTip(
+            "Use built-in convenience methods instead of task queue for common operations"
+        )
         processing_layout.addRow("", self.convenience_check)
 
         processing_group.setLayout(processing_layout)
@@ -178,7 +181,9 @@ class DistributedProcessingConfigDialog(BaseDialog):
 
         self.custom_patterns_edit = QLineEdit()
         self.custom_patterns_edit.setText("")
-        self.custom_patterns_edit.setToolTip("Enter custom patterns to search for, separated by commas. Example: 'pattern1, pattern2, pattern3'")
+        self.custom_patterns_edit.setToolTip(
+            "Enter custom patterns to search for, separated by commas. Example: 'pattern1, pattern2, pattern3'"
+        )
         pattern_layout.addWidget(self.custom_patterns_edit)
 
         pattern_group.setLayout(pattern_layout)
@@ -342,18 +347,17 @@ class DistributedProcessingConfigDialog(BaseDialog):
         if self.timeout_spin.value() < 10:
             return False
 
-        # Check if at least one analysis option is selected
-        analysis_selected = (
+        return (
             self.section_check.isChecked()
             or self.pattern_check.isChecked()
             or self.entropy_check.isChecked()
             or self.symbolic_check.isChecked()
         )
 
-        return analysis_selected
 
-
-def create_distributed_config_dialog(binary_path: str, parent: QWidget | None = None) -> DistributedProcessingConfigDialog:
+def create_distributed_config_dialog(
+    binary_path: str, parent: QWidget | None = None
+) -> DistributedProcessingConfigDialog:
     """Create a DistributedProcessingConfigDialog.
 
     Factory function for instantiating a distributed processing configuration dialog

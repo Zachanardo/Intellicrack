@@ -65,18 +65,18 @@ class ValidationResult:
         self.timestamp = time.time()
 
         # Scanner results
-        self.peid_results: List[Dict[str, Any]] = []
-        self.die_results: List[Dict[str, Any]] = []
-        self.protid_results: List[Dict[str, Any]] = []
-        self.yara_results: List[Dict[str, Any]] = []
+        self.peid_results: list[dict[str, Any]] = []
+        self.die_results: list[dict[str, Any]] = []
+        self.protid_results: list[dict[str, Any]] = []
+        self.yara_results: list[dict[str, Any]] = []
 
         # Consensus analysis
         self.consensus_score: float = 0.0
-        self.agreed_protections: List[str] = []
-        self.conflicting_results: List[Dict[str, Any]] = []
+        self.agreed_protections: list[str] = []
+        self.conflicting_results: list[dict[str, Any]] = []
 
         # Validation metadata
-        self.validation_sources: List[str] = []
+        self.validation_sources: list[str] = []
         self.confidence_level: float = 0.0
 
 
@@ -87,7 +87,7 @@ class CrossValidation:
     to validate Intellicrack's detection results and prevent false positives.
     """
 
-    def __init__(self, scanner_dir: Path, logger: Optional[logging.Logger] = None):
+    def __init__(self, scanner_dir: Path, logger: logging.Logger | None = None):
         """Initialize cross-validation engine.
 
         Args:
@@ -145,7 +145,7 @@ class CrossValidation:
         if not self.available_scanners:
             self.logger.error("No protection scanners found in scanner directory")
 
-    def run_peid_analysis(self, binary_path: Path) -> List[Dict[str, Any]]:
+    def run_peid_analysis(self, binary_path: Path) -> list[dict[str, Any]]:
         """Run PEiD protection scanner analysis.
 
         Args:
@@ -187,7 +187,7 @@ class CrossValidation:
             self.logger.error(f"PEiD analysis failed: {e}")
             return []
 
-    def _parse_peid_output(self, output: str) -> List[Dict[str, Any]]:
+    def _parse_peid_output(self, output: str) -> list[dict[str, Any]]:
         """Parse PEiD scanner output with version extraction.
 
         Args:
@@ -262,7 +262,7 @@ class CrossValidation:
 
         return results
 
-    def run_die_analysis(self, binary_path: Path) -> List[Dict[str, Any]]:
+    def run_die_analysis(self, binary_path: Path) -> list[dict[str, Any]]:
         """Run Detect It Easy (DIE) protection scanner analysis.
 
         Args:
@@ -304,7 +304,7 @@ class CrossValidation:
             self.logger.error(f"DIE analysis failed: {e}")
             return []
 
-    def _parse_die_output(self, output: str) -> List[Dict[str, Any]]:
+    def _parse_die_output(self, output: str) -> list[dict[str, Any]]:
         """Parse Detect It Easy output.
 
         Args:
@@ -365,7 +365,7 @@ class CrossValidation:
 
         return results
 
-    def run_protid_analysis(self, binary_path: Path) -> List[Dict[str, Any]]:
+    def run_protid_analysis(self, binary_path: Path) -> list[dict[str, Any]]:
         """Run Protection ID scanner analysis.
 
         Args:
@@ -407,7 +407,7 @@ class CrossValidation:
             self.logger.error(f"Protection ID analysis failed: {e}")
             return []
 
-    def _parse_protid_output(self, output: str) -> List[Dict[str, Any]]:
+    def _parse_protid_output(self, output: str) -> list[dict[str, Any]]:
         """Parse Protection ID scanner output.
 
         Args:
@@ -449,7 +449,7 @@ class CrossValidation:
 
         return results
 
-    def run_yara_validation(self, binary_path: Path) -> List[Dict[str, Any]]:
+    def run_yara_validation(self, binary_path: Path) -> list[dict[str, Any]]:
         """Run YARA rule validation for licensing protection patterns.
 
         Args:
@@ -489,7 +489,7 @@ class CrossValidation:
             self.logger.error(f"YARA validation failed: {e}")
             return []
 
-    def _run_custom_yara_rules(self, binary_path: Path) -> List[Dict[str, Any]]:
+    def _run_custom_yara_rules(self, binary_path: Path) -> list[dict[str, Any]]:
         """Run custom YARA rules for protection detection.
 
         Args:
@@ -563,8 +563,8 @@ rule HASP_Sentinel {
     def validate_against_signatures(
         self,
         binary_path: Path,
-        known_signatures: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        known_signatures: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Validate against known protection signatures and byte patterns.
 
         Args:
@@ -625,8 +625,8 @@ rule HASP_Sentinel {
     def compare_with_vendor_docs(
         self,
         detected_protection: str,
-        vendor_specs: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        vendor_specs: dict[str, Any]
+    ) -> dict[str, Any]:
         """Compare detection results with vendor SDK samples and documentation.
 
         Args:
@@ -685,7 +685,7 @@ rule HASP_Sentinel {
             self.logger.error(f"Vendor comparison failed: {e}")
             return comparison_result
 
-    def _signature_matches(self, signature: Dict[str, Any]) -> bool:
+    def _signature_matches(self, signature: dict[str, Any]) -> bool:
         """Check if a signature matches current binary using comprehensive pattern matching.
 
         Args:
@@ -759,8 +759,8 @@ rule HASP_Sentinel {
     def validate_behavioral_patterns(
         self,
         binary_path: Path,
-        expected_behaviors: List[str]
-    ) -> Dict[str, Any]:
+        expected_behaviors: list[str]
+    ) -> dict[str, Any]:
         """Validate behavioral patterns (license checks, server communication, etc.).
 
         Args:
@@ -807,7 +807,7 @@ rule HASP_Sentinel {
             self.logger.error(f"Behavioral validation failed: {e}")
             return behavior_results
 
-    def _analyze_behavioral_imports(self, binary_path: Path) -> Dict[str, Any]:
+    def _analyze_behavioral_imports(self, binary_path: Path) -> dict[str, Any]:
         """Analyze imports for behavioral patterns."""
         behavior_data = {
             'license_checks': False,
@@ -911,7 +911,7 @@ rule HASP_Sentinel {
 
         return behavior_data
 
-    def _analyze_behavioral_strings(self, binary_path: Path) -> Dict[str, Any]:
+    def _analyze_behavioral_strings(self, binary_path: Path) -> dict[str, Any]:
         """Analyze strings for behavioral patterns."""
         behavior_data = {
             'file_access_patterns': False,
@@ -1007,11 +1007,11 @@ rule HASP_Sentinel {
 
     def calculate_consensus(
         self,
-        peid_results: List[Dict[str, Any]],
-        die_results: List[Dict[str, Any]],
-        protid_results: List[Dict[str, Any]],
-        yara_results: List[Dict[str, Any]]
-    ) -> Tuple[float, List[Dict[str, Any]]]:
+        peid_results: list[dict[str, Any]],
+        die_results: list[dict[str, Any]],
+        protid_results: list[dict[str, Any]],
+        yara_results: list[dict[str, Any]]
+    ) -> tuple[float, list[dict[str, Any]]]:
         """Calculate consensus score from multiple scanner results with version tracking.
 
         Args:
@@ -1136,7 +1136,7 @@ rule HASP_Sentinel {
         self,
         binary_path: Path,
         intellicrack_detection: str,
-        vendor_specs: Optional[Dict[str, Any]] = None
+        vendor_specs: dict[str, Any] | None = None
     ) -> ValidationResult:
         """Run complete cross-validation analysis with version tracking.
 

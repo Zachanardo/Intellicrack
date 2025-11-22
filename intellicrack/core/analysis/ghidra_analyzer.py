@@ -26,6 +26,7 @@ import shutil
 import subprocess
 import tempfile
 
+
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
 except ImportError:
@@ -114,7 +115,9 @@ class GhidraOutputParser:
             processor = root.find(".//PROCESSOR")
             architecture = processor.get("NAME", "unknown") if processor is not None else "unknown"
             compiler_elem = root.find(".//COMPILER")
-            compiler = compiler_elem.get("NAME", "unknown") if compiler_elem is not None else "unknown"
+            compiler = (
+                compiler_elem.get("NAME", "unknown") if compiler_elem is not None else "unknown"
+            )
 
             # Parse functions
             functions = {}
@@ -150,19 +153,16 @@ class GhidraOutputParser:
                 addr = int(exp_elem.get("ADDRESS", "0"), 16)
                 exports.append((name, addr))
 
-            # Parse sections
-            sections = []
-            for sec_elem in root.findall(".//MEMORY_SECTION"):
-                sections.append(
-                    {
-                        "name": sec_elem.get("NAME", ""),
-                        "start": int(sec_elem.get("START_ADDR", "0"), 16),
-                        "size": int(sec_elem.get("LENGTH", "0"), 16),
-                        "permissions": sec_elem.get("PERMISSIONS", ""),
-                        "type": sec_elem.get("TYPE", ""),
-                    },
-                )
-
+            sections = [
+                {
+                    "name": sec_elem.get("NAME", ""),
+                    "start": int(sec_elem.get("START_ADDR", "0"), 16),
+                    "size": int(sec_elem.get("LENGTH", "0"), 16),
+                    "permissions": sec_elem.get("PERMISSIONS", ""),
+                    "type": sec_elem.get("TYPE", ""),
+                }
+                for sec_elem in root.findall(".//MEMORY_SECTION")
+            ]
             # Parse entry point
             entry_elem = root.find(".//PROGRAM_ENTRY_POINT")
             entry_point = int(entry_elem.get("ADDRESS", "0"), 16) if entry_elem is not None else 0
@@ -174,17 +174,14 @@ class GhidraOutputParser:
                 funcs = [int(f.get("ADDRESS", "0"), 16) for f in vt_elem.findall(".//VFUNCTION")]
                 vtables[addr] = funcs
 
-            # Parse exception handlers
-            exception_handlers = []
-            for eh_elem in root.findall(".//EXCEPTION_HANDLER"):
-                exception_handlers.append(
-                    {
-                        "address": int(eh_elem.get("ADDRESS", "0"), 16),
-                        "type": eh_elem.get("TYPE", ""),
-                        "handler": int(eh_elem.get("HANDLER", "0"), 16),
-                    },
-                )
-
+            exception_handlers = [
+                {
+                    "address": int(eh_elem.get("ADDRESS", "0"), 16),
+                    "type": eh_elem.get("TYPE", ""),
+                    "handler": int(eh_elem.get("HANDLER", "0"), 16),
+                }
+                for eh_elem in root.findall(".//EXCEPTION_HANDLER")
+            ]
             return GhidraAnalysisResult(
                 binary_path=binary_path,
                 architecture=architecture,
@@ -242,8 +239,14 @@ class GhidraOutputParser:
         assembly_code = asm_elem.text if asm_elem is not None else ""
 
         # Parse cross-references
-        xrefs_to = [int(xr.get("FROM_ADDRESS", "0"), 16) for xr in func_elem.findall('.//XREF[@TYPE="CALL"]')]
-        xrefs_from = [int(xr.get("TO_ADDRESS", "0"), 16) for xr in func_elem.findall('.//XREF[@DIRECTION="FROM"]')]
+        xrefs_to = [
+            int(xr.get("FROM_ADDRESS", "0"), 16)
+            for xr in func_elem.findall('.//XREF[@TYPE="CALL"]')
+        ]
+        xrefs_from = [
+            int(xr.get("TO_ADDRESS", "0"), 16)
+            for xr in func_elem.findall('.//XREF[@DIRECTION="FROM"]')
+        ]
 
         # Parse comments
         comments = {}
@@ -281,21 +284,26 @@ class GhidraOutputParser:
         size = int(dt_elem.get("SIZE", "0"), 10)
         category = dt_elem.get("CATEGORY", "unknown")
 
-        members = []
-        for member_elem in dt_elem.findall(".//MEMBER"):
-            members.append(
-                {
-                    "name": member_elem.get("NAME", ""),
-                    "type": member_elem.get("DATATYPE", ""),
-                    "offset": int(member_elem.get("OFFSET", "0"), 10),
-                    "size": int(member_elem.get("SIZE", "0"), 10),
-                },
-            )
-
+        members = [
+            {
+                "name": member_elem.get("NAME", ""),
+                "type": member_elem.get("DATATYPE", ""),
+                "offset": int(member_elem.get("OFFSET", "0"), 10),
+                "size": int(member_elem.get("SIZE", "0"), 10),
+            }
+            for member_elem in dt_elem.findall(".//MEMBER")
+        ]
         base_type = dt_elem.get("BASE_TYPE")
         alignment = int(dt_elem.get("ALIGNMENT", "1"), 10)
 
-        return GhidraDataType(name=name, size=size, category=category, members=members, base_type=base_type, alignment=alignment)
+        return GhidraDataType(
+            name=name,
+            size=size,
+            category=category,
+            members=members,
+            base_type=base_type,
+            alignment=alignment,
+        )
 
     def parse_json_output(self, json_content: str) -> GhidraAnalysisResult:
         """Parse Ghidra JSON output format."""
@@ -326,7 +334,10 @@ class GhidraOutputParser:
             strings = [(int(s["address"], 16), s["value"]) for s in data.get("strings", [])]
 
             # Parse imports
-            imports = [(i["library"], i["function"], int(i["address"], 16)) for i in data.get("imports", [])]
+            imports = [
+                (i["library"], i["function"], int(i["address"], 16))
+                for i in data.get("imports", [])
+            ]
 
             # Parse exports
             exports = [(e["name"], int(e["address"], 16)) for e in data.get("exports", [])]
@@ -372,7 +383,9 @@ class GhidraOutputParser:
             signature=func_data.get("signature", ""),
             return_type=func_data.get("returnType", "void"),
             parameters=[(p["type"], p["name"]) for p in func_data.get("parameters", [])],
-            local_variables=[(v["type"], v["name"], v["offset"]) for v in func_data.get("localVars", [])],
+            local_variables=[
+                (v["type"], v["name"], v["offset"]) for v in func_data.get("localVars", [])
+            ],
             decompiled_code=func_data.get("decompiledCode", ""),
             assembly_code=func_data.get("assembly", ""),
             xrefs_to=[int(x, 16) for x in func_data.get("xrefsTo", [])],
@@ -436,16 +449,16 @@ class GhidraOutputParser:
 
         # Extract basic program info
         arch_match = re.search(r"Processor:\s+(\S+)", text_content)
-        architecture = arch_match.group(1) if arch_match else "unknown"
+        architecture = arch_match[1] if arch_match else "unknown"
 
         compiler_match = re.search(r"Compiler:\s+(\S+)", text_content)
-        compiler = compiler_match.group(1) if compiler_match else "unknown"
+        compiler = compiler_match[1] if compiler_match else "unknown"
 
         entry_match = re.search(r"Entry\s+Point:\s+0x([0-9a-fA-F]+)", text_content)
-        entry_point = int(entry_match.group(1), 16) if entry_match else 0
+        entry_point = int(entry_match[1], 16) if entry_match else 0
 
         base_match = re.search(r"Image\s+Base:\s+0x([0-9a-fA-F]+)", text_content)
-        image_base = int(base_match.group(1), 16) if base_match else 0
+        image_base = int(base_match[1], 16) if base_match else 0
 
         return GhidraAnalysisResult(
             binary_path="",
@@ -479,12 +492,12 @@ class GhidraOutputParser:
         sig_pattern = rf"{re.escape(name)}\s*\(([^)]*)\)\s*->\s*(\S+)"
         sig_match = re.search(sig_pattern, context)
 
+        # Parse parameters
+        parameters = []
         if sig_match:
-            params_str = sig_match.group(1)
-            return_type = sig_match.group(2)
+            params_str = sig_match[1]
+            return_type = sig_match[2]
 
-            # Parse parameters
-            parameters = []
             if params_str:
                 for param in params_str.split(","):
                     parts = param.strip().split()
@@ -497,8 +510,6 @@ class GhidraOutputParser:
         else:
             signature = f"{name}()"
             return_type = "void"
-            parameters = []
-
         # Extract decompiled code if present
         decomp_start = context.find("{", context.find(name))
         decomp_code = ""
@@ -528,7 +539,7 @@ class GhidraOutputParser:
 
         # Extract size if available
         size_match = re.search(r"Size:\s+(\d+)\s+bytes", context)
-        size = int(size_match.group(1)) if size_match else 0
+        size = int(size_match[1]) if size_match else 0
 
         return GhidraFunction(
             name=name,
@@ -553,7 +564,14 @@ def _run_ghidra_thread(main_app: object, command: list[str], temp_dir: str) -> N
         # Use secure subprocess wrapper with validation
         # This prevents command injection while maintaining functionality
         process = secure_popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="ignore", shell=False, cwd=temp_dir,
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="ignore",
+            shell=False,
+            cwd=temp_dir,
         )
 
         stdout, stderr = process.communicate()
@@ -565,10 +583,9 @@ def _run_ghidra_thread(main_app: object, command: list[str], temp_dir: str) -> N
             parser = GhidraOutputParser()
             analysis_result = None
 
-            # Check for output files in the temp directory
-            output_files = list(Path(temp_dir).glob("*.xml")) + list(Path(temp_dir).glob("*.json"))
-
-            if output_files:
+            if output_files := list(Path(temp_dir).glob("*.xml")) + list(
+                Path(temp_dir).glob("*.json")
+            ):
                 # Parse structured output files
                 for output_file in output_files:
                     try:
@@ -577,13 +594,19 @@ def _run_ghidra_thread(main_app: object, command: list[str], temp_dir: str) -> N
 
                         if output_file.suffix == ".xml":
                             analysis_result = parser.parse_xml_output(content)
-                            main_app.update_output.emit(f"[Ghidra] Parsed XML output: {len(analysis_result.functions)} functions found")
+                            main_app.update_output.emit(
+                                f"[Ghidra] Parsed XML output: {len(analysis_result.functions)} functions found"
+                            )
                         elif output_file.suffix == ".json":
                             analysis_result = parser.parse_json_output(content)
-                            main_app.update_output.emit(f"[Ghidra] Parsed JSON output: {len(analysis_result.functions)} functions found")
+                            main_app.update_output.emit(
+                                f"[Ghidra] Parsed JSON output: {len(analysis_result.functions)} functions found"
+                            )
                         break
                     except Exception as e:
-                        main_app.update_output.emit(f"[Ghidra] Warning: Failed to parse {output_file.name}: {e}")
+                        main_app.update_output.emit(
+                            f"[Ghidra] Warning: Failed to parse {output_file.name}: {e}"
+                        )
 
             # Fallback to parsing stdout if no structured files found
             if not analysis_result and stdout:
@@ -591,15 +614,21 @@ def _run_ghidra_thread(main_app: object, command: list[str], temp_dir: str) -> N
                     # Try JSON first
                     if stdout.strip().startswith("{"):
                         analysis_result = parser.parse_json_output(stdout)
-                        main_app.update_output.emit(f"[Ghidra] Parsed JSON from stdout: {len(analysis_result.functions)} functions")
+                        main_app.update_output.emit(
+                            f"[Ghidra] Parsed JSON from stdout: {len(analysis_result.functions)} functions"
+                        )
                     # Try XML
                     elif stdout.strip().startswith("<?xml") or stdout.strip().startswith("<"):
                         analysis_result = parser.parse_xml_output(stdout)
-                        main_app.update_output.emit(f"[Ghidra] Parsed XML from stdout: {len(analysis_result.functions)} functions")
+                        main_app.update_output.emit(
+                            f"[Ghidra] Parsed XML from stdout: {len(analysis_result.functions)} functions"
+                        )
                     # Fallback to text parsing
                     else:
                         analysis_result = parser.parse_text_output(stdout)
-                        main_app.update_output.emit(f"[Ghidra] Parsed text output: {len(analysis_result.functions)} functions")
+                        main_app.update_output.emit(
+                            f"[Ghidra] Parsed text output: {len(analysis_result.functions)} functions"
+                        )
                 except Exception as e:
                     main_app.update_output.emit(f"[Ghidra] Warning: Failed to parse stdout: {e}")
 
@@ -619,29 +648,39 @@ def _run_ghidra_thread(main_app: object, command: list[str], temp_dir: str) -> N
                 main_app.update_output.emit(f"  - Imports: {len(analysis_result.imports)}")
                 main_app.update_output.emit(f"  - Exports: {len(analysis_result.exports)}")
 
-                # Process critical functions for licensing analysis
-                licensing_functions = _identify_licensing_functions(analysis_result)
-                if licensing_functions:
-                    main_app.update_output.emit(f"[Ghidra] Found {len(licensing_functions)} potential licensing functions")
+                if licensing_functions := _identify_licensing_functions(
+                    analysis_result
+                ):
+                    main_app.update_output.emit(
+                        f"[Ghidra] Found {len(licensing_functions)} potential licensing functions"
+                    )
                     for func_addr, func in licensing_functions:
                         main_app.update_output.emit(f"  - {func.name} at 0x{func_addr:08x}")
         else:
-            main_app.update_output.emit(f"[Ghidra] Analysis failed with return code {process.returncode}.")
+            main_app.update_output.emit(
+                f"[Ghidra] Analysis failed with return code {process.returncode}."
+            )
             if stdout:
                 main_app.update_output.emit(f"[Ghidra STDOUT]:\n{stdout}")
             if stderr:
                 main_app.update_output.emit(f"[Ghidra STDERR]:\n{stderr}")
 
     except FileNotFoundError:
-        main_app.update_output.emit("[Ghidra] Error: Command not found. Ensure Ghidra is in your system's PATH.")
+        main_app.update_output.emit(
+            "[Ghidra] Error: Command not found. Ensure Ghidra is in your system's PATH."
+        )
     except Exception as e:
         main_app.update_output.emit(f"[Ghidra] An unexpected error occurred: {e}")
     finally:
         try:
             shutil.rmtree(temp_dir)
-            main_app.update_output.emit(f"[Ghidra] Cleaned up temporary project directory: {temp_dir}")
+            main_app.update_output.emit(
+                f"[Ghidra] Cleaned up temporary project directory: {temp_dir}"
+            )
         except Exception as e:
-            main_app.update_output.emit(f"[Ghidra] Warning: Failed to clean up temporary directory {temp_dir}: {e}")
+            main_app.update_output.emit(
+                f"[Ghidra] Warning: Failed to clean up temporary directory {temp_dir}: {e}"
+            )
 
         if hasattr(main_app, "analysis_completed"):
             main_app.analysis_completed.emit("Ghidra Analysis")
@@ -693,7 +732,9 @@ class GhidraScriptManager:
     def __init__(self, ghidra_install_dir: str) -> None:
         """Initialize the GhidraAnalyzer with the Ghidra installation directory."""
         self.ghidra_install_dir = Path(ghidra_install_dir)
-        self.scripts_dir = self.ghidra_install_dir / "Ghidra" / "Features" / "Base" / "ghidra_scripts"
+        self.scripts_dir = (
+            self.ghidra_install_dir / "Ghidra" / "Features" / "Base" / "ghidra_scripts"
+        )
         self.user_scripts_dir = Path.home() / "ghidra_scripts"
         self.custom_scripts = self._load_custom_scripts()
 
@@ -718,7 +759,12 @@ class GhidraScriptManager:
 
     def _is_intellicrack_script(self, script_file: Path) -> bool:
         """Check if script is an Intellicrack-specific analysis script."""
-        intellicrack_markers = ["@intellicrack", "INTELLICRACK", "License Analysis", "Protection Detection"]
+        intellicrack_markers = [
+            "@intellicrack",
+            "INTELLICRACK",
+            "License Analysis",
+            "Protection Detection",
+        ]
         try:
             content = script_file.read_text(encoding="utf-8", errors="ignore")
             return any(marker in content for marker in intellicrack_markers)
@@ -727,7 +773,13 @@ class GhidraScriptManager:
 
     def _parse_script_metadata(self, script_file: Path) -> dict[str, Any]:
         """Parse script metadata from comments."""
-        metadata = {"name": script_file.name, "path": str(script_file), "params": {}, "output_format": "text", "description": ""}
+        metadata = {
+            "name": script_file.name,
+            "path": str(script_file),
+            "params": {},
+            "output_format": "text",
+            "description": "",
+        }
 
         try:
             content = script_file.read_text(encoding="utf-8", errors="ignore")
@@ -737,9 +789,8 @@ class GhidraScriptManager:
                 if "@description" in line:
                     metadata["description"] = line.split("@description")[-1].strip()
                 elif "@param" in line:
-                    param_match = re.match(r".*@param\s+(\w+)\s+(.+)", line)
-                    if param_match:
-                        metadata["params"][param_match.group(1)] = param_match.group(2)
+                    if param_match := re.match(r".*@param\s+(\w+)\s+(.+)", line):
+                        metadata["params"][param_match[1]] = param_match[2]
                 elif "@output" in line:
                     metadata["output_format"] = line.split("@output")[-1].strip()
         except (IndexError, ValueError):
@@ -754,7 +805,11 @@ class GhidraScriptManager:
             "protection": ["IdentifyProtectionSchemes.py", "AnalyzeAntiDebug.py"],
             "unpacking": ["DumpImportReconstruction.py"],
             "strings": ["ExtractStringReferences.py"],
-            "comprehensive": ["FindSerialValidation.py", "ExtractCryptoRoutines.py", "IdentifyProtectionSchemes.py"],
+            "comprehensive": [
+                "FindSerialValidation.py",
+                "ExtractCryptoRoutines.py",
+                "IdentifyProtectionSchemes.py",
+            ],
         }
 
         scripts_to_use = analysis_map.get(analysis_type, ["FindSerialValidation.py"])
@@ -772,7 +827,7 @@ class GhidraScriptManager:
                         selected_scripts.append(custom_script)
                         break
 
-        return selected_scripts if selected_scripts else [self.LICENSING_SCRIPTS[0]]
+        return selected_scripts or [self.LICENSING_SCRIPTS[0]]
 
     def build_script_chain(self, scripts: list[dict[str, Any]]) -> list[str]:
         """Build command-line arguments for script chaining."""
@@ -786,14 +841,18 @@ class GhidraScriptManager:
                 if isinstance(param_value, bool):
                     script_args.extend(["-scriptarg", f"{param_name}={str(param_value).lower()}"])
                 elif isinstance(param_value, list):
-                    script_args.extend(["-scriptarg", f"{param_name}={','.join(map(str, param_value))}"])
+                    script_args.extend(
+                        ["-scriptarg", f"{param_name}={','.join(map(str, param_value))}"]
+                    )
                 else:
                     script_args.extend(["-scriptarg", f"{param_name}={param_value}"])
 
         return script_args
 
 
-def run_advanced_ghidra_analysis(main_app: object, analysis_type: str = "comprehensive", scripts: list[str] | None = None) -> None:
+def run_advanced_ghidra_analysis(
+    main_app: object, analysis_type: str = "comprehensive", scripts: list[str] | None = None
+) -> None:
     """Launch a Ghidra headless analysis session with intelligent script selection."""
     if not main_app.current_binary:
         main_app.update_output.emit("[Ghidra] Error: No binary loaded.")
@@ -804,14 +863,18 @@ def run_advanced_ghidra_analysis(main_app: object, analysis_type: str = "compreh
     ghidra_install_dir = config.get_tool_path("ghidra")
 
     if not ghidra_install_dir or not Path(ghidra_install_dir).is_dir():
-        main_app.update_output.emit(f"[Ghidra] Error: Ghidra installation directory not configured or invalid: {ghidra_install_dir}")
+        main_app.update_output.emit(
+            f"[Ghidra] Error: Ghidra installation directory not configured or invalid: {ghidra_install_dir}"
+        )
         return
 
     headless_script_name = "analyzeHeadless.bat" if os.name == "nt" else "analyzeHeadless"
     headless_path = os.path.join(ghidra_install_dir, "support", headless_script_name)
 
     if not os.path.exists(headless_path):
-        main_app.update_output.emit(f"[Ghidra] Error: Headless analyzer not found at {headless_path}")
+        main_app.update_output.emit(
+            f"[Ghidra] Error: Headless analyzer not found at {headless_path}"
+        )
         return
 
     temp_dir = tempfile.mkdtemp(prefix="intellicrack_ghidra_")
@@ -833,9 +896,13 @@ def run_advanced_ghidra_analysis(main_app: object, analysis_type: str = "compreh
         # Auto-select based on analysis type
         selected_scripts = script_manager.get_script_for_analysis(analysis_type)
 
-    main_app.update_output.emit(f"[Ghidra] Selected {len(selected_scripts)} scripts for {analysis_type} analysis")
+    main_app.update_output.emit(
+        f"[Ghidra] Selected {len(selected_scripts)} scripts for {analysis_type} analysis"
+    )
     for script in selected_scripts:
-        main_app.update_output.emit(f"  - {script['name']}: {script.get('description', 'No description')}")
+        main_app.update_output.emit(
+            f"  - {script['name']}: {script.get('description', 'No description')}"
+        )
 
     # Build command with script chaining
     command = [
@@ -876,7 +943,9 @@ def run_advanced_ghidra_analysis(main_app: object, analysis_type: str = "compreh
 
     thread = Thread(target=_run_ghidra_thread, args=(main_app, command, temp_dir), daemon=True)
     thread.start()
-    main_app.update_output.emit("[Ghidra] Headless analysis task submitted with production script chain.")
+    main_app.update_output.emit(
+        "[Ghidra] Headless analysis task submitted with production script chain."
+    )
 
 
 def _identify_licensing_functions(result: GhidraAnalysisResult) -> list[tuple[int, GhidraFunction]]:
@@ -935,7 +1004,14 @@ def _identify_licensing_functions(result: GhidraAnalysisResult) -> list[tuple[in
                     break
 
         # Check imports that might be used for licensing
-        licensing_imports = ["CryptGenRandom", "CryptHashData", "RegOpenKeyEx", "GetVolumeInformation", "GetComputerName", "GetUserName"]
+        licensing_imports = [
+            "CryptGenRandom",
+            "CryptHashData",
+            "RegOpenKeyEx",
+            "GetVolumeInformation",
+            "GetComputerName",
+            "GetUserName",
+        ]
         for _lib, imp_func, imp_addr in result.imports:
             if imp_func in licensing_imports and imp_addr in func.xrefs_from:
                 licensing_functions.append((addr, func))
@@ -944,7 +1020,9 @@ def _identify_licensing_functions(result: GhidraAnalysisResult) -> list[tuple[in
     return licensing_functions
 
 
-def export_ghidra_results(result: GhidraAnalysisResult, output_path: str, format: str = "json") -> Path:
+def export_ghidra_results(
+    result: GhidraAnalysisResult, output_path: str, format: str = "json"
+) -> Path:
     """Export Ghidra analysis results in various formats."""
     output_path = Path(output_path)
 
@@ -970,7 +1048,10 @@ def export_ghidra_results(result: GhidraAnalysisResult, output_path: str, format
                 for addr, func in result.functions.items()
             ],
             "strings": [{"address": hex(addr), "value": val} for addr, val in result.strings],
-            "imports": [{"library": lib, "function": func, "address": hex(addr)} for lib, func, addr in result.imports],
+            "imports": [
+                {"library": lib, "function": func, "address": hex(addr)}
+                for lib, func, addr in result.imports
+            ],
             "exports": [{"name": name, "address": hex(addr)} for name, addr in result.exports],
         }
 

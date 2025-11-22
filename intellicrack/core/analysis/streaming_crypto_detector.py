@@ -27,15 +27,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from intellicrack.core.analysis.cryptographic_routine_detector import (
-    CryptoDetection,
-    CryptographicRoutineDetector,
-)
-from intellicrack.core.processing.streaming_analysis_manager import (
-    ChunkContext,
-    StreamingAnalysisManager,
-    StreamingAnalyzer,
-)
+from intellicrack.core.analysis.cryptographic_routine_detector import CryptoDetection, CryptographicRoutineDetector
+from intellicrack.core.processing.streaming_analysis_manager import ChunkContext, StreamingAnalysisManager, StreamingAnalyzer
+
 
 logger = logging.getLogger(__name__)
 
@@ -176,8 +170,7 @@ class StreamingCryptoDetector(StreamingAnalyzer):
                     )
                     continue
 
-                detections = chunk_result.get("detections", [])
-                if detections:
+                if detections := chunk_result.get("detections", []):
                     chunks_with_crypto += 1
                     all_detections.extend(detections)
 
@@ -188,16 +181,22 @@ class StreamingCryptoDetector(StreamingAnalyzer):
 
             all_detections.sort(key=lambda d: d.get("offset", 0))
 
-            algorithm_distribution = []
-            for algo, count in sorted(total_algorithm_counts.items(), key=lambda x: x[1], reverse=True):
-                algorithm_distribution.append(
-                    {
-                        "algorithm": algo,
-                        "occurrences": count,
-                        "percentage": round((count / len(all_detections)) * 100, 2) if all_detections else 0,
-                    },
+            algorithm_distribution = [
+                {
+                    "algorithm": algo,
+                    "occurrences": count,
+                    "percentage": (
+                        round((count / len(all_detections)) * 100, 2)
+                        if all_detections
+                        else 0
+                    ),
+                }
+                for algo, count in sorted(
+                    total_algorithm_counts.items(),
+                    key=lambda x: x[1],
+                    reverse=True,
                 )
-
+            ]
             merged = {
                 "total_detections": len(all_detections),
                 "detections": all_detections,
@@ -251,15 +250,13 @@ class StreamingCryptoDetector(StreamingAnalyzer):
 
             complexity_score = self._calculate_complexity_score(merged_results)
 
-            merged_results.update(
-                {
-                    "licensing_relevant_crypto": licensing_relevant,
-                    "unique_algorithms": unique_algorithms,
-                    "key_size_analysis": dict(key_sizes),
-                    "complexity_score": complexity_score,
-                    "analysis_summary": self._generate_summary(merged_results),
-                },
-            )
+            merged_results |= {
+                "licensing_relevant_crypto": licensing_relevant,
+                "unique_algorithms": unique_algorithms,
+                "key_size_analysis": dict(key_sizes),
+                "complexity_score": complexity_score,
+                "analysis_summary": self._generate_summary(merged_results),
+            }
 
             logger.info(
                 f"Finalized analysis: {len(unique_algorithms)} unique algorithms, "
@@ -319,8 +316,7 @@ class StreamingCryptoDetector(StreamingAnalyzer):
         elif total_detections > 5:
             score += 10
 
-        licensing_relevant = results.get("licensing_relevant_crypto", [])
-        if licensing_relevant:
+        if licensing_relevant := results.get("licensing_relevant_crypto", []):
             score += min(len(licensing_relevant) * 5, 30)
 
         return min(score, 100.0)
@@ -339,15 +335,18 @@ class StreamingCryptoDetector(StreamingAnalyzer):
         algorithms = results.get("unique_algorithms", [])
         licensing = len(results.get("licensing_relevant_crypto", []))
 
-        summary = f"Detected {total} cryptographic routines across {len(algorithms)} algorithm types. "
+        summary = (
+            f"Detected {total} cryptographic routines across {len(algorithms)} algorithm types. "
+        )
 
         if licensing > 0:
             summary += f"{licensing} routines are relevant to licensing systems. "
 
-        dist = results.get("algorithm_distribution", [])
-        if dist:
+        if dist := results.get("algorithm_distribution", []):
             top_algo = dist[0]
-            summary += f"Most common: {top_algo['algorithm']} ({top_algo['occurrences']} occurrences). "
+            summary += (
+                f"Most common: {top_algo['algorithm']} ({top_algo['occurrences']} occurrences). "
+            )
 
         return summary
 

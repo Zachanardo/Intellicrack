@@ -11,6 +11,7 @@ from ctypes import wintypes
 from dataclasses import dataclass
 from pathlib import Path
 
+
 try:
     import pefile
 
@@ -120,10 +121,18 @@ class StarForceDetector:
             self._advapi32 = ctypes.WinDLL("advapi32", use_last_error=True)
             self._kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
-            self._advapi32.OpenSCManagerW.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.DWORD]
+            self._advapi32.OpenSCManagerW.argtypes = [
+                wintypes.LPCWSTR,
+                wintypes.LPCWSTR,
+                wintypes.DWORD,
+            ]
             self._advapi32.OpenSCManagerW.restype = wintypes.HANDLE
 
-            self._advapi32.OpenServiceW.argtypes = [wintypes.HANDLE, wintypes.LPCWSTR, wintypes.DWORD]
+            self._advapi32.OpenServiceW.argtypes = [
+                wintypes.HANDLE,
+                wintypes.LPCWSTR,
+                wintypes.DWORD,
+            ]
             self._advapi32.OpenServiceW.restype = wintypes.HANDLE
 
             self._advapi32.CloseServiceHandle.argtypes = [wintypes.HANDLE]
@@ -235,7 +244,9 @@ class StarForceDetector:
             if self._yara_rules:
                 yara_matches = self._yara_scan(target_path)
 
-        confidence = self._calculate_confidence(drivers, services, registry_keys, sections, yara_matches)
+        confidence = self._calculate_confidence(
+            drivers, services, registry_keys, sections, yara_matches
+        )
 
         detected = confidence > 0.6
 
@@ -286,8 +297,9 @@ class StarForceDetector:
 
             try:
                 for service_name in self.SERVICE_NAMES:
-                    service_handle = self._advapi32.OpenServiceW(sc_manager, service_name, SERVICE_QUERY_CONFIG)
-                    if service_handle:
+                    if service_handle := self._advapi32.OpenServiceW(
+                        sc_manager, service_name, SERVICE_QUERY_CONFIG
+                    ):
                         detected.append(service_name)
                         self._advapi32.CloseServiceHandle(service_handle)
             finally:
@@ -328,9 +340,8 @@ class StarForceDetector:
                 if any(sf_name in section_name.lower() for sf_name in self.SECTION_NAMES):
                     detected.append(section_name)
 
-                if section.SizeOfRawData == 0 and section.Misc_VirtualSize > 0:
-                    if section.Characteristics & 0x20000000:
-                        detected.append(f"{section_name} (encrypted)")
+                if section.SizeOfRawData == 0 and section.Misc_VirtualSize > 0 and section.Characteristics & 0x20000000:
+                    detected.append(f"{section_name} (encrypted)")
 
             pe.close()
 
@@ -353,7 +364,9 @@ class StarForceDetector:
                         for st in entry.StringTable:
                             for _key, value in st.entries.items():
                                 if b"StarForce" in value or b"Protection Technology" in value:
-                                    return self._parse_version_string(value.decode("utf-8", errors="ignore"))
+                                    return self._parse_version_string(
+                                        value.decode("utf-8", errors="ignore")
+                                    )
 
             data = pe.get_memory_mapped_image()
 
@@ -376,9 +389,7 @@ class StarForceDetector:
         import re
 
         pattern = r"StarForce[^\d]*(\d+)\.(\d+)\.?(\d*)"
-        match = re.search(pattern, version_str)
-
-        if match:
+        if match := re.search(pattern, version_str):
             major = int(match.group(1))
             minor = int(match.group(2))
             build = int(match.group(3)) if match.group(3) else 0
@@ -399,18 +410,26 @@ class StarForceDetector:
         try:
             results = self._yara_rules.match(str(target_path))
 
-            for match in results:
-                matches.append(
-                    {"rule": match.rule, "version": match.meta.get("version", "unknown"), "description": match.meta.get("description", "")},
-                )
-
+            matches.extend(
+                {
+                    "rule": match.rule,
+                    "version": match.meta.get("version", "unknown"),
+                    "description": match.meta.get("description", ""),
+                }
+                for match in results
+            )
         except Exception as e:
             self.logger.debug(f"Error in YARA signature detection: {e}")
 
         return matches
 
     def _calculate_confidence(
-        self, drivers: list[str], services: list[str], registry_keys: list[str], sections: list[str], yara_matches: list[dict[str, str]],
+        self,
+        drivers: list[str],
+        services: list[str],
+        registry_keys: list[str],
+        sections: list[str],
+        yara_matches: list[dict[str, str]],
     ) -> float:
         """Calculate detection confidence score."""
         score = 0.0
@@ -464,7 +483,15 @@ class StarForceDetector:
                 ("dwWaitHint", wintypes.DWORD),
             ]
 
-        states = {1: "STOPPED", 2: "START_PENDING", 3: "STOP_PENDING", 4: "RUNNING", 5: "CONTINUE_PENDING", 6: "PAUSE_PENDING", 7: "PAUSED"}
+        states = {
+            1: "STOPPED",
+            2: "START_PENDING",
+            3: "STOP_PENDING",
+            4: "RUNNING",
+            5: "CONTINUE_PENDING",
+            6: "PAUSE_PENDING",
+            7: "PAUSED",
+        }
 
         try:
             sc_manager = self._advapi32.OpenSCManagerW(None, None, SC_MANAGER_ALL_ACCESS)
@@ -473,13 +500,21 @@ class StarForceDetector:
 
             try:
                 for service_name in services:
-                    service_handle = self._advapi32.OpenServiceW(sc_manager, service_name, SERVICE_QUERY_STATUS)
-                    if service_handle:
+                    if service_handle := self._advapi32.OpenServiceW(
+                        sc_manager, service_name, SERVICE_QUERY_STATUS
+                    ):
                         status = ServiceStatus()
                         if hasattr(self._advapi32, "QueryServiceStatus"):
-                            self._advapi32.QueryServiceStatus.argtypes = [wintypes.HANDLE, ctypes.POINTER(ServiceStatus)]
-                            if self._advapi32.QueryServiceStatus(service_handle, ctypes.byref(status)):
-                                status_info[service_name] = states.get(status.dwCurrentState, "UNKNOWN")
+                            self._advapi32.QueryServiceStatus.argtypes = [
+                                wintypes.HANDLE,
+                                ctypes.POINTER(ServiceStatus),
+                            ]
+                            if self._advapi32.QueryServiceStatus(
+                                service_handle, ctypes.byref(status)
+                            ):
+                                status_info[service_name] = states.get(
+                                    status.dwCurrentState, "UNKNOWN"
+                                )
 
                         self._advapi32.CloseServiceHandle(service_handle)
             finally:
@@ -493,7 +528,12 @@ class StarForceDetector:
     def _detect_scsi_miniport(self) -> bool:
         """Detect StarForce SCSI miniport driver."""
         try:
-            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Services\Scsi", 0, winreg.KEY_READ)
+            key = winreg.OpenKey(
+                winreg.HKEY_LOCAL_MACHINE,
+                r"SYSTEM\CurrentControlSet\Services\Scsi",
+                0,
+                winreg.KEY_READ,
+            )
 
             i = 0
             while True:

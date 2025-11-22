@@ -197,7 +197,9 @@ class BinaryAnalyzer:
             file_handle.close()
             raise RuntimeError(f"Failed to create memory map: {e}") from e
 
-    def _read_chunks(self, file_path: Path, chunk_size: int | None = None) -> Iterator[tuple[bytes, int]]:
+    def _read_chunks(
+        self, file_path: Path, chunk_size: int | None = None
+    ) -> Iterator[tuple[bytes, int]]:
         """Generate chunks of file data for streaming analysis.
 
         Args:
@@ -254,7 +256,9 @@ class BinaryAnalyzer:
         except Exception as e:
             return f"Error: {e}"
 
-    def _calculate_hashes_streaming(self, file_path: Path, progress_callback: Callable[[int, int], None] | None = None) -> dict[str, str]:
+    def _calculate_hashes_streaming(
+        self, file_path: Path, progress_callback: Callable[[int, int], None] | None = None
+    ) -> dict[str, str]:
         """Calculate file hashes using streaming to avoid loading entire file.
 
         Args:
@@ -336,15 +340,17 @@ class BinaryAnalyzer:
                     characteristics,
                 ) = struct.unpack("<HHIIIHH", coff_header)
 
-                pe_info.update(
-                    {
-                        "machine": f"0x{machine:04x}",
-                        "num_sections": num_sections,
-                        "timestamp": datetime.fromtimestamp(timestamp).isoformat() if timestamp > 0 else "N/A",
-                        "characteristics": f"0x{characteristics:04x}",
-                        "sections": [],
-                    },
-                )
+                pe_info |= {
+                    "machine": f"0x{machine:04x}",
+                    "num_sections": num_sections,
+                    "timestamp": (
+                        datetime.fromtimestamp(timestamp).isoformat()
+                        if timestamp > 0
+                        else "N/A"
+                    ),
+                    "characteristics": f"0x{characteristics:04x}",
+                    "sections": [],
+                }
 
                 section_table_offset = pe_offset + 24 + optional_header_size
                 for i in range(num_sections):
@@ -354,7 +360,9 @@ class BinaryAnalyzer:
 
                     section_data = mm[section_offset : section_offset + 40]
                     name = section_data[:8].decode("utf-8", errors="ignore").rstrip("\x00")
-                    virtual_size, virtual_address, raw_size, raw_address = struct.unpack("<IIII", section_data[8:24])
+                    virtual_size, virtual_address, raw_size, raw_address = struct.unpack(
+                        "<IIII", section_data[8:24]
+                    )
 
                     pe_info["sections"].append(
                         {
@@ -400,30 +408,32 @@ class BinaryAnalyzer:
                 ei_data = mm[5]
                 ei_version = mm[6]
 
-                elf_info.update(
-                    {
-                        "class": "64-bit" if ei_class == 2 else "32-bit",
-                        "data": "little-endian" if ei_data == 1 else "big-endian",
-                        "version": ei_version,
-                        "segments": [],
-                        "sections": [],
-                    },
-                )
+                elf_info |= {
+                    "class": "64-bit" if ei_class == 2 else "32-bit",
+                    "data": "little-endian" if ei_data == 1 else "big-endian",
+                    "version": ei_version,
+                    "segments": [],
+                    "sections": [],
+                }
 
                 if ei_class == 2:
-                    e_type, e_machine, _, e_entry, e_phoff, _ = struct.unpack("<HHIQQQQ", mm[16:48])[:6]
+                    e_type, e_machine, _, e_entry, e_phoff, _ = struct.unpack(
+                        "<HHIQQQQ", mm[16:48]
+                    )[:6]
                     e_phentsize, e_phnum = struct.unpack("<HH", mm[54:58])
                 else:
-                    e_type, e_machine, _, e_entry, e_phoff, _ = struct.unpack("<HHIIII", mm[16:36])[:6]
+                    e_type, e_machine, _, e_entry, e_phoff, _ = struct.unpack("<HHIIII", mm[16:36])[
+                        :6
+                    ]
                     e_phentsize, e_phnum = struct.unpack("<HH", mm[42:46])
 
-                elf_info.update(
-                    {
-                        "type": {1: "REL", 2: "EXEC", 3: "DYN", 4: "CORE"}.get(e_type, f"Unknown({e_type})"),
-                        "machine": f"0x{e_machine:04x}",
-                        "entry_point": f"0x{e_entry:08x}",
-                    },
-                )
+                elf_info |= {
+                    "type": {1: "REL", 2: "EXEC", 3: "DYN", 4: "CORE"}.get(
+                        e_type, f"Unknown({e_type})"
+                    ),
+                    "machine": f"0x{e_machine:04x}",
+                    "entry_point": f"0x{e_entry:08x}",
+                }
 
                 for i in range(min(e_phnum, 20)):
                     ph_offset = e_phoff + (i * e_phentsize)
@@ -432,11 +442,13 @@ class BinaryAnalyzer:
 
                     if ei_class == 2:
                         p_type, p_flags, p_offset, p_vaddr, _, p_filesz, p_memsz, _ = struct.unpack(
-                            "<IIQQQQQQ", mm[ph_offset : ph_offset + 56],
+                            "<IIQQQQQQ",
+                            mm[ph_offset : ph_offset + 56],
                         )
                     else:
                         p_type, p_offset, p_vaddr, _, p_filesz, p_memsz, p_flags, _ = struct.unpack(
-                            "<IIIIIIII", mm[ph_offset : ph_offset + 32],
+                            "<IIIIIIII",
+                            mm[ph_offset : ph_offset + 32],
                         )
 
                     segment_types = {
@@ -490,39 +502,34 @@ class BinaryAnalyzer:
 
                 macho_info = {}
 
-                if magic == 0xFEEDFACE:
-                    is_64 = False
-                    endian = "<"
-                elif magic == 0xFEEDFACF:
-                    is_64 = True
-                    endian = "<"
-                elif magic == 0xCEFAEDFE:
+                if magic == 0xCEFAEDFE:
                     is_64 = False
                     endian = ">"
                 elif magic == 0xCFFAEDFE:
                     is_64 = True
                     endian = ">"
+                elif magic == 0xFEEDFACE:
+                    is_64 = False
+                    endian = "<"
+                elif magic == 0xFEEDFACF:
+                    is_64 = True
+                    endian = "<"
                 else:
                     return {"error": "Invalid Mach-O magic"}
 
-                if is_64:
-                    cpu_type, _, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", mm[4:28])
-                    offset = 32
-                else:
-                    cpu_type, _, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", mm[4:28])
-                    offset = 28
-
-                macho_info.update(
-                    {
-                        "architecture": "64-bit" if is_64 else "32-bit",
-                        "cpu_type": f"0x{cpu_type:08x}",
-                        "file_type": file_type,
-                        "num_commands": ncmds,
-                        "commands_size": sizeofcmds,
-                        "flags": f"0x{flags:08x}",
-                        "load_commands": [],
-                    },
+                cpu_type, _, file_type, ncmds, sizeofcmds, flags = struct.unpack(
+                    endian + "IIIIII", mm[4:28]
                 )
+                offset = 32 if is_64 else 28
+                macho_info |= {
+                    "architecture": "64-bit" if is_64 else "32-bit",
+                    "cpu_type": f"0x{cpu_type:08x}",
+                    "file_type": file_type,
+                    "num_commands": ncmds,
+                    "commands_size": sizeofcmds,
+                    "flags": f"0x{flags:08x}",
+                    "load_commands": [],
+                }
 
                 for _i in range(min(ncmds, 50)):
                     if offset + 8 > len(mm):
@@ -571,7 +578,9 @@ class BinaryAnalyzer:
                     else:
                         if len(current_string) >= min_length:
                             string = current_string.decode("ascii", errors="ignore")
-                            if not all(c in "0123456789ABCDEFabcdef" for c in string):
+                            if any(
+                                c not in "0123456789ABCDEFabcdef" for c in string
+                            ):
                                 strings.append(string)
                                 if len(strings) >= max_strings:
                                     return strings
@@ -615,19 +624,24 @@ class BinaryAnalyzer:
                     probability = count / total_bytes
                     entropy -= probability * math.log2(probability)
 
-            entropy_info = {
+            return {
                 "overall_entropy": round(entropy, 4),
                 "file_size": total_bytes,
                 "unique_bytes": len(byte_counts),
-                "analysis": "Normal" if entropy < 7.0 else "High (possibly packed/encrypted)",
+                "analysis": (
+                    "Normal"
+                    if entropy < 7.0
+                    else "High (possibly packed/encrypted)"
+                ),
             }
-
-            return entropy_info
-
         except Exception as e:
             return {"error": str(e)}
 
-    def analyze_with_progress(self, binary_path: str | Path, progress_callback: Callable[[str, int, int], None] | None = None) -> dict[str, Any]:
+    def analyze_with_progress(
+        self,
+        binary_path: str | Path,
+        progress_callback: Callable[[str, int, int], None] | None = None,
+    ) -> dict[str, Any]:
         """Analyze binary with progress tracking for large files.
 
         Args:
@@ -650,7 +664,13 @@ class BinaryAnalyzer:
             file_info = self._get_file_info(binary_path)
             file_info.get("size", 0)
 
-            stages = ["format_detection", "hash_calculation", "format_analysis", "string_extraction", "entropy_analysis"]
+            stages = [
+                "format_detection",
+                "hash_calculation",
+                "format_analysis",
+                "string_extraction",
+                "entropy_analysis",
+            ]
             current_stage = 0
             total_stages = len(stages)
 
@@ -709,7 +729,9 @@ class BinaryAnalyzer:
             self.logger.error("Analysis with progress failed: %s", e)
             return {"error": str(e), "analysis_status": "failed"}
 
-    def save_analysis_checkpoint(self, analysis_results: dict[str, Any], checkpoint_path: str | Path) -> bool:
+    def save_analysis_checkpoint(
+        self, analysis_results: dict[str, Any], checkpoint_path: str | Path
+    ) -> bool:
         """Save analysis checkpoint for resumable operations.
 
         Args:
@@ -756,7 +778,9 @@ class BinaryAnalyzer:
             self.logger.error("Failed to load checkpoint: %s", e)
             return None
 
-    def scan_for_patterns_streaming(self, binary_path: str | Path, patterns: list[bytes], context_bytes: int = 32) -> dict[str, list[dict[str, Any]]]:
+    def scan_for_patterns_streaming(
+        self, binary_path: str | Path, patterns: list[bytes], context_bytes: int = 32
+    ) -> dict[str, list[dict[str, Any]]]:
         """Scan large binary for multiple byte patterns using streaming.
 
         Args:
@@ -794,9 +818,13 @@ class BinaryAnalyzer:
                         results[pattern.hex()].append(
                             {
                                 "offset": actual_offset,
-                                "context_before": search_data[max(0, pos - context_bytes) : pos].hex(),
+                                "context_before": search_data[
+                                    max(0, pos - context_bytes) : pos
+                                ].hex(),
                                 "match": pattern.hex(),
-                                "context_after": search_data[pos + len(pattern) : context_end].hex(),
+                                "context_after": search_data[
+                                    pos + len(pattern) : context_end
+                                ].hex(),
                             },
                         )
 
@@ -852,7 +880,9 @@ class BinaryAnalyzer:
                             for pattern in license_patterns:
                                 if pattern in string_lower:
                                     try:
-                                        decoded_string = string_bytes.decode("ascii", errors="ignore")
+                                        decoded_string = string_bytes.decode(
+                                            "ascii", errors="ignore"
+                                        )
                                         results.append(
                                             {
                                                 "offset": chunk_offset + string_start,
@@ -862,7 +892,9 @@ class BinaryAnalyzer:
                                             },
                                         )
                                     except Exception as e:
-                                        self.logger.debug(f"Error decoding license string at offset {chunk_offset + string_start}: {e}")
+                                        self.logger.debug(
+                                            f"Error decoding license string at offset {chunk_offset + string_start}: {e}"
+                                        )
                                     break
 
             return results[:500]
@@ -871,7 +903,9 @@ class BinaryAnalyzer:
             self.logger.error("License string scanning failed: %s", e)
             return [{"error": str(e)}]
 
-    def analyze_sections_streaming(self, binary_path: str | Path, section_ranges: list[tuple[int, int]]) -> dict[str, Any]:
+    def analyze_sections_streaming(
+        self, binary_path: str | Path, section_ranges: list[tuple[int, int]]
+    ) -> dict[str, Any]:
         """Analyze specific sections of large binary using memory mapping.
 
         Args:
@@ -908,7 +942,8 @@ class BinaryAnalyzer:
                             probability = count / section_size
                             entropy -= probability * math.log2(probability)
 
-                    printable_count = sum(1 for byte in section_data if 32 <= byte <= 126)
+                    printable_count = sum(bool(32 <= byte <= 126)
+                                      for byte in section_data)
                     null_count = byte_counts.get(0, 0)
 
                     results[f"section_{idx}"] = {
@@ -916,9 +951,15 @@ class BinaryAnalyzer:
                         "size": section_size,
                         "entropy": round(entropy, 4),
                         "unique_bytes": len(byte_counts),
-                        "printable_ratio": round(printable_count / section_size, 4) if section_size > 0 else 0,
-                        "null_ratio": round(null_count / section_size, 4) if section_size > 0 else 0,
-                        "characteristics": self._classify_section_characteristics(entropy, printable_count / section_size if section_size > 0 else 0),
+                        "printable_ratio": round(printable_count / section_size, 4)
+                        if section_size > 0
+                        else 0,
+                        "null_ratio": round(null_count / section_size, 4)
+                        if section_size > 0
+                        else 0,
+                        "characteristics": self._classify_section_characteristics(
+                            entropy, printable_count / section_size if section_size > 0 else 0
+                        ),
                     }
 
                 return results
@@ -950,9 +991,7 @@ class BinaryAnalyzer:
             return "Text/Strings"
         if printable_ratio < 0.1 and entropy > 5.0:
             return "Code/Binary Data"
-        if 4.0 <= entropy < 6.0:
-            return "Structured Binary"
-        return "Mixed Content"
+        return "Structured Binary" if 4.0 <= entropy < 6.0 else "Mixed Content"
 
     def _get_file_info(self, file_path: Path) -> dict[str, Any]:
         """Extract basic file metadata."""
@@ -1040,15 +1079,17 @@ class BinaryAnalyzer:
                 characteristics,
             ) = struct.unpack("<HHIIIHH", coff_header)
 
-            pe_info.update(
-                {
-                    "machine": f"0x{machine:04x}",
-                    "num_sections": num_sections,
-                    "timestamp": datetime.fromtimestamp(timestamp).isoformat() if timestamp > 0 else "N/A",
-                    "characteristics": f"0x{characteristics:04x}",
-                    "sections": [],
-                },
-            )
+            pe_info |= {
+                "machine": f"0x{machine:04x}",
+                "num_sections": num_sections,
+                "timestamp": (
+                    datetime.fromtimestamp(timestamp).isoformat()
+                    if timestamp > 0
+                    else "N/A"
+                ),
+                "characteristics": f"0x{characteristics:04x}",
+                "sections": [],
+            }
 
             # Parse sections
             section_table_offset = pe_offset + 24 + optional_header_size
@@ -1059,7 +1100,9 @@ class BinaryAnalyzer:
 
                 section_data = data[section_offset : section_offset + 40]
                 name = section_data[:8].decode("utf-8", errors="ignore").rstrip("\x00")
-                virtual_size, virtual_address, raw_size, raw_address = struct.unpack("<IIII", section_data[8:24])
+                virtual_size, virtual_address, raw_size, raw_address = struct.unpack(
+                    "<IIII", section_data[8:24]
+                )
 
                 pe_info["sections"].append(
                     {
@@ -1092,31 +1135,33 @@ class BinaryAnalyzer:
             ei_data = data[5]
             ei_version = data[6]
 
-            elf_info.update(
-                {
-                    "class": "64-bit" if ei_class == 2 else "32-bit",
-                    "data": "little-endian" if ei_data == 1 else "big-endian",
-                    "version": ei_version,
-                    "segments": [],
-                    "sections": [],
-                },
-            )
+            elf_info |= {
+                "class": "64-bit" if ei_class == 2 else "32-bit",
+                "data": "little-endian" if ei_data == 1 else "big-endian",
+                "version": ei_version,
+                "segments": [],
+                "sections": [],
+            }
 
             # Parse program headers (segments)
             if ei_class == 2:  # 64-bit
-                e_type, e_machine, _, e_entry, e_phoff, _ = struct.unpack("<HHIQQQQ", data[16:48])[:6]
+                e_type, e_machine, _, e_entry, e_phoff, _ = struct.unpack("<HHIQQQQ", data[16:48])[
+                    :6
+                ]
                 e_phentsize, e_phnum = struct.unpack("<HH", data[54:58])
             else:  # 32-bit
-                e_type, e_machine, _, e_entry, e_phoff, _ = struct.unpack("<HHIIII", data[16:36])[:6]
+                e_type, e_machine, _, e_entry, e_phoff, _ = struct.unpack("<HHIIII", data[16:36])[
+                    :6
+                ]
                 e_phentsize, e_phnum = struct.unpack("<HH", data[42:46])
 
-            elf_info.update(
-                {
-                    "type": {1: "REL", 2: "EXEC", 3: "DYN", 4: "CORE"}.get(e_type, f"Unknown({e_type})"),
-                    "machine": f"0x{e_machine:04x}",
-                    "entry_point": f"0x{e_entry:08x}",
-                },
-            )
+            elf_info |= {
+                "type": {1: "REL", 2: "EXEC", 3: "DYN", 4: "CORE"}.get(
+                    e_type, f"Unknown({e_type})"
+                ),
+                "machine": f"0x{e_machine:04x}",
+                "entry_point": f"0x{e_entry:08x}",
+            }
 
             # Parse program headers
             for i in range(min(e_phnum, 20)):  # Limit to prevent excessive parsing
@@ -1126,11 +1171,13 @@ class BinaryAnalyzer:
 
                 if ei_class == 2:  # 64-bit
                     p_type, p_flags, p_offset, p_vaddr, _, p_filesz, p_memsz, _ = struct.unpack(
-                        "<IIQQQQQQ", data[ph_offset : ph_offset + 56],
+                        "<IIQQQQQQ",
+                        data[ph_offset : ph_offset + 56],
                     )
                 else:  # 32-bit
                     p_type, p_offset, p_vaddr, _, p_filesz, p_memsz, p_flags, _ = struct.unpack(
-                        "<IIIIIIII", data[ph_offset : ph_offset + 32],
+                        "<IIIIIIII",
+                        data[ph_offset : ph_offset + 32],
                     )
 
                 segment_types = {
@@ -1185,40 +1232,35 @@ class BinaryAnalyzer:
             macho_info = {}
 
             # Determine architecture and endianness
-            if magic == 0xFEEDFACE:  # 32-bit little-endian
-                is_64 = False
-                endian = "<"
-            elif magic == 0xFEEDFACF:  # 64-bit little-endian
-                is_64 = True
-                endian = "<"
-            elif magic == 0xCEFAEDFE:  # 32-bit big-endian
+            if magic == 0xCEFAEDFE:
                 is_64 = False
                 endian = ">"
-            elif magic == 0xCFFAEDFE:  # 64-bit big-endian
+            elif magic == 0xCFFAEDFE:
                 is_64 = True
                 endian = ">"
+            elif magic == 0xFEEDFACE:
+                is_64 = False
+                endian = "<"
+            elif magic == 0xFEEDFACF:
+                is_64 = True
+                endian = "<"
             else:
                 return {"error": "Invalid Mach-O magic"}
 
-            # Parse header
-            if is_64:
-                cpu_type, _, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", data[4:28])
-                offset = 32
-            else:
-                cpu_type, _, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", data[4:28])
-                offset = 28
-
-            macho_info.update(
-                {
-                    "architecture": "64-bit" if is_64 else "32-bit",
-                    "cpu_type": f"0x{cpu_type:08x}",
-                    "file_type": file_type,
-                    "num_commands": ncmds,
-                    "commands_size": sizeofcmds,
-                    "flags": f"0x{flags:08x}",
-                    "load_commands": [],
-                },
+            cpu_type, _, file_type, ncmds, sizeofcmds, flags = struct.unpack(
+                endian + "IIIIII", data[4:28]
             )
+            # Parse header
+            offset = 32 if is_64 else 28
+            macho_info |= {
+                "architecture": "64-bit" if is_64 else "32-bit",
+                "cpu_type": f"0x{cpu_type:08x}",
+                "file_type": file_type,
+                "num_commands": ncmds,
+                "commands_size": sizeofcmds,
+                "flags": f"0x{flags:08x}",
+                "load_commands": [],
+            }
 
             # Parse load commands (limit to prevent excessive parsing)
             for _i in range(min(ncmds, 50)):
@@ -1263,14 +1305,12 @@ class BinaryAnalyzer:
                 file_size = struct.unpack("<I", data[32:36])[0]
                 header_size = struct.unpack("<I", data[36:40])[0]
 
-                dex_info.update(
-                    {
-                        "checksum": f"0x{checksum:08x}",
-                        "signature": signature,
-                        "declared_size": file_size,
-                        "header_size": header_size,
-                    },
-                )
+                dex_info |= {
+                    "checksum": f"0x{checksum:08x}",
+                    "signature": signature,
+                    "declared_size": file_size,
+                    "header_size": header_size,
+                }
 
                 # String IDs
                 string_ids_size = struct.unpack("<I", data[56:60])[0]
@@ -1283,7 +1323,9 @@ class BinaryAnalyzer:
                     try:
                         str_offset_addr = string_ids_off + (i * 4)
                         if str_offset_addr + 4 <= len(data):
-                            str_offset = struct.unpack("<I", data[str_offset_addr : str_offset_addr + 4])[0]
+                            str_offset = struct.unpack(
+                                "<I", data[str_offset_addr : str_offset_addr + 4]
+                            )[0]
                             if str_offset < len(data):
                                 # Simple ULEB128 decoding for string length
                                 length = 0
@@ -1298,7 +1340,9 @@ class BinaryAnalyzer:
                                     shift += 7
 
                                 if pos + length <= len(data):
-                                    string = data[pos : pos + length].decode("utf-8", errors="ignore")
+                                    string = data[pos : pos + length].decode(
+                                        "utf-8", errors="ignore"
+                                    )
                                     dex_info["strings"].append(string)
                     except (UnicodeDecodeError, IndexError, struct.error):
                         continue
@@ -1332,7 +1376,7 @@ class BinaryAnalyzer:
                     archive_info["type"] = "JAR"
 
                 # Analyze files (limit to first 20)
-                for _i, file_info in enumerate(zf.filelist[:20]):
+                for file_info in zf.filelist[:20]:
                     archive_info["files"].append(
                         {
                             "filename": file_info.filename,
@@ -1347,7 +1391,9 @@ class BinaryAnalyzer:
 
                 # Calculate compression ratio
                 if archive_info["uncompressed_size"] > 0:
-                    archive_info["compression_ratio"] = (1 - archive_info["compressed_size"] / archive_info["uncompressed_size"]) * 100
+                    archive_info["compression_ratio"] = (
+                        1 - archive_info["compressed_size"] / archive_info["uncompressed_size"]
+                    ) * 100
 
             return archive_info
 
@@ -1370,7 +1416,7 @@ class BinaryAnalyzer:
                 else:
                     if len(current_string) >= min_length:
                         string = current_string.decode("ascii", errors="ignore")
-                        if not all(c in "0123456789ABCDEFabcdef" for c in string):
+                        if any(c not in "0123456789ABCDEFabcdef" for c in string):
                             strings.append(string)
                     current_string = bytearray()
 
@@ -1404,15 +1450,16 @@ class BinaryAnalyzer:
                     probability = count / data_len
                     entropy -= probability * math.log2(probability)
 
-            entropy_info = {
+            return {
                 "overall_entropy": round(entropy, 4),
                 "file_size": data_len,
                 "unique_bytes": len(byte_counts),
-                "analysis": "Normal" if entropy < 7.0 else "High (possibly packed/encrypted)",
+                "analysis": (
+                    "Normal"
+                    if entropy < 7.0
+                    else "High (possibly packed/encrypted)"
+                ),
             }
-
-            return entropy_info
-
         except Exception as e:
             return {"error": str(e)}
 
@@ -1439,7 +1486,7 @@ class BinaryAnalyzer:
             if file_format == "Unknown":
                 security_info["suspicious_indicators"].append("Unknown file format")
                 security_info["risk_level"] = "Medium"
-            elif file_format in ["PE", "ELF", "Mach-O"]:
+            elif file_format in {"PE", "ELF", "Mach-O"}:
                 security_info["recommendations"].append("Run in sandboxed environment")
                 security_info["recommendations"].append("Scan with antivirus")
 

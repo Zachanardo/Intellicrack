@@ -10,6 +10,7 @@ import json
 # Load the verification results
 from pathlib import Path
 
+
 with Path('verification_results.json').open() as f:
     results = json.load(f)
 

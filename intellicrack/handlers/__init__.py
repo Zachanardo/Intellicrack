@@ -24,6 +24,7 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 
+
 logger: logging.Logger = logging.getLogger(__name__)
 
 # Attempt to import all available handlers
@@ -50,7 +51,7 @@ _handler_modules: list[tuple[str, str]] = [
     ("tkinter_handler", "Tkinter GUI framework"),
     ("torch_handler", "PyTorch machine learning"),
     ("wmi_handler", "WMI Windows Management"),
-    ("ipex_handler", "Intel Extension for PyTorch"),
+    ("torch_xpu_handler", "PyTorch XPU support"),
 ]
 
 # Load handlers with error tolerance

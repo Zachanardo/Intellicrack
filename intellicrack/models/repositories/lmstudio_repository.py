@@ -26,6 +26,7 @@ from intellicrack.utils.service_utils import get_service_url
 from .base import APIRepositoryBase, RateLimitConfig
 from .interface import ModelInfo
 
+
 """
 LMStudio Repository Implementation
 
@@ -119,8 +120,7 @@ class LMStudioRepository(APIRepositoryBase):
             # Extract model information from the response
             for model_data in data.get("data", []):
                 model_id = model_data.get("id")
-                model_info = self._create_model_info(model_id, model_data)
-                if model_info:
+                if model_info := self._create_model_info(model_id, model_data):
                     models.append(model_info)
 
             return models
@@ -164,14 +164,14 @@ class LMStudioRepository(APIRepositoryBase):
             return None
 
         try:
-            # Find the specific model in the list
-            for model_data in data.get("data", []):
-                if model_data.get("id") == model_id:
-                    return self._create_model_info(model_id, model_data)
-
-            # Model not found
-            return None
-
+            return next(
+                (
+                    self._create_model_info(model_id, model_data)
+                    for model_data in data.get("data", [])
+                    if model_data.get("id") == model_id
+                ),
+                None,
+            )
         except (KeyError, TypeError) as e:
             logger.error(f"Error parsing LMStudio model details for {model_id}: {e}")
             return None
@@ -188,8 +188,7 @@ class LMStudioRepository(APIRepositoryBase):
 
         """
         try:
-            # LMStudio typically serves local models loaded as GGUF files
-            model_info = ModelInfo(
+            return ModelInfo(
                 model_id=model_id,
                 name=model_data.get("name", model_id),
                 description=model_data.get("description", "Local LMStudio model"),
@@ -198,15 +197,14 @@ class LMStudioRepository(APIRepositoryBase):
                 provider="lmstudio",
                 parameters=None,  # Not typically provided
                 context_length=model_data.get("context_length"),
-                capabilities=["text-generation"],  # LMStudio typically serves text models
+                capabilities=[
+                    "text-generation"
+                ],  # LMStudio typically serves text models
                 version=model_data.get("version", "1.0"),
                 checksum=None,
                 download_url=None,
                 local_path=None,  # We don't know the actual path of the local model
             )
-
-            return model_info
-
         except (KeyError, TypeError) as e:
             logger.error(f"Error creating ModelInfo for {model_id}: {e}")
             return None
@@ -218,5 +216,7 @@ class LMStudioRepository(APIRepositoryBase):
             Always returns (False, "LMStudio doesn't support model downloads through API")
 
         """
-        logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
+        logger.warning(
+            f"Download requested for {model_id} to {destination_path}, but not supported"
+        )
         return False, "LMStudio doesn't support model downloads through API"

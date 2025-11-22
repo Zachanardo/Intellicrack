@@ -411,7 +411,7 @@ if __name__ == "__main__":
             })
             return False
 
-    def generate_production_report(self) -> Dict[str, Any]:
+    def generate_production_report(self) -> dict[str, Any]:
         """Generate comprehensive production readiness report."""
         passed_tests = sum(1 for result in self.test_results if result.get("success", False))
         total_tests = len(self.test_results)

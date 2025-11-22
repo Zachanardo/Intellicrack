@@ -25,17 +25,15 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 import math
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 
-from intellicrack.core.processing.streaming_analysis_manager import (
-    ChunkContext,
-    StreamingAnalysisManager,
-    StreamingAnalyzer,
-)
+from intellicrack.core.processing.streaming_analysis_manager import ChunkContext, StreamingAnalysisManager, StreamingAnalyzer
+
 
 logger = logging.getLogger(__name__)
 
@@ -136,9 +134,11 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
             chunk_entropy = self._calculate_entropy(byte_counts, len(chunk_data))
 
             unique_bytes = len(byte_counts)
-            printable_count = sum(1 for byte in chunk_data if 32 <= byte <= 126)
-            null_count = byte_counts[0] if 0 in byte_counts else 0
-            high_entropy_count = sum(1 for byte in chunk_data if byte > 127)
+            printable_count = sum(bool(32 <= byte <= 126)
+                              for byte in chunk_data)
+            null_count = byte_counts.get(0, 0)
+            high_entropy_count = sum(bool(byte > 127)
+                                 for byte in chunk_data)
 
             printable_ratio = printable_count / len(chunk_data) if chunk_data else 0
             null_ratio = null_count / len(chunk_data) if chunk_data else 0
@@ -239,11 +239,17 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
                 total_null += chunk_size * chunk_result.get("null_ratio", 0.0)
                 total_high_entropy += chunk_size * chunk_result.get("high_entropy_ratio", 0.0)
 
-            global_entropy = self._calculate_entropy(dict(self.global_byte_counts), self.total_bytes)
+            global_entropy = self._calculate_entropy(
+                dict(self.global_byte_counts), self.total_bytes
+            )
 
-            overall_printable_ratio = total_printable / total_bytes_counted if total_bytes_counted > 0 else 0
+            overall_printable_ratio = (
+                total_printable / total_bytes_counted if total_bytes_counted > 0 else 0
+            )
             overall_null_ratio = total_null / total_bytes_counted if total_bytes_counted > 0 else 0
-            overall_high_entropy_ratio = total_high_entropy / total_bytes_counted if total_bytes_counted > 0 else 0
+            overall_high_entropy_ratio = (
+                total_high_entropy / total_bytes_counted if total_bytes_counted > 0 else 0
+            )
 
             entropy_distribution = self._calculate_entropy_distribution(chunk_entropies)
 
@@ -251,7 +257,9 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
                 "global_entropy": round(global_entropy, 4),
                 "total_bytes": self.total_bytes,
                 "unique_bytes": len(self.global_byte_counts),
-                "average_chunk_entropy": round(np.mean(chunk_entropies), 4) if chunk_entropies else 0.0,
+                "average_chunk_entropy": round(np.mean(chunk_entropies), 4)
+                if chunk_entropies
+                else 0.0,
                 "min_chunk_entropy": round(min(chunk_entropies), 4) if chunk_entropies else 0.0,
                 "max_chunk_entropy": round(max(chunk_entropies), 4) if chunk_entropies else 0.0,
                 "std_dev_entropy": round(np.std(chunk_entropies), 4) if chunk_entropies else 0.0,
@@ -299,26 +307,28 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
 
             protection_indicators = []
             if is_encrypted:
-                protection_indicators.append("High entropy suggests strong encryption or compression")
+                protection_indicators.append(
+                    "High entropy suggests strong encryption or compression"
+                )
             if is_packed:
                 protection_indicators.append("Elevated entropy indicates possible packing")
 
             if len(high_entropy_regions) > 10:
-                protection_indicators.append(f"Multiple high-entropy regions ({len(high_entropy_regions)}) detected")
+                protection_indicators.append(
+                    f"Multiple high-entropy regions ({len(high_entropy_regions)}) detected"
+                )
 
             byte_usage_efficiency = len(self.global_byte_counts) / 256.0
 
-            merged_results.update(
-                {
-                    "is_packed": is_packed,
-                    "is_encrypted": is_encrypted,
-                    "protection_indicators": protection_indicators,
-                    "byte_usage_efficiency": round(byte_usage_efficiency, 4),
-                    "randomness_score": round((global_entropy / 8.0) * 100, 2),
-                    "summary": self._generate_summary(merged_results),
-                    "recommendations": self._generate_recommendations(merged_results),
-                },
-            )
+            merged_results |= {
+                "is_packed": is_packed,
+                "is_encrypted": is_encrypted,
+                "protection_indicators": protection_indicators,
+                "byte_usage_efficiency": round(byte_usage_efficiency, 4),
+                "randomness_score": round((global_entropy / 8.0) * 100, 2),
+                "summary": self._generate_summary(merged_results),
+                "recommendations": self._generate_recommendations(merged_results),
+            }
 
             logger.info(
                 f"Finalized entropy analysis: "
@@ -469,19 +479,28 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
         recommendations = []
 
         if results.get("is_encrypted"):
-            recommendations.append("Use unpacking tools before static analysis")
-            recommendations.append("Consider dynamic analysis to capture unpacked code")
-            recommendations.append("Check for custom decryption routines")
-
+            recommendations.extend(
+                (
+                    "Use unpacking tools before static analysis",
+                    "Consider dynamic analysis to capture unpacked code",
+                    "Check for custom decryption routines",
+                )
+            )
         if results.get("is_packed"):
-            recommendations.append("Identify packer type using signature detection")
-            recommendations.append("Apply appropriate unpacking technique")
-
+            recommendations.extend(
+                (
+                    "Identify packer type using signature detection",
+                    "Apply appropriate unpacking technique",
+                )
+            )
         high_entropy_regions = results.get("high_entropy_regions", [])
         if len(high_entropy_regions) > 20:
-            recommendations.append("Multiple high-entropy regions suggest layered protection")
-            recommendations.append("Examine each region individually for crypto/packing")
-
+            recommendations.extend(
+                (
+                    "Multiple high-entropy regions suggest layered protection",
+                    "Examine each region individually for crypto/packing",
+                )
+            )
         return recommendations
 
 
@@ -525,10 +544,7 @@ def analyze_entropy_streaming(
         if progress_callback:
             manager.register_progress_callback(progress_callback)
 
-        results = manager.analyze_streaming(binary_path, analyzer)
-
-        return results
-
+        return manager.analyze_streaming(binary_path, analyzer)
     except Exception as e:
         logger.error(f"Streaming entropy analysis failed: {e}")
         return {"error": str(e), "status": "failed"}

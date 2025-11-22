@@ -47,9 +47,9 @@ class ProtectionProfile:
     type: ProtectionType
     version: str
     confidence: float
-    detection_methods: List[str]
-    bypass_methods: List[str]
-    metadata: Dict[str, Any]
+    detection_methods: list[str]
+    bypass_methods: list[str]
+    metadata: dict[str, Any]
     timestamp: str
     hash: str
 
@@ -192,7 +192,7 @@ class CertifiedGroundTruthProfile:
         conn.commit()
         conn.close()
 
-    def create_profile(self, binary_path: Path, ground_truth_data: Dict[str, Any]) -> ProtectionProfile:
+    def create_profile(self, binary_path: Path, ground_truth_data: dict[str, Any]) -> ProtectionProfile:
         """
         Create a certified protection profile from ground truth data.
 
@@ -290,7 +290,7 @@ class CertifiedGroundTruthProfile:
 
         return ProtectionType.CUSTOM
 
-    def _calculate_confidence(self, ground_truth_data: Dict[str, Any]) -> float:
+    def _calculate_confidence(self, ground_truth_data: dict[str, Any]) -> float:
         """Calculate confidence level based on consensus data."""
         consensus = ground_truth_data.get("consensus", {})
 
@@ -309,7 +309,7 @@ class CertifiedGroundTruthProfile:
         else:
             return ConfidenceLevel.UNCERTAIN.value
 
-    def _extract_detection_methods(self, ground_truth_data: Dict[str, Any]) -> List[str]:
+    def _extract_detection_methods(self, ground_truth_data: dict[str, Any]) -> list[str]:
         """Extract detection methods from ground truth data."""
         methods = []
 
@@ -343,7 +343,7 @@ class CertifiedGroundTruthProfile:
         return methods if methods else ["manual:expert_analysis"]
 
     def _generate_bypass_methods(self, protection_type: ProtectionType,
-                                 ground_truth_data: Dict[str, Any]) -> List[str]:
+                                 ground_truth_data: dict[str, Any]) -> list[str]:
         """Generate bypass methods based on protection type."""
         bypass_methods = []
 
@@ -418,7 +418,7 @@ class CertifiedGroundTruthProfile:
                 sha256_hash.update(byte_block)
         return sha256_hash.hexdigest()
 
-    def _calculate_profile_hash(self, profile_data: Dict[str, Any]) -> str:
+    def _calculate_profile_hash(self, profile_data: dict[str, Any]) -> str:
         """Calculate unique hash for a profile."""
         profile_json = json.dumps(profile_data, sort_keys=True)
         return hashlib.sha256(profile_json.encode()).hexdigest()
@@ -569,7 +569,7 @@ class CertifiedGroundTruthProfile:
 
         logger.info(f"Stored certification {cert_id}")
 
-    def validate_profile(self, profile_id: str, test_data: Dict[str, Any]) -> Tuple[bool, Dict[str, Any]]:
+    def validate_profile(self, profile_id: str, test_data: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
         """
         Validate test data against a certified profile.
 
@@ -647,7 +647,7 @@ class CertifiedGroundTruthProfile:
 
         return validation_passed, validation_results
 
-    def _log_validation(self, profile_id: str, result: bool, details: Dict[str, Any]):
+    def _log_validation(self, profile_id: str, result: bool, details: dict[str, Any]):
         """Log validation attempt."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -674,7 +674,7 @@ class CertifiedGroundTruthProfile:
         conn.commit()
         conn.close()
 
-    def get_profile(self, profile_id: str) -> Optional[Dict[str, Any]]:
+    def get_profile(self, profile_id: str) -> dict[str, Any] | None:
         """Retrieve a profile by ID."""
         # Check cache first
         if profile_id in self.profiles_cache:
@@ -712,7 +712,7 @@ class CertifiedGroundTruthProfile:
 
         return None
 
-    def list_profiles(self, protection_type: Optional[ProtectionType] = None) -> List[Dict[str, Any]]:
+    def list_profiles(self, protection_type: ProtectionType | None = None) -> list[dict[str, Any]]:
         """List all profiles, optionally filtered by type."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -744,7 +744,7 @@ class CertifiedGroundTruthProfile:
         conn.close()
         return profiles
 
-    def get_certification(self, profile_id: str) -> Optional[Dict[str, Any]]:
+    def get_certification(self, profile_id: str) -> dict[str, Any] | None:
         """Get certification for a profile."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -773,7 +773,7 @@ class CertifiedGroundTruthProfile:
 
         return None
 
-    def verify_certification(self, profile_id: str) -> Tuple[bool, str]:
+    def verify_certification(self, profile_id: str) -> tuple[bool, str]:
         """
         Verify if a profile's certification is valid.
 
@@ -827,7 +827,7 @@ class CertifiedGroundTruthProfile:
 
     def import_profile(self, import_path: Path) -> str:
         """Import a profile from exported data."""
-        with open(import_path, 'r') as f:
+        with open(import_path) as f:
             import_data = json.load(f)
 
         profile_data = import_data["profile"]
@@ -865,7 +865,7 @@ class CertifiedGroundTruthProfile:
         logger.info(f"Imported profile {profile_data['id']}")
         return profile_data["id"]
 
-    def generate_validation_report(self) -> Dict[str, Any]:
+    def generate_validation_report(self) -> dict[str, Any]:
         """Generate a comprehensive validation report."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -939,7 +939,7 @@ def main():
     # Process all available ground truth profiles
     for gt_file in ground_truth_path.glob("*.json"):
         try:
-            with open(gt_file, 'r') as f:
+            with open(gt_file) as f:
                 ground_truth_data = json.load(f)
 
             # Verify ground truth is from external sources

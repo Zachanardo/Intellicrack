@@ -768,7 +768,7 @@ class TestPrivateHelperMethods(unittest.TestCase):
         if platform.system() == "Linux":
             # Test real /proc/self/status reading
             try:
-                with open('/proc/self/status', 'r') as f:
+                with open('/proc/self/status') as f:
                     status_content = f.read()
 
                 # Should be able to read status file
@@ -782,7 +782,7 @@ class TestPrivateHelperMethods(unittest.TestCase):
 
                 # Under normal test conditions, should be False (no debugger)
                 self.assertFalse(result)
-            except (IOError, PermissionError):
+            except (OSError, PermissionError):
                 # If can't read /proc/self/status, test error handling
                 result = self.defense._quick_debugger_check()
                 self.assertIsInstance(result, bool)
@@ -793,7 +793,7 @@ class TestPrivateHelperMethods(unittest.TestCase):
 
         # Create a temporary method that simulates file access error
         def failing_file_access():
-            raise IOError("File access error for testing")
+            raise OSError("File access error for testing")
 
         # Store original method if it exists
         original_method = None

@@ -30,17 +30,12 @@ from typing import Any
 
 from ..utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 # Try to import huggingface_hub
 try:
-    from huggingface_hub import (
-        HfApi,
-        ModelCard,
-        hf_hub_download,
-        list_models,
-        snapshot_download,
-    )
+    from huggingface_hub import HfApi, ModelCard, hf_hub_download, list_models, snapshot_download
     from huggingface_hub.utils import RepositoryNotFoundError
 
     HAS_HF_HUB = True
@@ -237,9 +232,8 @@ class ModelDownloadManager:
             try:
                 siblings = model.siblings or []
                 for file in siblings:
-                    if file.rfilename and file.size:
-                        if file.rfilename.endswith((".bin", ".safetensors", ".pt", ".pth")):
-                            model_size = (model_size or 0) + file.size
+                    if file.rfilename and file.size and file.rfilename.endswith((".bin", ".safetensors", ".pt", ".pth")):
+                        model_size = (model_size or 0) + file.size
             except Exception as e:
                 logger.debug(f"Could not calculate model size for {model.modelId}: {e}")
 
@@ -333,9 +327,7 @@ class ModelDownloadManager:
 
         """
         card_data = self.get_model_card(model_id)
-        if card_data and "content" in card_data:
-            return card_data["content"]
-        return None
+        return card_data["content"] if card_data and "content" in card_data else None
 
     def download_model(
         self,
@@ -415,7 +407,8 @@ class ModelDownloadManager:
                 "path": str(local_path),
                 "downloaded_at": datetime.now().isoformat(),
                 "revision": revision,
-                "size_mb": sum(f.stat().st_size for f in Path(local_path).rglob("*") if f.is_file()) / (1024 * 1024),
+                "size_mb": sum(f.stat().st_size for f in Path(local_path).rglob("*") if f.is_file())
+                / (1024 * 1024),
             }
             self._save_metadata()
 
@@ -510,7 +503,9 @@ class ModelDownloadManager:
             if model_dir.is_dir() and model_dir.name not in ["downloads", "tmp"]:
                 model_id = model_dir.name.replace("_", "/", 1)
                 if model_id not in cached_models:
-                    size_mb = sum(f.stat().st_size for f in model_dir.rglob("*") if f.is_file()) / (1024 * 1024)
+                    size_mb = sum(f.stat().st_size for f in model_dir.rglob("*") if f.is_file()) / (
+                        1024 * 1024
+                    )
                     cached_models[model_id] = {
                         "path": str(model_dir),
                         "size_mb": size_mb,
@@ -560,13 +555,13 @@ class ModelDownloadManager:
             Dictionary with size information in MB
 
         """
-        total_size = 0
         model_count = 0
 
-        for path in self.cache_dir.rglob("*"):
-            if path.is_file():
-                total_size += path.stat().st_size
-
+        total_size = sum(
+            path.stat().st_size
+            for path in self.cache_dir.rglob("*")
+            if path.is_file()
+        )
         cached_models = self.list_cached_models()
         model_count = len(cached_models)
 
@@ -608,12 +603,8 @@ class ModelDownloadManager:
             reverse=True,
         )
 
-        deleted = 0
-        for model_id, _ in sorted_models[keep_recent:]:
-            if self.delete_cached_model(model_id):
-                deleted += 1
-
-        return deleted
+        return sum(bool(self.delete_cached_model(model_id))
+               for model_id, _ in sorted_models[keep_recent:])
 
     def verify_model_files(self, model_path: str | Path) -> dict[str, Any]:
         """Verify integrity of downloaded model files.
@@ -654,8 +645,7 @@ class ModelDownloadManager:
         has_config = False
 
         for pattern in essential_patterns:
-            files = list(model_path.glob(pattern))
-            if files:
+            if files := list(model_path.glob(pattern)):
                 if pattern == "config.json":
                     has_config = True
                 else:
@@ -676,12 +666,7 @@ class ModelDownloadManager:
 
         # Check tokenizer files
         tokenizer_files = ["tokenizer_config.json", "tokenizer.json", "vocab.json"]
-        has_tokenizer = False
-        for file in tokenizer_files:
-            if (model_path / file).exists():
-                has_tokenizer = True
-                break
-
+        has_tokenizer = any((model_path / file).exists() for file in tokenizer_files)
         if not has_tokenizer:
             results["warnings"].append("No tokenizer files found")
 

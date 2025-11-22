@@ -34,6 +34,7 @@ from ..utils.logger import get_logger
 from .learning_engine_simple import get_learning_engine
 from .performance_monitor import performance_monitor, profile_ai_operation
 
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -189,9 +190,7 @@ class DataCollector:
             metrics_summary = performance_monitor.get_metrics_summary()
             data_points = []
 
-            # Overall system health
-            system_health = metrics_summary.get("system_health", {})
-            if system_health:
+            if system_health := metrics_summary.get("system_health", {}):
                 data_points.append(
                     DataPoint(
                         timestamp=datetime.now(),
@@ -300,9 +299,7 @@ class DataCollector:
                 ),
             )
 
-            # Disk I/O
-            disk_io = psutil.disk_io_counters()
-            if disk_io:
+            if disk_io := psutil.disk_io_counters():
                 data_points.append(
                     DataPoint(
                         timestamp=datetime.now(),
@@ -321,24 +318,18 @@ class DataCollector:
     def _collect_error_rate_metrics(self) -> list[DataPoint]:
         """Collect error rate metrics."""
         try:
-            # Get recent learning records to calculate error rates
-            data_points = []
-
             # Real error rate calculation based on actual error tracking
             current_time = datetime.now()
             error_rate = self._calculate_real_error_rate(current_time)
 
-            data_points.append(
+            return [
                 DataPoint(
                     timestamp=current_time,
                     value=error_rate,
                     label="Error Rate",
                     category="errors",
-                ),
-            )
-
-            return data_points
-
+                )
+            ]
         except Exception as e:
             logger.error(f"Error collecting error rate metrics: {e}")
             return []
@@ -354,7 +345,9 @@ class DataCollector:
             error_count = 0
 
             for _record_id, record in self.learning_records.items():
-                record_time = datetime.fromisoformat(record.get("timestamp", current_time.isoformat()))
+                record_time = datetime.fromisoformat(
+                    record.get("timestamp", current_time.isoformat())
+                )
 
                 if record_time >= lookback_time:
                     total_operations += 1
@@ -367,7 +360,8 @@ class DataCollector:
             recent_errors = [
                 error
                 for error in self.error_history
-                if datetime.fromisoformat(error.get("timestamp", current_time.isoformat())) >= lookback_time
+                if datetime.fromisoformat(error.get("timestamp", current_time.isoformat()))
+                >= lookback_time
             ]
             error_count += len(recent_errors)
 
@@ -397,7 +391,18 @@ class DataCollector:
             status = record.get("status", "").lower()
             result = record.get("result", "").lower()
 
-            error_keywords = ["error", "failed", "exception", "timeout", "crash", "invalid", "denied", "refused", "blocked", "abort"]
+            error_keywords = [
+                "error",
+                "failed",
+                "exception",
+                "timeout",
+                "crash",
+                "invalid",
+                "denied",
+                "refused",
+                "blocked",
+                "abort",
+            ]
 
             for keyword in error_keywords:
                 if keyword in status or keyword in result:
@@ -429,7 +434,9 @@ class DataCollector:
             # Analyze learning records for agent activity
             for record_id, record in self.learning_records.items():
                 try:
-                    record_time = datetime.fromisoformat(record.get("timestamp", current_time.isoformat()))
+                    record_time = datetime.fromisoformat(
+                        record.get("timestamp", current_time.isoformat())
+                    )
 
                     if record_time >= recent_threshold:
                         # Extract agent information from record
@@ -474,7 +481,7 @@ class DataCollector:
                 pass
 
             # If no agents detected from records, check system processes
-            if len(active_agent_ids) == 0:
+            if not active_agent_ids:
                 # Look for background processes or threads that might be agent-like
                 active_agent_ids.add("main_thread")  # At least the main analysis thread
 
@@ -484,7 +491,9 @@ class DataCollector:
                     recent_hour = current_time - timedelta(hours=1)
                     for _record_id, record in self.learning_records.items():
                         try:
-                            record_time = datetime.fromisoformat(record.get("timestamp", current_time.isoformat()))
+                            record_time = datetime.fromisoformat(
+                                record.get("timestamp", current_time.isoformat())
+                            )
                             if record_time >= recent_hour:
                                 total_tasks += 1
                         except Exception as e:
@@ -507,7 +516,6 @@ class DataCollector:
             # Return conservative estimates if calculation fails
             return 1, 10
 
-
     def _collect_learning_metrics(self) -> list[DataPoint]:
         """Collect learning progress metrics."""
         try:
@@ -526,17 +534,16 @@ class DataCollector:
 
             # Learning stats
             learning_stats = insights.get("learning_stats", {})
-            for stat_name, value in learning_stats.items():
-                if isinstance(value, (int, float)):
-                    data_points.append(
-                        DataPoint(
-                            timestamp=datetime.now(),
-                            value=value,
-                            label=f"Learning {stat_name}",
-                            category="learning_progress",
-                        ),
-                    )
-
+            data_points.extend(
+                DataPoint(
+                    timestamp=datetime.now(),
+                    value=value,
+                    label=f"Learning {stat_name}",
+                    category="learning_progress",
+                )
+                for stat_name, value in learning_stats.items()
+                if isinstance(value, (int, float))
+            )
             return data_points
 
         except Exception as e:
@@ -551,32 +558,23 @@ class DataCollector:
     def _collect_agent_activity_metrics(self) -> list[DataPoint]:
         """Collect multi-agent activity metrics."""
         try:
-            # Would integrate with multi-agent system
-            data_points = []
-
             # Real agent activity data from multi-agent system
             active_agents, total_tasks = self._get_real_agent_metrics()
 
-            data_points.append(
+            return [
                 DataPoint(
                     timestamp=datetime.now(),
                     value=active_agents,
                     label="Active Agents",
                     category="agent_activity",
                 ),
-            )
-
-            data_points.append(
                 DataPoint(
                     timestamp=datetime.now(),
                     value=total_tasks,
                     label="Total Tasks Processed",
                     category="task_volume",
                 ),
-            )
-
-            return data_points
-
+            ]
         except Exception as e:
             logger.error(f"Error collecting agent activity metrics: {e}")
             return []
@@ -588,9 +586,11 @@ class DataCollector:
 
         # Filter by time range (in seconds)
         cutoff_time = datetime.now() - timedelta(seconds=time_range)
-        filtered_data = [point for point in self.data_store[metric_type.value] if point.timestamp >= cutoff_time]
-
-        return filtered_data
+        return [
+            point
+            for point in self.data_store[metric_type.value]
+            if point.timestamp >= cutoff_time
+        ]
 
     def stop_collection(self) -> None:
         """Stop data collection."""
@@ -655,7 +655,9 @@ class ChartGenerator:
         }
 
     @profile_ai_operation("chart_generation")
-    def generate_chart(self, template_name: str, custom_options: dict[str, Any] = None) -> ChartData:
+    def generate_chart(
+        self, template_name: str, custom_options: dict[str, Any] = None
+    ) -> ChartData:
         """Generate chart from template."""
         if template_name not in self.chart_templates:
             raise ValueError(f"Unknown chart template: {template_name}")
@@ -673,15 +675,13 @@ class ChartGenerator:
         if custom_options:
             options.update(custom_options)
 
-        chart_data = ChartData(
+        return ChartData(
             chart_id=str(uuid.uuid4()),
             title=template["title"],
             chart_type=template["chart_type"],
             data_points=all_data_points,
             options=options,
         )
-
-        return chart_data
 
     def generate_custom_chart(self, chart_config: dict[str, Any]) -> ChartData:
         """Generate custom chart from configuration."""
@@ -695,7 +695,7 @@ class ChartGenerator:
             data_points = self.data_collector.get_data(metric_type, time_range)
             all_data_points.extend(data_points)
 
-        chart_data = ChartData(
+        return ChartData(
             chart_id=str(uuid.uuid4()),
             title=chart_config.get("title", "Custom Chart"),
             chart_type=chart_type,
@@ -705,23 +705,19 @@ class ChartGenerator:
             options=chart_config.get("options", {}),
         )
 
-        return chart_data
-
     def generate_exploit_chain_network_graph(self) -> ChartData:
         """Generate network graph of exploit chains."""
-        # exploit_chain_builder module removed - returning empty chart
-        chart_data = ChartData(
+        return ChartData(
             chart_id=str(uuid.uuid4()),
             title="Exploit Chain Network (Disabled)",
             chart_type=ChartType.NETWORK_GRAPH,
             data_points=[],
             options={"layout": "force_directed", "show_labels": True},
         )
-        return chart_data
 
     def generate_vulnerability_heatmap(self) -> ChartData:
         """Generate heatmap of vulnerability patterns."""
-        chart_data = ChartData(
+        return ChartData(
             chart_id=str(uuid.uuid4()),
             title="Vulnerability Pattern Heatmap (Disabled)",
             chart_type=ChartType.HEATMAP,
@@ -734,7 +730,6 @@ class ChartGenerator:
                 "grid_lines": True,
             },
         )
-        return chart_data
 
 
 class DashboardManager:
@@ -796,8 +791,7 @@ class DashboardManager:
     def _create_default_dashboards(self) -> None:
         """Create default dashboards."""
         for template_name, template in self.dashboard_templates.items():
-            dashboard = self.create_dashboard_from_template(template_name)
-            if dashboard:
+            if dashboard := self.create_dashboard_from_template(template_name):
                 self.dashboards[dashboard.dashboard_id] = dashboard
                 logger.info(f"Created default dashboard: {template['name']}")
 
@@ -824,7 +818,7 @@ class DashboardManager:
             except Exception as e:
                 logger.error(f"Error generating chart {chart_template}: {e}")
 
-        dashboard = Dashboard(
+        return Dashboard(
             dashboard_id=str(uuid.uuid4()),
             name=template["name"],
             description=template["description"],
@@ -832,9 +826,9 @@ class DashboardManager:
             layout=template["layout"],
         )
 
-        return dashboard
-
-    def create_custom_dashboard(self, name: str, description: str, chart_configs: list[dict[str, Any]]) -> Dashboard:
+    def create_custom_dashboard(
+        self, name: str, description: str, chart_configs: list[dict[str, Any]]
+    ) -> Dashboard:
         """Create custom dashboard."""
         charts = []
 
@@ -866,9 +860,7 @@ class DashboardManager:
         # Refresh each chart
         for i, chart in enumerate(dashboard.charts):
             try:
-                # Find matching template or regenerate custom chart
-                refreshed_chart = self._refresh_chart(chart)
-                if refreshed_chart:
+                if refreshed_chart := self._refresh_chart(chart):
                     dashboard.charts[i] = refreshed_chart
             except Exception as e:
                 logger.error(f"Error refreshing chart {chart.chart_id}: {e}")
@@ -983,11 +975,7 @@ class AnalyticsEngine:
         numerator = sum((i - x_mean) * (values[i] - y_mean) for i in range(n))
         denominator = sum((i - x_mean) ** 2 for i in range(n))
 
-        if denominator == 0:
-            slope = 0
-        else:
-            slope = numerator / denominator
-
+        slope = 0 if denominator == 0 else numerator / denominator
         # Determine trend direction
         if slope > 0.1:
             trend = "improving"
@@ -1000,7 +988,7 @@ class AnalyticsEngine:
         variance = sum((v - y_mean) ** 2 for v in values) / n
         std_dev = math.sqrt(variance)
 
-        analysis_result = {
+        return {
             "trend": trend,
             "slope": slope,
             "mean_value": y_mean,
@@ -1009,8 +997,6 @@ class AnalyticsEngine:
             "time_range_hours": time_range / 3600,
             "analysis": f"Performance trend is {trend} with slope {slope:.4f}",
         }
-
-        return analysis_result
 
     @profile_ai_operation("success_rate_analysis")
     def analyze_success_patterns(self) -> dict[str, Any]:
@@ -1190,7 +1176,9 @@ class VisualizationAnalytics:
         """Refresh dashboard data."""
         return self.dashboard_manager.refresh_dashboard(dashboard_id)
 
-    def create_custom_dashboard(self, name: str, description: str, chart_configs: list[dict[str, Any]]) -> Dashboard:
+    def create_custom_dashboard(
+        self, name: str, description: str, chart_configs: list[dict[str, Any]]
+    ) -> Dashboard:
         """Create custom dashboard."""
         return self.dashboard_manager.create_custom_dashboard(name, description, chart_configs)
 
@@ -1203,7 +1191,9 @@ class VisualizationAnalytics:
         return {
             "data_collector_active": self.data_collector.collection_enabled,
             "total_dashboards": len(self.dashboard_manager.dashboards),
-            "data_points_collected": sum(len(queue) for queue in self.data_collector.data_store.values()),
+            "data_points_collected": sum(
+                len(queue) for queue in self.data_collector.data_store.values()
+            ),
             "last_collection": datetime.now().isoformat(),
         }
 

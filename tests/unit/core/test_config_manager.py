@@ -256,12 +256,12 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         assert len(backup_files) > 0, "Backup file should be created"
 
         # Verify backup content is valid
-        with open(backup_files[0], 'r', encoding='utf-8') as f:
+        with open(backup_files[0], encoding='utf-8') as f:
             backup_data = json.load(f)
         self.assert_real_output(backup_data)
 
         # Verify saved config content
-        with open(self.test_config_file, 'r', encoding='utf-8') as f:
+        with open(self.test_config_file, encoding='utf-8') as f:
             saved_data = json.load(f)
         self.assert_real_output(saved_data)
         assert saved_data["ui"]["theme"] == "modified_theme"
@@ -560,7 +560,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         assert success, "Should restore from backup successfully"
 
         # Verify restoration
-        with open(self.test_config_file, 'r', encoding='utf-8') as f:
+        with open(self.test_config_file, encoding='utf-8') as f:
             restored_data = json.load(f)
 
         self.assert_real_output(restored_data)
@@ -780,7 +780,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         # Verify backup was created
         backup_file = legacy_file.with_suffix('.backup')
         assert backup_file.exists(), "Backup of legacy config should be created"
-        with open(backup_file, 'r', encoding='utf-8') as f:
+        with open(backup_file, encoding='utf-8') as f:
             backup_data = json.load(f)
         assert backup_data == legacy_config, "Backup should match original legacy config"
 

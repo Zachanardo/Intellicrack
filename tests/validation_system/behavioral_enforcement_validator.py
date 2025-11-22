@@ -33,7 +33,7 @@ class AlgorithmDocumentation:
     algorithm_details: str
     pseudocode: str
     patch_explanation: str
-    mathematical_proof: Optional[str]
+    mathematical_proof: str | None
     verification_status: bool
     timestamp: str = None
 
@@ -47,13 +47,13 @@ class CodeTraceResult:
     """Result of dynamic code tracing verification."""
     trace_id: str
     binary_path: str
-    protection_sections: List[Dict[str, Any]]
-    memory_operations: List[Dict[str, Any]]
-    execution_flow: List[str]
+    protection_sections: list[dict[str, Any]]
+    memory_operations: list[dict[str, Any]]
+    execution_flow: list[str]
     real_time_analysis: bool
     hardcoded_lookups_detected: bool
     verification_passed: bool
-    error_messages: List[str]
+    error_messages: list[str]
     timestamp: str = None
 
     def __post_init__(self):
@@ -65,7 +65,7 @@ class CodeTraceResult:
 class ChallengeTestResult:
     """Result of randomized challenge testing."""
     challenge_id: str
-    protection_parameters: Dict[str, Any]
+    protection_parameters: dict[str, Any]
     challenge_data: bytes
     expected_response: str
     actual_response: str
@@ -73,7 +73,7 @@ class ChallengeTestResult:
     correlation_verified: bool
     real_time_analysis: bool
     test_passed: bool
-    error_message: Optional[str] = None
+    error_message: str | None = None
     timestamp: str = None
 
     def __post_init__(self):
@@ -86,14 +86,14 @@ class KeygenResult:
     """Result of keygen generation verification."""
     software_name: str
     algorithm_type: str
-    generated_keys: List[str]
+    generated_keys: list[str]
     key_structure_valid: bool
     keys_work_on_fresh_install: bool
     hardware_variations_tested: int
     algorithm_understanding_proven: bool
     brute_force_excluded: bool
     validation_notes: str
-    error_messages: List[str]
+    error_messages: list[str]
     timestamp: str = None
 
     def __post_init__(self):
@@ -111,11 +111,11 @@ class BehavioralEnforcementResult:
     test_end_time: str
     algorithm_documentation: AlgorithmDocumentation
     code_trace_result: CodeTraceResult
-    challenge_test_results: List[ChallengeTestResult]
+    challenge_test_results: list[ChallengeTestResult]
     keygen_result: KeygenResult
     mechanism_understanding_verified: bool
     behavioral_requirements_met: bool
-    error_messages: List[str]
+    error_messages: list[str]
     timestamp: str = None
 
     def __post_init__(self):
@@ -187,7 +187,7 @@ class BehavioralEnforcementValidator:
                 sha256.update(chunk)
         return sha256.hexdigest()
 
-    def _generate_challenge_data(self, protection_type: str) -> Tuple[bytes, Dict[str, Any]]:
+    def _generate_challenge_data(self, protection_type: str) -> tuple[bytes, dict[str, Any]]:
         """Generate randomized challenge data that can't be pre-known."""
         timestamp = int(time.time())
         nonce = secrets.randbits(128).to_bytes(16, 'big')
@@ -679,7 +679,7 @@ if (!$process.HasExited) {{
         except Exception as e:
             return f"Windows Debug API error: {e}"
 
-    def _analyze_protection_sections(self, binary_path: str, execution_flow: List[str]) -> List[Dict[str, Any]]:
+    def _analyze_protection_sections(self, binary_path: str, execution_flow: list[str]) -> list[dict[str, Any]]:
         """Analyze protection sections from execution trace."""
         protection_sections = []
 
@@ -704,7 +704,7 @@ if (!$process.HasExited) {{
 
         return protection_sections
 
-    def _extract_memory_operations(self, execution_flow: List[str]) -> List[Dict[str, Any]]:
+    def _extract_memory_operations(self, execution_flow: list[str]) -> list[dict[str, Any]]:
         """Extract memory read/write operations from execution trace."""
         memory_operations = []
 
@@ -721,7 +721,7 @@ if (!$process.HasExited) {{
 
         return memory_operations
 
-    def _verify_real_time_analysis(self, execution_flow: List[str]) -> bool:
+    def _verify_real_time_analysis(self, execution_flow: list[str]) -> bool:
         """Verify that actual protection analysis occurs in real-time."""
         # Check for evidence of real-time computation vs pre-computed results
         real_time_indicators = [
@@ -739,7 +739,7 @@ if (!$process.HasExited) {{
         # Must have at least some evidence of real-time analysis
         return real_time_operations > 0
 
-    def _detect_hardcoded_lookups(self, execution_flow: List[str]) -> bool:
+    def _detect_hardcoded_lookups(self, execution_flow: list[str]) -> bool:
         """Detect hardcoded protection database lookups."""
         # Look for suspicious patterns that suggest pre-computed results
         suspicious_patterns = [
@@ -797,7 +797,7 @@ if (!$process.HasExited) {{
         else:
             return 0
 
-    def perform_randomized_challenge_testing(self, software_name: str, protection_type: str, num_challenges: int = 5) -> List[ChallengeTestResult]:
+    def perform_randomized_challenge_testing(self, software_name: str, protection_type: str, num_challenges: int = 5) -> list[ChallengeTestResult]:
         """Perform randomized challenge testing for Phase 3.7.3."""
         logger.info(f"Performing randomized challenge testing for {software_name}")
 
@@ -871,7 +871,7 @@ if (!$process.HasExited) {{
 
         return challenge_results
 
-    def _compute_expected_response(self, challenge_data: bytes, parameters: Dict[str, Any], protection_type: str) -> str:
+    def _compute_expected_response(self, challenge_data: bytes, parameters: dict[str, Any], protection_type: str) -> str:
         """Compute expected response using real cryptographic analysis."""
         # Use production-ready cryptographic validation
         if protection_type == "FlexLM":
@@ -899,7 +899,7 @@ if (!$process.HasExited) {{
             timestamp = int(time.time())
             return f"Protection_{challenge_hash}_{timestamp:08X}"
 
-    def _process_challenge_with_intellicrack(self, challenge_data: bytes, parameters: Dict[str, Any], protection_type: str) -> str:
+    def _process_challenge_with_intellicrack(self, challenge_data: bytes, parameters: dict[str, Any], protection_type: str) -> str:
         """Process challenge data through Intellicrack analysis."""
         # Save challenge data to temporary file
         challenge_file = self.challenges_dir / f"challenge_{int(time.time())}.bin"
@@ -1128,7 +1128,7 @@ Algorithm Understanding Evidence:
 
         return f"{crc:04X}"
 
-    def _validate_key_structure(self, keys: List[str], protection_type: str) -> bool:
+    def _validate_key_structure(self, keys: list[str], protection_type: str) -> bool:
         """Validate that generated keys follow correct structure."""
         if not keys:
             return False
@@ -1158,7 +1158,7 @@ Algorithm Understanding Evidence:
 
         return True
 
-    def _test_keys_fresh_install(self, keys: List[str], software_name: str) -> bool:
+    def _test_keys_fresh_install(self, keys: list[str], software_name: str) -> bool:
         """Test generated keys on fresh software install using real validation."""
         logger.info(f"Testing generated keys with fresh install validation for {software_name}")
 
@@ -1182,7 +1182,7 @@ Algorithm Understanding Evidence:
         logger.info("All generated keys passed production validation tests")
         return True
 
-    def _test_hardware_variations(self, keys: List[str], software_name: str) -> int:
+    def _test_hardware_variations(self, keys: list[str], software_name: str) -> int:
         """Test keys with different hardware variations using real HWID spoofing."""
         # Real hardware configuration testing with HWID manipulation
         hardware_configs = [
@@ -1202,7 +1202,7 @@ Algorithm Understanding Evidence:
 
         return variations_tested
 
-    def _test_keys_with_spoofed_hardware(self, keys: List[str], hardware_config: Dict[str, str], software_name: str) -> bool:
+    def _test_keys_with_spoofed_hardware(self, keys: list[str], hardware_config: dict[str, str], software_name: str) -> bool:
         """Test keys with spoofed hardware using real HWID manipulation techniques."""
         logger.info(f"Applying hardware spoofing for {software_name}")
 
@@ -1288,7 +1288,7 @@ Algorithm Understanding Evidence:
             logger.error(f"Hardware spoofing test failed: {e}")
             return False
 
-    def _verify_algorithm_understanding(self, keys: List[str], protection_type: str) -> bool:
+    def _verify_algorithm_understanding(self, keys: list[str], protection_type: str) -> bool:
         """Verify that keygen proves algorithm understanding, not brute force."""
         if not keys or len(keys) < 2:
             return False
@@ -1447,7 +1447,7 @@ Algorithm Understanding Evidence:
         else:
             return "Custom"
 
-    def generate_report(self, results: List[BehavioralEnforcementResult]) -> str:
+    def generate_report(self, results: list[BehavioralEnforcementResult]) -> str:
         """Generate comprehensive behavioral enforcement validation report."""
         if not results:
             return "No behavioral enforcement validation tests were run."
@@ -1547,7 +1547,7 @@ Algorithm Understanding Evidence:
 
         return "\n".join(report_lines)
 
-    def save_report(self, results: List[BehavioralEnforcementResult], filename: Optional[str] = None) -> str:
+    def save_report(self, results: list[BehavioralEnforcementResult], filename: str | None = None) -> str:
         """Save behavioral enforcement validation report to file."""
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

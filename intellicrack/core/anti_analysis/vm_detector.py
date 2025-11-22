@@ -33,6 +33,7 @@ from typing import Any
 
 from .base_detector import BaseDetector
 
+
 """
 Virtual Machine Detection
 
@@ -63,6 +64,7 @@ class CPUIDResult:
     brand_string: str = ""
     timestamp: float = field(default_factory=time.time)
 
+
 @dataclass
 class TimingMeasurement:
     """Timing measurement data."""
@@ -76,6 +78,7 @@ class TimingMeasurement:
     max_val: int = 0
     anomaly_detected: bool = False
     confidence: float = 0.0
+
 
 @dataclass
 class HardwareFingerprint:
@@ -269,7 +272,9 @@ class VMDetector(BaseDetector):
             # Calculate evasion score (how hard to evade detection)
             results["evasion_score"] = self._calculate_evasion_score(results["detections"])
 
-            self.logger.info(f"VM detection complete: {results['is_vm']} (confidence: {results['confidence']:.2f})")
+            self.logger.info(
+                f"VM detection complete: {results['is_vm']} (confidence: {results['confidence']:.2f})"
+            )
             return results
 
         except Exception as e:
@@ -285,31 +290,59 @@ class VMDetector(BaseDetector):
         try:
             if platform.system() == "Windows":
                 if platform.machine().endswith("64"):
-                    code = bytes([
-                        0x53,
-                        0x89, 0xC8,
-                        0x89, 0xD1,
-                        0x0F, 0xA2,
-                        0x41, 0x89, 0x00,
-                        0x41, 0x89, 0x58, 0x04,
-                        0x41, 0x89, 0x48, 0x08,
-                        0x41, 0x89, 0x50, 0x0C,
-                        0x5B,
-                        0xC3,
-                    ])
+                    code = bytes(
+                        [
+                            0x53,
+                            0x89,
+                            0xC8,
+                            0x89,
+                            0xD1,
+                            0x0F,
+                            0xA2,
+                            0x41,
+                            0x89,
+                            0x00,
+                            0x41,
+                            0x89,
+                            0x58,
+                            0x04,
+                            0x41,
+                            0x89,
+                            0x48,
+                            0x08,
+                            0x41,
+                            0x89,
+                            0x50,
+                            0x0C,
+                            0x5B,
+                            0xC3,
+                        ]
+                    )
                 else:
-                    code = bytes([
-                        0x53,
-                        0x89, 0xC0,
-                        0x89, 0xD1,
-                        0x0F, 0xA2,
-                        0x89, 0x07,
-                        0x89, 0x5F, 0x04,
-                        0x89, 0x4F, 0x08,
-                        0x89, 0x57, 0x0C,
-                        0x5B,
-                        0xC3,
-                    ])
+                    code = bytes(
+                        [
+                            0x53,
+                            0x89,
+                            0xC0,
+                            0x89,
+                            0xD1,
+                            0x0F,
+                            0xA2,
+                            0x89,
+                            0x07,
+                            0x89,
+                            0x5F,
+                            0x04,
+                            0x89,
+                            0x4F,
+                            0x08,
+                            0x89,
+                            0x57,
+                            0x0C,
+                            0x5B,
+                            0xC3,
+                        ]
+                    )
 
                 buf = ctypes.create_string_buffer(code)
                 VirtualAlloc = ctypes.windll.kernel32.VirtualAlloc
@@ -328,7 +361,9 @@ class VMDetector(BaseDetector):
                     return None
 
                 result = (ctypes.c_uint32 * 4)()
-                func_type = ctypes.CFUNCTYPE(None, ctypes.c_uint32, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32))
+                func_type = ctypes.CFUNCTYPE(
+                    None, ctypes.c_uint32, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32)
+                )
                 func = func_type(exec_mem)
                 func(leaf, subleaf, result)
 
@@ -342,31 +377,59 @@ class VMDetector(BaseDetector):
                 import mmap
 
                 if platform.machine() in ("x86_64", "AMD64"):
-                    code = bytes([
-                        0x53,
-                        0x89, 0xF8,
-                        0x89, 0xF1,
-                        0x0F, 0xA2,
-                        0x41, 0x89, 0x00,
-                        0x41, 0x89, 0x58, 0x04,
-                        0x41, 0x89, 0x48, 0x08,
-                        0x41, 0x89, 0x50, 0x0C,
-                        0x5B,
-                        0xC3,
-                    ])
+                    code = bytes(
+                        [
+                            0x53,
+                            0x89,
+                            0xF8,
+                            0x89,
+                            0xF1,
+                            0x0F,
+                            0xA2,
+                            0x41,
+                            0x89,
+                            0x00,
+                            0x41,
+                            0x89,
+                            0x58,
+                            0x04,
+                            0x41,
+                            0x89,
+                            0x48,
+                            0x08,
+                            0x41,
+                            0x89,
+                            0x50,
+                            0x0C,
+                            0x5B,
+                            0xC3,
+                        ]
+                    )
                 elif platform.machine() in ("i386", "i686"):
-                    code = bytes([
-                        0x53,
-                        0x89, 0xC0,
-                        0x89, 0xD1,
-                        0x0F, 0xA2,
-                        0x89, 0x07,
-                        0x89, 0x5F, 0x04,
-                        0x89, 0x4F, 0x08,
-                        0x89, 0x57, 0x0C,
-                        0x5B,
-                        0xC3,
-                    ])
+                    code = bytes(
+                        [
+                            0x53,
+                            0x89,
+                            0xC0,
+                            0x89,
+                            0xD1,
+                            0x0F,
+                            0xA2,
+                            0x89,
+                            0x07,
+                            0x89,
+                            0x5F,
+                            0x04,
+                            0x89,
+                            0x4F,
+                            0x08,
+                            0x89,
+                            0x57,
+                            0x0C,
+                            0x5B,
+                            0xC3,
+                        ]
+                    )
                 else:
                     return None
 
@@ -410,8 +473,7 @@ class VMDetector(BaseDetector):
         details = {"hypervisor_bit": False, "leaf": 0x1, "ecx_value": None}
 
         try:
-            result = self._execute_cpuid(0x1)
-            if result:
+            if result := self._execute_cpuid(0x1):
                 _eax, _ebx, ecx, _edx = result
                 details["ecx_value"] = ecx
                 hypervisor_bit = (ecx >> 31) & 1
@@ -431,23 +493,26 @@ class VMDetector(BaseDetector):
         details = {"vendor_string": None, "vm_type": None, "hypervisor_leaves": []}
 
         try:
-            result = self._execute_cpuid(0x40000000)
-            if result:
+            if result := self._execute_cpuid(0x40000000):
                 eax, ebx, ecx, edx = result
                 vendor_bytes = struct.pack("<III", ebx, ecx, edx)
                 vendor_string = vendor_bytes.decode("ascii", errors="ignore").rstrip("\x00")
                 details["vendor_string"] = vendor_string
-                details["hypervisor_leaves"].append({
-                    "leaf": 0x40000000,
-                    "eax": eax,
-                    "vendor": vendor_string,
-                })
+                details["hypervisor_leaves"].append(
+                    {
+                        "leaf": 0x40000000,
+                        "eax": eax,
+                        "vendor": vendor_string,
+                    }
+                )
 
                 for vm_type, signatures in self.vm_signatures.items():
                     cpuid_vendor = signatures.get("cpuid_vendor", "")
                     if cpuid_vendor and cpuid_vendor in vendor_string:
                         details["vm_type"] = vm_type
-                        self.logger.info(f"Detected {vm_type} via CPUID vendor string: {vendor_string}")
+                        self.logger.info(
+                            f"Detected {vm_type} via CPUID vendor string: {vendor_string}"
+                        )
                         return True, 0.98, details
 
                 if vendor_string and len(vendor_string) > 3:
@@ -477,7 +542,7 @@ class VMDetector(BaseDetector):
             if timings:
                 avg_time = sum(timings) / len(timings)
                 variance = sum((t - avg_time) ** 2 for t in timings) / len(timings)
-                std_dev = variance ** 0.5
+                std_dev = variance**0.5
 
                 details["avg_time_ns"] = int(avg_time)
                 details["variance"] = int(variance)
@@ -487,7 +552,9 @@ class VMDetector(BaseDetector):
                 if avg_time > 500 or std_dev > 200:
                     details["anomaly_detected"] = True
                     confidence = min(0.75, (avg_time / 1000) * 0.5 + (std_dev / 500) * 0.25)
-                    self.logger.info(f"CPUID timing anomaly: avg={avg_time:.0f}ns, std={std_dev:.0f}ns")
+                    self.logger.info(
+                        f"CPUID timing anomaly: avg={avg_time:.0f}ns, std={std_dev:.0f}ns"
+                    )
                     return True, confidence, details
 
         except Exception as e:
@@ -590,7 +657,9 @@ class VMDetector(BaseDetector):
                 for process in sigs.get("processes", []):
                     if process.lower() in processes:
                         details["detected_processes"].append(process)
-                        details["vm_type"] = vm_type  # Use vm_type to indicate which VM was detected
+                        details["vm_type"] = (
+                            vm_type  # Use vm_type to indicate which VM was detected
+                        )
 
             if details["detected_processes"]:
                 return True, 0.7, details
@@ -654,44 +723,78 @@ class VMDetector(BaseDetector):
 
     def _check_rdtsc_timing(self) -> tuple[bool, float, dict]:
         """Check RDTSC instruction timing for VM detection."""
-        details = {"avg_delta": 0, "variance": 0, "anomaly_detected": False, "min_delta": 0, "max_delta": 0}
+        details = {
+            "avg_delta": 0,
+            "variance": 0,
+            "anomaly_detected": False,
+            "min_delta": 0,
+            "max_delta": 0,
+        }
 
         try:
             if platform.system() != "Windows":
                 return False, 0.0, details
 
             if platform.machine().endswith("64"):
-                code = bytes([
-                    0x0F, 0x31,
-                    0x48, 0xC1, 0xE2, 0x20,
-                    0x48, 0x09, 0xD0,
-                    0x48, 0x89, 0x01,
-                    0x90,
-                    0x90,
-                    0x90,
-                    0x90,
-                    0x90,
-                    0x0F, 0x31,
-                    0x48, 0xC1, 0xE2, 0x20,
-                    0x48, 0x09, 0xD0,
-                    0x48, 0x2B, 0x01,
-                    0xC3,
-                ])
+                code = bytes(
+                    [
+                        0x0F,
+                        0x31,
+                        0x48,
+                        0xC1,
+                        0xE2,
+                        0x20,
+                        0x48,
+                        0x09,
+                        0xD0,
+                        0x48,
+                        0x89,
+                        0x01,
+                        0x90,
+                        0x90,
+                        0x90,
+                        0x90,
+                        0x90,
+                        0x0F,
+                        0x31,
+                        0x48,
+                        0xC1,
+                        0xE2,
+                        0x20,
+                        0x48,
+                        0x09,
+                        0xD0,
+                        0x48,
+                        0x2B,
+                        0x01,
+                        0xC3,
+                    ]
+                )
             else:
-                code = bytes([
-                    0x0F, 0x31,
-                    0x89, 0x01,
-                    0x89, 0x51, 0x04,
-                    0x90,
-                    0x90,
-                    0x90,
-                    0x90,
-                    0x90,
-                    0x0F, 0x31,
-                    0x2B, 0x01,
-                    0x1B, 0x51, 0x04,
-                    0xC3,
-                ])
+                code = bytes(
+                    [
+                        0x0F,
+                        0x31,
+                        0x89,
+                        0x01,
+                        0x89,
+                        0x51,
+                        0x04,
+                        0x90,
+                        0x90,
+                        0x90,
+                        0x90,
+                        0x90,
+                        0x0F,
+                        0x31,
+                        0x2B,
+                        0x01,
+                        0x1B,
+                        0x51,
+                        0x04,
+                        0xC3,
+                    ]
+                )
 
             buf = ctypes.create_string_buffer(code)
             VirtualAlloc = ctypes.windll.kernel32.VirtualAlloc
@@ -739,7 +842,7 @@ class VMDetector(BaseDetector):
             if deltas and len(deltas) > 100:
                 avg_delta = sum(deltas) / len(deltas)
                 variance = sum((d - avg_delta) ** 2 for d in deltas) / len(deltas)
-                std_dev = variance ** 0.5
+                std_dev = variance**0.5
                 min_delta = min(deltas)
                 max_delta = max(deltas)
 
@@ -847,8 +950,7 @@ class VMDetector(BaseDetector):
         try:
             # Get network interfaces
             if platform.system() == "Windows":
-                ipconfig_path = shutil.which("ipconfig")
-                if ipconfig_path:
+                if ipconfig_path := shutil.which("ipconfig"):
                     result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                         [ipconfig_path, "/all"],
                         check=False,
@@ -859,19 +961,17 @@ class VMDetector(BaseDetector):
                     output = result.stdout if result else ""
                 else:
                     output = ""
+            elif ip_path := shutil.which("ip"):
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                    [ip_path, "link"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    shell=False,  # Explicitly secure - using list format prevents shell injection
+                )
+                output = result.stdout if result else ""
             else:
-                ip_path = shutil.which("ip")
-                if ip_path:
-                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                        [ip_path, "link"],
-                        check=False,
-                        capture_output=True,
-                        text=True,
-                        shell=False,  # Explicitly secure - using list format prevents shell injection
-                    )
-                    output = result.stdout if result else ""
-                else:
-                    output = ""
+                output = ""
 
             # Extract MAC addresses
             import re
@@ -939,8 +1039,7 @@ class VMDetector(BaseDetector):
 
         try:
             if platform.system() == "Windows":
-                driverquery_path = shutil.which("driverquery")
-                if driverquery_path:
+                if driverquery_path := shutil.which("driverquery"):
                     result = subprocess.run(
                         [driverquery_path],
                         check=False,
@@ -1080,14 +1179,18 @@ class VMDetector(BaseDetector):
                             details["total_ram_mb"] = total_ram
 
                             if total_ram in [512, 1024, 2048, 4096, 8192]:
-                                details["suspicious_values"].append(f"ram={total_ram}MB (power of 2)")
+                                details["suspicious_values"].append(
+                                    f"ram={total_ram}MB (power of 2)"
+                                )
 
                         if hasattr(cs, "NumberOfLogicalProcessors"):
                             cpu_cores = int(cs.NumberOfLogicalProcessors)
                             details["cpu_cores"] = cpu_cores
 
-                            if cpu_cores in [1, 2, 4, 8]:
-                                details["suspicious_values"].append(f"cores={cpu_cores} (power of 2)")
+                            if cpu_cores in {1, 2, 4, 8}:
+                                details["suspicious_values"].append(
+                                    f"cores={cpu_cores} (power of 2)"
+                                )
 
                     disk_count = len(list(c.Win32_DiskDrive()))
                     details["disk_count"] = disk_count
@@ -1120,8 +1223,7 @@ class VMDetector(BaseDetector):
                     c = wmi.WMI()
                     for disk in c.Win32_DiskDrive():
                         if hasattr(disk, "SerialNumber"):
-                            serial = disk.SerialNumber.strip()
-                            if serial:
+                            if serial := disk.SerialNumber.strip():
                                 details["disk_serials"].append(serial)
 
                                 vm_serial_patterns = [
@@ -1152,8 +1254,7 @@ class VMDetector(BaseDetector):
                     )
                     if result.stdout:
                         for line in result.stdout.split("\n"):
-                            serial = line.strip()
-                            if serial:
+                            if serial := line.strip():
                                 details["disk_serials"].append(serial)
 
                                 vm_serial_patterns = [
@@ -1173,7 +1274,9 @@ class VMDetector(BaseDetector):
 
             if details["vm_patterns_found"]:
                 confidence = min(0.85, len(details["vm_patterns_found"]) * 0.30 + 0.55)
-                self.logger.info(f"VM disk serial patterns detected: {details['vm_patterns_found']}")
+                self.logger.info(
+                    f"VM disk serial patterns detected: {details['vm_patterns_found']}"
+                )
                 return True, confidence, details
 
         except Exception as e:
@@ -1189,8 +1292,7 @@ class VMDetector(BaseDetector):
             import re
 
             if platform.system() == "Windows":
-                ipconfig_path = shutil.which("ipconfig")
-                if ipconfig_path:
+                if ipconfig_path := shutil.which("ipconfig"):
                     result = subprocess.run(
                         [ipconfig_path, "/all"],
                         check=False,
@@ -1201,19 +1303,17 @@ class VMDetector(BaseDetector):
                     output = result.stdout if result else ""
                 else:
                     output = ""
+            elif ip_path := shutil.which("ip"):
+                result = subprocess.run(
+                    [ip_path, "link"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    shell=False,
+                )
+                output = result.stdout if result else ""
             else:
-                ip_path = shutil.which("ip")
-                if ip_path:
-                    result = subprocess.run(
-                        [ip_path, "link"],
-                        check=False,
-                        capture_output=True,
-                        text=True,
-                        shell=False,
-                    )
-                    output = result.stdout if result else ""
-                else:
-                    output = ""
+                output = ""
 
             mac_pattern = r"([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})"
             macs = re.findall(mac_pattern, output)
@@ -1255,8 +1355,7 @@ class VMDetector(BaseDetector):
         }
 
         try:
-            result = self._execute_cpuid(0x1)
-            if result:
+            if result := self._execute_cpuid(0x1):
                 _eax, _ebx, ecx, _edx = result
 
                 details["hypervisor_present"] = bool((ecx >> 31) & 1)
@@ -1306,11 +1405,14 @@ class VMDetector(BaseDetector):
         details = {"leaves": [], "hypervisor_info": {}, "vm_detected": False}
 
         try:
-            base_leaf = self._execute_cpuid(0x40000000)
-            if base_leaf:
+            if base_leaf := self._execute_cpuid(0x40000000):
                 eax, ebx, ecx, edx = base_leaf
                 max_leaf = eax
-                vendor = struct.pack("<III", ebx, ecx, edx).decode("ascii", errors="ignore").rstrip("\x00")
+                vendor = (
+                    struct.pack("<III", ebx, ecx, edx)
+                    .decode("ascii", errors="ignore")
+                    .rstrip("\x00")
+                )
 
                 details["hypervisor_info"]["base_leaf"] = {
                     "max_leaf": hex(max_leaf),
@@ -1323,18 +1425,24 @@ class VMDetector(BaseDetector):
 
                     for i in range(1, min(16, (max_leaf - 0x40000000) + 1)):
                         leaf_num = 0x40000000 + i
-                        leaf_result = self._execute_cpuid(leaf_num)
-                        if leaf_result:
+                        if leaf_result := self._execute_cpuid(leaf_num):
                             leaf_eax, leaf_ebx, leaf_ecx, leaf_edx = leaf_result
-                            details["leaves"].append({
-                                "leaf": hex(leaf_num),
-                                "eax": hex(leaf_eax),
-                                "ebx": hex(leaf_ebx),
-                                "ecx": hex(leaf_ecx),
-                                "edx": hex(leaf_edx),
-                            })
+                            details["leaves"].append(
+                                {
+                                    "leaf": hex(leaf_num),
+                                    "eax": hex(leaf_eax),
+                                    "ebx": hex(leaf_ebx),
+                                    "ecx": hex(leaf_ecx),
+                                    "edx": hex(leaf_edx),
+                                }
+                            )
 
-                    if "VMware" in vendor or "VBox" in vendor or "Microsoft Hv" in vendor or "KVM" in vendor:
+                    if (
+                        "VMware" in vendor
+                        or "VBox" in vendor
+                        or "Microsoft Hv" in vendor
+                        or "KVM" in vendor
+                    ):
                         return True, 0.95, details
 
                     return True, 0.80, details
@@ -1351,13 +1459,14 @@ class VMDetector(BaseDetector):
         try:
             brand_parts = []
             for leaf in [0x80000002, 0x80000003, 0x80000004]:
-                result = self._execute_cpuid(leaf)
-                if result:
+                if result := self._execute_cpuid(leaf):
                     eax, ebx, ecx, edx = result
                     brand_parts.append(struct.pack("<IIII", eax, ebx, ecx, edx))
 
             if brand_parts:
-                brand_string = b"".join(brand_parts).decode("ascii", errors="ignore").strip("\x00").strip()
+                brand_string = (
+                    b"".join(brand_parts).decode("ascii", errors="ignore").strip("\x00").strip()
+                )
                 details["brand_string"] = brand_string
 
                 vm_patterns = ["QEMU", "Virtual", "KVM", "Xen", "Bochs", "VMware", "VirtualBox"]
@@ -1391,31 +1500,63 @@ class VMDetector(BaseDetector):
                 return False, 0.0, details
 
             if platform.machine().endswith("64"):
-                code = bytes([
-                    0x48, 0x31, 0xC0,
-                    0x48, 0x31, 0xD2,
-                    0x0F, 0x31,
-                    0x48, 0xC1, 0xE2, 0x20,
-                    0x48, 0x09, 0xD0,
-                    0x48, 0x89, 0xC1,
-                    0x0F, 0x31,
-                    0x48, 0xC1, 0xE2, 0x20,
-                    0x48, 0x09, 0xD0,
-                    0x48, 0x29, 0xC8,
-                    0xC3,
-                ])
+                code = bytes(
+                    [
+                        0x48,
+                        0x31,
+                        0xC0,
+                        0x48,
+                        0x31,
+                        0xD2,
+                        0x0F,
+                        0x31,
+                        0x48,
+                        0xC1,
+                        0xE2,
+                        0x20,
+                        0x48,
+                        0x09,
+                        0xD0,
+                        0x48,
+                        0x89,
+                        0xC1,
+                        0x0F,
+                        0x31,
+                        0x48,
+                        0xC1,
+                        0xE2,
+                        0x20,
+                        0x48,
+                        0x09,
+                        0xD0,
+                        0x48,
+                        0x29,
+                        0xC8,
+                        0xC3,
+                    ]
+                )
             else:
-                code = bytes([
-                    0x31, 0xC0,
-                    0x31, 0xD2,
-                    0x0F, 0x31,
-                    0x89, 0xC1,
-                    0x89, 0xD3,
-                    0x0F, 0x31,
-                    0x29, 0xC8,
-                    0x19, 0xDA,
-                    0xC3,
-                ])
+                code = bytes(
+                    [
+                        0x31,
+                        0xC0,
+                        0x31,
+                        0xD2,
+                        0x0F,
+                        0x31,
+                        0x89,
+                        0xC1,
+                        0x89,
+                        0xD3,
+                        0x0F,
+                        0x31,
+                        0x29,
+                        0xC8,
+                        0x19,
+                        0xDA,
+                        0xC3,
+                    ]
+                )
 
             VirtualAlloc = ctypes.windll.kernel32.VirtualAlloc
             VirtualProtect = ctypes.windll.kernel32.VirtualProtect
@@ -1432,7 +1573,9 @@ class VMDetector(BaseDetector):
                 VirtualFree(exec_mem, 0, 0x8000)
                 return False, 0.0, details
 
-            func_type = ctypes.CFUNCTYPE(ctypes.c_uint64 if platform.machine().endswith("64") else ctypes.c_uint32)
+            func_type = ctypes.CFUNCTYPE(
+                ctypes.c_uint64 if platform.machine().endswith("64") else ctypes.c_uint32
+            )
             func = func_type(exec_mem)
 
             samples = 2000
@@ -1459,7 +1602,9 @@ class VMDetector(BaseDetector):
 
                 if vmexit_count > (samples * 0.05):
                     confidence = min(0.92, (vmexit_count / samples) * 2.0 + 0.60)
-                    self.logger.info(f"VM exit patterns detected: {vmexit_count}/{samples} samples ({details['vmexit_percentage']:.1f}%)")
+                    self.logger.info(
+                        f"VM exit patterns detected: {vmexit_count}/{samples} samples ({details['vmexit_percentage']:.1f}%)"
+                    )
                     return True, confidence, details
 
         except Exception as e:
@@ -1507,11 +1652,15 @@ class VMDetector(BaseDetector):
                         details["paravirt_detected"] = True
                         details["working_instruction"] = instr_name
                         VirtualFree(exec_mem, 0, 0x8000)
-                        self.logger.info(f"Paravirtualization instruction {instr_name} executed successfully (VM detected)")
+                        self.logger.info(
+                            f"Paravirtualization instruction {instr_name} executed successfully (VM detected)"
+                        )
                         return True, 0.99, details
 
                     except Exception as exec_err:
-                        details["exceptions_caught"].append(f"{instr_name}: {type(exec_err).__name__}")
+                        details["exceptions_caught"].append(
+                            f"{instr_name}: {type(exec_err).__name__}"
+                        )
 
                     VirtualFree(exec_mem, 0, 0x8000)
 
@@ -1532,6 +1681,7 @@ class VMDetector(BaseDetector):
             if platform.system() == "Windows":
                 try:
                     import wmi
+
                     c = wmi.WMI()
 
                     for table in c.MSAcpi_RawSMBiosTables():
@@ -1539,10 +1689,21 @@ class VMDetector(BaseDetector):
                             data = bytes(table.SMBiosData)
                             data_str = data.decode("ascii", errors="ignore").lower()
 
-                            vm_patterns = ["vmware", "vbox", "virtualbox", "qemu", "xen", "kvm", "hyper-v", "parallels"]
+                            vm_patterns = [
+                                "vmware",
+                                "vbox",
+                                "virtualbox",
+                                "qemu",
+                                "xen",
+                                "kvm",
+                                "hyper-v",
+                                "parallels",
+                            ]
                             for pattern in vm_patterns:
                                 if pattern in data_str:
-                                    details["vm_signatures_found"].append(f"ACPI contains '{pattern}'")
+                                    details["vm_signatures_found"].append(
+                                        f"ACPI contains '{pattern}'"
+                                    )
 
                 except ImportError:
                     pass
@@ -1563,7 +1724,9 @@ class VMDetector(BaseDetector):
                                 vm_patterns = ["vmware", "vbox", "qemu", "xen", "kvm", "bochs"]
                                 for pattern in vm_patterns:
                                     if pattern in data_str:
-                                        details["vm_signatures_found"].append(f"{acpi_path} contains '{pattern}'")
+                                        details["vm_signatures_found"].append(
+                                            f"{acpi_path} contains '{pattern}'"
+                                        )
                         except Exception as e:
                             self.logger.debug(f"Failed to read {acpi_path}: {e}")
 
@@ -1595,8 +1758,14 @@ class VMDetector(BaseDetector):
                     details["pci_devices"] = result.stdout.split("\n")[:20]
 
                     vm_device_patterns = [
-                        "vmware", "virtualbox", "qemu", "virtio",
-                        "red hat", "xen", "hyper-v", "parallels",
+                        "vmware",
+                        "virtualbox",
+                        "qemu",
+                        "virtio",
+                        "red hat",
+                        "xen",
+                        "hyper-v",
+                        "parallels",
                     ]
 
                     for pattern in vm_device_patterns:
@@ -1606,6 +1775,7 @@ class VMDetector(BaseDetector):
             elif platform.system() == "Windows":
                 try:
                     import wmi
+
                     c = wmi.WMI()
 
                     for controller in c.Win32_PnPEntity():
@@ -1667,8 +1837,12 @@ class VMDetector(BaseDetector):
                 if result == 0:
                     break
 
-                base_address = int.from_bytes(mbi[0:8] if sys.maxsize > 2**32 else mbi[0:4], "little")
-                region_size = int.from_bytes(mbi[16:24] if sys.maxsize > 2**32 else mbi[12:16], "little")
+                base_address = int.from_bytes(
+                    mbi[:8] if sys.maxsize > 2**32 else mbi[:4], "little"
+                )
+                region_size = int.from_bytes(
+                    mbi[16:24] if sys.maxsize > 2**32 else mbi[12:16], "little"
+                )
                 protect = int.from_bytes(mbi[32:36], "little")
 
                 if protect in [0x04, 0x20, 0x40]:
@@ -1684,14 +1858,16 @@ class VMDetector(BaseDetector):
                             scan_size,
                             ctypes.byref(bytes_read),
                         ):
-                            memory_data = buffer.raw[:bytes_read.value]
+                            memory_data = buffer.raw[: bytes_read.value]
 
                             for signature in hypervisor_signatures:
                                 if signature in memory_data:
                                     sig_str = signature.decode("ascii", errors="ignore")
                                     if sig_str not in details["signatures_found"]:
                                         details["signatures_found"].append(sig_str)
-                                        self.logger.info(f"Found hypervisor signature in memory: {sig_str}")
+                                        self.logger.info(
+                                            f"Found hypervisor signature in memory: {sig_str}"
+                                        )
                     except Exception as e:
                         self.logger.debug(f"Memory region scan error: {e}")
 
@@ -1720,6 +1896,7 @@ class VMDetector(BaseDetector):
             if platform.system() == "Windows":
                 try:
                     import wmi
+
                     c = wmi.WMI()
 
                     for proc in c.Win32_PerfFormattedData_PerfOS_Processor(Name="_Total"):
@@ -1761,17 +1938,28 @@ class VMDetector(BaseDetector):
                 return False, 0.0, details
 
             if platform.machine().endswith("64"):
-                code = bytes([
-                    0x0F, 0x31,
-                    0x48, 0xC1, 0xE2, 0x20,
-                    0x48, 0x09, 0xD0,
-                    0xC3,
-                ])
+                code = bytes(
+                    [
+                        0x0F,
+                        0x31,
+                        0x48,
+                        0xC1,
+                        0xE2,
+                        0x20,
+                        0x48,
+                        0x09,
+                        0xD0,
+                        0xC3,
+                    ]
+                )
             else:
-                code = bytes([
-                    0x0F, 0x31,
-                    0xC3,
-                ])
+                code = bytes(
+                    [
+                        0x0F,
+                        0x31,
+                        0xC3,
+                    ]
+                )
 
             VirtualAlloc = ctypes.windll.kernel32.VirtualAlloc
             VirtualProtect = ctypes.windll.kernel32.VirtualProtect
@@ -1788,7 +1976,9 @@ class VMDetector(BaseDetector):
                 VirtualFree(exec_mem, 0, 0x8000)
                 return False, 0.0, details
 
-            func_type = ctypes.CFUNCTYPE(ctypes.c_uint64 if platform.machine().endswith("64") else ctypes.c_uint32)
+            func_type = ctypes.CFUNCTYPE(
+                ctypes.c_uint64 if platform.machine().endswith("64") else ctypes.c_uint32
+            )
             func = func_type(exec_mem)
 
             measurements = []
@@ -1806,7 +1996,7 @@ class VMDetector(BaseDetector):
             if measurements:
                 avg_freq = sum(measurements) / len(measurements)
                 variance = sum((m - avg_freq) ** 2 for m in measurements) / len(measurements)
-                std_dev = variance ** 0.5
+                std_dev = variance**0.5
 
                 details["tsc_frequency_hz"] = int(avg_freq)
                 details["measurement_variance"] = int(variance)
@@ -1885,10 +2075,14 @@ class VMDetector(BaseDetector):
                 actual_l2_ratio = l2_time / l1_time
                 actual_mem_ratio = mem_time / l1_time
 
-                if actual_l2_ratio < (expected_l2_ratio * 0.5) or actual_mem_ratio < (expected_mem_ratio * 0.5):
+                if actual_l2_ratio < (expected_l2_ratio * 0.5) or actual_mem_ratio < (
+                    expected_mem_ratio * 0.5
+                ):
                     details["anomaly_detected"] = True
                     confidence = 0.55
-                    self.logger.info(f"Cache timing anomaly: L2/L1={actual_l2_ratio:.2f}, Mem/L1={actual_mem_ratio:.2f}")
+                    self.logger.info(
+                        f"Cache timing anomaly: L2/L1={actual_l2_ratio:.2f}, Mem/L1={actual_mem_ratio:.2f}"
+                    )
                     return True, confidence, details
 
         except Exception as e:
@@ -1904,11 +2098,12 @@ class VMDetector(BaseDetector):
         fingerprint = HardwareFingerprint()
 
         try:
-            result = self._execute_cpuid(0)
-            if result:
+            if result := self._execute_cpuid(0):
                 _, ebx, ecx, edx = result
                 vendor_bytes = struct.pack("<III", ebx, edx, ecx)
-                fingerprint.cpu_vendor = vendor_bytes.decode("ascii", errors="ignore").rstrip("\x00")
+                fingerprint.cpu_vendor = vendor_bytes.decode("ascii", errors="ignore").rstrip(
+                    "\x00"
+                )
 
             brand_result = self._check_cpuid_brand_string()
             if brand_result[0]:
@@ -1917,6 +2112,7 @@ class VMDetector(BaseDetector):
             if platform.system() == "Windows":
                 try:
                     import wmi
+
                     c = wmi.WMI()
 
                     for cs in c.Win32_ComputerSystem():
@@ -1934,8 +2130,7 @@ class VMDetector(BaseDetector):
 
                     for disk in disks[:5]:
                         if hasattr(disk, "SerialNumber"):
-                            serial = disk.SerialNumber.strip()
-                            if serial:
+                            if serial := disk.SerialNumber.strip():
                                 fingerprint.disk_serials.append(serial)
 
                     for bios in c.Win32_BIOS():
@@ -1995,14 +2190,18 @@ class VMDetector(BaseDetector):
 
                 if measurement.samples:
                     measurement.mean = sum(measurement.samples) / len(measurement.samples)
-                    measurement.variance = sum((s - measurement.mean) ** 2 for s in measurement.samples) / len(measurement.samples)
-                    measurement.std_dev = measurement.variance ** 0.5
+                    measurement.variance = sum(
+                        (s - measurement.mean) ** 2 for s in measurement.samples
+                    ) / len(measurement.samples)
+                    measurement.std_dev = measurement.variance**0.5
                     measurement.min_val = min(measurement.samples)
                     measurement.max_val = max(measurement.samples)
 
                     if measurement.std_dev > (measurement.mean * 0.5):
                         measurement.anomaly_detected = True
-                        measurement.confidence = min(0.75, (measurement.std_dev / measurement.mean) * 0.5)
+                        measurement.confidence = min(
+                            0.75, (measurement.std_dev / measurement.mean) * 0.5
+                        )
 
                 measurements[op_name] = measurement
 
@@ -2027,10 +2226,7 @@ class VMDetector(BaseDetector):
                         vm_scores[vm_type] = vm_scores.get(vm_type, 0) + result["confidence"]
 
         # Return VM type with highest score
-        if vm_scores:
-            return max(vm_scores, key=vm_scores.get)
-
-        return "unknown"
+        return max(vm_scores, key=vm_scores.get) if vm_scores else "unknown"
 
     def _calculate_evasion_score(self, detections: dict[str, Any]) -> int:
         """Calculate how difficult it is to evade detection."""
@@ -2046,7 +2242,7 @@ class VMDetector(BaseDetector):
         else:
             self.logger.debug("Generating general VM evasion code")
 
-        code = """
+        return """
 // VM Evasion Code
 #include <windows.h>
 #include <intrin.h>
@@ -2081,7 +2277,6 @@ if (IsRunningInVM()) {
     ExitProcess(0);
 }
 """
-        return code
 
     def get_aggressive_methods(self) -> list:
         """Get list of method names that are considered aggressive."""

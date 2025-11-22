@@ -25,6 +25,7 @@ from intellicrack.handlers.pyqt6_handler import HAS_PYQT
 
 from ..logger import setup_logger
 
+
 if HAS_PYQT:
     from intellicrack.handlers.pyqt6_handler import (
         QComboBox,
@@ -163,8 +164,12 @@ else:
 logger = setup_logger(__name__)
 
 try:
-    from intellicrack.handlers.matplotlib_handler import HAS_MATPLOTLIB, Figure, matplotlib
-    from intellicrack.handlers.matplotlib_handler import FigureCanvasQTAgg as FigureCanvas
+    from intellicrack.handlers.matplotlib_handler import (
+        HAS_MATPLOTLIB,
+        Figure,
+        FigureCanvasQTAgg as FigureCanvas,
+        matplotlib,
+    )
 
     if HAS_MATPLOTLIB:
         matplotlib.use("qtagg")

@@ -17,6 +17,7 @@ from enum import Enum
 
 import frida
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -445,7 +446,10 @@ class FridaProtectionBypasser:
                         type=ProtectionType.CERT_PINNING,
                         location=payload.get("location", "N/A"),
                         confidence=0.90,
-                        details={"method": payload.get("method", "Unknown"), "hostname": payload.get("hostname", "N/A")},
+                        details={
+                            "method": payload.get("method", "Unknown"),
+                            "hostname": payload.get("hostname", "N/A"),
+                        },
                         bypass_available=True,
                         bypass_script=cert_pinning_script,
                     )
@@ -887,7 +891,9 @@ class FridaProtectionBypasser:
             frida.get_local_device().enumerate_processes()[0]
 
             # Read first 4KB of main module for signatures
-            module_base = self.session.get_module_by_name(self.process_name if self.process_name else "main").base_address
+            module_base = self.session.get_module_by_name(
+                self.process_name or "main"
+            ).base_address
 
             header_data = self.session.read_bytes(module_base, 4096)
 
@@ -898,7 +904,10 @@ class FridaProtectionBypasser:
                             type=ProtectionType.PACKER,
                             location=f"Module header @ {hex(module_base)}",
                             confidence=0.92,
-                            details={"packer": packer_name, "signature": signature.decode("utf-8", errors="ignore")},
+                            details={
+                                "packer": packer_name,
+                                "signature": signature.decode("utf-8", errors="ignore"),
+                            },
                             bypass_available=True,
                             bypass_script=self._generate_unpacking_script(packer_name),
                         )
@@ -1467,12 +1476,13 @@ class FridaProtectionBypasser:
 
     def generate_bypass_report(self) -> str:
         """Generate detailed report of detected protections and bypasses."""
-        report = []
-        report.append("=" * 60)
-        report.append("PROTECTION BYPASS ANALYSIS REPORT")
-        report.append("=" * 60)
-        report.append(f"Target: {self.process_name or f'PID {self.pid}'}")
-        report.append(f"Total Protections Detected: {len(self.detected_protections)}")
+        report = [
+            "=" * 60,
+            "PROTECTION BYPASS ANALYSIS REPORT",
+            "=" * 60,
+            f"Target: {self.process_name or f'PID {self.pid}'}",
+            f"Total Protections Detected: {len(self.detected_protections)}",
+        ]
         report.append("")
 
         # Group by protection type
@@ -1522,7 +1532,9 @@ def main() -> None:
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-n", "--name", help="Process name to attach to")
     group.add_argument("-p", "--pid", type=int, help="Process ID to attach to")
-    parser.add_argument("-a", "--apply", action="store_true", help="Apply all bypasses automatically")
+    parser.add_argument(
+        "-a", "--apply", action="store_true", help="Apply all bypasses automatically"
+    )
     parser.add_argument("-r", "--report", help="Save report to file")
 
     args = parser.parse_args()

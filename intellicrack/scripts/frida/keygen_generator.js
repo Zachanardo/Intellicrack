@@ -41,10 +41,10 @@
 // Import existing production-ready capabilities
 const CloudLicenseBypass = require('./cloud_licensing_bypass.js').CloudLicensingBypass;
 const HardwareSpoofer = require('./enhanced_hardware_spoofer.js').EnhancedHardwareSpoofer;
-const HWIDSpoofer = require('./hwid_spoofer.js').HWIDSpoofer;
-const TelemetryBlocker = require('./anti_debugger.js').TelemetryBlocker;
+const {HWIDSpoofer} = require('./hwid_spoofer.js');
+const {TelemetryBlocker} = require('./anti_debugger.js');
 const AlgorithmExtractor = require('./universal_unpacker.js').UniversalUnpacker;
-const RuntimeAnalyzer = require('./memory_dumper.js').RuntimeAnalyzer;
+const {RuntimeAnalyzer} = require('./memory_dumper.js');
 
 const KeygenGenerator = {
     name: 'Advanced Keygen Generator v3.1.0',
@@ -1117,13 +1117,13 @@ const KeygenGenerator = {
 
             modPow: function (base, exponent, modulus) {
                 let result = BigInt(1);
-                base = base % modulus;
+                base %= modulus;
 
                 while (exponent > BigInt(0)) {
                     if (exponent % BigInt(2) === BigInt(1)) {
                         result = (result * base) % modulus;
                     }
-                    exponent = exponent >> BigInt(1);
+                    exponent >>= BigInt(1);
                     base = (base * base) % modulus;
                 }
 
@@ -1500,11 +1500,9 @@ const KeygenGenerator = {
                 const innerHash = KeygenGenerator.mathematicalCrypto.hash.sha256(
                     innerKey.concat(data)
                 );
-                const hmac = KeygenGenerator.mathematicalCrypto.hash.sha256(
-                    outerKey.concat(innerHash)
-                );
-
-                return hmac;
+                return KeygenGenerator.mathematicalCrypto.hash.sha256(
+                                    outerKey.concat(innerHash)
+                                );
             },
 
             base64UrlEncode: function (data) {
@@ -3482,7 +3480,7 @@ const KeygenGenerator = {
         // Fast modular exponentiation
         fastPowerMod: function (base, exp, mod) {
             let result = 1;
-            base = base % mod;
+            base %= mod;
             while (exp > 0) {
                 if (exp % 2 === 1) {
                     result = (result * base) % mod;
@@ -3594,7 +3592,7 @@ const KeygenGenerator = {
                 }
 
                 let entropy = 0;
-                const length = key.length;
+                const {length} = key;
 
                 for (const count of Object.values(frequency)) {
                     const probability = count / length;
@@ -3817,7 +3815,7 @@ const KeygenGenerator = {
 
                         // Track strategy performance
                         for (const key of batchResult.keys) {
-                            const strategy = key.strategy;
+                            const {strategy} = key;
                             if (!benchmark.results.strategies[strategy]) {
                                 benchmark.results.strategies[strategy] = { count: 0, rate: 0 };
                             }
@@ -4013,7 +4011,7 @@ const KeygenGenerator = {
         calculateKeyStrength: function (key) {
             try {
                 let score = 0;
-                const length = key.length;
+                const {length} = key;
 
                 // Length scoring
                 if (length >= 16) score += 25;
@@ -4180,13 +4178,11 @@ const KeygenGenerator = {
                     }
                 }
 
-                const uniqueness = {
-                    isUnique: !existsInCache && duplicatesFound === 0,
-                    duplicateCount: duplicatesFound,
-                    uniquenessScore: Math.max(0, 100 - duplicatesFound * 20),
-                };
-
-                return uniqueness;
+                return {
+                                    isUnique: !existsInCache && duplicatesFound === 0,
+                                    duplicateCount: duplicatesFound,
+                                    uniquenessScore: Math.max(0, 100 - duplicatesFound * 20),
+                                };
             } catch (error) {
                 console.error(`[QualityAssurance] Uniqueness check failed: ${error.message}`);
                 return { isUnique: true, duplicateCount: 0, uniquenessScore: 100 };
@@ -4288,7 +4284,7 @@ const KeygenGenerator = {
 
                 // Calculate length distribution
                 for (const assessment of validAssessments) {
-                    const length = assessment.key.length;
+                    const {length} = assessment.key;
                     analysis.distribution.lengthDistribution.set(
                         length,
                         (analysis.distribution.lengthDistribution.get(length) || 0) + 1
@@ -4580,12 +4576,9 @@ const KeygenGenerator = {
                     (strategyResults.performanceScore / 1000) * 100
                 );
 
-                const compositeScore =
-                    strategyResults.qualityScore * weights.quality +
-                    normalizedPerformance * weights.performance +
-                    strategyResults.uniquenessScore * weights.uniqueness;
-
-                return compositeScore;
+                return strategyResults.qualityScore * weights.quality +
+                                    normalizedPerformance * weights.performance +
+                                    strategyResults.uniquenessScore * weights.uniqueness;
             } catch (error) {
                 console.error(`[QualityAssurance] Test score calculation failed: ${error.message}`);
                 return 0;
@@ -4890,7 +4883,7 @@ const KeygenGenerator = {
                     for (let i = 0; i < componentData.length; i++) {
                         const char = componentData.charCodeAt(i);
                         hash = (hash << 5) - hash + char;
-                        hash = hash & hash; // Convert to 32-bit integer
+                        hash &= hash; // Convert to 32-bit integer
                     }
 
                     return Math.abs(hash).toString(16);
@@ -5099,7 +5092,7 @@ const KeygenGenerator = {
                     for (let i = 0; i < funcString.length; i++) {
                         const char = funcString.charCodeAt(i);
                         hash = (hash << 5) - hash + char;
-                        hash = hash & hash;
+                        hash &= hash;
                     }
 
                     return Math.abs(hash).toString(16);
@@ -5138,14 +5131,12 @@ const KeygenGenerator = {
 
             // Initialize encrypted workflows
             initializeEncryptedWorkflows: function () {
-                const workflows = {
-                    keyGeneration: this.createEncryptedWorkflow('key_generation'),
-                    validation: this.createEncryptedWorkflow('validation'),
-                    distribution: this.createEncryptedWorkflow('distribution'),
-                    storage: this.createEncryptedWorkflow('storage'),
-                };
-
-                return workflows;
+                return {
+                                    keyGeneration: this.createEncryptedWorkflow('key_generation'),
+                                    validation: this.createEncryptedWorkflow('validation'),
+                                    distribution: this.createEncryptedWorkflow('distribution'),
+                                    storage: this.createEncryptedWorkflow('storage'),
+                                };
             },
 
             // Create encrypted workflow
@@ -5657,7 +5648,7 @@ const KeygenGenerator = {
                 for (let i = 0; i < funcString.length; i++) {
                     const char = funcString.charCodeAt(i);
                     hash = (hash << 5) - hash + char;
-                    hash = hash & hash;
+                    hash &= hash;
                 }
                 return Math.abs(hash).toString(16);
             },

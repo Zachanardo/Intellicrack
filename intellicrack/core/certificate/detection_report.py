@@ -160,9 +160,7 @@ class DetectionReport:
         return {
             "binary_path": self.binary_path,
             "detected_libraries": self.detected_libraries,
-            "validation_functions": [
-                func.to_dict() for func in self.validation_functions
-            ],
+            "validation_functions": [func.to_dict() for func in self.validation_functions],
             "recommended_method": self.recommended_method.value,
             "risk_level": self.risk_level,
             "timestamp": self.timestamp.isoformat(),
@@ -189,26 +187,29 @@ class DetectionReport:
         ]
 
         if self.detected_libraries:
-            for lib in self.detected_libraries:
-                lines.append(f"  - {lib}")
+            lines.extend(f"  - {lib}" for lib in self.detected_libraries)
         else:
             lines.append("  (none)")
 
-        lines.extend([
-            "",
-            "DETECTED VALIDATION FUNCTIONS:",
-            "-" * 80,
-        ])
+        lines.extend(
+            [
+                "",
+                "DETECTED VALIDATION FUNCTIONS:",
+                "-" * 80,
+            ]
+        )
 
         if self.validation_functions:
             for func in self.validation_functions:
-                lines.extend([
-                    f"  API: {func.api_name}",
-                    f"  Library: {func.library}",
-                    f"  Address: 0x{func.address:08x}",
-                    f"  Confidence: {func.confidence:.2%}",
-                    f"  Cross-references: {len(func.references)}",
-                ])
+                lines.extend(
+                    [
+                        f"  API: {func.api_name}",
+                        f"  Library: {func.library}",
+                        f"  Address: 0x{func.address:08x}",
+                        f"  Confidence: {func.confidence:.2%}",
+                        f"  Cross-references: {len(func.references)}",
+                    ]
+                )
                 if func.context:
                     context_preview = func.context[:200]
                     if len(func.context) > 200:
@@ -233,8 +234,7 @@ class DetectionReport:
 
         """
         validation_functions = [
-            ValidationFunction(**func_data)
-            for func_data in data.get("validation_functions", [])
+            ValidationFunction(**func_data) for func_data in data.get("validation_functions", [])
         ]
 
         method_str = data.get("recommended_method", "none")
@@ -243,8 +243,7 @@ class DetectionReport:
         except ValueError:
             recommended_method = BypassMethod.NONE
 
-        timestamp_str = data.get("timestamp")
-        if timestamp_str:
+        if timestamp_str := data.get("timestamp"):
             timestamp = datetime.fromisoformat(timestamp_str)
         else:
             timestamp = datetime.now()
@@ -282,10 +281,7 @@ class DetectionReport:
             List of high-confidence validation functions
 
         """
-        return [
-            func for func in self.validation_functions
-            if func.confidence >= threshold
-        ]
+        return [func for func in self.validation_functions if func.confidence >= threshold]
 
     def has_validation(self) -> bool:
         """Check if any certificate validation was detected.

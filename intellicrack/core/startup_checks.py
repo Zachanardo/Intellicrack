@@ -28,6 +28,7 @@ from pathlib import Path
 
 from intellicrack.utils.logger import log_function_call
 
+
 logger = logging.getLogger(__name__)
 
 # Configure TensorFlow environment ONCE at module level before any imports
@@ -58,8 +59,6 @@ def _get_tensorflow() -> tuple[object, bool]:
         try:
             from intellicrack.handlers.tensorflow_handler import (
                 ensure_tensorflow_loaded,
-            )
-            from intellicrack.handlers.tensorflow_handler import (
                 tensorflow as tf,
             )
 
@@ -67,8 +66,12 @@ def _get_tensorflow() -> tuple[object, bool]:
             _tf_module = tf
             _tf_available = True
             _tf_module.config.set_visible_devices([], "GPU")
-            logger.info(f"TensorFlow: Imported successfully (version: {tf.__version__}). GPU devices set to invisible.")
-            logger.debug(f"TensorFlow: Visible devices after configuration: {tf.config.get_visible_devices()}")
+            logger.info(
+                f"TensorFlow: Imported successfully (version: {tf.__version__}). GPU devices set to invisible."
+            )
+            logger.debug(
+                f"TensorFlow: Visible devices after configuration: {tf.config.get_visible_devices()}"
+            )
         except Exception as e:
             logger.warning(f"TensorFlow: Import failed: {e}", exc_info=True)
             _tf_available = False
@@ -108,7 +111,9 @@ def check_dependencies() -> dict[str, bool]:
         logger.info("Flask and Flask-CORS found and basic functionality validated.")
     except ImportError:
         dependencies["Flask"] = False
-        logger.warning("Flask or Flask-CORS not found. Web UI and API endpoints will be unavailable.")
+        logger.warning(
+            "Flask or Flask-CORS not found. Web UI and API endpoints will be unavailable."
+        )
     except Exception as e:
         dependencies["Flask"] = False
         logger.warning(f"Flask initialization failed: {e}", exc_info=True)
@@ -157,7 +162,9 @@ def check_dependencies() -> dict[str, bool]:
                 logger.info(f"TensorFlow: Basic tensor operations validated (sum: {actual_sum}).")
             else:
                 dependencies["TensorFlow"] = False
-                logger.error(f"TensorFlow: Tensor operation failed: expected {expected_sum}, got {actual_sum}.")
+                logger.error(
+                    f"TensorFlow: Tensor operation failed: expected {expected_sum}, got {actual_sum}."
+                )
                 # No need to return here, continue checking other dependencies
 
             # Check if models can be loaded (this part of the original code was incomplete/commented)
@@ -188,7 +195,9 @@ def check_dependencies() -> dict[str, bool]:
 
         # Validate parameter structures are properly initialized
         if hasattr(model_params, "n_gpu_layers") and hasattr(context_params, "n_ctx"):
-            logger.debug("llama-cpp-python: Model and context parameters found (n_gpu_layers, n_ctx).")
+            logger.debug(
+                "llama-cpp-python: Model and context parameters found (n_gpu_layers, n_ctx)."
+            )
             # Test parameter modification to ensure they're functional
             try:
                 original_gpu_layers = model_params.n_gpu_layers
@@ -197,7 +206,9 @@ def check_dependencies() -> dict[str, bool]:
                 # Temporarily modify parameters to test functionality
                 model_params.n_gpu_layers = 0
                 context_params.n_ctx = 512
-                logger.debug("llama-cpp-python: Temporarily modified model/context parameters for testing.")
+                logger.debug(
+                    "llama-cpp-python: Temporarily modified model/context parameters for testing."
+                )
 
                 # Restore original values
                 model_params.n_gpu_layers = original_gpu_layers
@@ -208,10 +219,14 @@ def check_dependencies() -> dict[str, bool]:
                 logger.info("llama-cpp-python: Basic parameter manipulation validated.")
             except Exception as param_error:
                 dependencies["llama-cpp-python"] = False
-                logger.error(f"llama-cpp-python: Parameter validation failed: {param_error}", exc_info=True)
+                logger.error(
+                    f"llama-cpp-python: Parameter validation failed: {param_error}", exc_info=True
+                )
         else:
             dependencies["llama-cpp-python"] = False
-            logger.error("llama-cpp-python: Parameters missing required attributes (n_gpu_layers or n_ctx).")
+            logger.error(
+                "llama-cpp-python: Parameters missing required attributes (n_gpu_layers or n_ctx)."
+            )
     except ImportError:
         dependencies["llama-cpp-python"] = False
         logger.warning("llama-cpp-python: Import error. LLM Manager will be unavailable.")
@@ -227,10 +242,7 @@ def check_dependencies() -> dict[str, bool]:
 def check_data_paths() -> dict[str, tuple[str, bool]]:
     """Check and create required data paths."""
     logger.info("Checking and ensuring data paths exist...")
-    from ..utils.path_resolver import (
-        ensure_data_directories,
-        get_qemu_images_dir,
-    )
+    from ..utils.path_resolver import ensure_data_directories, get_qemu_images_dir
     from ..utils.qemu_image_discovery import get_qemu_discovery
 
     # Ensure directories exist
@@ -244,7 +256,9 @@ def check_data_paths() -> dict[str, tuple[str, bool]]:
     qemu_dir = get_qemu_images_dir()
     paths["qemu_images"] = (str(qemu_dir), qemu_dir.exists())
     if not qemu_dir.exists():
-        logger.warning(f"QEMU images directory not found at: {qemu_dir}. QEMU emulation might be affected.")
+        logger.warning(
+            f"QEMU images directory not found at: {qemu_dir}. QEMU emulation might be affected."
+        )
     else:
         logger.info(f"QEMU images directory found at: {qemu_dir}.")
 
@@ -286,13 +300,13 @@ def check_qemu_setup() -> bool:
     # Use dynamic image discovery
     logger.debug("Initiating dynamic QEMU image discovery for setup check.")
     discovery = get_qemu_discovery()
-    discovered_images = discovery.discover_images()
-
-    if discovered_images:
+    if discovered_images := discovery.discover_images():
         logger.info(f"Found {len(discovered_images)} QEMU images.")
         return True
     if qemu_available:
-        logger.info("QEMU installed but no images found. Use the QEMU setup tools to download/create images if needed.")
+        logger.info(
+            "QEMU installed but no images found. Use the QEMU setup tools to download/create images if needed."
+        )
         return False
     logger.info("QEMU not available and no images found.")
     return False
@@ -331,18 +345,26 @@ def create_minimal_qemu_disk() -> Path | None:
                     if format_result.returncode == 0:
                         logger.info(f"Successfully formatted QEMU disk {minimal_disk} with ext4.")
                     else:
-                        logger.warning(f"Failed to format QEMU disk {minimal_disk} with ext4. Stderr: {format_result.stderr}")
+                        logger.warning(
+                            f"Failed to format QEMU disk {minimal_disk} with ext4. Stderr: {format_result.stderr}"
+                        )
                 else:
                     logger.debug("Skipping ext4 formatting: Not on Linux platform.")
             except Exception as format_e:
-                logger.warning(f"An error occurred during QEMU disk formatting: {format_e}", exc_info=True)
+                logger.warning(
+                    f"An error occurred during QEMU disk formatting: {format_e}", exc_info=True
+                )
 
             return minimal_disk
-        logger.error(f"Failed to create QEMU disk. Return code: {result.returncode}, Stderr: {result.stderr}")
+        logger.error(
+            f"Failed to create QEMU disk. Return code: {result.returncode}, Stderr: {result.stderr}"
+        )
         return None
 
     except (FileNotFoundError, subprocess.CalledProcessError) as e:
-        logger.error(f"'qemu-img' command not found or failed: {e}. QEMU must be installed for emulation features.")
+        logger.error(
+            f"'qemu-img' command not found or failed: {e}. QEMU must be installed for emulation features."
+        )
         logger.info("Install QEMU: https://www.qemu.org/download/")
         return None
 
@@ -410,15 +432,23 @@ def validate_tensorflow_models() -> dict[str, any]:
                 if 0.0 <= output_value <= 1.0:  # Valid sigmoid output
                     tf_info["model_building"] = True
                     tf_info["model_prediction_test"] = f"OK (output: {output_value:.3f})"
-                    logger.info(f"TensorFlow model building and prediction test successful. Output: {output_value:.3f}")
+                    logger.info(
+                        f"TensorFlow model building and prediction test successful. Output: {output_value:.3f}"
+                    )
                 else:
                     tf_info["model_building"] = False
                     tf_info["model_prediction_test"] = f"FAIL Invalid output range: {output_value}"
-                    logger.error(f"TensorFlow model prediction test failed: Invalid output range: {output_value}")
+                    logger.error(
+                        f"TensorFlow model prediction test failed: Invalid output range: {output_value}"
+                    )
             else:
                 tf_info["model_building"] = False
-                tf_info["model_prediction_test"] = f"FAIL Wrong output shape: {test_output.shape} vs {expected_shape}"
-                logger.error(f"TensorFlow model prediction test failed: Wrong output shape: {test_output.shape} vs {expected_shape}")
+                tf_info["model_prediction_test"] = (
+                    f"FAIL Wrong output shape: {test_output.shape} vs {expected_shape}"
+                )
+                logger.error(
+                    f"TensorFlow model prediction test failed: Wrong output shape: {test_output.shape} vs {expected_shape}"
+                )
         else:
             tf_info["model_building"] = False
             tf_info["model_prediction_test"] = "FAIL No valid output"
@@ -449,7 +479,9 @@ def perform_startup_checks() -> dict[str, any]:
     if config_valid:
         logger.info("Configuration manager successfully initialized.")
     else:
-        logger.critical("Configuration manager failed to initialize. Application may not function correctly.")
+        logger.critical(
+            "Configuration manager failed to initialize. Application may not function correctly."
+        )
 
     deps = check_dependencies()
     paths = check_data_paths()
@@ -475,11 +507,15 @@ def perform_startup_checks() -> dict[str, any]:
     logger.debug("Checking protection models (using native ICP Engine).")
     check_protection_models()
 
-    # Log summary
-    missing_deps = [k for k, v in results["dependencies"].items() if not v]
-    if missing_deps:
-        logger.warning(f"Missing critical dependencies: {', '.join(missing_deps)}. Please install them for full functionality.")
-        logger.info("Recommendation: Run 'pip install -r requirements.txt' to install missing packages.")
+    if missing_deps := [
+        k for k, v in results["dependencies"].items() if not v
+    ]:
+        logger.warning(
+            f"Missing critical dependencies: {', '.join(missing_deps)}. Please install them for full functionality."
+        )
+        logger.info(
+            "Recommendation: Run 'pip install -r requirements.txt' to install missing packages."
+        )
     else:
         logger.info("All critical dependencies are met.")
 
@@ -487,9 +523,13 @@ def perform_startup_checks() -> dict[str, any]:
     if "tensorflow_validation" in results:
         tf_val = results["tensorflow_validation"]
         if tf_val["status"]:
-            logger.info(f"TensorFlow {tf_val['version']} validated and ready (GPU available: {tf_val['gpu_available']}, GPU count: {tf_val['gpu_count']}).")
+            logger.info(
+                f"TensorFlow {tf_val['version']} validated and ready (GPU available: {tf_val['gpu_available']}, GPU count: {tf_val['gpu_count']})."
+            )
         else:
-            logger.warning(f"TensorFlow validation failed. Status: {tf_val['status']}, Error: {tf_val.get('error', 'N/A')}.")
+            logger.warning(
+                f"TensorFlow validation failed. Status: {tf_val['status']}, Error: {tf_val.get('error', 'N/A')}."
+            )
 
     logger.info("All startup checks completed.")
     return results
@@ -505,7 +545,9 @@ def get_system_health_report() -> dict[str, any]:
         "python_version": sys.version.split()[0],
         "services": {},
     }
-    logger.debug(f"System basic info: Platform='{report['platform']}', Python='{report['python_version']}'.")
+    logger.debug(
+        f"System basic info: Platform='{report['platform']}', Python='{report['python_version']}'."
+    )
 
     # Check Flask web service health
     logger.debug("Checking Flask web service health.")
@@ -545,7 +587,9 @@ def get_system_health_report() -> dict[str, any]:
                 try:
                     gpu = gpu_devices[0]
                     memory_info["gpu_memory_growth"] = tf.config.experimental.get_memory_growth(gpu)
-                    logger.debug(f"ML Engine: GPU memory growth for {gpu.name}: {memory_info['gpu_memory_growth']}.")
+                    logger.debug(
+                        f"ML Engine: GPU memory growth for {gpu.name}: {memory_info['gpu_memory_growth']}."
+                    )
                 except Exception as mem_e:
                     logger.warning(f"ML Engine: Could not get GPU memory growth info: {mem_e}")
             else:
@@ -558,10 +602,14 @@ def get_system_health_report() -> dict[str, any]:
                 "gpu_support": len(gpu_devices) > 0,
                 "memory_info": memory_info,
             }
-            logger.info(f"ML Engine (TensorFlow) service is available and healthy. Version: {tf.__version__}, GPU support: {report['services']['ml_engine']['gpu_support']}.")
+            logger.info(
+                f"ML Engine (TensorFlow) service is available and healthy. Version: {tf.__version__}, GPU support: {report['services']['ml_engine']['gpu_support']}."
+            )
     except Exception as e:
         report["services"]["ml_engine"] = {"available": False, "error": str(e)}
-        logger.warning(f"ML Engine (TensorFlow) service is unavailable or unhealthy: {e}", exc_info=True)
+        logger.warning(
+            f"ML Engine (TensorFlow) service is unavailable or unhealthy: {e}", exc_info=True
+        )
 
     # Check LLM service health
     logger.debug("Checking LLM service health (llama-cpp-python).")
@@ -572,12 +620,18 @@ def get_system_health_report() -> dict[str, any]:
             "available": True,
             "backend": "llama-cpp-python",
             "version": getattr(llama_cpp, "__version__", "Unknown"),
-            "gpu_support": hasattr(llama_cpp, "llama_backend_init"), # This is a heuristic, actual GPU usage depends on model loading
+            "gpu_support": hasattr(
+                llama_cpp, "llama_backend_init"
+            ),  # This is a heuristic, actual GPU usage depends on model loading
         }
-        logger.info(f"LLM Engine (llama-cpp-python) service is available and healthy. Version: {report['services']['llm_engine']['version']}, GPU support heuristic: {report['services']['llm_engine']['gpu_support']}.")
+        logger.info(
+            f"LLM Engine (llama-cpp-python) service is available and healthy. Version: {report['services']['llm_engine']['version']}, GPU support heuristic: {report['services']['llm_engine']['gpu_support']}."
+        )
     except Exception as e:
         report["services"]["llm_engine"] = {"available": False, "error": str(e)}
-        logger.warning(f"LLM Engine (llama-cpp-python) service is unavailable or unhealthy: {e}", exc_info=True)
+        logger.warning(
+            f"LLM Engine (llama-cpp-python) service is unavailable or unhealthy: {e}", exc_info=True
+        )
 
     # Add disk space info for data directories
     from ..utils.path_resolver import get_data_dir
@@ -596,10 +650,14 @@ def get_system_health_report() -> dict[str, any]:
             "free_gb": round(disk_usage.free / (1024**3), 2),
             "percent_used": round((disk_usage.used / disk_usage.total) * 100, 1),
         }
-        logger.info(f"Disk space for data directory '{data_dir}' checked. Used: {report['disk_space']['percent_used']}%.")
+        logger.info(
+            f"Disk space for data directory '{data_dir}' checked. Used: {report['disk_space']['percent_used']}%."
+        )
     except Exception as e:
         report["disk_space"] = {"available": False, "error": str(e)}
-        logger.warning(f"Could not retrieve disk space information for '{data_dir}': {e}", exc_info=True)
+        logger.warning(
+            f"Could not retrieve disk space information for '{data_dir}': {e}", exc_info=True
+        )
 
     logger.info("System health report generation completed.")
     return report

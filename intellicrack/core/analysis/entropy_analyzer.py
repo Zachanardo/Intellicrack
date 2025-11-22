@@ -94,6 +94,4 @@ class EntropyAnalyzer:
         """Classify entropy level."""
         if entropy >= self.high_entropy_threshold:
             return "high"
-        if entropy >= self.medium_entropy_threshold:
-            return "medium"
-        return "low"
+        return "medium" if entropy >= self.medium_entropy_threshold else "low"

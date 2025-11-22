@@ -34,6 +34,7 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 
+
 logger = logging.getLogger(__name__)
 
 

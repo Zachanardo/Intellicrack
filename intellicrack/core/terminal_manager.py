@@ -29,6 +29,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from intellicrack.ui.main_app import IntellicrackApp
     from intellicrack.ui.widgets import TerminalSessionWidget
@@ -169,7 +170,13 @@ class TerminalManager:
 
         return resolved
 
-    def execute_script(self, script_path: str | Path, interactive: bool = True, auto_switch: bool = True, cwd: str | Path | None = None) -> str:
+    def execute_script(
+        self,
+        script_path: str | Path,
+        interactive: bool = True,
+        auto_switch: bool = True,
+        cwd: str | Path | None = None,
+    ) -> str:
         """Execute script in terminal session.
 
         Args:
@@ -230,16 +237,20 @@ class TerminalManager:
             session_id = self._terminal_widget.create_new_session()
             session_id, terminal = self._terminal_widget.get_active_session()
 
-        pid = terminal.start_process(command, cwd=cwd)
-
-        if pid:
+        if pid := terminal.start_process(command, cwd=cwd):
             logger.info(f"Script started in terminal session {session_id} with PID {pid}")
         else:
             logger.error("Failed to start script in terminal")
 
         return session_id
 
-    def execute_command(self, command: str | list[str], capture_output: bool = False, auto_switch: bool = False, cwd: str | Path | None = None) -> str | tuple[int, str, str]:
+    def execute_command(
+        self,
+        command: str | list[str],
+        capture_output: bool = False,
+        auto_switch: bool = False,
+        cwd: str | Path | None = None,
+    ) -> str | tuple[int, str, str]:
         """Execute command, return output if capture_output=True.
 
         Args:
@@ -264,12 +275,16 @@ class TerminalManager:
 
             try:
                 # Validate that command and cwd contain only safe values to prevent command injection
-                if not isinstance(command, list) or not all(isinstance(arg, str) for arg in command):
+                if not isinstance(command, list) or not all(
+                    isinstance(arg, str) for arg in command
+                ):
                     error_msg = f"Unsafe command: {command}"
                     logger.error(error_msg)
                     raise ValueError(error_msg)
                 cwd_clean = str(cwd).replace(";", "").replace("|", "").replace("&", "")
-                result = subprocess.run(command, capture_output=True, text=True, cwd=cwd_clean, timeout=300, shell=False)
+                result = subprocess.run(
+                    command, capture_output=True, text=True, cwd=cwd_clean, timeout=300, shell=False
+                )
 
                 return (result.returncode, result.stdout, result.stderr)
 
@@ -298,9 +313,7 @@ class TerminalManager:
                 session_id = self._terminal_widget.create_new_session()
                 session_id, terminal = self._terminal_widget.get_active_session()
 
-            pid = terminal.start_process(command, cwd=cwd)
-
-            if pid:
+            if pid := terminal.start_process(command, cwd=cwd):
                 logger.info(f"Command started in terminal session {session_id} with PID {pid}")
             else:
                 logger.error("Failed to start command in terminal")

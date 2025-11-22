@@ -12,14 +12,8 @@ import ctypes.wintypes
 import threading
 import time
 
-from intellicrack.core.monitoring.base_monitor import (
-    BaseMonitor,
-    EventSeverity,
-    EventSource,
-    EventType,
-    MonitorEvent,
-    ProcessInfo,
-)
+from intellicrack.core.monitoring.base_monitor import BaseMonitor, EventSeverity, EventSource, EventType, MonitorEvent, ProcessInfo
+
 
 advapi32 = ctypes.windll.advapi32
 kernel32 = ctypes.windll.kernel32
@@ -106,8 +100,9 @@ class RegistryMonitor(BaseMonitor):
         for hive_key, hive_name in hives:
             for subkey in self._watch_keys:
                 try:
-                    watcher = self._create_watcher(hive_key, hive_name, subkey)
-                    if watcher:
+                    if watcher := self._create_watcher(
+                        hive_key, hive_name, subkey
+                    ):
                         watchers.append(watcher)
                 except Exception as e:
                     print(f"[RegistryMonitor] Failed to watch {hive_name}\\{subkey}: {e}")
@@ -148,7 +143,9 @@ class RegistryMonitor(BaseMonitor):
         """
         hkey = ctypes.wintypes.HKEY()
 
-        result = advapi32.RegOpenKeyExW(hive_key, subkey, 0, KEY_NOTIFY | KEY_READ, ctypes.byref(hkey))
+        result = advapi32.RegOpenKeyExW(
+            hive_key, subkey, 0, KEY_NOTIFY | KEY_READ, ctypes.byref(hkey)
+        )
 
         if result != ERROR_SUCCESS:
             return None
@@ -173,7 +170,13 @@ class RegistryMonitor(BaseMonitor):
             advapi32.RegCloseKey(hkey)
             return None
 
-        return {"hkey": hkey, "event": event_handle, "hive_name": hive_name, "subkey": subkey, "last_notification": time.time()}
+        return {
+            "hkey": hkey,
+            "event": event_handle,
+            "hive_name": hive_name,
+            "subkey": subkey,
+            "last_notification": time.time(),
+        }
 
     def _check_watcher(self, watcher: dict) -> None:
         """Check if watcher has detected changes.
@@ -197,7 +200,11 @@ class RegistryMonitor(BaseMonitor):
                 source=EventSource.REGISTRY,
                 event_type=EventType.MODIFY,
                 severity=EventSeverity.WARNING,
-                details={"hive": watcher["hive_name"], "key_path": watcher["subkey"], "change_type": "registry_modified"},
+                details={
+                    "hive": watcher["hive_name"],
+                    "key_path": watcher["subkey"],
+                    "change_type": "registry_modified",
+                },
                 process_info=self.process_info,
             )
 
@@ -205,4 +212,6 @@ class RegistryMonitor(BaseMonitor):
 
             notify_filter = REG_NOTIFY_CHANGE_NAME | REG_NOTIFY_CHANGE_LAST_SET
 
-            advapi32.RegNotifyChangeKeyValue(watcher["hkey"], True, notify_filter, watcher["event"], True)
+            advapi32.RegNotifyChangeKeyValue(
+                watcher["hkey"], True, notify_filter, watcher["event"], True
+            )

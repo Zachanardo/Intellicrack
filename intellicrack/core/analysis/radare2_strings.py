@@ -9,6 +9,7 @@ from intellicrack.utils.logger import logger
 
 from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
 
+
 """
 Radare2 Advanced String Analysis Engine
 
@@ -100,7 +101,7 @@ class R2StringAnalyzer:
 
                 # Categorize strings
                 categories = self._categorize_strings(all_strings)
-                result.update(categories)
+                result |= categories
 
                 # Get cross-references for important strings
                 result["cross_references"] = self._get_string_cross_references(r2, all_strings)
@@ -120,7 +121,9 @@ class R2StringAnalyzer:
 
         return result
 
-    def _get_comprehensive_strings(self, r2: R2Session, min_length: int, encoding: str) -> list[dict[str, Any]]:
+    def _get_comprehensive_strings(
+        self, r2: R2Session, min_length: int, encoding: str
+    ) -> list[dict[str, Any]]:
         """Get strings using multiple radare2 commands for comprehensive coverage."""
         all_strings = []
 
@@ -184,8 +187,7 @@ class R2StringAnalyzer:
             # Clean and normalize string data
             normalized_strings = []
             for string_data in all_strings:
-                normalized = self._normalize_string_data(string_data)
-                if normalized:
+                if normalized := self._normalize_string_data(string_data):
                     normalized_strings.append(normalized)
 
             return normalized_strings
@@ -215,16 +217,17 @@ class R2StringAnalyzer:
             "type": string_data.get("type", "ascii"),
             "encoding": string_data.get("encoding", "ascii"),
             "is_wide": string_data.get("is_wide", False),
+            "entropy": self._calculate_entropy(content),
         }
 
-        # Calculate additional metrics
-        normalized["entropy"] = self._calculate_entropy(content)
         normalized["has_null_bytes"] = "\x00" in content
         normalized["is_printable"] = all(c.isprintable() or c.isspace() for c in content)
 
         return normalized
 
-    def _analyze_strings_by_section(self, r2: R2Session, strings: list[dict[str, Any]]) -> dict[str, Any]:
+    def _analyze_strings_by_section(
+        self, r2: R2Session, strings: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Analyze string distribution by binary sections."""
         sections = {}
 
@@ -250,11 +253,13 @@ class R2StringAnalyzer:
             sections[section_name]["strings"].append(string_data)
 
         # Calculate section statistics
-        for _section_name, section_data in sections.items():
+        for section_data in sections.values():
             section_strings = section_data["strings"]
             section_data["string_count"] = len(section_strings)
             section_data["total_string_length"] = sum(s.get("length", 0) for s in section_strings)
-            section_data["average_string_length"] = section_data["total_string_length"] / max(1, section_data["string_count"])
+            section_data["average_string_length"] = section_data["total_string_length"] / max(
+                1, section_data["string_count"]
+            )
 
         return sections
 
@@ -430,13 +435,7 @@ class R2StringAnalyzer:
 
         # License keys typically have balanced alphanumeric distribution
         # Usually 30-70% digits, 30-70% letters
-        if 0.3 <= digit_ratio <= 0.7 and 0.3 <= letter_ratio <= 0.7:
-            # Check for repeated character patterns (common in serial numbers)
-            # but avoid excessively repetitive patterns
-            if self._has_license_key_patterns(content) and not self._is_repetitive_pattern(content):
-                return True
-
-        return False
+        return bool(0.3 <= digit_ratio <= 0.7 and 0.3 <= letter_ratio <= 0.7 and (self._has_license_key_patterns(content) and not self._is_repetitive_pattern(content)))
 
     def _has_license_key_patterns(self, content: str) -> bool:
         """Check for patterns common in license keys."""
@@ -450,12 +449,8 @@ class R2StringAnalyzer:
         if max_char_freq > 0.4:
             return False
 
-        # Look for alternating patterns (digit-letter-digit or vice versa)
-        alternations = 0
-        for i in range(len(content) - 1):
-            if content[i].isdigit() != content[i + 1].isdigit():
-                alternations += 1
-
+        alternations = sum(bool(content[i].isdigit() != content[i + 1].isdigit())
+                       for i in range(len(content) - 1))
         alternation_ratio = alternations / max(1, len(content) - 1)
         return 0.3 <= alternation_ratio <= 0.8  # Moderate alternation suggests structure
 
@@ -482,7 +477,10 @@ class R2StringAnalyzer:
         # Pattern 2: Simple repetition of 1-3 characters
         for pattern_len in range(1, 4):
             pattern = content[:pattern_len]
-            if pattern * (len(content) // pattern_len + 1) == content + pattern[: len(content) % pattern_len]:
+            if (
+                pattern * (len(content) // pattern_len + 1)
+                == content + pattern[: len(content) % pattern_len]
+            ):
                 return True
 
         return False
@@ -495,7 +493,11 @@ class R2StringAnalyzer:
         # This would need context from surrounding strings/code
         # For now, check if the string itself has validation-like structure
         content_lower = content.lower()
-        return any(pattern in content_lower for pattern in ["key", "serial", "code"] if len(content) >= 10 and content.isascii())
+        return any(
+            pattern in content_lower
+            for pattern in ["key", "serial", "code"]
+            if len(content) >= 10 and content.isascii()
+        )
 
     def _is_crypto_string(self, content: str) -> bool:
         """Enhanced cryptographic string identification with advanced algorithms."""
@@ -668,12 +670,15 @@ class R2StringAnalyzer:
         try:
             data = bytes.fromhex(hex_string)
             return self._calculate_entropy(data.decode("latin-1"))
-        except (ValueError, UnicodeDecodeError):
+        except ValueError:
             # Fallback to character-based entropy
             return self._calculate_entropy(hex_string)
 
     def _is_api_string(self, content: str) -> bool:
         """Enhanced API call string analysis with advanced algorithms."""
+        if len(content) > 50:
+            return False
+
         # Basic pattern matching (existing functionality)
         api_patterns = [
             r"^(Get|Set|Create|Delete|Open|Close|Read|Write|Load|Save)\w+$",
@@ -686,15 +691,11 @@ class R2StringAnalyzer:
             r"^__\w+$",  # Compiler intrinsics
         ]
 
-        # Check length (API names are typically not too long)
-        if len(content) > 50:
-            return False
-
-        if any(re.match(pattern, content) for pattern in api_patterns):
-            return True
-
-        # Enhanced API function analysis
-        return self._analyze_api_function_patterns(content)
+        return (
+            True
+            if any(re.match(pattern, content) for pattern in api_patterns)
+            else self._analyze_api_function_patterns(content)
+        )
 
     def _analyze_api_function_patterns(self, content: str) -> bool:
         """Advanced analysis of API function patterns."""
@@ -1091,18 +1092,22 @@ class R2StringAnalyzer:
 
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in network_patterns)
 
-    def _get_string_cross_references(self, r2: R2Session, strings: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    def _get_string_cross_references(
+        self, r2: R2Session, strings: list[dict[str, Any]]
+    ) -> dict[str, list[dict[str, Any]]]:
         """Get cross-references for important strings."""
         xrefs = {}
 
         # Focus on license and crypto strings for cross-reference analysis
         important_strings = [
-            s for s in strings if self._is_license_string(s.get("content", "")) or self._is_crypto_string(s.get("content", ""))
+            s
+            for s in strings
+            if self._is_license_string(s.get("content", ""))
+            or self._is_crypto_string(s.get("content", ""))
         ]
 
         for string_data in important_strings[:20]:  # Limit to avoid performance issues
-            addr = string_data.get("address", 0)
-            if addr:
+            if addr := string_data.get("address", 0):
                 try:
                     # Get cross-references to this string
                     xref_data = r2._execute_command(f"axtj @ {hex(addr)}", expect_json=True)
@@ -1188,7 +1193,9 @@ class R2StringAnalyzer:
                 )
 
             # Suspicious license keywords
-            if any(keyword in content.lower() for keyword in ["crack", "keygen", "serial", "patch"]):
+            if any(
+                keyword in content.lower() for keyword in ["crack", "keygen", "serial", "patch"]
+            ):
                 suspicious.append(
                     {
                         "string": string_data,
@@ -1242,8 +1249,10 @@ class R2StringAnalyzer:
             category_strings = result.get(category, [])
             stats[category] = {
                 "count": len(category_strings),
-                "percentage": (len(category_strings) / max(1, result.get("total_strings", 1))) * 100,
-                "average_length": sum(len(s.get("content", "")) for s in category_strings) / max(1, len(category_strings)),
+                "percentage": (len(category_strings) / max(1, result.get("total_strings", 1)))
+                * 100,
+                "average_length": sum(len(s.get("content", "")) for s in category_strings)
+                / max(1, len(category_strings)),
             }
 
         return stats
@@ -1280,12 +1289,13 @@ class R2StringAnalyzer:
                         search_results = r2._execute_command(f"/j {term}", expect_json=True)
                         if isinstance(search_results, list):
                             for result in search_results:
-                                # Get string at found address
-                                addr = result.get("offset", 0)
-                                if addr:
+                                if addr := result.get("offset", 0):
                                     try:
                                         string_content = r2._execute_command(f"ps @ {hex(addr)}")
-                                        if string_content and term.lower() in string_content.lower():
+                                        if (
+                                            string_content
+                                            and term.lower() in string_content.lower()
+                                        ):
                                             validation_strings.append(
                                                 {
                                                     "content": string_content.strip(),
@@ -1312,7 +1322,9 @@ class R2StringAnalyzer:
             return {"error": str(e)}
 
 
-def analyze_binary_strings(binary_path: str, radare2_path: str | None = None, min_length: int = 4) -> dict[str, Any]:
+def analyze_binary_strings(
+    binary_path: str, radare2_path: str | None = None, min_length: int = 4
+) -> dict[str, Any]:
     """Perform comprehensive string analysis on a binary.
 
     Args:

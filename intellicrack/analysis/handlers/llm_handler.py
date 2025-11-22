@@ -25,6 +25,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+
 try:
     from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
 
@@ -33,7 +34,6 @@ except ImportError:
     # Fallback classes when PyQt6 is not available
     class QObject:
         """Fallback QObject class when PyQt6 is not available."""
-
 
     class QRunnable:
         """Fallback QRunnable class when PyQt6 is not available."""
@@ -101,7 +101,9 @@ class LLMWorkerSignals(QObject):
 class LLMAnalysisWorker(QRunnable):
     """Worker thread for LLM analysis operations."""
 
-    def __init__(self, operation: str, analysis_result: UnifiedProtectionResult, **kwargs: object) -> None:
+    def __init__(
+        self, operation: str, analysis_result: UnifiedProtectionResult, **kwargs: object
+    ) -> None:
         """Initialize the LLM analysis worker.
 
         Args:

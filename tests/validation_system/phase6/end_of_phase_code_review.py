@@ -63,7 +63,7 @@ class ComponentReview:
     component_name: str
     file_path: Path
     total_lines: int
-    issues_found: List[CodeIssue] = field(default_factory=list)
+    issues_found: list[CodeIssue] = field(default_factory=list)
     complexity_score: float = 0.0
     maintainability_index: float = 0.0
     test_coverage: float = 0.0
@@ -71,11 +71,11 @@ class ComponentReview:
     production_ready: bool = False
 
     @property
-    def critical_issues(self) -> List[CodeIssue]:
+    def critical_issues(self) -> list[CodeIssue]:
         return [issue for issue in self.issues_found if issue.severity == ReviewSeverity.CRITICAL]
 
     @property
-    def high_issues(self) -> List[CodeIssue]:
+    def high_issues(self) -> list[CodeIssue]:
         return [issue for issue in self.issues_found if issue.severity == ReviewSeverity.HIGH]
 
 
@@ -84,7 +84,7 @@ class PhaseReviewReport:
     """Complete Phase 6 code review report."""
     phase_name: str
     review_timestamp: datetime
-    components_reviewed: List[ComponentReview] = field(default_factory=list)
+    components_reviewed: list[ComponentReview] = field(default_factory=list)
     total_issues: int = 0
     critical_issues: int = 0
     high_issues: int = 0
@@ -232,7 +232,7 @@ class EndOfPhaseCodeReviewer:
 
         return report
 
-    def _verify_component_completeness(self) -> List[str]:
+    def _verify_component_completeness(self) -> list[str]:
         """
         Verify all required components are present.
 
@@ -260,7 +260,7 @@ class EndOfPhaseCodeReviewer:
 
         # Read source code
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 source_code = f.read()
         except Exception as e:
             self.logger.error(f"Failed to read {file_path}: {e}")
@@ -294,7 +294,7 @@ class EndOfPhaseCodeReviewer:
 
         return review
 
-    def _detect_placeholders(self, file_path: Path, source_code: str) -> List[CodeIssue]:
+    def _detect_placeholders(self, file_path: Path, source_code: str) -> list[CodeIssue]:
         """
         Detect placeholder, stub, mock, or incomplete code.
 
@@ -357,7 +357,7 @@ class EndOfPhaseCodeReviewer:
 
         return issues
 
-    def _check_production_readiness(self, file_path: Path, source_code: str) -> List[CodeIssue]:
+    def _check_production_readiness(self, file_path: Path, source_code: str) -> list[CodeIssue]:
         """
         Check production readiness indicators.
 
@@ -419,7 +419,7 @@ class EndOfPhaseCodeReviewer:
 
         return issues
 
-    def _analyze_code_quality(self, file_path: Path, source_code: str) -> List[CodeIssue]:
+    def _analyze_code_quality(self, file_path: Path, source_code: str) -> list[CodeIssue]:
         """
         Analyze general code quality issues.
 
@@ -496,7 +496,7 @@ class EndOfPhaseCodeReviewer:
 
         return issues
 
-    def _security_analysis(self, file_path: Path, source_code: str) -> List[CodeIssue]:
+    def _security_analysis(self, file_path: Path, source_code: str) -> list[CodeIssue]:
         """
         Analyze security-related issues.
 
@@ -536,7 +536,7 @@ class EndOfPhaseCodeReviewer:
 
         return issues
 
-    def _performance_analysis(self, file_path: Path, source_code: str) -> List[CodeIssue]:
+    def _performance_analysis(self, file_path: Path, source_code: str) -> list[CodeIssue]:
         """
         Analyze performance-related issues.
 
@@ -654,7 +654,7 @@ class EndOfPhaseCodeReviewer:
 
         return True
 
-    def generate_report(self, review_report: PhaseReviewReport) -> Dict[str, Any]:
+    def generate_report(self, review_report: PhaseReviewReport) -> dict[str, Any]:
         """
         Generate comprehensive review report.
 

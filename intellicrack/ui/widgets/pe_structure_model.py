@@ -31,9 +31,7 @@ class PEStructureItem:
 
     def child(self, row: int) -> "PEStructureItem | None":
         """Get child at row."""
-        if 0 <= row < len(self.child_items):
-            return self.child_items[row]
-        return None
+        return self.child_items[row] if 0 <= row < len(self.child_items) else None
 
     def child_count(self) -> int:
         """Get number of children."""
@@ -73,9 +71,7 @@ class PEStructureItem:
 
     def row(self) -> int:
         """Get row number in parent."""
-        if self.parent_item:
-            return self.parent_item.child_items.index(self)
-        return 0
+        return self.parent_item.child_items.index(self) if self.parent_item else 0
 
 
 class PEStructureModel(QAbstractItemModel):
@@ -238,11 +234,14 @@ class PEStructureModel(QAbstractItemModel):
         if signing_cert.subject:
             # Extract CN from subject
             subject_parts = signing_cert.subject.split(",")
-            cn_part = next(
-                (part.strip() for part in subject_parts if part.strip().startswith("CN=")),
+            if cn_part := next(
+                (
+                    part.strip()
+                    for part in subject_parts
+                    if part.strip().startswith("CN=")
+                ),
                 None,
-            )
-            if cn_part:
+            ):
                 cert_info = f"{cert_info} - {cn_part[3:]}"  # Remove 'CN=' prefix
 
         cert_item = PEStructureItem(cert_info, certificates_root)
@@ -287,11 +286,14 @@ class PEStructureModel(QAbstractItemModel):
             # Try to get CN from subject
             if cert.subject:
                 subject_parts = cert.subject.split(",")
-                cn_part = next(
-                    (part.strip() for part in subject_parts if part.strip().startswith("CN=")),
+                if cn_part := next(
+                    (
+                        part.strip()
+                        for part in subject_parts
+                        if part.strip().startswith("CN=")
+                    ),
                     None,
-                )
-                if cn_part:
+                ):
                     cert_name = f"{cert_name} - {cn_part[3:]}"
 
             chain_cert_item = PEStructureItem(cert_name, chain_item)
@@ -306,13 +308,13 @@ class PEStructureModel(QAbstractItemModel):
         certificates_root = PEStructureItem("Digital Certificates", self.root_item)
         self.root_item.append_child(certificates_root)
 
-        # Signing information
-        signing_cert = certificates.signing_certificate
-        if signing_cert:
+        if signing_cert := certificates.signing_certificate:
             self._add_certificate_details(signing_cert, certificates_root)
 
         # Trust status
-        trust_item = PEStructureItem(f"Trust Status: {certificates.trust_status}", certificates_root)
+        trust_item = PEStructureItem(
+            f"Trust Status: {certificates.trust_status}", certificates_root
+        )
         certificates_root.append_child(trust_item)
 
         # Additional certificates in chain
@@ -399,13 +401,8 @@ class PEStructureModel(QAbstractItemModel):
         if not self.hasIndex(row, column, parent):
             return QModelIndex()
 
-        if not parent.isValid():
-            parent_item = self.root_item
-        else:
-            parent_item = parent.internalPointer()
-
-        child_item = parent_item.child(row)
-        if child_item:
+        parent_item = parent.internalPointer() if parent.isValid() else self.root_item
+        if child_item := parent_item.child(row):
             return self.createIndex(row, column, child_item)
         return QModelIndex()
 
@@ -429,11 +426,7 @@ class PEStructureModel(QAbstractItemModel):
         if parent.column() > 0:
             return 0
 
-        if not parent.isValid():
-            parent_item = self.root_item
-        else:
-            parent_item = parent.internalPointer()
-
+        parent_item = parent.internalPointer() if parent.isValid() else self.root_item
         return parent_item.child_count()
 
     def get_item_offset_and_size(self, index: QModelIndex) -> tuple[int | None, int | None]:
@@ -459,9 +452,7 @@ class PEStructureModel(QAbstractItemModel):
 
         if isinstance(item.item_data, SectionInfo):
             return item.item_data.virtual_address
-        if isinstance(item.item_data, FileStructure):
-            # Convert file offset to RVA if possible
-            if self.pe_model:
-                return self.pe_model.offset_to_rva(item.item_data.offset)
+        if isinstance(item.item_data, FileStructure) and self.pe_model:
+            return self.pe_model.offset_to_rva(item.item_data.offset)
 
         return None

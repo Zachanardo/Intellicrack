@@ -17,6 +17,7 @@ from typing import Any
 
 from intellicrack.utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 try:
@@ -206,7 +207,10 @@ class PolymorphicAnalyzer:
         self.behavior_database: dict[str, BehaviorPattern] = {}
 
     def analyze_polymorphic_code(
-        self, data: bytes, base_address: int = 0, max_instructions: int = 1000,
+        self,
+        data: bytes,
+        base_address: int = 0,
+        max_instructions: int = 1000,
     ) -> PolymorphicAnalysis:
         """Analyze polymorphic code and extract behavioral patterns.
 
@@ -273,10 +277,9 @@ class PolymorphicAnalyzer:
         code_block = self._disassemble_block(data, base_address, len(data))
         self._normalize_instructions(code_block)
 
-        canonical_form = []
-        for node in code_block.normalized_instructions:
-            canonical_form.append(node.semantic_hash)
-
+        canonical_form = [
+            node.semantic_hash for node in code_block.normalized_instructions
+        ]
         return hashlib.sha256("".join(canonical_form).encode()).hexdigest()
 
     def extract_semantic_signature(self, data: bytes, base_address: int = 0) -> str:
@@ -296,14 +299,11 @@ class PolymorphicAnalyzer:
         code_block = self._disassemble_block(data, base_address, len(data))
         self._normalize_instructions(code_block)
 
-        signature_components = []
-
-        for node in code_block.normalized_instructions:
-            if node.semantic_class not in ["no_operation", "dead_code"]:
-                signature_components.append(
-                    f"{node.semantic_class}:{','.join(node.operand_types)}",
-                )
-
+        signature_components = [
+            f"{node.semantic_class}:{','.join(node.operand_types)}"
+            for node in code_block.normalized_instructions
+            if node.semantic_class not in ["no_operation", "dead_code"]
+        ]
         data_flow = self._analyze_data_flow(code_block)
         signature_components.append(f"DF:{len(data_flow)}")
 
@@ -313,7 +313,10 @@ class PolymorphicAnalyzer:
         return hashlib.sha256("|".join(signature_components).encode()).hexdigest()
 
     def _disassemble_block(
-        self, data: bytes, base_address: int, max_instructions: int,
+        self,
+        data: bytes,
+        base_address: int,
+        max_instructions: int,
     ) -> CodeBlock:
         """Disassemble code block into instructions."""
         instructions = []
@@ -353,9 +356,8 @@ class PolymorphicAnalyzer:
             if xor_count > 5 and loop_count > 2:
                 return PolymorphicEngine.METAPHOR
 
-        if "rdtsc" in mnemonics or "cpuid" in mnemonics:
-            if "jmp" in mnemonics and mnemonics.count("jmp") > 10:
-                return PolymorphicEngine.NGVCK
+        if ("rdtsc" in mnemonics or "cpuid" in mnemonics) and ("jmp" in mnemonics and mnemonics.count("jmp") > 10):
+            return PolymorphicEngine.NGVCK
 
         if "push" in mnemonics and "pop" in mnemonics:
             push_count = mnemonics.count("push")
@@ -409,13 +411,11 @@ class PolymorphicAnalyzer:
             insn = code_block.instructions[i]
             next_insn = code_block.instructions[i + 1]
 
-            if insn.mnemonic == "xor" and len(insn.operands) == 2:
-                if self._operands_equal(insn.operands[0], insn.operands[1]):
-                    equivalent_sequences += 1
+            if insn.mnemonic == "xor" and len(insn.operands) == 2 and self._operands_equal(insn.operands[0], insn.operands[1]):
+                equivalent_sequences += 1
 
-            if insn.mnemonic == "add" and next_insn.mnemonic == "sub":
-                if self._is_register_operand(insn.operands[0]):
-                    equivalent_sequences += 1
+            if insn.mnemonic == "add" and next_insn.mnemonic == "sub" and self._is_register_operand(insn.operands[0]):
+                equivalent_sequences += 1
 
             i += 1
 
@@ -454,14 +454,11 @@ class PolymorphicAnalyzer:
 
             if insn.mnemonic in ["push", "pop"] and i < len(code_block.instructions) - 1:
                 next_insn = code_block.instructions[i + 1]
-                if next_insn.mnemonic == "pop" and insn.mnemonic == "push":
-                    if len(insn.operands) > 0 and len(next_insn.operands) > 0:
-                        if self._operands_equal(insn.operands[0], next_insn.operands[0]):
-                            junk_patterns += 1
-
-            if insn.mnemonic in ["mov", "lea"] and len(insn.operands) == 2:
-                if self._operands_equal(insn.operands[0], insn.operands[1]):
+                if next_insn.mnemonic == "pop" and insn.mnemonic == "push" and (len(insn.operands) > 0 and len(next_insn.operands) > 0) and self._operands_equal(insn.operands[0], next_insn.operands[0]):
                     junk_patterns += 1
+
+            if insn.mnemonic in ["mov", "lea"] and len(insn.operands) == 2 and self._operands_equal(insn.operands[0], insn.operands[1]):
+                junk_patterns += 1
 
         return junk_patterns >= 3
 
@@ -470,12 +467,10 @@ class PolymorphicAnalyzer:
         dead_code_count = 0
 
         for i, insn in enumerate(code_block.instructions):
-            if insn.mnemonic in ["xor", "sub"] and len(insn.operands) == 2:
-                if self._operands_equal(insn.operands[0], insn.operands[1]):
-                    if i < len(code_block.instructions) - 1:
-                        next_insn = code_block.instructions[i + 1]
-                        if next_insn.mnemonic == "mov":
-                            dead_code_count += 1
+            if insn.mnemonic in ["xor", "sub"] and len(insn.operands) == 2 and self._operands_equal(insn.operands[0], insn.operands[1]) and i < len(code_block.instructions) - 1:
+                next_insn = code_block.instructions[i + 1]
+                if next_insn.mnemonic == "mov":
+                    dead_code_count += 1
 
         return dead_code_count >= 2
 
@@ -484,13 +479,10 @@ class PolymorphicAnalyzer:
         opaque_count = 0
 
         for i, insn in enumerate(code_block.instructions):
-            if insn.mnemonic in ["cmp", "test"]:
-                if i < len(code_block.instructions) - 1:
-                    next_insn = code_block.instructions[i + 1]
-                    if next_insn.mnemonic in ["je", "jne", "jz", "jnz"]:
-                        if insn.mnemonic == "test" and len(insn.operands) == 2:
-                            if self._operands_equal(insn.operands[0], insn.operands[1]):
-                                opaque_count += 1
+            if insn.mnemonic in ["cmp", "test"] and i < len(code_block.instructions) - 1:
+                next_insn = code_block.instructions[i + 1]
+                if next_insn.mnemonic in ["je", "jne", "jz", "jnz"] and (insn.mnemonic == "test" and len(insn.operands) == 2) and self._operands_equal(insn.operands[0], insn.operands[1]):
+                    opaque_count += 1
 
         return opaque_count >= 1
 
@@ -504,19 +496,16 @@ class PolymorphicAnalyzer:
             next_insn = code_block.instructions[i + 1]
 
             if insn.mnemonic in ["add", "sub", "xor", "or"] and next_insn.mnemonic in [
-                "add",
-                "sub",
-                "xor",
-                "or",
-            ]:
-                if len(insn.operands) >= 2 and len(next_insn.operands) >= 2:
-                    if (
-                        insn.mnemonic == "add"
-                        and next_insn.mnemonic == "sub"
-                        and self._operands_equal(insn.operands[0], next_insn.operands[0])
-                    ):
-                        if self._operands_equal(insn.operands[1], next_insn.operands[1]):
-                            semantic_nop_count += 1
+                                                    "add",
+                                                    "sub",
+                                                    "xor",
+                                                    "or",
+                                                ] and (len(insn.operands) >= 2 and len(next_insn.operands) >= 2) and (
+                                            insn.mnemonic == "add"
+                                            and next_insn.mnemonic == "sub"
+                                            and self._operands_equal(insn.operands[0], next_insn.operands[0])
+                                        ) and self._operands_equal(insn.operands[1], next_insn.operands[1]):
+                semantic_nop_count += 1
 
             i += 1
 
@@ -571,20 +560,20 @@ class PolymorphicAnalyzer:
         control_deps = set()
         side_effects = set()
 
-        if semantic_class == "data_transfer":
-            if len(insn.operands) >= 2:
-                src_type = "reg" if insn.operands[1].type == X86_OP_REG else "mem"
-                data_deps.add(src_type)
-
         if semantic_class == "arithmetic":
             if len(insn.operands) >= 2:
                 data_deps.add("reg")
             side_effects.add("flags")
 
-        if semantic_class == "control_flow":
+        elif semantic_class == "control_flow":
             control_deps.add("flags")
 
-        if semantic_class == "function_call":
+        elif semantic_class == "data_transfer":
+            if len(insn.operands) >= 2:
+                src_type = "reg" if insn.operands[1].type == X86_OP_REG else "mem"
+                data_deps.add(src_type)
+
+        elif semantic_class == "function_call":
             side_effects.add("stack")
             side_effects.add("memory")
 
@@ -601,8 +590,6 @@ class PolymorphicAnalyzer:
 
     def _extract_behavior_patterns(self, code_block: CodeBlock) -> list[BehaviorPattern]:
         """Extract invariant behavior patterns from code block."""
-        patterns = []
-
         data_flow = self._analyze_data_flow(code_block)
         control_flow = self._analyze_control_flow(code_block)
         register_usage = self._analyze_register_usage(code_block)
@@ -633,8 +620,7 @@ class PolymorphicAnalyzer:
             behavioral_hash=behavioral_hash,
         )
 
-        patterns.append(pattern)
-        return patterns
+        return [pattern]
 
     def _analyze_data_flow(self, code_block: CodeBlock) -> dict[str, set[str]]:
         """Analyze data flow between instructions."""
@@ -652,15 +638,13 @@ class PolymorphicAnalyzer:
         cfg: dict[int, set[int]] = defaultdict(set)
 
         for i, insn in enumerate(code_block.instructions):
-            if insn.mnemonic in ["jmp", "je", "jne", "jl", "jg", "call"]:
-                if len(insn.operands) > 0 and insn.operands[0].type == X86_OP_IMM:
-                    target = insn.operands[0].imm
-                    cfg[insn.address].add(target)
+            if insn.mnemonic in ["jmp", "je", "jne", "jl", "jg", "call"] and (len(insn.operands) > 0 and insn.operands[0].type == X86_OP_IMM):
+                target = insn.operands[0].imm
+                cfg[insn.address].add(target)
 
-            if i < len(code_block.instructions) - 1:
-                if insn.mnemonic not in ["jmp", "ret"]:
-                    next_insn = code_block.instructions[i + 1]
-                    cfg[insn.address].add(next_insn.address)
+            if i < len(code_block.instructions) - 1 and insn.mnemonic not in ["jmp", "ret"]:
+                next_insn = code_block.instructions[i + 1]
+                cfg[insn.address].add(next_insn.address)
 
         return dict(cfg)
 
@@ -695,13 +679,12 @@ class PolymorphicAnalyzer:
         api_calls = []
 
         for insn in code_block.instructions:
-            if insn.mnemonic == "call":
-                if len(insn.operands) > 0:
-                    if insn.operands[0].type == X86_OP_IMM:
-                        api_calls.append(f"call_{hex(insn.operands[0].imm)}")
-                    elif insn.operands[0].type == X86_OP_REG:
-                        reg_name = insn.reg_name(insn.operands[0].reg)
-                        api_calls.append(f"call_{reg_name}")
+            if insn.mnemonic == "call" and len(insn.operands) > 0:
+                if insn.operands[0].type == X86_OP_IMM:
+                    api_calls.append(f"call_{hex(insn.operands[0].imm)}")
+                elif insn.operands[0].type == X86_OP_REG:
+                    reg_name = insn.reg_name(insn.operands[0].reg)
+                    api_calls.append(f"call_{reg_name}")
 
         return api_calls
 
@@ -720,18 +703,18 @@ class PolymorphicAnalyzer:
 
     def _extract_invariants(self, code_block: CodeBlock) -> dict[str, Any]:
         """Extract code features that remain constant across mutations."""
-        invariants = {}
-
         semantic_classes = [
             node.semantic_class
             for node in code_block.normalized_instructions
             if node.semantic_class not in ["no_operation", "dead_code"]
         ]
-        invariants["semantic_sequence"] = tuple(semantic_classes)
-
         data_flow = self._analyze_data_flow(code_block)
-        invariants["data_flow_depth"] = max([len(v) for v in data_flow.values()], default=0)
-
+        invariants = {
+            "semantic_sequence": tuple(semantic_classes),
+            "data_flow_depth": max(
+                (len(v) for v in data_flow.values()), default=0
+            ),
+        }
         control_flow = self._analyze_control_flow(code_block)
         invariants["control_flow_branches"] = len(
             [k for k, v in control_flow.items() if len(v) > 1],
@@ -760,9 +743,7 @@ class PolymorphicAnalyzer:
             start_idx = max(0, min(xor_instructions) - 5)
             end_idx = min(len(code_block.instructions), max(loop_instructions) + 5)
 
-            decryption_insns = code_block.instructions[start_idx:end_idx]
-
-            if decryption_insns:
+            if decryption_insns := code_block.instructions[start_idx:end_idx]:
                 return CodeBlock(
                     start_address=decryption_insns[0].address,
                     end_address=decryption_insns[-1].address + decryption_insns[-1].size,
@@ -772,7 +753,9 @@ class PolymorphicAnalyzer:
         return None
 
     def _calculate_mutation_complexity(
-        self, code_block: CodeBlock, mutations: list[MutationType],
+        self,
+        code_block: CodeBlock,
+        mutations: list[MutationType],
     ) -> float:
         """Calculate mutation complexity score."""
         if not code_block.instructions or not mutations:
@@ -803,13 +786,12 @@ class PolymorphicAnalyzer:
         if "cpuid" in mnemonics:
             techniques.append("vm_detection")
 
-        if "int" in mnemonics:
-            if any(
-                insn.mnemonic == "int" and insn.operands[0].imm in [0x2D, 0x03]
-                for insn in code_block.instructions
-                if insn.mnemonic == "int" and len(insn.operands) > 0
-            ):
-                techniques.append("anti_debug")
+        if "int" in mnemonics and any(
+                        insn.mnemonic == "int" and insn.operands[0].imm in [0x2D, 0x03]
+                        for insn in code_block.instructions
+                        if insn.mnemonic == "int" and len(insn.operands) > 0
+                    ):
+            techniques.append("anti_debug")
 
         push_pop_count = mnemonics.count("push") + mnemonics.count("pop")
         if push_pop_count > len(code_block.instructions) * 0.3:
@@ -860,7 +842,10 @@ class PolymorphicAnalyzer:
         return operand.type == X86_OP_REG
 
     def compare_code_variants(
-        self, variant1: bytes, variant2: bytes, base_address: int = 0,
+        self,
+        variant1: bytes,
+        variant2: bytes,
+        base_address: int = 0,
     ) -> tuple[float, dict[str, Any]]:
         """Compare two code variants and determine semantic similarity.
 

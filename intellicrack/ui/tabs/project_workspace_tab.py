@@ -254,17 +254,22 @@ class DashboardTab(BaseTab):
             self.log_activity(f"Opening project: {project_file}")
             try:
                 import json
-                with open(project_file, encoding='utf-8') as f:
+
+                with open(project_file, encoding="utf-8") as f:
                     project_data = json.load(f)
-                    if 'binary_path' in project_data:
-                        binary_path = project_data['binary_path']
+                    if "binary_path" in project_data:
+                        binary_path = project_data["binary_path"]
                         if os.path.exists(binary_path):
                             self.load_binary(binary_path)
                             self.log_activity(f"Project loaded successfully: {project_file}")
                         else:
-                            QMessageBox.warning(self, "Open Project", f"Binary file not found: {binary_path}")
+                            QMessageBox.warning(
+                                self, "Open Project", f"Binary file not found: {binary_path}"
+                            )
                     else:
-                        QMessageBox.warning(self, "Open Project", "Invalid project file: missing binary_path")
+                        QMessageBox.warning(
+                            self, "Open Project", "Invalid project file: missing binary_path"
+                        )
             except (OSError, json.JSONDecodeError) as e:
                 QMessageBox.critical(self, "Open Project", f"Failed to load project: {e!s}")
 
@@ -285,11 +290,12 @@ class DashboardTab(BaseTab):
             self.log_activity(f"Saving project: {project_file}")
             try:
                 import json
+
                 project_data = {
-                    'binary_path': self.current_binary_path,
-                    'recent_files': self.recent_files,
+                    "binary_path": self.current_binary_path,
+                    "recent_files": self.recent_files,
                 }
-                with open(project_file, 'w', encoding='utf-8') as f:
+                with open(project_file, "w", encoding="utf-8") as f:
                     json.dump(project_data, f, indent=2)
                     self.log_activity(f"Project saved successfully: {project_file}")
             except OSError as e:
@@ -378,7 +384,9 @@ class DashboardTab(BaseTab):
     def export_results(self) -> None:
         """Export results in various formats."""
         if not self.current_binary_path:
-            QMessageBox.information(self, "Export Results", "No binary loaded to export results for.")
+            QMessageBox.information(
+                self, "Export Results", "No binary loaded to export results for."
+            )
             return
 
         self.log_activity("Exporting results...")
@@ -391,11 +399,11 @@ class DashboardTab(BaseTab):
         )
         if export_file:
             try:
-                if export_file.endswith('.csv'):
+                if export_file.endswith(".csv"):
                     self._export_as_csv(export_file)
-                elif export_file.endswith('.json'):
+                elif export_file.endswith(".json"):
                     self._export_as_json(export_file)
-                elif export_file.endswith('.txt'):
+                elif export_file.endswith(".txt"):
                     self._export_as_text(export_file)
                 else:
                     self._export_as_text(export_file)
@@ -405,7 +413,7 @@ class DashboardTab(BaseTab):
 
     def _export_as_csv(self, file_path: str) -> None:
         """Export analysis results as CSV format."""
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write("Analysis Results Export\n")
             f.write(f"Binary: {self.current_binary_path}\n")
             f.write(f"File Size: {self.file_size_label.text()}\n")
@@ -414,23 +422,24 @@ class DashboardTab(BaseTab):
     def _export_as_json(self, file_path: str) -> None:
         """Export analysis results as JSON format."""
         import json
+
         export_data = {
-            'binary_path': self.current_binary_path,
-            'file_size': self.file_size_label.text(),
-            'architecture': self.architecture_label.text(),
-            'entry_point': self.entry_point_label.text(),
-            'vulnerabilities': self.vulns_found_label.text(),
-            'protections': self.protections_label.text(),
-            'patches': self.patches_label.text(),
+            "binary_path": self.current_binary_path,
+            "file_size": self.file_size_label.text(),
+            "architecture": self.architecture_label.text(),
+            "entry_point": self.entry_point_label.text(),
+            "vulnerabilities": self.vulns_found_label.text(),
+            "protections": self.protections_label.text(),
+            "patches": self.patches_label.text(),
         }
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(export_data, f, indent=2)
 
     def _export_as_text(self, file_path: str) -> None:
         """Export analysis results as text format."""
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write("INTELLICRACK ANALYSIS RESULTS\n")
-            f.write("="*50 + "\n\n")
+            f.write("=" * 50 + "\n\n")
             f.write(f"Binary Path: {self.current_binary_path}\n")
             f.write(f"{self.file_size_label.text()}\n")
             f.write(f"{self.architecture_label.text()}\n")

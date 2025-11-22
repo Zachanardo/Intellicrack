@@ -15,6 +15,7 @@ from typing import Any
 
 from .ai_wrapper import ConfirmationManager, IntellicrackAIInterface
 
+
 script_dir: str = os.path.dirname(os.path.abspath(__file__))
 project_root: str = os.path.abspath(os.path.join(script_dir, "..", ".."))
 sys.path.insert(0, project_root)
@@ -45,10 +46,7 @@ class ClaudeAdapter(AIModelAdapter):
 
     def _create_tool_definitions(self) -> list[dict[str, Any]]:
         """Create tool definitions in Claude's format."""
-        tools = []
-
-        # Analyze binary tool
-        tools.append(
+        return [
             {
                 "name": "analyze_binary",
                 "description": "Analyze a binary file to understand its structure, protections, and vulnerabilities",
@@ -69,10 +67,6 @@ class ClaudeAdapter(AIModelAdapter):
                     "required": ["binary_path"],
                 },
             },
-        )
-
-        # Suggest patches tool
-        tools.append(
             {
                 "name": "suggest_patches",
                 "description": "Generate patch suggestions for bypassing protections in a binary",
@@ -87,10 +81,6 @@ class ClaudeAdapter(AIModelAdapter):
                     "required": ["binary_path"],
                 },
             },
-        )
-
-        # Apply patch tool
-        tools.append(
             {
                 "name": "apply_patch",
                 "description": "Apply a patch to modify a binary (requires user confirmation)",
@@ -109,10 +99,6 @@ class ClaudeAdapter(AIModelAdapter):
                     "required": ["binary_path", "patch_file"],
                 },
             },
-        )
-
-        # Generic CLI command tool
-        tools.append(
             {
                 "name": "execute_cli_command",
                 "description": "Execute any Intellicrack CLI command with full control",
@@ -136,9 +122,7 @@ class ClaudeAdapter(AIModelAdapter):
                     "required": ["args", "description"],
                 },
             },
-        )
-
-        return tools
+        ]
 
     def handle_tool_call(self, tool_name: str, parameters: dict[str, Any]) -> dict[str, Any]:
         """Handle a tool call from Claude."""
@@ -183,10 +167,7 @@ class OpenAIAdapter(AIModelAdapter):
 
     def _create_tool_definitions(self) -> list[dict[str, Any]]:
         """Create tool definitions in OpenAI's format."""
-        tools = []
-
-        # Analyze binary function
-        tools.append(
+        return [
             {
                 "type": "function",
                 "function": {
@@ -216,10 +197,6 @@ class OpenAIAdapter(AIModelAdapter):
                     },
                 },
             },
-        )
-
-        # Suggest patches function
-        tools.append(
             {
                 "type": "function",
                 "function": {
@@ -237,10 +214,6 @@ class OpenAIAdapter(AIModelAdapter):
                     },
                 },
             },
-        )
-
-        # Apply patch function
-        tools.append(
             {
                 "type": "function",
                 "function": {
@@ -262,9 +235,7 @@ class OpenAIAdapter(AIModelAdapter):
                     },
                 },
             },
-        )
-
-        return tools
+        ]
 
     def handle_tool_call(self, tool_name: str, parameters: dict[str, Any]) -> dict[str, Any]:
         """Handle a tool call from OpenAI."""
@@ -278,10 +249,14 @@ class OpenAIAdapter(AIModelAdapter):
                 return self.interface.suggest_patches(parameters["binary_path"])
 
             if tool_name == "apply_patch":
-                return self.interface.apply_patch(parameters["binary_path"], parameters["patch_file"])
+                return self.interface.apply_patch(
+                    parameters["binary_path"], parameters["patch_file"]
+                )
 
             if tool_name == "execute_cli_command":
-                return self.interface.execute_command(parameters["args"], parameters["description"], parameters.get("reasoning", ""))
+                return self.interface.execute_command(
+                    parameters["args"], parameters["description"], parameters.get("reasoning", "")
+                )
 
             if tool_name == "generate_frida_script":
                 return self.interface.generate_frida_script(
@@ -292,7 +267,8 @@ class OpenAIAdapter(AIModelAdapter):
 
             if tool_name == "generate_ghidra_script":
                 return self.interface.generate_ghidra_script(
-                    parameters.get("binary_path"), parameters.get("analysis_type", "comprehensive"),
+                    parameters.get("binary_path"),
+                    parameters.get("analysis_type", "comprehensive"),
                 )
 
             return {
@@ -345,33 +321,27 @@ class LangChainIntegration:
 
             tools: list[Any] = []
 
-            # Analyze binary tool
-            tools.append(
-                Tool(
-                    name="analyze_binary",
-                    func=lambda input_str: self._handle_analyze(input_str),
-                    description="Analyze a binary file. Input: 'path/to/binary [analysis_types]'",
-                ),
+            tools.extend(
+                (
+                    Tool(
+                        name="analyze_binary",
+                        func=lambda input_str: self._handle_analyze(input_str),
+                        description="Analyze a binary file. Input: 'path/to/binary [analysis_types]'",
+                    ),
+                    Tool(
+                        name="suggest_patches",
+                        func=lambda input_str: self._handle_suggest_patches(
+                            input_str
+                        ),
+                        description="Suggest patches for a binary. Input: 'path/to/binary'",
+                    ),
+                    Tool(
+                        name="intellicrack_cli",
+                        func=lambda input_str: self._handle_cli_command(input_str),
+                        description="Run Intellicrack CLI command. Input: 'description | command args'",
+                    ),
+                )
             )
-
-            # Suggest patches tool
-            tools.append(
-                Tool(
-                    name="suggest_patches",
-                    func=lambda input_str: self._handle_suggest_patches(input_str),
-                    description="Suggest patches for a binary. Input: 'path/to/binary'",
-                ),
-            )
-
-            # CLI command tool
-            tools.append(
-                Tool(
-                    name="intellicrack_cli",
-                    func=lambda input_str: self._handle_cli_command(input_str),
-                    description="Run Intellicrack CLI command. Input: 'description | command args'",
-                ),
-            )
-
             return tools
 
         except ImportError:
@@ -430,14 +400,13 @@ class IntellicrackAIServer:
         tool_name = request.get("tool")
         parameters = request.get("parameters", {})
 
-        adapter = self.get_adapter(model_type)
-        if not adapter:
+        if adapter := self.get_adapter(model_type):
+            return adapter.handle_tool_call(tool_name, parameters)
+        else:
             return {
                 "status": "error",
                 "message": f"Unknown model type: {model_type}",
             }
-
-        return adapter.handle_tool_call(tool_name, parameters)
 
 
 def create_ai_system_prompt() -> str:

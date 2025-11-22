@@ -196,7 +196,7 @@ if (ObjC.available) {
         if (ObjC.classes.AFSecurityPolicy) {
             log('AFNetworking framework detected');
 
-            const AFSecurityPolicy = ObjC.classes.AFSecurityPolicy;
+            const {AFSecurityPolicy} = ObjC.classes;
 
             Interceptor.attach(
                 AFSecurityPolicy['- evaluateServerTrust:forDomain:'].implementation,
@@ -235,7 +235,7 @@ if (ObjC.available) {
         if (ObjC.classes.NSURLSession) {
             log('NSURLSession detected - hooking delegate methods');
 
-            const NSURLSessionDelegate = ObjC.protocols.NSURLSessionDelegate;
+            const {NSURLSessionDelegate} = ObjC.protocols;
             if (NSURLSessionDelegate) {
                 const originalDidReceiveChallenge =
                     NSURLSessionDelegate.methods[
@@ -256,7 +256,7 @@ if (ObjC.available) {
                                 log('NSURLSession: Server trust challenge - auto-accepting');
 
                                 const serverTrust = challengeObj.protectionSpace().serverTrust();
-                                const NSURLCredential = ObjC.classes.NSURLCredential;
+                                const {NSURLCredential} = ObjC.classes;
                                 const credential = NSURLCredential.credentialForTrust_(serverTrust);
 
                                 const completionBlock = new ObjC.Block(completionHandler);
@@ -294,7 +294,7 @@ if (ObjC.available) {
 
     try {
         if (ObjC.classes.NSURLConnection) {
-            const NSURLConnection = ObjC.classes.NSURLConnection;
+            const {NSURLConnection} = ObjC.classes;
 
             Interceptor.attach(
                 NSURLConnection['+ sendSynchronousRequest:returningResponse:error:'].implementation,

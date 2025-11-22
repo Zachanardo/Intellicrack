@@ -21,6 +21,7 @@ import frida
 import lief
 import pefile
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -194,7 +195,7 @@ class ChecksumRecalculator:
             crc = self.crc64_table[table_index] ^ (crc >> 8)
         return crc ^ 0xFFFFFFFFFFFFFFFF
 
-    def calculate_hmac(self, data: bytes, key: bytes, algorithm: str = 'sha256') -> str:
+    def calculate_hmac(self, data: bytes, key: bytes, algorithm: str = "sha256") -> str:
         """Calculate HMAC signature with specified algorithm."""
         hash_func = getattr(hashlib, algorithm)
         return hmac.new(key, data, hash_func).hexdigest()
@@ -225,9 +226,9 @@ class ChecksumRecalculator:
                     continue
 
                 if i + 4 <= len(binary_data):
-                    dword = struct.unpack("<I", binary_data[i:i+4])[0]
+                    dword = struct.unpack("<I", binary_data[i : i + 4])[0]
                 elif i + 2 <= len(binary_data):
-                    dword = struct.unpack("<H", binary_data[i:i+2])[0]
+                    dword = struct.unpack("<H", binary_data[i : i + 2])[0]
                 else:
                     dword = binary_data[i]
 
@@ -252,7 +253,7 @@ class ChecksumRecalculator:
             pe = pefile.PE(binary_path)
 
             for section in pe.sections:
-                section_name = section.Name.decode().rstrip('\x00')
+                section_name = section.Name.decode().rstrip("\x00")
                 section_data = section.get_data()
 
                 section_hashes[section_name] = {
@@ -277,7 +278,7 @@ class ChecksumRecalculator:
         hmac_keys = []
 
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 binary_data = f.read()
 
             key_sizes = [16, 20, 24, 32, 48, 64]
@@ -285,19 +286,22 @@ class ChecksumRecalculator:
             for key_size in key_sizes:
                 offset = 0
                 while offset < len(binary_data) - key_size:
-                    potential_key = binary_data[offset:offset + key_size]
+                    potential_key = binary_data[offset : offset + key_size]
 
                     entropy = self._calculate_key_entropy(potential_key)
 
-                    if 3.5 < entropy < 7.0:
-                        if self._is_likely_key(potential_key):
-                            hmac_keys.append({
+                    if 3.5 < entropy < 7.0 and self._is_likely_key(potential_key):
+                        hmac_keys.append(
+                            {
                                 "offset": offset,
                                 "size": key_size,
                                 "key_hex": potential_key.hex(),
                                 "entropy": entropy,
-                                "confidence": self._calculate_key_confidence(potential_key, entropy),
-                            })
+                                "confidence": self._calculate_key_confidence(
+                                    potential_key, entropy
+                                ),
+                            }
+                        )
 
                     offset += 1
 
@@ -330,14 +334,14 @@ class ChecksumRecalculator:
 
     def _is_likely_key(self, data: bytes) -> bool:
         """Heuristic check if data is likely cryptographic key material."""
-        if data.count(b'\x00') > len(data) * 0.3:
+        if data.count(b"\x00") > len(data) * 0.3:
             return False
 
-        if data.count(b'\xff') > len(data) * 0.3:
+        if data.count(b"\xff") > len(data) * 0.3:
             return False
 
-        repeating_patterns = [data[i:i+2] for i in range(len(data)-1)]
-        return not len(set(repeating_patterns)) < len(data) * 0.4
+        repeating_patterns = [data[i : i + 2] for i in range(len(data) - 1)]
+        return len(set(repeating_patterns)) >= len(data) * 0.4
 
     def _calculate_key_confidence(self, data: bytes, entropy: float) -> float:
         """Calculate confidence score for potential key material."""
@@ -350,10 +354,11 @@ class ChecksumRecalculator:
         if unique_bytes > len(data) * 0.5:
             confidence += 0.3
 
-        if not (b'\x00' * 4 in data or b'\xff' * 4 in data):
+        if b"\x00" * 4 not in data and b"\xff" * 4 not in data:
             confidence += 0.2
 
-        printable_count = sum(1 for b in data if 32 <= b <= 126)
+        printable_count = sum(bool(32 <= b <= 126)
+                          for b in data)
         if printable_count < len(data) * 0.2:
             confidence += 0.1
 
@@ -364,7 +369,7 @@ class ChecksumRecalculator:
         locations = []
 
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 binary_data = f.read()
 
             actual_crc32 = self.calculate_crc32_zlib(binary_data)
@@ -374,10 +379,10 @@ class ChecksumRecalculator:
             actual_sha256 = bytes.fromhex(self.calculate_sha256(binary_data))
             actual_sha512 = bytes.fromhex(self.calculate_sha512(binary_data))
 
-            crc32_bytes_le = struct.pack('<I', actual_crc32)
-            crc32_bytes_be = struct.pack('>I', actual_crc32)
-            crc64_bytes_le = struct.pack('<Q', actual_crc64)
-            crc64_bytes_be = struct.pack('>Q', actual_crc64)
+            crc32_bytes_le = struct.pack("<I", actual_crc32)
+            crc32_bytes_be = struct.pack(">I", actual_crc32)
+            crc64_bytes_le = struct.pack("<Q", actual_crc64)
+            crc64_bytes_be = struct.pack(">Q", actual_crc64)
 
             search_patterns = [
                 (crc32_bytes_le, IntegrityCheckType.CRC32, 4),
@@ -418,8 +423,8 @@ class ChecksumRecalculator:
                 section_sha256 = bytes.fromhex(self.calculate_sha256(section_data))
 
                 section_patterns = [
-                    (struct.pack('<I', section_crc32), IntegrityCheckType.CRC32, 4),
-                    (struct.pack('>I', section_crc32), IntegrityCheckType.CRC32, 4),
+                    (struct.pack("<I", section_crc32), IntegrityCheckType.CRC32, 4),
+                    (struct.pack(">I", section_crc32), IntegrityCheckType.CRC32, 4),
                     (section_md5, IntegrityCheckType.MD5_HASH, 16),
                     (section_sha256, IntegrityCheckType.SHA256_HASH, 32),
                 ]
@@ -435,7 +440,7 @@ class ChecksumRecalculator:
                             calculated_value=pattern,
                             confidence=0.9,
                         )
-                        if not any(loc.offset == pos for loc in locations):
+                        if all(loc.offset != pos for loc in locations):
                             locations.append(location)
 
             pe.close()
@@ -455,9 +460,9 @@ class ChecksumRecalculator:
                 section_end = section_start + section.SizeOfRawData
 
                 if section_start <= offset < section_end:
-                    section_name = section.Name.decode().rstrip('\x00')
+                    section_name = section.Name.decode().rstrip("\x00")
 
-                    if section_name in ['.rdata', '.data', '.idata']:
+                    if section_name in [".rdata", ".data", ".idata"]:
                         return True
 
                     if not (section.IMAGE_SCN_MEM_EXECUTE):
@@ -470,7 +475,9 @@ class ChecksumRecalculator:
             return offset > 0x400
 
     def recalculate_for_patched_binary(
-        self, original_path: str, patched_path: str,
+        self,
+        original_path: str,
+        patched_path: str,
     ) -> ChecksumRecalculation:
         """Recalculate all checksums for patched binary."""
         with open(original_path, "rb") as f:
@@ -634,7 +641,7 @@ class IntegrityCheckDetector:
         checks = []
 
         try:
-            if binary_path.lower().endswith(('.exe', '.dll', '.sys')):
+            if binary_path.lower().endswith((".exe", ".dll", ".sys")):
                 pe = pefile.PE(binary_path)
 
                 api_checks = self._scan_api_imports(pe, binary_path)
@@ -647,10 +654,8 @@ class IntegrityCheckDetector:
                 checks.extend(antitamper_checks)
 
                 pe.close()
-            else:
-                binary = lief.parse(binary_path)
-                if binary:
-                    checks.extend(self._scan_elf_checks(binary, binary_path))
+            elif binary := lief.parse(binary_path):
+                checks.extend(self._scan_elf_checks(binary, binary_path))
 
         except Exception as e:
             logger.error(f"Integrity check detection failed: {e}")
@@ -692,7 +697,7 @@ class IntegrityCheckDetector:
         for section in pe.sections:
             if section.IMAGE_SCN_MEM_EXECUTE:
                 section_data = section.get_data()
-                section_name = section.Name.decode().rstrip('\x00')
+                section_name = section.Name.decode().rstrip("\x00")
 
                 for _pattern_name, pattern_info in self.check_patterns.items():
                     pattern = pattern_info["pattern"]
@@ -727,7 +732,7 @@ class IntegrityCheckDetector:
         for section in pe.sections:
             entropy = self._calculate_entropy(section.get_data())
             if entropy > 7.5:
-                section_name = section.Name.decode().rstrip('\x00')
+                section_name = section.Name.decode().rstrip("\x00")
                 check = IntegrityCheck(
                     check_type=IntegrityCheckType.ANTI_TAMPER,
                     address=section.VirtualAddress,
@@ -753,7 +758,7 @@ class IntegrityCheckDetector:
 
         for section in pe.sections:
             section_data = section.get_data()
-            section_name = section.Name.decode().rstrip('\x00')
+            section_name = section.Name.decode().rstrip("\x00")
             for pattern in smc_patterns:
                 if pattern in section_data:
                     check = IntegrityCheck(
@@ -832,9 +837,7 @@ class IntegrityBypassEngine:
 
     def _load_bypass_strategies(self) -> list[BypassStrategy]:
         """Load bypass strategies for different check types."""
-        strategies = []
-
-        strategies.append(
+        strategies = [
             BypassStrategy(
                 name="crc32_bypass",
                 check_types=[IntegrityCheckType.CRC32],
@@ -881,8 +884,8 @@ class IntegrityBypassEngine:
             """,
                 success_rate=0.95,
                 priority=1,
-            ),
-        )
+            )
+        ]
 
         strategies.append(
             BypassStrategy(
@@ -932,7 +935,12 @@ class IntegrityBypassEngine:
         strategies.append(
             BypassStrategy(
                 name="hash_bypass",
-                check_types=[IntegrityCheckType.MD5_HASH, IntegrityCheckType.SHA1_HASH, IntegrityCheckType.SHA256_HASH, IntegrityCheckType.SHA512_HASH],
+                check_types=[
+                    IntegrityCheckType.MD5_HASH,
+                    IntegrityCheckType.SHA1_HASH,
+                    IntegrityCheckType.SHA256_HASH,
+                    IntegrityCheckType.SHA512_HASH,
+                ],
                 frida_script="""
                 var cryptHashData = Module.findExportByName('Advapi32.dll', 'CryptHashData');
                 if (cryptHashData) {
@@ -1453,12 +1461,9 @@ class IntegrityBypassEngine:
             checks_by_type[check.check_type].append(check)
 
         for check_type, type_checks in checks_by_type.items():
-            strategy = self._get_best_strategy(check_type)
-            if strategy:
+            if strategy := self._get_best_strategy(check_type):
                 script = self._customize_script(strategy.frida_script, type_checks)
-                script_parts.append(f"// {strategy.name}")
-                script_parts.append(script)
-
+                script_parts.extend((f"// {strategy.name}", script))
         return "\n".join(script_parts)
 
     def _get_best_strategy(self, check_type: IntegrityCheckType) -> BypassStrategy | None:
@@ -1467,10 +1472,9 @@ class IntegrityBypassEngine:
         best_priority = 999
 
         for strategy in self.bypass_strategies:
-            if check_type in strategy.check_types:
-                if strategy.priority < best_priority:
-                    best_strategy = strategy
-                    best_priority = strategy.priority
+            if check_type in strategy.check_types and strategy.priority < best_priority:
+                best_strategy = strategy
+                best_priority = strategy.priority
 
         return best_strategy
 
@@ -1510,26 +1514,36 @@ class IntegrityBypassEngine:
                     hmac_keys_json = str(hmac_keys).replace("'", '"') if hmac_keys else "[]"
                     script = script.replace("%HMAC_KEYS%", hmac_keys_json)
 
-                    if binary_path.lower().endswith(('.exe', '.dll', '.sys')):
+                    if binary_path.lower().endswith((".exe", ".dll", ".sys")):
                         pe = pefile.PE(binary_path)
                         actual_size = pe.OPTIONAL_HEADER.SizeOfImage
                         actual_header_checksum = pe.OPTIONAL_HEADER.CheckSum
-                        actual_image_checksum = self.checksum_calc.recalculate_pe_checksum(binary_path)
+                        actual_image_checksum = self.checksum_calc.recalculate_pe_checksum(
+                            binary_path
+                        )
                         pe.close()
 
                         script = script.replace("%EXPECTED_SIZE%", str(actual_size))
                         script = script.replace("%HEADER_CHECKSUM%", str(actual_header_checksum))
                         script = script.replace("%IMAGE_CHECKSUM%", str(actual_image_checksum))
 
-                    protected_regions = []
-                    for check in checks:
-                        if check.address and check.size:
-                            protected_regions.append({
-                                "start": check.address,
-                                "end": check.address + check.size,
-                                "original": list(binary_data[check.address:check.address + check.size]) if check.address < len(binary_data) else [],
-                            })
-
+                    protected_regions = [
+                        {
+                            "start": check.address,
+                            "end": check.address + check.size,
+                            "original": (
+                                list(
+                                    binary_data[
+                                        check.address : check.address + check.size
+                                    ]
+                                )
+                                if check.address < len(binary_data)
+                                else []
+                            ),
+                        }
+                        for check in checks
+                        if check.address and check.size
+                    ]
                     script = script.replace("%PROTECTED_REGIONS%", str(protected_regions))
 
             except Exception as e:
@@ -1572,11 +1586,18 @@ class BinaryPatcher:
         self.patch_history = []
 
     def patch_integrity_checks(
-        self, binary_path: str, checks: list[IntegrityCheck], output_path: str = None,
+        self,
+        binary_path: str,
+        checks: list[IntegrityCheck],
+        output_path: str = None,
     ) -> tuple[bool, ChecksumRecalculation | None]:
         """Patch binary to remove integrity checks and recalculate all checksums."""
         if output_path is None:
-            output_path = str(Path(binary_path).with_suffix('.patched' + Path(binary_path).suffix))
+            output_path = str(
+                Path(binary_path).with_suffix(
+                    f".patched{Path(binary_path).suffix}"
+                )
+            )
 
         try:
             with open(binary_path, "rb") as f:
@@ -1592,30 +1613,35 @@ class BinaryPatcher:
                         for i in range(check.size):
                             patch_data[offset + i] = 0x90
 
-                        self.patch_history.append({
-                            "address": check.address,
-                            "size": check.size,
-                            "original": bytes(original_data[offset:offset + check.size]),
-                            "patched": bytes([0x90] * check.size),
-                            "type": check.check_type.name,
-                        })
+                        self.patch_history.append(
+                            {
+                                "address": check.address,
+                                "size": check.size,
+                                "original": bytes(original_data[offset : offset + check.size]),
+                                "patched": bytes([0x90] * check.size),
+                                "type": check.check_type.name,
+                            }
+                        )
 
                 elif check.check_type in [IntegrityCheckType.CRC32, IntegrityCheckType.CHECKSUM]:
-                    offset = self._rva_to_offset(pe, check.address)
-                    if offset:
+                    if offset := self._rva_to_offset(pe, check.address):
                         patch_bytes = b"\xb8\x00\x00\x00\x00\xc3"
 
                         for i, byte in enumerate(patch_bytes):
                             if offset + i < len(patch_data):
                                 patch_data[offset + i] = byte
 
-                        self.patch_history.append({
-                            "address": check.address,
-                            "size": len(patch_bytes),
-                            "original": bytes(original_data[offset:offset + len(patch_bytes)]),
-                            "patched": patch_bytes,
-                            "type": check.check_type.name,
-                        })
+                        self.patch_history.append(
+                            {
+                                "address": check.address,
+                                "size": len(patch_bytes),
+                                "original": bytes(
+                                    original_data[offset : offset + len(patch_bytes)]
+                                ),
+                                "patched": patch_bytes,
+                                "type": check.check_type.name,
+                            }
+                        )
 
             with open(output_path, "wb") as f:
                 f.write(patch_data)
@@ -1646,10 +1672,16 @@ class BinaryPatcher:
 
     def _rva_to_offset(self, pe: pefile.PE, rva: int) -> int | None:
         """Convert RVA to file offset."""
-        for section in pe.sections:
-            if section.VirtualAddress <= rva < section.VirtualAddress + section.Misc_VirtualSize:
-                return section.PointerToRawData + (rva - section.VirtualAddress)
-        return None
+        return next(
+            (
+                section.PointerToRawData + (rva - section.VirtualAddress)
+                for section in pe.sections
+                if section.VirtualAddress
+                <= rva
+                < section.VirtualAddress + section.Misc_VirtualSize
+            ),
+            None,
+        )
 
 
 class IntegrityCheckDefeatSystem:
@@ -1671,11 +1703,18 @@ class IntegrityCheckDefeatSystem:
         return self.checksum_calc.extract_hmac_keys(binary_path)
 
     def patch_embedded_checksums(
-        self, binary_path: str, checksum_locations: list[ChecksumLocation], output_path: str = None,
+        self,
+        binary_path: str,
+        checksum_locations: list[ChecksumLocation],
+        output_path: str = None,
     ) -> bool:
         """Patch embedded checksums in binary with recalculated values."""
         if output_path is None:
-            output_path = str(Path(binary_path).with_suffix('.patched' + Path(binary_path).suffix))
+            output_path = str(
+                Path(binary_path).with_suffix(
+                    f".patched{Path(binary_path).suffix}"
+                )
+            )
 
         try:
             with open(binary_path, "rb") as f:
@@ -1683,8 +1722,12 @@ class IntegrityCheckDefeatSystem:
 
             for location in checksum_locations:
                 if location.offset + location.size <= len(binary_data):
-                    binary_data[location.offset:location.offset + location.size] = location.calculated_value
-                    logger.info(f"Patched {location.algorithm.name} at offset {hex(location.offset)}")
+                    binary_data[location.offset : location.offset + location.size] = (
+                        location.calculated_value
+                    )
+                    logger.info(
+                        f"Patched {location.algorithm.name} at offset {hex(location.offset)}"
+                    )
 
             with open(output_path, "wb") as f:
                 f.write(binary_data)
@@ -1697,22 +1740,22 @@ class IntegrityCheckDefeatSystem:
             return False
 
     def defeat_integrity_checks(
-        self, binary_path: str, process_name: str = None, patch_binary: bool = False,
+        self,
+        binary_path: str,
+        process_name: str = None,
+        patch_binary: bool = False,
     ) -> dict[str, Any]:
         """Complete integrity check defeat workflow."""
+        logger.info(f"Detecting integrity checks: {binary_path}")
+        checks = self.detector.detect_checks(binary_path)
         result = {
             "success": False,
-            "checks_detected": 0,
             "checks_bypassed": 0,
             "binary_patched": False,
             "checksums": None,
             "details": [],
+            "checks_detected": len(checks),
         }
-
-        logger.info(f"Detecting integrity checks: {binary_path}")
-        checks = self.detector.detect_checks(binary_path)
-        result["checks_detected"] = len(checks)
-
         if not checks:
             logger.info("No integrity checks detected")
             result["success"] = True
@@ -1721,14 +1764,16 @@ class IntegrityCheckDefeatSystem:
         logger.info(f"Detected {len(checks)} integrity checks")
 
         for check in checks:
-            result["details"].append({
-                "type": check.check_type.name,
-                "address": hex(check.address),
-                "function": check.function_name,
-                "bypass_method": check.bypass_method,
-                "confidence": check.confidence,
-                "section": check.section_name,
-            })
+            result["details"].append(
+                {
+                    "type": check.check_type.name,
+                    "address": hex(check.address),
+                    "function": check.function_name,
+                    "bypass_method": check.bypass_method,
+                    "confidence": check.confidence,
+                    "section": check.section_name,
+                }
+            )
 
         if process_name:
             logger.info(f"Applying runtime bypasses: {process_name}")
@@ -1808,7 +1853,9 @@ def main() -> None:
         locations = defeat_system.find_embedded_checksums(args.binary)
         print(f"\n=== Found {len(locations)} Embedded Checksums ===")
         for loc in locations:
-            print(f"- {loc.algorithm.name} at offset {hex(loc.offset)} (size={loc.size}, confidence={loc.confidence:.1%})")
+            print(
+                f"- {loc.algorithm.name} at offset {hex(loc.offset)} (size={loc.size}, confidence={loc.confidence:.1%})"
+            )
             print(f"  Current:    {loc.current_value.hex()}")
             print(f"  Calculated: {loc.calculated_value.hex()}")
         return
@@ -1828,7 +1875,9 @@ def main() -> None:
         print(script)
     else:
         result = defeat_system.defeat_integrity_checks(
-            args.binary, args.process, patch_binary=args.patch,
+            args.binary,
+            args.process,
+            patch_binary=args.patch,
         )
 
         print("\n=== Integrity Check Defeat Results ===")
@@ -1862,10 +1911,12 @@ def main() -> None:
             print(f"Patched SHA512:  {cs['patched_sha512']}")
             print(f"PE Checksum:    {cs['pe_checksum']}")
 
-            if cs.get('hmac_keys'):
+            if cs.get("hmac_keys"):
                 print("\n=== Extracted HMAC Keys ===")
-                for key in cs['hmac_keys'][:5]:
-                    print(f"- Key at offset {hex(key['offset'])}: {key['key_hex'][:32]}... (confidence={key['confidence']:.1%})")
+                for key in cs["hmac_keys"][:5]:
+                    print(
+                        f"- Key at offset {hex(key['offset'])}: {key['key_hex'][:32]}... (confidence={key['confidence']:.1%})"
+                    )
 
 
 if __name__ == "__main__":

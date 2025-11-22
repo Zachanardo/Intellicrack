@@ -34,6 +34,7 @@ from .sandbox_detector import SandboxDetector
 from .timing_attacks import TimingAttackDefense
 from .vm_detector import VMDetector
 
+
 """
 Anti-Analysis and Evasion Module
 
@@ -66,17 +67,17 @@ class AntiAnalysisEngine:
 
 
 __all__ = [
-    "AdvancedDebuggerBypass",
     "APIObfuscator",
+    "AdvancedDebuggerBypass",
     "AntiAnalysisEngine",
     "BaseDetector",
     "DebuggerBypass",
     "DebuggerDetector",
     "HypervisorDebugger",
-    "UserModeNTAPIHooker",
     "SandboxDetector",
     "TimingAttackDefense",
     "TimingNeutralizer",
+    "UserModeNTAPIHooker",
     "VMDetector",
     "install_advanced_bypass",
     "install_anti_antidebug",

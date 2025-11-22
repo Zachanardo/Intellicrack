@@ -37,7 +37,7 @@ from intellicrack.core.config_manager import IntellicrackConfig
 class RealQSettingsSimulator:
     """Real QSettings behavior simulator for testing legacy configuration migration."""
 
-    def __init__(self, test_data: Dict[str, Any]):
+    def __init__(self, test_data: dict[str, Any]):
         """Initialize with realistic QSettings test data."""
         self.data = test_data
         self.keys_list = list(test_data.keys())
@@ -46,7 +46,7 @@ class RealQSettingsSimulator:
         """Get value from QSettings data, matching real QSettings behavior."""
         return self.data.get(key, default)
 
-    def allKeys(self) -> List[str]:
+    def allKeys(self) -> list[str]:
         """Return all keys in QSettings format."""
         return self.keys_list.copy()
 
@@ -72,7 +72,7 @@ class RealLegacyFileGenerator:
     """Generate realistic legacy configuration files for migration testing."""
 
     @staticmethod
-    def create_qsettings_data() -> Dict[str, Any]:
+    def create_qsettings_data() -> dict[str, Any]:
         """Create realistic QSettings data matching production usage patterns."""
         return {
             "execution/qemu_preference": "always",
@@ -116,7 +116,7 @@ class RealLegacyFileGenerator:
         }
 
     @staticmethod
-    def create_llm_models_data() -> Dict[str, Any]:
+    def create_llm_models_data() -> dict[str, Any]:
         """Create realistic LLM models configuration data."""
         return {
             "gpt-4-turbo": {
@@ -183,7 +183,7 @@ class RealLegacyFileGenerator:
         }
 
     @staticmethod
-    def create_llm_profiles_data() -> Dict[str, Any]:
+    def create_llm_profiles_data() -> dict[str, Any]:
         """Create realistic LLM profiles configuration data."""
         return {
             "default": {
@@ -225,7 +225,7 @@ class RealLegacyFileGenerator:
         }
 
     @staticmethod
-    def create_llm_metrics_data() -> Dict[str, Any]:
+    def create_llm_metrics_data() -> dict[str, Any]:
         """Create realistic LLM usage metrics data."""
         return {
             "total_requests": 2847,
@@ -294,7 +294,7 @@ class RealLegacyFileGenerator:
         }
 
     @staticmethod
-    def create_legacy_config_data() -> Dict[str, Any]:
+    def create_legacy_config_data() -> dict[str, Any]:
         """Create comprehensive legacy configuration data."""
         return {
             "vm_framework": {
@@ -427,7 +427,7 @@ class RealLegacyFileGenerator:
         }
 
     @staticmethod
-    def create_font_config_data() -> Dict[str, Any]:
+    def create_font_config_data() -> dict[str, Any]:
         """Create realistic font configuration data."""
         return {
             "monospace_fonts": {
@@ -579,7 +579,7 @@ class RealMigrationTester:
             json.dump(metrics_data, f, indent=2)
         self.created_files.append(metrics_file)
 
-    def create_real_legacy_config_files(self) -> List[Path]:
+    def create_real_legacy_config_files(self) -> list[Path]:
         """Create real legacy configuration files with diverse data."""
         legacy_files = []
 
@@ -670,7 +670,7 @@ class RealConfigurationValidator:
     """Real configuration validation for verifying migration results."""
 
     @staticmethod
-    def validate_qsettings_migration(config: IntellicrackConfig, original_data: Dict[str, Any]) -> bool:
+    def validate_qsettings_migration(config: IntellicrackConfig, original_data: dict[str, Any]) -> bool:
         """Validate that QSettings migration was successful with real data verification."""
         # Verify QEMU testing preferences
         qemu_pref = config.get("qemu_testing.default_preference")
@@ -963,13 +963,13 @@ class TestMigrationMethods(unittest.TestCase):
         metrics_file = self.migration_tester.llm_configs_dir / "metrics.json"
 
         # Read real data from files
-        with open(models_file, 'r', encoding='utf-8') as f:
+        with open(models_file, encoding='utf-8') as f:
             models_data = json.load(f)
 
-        with open(profiles_file, 'r', encoding='utf-8') as f:
+        with open(profiles_file, encoding='utf-8') as f:
             profiles_data = json.load(f)
 
-        with open(metrics_file, 'r', encoding='utf-8') as f:
+        with open(metrics_file, encoding='utf-8') as f:
             metrics_data = json.load(f)
 
         # Perform real migration by setting configuration
@@ -1065,7 +1065,7 @@ class TestMigrationMethods(unittest.TestCase):
 
         # Migrate each legacy file
         for legacy_file in legacy_files:
-            with open(legacy_file, 'r', encoding='utf-8') as f:
+            with open(legacy_file, encoding='utf-8') as f:
                 legacy_data = json.load(f)
 
             # Perform real migration
@@ -1286,7 +1286,7 @@ class TestMigrationMethods(unittest.TestCase):
         font_file = self.migration_tester.create_real_font_config_file()
 
         # Load real font data
-        with open(font_file, 'r', encoding='utf-8') as f:
+        with open(font_file, encoding='utf-8') as f:
             font_data = json.load(f)
 
         # Perform real migration
@@ -1441,7 +1441,7 @@ class TestMigrationMethods(unittest.TestCase):
 
         # Attempt to load corrupted JSON
         try:
-            with open(corrupted_file, 'r', encoding='utf-8') as f:
+            with open(corrupted_file, encoding='utf-8') as f:
                 json.load(f)
             self.fail("Expected JSON decode error for corrupted file")
         except json.JSONDecodeError:
@@ -1454,7 +1454,7 @@ class TestMigrationMethods(unittest.TestCase):
 
         # Verify that attempting to read non-existent file raises appropriate error
         with self.assertRaises(FileNotFoundError):
-            with open(non_existent_file, 'r') as f:
+            with open(non_existent_file) as f:
                 json.load(f)
 
         # Test migration with empty directory
@@ -1472,7 +1472,7 @@ class TestMigrationMethods(unittest.TestCase):
             json.dump(partial_data, f)
 
         # Load partial data and verify it's incomplete
-        with open(partial_models_file, 'r', encoding='utf-8') as f:
+        with open(partial_models_file, encoding='utf-8') as f:
             loaded_data = json.load(f)
 
         # Verify it's not valid LLM model data
@@ -1755,7 +1755,7 @@ class TestMigrationMethods(unittest.TestCase):
         self.assertTrue(output.get("compression"))  # Preserved
         self.assertTrue(output.get("encryption"))  # Updated
 
-    def _perform_legacy_migration(self, legacy_data: Dict[str, Any], legacy_path: Path) -> None:
+    def _perform_legacy_migration(self, legacy_data: dict[str, Any], legacy_path: Path) -> None:
         """Perform real legacy configuration migration."""
         # VM framework migration
         if "vm_framework" in legacy_data:

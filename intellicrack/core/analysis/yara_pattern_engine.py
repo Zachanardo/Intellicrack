@@ -18,6 +18,7 @@ from typing import Any
 
 from ...utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 try:
@@ -184,7 +185,9 @@ class YaraPatternEngine:
             self.compiled_rules = yara.compile(filepaths=rule_files)
             self._extract_rule_metadata()
 
-            logger.info(f"Loaded {len(rule_files)} YARA rule namespaces with {self._count_total_rules()} rules")
+            logger.info(
+                f"Loaded {len(rule_files)} YARA rule namespaces with {self._count_total_rules()} rules"
+            )
 
         except Exception as e:
             logger.error(f"Failed to load YARA rules: {e}")
@@ -570,9 +573,7 @@ rule Basic_PE_Detection
 
     def _count_total_rules(self) -> int:
         """Count total number of rules."""
-        if not self.compiled_rules:
-            return 0
-        return len(list(self.compiled_rules))
+        return len(list(self.compiled_rules)) if self.compiled_rules else 0
 
     def scan_file(self, file_path: str, timeout: int = 60) -> YaraScanResult:
         """Scan a file with YARA rules.
@@ -667,7 +668,7 @@ rule Basic_PE_Detection
             file_hash = hasher.hexdigest()[:32]  # Use more hash bytes for better uniqueness
         except Exception as e:
             logger.debug(f"Could not generate file hash: {e}")
-            file_hash = f"unknown_{file_size}_{int(file_mtime)}"
+            file_hash = f"unknown_{file_size}_{file_mtime}"
 
         # Update cache with new file info
         self.scanned_files[abs_file_path] = (file_mtime, file_size, file_hash)
@@ -697,8 +698,16 @@ rule Basic_PE_Detection
                     else:
                         # Try to access as attributes first, fall back to indexing
                         try:
-                            offset = string_match.offset if hasattr(string_match, "offset") else string_match[0]
-                            identifier = string_match.identifier if hasattr(string_match, "identifier") else string_match[1]
+                            offset = (
+                                string_match.offset
+                                if hasattr(string_match, "offset")
+                                else string_match[0]
+                            )
+                            identifier = (
+                                string_match.identifier
+                                if hasattr(string_match, "identifier")
+                                else string_match[1]
+                            )
                             # The matched data is typically at index 2
                             if hasattr(string_match, "__getitem__"):
                                 matched_data = string_match[2] if len(string_match) > 2 else b""
@@ -707,7 +716,9 @@ rule Basic_PE_Detection
                             length = len(matched_data) if matched_data else 0
                         except (AttributeError, IndexError, TypeError):
                             # Skip malformed matches
-                            logger.debug(f"Skipping malformed string match in file scan: {string_match}")
+                            logger.debug(
+                                f"Skipping malformed string match in file scan: {string_match}"
+                            )
                             continue
 
                     # Convert bytes to string if necessary
@@ -750,7 +761,7 @@ rule Basic_PE_Detection
 
             scan_time = time.time() - start_time
 
-            result = YaraScanResult(
+            return YaraScanResult(
                 file_path=file_path,
                 matches=matches,
                 total_rules=self._count_total_rules(),
@@ -761,9 +772,6 @@ rule Basic_PE_Detection
                     "file_mtime": file_mtime,
                 },
             )
-
-            return result
-
         except Exception as e:
             logger.error(f"YARA scan error: {e}")
             return YaraScanResult(
@@ -787,11 +795,17 @@ rule Basic_PE_Detection
         # Check rule name first
         rule_name = match.rule.lower()
 
-        if any(keyword in rule_name for keyword in ["protection", "protect", "vmprotect", "themida", "enigma"]):
+        if any(
+            keyword in rule_name
+            for keyword in ["protection", "protect", "vmprotect", "themida", "enigma"]
+        ):
             return PatternCategory.PROTECTION
         if any(keyword in rule_name for keyword in ["pack", "upx", "aspack", "pecompact"]):
             return PatternCategory.PACKER
-        if any(keyword in rule_name for keyword in ["license", "flexlm", "hasp", "dongle", "activation"]):
+        if any(
+            keyword in rule_name
+            for keyword in ["license", "flexlm", "hasp", "dongle", "activation"]
+        ):
             return PatternCategory.LICENSING
         if any(keyword in rule_name for keyword in ["debug", "antidebug", "anti_debug"]):
             return PatternCategory.ANTI_DEBUG
@@ -993,7 +1007,9 @@ rule Basic_PE_Detection
         return {
             "total_rules": self._count_total_rules(),
             "categories": categories,
-            "namespaces": list({meta.get("namespace", "unknown") for meta in self.rule_metadata.values()}),
+            "namespaces": list(
+                {meta.get("namespace", "unknown") for meta in self.rule_metadata.values()}
+            ),
             "namespace_distribution": namespace_dist,
             "yara_available": YARA_AVAILABLE,
         }
@@ -1110,7 +1126,4 @@ def is_yara_available() -> bool:
 
 def scan_file_with_yara(file_path: str) -> YaraScanResult | None:
     """Quick scan function for integration."""
-    engine = get_yara_engine()
-    if engine:
-        return engine.scan_file(file_path)
-    return None
+    return engine.scan_file(file_path) if (engine := get_yara_engine()) else None

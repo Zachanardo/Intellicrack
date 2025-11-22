@@ -60,7 +60,7 @@ class MockIntellicrackApp:
             return None
 
         try:
-            with open(cache_file, "r", encoding="utf-8") as f:
+            with open(cache_file, encoding="utf-8") as f:
                 return json.load(f)
         except (json.JSONDecodeError, OSError) as e:
             self.logger.debug(f"Failed to load cache data: {e}")
@@ -226,7 +226,7 @@ class MockIntellicrackApp:
                                         with open(full_path, "rb") as f:
                                             f.read(512)
                                     else:
-                                        with open(full_path, "r", encoding="utf-8") as f:
+                                        with open(full_path, encoding="utf-8") as f:
                                             f.read(512)
 
                                     plugin_info = {
@@ -262,7 +262,7 @@ class MockIntellicrackApp:
                 with lock, open(cache_file, "w", encoding="utf-8") as f:
                     json.dump({"plugins": plugins, "cache_version": "1.0"}, f, indent=2)
                 self.logger.debug(f"Plugin cache saved to {cache_file}")
-            except (OSError, IOError) as cache_error:
+            except OSError as cache_error:
                 self.logger.warning(f"Failed to save plugin cache: {cache_error}")
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -590,7 +590,7 @@ class TestPluginCaching:
         assert len(plugins["custom"]) == 1
         assert cache_file.exists()
 
-        with open(cache_file, "r", encoding="utf-8") as f:
+        with open(cache_file, encoding="utf-8") as f:
             cache_data = json.load(f)
 
         malicious_paths = [
@@ -679,7 +679,7 @@ class TestPluginCaching:
         assert cache_file.exists(), "Cache file doesn't exist after concurrent access"
 
         try:
-            with open(cache_file, "r", encoding="utf-8") as f:
+            with open(cache_file, encoding="utf-8") as f:
                 cache_data = json.load(f)
                 assert "plugins" in cache_data, "Cache file missing 'plugins' key"
                 assert isinstance(cache_data["plugins"], dict), \

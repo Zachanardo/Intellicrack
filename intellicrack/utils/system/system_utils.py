@@ -30,6 +30,7 @@ from typing import Any
 # Import consolidated process utilities
 from .process_utils import get_all_processes
 
+
 # Module logger
 logger = logging.getLogger(__name__)
 
@@ -388,7 +389,9 @@ def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
                 command = " ".join(command)
 
             # Use PowerShell to run with elevated privileges
-            ps_command = f'Start-Process -FilePath "cmd" -ArgumentList "/c {command}" -Verb RunAs -Wait'
+            ps_command = (
+                f'Start-Process -FilePath "cmd" -ArgumentList "/c {command}" -Verb RunAs -Wait'
+            )
             powershell_path = shutil.which("powershell")
             if not powershell_path:
                 logger.error("PowerShell not found in PATH")
@@ -437,7 +440,7 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> str | Non
 
         # Default output path
         if output_path is None:
-            output_path = os.path.splitext(exe_path)[0] + "_icon.png"
+            output_path = f"{os.path.splitext(exe_path)[0]}_icon.png"
 
         if is_windows():
             try:
@@ -641,26 +644,25 @@ def optimize_memory_usage() -> dict[str, Any]:
 
 # Exported functions
 __all__ = [
-    "get_targetprocess_pid",
-    "get_system_info",
+    "check_admin_privileges",
     "check_dependencies",
-    "run_command",
-    "is_windows",
+    "extract_executable_icon",
+    "get_environment_variable",
+    "get_home_directory",
+    "get_process_list",
+    "get_system_info",
+    "get_target_process_pid",
+    "get_targetprocess_pid",
+    "get_temp_directory",
+    "getprocess_list",
+    "is_admin",
     "is_linux",
     "is_macos",
-    "get_process_list",
+    "is_windows",
     "kill_process",
-    "get_environment_variable",
-    "set_environment_variable",
-    "get_temp_directory",
-    "get_home_directory",
-    "check_admin_privileges",
-    "is_admin",
-    "run_as_admin",
-    "extract_executable_icon",
-    "optimize_memory_usage",
-    # Backward compatibility aliases
-    "getprocess_list",
     "killprocess",
-    "get_target_process_pid",
+    "optimize_memory_usage",
+    "run_as_admin",
+    "run_command",
+    "set_environment_variable",
 ]

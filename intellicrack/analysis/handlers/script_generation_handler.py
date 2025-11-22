@@ -23,26 +23,17 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 from PyQt6.QtWidgets import QWidget
 
+
 try:
     from PyQt6.QtCore import QObject, QRunnable, QThreadPool, QTimer, pyqtSignal
     from PyQt6.QtGui import QFont, QTextDocument
-    from PyQt6.QtWidgets import (
-        QDialog,
-        QFileDialog,
-        QHBoxLayout,
-        QLabel,
-        QMessageBox,
-        QPushButton,
-        QTextEdit,
-        QVBoxLayout,
-    )
+    from PyQt6.QtWidgets import QDialog, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
 
     PYQT6_AVAILABLE = True
 except ImportError:
     # Fallback classes when PyQt6 is not available
     class QObject:
         """Fallback QObject class when PyQt6 is not available."""
-
 
     class QRunnable:
         """Fallback QRunnable class when PyQt6 is not available."""
@@ -61,7 +52,6 @@ except ImportError:
     class QTimer:
         """Fallback QTimer class when PyQt6 is not available."""
 
-
     def pyqtSignal(*args: object) -> None:
         """Fallback pyqtSignal function when PyQt6 is not available."""
         return
@@ -69,43 +59,33 @@ except ImportError:
     class QFont:
         """Fallback QFont class when PyQt6 is not available."""
 
-
     class QTextDocument:
         """Fallback QTextDocument class when PyQt6 is not available."""
-
 
     # Fallback widget classes
     class QDialog:
         """Fallback QDialog class when PyQt6 is not available."""
 
-
     class QFileDialog:
         """Fallback QFileDialog class when PyQt6 is not available."""
-
 
     class QHBoxLayout:
         """Fallback QHBoxLayout class when PyQt6 is not available."""
 
-
     class QLabel:
         """Fallback QLabel class when PyQt6 is not available."""
-
 
     class QMessageBox:
         """Fallback QMessageBox class when PyQt6 is not available."""
 
-
     class QPushButton:
         """Fallback QPushButton class when PyQt6 is not available."""
-
 
     class QTextEdit:
         """Fallback QTextEdit class when PyQt6 is not available."""
 
-
     class QVBoxLayout:
         """Fallback QVBoxLayout class when PyQt6 is not available."""
-
 
     PYQT6_AVAILABLE = False
 
@@ -199,7 +179,9 @@ class ScriptGenerationWorker(QRunnable):
                     if enhanced_result.get("enhanced_script"):
                         result["script"] = enhanced_result["enhanced_script"]
                         result["ai_enhanced"] = True
-                        result["optimization_applied"] = enhanced_result.get("optimization_applied", [])
+                        result["optimization_applied"] = enhanced_result.get(
+                            "optimization_applied", []
+                        )
                         self.signals.progress.emit("AI enhancement complete")
 
                 except ImportError:
@@ -478,7 +460,9 @@ class ScriptGenerationHandler(QObject):
         self.current_result = result
         logger.info(f"Script generation handler received analysis for: {result.file_path}")
 
-    def generate_script(self, script_type: str = "frida", parent_widget: QWidget | None = None) -> None:
+    def generate_script(
+        self, script_type: str = "frida", parent_widget: QWidget | None = None
+    ) -> None:
         """Generate a bypass script of the specified type.
 
         Args:

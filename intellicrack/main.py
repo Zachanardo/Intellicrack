@@ -23,8 +23,11 @@ import warnings
 
 from intellicrack.utils.logger import log_function_call
 
+
 # Suppress pkg_resources deprecation warning from capstone
-warnings.filterwarnings("ignore", message="pkg_resources is deprecated as an API.*", category=UserWarning)
+warnings.filterwarnings(
+    "ignore", message="pkg_resources is deprecated as an API.*", category=UserWarning
+)
 
 # Initialize logger before it's used
 logger = logging.getLogger(__name__)
@@ -52,11 +55,15 @@ if "DISPLAY" not in os.environ and "QT_QPA_PLATFORM" not in os.environ:
     # Don't set offscreen mode on Windows - use native rendering
     elif os.name != "nt":
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
-        logger.info("Non-Windows OS detected without display, setting QT_QPA_PLATFORM to 'offscreen'.")
+        logger.info(
+            "Non-Windows OS detected without display, setting QT_QPA_PLATFORM to 'offscreen'."
+        )
     else:
         logger.debug("Running on Windows, not setting QT_QPA_PLATFORM to 'offscreen'.")
 else:
-    logger.debug(f"DISPLAY is '{os.environ.get('DISPLAY')}' or QT_QPA_PLATFORM is '{os.environ.get('QT_QPA_PLATFORM')}', skipping offscreen mode configuration.")
+    logger.debug(
+        f"DISPLAY is '{os.environ.get('DISPLAY')}' or QT_QPA_PLATFORM is '{os.environ.get('QT_QPA_PLATFORM')}', skipping offscreen mode configuration."
+    )
 
 # Configure Qt font handling for Windows
 if os.name == "nt":
@@ -90,8 +97,12 @@ if os.name == "nt":
         os.environ["QT_OPENGL"] = "software"  # Always force software for Intel
         os.environ["QT_QUICK_BACKEND"] = "software"
         os.environ["QT_ANGLE_PLATFORM"] = "warp"
-        logger.info("Intel GPU detected, forcing software rendering and specific Qt backend/platform for compatibility.")
-        logger.debug(f"QT_OPENGL set to '{os.environ['QT_OPENGL']}', QT_QUICK_BACKEND set to '{os.environ['QT_QUICK_BACKEND']}', QT_ANGLE_PLATFORM set to '{os.environ['QT_ANGLE_PLATFORM']}'.")
+        logger.info(
+            "Intel GPU detected, forcing software rendering and specific Qt backend/platform for compatibility."
+        )
+        logger.debug(
+            f"QT_OPENGL set to '{os.environ['QT_OPENGL']}', QT_QUICK_BACKEND set to '{os.environ['QT_QUICK_BACKEND']}', QT_ANGLE_PLATFORM set to '{os.environ['QT_ANGLE_PLATFORM']}'."
+        )
     else:
         logger.debug("Intel GPU not detected or not specified as vendor.")
 else:
@@ -125,6 +136,7 @@ def main() -> int:
         .. code-block:: python
 
             import sys
+
             sys.exit(main())
 
     """
@@ -166,6 +178,7 @@ def main() -> int:
         # Initialize comprehensive logging system
         try:
             from intellicrack.core.logging.audit_logger import setup_comprehensive_logging
+
             setup_comprehensive_logging()
             logger.info("Comprehensive logging system initialized successfully.")
         except Exception as e:
@@ -175,10 +188,13 @@ def main() -> int:
         logger.debug("Attempting to initialize GIL safety...")
         try:
             from intellicrack.utils.torch_gil_safety import initialize_gil_safety
+
             initialize_gil_safety()
             logger.info("GIL safety initialized successfully.")
         except ImportError as e:
-            logger.warning(f"GIL safety not available: {e}. Setting PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF environment variable.")
+            logger.warning(
+                f"GIL safety not available: {e}. Setting PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF environment variable."
+            )
             os.environ.setdefault("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1")
         except Exception as e:
             logger.exception(f"An unexpected error occurred during GIL safety initialization: {e}")
@@ -187,27 +203,41 @@ def main() -> int:
         logger.debug("Attempting to initialize security enforcement...")
         try:
             from intellicrack.core import security_enforcement
+
             security_enforcement.initialize_security()
             security_status = security_enforcement.get_security_status()
             if security_status.get("initialized"):
-                logger.info(f"Security enforcement initialized successfully with status: {security_status}.")
+                logger.info(
+                    f"Security enforcement initialized successfully with status: {security_status}."
+                )
             else:
-                logger.warning(f"Security enforcement initialized but reported not enabled. Status: {security_status}")
+                logger.warning(
+                    f"Security enforcement initialized but reported not enabled. Status: {security_status}"
+                )
         except ImportError as e:
-            logger.warning(f"Security enforcement not available: {e}. Skipping security enforcement initialization.")
+            logger.warning(
+                f"Security enforcement not available: {e}. Skipping security enforcement initialization."
+            )
         except Exception as e:
-            logger.exception(f"An unexpected error occurred during security enforcement initialization: {e}")
+            logger.exception(
+                f"An unexpected error occurred during security enforcement initialization: {e}"
+            )
 
         # Apply security mitigations
         logger.debug("Attempting to apply security mitigations...")
         try:
             from intellicrack.utils.security_mitigations import apply_all_mitigations
+
             apply_all_mitigations()
             logger.info("Security mitigations applied successfully.")
         except ImportError as e:
-            logger.warning(f"Security mitigations not available: {e}. Skipping security mitigation application.")
+            logger.warning(
+                f"Security mitigations not available: {e}. Skipping security mitigation application."
+            )
         except Exception as e:
-            logger.exception(f"An unexpected error occurred during security mitigation application: {e}")
+            logger.exception(
+                f"An unexpected error occurred during security mitigation application: {e}"
+            )
 
         # Perform startup checks and auto-configuration
         logger.debug("Importing startup_checks module...")
@@ -235,7 +265,10 @@ def main() -> int:
 
     except ImportError as e:
         logger.exception("Import error in main: %s", e)
-        logger.critical("Failed to import Intellicrack components: %s. Please ensure all dependencies are installed using 'pip install -r requirements.txt'", e)
+        logger.critical(
+            "Failed to import Intellicrack components: %s. Please ensure all dependencies are installed using 'pip install -r requirements.txt'",
+            e,
+        )
         import traceback
 
         traceback.print_exc()

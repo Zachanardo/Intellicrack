@@ -10,27 +10,14 @@ Licensed under GNU General Public License v3.0
 import logging
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtWidgets import (
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QProgressBar,
-    QPushButton,
-    QSplitter,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
-)
+from PyQt6.QtWidgets import QGroupBox, QHBoxLayout, QLabel, QProgressBar, QPushButton, QSplitter, QTextEdit, QVBoxLayout, QWidget
 
 from intellicrack.handlers.pyqt6_handler import QFont
 
-from ...ai.background_loader import (
-    LoadingProgress,
-    LoadingState,
-    QueuedProgressCallback,
-)
+from ...ai.background_loader import LoadingProgress, LoadingState, QueuedProgressCallback
 from ...ai.llm_backends import get_llm_manager
 from ...ai.llm_config_manager import LLMConfig, LLMProvider
+
 
 logger = logging.getLogger(__name__)
 
@@ -257,9 +244,7 @@ class ModelLoadingProgressWidget(QWidget):
             if success:
                 self.model_loaded.emit(model_id)
 
-                # Register the loaded model
-                task = self.llm_manager.get_loading_progress(model_id)
-                if task:
+                if task := self.llm_manager.get_loading_progress(model_id):
                     self.llm_manager.register_background_loaded_model(model_id, task)
 
     def cancel_loading(self, model_id: str) -> None:
@@ -296,13 +281,11 @@ Active Workers: {stats.get("active_workers", 0)}
 
         # Submit loading task
         model_id = f"test_model_{len(self.loading_items) + 1}"
-        task = self.llm_manager.load_model_in_background(
+        if task := self.llm_manager.load_model_in_background(
             llm_id=model_id,
             config=test_config,
             priority=5,
-        )
-
-        if task:
+        ):
             logger.info(f"Submitted test loading task: {model_id}")
         else:
             logger.error("Failed to submit test loading task")

@@ -207,7 +207,9 @@ class VMWorkflowManager:
                     test_wrapped_script,
                 )
 
-                self.logger.info("Test script execution completed. Success: %s", test_result.success)
+                self.logger.info(
+                    "Test script execution completed. Success: %s", test_result.success
+                )
             except Exception as e:
                 self.logger.exception("Failed to execute test script: %s", e)
                 test_result = type(
@@ -261,7 +263,9 @@ class VMWorkflowManager:
         try:
             snapshot = self.qemu_manager.snapshots[snapshot_id]
             # Access public method instead of private
-            ssh_client = getattr(self.qemu_manager, "get_ssh_connection", self.qemu_manager._get_ssh_connection)(snapshot)
+            ssh_client = getattr(
+                self.qemu_manager, "get_ssh_connection", self.qemu_manager._get_ssh_connection
+            )(snapshot)
 
             if ssh_client is None:
                 self.logger.error("Failed to get SSH connection to %s", snapshot.vm_name)
@@ -270,9 +274,7 @@ class VMWorkflowManager:
             # Create SFTP client and upload
             sftp = ssh_client.open_sftp()
             try:
-                # Ensure remote directory exists
-                remote_dir = str(Path(remote_path).parent)
-                if remote_dir:
+                if remote_dir := str(Path(remote_path).parent):
                     import contextlib
 
                     with contextlib.suppress(OSError):
@@ -301,7 +303,7 @@ class VMWorkflowManager:
         input_path: str,
     ) -> str:
         """Wrap modification script with OUTPUT_PATH contract and validation."""
-        wrapper = f"""#!/bin/bash
+        return f"""#!/bin/bash
 # Modification script wrapper with OUTPUT_PATH contract
 export OUTPUT_PATH="{output_path}"
 export INPUT_PATH="{input_path}"
@@ -323,11 +325,10 @@ echo "Binary modification completed successfully"
 echo "Modified binary saved to: $OUTPUT_PATH"
 exit 0
 """
-        return wrapper
 
     def _wrap_test_script(self, script_content: str, modified_binary_path: str) -> str:
         """Wrap test script with modified binary path."""
-        wrapper = f"""#!/bin/bash
+        return f"""#!/bin/bash
 # Test script wrapper
 export MODIFIED_BINARY="{modified_binary_path}"
 
@@ -340,7 +341,6 @@ echo "Testing binary: $MODIFIED_BINARY"
 echo "Test execution completed"
 exit $?
 """
-        return wrapper
 
     def _get_user_export_path(self, suggested_filename: str) -> str:
         """Open file dialog for user to select export location."""
@@ -364,4 +364,4 @@ exit $?
             "Binary Files (*.exe *.bin *.elf *.so *.dll);;All Files (*.*)",
         )
 
-        return file_path if file_path else None
+        return file_path or None

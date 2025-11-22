@@ -32,6 +32,7 @@ import time
 from datetime import datetime, timedelta
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -190,7 +191,11 @@ class CloudLicenseResponseGenerator:
                 try:
                     client_socket, address = listener_socket.accept()
                     # Handle connection in separate thread
-                    threading.Thread(target=self._handle_connection, args=(client_socket, address, port), daemon=True).start()
+                    threading.Thread(
+                        target=self._handle_connection,
+                        args=(client_socket, address, port),
+                        daemon=True,
+                    ).start()
                 except TimeoutError:
                     continue
                 except Exception as e:
@@ -202,7 +207,9 @@ class CloudLicenseResponseGenerator:
         except Exception as e:
             logger.error(f"Failed to start listener on port {port}: {e}")
 
-    def _handle_connection(self, client_socket: socket.socket, address: tuple[str, int], port: int) -> None:
+    def _handle_connection(
+        self, client_socket: socket.socket, address: tuple[str, int], port: int
+    ) -> None:
         """Handle an incoming connection.
 
         Args:
@@ -215,10 +222,7 @@ class CloudLicenseResponseGenerator:
             # Record connection start time for performance metrics
             connection_start = time.time()
 
-            # Receive request data
-            request_data = client_socket.recv(4096)
-
-            if request_data:
+            if request_data := client_socket.recv(4096):
                 # Match actual license server response timing characteristics
                 network_delay = self.config.get("network_delay", 0.1)
                 if network_delay > 0:
@@ -236,9 +240,7 @@ class CloudLicenseResponseGenerator:
                 }
                 self.intercepted_requests.append(request_info)
 
-                # Generate and send response
-                response = self._generate_response(request_info)
-                if response:
+                if response := self._generate_response(request_info):
                     # Add response transmission delay for realism
                     response_delay = self.config.get("response_delay", 0.05)
                     if response_delay > 0:
@@ -248,11 +250,17 @@ class CloudLicenseResponseGenerator:
 
                     # Log total processing time
                     total_time = time.time() - connection_start
-                    logger.debug(f"Connection processed in {total_time:.3f}s with {network_delay:.3f}s network delay")
+                    logger.debug(
+                        f"Connection processed in {total_time:.3f}s with {network_delay:.3f}s network delay"
+                    )
 
                     # Log generated response
                     self.generated_responses.append(
-                        {"timestamp": datetime.now().isoformat(), "request": request_info, "response": response},
+                        {
+                            "timestamp": datetime.now().isoformat(),
+                            "request": request_info,
+                            "response": response,
+                        },
                     )
 
         except Exception as e:
@@ -283,10 +291,7 @@ class CloudLicenseResponseGenerator:
             return "websocket"
 
         # Check for gRPC (HTTP/2)
-        if data.startswith(b"PRI * HTTP/2"):
-            return "grpc"
-
-        return "custom"
+        return "grpc" if data.startswith(b"PRI * HTTP/2") else "custom"
 
     def _generate_response(self, request_info: dict[str, Any]) -> bytes | None:
         """Generate a license validation response.
@@ -315,12 +320,9 @@ class CloudLicenseResponseGenerator:
             HTTP response bytes
 
         """
-        # Parse HTTP request
-        request_data = request_info["data"]
-
         # Analyze request data to determine license type
         license_type = "valid_license"
-        if request_data:
+        if request_data := request_info["data"]:
             # Look for common license request patterns
             request_str = request_data.decode("utf-8", errors="ignore")
             if "premium" in request_str.lower():
@@ -432,9 +434,7 @@ class CloudLicenseResponseGenerator:
         payload = json.dumps(license_data).encode()
         length = struct.pack(">I", len(payload))
 
-        response = magic + version + length + payload
-
-        return response
+        return magic + version + length + payload
 
     def _create_license_response(self, template_name: str) -> dict[str, Any]:
         """Create a license response from template.
@@ -446,7 +446,9 @@ class CloudLicenseResponseGenerator:
             License response dictionary
 
         """
-        template = self.response_templates.get(template_name, self.response_templates["valid_license"])
+        template = self.response_templates.get(
+            template_name, self.response_templates["valid_license"]
+        )
 
         response = template.copy()
 
@@ -474,10 +476,7 @@ class CloudLicenseResponseGenerator:
         # Create signing string
         signing_data = json.dumps(data, sort_keys=True).encode()
 
-        # Generate SHA256 signature
-        signature = hashlib.sha256(signing_data).hexdigest()
-
-        return signature
+        return hashlib.sha256(signing_data).hexdigest()
 
     def _install_socket_hooks(self) -> None:
         """Install hooks on socket functions for active interception.

@@ -17,7 +17,8 @@ import queue
 import socket
 import hashlib
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Callable, Tuple
+from typing import Dict, List, Any, Optional, Tuple
+from collections.abc import Callable
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone, timedelta
 from enum import Enum
@@ -69,15 +70,15 @@ class ValidationJob:
     """Represents a validation job in the pipeline."""
     job_id: str
     trigger_type: TriggerType
-    trigger_data: Dict
+    trigger_data: dict
     created_at: datetime
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
     status: ValidationStatus = ValidationStatus.PENDING
-    phases_to_run: List[str] = field(default_factory=list)
-    results: Dict = field(default_factory=dict)
-    artifacts: List[Path] = field(default_factory=list)
-    error_message: Optional[str] = None
+    phases_to_run: list[str] = field(default_factory=list)
+    results: dict = field(default_factory=dict)
+    artifacts: list[Path] = field(default_factory=list)
+    error_message: str | None = None
     retry_count: int = 0
 
 
@@ -148,7 +149,7 @@ class MetricsCollector:
 class NotificationManager:
     """Manages notifications across multiple channels."""
 
-    def __init__(self, config: Dict):
+    def __init__(self, config: dict):
         self.config = config
         self.channels = []
 
@@ -176,7 +177,7 @@ class NotificationManager:
         title: str,
         message: str,
         level: str = "info",
-        attachments: List[Dict] = None
+        attachments: list[dict] = None
     ):
         """Send notification to all configured channels."""
 
@@ -196,7 +197,7 @@ class NotificationManager:
         if "email" in self.channels:
             self._send_email(title, message, level)
 
-    def _send_slack(self, title: str, message: str, level: str, attachments: List[Dict]):
+    def _send_slack(self, title: str, message: str, level: str, attachments: list[dict]):
         """Send Slack notification."""
         try:
             color = {
@@ -303,7 +304,7 @@ class NotificationManager:
 class CIPlatformIntegration:
     """Integration with CI/CD platforms."""
 
-    def __init__(self, platform: str, config: Dict):
+    def __init__(self, platform: str, config: dict):
         self.platform = platform
         self.config = config
         self.client = self._initialize_client()
@@ -330,7 +331,7 @@ class CIPlatformIntegration:
             # Would use CircleCI API
             pass
 
-    def trigger_validation(self, trigger_data: Dict) -> str:
+    def trigger_validation(self, trigger_data: dict) -> str:
         """Trigger validation job on CI platform."""
         if self.platform == "jenkins":
             return self._trigger_jenkins(trigger_data)
@@ -339,7 +340,7 @@ class CIPlatformIntegration:
         elif self.platform == "gitlab":
             return self._trigger_gitlab_pipeline(trigger_data)
 
-    def _trigger_jenkins(self, trigger_data: Dict) -> str:
+    def _trigger_jenkins(self, trigger_data: dict) -> str:
         """Trigger Jenkins job."""
         job_name = self.config["job_name"]
         parameters = {
@@ -351,7 +352,7 @@ class CIPlatformIntegration:
         queue_item = self.client.build_job(job_name, parameters)
         return f"jenkins_{queue_item}"
 
-    def _trigger_github_action(self, trigger_data: Dict) -> str:
+    def _trigger_github_action(self, trigger_data: dict) -> str:
         """Trigger GitHub Action workflow."""
         repo = self.client.get_repo(self.config["repository"])
         workflow = repo.get_workflow(self.config["workflow_id"])
@@ -366,7 +367,7 @@ class CIPlatformIntegration:
 
         return f"github_{workflow.id}_{int(time.time())}"
 
-    def _trigger_gitlab_pipeline(self, trigger_data: Dict) -> str:
+    def _trigger_gitlab_pipeline(self, trigger_data: dict) -> str:
         """Trigger GitLab pipeline."""
         project = self.client.projects.get(self.config["project_id"])
 
@@ -380,7 +381,7 @@ class CIPlatformIntegration:
 
         return f"gitlab_{pipeline.id}"
 
-    def get_job_status(self, job_id: str) -> Dict:
+    def get_job_status(self, job_id: str) -> dict:
         """Get status of CI job."""
         if self.platform == "jenkins":
             return self._get_jenkins_status(job_id)
@@ -389,7 +390,7 @@ class CIPlatformIntegration:
         elif self.platform == "gitlab":
             return self._get_gitlab_status(job_id)
 
-    def _get_jenkins_status(self, job_id: str) -> Dict:
+    def _get_jenkins_status(self, job_id: str) -> dict:
         """Get Jenkins job status."""
         # Parse job_id to get queue number
         queue_num = int(job_id.split("_")[1])
@@ -412,7 +413,7 @@ class CIPlatformIntegration:
 class ValidationScheduler:
     """Schedules and manages validation runs."""
 
-    def __init__(self, config: Dict):
+    def __init__(self, config: dict):
         self.config = config
         self.jobs_queue = queue.Queue()
         self.active_jobs = {}
@@ -447,7 +448,7 @@ class ValidationScheduler:
             schedule.run_pending()
             time.sleep(60)  # Check every minute
 
-    def _setup_schedule(self, schedule_config: Dict):
+    def _setup_schedule(self, schedule_config: dict):
         """Set up a scheduled job."""
         trigger_data = {
             "type": "scheduled",
@@ -468,7 +469,7 @@ class ValidationScheduler:
                 self.queue_job, TriggerType.SCHEDULED, trigger_data
             )
 
-    def queue_job(self, trigger_type: TriggerType, trigger_data: Dict) -> ValidationJob:
+    def queue_job(self, trigger_type: TriggerType, trigger_data: dict) -> ValidationJob:
         """Queue a validation job."""
         job = ValidationJob(
             job_id=self._generate_job_id(),
@@ -573,7 +574,7 @@ class ContinuousValidationIntegration:
         self.ci_integrations = self._setup_ci_integrations()
         self.api_server = None
 
-    def _load_config(self, config_file: Path) -> Dict:
+    def _load_config(self, config_file: Path) -> dict:
         """Load configuration from file."""
         if config_file.suffix == ".json":
             with open(config_file) as f:
@@ -584,7 +585,7 @@ class ContinuousValidationIntegration:
         else:
             raise ValueError(f"Unsupported config format: {config_file.suffix}")
 
-    def _setup_ci_integrations(self) -> Dict:
+    def _setup_ci_integrations(self) -> dict:
         """Set up CI platform integrations."""
         integrations = {}
 
@@ -809,7 +810,7 @@ class ContinuousValidationIntegration:
 
         return web.json_response({"status": "ok"})
 
-    def _verify_github_signature(self, headers: Dict, body: bytes) -> bool:
+    def _verify_github_signature(self, headers: dict, body: bytes) -> bool:
         """Verify GitHub webhook signature."""
         signature = headers.get("X-Hub-Signature-256")
         if not signature:

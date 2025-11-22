@@ -121,7 +121,7 @@ class ConfigPerformanceBenchmark(unittest.TestCase):
 
         # Benchmark legacy JSON loading
         def load_legacy():
-            with open(self.legacy_config_file, 'r') as f:
+            with open(self.legacy_config_file) as f:
                 data = json.load(f)
             return data
 
@@ -159,7 +159,7 @@ class ConfigPerformanceBenchmark(unittest.TestCase):
         print("\n=== GET OPERATION BENCHMARK ===")
 
         # Set up legacy dict access
-        with open(self.legacy_config_file, 'r') as f:
+        with open(self.legacy_config_file) as f:
             legacy_data = json.load(f)
 
         # Set up new config

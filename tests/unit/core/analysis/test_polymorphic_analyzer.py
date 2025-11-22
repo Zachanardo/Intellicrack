@@ -797,7 +797,7 @@ class TestEdgeCases:
 
     def test_empty_code(self, analyzer_32bit):
         """Test handling of empty code."""
-        code = bytes()
+        code = b''
 
         analysis = analyzer_32bit.analyze_polymorphic_code(code)
 

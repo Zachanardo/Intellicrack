@@ -125,11 +125,10 @@ if __name__ == '__main__':
         import ast
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
                 tree = ast.parse(content, filename=file_path)
 
-            test_methods = []
             class_node = None
             parent_classes = []
             imports = []
@@ -163,15 +162,15 @@ if __name__ == '__main__':
                         ast.get_docstring(node)
                         break
 
-            # Always include basic initialization test
-            test_methods.append("""
+            test_methods = [
+                """
     def test_initialize(self):
         \"\"\"Test plugin initialization\"\"\"
         self.assertIsNotNone(self.plugin)
         self.assertTrue(hasattr(self.plugin, 'run'))
         self.assertIsInstance(self.plugin.name, str)
-        self.assertIsInstance(self.plugin.version, str)""")
-
+        self.assertIsInstance(self.plugin.version, str)"""
+            ]
             if class_node:
                 # Analyze class attributes and methods
                 class_attributes = {}
@@ -242,10 +241,10 @@ if __name__ == '__main__':
         # Skip self parameter
         params = [arg.arg for arg in args.args[1:]]
 
-        test_body = []
-        test_body.append(f"\n    def test_{method_name}(self):")
-        test_body.append(f'        """Test {method_name} method"""')
-
+        test_body = [
+            f"\n    def test_{method_name}(self):",
+            f'        """Test {method_name} method"""',
+        ]
         # Generate appropriate test parameters based on parameter names
         test_params = []
         for param in params:
@@ -327,12 +326,11 @@ if __name__ == '__main__':
         """Analyze exceptions that might be raised"""
         exceptions = []
         for node in ast.walk(func_node):
-            if isinstance(node, ast.Raise):
-                if node.exc:
-                    if isinstance(node.exc, ast.Call) and hasattr(node.exc.func, "id"):
-                        exceptions.append(node.exc.func.id)
-                    elif isinstance(node.exc, ast.Name):
-                        exceptions.append(node.exc.id)
+            if isinstance(node, ast.Raise) and node.exc:
+                if isinstance(node.exc, ast.Call) and hasattr(node.exc.func, "id"):
+                    exceptions.append(node.exc.func.id)
+                elif isinstance(node.exc, ast.Name):
+                    exceptions.append(node.exc.id)
         return list(set(exceptions))
 
     def _generate_comprehensive_test_for_method(self, method_info, class_attributes, imports):
@@ -357,7 +355,7 @@ if __name__ == '__main__':
 
         # Generate test parameters based on comprehensive analysis
         test_params = []
-        for i, arg in enumerate(args):
+        for arg in args:
             param_value = self._generate_smart_test_param(arg, class_attributes, imports)
             test_params.append(param_value)
 
@@ -452,17 +450,22 @@ if __name__ == '__main__':
         test_lines = []
         async_prefix = "async " if is_async else ""
 
-        test_lines.append(f"\n    {async_prefix}def test_{method_name}_edge_cases(self):")
-        test_lines.append(f'        """Test {method_name} with edge case inputs"""')
-
+        test_lines.extend(
+            (
+                f"\n    {async_prefix}def test_{method_name}_edge_cases(self):",
+                f'        """Test {method_name} with edge case inputs"""',
+            )
+        )
         # Test with None parameters
         none_params = ", ".join(["None"] * len(args))
-        test_lines.append("        # Test with None parameters")
-        test_lines.append("        with self.assertRaises((TypeError, ValueError, AttributeError)):")
-        test_lines.append(f"            {await_prefix}self.plugin.{method_name}({none_params})")
-
-        # Test with empty parameters
-        test_lines.append("        # Test with empty parameters")
+        test_lines.extend(
+            (
+                "        # Test with None parameters",
+                "        with self.assertRaises((TypeError, ValueError, AttributeError)):",
+                f"            {await_prefix}self.plugin.{method_name}({none_params})",
+                "        # Test with empty parameters",
+            )
+        )
         empty_params = []
         for arg in args:
             if "string" in arg.lower() or "text" in arg.lower():
@@ -478,23 +481,29 @@ if __name__ == '__main__':
 
         if empty_params:
             empty_str = ", ".join(empty_params)
-            test_lines.append(f"        result = {await_prefix}self.plugin.{method_name}({empty_str})")
-            test_lines.append("        # Should handle empty inputs gracefully")
-
+            test_lines.extend(
+                (
+                    f"        result = {await_prefix}self.plugin.{method_name}({empty_str})",
+                    "        # Should handle empty inputs gracefully",
+                )
+            )
         return test_lines
 
     def _generate_exception_test(self, method_name, args, exceptions, is_async):
         """Generate exception handling tests"""
-        test_lines = []
         async_prefix = "async " if is_async else ""
 
-        test_lines.append(f"\n    {async_prefix}def test_{method_name}_exceptions(self):")
-        test_lines.append(f'        """Test {method_name} exception handling"""')
-
+        test_lines = [
+            f"\n    {async_prefix}def test_{method_name}_exceptions(self):",
+            f'        """Test {method_name} exception handling"""',
+        ]
         for exc in exceptions:
-            test_lines.append(f"        # Test {exc} handling")
-            test_lines.append(f"        # Create conditions that should raise {exc}")
-
+            test_lines.extend(
+                (
+                    f"        # Test {exc} handling",
+                    f"        # Create conditions that should raise {exc}",
+                )
+            )
         return test_lines
 
     def _generate_attribute_tests(self, class_attributes):
@@ -518,10 +527,7 @@ if __name__ == '__main__':
         for parent in parent_classes:
             if "." in parent:
                 module, cls = parent.rsplit(".", 1)
-                test_lines.append(f"        # Should inherit from {parent}")
-            else:
-                test_lines.append(f"        # Should inherit from {parent}")
-
+            test_lines.append(f"        # Should inherit from {parent}")
         return "\n".join(test_lines)
 
     def _generate_plugin_specific_tests(self, methods_info, imports):
@@ -840,8 +846,7 @@ class MockDataGenerator:
 
     def _load_elf_template(self):
         """Load a real ELF file template"""
-        # ELF header for 64-bit
-        elf_header = bytearray(
+        return bytearray(
             [
                 0x7F,
                 0x45,
@@ -909,8 +914,6 @@ class MockDataGenerator:
                 0x00,  # Section name string table index
             ]
         )
-
-        return elf_header
 
     def create_mock_binary(self, binary_type="pe"):
         """Create a mock binary file with real structure"""
@@ -1074,8 +1077,6 @@ class MockDataGenerator:
         """Create realistic network capture data"""
         import time
 
-        packets = []
-
         # TCP handshake
         syn_packet = {
             "timestamp": time.time(),
@@ -1088,8 +1089,7 @@ class MockDataGenerator:
             "length": 74,
             "payload": "",
         }
-        packets.append(syn_packet)
-
+        packets = [syn_packet]
         # SYN-ACK
         syn_ack_packet = {
             "timestamp": time.time() + 0.05,

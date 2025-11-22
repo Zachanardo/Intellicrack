@@ -41,7 +41,7 @@ class BinaryAnalysisTool:
         except ImportError:
             logger.warning("ELF analyzer not available")
 
-    def get_tool_definition(self) -> Dict[str, Any]:
+    def get_tool_definition(self) -> dict[str, Any]:
         """Get tool definition for LLM registration"""
         return {
             "name": "binary_analysis",
@@ -64,7 +64,7 @@ class BinaryAnalysisTool:
             },
         }
 
-    def execute(self, **kwargs) -> Dict[str, Any]:
+    def execute(self, **kwargs) -> dict[str, Any]:
         """Execute binary analysis"""
         file_path = kwargs.get("file_path")
         analysis_type = kwargs.get("analysis_type", "full")
@@ -102,7 +102,7 @@ class BinaryAnalysisTool:
         else:
             return "UNKNOWN"
 
-    def _analyze_pe(self, file_path: str, analysis_type: str) -> Dict[str, Any]:
+    def _analyze_pe(self, file_path: str, analysis_type: str) -> dict[str, Any]:
         """Analyze PE file"""
         pe_info = self.pe_analyzer.analyze(file_path)
 
@@ -142,7 +142,7 @@ class BinaryAnalysisTool:
 
         return result
 
-    def _analyze_elf(self, file_path: str, analysis_type: str) -> Dict[str, Any]:
+    def _analyze_elf(self, file_path: str, analysis_type: str) -> dict[str, Any]:
         """Analyze ELF file"""
         result = {
             "success": True,
@@ -177,12 +177,12 @@ class BinaryAnalysisTool:
             machine_map = {3: "x86", 62: "x86_64", 40: "ARM", 183: "ARM64"}
             result["machine"] = machine_map.get(e_machine, f"Unknown ({e_machine})")
 
-        if analysis_type in ["strings", "full"]:
+        if analysis_type in {"strings", "full"}:
             result["strings"] = self._extract_strings(file_path)
 
         return result
 
-    def _analyze_basic(self, file_path: str, analysis_type: str) -> Dict[str, Any]:
+    def _analyze_basic(self, file_path: str, analysis_type: str) -> dict[str, Any]:
         """Basic binary analysis for unknown file types"""
         result = {
             "success": True,
@@ -194,7 +194,7 @@ class BinaryAnalysisTool:
             "entropy": self._calculate_entropy(file_path),
         }
 
-        if analysis_type in ["strings", "full"]:
+        if analysis_type in {"strings", "full"}:
             result["strings"] = self._extract_strings(file_path)
 
         # Detect potential file type by content
@@ -244,7 +244,7 @@ class BinaryAnalysisTool:
 
         return round(entropy, 3)
 
-    def _format_imports(self, imports: Dict[str, List]) -> Dict[str, Any]:
+    def _format_imports(self, imports: dict[str, list]) -> dict[str, Any]:
         """Format import information"""
         formatted = {}
         for dll, functions in imports.items():
@@ -257,23 +257,21 @@ class BinaryAnalysisTool:
                 formatted[dll]["total_functions"] = len(functions)
         return formatted
 
-    def _format_sections(self, sections: List[Dict]) -> List[Dict]:
+    def _format_sections(self, sections: list[dict]) -> list[dict]:
         """Format section information"""
-        formatted = []
-        for section in sections:
-            formatted.append(
-                {
-                    "name": section.get("name", ""),
-                    "virtual_address": hex(section.get("virtual_address", 0)),
-                    "virtual_size": section.get("virtual_size", 0),
-                    "raw_size": section.get("raw_size", 0),
-                    "entropy": round(section.get("entropy", 0), 3),
-                    "characteristics": section.get("characteristics", []),
-                }
-            )
-        return formatted
+        return [
+            {
+                "name": section.get("name", ""),
+                "virtual_address": hex(section.get("virtual_address", 0)),
+                "virtual_size": section.get("virtual_size", 0),
+                "raw_size": section.get("raw_size", 0),
+                "entropy": round(section.get("entropy", 0), 3),
+                "characteristics": section.get("characteristics", []),
+            }
+            for section in sections
+        ]
 
-    def _extract_strings(self, file_path: str, min_length: int = 4) -> List[str]:
+    def _extract_strings(self, file_path: str, min_length: int = 4) -> list[str]:
         """Extract printable strings from binary"""
         strings = []
         with open(file_path, "rb") as f:

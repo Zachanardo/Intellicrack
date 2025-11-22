@@ -27,6 +27,7 @@ from pathlib import Path
 
 from intellicrack.utils.logger import logger
 
+
 """
 Psutil Import Handler with Production-Ready Fallbacks
 
@@ -46,9 +47,12 @@ try:
         STATUS_SLEEPING,
         STATUS_STOPPED,
         STATUS_ZOMBIE,
+        AccessDenied as _AccessDenied,
         Error,
+        NoSuchProcess as _NoSuchProcess,
         Popen,
         Process,
+        TimeoutExpired as _TimeoutExpired,
         boot_time,
         cpu_count,
         cpu_freq,
@@ -67,15 +71,6 @@ try:
         users,
         virtual_memory,
         wait_procs,
-    )
-    from psutil import (
-        AccessDenied as _AccessDenied,
-    )
-    from psutil import (
-        NoSuchProcess as _NoSuchProcess,
-    )
-    from psutil import (
-        TimeoutExpired as _TimeoutExpired,
     )
 
     # Create aliases for compatibility with handler interface
@@ -108,7 +103,6 @@ except ImportError as e:
     class Error(Exception):
         """Base psutil error."""
 
-
     class NoSuchProcessError(Error):
         """Process does not exist."""
 
@@ -132,7 +126,9 @@ except ImportError as e:
     class AccessDeniedError(Error):
         """Access denied to process information."""
 
-        def __init__(self, pid: int | None = None, name: str | None = None, msg: str | None = None) -> None:
+        def __init__(
+            self, pid: int | None = None, name: str | None = None, msg: str | None = None
+        ) -> None:
             """Initialize AccessDenied exception with process details."""
             self.pid: int | None = pid
             self.name: str | None = name
@@ -166,7 +162,9 @@ except ImportError as e:
         def _get_basic_info(self) -> None:
             """Get basic process information."""
             # Skip strict process validation during testing
-            if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
+            if os.environ.get("INTELLICRACK_TESTING") or os.environ.get(
+                "DISABLE_BACKGROUND_THREADS"
+            ):
                 self._name = "python"
                 self._ppid = 0
                 return
@@ -184,7 +182,14 @@ except ImportError as e:
                     return
 
                 result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                    [wmic_path, "process", "where", f"ProcessId={self._pid}", "get", "Name,ParentProcessId,CreationDate"],
+                    [
+                        wmic_path,
+                        "process",
+                        "where",
+                        f"ProcessId={self._pid}",
+                        "get",
+                        "Name,ParentProcessId,CreationDate",
+                    ],
                     capture_output=True,
                     text=True,
                     timeout=2,
@@ -194,9 +199,7 @@ except ImportError as e:
                 if result.returncode == 0:
                     lines = result.stdout.strip().split("\n")
                     if len(lines) > 1:
-                        # Parse output
-                        data = lines[1].strip().split()
-                        if data:
+                        if data := lines[1].strip().split():
                             self._name = data[1] if len(data) > 1 else "unknown"
                             try:
                                 self._ppid = int(data[2]) if len(data) > 2 else None
@@ -224,8 +227,7 @@ except ImportError as e:
                 )
 
                 if result.returncode == 0:
-                    output = result.stdout.strip()
-                    if output:
+                    if output := result.stdout.strip():
                         parts = output.split()
                         self._name = parts[0] if parts else "unknown"
                         try:
@@ -266,7 +268,14 @@ except ImportError as e:
                         return None
 
                     result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                        [wmic_path, "process", "where", f"ProcessId={self._pid}", "get", "ExecutablePath"],
+                        [
+                            wmic_path,
+                            "process",
+                            "where",
+                            f"ProcessId={self._pid}",
+                            "get",
+                            "ExecutablePath",
+                        ],
                         capture_output=True,
                         text=True,
                         timeout=2,
@@ -285,7 +294,7 @@ except ImportError as e:
                 if os.path.exists(proc_exe):
                     try:
                         return str(Path(proc_exe).readlink())
-                    except (OSError, FileNotFoundError) as e:
+                    except OSError as e:
                         logger.debug(f"Failed to read exe link for PID {self._pid}: {e}")
 
             return ""
@@ -303,7 +312,14 @@ except ImportError as e:
                     if not wmic_path:
                         return []
                     result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                        [wmic_path, "process", "where", f"ProcessId={self._pid}", "get", "CommandLine"],
+                        [
+                            wmic_path,
+                            "process",
+                            "where",
+                            f"ProcessId={self._pid}",
+                            "get",
+                            "CommandLine",
+                        ],
                         capture_output=True,
                         text=True,
                         timeout=2,
@@ -324,7 +340,7 @@ except ImportError as e:
                     try:
                         with open(proc_cmdline) as f:
                             return f.read().strip("\x00").split("\x00")
-                    except (OSError, FileNotFoundError) as e:
+                    except OSError as e:
                         logger.debug(f"Failed to read cmdline for PID {self._pid}: {e}")
 
             return []
@@ -340,9 +356,7 @@ except ImportError as e:
         def parent(self) -> "FallbackProcess | None":
             """Get parent process."""
             ppid = self.ppid()
-            if ppid is not None:
-                return FallbackProcess(ppid)
-            return None
+            return FallbackProcess(ppid) if ppid is not None else None
 
         def children(self, recursive: bool = False) -> list["FallbackProcess"]:
             """Get child processes."""
@@ -390,7 +404,7 @@ except ImportError as e:
                             "I": STATUS_IDLE,
                         }
                         return status_map.get(status_char, STATUS_RUNNING)
-                except (OSError, FileNotFoundError, IndexError) as e:
+                except (OSError, IndexError) as e:
                     logger.debug(f"Failed to read process status: {e}")
 
             return STATUS_RUNNING
@@ -444,9 +458,10 @@ except ImportError as e:
                 raise NoSuchProcessError(self._pid, msg=error_msg)
 
             if sys.platform == "win32":
-                taskkill_path = shutil.which("taskkill")
-                if taskkill_path:
-                    subprocess.run([taskkill_path, "/PID", str(self._pid)], check=False, shell=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # Explicitly secure - using list format prevents shell injection
+                if taskkill_path := shutil.which("taskkill"):
+                    subprocess.run(
+                        [taskkill_path, "/PID", str(self._pid)], check=False, shell=False
+                    )  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # Explicitly secure - using list format prevents shell injection
             else:
                 import signal
 
@@ -460,10 +475,11 @@ except ImportError as e:
                 raise NoSuchProcessError(self._pid, msg=error_msg)
 
             if sys.platform == "win32":
-                taskkill_path = shutil.which("taskkill")
-                if taskkill_path:
+                if taskkill_path := shutil.which("taskkill"):
                     subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                        [taskkill_path, "/F", "/PID", str(self._pid)], check=False, shell=False,
+                        [taskkill_path, "/F", "/PID", str(self._pid)],
+                        check=False,
+                        shell=False,
                     )
             else:
                 import signal
@@ -528,7 +544,11 @@ except ImportError as e:
                 if not wmic_path:
                     return 0.0
                 result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                    [wmic_path, "cpu", "get", "loadpercentage"], capture_output=True, text=True, timeout=2, shell=False,
+                    [wmic_path, "cpu", "get", "loadpercentage"],
+                    capture_output=True,
+                    text=True,
+                    timeout=2,
+                    shell=False,
                 )
 
                 if result.returncode == 0:
@@ -536,12 +556,10 @@ except ImportError as e:
                     if len(lines) > 1:
                         try:
                             percent = float(lines[1].strip())
-                            if percpu:
-                                return [percent]  # Simplified
-                            return percent
+                            return [percent] if percpu else percent
                         except ValueError:
                             logger.debug("Invalid CPU time value")
-            except (OSError, FileNotFoundError) as e:
+            except OSError as e:
                 logger.debug(f"Failed to read CPU times: {e}")
         else:
             # Read /proc/stat on Linux
@@ -573,9 +591,9 @@ except ImportError as e:
                                         # Per-CPU usage
                                         cpu_times.append(min(100.0, usage))
 
-                    if percpu and cpu_times:
-                        return cpu_times
                     if percpu:
+                        if cpu_times:
+                            return cpu_times
                         # Return single CPU if no per-cpu data
                         return [0.0]
                     return 0.0
@@ -589,10 +607,7 @@ except ImportError as e:
     def cpu_count(logical: bool = True) -> int:
         """Get CPU count."""
         try:
-            if logical:
-                return os.cpu_count() or 1
-            # Physical cores harder to detect, use logical / 2 as estimate
-            return max(1, (os.cpu_count() or 2) // 2)
+            return os.cpu_count() or 1 if logical else max(1, (os.cpu_count() or 2) // 2)
         except (OSError, AttributeError) as e:
             logger.debug(f"Failed to get CPU count: {e}")
             return 1
@@ -609,9 +624,7 @@ except ImportError as e:
         # Try to get frequency info
         freq = CPUFreq(2400.0, 800.0, 3600.0)  # Common defaults
 
-        if percpu:
-            return [freq]
-        return freq
+        return [freq] if percpu else freq
 
     def cpu_stats() -> "CPUStats":
         """Get CPU statistics."""
@@ -667,8 +680,6 @@ except ImportError as e:
                                 logger.debug(f"Failed to parse memory values: {e}")
             except (subprocess.TimeoutExpired, subprocess.CalledProcessError, OSError) as e:
                 logger.debug(f"Failed to get Windows memory info via WMIC: {e}")
-            except FileNotFoundError:
-                logger.debug("WMIC command not available on this system")
         else:
             # Try reading /proc/meminfo on Linux
             try:
@@ -685,7 +696,7 @@ except ImportError as e:
                     mem.used = mem.total - mem.available
                     mem.percent = (mem.used / mem.total) * 100 if mem.total > 0 else 0
                     return mem
-            except (OSError, FileNotFoundError) as e:
+            except OSError as e:
                 logger.debug(f"Failed to get virtual memory: {e}")
 
         return VirtualMemory()
@@ -725,7 +736,7 @@ except ImportError as e:
             disk.free = usage.free
             disk.percent = (usage.used / usage.total) * 100 if usage.total > 0 else 0
             return disk
-        except (OSError, FileNotFoundError, PermissionError) as e:
+        except OSError as e:
             logger.debug(f"Failed to get disk usage for {path}: {e}")
             return DiskUsage()
 
@@ -767,9 +778,7 @@ except ImportError as e:
                 self.read_time: int = 0
                 self.write_time: int = 0
 
-        if perdisk:
-            return {"sda": DiskIOCounters()}
-        return DiskIOCounters()
+        return {"sda": DiskIOCounters()} if perdisk else DiskIOCounters()
 
     def net_io_counters(pernic: bool = False) -> "NetIOCounters | dict[str, NetIOCounters]":
         """Get network I/O statistics."""
@@ -785,9 +794,7 @@ except ImportError as e:
                 self.dropin: int = 0
                 self.dropout: int = 0
 
-        if pernic:
-            return {"eth0": NetIOCounters()}
-        return NetIOCounters()
+        return {"eth0": NetIOCounters()} if pernic else NetIOCounters()
 
     def net_connections(kind: str = "all") -> list:
         """Get network connections."""
@@ -820,7 +827,11 @@ except ImportError as e:
                 if not wmic_path:
                     return processes
                 result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                    [wmic_path, "process", "get", "ProcessId"], capture_output=True, text=True, timeout=5, shell=False,
+                    [wmic_path, "process", "get", "ProcessId"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                    shell=False,
                 )
 
                 if result.returncode == 0:
@@ -831,7 +842,7 @@ except ImportError as e:
                             processes.append(FallbackProcess(pid))
                         except ValueError:
                             continue
-            except (OSError, FileNotFoundError) as e:
+            except OSError as e:
                 logger.debug(f"Failed to read network counters: {e}")
         else:
             # Try reading /proc on Linux
@@ -869,19 +880,20 @@ except ImportError as e:
             try:
                 os.kill(pid, 0)
                 return True
-            except (OSError, ProcessLookupError):
+            except OSError:
                 return False
 
-    def wait_procs(procs: list["FallbackProcess"], timeout: float | None = None, callback: Callable[["FallbackProcess"], None] | None = None) -> tuple[list["FallbackProcess"], list["FallbackProcess"]]:
+    def wait_procs(
+        procs: list["FallbackProcess"],
+        timeout: float | None = None,
+        callback: Callable[["FallbackProcess"], None] | None = None,
+    ) -> tuple[list["FallbackProcess"], list["FallbackProcess"]]:
         """Wait for processes to terminate."""
         gone: list[FallbackProcess] = []
         alive: list[FallbackProcess] = list(procs)
 
         start_time = time.time()
-        while alive:
-            if timeout is not None and (time.time() - start_time) > timeout:
-                break
-
+        while alive and not (timeout is not None and (time.time() - start_time) > timeout):
             new_alive: list[FallbackProcess] = []
             for proc in alive:
                 if proc.is_running():
@@ -910,8 +922,11 @@ except ImportError as e:
             if not self._process:
                 return {}
 
-            info = {"pid": self._process.pid, "name": self._process.name(), "status": self._process.status()}
-            return info
+            return {
+                "pid": self._process.pid,
+                "name": self._process.name(),
+                "status": self._process.status(),
+            }
 
     # Create Process wrapper that matches psutil.Process() interface
     class ProcessWrapper:
@@ -971,45 +986,40 @@ except ImportError as e:
 
 # Export all psutil objects and availability flag
 __all__ = [
-    # Availability flags
+    "AccessDeniedError",
+    "Error",
     "HAS_PSUTIL",
+    "NoSuchProcessError",
     "PSUTIL_AVAILABLE",
     "PSUTIL_VERSION",
-    # Main module
-    "psutil",
-    # Classes
-    "Process",
-    "NoSuchProcessError",
-    "ZombieProcessError",
-    "AccessDeniedError",
-    "TimeoutExpiredError",
-    "Error",
     "Popen",
-    # Status constants
+    "Process",
+    "STATUS_DEAD",
+    "STATUS_DISK_SLEEP",
+    "STATUS_IDLE",
     "STATUS_RUNNING",
     "STATUS_SLEEPING",
-    "STATUS_DISK_SLEEP",
     "STATUS_STOPPED",
     "STATUS_ZOMBIE",
-    "STATUS_DEAD",
-    "STATUS_IDLE",
-    # Functions
-    "cpu_percent",
+    "TimeoutExpiredError",
+    "ZombieProcessError",
+    "boot_time",
     "cpu_count",
     "cpu_freq",
+    "cpu_percent",
     "cpu_stats",
-    "virtual_memory",
-    "swap_memory",
-    "disk_usage",
-    "disk_partitions",
     "disk_io_counters",
-    "net_io_counters",
+    "disk_partitions",
+    "disk_usage",
     "net_connections",
     "net_if_addrs",
     "net_if_stats",
-    "boot_time",
-    "users",
-    "process_iter",
+    "net_io_counters",
     "pid_exists",
+    "process_iter",
+    "psutil",
+    "swap_memory",
+    "users",
+    "virtual_memory",
     "wait_procs",
 ]

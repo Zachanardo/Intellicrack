@@ -23,6 +23,7 @@ from typing import Any
 
 import numpy as np
 
+
 try:
     import matplotlib as mpl
 
@@ -164,7 +165,12 @@ class VisualizationRenderer:
         self.chart_templates = self._load_chart_templates()
 
         # 3D rendering configuration
-        self.three_d_config = {"camera_distance": 100, "camera_angle": 45, "rotation_speed": 0.01, "zoom_factor": 1.2}
+        self.three_d_config = {
+            "camera_distance": 100,
+            "camera_angle": 45,
+            "rotation_speed": 0.01,
+            "zoom_factor": 1.2,
+        }
 
         # Cache for rendered visualizations
         self.render_cache = {}
@@ -511,7 +517,12 @@ class VisualizationRenderer:
         return result
 
     def render_heatmap(
-        self, data: np.ndarray, labels_x: list[str], labels_y: list[str], title: str = "Heatmap", color_scheme: str = "heatmap",
+        self,
+        data: np.ndarray,
+        labels_x: list[str],
+        labels_y: list[str],
+        title: str = "Heatmap",
+        color_scheme: str = "heatmap",
     ) -> dict[str, Any]:
         """Render a heatmap visualization.
 
@@ -562,9 +573,16 @@ class VisualizationRenderer:
         image_base64 = base64.b64encode(buffer.getvalue()).decode()
         plt.close()
 
-        return {"type": "heatmap", "image": f"data:image/png;base64,{image_base64}", "title": title, "shape": data.shape}
+        return {
+            "type": "heatmap",
+            "image": f"data:image/png;base64,{image_base64}",
+            "title": title,
+            "shape": data.shape,
+        }
 
-    def render_timeline(self, events: list[dict[str, Any]], width: int = 1000, height: int = 400) -> dict[str, Any]:
+    def render_timeline(
+        self, events: list[dict[str, Any]], width: int = 1000, height: int = 400
+    ) -> dict[str, Any]:
         """Render a timeline visualization.
 
         Args:
@@ -653,9 +671,17 @@ class VisualizationRenderer:
         if HAS_MATPLOTLIB:
             static_image = self._render_static_timeline(events, (width, height))
 
-        return {"type": "timeline", "js_code": js_code, "static_image": static_image, "event_count": len(events), "time_range": time_range}
+        return {
+            "type": "timeline",
+            "js_code": js_code,
+            "static_image": static_image,
+            "event_count": len(events),
+            "time_range": time_range,
+        }
 
-    def render_metrics_chart(self, metrics: list[dict[str, Any]], chart_type: str = "line", title: str = "Metrics") -> dict[str, Any]:
+    def render_metrics_chart(
+        self, metrics: list[dict[str, Any]], chart_type: str = "line", title: str = "Metrics"
+    ) -> dict[str, Any]:
         """Render metrics chart.
 
         Args:
@@ -673,7 +699,9 @@ class VisualizationRenderer:
         # Group metrics by name
         grouped = defaultdict(list)
         for metric in metrics:
-            grouped[metric["metric_name"]].append({"x": metric["timestamp"], "y": metric["metric_value"]})
+            grouped[metric["metric_name"]].append(
+                {"x": metric["timestamp"], "y": metric["metric_value"]}
+            )
 
         # Prepare datasets for Chart.js
         datasets = []
@@ -684,9 +712,9 @@ class VisualizationRenderer:
                     "label": name,
                     "data": points,
                     "borderColor": colors[i % len(colors)],
-                    "backgroundColor": colors[i % len(colors)] + "33",  # Add transparency
+                    "backgroundColor": f"{colors[i % len(colors)]}33",
                     "fill": chart_type == "area",
-                },
+                }
             )
 
         # Generate Chart.js code
@@ -710,7 +738,9 @@ class VisualizationRenderer:
             "data_points": sum(len(points) for points in grouped.values()),
         }
 
-    def render_3d_call_graph(self, functions: list[dict[str, Any]], calls: list[dict[str, Any]]) -> dict[str, Any]:
+    def render_3d_call_graph(
+        self, functions: list[dict[str, Any]], calls: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Render 3D call graph visualization.
 
         Args:
@@ -723,10 +753,10 @@ class VisualizationRenderer:
         """
         # Create nodes from functions
         nodes = []
+        radius = 50
         for i, func in enumerate(functions):
             # Calculate 3D position using spherical coordinate distribution
             angle = (i / len(functions)) * 2 * math.pi
-            radius = 50
             nodes.append(
                 GraphNode(
                     id=func["name"],
@@ -740,13 +770,15 @@ class VisualizationRenderer:
                 ),
             )
 
-        # Create edges from calls
-        edges = []
-        for call in calls:
-            edges.append(
-                GraphEdge(source=call["caller"], target=call["callee"], weight=call.get("count", 1), color=self._get_call_color(call)),
+        edges = [
+            GraphEdge(
+                source=call["caller"],
+                target=call["callee"],
+                weight=call.get("count", 1),
+                color=self._get_call_color(call),
             )
-
+            for call in calls
+        ]
         # Generate Three.js code
         js_code = self.chart_templates["three_js_3d_graph"]
         js_code = js_code.replace("{{container_id}}", "3d-graph-container")
@@ -754,7 +786,9 @@ class VisualizationRenderer:
         js_code = js_code.replace("{{height}}", "600")
         js_code = js_code.replace("{{nodes}}", json.dumps([n.to_dict() for n in nodes]))
         js_code = js_code.replace("{{edges}}", json.dumps([e.to_dict() for e in edges]))
-        js_code = js_code.replace("{{camera_distance}}", str(self.three_d_config["camera_distance"]))
+        js_code = js_code.replace(
+            "{{camera_distance}}", str(self.three_d_config["camera_distance"])
+        )
         js_code = js_code.replace("{{rotation_speed}}", str(self.three_d_config["rotation_speed"]))
 
         return {
@@ -854,7 +888,9 @@ class VisualizationRenderer:
 
         return {"type": "interactive_explorer", "js_code": js_code, "data": data}
 
-    def _apply_hierarchical_layout(self, nodes: list[GraphNode], edges: list[GraphEdge], dimensions: tuple[int, int]) -> None:
+    def _apply_hierarchical_layout(
+        self, nodes: list[GraphNode], edges: list[GraphEdge], dimensions: tuple[int, int]
+    ) -> None:
         """Apply hierarchical layout to nodes.
 
         Args:
@@ -888,9 +924,7 @@ class VisualizationRenderer:
             visited.add(node_id)
             levels[level].append(node_id)
 
-            for child in children[node_id]:
-                queue.append((child, level + 1))
-
+            queue.extend((child, level + 1) for child in children[node_id])
         # Position nodes
         node_map = {node.id: node for node in nodes}
         max_level = max(levels.keys()) if levels else 0
@@ -925,7 +959,11 @@ class VisualizationRenderer:
             node.y = center_y + radius * math.sin(angle)
 
     def _generate_static_graph_js(
-        self, nodes: list[GraphNode], edges: list[GraphEdge], container_id: str, dimensions: tuple[int, int],
+        self,
+        nodes: list[GraphNode],
+        edges: list[GraphEdge],
+        container_id: str,
+        dimensions: tuple[int, int],
     ) -> str:
         """Generate JavaScript for static graph layout.
 
@@ -941,7 +979,7 @@ class VisualizationRenderer:
         """
         width, height = dimensions
 
-        js_code = f"""
+        return f"""
             const svg = d3.select("#{container_id}")
                 .append("svg")
                 .attr("width", {width})
@@ -983,9 +1021,9 @@ class VisualizationRenderer:
                 .text(d => d.label);
         """
 
-        return js_code
-
-    def _render_static_graph(self, nodes: list[GraphNode], edges: list[GraphEdge], dimensions: tuple[int, int]) -> str:
+    def _render_static_graph(
+        self, nodes: list[GraphNode], edges: list[GraphEdge], dimensions: tuple[int, int]
+    ) -> str:
         """Render static graph image using matplotlib.
 
         Args:
@@ -1009,11 +1047,7 @@ class VisualizationRenderer:
         for edge in edges:
             G.add_edge(edge.source, edge.target, weight=edge.weight, color=edge.color)
 
-        # Get positions
-        pos = {}
-        for node in nodes:
-            pos[node.id] = (node.x, node.y)
-
+        pos = {node.id: (node.x, node.y) for node in nodes}
         # Use matplotlib patches to draw nodes with enhanced visualization
         for node in nodes:
             x, y = pos[node.id]
@@ -1032,7 +1066,15 @@ class VisualizationRenderer:
 
             # Also draw a Rectangle as another example of using the import
             if len(nodes) < 20:  # Only for small graphs to avoid clutter
-                rect = Rectangle((x - 0.25, y - 0.25), 0.5, 0.5, linewidth=1, edgecolor="black", facecolor="none", alpha=0.3)
+                rect = Rectangle(
+                    (x - 0.25, y - 0.25),
+                    0.5,
+                    0.5,
+                    linewidth=1,
+                    edgecolor="black",
+                    facecolor="none",
+                    alpha=0.3,
+                )
                 ax.add_patch(rect)
 
         # Draw edges
@@ -1057,7 +1099,9 @@ class VisualizationRenderer:
 
         return f"data:image/png;base64,{image_base64}"
 
-    def _render_static_timeline(self, events: list[dict[str, Any]], dimensions: tuple[int, int]) -> str:
+    def _render_static_timeline(
+        self, events: list[dict[str, Any]], dimensions: tuple[int, int]
+    ) -> str:
         """Render static timeline using matplotlib.
 
         Args:
@@ -1081,7 +1125,9 @@ class VisualizationRenderer:
             timestamp = event.get("timestamp", 0)
             y = source_y[source]
 
-            ax.scatter(timestamp, y, s=50, c=event.get("color", "#3498db"), alpha=0.7, edgecolors="black")
+            ax.scatter(
+                timestamp, y, s=50, c=event.get("color", "#3498db"), alpha=0.7, edgecolors="black"
+            )
 
         # Set labels
         ax.set_yticks(range(len(sources)))
@@ -1105,7 +1151,9 @@ class VisualizationRenderer:
 
         return f"data:image/png;base64,{image_base64}"
 
-    def _render_static_metrics(self, grouped: dict[str, list[dict[str, float]]], chart_type: str, title: str) -> str:
+    def _render_static_metrics(
+        self, grouped: dict[str, list[dict[str, float]]], chart_type: str, title: str
+    ) -> str:
         """Render static metrics chart using matplotlib.
 
         Args:
@@ -1162,7 +1210,12 @@ class VisualizationRenderer:
             Colormap name string
 
         """
-        colormaps = {"heatmap": "RdYlGn_r", "diverging": "RdBu_r", "sequential": "Blues", "categorical": "tab10"}
+        colormaps = {
+            "heatmap": "RdYlGn_r",
+            "diverging": "RdBu_r",
+            "sequential": "Blues",
+            "categorical": "tab10",
+        }
         return colormaps.get(color_scheme, "viridis")
 
     def _get_function_color(self, func: dict[str, Any]) -> str:
@@ -1178,9 +1231,7 @@ class VisualizationRenderer:
         complexity = func.get("complexity", 0)
         if complexity > 10:
             return "#e74c3c"  # Red for high complexity
-        if complexity > 5:
-            return "#f39c12"  # Orange for medium
-        return "#2ecc71"  # Green for low
+        return "#f39c12" if complexity > 5 else "#2ecc71"
 
     def _get_call_color(self, call: dict[str, Any]) -> str:
         """Get color for function call edge.
@@ -1195,11 +1246,11 @@ class VisualizationRenderer:
         count = call.get("count", 1)
         if count > 100:
             return "#e74c3c"  # Red for hot path
-        if count > 10:
-            return "#f39c12"  # Orange for warm
-        return "#95a5a6"  # Gray for cold
+        return "#f39c12" if count > 10 else "#95a5a6"
 
-    def _create_thumbnail(self, image_data: bytes, size: tuple[int, int] = (100, 100)) -> str | None:
+    def _create_thumbnail(
+        self, image_data: bytes, size: tuple[int, int] = (100, 100)
+    ) -> str | None:
         """Create a thumbnail using PIL.
 
         Args:

@@ -40,8 +40,8 @@ class FingerprintChange:
     new_value: Any
     timestamp: float = field(default_factory=time.time)
     reversible: bool = True
-    apply_method: Optional[str] = None
-    revert_method: Optional[str] = None
+    apply_method: str | None = None
+    revert_method: str | None = None
 
 
 class SystemFingerprinter:
@@ -50,7 +50,7 @@ class SystemFingerprinter:
     def __init__(self):
         self.wmi_client = wmi.WMI()
 
-    def collect_fingerprint(self) -> Dict[str, Any]:
+    def collect_fingerprint(self) -> dict[str, Any]:
         """
         Collect complete system fingerprint.
 
@@ -72,7 +72,7 @@ class SystemFingerprinter:
 
         return fingerprint
 
-    def _collect_hardware_fingerprint(self) -> Dict[str, Any]:
+    def _collect_hardware_fingerprint(self) -> dict[str, Any]:
         """Collect hardware-based fingerprints."""
         hardware = {}
 
@@ -144,7 +144,7 @@ class SystemFingerprinter:
 
         return hardware
 
-    def _collect_software_fingerprint(self) -> Dict[str, Any]:
+    def _collect_software_fingerprint(self) -> dict[str, Any]:
         """Collect software-based fingerprints."""
         software = {}
 
@@ -195,7 +195,7 @@ class SystemFingerprinter:
 
         return software
 
-    def _collect_network_fingerprint(self) -> Dict[str, Any]:
+    def _collect_network_fingerprint(self) -> dict[str, Any]:
         """Collect network-based fingerprints."""
         network = {}
 
@@ -229,7 +229,7 @@ class SystemFingerprinter:
 
         return network
 
-    def _collect_behavioral_fingerprint(self) -> Dict[str, Any]:
+    def _collect_behavioral_fingerprint(self) -> dict[str, Any]:
         """Collect behavioral fingerprints."""
         behavior = {}
 
@@ -263,7 +263,7 @@ class SystemFingerprinter:
 
         return behavior
 
-    def _collect_timing_fingerprint(self) -> Dict[str, Any]:
+    def _collect_timing_fingerprint(self) -> dict[str, Any]:
         """Collect timing-based fingerprints."""
         timing = {}
 
@@ -325,7 +325,7 @@ class FingerprintRandomizer:
         self.changes = []
         self.original_fingerprint = None
 
-    def randomize_all(self) -> Dict[str, Any]:
+    def randomize_all(self) -> dict[str, Any]:
         """
         Randomize all possible fingerprints.
 
@@ -368,7 +368,7 @@ class FingerprintRandomizer:
 
         return results
 
-    def randomize_hardware_fingerprint(self) -> List[FingerprintChange]:
+    def randomize_hardware_fingerprint(self) -> list[FingerprintChange]:
         """Randomize hardware-related fingerprints."""
         changes = []
 
@@ -399,7 +399,7 @@ class FingerprintRandomizer:
 
         return changes
 
-    def randomize_software_fingerprint(self) -> List[FingerprintChange]:
+    def randomize_software_fingerprint(self) -> list[FingerprintChange]:
         """Randomize software-related fingerprints."""
         changes = []
 
@@ -432,7 +432,7 @@ class FingerprintRandomizer:
 
         return changes
 
-    def randomize_network_fingerprint(self) -> List[FingerprintChange]:
+    def randomize_network_fingerprint(self) -> list[FingerprintChange]:
         """Randomize network-related fingerprints."""
         changes = []
 
@@ -459,7 +459,7 @@ class FingerprintRandomizer:
 
         return changes
 
-    def randomize_behavioral_fingerprint(self) -> List[FingerprintChange]:
+    def randomize_behavioral_fingerprint(self) -> list[FingerprintChange]:
         """Randomize behavioral fingerprints."""
         changes = []
 
@@ -475,7 +475,7 @@ class FingerprintRandomizer:
 
         return changes
 
-    def randomize_timing_fingerprint(self) -> List[FingerprintChange]:
+    def randomize_timing_fingerprint(self) -> list[FingerprintChange]:
         """Randomize timing-based fingerprints."""
         changes = []
 
@@ -542,7 +542,7 @@ class FingerprintRandomizer:
 
         return False
 
-    def _randomize_hardware_ids(self) -> List[FingerprintChange]:
+    def _randomize_hardware_ids(self) -> list[FingerprintChange]:
         """Randomize hardware IDs in registry."""
         changes = []
 
@@ -568,7 +568,7 @@ class FingerprintRandomizer:
 
         return changes
 
-    def _randomize_disk_serials(self) -> List[FingerprintChange]:
+    def _randomize_disk_serials(self) -> list[FingerprintChange]:
         """Randomize disk serial numbers (spoofing only)."""
         changes = []
 
@@ -604,7 +604,7 @@ class FingerprintRandomizer:
         except Exception:
             return False
 
-    def _randomize_product_id(self) -> Optional[FingerprintChange]:
+    def _randomize_product_id(self) -> FingerprintChange | None:
         """Randomize Windows Product ID."""
         try:
             key_path = r'SOFTWARE\Microsoft\Windows NT\CurrentVersion'
@@ -626,7 +626,7 @@ class FingerprintRandomizer:
         except Exception:
             return None
 
-    def _randomize_timezone(self) -> Optional[FingerprintChange]:
+    def _randomize_timezone(self) -> FingerprintChange | None:
         """Randomize system timezone."""
         timezones = [
             'Pacific Standard Time',
@@ -669,7 +669,7 @@ class FingerprintRandomizer:
         except Exception:
             return False
 
-    def _randomize_dns_cache(self) -> Optional[FingerprintChange]:
+    def _randomize_dns_cache(self) -> FingerprintChange | None:
         """Randomize DNS cache entries."""
         try:
             # Flush DNS cache
@@ -721,7 +721,7 @@ class FingerprintRandomizer:
         except Exception:
             return None
 
-    def _randomize_screen_resolution(self) -> Optional[FingerprintChange]:
+    def _randomize_screen_resolution(self) -> FingerprintChange | None:
         """Randomize screen resolution temporarily."""
         try:
             user32 = ctypes.windll.user32
@@ -745,7 +745,7 @@ class FingerprintRandomizer:
         except Exception:
             return None
 
-    def _add_decoy_processes(self) -> List[FingerprintChange]:
+    def _add_decoy_processes(self) -> list[FingerprintChange]:
         """Add decoy processes to confuse fingerprinting."""
         changes = []
 
@@ -770,7 +770,7 @@ class FingerprintRandomizer:
 
         return changes
 
-    def revert_all_changes(self) -> Dict[str, Any]:
+    def revert_all_changes(self) -> dict[str, Any]:
         """
         Revert all fingerprint changes.
 
@@ -821,7 +821,7 @@ class FingerprintRandomizer:
 
         return results
 
-    def generate_report(self) -> Dict[str, Any]:
+    def generate_report(self) -> dict[str, Any]:
         """
         Generate fingerprint randomization report.
 
@@ -872,7 +872,7 @@ class FingerprintRandomizer:
 
         return report
 
-    def _calculate_effectiveness(self, original: Dict, current: Dict) -> Dict[str, float]:
+    def _calculate_effectiveness(self, original: dict, current: dict) -> dict[str, float]:
         """
         Calculate randomization effectiveness.
 

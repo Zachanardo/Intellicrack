@@ -24,6 +24,7 @@ from typing import Any
 from .base import APIRepositoryBase, RateLimitConfig
 from .interface import ModelInfo
 
+
 """
 OpenAI Repository Implementation
 
@@ -132,12 +133,12 @@ class OpenAIRepository(APIRepositoryBase):
                 model_id = model_data.get("id")
 
                 # For most API usage we'll only care about chat and embedding models
-                if not (model_id.startswith("gpt-") or "embedding" in model_id or model_id == "dall-e-3"):
+                if not (
+                    model_id.startswith("gpt-") or "embedding" in model_id or model_id == "dall-e-3"
+                ):
                     continue
 
-                # Get detailed model info
-                model_info = self._get_model_details(model_id)
-                if model_info:
+                if model_info := self._get_model_details(model_id):
                     models.append(model_info)
 
             return models
@@ -182,15 +183,14 @@ class OpenAIRepository(APIRepositoryBase):
             capabilities = []
             if model_id.startswith("gpt-"):
                 capabilities.append("text-generation")
-                if "vision" in model_id or model_id in ["gpt-4-turbo", "gpt-4o"]:
+                if "vision" in model_id or model_id in {"gpt-4-turbo", "gpt-4o"}:
                     capabilities.append("vision")
             elif "embedding" in model_id:
                 capabilities.append("embeddings")
             elif model_id == "dall-e-3":
                 capabilities.append("image-generation")
 
-            # Extract model information
-            model_info = ModelInfo(
+            return ModelInfo(
                 model_id=model_id,
                 name=data.get("name", model_id),
                 description=data.get("description", ""),
@@ -205,9 +205,6 @@ class OpenAIRepository(APIRepositoryBase):
                 download_url=None,
                 local_path=None,
             )
-
-            return model_info
-
         except (KeyError, TypeError) as e:
             logger.error(f"Error creating ModelInfo for {model_id}: {e}")
             return None
@@ -219,5 +216,7 @@ class OpenAIRepository(APIRepositoryBase):
             Always returns (False, "OpenAI doesn't support model downloads")
 
         """
-        logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
+        logger.warning(
+            f"Download requested for {model_id} to {destination_path}, but not supported"
+        )
         return False, "OpenAI doesn't support model downloads for this model"

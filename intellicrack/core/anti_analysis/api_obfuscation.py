@@ -25,6 +25,7 @@ import struct
 import zlib
 from typing import Any
 
+
 """
 API Obfuscation
 
@@ -122,18 +123,16 @@ class APIObfuscator:
 
             address = None
 
-            if method == "normal":
-                address = self._normal_resolve(dll_name, api_name)
+            if method == "dynamic_resolution":
+                address = self._dynamic_resolve(dll_name, api_name)
+
             elif method == "hash_lookup":
                 api_hash = self._calculate_hash(api_name)
                 address = self._resolve_by_hash(dll_name, api_hash)
+            elif method == "normal":
+                address = self._normal_resolve(dll_name, api_name)
             elif method == "ordinal_lookup":
-                # Default to ordinal 1 if not specified
-                ordinal = 1
-                address = self._resolve_by_ordinal(dll_name, ordinal)
-            elif method == "dynamic_resolution":
-                address = self._dynamic_resolve(dll_name, api_name)
-
+                address = self._resolve_by_ordinal(dll_name, 1)
             if address:
                 self.resolved_apis_cache[cache_key] = address
                 self.resolved_apis += 1
@@ -155,15 +154,10 @@ class APIObfuscator:
             kernel32 = ctypes.windll.kernel32
 
             # Get module handle
-            h_module = kernel32.GetModuleHandleW(dll_name)
-            if not h_module:
-                h_module = kernel32.LoadLibraryW(dll_name)
+            h_module = kernel32.GetModuleHandleW(dll_name) or kernel32.LoadLibraryW(dll_name)
 
             if h_module:
-                # Get API address
-                address = kernel32.GetProcAddress(h_module, api_name.encode())
-                return address
-
+                return kernel32.GetProcAddress(h_module, api_name.encode())
         except Exception as e:
             self.logger.debug(f"Normal resolution failed: {e}")
 
@@ -179,9 +173,7 @@ class APIObfuscator:
 
             # Load DLL and enumerate exports
             kernel32 = ctypes.windll.kernel32
-            h_module = kernel32.GetModuleHandleW(dll_name)
-            if not h_module:
-                h_module = kernel32.LoadLibraryW(dll_name)
+            h_module = kernel32.GetModuleHandleW(dll_name) or kernel32.LoadLibraryW(dll_name)
 
             if not h_module:
                 return None
@@ -217,7 +209,9 @@ class APIObfuscator:
                 return None
 
             if num_names > num_functions:
-                self.logger.warning(f"DLL {dll_name} has more names ({num_names}) than functions ({num_functions}) - possible corruption")
+                self.logger.warning(
+                    f"DLL {dll_name} has more names ({num_names}) than functions ({num_functions}) - possible corruption"
+                )
                 return None
 
             # Check for suspiciously large export tables (possible anti-analysis)
@@ -228,7 +222,9 @@ class APIObfuscator:
 
             # Validate that we have named exports to search through
             if num_names == 0:
-                self.logger.info(f"DLL {dll_name} has {num_functions} functions but no named exports (ordinal-only)")
+                self.logger.info(
+                    f"DLL {dll_name} has {num_functions} functions but no named exports (ordinal-only)"
+                )
                 return None
 
             names_array = h_module + names_rva
@@ -274,9 +270,7 @@ class APIObfuscator:
             kernel32 = ctypes.windll.kernel32
 
             # Get module handle with obfuscation
-            h_module = kernel32.GetModuleHandleW(dll_name)
-            if not h_module:
-                h_module = kernel32.LoadLibraryW(dll_name)
+            h_module = kernel32.GetModuleHandleW(dll_name) or kernel32.LoadLibraryW(dll_name)
 
             if not h_module:
                 return None
@@ -337,7 +331,7 @@ class APIObfuscator:
                 # Fallback: Use GetProcAddress with MAKEINTRESOURCE
                 try:
                     address = kernel32.GetProcAddress(h_module, ordinal)
-                    return address if address else None
+                    return address or None
                 except Exception:
                     return None
 
@@ -394,7 +388,7 @@ class APIObfuscator:
         """
         try:
             # Create function prototype based on number of arguments
-            if len(args) == 0:
+            if not args:
                 func_type = ctypes.WINFUNCTYPE(ctypes.c_void_p)
             elif len(args) == 1:
                 func_type = ctypes.WINFUNCTYPE(ctypes.c_void_p, ctypes.c_void_p)
@@ -423,10 +417,7 @@ class APIObfuscator:
 
     def _deobfuscate_string(self, data: bytes) -> str:
         """Deobfuscate XOR encrypted string."""
-        if len(data) < 2:
-            return ""
-        key = data[0]
-        return "".join(chr(b ^ key) for b in data[1:])
+        return "" if len(data) < 2 else "".join(chr(b ^ data[0]) for b in data[1:])
 
     def _djb2_hash(self, string: str) -> int:
         """DJB2 hash algorithm commonly used in protected software."""
@@ -467,7 +458,7 @@ class APIObfuscator:
                 return None
 
             dll_name, api_name = forward_str.split(".", 1)
-            dll_name = dll_name + ".dll"
+            dll_name = f"{dll_name}.dll"
 
             # Use normal resolution for forwarded export
             return self._normal_resolve(dll_name, api_name)
@@ -482,7 +473,7 @@ class APIObfuscator:
 
     def _generate_hash_lookup_code(self) -> str:
         """Generate code that uses hash-based API resolution."""
-        code = """
+        return """
 // Hash-based API Resolution
 #include <windows.h>
 
@@ -533,11 +524,10 @@ CreateThread_t pCreateThread = (CreateThread_t)ResolveApiHash(kernel32, 0x1EAE4C
 LPVOID mem = pVirtualAlloc(NULL, 0x1000, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 HANDLE thread = pCreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)mem, NULL, 0, NULL);
 """
-        return code
 
     def _generate_dynamic_resolution_code(self) -> str:
         """Generate code with dynamic API resolution."""
-        code = """
+        return """
 // Dynamic API Resolution
 #include <windows.h>
 
@@ -614,14 +604,13 @@ typedef LPVOID (*VirtualAlloc_t)(LPVOID, SIZE_T, DWORD, DWORD);
 VirtualAlloc_t pVirtualAlloc = (VirtualAlloc_t)GetApi("kernel32.dll", 0);
 LPVOID mem = pVirtualAlloc(NULL, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 """
-        return code
 
     def generate_call_obfuscation(self, api_name: str) -> str:
         """Generate obfuscated call for specific API."""
         # Calculate hash
         api_hash = self._calculate_hash(api_name)
 
-        code = f"""
+        return f"""
 // Obfuscated call to {api_name}
 FARPROC p{api_name} = ResolveApiHash(GetModuleHandleA("kernel32.dll"), 0x{api_hash:08X});
 if (p{api_name}) {{
@@ -630,7 +619,6 @@ if (p{api_name}) {{
     ((void(*)())p{api_name})();
 }}
 """
-        return code
 
     def _load_api_databases(self) -> None:
         """Load known API hash databases."""
@@ -681,7 +669,9 @@ if (p{api_name}) {{
                     key = f"{hash_type}_{hash_value}"
                     self.api_hash_db[key] = (dll_name, api_name)
 
-            self.logger.info(f"Loaded {len(common_apis)} API entries with {len(self.api_hash_db)} hash mappings")
+            self.logger.info(
+                f"Loaded {len(common_apis)} API entries with {len(self.api_hash_db)} hash mappings"
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to load API databases: {e}")
@@ -720,7 +710,9 @@ if (p{api_name}) {{
                     # Try to decrypt
                     if addr in self.encrypted_strings_db:
                         decrypted = self.encrypted_strings_db[addr]
-                        encrypted_patterns.append({"offset": i, "encrypted": hex(addr), "decrypted": decrypted})
+                        encrypted_patterns.append(
+                            {"offset": i, "encrypted": hex(addr), "decrypted": decrypted}
+                        )
 
             return bytes(resolved_code), {
                 "method": "string_encryption",
@@ -756,9 +748,15 @@ if (p{api_name}) {{
                     api_addr = int.from_bytes(code[i + 2 : i + 6], "little")
                     if api_addr in self.api_hash_db:
                         api_name = self.api_hash_db[api_addr]
-                        dynamic_imports.append({"offset": i, "api": api_name, "method": "GetProcAddress"})
+                        dynamic_imports.append(
+                            {"offset": i, "api": api_name, "method": "GetProcAddress"}
+                        )
 
-            return bytes(resolved_code), {"method": "dynamic_loading", "resolved_count": len(dynamic_imports), "imports": dynamic_imports}
+            return bytes(resolved_code), {
+                "method": "dynamic_loading",
+                "resolved_count": len(dynamic_imports),
+                "imports": dynamic_imports,
+            }
 
         except Exception as e:
             self.logger.error(f"Failed to resolve dynamic imports: {e}")
@@ -789,7 +787,14 @@ if (p{api_name}) {{
                     # Check if target is a known API
                     if target in self.api_hash_db:
                         api_name = self.api_hash_db[target]
-                        redirected_apis.append({"offset": i, "api": api_name, "method": "JMP redirection", "target": hex(target)})
+                        redirected_apis.append(
+                            {
+                                "offset": i,
+                                "api": api_name,
+                                "method": "JMP redirection",
+                                "target": hex(target),
+                            }
+                        )
 
             return bytes(resolved_code), {
                 "method": "api_redirection",
@@ -843,7 +848,14 @@ if (p{api_name}) {{
                         if len(indirect_sequence) <= 5:
                             modified_code[i : i + 5] = indirect_sequence[:5]
 
-                            indirect_calls.append({"offset": i, "api": api_name, "original": "CALL direct", "replacement": "CALL indirect"})
+                            indirect_calls.append(
+                                {
+                                    "offset": i,
+                                    "api": api_name,
+                                    "original": "CALL direct",
+                                    "replacement": "CALL indirect",
+                                }
+                            )
 
                 # Check for CALL DWORD PTR [addr] pattern
                 if code[i : i + 2] == b"\xff\x15":  # CALL DWORD PTR [addr32]
@@ -862,10 +874,19 @@ if (p{api_name}) {{
                     # This sequence is longer, so we need to handle it differently
                     # For now, mark it for later expansion
                     indirect_calls.append(
-                        {"offset": i, "type": "import_table_call", "import_addr": hex(import_addr), "needs_expansion": True},
+                        {
+                            "offset": i,
+                            "type": "import_table_call",
+                            "import_addr": hex(import_addr),
+                            "needs_expansion": True,
+                        },
                     )
 
-            return bytes(modified_code), {"method": "indirect_calls", "modified_count": len(indirect_calls), "calls": indirect_calls}
+            return bytes(modified_code), {
+                "method": "indirect_calls",
+                "modified_count": len(indirect_calls),
+                "calls": indirect_calls,
+            }
 
         except Exception as e:
             self.logger.error(f"Failed to generate indirect calls: {e}")
@@ -908,10 +929,17 @@ if (p{api_name}) {{
 
                     # Update call to point to trampoline
                     new_call_offset = trampoline_offset - (i + 5)
-                    modified_code[i + 1 : i + 5] = new_call_offset.to_bytes(4, "little", signed=True)
+                    modified_code[i + 1 : i + 5] = new_call_offset.to_bytes(
+                        4, "little", signed=True
+                    )
 
                     trampolines.append(
-                        {"offset": trampoline_offset, "size": len(trampoline), "target": hex(call_target), "original_call": hex(i)},
+                        {
+                            "offset": trampoline_offset,
+                            "size": len(trampoline),
+                            "target": hex(call_target),
+                            "original_call": hex(i),
+                        },
                     )
 
                     # Append trampoline to code
@@ -1068,7 +1096,9 @@ if (p{api_name}) {{
 
                     # Insert decryption stub before encrypted section
                     # The stub will decrypt the code at runtime before execution
-                    modified_code = bytearray(modified_code[:i]) + decrypt_stub + bytearray(modified_code[i:])
+                    modified_code = (
+                        bytearray(modified_code[:i]) + decrypt_stub + bytearray(modified_code[i:])
+                    )
 
                     encrypted_sections.append(
                         {
@@ -1136,7 +1166,12 @@ if (p{api_name}) {{
                     wrapper.extend(b"\x90" * (secrets.randbelow(3) + 1))  # Random NOPs
 
                     wrappers.append(
-                        {"offset": i, "variant_used": polymorphic_variants.index(variant), "wrapper_size": len(wrapper), "original_size": 5},
+                        {
+                            "offset": i,
+                            "variant_used": polymorphic_variants.index(variant),
+                            "wrapper_size": len(wrapper),
+                            "original_size": 5,
+                        },
                     )
 
             return bytes(modified_code), {
@@ -1179,7 +1214,12 @@ if (p{api_name}) {{
                         if actual_addr in self.api_hash_db:
                             api_name = self.api_hash_db[actual_addr]
                             delayed_imports.append(
-                                {"offset": i, "api": api_name, "method": "Delayed import", "thunk_addr": hex(import_addr)},
+                                {
+                                    "offset": i,
+                                    "api": api_name,
+                                    "method": "Delayed import",
+                                    "thunk_addr": hex(import_addr),
+                                },
                             )
 
                 # Check for LoadLibrary patterns for delayed loading
@@ -1187,7 +1227,9 @@ if (p{api_name}) {{
                     lib_name_addr = int.from_bytes(code[i + 1 : i + 5], "little")
 
                     # Check if followed by LoadLibrary call
-                    if i + 5 < len(code) - 5 and code[i + 5 : i + 7] == b"\xff\x15":  # CALL DWORD PTR
+                    if (
+                        i + 5 < len(code) - 5 and code[i + 5 : i + 7] == b"\xff\x15"
+                    ):  # CALL DWORD PTR
                         call_target = int.from_bytes(code[i + 7 : i + 11], "little")
 
                         # Check if this calls LoadLibrary
@@ -1211,14 +1253,23 @@ if (p{api_name}) {{
                     call_target = i + 5 + call_offset
 
                     # Check if target looks like delay load helper
-                    if 0 <= call_target < len(code) - 8:
-                        # Check for characteristic delay load helper prologue
-                        if code[call_target : call_target + 3] == b"\x55\x8b\xec":  # push ebp; mov ebp, esp
-                            delayed_imports.append(
-                                {"offset": i, "api": "Delay load helper", "method": "__delayLoadHelper2", "helper_addr": hex(call_target)},
-                            )
+                    if 0 <= call_target < len(code) - 8 and (
+                                                code[call_target : call_target + 3] == b"\x55\x8b\xec"
+                                            ):
+                        delayed_imports.append(
+                            {
+                                "offset": i,
+                                "api": "Delay load helper",
+                                "method": "__delayLoadHelper2",
+                                "helper_addr": hex(call_target),
+                            },
+                        )
 
-            return bytes(resolved_code), {"method": "delayed_loading", "resolved_count": len(delayed_imports), "imports": delayed_imports}
+            return bytes(resolved_code), {
+                "method": "delayed_loading",
+                "resolved_count": len(delayed_imports),
+                "imports": delayed_imports,
+            }
 
         except Exception as e:
             self.logger.error(f"Failed to resolve delayed imports: {e}")

@@ -117,7 +117,7 @@ class ScapyPacketReader:
                 yield timestamp, raw_packet
         except Exception as e:
             logger.error("Exception in pcapy_compat: %s", e)
-            raise RuntimeError(f"Packet capture failed: {e}")
+            raise RuntimeError(f"Packet capture failed: {e}") from e
 
     def stop(self):
         """Stop packet capture."""
@@ -131,9 +131,7 @@ def get_packet_capture_interface():
         module: Scapy module or None if unavailable
 
     """
-    if SCAPY_AVAILABLE:
-        return scapy
-    return None
+    return scapy if SCAPY_AVAILABLE else None
 
 
 def create_pcap_reader(interface="any"):
@@ -150,8 +148,7 @@ def create_pcap_reader(interface="any"):
         return None
 
     try:
-        reader = ScapyPacketReader(interface=interface, promisc=True, immediate=True)
-        return reader
+        return ScapyPacketReader(interface=interface, promisc=True, immediate=True)
     except Exception as e:
         logger.error("Exception in pcapy_compat: %s", e)
         print(f"Warning: Failed to create packet capture reader: {e}")
@@ -163,10 +160,10 @@ pcapy = get_packet_capture_interface()
 PCAP_AVAILABLE = SCAPY_AVAILABLE  # For backward compatibility
 
 __all__ = [
-    "get_packet_capture_interface",
-    "create_pcap_reader",
-    "pcapy",
     "PCAP_AVAILABLE",
-    "ScapyPacketReader",
     "SCAPY_AVAILABLE",
+    "ScapyPacketReader",
+    "create_pcap_reader",
+    "get_packet_capture_interface",
+    "pcapy",
 ]

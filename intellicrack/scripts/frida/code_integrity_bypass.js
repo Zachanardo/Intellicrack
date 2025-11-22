@@ -257,14 +257,11 @@ const CodeIntegrityBypass = {
                                     config.hashAlgorithms.sha256.spoofedHash
                                 );
                             }
-                        } else if (hashLength === 64) {
-                            // SHA512
-                            if (config.hashAlgorithms.sha512.enabled) {
-                                spoofedHash = this.hexToBytes(
-                                    config.hashAlgorithms.sha512.spoofedHash
-                                );
-                            }
-                        }
+                        } else if (hashLength === 64 && config.hashAlgorithms.sha512.enabled) {
+                                     spoofedHash = this.hexToBytes(
+                                         config.hashAlgorithms.sha512.spoofedHash
+                                     );
+                               }
 
                         if (spoofedHash && spoofedHash.length === hashLength) {
                             this.pbData.writeByteArray(spoofedHash);
@@ -444,11 +441,8 @@ const CodeIntegrityBypass = {
 
                         onLeave: function (retval) {
                             // Force success return value for hash validation
-                            if (retval && !retval.isNull()) {
-                                // Common success values: 0, 1, S_OK (0x00000000)
-                                if (retval.toInt32() !== 0 && retval.toInt32() !== 1) {
-                                    retval.replace(ptr(0)); // Force success
-                                }
+                            if (retval && !retval.isNull() && (retval.toInt32() !== 0 && retval.toInt32() !== 1)) {
+                                  retval.replace(ptr(0));
                             }
                             if (functionName.includes('Final') && this.hashType) {
                                 // This is a final hash function - spoof the result
@@ -544,11 +538,8 @@ const CodeIntegrityBypass = {
                         Interceptor.attach(func, {
                             onLeave: function (retval) {
                                 // Manipulate compute function return value
-                                if (retval && !retval.isNull()) {
-                                    // Ensure compute operations return success
-                                    if (retval.toInt32() !== 0 && retval.toInt32() !== hashSize) {
-                                        retval.replace(ptr(hashSize)); // Return expected hash size
-                                    }
+                                if (retval && !retval.isNull() && (retval.toInt32() !== 0 && retval.toInt32() !== hashSize)) {
+                                      retval.replace(ptr(hashSize));
                                 }
                                 // For compute functions, the result is often returned or in an output parameter
                                 this.spoofComputeResult();

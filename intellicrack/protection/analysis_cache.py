@@ -33,6 +33,7 @@ from threading import Lock
 
 from ..utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 # Security configuration for pickle
@@ -146,7 +147,7 @@ class CacheEntry:
 
     def __post_init__(self) -> None:
         """Initialize logger after dataclass initialization."""
-        self.logger = logging.getLogger(__name__ + ".CacheEntry")
+        self.logger = logging.getLogger(f"{__name__}.CacheEntry")
 
     def is_valid(self, file_path: str) -> bool:
         """Check if cache entry is still valid."""
@@ -248,7 +249,9 @@ class AnalysisCache:
         # Load existing cache
         self._load_cache()
 
-        logger.info(f"Analysis cache initialized: {len(self._cache)} entries, {self._get_cache_size_mb():.1f}MB")
+        logger.info(
+            f"Analysis cache initialized: {len(self._cache)} entries, {self._get_cache_size_mb():.1f}MB"
+        )
 
     def get(self, file_path: str, scan_options: str = "") -> object | None:
         """Get cached analysis result.

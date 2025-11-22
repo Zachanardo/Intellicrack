@@ -21,6 +21,7 @@ import warnings
 
 from intellicrack.utils.logger import logger
 
+
 HAS_WMI = False
 WMI = None
 

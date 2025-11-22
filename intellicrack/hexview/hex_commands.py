@@ -24,6 +24,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
+
 if TYPE_CHECKING:
     from .file_handler import VirtualFileAccess
 
@@ -165,7 +166,9 @@ class ReplaceCommand(HexCommand):
             success = file_handler.write(self.offset, self.old_data)
             if success:
                 self.executed = False
-                logger.debug(f"Undid replace of {len(self.old_data)} bytes at offset 0x{self.offset:X}")
+                logger.debug(
+                    f"Undid replace of {len(self.old_data)} bytes at offset 0x{self.offset:X}"
+                )
             return success
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error undoing replace command: %s", e)
@@ -193,7 +196,9 @@ class ReplaceCommand(HexCommand):
 
         # Combine the data
         combined_new_data = self.new_data + other.new_data
-        combined_old_data = self.old_data + other.old_data if self.old_data and other.old_data else None
+        combined_old_data = (
+            self.old_data + other.old_data if self.old_data and other.old_data else None
+        )
 
         return ReplaceCommand(self.offset, combined_new_data, combined_old_data)
 
@@ -356,7 +361,10 @@ class DeleteCommand(HexCommand):
             return True
 
         # Check for overlap
-        return bool(self.offset <= other.offset < self.offset + self.length or other.offset <= self.offset < other.offset + other.length)
+        return (
+            self.offset <= other.offset < self.offset + self.length
+            or other.offset <= self.offset < other.offset + other.length
+        )
 
     def merge_with(self, other: "HexCommand") -> "HexCommand":
         """Merge with another delete command.
@@ -424,7 +432,9 @@ class FillCommand(HexCommand):
 
     def __init__(self, offset: int, length: int, fill_value: int, old_data: bytes = None) -> None:
         """Initialize the FillCommand with offset, length, fill value, and old data."""
-        super().__init__(f"Fill {length} bytes at 0x{offset:X} with 0x{fill_value:02X}", OperationType.FILL)
+        super().__init__(
+            f"Fill {length} bytes at 0x{offset:X} with 0x{fill_value:02X}", OperationType.FILL
+        )
         self.offset = offset
         self.length = length
         self.fill_value = fill_value
@@ -477,10 +487,14 @@ class FillCommand(HexCommand):
 class PasteCommand(HexCommand):
     """Command for pasting data at a specific offset."""
 
-    def __init__(self, offset: int, data: bytes, insert_mode: bool = False, old_data: bytes = None) -> None:
+    def __init__(
+        self, offset: int, data: bytes, insert_mode: bool = False, old_data: bytes = None
+    ) -> None:
         """Initialize the PasteCommand with offset, data, insert mode, and old data."""
         mode_str = "insert" if insert_mode else "overwrite"
-        super().__init__(f"Paste {len(data)} bytes at 0x{offset:X} ({mode_str})", OperationType.PASTE)
+        super().__init__(
+            f"Paste {len(data)} bytes at 0x{offset:X} ({mode_str})", OperationType.PASTE
+        )
         self.offset = offset
         self.data = data
         self.insert_mode = insert_mode
@@ -501,7 +515,9 @@ class PasteCommand(HexCommand):
             if success:
                 self.executed = True
                 mode_str = "inserted" if self.insert_mode else "overwrote"
-                logger.debug(f"Pasted {len(self.data)} bytes at offset 0x{self.offset:X} ({mode_str})")
+                logger.debug(
+                    f"Pasted {len(self.data)} bytes at offset 0x{self.offset:X} ({mode_str})"
+                )
             return success
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error executing paste command: %s", e)
@@ -516,16 +532,17 @@ class PasteCommand(HexCommand):
             if self.insert_mode:
                 # Undo insert by deleting
                 success = file_handler.delete(self.offset, len(self.data))
+            elif self.old_data is None:
+                return False
             else:
-                # Undo overwrite by restoring old data
-                if self.old_data is None:
-                    return False
                 success = file_handler.write(self.offset, self.old_data)
 
             if success:
                 self.executed = False
                 mode_str = "insert" if self.insert_mode else "overwrite"
-                logger.debug(f"Undid paste ({mode_str}) of {len(self.data)} bytes at offset 0x{self.offset:X}")
+                logger.debug(
+                    f"Undid paste ({mode_str}) of {len(self.data)} bytes at offset 0x{self.offset:X}"
+                )
             return success
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error undoing paste command: %s", e)
@@ -572,7 +589,12 @@ class CommandManager:
             return False
 
         # Try to merge with previous command if auto-merge is enabled
-        if self.auto_merge and self.command_history and self.current_index >= 0 and self.current_index < len(self.command_history):
+        if (
+            self.auto_merge
+            and self.command_history
+            and self.current_index >= 0
+            and self.current_index < len(self.command_history)
+        ):
             last_command = self.command_history[self.current_index]
             if last_command.can_merge_with(command):
                 try:
@@ -684,19 +706,17 @@ class CommandManager:
             List of command information dictionaries
 
         """
-        summary = []
-        for i, command in enumerate(self.command_history):
-            summary.append(
-                {
-                    "index": i,
-                    "description": command.description,
-                    "type": command.operation_type.value,
-                    "executed": command.executed,
-                    "is_current": i == self.current_index,
-                    "affected_range": command.get_affected_range(),
-                },
-            )
-        return summary
+        return [
+            {
+                "index": i,
+                "description": command.description,
+                "type": command.operation_type.value,
+                "executed": command.executed,
+                "is_current": i == self.current_index,
+                "affected_range": command.get_affected_range(),
+            }
+            for i, command in enumerate(self.command_history)
+        ]
 
     def set_auto_merge(self, enabled: bool) -> None:
         """Enable or disable automatic command merging."""

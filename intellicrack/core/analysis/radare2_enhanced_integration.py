@@ -40,6 +40,7 @@ from .radare2_signatures import R2SignatureAnalyzer
 from .radare2_strings import R2StringAnalyzer
 from .radare2_vulnerability_engine import R2VulnerabilityEngine
 
+
 logger = get_logger(__name__)
 
 try:
@@ -95,7 +96,9 @@ class EnhancedR2Integration:
         }
 
         # Initialize performance monitor
-        self.performance_monitor = create_performance_monitor(enable_real_time=self.config.get("enable_performance_monitoring", True))
+        self.performance_monitor = create_performance_monitor(
+            enable_real_time=self.config.get("enable_performance_monitoring", True)
+        )
         self.performance_monitor.start_session(f"r2_session_{binary_path}")
 
         # Thread safety
@@ -177,9 +180,7 @@ class EnhancedR2Integration:
         parallel_safe = ["strings", "imports", "signatures"]
         sequential_required = ["decompiler", "vulnerability", "esil", "ai", "bypass"]
 
-        # Run parallel-safe analyses first
-        parallel_types = [t for t in analysis_types if t in parallel_safe]
-        if parallel_types:
+        if parallel_types := [t for t in analysis_types if t in parallel_safe]:
             parallel_results = self._run_parallel_analysis(parallel_types)
             results["components"].update(parallel_results)
 
@@ -187,8 +188,7 @@ class EnhancedR2Integration:
         sequential_types = [t for t in analysis_types if t in sequential_required]
         for analysis_type in sequential_types:
             try:
-                component_result = self._run_single_analysis(analysis_type)
-                if component_result:
+                if component_result := self._run_single_analysis(analysis_type):
                     results["components"][analysis_type] = component_result
             except Exception as e:
                 self.logger.error(f"Failed to run {analysis_type} analysis: {e}")
@@ -203,17 +203,16 @@ class EnhancedR2Integration:
         # Add performance metrics
         results["performance"] = self.get_performance_stats()
         results["metadata"]["analysis_end"] = time.time()
-        results["metadata"]["total_duration"] = results["metadata"]["analysis_end"] - results["metadata"]["analysis_start"]
+        results["metadata"]["total_duration"] = (
+            results["metadata"]["analysis_end"] - results["metadata"]["analysis_start"]
+        )
 
-        # Standardize results
-        standardized_results = standardize_r2_result(
+        return standardize_r2_result(
             "comprehensive",
             results,
             self.binary_path,
             {"enhanced_integration": True},
         )
-
-        return standardized_results
 
     def _run_parallel_analysis(self, analysis_types: list[str]) -> dict[str, Any]:
         """Run analyses in parallel for performance."""
@@ -222,14 +221,16 @@ class EnhancedR2Integration:
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all tasks
-            future_to_type = {executor.submit(self._run_single_analysis, analysis_type): analysis_type for analysis_type in analysis_types}
+            future_to_type = {
+                executor.submit(self._run_single_analysis, analysis_type): analysis_type
+                for analysis_type in analysis_types
+            }
 
             # Collect results as they complete
             for future in as_completed(future_to_type, timeout=300):  # 5 minute timeout
                 analysis_type = future_to_type[future]
                 try:
-                    result = future.result()
-                    if result:
+                    if result := future.result():
                         results[analysis_type] = result
                 except Exception as e:
                     self.logger.error(f"Parallel analysis {analysis_type} failed: {e}")
@@ -248,8 +249,7 @@ class EnhancedR2Integration:
         """Run a single analysis with caching and error handling."""
         # Check cache first
         cache_key = f"{analysis_type}_{self.binary_path}"
-        cached_result = self._get_cached_result(cache_key)
-        if cached_result:
+        if cached_result := self._get_cached_result(cache_key):
             self.performance_stats["cache_hits"] += 1
             self.performance_monitor.record_cache_hit()
             return cached_result
@@ -304,7 +304,9 @@ class EnhancedR2Integration:
 
                 # End performance tracking with success
                 bytes_processed = len(str(result)) if result else 0
-                self.performance_monitor.end_operation(operation_metrics, success=True, bytes_processed=bytes_processed)
+                self.performance_monitor.end_operation(
+                    operation_metrics, success=True, bytes_processed=bytes_processed
+                )
 
                 # Cache result
                 self._cache_result(cache_key, result)
@@ -316,7 +318,9 @@ class EnhancedR2Integration:
             self._record_analysis_time(analysis_type, duration, success=False)
 
             # End performance tracking with failure
-            self.performance_monitor.end_operation(operation_metrics, success=False, error_message=str(e))
+            self.performance_monitor.end_operation(
+                operation_metrics, success=False, error_message=str(e)
+            )
 
             self.logger.error(f"Analysis {analysis_type} failed: {e}")
             self.performance_stats["errors_handled"] += 1
@@ -379,7 +383,9 @@ class EnhancedR2Integration:
                 for key, _ in sorted_items[:10]:  # Remove 10 oldest
                     del self.results_cache[key]
 
-    def _record_analysis_time(self, analysis_type: str, duration: float, success: bool = True) -> None:
+    def _record_analysis_time(
+        self, analysis_type: str, duration: float, success: bool = True
+    ) -> None:
         """Record analysis performance."""
         with self._lock:
             if analysis_type not in self.performance_stats["analysis_times"]:
@@ -501,7 +507,8 @@ class EnhancedR2Integration:
         health = {
             "overall_health": "healthy",
             "r2pipe_available": self.r2pipe_available,
-            "components_available": sum(1 for c in self.components.values() if c is not None),
+            "components_available": sum(bool(c is not None)
+                                    for c in self.components.values()),
             "total_components": len(self.components),
             "cache_health": {
                 "size": len(self.results_cache),
@@ -520,10 +527,15 @@ class EnhancedR2Integration:
 
         # Calculate recovery rate
         if stats["errors_handled"] > 0:
-            health["error_health"]["recovery_rate"] = stats["recoveries_successful"] / stats["errors_handled"]
+            health["error_health"]["recovery_rate"] = (
+                stats["recoveries_successful"] / stats["errors_handled"]
+            )
 
         # Determine overall health
-        if not health["r2pipe_available"] or health["components_available"] < health["total_components"] * 0.5:
+        if (
+            not health["r2pipe_available"]
+            or health["components_available"] < health["total_components"] * 0.5
+        ):
             health["overall_health"] = "critical"
         elif health["error_health"]["recovery_rate"] < 0.5:
             health["overall_health"] = "degraded"
@@ -675,7 +687,14 @@ class EnhancedR2Integration:
                         for n in graph_data.nodes
                     ],
                     "edges": [
-                        {"source": e.source, "target": e.target, "type": e.type, "label": e.label, "color": e.color, "style": e.style}
+                        {
+                            "source": e.source,
+                            "target": e.target,
+                            "type": e.type,
+                            "label": e.label,
+                            "color": e.color,
+                            "style": e.style,
+                        }
                         for e in graph_data.edges
                     ],
                     "metadata": graph_data.metadata,
@@ -713,7 +732,14 @@ class EnhancedR2Integration:
                         for n in graph_data.nodes
                     ],
                     "edges": [
-                        {"source": e.source, "target": e.target, "type": e.type, "label": e.label, "color": e.color, "style": e.style}
+                        {
+                            "source": e.source,
+                            "target": e.target,
+                            "type": e.type,
+                            "label": e.label,
+                            "color": e.color,
+                            "style": e.style,
+                        }
                         for e in graph_data.edges
                     ],
                     "metadata": graph_data.metadata,
@@ -739,10 +765,24 @@ class EnhancedR2Integration:
                 graph_data = self.components["graph"].generate_xref_graph(address)
                 return {
                     "nodes": [
-                        {"id": n.id, "label": n.label, "type": n.type, "address": n.address, "color": n.color} for n in graph_data.nodes
+                        {
+                            "id": n.id,
+                            "label": n.label,
+                            "type": n.type,
+                            "address": n.address,
+                            "color": n.color,
+                        }
+                        for n in graph_data.nodes
                     ],
                     "edges": [
-                        {"source": e.source, "target": e.target, "type": e.type, "label": e.label, "color": e.color, "style": e.style}
+                        {
+                            "source": e.source,
+                            "target": e.target,
+                            "type": e.type,
+                            "label": e.label,
+                            "color": e.color,
+                            "style": e.style,
+                        }
                         for e in graph_data.edges
                     ],
                     "metadata": graph_data.metadata,
@@ -801,9 +841,7 @@ class EnhancedR2Integration:
             self.stop_real_time_monitoring()
             self.clear_cache()
 
-            # End performance monitoring session
-            final_metrics = self.performance_monitor.end_session()
-            if final_metrics:
+            if final_metrics := self.performance_monitor.end_session():
                 self.logger.info(f"Performance session ended: {final_metrics.session_id}")
                 self.logger.info(
                     f"Total operations: {final_metrics.total_operations}, "

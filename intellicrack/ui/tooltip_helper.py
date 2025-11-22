@@ -2,6 +2,7 @@
 
 from intellicrack.utils.logger import logger
 
+
 """
 Comprehensive tooltip definitions for Intellicrack UI.
 
@@ -258,6 +259,190 @@ def get_tooltip_definitions() -> dict[str, str]:
     }
 
 
+def _apply_tooltips_to_buttons(parent_widget: object, all_tooltips: dict[str, str]) -> None:
+    """Apply tooltips to QPushButton elements."""
+    try:
+        from intellicrack.handlers.pyqt6_handler import QPushButton
+    except ImportError as e:
+        logger.error("Import error in tooltip_helper: %s", e)
+        QPushButton = object  # Fallback
+
+    buttons = parent_widget.findChildren(QPushButton)
+    for button in buttons:
+        button_text = button.text()
+        if button_text in all_tooltips:
+            button.setToolTip(all_tooltips[button_text])
+
+
+def _apply_tooltips_to_labels(parent_widget: object, all_tooltips: dict[str, str]) -> None:
+    """Apply tooltips to QLabel elements."""
+    try:
+        from intellicrack.handlers.pyqt6_handler import QLabel
+    except ImportError:
+        from intellicrack.handlers.pyqt6_handler import QPushButton
+
+        QLabel = QPushButton  # Fallback
+
+    labels = parent_widget.findChildren(QLabel)
+    for label in labels:
+        label_text = label.text()
+        object_name = label.objectName()
+
+        if label_text in all_tooltips:
+            label.setToolTip(all_tooltips[label_text])
+        elif object_name in all_tooltips:
+            label.setToolTip(all_tooltips[object_name])
+        elif label_text and _get_contextual_tooltip(label_text):
+            label.setToolTip(_get_contextual_tooltip(label_text))
+
+
+def _apply_tooltips_to_line_edits(parent_widget: object, all_tooltips: dict[str, str]) -> None:
+    """Apply tooltips to QLineEdit elements."""
+    try:
+        from intellicrack.handlers.pyqt6_handler import QLineEdit
+    except ImportError:
+        from intellicrack.handlers.pyqt6_handler import QPushButton
+
+        QLineEdit = QPushButton  # Fallback
+
+    line_edits = parent_widget.findChildren(QLineEdit)
+    for line_edit in line_edits:
+        hint_text = next(
+            (
+                line_edit.property("hintText") or ""
+                for prop in line_edit.dynamicPropertyNames()
+                if prop.data().decode() == "hintText"
+            ),
+            "",
+        )
+        object_name = line_edit.objectName()
+
+        if hint_text in all_tooltips:
+            line_edit.setToolTip(all_tooltips[hint_text])
+        elif object_name in all_tooltips:
+            line_edit.setToolTip(all_tooltips[object_name])
+        elif hint_text and _get_contextual_tooltip(hint_text):
+            line_edit.setToolTip(_get_contextual_tooltip(hint_text))
+
+
+def _apply_tooltips_to_combo_boxes(parent_widget: object, all_tooltips: dict[str, str]) -> None:
+    """Apply tooltips to QComboBox elements."""
+    try:
+        from intellicrack.handlers.pyqt6_handler import QComboBox
+    except ImportError:
+        from intellicrack.handlers.pyqt6_handler import QPushButton
+
+        QComboBox = QPushButton  # Fallback
+
+    combo_boxes = parent_widget.findChildren(QComboBox)
+    for combo in combo_boxes:
+        object_name = combo.objectName()
+        current_text = combo.currentText()
+
+        if object_name in all_tooltips:
+            combo.setToolTip(all_tooltips[object_name])
+        elif current_text in all_tooltips:
+            combo.setToolTip(all_tooltips[current_text])
+        elif object_name and _get_contextual_tooltip(object_name):
+            combo.setToolTip(_get_contextual_tooltip(object_name))
+
+
+def _apply_tooltips_to_checkboxes(parent_widget: object, all_tooltips: dict[str, str]) -> None:
+    """Apply tooltips to QCheckBox elements."""
+    try:
+        from intellicrack.handlers.pyqt6_handler import QCheckBox
+    except ImportError:
+        from intellicrack.handlers.pyqt6_handler import QPushButton
+
+        QCheckBox = QPushButton  # Fallback
+
+    checkboxes = parent_widget.findChildren(QCheckBox)
+    for checkbox in checkboxes:
+        checkbox_text = checkbox.text()
+        object_name = checkbox.objectName()
+
+        if checkbox_text in all_tooltips:
+            checkbox.setToolTip(all_tooltips[checkbox_text])
+        elif object_name in all_tooltips:
+            checkbox.setToolTip(all_tooltips[object_name])
+        elif checkbox_text and _get_contextual_tooltip(checkbox_text):
+            checkbox.setToolTip(_get_contextual_tooltip(checkbox_text))
+
+
+def _apply_tooltips_to_spinboxes(parent_widget: object, all_tooltips: dict[str, str]) -> None:
+    """Apply tooltips to QSpinBox and QDoubleSpinBox elements."""
+    try:
+        from intellicrack.handlers.pyqt6_handler import QDoubleSpinBox, QSpinBox
+    except ImportError:
+        from intellicrack.handlers.pyqt6_handler import QPushButton
+
+        QSpinBox = QDoubleSpinBox = QPushButton  # Fallback
+
+    spinboxes = parent_widget.findChildren(QSpinBox) + parent_widget.findChildren(QDoubleSpinBox)
+    for spinbox in spinboxes:
+        object_name = spinbox.objectName()
+
+        if object_name in all_tooltips:
+            spinbox.setToolTip(all_tooltips[object_name])
+        elif object_name and _get_contextual_tooltip(object_name):
+            spinbox.setToolTip(_get_contextual_tooltip(object_name))
+
+
+def _apply_tooltips_to_tab_widgets(parent_widget: object, all_tooltips: dict[str, str]) -> None:
+    """Apply tooltips to QTabWidget elements."""
+    try:
+        from intellicrack.handlers.pyqt6_handler import QTabWidget
+    except ImportError:
+        from intellicrack.handlers.pyqt6_handler import QPushButton
+
+        QTabWidget = QPushButton  # Fallback
+
+    tab_widgets = parent_widget.findChildren(QTabWidget)
+    for tab_widget in tab_widgets:
+        for i in range(tab_widget.count()):
+            tab_text = tab_widget.tabText(i)
+            if tab_text in all_tooltips:
+                tab_widget.setTabToolTip(i, all_tooltips[tab_text])
+            elif tab_text and _get_contextual_tooltip(tab_text):
+                tab_widget.setTabToolTip(i, _get_contextual_tooltip(tab_text))
+
+
+def _apply_tooltips_to_other_widgets(parent_widget: object, all_tooltips: dict[str, str]) -> None:
+    """Apply tooltips to various other widget types."""
+    try:
+        from intellicrack.handlers.pyqt6_handler import (
+            QListWidget,
+            QPlainTextEdit,
+            QProgressBar,
+            QSlider,
+            QTableWidget,
+            QTextEdit,
+            QTreeWidget,
+        )
+    except ImportError:
+        from intellicrack.handlers.pyqt6_handler import QPushButton
+
+        QSlider = QProgressBar = QTextEdit = QPlainTextEdit = QPushButton
+        QListWidget = QTreeWidget = QTableWidget = QPushButton
+
+    other_widgets = (
+        parent_widget.findChildren(QSlider)
+        + parent_widget.findChildren(QProgressBar)
+        + parent_widget.findChildren(QTextEdit)
+        + parent_widget.findChildren(QPlainTextEdit)
+        + parent_widget.findChildren(QListWidget)
+        + parent_widget.findChildren(QTreeWidget)
+        + parent_widget.findChildren(QTableWidget)
+    )
+
+    for widget in other_widgets:
+        object_name = widget.objectName()
+        if object_name in all_tooltips:
+            widget.setToolTip(all_tooltips[object_name])
+        elif object_name and _get_contextual_tooltip(object_name):
+            widget.setToolTip(_get_contextual_tooltip(object_name))
+
+
 def apply_tooltips_to_all_elements(parent_widget: object) -> None:
     """Apply tooltips to all UI elements in a widget hierarchy.
 
@@ -291,118 +476,21 @@ def apply_tooltips_to_all_elements(parent_widget: object) -> None:
         logger.error("Import error in tooltip_helper: %s", e)
         from intellicrack.handlers.pyqt6_handler import QPushButton
 
-        QLabel = QLineEdit = QComboBox = QCheckBox = QPushButton  # Fallback
-        QSpinBox = QDoubleSpinBox = QTabWidget = QSlider = QPushButton
-        QProgressBar = QTextEdit = QPlainTextEdit = QPushButton
-        QListWidget = QTreeWidget = QTableWidget = QPushButton
-
     tooltips = get_tooltip_definitions()
 
     # Enhanced tooltip definitions for all UI elements
     enhanced_tooltips = get_enhanced_tooltip_definitions()
     all_tooltips = {**tooltips, **enhanced_tooltips}
 
-    # Apply tooltips to QPushButton (existing functionality)
-    buttons = parent_widget.findChildren(QPushButton)
-    for button in buttons:
-        button_text = button.text()
-        if button_text in all_tooltips:
-            button.setToolTip(all_tooltips[button_text])
-
-    # Apply tooltips to QLabel
-    labels = parent_widget.findChildren(QLabel)
-    for label in labels:
-        label_text = label.text()
-        object_name = label.objectName()
-
-        if label_text in all_tooltips:
-            label.setToolTip(all_tooltips[label_text])
-        elif object_name in all_tooltips:
-            label.setToolTip(all_tooltips[object_name])
-        elif label_text and _get_contextual_tooltip(label_text):
-            label.setToolTip(_get_contextual_tooltip(label_text))
-
-    # Apply tooltips to QLineEdit
-    line_edits = parent_widget.findChildren(QLineEdit)
-    for line_edit in line_edits:
-        # Get hint text from widget property
-        hint_text = ""
-        for prop in line_edit.dynamicPropertyNames():
-            if prop.data().decode() == "hintText":
-                hint_text = line_edit.property("hintText") or ""
-                break
-        object_name = line_edit.objectName()
-
-        if hint_text in all_tooltips:
-            line_edit.setToolTip(all_tooltips[hint_text])
-        elif object_name in all_tooltips:
-            line_edit.setToolTip(all_tooltips[object_name])
-        elif hint_text and _get_contextual_tooltip(hint_text):
-            line_edit.setToolTip(_get_contextual_tooltip(hint_text))
-
-    # Apply tooltips to QComboBox
-    combo_boxes = parent_widget.findChildren(QComboBox)
-    for combo in combo_boxes:
-        object_name = combo.objectName()
-        current_text = combo.currentText()
-
-        if object_name in all_tooltips:
-            combo.setToolTip(all_tooltips[object_name])
-        elif current_text in all_tooltips:
-            combo.setToolTip(all_tooltips[current_text])
-        elif object_name and _get_contextual_tooltip(object_name):
-            combo.setToolTip(_get_contextual_tooltip(object_name))
-
-    # Apply tooltips to QCheckBox
-    checkboxes = parent_widget.findChildren(QCheckBox)
-    for checkbox in checkboxes:
-        checkbox_text = checkbox.text()
-        object_name = checkbox.objectName()
-
-        if checkbox_text in all_tooltips:
-            checkbox.setToolTip(all_tooltips[checkbox_text])
-        elif object_name in all_tooltips:
-            checkbox.setToolTip(all_tooltips[object_name])
-        elif checkbox_text and _get_contextual_tooltip(checkbox_text):
-            checkbox.setToolTip(_get_contextual_tooltip(checkbox_text))
-
-    # Apply tooltips to QSpinBox and QDoubleSpinBox
-    spinboxes = parent_widget.findChildren(QSpinBox) + parent_widget.findChildren(QDoubleSpinBox)
-    for spinbox in spinboxes:
-        object_name = spinbox.objectName()
-
-        if object_name in all_tooltips:
-            spinbox.setToolTip(all_tooltips[object_name])
-        elif object_name and _get_contextual_tooltip(object_name):
-            spinbox.setToolTip(_get_contextual_tooltip(object_name))
-
-    # Apply tooltips to QTabWidget tabs
-    tab_widgets = parent_widget.findChildren(QTabWidget)
-    for tab_widget in tab_widgets:
-        for i in range(tab_widget.count()):
-            tab_text = tab_widget.tabText(i)
-            if tab_text in all_tooltips:
-                tab_widget.setTabToolTip(i, all_tooltips[tab_text])
-            elif tab_text and _get_contextual_tooltip(tab_text):
-                tab_widget.setTabToolTip(i, _get_contextual_tooltip(tab_text))
-
-    # Apply tooltips to other common widgets
-    other_widgets = (
-        parent_widget.findChildren(QSlider)
-        + parent_widget.findChildren(QProgressBar)
-        + parent_widget.findChildren(QTextEdit)
-        + parent_widget.findChildren(QPlainTextEdit)
-        + parent_widget.findChildren(QListWidget)
-        + parent_widget.findChildren(QTreeWidget)
-        + parent_widget.findChildren(QTableWidget)
-    )
-
-    for widget in other_widgets:
-        object_name = widget.objectName()
-        if object_name in all_tooltips:
-            widget.setToolTip(all_tooltips[object_name])
-        elif object_name and _get_contextual_tooltip(object_name):
-            widget.setToolTip(_get_contextual_tooltip(object_name))
+    # Apply tooltips to all supported widget types
+    _apply_tooltips_to_buttons(parent_widget, all_tooltips)
+    _apply_tooltips_to_labels(parent_widget, all_tooltips)
+    _apply_tooltips_to_line_edits(parent_widget, all_tooltips)
+    _apply_tooltips_to_combo_boxes(parent_widget, all_tooltips)
+    _apply_tooltips_to_checkboxes(parent_widget, all_tooltips)
+    _apply_tooltips_to_spinboxes(parent_widget, all_tooltips)
+    _apply_tooltips_to_tab_widgets(parent_widget, all_tooltips)
+    _apply_tooltips_to_other_widgets(parent_widget, all_tooltips)
 
 
 def get_enhanced_tooltip_definitions() -> dict[str, str]:
@@ -445,14 +533,18 @@ def get_enhanced_tooltip_definitions() -> dict[str, str]:
             "and advanced configuration options."
         ),
         # Common UI element tooltips
-        "Binary Path:": ("Full path to the target binary file for analysis.<br>Supports PE (.exe/.dll), ELF, and Mach-O formats."),
+        "Binary Path:": (
+            "Full path to the target binary file for analysis.<br>Supports PE (.exe/.dll), ELF, and Mach-O formats."
+        ),
         "Target Binary:": (
             "Select the executable file you want to analyze.<br>The binary will be loaded but not executed until you choose."
         ),
         "Output Directory:": (
             "Where analysis results and generated files will be saved.<br>Include reports, patches, extracted data, and logs."
         ),
-        "API Key:": ("Authentication key for AI service access.<br>Required for OpenAI, Anthropic, or other AI providers."),
+        "API Key:": (
+            "Authentication key for AI service access.<br>Required for OpenAI, Anthropic, or other AI providers."
+        ),
         "Temperature:": (
             "Controls AI response creativity and randomness.<br>"
             "Lower values (0.1-0.3): More focused and deterministic<br>"
@@ -493,18 +585,32 @@ def get_enhanced_tooltip_definitions() -> dict[str, str]:
         "opacity_slider": "Adjust window transparency",
         "icon_size_combo": "Choose UI icon size",
         # Hint text tooltips
-        "Select a binary file for analysis...": ("Click Browse to choose an executable file.<br>Supported formats: PE, ELF, Mach-O"),
+        "Select a binary file for analysis...": (
+            "Click Browse to choose an executable file.<br>Supported formats: PE, ELF, Mach-O"
+        ),
         "Enter API key...": ("Paste your AI service API key here.<br>Keep this secret and secure!"),
-        "Search files...": ("Enter filename or pattern to search.<br>Supports wildcards like *.exe or *crack*"),
-        "Enter target address...": ("Memory address in hexadecimal format.<br>Example: 0x401000 or 401000"),
-        "Enter shellcode...": ("Raw shellcode bytes in hex format.<br>Example: \\x90\\x90\\xCC or 909090CC"),
+        "Search files...": (
+            "Enter filename or pattern to search.<br>Supports wildcards like *.exe or *crack*"
+        ),
+        "Enter target address...": (
+            "Memory address in hexadecimal format.<br>Example: 0x401000 or 401000"
+        ),
+        "Enter shellcode...": (
+            "Raw shellcode bytes in hex format.<br>Example: \\x90\\x90\\xCC or 909090CC"
+        ),
         # Analysis specific tooltips
         "Include Strings": (
             "Extract and include readable text strings from the binary.<br>Helps identify: URLs, file paths, error messages, debug info."
         ),
-        "Include Imports": ("Analyze imported functions and libraries.<br>Shows what Windows APIs or system functions are used."),
-        "Include Exports": ("Analyze exported functions (for DLLs).<br>Shows what functions this library provides to other programs."),
-        "Include Disassembly": ("Include assembly code in the analysis.<br>WARNING️ Can produce very large outputs for big binaries."),
+        "Include Imports": (
+            "Analyze imported functions and libraries.<br>Shows what Windows APIs or system functions are used."
+        ),
+        "Include Exports": (
+            "Analyze exported functions (for DLLs).<br>Shows what functions this library provides to other programs."
+        ),
+        "Include Disassembly": (
+            "Include assembly code in the analysis.<br>WARNING️ Can produce very large outputs for big binaries."
+        ),
         "Enable GPU": (
             "Use GPU acceleration for analysis tasks.<br>"
             "Significantly faster but requires compatible GPU.<br>"
@@ -515,12 +621,24 @@ def get_enhanced_tooltip_definitions() -> dict[str, str]:
             "Prevents accidental dangerous operations.<br>"
             "Recommended for production environments."
         ),
-        "Auto Analysis": ("Automatically start analysis when binary is selected.<br>Convenient but may slow down file browsing."),
-        "Show Tooltips": ("Display helpful tooltips like this one.<br>Disable to reduce visual clutter."),
-        "Enable Animations": ("Use smooth animations for UI transitions.<br>Disable to improve performance on slower systems."),
-        "Parallel Processing": ("Use multiple CPU cores for analysis tasks.<br>Faster analysis but higher resource usage."),
-        "Auto Cleanup": ("Automatically clean up temporary files and memory.<br>Keeps system clean but may slow down repeated tasks."),
-        "Debug Mode": ("Enable verbose logging and debug features.<br>Useful for troubleshooting but slower performance."),
+        "Auto Analysis": (
+            "Automatically start analysis when binary is selected.<br>Convenient but may slow down file browsing."
+        ),
+        "Show Tooltips": (
+            "Display helpful tooltips like this one.<br>Disable to reduce visual clutter."
+        ),
+        "Enable Animations": (
+            "Use smooth animations for UI transitions.<br>Disable to improve performance on slower systems."
+        ),
+        "Parallel Processing": (
+            "Use multiple CPU cores for analysis tasks.<br>Faster analysis but higher resource usage."
+        ),
+        "Auto Cleanup": (
+            "Automatically clean up temporary files and memory.<br>Keeps system clean but may slow down repeated tasks."
+        ),
+        "Debug Mode": (
+            "Enable verbose logging and debug features.<br>Useful for troubleshooting but slower performance."
+        ),
         "Advanced Features": (
             "Enable sophisticated AI-powered analysis features.<br>Includes neural network predictions and advanced pattern recognition."
         ),

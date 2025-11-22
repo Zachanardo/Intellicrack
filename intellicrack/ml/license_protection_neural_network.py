@@ -27,6 +27,7 @@ from typing import Any
 
 import numpy as np
 
+
 try:
     import torch
     from torch import nn, optim
@@ -117,11 +118,11 @@ class LicenseFeatures:
 
     def to_tensor(self) -> np.ndarray:
         """Convert all features to a single tensor."""
-        all_features = []
-        for _field_name, field_value in self.__dict__.items():
-            if isinstance(field_value, np.ndarray):
-                all_features.append(field_value.flatten())
-
+        all_features = [
+            field_value.flatten()
+            for _field_name, field_value in self.__dict__.items()
+            if isinstance(field_value, np.ndarray)
+        ]
         return np.concatenate(all_features)
 
 
@@ -147,7 +148,12 @@ class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):
         self.bn3 = nn.BatchNorm2d(128)
 
         # Attention mechanism for important features
-        self.attention = nn.Sequential(nn.Conv2d(128, 64, kernel_size=1), nn.ReLU(), nn.Conv2d(64, 128, kernel_size=1), nn.Sigmoid())
+        self.attention = nn.Sequential(
+            nn.Conv2d(128, 64, kernel_size=1),
+            nn.ReLU(),
+            nn.Conv2d(64, 128, kernel_size=1),
+            nn.Sigmoid(),
+        )
 
         # Pooling layers
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
@@ -194,7 +200,9 @@ class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):
             try:
                 state_dict = torch.load(pretrained_path, map_location="cpu")
                 self.load_state_dict(state_dict, strict=False)
-                logging.getLogger(__name__).info(f"Loaded pre-trained weights from {pretrained_path}")
+                logging.getLogger(__name__).info(
+                    f"Loaded pre-trained weights from {pretrained_path}"
+                )
             except Exception as e:
                 logging.getLogger(__name__).warning(f"Could not load pre-trained weights: {e}")
 
@@ -321,9 +329,13 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):
             try:
                 state_dict = torch.load(pretrained_path, map_location="cpu")
                 self.load_state_dict(state_dict, strict=False)
-                logging.getLogger(__name__).info(f"Loaded pre-trained Transformer weights from {pretrained_path}")
+                logging.getLogger(__name__).info(
+                    f"Loaded pre-trained Transformer weights from {pretrained_path}"
+                )
             except Exception as e:
-                logging.getLogger(__name__).warning(f"Could not load pre-trained Transformer weights: {e}")
+                logging.getLogger(__name__).warning(
+                    f"Could not load pre-trained Transformer weights: {e}"
+                )
 
     def save_weights(self, path: str | None = None) -> None:
         """Save model weights for future use."""
@@ -367,9 +379,7 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):
         # Global pooling and classification
         x = x.transpose(1, 2)  # (batch, features, seq_len)
         x = self.global_pool(x).squeeze(-1)  # (batch, features)
-        output = self.classifier(x)
-
-        return output
+        return self.classifier(x)
 
 
 class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
@@ -456,9 +466,13 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
             try:
                 state_dict = torch.load(pretrained_path, map_location="cpu")
                 self.load_state_dict(state_dict, strict=False)
-                logging.getLogger(__name__).info(f"Loaded pre-trained Hybrid model weights from {pretrained_path}")
+                logging.getLogger(__name__).info(
+                    f"Loaded pre-trained Hybrid model weights from {pretrained_path}"
+                )
             except Exception as e:
-                logging.getLogger(__name__).warning(f"Could not load pre-trained Hybrid weights: {e}")
+                logging.getLogger(__name__).warning(
+                    f"Could not load pre-trained Hybrid weights: {e}"
+                )
 
     def save_weights(self, path: str | None = None) -> None:
         """Save model weights for future use."""
@@ -477,7 +491,9 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
 
         """
         # Simplified GNN using standard layers
-        return nn.Sequential(nn.Linear(512, 256), nn.ReLU(), nn.BatchNorm1d(256), nn.Linear(256, 256), nn.ReLU())
+        return nn.Sequential(
+            nn.Linear(512, 256), nn.ReLU(), nn.BatchNorm1d(256), nn.Linear(256, 256), nn.ReLU()
+        )
 
     def forward(
         self,
@@ -511,13 +527,20 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
         complexity = self.complexity_scorer(fused)
         difficulty = self.bypass_difficulty(fused)
 
-        return {"protection_type": protection_type, "version": version, "complexity": complexity, "bypass_difficulty": difficulty}
+        return {
+            "protection_type": protection_type,
+            "version": version,
+            "complexity": complexity,
+            "bypass_difficulty": difficulty,
+        }
 
 
 class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
     """Dataset for license protection training data."""
 
-    def __init__(self, data_path: str, transform: None | object = None, cache_features: bool = True) -> None:
+    def __init__(
+        self, data_path: str, transform: None | object = None, cache_features: bool = True
+    ) -> None:
         """Initialize dataset with protection samples.
 
         Args:
@@ -575,7 +598,13 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
                 if protection_type in [e.value for e in LicenseProtectionType]:
                     # Load all binary files in this directory
                     for file_path in protection_dir.glob("*"):
-                        if file_path.is_file() and file_path.suffix in [".exe", ".dll", ".sys", ".bin", ""]:
+                        if file_path.is_file() and file_path.suffix in [
+                            ".exe",
+                            ".dll",
+                            ".sys",
+                            ".bin",
+                            "",
+                        ]:
                             self.samples.append(file_path)
                             self.labels.append(protection_type)
 
@@ -640,37 +669,41 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
             with open(binary_path, "rb") as f:
                 data = f.read()
 
-            # Use advanced features where available, fallback to simple extraction for others
-            features = LicenseFeatures(
+            return LicenseFeatures(
                 entropy_scores=extractor.calculate_section_entropy(),
                 section_characteristics=self._analyze_sections(data),
-                import_signatures=extractor.extract_api_sequences()[:64],  # Truncate to expected size
+                import_signatures=extractor.extract_api_sequences()[
+                    :64
+                ],  # Truncate to expected size
                 export_signatures=self._extract_exports(data),
                 string_features=extractor.extract_string_features(),
-                opcode_histogram=extractor.extract_opcode_histogram()[:256],  # Truncate to expected size
-                call_graph_features=extractor._cfg_to_vector(extractor.build_control_flow_graph()),
+                opcode_histogram=extractor.extract_opcode_histogram()[
+                    :256
+                ],  # Truncate to expected size
+                call_graph_features=extractor._cfg_to_vector(
+                    extractor.build_control_flow_graph()
+                ),
                 crypto_signatures=self._detect_crypto(data),
                 anti_debug_features=self._detect_anti_debug(data),
                 api_sequence_embedding=self._embed_api_sequences(data),
                 network_signatures=self._analyze_network(data),
                 registry_patterns=self._analyze_registry(data),
                 file_access_patterns=self._analyze_file_access(data),
-                control_flow_complexity=extractor._cfg_to_vector(extractor.build_control_flow_graph())[:8],
+                control_flow_complexity=extractor._cfg_to_vector(
+                    extractor.build_control_flow_graph()
+                )[:8],
                 data_flow_features=self._analyze_data_flow(data),
                 memory_access_patterns=self._analyze_memory(data),
                 timing_patterns=self._analyze_timing(data),
                 hardware_checks=self._detect_hardware_checks(data),
                 virtualization_checks=self._detect_vm_checks(data),
             )
-
-            return features
-
         except ImportError:
             # Fallback to original simple extraction if advanced extractor not available
             with open(binary_path, "rb") as f:
                 data = f.read()
 
-            features = LicenseFeatures(
+            return LicenseFeatures(
                 entropy_scores=self._calculate_entropy(data),
                 section_characteristics=self._analyze_sections(data),
                 import_signatures=self._extract_imports(data),
@@ -692,8 +725,6 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
                 virtualization_checks=self._detect_vm_checks(data),
             )
 
-            return features
-
     def _calculate_entropy(self, data: bytes) -> np.ndarray:
         """Calculate Shannon entropy distribution."""
         if not data:
@@ -704,8 +735,7 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
         entropies = []
 
         for i in range(16):
-            chunk = data[i * chunk_size : (i + 1) * chunk_size]
-            if chunk:
+            if chunk := data[i * chunk_size : (i + 1) * chunk_size]:
                 # Calculate byte frequency
                 byte_counts = np.bincount(np.frombuffer(chunk, dtype=np.uint8), minlength=256)
                 probabilities = byte_counts / len(chunk)
@@ -728,7 +758,9 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
                 # Extract section information
                 num_sections_offset = pe_offset + 6
                 if len(data) > num_sections_offset + 2:
-                    num_sections = struct.unpack("<H", data[num_sections_offset : num_sections_offset + 2])[0]
+                    num_sections = struct.unpack(
+                        "<H", data[num_sections_offset : num_sections_offset + 2]
+                    )[0]
                     features[0] = min(num_sections, 20) / 20.0  # Normalize
 
                     # Section header analysis
@@ -737,8 +769,12 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
                         section_offset = section_table_offset + (i * 40)
                         if len(data) > section_offset + 40:
                             # Extract section characteristics
-                            characteristics = struct.unpack("<I", data[section_offset + 36 : section_offset + 40])[0]
-                            features[i + 1] = (characteristics & 0xE0000000) / 0xE0000000  # Normalize flags
+                            characteristics = struct.unpack(
+                                "<I", data[section_offset + 36 : section_offset + 40]
+                            )[0]
+                            features[i + 1] = (
+                                characteristics & 0xE0000000
+                            ) / 0xE0000000  # Normalize flags
 
         return features
 
@@ -809,7 +845,7 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
             histogram[byte] += 1
 
         # Normalize
-        if len(data) > 0:
+        if data:
             histogram = histogram / len(data)
 
         return histogram
@@ -941,7 +977,13 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
         features = np.zeros(16, dtype=np.float32)
 
         # Registry APIs
-        reg_apis = [b"RegOpenKey", b"RegCreateKey", b"RegSetValue", b"RegQueryValue", b"RegDeleteKey"]
+        reg_apis = [
+            b"RegOpenKey",
+            b"RegCreateKey",
+            b"RegSetValue",
+            b"RegQueryValue",
+            b"RegDeleteKey",
+        ]
 
         for i, api in enumerate(reg_apis):
             if api in data:
@@ -979,7 +1021,12 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
         features = np.zeros(8, dtype=np.float32)
 
         # Timing APIs
-        timing_apis = [b"GetTickCount", b"QueryPerformanceCounter", b"GetSystemTime", b"timeGetTime"]
+        timing_apis = [
+            b"GetTickCount",
+            b"QueryPerformanceCounter",
+            b"GetSystemTime",
+            b"timeGetTime",
+        ]
 
         for i, api in enumerate(timing_apis):
             if api in data:
@@ -992,7 +1039,13 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
         features = np.zeros(16, dtype=np.float32)
 
         # Hardware APIs
-        hw_apis = [b"GetVolumeInformation", b"GetSystemInfo", b"cpuid", b"GetComputerName", b"GetAdaptersInfo"]
+        hw_apis = [
+            b"GetVolumeInformation",
+            b"GetSystemInfo",
+            b"cpuid",
+            b"GetComputerName",
+            b"GetAdaptersInfo",
+        ]
 
         for i, api in enumerate(hw_apis):
             if api in data:
@@ -1055,38 +1108,40 @@ class ProtectionLoss(nn.Module if TORCH_AVAILABLE else object):
             Computed loss value.
 
         """
-        if isinstance(outputs, dict):
-            # Multi-task learning
-            total_loss = 0.0
+        if not isinstance(outputs, dict):
+            # Single task - use focal loss
+            return self.focal_loss(outputs, targets)
+        # Multi-task learning
+        total_loss = 0.0
 
-            # Main classification loss
-            if "protection_type" in outputs:
-                class_loss = self.focal_loss(outputs["protection_type"], targets)
-                total_loss += class_loss
+        # Main classification loss
+        if "protection_type" in outputs:
+            class_loss = self.focal_loss(outputs["protection_type"], targets)
+            total_loss += class_loss
 
-            # Version regression loss
-            if "version" in outputs:
-                version_loss = functional.mse_loss(outputs["version"], targets.float() * 0.1)
-                total_loss += 0.1 * version_loss
+        # Version regression loss
+        if "version" in outputs:
+            version_loss = functional.mse_loss(outputs["version"], targets.float() * 0.1)
+            total_loss += 0.1 * version_loss
 
-            # Complexity scoring loss
-            if "complexity" in outputs:
-                complexity_loss = functional.mse_loss(outputs["complexity"], targets.float() * 0.05)
-                total_loss += 0.05 * complexity_loss
+        # Complexity scoring loss
+        if "complexity" in outputs:
+            complexity_loss = functional.mse_loss(outputs["complexity"], targets.float() * 0.05)
+            total_loss += 0.05 * complexity_loss
 
-            # Bypass difficulty loss
-            if "bypass_difficulty" in outputs:
-                difficulty_loss = functional.cross_entropy(outputs["bypass_difficulty"], torch.clamp(targets // 4, 0, 4))
-                total_loss += 0.1 * difficulty_loss
+        # Bypass difficulty loss
+        if "bypass_difficulty" in outputs:
+            difficulty_loss = functional.cross_entropy(
+                outputs["bypass_difficulty"], torch.clamp(targets // 4, 0, 4)
+            )
+            total_loss += 0.1 * difficulty_loss
 
-            # Center loss for feature clustering
-            if features is not None:
-                center_loss = self.compute_center_loss(features, targets)
-                total_loss += self.center_loss_weight * center_loss
+        # Center loss for feature clustering
+        if features is not None:
+            center_loss = self.compute_center_loss(features, targets)
+            total_loss += self.center_loss_weight * center_loss
 
-            return total_loss
-        # Single task - use focal loss
-        return self.focal_loss(outputs, targets)
+        return total_loss
 
     def focal_loss(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """Compute focal loss for addressing class imbalance.
@@ -1121,10 +1176,7 @@ class ProtectionLoss(nn.Module if TORCH_AVAILABLE else object):
         # Get centers for each target class
         centers_batch = self.centers.index_select(0, targets.long())
 
-        # Compute L2 distance
-        center_loss = functional.mse_loss(features, centers_batch)
-
-        return center_loss
+        return functional.mse_loss(features, centers_batch)
 
 
 class LicenseProtectionTrainer:
@@ -1162,7 +1214,13 @@ class LicenseProtectionTrainer:
 
         if TORCH_AVAILABLE:
             # Use AdamW with better hyperparameters
-            self.optimizer = optim.AdamW(self.model.parameters(), lr=self.learning_rate, weight_decay=0.01, betas=(0.9, 0.999), eps=1e-8)
+            self.optimizer = optim.AdamW(
+                self.model.parameters(),
+                lr=self.learning_rate,
+                weight_decay=0.01,
+                betas=(0.9, 0.999),
+                eps=1e-8,
+            )
 
             # OneCycleLR scheduler for better convergence
             self.scheduler = optim.lr_scheduler.OneCycleLR(
@@ -1175,10 +1233,17 @@ class LicenseProtectionTrainer:
             )
 
             # Use custom loss function
-            self.criterion = ProtectionLoss(num_classes=len(LicenseProtectionType), class_weights=class_weights)
+            self.criterion = ProtectionLoss(
+                num_classes=len(LicenseProtectionType), class_weights=class_weights
+            )
 
         # Training history
-        self.history: dict[str, list[float]] = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": []}
+        self.history: dict[str, list[float]] = {
+            "train_loss": [],
+            "train_acc": [],
+            "val_loss": [],
+            "val_acc": [],
+        }
 
     def train_epoch(self, dataloader: DataLoader) -> tuple[float, float]:
         """Train for one epoch.
@@ -1198,7 +1263,7 @@ class LicenseProtectionTrainer:
         correct = 0
         total = 0
 
-        for _batch_idx, (features, labels) in enumerate(dataloader):
+        for features, labels in dataloader:
             features = features.to(self.device)
             labels = labels.to(self.device)
 
@@ -1312,7 +1377,9 @@ class LicenseProtectionTrainer:
                     f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%",
                 )
             else:
-                self.logger.info(f"Epoch {epoch + 1}/{self.num_epochs} - Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%")
+                self.logger.info(
+                    f"Epoch {epoch + 1}/{self.num_epochs} - Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%"
+                )
 
             # Learning rate scheduling
             self.scheduler.step()
@@ -1334,7 +1401,9 @@ class LicenseProtectionTrainer:
         # Get model architecture info
         model_info = {
             "model_class": self.model.__class__.__name__,
-            "input_size": getattr(self.model, "input_size", 4096) if hasattr(self.model, "input_size") else 4096,
+            "input_size": getattr(self.model, "input_size", 4096)
+            if hasattr(self.model, "input_size")
+            else 4096,
             "num_classes": len(LicenseProtectionType),
             "device": self.device,
         }
@@ -1378,7 +1447,7 @@ class LicenseProtectionTrainer:
 
             # Validate checkpoint structure
             required_keys = ["model_state_dict", "optimizer_state_dict"]
-            if not all(key in checkpoint for key in required_keys):
+            if any(key not in checkpoint for key in required_keys):
                 self.logger.error(f"Invalid checkpoint format in {filepath}")
                 return False
 
@@ -1397,8 +1466,12 @@ class LicenseProtectionTrainer:
             # Log model info if present
             if "model_info" in checkpoint:
                 info = checkpoint["model_info"]
-                self.logger.info(f"Loaded {info.get('model_class', 'Unknown')} model from epoch {checkpoint.get('epoch', 0)}")
-                self.logger.info(f"Best validation accuracy: {checkpoint.get('best_val_acc', 0.0):.2f}%")
+                self.logger.info(
+                    f"Loaded {info.get('model_class', 'Unknown')} model from epoch {checkpoint.get('epoch', 0)}"
+                )
+                self.logger.info(
+                    f"Best validation accuracy: {checkpoint.get('best_val_acc', 0.0):.2f}%"
+                )
 
             self.logger.info(f"Checkpoint loaded successfully from {filepath}")
             return True
@@ -1471,16 +1544,20 @@ class LicenseProtectionPredictor:
         protection_idx = protection_probs.argmax(dim=1).item()
         protection_type = list(LicenseProtectionType)[protection_idx]
 
-        result = {
+        return {
             "protection_type": protection_type.value,
             "confidence": protection_probs.max().item(),
             "version": outputs["version"].item(),
             "complexity": outputs["complexity"].item(),
-            "bypass_difficulty": outputs["bypass_difficulty"].argmax(dim=1).item() + 1,
-            "all_probabilities": {t.value: prob.item() for t, prob in zip(LicenseProtectionType, protection_probs[0], strict=False)},
+            "bypass_difficulty": outputs["bypass_difficulty"].argmax(dim=1).item()
+            + 1,
+            "all_probabilities": {
+                t.value: prob.item()
+                for t, prob in zip(
+                    LicenseProtectionType, protection_probs[0], strict=False
+                )
+            },
         }
-
-        return result
 
     def _extract_features(self, binary_path: str) -> dict[str, np.ndarray]:
         """Extract multi-modal features from binary."""
@@ -1501,8 +1578,7 @@ class LicenseProtectionPredictor:
         # Entropy distribution
         chunk_size = max(1, len(data) // 64)
         for i in range(64):
-            chunk = data[i * chunk_size : (i + 1) * chunk_size]
-            if chunk:
+            if chunk := data[i * chunk_size : (i + 1) * chunk_size]:
                 byte_counts = np.bincount(np.frombuffer(chunk, dtype=np.uint8), minlength=256)
                 probs = byte_counts / len(chunk)
                 entropy = -np.sum(probs * np.log2(probs + 1e-10))
@@ -1543,16 +1619,12 @@ class LicenseProtectionPredictor:
 
     def _extract_graph_features(self, data: bytes) -> np.ndarray:
         """Extract control flow graph features."""
-        # Simplified CFG feature extraction
-        features = []
-
         # Count different types of control flow instructions
         jmp_count = data.count(b"\xe9") + data.count(b"\xeb")
         call_count = data.count(b"\xe8")
         ret_count = data.count(b"\xc3") + data.count(b"\xc2")
 
-        features.extend([jmp_count, call_count, ret_count])
-
+        features = [jmp_count, call_count, ret_count]
         # Pad to expected size
         while len(features) < 512:
             features.append(0.0)
@@ -1650,9 +1722,21 @@ def create_dataloaders(
         drop_last=True,
     )
 
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=pin_memory)
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=pin_memory,
+    )
 
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=pin_memory)
+    test_loader = DataLoader(
+        test_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=pin_memory,
+    )
 
     return train_loader, val_loader, test_loader
 
@@ -1680,10 +1764,10 @@ def train_license_model(
     # Create model based on type
     if model_type == "cnn":
         model = LicenseProtectionCNN()
-    elif model_type == "transformer":
-        model = LicenseProtectionTransformer()
     elif model_type == "hybrid":
         model = HybridLicenseAnalyzer()
+    elif model_type == "transformer":
+        model = LicenseProtectionTransformer()
     else:
         raise ValueError(f"Unknown model type: {model_type}")
 
@@ -1737,23 +1821,38 @@ def train_license_model(
     save_path.parent.mkdir(parents=True, exist_ok=True)
     trainer.save_checkpoint(str(save_path))
 
-    # Return training results
-    results = {
+    return {
         "model_type": model_type,
-        "final_train_loss": trainer.history["train_loss"][-1] if trainer.history["train_loss"] else None,
-        "final_train_acc": trainer.history["train_acc"][-1] if trainer.history["train_acc"] else None,
-        "final_val_loss": trainer.history["val_loss"][-1] if trainer.history["val_loss"] else None,
-        "final_val_acc": trainer.history["val_acc"][-1] if trainer.history["val_acc"] else None,
+        "final_train_loss": (
+            trainer.history["train_loss"][-1]
+            if trainer.history["train_loss"]
+            else None
+        ),
+        "final_train_acc": (
+            trainer.history["train_acc"][-1]
+            if trainer.history["train_acc"]
+            else None
+        ),
+        "final_val_loss": (
+            trainer.history["val_loss"][-1]
+            if trainer.history["val_loss"]
+            else None
+        ),
+        "final_val_acc": (
+            trainer.history["val_acc"][-1]
+            if trainer.history["val_acc"]
+            else None
+        ),
         "test_loss": test_loss,
         "test_acc": test_acc,
         "model_path": str(save_path),
         "history": trainer.history,
     }
 
-    return results
 
-
-def evaluate_model(model_path: str, test_data_path: str, batch_size: int = 32, device: str | None = None) -> dict[str, Any]:
+def evaluate_model(
+    model_path: str, test_data_path: str, batch_size: int = 32, device: str | None = None
+) -> dict[str, Any]:
     """Evaluate a trained model on test data."""
     if not TORCH_AVAILABLE:
         raise ImportError("PyTorch not available for evaluation")
@@ -1820,13 +1919,14 @@ def evaluate_model(model_path: str, test_data_path: str, batch_size: int = 32, d
     # Calculate metrics
     overall_accuracy = 100.0 * correct / total
 
-    per_class_accuracy = {}
-    for cls in LicenseProtectionType:
-        if class_total[cls] > 0:
-            per_class_accuracy[cls.value] = 100.0 * class_correct[cls] / class_total[cls]
-        else:
-            per_class_accuracy[cls.value] = 0.0
-
+    per_class_accuracy = {
+        cls.value: (
+            100.0 * class_correct[cls] / class_total[cls]
+            if class_total[cls] > 0
+            else 0.0
+        )
+        for cls in LicenseProtectionType
+    }
     results = {
         "overall_accuracy": overall_accuracy,
         "per_class_accuracy": per_class_accuracy,

@@ -49,6 +49,7 @@ from ...tools.plugin_ci_cd import CICDPipeline, GitHubActionsGenerator
 from ..icon_manager import set_button_icon
 from .plugin_dialog_base import PluginDialogBase
 
+
 """
 CI/CD Pipeline Dialog for Intellicrack plugins.
 
@@ -631,7 +632,9 @@ class CICDDialog(PluginDialogBase):
 
         # Clear console
         self.console_output.clear()
-        self.console_output.append(f" Starting CI/CD pipeline for {os.path.basename(self.plugin_path)}\n")
+        self.console_output.append(
+            f" Starting CI/CD pipeline for {os.path.basename(self.plugin_path)}\n"
+        )
 
         # Reset stage widgets
         for stage_widget in self.stage_widgets.values():
@@ -701,7 +704,8 @@ class CICDDialog(PluginDialogBase):
                 widget.setObjectName("pipelineStageError")
 
         # Update progress
-        completed = sum(1 for w in self.stage_widgets.values() if w.status_label.text() in ["OK", "ERROR"])
+        completed = sum(bool(w.status_label.text() in ["OK", "ERROR"])
+                    for w in self.stage_widgets.values())
         self.progress_bar.setValue(completed)
 
         # Log errors

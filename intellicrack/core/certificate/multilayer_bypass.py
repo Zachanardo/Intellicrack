@@ -110,6 +110,7 @@ from intellicrack.core.certificate.layer_detector import DependencyGraph, LayerI
 from intellicrack.core.certificate.patch_templates import select_template
 from intellicrack.core.certificate.validation_detector import CertificateValidationDetector
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -196,7 +197,10 @@ class MultiLayerBypass:
             logger.info(f"Stage {stage_number}: Bypassing {layer_type.value}")
 
             stage_result = self._execute_stage_bypass(
-                stage_number, layer_type, layer_info, target,
+                stage_number,
+                layer_type,
+                layer_info,
+                target,
             )
             result.add_stage_result(stage_result)
 
@@ -256,9 +260,9 @@ class MultiLayerBypass:
             detection_report = self._detector.detect_certificate_validation(target)
 
             os_level_functions = [
-                func for func in detection_report.validation_functions
-                if any(dll in func.library.lower()
-                       for dll in ["crypt32", "sspicli", "schannel"])
+                func
+                for func in detection_report.validation_functions
+                if any(dll in func.library.lower() for dll in ["crypt32", "sspicli", "schannel"])
             ]
 
             if not os_level_functions:
@@ -272,8 +276,7 @@ class MultiLayerBypass:
 
             bypassed = []
             for func in os_level_functions[:5]:
-                template = select_template(func.api_name, "x64")
-                if template:
+                if template := select_template(func.api_name, "x64"):
                     try:
                         patch_result = self._patcher.patch_certificate_validation(
                             detection_report,
@@ -285,9 +288,8 @@ class MultiLayerBypass:
 
             if not bypassed:
                 try:
-                    if self._frida_hooks.attach(target):
-                        if self._frida_hooks.inject_specific_bypass("cryptoapi"):
-                            bypassed.append("Frida: CryptoAPI hooks")
+                    if self._frida_hooks.attach(target) and self._frida_hooks.inject_specific_bypass("cryptoapi"):
+                        bypassed.append("Frida: CryptoAPI hooks")
                 except Exception as e:
                     logger.error(f"Frida hook injection failed: {e}")
 
@@ -321,9 +323,9 @@ class MultiLayerBypass:
             detection_report = self._detector.detect_certificate_validation(target)
 
             library_functions = [
-                func for func in detection_report.validation_functions
-                if any(lib in func.library.lower()
-                       for lib in ["ssl", "tls", "nss", "boring"])
+                func
+                for func in detection_report.validation_functions
+                if any(lib in func.library.lower() for lib in ["ssl", "tls", "nss", "boring"])
             ]
 
             if not library_functions:
@@ -348,8 +350,7 @@ class MultiLayerBypass:
                 logger.warning(f"Frida injection failed, trying binary patching: {e}")
 
                 for func in library_functions[:3]:
-                    template = select_template(func.api_name, "x64")
-                    if template:
+                    if template := select_template(func.api_name, "x64"):
                         try:
                             patch_result = self._patcher.patch_certificate_validation(
                                 detection_report,
@@ -404,8 +405,7 @@ class MultiLayerBypass:
                 detection_report = self._detector.detect_certificate_validation(target)
 
                 app_functions = [
-                    func for func in detection_report.validation_functions
-                    if func.confidence > 0.6
+                    func for func in detection_report.validation_functions if func.confidence > 0.6
                 ]
 
                 for func in app_functions[:5]:
@@ -452,9 +452,8 @@ class MultiLayerBypass:
                     status = self._frida_hooks.get_bypass_status()
 
                     detected_libs = status.get("detected_libraries", [])
-                    if "winhttp" in [lib.lower() for lib in detected_libs]:
-                        if self._frida_hooks.inject_specific_bypass("winhttp"):
-                            bypassed.append("Frida: WinHTTP bypass")
+                    if "winhttp" in [lib.lower() for lib in detected_libs] and self._frida_hooks.inject_specific_bypass("winhttp"):
+                        bypassed.append("Frida: WinHTTP bypass")
 
             except Exception as e:
                 logger.warning(f"Server-level Frida bypass failed: {e}")
@@ -469,10 +468,7 @@ class MultiLayerBypass:
                 layer=layer,
                 success=len(bypassed) > 0,
                 bypassed_functions=bypassed,
-                error_message=(
-                    "Server validation requires MITM proxy"
-                    if not bypassed else None
-                ),
+                error_message=(None if bypassed else "Server validation requires MITM proxy"),
             )
 
         except Exception as e:
@@ -493,11 +489,7 @@ class MultiLayerBypass:
         """Check if all dependencies for a layer have been successfully bypassed."""
         dependencies = dependency_graph.get_dependencies(layer)
 
-        for dependency in dependencies:
-            if dependency not in result.bypassed_layers:
-                return False
-
-        return True
+        return all(dependency in result.bypassed_layers for dependency in dependencies)
 
     def _verify_layer_bypassed(self, layer: ValidationLayer, target: str) -> bool:
         """Verify that a layer has been successfully bypassed.
@@ -528,7 +520,7 @@ class MultiLayerBypass:
     def _verify_os_level_bypass(self, target: str) -> bool:
         """Verify OS-level bypass is working."""
         try:
-            if hasattr(self._frida_hooks, '_script') and self._frida_hooks._script:
+            if hasattr(self._frida_hooks, "_script") and self._frida_hooks._script:
                 status = self._frida_hooks.get_bypass_status()
                 return status.get("cryptoapi_bypassed", False)
             return True
@@ -539,12 +531,12 @@ class MultiLayerBypass:
     def _verify_library_level_bypass(self, target: str) -> bool:
         """Verify library-level bypass is working."""
         try:
-            if hasattr(self._frida_hooks, '_script') and self._frida_hooks._script:
+            if hasattr(self._frida_hooks, "_script") and self._frida_hooks._script:
                 status = self._frida_hooks.get_bypass_status()
                 return (
-                    status.get("openssl_bypassed", False) or
-                    status.get("nss_bypassed", False) or
-                    status.get("boringssl_bypassed", False)
+                    status.get("openssl_bypassed", False)
+                    or status.get("nss_bypassed", False)
+                    or status.get("boringssl_bypassed", False)
                 )
             return True
         except Exception as e:
@@ -554,7 +546,7 @@ class MultiLayerBypass:
     def _verify_application_level_bypass(self, target: str) -> bool:
         """Verify application-level bypass is working."""
         try:
-            if hasattr(self._frida_hooks, '_script') and self._frida_hooks._script:
+            if hasattr(self._frida_hooks, "_script") and self._frida_hooks._script:
                 status = self._frida_hooks.get_bypass_status()
                 return status.get("pinning_bypassed", False)
             return True
@@ -565,7 +557,7 @@ class MultiLayerBypass:
     def _verify_server_level_bypass(self, target: str) -> bool:
         """Verify server-level bypass is working."""
         try:
-            if hasattr(self._frida_hooks, '_script') and self._frida_hooks._script:
+            if hasattr(self._frida_hooks, "_script") and self._frida_hooks._script:
                 status = self._frida_hooks.get_bypass_status()
                 return status.get("winhttp_bypassed", False)
             return True
@@ -578,7 +570,7 @@ class MultiLayerBypass:
         logger.warning("Rolling back previous bypass stages due to failure")
 
         try:
-            if hasattr(self._frida_hooks, '_session') and self._frida_hooks._session:
+            if hasattr(self._frida_hooks, "_session") and self._frida_hooks._session:
                 self._frida_hooks.detach()
                 logger.info("Detached Frida hooks")
         except Exception as e:
@@ -593,7 +585,7 @@ class MultiLayerBypass:
     def cleanup(self) -> None:
         """Clean up resources used by the bypass."""
         try:
-            if hasattr(self._frida_hooks, '_session') and self._frida_hooks._session:
+            if hasattr(self._frida_hooks, "_session") and self._frida_hooks._session:
                 self._frida_hooks.detach()
         except Exception as e:
             logger.error(f"Cleanup failed: {e}")

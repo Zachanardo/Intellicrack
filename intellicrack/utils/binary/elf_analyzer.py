@@ -12,6 +12,7 @@ import struct
 from pathlib import Path
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -308,18 +309,16 @@ class ELFAnalyzer:
         num_symbols = size // entsize
         fmt_prefix = "<" if self.endian == "little" else ">"
 
-        if self.is_64bit:
-            symbol_fmt = f"{fmt_prefix}IBBHQQ"
-        else:
-            symbol_fmt = f"{fmt_prefix}IIIBBH"
-
+        symbol_fmt = f"{fmt_prefix}IBBHQQ" if self.is_64bit else f"{fmt_prefix}IIIBBH"
         for i in range(num_symbols):
             try:
                 sym_offset = offset + i * entsize
                 if sym_offset + entsize > len(self.data):
                     break
 
-                symbol_data = struct.unpack(symbol_fmt, self.data[sym_offset : sym_offset + entsize])
+                symbol_data = struct.unpack(
+                    symbol_fmt, self.data[sym_offset : sym_offset + entsize]
+                )
 
                 if self.is_64bit:
                     symbol = {
@@ -353,7 +352,14 @@ class ELFAnalyzer:
             Dictionary containing security feature analysis
 
         """
-        features = {"nx_bit": False, "stack_canary": False, "pie": False, "relro": False, "fortify": False, "stripped": True}
+        features = {
+            "nx_bit": False,
+            "stack_canary": False,
+            "pie": False,
+            "relro": False,
+            "fortify": False,
+            "stripped": True,
+        }
 
         if not self.header:
             return features
@@ -426,7 +432,7 @@ class ELFAnalyzer:
         if not self.load_binary():
             return {"error": "Failed to load binary"}
 
-        analysis = {
+        return {
             "file_path": str(self.file_path),
             "header": self.header,
             "architecture": self._get_architecture(),
@@ -436,8 +442,6 @@ class ELFAnalyzer:
             "security_features": self.get_security_features(),
             "file_size": len(self.data) if self.data else 0,
         }
-
-        return analysis
 
     def _get_architecture(self) -> str:
         """Get human-readable architecture string.
@@ -450,7 +454,12 @@ class ELFAnalyzer:
             return "unknown"
 
         machine = self.header["e_machine"]
-        arch_map = {self.EM_386: "x86", self.EM_X86_64: "x86_64", self.EM_ARM: "ARM", self.EM_AARCH64: "AArch64"}
+        arch_map = {
+            self.EM_386: "x86",
+            self.EM_X86_64: "x86_64",
+            self.EM_ARM: "ARM",
+            self.EM_AARCH64: "AArch64",
+        }
 
         arch = arch_map.get(machine, f"unknown_{machine}")
         bits = "64" if self.is_64bit else "32"

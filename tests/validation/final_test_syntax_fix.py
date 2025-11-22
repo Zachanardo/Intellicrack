@@ -22,7 +22,7 @@ def fix_syntax_errors():
     if cfi_test.exists():
         print(f"Fixing: {cfi_test.name}")
 
-        with open(cfi_test, 'r', encoding='utf-8') as f:
+        with open(cfi_test, encoding='utf-8') as f:
             lines = f.readlines()
 
         # Fix misplaced assert statements
@@ -48,7 +48,7 @@ def fix_syntax_errors():
     if dep_test.exists():
         print(f"Fixing: {dep_test.name}")
 
-        with open(dep_test, 'r', encoding='utf-8') as f:
+        with open(dep_test, encoding='utf-8') as f:
             content = f.read()
 
         # Fix the broken analyzer line
@@ -68,7 +68,7 @@ def fix_syntax_errors():
     if aslr_test.exists():
         print(f"Fixing: {aslr_test.name}")
 
-        with open(aslr_test, 'r', encoding='utf-8') as f:
+        with open(aslr_test, encoding='utf-8') as f:
             lines = f.readlines()
 
         fixed_lines = []

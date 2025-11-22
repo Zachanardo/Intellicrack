@@ -90,10 +90,6 @@ dependencies = [
   "fastapi>=0.120.4,<0.122",
   "httpie>=3.2.4,<4",
 
-  # ML Frameworks
-  "torch",
-  "torchvision",
-  "torchaudio",
   "dpctl",
   "pyopencl>=2025.2.6,<2026",
   "tensorflow>=2.20.0,<3",
@@ -327,6 +323,7 @@ dependencies = [
   "pytest-deadfixtures",
   "mypy>=1.18.2,<2",
   "pyright>=1.1.406,<2",
+  "ty",
   "mccabe>=0.7.0,<0.8",
   "xenon>=0.9.3,<0.10",
   "safety>=3.6.2,<4",
@@ -751,14 +748,14 @@ exclude = [
   "CLI Coding",
   "Screenshots",
 ]
-typeCheckingMode = "off"
+typeCheckingMode = "standard"
 pythonVersion = "3.12"
-reportMissingImports = "none"
+reportMissingImports = "warning"
 reportMissingTypeStubs = false
 reportUnknownMemberType = false
-reportUnknownArgumentType = false
-reportUnknownVariableType = false
-reportUnknownParameterType = false
+reportUnknownArgumentType = "warning"
+reportUnknownVariableType = "warning"
+reportUnknownParameterType = "warning"
 useLibraryCodeForTypes = true
 analyzeUnannotatedFunctions = true
 enableTypeIgnoreComments = true
@@ -936,62 +933,81 @@ exclude = [
 
 [tool.ruff.lint]
 select = [
-  "E",
-  "W",
-  "F",
-  "I",
-  "C90",
-  "N",
-  "B",
-  "S",
-  "D",
-  "UP",
-  "YTT",
-  "ANN",
-  "ASYNC",
-  "BLE",
-  "FBT",
-  "A",
-  "COM",
-  "C4",
-  "DTZ",
-  "T10",
-  "EM",
-  "EXE",
-  "FA",
-  "ISC",
-  "ICN",
-  "G",
-  "INP",
-  "PIE",
-  "T20",
-  "PYI",
-  "PT",
-  "Q",
-  "RSE",
-  "RET",
-  "SLF",
-  "SLOT",
-  "SIM",
-  "TID",
-  "TCH",
-  "INT",
-  "ARG",
-  "PTH",
-  "TD",
-  "FIX",
-  "ERA",
-  "PD",
-  "PGH",
-  "PL",
-  "TRY",
-  "FLY",
-  "NPY",
-  "AIR",
-  "PERF",
-  "FURB",
-  "LOG",
-  "RUF",
+  # pycodestyle (E/W) - replaces pycodestyle
+  "E",   # pycodestyle errors
+  "W",   # pycodestyle warnings
+
+  # Pyflakes (F) - replaces pyflakes
+  "F",   # pyflakes
+
+  # isort (I) - replaces isort
+  "I",   # isort
+
+  # mccabe (C90) - replaces mccabe
+  "C9",  # mccabe complexity checker
+
+  # pep8-naming (N) - replaces pep8-naming
+  "N",   # pep8-naming
+
+  # flake8-builtins (A) - replaces flake8-builtins
+  "A",   # flake8-builtins
+
+  # flake8-comprehensions (C4) - replaces flake8-comprehensions
+  "C4",  # flake8-comprehensions
+
+  # flake8-bugbear (B) - replaces flake8-bugbear
+  "B",   # flake8-bugbear
+
+  # flake8-simplify (SIM) - replaces flake8-simplify
+  "SIM", # flake8-simplify
+
+  # pyupgrade (UP) - replaces pyupgrade
+  "UP",  # pyupgrade
+
+  # flake8-import-conventions (ICN)
+  "ICN", # flake8-import-conventions
+
+  # flake8-print (T20)
+  "T20", # flake8-print
+
+  # flake8-quotes (Q)
+  "Q",   # flake8-quotes
+
+  # flake8-boolean-trap (FBT)
+  "FBT", # flake8-boolean-trap
+
+  # flake8-unused-arguments (ARG)
+  "ARG", # flake8-unused-arguments
+
+  # flake8-implicit-str-concat (ISC)
+  "ISC", # flake8-implicit-str-concat
+
+  # flake8-get-type-plugin (G)
+  "G",   # flake8-get-type-plugin
+
+  # flake8-type-checking (TC)
+  "TC",  # flake8-type-checking
+
+  # flake8-return (RET)
+  "RET", # flake8-return
+
+  # pylint (PL) - replaces pylint
+  "PL",  # pylint (with extensions)
+
+  # tryceratops (TRY) - for exception handling
+  "TRY", # tryceratops
+
+  # Ruff-specific rules (RUF)
+  "RUF", # ruff-specific
+
+  # Perflint (PERF) - replaces some performance checking tools
+  "PERF", # perflint
+
+  # pydocstyle (D) - replaces pydocstyle
+  "D",   # pydocstyle
+
+  # Security (S) - replaces bandit
+  "S",   # Bandit security checks
 ]
 
 # Rules that should NEVER be auto-fixed (will break code)
@@ -1018,6 +1034,7 @@ unfixable = [
 ignore = [
   # Code formatting (handled by formatter)
   "E501",   # line-too-long - handled by black/formatter
+  "RUF022", # unsorted-dunder-all - sorting breaks initialization order
 
   # CLI output (user-facing)
   "T201",   # print() - CLI tool needs output
@@ -1080,19 +1097,149 @@ ignore = [
   # Loop variable style
   "PLW2901", # redefined-loop-name
 
+  # Complexity rules (function design preferences)
+  "PLR0911", # too-many-return-statements
+  "PLR0912", # too-many-branches
+  "PLR0913", # too-many-arguments
+  "PLR0915", # too-many-statements
+
   # Conflicting docstring rules (keep D211/D212, ignore D203/D213)
   "D203", # incorrect-blank-line-before-class (conflicts with D211)
   "D213", # multi-line-summary-second-line (conflicts with D212)
 ]
 
+# Allow autofix for all enabled rules (when safe).
+fixable = ["ALL"]
+
+# Allow unused variables when they start with underscore
+dummy-variable-rgx = "^(_+|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
 [tool.ruff.lint.mccabe]
 max-complexity = 30
 
-[tool.ruff.lint.pep8-naming]
-classmethod-decorators = ["classmethod", "pydantic.validator"]
+[tool.ruff.lint.pydocstyle]
+# Use Google-style docstrings to match your project preference
+convention = "google"
 
-[tool.ruff.lint.flake8-bugbear]
-extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
+[tool.ruff.lint.pylint]
+# Increase the maximum number of arguments for functions and methods
+max-args = 20
+# Increase the maximum number of branches in a function
+max-branches = 25
+# Increase the maximum number of statements in a function
+max-statements = 100
+# Maximum number of public methods for a class
+max-public-methods = 30
+# Maximum number of boolean expressions in an if statement
+max-bool-expr = 10
+
+[tool.ruff.lint.isort]
+# Import formatting options to match your project
+lines-after-imports = 2
+force-wrap-aliases = true
+combine-as-imports = true
+split-on-trailing-comma = false
+known-first-party = ["intellicrack"]
+known-third-party = ["angr", "claripy", "capstone", "pyqt6", "requests", "numpy", "scipy", "pandas", "matplotlib", "aiohttp"]
+
+[tool.ruff.lint.flake8-builtins]
+builtins-ignorelist = [
+  "id",
+  "type",
+  "file",
+  "help",
+  "all",
+  "dir",
+  "format",
+  "globals",
+  "hash",
+  "input",
+  "len",
+  "list",
+  "max",
+  "min",
+  "next",
+  "object",
+  "open",
+  "ord",
+  "pow",
+  "set",
+  "str",
+  "sum",
+  "vars",
+  "zip",
+  "bytes",
+  "classmethod",
+  "property",
+  "staticmethod",
+  "super",
+  "tuple",
+  "frozenset",
+  "int",
+  "float",
+  "bool",
+  "complex",
+  "dict",
+  "range",
+  "slice",
+  "bytes",
+  "bytearray",
+  "memoryview",
+  "slice",
+  "type",
+  "object",
+  "Exception",
+  "ValueError",
+  "TypeError",
+  "AttributeError",
+  "KeyError",
+  "IndexError",
+  "StopIteration",
+  "StopAsyncIteration",
+  "NotImplemented",
+  "NotImplementedError",
+  "SyntaxError",
+  "RuntimeError",
+  "NameError",
+  "ImportError",
+  "LookupError",
+  "FloatingPointError",
+  "OverflowError",
+  "ZeroDivisionError",
+  "AssertionError",
+  "EOFError",
+  "IOError",
+  "OSError",
+  "EnvironmentError",
+  "UnboundLocalError",
+  "ReferenceError",
+  "SystemError",
+  "SystemExit",
+  "KeyboardInterrupt",
+  "GeneratorExit",
+  "StopIteration",
+  "StopAsyncIteration",
+  "Warning",
+  "UserWarning",
+  "DeprecationWarning",
+  "PendingDeprecationWarning",
+  "SyntaxWarning",
+  "RuntimeWarning",
+  "FutureWarning",
+  "ImportWarning",
+  "UnicodeWarning",
+  "BytesWarning",
+  "ResourceWarning",
+]
+
+[tool.ruff.format]
+# Same as Black to maintain consistency with your project
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+docstring-code-line-length = 30
 
 [tool.darglint]
 # Strict docstring checking following Google conventions

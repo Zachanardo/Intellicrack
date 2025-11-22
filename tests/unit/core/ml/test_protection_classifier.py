@@ -530,7 +530,7 @@ class TestProtectionClassifier:
         assert metadata_file.exists()
 
         import json
-        with open(metadata_file, 'r', encoding='utf-8') as f:
+        with open(metadata_file, encoding='utf-8') as f:
             metadata = json.load(f)
 
         assert 'model_version' in metadata
@@ -580,8 +580,8 @@ class TestProtectionClassifier:
         X, y = synthetic_training_data
         classifier.train(X, y, n_estimators=50, cross_validate=False)
 
-        expected_classes = set(['VMProtect', 'Themida', 'Enigma', 'Obsidium',
-                                 'ASProtect', 'UPX', 'None'])
+        expected_classes = {'VMProtect', 'Themida', 'Enigma', 'Obsidium',
+                                 'ASProtect', 'UPX', 'None'}
         actual_classes = set(classifier.label_encoder.classes_)
 
         assert expected_classes.issubset(actual_classes)

@@ -68,7 +68,7 @@ def run_coverage_analysis():
         target_file = "intellicrack/core/network/license_server_emulator.py"
 
         if os.path.exists(target_file):
-            with open(target_file, 'r') as f:
+            with open(target_file) as f:
                 lines = f.readlines()
                 total_lines = len([l for l in lines if l.strip() and not l.strip().startswith('#')])
 
@@ -119,7 +119,7 @@ def count_test_methods():
     test_file = "tests/unit/core/network/test_license_server_emulator.py"
 
     try:
-        with open(test_file, 'r') as f:
+        with open(test_file) as f:
             content = f.read()
 
         # Count test methods

@@ -50,7 +50,7 @@ def log_message(message: str) -> str:
     return f"[{time.strftime('%H:%M:%S')}] {message}"
 
 
-def wrapper_find_file(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def wrapper_find_file(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_find_file.
     Searches for files based on filename.
 
@@ -92,7 +92,7 @@ def wrapper_find_file(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any
         return {"status": "error", "message": f"Error searching for file: {str(e)}"}
 
 
-def wrapper_load_binary(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def wrapper_load_binary(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_load_binary.
     Loads a binary file for analysis.
 
@@ -136,7 +136,7 @@ def wrapper_load_binary(app_instance, parameters: Dict[str, Any]) -> Dict[str, A
         return {"status": "error", "message": f"Error loading binary: {str(e)}"}
 
 
-def wrapper_list_relevant_files(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def wrapper_list_relevant_files(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_list_relevant_files.
     Lists files relevant to the current binary.
 
@@ -181,7 +181,7 @@ def wrapper_list_relevant_files(app_instance, parameters: Dict[str, Any]) -> Dic
         return {"status": "error", "message": f"Error listing files: {str(e)}"}
 
 
-def wrapper_read_file_chunk(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def wrapper_read_file_chunk(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_read_file_chunk.
     Reads a chunk of data from a file.
 
@@ -228,7 +228,7 @@ def wrapper_read_file_chunk(app_instance, parameters: Dict[str, Any]) -> Dict[st
         return {"status": "error", "message": f"Error reading file: {str(e)}"}
 
 
-def wrapper_get_file_metadata(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def wrapper_get_file_metadata(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_get_file_metadata.
     Gets metadata information about a file.
 
@@ -278,7 +278,7 @@ def wrapper_get_file_metadata(app_instance, parameters: Dict[str, Any]) -> Dict[
         return {"status": "error", "message": f"Error getting metadata: {str(e)}"}
 
 
-def wrapper_run_static_analysis(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def wrapper_run_static_analysis(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_run_static_analysis.
     Runs static analysis on the loaded binary.
 
@@ -308,7 +308,7 @@ def wrapper_run_static_analysis(app_instance, parameters: Dict[str, Any]) -> Dic
         return {"status": "error", "message": f"Error in static analysis: {str(e)}"}
 
 
-def wrapper_deep_license_analysis(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def wrapper_deep_license_analysis(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_deep_license_analysis.
     Runs deep license analysis on the loaded binary.
 
@@ -334,7 +334,7 @@ def wrapper_deep_license_analysis(app_instance, parameters: Dict[str, Any]) -> D
         return {"status": "error", "message": f"Error in license analysis: {str(e)}"}
 
 
-def wrapper_detect_protections(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def wrapper_detect_protections(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_detect_protections.
     Detects protections in the loaded binary.
 
@@ -367,7 +367,7 @@ def wrapper_detect_protections(app_instance, parameters: Dict[str, Any]) -> Dict
         return {"status": "error", "message": f"Error detecting protections: {str(e)}"}
 
 
-def wrapper_disassemble_address(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def wrapper_disassemble_address(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_disassemble_address.
     Disassembles instructions at a given address.
 
@@ -481,7 +481,7 @@ def wrapper_disassemble_address(app_instance, parameters: Dict[str, Any]) -> Dic
         return {"status": "error", "message": f"Disassembly error: {str(e)}"}
 
 
-def wrapper_get_cfg(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def wrapper_get_cfg(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_get_cfg.
     Gets control flow graph for a function.
 
@@ -528,7 +528,7 @@ def wrapper_get_cfg(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
         return {"status": "error", "message": f"CFG generation error: {str(e)}"}
 
 
-def wrapper_launch_target(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def wrapper_launch_target(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_launch_target.
     Launches the target process for dynamic analysis.
 
@@ -560,7 +560,6 @@ def wrapper_launch_target(app_instance, parameters: Dict[str, Any]) -> Dict[str,
                 CREATE_SUSPENDED = 0x00000004
                 CREATE_NEW_CONSOLE = 0x00000010
 
-                # Prepare startup info
                 class STARTUPINFO(ctypes.Structure):
                     _fields_ = [
                         ("cb", wintypes.DWORD),
@@ -601,7 +600,7 @@ def wrapper_launch_target(app_instance, parameters: Dict[str, Any]) -> Dict[str,
                 if args:
                     cmd_line += " " + " ".join(f'"{arg}"' for arg in args)
 
-                result = kernel32.CreateProcessW(
+                if result := kernel32.CreateProcessW(
                     None,
                     cmd_line,
                     None,
@@ -612,9 +611,7 @@ def wrapper_launch_target(app_instance, parameters: Dict[str, Any]) -> Dict[str,
                     None,
                     ctypes.byref(startup_info),
                     ctypes.byref(process_info),
-                )
-
-                if result:
+                ):
                     pid = process_info.dwProcessId
                     # Store handles for later use
                     if hasattr(app_instance, "process_handles"):
@@ -656,7 +653,7 @@ def wrapper_launch_target(app_instance, parameters: Dict[str, Any]) -> Dict[str,
         return {"status": "error", "message": f"Launch error: {str(e)}"}
 
 
-def wrapper_attach_target(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def wrapper_attach_target(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_attach_target.
     Attaches to a running target process.
 
@@ -740,7 +737,7 @@ def wrapper_attach_target(app_instance, parameters: Dict[str, Any]) -> Dict[str,
         return {"status": "error", "message": f"Attach error: {str(e)}"}
 
 
-def wrapper_run_frida_script(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def wrapper_run_frida_script(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_run_frida_script.
     Runs a Frida script on the target process.
 
@@ -780,7 +777,7 @@ def wrapper_run_frida_script(app_instance, parameters: Dict[str, Any]) -> Dict[s
 
                 result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
                 if result.returncode == 0:
-                    output_lines = result.stdout if result.stdout else "Script executed"
+                    output_lines = result.stdout or "Script executed"
                     return {
                         "status": "success",
                         "script_path": script_path,
@@ -798,7 +795,7 @@ def wrapper_run_frida_script(app_instance, parameters: Dict[str, Any]) -> Dict[s
         # Use Frida Python API
         try:
             # Read script content
-            with open(script_path, "r") as f:
+            with open(script_path) as f:
                 script_content = f.read()
 
             # Attach to process or spawn new one
@@ -867,7 +864,7 @@ def wrapper_run_frida_script(app_instance, parameters: Dict[str, Any]) -> Dict[s
         return {"status": "error", "message": f"Script execution error: {str(e)}"}
 
 
-def wrapper_detach(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def wrapper_detach(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_detach.
     Detaches from the target process.
 
@@ -896,9 +893,9 @@ def wrapper_detach(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
 
         # Clean up debugger attachments
         if hasattr(app_instance, "attached_processes"):
-            if platform.system() == "Windows":
-                import ctypes
+            import ctypes
 
+            if platform.system() == "Windows":
                 kernel32 = ctypes.windll.kernel32
 
                 for pid in list(app_instance.attached_processes.keys()):
@@ -912,9 +909,6 @@ def wrapper_detach(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
                         except Exception as e:
                             logger.warning(f"Error detaching from {pid}: {e}")
             else:
-                # Unix/Linux ptrace detach
-                import ctypes
-
                 libc = ctypes.CDLL("libc.so.6")
                 PTRACE_DETACH = 17
 
@@ -930,23 +924,22 @@ def wrapper_detach(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
                             logger.warning(f"Error detaching from {pid}: {e}")
 
         # Clean up process handles
-        if hasattr(app_instance, "process_handles"):
-            if platform.system() == "Windows":
-                import ctypes
-
-                kernel32 = ctypes.windll.kernel32
-
-                for pid in list(app_instance.process_handles.keys()):
-                    if process_id is None or pid == process_id:
-                        try:
-                            handles = app_instance.process_handles[pid]
-                            if "process" in handles:
-                                kernel32.CloseHandle(handles["process"])
-                            if "thread" in handles:
-                                kernel32.CloseHandle(handles["thread"])
-                            del app_instance.process_handles[pid]
-                        except Exception as e:
-                            logger.warning(f"Error closing handles for {pid}: {e}")
+        if hasattr(app_instance, "process_handles") and platform.system() == "Windows":
+            import ctypes
+        
+            kernel32 = ctypes.windll.kernel32
+        
+            for pid in list(app_instance.process_handles.keys()):
+                if process_id is None or pid == process_id:
+                    try:
+                        handles = app_instance.process_handles[pid]
+                        if "process" in handles:
+                            kernel32.CloseHandle(handles["process"])
+                        if "thread" in handles:
+                            kernel32.CloseHandle(handles["thread"])
+                        del app_instance.process_handles[pid]
+                    except Exception as e:
+                        logger.warning(f"Error closing handles for {pid}: {e}")
 
         return {"status": "success", "message": "Successfully detached from target process"}
 
@@ -955,7 +948,7 @@ def wrapper_detach(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
         return {"status": "error", "message": f"Detach error: {str(e)}"}
 
 
-def wrapper_propose_patch(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def wrapper_propose_patch(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_propose_patch.
     Proposes patches based on analysis results.
 
@@ -1045,7 +1038,7 @@ def wrapper_propose_patch(app_instance, parameters: Dict[str, Any]) -> Dict[str,
         return {"status": "error", "message": f"Patch proposal error: {str(e)}"}
 
 
-def _analyze_static_patterns(binary_path: str) -> List[Dict[str, Any]]:
+def _analyze_static_patterns(binary_path: str) -> list[dict[str, Any]]:
     """Analyze binary for common crackable patterns."""
     patches = []
 
@@ -1068,7 +1061,7 @@ def _analyze_static_patterns(binary_path: str) -> List[Dict[str, Any]]:
                     "address": hex(0x400000 + offset),
                     "file_offset": offset,
                     "original_bytes": data[offset : offset + 2].hex(),
-                    "new_bytes": "eb" + data[offset + 1 : offset + 2].hex(),  # je -> jmp
+                    "new_bytes": f"eb{data[offset + 1:offset + 2].hex()}",
                     "pattern": "je_to_jmp",
                     "analysis_method": "static_pattern",
                 }
@@ -1114,7 +1107,7 @@ def _analyze_static_patterns(binary_path: str) -> List[Dict[str, Any]]:
     return patches
 
 
-def _analyze_license_strings(binary_path: str) -> List[Dict[str, Any]]:
+def _analyze_license_strings(binary_path: str) -> list[dict[str, Any]]:
     """Analyze strings for license-related patches."""
     patches = []
 
@@ -1169,7 +1162,7 @@ def _analyze_license_strings(binary_path: str) -> List[Dict[str, Any]]:
     return patches[:5]  # Limit string patches
 
 
-def _analyze_imports(binary_path: str) -> List[Dict[str, Any]]:
+def _analyze_imports(binary_path: str) -> list[dict[str, Any]]:
     """Analyze import table for hookable functions."""
     patches = []
 
@@ -1181,7 +1174,7 @@ def _analyze_imports(binary_path: str) -> List[Dict[str, Any]]:
     return patches[:10]  # Limit import patches
 
 
-def _try_pefile_import_analysis(binary_path: str) -> List[Dict[str, Any]]:
+def _try_pefile_import_analysis(binary_path: str) -> list[dict[str, Any]]:
     """Try PE import analysis using pefile."""
     patches = []
 
@@ -1213,7 +1206,7 @@ def _try_pefile_import_analysis(binary_path: str) -> List[Dict[str, Any]]:
     return patches
 
 
-def _extract_import_patches(pe, detected_apis) -> List[Dict[str, Any]]:
+def _extract_import_patches(pe, detected_apis) -> list[dict[str, Any]]:
     """Extract import patches from PE analysis."""
     patches = []
 
@@ -1242,7 +1235,7 @@ def _extract_import_patches(pe, detected_apis) -> List[Dict[str, Any]]:
     return patches
 
 
-def _analyze_disassembly(binary_path: str) -> List[Dict[str, Any]]:
+def _analyze_disassembly(binary_path: str) -> list[dict[str, Any]]:
     """Analyze disassembly for patchable instructions."""
     patches = []
 
@@ -1300,27 +1293,25 @@ def _analyze_disassembly(binary_path: str) -> List[Dict[str, Any]]:
     return patches[:15]  # Limit disassembly patches
 
 
-def _convert_vulnerabilities_to_patches(vulnerabilities: List[Dict]) -> List[Dict[str, Any]]:
+def _convert_vulnerabilities_to_patches(vulnerabilities: list[dict]) -> list[dict[str, Any]]:
     """Convert vulnerability findings to patch proposals."""
-    patches = []
-
-    for vuln in vulnerabilities[:5]:  # Limit to 5 vulnerabilities
-        patches.append(
-            {
-                "type": "vulnerability_fix",
-                "description": f"Address vulnerability: {vuln.get('type', 'unknown')}",
-                "address": vuln.get("address", "0x0"),
-                "vulnerability": vuln.get("type", "unknown"),
-                "severity": vuln.get("severity", "medium"),
-                "analysis_method": "ml_analysis",
-                "recommendation": vuln.get("description", "Fix identified vulnerability"),
-            }
-        )
-
-    return patches
+    return [
+        {
+            "type": "vulnerability_fix",
+            "description": f"Address vulnerability: {vuln.get('type', 'unknown')}",
+            "address": vuln.get("address", "0x0"),
+            "vulnerability": vuln.get("type", "unknown"),
+            "severity": vuln.get("severity", "medium"),
+            "analysis_method": "ml_analysis",
+            "recommendation": vuln.get(
+                "description", "Fix identified vulnerability"
+            ),
+        }
+        for vuln in vulnerabilities[:5]
+    ]
 
 
-def _deduplicate_and_rank_patches(patches: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _deduplicate_and_rank_patches(patches: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Remove duplicates and rank patches by effectiveness."""
     # Simple deduplication by address
     seen_addresses = set()
@@ -1335,7 +1326,7 @@ def _deduplicate_and_rank_patches(patches: List[Dict[str, Any]]) -> List[Dict[st
     return unique_patches
 
 
-def _calculate_patch_confidence(patch: Dict[str, Any]) -> float:
+def _calculate_patch_confidence(patch: dict[str, Any]) -> float:
     """Calculate confidence score for a patch."""
     confidence = 0.5  # Base confidence
 
@@ -1357,16 +1348,14 @@ def _calculate_patch_confidence(patch: Dict[str, Any]) -> float:
     return min(confidence, 1.0)
 
 
-def _assess_patch_risk(patch: Dict[str, Any]) -> int:
+def _assess_patch_risk(patch: dict[str, Any]) -> int:
     """Assess risk level (1=low, 2=medium, 3=high)."""
     if patch.get("type") in ["string_modification", "conditional_bypass"]:
         return 1  # Low risk
-    if patch.get("type") in ["return_modification", "test_bypass"]:
-        return 2  # Medium risk
-    return 3  # High risk
+    return 2 if patch.get("type") in ["return_modification", "test_bypass"] else 3
 
 
-def _assess_compatibility(patch: Dict[str, Any], binary_path: str) -> str:
+def _assess_compatibility(patch: dict[str, Any], binary_path: str) -> str:
     """Assess patch compatibility."""
     logger.debug(f"Assessing patch compatibility for binary: {binary_path}")
     # Simple compatibility assessment
@@ -1378,7 +1367,7 @@ def _assess_compatibility(patch: Dict[str, Any], binary_path: str) -> str:
         return "low"
 
 
-def _get_binary_info(binary_path: str) -> Dict[str, Any]:
+def _get_binary_info(binary_path: str) -> dict[str, Any]:
     """Get basic binary information."""
     try:
         stat = os.stat(binary_path)
@@ -1392,12 +1381,12 @@ def _get_binary_info(binary_path: str) -> Dict[str, Any]:
             "modified": stat.st_mtime,
             "path": binary_path,
         }
-    except (OSError, IOError, ValueError) as e:
+    except (OSError, ValueError) as e:
         logger.debug("Error getting binary info: %s", e)
         return {"size": 0, "format": "Unknown", "path": binary_path}
 
 
-def _generate_fallback_patches(binary_path: str) -> Dict[str, Any]:
+def _generate_fallback_patches(binary_path: str) -> dict[str, Any]:
     """Generate basic fallback patches when advanced analysis fails."""
     patches = [
         {
@@ -1448,7 +1437,7 @@ def _generate_fallback_patches(binary_path: str) -> Dict[str, Any]:
     }
 
 
-def wrapper_get_proposed_patches(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def wrapper_get_proposed_patches(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_get_proposed_patches.
     Gets the list of currently proposed patches.
 
@@ -1500,7 +1489,7 @@ def wrapper_get_proposed_patches(app_instance, parameters: Dict[str, Any]) -> Di
         return {"status": "error", "message": f"Error retrieving patches: {str(e)}"}
 
 
-def wrapper_apply_confirmed_patch(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def wrapper_apply_confirmed_patch(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_apply_confirmed_patch.
     Applies a confirmed patch to the binary.
 
@@ -1531,12 +1520,7 @@ def wrapper_apply_confirmed_patch(app_instance, parameters: Dict[str, Any]) -> D
 
         # Get patch details from stored patches
         patches = getattr(app_instance, "potential_patches", [])
-        patch = None
-        for p in patches:
-            if p.get("id") == patch_id:
-                patch = p
-                break
-
+        patch = next((p for p in patches if p.get("id") == patch_id), None)
         if not patch:
             return {"status": "error", "message": f"Patch {patch_id} not found"}
 
@@ -1546,7 +1530,7 @@ def wrapper_apply_confirmed_patch(app_instance, parameters: Dict[str, Any]) -> D
         backup_path = f"{binary_path}.bak_{int(time.time())}"
         try:
             shutil.copy2(binary_path, backup_path)
-        except IOError as e:
+        except OSError as e:
             return {"status": "error", "message": f"Failed to create backup: {str(e)}"}
 
         # Apply the patch
@@ -1608,7 +1592,7 @@ def wrapper_apply_confirmed_patch(app_instance, parameters: Dict[str, Any]) -> D
             # Restore backup on error
             try:
                 shutil.copy2(backup_path, binary_path)
-            except:
+            except Exception:
                 pass
             return {"status": "error", "message": f"Failed to apply patch: {str(e)}"}
 
@@ -1617,7 +1601,7 @@ def wrapper_apply_confirmed_patch(app_instance, parameters: Dict[str, Any]) -> D
         return {"status": "error", "message": f"Patch application error: {str(e)}"}
 
 
-def wrapper_generate_launcher_script(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def wrapper_generate_launcher_script(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_generate_launcher_script.
     Generates a launcher script for the patched binary.
 
@@ -1661,7 +1645,7 @@ pause
         return {"status": "error", "message": f"Script generation error: {str(e)}"}
 
 
-def dispatch_tool(app_instance, tool_name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def dispatch_tool(app_instance, tool_name: str, parameters: dict[str, Any]) -> dict[str, Any]:
     """Central dispatcher for tool wrapper functions.
 
     Args:
@@ -1744,7 +1728,7 @@ def run_external_tool(args):
     return results
 
 
-def wrapper_deep_runtime_monitoring(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
+def wrapper_deep_runtime_monitoring(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for deep runtime monitoring functionality.
 
     Args:
@@ -1822,8 +1806,8 @@ def run_ghidra_headless(
     script_path: str = None,
     output_dir: str = None,
     project_name: str = None,
-    options: Dict[str, Any] = None,
-) -> Dict[str, Any]:
+    options: dict[str, Any] = None,
+) -> dict[str, Any]:
     """Run comprehensive Ghidra headless analysis on a binary.
 
     Args:
@@ -1904,8 +1888,7 @@ def run_ghidra_headless(
         try:
             from ...core.path_discovery import find_tool
 
-            ghidra_base = find_tool("ghidra")
-            if ghidra_base:
+            if ghidra_base := find_tool("ghidra"):
                 # Find analyzeHeadless relative to ghidra installation
                 if os.path.isfile(ghidra_base):
                     ghidra_dir = os.path.dirname(ghidra_base)
@@ -1996,9 +1979,7 @@ def run_ghidra_headless(
             cmd.append("-analyze")
 
         # Create comprehensive analysis script if none provided
-        analysis_script_path = script_path
-        if not analysis_script_path:
-            analysis_script_path = _create_comprehensive_analysis_script(output_dir, export_format, export_selection, script_params)
+        analysis_script_path = script_path or _create_comprehensive_analysis_script(output_dir, export_format, export_selection, script_params)
 
         # Add post-analysis script
         if analysis_script_path and os.path.exists(analysis_script_path):
@@ -2370,7 +2351,7 @@ def _load_analysis_exports(results: dict, output_dir: str, export_format: str) -
         file_path = os.path.join(output_dir, export_file)
         if os.path.exists(file_path):
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     data = json.load(f)
 
                 key = export_file.replace(".json", "")

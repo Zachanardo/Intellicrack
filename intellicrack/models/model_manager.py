@@ -27,6 +27,7 @@ from typing import Any, TypeVar, cast
 from intellicrack.utils.logger import logger
 from intellicrack.utils.torch_gil_safety import _torch_lock, safe_torch_import
 
+
 """
 Model Manager Module
 
@@ -36,11 +37,7 @@ model repositories and handles model import, loading, and verification.
 
 try:
     from .repositories.factory import RepositoryFactory
-    from .repositories.interface import (
-        DownloadProgressCallback,
-        ModelInfo,
-        ModelRepositoryInterface,
-    )
+    from .repositories.interface import DownloadProgressCallback, ModelInfo, ModelRepositoryInterface
     from .repositories.local_repository import LocalFileRepository
 except ImportError:
     # Fallback classes if repositories not available
@@ -59,7 +56,9 @@ except ImportError:
                 None for fallback implementation
 
             """
-            logger.debug(f"Fallback repository creation called with {len(args)} args and {len(kwargs)} kwargs")
+            logger.debug(
+                f"Fallback repository creation called with {len(args)} args and {len(kwargs)} kwargs"
+            )
             return None
 
     class DownloadProgressCallback:
@@ -86,7 +85,9 @@ except ImportError:
                 **kwargs: Variable keyword arguments
 
             """
-            logger.debug(f"ModelInfo fallback initialized with {len(args)} args and {len(kwargs)} kwargs")
+            logger.debug(
+                f"ModelInfo fallback initialized with {len(args)} args and {len(kwargs)} kwargs"
+            )
             self.name: str = "unknown"
             self.size: int = 0
 
@@ -161,7 +162,9 @@ class ModelManager:
         """
         self.config = config
         self.repositories: dict[str, ModelRepositoryInterface] = {}
-        self.download_dir = config.get("download_directory", os.path.join(os.path.dirname(__file__), "downloads"))
+        self.download_dir = config.get(
+            "download_directory", os.path.join(os.path.dirname(__file__), "downloads")
+        )
 
         # Create download directory
         os.makedirs(self.download_dir, exist_ok=True)
@@ -196,9 +199,7 @@ class ModelManager:
             # Add the repository name to the config
             repo_config["name"] = repo_name
 
-            # Create the repository
-            repository = RepositoryFactory.create_repository(repo_config)
-            if repository:
+            if repository := RepositoryFactory.create_repository(repo_config):
                 self.repositories[repo_name] = repository
                 logger.info(f"Initialized repository: {repo_name}")
             else:
@@ -357,16 +358,17 @@ class ModelManager:
         )
 
         # If successful, add to local repository
-        if success and os.path.exists(destination_path):
-            if "local" in self.repositories:
-                local_repo = self.repositories["local"]
-                if isinstance(local_repo, LocalFileRepository):
-                    local_repo.add_model(destination_path)
+        if success and os.path.exists(destination_path) and "local" in self.repositories:
+            local_repo = self.repositories["local"]
+            if isinstance(local_repo, LocalFileRepository):
+                local_repo.add_model(destination_path)
 
         # Call the completion handler
         progress_handler.on_complete(success, message)
 
-    def verify_model_integrity(self, model_path: str, expected_checksum: str | None = None) -> tuple[bool, str]:
+    def verify_model_integrity(
+        self, model_path: str, expected_checksum: str | None = None
+    ) -> tuple[bool, str]:
         """Verify the integrity of a model file.
 
         Args:
@@ -439,7 +441,9 @@ class ModelManager:
             return False
 
         # Special handling for local repository
-        if repository_name == "local" and isinstance(self.repositories[repository_name], LocalFileRepository):
+        if repository_name == "local" and isinstance(
+            self.repositories[repository_name], LocalFileRepository
+        ):
             return self.repositories[repository_name].remove_model(model_id)
 
         # For API repositories, we just remove the local copy if it exists
@@ -559,7 +563,9 @@ class ModelManager:
                     from torch import nn
 
                     class SimpleNN(nn.Module):
-                        def __init__(self, input_size: int, hidden_size: int, output_size: int) -> None:
+                        def __init__(
+                            self, input_size: int, hidden_size: int, output_size: int
+                        ) -> None:
                             super().__init__()
                             self.fc1 = nn.Linear(input_size, hidden_size)
                             self.relu = nn.ReLU()
@@ -704,7 +710,7 @@ class ModelManager:
                 saved = True
 
             # Save metadata
-            metadata_path = path + ".meta"
+            metadata_path = f"{path}.meta"
             metadata = {
                 "model_type": type(model).__name__,
                 "saved_at": str(datetime.now()),

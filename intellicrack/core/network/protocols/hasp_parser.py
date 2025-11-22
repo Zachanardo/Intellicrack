@@ -38,6 +38,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 from intellicrack.utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 
@@ -353,7 +354,7 @@ class HASPCrypto:
 
         private_key, _ = self.rsa_keys[session_id]
 
-        signature = private_key.sign(
+        return private_key.sign(
             data,
             padding.PSS(
                 mgf=padding.MGF1(hashes.SHA256()),
@@ -361,8 +362,6 @@ class HASPCrypto:
             ),
             hashes.SHA256(),
         )
-
-        return signature
 
     def rsa_verify(self, data: bytes, signature: bytes, session_id: int = 0) -> bool:
         """Verify RSA signature."""
@@ -638,7 +637,7 @@ class HASPSentinelParser:
         memory = self.memory_storage[feature_id]
         feature = self.features[feature_id]
 
-        memory[0:4] = struct.pack("<I", feature.vendor_code)
+        memory[:4] = struct.pack("<I", feature.vendor_code)
         memory[4:8] = struct.pack("<I", feature.feature_id)
         memory[8:12] = struct.pack("<I", int(time.time()))
         memory[12:16] = struct.pack("<I", feature.max_users)
@@ -785,8 +784,14 @@ class HASPSentinelParser:
                 timestamp=timestamp,
             )
 
-            command_name = HASPCommandType(command).name if command in HASPCommandType._value2member_map_ else f"UNKNOWN_{command:02X}"
-            self.logger.info(f"Parsed HASP {command_name} request for feature {feature_id} (session {session_id})")
+            command_name = (
+                HASPCommandType(command).name
+                if command in HASPCommandType._value2member_map_
+                else f"UNKNOWN_{command:02X}"
+            )
+            self.logger.info(
+                f"Parsed HASP {command_name} request for feature {feature_id} (session {session_id})"
+            )
 
             return request
 
@@ -799,10 +804,7 @@ class HASPSentinelParser:
         params = {}
         try:
             offset = 0
-            while offset < len(data) - 4:
-                if offset + 4 > len(data):
-                    break
-
+            while offset < len(data) - 4 and not offset + 4 > len(data):
                 param_type = struct.unpack("<H", data[offset : offset + 2])[0]
                 param_length = struct.unpack("<H", data[offset + 2 : offset + 4])[0]
                 offset += 4
@@ -831,7 +833,9 @@ class HASPSentinelParser:
                 elif param_type == 0x0007:
                     params["write_data"] = param_data
                 elif param_type == 0x0008:
-                    params["detach_duration"] = struct.unpack("<I", param_data[:4])[0] if len(param_data) >= 4 else 0
+                    params["detach_duration"] = (
+                        struct.unpack("<I", param_data[:4])[0] if len(param_data) >= 4 else 0
+                    )
                 else:
                     params[f"param_{param_type:04X}"] = param_data
 
@@ -967,14 +971,15 @@ class HASPSentinelParser:
         if request.vendor_code != feature.vendor_code:
             return self._create_error_response(request, HASPStatusCode.INVALID_VENDOR_CODE)
 
-        active_users = len([s for s in self.active_sessions.values() if s.feature_id == request.feature_id])
+        active_users = len(
+            [s for s in self.active_sessions.values() if s.feature_id == request.feature_id]
+        )
 
         if feature.concurrent_limit > 0 and active_users >= feature.concurrent_limit:
             return self._create_error_response(request, HASPStatusCode.TOO_MANY_USERS)
 
-        if feature.expiry != "permanent":
-            if self._is_feature_expired(feature):
-                return self._create_error_response(request, HASPStatusCode.FEATURE_EXPIRED)
+        if feature.expiry != "permanent" and self._is_feature_expired(feature):
+            return self._create_error_response(request, HASPStatusCode.FEATURE_EXPIRED)
 
         session = self.active_sessions[request.session_id]
         session.feature_id = request.feature_id
@@ -989,7 +994,9 @@ class HASPSentinelParser:
             license_data={
                 "feature_name": feature.name,
                 "feature_type": feature.feature_type.name,
-                "users_remaining": max(0, feature.concurrent_limit - active_users - 1) if feature.concurrent_limit > 0 else -1,
+                "users_remaining": max(0, feature.concurrent_limit - active_users - 1)
+                if feature.concurrent_limit > 0
+                else -1,
                 "feature_handle": session.feature_handle,
                 "detachable": feature.detachable,
                 "network_enabled": feature.network_enabled,
@@ -1004,7 +1011,11 @@ class HASPSentinelParser:
         if request.session_id not in self.active_sessions:
             return self._create_error_response(request, HASPStatusCode.NOT_LOGGED_IN)
 
-        encryption_type = request.encryption_type if request.encryption_type != HASPEncryptionType.NONE else HASPEncryptionType.AES256
+        encryption_type = (
+            request.encryption_type
+            if request.encryption_type != HASPEncryptionType.NONE
+            else HASPEncryptionType.AES256
+        )
 
         if encryption_type in (HASPEncryptionType.AES128, HASPEncryptionType.AES256):
             encrypted_data = self.crypto.aes_encrypt(request.encryption_data, request.session_id)
@@ -1012,7 +1023,9 @@ class HASPSentinelParser:
             seed = hash(request.session_id) & 0xFFFFFFFF
             encrypted_data = self.crypto.hasp4_encrypt(request.encryption_data, seed)
         elif encryption_type == HASPEncryptionType.ENVELOPE:
-            encrypted_data = self.crypto.envelope_encrypt(request.encryption_data, request.session_id)
+            encrypted_data = self.crypto.envelope_encrypt(
+                request.encryption_data, request.session_id
+            )
         else:
             encrypted_data = self.crypto.aes_encrypt(request.encryption_data, request.session_id)
 
@@ -1031,7 +1044,11 @@ class HASPSentinelParser:
         if request.session_id not in self.active_sessions:
             return self._create_error_response(request, HASPStatusCode.NOT_LOGGED_IN)
 
-        encryption_type = request.encryption_type if request.encryption_type != HASPEncryptionType.NONE else HASPEncryptionType.AES256
+        encryption_type = (
+            request.encryption_type
+            if request.encryption_type != HASPEncryptionType.NONE
+            else HASPEncryptionType.AES256
+        )
 
         if encryption_type in (HASPEncryptionType.AES128, HASPEncryptionType.AES256):
             decrypted_data = self.crypto.aes_decrypt(request.encryption_data, request.session_id)
@@ -1039,7 +1056,9 @@ class HASPSentinelParser:
             seed = hash(request.session_id) & 0xFFFFFFFF
             decrypted_data = self.crypto.hasp4_decrypt(request.encryption_data, seed)
         elif encryption_type == HASPEncryptionType.ENVELOPE:
-            decrypted_data = self.crypto.envelope_decrypt(request.encryption_data, request.session_id)
+            decrypted_data = self.crypto.envelope_decrypt(
+                request.encryption_data, request.session_id
+            )
         else:
             decrypted_data = self.crypto.aes_decrypt(request.encryption_data, request.session_id)
 
@@ -1514,20 +1533,18 @@ class HASPSentinelParser:
             List of active session information dictionaries
 
         """
-        sessions = []
-        for _session_id, session in self.active_sessions.items():
-            sessions.append(
-                {
-                    "session_id": session.session_id,
-                    "vendor_code": session.vendor_code,
-                    "feature_id": session.feature_id,
-                    "login_time": session.login_time,
-                    "last_heartbeat": session.last_heartbeat,
-                    "client_info": session.client_info,
-                    "uptime": int(time.time() - session.login_time),
-                },
-            )
-        return sessions
+        return [
+            {
+                "session_id": session.session_id,
+                "vendor_code": session.vendor_code,
+                "feature_id": session.feature_id,
+                "login_time": session.login_time,
+                "last_heartbeat": session.last_heartbeat,
+                "client_info": session.client_info,
+                "uptime": int(time.time() - session.login_time),
+            }
+            for _session_id, session in self.active_sessions.items()
+        ]
 
     def export_license_data(self, output_path: Path) -> None:
         """Export license data to XML format (v2c format).
@@ -1589,8 +1606,7 @@ class HASPPacketAnalyzer:
                 pcap = dpkt.pcap.Reader(f)
 
                 for timestamp, buf in pcap:
-                    packet = self._parse_pcap_packet(timestamp, buf)
-                    if packet:
+                    if packet := self._parse_pcap_packet(timestamp, buf):
                         packets.append(packet)
                         self.captured_packets.append(packet)
 
@@ -1666,7 +1682,7 @@ class HASPPacketAnalyzer:
 
     def _is_hasp_packet(self, payload: bytes, sport: int, dport: int) -> bool:
         """Determine if packet is HASP-related."""
-        if sport in [1947, 475] or dport in [1947, 475]:
+        if sport in {1947, 475} or dport in {1947, 475}:
             return True
 
         if HASPNetworkProtocol.DISCOVERY_MAGIC in payload:
@@ -1732,8 +1748,7 @@ class HASPPacketAnalyzer:
 
         for packet in self.captured_packets:
             if packet.packet_type == "SERVER_READY":
-                server_info = self._extract_server_info(packet.raw_data)
-                if server_info:
+                if server_info := self._extract_server_info(packet.raw_data):
                     license_info["discovered_servers"].append(server_info)
 
             if packet.parsed_request:
@@ -1742,7 +1757,9 @@ class HASPPacketAnalyzer:
                 license_info["session_ids"].add(req.session_id)
                 license_info["encryption_types"].add(req.encryption_type)
 
-                if req.feature_id not in [f["feature_id"] for f in license_info["discovered_features"]]:
+                if req.feature_id not in [
+                    f["feature_id"] for f in license_info["discovered_features"]
+                ]:
                     license_info["discovered_features"].append(
                         {
                             "feature_id": req.feature_id,
@@ -1818,7 +1835,9 @@ class HASPPacketAnalyzer:
 
         packet_type_counts: dict[str, int] = {}
         for packet in self.captured_packets:
-            packet_type_counts[packet.packet_type] = packet_type_counts.get(packet.packet_type, 0) + 1
+            packet_type_counts[packet.packet_type] = (
+                packet_type_counts.get(packet.packet_type, 0) + 1
+            )
 
             analysis["timeline"].append(
                 {
@@ -1938,14 +1957,13 @@ class HASPUSBEmulator:
 
     def _handle_usb_get_info(self) -> bytes:
         """Handle USB get info request."""
-        info_struct = struct.pack(
+        return struct.pack(
             "<IIII",
             self.device_info["vendor_id"],
             self.device_info["product_id"],
             0x01000000,
             65536,
         )
-        return info_struct
 
     def _handle_usb_get_rtc(self) -> bytes:
         """Handle USB RTC read."""
@@ -2047,9 +2065,7 @@ class HASPServerEmulator:
             return b""
 
         response = self.parser.generate_response(request)
-        response_bytes = self.parser.serialize_response(response)
-
-        return response_bytes
+        return self.parser.serialize_response(response)
 
     def start_server(self) -> None:
         """Start HASP license server (blocking)."""
@@ -2108,10 +2124,8 @@ class HASPServerEmulator:
                 client_sock, addr = sock.accept()
                 self.logger.info(f"TCP connection from {addr}")
 
-                data = client_sock.recv(4096)
-                if data:
-                    response = self.handle_client_request(data)
-                    if response:
+                if data := client_sock.recv(4096):
+                    if response := self.handle_client_request(data):
                         client_sock.send(response)
 
                 client_sock.close()

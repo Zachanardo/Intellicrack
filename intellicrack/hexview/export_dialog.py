@@ -41,6 +41,7 @@ from PyQt6.QtWidgets import (
 
 from ..utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 
@@ -91,11 +92,10 @@ class ExportDialog(QDialog):
         source_layout.addWidget(self.selection_radio)
 
         # Check if there's a selection
-        if self.hex_viewer and hasattr(self.hex_viewer, "selection_start"):
-            if self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1:
-                self.selection_radio.setEnabled(True)
-                selection_size = self.hex_viewer.selection_end - self.hex_viewer.selection_start
-                self.selection_radio.setText(f"Current selection ({selection_size} bytes)")
+        if self.hex_viewer and hasattr(self.hex_viewer, "selection_start") and (self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1):
+            self.selection_radio.setEnabled(True)
+            selection_size = self.hex_viewer.selection_end - self.hex_viewer.selection_start
+            self.selection_radio.setText(f"Current selection ({selection_size} bytes)")
 
         source_group.setLayout(source_layout)
         layout.addWidget(source_group)
@@ -168,7 +168,9 @@ class ExportDialog(QDialog):
         layout.addWidget(file_group)
 
         # Dialog buttons
-        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
         button_box.accepted.connect(self.export_data)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
@@ -187,7 +189,12 @@ class ExportDialog(QDialog):
         """
         # Show/hide relevant options based on format
         is_hex_text = format_name == "Hex Text"
-        is_array = format_name in ["C Array", "C++ Array", "Java Array", "Python Bytes"]
+        is_array = format_name in {
+            "C Array",
+            "C++ Array",
+            "Java Array",
+            "Python Bytes",
+        }
 
         self.hex_uppercase_check.setVisible(is_hex_text or is_array)
         self.items_per_line_spin.parent().setVisible(is_array)
@@ -271,7 +278,9 @@ class ExportDialog(QDialog):
             with open(file_path, mode) as f:
                 f.write(output)
 
-            QMessageBox.information(self, "Export Complete", f"Data exported successfully to:\n{file_path}")
+            QMessageBox.information(
+                self, "Export Complete", f"Data exported successfully to:\n{file_path}"
+            )
             self.accept()
 
         except Exception as e:
@@ -339,9 +348,7 @@ class ExportDialog(QDialog):
         lines = []
 
         if self.include_size_check.isChecked():
-            lines.append(f"#define {var_name.upper()}_SIZE {len(data)}")
-            lines.append("")
-
+            lines.extend((f"#define {var_name.upper()}_SIZE {len(data)}", ""))
         lines.append(f"unsigned char {var_name}[] = {{")
 
         for i in range(0, len(data), items_per_line):
@@ -373,9 +380,7 @@ class ExportDialog(QDialog):
         lines = []
 
         if self.include_size_check.isChecked():
-            lines.append(f"constexpr size_t {var_name}_size = {len(data)};")
-            lines.append("")
-
+            lines.extend((f"constexpr size_t {var_name}_size = {len(data)};", ""))
         lines.append(f"const unsigned char {var_name}[] = {{")
 
         for i in range(0, len(data), items_per_line):
@@ -406,9 +411,12 @@ class ExportDialog(QDialog):
         lines = []
 
         if self.include_size_check.isChecked():
-            lines.append(f"public static final int {var_name.upper()}_SIZE = {len(data)};")
-            lines.append("")
-
+            lines.extend(
+                (
+                    f"public static final int {var_name.upper()}_SIZE = {len(data)};",
+                    "",
+                )
+            )
         lines.append(f"public static final byte[] {var_name} = {{")
 
         for i in range(0, len(data), items_per_line):
@@ -445,9 +453,7 @@ class ExportDialog(QDialog):
         lines = []
 
         if self.include_size_check.isChecked():
-            lines.append(f"{var_name.upper()}_SIZE = {len(data)}")
-            lines.append("")
-
+            lines.extend((f"{var_name.upper()}_SIZE = {len(data)}", ""))
         lines.append(f"{var_name} = (")
 
         for i in range(0, len(data), items_per_line):
@@ -507,15 +513,15 @@ class ExportDialog(QDialog):
             S-Record format string
 
         """
-        lines = []
         record_size = 16  # Standard S-Record uses 16 bytes per record
 
         # Header record (S0)
         header = b"HDR"
         header_checksum = len(header) + 3 + sum(header)
         header_checksum = (~header_checksum) & 0xFF
-        lines.append(f"S0{len(header) + 3:02X}0000{header.hex().upper()}{header_checksum:02X}")
-
+        lines = [
+            f"S0{len(header) + 3:02X}0000{header.hex().upper()}{header_checksum:02X}"
+        ]
         # Data records (S1 for 16-bit addressing)
         for i in range(0, len(data), record_size):
             chunk = data[i : i + record_size]
@@ -555,11 +561,7 @@ class ExportDialog(QDialog):
 
         encoded = base64.b64encode(data).decode("ascii")
 
-        # Split into lines of 76 characters (standard MIME line length)
-        lines = []
-        for i in range(0, len(encoded), 76):
-            lines.append(encoded[i : i + 76])
-
+        lines = [encoded[i : i + 76] for i in range(0, len(encoded), 76)]
         return "\n".join(lines)
 
     def format_data_uri(self, data: bytes) -> str:

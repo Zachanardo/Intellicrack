@@ -29,6 +29,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+
 try:
     import frida
 except ImportError:
@@ -263,7 +264,9 @@ class StalkerSession:
             )
             self.trace_events.append(trace_event)
 
-        output_file = os.path.join(self.output_dir, f"function_trace_{function.replace('!', '_')}.json")
+        output_file = os.path.join(
+            self.output_dir, f"function_trace_{function.replace('!', '_')}.json"
+        )
         self._save_json(output_file, {"function": function, "trace": trace_data})
 
     def _handle_module_coverage(self, payload: dict[str, Any]) -> None:
@@ -301,7 +304,9 @@ class StalkerSession:
         try:
             self._log(f"Starting Stalker session for {os.path.basename(self.binary_path)}")
 
-            script_path = Path(__file__).parent.parent.parent / "scripts" / "frida" / "stalker_tracer.js"
+            script_path = (
+                Path(__file__).parent.parent.parent / "scripts" / "frida" / "stalker_tracer.js"
+            )
             if not script_path.exists():
                 self._log(f"Stalker script not found: {script_path}")
                 return False

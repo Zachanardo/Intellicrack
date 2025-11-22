@@ -21,8 +21,10 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 from collections import defaultdict
 
+
 try:
     import capstone
+
     CAPSTONE_AVAILABLE = True
 except ImportError:
     CAPSTONE_AVAILABLE = False
@@ -101,7 +103,7 @@ class OpaquePredicateDetector:
                 }
                 self.logger.info(
                     f"Opaque predicate detected at 0x{address:x}: always FALSE "
-                    f"(confidence: {1-taken_ratio:.2%}, samples: {total_count})",
+                    f"(confidence: {1 - taken_ratio:.2%}, samples: {total_count})",
                 )
                 return {
                     "opaque": True,
@@ -135,8 +137,10 @@ class OpaquePredicateDetector:
             dict: Statistics about detected opaque predicates
 
         """
-        always_true = sum(1 for p in self.detected_predicates.values() if p["type"] == "always_true")
-        always_false = sum(1 for p in self.detected_predicates.values() if p["type"] == "always_false")
+        always_true = sum(bool(p["type"] == "always_true")
+                      for p in self.detected_predicates.values())
+        always_false = sum(bool(p["type"] == "always_false")
+                       for p in self.detected_predicates.values())
 
         return {
             "total_detected": len(self.detected_predicates),
@@ -223,7 +227,7 @@ class ControlFlowFlatteningHandler:
                 "detected_at": address,
             }
 
-            if switch_pattern_score >= 8 and len(instructions) < 20:
+            if len(instructions) < 20:
                 self.dispatcher_blocks.add(address)
 
             if switch_pattern_score >= 12:
@@ -262,8 +266,7 @@ class ControlFlowFlatteningHandler:
             "dispatcher": self.dispatcher_address,
             "states": len(self.state_transitions),
             "transitions": {
-                state: list(targets)
-                for state, targets in self.state_transitions.items()
+                state: list(targets) for state, targets in self.state_transitions.items()
             },
             "is_flattened": self.dispatcher_detected,
         }
@@ -330,11 +333,15 @@ class VirtualizationDetector:
                 vm_indicators["decode"] += 1
 
             if insn.mnemonic == "call":
-                if "[" in insn.op_str or any(reg in insn.op_str for reg in ["rax", "eax", "rbx", "ebx"]):
+                if "[" in insn.op_str or any(
+                    reg in insn.op_str for reg in ["rax", "eax", "rbx", "ebx"]
+                ):
                     vm_indicators["dispatch"] += 2
 
-            if insn.mnemonic == "jmp":
-                if "[" in insn.op_str or any(reg in insn.op_str for reg in ["rax", "eax", "rbx", "ebx"]):
+            elif insn.mnemonic == "jmp":
+                if "[" in insn.op_str or any(
+                    reg in insn.op_str for reg in ["rax", "eax", "rbx", "ebx"]
+                ):
                     vm_indicators["dispatch"] += 3
 
             if insn.mnemonic in ["push", "pop", "mov"] and any(
@@ -344,18 +351,17 @@ class VirtualizationDetector:
 
         total_score = sum(vm_indicators.values())
 
-        if (vm_indicators["fetch"] >= 2 and
-            vm_indicators["dispatch"] >= 2 and
-            total_score >= 6):
-
+        if vm_indicators["fetch"] >= 2 and vm_indicators["dispatch"] >= 2 and total_score >= 6:
             self.dispatch_loop = loop_address
             self.vm_detected = True
-            self.vm_candidates.append({
-                "address": loop_address,
-                "score": total_score,
-                "indicators": vm_indicators.copy(),
-                "instruction_count": len(loop_body),
-            })
+            self.vm_candidates.append(
+                {
+                    "address": loop_address,
+                    "score": total_score,
+                    "indicators": vm_indicators.copy(),
+                    "instruction_count": len(loop_body),
+                }
+            )
 
             self.logger.info(
                 f"VM dispatch loop detected at 0x{loop_address:x} "
@@ -494,12 +500,11 @@ class StringDeobfuscation:
         else:
             key_len = len(key)
             decrypted = bytes(
-                encrypted_bytes[i] ^ key[i % key_len]
-                for i in range(len(encrypted_bytes))
+                encrypted_bytes[i] ^ key[i % key_len] for i in range(len(encrypted_bytes))
             )
 
         try:
-            result = decrypted.decode('utf-8', errors='ignore').rstrip('\x00')
+            result = decrypted.decode("utf-8", errors="ignore").rstrip("\x00")
             if result and result.isprintable():
                 self.decrypted_strings[encrypted_bytes.hex()[:16]] = result
                 return result
@@ -609,10 +614,14 @@ class ObfuscationAwareConcolicEngine:
         opaque_info = self.opaque_detector.is_opaque_predicate(address, condition)
 
         if opaque_info and opaque_info.get("type") == "always_true":
-            self.logger.debug(f"Skipping false path at 0x{address:x} (opaque predicate: always true)")
+            self.logger.debug(
+                f"Skipping false path at 0x{address:x} (opaque predicate: always true)"
+            )
             return False
         if opaque_info and opaque_info.get("type") == "always_false":
-            self.logger.debug(f"Skipping true path at 0x{address:x} (opaque predicate: always false)")
+            self.logger.debug(
+                f"Skipping true path at 0x{address:x} (opaque predicate: always false)"
+            )
             return False
 
         return True
@@ -631,7 +640,10 @@ class ObfuscationAwareConcolicEngine:
         """
         opaque_info = self.opaque_detector.is_opaque_predicate(address, condition)
 
-        return bool((opaque_info and opaque_info.get("type") == "always_true" and not taken) or (opaque_info and opaque_info.get("type") == "always_false" and taken))
+        return bool(
+            (opaque_info and opaque_info.get("type") == "always_true" and not taken)
+            or (opaque_info and opaque_info.get("type") == "always_false" and taken)
+        )
 
     def analyze_basic_block_obfuscation(self, address: int, instructions: list) -> dict:
         """Comprehensive obfuscation analysis for a basic block.
@@ -708,10 +720,13 @@ class ObfuscationAwareConcolicEngine:
             },
         }
 
-        return strategies.get(obfuscation_type, {
-            "default": True,
-            "conservative_exploration": True,
-        })
+        return strategies.get(
+            obfuscation_type,
+            {
+                "default": True,
+                "conservative_exploration": True,
+            },
+        )
 
     def get_obfuscation_report(self) -> dict:
         """Generate comprehensive obfuscation analysis report.
@@ -765,12 +780,11 @@ class ObfuscationAwareConcolicEngine:
             list: Execution results
 
         """
-        results = []
-
-        if hasattr(self.base_engine, 'explore'):
-            results = self.base_engine.explore()
-
-        return results
+        return (
+            self.base_engine.explore()
+            if hasattr(self.base_engine, "explore")
+            else []
+        )
 
     def analyze_obfuscation(self) -> dict:
         """Analyze detected obfuscation techniques.
@@ -812,10 +826,10 @@ def create_obfuscation_aware_engine(base_engine: object) -> ObfuscationAwareConc
 
 
 __all__ = [
-    "OpaquePredicateDetector",
     "ControlFlowFlatteningHandler",
-    "VirtualizationDetector",
-    "StringDeobfuscation",
     "ObfuscationAwareConcolicEngine",
+    "OpaquePredicateDetector",
+    "StringDeobfuscation",
+    "VirtualizationDetector",
     "create_obfuscation_aware_engine",
 ]

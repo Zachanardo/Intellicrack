@@ -62,7 +62,7 @@ class TestGenerationThread(QThread):
     finished = pyqtSignal(dict)
     error = pyqtSignal(str)
 
-    def __init__(self, plugin_path: str, options: Dict[str, Any]):
+    def __init__(self, plugin_path: str, options: dict[str, Any]):
         """Initialize the TestGenerationThread with default values."""
         super().__init__()
         self.plugin_path = plugin_path
@@ -419,7 +419,7 @@ class TestGeneratorDialog(PluginDialogBase):
         """Handle progress updates"""
         self.test_output.append(message)
 
-    def on_tests_finished(self, results: Dict[str, Any]):
+    def on_tests_finished(self, results: dict[str, Any]):
         """Handle test completion"""
         # Update UI
         self.progress_bar.setVisible(False)
@@ -453,7 +453,7 @@ class TestGeneratorDialog(PluginDialogBase):
 
         QMessageBox.critical(self, "Test Error", f"Failed to run tests:\n{error}")
 
-    def update_coverage_display(self, coverage: Dict[str, Any]):
+    def update_coverage_display(self, coverage: dict[str, Any]):
         """Update coverage display"""
         # Update summary
         total = coverage.get('total_coverage', 0)

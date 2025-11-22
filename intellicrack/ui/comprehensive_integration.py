@@ -27,6 +27,7 @@ from .enhanced_ui_integration import EnhancedAnalysisDashboard
 from .radare2_integration_ui import R2IntegrationWidget
 from .radare2_ui_manager import R2UIManager, integrate_radare2_ui_comprehensive
 
+
 if TYPE_CHECKING:
     from typing import Any
 
@@ -64,7 +65,9 @@ class ComprehensiveR2Integration:
 
         """
         try:
-            self.logger.info(f"Starting comprehensive radare2 integration with {type(main_app).__name__}")
+            self.logger.info(
+                f"Starting comprehensive radare2 integration with {type(main_app).__name__}"
+            )
 
             # Detect application type and use appropriate integration method
             integration_method = self._detect_integration_method(main_app)
@@ -117,12 +120,7 @@ class ComprehensiveR2Integration:
                 return "tab_widget"
 
             # Check for generic widget
-            if isinstance(main_app, QWidget):
-                return "generic_widget"
-
-            # Fallback
-            return "fallback"
-
+            return "generic_widget" if isinstance(main_app, QWidget) else "fallback"
         except Exception as e:
             self.logger.error(f"Failed to detect integration method: {e}")
             return "fallback"
@@ -309,9 +307,8 @@ class ComprehensiveR2Integration:
                 self.integration_status["menu_integration"] = True
 
             # Connect binary path updates
-            if hasattr(main_app, "binary_path"):
-                if main_app.binary_path:
-                    self.ui_manager.set_binary_path(main_app.binary_path)
+            if hasattr(main_app, "binary_path") and main_app.binary_path:
+                self.ui_manager.set_binary_path(main_app.binary_path)
 
             self.logger.info("IntellicrackApp specific features integrated")
 

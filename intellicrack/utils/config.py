@@ -21,7 +21,8 @@ from intellicrack.utils.logger import get_logger
 
 from ..config import CONFIG, DEFAULT_CONFIG, ConfigManager, get_config, load_config, save_config
 
+
 logger = get_logger(__name__)
 logger.debug("Config utils module loaded")
 
-__all__ = ["CONFIG", "DEFAULT_CONFIG", "ConfigManager", "get_config", "load_config", "save_config"]
+__all__ = ["CONFIG", "ConfigManager", "DEFAULT_CONFIG", "get_config", "load_config", "save_config"]

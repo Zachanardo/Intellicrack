@@ -20,6 +20,7 @@ import json
 import logging
 import re
 
+
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
 except ImportError:
@@ -27,6 +28,7 @@ except ImportError:
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +46,9 @@ class FunctionSignature:
     is_exported: bool = False
     is_imported: bool = False
     stack_frame_size: int = 0
-    local_variables: list[tuple[str, str, int]] = field(default_factory=list)  # (type, name, offset)
+    local_variables: list[tuple[str, str, int]] = field(
+        default_factory=list
+    )  # (type, name, offset)
 
 
 @dataclass
@@ -153,13 +157,18 @@ class GhidraOutputParser:
                         name=func_data["name"],
                         address=int(func_data["address"], 16),
                         return_type=func_data.get("returnType", "void"),
-                        parameters=[(p["type"], p["name"]) for p in func_data.get("parameters", [])],
+                        parameters=[
+                            (p["type"], p["name"]) for p in func_data.get("parameters", [])
+                        ],
                         calling_convention=func_data.get("callingConvention", "default"),
                         is_thunk=func_data.get("isThunk", False),
                         is_exported=func_data.get("isExported", False),
                         is_imported=func_data.get("isImported", False),
                         stack_frame_size=func_data.get("stackFrameSize", 0),
-                        local_variables=[(v["type"], v["name"], v["offset"]) for v in func_data.get("localVariables", [])],
+                        local_variables=[
+                            (v["type"], v["name"], v["offset"])
+                            for v in func_data.get("localVariables", [])
+                        ],
                     )
                     self.functions[function.address] = function
 
@@ -231,7 +240,11 @@ class GhidraOutputParser:
                     blocks = func_code.count("{")
 
                     decompiled = DecompiledFunction(
-                        name=func_name, address=func_addr, pseudocode=func_code, complexity=complexity, basic_blocks=blocks,
+                        name=func_name,
+                        address=func_addr,
+                        pseudocode=func_code,
+                        complexity=complexity,
+                        basic_blocks=blocks,
                     )
 
                     decompiled_functions.append(decompiled)
@@ -250,11 +263,11 @@ class GhidraOutputParser:
         try:
             with open(graph_path, encoding="utf-8") as f:
                 for line in f:
-                    # Parse graph edges (caller -> callee)
-                    match = re.match(r"([^\s]+)\s+->\s+([^\s]+)", line.strip())
-                    if match:
-                        caller = match.group(1)
-                        callee = match.group(2)
+                    if match := re.match(
+                        r"([^\s]+)\s+->\s+([^\s]+)", line.strip()
+                    ):
+                        caller = match[1]
+                        callee = match[2]
 
                         if caller not in call_graph:
                             call_graph[caller] = []
@@ -370,7 +383,12 @@ class GhidraOutputParser:
             field_size = int(field_elem.get("SIZE", "0"))
             fields.append((field_type, field_name, field_offset, field_size))
 
-        return DataStructure(name=name, size=size, fields=fields, is_union=elem.get("IS_UNION", "false").lower() == "true")
+        return DataStructure(
+            name=name,
+            size=size,
+            fields=fields,
+            is_union=elem.get("IS_UNION", "false").lower() == "true",
+        )
 
     def _parse_xref_xml(self, elem: ET.Element) -> CrossReference:
         """Parse cross-reference from XML element."""
@@ -395,10 +413,7 @@ class GhidraOutputParser:
 
     def _calculate_complexity(self, code: str) -> int:
         """Calculate cyclomatic complexity of pseudocode."""
-        complexity = 1  # Base complexity
-
-        # Count decision points
-        complexity += code.count("if ")
+        complexity = 1 + code.count("if ")
         complexity += code.count("else if ")
         complexity += code.count("while ")
         complexity += code.count("for ")
@@ -444,10 +459,9 @@ class GhidraOutputParser:
 
     def get_function_by_name(self, name: str) -> FunctionSignature | None:
         """Get function by name."""
-        for func in self.functions.values():
-            if func.name == name:
-                return func
-        return None
+        return next(
+            (func for func in self.functions.values() if func.name == name), None
+        )
 
     def get_function_by_address(self, address: int) -> FunctionSignature | None:
         """Get function by address."""
@@ -464,11 +478,12 @@ class GhidraOutputParser:
     def get_call_targets(self, function_name: str) -> list[str]:
         """Get all functions called by a function."""
         targets = []
-        func = self.get_function_by_name(function_name)
-        if func:
-            for xref in self.get_xrefs_from(func.address):
-                if xref.ref_type == "CALL" and xref.to_function:
-                    targets.append(xref.to_function)
+        if func := self.get_function_by_name(function_name):
+            targets.extend(
+                xref.to_function
+                for xref in self.get_xrefs_from(func.address)
+                if xref.ref_type == "CALL" and xref.to_function
+            )
         return targets
 
     def export_to_json(self, output_path: Path) -> None:
@@ -482,12 +497,20 @@ class GhidraOutputParser:
                     "parameters": [{"type": t, "name": n} for t, n in f.parameters],
                     "calling_convention": f.calling_convention,
                     "stack_frame_size": f.stack_frame_size,
-                    "local_variables": [{"type": t, "name": n, "offset": o} for t, n, o in f.local_variables],
+                    "local_variables": [
+                        {"type": t, "name": n, "offset": o} for t, n, o in f.local_variables
+                    ],
                 }
                 for f in self.functions.values()
             ],
             "structures": [
-                {"name": s.name, "size": s.size, "fields": [{"type": t, "name": n, "offset": o, "size": sz} for t, n, o, sz in s.fields]}
+                {
+                    "name": s.name,
+                    "size": s.size,
+                    "fields": [
+                        {"type": t, "name": n, "offset": o, "size": sz} for t, n, o, sz in s.fields
+                    ],
+                }
                 for s in self.structures.values()
             ],
             "cross_references": [

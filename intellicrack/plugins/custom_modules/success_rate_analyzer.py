@@ -43,6 +43,7 @@ from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.sqlite3_handler import sqlite3
 from intellicrack.utils.logger import logger
 
+
 warnings.filterwarnings("ignore")
 
 """
@@ -151,7 +152,9 @@ class WilsonScoreInterval:
     """Wilson score interval for binomial confidence intervals."""
 
     @staticmethod
-    def calculate(successes: int, total: int, confidence_level: float = 0.95) -> tuple[float, float]:
+    def calculate(
+        successes: int, total: int, confidence_level: float = 0.95
+    ) -> tuple[float, float]:
         """Calculate Wilson score confidence interval."""
         if total == 0:
             return (0.0, 1.0)
@@ -188,7 +191,9 @@ class BayesianAnalyzer:
         alpha, beta = self.update_posterior(successes, failures)
         return alpha / (alpha + beta)
 
-    def credible_interval(self, successes: int, failures: int, confidence: float = 0.95) -> tuple[float, float]:
+    def credible_interval(
+        self, successes: int, failures: int, confidence: float = 0.95
+    ) -> tuple[float, float]:
         """Calculate Bayesian credible interval."""
         alpha, beta = self.update_posterior(successes, failures)
         lower_percentile = (1 - confidence) / 2
@@ -259,12 +264,10 @@ class SurvivalAnalyzer:
         if not times:
             return None
 
-        # Find where survival probability drops below 0.5
-        for i, prob in enumerate(survival_probs):
-            if prob <= 0.5:
-                return times[i]
-
-        return None  # Median not reached
+        return next(
+            (times[i] for i, prob in enumerate(survival_probs) if prob <= 0.5),
+            None,
+        )
 
 
 class TimeSeriesAnalyzer:
@@ -355,7 +358,9 @@ class TimeSeriesAnalyzer:
             },
         }
 
-    def forecast_arima(self, component: str, periods: int = 10) -> tuple[list[float], list[tuple[float, float]]]:
+    def forecast_arima(
+        self, component: str, periods: int = 10
+    ) -> tuple[list[float], list[tuple[float, float]]]:
         """Perform ARIMA-like forecasting."""
         if component not in self.history or len(self.history[component]) < 10:
             return ([], [])
@@ -378,7 +383,9 @@ class TimeSeriesAnalyzer:
             # Use combination of trend and mean reversion for better forecasting
             trend_component = last_value + drift * (i + 1)
             mean_reversion_weight = min(0.3, (i + 1) * 0.05)  # Increase mean reversion over time
-            forecast = trend_component * (1 - mean_reversion_weight) + recent_mean * mean_reversion_weight
+            forecast = (
+                trend_component * (1 - mean_reversion_weight) + recent_mean * mean_reversion_weight
+            )
 
             # Increasing uncertainty over time
             uncertainty = recent_std * np.sqrt(i + 1)
@@ -410,7 +417,9 @@ class StatisticalTester:
         }
 
     @staticmethod
-    def fishers_exact_test(success1: int, total1: int, success2: int, total2: int) -> dict[str, float]:
+    def fishers_exact_test(
+        success1: int, total1: int, success2: int, total2: int
+    ) -> dict[str, float]:
         """Fisher's exact test for comparing two proportions."""
         # Create contingency table
         table = [[success1, total1 - success1], [success2, total2 - success2]]
@@ -447,7 +456,9 @@ class PerformanceMetrics:
         precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
         recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
         specificity = tn / (tn + fp) if (tn + fp) > 0 else 0.0
-        f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
+        f1_score = (
+            2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
+        )
 
         return {
             "accuracy": accuracy,
@@ -564,7 +575,9 @@ class EventTracker:
             # Create indices for performance
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_events_timestamp ON events(timestamp)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_events_component ON events(component)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_events_category ON events(protection_category)")
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_events_category ON events(protection_category)"
+            )
 
             conn.commit()
 
@@ -657,7 +670,8 @@ class EventTracker:
         """Get success and total counts."""
         events = self.get_events(component, protection_category, start_time, end_time)
 
-        success_count = sum(1 for event in events if event.outcome == OutcomeType.SUCCESS)
+        success_count = sum(bool(event.outcome == OutcomeType.SUCCESS)
+                        for event in events)
         total_count = len(events)
 
         return (success_count, total_count)
@@ -698,7 +712,8 @@ class MLPredictor:
                 continue
 
             # Calculate features for this window
-            success_count = sum(1 for e in window_events if e.outcome == OutcomeType.SUCCESS)
+            success_count = sum(bool(e.outcome == OutcomeType.SUCCESS)
+                            for e in window_events)
             total_count = len(window_events)
             success_rate = success_count / total_count if total_count > 0 else 0
 
@@ -827,9 +842,7 @@ class ReportGenerator:
                 ax1.set_xticklabels(components, rotation=45, ha="right")
                 ax1.set_ylim(0, 1)
 
-            # Success rates by protection category
-            category_stats = analyzer.get_category_statistics()
-            if category_stats:
+            if category_stats := analyzer.get_category_statistics():
                 categories = list(category_stats.keys())
                 cat_success_rates = [stats["success_rate"] for stats in category_stats.values()]
 
@@ -857,9 +870,9 @@ class ReportGenerator:
                 ax3.set_ylim(0, 1)
                 ax3.grid(True, alpha=0.3)
 
-            # Distribution of event durations
-            durations = [event.duration for event in recent_events if event.duration > 0]
-            if durations:
+            if durations := [
+                event.duration for event in recent_events if event.duration > 0
+            ]:
                 ax4.hist(durations, bins=20, alpha=0.7, edgecolor="black")
                 ax4.set_title("Distribution of Analysis Durations")
                 ax4.set_xlabel("Duration (seconds)")
@@ -917,8 +930,7 @@ class ReportGenerator:
 
             # Prediction accuracy if ML models available
             if hasattr(analyzer, "ml_predictor") and analyzer.ml_predictor.is_trained:
-                predictions = analyzer.ml_predictor.predict(recent_events)
-                if predictions:
+                if predictions := analyzer.ml_predictor.predict(recent_events):
                     pred_names = list(predictions.keys())
                     pred_values = list(predictions.values())
 
@@ -948,7 +960,8 @@ class ReportGenerator:
         daily_success = {}
         for day, day_events in daily_events.items():
             if day_events:
-                success_count = sum(1 for e in day_events if e.outcome == OutcomeType.SUCCESS)
+                success_count = sum(bool(e.outcome == OutcomeType.SUCCESS)
+                                for e in day_events)
                 daily_success[day] = success_count / len(day_events)
 
         return daily_success
@@ -1053,7 +1066,9 @@ class SuccessRateAnalyzer:
 
                     # Clear expired cache
                     current_time = time.time()
-                    expired_keys = [key for key, expiry in self.cache_expiry.items() if expiry < current_time]
+                    expired_keys = [
+                        key for key, expiry in self.cache_expiry.items() if expiry < current_time
+                    ]
                     for key in expired_keys:
                         self.cache.pop(key, None)
                         self.cache_expiry.pop(key, None)
@@ -1112,10 +1127,7 @@ class SuccessRateAnalyzer:
         if cache_key in self.cache and self.cache_expiry.get(cache_key, 0) > time.time():
             return self.cache[cache_key]
 
-        start_time = None
-        if time_window:
-            start_time = time.time() - time_window
-
+        start_time = time.time() - time_window if time_window else None
         success_count, total_count = self.event_tracker.get_success_counts(
             component,
             protection_category,
@@ -1146,18 +1158,28 @@ class SuccessRateAnalyzer:
 
         return result
 
-    def get_bayesian_success_rate(self, component: str = None, protection_category: ProtectionCategory = None) -> dict[str, Any]:
+    def get_bayesian_success_rate(
+        self, component: str = None, protection_category: ProtectionCategory = None
+    ) -> dict[str, Any]:
         """Get Bayesian success rate analysis."""
-        success_count, total_count = self.event_tracker.get_success_counts(component, protection_category)
+        success_count, total_count = self.event_tracker.get_success_counts(
+            component, protection_category
+        )
         failure_count = total_count - success_count
 
         posterior_mean = self.bayesian_analyzer.posterior_mean(success_count, failure_count)
         credible_interval = self.bayesian_analyzer.credible_interval(success_count, failure_count)
 
         # Calculate probability of success rate being above various thresholds
-        prob_above_50 = self.bayesian_analyzer.posterior_probability(success_count, failure_count, 0.5)
-        prob_above_80 = self.bayesian_analyzer.posterior_probability(success_count, failure_count, 0.8)
-        prob_above_90 = self.bayesian_analyzer.posterior_probability(success_count, failure_count, 0.9)
+        prob_above_50 = self.bayesian_analyzer.posterior_probability(
+            success_count, failure_count, 0.5
+        )
+        prob_above_80 = self.bayesian_analyzer.posterior_probability(
+            success_count, failure_count, 0.8
+        )
+        prob_above_90 = self.bayesian_analyzer.posterior_probability(
+            success_count, failure_count, 0.9
+        )
 
         return {
             "posterior_mean": posterior_mean,
@@ -1168,7 +1190,9 @@ class SuccessRateAnalyzer:
             "sample_size": total_count,
         }
 
-    def compare_success_rates(self, component1: str, component2: str, protection_category: ProtectionCategory = None) -> dict[str, Any]:
+    def compare_success_rates(
+        self, component1: str, component2: str, protection_category: ProtectionCategory = None
+    ) -> dict[str, Any]:
         """Compare success rates between components."""
         success1, total1 = self.event_tracker.get_success_counts(component1, protection_category)
         success2, total2 = self.event_tracker.get_success_counts(component2, protection_category)
@@ -1200,7 +1224,9 @@ class SuccessRateAnalyzer:
             "significant_difference": fisher_result["p_value"] < 0.05,
         }
 
-    def get_trend_analysis(self, component: str, protection_category: ProtectionCategory = None) -> TrendAnalysis:
+    def get_trend_analysis(
+        self, component: str, protection_category: ProtectionCategory = None
+    ) -> TrendAnalysis:
         """Get trend analysis for component."""
         trend_data = self.time_series_analyzer.detect_trend(component)
         forecasts, intervals = self.time_series_analyzer.forecast_arima(component)
@@ -1261,7 +1287,8 @@ class SuccessRateAnalyzer:
 
         # Overall metrics
         total_events = len(recent_events)
-        successful_events = sum(1 for e in recent_events if e.outcome == OutcomeType.SUCCESS)
+        successful_events = sum(bool(e.outcome == OutcomeType.SUCCESS)
+                            for e in recent_events)
         overall_success_rate = successful_events / total_events if total_events > 0 else 0
 
         # Component breakdown
@@ -1270,13 +1297,18 @@ class SuccessRateAnalyzer:
 
         for component in components:
             component_events = [e for e in recent_events if e.component == component]
-            component_successes = sum(1 for e in component_events if e.outcome == OutcomeType.SUCCESS)
+            component_successes = sum(bool(e.outcome == OutcomeType.SUCCESS)
+                                  for e in component_events)
 
             component_performance[component] = {
                 "events": len(component_events),
                 "successes": component_successes,
-                "success_rate": component_successes / len(component_events) if component_events else 0,
-                "avg_duration": np.mean([e.duration for e in component_events if e.duration > 0]) if component_events else 0,
+                "success_rate": component_successes / len(component_events)
+                if component_events
+                else 0,
+                "avg_duration": np.mean([e.duration for e in component_events if e.duration > 0])
+                if component_events
+                else 0,
             }
 
         # Recent trends
@@ -1403,7 +1435,9 @@ def get_success_rate_analyzer(db_path: str | None = None) -> SuccessRateAnalyzer
 
 
 # Decorator for automatic success tracking
-def track_success(event_type: EventType, protection_category: ProtectionCategory, component: str | None = None) -> Callable[[Callable[P, R]], Callable[P, R]]:
+def track_success(
+    event_type: EventType, protection_category: ProtectionCategory, component: str | None = None
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Create decorator for automatic success/failure tracking."""
 
     def decorator(func: Callable[P, R]) -> Callable[P, R]:
@@ -1470,7 +1504,9 @@ if __name__ == "__main__":
         """Register success tracking hooks with Intellicrack components."""
 
         # Track protection detection events
-        @track_success(EventType.PROTECTION_DETECTION, ProtectionCategory.SERIAL_KEY, "protection_detector")
+        @track_success(
+            EventType.PROTECTION_DETECTION, ProtectionCategory.SERIAL_KEY, "protection_detector"
+        )
         def detect_serial_protection(binary_path: str) -> bool:
             try:
                 detector = ProtectionDetector()
@@ -1548,7 +1584,9 @@ if __name__ == "__main__":
     comparison = analyzer.compare_success_rates(components[0], components[1])
     if "error" not in comparison:
         print(f"  {comparison['component1']['name']} vs {comparison['component2']['name']}")
-        print(f"  Success rates: {comparison['component1']['success_rate']:.3f} vs {comparison['component2']['success_rate']:.3f}")
+        print(
+            f"  Success rates: {comparison['component1']['success_rate']:.3f} vs {comparison['component2']['success_rate']:.3f}"
+        )
         print(f"  Significant difference: {comparison['significant_difference']}")
         print(f"  p-value: {comparison['statistical_test']['p_value']:.4f}")
 
@@ -1562,7 +1600,9 @@ if __name__ == "__main__":
     print("\nDashboard Summary:")
     dashboard = analyzer.generate_performance_dashboard()
     print(f"  Total events (24h): {dashboard['overall_metrics']['total_events_24h']}")
-    print(f"  Overall success rate (24h): {dashboard['overall_metrics']['overall_success_rate_24h']:.3f}")
+    print(
+        f"  Overall success rate (24h): {dashboard['overall_metrics']['overall_success_rate_24h']:.3f}"
+    )
 
     # Generate report
     print("\nGenerating comprehensive report...")

@@ -31,10 +31,12 @@ from typing import Any
 from ..handlers.lief_handler import Binary
 from ..utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 try:
     import lief
+
     LIEF_AVAILABLE = True
 except ImportError:
     LIEF_AVAILABLE = False
@@ -42,6 +44,7 @@ except ImportError:
 
 try:
     import capstone
+
     CAPSTONE_AVAILABLE = True
 except ImportError:
     CAPSTONE_AVAILABLE = False
@@ -121,59 +124,59 @@ class DenuvoAnalyzer:
     """Advanced Denuvo Anti-Tamper detection and analysis engine."""
 
     DENUVO_V4_SIGNATURES = [
-        b"\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x10\x57\x48\x83\xEC\x20\x48\x8B\xF9\xE8",
-        b"\x40\x53\x48\x83\xEC\x20\x48\x8B\xD9\x48\x8D\x0D",
-        b"\x48\x89\x4C\x24\x08\x48\x83\xEC\x38\x48\x8B\x44\x24\x40",
-        b"\x4C\x8B\xDC\x49\x89\x5B\x08\x49\x89\x6B\x10\x49\x89\x73\x18\x57\x48\x83\xEC\x50",
+        b"\x48\x89\x5c\x24\x08\x48\x89\x74\x24\x10\x57\x48\x83\xec\x20\x48\x8b\xf9\xe8",
+        b"\x40\x53\x48\x83\xec\x20\x48\x8b\xd9\x48\x8d\x0d",
+        b"\x48\x89\x4c\x24\x08\x48\x83\xec\x38\x48\x8b\x44\x24\x40",
+        b"\x4c\x8b\xdc\x49\x89\x5b\x08\x49\x89\x6b\x10\x49\x89\x73\x18\x57\x48\x83\xec\x50",
     ]
 
     DENUVO_V5_SIGNATURES = [
-        b"\x48\x8B\xC4\x48\x89\x58\x08\x48\x89\x68\x10\x48\x89\x70\x18\x48\x89\x78\x20\x41\x56",
-        b"\x40\x55\x53\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x8D\x6C\x24",
-        b"\x48\x89\x54\x24\x10\x48\x89\x4C\x24\x08\x55\x53\x56\x57\x41\x54\x41\x55\x41\x56",
-        b"\xE8\x00\x00\x00\x00\x58\x48\x2D\x05\x00\x00\x00",
+        b"\x48\x8b\xc4\x48\x89\x58\x08\x48\x89\x68\x10\x48\x89\x70\x18\x48\x89\x78\x20\x41\x56",
+        b"\x40\x55\x53\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x8d\x6c\x24",
+        b"\x48\x89\x54\x24\x10\x48\x89\x4c\x24\x08\x55\x53\x56\x57\x41\x54\x41\x55\x41\x56",
+        b"\xe8\x00\x00\x00\x00\x58\x48\x2d\x05\x00\x00\x00",
     ]
 
     DENUVO_V6_SIGNATURES = [
-        b"\x48\x89\x5C\x24\x10\x48\x89\x74\x24\x18\x55\x57\x41\x56\x48\x8D\xAC\x24",
-        b"\x4C\x8B\xD1\x48\x8D\x0D",
-        b"\x48\x8B\x05\x00\x00\x00\x00\x48\x85\xC0\x0F\x84",
-        b"\x66\x0F\x1F\x44\x00\x00\x48\x8B\x01\xFF\x50",
+        b"\x48\x89\x5c\x24\x10\x48\x89\x74\x24\x18\x55\x57\x41\x56\x48\x8d\xac\x24",
+        b"\x4c\x8b\xd1\x48\x8d\x0d",
+        b"\x48\x8b\x05\x00\x00\x00\x00\x48\x85\xc0\x0f\x84",
+        b"\x66\x0f\x1f\x44\x00\x00\x48\x8b\x01\xff\x50",
     ]
 
     DENUVO_V7_SIGNATURES = [
-        b"\x48\x89\x5C\x24\x08\x48\x89\x6C\x24\x10\x48\x89\x74\x24\x18\x57\x48\x83\xEC\x30\x48\x8B\xF9\x48\x8D\x0D",
-        b"\x40\x53\x48\x83\xEC\x30\x48\x8B\xD9\x48\x8B\x0D",
-        b"\x48\x8D\x05\x00\x00\x00\x00\x48\x89\x01\x48\x8D\x05",
-        b"\x48\x89\x4C\x24\x08\x48\x83\xEC\x48\x48\x8B\x05",
+        b"\x48\x89\x5c\x24\x08\x48\x89\x6c\x24\x10\x48\x89\x74\x24\x18\x57\x48\x83\xec\x30\x48\x8b\xf9\x48\x8d\x0d",
+        b"\x40\x53\x48\x83\xec\x30\x48\x8b\xd9\x48\x8b\x0d",
+        b"\x48\x8d\x05\x00\x00\x00\x00\x48\x89\x01\x48\x8d\x05",
+        b"\x48\x89\x4c\x24\x08\x48\x83\xec\x48\x48\x8b\x05",
     ]
 
     INTEGRITY_CHECK_PATTERNS = [
-        b"\x0F\xB6\x04\x0F\x03\xC8\xC1\xC1",
-        b"\x33\xC0\x85\xD2\x74\x00\x8A\x01\x03\xC8",
-        b"\x8B\x44\x24\x04\x85\xC0\x74\x00\x56\x8B\x74\x24\x0C",
-        b"\xF7\xD0\x23\xC1\x33\xC2\xC1\xC0",
+        b"\x0f\xb6\x04\x0f\x03\xc8\xc1\xc1",
+        b"\x33\xc0\x85\xd2\x74\x00\x8a\x01\x03\xc8",
+        b"\x8b\x44\x24\x04\x85\xc0\x74\x00\x56\x8b\x74\x24\x0c",
+        b"\xf7\xd0\x23\xc1\x33\xc2\xc1\xc0",
     ]
 
     TIMING_CHECK_PATTERNS = [
-        b"\x0F\x31\x48\x8B\xC8\x48\xC1\xE1\x20\x48\x0B\xC8",
-        b"\x0F\x31\x89\x45\x00\x89\x55\x00",
-        b"\xF3\x0F\x16\x05",
-        b"\x65\x48\x8B\x04\x25\x30\x00\x00\x00\x8B\x80",
+        b"\x0f\x31\x48\x8b\xc8\x48\xc1\xe1\x20\x48\x0b\xc8",
+        b"\x0f\x31\x89\x45\x00\x89\x55\x00",
+        b"\xf3\x0f\x16\x05",
+        b"\x65\x48\x8b\x04\x25\x30\x00\x00\x00\x8b\x80",
     ]
 
     VM_HANDLER_PATTERNS = [
-        b"\xFF\x24\xC5",
-        b"\x48\x8B\x04\xC8\xFF\xE0",
-        b"\x41\xFF\x24\xC0",
-        b"\x48\x8B\x84\xC1\x00\x00\x00\x00\xFF\xE0",
+        b"\xff\x24\xc5",
+        b"\x48\x8b\x04\xc8\xff\xe0",
+        b"\x41\xff\x24\xc0",
+        b"\x48\x8b\x84\xc1\x00\x00\x00\x00\xff\xe0",
     ]
 
     TRIGGER_PATTERNS = [
-        b"\xE8\x00\x00\x00\x00\x84\xC0\x0F\x84",
-        b"\xE8\x00\x00\x00\x00\x85\xC0\x0F\x85",
-        b"\xFF\x15\x00\x00\x00\x00\x84\xC0\x74",
-        b"\xFF\x15\x00\x00\x00\x00\x85\xC0\x75",
+        b"\xe8\x00\x00\x00\x00\x84\xc0\x0f\x84",
+        b"\xe8\x00\x00\x00\x00\x85\xc0\x0f\x85",
+        b"\xff\x15\x00\x00\x00\x00\x84\xc0\x74",
+        b"\xff\x15\x00\x00\x00\x00\x85\xc0\x75",
     ]
 
     def __init__(self) -> None:
@@ -222,37 +225,32 @@ class DenuvoAnalyzer:
             encrypted_result = self._detect_encrypted_sections(binary)
             if encrypted_result:
                 encrypted_sections = encrypted_result
-                if encrypted_result:
-                    confidence_scores.append(0.85)
-                    analysis_details["encrypted_sections"] = len(encrypted_result)
+                confidence_scores.append(0.85)
+                analysis_details["encrypted_sections"] = len(encrypted_result)
 
             vm_result = self._detect_vm_regions(binary)
             if vm_result:
                 vm_regions = vm_result
-                if vm_result:
-                    confidence_scores.append(0.80)
-                    analysis_details["vm_regions"] = len(vm_result)
+                confidence_scores.append(0.80)
+                analysis_details["vm_regions"] = len(vm_result)
 
             integrity_result = self._detect_integrity_checks(binary)
             if integrity_result:
                 integrity_checks = integrity_result
-                if integrity_result:
-                    confidence_scores.append(0.75)
-                    analysis_details["integrity_checks"] = len(integrity_result)
+                confidence_scores.append(0.75)
+                analysis_details["integrity_checks"] = len(integrity_result)
 
             timing_result = self._detect_timing_checks(binary)
             if timing_result:
                 timing_checks = timing_result
-                if timing_result:
-                    confidence_scores.append(0.70)
-                    analysis_details["timing_checks"] = len(timing_result)
+                confidence_scores.append(0.70)
+                analysis_details["timing_checks"] = len(timing_result)
 
             trigger_result = self._detect_triggers(binary)
             if trigger_result:
                 triggers = trigger_result
-                if trigger_result:
-                    confidence_scores.append(0.65)
-                    analysis_details["triggers"] = len(trigger_result)
+                confidence_scores.append(0.65)
+                analysis_details["triggers"] = len(trigger_result)
 
             if confidence_scores:
                 overall_confidence = sum(confidence_scores) / len(confidence_scores)
@@ -262,7 +260,11 @@ class DenuvoAnalyzer:
                 detected = False
 
             bypass_recommendations = self._generate_bypass_recommendations(
-                version, triggers, integrity_checks, timing_checks, vm_regions,
+                version,
+                triggers,
+                integrity_checks,
+                timing_checks,
+                vm_regions,
             )
 
             return DenuvoAnalysisResult(
@@ -307,7 +309,7 @@ class DenuvoAnalyzer:
             ]:
                 for sig in sig_list:
                     if sig in data:
-                        major = int(ver_name.split()[1].split('.')[0])
+                        major = int(ver_name.split()[1].split(".")[0])
                         version = DenuvoVersion(
                             major=major,
                             minor=0,
@@ -370,11 +372,8 @@ class DenuvoAnalyzer:
             ]
 
             for signatures, major, name, base_confidence in version_checks:
-                match_count = 0
-                for sig in signatures:
-                    if sig in data:
-                        match_count += 1
-
+                match_count = sum(bool(sig in data)
+                              for sig in signatures)
                 if match_count > 0:
                     confidence = base_confidence * (match_count / len(signatures))
                     if confidence >= 0.60:
@@ -412,13 +411,15 @@ class DenuvoAnalyzer:
                 entropy = self._calculate_entropy(content)
 
                 if entropy > 7.2:
-                    encrypted_sections.append({
-                        "name": section.name,
-                        "virtual_address": section.virtual_address,
-                        "size": section.size,
-                        "entropy": entropy,
-                        "characteristics": section.characteristics,
-                    })
+                    encrypted_sections.append(
+                        {
+                            "name": section.name,
+                            "virtual_address": section.virtual_address,
+                            "size": section.size,
+                            "entropy": entropy,
+                            "characteristics": section.characteristics,
+                        }
+                    )
 
             return encrypted_sections
 
@@ -462,13 +463,15 @@ class DenuvoAnalyzer:
 
                     confidence = min(0.95, 0.60 + (len(handler_matches) * 0.05))
 
-                    vm_regions.append(VMRegion(
-                        start_address=section.virtual_address,
-                        end_address=section.virtual_address + section.size,
-                        entry_points=entry_points,
-                        handler_count=len(handler_matches),
-                        confidence=confidence,
-                    ))
+                    vm_regions.append(
+                        VMRegion(
+                            start_address=section.virtual_address,
+                            end_address=section.virtual_address + section.size,
+                            entry_points=entry_points,
+                            handler_count=len(handler_matches),
+                            confidence=confidence,
+                        )
+                    )
 
             return vm_regions
 
@@ -505,16 +508,18 @@ class DenuvoAnalyzer:
                         address = section.virtual_address + pos
 
                         check_type, algorithm = self._identify_integrity_algorithm(
-                            content[pos:pos+50] if pos+50 < len(content) else content[pos:],
+                            content[pos : pos + 50] if pos + 50 < len(content) else content[pos:],
                         )
 
-                        integrity_checks.append(IntegrityCheck(
-                            address=address,
-                            type=check_type,
-                            target="code_section",
-                            algorithm=algorithm,
-                            confidence=0.75,
-                        ))
+                        integrity_checks.append(
+                            IntegrityCheck(
+                                address=address,
+                                type=check_type,
+                                target="code_section",
+                                algorithm=algorithm,
+                                confidence=0.75,
+                            )
+                        )
 
                         offset = pos + 1
 
@@ -559,15 +564,17 @@ class DenuvoAnalyzer:
                         address = section.virtual_address + pos
 
                         method = self._identify_timing_method(
-                            content[pos:pos+30] if pos+30 < len(content) else content[pos:],
+                            content[pos : pos + 30] if pos + 30 < len(content) else content[pos:],
                         )
 
-                        timing_checks.append(TimingCheck(
-                            address=address,
-                            method=method,
-                            threshold=1000,
-                            confidence=0.70,
-                        ))
+                        timing_checks.append(
+                            TimingCheck(
+                                address=address,
+                                method=method,
+                                threshold=1000,
+                                confidence=0.70,
+                            )
+                        )
 
                         offset = pos + 1
 
@@ -612,16 +619,18 @@ class DenuvoAnalyzer:
                         address = section.virtual_address + pos
 
                         trigger_type, description = self._identify_trigger_type(
-                            content[pos:pos+40] if pos+40 < len(content) else content[pos:],
+                            content[pos : pos + 40] if pos + 40 < len(content) else content[pos:],
                         )
 
-                        triggers.append(DenuvoTrigger(
-                            address=address,
-                            type=trigger_type,
-                            function_name=f"trigger_{address:x}",
-                            confidence=0.65,
-                            description=description,
-                        ))
+                        triggers.append(
+                            DenuvoTrigger(
+                                address=address,
+                                type=trigger_type,
+                                function_name=f"trigger_{address:x}",
+                                confidence=0.65,
+                                description=description,
+                            )
+                        )
 
                         offset = pos + 1
 
@@ -679,9 +688,9 @@ class DenuvoAnalyzer:
         entry_points = []
 
         entry_patterns = [
-            b"\xE8\x00\x00\x00\x00\x58\x48\x2D",
-            b"\x48\x8D\x0D\x00\x00\x00\x00\xE8",
-            b"\xFF\x15\x00\x00\x00\x00\x48\x8B",
+            b"\xe8\x00\x00\x00\x00\x58\x48\x2d",
+            b"\x48\x8d\x0d\x00\x00\x00\x00\xe8",
+            b"\xff\x15\x00\x00\x00\x00\x48\x8b",
         ]
 
         for pattern in entry_patterns:
@@ -708,11 +717,11 @@ class DenuvoAnalyzer:
             Tuple of (check_type, algorithm)
 
         """
-        if b"\x03\xC8\xC1\xC1" in code:
+        if b"\x03\xc8\xc1\xc1" in code:
             return ("hash_check", "CRC32")
-        if b"\x33\xC0\x85\xD2" in code:
+        if b"\x33\xc0\x85\xd2" in code:
             return ("hash_check", "custom_hash")
-        if b"\xF7\xD0\x23\xC1" in code:
+        if b"\xf7\xd0\x23\xc1" in code:
             return ("hash_check", "checksum")
         return ("integrity_check", "unknown")
 
@@ -726,11 +735,11 @@ class DenuvoAnalyzer:
             Timing method name
 
         """
-        if b"\x0F\x31" in code:
+        if b"\x0f\x31" in code:
             return "RDTSC"
-        if b"\xF3\x0F\x16" in code:
+        if b"\xf3\x0f\x16" in code:
             return "QueryPerformanceCounter"
-        if b"\x65\x48\x8B\x04\x25\x30" in code:
+        if b"\x65\x48\x8b\x04\x25\x30" in code:
             return "PEB_timing"
         return "unknown_timing"
 
@@ -744,11 +753,11 @@ class DenuvoAnalyzer:
             Tuple of (trigger_type, description)
 
         """
-        if b"\xE8\x00\x00\x00\x00\x84\xC0\x0F\x84" in code:
+        if b"\xe8\x00\x00\x00\x00\x84\xc0\x0f\x84" in code:
             return ("validation_trigger", "License validation check")
-        if b"\xE8\x00\x00\x00\x00\x85\xC0\x0F\x85" in code:
+        if b"\xe8\x00\x00\x00\x00\x85\xc0\x0f\x85" in code:
             return ("activation_trigger", "Activation verification")
-        if b"\xFF\x15\x00\x00\x00\x00\x84\xC0\x74" in code:
+        if b"\xff\x15\x00\x00\x00\x00\x84\xc0\x74" in code:
             return ("api_trigger", "API validation call")
         return ("generic_trigger", "Generic protection trigger")
 
@@ -766,7 +775,7 @@ class DenuvoAnalyzer:
         high_entropy_count = 0
 
         for i in range(0, len(data), section_size):
-            chunk = data[i:i+section_size]
+            chunk = data[i : i + section_size]
             if len(chunk) < 256:
                 continue
 
@@ -801,18 +810,18 @@ class DenuvoAnalyzer:
 
         if version:
             if version.major >= 7:
-                recommendations.append(
-                    "Denuvo 7.x+ detected - Consider VM devirtualization approach",
-                )
-                recommendations.append(
-                    "Use Scylla Hide or similar anti-anti-debugging tools",
+                recommendations.extend(
+                    (
+                        "Denuvo 7.x+ detected - Consider VM devirtualization approach",
+                        "Use Scylla Hide or similar anti-anti-debugging tools",
+                    )
                 )
             elif version.major >= 5:
-                recommendations.append(
-                    "Denuvo 5.x/6.x detected - Focus on trigger point analysis",
-                )
-                recommendations.append(
-                    "Monitor activation server communication for offline bypass",
+                recommendations.extend(
+                    (
+                        "Denuvo 5.x/6.x detected - Focus on trigger point analysis",
+                        "Monitor activation server communication for offline bypass",
+                    )
                 )
             else:
                 recommendations.append(
@@ -820,29 +829,26 @@ class DenuvoAnalyzer:
                 )
 
         if triggers:
-            recommendations.append(
-                f"Found {len(triggers)} activation triggers - NOP or bypass recommended",
+            recommendations.extend(
+                (
+                    f"Found {len(triggers)} activation triggers - NOP or bypass recommended",
+                    "Use Frida or similar hooking framework to intercept triggers",
+                )
             )
-            recommendations.append(
-                "Use Frida or similar hooking framework to intercept triggers",
-            )
-
         if integrity_checks:
-            recommendations.append(
-                f"Found {len(integrity_checks)} integrity checks - Patch or hook hash functions",
+            recommendations.extend(
+                (
+                    f"Found {len(integrity_checks)} integrity checks - Patch or hook hash functions",
+                    "Consider memory dumping after integrity checks complete",
+                )
             )
-            recommendations.append(
-                "Consider memory dumping after integrity checks complete",
-            )
-
         if timing_checks:
-            recommendations.append(
-                f"Found {len(timing_checks)} timing checks - Hook RDTSC and timing APIs",
+            recommendations.extend(
+                (
+                    f"Found {len(timing_checks)} timing checks - Hook RDTSC and timing APIs",
+                    "Use ScyllaHide RDTSC feature or manual timing manipulation",
+                )
             )
-            recommendations.append(
-                "Use ScyllaHide RDTSC feature or manual timing manipulation",
-            )
-
         if vm_regions:
             recommendations.append(
                 f"Found {len(vm_regions)} VM-protected regions - Devirtualization required",

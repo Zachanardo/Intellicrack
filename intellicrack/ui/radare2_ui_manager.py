@@ -24,16 +24,9 @@ from typing import Any
 from intellicrack.handlers.pyqt6_handler import QMessageBox, QObject, QTabWidget, pyqtSignal
 
 from ..utils.logger import get_logger
-from .enhanced_ui_integration import (
-    EnhancedAnalysisDashboard,
-    integrate_enhanced_ui_with_existing_app,
-)
-from .radare2_integration_ui import (
-    R2ConfigurationDialog,
-    R2IntegrationWidget,
-    R2ResultsViewer,
-    integrate_with_main_app,
-)
+from .enhanced_ui_integration import EnhancedAnalysisDashboard, integrate_enhanced_ui_with_existing_app
+from .radare2_integration_ui import R2ConfigurationDialog, R2IntegrationWidget, R2ResultsViewer, integrate_with_main_app
+
 
 logger = get_logger(__name__)
 
@@ -112,12 +105,7 @@ class R2UIManager(QObject):
 
             # Connect UI component signals if they exist
             if "r2_widget" in self.ui_components:
-                r2_widget = self.ui_components["r2_widget"]
-                # Connect internal signals if available
-                if hasattr(r2_widget, "current_worker"):
-                    # These will be connected when worker is created
-                    pass
-
+                self.ui_components["r2_widget"]
             self.logger.info("Signal connections established")
 
         except Exception as e:
@@ -259,9 +247,8 @@ class R2UIManager(QObject):
         """Set up binary path synchronization."""
         try:
             # Connect to main app's binary path changes
-            if hasattr(main_app, "binary_path"):
-                if main_app.binary_path:
-                    self.set_binary_path(main_app.binary_path)
+            if hasattr(main_app, "binary_path") and main_app.binary_path:
+                self.set_binary_path(main_app.binary_path)
 
             # Setup signal connection if main app emits binary path changes
             if hasattr(main_app, "binary_path_changed"):
@@ -295,9 +282,8 @@ class R2UIManager(QObject):
             if "r2_widget" in self.ui_components:
                 self.ui_components["r2_widget"].set_binary_path(path)
 
-            if "enhanced_dashboard" in self.ui_components:
-                if hasattr(self.ui_components["enhanced_dashboard"], "r2_widget"):
-                    self.ui_components["enhanced_dashboard"].r2_widget.set_binary_path(path)
+            if "enhanced_dashboard" in self.ui_components and hasattr(self.ui_components["enhanced_dashboard"], "r2_widget"):
+                self.ui_components["enhanced_dashboard"].r2_widget.set_binary_path(path)
 
             # Emit signal
             self.binary_loaded.emit(path)
@@ -496,10 +482,9 @@ class R2UIManager(QObject):
             # Stop any running analysis
             if "r2_widget" in self.ui_components:
                 r2_widget = self.ui_components["r2_widget"]
-                if hasattr(r2_widget, "current_worker") and r2_widget.current_worker:
-                    if r2_widget.current_worker.isRunning():
-                        r2_widget.current_worker.terminate()
-                        r2_widget.current_worker.wait()
+                if hasattr(r2_widget, "current_worker") and r2_widget.current_worker and r2_widget.current_worker.isRunning():
+                    r2_widget.current_worker.terminate()
+                    r2_widget.current_worker.wait()
 
             # Clear references
             self.ui_components.clear()

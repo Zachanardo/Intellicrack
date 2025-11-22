@@ -48,6 +48,7 @@ from intellicrack.handlers.pyqt6_handler import (
 from ...utils.logger import get_logger
 from ...utils.tools.ghidra_script_manager import GhidraScript, get_script_manager
 
+
 logger = get_logger(__name__)
 
 
@@ -152,14 +153,13 @@ class ScriptInfoWidget(QWidget):
         self.category_label.setText(f"Category: {script.category}")
         self.version_label.setText(f"Version: {script.version}")
         self.type_label.setText(f"Type: {script.type.upper()}")
-        self.modified_label.setText(f"Last Modified: {script.last_modified.strftime('%Y-%m-%d %H:%M')}")
+        self.modified_label.setText(
+            f"Last Modified: {script.last_modified.strftime('%Y-%m-%d %H:%M')}"
+        )
 
         # Format size
         size_kb = script.size / 1024
-        if size_kb < 1:
-            size_str = f"{script.size} bytes"
-        else:
-            size_str = f"{size_kb:.1f} KB"
+        size_str = f"{script.size} bytes" if size_kb < 1 else f"{size_kb:.1f} KB"
         self.size_label.setText(f"Size: {size_str}")
 
         self.description_text.setText(script.description)
@@ -431,9 +431,7 @@ class GhidraScriptSelector(QDialog):
             self.select_btn.setEnabled(False)
             return
 
-        # Get script
-        script = self.script_manager.get_script(script_path)
-        if script:
+        if script := self.script_manager.get_script(script_path):
             self.info_widget.update_script_info(script)
             self.select_btn.setEnabled(script.is_valid)
             self.selected_script_path = script_path
@@ -466,8 +464,7 @@ class GhidraScriptSelector(QDialog):
     def _on_item_double_clicked(self, item: QTreeWidgetItem, column: int) -> None:
         """Handle double-click on item."""
         _ = column
-        script_path = item.data(0, Qt.UserRole)
-        if script_path:
+        if script_path := item.data(0, Qt.UserRole):
             script = self.script_manager.get_script(script_path)
             if script and script.is_valid:
                 self._on_select_clicked()
@@ -501,10 +498,7 @@ class GhidraScriptSelector(QDialog):
         if not file_path:
             return
 
-        # Add script
-        script = self.script_manager.add_user_script(file_path)
-
-        if script:
+        if script := self.script_manager.add_user_script(file_path):
             QMessageBox.information(
                 self,
                 "Script Added",

@@ -134,7 +134,7 @@ class TestSecurePickleFunctions(unittest.TestCase):
         """Test that secure pickle functions handle large analysis datasets efficiently."""
         # Create large analysis dataset simulating real binary analysis
         large_dataset = {
-            "strings": ["string_{}".format(i) for i in range(10000)],
+            "strings": [f"string_{i}" for i in range(10000)],
             "disassembly": [
                 {"address": hex(0x401000 + i*4), "instruction": f"mov eax, {i}"}
                 for i in range(5000)

@@ -24,6 +24,7 @@ from typing import Any
 
 from ...utils.protection_utils import calculate_entropy
 
+
 # Module logger
 logger = logging.getLogger(__name__)
 
@@ -107,11 +108,7 @@ def get_characteristics(characteristics: int) -> str:
         0x8000: "BYTES_REVERSED_HI",
     }
 
-    flags = []
-    for flag, name in char_flags.items():
-        if characteristics & flag:
-            flags.append(name)
-
+    flags = [name for flag, name in char_flags.items() if characteristics & flag]
     return " | ".join(flags) if flags else "None"
 
 
@@ -151,11 +148,16 @@ def analyze_binary_internal(binary_path: str, flags: list[str] | None = None) ->
 
     try:
         logger.info("Starting internal binary analysis for: %s. Flags: %s", binary_path, flags)
-        results.append(f"Analyzing binary: {os.path.basename(binary_path)}")
-        results.append(f"File size: {os.path.getsize(binary_path):,} bytes")
-
+        results.extend(
+            (
+                f"Analyzing binary: {os.path.basename(binary_path)}",
+                f"File size: {os.path.getsize(binary_path):,} bytes",
+            )
+        )
         if not pefile:
-            results.append("ERROR: pefile library not available - install with 'pip install pefile'")
+            results.append(
+                "ERROR: pefile library not available - install with 'pip install pefile'"
+            )
             return results
 
         pe = pefile.PE(binary_path)
@@ -206,7 +208,9 @@ def _analyze_pe_header(pe: object) -> list[str]:
             results.append(f"Time date stamp: {hex(timestamp)} ({get_pe_timestamp(timestamp)})")
         characteristics = getattr(pe.FILE_HEADER, "Characteristics", None)
         if characteristics is not None:
-            results.append(f"Characteristics: 0x{characteristics:04X} ({get_characteristics(characteristics)})")
+            results.append(
+                f"Characteristics: 0x{characteristics:04X} ({get_characteristics(characteristics)})"
+            )
     else:
         results.append("PE FILE_HEADER missing or invalid")
 
@@ -340,9 +344,7 @@ def _analyze_imports(pe: object, results: list[str]) -> list[str]:
 
     if license_related_imports:
         results.append("\nLicense-related imports detected:")
-        for imp in license_related_imports:
-            results.append(f"  {imp}")
-
+        results.extend(f"  {imp}" for imp in license_related_imports)
     return license_related_imports
 
 
@@ -359,12 +361,16 @@ def _analyze_exports(pe: object, results: list[str]) -> None:
     """
     if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
         results.append("\nExports:")
-        for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
-            if exp.name:
-                results.append(f"  {exp.name.decode('utf-8', errors='ignore')}")
+        results.extend(
+            f"  {exp.name.decode('utf-8', errors='ignore')}"
+            for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols
+            if exp.name
+        )
 
 
-def _generate_analysis_summary(results: list[str], suspicious_sections: list[str], license_related_imports: list[str]) -> None:
+def _generate_analysis_summary(
+    results: list[str], suspicious_sections: list[str], license_related_imports: list[str]
+) -> None:
     """Generate analysis summary and add to results list.
 
     Appends a summary section showing counts of suspicious sections and
@@ -423,7 +429,9 @@ def enhanced_deep_license_analysis(binary_path: str) -> dict[str, Any]:
                         func_name = _imp.name.decode("utf-8", errors="ignore").lower()
 
                         # Network-related functions
-                        if any(_net in func_name for _net in ["inet", "socket", "winhttp", "urlmon"]):
+                        if any(
+                            _net in func_name for _net in ["inet", "socket", "winhttp", "urlmon"]
+                        ):
                             results["network_calls"].append(f"{dll_name}::{func_name}")
 
                         # Registry-related functions
@@ -431,7 +439,10 @@ def enhanced_deep_license_analysis(binary_path: str) -> dict[str, Any]:
                             results["registry_access"].append(f"{dll_name}::{func_name}")
 
                         # File operation functions
-                        if any(_file_op in func_name for _file_op in ["file", "read", "write", "create"]):
+                        if any(
+                            _file_op in func_name
+                            for _file_op in ["file", "read", "write", "create"]
+                        ):
                             results["file_operations"].append(f"{dll_name}::{func_name}")
 
                         # License validation patterns
@@ -486,8 +497,10 @@ def enhanced_deep_license_analysis(binary_path: str) -> dict[str, Any]:
                     entropy = calculate_entropy(section_data)
                     if entropy > 7.0:
                         section_name = _section.Name.decode("utf-8", errors="ignore").rstrip("\0")
-                        protection_indicators.append(f"High entropy section: {section_name} ({entropy:.2f})")
-                except (UnicodeDecodeError, AttributeError, ValueError) as e:
+                        protection_indicators.append(
+                            f"High entropy section: {section_name} ({entropy:.2f})"
+                        )
+                except (AttributeError, ValueError) as e:
                     logger.error("Error in core_analysis: %s", e)
 
         results["protection_mechanisms"] = protection_indicators
@@ -549,7 +562,9 @@ def detect_packing(binary_path: str) -> dict[str, Any]:
 
                     if entropy > 7.0:
                         high_entropy_sections += 1
-                        results["indicators"].append(f"High entropy section: {section_name} ({entropy:.2f})")
+                        results["indicators"].append(
+                            f"High entropy section: {section_name} ({entropy:.2f})"
+                        )
 
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.warning("Could not analyze section entropy: %s", e)
@@ -771,10 +786,13 @@ def decrypt_embedded_script(binary_path: str) -> list[str]:
             results.append(f"Found {len(found_scripts)} potential embedded scripts:")
 
             for i, script in enumerate(found_scripts):
-                results.append(f"\nScript {i + 1} at offset 0x{script['offset']:X}:")
-                results.append(f"Marker: {script['marker']}")
-                results.append("Content preview:")
-
+                results.extend(
+                    (
+                        f"\nScript {i + 1} at offset 0x{script['offset']:X}:",
+                        f"Marker: {script['marker']}",
+                        "Content preview:",
+                    )
+                )
                 # Show first few lines
                 lines = script["content"].splitlines() if script.get("content") is not None else []
                 for j, line in enumerate(lines[:10]):

@@ -13,14 +13,8 @@ Licensed under GNU General Public License v3.0
 import threading
 import time
 
-from intellicrack.core.monitoring.base_monitor import (
-    BaseMonitor,
-    EventSeverity,
-    EventSource,
-    EventType,
-    MonitorEvent,
-    ProcessInfo,
-)
+from intellicrack.core.monitoring.base_monitor import BaseMonitor, EventSeverity, EventSource, EventType, MonitorEvent, ProcessInfo
+
 
 try:
     from scapy.all import IP, TCP, UDP, Raw, sniff
@@ -42,7 +36,9 @@ class NetworkMonitor(BaseMonitor):
     This monitor is OPTIONAL for advanced packet analysis.
     """
 
-    def __init__(self, process_info: ProcessInfo | None = None, target_ports: list | None = None) -> None:
+    def __init__(
+        self, process_info: ProcessInfo | None = None, target_ports: list | None = None
+    ) -> None:
         """Initialize network monitor.
 
         Args:
@@ -93,7 +89,12 @@ class NetworkMonitor(BaseMonitor):
         filter_str = f"tcp port {' or '.join(map(str, self.target_ports))}"
 
         try:
-            sniff(filter=filter_str, prn=self._process_packet, store=False, stop_filter=lambda _: self._stop_sniffing)
+            sniff(
+                filter=filter_str,
+                prn=self._process_packet,
+                store=False,
+                stop_filter=lambda _: self._stop_sniffing,
+            )
         except Exception as e:
             self._handle_error(e)
 
@@ -119,7 +120,10 @@ class NetworkMonitor(BaseMonitor):
             if packet.haslayer(Raw):
                 payload = packet[Raw].load
 
-                if any(keyword in payload.lower() for keyword in [b"license", b"serial", b"activation", b"key"]):
+                if any(
+                    keyword in payload.lower()
+                    for keyword in [b"license", b"serial", b"activation", b"key"]
+                ):
                     severity = EventSeverity.CRITICAL
                 else:
                     severity = EventSeverity.INFO
@@ -154,7 +158,12 @@ class NetworkMonitor(BaseMonitor):
                     source=EventSource.NETWORK,
                     event_type=EventType.SEND,
                     severity=EventSeverity.INFO,
-                    details={"protocol": "UDP", "src": f"{src_ip}:{src_port}", "dst": f"{dst_ip}:{dst_port}", "payload_size": len(payload)},
+                    details={
+                        "protocol": "UDP",
+                        "src": f"{src_ip}:{src_port}",
+                        "dst": f"{dst_ip}:{dst_port}",
+                        "payload_size": len(payload),
+                    },
                     process_info=self.process_info,
                 )
 

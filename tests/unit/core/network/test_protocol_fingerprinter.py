@@ -44,7 +44,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
         cls.real_protocol_samples = cls._generate_real_protocol_samples()
 
     @classmethod
-    def _generate_real_protocol_samples(cls) -> Dict[str, bytes]:
+    def _generate_real_protocol_samples(cls) -> dict[str, bytes]:
         """Generate real protocol packet samples based on actual license protocols."""
         return {
             # FlexLM protocol samples

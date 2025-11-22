@@ -817,16 +817,14 @@ const BypassSuccessTracker = {
         if (!this.config.reporting.alertOnLowSuccessRate) return;
 
         var categoryStats = this.statistics.byCategory.get(category);
-        if (categoryStats && categoryStats.attempts >= this.config.thresholds.minimumAttempts) {
-            if (categoryStats.successRate < this.config.reporting.alertThreshold) {
-                this.generateAlert('low_success_rate', {
-                    category: category,
-                    method: method,
-                    successRate: categoryStats.successRate,
-                    attempts: categoryStats.attempts,
-                    threshold: this.config.reporting.alertThreshold,
-                });
-            }
+        if (categoryStats && categoryStats.attempts >= this.config.thresholds.minimumAttempts && categoryStats.successRate < this.config.reporting.alertThreshold) {
+              this.generateAlert('low_success_rate', {
+                  category: category,
+                  method: method,
+                  successRate: categoryStats.successRate,
+                  attempts: categoryStats.attempts,
+                  threshold: this.config.reporting.alertThreshold,
+              });
         }
     },
 
@@ -1269,16 +1267,14 @@ const BypassSuccessTracker = {
 
         // Analyze method effectiveness
         this.statistics.byMethod.forEach((methodStats, methodKey) => {
-            if (methodStats.attempts >= this.config.thresholds.minimumAttempts) {
-                if (methodStats.successRate < this.config.thresholds.warningSuccessRate) {
-                    recommendations.push({
-                        type: 'improve_method',
-                        priority: 'medium',
-                        method: methodKey,
-                        currentRate: methodStats.successRate,
-                        suggestion: 'Consider alternative approach for ' + methodKey,
-                    });
-                }
+            if (methodStats.attempts >= this.config.thresholds.minimumAttempts && methodStats.successRate < this.config.thresholds.warningSuccessRate) {
+                  recommendations.push({
+                      type: 'improve_method',
+                      priority: 'medium',
+                      method: methodKey,
+                      currentRate: methodStats.successRate,
+                      suggestion: 'Consider alternative approach for ' + methodKey,
+                  });
             }
         });
 

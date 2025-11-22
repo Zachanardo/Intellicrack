@@ -20,6 +20,7 @@ import os
 
 from intellicrack.handlers.pyqt6_handler import QFileDialog, QWidget
 
+
 """Plugin Browser Utility Functions.
 
 Shared utilities for plugin browsing functionality to eliminate code duplication.

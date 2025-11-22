@@ -46,7 +46,7 @@ class EvidenceItem:
     file_size: int
     timestamp: str
     description: str
-    metadata: Dict[str, Any] = None
+    metadata: dict[str, Any] = None
 
     def __post_init__(self):
         if self.metadata is None:
@@ -57,10 +57,10 @@ class EvidencePackage:
     """Complete evidence package structure."""
     package_id: str
     creation_timestamp: str
-    evidence_items: List[EvidenceItem]
-    integrity_manifest: Dict[str, str]
-    gpg_signature: Optional[str] = None
-    chain_of_custody: List[Dict[str, str]] = None
+    evidence_items: list[EvidenceItem]
+    integrity_manifest: dict[str, str]
+    gpg_signature: str | None = None
+    chain_of_custody: list[dict[str, str]] = None
 
     def __post_init__(self):
         if self.chain_of_custody is None:
@@ -139,7 +139,7 @@ class EvidenceRequirementsValidator:
             }
         }
 
-    def validate_evidence_package(self, package_path: Path) -> Tuple[EvidenceResult, Dict[str, Any]]:
+    def validate_evidence_package(self, package_path: Path) -> tuple[EvidenceResult, dict[str, Any]]:
         """
         Validate complete evidence package against Phase 6.3 requirements.
 
@@ -226,7 +226,7 @@ class EvidenceRequirementsValidator:
 
         return validation_report["overall_result"], validation_report
 
-    def _extract_evidence_package(self, package_path: Path) -> List[EvidenceItem]:
+    def _extract_evidence_package(self, package_path: Path) -> list[EvidenceItem]:
         """Extract evidence items from package directory or archive."""
         evidence_items = []
 
@@ -246,7 +246,7 @@ class EvidenceRequirementsValidator:
 
         return evidence_items
 
-    def _scan_directory_evidence(self, directory: Path) -> List[EvidenceItem]:
+    def _scan_directory_evidence(self, directory: Path) -> list[EvidenceItem]:
         """Scan directory for evidence files."""
         evidence_items = []
 
@@ -272,7 +272,7 @@ class EvidenceRequirementsValidator:
 
         return evidence_items
 
-    def _extract_archived_evidence(self, archive_path: Path) -> List[EvidenceItem]:
+    def _extract_archived_evidence(self, archive_path: Path) -> list[EvidenceItem]:
         """Extract evidence from archived package."""
         evidence_items = []
         temp_dir = self.evidence_path / "temp_extraction"
@@ -304,7 +304,7 @@ class EvidenceRequirementsValidator:
 
         return evidence_items
 
-    def _determine_evidence_type(self, file_path: Path) -> Optional[EvidenceType]:
+    def _determine_evidence_type(self, file_path: Path) -> EvidenceType | None:
         """Determine evidence type from file characteristics."""
         file_name = file_path.name.lower()
         file_suffix = file_path.suffix.lower()
@@ -343,7 +343,7 @@ class EvidenceRequirementsValidator:
 
         return None
 
-    def _categorize_evidence(self, evidence_items: List[EvidenceItem]) -> Dict[EvidenceType, List[EvidenceItem]]:
+    def _categorize_evidence(self, evidence_items: list[EvidenceItem]) -> dict[EvidenceType, list[EvidenceItem]]:
         """Categorize evidence items by type."""
         categorized = {}
 
@@ -355,8 +355,8 @@ class EvidenceRequirementsValidator:
         return categorized
 
     def _validate_evidence_type(self, evidence_type: EvidenceType,
-                              evidence_items: List[EvidenceItem],
-                              requirements: Dict[str, Any]) -> Dict[str, Any]:
+                              evidence_items: list[EvidenceItem],
+                              requirements: dict[str, Any]) -> dict[str, Any]:
         """Validate specific evidence type against requirements."""
         validation_result = {
             "evidence_type": evidence_type.value,
@@ -404,7 +404,7 @@ class EvidenceRequirementsValidator:
 
         return validation_result
 
-    def _validate_evidence_item(self, item: EvidenceItem, requirements: Dict[str, Any]) -> Dict[str, Any]:
+    def _validate_evidence_item(self, item: EvidenceItem, requirements: dict[str, Any]) -> dict[str, Any]:
         """Validate individual evidence item."""
         validation = {"valid": True, "issues": []}
 
@@ -445,7 +445,7 @@ class EvidenceRequirementsValidator:
 
         return validation
 
-    def _validate_file_format(self, item: EvidenceItem) -> Dict[str, Any]:
+    def _validate_file_format(self, item: EvidenceItem) -> dict[str, Any]:
         """Validate file format and structure."""
         validation = {"valid": True, "issues": []}
 
@@ -472,7 +472,7 @@ class EvidenceRequirementsValidator:
 
         return validation
 
-    def _validate_pcap_format(self, file_path: Path) -> Dict[str, Any]:
+    def _validate_pcap_format(self, file_path: Path) -> dict[str, Any]:
         """Validate PCAP file format and content."""
         validation = {"valid": True, "issues": []}
 
@@ -495,7 +495,7 @@ class EvidenceRequirementsValidator:
 
         return validation
 
-    def _validate_video_format(self, file_path: Path) -> Dict[str, Any]:
+    def _validate_video_format(self, file_path: Path) -> dict[str, Any]:
         """Validate video file format and properties."""
         validation = {"valid": True, "issues": []}
 
@@ -529,12 +529,12 @@ class EvidenceRequirementsValidator:
 
         return validation
 
-    def _validate_api_trace_format(self, file_path: Path) -> Dict[str, Any]:
+    def _validate_api_trace_format(self, file_path: Path) -> dict[str, Any]:
         """Validate API trace log format and content."""
         validation = {"valid": True, "issues": []}
 
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(file_path, encoding='utf-8', errors='ignore') as f:
                 content = f.read(1024)  # Read first 1KB
 
             # Check for common API trace patterns
@@ -549,7 +549,7 @@ class EvidenceRequirementsValidator:
 
         return validation
 
-    def _validate_memory_dump_format(self, file_path: Path) -> Dict[str, Any]:
+    def _validate_memory_dump_format(self, file_path: Path) -> dict[str, Any]:
         """Validate memory dump format."""
         validation = {"valid": True, "issues": []}
 
@@ -570,7 +570,7 @@ class EvidenceRequirementsValidator:
 
         return validation
 
-    def _validate_gpg_signatures(self, evidence_items: List[EvidenceItem]) -> Dict[str, Any]:
+    def _validate_gpg_signatures(self, evidence_items: list[EvidenceItem]) -> dict[str, Any]:
         """Validate GPG signatures for all evidence."""
         validation = {
             "valid": True,
@@ -629,7 +629,7 @@ class EvidenceRequirementsValidator:
 
         return validation
 
-    def _verify_gpg_signature(self, file_path: Path, signature_file: Path) -> Dict[str, Any]:
+    def _verify_gpg_signature(self, file_path: Path, signature_file: Path) -> dict[str, Any]:
         """Verify GPG signature for a file."""
         try:
             with open(signature_file, 'rb') as sig_f:
@@ -654,7 +654,7 @@ class EvidenceRequirementsValidator:
                 "error": str(e)
             }
 
-    def _validate_file_integrity(self, evidence_items: List[EvidenceItem]) -> Dict[str, Any]:
+    def _validate_file_integrity(self, evidence_items: list[EvidenceItem]) -> dict[str, Any]:
         """Validate file integrity using hashes."""
         validation = {
             "intact": True,
@@ -684,7 +684,7 @@ class EvidenceRequirementsValidator:
 
         return validation
 
-    def _validate_evidence_consistency(self, evidence_items: List[EvidenceItem]) -> Dict[str, Any]:
+    def _validate_evidence_consistency(self, evidence_items: list[EvidenceItem]) -> dict[str, Any]:
         """Validate evidence consistency and timeline."""
         validation = {
             "consistent": True,
@@ -725,7 +725,7 @@ class EvidenceRequirementsValidator:
 
         return validation
 
-    def _generate_evidence_summary(self, evidence_items: List[EvidenceItem]) -> Dict[str, Any]:
+    def _generate_evidence_summary(self, evidence_items: list[EvidenceItem]) -> dict[str, Any]:
         """Generate summary of evidence package."""
         summary = {
             "total_items": len(evidence_items),
@@ -783,7 +783,7 @@ class EvidenceRequirementsValidator:
         }
         return descriptions.get(evidence_type, f"Evidence file: {file_path.name}")
 
-    def _extract_file_metadata(self, file_path: Path) -> Dict[str, Any]:
+    def _extract_file_metadata(self, file_path: Path) -> dict[str, Any]:
         """Extract metadata from evidence file."""
         metadata = {}
         try:
@@ -809,7 +809,7 @@ class EvidenceRequirementsValidator:
         """Get ISO timestamp."""
         return datetime.utcnow().isoformat() + 'Z'
 
-    def create_evidence_package(self, evidence_files: List[Path], package_name: str) -> EvidencePackage:
+    def create_evidence_package(self, evidence_files: list[Path], package_name: str) -> EvidencePackage:
         """Create a new evidence package with proper structure."""
         package_id = f"intellicrack-evidence-{int(time.time())}"
         evidence_items = []

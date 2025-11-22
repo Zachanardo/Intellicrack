@@ -14,6 +14,7 @@ from typing import Any
 
 from .ghidra_script_runner import GhidraScriptRunner
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -329,8 +330,7 @@ class GhidraBinaryIntegration:
             )
 
             self.logger.info(
-                f"Unpacking completed for {binary_path.name}: "
-                f"OEP={hex(result.get('oep', 0))}",
+                f"Unpacking completed for {binary_path.name}: OEP={hex(result.get('oep', 0))}",
             )
 
             return result
@@ -396,12 +396,16 @@ class GhidraBinaryIntegration:
 
         workflow_results["stages"]["protection_detection"] = self.detect_protections(binary_path)
 
-        if any(prot in workflow_results["stages"]["protection_detection"].get("protections", [])
-               for prot in ["VMProtect", "Themida", "Enigma"]):
+        if any(
+            prot in workflow_results["stages"]["protection_detection"].get("protections", [])
+            for prot in ["VMProtect", "Themida", "Enigma"]
+        ):
             self.logger.info("Packer detected, attempting to unpack...")
             workflow_results["stages"]["unpacking"] = self.unpack_binary(binary_path)
 
-        workflow_results["stages"]["license_analysis"] = self.analyze_license_validation(binary_path, deep_analysis=True)
+        workflow_results["stages"]["license_analysis"] = self.analyze_license_validation(
+            binary_path, deep_analysis=True
+        )
 
         workflow_results["stages"]["crypto_analysis"] = self.analyze_crypto_routines(binary_path)
 
@@ -434,8 +438,7 @@ class GhidraBinaryIntegration:
             Dictionary with script information or None
 
         """
-        script = self.script_runner._get_script(script_name)
-        if script:
+        if script := self.script_runner._get_script(script_name):
             return {
                 "name": script.name,
                 "description": script.description,

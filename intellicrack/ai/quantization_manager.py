@@ -25,6 +25,7 @@ from typing import TypeVar
 from ..utils.logger import get_logger
 from .model_sharding import get_sharding_manager
 
+
 ModelType = TypeVar("ModelType")
 ConfigType = TypeVar("ConfigType")
 
@@ -35,13 +36,7 @@ try:
 
     # Import unified GPU system
     try:
-        from ..utils.gpu_autoloader import (
-            get_device,
-            get_gpu_info,
-            gpu_autoloader,
-            optimize_for_gpu,
-            to_device,
-        )
+        from ..utils.gpu_autoloader import get_device, get_gpu_info, gpu_autoloader, optimize_for_gpu, to_device
 
         GPU_AUTOLOADER_AVAILABLE = True
     except ImportError:
@@ -86,12 +81,7 @@ HAS_AWQ = False
 AutoAWQForCausalLM = None
 
 try:
-    from transformers import (
-        AutoModelForCausalLM,
-        AutoTokenizer,
-        BitsAndBytesConfig,
-        GPTQConfig,
-    )
+    from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, GPTQConfig
 
     HAS_TRANSFORMERS = True
 except ImportError as e:
@@ -139,7 +129,9 @@ class QuantizationManager:
             gpu_info = get_gpu_info()
             if gpu_info["available"] and gpu_info["info"].get("device_count", 1) > 1:
                 self.sharding_manager = get_sharding_manager()
-                logger.info(f"Multi-GPU sharding enabled with {gpu_info['info']['device_count']} devices")
+                logger.info(
+                    f"Multi-GPU sharding enabled with {gpu_info['info']['device_count']} devices"
+                )
         elif HAS_TORCH and torch.cuda.device_count() > 1:
             self.sharding_manager = get_sharding_manager()
             logger.info(f"Multi-GPU sharding enabled with {torch.cuda.device_count()} devices")
@@ -347,7 +339,9 @@ class QuantizationManager:
             logger.error(f"Failed to load GPTQ model: {e}")
             return None
 
-    def _load_standard_model(self, model_path: Path, device: str, **kwargs: object) -> ModelType | None:
+    def _load_standard_model(
+        self, model_path: Path, device: str, **kwargs: object
+    ) -> ModelType | None:
         """Load model without quantization."""
         if not HAS_TRANSFORMERS:
             logger.error("transformers required for model loading")
@@ -567,7 +561,7 @@ class QuantizationManager:
                 "up_proj",
             ]
 
-        config = LoraConfig(
+        return LoraConfig(
             r=r,
             lora_alpha=lora_alpha,
             target_modules=target_modules,
@@ -576,8 +570,6 @@ class QuantizationManager:
             task_type=kwargs.get("task_type", "CAUSAL_LM"),
             inference_mode=kwargs.get("inference_mode", False),
         )
-
-        return config
 
     def get_sharding_info(self) -> dict[str, object]:
         """Get information about multi-GPU sharding capabilities.
@@ -590,7 +582,9 @@ class QuantizationManager:
             return self.sharding_manager.get_device_info()
         gpu_info = get_gpu_info() if GPU_AUTOLOADER_AVAILABLE else {}
         return {
-            "cuda_available": gpu_info.get("available", False) if GPU_AUTOLOADER_AVAILABLE else torch.cuda.is_available(),
+            "cuda_available": gpu_info.get("available", False)
+            if GPU_AUTOLOADER_AVAILABLE
+            else torch.cuda.is_available(),
             "device_count": gpu_info.get("info", {}).get("device_count", 0)
             if GPU_AUTOLOADER_AVAILABLE
             else (torch.cuda.device_count() if torch.cuda.is_available() else 0),
@@ -616,7 +610,9 @@ class QuantizationManager:
 
         return supported_types
 
-    def quantize_model_with_bnb(self, model: ModelType, quantization_bits: int = 8, **kwargs: object) -> ModelType | None:
+    def quantize_model_with_bnb(
+        self, model: ModelType, quantization_bits: int = 8, **kwargs: object
+    ) -> ModelType | None:
         """Quantize a model using bitsandbytes (bnb) library.
 
         Args:
@@ -634,9 +630,9 @@ class QuantizationManager:
 
         try:
             # Prepare model for quantization
-            if quantization_bits == 8:
-                # Convert model layers to 8-bit using bnb
-                for name, module in model.named_modules():
+            for name, module in model.named_modules():
+                        # Prepare model for quantization
+                if quantization_bits == 8:
                     if isinstance(module, torch.nn.Linear):
                         # Replace with 8-bit linear layer
                         in_features = module.in_features
@@ -668,9 +664,7 @@ class QuantizationManager:
                             parent = getattr(parent, part)
                         setattr(parent, child_name, linear_8bit)
 
-            elif quantization_bits == 4:
-                # 4-bit quantization using bnb
-                for name, module in model.named_modules():
+                elif quantization_bits == 4:
                     if isinstance(module, torch.nn.Linear):
                         # Use bnb's 4-bit quantization
                         in_features = module.in_features
@@ -709,7 +703,9 @@ class QuantizationManager:
             logger.error(f"Failed to quantize model with bnb: {e}")
             return None
 
-    def create_gptq_config(self, bits: int = 4, group_size: int = 128, **kwargs: object) -> ConfigType | None:
+    def create_gptq_config(
+        self, bits: int = 4, group_size: int = 128, **kwargs: object
+    ) -> ConfigType | None:
         """Create a GPTQ configuration using BaseQuantizeConfig.
 
         Args:
@@ -746,7 +742,9 @@ class QuantizationManager:
             logger.error(f"Failed to create GPTQ config: {e}")
             return None
 
-    def prepare_model_for_gptq_quantization(self, model_path: str | Path, config: ConfigType | None = None, **kwargs: object) -> ModelType | None:
+    def prepare_model_for_gptq_quantization(
+        self, model_path: str | Path, config: ConfigType | None = None, **kwargs: object
+    ) -> ModelType | None:
         """Prepare a model for GPTQ quantization using GPTQConfig.
 
         Args:

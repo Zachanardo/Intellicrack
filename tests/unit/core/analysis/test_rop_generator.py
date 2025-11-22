@@ -41,7 +41,7 @@ from intellicrack.core.analysis.rop_generator import (
 class RealApplication:
     """Real application object for production testing."""
 
-    def __init__(self, binary_path: Optional[str] = None):
+    def __init__(self, binary_path: str | None = None):
         """Initialize real application with production capabilities."""
         self.binary_path = binary_path
         self.output_messages = []

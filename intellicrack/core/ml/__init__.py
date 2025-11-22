@@ -24,13 +24,14 @@ from intellicrack.core.ml.ml_integration import MLAnalysisIntegration
 from intellicrack.core.ml.protection_classifier import ClassificationResult, ProtectionClassifier
 from intellicrack.core.ml.sample_database import SampleDatabase, SampleMetadata
 
+
 __all__ = [
-    'BinaryFeatureExtractor',
-    'ProtectionClassifier',
-    'ClassificationResult',
-    'IncrementalLearner',
-    'TrainingSample',
-    'SampleDatabase',
-    'SampleMetadata',
-    'MLAnalysisIntegration',
+    "BinaryFeatureExtractor",
+    "ClassificationResult",
+    "IncrementalLearner",
+    "MLAnalysisIntegration",
+    "ProtectionClassifier",
+    "SampleDatabase",
+    "SampleMetadata",
+    "TrainingSample",
 ]

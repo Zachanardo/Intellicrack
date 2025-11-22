@@ -33,22 +33,13 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 import logging
 
 from PyQt6.QtCore import QObject, Qt, pyqtSignal
-from PyQt6.QtWidgets import (
-    QApplication,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QSizePolicy,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
-)
+from PyQt6.QtWidgets import QApplication, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSizePolicy, QTextEdit, QVBoxLayout, QWidget
 
 # Import protocol parsers for real functionality
 from intellicrack.core.network import protocols
 from intellicrack.core.network.protocol_fingerprinter import ProtocolFingerprinter
 from intellicrack.core.network.traffic_interception_engine import TrafficInterceptionEngine
+
 
 PYQT6_AVAILABLE = True
 
@@ -129,14 +120,18 @@ class ProtocolToolWindow(QWidget):
         # Protocol Output/Log Area
         self.output_text_edit = QTextEdit()
         self.output_text_edit.setReadOnly(True)
-        self.output_text_edit.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.output_text_edit.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
         main_layout.addWidget(self.output_text_edit)
 
         # Input Line
         input_layout = QHBoxLayout()
         self.input_line_edit = QLineEdit()
         # Show real command syntax hints for available protocol operations
-        self.input_line_edit.setToolTip("Commands: analyze <protocol> <file>, parse <hex_data>, send <protocol> <command>")
+        self.input_line_edit.setToolTip(
+            "Commands: analyze <protocol> <file>, parse <hex_data>, send <protocol> <command>"
+        )
         self.input_line_edit.returnPressed.connect(self._on_input_submitted)
         input_layout.addWidget(self.input_line_edit)
 
@@ -167,8 +162,7 @@ class ProtocolToolWindow(QWidget):
 
     def _on_input_submitted(self) -> None:
         """Handle user input from the QLineEdit with real protocol processing."""
-        command = self.input_line_edit.text().strip()
-        if command:
+        if command := self.input_line_edit.text().strip():
             self.output_text_edit.append(f"> {command}")
             self.input_line_edit.clear()
             logger.info(f"Protocol command submitted: {command}")
@@ -205,7 +199,9 @@ class ProtocolToolWindow(QWidget):
             else:
                 self.output_text_edit.append(f"[ERROR] Unknown command: {cmd}")
                 self.output_text_edit.append("[HELP] Available commands:")
-                self.output_text_edit.append("  analyze <protocol> <hex_data> - Analyze protocol data")
+                self.output_text_edit.append(
+                    "  analyze <protocol> <hex_data> - Analyze protocol data"
+                )
                 self.output_text_edit.append("  parse <hex_data> - Auto-detect and parse protocol")
                 self.output_text_edit.append("  send <protocol> <command> - Send protocol command")
                 self.output_text_edit.append("  list - List available protocols")
@@ -228,19 +224,25 @@ class ProtocolToolWindow(QWidget):
             detected_protocols = fingerprinter.detect_protocols()
 
             for protocol in detected_protocols:
-                self.output_text_edit.append(f"[FOUND] {protocol['name']} - Port {protocol['port']}")
+                self.output_text_edit.append(
+                    f"[FOUND] {protocol['name']} - Port {protocol['port']}"
+                )
                 self.output_text_edit.append(f"  Confidence: {protocol['confidence']}%")
                 self.output_text_edit.append(f"  Pattern: {protocol['pattern'][:50]}...")
 
-            # Check for license server traffic
-            license_traffic = interceptor.capture_license_traffic()
-            if license_traffic:
-                self.output_text_edit.append(f"[LICENSE] Detected {len(license_traffic)} license validation attempts")
+            if license_traffic := interceptor.capture_license_traffic():
+                self.output_text_edit.append(
+                    f"[LICENSE] Detected {len(license_traffic)} license validation attempts"
+                )
                 for traffic in license_traffic[:5]:  # Show first 5
                     self.output_text_edit.append(f"  {traffic['protocol']} -> {traffic['server']}")
 
-            self.output_text_edit.append(f"[INFO] Analysis complete. Found {len(detected_protocols)} protocol patterns.")
-            self.description_label.setText(f"Analysis complete - {len(detected_protocols)} protocols detected")
+            self.output_text_edit.append(
+                f"[INFO] Analysis complete. Found {len(detected_protocols)} protocol patterns."
+            )
+            self.description_label.setText(
+                f"Analysis complete - {len(detected_protocols)} protocols detected"
+            )
 
         except Exception as e:
             self.output_text_edit.append(f"[ERROR] Analysis failed: {e!s}")
@@ -259,7 +261,9 @@ class ProtocolToolWindow(QWidget):
         logger.info(f"Protocol tool description updated to: {description}")
         ProtocolToolWindow.signals.description_updated.emit(description)
         if self.app_instance:
-            self.app_instance.update_output.emit(f"Protocol tool description updated: {description}")
+            self.app_instance.update_output.emit(
+                f"Protocol tool description updated: {description}"
+            )
 
     def _execute_protocol_analysis(self, protocol_name: str, hex_data: str) -> None:
         """Execute real protocol analysis on hex data."""
@@ -271,7 +275,9 @@ class ProtocolToolWindow(QWidget):
                 return
 
             data_bytes = bytes.fromhex(hex_data)
-            self.output_text_edit.append(f"[ANALYZE] Protocol: {protocol_name}, Data: {len(data_bytes)} bytes")
+            self.output_text_edit.append(
+                f"[ANALYZE] Protocol: {protocol_name}, Data: {len(data_bytes)} bytes"
+            )
 
             # Map protocol names to parser modules
             parser_map = {
@@ -283,25 +289,31 @@ class ProtocolToolWindow(QWidget):
             }
 
             if protocol_name in parser_map:
-                parser_module = protocols.get_parser(parser_map[protocol_name])
-                if parser_module:
+                if parser_module := protocols.get_parser(
+                    parser_map[protocol_name]
+                ):
                     # Use the specific parser
                     if hasattr(parser_module, f"{protocol_name.upper()}ProtocolParser"):
-                        parser_class = getattr(parser_module, f"{protocol_name.upper()}ProtocolParser")
+                        parser_class = getattr(
+                            parser_module, f"{protocol_name.upper()}ProtocolParser"
+                        )
                     elif hasattr(parser_module, f"{protocol_name.capitalize()}ProtocolParser"):
-                        parser_class = getattr(parser_module, f"{protocol_name.capitalize()}ProtocolParser")
+                        parser_class = getattr(
+                            parser_module, f"{protocol_name.capitalize()}ProtocolParser"
+                        )
                     else:
-                        # Try generic parser class name
-                        parser_class = None
-                        for attr_name in dir(parser_module):
-                            if "Parser" in attr_name and "Protocol" in attr_name:
-                                parser_class = getattr(parser_module, attr_name)
-                                break
-
+                        parser_class = next(
+                            (
+                                getattr(parser_module, attr_name)
+                                for attr_name in dir(parser_module)
+                                if "Parser" in attr_name
+                                and "Protocol" in attr_name
+                            ),
+                            None,
+                        )
                     if parser_class:
                         parser = parser_class()
-                        result = parser.parse_request(data_bytes)
-                        if result:
+                        if result := parser.parse_request(data_bytes):
                             self.output_text_edit.append(f"[PARSED] Command: {result.command}")
                             self.output_text_edit.append(f"[PARSED] Version: {result.version}")
                             if hasattr(result, "feature"):
@@ -312,9 +324,13 @@ class ProtocolToolWindow(QWidget):
                         else:
                             self.output_text_edit.append("[ERROR] Failed to parse protocol data")
                     else:
-                        self.output_text_edit.append(f"[ERROR] Parser class not found for {protocol_name}")
+                        self.output_text_edit.append(
+                            f"[ERROR] Parser class not found for {protocol_name}"
+                        )
                 else:
-                    self.output_text_edit.append(f"[ERROR] Parser module not available for {protocol_name}")
+                    self.output_text_edit.append(
+                        f"[ERROR] Parser module not available for {protocol_name}"
+                    )
             else:
                 self.output_text_edit.append(f"[ERROR] Unknown protocol: {protocol_name}")
                 self.output_text_edit.append(f"[INFO] Available: {', '.join(parser_map.keys())}")
@@ -336,9 +352,7 @@ class ProtocolToolWindow(QWidget):
 
             # Try protocol fingerprinting
             fingerprinter = ProtocolFingerprinter()
-            detected_protocol = fingerprinter.identify_protocol(data_bytes)
-
-            if detected_protocol:
+            if detected_protocol := fingerprinter.identify_protocol(data_bytes):
                 self.output_text_edit.append(f"[DETECTED] Protocol: {detected_protocol['name']}")
                 self.output_text_edit.append(f"[CONFIDENCE] {detected_protocol['confidence']}%")
 
@@ -359,9 +373,10 @@ class ProtocolToolWindow(QWidget):
                             parser_class = getattr(parser_module, attr_name)
                             try:
                                 parser = parser_class()
-                                result = parser.parse_request(data_bytes)
-                                if result:
-                                    self.output_text_edit.append(f"[SUCCESS] Parsed as {parser_name}")
+                                if result := parser.parse_request(data_bytes):
+                                    self.output_text_edit.append(
+                                        f"[SUCCESS] Parsed as {parser_name}"
+                                    )
                                     self.output_text_edit.append(f"[COMMAND] {result.command}")
                                     return
                             except (AttributeError, KeyError):
@@ -379,7 +394,9 @@ class ProtocolToolWindow(QWidget):
     def _send_protocol_command(self, protocol_name: str, command_data: str) -> None:
         """Send a protocol command to a license server."""
         try:
-            self.output_text_edit.append(f"[SEND] Protocol: {protocol_name}, Command: {command_data}")
+            self.output_text_edit.append(
+                f"[SEND] Protocol: {protocol_name}, Command: {command_data}"
+            )
 
             # Use traffic interception engine to send command
             interceptor = TrafficInterceptionEngine()
@@ -394,10 +411,9 @@ class ProtocolToolWindow(QWidget):
 
             self.output_text_edit.append(f"[CONNECT] {host}:{port}")
 
-            # Send protocol-specific command
-            response = interceptor.send_protocol_command(protocol_name, host, port, b"STATUS")
-
-            if response:
+            if response := interceptor.send_protocol_command(
+                protocol_name, host, port, b"STATUS"
+            ):
                 self.output_text_edit.append(f"[RESPONSE] {len(response)} bytes received")
                 # Display first 100 chars of response
                 response_str = response[:100].hex()
@@ -418,7 +434,11 @@ class ProtocolToolWindow(QWidget):
             for parser_name in available_parsers:
                 parser_module = protocols.get_parser(parser_name)
                 # Get parser description
-                desc = parser_module.__doc__.split("\n")[0] if parser_module.__doc__ else "No description"
+                desc = (
+                    parser_module.__doc__.split("\n")[0]
+                    if parser_module.__doc__
+                    else "No description"
+                )
                 self.output_text_edit.append(f"   {parser_name}: {desc}")
         else:
             self.output_text_edit.append("  No protocol parsers loaded")
@@ -444,9 +464,7 @@ def launch_protocol_tool(app_instance: object | None = None) -> ProtocolToolWind
         The instance of the ProtocolToolWindow.
 
     """
-    app = QApplication.instance()
-    if not app:
-        app = QApplication([])  # Create QApplication if it doesn't exist (for standalone testing)
+    QApplication.instance() or QApplication([])  # Create QApplication if it doesn't exist (for standalone testing)
 
     window = ProtocolToolWindow(app_instance)
     window.show()
@@ -454,7 +472,9 @@ def launch_protocol_tool(app_instance: object | None = None) -> ProtocolToolWind
     return window
 
 
-def update_protocol_tool_description(app_instance: object | None = None, description: str = "") -> None:
+def update_protocol_tool_description(
+    app_instance: object | None = None, description: str = ""
+) -> None:
     """Update the description in the Protocol Tool window.
 
     Args:

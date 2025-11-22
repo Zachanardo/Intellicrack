@@ -26,6 +26,7 @@ import logging
 import types
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -51,7 +52,9 @@ class APIClient:
         self.base_url = base_url or get_secret("API_BASE_URL", "https://api.intellicrack.com")
         self.timeout = int(get_secret("API_TIMEOUT", "60"))
         self.retry_attempts = int(get_secret("API_RETRY_ATTEMPTS", "3"))
-        self.retry_delay = int(get_secret("API_RETRY_DELAY", "1000")) / 1000  # Convert ms to seconds
+        self.retry_delay = (
+            int(get_secret("API_RETRY_DELAY", "1000")) / 1000
+        )  # Convert ms to seconds
         self.session = None
 
     async def __aenter__(self) -> "APIClient":
@@ -116,12 +119,11 @@ class APIClient:
         # Add API key if available
         from .secrets_manager import get_secret
 
-        api_key = get_secret("API_KEY")
-        if api_key:
+        if api_key := get_secret("API_KEY"):
             default_headers["Authorization"] = f"Bearer {api_key}"
 
         if headers:
-            default_headers.update(headers)
+            default_headers |= headers
 
         # Retry logic
         for attempt in range(self.retry_attempts):
@@ -170,7 +172,9 @@ class APIClient:
         raise RuntimeError(error_msg)
 
 
-async def make_api_call(endpoint: str, method: str = "GET", data: dict[str, Any] | None = None) -> dict[str, Any]:
+async def make_api_call(
+    endpoint: str, method: str = "GET", data: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Provide for making API calls.
 
     Args:
@@ -187,7 +191,9 @@ async def make_api_call(endpoint: str, method: str = "GET", data: dict[str, Any]
 
 
 # Synchronous wrapper for compatibility
-def sync_api_call(endpoint: str, method: str = "GET", data: dict[str, Any] | None = None) -> dict[str, Any]:
+def sync_api_call(
+    endpoint: str, method: str = "GET", data: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Wrap for API calls.
 
     Args:

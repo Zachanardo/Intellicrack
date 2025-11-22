@@ -521,7 +521,7 @@ class TestAnalysisReporting:
             assert os.path.exists(report_path)
 
             # Production requirement: Must include all analysis data
-            with open(report_path, 'r') as f:
+            with open(report_path) as f:
                 import json
                 report_data = json.load(f)
 
@@ -743,7 +743,7 @@ class TestIntegrationScenarios:
             assert os.path.exists(report_path)
 
             # Verify report contains complete workflow data
-            with open(report_path, 'r') as f:
+            with open(report_path) as f:
                 import json
                 report_data = json.load(f)
 

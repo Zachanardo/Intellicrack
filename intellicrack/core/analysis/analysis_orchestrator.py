@@ -127,7 +127,9 @@ class AnalysisOrchestrator(QObject):
         self.enabled_phases = list(AnalysisPhase)
         self.timeout_per_phase = 300  # 5 minutes per phase
 
-    def analyze_binary(self, binary_path: str, phases: list[AnalysisPhase] | None = None) -> OrchestrationResult:
+    def analyze_binary(
+        self, binary_path: str, phases: list[AnalysisPhase] | None = None
+    ) -> OrchestrationResult:
         """Perform orchestrated analysis on a binary.
 
         Args:
@@ -219,9 +221,7 @@ class AnalysisOrchestrator(QObject):
 
             # Initialize radare2 if not already done
             if self.radare2 is None:
-                from .radare2_enhanced_integration import (
-                    EnhancedR2Integration as Radare2EnhancedIntegration,
-                )
+                from .radare2_enhanced_integration import EnhancedR2Integration as Radare2EnhancedIntegration
 
                 try:
                     self.radare2 = Radare2EnhancedIntegration(binary_path)
@@ -237,26 +237,18 @@ class AnalysisOrchestrator(QObject):
             if analysis_result and "components" in analysis_result:
                 components = analysis_result["components"]
 
-                # Extract imports and exports from the imports component
-                imports_data = components.get("imports")
-                if imports_data:
+                if imports_data := components.get("imports"):
                     result["imports"] = imports_data.get("imports", [])
                     result["exports"] = imports_data.get("exports", [])
                     result["sections"] = imports_data.get("sections", [])
 
-                # Extract strings from the strings component
-                strings_data = components.get("strings")
-                if strings_data:
+                if strings_data := components.get("strings"):
                     result["strings"] = strings_data.get("strings", [])
 
-                # Extract functions from decompiler component
-                decompiler_data = components.get("decompiler")
-                if decompiler_data:
+                if decompiler_data := components.get("decompiler"):
                     result["functions"] = decompiler_data.get("functions", [])
 
-                # Include signatures for additional static analysis data
-                signatures_data = components.get("signatures")
-                if signatures_data:
+                if signatures_data := components.get("signatures"):
                     result["signatures"] = signatures_data
 
                 # Include ESIL analysis for advanced static analysis
@@ -264,9 +256,7 @@ class AnalysisOrchestrator(QObject):
                 if esil_data:
                     result["esil_analysis"] = esil_data
 
-            # Include any errors from the analysis
-            errors = analysis_result.get("errors")
-            if errors:
+            if errors := analysis_result.get("errors"):
                 result["analysis_errors"] = errors
 
             return result
@@ -293,7 +283,9 @@ class AnalysisOrchestrator(QObject):
             # Initialize QEMU Test Manager on demand
             if self.qemu_manager is None:
                 try:
-                    self.qemu_manager = QEMUManager(vm_name="ghidra_analysis_vm", vm_type="ubuntu", memory="4096", cpu_cores=2)
+                    self.qemu_manager = QEMUManager(
+                        vm_name="ghidra_analysis_vm", vm_type="ubuntu", memory="4096", cpu_cores=2
+                    )
                     # Start the VM if not already running
                     if not self.qemu_manager.is_vm_running():
                         vm_started = self.qemu_manager.start_vm(timeout=120)
@@ -304,18 +296,18 @@ class AnalysisOrchestrator(QObject):
                     result["errors"].append(f"QEMU VM initialization failed: {vm_error!s}")
                     return result
 
-            # Select appropriate Ghidra script based on binary
-            selected_script = self._select_ghidra_script(binary_path)
-            if selected_script:
+            if selected_script := self._select_ghidra_script(binary_path):
                 result["script_used"] = selected_script.name
 
                 # Copy binary to VM
                 vm_binary_path = f"{tempfile.gettempdir()}/analysis_{os.path.basename(binary_path)}"
-                copy_success = self.qemu_manager.copy_file_to_vm(binary_path, vm_binary_path)
-
-                if copy_success:
+                if copy_success := self.qemu_manager.copy_file_to_vm(
+                    binary_path, vm_binary_path
+                ):
                     # Execute Ghidra script in VM
-                    ghidra_command = self._build_ghidra_command(selected_script.path, vm_binary_path)
+                    ghidra_command = self._build_ghidra_command(
+                        selected_script.path, vm_binary_path
+                    )
 
                     execution_result = self.qemu_manager.execute_in_vm(
                         ghidra_command,
@@ -342,7 +334,11 @@ class AnalysisOrchestrator(QObject):
                         if "keygen_patterns" in parsed_results:
                             result["keygen_candidates"] = parsed_results["keygen_patterns"]
                     else:
-                        error_msg = execution_result.error if execution_result else "Unknown execution error"
+                        error_msg = (
+                            execution_result.error
+                            if execution_result
+                            else "Unknown execution error"
+                        )
                         result["errors"].append(f"Ghidra script execution failed: {error_msg}")
                 else:
                     result["errors"].append("Failed to copy binary to VM")
@@ -418,16 +414,7 @@ class AnalysisOrchestrator(QObject):
         project_location = f"{tempfile.gettempdir()}/ghidra_projects"
         project_name = f"analysis_{os.path.basename(binary_path)}"
 
-        # Build headless analyzer command
-        command = (
-            f"{ghidra_home}/support/analyzeHeadless "
-            f"{project_location} {project_name} "
-            f"-import {binary_path} "
-            f"-postScript {script_path} "
-            f"-deleteProject"  # Clean up after analysis
-        )
-
-        return command
+        return f"{ghidra_home}/support/analyzeHeadless {project_location} {project_name} -import {binary_path} -postScript {script_path} -deleteProject"
 
     def _parse_ghidra_output(self, output: str) -> dict[str, Any]:
         """Parse Ghidra script output into structured data.
@@ -450,19 +437,27 @@ class AnalysisOrchestrator(QObject):
 
             for line in lines:
                 # Parse license check detection
-                if "LICENSE_CHECK" in line or "license" in line.lower():
-                    if "Function:" in line:
-                        func_match = line.split("Function:")[1].strip()
-                        parsed["license_checks"].append(
-                            {
-                                "function": func_match,
-                                "address": self._extract_address(line),
-                                "confidence": "high" if "LICENSE_CHECK" in line else "medium",
-                            },
-                        )
+                if (
+                    ("LICENSE_CHECK" in line
+                    and "Function:" in line)
+                    or ("LICENSE_CHECK" not in line
+                    and "license" in line.lower()
+                    and "Function:" in line)
+                ):
+                    func_match = line.split("Function:")[1].strip()
+                    parsed["license_checks"].append(
+                        {
+                            "function": func_match,
+                            "address": self._extract_address(line),
+                            "confidence": "high" if "LICENSE_CHECK" in line else "medium",
+                        },
+                    )
 
                 # Parse cryptographic routine detection
-                if any(crypto in line.lower() for crypto in ["aes", "rsa", "crypto", "hash", "md5", "sha"]):
+                if any(
+                    crypto in line.lower()
+                    for crypto in ["aes", "rsa", "crypto", "hash", "md5", "sha"]
+                ):
                     parsed["crypto_routines"].append(
                         {
                             "type": self._identify_crypto_type(line),
@@ -472,11 +467,20 @@ class AnalysisOrchestrator(QObject):
                     )
 
                 # Parse protection mechanism detection
-                if any(prot in line.lower() for prot in ["anti-debug", "obfuscat", "pack", "encrypt", "protect"]):
-                    parsed["protection_mechanisms"].append({"type": self._identify_protection_type(line), "details": line.strip()})
+                if any(
+                    prot in line.lower()
+                    for prot in ["anti-debug", "obfuscat", "pack", "encrypt", "protect"]
+                ):
+                    parsed["protection_mechanisms"].append(
+                        {"type": self._identify_protection_type(line), "details": line.strip()}
+                    )
 
                 # Parse potential keygen patterns
-                if "keygen" in line.lower() or "serial" in line.lower() or "algorithm" in line.lower():
+                if (
+                    "keygen" in line.lower()
+                    or "serial" in line.lower()
+                    or "algorithm" in line.lower()
+                ):
                     parsed["keygen_patterns"].append(
                         {
                             "pattern": line.strip(),
@@ -521,9 +525,7 @@ class AnalysisOrchestrator(QObject):
             return "SHA256"
         if "sha1" in line_lower:
             return "SHA1"
-        if "hash" in line_lower:
-            return "Generic Hash"
-        return "Unknown Crypto"
+        return "Generic Hash" if "hash" in line_lower else "Unknown Crypto"
 
     def _identify_protection_type(self, line: str) -> str:
         """Identify the type of protection mechanism from output."""
@@ -536,9 +538,7 @@ class AnalysisOrchestrator(QObject):
             return "Packing"
         if "encrypt" in line_lower:
             return "Encryption"
-        if "virtualiz" in line_lower:
-            return "Virtualization"
-        return "Generic Protection"
+        return "Virtualization" if "virtualiz" in line_lower else "Generic Protection"
 
     def _is_interesting_string(self, string_val: str) -> bool:
         """Determine if a string is interesting for license analysis."""
@@ -565,21 +565,17 @@ class AnalysisOrchestrator(QObject):
     def _perform_entropy_analysis(self, binary_path: str) -> dict[str, Any]:
         """Perform entropy analysis."""
         try:
-            result = {"sections": []}
-
             with open(binary_path, "rb") as f:
                 data = f.read()
 
             # Overall entropy
             overall_entropy = self.entropy_analyzer.calculate_entropy(data)
-            result["overall_entropy"] = overall_entropy
-
+            result = {"sections": [], "overall_entropy": overall_entropy}
             # Analyze in chunks
             chunk_size = 1024
             chunks = []
             for i in range(0, len(data), chunk_size):
-                chunk_data = data[i : i + chunk_size]
-                if chunk_data:
+                if chunk_data := data[i : i + chunk_size]:
                     entropy = self.entropy_analyzer.calculate_entropy(chunk_data)
                     chunks.append(
                         {
@@ -640,7 +636,10 @@ class AnalysisOrchestrator(QObject):
                     }
 
             # Check if dynamic analysis is available
-            if hasattr(self.dynamic_analyzer, "is_available") and self.dynamic_analyzer.is_available():
+            if (
+                hasattr(self.dynamic_analyzer, "is_available")
+                and self.dynamic_analyzer.is_available()
+            ):
                 return self.dynamic_analyzer.analyze(binary_path)
             return {"status": "skipped", "reason": "Dynamic analysis not available"}
         except Exception as e:
@@ -668,13 +667,17 @@ class AnalysisOrchestrator(QObject):
         if AnalysisPhase.VULNERABILITY_SCAN in result.phases_completed:
             vuln_data = result.results.get("vulnerability_scan", {})
             if vuln_data.get("vulnerabilities"):
-                findings.append(f"Found {len(vuln_data['vulnerabilities'])} potential vulnerabilities")
+                findings.append(
+                    f"Found {len(vuln_data['vulnerabilities'])} potential vulnerabilities"
+                )
 
         summary["key_findings"] = findings
         return summary
 
 
-def run_selected_analysis(binary_path: str, analysis_types: list[str] | None = None) -> dict[str, Any]:
+def run_selected_analysis(
+    binary_path: str, analysis_types: list[str] | None = None
+) -> dict[str, Any]:
     """Run selected analysis on a binary file.
 
     Orchestrates binary analysis using multiple analysis engines including static,

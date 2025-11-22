@@ -22,6 +22,7 @@ import logging
 
 from intellicrack.core.exceptions import ConfigurationError
 
+
 logger = logging.getLogger(__name__)
 
 

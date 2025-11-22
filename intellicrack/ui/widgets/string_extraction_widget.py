@@ -36,6 +36,7 @@ from PyQt6.QtWidgets import (
 
 from ...utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 
@@ -169,7 +170,9 @@ class StringExtractionWidget(QWidget):
 
         # String table
         self.string_table = QTableWidget()
-        self.string_table.setToolTip("Table of extracted strings from the binary. Click headers to sort, right-click for context menu")
+        self.string_table.setToolTip(
+            "Table of extracted strings from the binary. Click headers to sort, right-click for context menu"
+        )
         self.string_table.setColumnCount(5)
         self.string_table.setHorizontalHeaderLabels(
             [
@@ -232,17 +235,23 @@ class StringExtractionWidget(QWidget):
         self.min_length_spin.setMinimum(3)
         self.min_length_spin.setMaximum(20)
         self.min_length_spin.setValue(4)
-        self.min_length_spin.setToolTip("Minimum number of consecutive characters to consider as a valid string")
+        self.min_length_spin.setToolTip(
+            "Minimum number of consecutive characters to consider as a valid string"
+        )
         options_layout.addWidget(QLabel("Min Length:"))
         options_layout.addWidget(self.min_length_spin)
 
         self.extract_ascii_cb = QCheckBox("ASCII")
-        self.extract_ascii_cb.setToolTip("Extract standard ASCII text strings (single-byte characters)")
+        self.extract_ascii_cb.setToolTip(
+            "Extract standard ASCII text strings (single-byte characters)"
+        )
         self.extract_ascii_cb.setChecked(True)
         options_layout.addWidget(self.extract_ascii_cb)
 
         self.extract_unicode_cb = QCheckBox("Unicode")
-        self.extract_unicode_cb.setToolTip("Extract Unicode/UTF-16 strings (wide character strings)")
+        self.extract_unicode_cb.setToolTip(
+            "Extract Unicode/UTF-16 strings (wide character strings)"
+        )
         self.extract_unicode_cb.setChecked(True)
         options_layout.addWidget(self.extract_unicode_cb)
 
@@ -280,7 +289,9 @@ class StringExtractionWidget(QWidget):
 
         # Search filter
         self.search_input = QLineEdit()
-        self.search_input.setToolTip("Enter search text to filter displayed strings (substring match)")
+        self.search_input.setToolTip(
+            "Enter search text to filter displayed strings (substring match)"
+        )
         self.search_input.textChanged.connect(self.apply_filters)
         layout.addWidget(QLabel("Filter:"))
         layout.addWidget(self.search_input)
@@ -505,7 +516,7 @@ class StringExtractionWidget(QWidget):
             self.string_table.setItem(row, 0, offset_item)
 
             # String (truncate if too long)
-            display_string = string if len(string) <= 100 else string[:97] + "..."
+            display_string = string if len(string) <= 100 else f"{string[:97]}..."
             string_item = QTableWidgetItem(display_string)
             string_item.setData(Qt.UserRole, string)  # Store full string
             self.string_table.setItem(row, 1, string_item)
@@ -608,8 +619,7 @@ class StringExtractionWidget(QWidget):
         """Copy selected string to clipboard."""
         row = self.string_table.currentRow()
         if row >= 0:
-            string_item = self.string_table.item(row, 1)
-            if string_item:
+            if string_item := self.string_table.item(row, 1):
                 full_string = string_item.data(Qt.UserRole)
                 from intellicrack.handlers.pyqt6_handler import QApplication
 
@@ -619,8 +629,7 @@ class StringExtractionWidget(QWidget):
         """Copy selected offset to clipboard."""
         row = self.string_table.currentRow()
         if row >= 0:
-            offset_item = self.string_table.item(row, 0)
-            if offset_item:
+            if offset_item := self.string_table.item(row, 0):
                 QApplication.clipboard().setText(offset_item.text())
 
     def _copy_selected_row(self) -> None:
@@ -629,8 +638,7 @@ class StringExtractionWidget(QWidget):
         if row >= 0:
             row_data = []
             for col in range(self.string_table.columnCount()):
-                item = self.string_table.item(row, col)
-                if item:
+                if item := self.string_table.item(row, col):
                     if col == 1:  # String column - get full string
                         row_data.append(item.data(Qt.UserRole))
                     else:

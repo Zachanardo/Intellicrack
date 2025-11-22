@@ -786,16 +786,11 @@ const BlockchainLicenseBypass = {
 
     // Modify license response
     modifyLicenseResponse: function (response) {
-        if (response.result) {
-            // Ensure positive/true result
-            if (
-                response.result === '0x0' ||
-                response.result ===
-                    '0x0000000000000000000000000000000000000000000000000000000000000000'
-            ) {
-                response.result =
-                    '0x0000000000000000000000000000000000000000000000000000000000000001';
-            }
+        if (response.result && (response.result === '0x0' ||
+                        response.result ===
+                            '0x0000000000000000000000000000000000000000000000000000000000000000')) {
+              response.result =
+                  '0x0000000000000000000000000000000000000000000000000000000000000001';
         }
 
         return response;

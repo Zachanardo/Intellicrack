@@ -23,6 +23,7 @@ from dataclasses import dataclass
 
 from intellicrack.utils.logger import log_all_methods
 
+
 """
 Binary Patcher Plugin Template
 Specialized template for binary patching operations
@@ -83,9 +84,7 @@ class BinaryPatcherPlugin:
             in the returned results list.
 
         """
-        results = []
-        results.append(f"Scanning for patch targets in: {binary_path}")
-
+        results = [f"Scanning for patch targets in: {binary_path}"]
         # Example: Find specific byte patterns
         try:
             with open(binary_path, "rb") as f:
@@ -223,15 +222,22 @@ class BinaryPatcherPlugin:
                 with open(binary_path, "wb") as f:
                     f.write(data)
 
-                results.append(f"Successfully applied {patches_applied} patches")
-                results.append("Patch types applied:")
-                results.append("- License check bypass (defensive research)")
-                results.append("- Trial period text neutralization")
-                results.append("File integrity maintained")
+                results.extend(
+                    (
+                        f"Successfully applied {patches_applied} patches",
+                        "Patch types applied:",
+                        "- License check bypass (defensive research)",
+                        "- Trial period text neutralization",
+                        "File integrity maintained",
+                    )
+                )
             else:
-                results.append("No applicable patches found")
-                results.append("File analysis completed - no modifications needed")
-
+                results.extend(
+                    (
+                        "No applicable patches found",
+                        "File analysis completed - no modifications needed",
+                    )
+                )
         except Exception as e:
             self.logger.exception(f"Patching error: {e}")
             results.append(f"Patching error: {e}")

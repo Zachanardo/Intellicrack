@@ -30,6 +30,7 @@ from intellicrack.utils.logger import logger
 
 from ..utils.logger import get_logger
 
+
 # Try to import GPU autoloader
 GPU_AUTOLOADER_AVAILABLE = False
 get_device = None
@@ -41,15 +42,7 @@ empty_cache = None
 gpu_autoloader = None
 
 try:
-    from ..utils.gpu_autoloader import (
-        empty_cache,
-        get_device,
-        get_gpu_info,
-        gpu_autoloader,
-        memory_allocated,
-        memory_reserved,
-        to_device,
-    )
+    from ..utils.gpu_autoloader import empty_cache, get_device, get_gpu_info, gpu_autoloader, memory_allocated, memory_reserved, to_device
 
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError:
@@ -62,8 +55,10 @@ HAS_TORCH = False
 HAS_PYNVML = False
 
 try:
-    from intellicrack.handlers.numpy_handler import HAS_NUMPY
-    from intellicrack.handlers.numpy_handler import numpy as np
+    from intellicrack.handlers.numpy_handler import (
+        HAS_NUMPY,
+        numpy as np,
+    )
 except ImportError as e:
     logger.error("Import error in model_performance_monitor: %s", e)
     np = None
@@ -179,7 +174,7 @@ class ModelPerformanceMonitor:
                     self.gpu_count = pynvml.nvmlDeviceGetCount()
                 else:
                     raise ImportError("pynvml not available")
-            except (ImportError, OSError, Exception):
+            except Exception:
                 self.has_nvidia_ml = False
         else:
             self.has_nvidia_ml = False
@@ -214,9 +209,8 @@ class ModelPerformanceMonitor:
         """Save benchmark data."""
         benchmark_file = self.save_dir / "benchmarks.json"
         try:
-            data = {}
-            for model_id, benchmark in self.benchmarks.items():
-                data[model_id] = {
+            data = {
+                model_id: {
                     "avg_tokens_per_second": benchmark.avg_tokens_per_second,
                     "avg_inference_time": benchmark.avg_inference_time,
                     "avg_memory_mb": benchmark.avg_memory_mb,
@@ -230,7 +224,8 @@ class ModelPerformanceMonitor:
                     "quantization": benchmark.quantization,
                     "benchmark_date": benchmark.benchmark_date.isoformat(),
                 }
-
+                for model_id, benchmark in self.benchmarks.items()
+            }
             with open(benchmark_file, "w") as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
@@ -388,7 +383,10 @@ class ModelPerformanceMonitor:
                 total_mem = memory_reserved()
                 return (used_mem / total_mem) * 100 if total_mem > 0 else 0
             if HAS_TORCH and torch.cuda.is_available():
-                total_mem = sum(torch.cuda.get_device_properties(i).total_memory for i in range(torch.cuda.device_count()))
+                total_mem = sum(
+                    torch.cuda.get_device_properties(i).total_memory
+                    for i in range(torch.cuda.device_count())
+                )
                 used_mem = torch.cuda.memory_allocated()
                 return (used_mem / total_mem) * 100 if total_mem > 0 else 0
             return 0.0
@@ -416,21 +414,32 @@ class ModelPerformanceMonitor:
         p99_idx = int(len(latencies) * 0.99)
 
         # Error rate
-        error_count = sum(1 for m in history if m.error is not None)
+        error_count = sum(bool(m.error is not None)
+                      for m in history)
         error_rate = error_count / len(history) if history else 0
 
         # Create/update benchmark
         self.benchmarks[model_id] = ModelBenchmark(
             model_id=model_id,
             avg_tokens_per_second=(
-                np.mean(tokens_per_second) if HAS_NUMPY and tokens_per_second else sum(tokens_per_second) / len(tokens_per_second)
+                np.mean(tokens_per_second)
+                if HAS_NUMPY and tokens_per_second
+                else sum(tokens_per_second) / len(tokens_per_second)
             )
             if tokens_per_second
             else 0,
-            avg_inference_time=(np.mean(inference_times) if HAS_NUMPY else sum(inference_times) / len(inference_times))
+            avg_inference_time=(
+                np.mean(inference_times)
+                if HAS_NUMPY
+                else sum(inference_times) / len(inference_times)
+            )
             if inference_times
             else 0,
-            avg_memory_mb=(np.mean(memory_usage) if HAS_NUMPY else sum(memory_usage) / len(memory_usage)) if memory_usage else 0,
+            avg_memory_mb=(
+                np.mean(memory_usage) if HAS_NUMPY else sum(memory_usage) / len(memory_usage)
+            )
+            if memory_usage
+            else 0,
             p50_latency=latencies[p50_idx] if p50_idx < len(latencies) else 0,
             p95_latency=latencies[p95_idx] if p95_idx < len(latencies) else 0,
             p99_latency=latencies[p99_idx] if p99_idx < len(latencies) else 0,
@@ -470,12 +479,24 @@ class ModelPerformanceMonitor:
             "model_id": model_id,
             "total_inferences": len(history),
             "recent_performance": {
-                "avg_tokens_per_second": (np.mean(recent_tps) if HAS_NUMPY else sum(recent_tps) / len(recent_tps)) if recent_tps else 0,
-                "avg_latency": (np.mean(recent_latency) if HAS_NUMPY else sum(recent_latency) / len(recent_latency))
+                "avg_tokens_per_second": (
+                    np.mean(recent_tps) if HAS_NUMPY else sum(recent_tps) / len(recent_tps)
+                )
+                if recent_tps
+                else 0,
+                "avg_latency": (
+                    np.mean(recent_latency)
+                    if HAS_NUMPY
+                    else sum(recent_latency) / len(recent_latency)
+                )
                 if recent_latency
                 else 0,
-                "min_latency": (np.min(recent_latency) if HAS_NUMPY else min(recent_latency)) if recent_latency else 0,
-                "max_latency": (np.max(recent_latency) if HAS_NUMPY else max(recent_latency)) if recent_latency else 0,
+                "min_latency": (np.min(recent_latency) if HAS_NUMPY else min(recent_latency))
+                if recent_latency
+                else 0,
+                "max_latency": (np.max(recent_latency) if HAS_NUMPY else max(recent_latency))
+                if recent_latency
+                else 0,
             },
         }
 
@@ -530,14 +551,14 @@ class ModelPerformanceMonitor:
             if model_id in self.benchmarks:
                 benchmark = self.benchmarks[model_id]
 
-                if metric == "tokens_per_second":
-                    value = benchmark.avg_tokens_per_second
-                elif metric == "latency":
+                if metric == "latency":
                     value = benchmark.avg_inference_time
                 elif metric == "memory":
                     value = benchmark.avg_memory_mb
                 elif metric == "p95_latency":
                     value = benchmark.p95_latency
+                elif metric == "tokens_per_second":
+                    value = benchmark.avg_tokens_per_second
                 else:
                     value = None
 
@@ -550,7 +571,7 @@ class ModelPerformanceMonitor:
 
         # Find best performer
         if comparison["models"]:
-            if metric in ["latency", "memory", "p95_latency"]:
+            if metric in {"latency", "memory", "p95_latency"}:
                 # Lower is better
                 best_model = min(
                     comparison["models"].items(),

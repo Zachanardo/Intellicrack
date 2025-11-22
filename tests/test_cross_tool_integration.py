@@ -57,7 +57,7 @@ class RealGhidraIntegration:
         self.connected = True
         return True
 
-    def analyze_binary(self, binary_path: str) -> Dict[str, Any]:
+    def analyze_binary(self, binary_path: str) -> dict[str, Any]:
         """Analyze binary with Ghidra.
 
         Args:
@@ -187,7 +187,7 @@ class RealFridaIntegration:
         self.attached = True
         return True
 
-    def analyze_runtime(self, binary_path: str) -> Dict[str, Any]:
+    def analyze_runtime(self, binary_path: str) -> dict[str, Any]:
         """Analyze binary at runtime.
 
         Args:
@@ -280,7 +280,7 @@ class RealFridaIntegration:
         })
         return True
 
-    def intercept_api(self, api_name: str) -> List[Dict[str, Any]]:
+    def intercept_api(self, api_name: str) -> list[dict[str, Any]]:
         """Intercept API calls.
 
         Args:
@@ -322,7 +322,7 @@ class RealRadare2Integration:
         self.session_open = True
         return True
 
-    def analyze_static(self, binary_path: str) -> Dict[str, Any]:
+    def analyze_static(self, binary_path: str) -> dict[str, Any]:
         """Perform static analysis.
 
         Args:
@@ -432,7 +432,7 @@ class RealRadare2Integration:
         self.analysis_results = results
         return results
 
-    def get_assembly(self, address: int, size: int) -> List[str]:
+    def get_assembly(self, address: int, size: int) -> list[str]:
         """Get assembly code at address.
 
         Args:
@@ -904,8 +904,8 @@ class TestIntegrationScenarios:
             assert len(result.bypass_strategies) > 0
 
             # Verify each protection has a bypass
-            protection_types = set(p['type'] for p in result.protections)
-            bypass_types = set(s.protection_type for s in result.bypass_strategies)
+            protection_types = {p['type'] for p in result.protections}
+            bypass_types = {s.protection_type for s in result.bypass_strategies}
 
             # At least some protections should have bypasses
             assert len(bypass_types) > 0

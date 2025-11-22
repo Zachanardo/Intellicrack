@@ -22,9 +22,14 @@ import logging
 from enum import Enum, auto
 from typing import Any
 
+
 logger = logging.getLogger("Intellicrack.HexView")
 
-__all__ = ["HighlightType", "HexHighlight", "HexHighlighter"]
+__all__ = [
+    "HexHighlight",
+    "HexHighlighter",
+    "HighlightType",
+]
 
 
 class HighlightType(Enum):
@@ -104,7 +109,9 @@ class HexHighlight:
             logger.error(error_msg)
             raise ValueError(error_msg)
 
-        logger.debug(f"Created highlight: 0x{start:X}-0x{end:X} type={highlight_type} color={color}")
+        logger.debug(
+            f"Created highlight: 0x{start:X}-0x{end:X} type={highlight_type} color={color}"
+        )
 
     @property
     def size(self) -> int:
@@ -203,10 +210,14 @@ class HexHighlighter:
         alpha_int = int(alpha * 255)
 
         # Create and add the highlight
-        highlight = HexHighlight(start, end, highlight_type, color, alpha_int, 0, description, metadata)
+        highlight = HexHighlight(
+            start, end, highlight_type, color, alpha_int, 0, description, metadata
+        )
         self.highlights.append(highlight)
 
-        logger.debug("Added highlight ID %s: %s-%s, type: %s", highlight.id, start, end, highlight_type.name)
+        logger.debug(
+            "Added highlight ID %s: %s-%s, type: %s", highlight.id, start, end, highlight_type.name
+        )
         return highlight.id
 
     def remove_highlight(self, highlight_id: int) -> bool:
@@ -287,10 +298,7 @@ class HexHighlighter:
             The highlight, or None if not found
 
         """
-        for h in self.highlights:
-            if h.id == highlight_id:
-                return h
-        return None
+        return next((h for h in self.highlights if h.id == highlight_id), None)
 
     def get_highlight_count(self, highlight_type: HighlightType | None = None) -> int:
         """Get the number of highlights, optionally of a specific type.
@@ -305,7 +313,8 @@ class HexHighlighter:
         if highlight_type is None:
             return len(self.highlights)
 
-        return sum(1 for h in self.highlights if h.highlight_type == highlight_type)
+        return sum(bool(h.highlight_type == highlight_type)
+               for h in self.highlights)
 
     def update_highlight(self, highlight_id: int, **kwargs: object) -> bool:
         """Update an existing highlight's properties.
@@ -331,7 +340,9 @@ class HexHighlighter:
         logger.debug("Updated highlight ID %s with %s", highlight_id, kwargs)
         return True
 
-    def add_bookmark(self, offset: int, size: int = 1, description: str = "", color: str = "#0000FF") -> int:
+    def add_bookmark(
+        self, offset: int, size: int = 1, description: str = "", color: str = "#0000FF"
+    ) -> int:
         """Add a bookmark highlight.
 
         Args:
@@ -353,7 +364,9 @@ class HexHighlighter:
             metadata={"bookmark": True},
         )
 
-    def add_search_result(self, start: int, end: int, query: str = "", color: str = "#00FF00") -> int:
+    def add_search_result(
+        self, start: int, end: int, query: str = "", color: str = "#00FF00"
+    ) -> int:
         """Add a search result highlight.
 
         Args:

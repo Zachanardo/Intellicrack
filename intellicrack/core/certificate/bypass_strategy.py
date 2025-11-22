@@ -91,10 +91,8 @@ RISK ASSESSMENT:
 
 import logging
 
-from intellicrack.core.certificate.detection_report import (
-    BypassMethod,
-    DetectionReport,
-)
+from intellicrack.core.certificate.detection_report import BypassMethod, DetectionReport
+
 
 logger = logging.getLogger(__name__)
 
@@ -132,10 +130,15 @@ class BypassStrategySelector:
 
         if target_state == "static":
             return self._select_static_strategy(
-                detection_report, num_functions, num_libraries, risk_level,
+                detection_report,
+                num_functions,
+                num_libraries,
+                risk_level,
             )
         return self._select_running_strategy(
-            detection_report, num_functions, num_libraries,
+            detection_report,
+            num_functions,
+            num_libraries,
         )
 
     def _select_static_strategy(
@@ -166,10 +169,8 @@ class BypassStrategySelector:
             return BypassMethod.HYBRID
 
         if num_functions <= 3 and risk_level == "low":
-            high_confidence = sum(
-                1 for func in detection_report.validation_functions
-                if func.confidence >= 0.8
-            )
+            high_confidence = sum(bool(func.confidence >= 0.8)
+                              for func in detection_report.validation_functions)
             if high_confidence == num_functions:
                 logger.info("Simple validation with high confidence, using binary patch")
                 return BypassMethod.BINARY_PATCH
@@ -219,13 +220,11 @@ class BypassStrategySelector:
             True if binary appears packed
 
         """
-        if hasattr(detection_report, 'is_packed'):
+        if hasattr(detection_report, "is_packed"):
             return detection_report.is_packed
 
-        low_confidence_count = sum(
-            1 for func in detection_report.validation_functions
-            if func.confidence < 0.5
-        )
+        low_confidence_count = sum(bool(func.confidence < 0.5)
+                               for func in detection_report.validation_functions)
 
         return low_confidence_count > len(detection_report.validation_functions) * 0.5
 
@@ -240,16 +239,24 @@ class BypassStrategySelector:
 
         """
         network_indicators = [
-            "winhttp", "wininet", "curl", "https", "http",
-            "activation", "online", "server",
+            "winhttp",
+            "wininet",
+            "curl",
+            "https",
+            "http",
+            "activation",
+            "online",
+            "server",
         ]
 
         for func in detection_report.validation_functions:
             func_lower = func.api_name.lower()
             context_lower = func.context.lower() if func.context else ""
 
-            if any(indicator in func_lower or indicator in context_lower
-                   for indicator in network_indicators):
+            if any(
+                indicator in func_lower or indicator in context_lower
+                for indicator in network_indicators
+            ):
                 return True
 
         return False
@@ -267,9 +274,7 @@ class BypassStrategySelector:
         if not detection_report.validation_functions:
             return "low"
 
-        total_refs = sum(
-            len(func.references) for func in detection_report.validation_functions
-        )
+        total_refs = sum(len(func.references) for func in detection_report.validation_functions)
         avg_refs = total_refs / len(detection_report.validation_functions)
 
         if avg_refs > 15:

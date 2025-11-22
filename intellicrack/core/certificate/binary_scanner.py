@@ -70,14 +70,17 @@ PERFORMANCE NOTES:
 import re
 from pathlib import Path
 
+
 try:
     import lief
+
     LIEF_AVAILABLE = True
 except ImportError:
     LIEF_AVAILABLE = False
 
 try:
     import r2pipe
+
     R2PIPE_AVAILABLE = True
 except ImportError:
     R2PIPE_AVAILABLE = False
@@ -169,8 +172,15 @@ class BinaryScanner:
             imports = self.scan_imports()
 
         tls_keywords = [
-            "ssl", "tls", "crypt", "winhttp", "schannel", "sspicli",
-            "nss", "security", "cfnetwork",
+            "ssl",
+            "tls",
+            "crypt",
+            "winhttp",
+            "schannel",
+            "sspicli",
+            "nss",
+            "security",
+            "cfnetwork",
         ]
 
         tls_libs = []
@@ -200,13 +210,11 @@ class BinaryScanner:
 
             unicode_pattern = rb"(?:[ -~]\x00){4,}"
             matches = re.findall(unicode_pattern, data)
-            strings.extend([
-                m.decode("utf-16le", errors="ignore").rstrip("\x00")
-                for m in matches
-            ])
+            strings.extend([m.decode("utf-16le", errors="ignore").rstrip("\x00") for m in matches])
 
         except Exception as e:
             import logging
+
             logging.getLogger(__name__).debug(f"Failed to extract strings: {e}")
 
         return list(set(strings))
@@ -225,8 +233,19 @@ class BinaryScanner:
             strings = self.scan_strings()
 
         cert_keywords = [
-            "certificate", "cert", "ssl", "tls", "x509", "pem", "der",
-            "ca_bundle", "trusted", "verify", "pinning", "sha256", "sha1",
+            "certificate",
+            "cert",
+            "ssl",
+            "tls",
+            "x509",
+            "pem",
+            "der",
+            "ca_bundle",
+            "trusted",
+            "verify",
+            "pinning",
+            "sha256",
+            "sha1",
         ]
 
         cert_strings = []
@@ -274,9 +293,8 @@ class BinaryScanner:
             addresses = []
 
             for line in result.splitlines():
-                match = re.search(r"0x([0-9a-fA-F]+)", line)
-                if match:
-                    addresses.append(int(match.group(1), 16))
+                if match := re.search(r"0x([0-9a-fA-F]+)", line):
+                    addresses.append(int(match[1], 16))
 
             return addresses
 
@@ -300,10 +318,11 @@ class BinaryScanner:
 
         if isinstance(self.binary, lief.PE.Binary):
             for imp in self.binary.imports:
-                for entry in imp.entries:
-                    if entry.name and api_name in entry.name:
-                        addresses.append(entry.iat_address)
-
+                addresses.extend(
+                    entry.iat_address
+                    for entry in imp.entries
+                    if entry.name and api_name in entry.name
+                )
         return addresses
 
     def analyze_call_context(self, address: int) -> ContextInfo:
@@ -329,9 +348,8 @@ class BinaryScanner:
             xrefs_output = self.r2_handle.cmd(f"axt @ {hex(address)}")
             xrefs = []
             for line in xrefs_output.splitlines():
-                match = re.search(r"0x([0-9a-fA-F]+)", line)
-                if match:
-                    xrefs.append(int(match.group(1), 16))
+                if match := re.search(r"0x([0-9a-fA-F]+)", line):
+                    xrefs.append(int(match[1], 16))
 
             return ContextInfo(
                 address=address,
@@ -387,6 +405,7 @@ class BinaryScanner:
                 self.r2_handle.quit()
             except Exception as e:
                 import logging
+
                 logging.getLogger(__name__).debug(f"Failed to close radare2: {e}")
             self.r2_handle = None
 

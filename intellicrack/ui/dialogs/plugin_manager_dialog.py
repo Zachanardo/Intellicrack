@@ -51,6 +51,7 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 
+
 # Additional imports specific to plugin manager
 if not HAS_PYQT:
 
@@ -185,7 +186,14 @@ else:
 
             # Plugin management
             self.installed_plugins = {}
-            self.plugin_categories = ["Analysis", "Exploitation", "Network", "UI", "Utilities", "Tools"]
+            self.plugin_categories = [
+                "Analysis",
+                "Exploitation",
+                "Network",
+                "UI",
+                "Utilities",
+                "Tools",
+            ]
             self.plugin_configs = {}
 
             # Threading
@@ -215,7 +223,9 @@ else:
             self.auto_refresh_timer.timeout.connect(self.auto_refresh_plugins)
 
             # Check for updates on startup
-            if hasattr(self.app_context, "config") and self.app_context.config.get("plugin_auto_update", True):
+            if hasattr(self.app_context, "config") and self.app_context.config.get(
+                "plugin_auto_update", True
+            ):
                 QTimer.singleShot(2000, self.check_for_updates)
 
             logger.info("Plugin Manager Dialog initialized")
@@ -276,9 +286,10 @@ else:
                 self.repo_combo.currentTextChanged.connect(self.on_repository_changed)
 
             # Auto-refresh timer
-            if hasattr(self, "auto_refresh_timer"):
-                if hasattr(self.app_context, "config") and self.app_context.config.get("plugin_auto_refresh", False):
-                    self.auto_refresh_timer.start(300000)  # 5 minutes
+            if hasattr(self, "auto_refresh_timer") and (hasattr(self.app_context, "config") and self.app_context.config.get(
+                                "plugin_auto_refresh", False
+                            )):
+                self.auto_refresh_timer.start(300000)  # 5 minutes
 
         def on_repository_changed(self, repository_name: str) -> None:
             """Handle repository selection change."""
@@ -322,43 +333,51 @@ else:
                         plugin_name = plugin_info.get("name", "")
                         current_version = plugin_info.get("version", "1.0.0")
 
-                        # Try to determine repository URL from plugin metadata or use defaults
-                        repo_url = self._get_plugin_repository_url(plugin_info)
-
-                        if repo_url:
+                        if repo_url := self._get_plugin_repository_url(plugin_info):
                             logger.debug(f"Checking updates for {plugin_name} from {repo_url}")
 
-                            # Fetch latest version information from repository
-                            latest_version_info = self._fetch_latest_version(repo_url, plugin_name)
-
-                            if latest_version_info:
+                            if latest_version_info := self._fetch_latest_version(
+                                repo_url, plugin_name
+                            ):
                                 latest_version = latest_version_info.get("version", current_version)
 
                                 # Compare versions using semantic versioning
                                 try:
-                                    if version.parse(latest_version) > version.parse(current_version):
+                                    if version.parse(latest_version) > version.parse(
+                                        current_version
+                                    ):
                                         updates_available += 1
                                         update_details.append(
                                             {
                                                 "name": plugin_name,
                                                 "current": current_version,
                                                 "latest": latest_version,
-                                                "description": latest_version_info.get("description", ""),
+                                                "description": latest_version_info.get(
+                                                    "description", ""
+                                                ),
                                                 "url": repo_url,
                                             },
                                         )
-                                        logger.info(f"Update available for {plugin_name}: {current_version} -> {latest_version}")
+                                        logger.info(
+                                            f"Update available for {plugin_name}: {current_version} -> {latest_version}"
+                                        )
                                 except Exception as version_error:
-                                    logger.debug(f"Version comparison failed for {plugin_name}: {version_error}")
+                                    logger.debug(
+                                        f"Version comparison failed for {plugin_name}: {version_error}"
+                                    )
 
                     except Exception as plugin_error:
-                        logger.debug(f"Failed to check updates for plugin {plugin_name}: {plugin_error}")
+                        logger.debug(
+                            f"Failed to check updates for plugin {plugin_name}: {plugin_error}"
+                        )
 
                 # Show results to user
                 if updates_available > 0:
                     update_message = f"{updates_available} plugin update(s) available:\n\n"
                     for update in update_details[:5]:  # Limit to first 5 for readability
-                        update_message += f" {update['name']}: {update['current']} → {update['latest']}\n"
+                        update_message += (
+                            f" {update['name']}: {update['current']} → {update['latest']}\n"
+                        )
 
                     if len(update_details) > 5:
                         update_message += f"... and {len(update_details) - 5} more updates\n"
@@ -387,7 +406,11 @@ else:
                     lines = content.split("\n")
                     for line in lines[:30]:  # Check first 30 lines
                         line = line.strip()
-                        if line.startswith("# Repository:") or line.startswith("# Repo:") or line.startswith("# URL:"):
+                        if (
+                            line.startswith("# Repository:")
+                            or line.startswith("# Repo:")
+                            or line.startswith("# URL:")
+                        ):
                             return line.split(":", 1)[1].strip()
 
                 # Default repository URLs for known plugins
@@ -396,16 +419,18 @@ else:
                     "community-plugins": "https://api.github.com/repos/intellicrack-community/plugins",
                 }
 
-                # Check if plugin name matches any default repository
-                for repo_name, repo_url in default_repos.items():
-                    if repo_name in plugin_name.lower():
-                        return repo_url
-
-                # Fallback to main Intellicrack plugin repository
-                return "https://api.github.com/repos/intellicrack/community-plugins"
-
+                return next(
+                    (
+                        repo_url
+                        for repo_name, repo_url in default_repos.items()
+                        if repo_name in plugin_name.lower()
+                    ),
+                    "https://api.github.com/repos/intellicrack/community-plugins",
+                )
             except Exception as e:
-                logger.debug(f"Failed to determine repository URL for plugin {plugin_info.get('name', 'unknown')}: {e}")
+                logger.debug(
+                    f"Failed to determine repository URL for plugin {plugin_info.get('name', 'unknown')}: {e}"
+                )
                 return None
 
         def _fetch_latest_version(self, repo_url: str, plugin_name: str) -> dict | None:
@@ -437,8 +462,7 @@ else:
                     response = requests.get(tags_url, timeout=10)
 
                     if response.status_code == 200:
-                        tags_data = response.json()
-                        if tags_data:
+                        if tags_data := response.json():
                             latest_tag = tags_data[0]
                             return {
                                 "version": latest_tag.get("name", "").lstrip("v"),
@@ -474,7 +498,9 @@ else:
                                     "published_at": version_data.get("updated", ""),
                                 }
                         except Exception as file_error:
-                            logger.debug(f"Failed to fetch {file_name} for {plugin_name}: {file_error}")
+                            logger.debug(
+                                f"Failed to fetch {file_name} for {plugin_name}: {file_error}"
+                            )
 
                 return None
 
@@ -744,8 +770,7 @@ else:
 
         def on_installed_selection_changed(self) -> None:
             """Handle selection change in installed plugins list."""
-            current_item = self.installed_list.currentItem()
-            if current_item:
+            if current_item := self.installed_list.currentItem():
                 plugin_info = current_item.data(0)
                 info_text = f"""Plugin: {plugin_info["name"]}
 Version: {plugin_info.get("version", "Unknown")}
@@ -763,8 +788,7 @@ Description: {plugin_info.get("description", "No description available")}"""
 
         def enable_selected_plugin(self) -> None:
             """Enable the selected plugin."""
-            current_item = self.installed_list.currentItem()
-            if current_item:
+            if current_item := self.installed_list.currentItem():
                 plugin_info = current_item.data(0)
                 plugin_info["enabled"] = True
                 current_item.setData(0, plugin_info)
@@ -774,8 +798,7 @@ Description: {plugin_info.get("description", "No description available")}"""
 
         def disable_selected_plugin(self) -> None:
             """Disable the selected plugin."""
-            current_item = self.installed_list.currentItem()
-            if current_item:
+            if current_item := self.installed_list.currentItem():
                 plugin_info = current_item.data(0)
                 plugin_info["enabled"] = False
                 current_item.setData(0, plugin_info)
@@ -787,8 +810,7 @@ Description: {plugin_info.get("description", "No description available")}"""
 
         def remove_selected_plugin(self) -> None:
             """Remove the selected plugin."""
-            current_item = self.installed_list.currentItem()
-            if current_item:
+            if current_item := self.installed_list.currentItem():
                 plugin_info = current_item.data(0)
                 reply = QMessageBox.question(
                     self,
@@ -836,10 +858,25 @@ Description: {plugin_info.get("description", "No description available")}"""
                 # Common configuration options
                 config_options = [
                     ("enabled", "Enabled", "checkbox", plugin_config.get("enabled", True)),
-                    ("auto_update", "Auto Update", "checkbox", plugin_config.get("auto_update", True)),
-                    ("max_file_size", "Max File Size (MB)", "spinbox", plugin_config.get("max_file_size", 100)),
+                    (
+                        "auto_update",
+                        "Auto Update",
+                        "checkbox",
+                        plugin_config.get("auto_update", True),
+                    ),
+                    (
+                        "max_file_size",
+                        "Max File Size (MB)",
+                        "spinbox",
+                        plugin_config.get("max_file_size", 100),
+                    ),
                     ("timeout", "Timeout (seconds)", "spinbox", plugin_config.get("timeout", 30)),
-                    ("temp_dir", "Temporary Directory", "text", plugin_config.get("temp_dir", self.temp_dir)),
+                    (
+                        "temp_dir",
+                        "Temporary Directory",
+                        "text",
+                        plugin_config.get("temp_dir", self.temp_dir),
+                    ),
                     ("log_level", "Log Level", "combo", plugin_config.get("log_level", "INFO")),
                 ]
 
@@ -848,25 +885,70 @@ Description: {plugin_info.get("description", "No description available")}"""
                 if category == "analysis":
                     config_options.extend(
                         [
-                            ("deep_scan", "Deep Analysis", "checkbox", plugin_config.get("deep_scan", False)),
-                            ("entropy_threshold", "Entropy Threshold", "spinbox", plugin_config.get("entropy_threshold", 7.5)),
-                            ("scan_sections", "Scan All Sections", "checkbox", plugin_config.get("scan_sections", True)),
+                            (
+                                "deep_scan",
+                                "Deep Analysis",
+                                "checkbox",
+                                plugin_config.get("deep_scan", False),
+                            ),
+                            (
+                                "entropy_threshold",
+                                "Entropy Threshold",
+                                "spinbox",
+                                plugin_config.get("entropy_threshold", 7.5),
+                            ),
+                            (
+                                "scan_sections",
+                                "Scan All Sections",
+                                "checkbox",
+                                plugin_config.get("scan_sections", True),
+                            ),
                         ],
                     )
                 elif category == "exploitation":
                     config_options.extend(
                         [
-                            ("safe_mode", "Safe Mode", "checkbox", plugin_config.get("safe_mode", True)),
-                            ("backup_target", "Backup Target", "checkbox", plugin_config.get("backup_target", True)),
-                            ("max_attempts", "Max Attempts", "spinbox", plugin_config.get("max_attempts", 3)),
+                            (
+                                "safe_mode",
+                                "Safe Mode",
+                                "checkbox",
+                                plugin_config.get("safe_mode", True),
+                            ),
+                            (
+                                "backup_target",
+                                "Backup Target",
+                                "checkbox",
+                                plugin_config.get("backup_target", True),
+                            ),
+                            (
+                                "max_attempts",
+                                "Max Attempts",
+                                "spinbox",
+                                plugin_config.get("max_attempts", 3),
+                            ),
                         ],
                     )
                 elif category == "network":
                     config_options.extend(
                         [
-                            ("capture_packets", "Capture Packets", "checkbox", plugin_config.get("capture_packets", False)),
-                            ("interface", "Network Interface", "text", plugin_config.get("interface", "auto")),
-                            ("port_range", "Port Range", "text", plugin_config.get("port_range", "1-65535")),
+                            (
+                                "capture_packets",
+                                "Capture Packets",
+                                "checkbox",
+                                plugin_config.get("capture_packets", False),
+                            ),
+                            (
+                                "interface",
+                                "Network Interface",
+                                "text",
+                                plugin_config.get("interface", "auto"),
+                            ),
+                            (
+                                "port_range",
+                                "Port Range",
+                                "text",
+                                plugin_config.get("port_range", "1-65535"),
+                            ),
                         ],
                     )
 
@@ -878,7 +960,9 @@ Description: {plugin_info.get("description", "No description available")}"""
                     elif widget_type == "spinbox":
                         widget = QSpinBox()
                         widget.setRange(0, 99999)
-                        widget.setValue(int(default_value) if isinstance(default_value, (int, float)) else 0)
+                        widget.setValue(
+                            int(default_value) if isinstance(default_value, (int, float)) else 0
+                        )
                     elif widget_type == "combo":
                         widget = QComboBox()
                         if key == "log_level":
@@ -890,7 +974,7 @@ Description: {plugin_info.get("description", "No description available")}"""
                         widget.setText(str(default_value) if default_value else "")
 
                     config_widgets[key] = widget
-                    form_layout.addRow(label + ":", widget)
+                    form_layout.addRow(f"{label}:", widget)
 
                 layout.addWidget(form_group)
 
@@ -936,7 +1020,9 @@ Path: {plugin_info.get("path", "Unknown")}"""
                         if widget_type == "checkbox":
                             widget.setChecked(bool(default_value))
                         elif widget_type == "spinbox":
-                            widget.setValue(int(default_value) if isinstance(default_value, (int, float)) else 0)
+                            widget.setValue(
+                                int(default_value) if isinstance(default_value, (int, float)) else 0
+                            )
                         elif widget_type == "combo":
                             if isinstance(default_value, str):
                                 widget.setCurrentText(default_value)
@@ -979,7 +1065,9 @@ Path: {plugin_info.get("path", "Unknown")}"""
 
                         # Save configuration to file
                         try:
-                            config_file = os.path.join(self.plugins_dir, f"{plugin_name}_config.json")
+                            config_file = os.path.join(
+                                self.plugins_dir, f"{plugin_name}_config.json"
+                            )
                             import json
 
                             with open(config_file, "w") as f:
@@ -988,7 +1076,9 @@ Path: {plugin_info.get("path", "Unknown")}"""
                             logger.warning(f"Failed to save plugin configuration: {e}")
 
                     config_dialog.accept()
-                    QMessageBox.information(self, "Success", f"Configuration saved for {plugin_name}")
+                    QMessageBox.information(
+                        self, "Success", f"Configuration saved for {plugin_name}"
+                    )
 
                 ok_btn.clicked.connect(save_configuration)
                 cancel_btn.clicked.connect(config_dialog.reject)
@@ -1003,7 +1093,9 @@ Path: {plugin_info.get("path", "Unknown")}"""
 
         def install_selected_plugin(self) -> None:
             """Install the selected available plugin - functionality removed."""
-            QMessageBox.information(self, "Information", "Available plugins functionality has been removed.")
+            QMessageBox.information(
+                self, "Information", "Available plugins functionality has been removed."
+            )
 
         def _check_dependencies(self, dependencies: list) -> list:
             """Check which dependencies are missing."""
@@ -1031,7 +1123,9 @@ Path: {plugin_info.get("path", "Unknown")}"""
                     elif dep == "frida":
                         import frida
 
-                        _ = frida.__name__  # Verify frida dynamic instrumentation toolkit is available
+                        _ = (
+                            frida.__name__
+                        )  # Verify frida dynamic instrumentation toolkit is available
                     elif dep == "psutil":
                         import psutil
 
@@ -1047,21 +1141,23 @@ Path: {plugin_info.get("path", "Unknown")}"""
                     elif dep == "scapy":
                         import scapy
 
-                        _ = scapy.__name__  # Verify scapy network packet manipulation library is available
+                        _ = (
+                            scapy.__name__
+                        )  # Verify scapy network packet manipulation library is available
                     elif dep == "pyshark":
                         import pyshark
 
-                        _ = pyshark.__name__  # Verify pyshark Wireshark packet capture library is available
+                        _ = (
+                            pyshark.__name__
+                        )  # Verify pyshark Wireshark packet capture library is available
                     elif dep == "regex":
                         import regex
 
-                        _ = regex.__name__  # Verify regex enhanced regular expression library is available
-                    # Add more dependency checks as needed
-                except ImportError:
-                    missing.append(dep)
+                        _ = (
+                            regex.__name__
+                        )  # Verify regex enhanced regular expression library is available
                 except Exception:
                     missing.append(dep)
-
             return missing
 
         def _start_remote_plugin_installation(self, plugin_info: dict) -> None:
@@ -1084,12 +1180,16 @@ Path: {plugin_info.get("path", "Unknown")}"""
                         shutil.copy2(src_path, dest_path)
                     else:
                         # Copy directory
-                        dest_dir = os.path.join(self.plugins_dir, plugin_name.lower().replace(" ", "_"))
+                        dest_dir = os.path.join(
+                            self.plugins_dir, plugin_name.lower().replace(" ", "_")
+                        )
                         if os.path.exists(dest_dir):
                             shutil.rmtree(dest_dir)
                         shutil.copytree(src_path, dest_dir)
 
-                    QMessageBox.information(self, "Success", f"Plugin '{plugin_name}' installed successfully")
+                    QMessageBox.information(
+                        self, "Success", f"Plugin '{plugin_name}' installed successfully"
+                    )
                     self.load_installed_plugins()
 
                 except Exception as e:
@@ -1133,8 +1233,11 @@ Path: {plugin_info.get("path", "Unknown")}"""
                 def perform_installation() -> None:
                     try:
                         import requests
-                        from requests.exceptions import ConnectionError as RequestsConnectionError
-                        from requests.exceptions import RequestException, Timeout
+                        from requests.exceptions import (
+                            ConnectionError as RequestsConnectionError,
+                            RequestException,
+                            Timeout,
+                        )
 
                         status_label.setText("Downloading plugin...")
                         log_text.append(f"Downloading from: {download_url}")
@@ -1163,7 +1266,9 @@ Path: {plugin_info.get("path", "Unknown")}"""
                             status_label.setText("Extracting plugin files...")
                             log_text.append("Extracting plugin archive...")
 
-                            extract_dir = os.path.join(self.plugins_dir, plugin_name.lower().replace(" ", "_"))
+                            extract_dir = os.path.join(
+                                self.plugins_dir, plugin_name.lower().replace(" ", "_")
+                            )
                             os.makedirs(extract_dir, exist_ok=True)
 
                             if temp_file.endswith(".zip"):
@@ -1181,7 +1286,9 @@ Path: {plugin_info.get("path", "Unknown")}"""
                                 if any(f.endswith(".py") for f in plugin_files):
                                     progress_bar.setValue(100)
                                     status_label.setText("Installation complete!")
-                                    log_text.append(f"Plugin '{plugin_name}' installed successfully")
+                                    log_text.append(
+                                        f"Plugin '{plugin_name}' installed successfully"
+                                    )
                                 else:
                                     status_label.setText("Installation failed!")
                                     log_text.append("ERROR: No valid plugin files found in archive")
@@ -1215,7 +1322,9 @@ Path: {plugin_info.get("path", "Unknown")}"""
 
                 if install_dialog.exec() == QDialog.Accepted:
                     self.load_installed_plugins()
-                    QMessageBox.information(self, "Success", f"Plugin '{plugin_name}' has been installed successfully!")
+                    QMessageBox.information(
+                        self, "Success", f"Plugin '{plugin_name}' has been installed successfully!"
+                    )
 
         def _create_fallback_plugin(self, plugin_info: dict) -> None:
             """Create a realistic plugin file for fallback plugins."""
@@ -1227,13 +1336,21 @@ Path: {plugin_info.get("path", "Unknown")}"""
 
             # Generate plugin code based on category
             if plugin_category.lower() == "analysis":
-                plugin_code = self._generate_analysis_plugin_code(plugin_name, plugin_version, plugin_author, plugin_desc)
+                plugin_code = self._generate_analysis_plugin_code(
+                    plugin_name, plugin_version, plugin_author, plugin_desc
+                )
             elif plugin_category.lower() == "exploitation":
-                plugin_code = self._generate_exploitation_plugin_code(plugin_name, plugin_version, plugin_author, plugin_desc)
+                plugin_code = self._generate_exploitation_plugin_code(
+                    plugin_name, plugin_version, plugin_author, plugin_desc
+                )
             elif plugin_category.lower() == "network":
-                plugin_code = self._generate_network_plugin_code(plugin_name, plugin_version, plugin_author, plugin_desc)
+                plugin_code = self._generate_network_plugin_code(
+                    plugin_name, plugin_version, plugin_author, plugin_desc
+                )
             else:
-                plugin_code = self._generate_generic_plugin_code(plugin_name, plugin_version, plugin_author, plugin_desc)
+                plugin_code = self._generate_generic_plugin_code(
+                    plugin_name, plugin_version, plugin_author, plugin_desc
+                )
 
             # Save plugin file
             filename = f"{plugin_name.lower().replace(' ', '_').replace('-', '_')}.py"
@@ -1247,7 +1364,9 @@ Path: {plugin_info.get("path", "Unknown")}"""
                 logger.error(f"Failed to create fallback plugin: {e}")
                 raise
 
-        def _generate_analysis_plugin_code(self, name: str, version: str, author: str, description: str) -> str:
+        def _generate_analysis_plugin_code(
+            self, name: str, version: str, author: str, description: str
+        ) -> str:
             """Generate analysis plugin code."""
             class_name = name.replace(" ", "").replace("-", "")
             return f'''#!/usr/bin/env python3
@@ -1545,7 +1664,9 @@ PLUGIN_INFO = {{
 }}
 '''
 
-        def _generate_exploitation_plugin_code(self, name: str, version: str, author: str, description: str) -> str:
+        def _generate_exploitation_plugin_code(
+            self, name: str, version: str, author: str, description: str
+        ) -> str:
             """Generate exploitation plugin code."""
             class_name = name.replace(" ", "").replace("-", "")
             return f'''#!/usr/bin/env python3
@@ -1611,7 +1732,9 @@ PLUGIN_INFO = {{
 }}
 '''
 
-        def _generate_network_plugin_code(self, name: str, version: str, author: str, description: str) -> str:
+        def _generate_network_plugin_code(
+            self, name: str, version: str, author: str, description: str
+        ) -> str:
             """Generate network plugin code."""
             class_name = name.replace(" ", "").replace("-", "")
             return f'''#!/usr/bin/env python3
@@ -1672,7 +1795,9 @@ PLUGIN_INFO = {{
 }}
 '''
 
-        def _generate_generic_plugin_code(self, name: str, version: str, author: str, description: str) -> str:
+        def _generate_generic_plugin_code(
+            self, name: str, version: str, author: str, description: str
+        ) -> str:
             """Generate generic plugin code."""
             class_name = name.replace(" ", "").replace("-", "")
             return f'''#!/usr/bin/env python3
@@ -1726,7 +1851,9 @@ PLUGIN_INFO = {{
 
         def preview_selected_plugin(self) -> None:
             """Preview the selected available plugin - functionality removed."""
-            QMessageBox.information(self, "Information", "Available plugins functionality has been removed.")
+            QMessageBox.information(
+                self, "Information", "Available plugins functionality has been removed."
+            )
 
         def _install_from_preview(self, plugin_info: dict, preview_dialog: object) -> None:
             """Install plugin directly from preview dialog - functionality removed."""
@@ -1904,7 +2031,9 @@ def create_plugin():
                 return
 
             # Start installation thread
-            install_dir = os.path.join(self.plugins_dir, os.path.splitext(os.path.basename(plugin_file))[0])
+            install_dir = os.path.join(
+                self.plugins_dir, os.path.splitext(os.path.basename(plugin_file))[0]
+            )
             os.makedirs(install_dir, exist_ok=True)
 
             self.install_thread = PluginInstallThread(plugin_file, install_dir)
@@ -2599,4 +2728,4 @@ if __name__ == '__main__':
 
         def exec_(self) -> int:
             """Execute dialog."""
-            return 0 if not HAS_PYQT else super().exec()
+            return super().exec() if HAS_PYQT else 0

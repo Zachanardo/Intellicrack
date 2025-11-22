@@ -12,12 +12,12 @@ def analyze_test_coverage():
     source_file = Path(r"D:\Intellicrack\intellicrack\core\analysis\dynamic_instrumentation.py")
 
     # Parse test file
-    with open(test_file, 'r') as f:
+    with open(test_file) as f:
         test_content = f.read()
         test_tree = ast.parse(test_content)
 
     # Parse source file
-    with open(source_file, 'r') as f:
+    with open(source_file) as f:
         source_content = f.read()
         source_tree = ast.parse(source_content)
 

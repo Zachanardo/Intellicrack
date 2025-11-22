@@ -6,6 +6,7 @@ It limits output to the first 100 unique entries.
 """
 import regex
 
+
 with open('scanner_output_full.txt', encoding='utf-8') as f:
     content = f.read()
 

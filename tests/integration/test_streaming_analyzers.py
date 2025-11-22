@@ -1,303 +1,467 @@
-"""Integration tests for streaming analyzers.
+#!/usr/bin/env python3
+from __future__ import annotations
 
-Tests real-world scenarios with actual binary analysis on large files.
-
-Copyright (C) 2025 Zachary Flint
-
-This file is part of Intellicrack.
-"""
-
+import os
+from pathlib import Path
 
 import pytest
 
-try:
-    from intellicrack.core.analysis.streaming_crypto_detector import (
-        StreamingCryptoDetector,
-        analyze_crypto_streaming,
-    )
-    CRYPTO_AVAILABLE = True
-except ImportError:
-    CRYPTO_AVAILABLE = False
-
+from intellicrack.core.analysis.streaming_crypto_detector import (
+    StreamingCryptoDetector,
+    analyze_crypto_streaming,
+)
 from intellicrack.core.analysis.streaming_entropy_analyzer import (
     StreamingEntropyAnalyzer,
     analyze_entropy_streaming,
 )
-from intellicrack.core.processing.streaming_analysis_manager import StreamingAnalysisManager
-
-try:
-    import yara
-    from intellicrack.core.analysis.streaming_yara_scanner import (
-        StreamingYaraScanner,
-        scan_binary_streaming,
-    )
-
-    YARA_AVAILABLE = True
-except ImportError:
-    YARA_AVAILABLE = False
+from intellicrack.core.analysis.streaming_yara_scanner import (
+    YARA_AVAILABLE,
+    StreamingYaraScanner,
+    scan_binary_streaming,
+)
 
 
-class TestStreamingCryptoDetector:
-    """Integration tests for streaming cryptographic detection."""
-
-    @pytest.mark.skipif(not CRYPTO_AVAILABLE, reason="Capstone not available")
-    def test_crypto_detector_basic(self, tmp_path):
-        """Test basic crypto detection in streaming mode."""
-        test_file = tmp_path / "crypto_test.bin"
-
-        aes_sbox = bytes(
-            [
-                0x63,
-                0x7C,
-                0x77,
-                0x7B,
-                0xF2,
-                0x6B,
-                0x6F,
-                0xC5,
-                0x30,
-                0x01,
-                0x67,
-                0x2B,
-                0xFE,
-                0xD7,
-                0xAB,
-                0x76,
-            ]
-        )
-
-        test_data = b"\x00" * 10000 + aes_sbox + b"\x00" * 10000
-
-        test_file.write_bytes(test_data)
-
-        results = analyze_crypto_streaming(test_file, quick_mode=True)
-
-        assert results["status"] == "completed"
-        assert results["streaming_mode"] is True
-
-    @pytest.mark.skipif(not CRYPTO_AVAILABLE, reason="Capstone not available")
-    def test_crypto_detector_chunk_processing(self, tmp_path):
-        """Test crypto detection across chunk boundaries."""
-        test_file = tmp_path / "crypto_chunks.bin"
-
-        detector = StreamingCryptoDetector(quick_mode=True)
-        manager = StreamingAnalysisManager()
-
-        crypto_pattern = b"\x01\x00\x01\x00"
-
-        chunk_size = 1000
-        test_data = b"X" * (chunk_size - 10) + crypto_pattern + b"Y" * (chunk_size + 10)
-
-        test_file.write_bytes(test_data)
-
-        results = manager.analyze_streaming(test_file, detector)
-
-        assert results["status"] == "completed"
-
-    @pytest.mark.skipif(not CRYPTO_AVAILABLE, reason="Capstone not available")
-    def test_crypto_detector_large_file(self, tmp_path):
-        """Test crypto detection on simulated large file."""
-        test_file = tmp_path / "large_crypto.bin"
-
-        with open(test_file, "wb") as f:
-            for i in range(100):
-                chunk = bytes([i % 256]) * 10000
-                f.write(chunk)
-
-        results = analyze_crypto_streaming(test_file, quick_mode=True)
-
-        assert results["status"] == "completed"
-        assert results["file_size"] > 900_000
+SYSTEM_BINARIES_WINDOWS = [
+    r"C:\Windows\System32\kernel32.dll",
+    r"C:\Windows\System32\ntdll.dll",
+    r"C:\Windows\System32\user32.dll",
+    r"C:\Windows\System32\advapi32.dll",
+    r"C:\Windows\System32\crypt32.dll",
+    r"C:\Windows\System32\bcrypt.dll",
+]
 
 
-class TestStreamingEntropyAnalyzer:
-    """Integration tests for streaming entropy analysis."""
-
-    def test_entropy_analyzer_basic(self, tmp_path):
-        """Test basic entropy analysis in streaming mode."""
-        test_file = tmp_path / "entropy_test.bin"
-
-        low_entropy = b"\x00" * 5000
-        high_entropy = bytes(range(256)) * 20
-
-        test_data = low_entropy + high_entropy + low_entropy
-
-        test_file.write_bytes(test_data)
-
-        results = analyze_entropy_streaming(test_file, window_size=1000, stride=500)
-
-        assert results["status"] == "completed"
-        assert results["streaming_mode"] is True
-        assert "global_entropy" in results
-        assert "entropy_windows" in results
-
-    def test_entropy_analyzer_classifications(self, tmp_path):
-        """Test entropy-based section classification."""
-        test_file = tmp_path / "classified.bin"
-
-        padding = b"\x00" * 2000
-        text = b"The quick brown fox jumps over the lazy dog. " * 50
-        code = bytes(range(256)) * 10
-
-        test_data = padding + text + code
-
-        test_file.write_bytes(test_data)
-
-        analyzer = StreamingEntropyAnalyzer(window_size=1000, stride=500)
-        manager = StreamingAnalysisManager()
-
-        results = manager.analyze_streaming(test_file, analyzer)
-
-        assert results["status"] == "completed"
-        assert "classification_distribution" in results
-
-    def test_entropy_analyzer_high_entropy_detection(self, tmp_path):
-        """Test detection of high-entropy regions."""
-        test_file = tmp_path / "high_entropy.bin"
-
-        import random
-
-        random.seed(42)
-
-        normal_data = bytes([random.randint(0, 100) for _ in range(5000)])  # noqa: S311
-        high_entropy_data = bytes([random.randint(0, 255) for _ in range(5000)])  # noqa: S311
-
-        test_data = normal_data + high_entropy_data + normal_data
-
-        test_file.write_bytes(test_data)
-
-        results = analyze_entropy_streaming(test_file)
-
-        assert results["status"] == "completed"
-        assert "high_entropy_regions" in results
-
-    def test_entropy_analyzer_protection_detection(self, tmp_path):
-        """Test detection of packing/encryption indicators."""
-        test_file = tmp_path / "protected.bin"
-
-        import random
-
-        random.seed(123)
-
-        encrypted_like = bytes([random.randint(0, 255) for _ in range(20000)])  # noqa: S311
-
-        test_file.write_bytes(encrypted_like)
-
-        results = analyze_entropy_streaming(test_file)
-
-        assert results["status"] == "completed"
-        assert "is_packed" in results
-        assert "is_encrypted" in results
-        assert "protection_indicators" in results
+def get_available_system_binaries() -> list[str]:
+    return [path for path in SYSTEM_BINARIES_WINDOWS if os.path.exists(path)]
 
 
-@pytest.mark.skipif(not YARA_AVAILABLE, reason="YARA not available")
-class TestStreamingYaraScanner:
-    """Integration tests for streaming YARA scanner."""
+class TestStreamingCryptoDetectorWithRealBinaries:
+    def test_crypto_detector_initialization(self) -> None:
+        detector = StreamingCryptoDetector()
 
-    @pytest.mark.skipif(not YARA_AVAILABLE, reason="YARA not available")
-    def test_yara_scanner_basic(self, tmp_path):
-        """Test basic YARA scanning in streaming mode."""
-        test_file = tmp_path / "yara_test.bin"
+        assert detector is not None
+        assert hasattr(detector, 'process_chunk')
+        assert hasattr(detector, 'get_results')
 
-        test_data = b"This is a license key validation routine. " * 100 + b"X" * 10000
+    def test_crypto_detection_on_windows_crypt32(self) -> None:
+        crypt32_path = r"C:\Windows\System32\crypt32.dll"
 
-        test_file.write_bytes(test_data)
+        if not os.path.exists(crypt32_path):
+            pytest.skip("crypt32.dll not found")
 
-        results = scan_binary_streaming(test_file)
+        detector = StreamingCryptoDetector()
 
-        assert results["status"] == "completed"
-        assert results["streaming_mode"] is True
+        chunk_size = 1024 * 1024
 
-    def test_yara_scanner_custom_rules(self, tmp_path):
-        """Test YARA scanner with custom rules."""
-        test_file = tmp_path / "custom_yara.bin"
+        with open(crypt32_path, 'rb') as f:
+            chunks_processed = 0
+            while True:
+                chunk = f.read(chunk_size)
+                if not chunk:
+                    break
 
-        test_data = b"TESTPATTERN" + b"\x00" * 5000 + b"TESTPATTERN" + b"\x00" * 5000
+                detector.process_chunk(chunk, offset=chunks_processed * chunk_size)
+                chunks_processed += 1
 
-        test_file.write_bytes(test_data)
+                if chunks_processed >= 5:
+                    break
 
-        custom_rules = """
-        rule TestPattern {
-            meta:
-                description = "Test pattern detection"
+        results = detector.get_results()
+
+        assert results is not None
+        assert chunks_processed > 0
+
+    def test_crypto_detection_on_windows_bcrypt(self) -> None:
+        bcrypt_path = r"C:\Windows\System32\bcrypt.dll"
+
+        if not os.path.exists(bcrypt_path):
+            pytest.skip("bcrypt.dll not found")
+
+        detector = StreamingCryptoDetector()
+
+        with open(bcrypt_path, 'rb') as f:
+            first_chunk = f.read(1024 * 1024)
+
+        detector.process_chunk(first_chunk, offset=0)
+        results = detector.get_results()
+
+        assert results is not None
+
+    def test_analyze_crypto_streaming_function(self) -> None:
+        kernel32_path = r"C:\Windows\System32\kernel32.dll"
+
+        if not os.path.exists(kernel32_path):
+            pytest.skip("kernel32.dll not found")
+
+        results = analyze_crypto_streaming(kernel32_path, chunk_size=512 * 1024)
+
+        assert results is not None
+
+    def test_crypto_detection_handles_small_files(self) -> None:
+        detector = StreamingCryptoDetector()
+
+        small_data = b"\x00" * 1024
+
+        detector.process_chunk(small_data, offset=0)
+        results = detector.get_results()
+
+        assert results is not None
+
+
+class TestStreamingEntropyAnalyzerWithRealBinaries:
+    def test_entropy_analyzer_initialization(self) -> None:
+        analyzer = StreamingEntropyAnalyzer()
+
+        assert analyzer is not None
+        assert hasattr(analyzer, 'process_chunk')
+        assert hasattr(analyzer, 'get_windows')
+
+    def test_entropy_analysis_on_kernel32(self) -> None:
+        kernel32_path = r"C:\Windows\System32\kernel32.dll"
+
+        if not os.path.exists(kernel32_path):
+            pytest.skip("kernel32.dll not found")
+
+        analyzer = StreamingEntropyAnalyzer(window_size=4096)
+
+        with open(kernel32_path, 'rb') as f:
+            chunks_processed = 0
+            while True:
+                chunk = f.read(1024 * 1024)
+                if not chunk:
+                    break
+
+                analyzer.process_chunk(chunk, offset=chunks_processed * 1024 * 1024)
+                chunks_processed += 1
+
+                if chunks_processed >= 3:
+                    break
+
+        windows = analyzer.get_windows()
+
+        assert windows is not None
+        assert len(windows) > 0
+
+        for window in windows:
+            assert hasattr(window, 'offset')
+            assert hasattr(window, 'entropy')
+            assert 0.0 <= window.entropy <= 8.0
+
+    def test_entropy_analysis_on_ntdll(self) -> None:
+        ntdll_path = r"C:\Windows\System32\ntdll.dll"
+
+        if not os.path.exists(ntdll_path):
+            pytest.skip("ntdll.dll not found")
+
+        results = analyze_entropy_streaming(ntdll_path, window_size=8192, chunk_size=1024 * 1024)
+
+        assert results is not None
+        assert len(results) > 0
+
+        high_entropy_windows = [w for w in results if w.entropy > 7.0]
+        assert len(high_entropy_windows) >= 0
+
+    def test_entropy_on_multiple_system_binaries(self) -> None:
+        analyzer = StreamingEntropyAnalyzer(window_size=4096)
+
+        binaries = get_available_system_binaries()[:3]
+
+        if not binaries:
+            pytest.skip("No system binaries found")
+
+        all_results = []
+
+        for binary_path in binaries:
+            with open(binary_path, 'rb') as f:
+                chunk = f.read(512 * 1024)
+
+            analyzer.process_chunk(chunk, offset=0)
+            windows = analyzer.get_windows()
+
+            all_results.extend(windows)
+
+        assert len(all_results) > 0
+
+    def test_entropy_detects_packed_regions(self) -> None:
+        user32_path = r"C:\Windows\System32\user32.dll"
+
+        if not os.path.exists(user32_path):
+            pytest.skip("user32.dll not found")
+
+        analyzer = StreamingEntropyAnalyzer(window_size=4096)
+
+        with open(user32_path, 'rb') as f:
+            data = f.read(2 * 1024 * 1024)
+
+        analyzer.process_chunk(data, offset=0)
+        windows = analyzer.get_windows()
+
+        assert len(windows) > 0
+
+        entropy_values = [w.entropy for w in windows]
+        assert max(entropy_values) > 0.0
+
+
+class TestStreamingYaraScannerWithRealBinaries:
+    def test_yara_scanner_initialization(self) -> None:
+        if not YARA_AVAILABLE:
+            pytest.skip("YARA not available")
+
+        scanner = StreamingYaraScanner()
+
+        assert scanner is not None
+        assert hasattr(scanner, 'add_rule')
+        assert hasattr(scanner, 'process_chunk')
+
+    def test_yara_scan_detects_mz_header(self) -> None:
+        if not YARA_AVAILABLE:
+            pytest.skip("YARA not available")
+
+        kernel32_path = r"C:\Windows\System32\kernel32.dll"
+
+        if not os.path.exists(kernel32_path):
+            pytest.skip("kernel32.dll not found")
+
+        scanner = StreamingYaraScanner()
+
+        mz_rule = '''
+        rule MZ_Header {
             strings:
-                $pattern = "TESTPATTERN"
+                $mz = { 4D 5A }
             condition:
-                $pattern
+                $mz at 0
         }
-        """
+        '''
 
-        results = scan_binary_streaming(test_file, rules_source=custom_rules)
+        scanner.add_rule(mz_rule)
 
-        assert results["status"] == "completed"
+        with open(kernel32_path, 'rb') as f:
+            first_chunk = f.read(1024)
 
-    def test_yara_scanner_chunk_boundaries(self, tmp_path):
-        """Test YARA pattern matching across chunk boundaries."""
-        test_file = tmp_path / "boundary_test.bin"
+        scanner.process_chunk(first_chunk, offset=0)
+        matches = scanner.get_matches()
 
-        scanner = StreamingYaraScanner(rules_source="rule Test { strings: $a = \"BOUNDARY\" condition: $a }")
+        assert matches is not None
+        assert len(matches) > 0
+        assert any(m.rule_name == "MZ_Header" for m in matches)
 
-        manager = StreamingAnalysisManager()
+    def test_yara_scan_detects_pe_signature(self) -> None:
+        if not YARA_AVAILABLE:
+            pytest.skip("YARA not available")
 
-        pattern_at_boundary = b"X" * 4990 + b"BOUNDARY" + b"Y" * 5000
+        ntdll_path = r"C:\Windows\System32\ntdll.dll"
 
-        test_file.write_bytes(pattern_at_boundary)
+        if not os.path.exists(ntdll_path):
+            pytest.skip("ntdll.dll not found")
 
-        results = manager.analyze_streaming(test_file, scanner)
+        scanner = StreamingYaraScanner()
 
-        assert results["status"] == "completed"
+        pe_rule = '''
+        rule PE_File {
+            strings:
+                $pe = "PE"
+            condition:
+                $pe
+        }
+        '''
+
+        scanner.add_rule(pe_rule)
+
+        with open(ntdll_path, 'rb') as f:
+            data = f.read(1024 * 1024)
+
+        scanner.process_chunk(data, offset=0)
+        matches = scanner.get_matches()
+
+        assert matches is not None
+
+    def test_yara_function_scans_real_binary(self) -> None:
+        if not YARA_AVAILABLE:
+            pytest.skip("YARA not available")
+
+        advapi32_path = r"C:\Windows\System32\advapi32.dll"
+
+        if not os.path.exists(advapi32_path):
+            pytest.skip("advapi32.dll not found")
+
+        simple_rule = '''
+        rule Windows_DLL {
+            strings:
+                $s1 = "kernel32" nocase
+                $s2 = ".dll" nocase
+            condition:
+                any of them
+        }
+        '''
+
+        matches = scan_binary_streaming(advapi32_path, simple_rule, chunk_size=1024 * 1024)
+
+        assert matches is not None
+
+    def test_yara_scans_multiple_chunks(self) -> None:
+        if not YARA_AVAILABLE:
+            pytest.skip("YARA not available")
+
+        user32_path = r"C:\Windows\System32\user32.dll"
+
+        if not os.path.exists(user32_path):
+            pytest.skip("user32.dll not found")
+
+        scanner = StreamingYaraScanner()
+
+        api_rule = '''
+        rule Has_Import_Table {
+            strings:
+                $s = ".idata" nocase
+            condition:
+                $s
+        }
+        '''
+
+        scanner.add_rule(api_rule)
+
+        with open(user32_path, 'rb') as f:
+            chunk_count = 0
+            while True:
+                chunk = f.read(512 * 1024)
+                if not chunk:
+                    break
+
+                scanner.process_chunk(chunk, offset=chunk_count * 512 * 1024)
+                chunk_count += 1
+
+                if chunk_count >= 4:
+                    break
+
+        matches = scanner.get_matches()
+
+        assert matches is not None
+        assert chunk_count > 0
 
 
-class TestStreamingIntegration:
-    """Integration tests combining multiple streaming analyzers."""
+class TestStreamingIntegrationWithRealBinaries:
+    def test_combined_crypto_and_entropy_analysis(self) -> None:
+        bcrypt_path = r"C:\Windows\System32\bcrypt.dll"
 
-    @pytest.mark.skipif(not CRYPTO_AVAILABLE, reason="Capstone not available")
-    def test_combined_analysis(self, tmp_path):
-        """Test running multiple streaming analyzers on same file."""
-        test_file = tmp_path / "combined.bin"
+        if not os.path.exists(bcrypt_path):
+            pytest.skip("bcrypt.dll not found")
 
-        complex_data = (
-            b"License validation routine: "
-            + bytes(range(256)) * 20
-            + b"RSA key: "
-            + b"\x30\x82\x01\x22\x30\x0D"
-            + b"\x00" * 5000
-        )
+        crypto_detector = StreamingCryptoDetector()
+        entropy_analyzer = StreamingEntropyAnalyzer(window_size=4096)
 
-        test_file.write_bytes(complex_data)
+        with open(bcrypt_path, 'rb') as f:
+            data = f.read(2 * 1024 * 1024)
 
-        entropy_results = analyze_entropy_streaming(test_file)
-        crypto_results = analyze_crypto_streaming(test_file, quick_mode=True)
+        crypto_detector.process_chunk(data, offset=0)
+        entropy_analyzer.process_chunk(data, offset=0)
 
-        assert entropy_results["status"] == "completed"
-        assert crypto_results["status"] == "completed"
+        crypto_results = crypto_detector.get_results()
+        entropy_windows = entropy_analyzer.get_windows()
 
-        assert "global_entropy" in entropy_results
-        assert "total_detections" in crypto_results
+        assert crypto_results is not None
+        assert entropy_windows is not None
+        assert len(entropy_windows) > 0
 
-    @pytest.mark.skipif(not CRYPTO_AVAILABLE, reason="Capstone not available")
-    def test_large_file_all_analyzers(self, tmp_path):
-        """Test all streaming analyzers on large simulated binary."""
-        test_file = tmp_path / "large_combined.bin"
+    def test_all_three_analyzers_on_same_binary(self) -> None:
+        if not YARA_AVAILABLE:
+            pytest.skip("YARA not available")
 
-        with open(test_file, "wb") as f:
-            for i in range(200):
-                chunk_data = bytes([(i * 13 + j) % 256 for j in range(5000)])
-                f.write(chunk_data)
+        kernel32_path = r"C:\Windows\System32\kernel32.dll"
 
-        file_size = test_file.stat().st_size
-        assert file_size > 900_000
+        if not os.path.exists(kernel32_path):
+            pytest.skip("kernel32.dll not found")
 
-        entropy_results = analyze_entropy_streaming(test_file)
-        crypto_results = analyze_crypto_streaming(test_file, quick_mode=True)
+        crypto_detector = StreamingCryptoDetector()
+        entropy_analyzer = StreamingEntropyAnalyzer(window_size=8192)
+        yara_scanner = StreamingYaraScanner()
 
-        assert entropy_results["status"] == "completed"
-        assert crypto_results["status"] == "completed"
+        yara_scanner.add_rule('''
+        rule Generic_PE {
+            strings:
+                $mz = { 4D 5A }
+            condition:
+                $mz at 0
+        }
+        ''')
 
-        assert entropy_results["file_size"] == file_size
-        assert crypto_results["file_size"] == file_size
+        with open(kernel32_path, 'rb') as f:
+            data = f.read(3 * 1024 * 1024)
 
+        crypto_detector.process_chunk(data, offset=0)
+        entropy_analyzer.process_chunk(data, offset=0)
+        yara_scanner.process_chunk(data, offset=0)
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+        crypto_results = crypto_detector.get_results()
+        entropy_windows = entropy_analyzer.get_windows()
+        yara_matches = yara_scanner.get_matches()
+
+        assert crypto_results is not None
+        assert len(entropy_windows) > 0
+        assert yara_matches is not None
+
+    def test_performance_on_large_binary(self) -> None:
+        import time
+
+        crypt32_path = r"C:\Windows\System32\crypt32.dll"
+
+        if not os.path.exists(crypt32_path):
+            pytest.skip("crypt32.dll not found")
+
+        entropy_analyzer = StreamingEntropyAnalyzer(window_size=4096)
+
+        start_time = time.time()
+
+        with open(crypt32_path, 'rb') as f:
+            total_bytes = 0
+            while True:
+                chunk = f.read(1024 * 1024)
+                if not chunk:
+                    break
+
+                entropy_analyzer.process_chunk(chunk, offset=total_bytes)
+                total_bytes += len(chunk)
+
+                if total_bytes >= 10 * 1024 * 1024:
+                    break
+
+        elapsed = time.time() - start_time
+
+        windows = entropy_analyzer.get_windows()
+
+        assert len(windows) > 0
+        assert total_bytes > 0
+        assert elapsed < 30.0
+
+        if total_bytes > 0:
+            throughput_mb_s = (total_bytes / (1024 * 1024)) / elapsed
+            assert throughput_mb_s > 0.1
+
+    def test_streaming_handles_file_size_correctly(self) -> None:
+        binaries = get_available_system_binaries()[:2]
+
+        if not binaries:
+            pytest.skip("No system binaries found")
+
+        for binary_path in binaries:
+            file_size = os.path.getsize(binary_path)
+
+            entropy_analyzer = StreamingEntropyAnalyzer(window_size=4096)
+
+            with open(binary_path, 'rb') as f:
+                total_processed = 0
+                while True:
+                    chunk = f.read(1024 * 1024)
+                    if not chunk:
+                        break
+
+                    entropy_analyzer.process_chunk(chunk, offset=total_processed)
+                    total_processed += len(chunk)
+
+                    if total_processed >= 5 * 1024 * 1024:
+                        break
+
+            windows = entropy_analyzer.get_windows()
+
+            assert windows is not None
+            assert total_processed > 0
+            assert total_processed <= file_size

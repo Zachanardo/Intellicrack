@@ -23,6 +23,7 @@ import os
 import sys
 from pathlib import Path
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -40,7 +41,7 @@ def mitigate_future_vulnerability() -> None:
 
         def secure_import(name: str, *args: object, **kwargs: object) -> object:
             """Prevent automatic import of test.py by future package."""
-            if name == "test" and len(args) > 0 and args[0] is not None:
+            if name == "test" and args and args[0] is not None:
                 args[2] if len(args) > 2 else kwargs.get("fromlist", ())
                 args[3] if len(args) > 3 else kwargs.get("level", 0)
 
@@ -99,8 +100,10 @@ def scan_for_malicious_test_files() -> list[Path]:
 
                     if any(pattern in content for pattern in suspicious_patterns):
                         suspicious_files.append(test_file)
-                        logger.warning(f"Found suspicious test.py at {test_file} - potential future package vulnerability exploit")
-        except (OSError, PermissionError) as e:
+                        logger.warning(
+                            f"Found suspicious test.py at {test_file} - potential future package vulnerability exploit"
+                        )
+        except OSError as e:
             logger.debug(f"Could not scan {base_path}: {e}")
 
     return suspicious_files
@@ -127,7 +130,7 @@ def remove_malicious_test_files(files: list[Path], force: bool = False) -> int:
                 removed += 1
             else:
                 logger.warning(f"Skipped removal of {file_path} - may be legitimate")
-        except (OSError, PermissionError) as e:
+        except OSError as e:
             logger.error(f"Failed to remove {file_path}: {e}")
 
     return removed
@@ -149,7 +152,16 @@ def _is_safe_to_remove(file_path: Path) -> bool:
 
         parent = file_path.parent.name
 
-        legitimate_test_dirs = ["tests", "test", "testing", "unittest", "pytest", "specs", "spec", "__pycache__"]
+        legitimate_test_dirs = [
+            "tests",
+            "test",
+            "testing",
+            "unittest",
+            "pytest",
+            "specs",
+            "spec",
+            "__pycache__",
+        ]
 
         if any(test_dir in parent.lower() for test_dir in legitimate_test_dirs):
             return False
@@ -178,13 +190,9 @@ def apply_all_mitigations() -> dict[str, bool]:
         Dictionary mapping mitigation names to success status
 
     """
-    results = {}
-
     mitigate_future_vulnerability()
-    results["future_vulnerability_mitigation"] = True
-
-    suspicious_files = scan_for_malicious_test_files()
-    if suspicious_files:
+    results = {"future_vulnerability_mitigation": True}
+    if suspicious_files := scan_for_malicious_test_files():
         removed = remove_malicious_test_files(suspicious_files)
         results["malicious_test_files_removed"] = removed
         logger.warning(f"Found and removed {removed} suspicious test.py files")

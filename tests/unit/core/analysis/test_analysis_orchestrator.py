@@ -17,12 +17,13 @@ try:
 except ImportError:
     # Implement a real signal/slot system compatible with Qt's QObject
     import weakref
-    from typing import Any, Callable, Dict, List, Optional
+    from typing import Any, Dict, List, Optional
+    from collections.abc import Callable
 
     class Signal:
         """Production-ready signal implementation for Qt compatibility"""
         def __init__(self):
-            self._connections: List[weakref.ref] = []
+            self._connections: list[weakref.ref] = []
 
         def connect(self, slot: Callable) -> None:
             """Connect a slot to this signal"""
@@ -51,9 +52,9 @@ except ImportError:
 
         def __init__(self, parent: Optional["QObject"] = None):
             self._parent = None
-            self._children: List[weakref.ref] = []
-            self._properties: Dict[str, Any] = {}
-            self._signals: Dict[str, Signal] = {}
+            self._children: list[weakref.ref] = []
+            self._properties: dict[str, Any] = {}
+            self._signals: dict[str, Signal] = {}
             self._destroyed = False
 
             # Register instance
@@ -83,7 +84,7 @@ except ImportError:
             """Remove a child object"""
             self._children = [ref for ref in self._children if ref() != child]
 
-        def children(self) -> List["QObject"]:
+        def children(self) -> list["QObject"]:
             """Get all child objects"""
             alive_children = []
             dead_refs = []

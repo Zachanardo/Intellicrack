@@ -7,7 +7,7 @@ import pytest
 def setup_test_environment():
     # Read the original content of intellicrack/main.py
     main_py_path = os.path.join(os.path.dirname(__file__), '..', 'intellicrack', 'main.py')
-    with open(main_py_path, 'r') as f:
+    with open(main_py_path) as f:
         original_main_py_content = f.read()
 
     # Overwrite intellicrack/main.py with the test script
@@ -110,7 +110,7 @@ def test_full_rust_launch(setup_test_environment):
 
     # 5. Read the output file and assert its contents
     assert os.path.exists("rust_launch_test_output.txt"), "Output file was not created."
-    with open("rust_launch_test_output.txt", 'r') as f:
+    with open("rust_launch_test_output.txt") as f:
         output_content = f.read()
     
     print(f"Test output file content:\n{output_content}")

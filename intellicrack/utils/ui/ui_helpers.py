@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from intellicrack.utils.logger import logger
 
+
 if TYPE_CHECKING:
     from intellicrack.handlers.pyqt6_handler import QWidget
 
@@ -60,19 +61,22 @@ def emit_log_message(app_instance: object, message: str) -> None:
         message: Message to log
 
     """
-    if hasattr(app_instance, "update_output") and hasattr(app_instance.update_output, "emit"):
-        try:
-            from ..core.misc_utils import log_message
+    if hasattr(app_instance, "update_output"):
+        if hasattr(app_instance.update_output, "emit"):
+            try:
+                from ..core.misc_utils import log_message
 
-            app_instance.update_output.emit(log_message(message))
-        except ImportError as e:
-            logger.error("Import error in ui_helpers: %s", e)
+                app_instance.update_output.emit(log_message(message))
+            except ImportError as e:
+                logger.error("Import error in ui_helpers: %s", e)
+                app_instance.update_output.emit(message)
+        else:
             app_instance.update_output.emit(message)
-    elif hasattr(app_instance, "update_output"):
-        app_instance.update_output.emit(message)
 
 
-def show_file_dialog(parent: object, title: str, file_filter: str = "HTML Files (*.html);;All Files (*)") -> str:
+def show_file_dialog(
+    parent: object, title: str, file_filter: str = "HTML Files (*.html);;All Files (*)"
+) -> str:
     """Show file save dialog and return filename.
 
     Args:
@@ -88,7 +92,7 @@ def show_file_dialog(parent: object, title: str, file_filter: str = "HTML Files 
         from intellicrack.handlers.pyqt6_handler import QFileDialog
 
         filename, _ = QFileDialog.getSaveFileName(parent, title, "", file_filter)
-        return filename if filename else ""
+        return filename or ""
     except ImportError as e:
         logger.error("Import error in ui_helpers: %s", e)
         return ""
@@ -123,7 +127,9 @@ def ask_yes_no_question(parent: object, title: str, question: str) -> bool:
         return False
 
 
-def generate_exploit_payload_common(payload_type: str, target_path: str = "target_software") -> dict[str, str | bool | list[str]]:
+def generate_exploit_payload_common(
+    payload_type: str, target_path: str = "target_software"
+) -> dict[str, str | bool | list[str]]:
     """Generate exploit payload of specified type.
 
     This is the common implementation extracted from duplicate code
@@ -202,7 +208,9 @@ def generate_exploit_payload_common(payload_type: str, target_path: str = "targe
         return {"error": str(e)}
 
 
-def generate_exploit_strategy_common(binary_path: str, vulnerability_type: str = "buffer_overflow") -> dict[str, str | object]:
+def generate_exploit_strategy_common(
+    binary_path: str, vulnerability_type: str = "buffer_overflow"
+) -> dict[str, str | object]:
     """Generate exploit strategy for given binary and vulnerability type.
 
     This is the common implementation extracted from duplicate code.
@@ -218,9 +226,7 @@ def generate_exploit_strategy_common(binary_path: str, vulnerability_type: str =
     try:
         from ..exploitation.exploitation import generate_exploit_strategy
 
-        strategy = generate_exploit_strategy(binary_path, vulnerability_type)
-        return strategy
-
+        return generate_exploit_strategy(binary_path, vulnerability_type)
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in ui_helpers: %s", e)
         return {"error": str(e)}

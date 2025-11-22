@@ -40,6 +40,7 @@ from rich.table import Table
 from intellicrack.core.config_manager import IntellicrackConfig
 from intellicrack.utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 """
@@ -121,42 +122,45 @@ class ProfileManager:
     def _migrate_if_needed(self) -> None:
         """One-time migration from old profile files to central config."""
         # Check if migration is needed
-        if self.profile_dir.exists() and not self.central_config.get("cli_configuration.profiles_migrated", False):
-            try:
-                logger.info(f"Migrating CLI profiles from {self.profile_dir} to central config")
+        if not self.profile_dir.exists() or self.central_config.get(
+            "cli_configuration.profiles_migrated", False
+        ):
+            return
+        try:
+            logger.info(f"Migrating CLI profiles from {self.profile_dir} to central config")
 
-                # Get current profiles from central config
-                cli_config = self.central_config.get("cli_configuration", {})
-                current_profiles = cli_config.get("profiles", {})
+            # Get current profiles from central config
+            cli_config = self.central_config.get("cli_configuration", {})
+            current_profiles = cli_config.get("profiles", {})
 
-                # Load and migrate each profile file
-                for profile_file in self.profile_dir.glob("*.json"):
-                    try:
-                        with open(profile_file) as f:
-                            data = json.load(f)
-                            profile_name = data.get("name", profile_file.stem)
-                            # Store profile data in central config
-                            current_profiles[profile_name] = data
-                            logger.info(f"Migrated profile: {profile_name}")
-                    except Exception as e:
-                        logger.error(f"Failed to migrate profile {profile_file}: {e}")
+            # Load and migrate each profile file
+            for profile_file in self.profile_dir.glob("*.json"):
+                try:
+                    with open(profile_file) as f:
+                        data = json.load(f)
+                        profile_name = data.get("name", profile_file.stem)
+                        # Store profile data in central config
+                        current_profiles[profile_name] = data
+                        logger.info(f"Migrated profile: {profile_name}")
+                except Exception as e:
+                    logger.error(f"Failed to migrate profile {profile_file}: {e}")
 
-                # Update central config with all profiles
-                cli_config["profiles"] = current_profiles
-                cli_config["profiles_migrated"] = True
-                self.central_config.set("cli_configuration", cli_config)
-                self.central_config.save()
+            # Update central config with all profiles
+            cli_config["profiles"] = current_profiles
+            cli_config["profiles_migrated"] = True
+            self.central_config.set("cli_configuration", cli_config)
+            self.central_config.save()
 
-                logger.info("Successfully migrated all CLI profiles to central config")
+            logger.info("Successfully migrated all CLI profiles to central config")
 
-                # Rename old profile directory to .backup
-                backup_dir = self.profile_dir.with_suffix(".backup")
-                if not backup_dir.exists():
-                    self.profile_dir.rename(backup_dir)
-                    logger.info(f"Renamed old profile directory to {backup_dir}")
+            # Rename old profile directory to .backup
+            backup_dir = self.profile_dir.with_suffix(".backup")
+            if not backup_dir.exists():
+                self.profile_dir.rename(backup_dir)
+                logger.info(f"Renamed old profile directory to {backup_dir}")
 
-            except Exception as e:
-                logger.error(f"Failed to migrate CLI profiles: {e}")
+        except Exception as e:
+            logger.error(f"Failed to migrate CLI profiles: {e}")
 
     def _load_profiles(self) -> dict[str, ConfigProfile]:
         """Load all profiles from central config."""
@@ -169,7 +173,11 @@ class ProfileManager:
         for profile_name, profile_data in profiles_data.items():
             try:
                 # Skip migration marker
-                if profile_name == "default" and isinstance(profile_data, dict) and "output_format" in profile_data:
+                if (
+                    profile_name == "default"
+                    and isinstance(profile_data, dict)
+                    and "output_format" in profile_data
+                ):
                     # This is the default profile structure, not a user profile
                     continue
 
@@ -241,9 +249,17 @@ class ProfileManager:
         for profile in self.profiles.values():
             table.add_row(
                 profile.name,
-                profile.description[:30] + "..." if len(profile.description) > 30 else profile.description,
+                (
+                    f"{profile.description[:30]}..."
+                    if len(profile.description) > 30
+                    else profile.description
+                ),
                 profile.created_at.strftime("%Y-%m-%d"),
-                profile.last_used.strftime("%Y-%m-%d") if profile.last_used else "Never",
+                (
+                    profile.last_used.strftime("%Y-%m-%d")
+                    if profile.last_used
+                    else "Never"
+                ),
                 f"{len(profile.analysis_options)} options",
             )
 
@@ -294,7 +310,9 @@ class ProfileManager:
 
         # Advanced settings
         if Confirm.ask("\nConfigure advanced settings?", default=False):
-            profile.settings["timeout"] = int(Prompt.ask("Analysis timeout (seconds)", default="300"))
+            profile.settings["timeout"] = int(
+                Prompt.ask("Analysis timeout (seconds)", default="300")
+            )
             profile.settings["max_memory"] = int(Prompt.ask("Max memory (MB)", default="2048"))
             profile.settings["threads"] = int(Prompt.ask("Number of threads", default="4"))
 
@@ -449,9 +467,7 @@ def main() -> None:
                 continue
 
             profile_name = Prompt.ask("Profile name", choices=list(manager.profiles.keys()))
-            profile = manager.get_profile(profile_name)
-
-            if profile:
+            if profile := manager.get_profile(profile_name):
                 # Display profile details
                 details = Panel(
                     f"[bold]Name:[/bold] {profile.name}\n"
@@ -471,7 +487,9 @@ def main() -> None:
                 console.print("[yellow]No profiles available.[/yellow]")
                 continue
 
-            profile_name = Prompt.ask("Profile name to delete", choices=list(manager.profiles.keys()))
+            profile_name = Prompt.ask(
+                "Profile name to delete", choices=list(manager.profiles.keys())
+            )
             if Confirm.ask(f"Delete profile '{profile_name}'?", default=False):
                 if manager.delete_profile(profile_name):
                     console.print(f"[green]Profile '{profile_name}' deleted.[/green]")

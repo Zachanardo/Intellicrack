@@ -30,6 +30,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -48,10 +49,8 @@ class MigrationError(Exception):
     """Base exception for migration errors."""
 
 
-
 class MigrationRollbackError(MigrationError):
     """Exception raised when rollback fails."""
-
 
 
 class MigrationValidator:
@@ -68,7 +67,6 @@ class MigrationValidator:
             Tuple of (is_valid, list_of_errors)
 
         """
-        errors = []
         required_sections = [
             "version",
             "application",
@@ -77,10 +75,11 @@ class MigrationValidator:
             "analysis_settings",
         ]
 
-        for section in required_sections:
-            if section not in config:
-                errors.append(f"Missing required section: {section}")
-
+        errors = [
+            f"Missing required section: {section}"
+            for section in required_sections
+            if section not in config
+        ]
         # Validate version format
         if "version" in config:
             version = config["version"]
@@ -95,7 +94,7 @@ class MigrationValidator:
             elif "name" not in app:
                 errors.append("Application section missing 'name' field")
 
-        return len(errors) == 0, errors
+        return not errors, errors
 
     @staticmethod
     def validate_data_types(config: dict[str, Any]) -> tuple[bool, list[str]]:
@@ -133,7 +132,7 @@ class MigrationValidator:
             if "theme" in ui and not isinstance(ui["theme"], str):
                 errors.append(f"Invalid theme type: {type(ui['theme']).__name__}")
 
-        return len(errors) == 0, errors
+        return not errors, errors
 
 
 class MigrationBackup:
@@ -202,8 +201,7 @@ class MigrationBackup:
             Path to the latest backup or None
 
         """
-        backups = list(self.backup_dir.glob("config_backup_*.json"))
-        if backups:
+        if backups := list(self.backup_dir.glob("config_backup_*.json")):
             return max(backups, key=lambda p: p.stat().st_mtime)
         return None
 
@@ -225,7 +223,10 @@ class ConfigMigrationHandler:
         self.migration_status = MigrationStatus.NOT_STARTED
 
     def migrate_with_recovery(
-        self, config_data: dict[str, Any], migration_func: Callable, migration_name: str,
+        self,
+        config_data: dict[str, Any],
+        migration_func: Callable,
+        migration_name: str,
     ) -> tuple[bool, dict[str, Any]]:
         """Execute migration with error handling and recovery.
 
@@ -286,7 +287,9 @@ class ConfigMigrationHandler:
                 # Return original data as last resort
                 return False, config_data
 
-    def handle_partial_migration(self, config_data: dict[str, Any], migrations: dict[str, Callable]) -> dict[str, Any]:
+    def handle_partial_migration(
+        self, config_data: dict[str, Any], migrations: dict[str, Callable]
+    ) -> dict[str, Any]:
         """Handle multiple migrations with partial success support.
 
         Args:
@@ -309,7 +312,9 @@ class ConfigMigrationHandler:
                 current_data = migrated_data
             else:
                 failed_migrations.append(name)
-                self.log_migration(f"Continuing with partial migration after {name} failed", level="warning")
+                self.log_migration(
+                    f"Continuing with partial migration after {name} failed", level="warning"
+                )
 
         if failed_migrations:
             self.migration_status = MigrationStatus.PARTIAL
@@ -376,7 +381,9 @@ class SafeMigrationWrapper:
     """Wrap to safely execute migration functions with timeout and resource limits."""
 
     @staticmethod
-    def migrate_with_timeout(migration_func: Callable, config_data: dict[str, Any], timeout: int = 30) -> dict[str, Any]:
+    def migrate_with_timeout(
+        migration_func: Callable, config_data: dict[str, Any], timeout: int = 30
+    ) -> dict[str, Any]:
         """Execute migration with timeout protection.
 
         Args:
@@ -438,6 +445,8 @@ class SafeMigrationWrapper:
         migrated_size = len(json.dumps(migrated))
 
         if migrated_size < original_size * 0.5:
-            logger.warning(f"Configuration size reduced by more than 50% ({original_size} -> {migrated_size} bytes)")
+            logger.warning(
+                f"Configuration size reduced by more than 50% ({original_size} -> {migrated_size} bytes)"
+            )
 
         return True

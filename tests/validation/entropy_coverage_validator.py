@@ -171,7 +171,7 @@ def measure_coverage():
 
     try:
         # Read the entropy analyzer source code
-        with open("intellicrack/core/analysis/entropy_analyzer.py", "r") as f:
+        with open("intellicrack/core/analysis/entropy_analyzer.py") as f:
             source_lines = f.readlines()
 
         # Count executable lines (exclude comments, docstrings, empty lines)

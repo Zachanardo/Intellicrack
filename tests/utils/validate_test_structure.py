@@ -27,7 +27,7 @@ def validate_test_file():
 
     # Check syntax
     try:
-        with open(test_file, 'r', encoding='utf-8') as f:
+        with open(test_file, encoding='utf-8') as f:
             content = f.read()
 
         # Parse as AST to check syntax
@@ -123,7 +123,7 @@ def estimate_coverage():
     init_file = PROJECT_ROOT / "intellicrack" / "utils" / "exploitation" / "__init__.py"
 
     try:
-        with open(init_file, 'r') as f:
+        with open(init_file) as f:
             lines = f.readlines()
 
         # Count non-empty, non-comment lines

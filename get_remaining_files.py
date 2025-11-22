@@ -2,8 +2,9 @@
 """Calculate remaining files for final batch."""
 import json
 
+
 # Read violations
-with open('ruff_ann_d_violations.json', 'r', encoding='utf-8') as f:
+with open('ruff_ann_d_violations.json', encoding='utf-8') as f:
     content = f.read()
     start_idx = content.find('[')
     violations = json.loads(content[start_idx:])

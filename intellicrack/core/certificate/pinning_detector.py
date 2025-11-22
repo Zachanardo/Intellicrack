@@ -103,6 +103,7 @@ import lief
 
 from .apk_analyzer import APKAnalyzer, PinningInfo
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -172,12 +173,9 @@ class PinningDetector:
             logger.error(f"Failed to read binary: {e}")
             return []
 
-        hashes = []
-
         sha256_pattern = re.compile(r"\b([a-fA-F0-9]{64})\b")
         sha256_matches = sha256_pattern.findall(text_content)
-        hashes.extend([f"SHA-256:{h}" for h in set(sha256_matches)])
-
+        hashes = [f"SHA-256:{h}" for h in set(sha256_matches)]
         sha1_pattern = re.compile(r"\b([a-fA-F0-9]{40})\b")
         sha1_matches = sha1_pattern.findall(text_content)
         hashes.extend([f"SHA-1:{h}" for h in set(sha1_matches)])
@@ -233,10 +231,7 @@ class PinningDetector:
             self.platform = "windows"
         elif isinstance(self.binary, lief.ELF.Binary):
             machine = getattr(self.binary.header, "machine_type", None)
-            if machine and "ARM" in str(machine):
-                self.platform = "android"
-            else:
-                self.platform = "linux"
+            self.platform = "android" if machine and "ARM" in str(machine) else "linux"
         elif isinstance(self.binary, lief.MachO.Binary):
             self.platform = "ios"
         else:
@@ -254,16 +249,19 @@ class PinningDetector:
                     analyzer.extract_apk(str(self.binary_path))
                     okhttp_pins = analyzer.detect_okhttp_pinning()
 
-                    for pin in okhttp_pins:
-                        locations.append(
-                            PinningLocation(
-                                address=0,
-                                function_name=pin.location,
-                                pinning_type="okhttp",
-                                confidence=pin.confidence,
-                                evidence=[f"Domains: {', '.join(pin.domains)}", f"Hashes: {', '.join(pin.hashes)}"],
-                            ),
+                    locations.extend(
+                        PinningLocation(
+                            address=0,
+                            function_name=pin.location,
+                            pinning_type="okhttp",
+                            confidence=pin.confidence,
+                            evidence=[
+                                f"Domains: {', '.join(pin.domains)}",
+                                f"Hashes: {', '.join(pin.hashes)}",
+                            ],
                         )
+                        for pin in okhttp_pins
+                    )
             except Exception as e:
                 logger.debug(f"APK analysis failed: {e}")
 
@@ -275,30 +273,50 @@ class PinningDetector:
 
         strings = self._extract_strings()
 
-        afnetworking_indicators = ["AFSecurityPolicy", "pinnedCertificates", "validatesDomainName", "SSLPinningMode"]
+        afnetworking_indicators = [
+            "AFSecurityPolicy",
+            "pinnedCertificates",
+            "validatesDomainName",
+            "SSLPinningMode",
+        ]
 
-        alamofire_indicators = ["ServerTrustPolicy", "PinnedCertificates", "PublicKeys", "performDefaultEvaluation"]
+        alamofire_indicators = [
+            "ServerTrustPolicy",
+            "PinnedCertificates",
+            "PublicKeys",
+            "performDefaultEvaluation",
+        ]
 
-        evidence = []
-        for indicator in afnetworking_indicators:
-            if indicator in strings:
-                evidence.append(f"Found: {indicator}")
-
+        evidence = [
+            f"Found: {indicator}"
+            for indicator in afnetworking_indicators
+            if indicator in strings
+        ]
         if evidence:
             locations.append(
                 PinningLocation(
-                    address=0, function_name="AFNetworking_pinning", pinning_type="afnetworking", confidence=0.85, evidence=evidence,
+                    address=0,
+                    function_name="AFNetworking_pinning",
+                    pinning_type="afnetworking",
+                    confidence=0.85,
+                    evidence=evidence,
                 ),
             )
 
-        evidence = []
-        for indicator in alamofire_indicators:
-            if indicator in strings:
-                evidence.append(f"Found: {indicator}")
-
+        evidence = [
+            f"Found: {indicator}"
+            for indicator in alamofire_indicators
+            if indicator in strings
+        ]
         if evidence:
             locations.append(
-                PinningLocation(address=0, function_name="Alamofire_pinning", pinning_type="alamofire", confidence=0.85, evidence=evidence),
+                PinningLocation(
+                    address=0,
+                    function_name="Alamofire_pinning",
+                    pinning_type="alamofire",
+                    confidence=0.85,
+                    evidence=evidence,
+                ),
             )
 
         if "SecTrustEvaluate" in strings and any(h in strings for h in ["sha256", "SHA256"]):
@@ -323,14 +341,15 @@ class PinningDetector:
 
         imports = self._get_imported_functions()
 
-        cert_apis = {"CertVerifyCertificateChainPolicy", "CertGetCertificateChain", "WinHttpSetOption", "WinHttpSendRequest"}
+        cert_apis = {
+            "CertVerifyCertificateChainPolicy",
+            "CertGetCertificateChain",
+            "WinHttpSetOption",
+            "WinHttpSendRequest",
+        }
 
-        found_apis = cert_apis.intersection(imports)
-
-        if found_apis:
-            hashes = self.scan_for_certificate_hashes(str(self.binary_path))
-
-            if hashes:
+        if found_apis := cert_apis.intersection(imports):
+            if hashes := self.scan_for_certificate_hashes(str(self.binary_path)):
                 locations.append(
                     PinningLocation(
                         address=0,
@@ -352,14 +371,15 @@ class PinningDetector:
 
         imports = self._get_imported_functions()
 
-        openssl_verify = {"SSL_CTX_set_verify", "SSL_get_verify_result", "X509_verify_cert", "SSL_CTX_set_cert_verify_callback"}
+        openssl_verify = {
+            "SSL_CTX_set_verify",
+            "SSL_get_verify_result",
+            "X509_verify_cert",
+            "SSL_CTX_set_cert_verify_callback",
+        }
 
-        found_apis = openssl_verify.intersection(imports)
-
-        if found_apis:
-            hashes = self.scan_for_certificate_hashes(str(self.binary_path))
-
-            if hashes:
+        if found_apis := openssl_verify.intersection(imports):
+            if hashes := self.scan_for_certificate_hashes(str(self.binary_path)):
                 locations.append(
                     PinningLocation(
                         address=0,
@@ -419,9 +439,7 @@ class PinningDetector:
         strings = self._extract_strings()
 
         if "AFSecurityPolicy" in strings:
-            hashes = self.scan_for_certificate_hashes(binary_path)
-
-            if hashes:
+            if hashes := self.scan_for_certificate_hashes(binary_path):
                 pins.append(
                     PinningInfo(
                         location="AFSecurityPolicy",
@@ -459,9 +477,7 @@ class PinningDetector:
         strings = self._extract_strings()
 
         if "ServerTrustPolicy" in strings or "Alamofire" in strings:
-            hashes = self.scan_for_certificate_hashes(binary_path)
-
-            if hashes:
+            if hashes := self.scan_for_certificate_hashes(binary_path):
                 pins.append(
                     PinningInfo(
                         location="ServerTrustPolicy",
@@ -539,7 +555,10 @@ class PinningDetector:
         pinning_locations = self.detect_pinning_logic(str(self.binary_path))
         pinning_methods = list({loc.pinning_type for loc in pinning_locations})
 
-        if self.platform == "android" and self.binary_path.suffix.lower() in [".apk", ".aab"]:
+        if self.platform == "android" and self.binary_path.suffix.lower() in {
+            ".apk",
+            ".aab",
+        }:
             try:
                 with APKAnalyzer() as analyzer:
                     analyzer.extract_apk(str(self.binary_path))
@@ -590,13 +609,17 @@ class PinningDetector:
                 ),
             )
 
-        bypass_recommendations = self._generate_bypass_recommendations(pinning_methods, detected_pins)
+        bypass_recommendations = self._generate_bypass_recommendations(
+            pinning_methods, detected_pins
+        )
 
         avg_confidence = 0.0
         if detected_pins:
             avg_confidence = sum(p.confidence for p in detected_pins) / len(detected_pins)
         elif pinning_locations:
-            avg_confidence = sum(loc.confidence for loc in pinning_locations) / len(pinning_locations)
+            avg_confidence = sum(loc.confidence for loc in pinning_locations) / len(
+                pinning_locations
+            )
 
         report = PinningReport(
             binary_path=str(self.binary_path),
@@ -608,11 +631,15 @@ class PinningDetector:
             platform=self.platform or "unknown",
         )
 
-        logger.info(f"Generated pinning report: {len(detected_pins)} pins, {len(pinning_methods)} methods, confidence={avg_confidence:.2f}")
+        logger.info(
+            f"Generated pinning report: {len(detected_pins)} pins, {len(pinning_methods)} methods, confidence={avg_confidence:.2f}"
+        )
 
         return report
 
-    def _generate_bypass_recommendations(self, pinning_methods: list[str], detected_pins: list[PinningInfo]) -> list[str]:
+    def _generate_bypass_recommendations(
+        self, pinning_methods: list[str], detected_pins: list[PinningInfo]
+    ) -> list[str]:
         """Generate bypass recommendations based on detected pinning."""
         recommendations = []
 
@@ -623,13 +650,19 @@ class PinningDetector:
             )
 
         if "okhttp" in pinning_methods:
-            recommendations.append("OkHttp: Hook okhttp3.CertificatePinner.check() method with Frida to bypass pinning")
+            recommendations.append(
+                "OkHttp: Hook okhttp3.CertificatePinner.check() method with Frida to bypass pinning"
+            )
 
         if "afnetworking" in pinning_methods:
-            recommendations.append("AFNetworking: Hook AFSecurityPolicy.evaluateServerTrust with Frida, force return YES")
+            recommendations.append(
+                "AFNetworking: Hook AFSecurityPolicy.evaluateServerTrust with Frida, force return YES"
+            )
 
         if "alamofire" in pinning_methods:
-            recommendations.append("Alamofire: Hook ServerTrustPolicy evaluation, always return .performDefaultEvaluation")
+            recommendations.append(
+                "Alamofire: Hook ServerTrustPolicy evaluation, always return .performDefaultEvaluation"
+            )
 
         if "openssl" in pinning_methods:
             recommendations.append(
@@ -637,10 +670,14 @@ class PinningDetector:
             )
 
         if "custom" in pinning_methods:
-            recommendations.append("Custom implementation: Identify hash comparison function and patch/hook to always succeed")
+            recommendations.append(
+                "Custom implementation: Identify hash comparison function and patch/hook to always succeed"
+            )
 
         if not recommendations:
-            recommendations.append("No specific pinning detected - use general certificate bypass with Frida or MITM proxy")
+            recommendations.append(
+                "No specific pinning detected - use general certificate bypass with Frida or MITM proxy"
+            )
 
         return recommendations
 
@@ -653,9 +690,7 @@ class PinningDetector:
             content = self.binary_path.read_bytes().decode("utf-8", errors="ignore")
 
             string_pattern = re.compile(r"[A-Za-z_][A-Za-z0-9_]{3,}")
-            strings = set(string_pattern.findall(content))
-
-            return strings
+            return set(string_pattern.findall(content))
         except Exception as e:
             logger.debug(f"String extraction failed: {e}")
             return set()

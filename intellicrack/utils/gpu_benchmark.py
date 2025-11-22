@@ -24,6 +24,7 @@ from typing import Any
 
 from intellicrack.handlers.numpy_handler import numpy as np
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -96,17 +97,15 @@ def run_gpu_accelerated_analysis(app: object, binary_data: bytes) -> dict[str, A
 
         # Identify high entropy sections (likely encrypted/compressed)
         if "block_entropies" in entropy_result:
-            high_entropy_blocks = []
-            for i, entropy in enumerate(entropy_result["block_entropies"]):
-                if entropy > 7.0:  # High entropy threshold
-                    high_entropy_blocks.append(
-                        {
-                            "block_index": i,
-                            "offset": i * 4096,
-                            "entropy": entropy,
-                        },
-                    )
-
+            high_entropy_blocks = [
+                {
+                    "block_index": i,
+                    "offset": i * 4096,
+                    "entropy": entropy,
+                }
+                for i, entropy in enumerate(entropy_result["block_entropies"])
+                if entropy > 7.0
+            ]
             if high_entropy_blocks and hasattr(app, "update_output"):
                 app.update_output.emit(
                     f"[GPU] Found {len(high_entropy_blocks)} high-entropy blocks (likely encrypted/compressed)",
@@ -186,10 +185,10 @@ def _benchmark_cupy_framework(framework_results: dict, test_data: dict[int, byte
     try:
         import cupy as cp
 
+        pattern = b"LICENSE"
+
         for size, data in test_data.items():
             size_mb = size / (1024 * 1024)
-            pattern = b"LICENSE"
-
             # Data transfer
             transfer_start = time.time()
             data_gpu = cp.asarray(np.frombuffer(data, dtype=np.uint8))
@@ -199,11 +198,8 @@ def _benchmark_cupy_framework(framework_results: dict, test_data: dict[int, byte
             # Pattern search
             start_time = time.time()
             pattern_gpu = cp.asarray(np.frombuffer(pattern, dtype=np.uint8))
-            # Simple matching for benchmark
-            matches = 0
-            for i in range(0, len(data_gpu) - len(pattern_gpu), 1000):
-                if cp.all(data_gpu[i : i + len(pattern_gpu)] == pattern_gpu):
-                    matches += 1
+            sum(bool(cp.all(data_gpu[i : i + len(pattern_gpu)] == pattern_gpu))
+                      for i in range(0, len(data_gpu) - len(pattern_gpu), 1000))
             cp.cuda.Stream.null.synchronize()
 
             search_time = time.time() - start_time - transfer_time
@@ -236,7 +232,11 @@ def _benchmark_numba_framework(framework_results: dict, test_data: dict[int, byt
             search_start = time.time()
 
             @numba_cuda.jit
-            def pattern_search_kernel(data: numba_cuda.uint8[:], pattern: numba_cuda.uint8[:], results: numba_cuda.int32[:]) -> None:
+            def pattern_search_kernel(
+                data: numba_cuda.uint8[:],
+                pattern: numba_cuda.uint8[:],
+                results: numba_cuda.int32[:],
+            ) -> None:
                 """GPU kernel for pattern matching in binary data."""
                 idx = numba_cuda.grid(1)
                 if idx < len(data) - len(pattern) + 1:
@@ -259,7 +259,9 @@ def _benchmark_numba_framework(framework_results: dict, test_data: dict[int, byt
             numba_cuda.synchronize()
             search_time = time.time() - search_start
             framework_results["pattern_search"][f"{size_mb}MB"] = search_time
-            framework_results["results_found"] = framework_results.get("results_found", 0) + result_count
+            framework_results["results_found"] = (
+                framework_results.get("results_found", 0) + result_count
+            )
 
     except Exception as e:
         logger.error(f"Numba benchmark failed: {e}")
@@ -293,10 +295,10 @@ def _benchmark_pycuda_framework(framework_results: dict, test_data: dict[int, by
 
 def _benchmark_cpu_framework(framework_results: dict, test_data: dict[int, bytes]) -> None:
     """Benchmark CPU baseline."""
+    pattern = b"LICENSE"
+
     for size, data in test_data.items():
         size_mb = size / (1024 * 1024)
-        pattern = b"LICENSE"
-
         # Pattern search
         start_time = time.time()
         data.count(pattern)

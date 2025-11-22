@@ -166,7 +166,7 @@ class TestCompleteConfigSystem(IntellicrackTestBase):
         assert self.test_config_file.exists()
 
         # Load configuration and verify all settings
-        with open(self.test_config_file, 'r', encoding='utf-8') as f:
+        with open(self.test_config_file, encoding='utf-8') as f:
             saved_config = json.load(f)
 
         assert saved_config["application"]["name"] == "IntellicrackTest"

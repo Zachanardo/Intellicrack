@@ -126,7 +126,7 @@ class ProductionReadinessValidator:
                 continue
 
             try:
-                with open(full_path, 'r', encoding='utf-8') as f:
+                with open(full_path, encoding='utf-8') as f:
                     content = f.read()
 
                 for forbidden in forbidden_strings:

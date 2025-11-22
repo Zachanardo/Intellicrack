@@ -24,6 +24,7 @@ This module consolidates Windows-specific functionality to reduce code duplicati
 import logging
 import sys
 
+
 logger: logging.Logger = logging.getLogger(__name__)
 
 # Global Windows availability check
@@ -99,7 +100,9 @@ class WindowsConstants:
 
 
 def cleanup_process_handles(
-    kernel32: object, process_info: dict[str, object], logger_instance: logging.Logger | None = None,
+    kernel32: object,
+    process_info: dict[str, object],
+    logger_instance: logging.Logger | None = None,
 ) -> None:
     """Clean up Windows process handles.
 

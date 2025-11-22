@@ -75,14 +75,14 @@ class ValidationResult:
     success: bool
     confidence_score: float
     execution_time: float
-    evidence_paths: List[Path] = field(default_factory=list)
-    bypass_method: Optional[str] = None
-    error_message: Optional[str] = None
-    memory_before: Optional[int] = None
-    memory_after: Optional[int] = None
-    cpu_usage: Optional[float] = None
-    detection_signatures: List[str] = field(default_factory=list)
-    exploitation_artifacts: List[str] = field(default_factory=list)
+    evidence_paths: list[Path] = field(default_factory=list)
+    bypass_method: str | None = None
+    error_message: str | None = None
+    memory_before: int | None = None
+    memory_after: int | None = None
+    cpu_usage: float | None = None
+    detection_signatures: list[str] = field(default_factory=list)
+    exploitation_artifacts: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -99,7 +99,7 @@ class PerformanceMetrics:
     disk_io_write: int
     network_bytes_sent: int
     network_bytes_received: int
-    gpu_utilization: Optional[float] = None
+    gpu_utilization: float | None = None
 
 
 class CryptographicSigner:
@@ -468,7 +468,7 @@ class ForensicEvidenceCollector:
         conn.commit()
         conn.close()
 
-    def get_evidence_for_test(self, test_id: str) -> List[Dict]:
+    def get_evidence_for_test(self, test_id: str) -> list[dict]:
         """Retrieve all evidence for a specific test."""
         conn = sqlite3.connect(self.evidence_db)
         cursor = conn.cursor()
@@ -496,7 +496,7 @@ class ForensicEvidenceCollector:
 class StatisticalAnalyzer:
     """Performs statistical analysis on validation results."""
 
-    def __init__(self, results: List[ValidationResult]):
+    def __init__(self, results: list[ValidationResult]):
         self.results = results
         self.df = self._create_dataframe()
 
@@ -517,7 +517,7 @@ class StatisticalAnalyzer:
             })
         return pd.DataFrame(data)
 
-    def calculate_confidence_intervals(self, confidence_level: float = 0.95) -> Dict:
+    def calculate_confidence_intervals(self, confidence_level: float = 0.95) -> dict:
         """Calculate confidence intervals for success rates."""
         from scipy import stats
 
@@ -566,7 +566,7 @@ class StatisticalAnalyzer:
 
         return intervals
 
-    def perform_hypothesis_testing(self) -> Dict:
+    def perform_hypothesis_testing(self) -> dict:
         """Perform statistical hypothesis tests on results."""
         from scipy import stats
 
@@ -645,9 +645,9 @@ class UndeniableReportGenerator:
 
     def generate_comprehensive_report(
         self,
-        results: List[ValidationResult],
+        results: list[ValidationResult],
         metrics: PerformanceMetrics,
-        phase_results: Dict[str, Any]
+        phase_results: dict[str, Any]
     ) -> Path:
         """Generate complete validation report with all evidence."""
 
@@ -703,7 +703,7 @@ class UndeniableReportGenerator:
 
         return pdf_report
 
-    def _calculate_verdict(self, results: List[ValidationResult]) -> VerdictLevel:
+    def _calculate_verdict(self, results: list[ValidationResult]) -> VerdictLevel:
         """Calculate overall verdict based on test results."""
         if not results:
             return VerdictLevel.FAILURE
@@ -723,7 +723,7 @@ class UndeniableReportGenerator:
         else:
             return VerdictLevel.FAILURE
 
-    def _generate_executive_summary(self, results: List[ValidationResult], verdict: VerdictLevel) -> str:
+    def _generate_executive_summary(self, results: list[ValidationResult], verdict: VerdictLevel) -> str:
         """Generate executive summary of validation results."""
         total = len(results)
         successful = sum(1 for r in results if r.success)
@@ -784,14 +784,14 @@ class UndeniableReportGenerator:
 
         # Modern licensing systems defeated
         modern_systems = ["Denuvo", "VMProtect", "Themida", "SecuROM", "StarForce"]
-        defeated_modern = set(r.target_protection for r in results
-                            if r.success and any(m in r.target_protection for m in modern_systems))
+        defeated_modern = {r.target_protection for r in results
+                            if r.success and any(m in r.target_protection for m in modern_systems)}
         if defeated_modern:
             summary += f"- Defeated {len(defeated_modern)} modern licensing systems: {', '.join(defeated_modern)}\n"
 
         return summary
 
-    def _compile_detection_results(self, results: List[ValidationResult]) -> Dict:
+    def _compile_detection_results(self, results: list[ValidationResult]) -> dict:
         """Compile detection results with evidence links."""
         detection_results = {
             "total_detections": 0,
@@ -827,7 +827,7 @@ class UndeniableReportGenerator:
 
         return detection_results
 
-    def _compile_exploitation_results(self, results: List[ValidationResult]) -> Dict:
+    def _compile_exploitation_results(self, results: list[ValidationResult]) -> dict:
         """Compile exploitation results with functional proof."""
         exploitation_results = {
             "successful_exploits": 0,
@@ -861,7 +861,7 @@ class UndeniableReportGenerator:
 
         return exploitation_results
 
-    def _compile_forensic_evidence(self, results: List[ValidationResult]) -> Dict:
+    def _compile_forensic_evidence(self, results: list[ValidationResult]) -> dict:
         """Compile inventory of all forensic evidence."""
         evidence_inventory = {
             "total_evidence_files": 0,
@@ -899,7 +899,7 @@ class UndeniableReportGenerator:
 
         return evidence_inventory
 
-    def _document_failed_tests(self, results: List[ValidationResult]) -> List[Dict]:
+    def _document_failed_tests(self, results: list[ValidationResult]) -> list[dict]:
         """Document failed tests with root cause analysis."""
         failed_tests = []
 
@@ -918,7 +918,7 @@ class UndeniableReportGenerator:
 
         return failed_tests
 
-    def _analyze_failure_cause(self, result: ValidationResult) -> List[str]:
+    def _analyze_failure_cause(self, result: ValidationResult) -> list[str]:
         """Analyze potential causes for test failure."""
         causes = []
 
@@ -939,7 +939,7 @@ class UndeniableReportGenerator:
 
         return causes
 
-    def _generate_failure_recommendations(self, result: ValidationResult) -> List[str]:
+    def _generate_failure_recommendations(self, result: ValidationResult) -> list[str]:
         """Generate recommendations for addressing test failures."""
         recommendations = []
 
@@ -960,7 +960,7 @@ class UndeniableReportGenerator:
 
         return recommendations
 
-    def _generate_recommendations(self, results: List[ValidationResult]) -> List[str]:
+    def _generate_recommendations(self, results: list[ValidationResult]) -> list[str]:
         """Generate improvement recommendations based on results."""
         recommendations = []
 
@@ -1001,7 +1001,7 @@ class UndeniableReportGenerator:
 
         return recommendations
 
-    def _generate_json_report(self, report_data: Dict) -> Path:
+    def _generate_json_report(self, report_data: dict) -> Path:
         """Generate JSON format report."""
         json_file = self.report_dir / f"validation_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 
@@ -1010,7 +1010,7 @@ class UndeniableReportGenerator:
 
         return json_file
 
-    def _generate_html_report(self, report_data: Dict) -> Path:
+    def _generate_html_report(self, report_data: dict) -> Path:
         """Generate HTML format report with visualizations."""
         html_template = """
 <!DOCTYPE html>
@@ -1180,7 +1180,7 @@ class UndeniableReportGenerator:
 
         return pdf_file
 
-    def _create_evidence_package(self, results: List[ValidationResult], report_data: Dict) -> Path:
+    def _create_evidence_package(self, results: list[ValidationResult], report_data: dict) -> Path:
         """Create ZIP package with all evidence files."""
         package_file = self.report_dir / f"evidence_package_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
 
@@ -1200,7 +1200,7 @@ class UndeniableReportGenerator:
 
         return package_file
 
-    def _sign_reports(self, report_files: List[Path]):
+    def _sign_reports(self, report_files: list[Path]):
         """Cryptographically sign all report files."""
         for report_file in report_files:
             if report_file.exists():
@@ -1216,7 +1216,7 @@ class UndeniableReportGenerator:
                 with open(sig_file, "wb") as f:
                     f.write(signature)
 
-    def _create_verification_chain(self, report_data: Dict) -> Dict:
+    def _create_verification_chain(self, report_data: dict) -> dict:
         """Create blockchain-style verification chain for report integrity."""
         chain = []
 
@@ -1265,12 +1265,12 @@ class UndeniableReportGenerator:
             "root_hash": chain[-1]["hash"]
         }
 
-    def _calculate_block_hash(self, block: Dict) -> str:
+    def _calculate_block_hash(self, block: dict) -> str:
         """Calculate SHA-256 hash for a block."""
         block_string = json.dumps(block, sort_keys=True)
         return hashlib.sha256(block_string.encode()).hexdigest()
 
-    def _verify_chain(self, chain: List[Dict]) -> bool:
+    def _verify_chain(self, chain: list[dict]) -> bool:
         """Verify integrity of blockchain."""
         for i in range(1, len(chain)):
             current = chain[i]

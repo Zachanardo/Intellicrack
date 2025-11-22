@@ -26,10 +26,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from intellicrack.utils.logger import get_logger
+
 
 logger = get_logger(__name__)
 logger.debug("Project manager module loaded")
@@ -217,13 +219,14 @@ class ProjectManager:
         with tempfile.TemporaryDirectory() as temp_dir:
             shutil.unpack_archive(archive_path, temp_dir)
 
-            # Find project.json
-            project_json = None
-            for root, _dirs, files in os.walk(temp_dir):
-                if "project.json" in files:
-                    project_json = Path(root) / "project.json"
-                    break
-
+            project_json = next(
+                (
+                    Path(root) / "project.json"
+                    for root, _dirs, files in os.walk(temp_dir)
+                    if "project.json" in files
+                ),
+                None,
+            )
             if not project_json:
                 raise ValueError("Invalid project archive: missing project.json")
 
@@ -307,16 +310,15 @@ def main() -> int:
             print(f"Created project: {args.name}")
 
         elif args.command == "list":
-            projects = manager.list_projects()
-            if not projects:
-                print("No projects found")
-            else:
+            if projects := manager.list_projects():
                 print("\nAvailable projects:")
                 for proj in projects:
                     print(f"  - {proj['name']}: {proj['description']}")
                     print(f"    Created: {proj['created']}")
                     print(f"    Modified: {proj['modified']}")
 
+            else:
+                print("No projects found")
         elif args.command == "load":
             metadata = manager.load_project(args.name)
             print(f"Loaded project: {metadata['name']}")

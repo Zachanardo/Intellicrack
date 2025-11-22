@@ -46,6 +46,7 @@ from intellicrack.handlers.pyqt6_handler import (
 from intellicrack.utils.logger import logger
 from intellicrack.utils.resource_helper import get_resource_path
 
+
 """
 Guided Workflow Wizard
 
@@ -126,7 +127,9 @@ class GuidedWorkflowWizard(QWizard):
         """Create the introduction page."""
         page = QWizardPage()
         page.setTitle("Welcome to Intellicrack")
-        page.setSubTitle("This wizard will guide you through analyzing and patching your first binary")
+        page.setSubTitle(
+            "This wizard will guide you through analyzing and patching your first binary"
+        )
 
         layout = QVBoxLayout()
 
@@ -147,7 +150,9 @@ class GuidedWorkflowWizard(QWizard):
         splash_path = get_resource_path("assets/splash.png")
         if os.path.exists(splash_path):
             image_label = QLabel()
-            pixmap = QPixmap(splash_path).scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            pixmap = QPixmap(splash_path).scaled(
+                400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation
+            )
             image_label.setPixmap(pixmap)
             image_label.setAlignment(Qt.AlignCenter)
             layout.addWidget(image_label)
@@ -302,7 +307,9 @@ class GuidedWorkflowWizard(QWizard):
         self.dynamic_analysis_cb.setToolTip("Analyze the binary during execution")
 
         self.symbolic_execution_cb = QCheckBox("Symbolic Execution")
-        self.symbolic_execution_cb.setToolTip("Use symbolic execution to explore multiple code paths")
+        self.symbolic_execution_cb.setToolTip(
+            "Use symbolic execution to explore multiple code paths"
+        )
 
         self.ml_analysis_cb = QCheckBox("ML-assisted Analysis")
         self.ml_analysis_cb.setToolTip("Use machine learning to identify potential vulnerabilities")
@@ -519,7 +526,9 @@ class GuidedWorkflowWizard(QWizard):
         self.static_vuln_scan_cb.setChecked(True)
 
         self.ml_vuln_prediction_cb = QCheckBox("ML-Based Vulnerability Prediction")
-        self.ml_vuln_prediction_cb.setToolTip("Use machine learning models to predict vulnerabilities")
+        self.ml_vuln_prediction_cb.setToolTip(
+            "Use machine learning models to predict vulnerabilities"
+        )
 
         self.buffer_overflow_cb = QCheckBox("Buffer Overflow Detection")
         self.buffer_overflow_cb.setChecked(True)
@@ -741,12 +750,11 @@ class GuidedWorkflowWizard(QWizard):
             ("detect_time", "Time-based Limitations"),
         ]
 
-        items = []
-        for field_name, display_name in protection_fields:
-            if self.field(field_name):
-                items.append(f"<li>{display_name}</li>\n")
-
-        if items:
+        if items := [
+            f"<li>{display_name}</li>\n"
+            for field_name, display_name in protection_fields
+            if self.field(field_name)
+        ]:
             return "<h3>Protection Detection</h3>\n<ul>\n" + "".join(items) + "</ul>\n\n"
         return "<h3>Protection Detection</h3>\n<ul>\n</ul>\n\n"
 
@@ -761,11 +769,11 @@ class GuidedWorkflowWizard(QWizard):
             ("detect_vm", "Detect VM/Debugging Evasions"),
         ]
 
-        items = []
-        for field_name, display_name in analysis_fields:
-            if self.field(field_name):
-                items.append(f"<li>{display_name}</li>\n")
-
+        items = [
+            f"<li>{display_name}</li>\n"
+            for field_name, display_name in analysis_fields
+            if self.field(field_name)
+        ]
         # Always add timeout
         items.append(f"<li>Timeout: {self.field('timeout')} seconds</li>\n")
 
@@ -785,12 +793,11 @@ class GuidedWorkflowWizard(QWizard):
             ("radare2_analysis", "Radare2 Analysis"),
         ]
 
-        items = []
-        for field_name, display_name in advanced_fields:
-            if self.field(field_name):
-                items.append(f"<li>{display_name}</li>\n")
-
-        if items:
+        if items := [
+            f"<li>{display_name}</li>\n"
+            for field_name, display_name in advanced_fields
+            if self.field(field_name)
+        ]:
             return "<h3>Advanced Analysis</h3>\n<ul>\n" + "".join(items) + "</ul>\n\n"
         return "<h3>Advanced Analysis</h3>\n<ul>\n</ul>\n\n"
 
@@ -807,12 +814,11 @@ class GuidedWorkflowWizard(QWizard):
             ("shellcode", "Generate Shellcode"),
         ]
 
-        items = []
-        for field_name, display_name in vuln_fields:
-            if self.field(field_name):
-                items.append(f"<li>{display_name}</li>\n")
-
-        if items:
+        if items := [
+            f"<li>{display_name}</li>\n"
+            for field_name, display_name in vuln_fields
+            if self.field(field_name)
+        ]:
             return "<h3>Vulnerability Detection</h3>\n<ul>\n" + "".join(items) + "</ul>\n\n"
         return "<h3>Vulnerability Detection</h3>\n<ul>\n</ul>\n\n"
 
@@ -825,12 +831,11 @@ class GuidedWorkflowWizard(QWizard):
             ("memory_patching", "Memory Patching"),
         ]
 
-        items = []
-        for field_name, display_name in patching_fields:
-            if self.field(field_name):
-                items.append(f"<li>{display_name}</li>\n")
-
-        if items:
+        if items := [
+            f"<li>{display_name}</li>\n"
+            for field_name, display_name in patching_fields
+            if self.field(field_name)
+        ]:
             return "<h3>Patching Options</h3>\n<ul>\n" + "".join(items) + "</ul>\n\n"
         return "<h3>Patching Options</h3>\n<ul>\n</ul>\n\n"
 
@@ -843,12 +848,11 @@ class GuidedWorkflowWizard(QWizard):
             ("anti_debug", "Anti-debugging Measures"),
         ]
 
-        items = []
-        for field_name, display_name in target_fields:
-            if self.field(field_name):
-                items.append(f"<li>{display_name}</li>\n")
-
-        if items:
+        if items := [
+            f"<li>{display_name}</li>\n"
+            for field_name, display_name in target_fields
+            if self.field(field_name)
+        ]:
             return "<h3>Patch Targets</h3>\n<ul>\n" + "".join(items) + "</ul>\n\n"
         return "<h3>Patch Targets</h3>\n<ul>\n</ul>\n\n"
 
@@ -862,12 +866,11 @@ class GuidedWorkflowWizard(QWizard):
             ("cloud_license_hook", "Cloud License Hooking"),
         ]
 
-        items = []
-        for field_name, display_name in network_fields:
-            if self.field(field_name):
-                items.append(f"<li>{display_name}</li>\n")
-
-        if items:
+        if items := [
+            f"<li>{display_name}</li>\n"
+            for field_name, display_name in network_fields
+            if self.field(field_name)
+        ]:
             return "<h3>Network Analysis</h3>\n<ul>\n" + "".join(items) + "</ul>\n\n"
         return "<h3>Network Analysis</h3>\n<ul>\n</ul>\n\n"
 
@@ -883,12 +886,11 @@ class GuidedWorkflowWizard(QWizard):
             ("gpu_acceleration", "GPU Acceleration"),
         ]
 
-        items = []
-        for field_name, display_name in ai_fields:
-            if self.field(field_name):
-                items.append(f"<li>{display_name}</li>\n")
-
-        if items:
+        if items := [
+            f"<li>{display_name}</li>\n"
+            for field_name, display_name in ai_fields
+            if self.field(field_name)
+        ]:
             return "<h3>AI & Machine Learning</h3>\n<ul>\n" + "".join(items) + "</ul>"
         return "<h3>AI & Machine Learning</h3>\n<ul>\n</ul>"
 
@@ -954,7 +956,9 @@ class GuidedWorkflowWizard(QWizard):
                     try:
                         timestamp = getattr(pe.FILE_HEADER, "TimeDateStamp", 0)
                         compile_time = datetime.datetime.fromtimestamp(timestamp)
-                        info_text += f"<b>Compiled:</b> {compile_time.strftime('%Y-%m-%d %H:%M:%S')}<br>"
+                        info_text += (
+                            f"<b>Compiled:</b> {compile_time.strftime('%Y-%m-%d %H:%M:%S')}<br>"
+                        )
                     except (OSError, ValueError, RuntimeError) as e:
                         logger.error("Error in guided_workflow_wizard: %s", e)
 
@@ -981,75 +985,76 @@ class GuidedWorkflowWizard(QWizard):
 
     def on_finished(self, result: int) -> None:
         """Handle wizard completion."""
-        if result == QDialog.Accepted and self.parent:
-            # Collect all the settings from the wizard fields
-            settings = {
-                "binary_path": self.field("binary_path"),
-                "analysis": {
-                    "static": self.field("static_analysis"),
-                    "dynamic": self.field("dynamic_analysis"),
-                    "symbolic": self.field("symbolic_execution"),
-                    "ml": self.field("ml_analysis"),
-                    "timeout": self.field("timeout"),
-                    "detect_protections": self.field("detect_protections"),
-                    "detect_vm": self.field("detect_vm"),
+        if result != QDialog.Accepted or not self.parent:
+            return
+        # Collect all the settings from the wizard fields
+        settings = {
+            "binary_path": self.field("binary_path"),
+            "analysis": {
+                "static": self.field("static_analysis"),
+                "dynamic": self.field("dynamic_analysis"),
+                "symbolic": self.field("symbolic_execution"),
+                "ml": self.field("ml_analysis"),
+                "timeout": self.field("timeout"),
+                "detect_protections": self.field("detect_protections"),
+                "detect_vm": self.field("detect_vm"),
+            },
+            "patching": {
+                "auto": self.field("auto_patch"),
+                "interactive": self.field("interactive_patch"),
+                "function_hooking": self.field("function_hooking"),
+                "memory_patching": self.field("memory_patching"),
+                "targets": {
+                    "license_check": self.field("license_check"),
+                    "time_limit": self.field("time_limit"),
+                    "feature_unlock": self.field("feature_unlock"),
+                    "anti_debug": self.field("anti_debug"),
                 },
-                "patching": {
-                    "auto": self.field("auto_patch"),
-                    "interactive": self.field("interactive_patch"),
-                    "function_hooking": self.field("function_hooking"),
-                    "memory_patching": self.field("memory_patching"),
-                    "targets": {
-                        "license_check": self.field("license_check"),
-                        "time_limit": self.field("time_limit"),
-                        "feature_unlock": self.field("feature_unlock"),
-                        "anti_debug": self.field("anti_debug"),
-                    },
-                },
-            }
+            },
+        }
 
-            # Apply settings to parent app
-            binary_path = settings["binary_path"]
-            if os.path.exists(binary_path):
-                self.parent.binary_path = binary_path
+        # Apply settings to parent app
+        binary_path = settings["binary_path"]
+        if os.path.exists(binary_path):
+            self.parent.binary_path = binary_path
 
-                # Emit signals if available
+            # Emit signals if available
+            if hasattr(self.parent, "update_output"):
+                self.parent.update_output.emit(f"[Wizard] Set binary path: {binary_path}")
+
+            # Load the binary in the UI
+            if hasattr(self.parent, "load_binary"):
+                self.parent.load_binary(binary_path)
+
+            # Configure analysis options
+            if hasattr(self.parent, "update_output"):
+                self.parent.update_output.emit("[Wizard] Configured analysis options")
+
+            # Start analysis if auto-analyze is enabled
+            if settings["analysis"]["static"] and hasattr(self.parent, "run_static_analysis"):
                 if hasattr(self.parent, "update_output"):
-                    self.parent.update_output.emit(f"[Wizard] Set binary path: {binary_path}")
+                    self.parent.update_output.emit("[Wizard] Starting static analysis...")
+                self.parent.run_static_analysis()
 
-                # Load the binary in the UI
-                if hasattr(self.parent, "load_binary"):
-                    self.parent.load_binary(binary_path)
-
-                # Configure analysis options
+            if settings["analysis"]["dynamic"] and hasattr(self.parent, "run_dynamic_analysis"):
                 if hasattr(self.parent, "update_output"):
-                    self.parent.update_output.emit("[Wizard] Configured analysis options")
+                    self.parent.update_output.emit("[Wizard] Starting dynamic analysis...")
+                self.parent.run_dynamic_analysis()
 
-                # Start analysis if auto-analyze is enabled
-                if settings["analysis"]["static"] and hasattr(self.parent, "run_static_analysis"):
-                    if hasattr(self.parent, "update_output"):
-                        self.parent.update_output.emit("[Wizard] Starting static analysis...")
-                    self.parent.run_static_analysis()
+            # Switch to the Analysis tab if available
+            if hasattr(self.parent, "switch_tab"):
+                self.parent.switch_tab.emit(1)  # Assuming Analysis tab is index 1
 
-                if settings["analysis"]["dynamic"] and hasattr(self.parent, "run_dynamic_analysis"):
-                    if hasattr(self.parent, "update_output"):
-                        self.parent.update_output.emit("[Wizard] Starting dynamic analysis...")
-                    self.parent.run_dynamic_analysis()
+            # Record that the guided workflow has been completed
+            if hasattr(self.parent, "update_output"):
+                self.parent.update_output.emit("[Wizard] Guided workflow completed")
 
-                # Switch to the Analysis tab if available
-                if hasattr(self.parent, "switch_tab"):
-                    self.parent.switch_tab.emit(1)  # Assuming Analysis tab is index 1
-
-                # Record that the guided workflow has been completed
-                if hasattr(self.parent, "update_output"):
-                    self.parent.update_output.emit("[Wizard] Guided workflow completed")
-
-                # Show notification
-                QMessageBox.information(
-                    self.parent,
-                    "Guided Workflow",
-                    "The guided workflow has been set up and started.\nYou can monitor the analysis progress in the output panel.",
-                )
+            # Show notification
+            QMessageBox.information(
+                self.parent,
+                "Guided Workflow",
+                "The guided workflow has been set up and started.\nYou can monitor the analysis progress in the output panel.",
+            )
 
     def get_settings(self) -> dict[str, Any]:
         """Get the current wizard settings.

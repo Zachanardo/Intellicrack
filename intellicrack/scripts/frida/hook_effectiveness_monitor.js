@@ -1252,7 +1252,7 @@ const HookEffectivenessMonitor = {
             for (var i = 0; i < targetStr.length; i++) {
                 var char = targetStr.charCodeAt(i);
                 hash = (hash << 5) - hash + char;
-                hash = hash & hash; // Convert to 32-bit integer
+                hash &= hash; // Convert to 32-bit integer
             }
             return 'hook_' + Math.abs(hash).toString(16);
         } catch (e) {

@@ -30,6 +30,7 @@ from typing import Any, Optional
 
 from intellicrack.utils.logger import logger
 
+
 """
 AioHTTP Import Handler with Production-Ready Fallbacks
 
@@ -67,14 +68,11 @@ except ImportError as e:
     class ClientError(Exception):
         """Base aiohttp client error."""
 
-
     class ClientConnectorError(ClientError):
         """Connection error."""
 
-
     class ServerTimeoutError(ClientError):
         """Server timeout error."""
-
 
     # Response class
     class ClientResponse:
@@ -84,7 +82,7 @@ except ImportError as e:
             self: "ClientResponse",
             url: str,
             status: int = 200,
-            headers: Optional[dict[str, str]] = None,
+            headers: dict[str, str] | None = None,
             content: bytes = b"",
         ) -> None:
             """Initialize response.
@@ -183,10 +181,10 @@ except ImportError as e:
 
         def __init__(
             self: "ClientTimeout",
-            total: Optional[int] = None,
-            connect: Optional[int] = None,
-            sock_connect: Optional[int] = None,
-            sock_read: Optional[int] = None,
+            total: int | None = None,
+            connect: int | None = None,
+            sock_connect: int | None = None,
+            sock_read: int | None = None,
         ) -> None:
             """Initialize timeout.
 
@@ -198,9 +196,9 @@ except ImportError as e:
 
             """
             self.total: int = total or 300
-            self.connect: Optional[int] = connect
-            self.sock_connect: Optional[int] = sock_connect
-            self.sock_read: Optional[int] = sock_read
+            self.connect: int | None = connect
+            self.sock_connect: int | None = sock_connect
+            self.sock_read: int | None = sock_read
 
     # Connector class
     class TCPConnector:
@@ -246,9 +244,9 @@ except ImportError as e:
             self: "ClientSession",
             connector: Optional["TCPConnector"] = None,
             timeout: Optional["ClientTimeout"] = None,
-            headers: Optional[dict[str, str]] = None,
-            cookies: Optional[dict[str, str]] = None,
-            auth: Optional[tuple[str, str]] = None,
+            headers: dict[str, str] | None = None,
+            cookies: dict[str, str] | None = None,
+            auth: tuple[str, str] | None = None,
             json_serialize: Callable[[Any], str] = json.dumps,
         ) -> None:
             """Initialize session.
@@ -266,7 +264,7 @@ except ImportError as e:
             self.timeout: ClientTimeout = timeout or ClientTimeout()
             self.headers: dict[str, str] = headers or {}
             self.cookies: dict[str, str] = cookies or {}
-            self.auth: Optional[tuple[str, str]] = auth
+            self.auth: tuple[str, str] | None = auth
             self.json_serialize: Callable[[Any], str] = json_serialize
             self._closed: bool = False
 
@@ -293,9 +291,9 @@ except ImportError as e:
 
             """
             # Extract parameters
-            params: Optional[dict[str, object]] = kwargs.get("params")
-            data: Optional[object] = kwargs.get("data")
-            json_data: Optional[object] = kwargs.get("json")
+            params: dict[str, object] | None = kwargs.get("params")
+            data: object | None = kwargs.get("data")
+            json_data: object | None = kwargs.get("json")
             headers: dict[str, str] = kwargs.get("headers", {})
             timeout: ClientTimeout = kwargs.get("timeout", self.timeout)
 
@@ -338,10 +336,14 @@ except ImportError as e:
                             response.read(),
                         )
 
-                response_url, status_code, headers, content = await asyncio.to_thread(_execute_request)
+                response_url, status_code, headers, content = await asyncio.to_thread(
+                    _execute_request
+                )
 
                 # Create ClientResponse
-                resp = ClientResponse(url=response_url, status=status_code, headers=headers, content=content)
+                resp = ClientResponse(
+                    url=response_url, status=status_code, headers=headers, content=content
+                )
 
                 return resp
 
@@ -388,8 +390,8 @@ except ImportError as e:
         async def post(
             self: "ClientSession",
             url: str,
-            data: Optional[object] = None,
-            json: Optional[object] = None,
+            data: object | None = None,
+            json: object | None = None,
             **kwargs: object,
         ) -> "ClientResponse":
             """Send POST request.
@@ -409,7 +411,7 @@ except ImportError as e:
         async def put(
             self: "ClientSession",
             url: str,
-            data: Optional[object] = None,
+            data: object | None = None,
             **kwargs: object,
         ) -> "ClientResponse":
             """Send PUT request.
@@ -428,7 +430,7 @@ except ImportError as e:
         async def patch(
             self: "ClientSession",
             url: str,
-            data: Optional[object] = None,
+            data: object | None = None,
             **kwargs: object,
         ) -> "ClientResponse":
             """Send PATCH request.
@@ -529,7 +531,7 @@ except ImportError as e:
             self: "Request",
             method: str = "GET",
             path: str = "/",
-            headers: Optional[dict[str, str]] = None,
+            headers: dict[str, str] | None = None,
             body: bytes = b"",
         ) -> None:
             """Initialize request.
@@ -548,7 +550,7 @@ except ImportError as e:
             self.match_info: dict[str, Any] = {}
             self.query: dict[str, Any] = {}
             self.cookies: dict[str, str] = {}
-            self.app: Optional[Any] = None
+            self.app: Any | None = None
 
         async def text(self: "Request") -> str:
             """Get request text.
@@ -587,7 +589,7 @@ except ImportError as e:
             self: "Response",
             text: str = "",
             status: int = 200,
-            headers: Optional[dict[str, str]] = None,
+            headers: dict[str, str] | None = None,
             content_type: str = "text/plain",
         ) -> None:
             """Initialize response.
@@ -797,7 +799,7 @@ except ImportError as e:
         app: "Application",
         host: str = "127.0.0.1",
         port: int = 8080,
-        print: Callable[[str], None] = print,
+        print_func: Callable[[str], None] = print,
     ) -> None:
         """Run web application.
 
@@ -805,12 +807,12 @@ except ImportError as e:
             app: Application instance.
             host: Host to bind to.
             port: Port to bind to.
-            print: Print function.
+            print_func: Print function.
 
         """
         logger.info("Starting aiohttp fallback server on %s:%d", host, port)
-        print(f"======== Running on http://{host}:{port} ========")
-        print("(Press CTRL+C to quit)")
+        print_func(f"======== Running on http://{host}:{port} ========")
+        print_func("(Press CTRL+C to quit)")
 
         # Simple HTTP server using built-in libraries
         class Handler(http.server.SimpleHTTPRequestHandler):
@@ -852,7 +854,9 @@ except ImportError as e:
                 Response object.
 
             """
-            return Response(text=json.dumps(data), status=status, content_type="application/json", **kwargs)
+            return Response(
+                text=json.dumps(data), status=status, content_type="application/json", **kwargs
+            )
 
     # Create module-like object
     class FallbackAioHTTP:
@@ -880,6 +884,7 @@ except ImportError as e:
     Request: type = FallbackWeb
     Response: type = FallbackWeb
     RouteTableDef: type = FallbackWeb
+
     def run_app(app: object, host: str, port: int, logger: Callable[[str], None]) -> None:
         """Fallback implementation of run_app that simply prints the intended operation."""
         return print(f"Would run app on {host}:{port}")
@@ -887,25 +892,20 @@ except ImportError as e:
 
 # Export all aiohttp objects and availability flag
 __all__ = [
-    # Availability flags
-    "HAS_AIOHTTP",
     "AIOHTTP_VERSION",
-    # Main module
-    "aiohttp",
-    # Client classes
-    "ClientSession",
-    "ClientResponse",
-    "ClientTimeout",
-    "TCPConnector",
-    # Exceptions
-    "ClientError",
-    "ClientConnectorError",
-    "ServerTimeoutError",
-    # Web module
-    "web",
     "Application",
+    "ClientConnectorError",
+    "ClientError",
+    "ClientResponse",
+    "ClientSession",
+    "ClientTimeout",
+    "HAS_AIOHTTP",
     "Request",
     "Response",
     "RouteTableDef",
+    "ServerTimeoutError",
+    "TCPConnector",
+    "aiohttp",
     "run_app",
+    "web",
 ]

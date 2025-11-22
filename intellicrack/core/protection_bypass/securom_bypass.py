@@ -13,6 +13,7 @@ from ctypes import wintypes
 from dataclasses import dataclass
 from pathlib import Path
 
+
 try:
     import pefile
 
@@ -61,7 +62,16 @@ class SecuROMBypass:
         r"C:\Windows\System32\drivers\SecuROMv8.sys",
     ]
 
-    SERVICE_NAMES = ["SecuROM", "SecuROM User Access Service", "SecuROM7", "SecuROM8", "UserAccess7", "UserAccess8", "SecDrv", "SRService"]
+    SERVICE_NAMES = [
+        "SecuROM",
+        "SecuROM User Access Service",
+        "SecuROM7",
+        "SecuROM8",
+        "UserAccess7",
+        "UserAccess8",
+        "SecDrv",
+        "SRService",
+    ]
 
     REGISTRY_KEYS_TO_DELETE = [
         (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Services\secdrv"),
@@ -100,13 +110,25 @@ class SecuROMBypass:
             self._kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
             self._ntdll = ctypes.WinDLL("ntdll", use_last_error=True)
 
-            self._advapi32.OpenSCManagerW.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.DWORD]
+            self._advapi32.OpenSCManagerW.argtypes = [
+                wintypes.LPCWSTR,
+                wintypes.LPCWSTR,
+                wintypes.DWORD,
+            ]
             self._advapi32.OpenSCManagerW.restype = wintypes.HANDLE
 
-            self._advapi32.OpenServiceW.argtypes = [wintypes.HANDLE, wintypes.LPCWSTR, wintypes.DWORD]
+            self._advapi32.OpenServiceW.argtypes = [
+                wintypes.HANDLE,
+                wintypes.LPCWSTR,
+                wintypes.DWORD,
+            ]
             self._advapi32.OpenServiceW.restype = wintypes.HANDLE
 
-            self._advapi32.ControlService.argtypes = [wintypes.HANDLE, wintypes.DWORD, wintypes.LPVOID]
+            self._advapi32.ControlService.argtypes = [
+                wintypes.HANDLE,
+                wintypes.DWORD,
+                wintypes.LPVOID,
+            ]
             self._advapi32.ControlService.restype = wintypes.BOOL
 
             self._advapi32.DeleteService.argtypes = [wintypes.HANDLE]
@@ -161,7 +183,12 @@ class SecuROMBypass:
         deleted_files = self._remove_application_files()
         files_deleted.extend(deleted_files)
 
-        success = len(drivers_removed) > 0 or len(services_stopped) > 0 or len(registry_cleaned) > 0 or activation_bypassed
+        success = (
+            len(drivers_removed) > 0
+            or len(services_stopped) > 0
+            or len(registry_cleaned) > 0
+            or activation_bypassed
+        )
 
         return SecuROMRemovalResult(
             drivers_removed=drivers_removed,
@@ -202,12 +229,14 @@ class SecuROMBypass:
 
             try:
                 for service_name in self.SERVICE_NAMES:
-                    service_handle = self._advapi32.OpenServiceW(sc_manager, service_name, SERVICE_STOP)
-
-                    if service_handle:
+                    if service_handle := self._advapi32.OpenServiceW(
+                        sc_manager, service_name, SERVICE_STOP
+                    ):
                         try:
                             status = ServiceStatus()
-                            if self._advapi32.ControlService(service_handle, SERVICE_CONTROL_STOP, ctypes.byref(status)):
+                            if self._advapi32.ControlService(
+                                service_handle, SERVICE_CONTROL_STOP, ctypes.byref(status)
+                            ):
                                 stopped.append(service_name)
                         finally:
                             self._advapi32.CloseServiceHandle(service_handle)
@@ -236,9 +265,9 @@ class SecuROMBypass:
 
             try:
                 for service_name in self.SERVICE_NAMES:
-                    service_handle = self._advapi32.OpenServiceW(sc_manager, service_name, DELETE)
-
-                    if service_handle:
+                    if service_handle := self._advapi32.OpenServiceW(
+                        sc_manager, service_name, DELETE
+                    ):
                         try:
                             if self._advapi32.DeleteService(service_handle):
                                 deleted.append(service_name)
@@ -255,13 +284,11 @@ class SecuROMBypass:
 
     def _clean_registry(self) -> list[str]:
         """Clean SecuROM registry keys."""
-        cleaned = []
-
-        for root_key, subkey_path in self.REGISTRY_KEYS_TO_DELETE:
-            if self._delete_registry_key_recursive(root_key, subkey_path):
-                cleaned.append(f"{root_key}\\{subkey_path}")
-
-        return cleaned
+        return [
+            f"{root_key}\\{subkey_path}"
+            for root_key, subkey_path in self.REGISTRY_KEYS_TO_DELETE
+            if self._delete_registry_key_recursive(root_key, subkey_path)
+        ]
 
     def _delete_registry_key_recursive(self, root_key: int, subkey_path: str) -> bool:
         """Recursively delete a registry key and all subkeys."""
@@ -390,14 +417,19 @@ class SecuROMBypass:
 
         success = len(details) > 0
 
-        return BypassResult(success=success, technique="Activation Bypass", details="; ".join(details), errors=errors)
+        return BypassResult(
+            success=success,
+            technique="Activation Bypass",
+            details="; ".join(details),
+            errors=errors,
+        )
 
     def _patch_activation_checks(self, target_exe: Path) -> bool:
         """Patch activation validation checks in executable."""
         try:
             pe = pefile.PE(str(target_exe))
 
-            backup_path = target_exe.with_suffix(target_exe.suffix + ".bak")
+            backup_path = target_exe.with_suffix(f"{target_exe.suffix}.bak")
             if not backup_path.exists():
                 import shutil
 
@@ -435,7 +467,10 @@ class SecuROMBypass:
                     for section in pe.sections:
                         if section.Characteristics & 0x20000000:
                             f.seek(section.PointerToRawData)
-                            section_data = data[section.VirtualAddress : section.VirtualAddress + section.SizeOfRawData]
+                            section_data = data[
+                                section.VirtualAddress : section.VirtualAddress
+                                + section.SizeOfRawData
+                            ]
                             f.write(bytes(section_data))
 
             pe.close()
@@ -478,7 +513,11 @@ class SecuROMBypass:
             with open(target_exe, "r+b") as f:
                 data = bytearray(f.read())
 
-            countdown_patterns = [b"ActivationDaysRemaining", b"TrialDaysRemaining", b"DaysUntilExpiration"]
+            countdown_patterns = [
+                b"ActivationDaysRemaining",
+                b"TrialDaysRemaining",
+                b"DaysUntilExpiration",
+            ]
 
             modified = False
             for pattern in countdown_patterns:
@@ -526,7 +565,7 @@ class SecuROMBypass:
         triggers_removed = 0
 
         try:
-            backup_path = target_exe.with_suffix(target_exe.suffix + ".bak")
+            backup_path = target_exe.with_suffix(f"{target_exe.suffix}.bak")
             if not backup_path.exists():
                 import shutil
 
@@ -583,7 +622,9 @@ class SecuROMBypass:
             success = False
             details = "Failed to remove triggers"
 
-        return BypassResult(success=success, technique="Trigger Removal", details=details, errors=errors)
+        return BypassResult(
+            success=success, technique="Trigger Removal", details=details, errors=errors
+        )
 
     def _nop_trigger_function(self, data: bytearray, offset: int) -> bool:
         """NOP out trigger function by finding its prologue and replacing with RET."""
@@ -607,7 +648,14 @@ class SecuROMBypass:
         context_end = min(len(data), offset + 200)
         context = bytes(data[context_start:context_end])
 
-        network_indicators = [b"WinHttpSendRequest", b"InternetOpenUrl", b"HttpSendRequest", b"WSASend", b"send", b"recv"]
+        network_indicators = [
+            b"WinHttpSendRequest",
+            b"InternetOpenUrl",
+            b"HttpSendRequest",
+            b"WSASend",
+            b"send",
+            b"recv",
+        ]
 
         return any(indicator in context for indicator in network_indicators)
 
@@ -649,7 +697,12 @@ class SecuROMBypass:
 
         success = len(details) > 0
 
-        return BypassResult(success=success, technique="Disc Check Bypass", details="; ".join(details), errors=errors)
+        return BypassResult(
+            success=success,
+            technique="Disc Check Bypass",
+            details="; ".join(details),
+            errors=errors,
+        )
 
     def _patch_disc_check_calls(self, target_exe: Path) -> bool:
         """Patch disc check API calls in executable."""
@@ -699,13 +752,22 @@ class SecuROMBypass:
             with open(target_exe, "r+b") as f:
                 data = bytearray(f.read())
 
-            scsi_command_codes = [b"\x12", b"\x28", b"\xa8", b"\x43", b"\x42", b"\xbe", b"\x25", b"\x51"]
+            scsi_command_codes = [
+                b"\x12",
+                b"\x28",
+                b"\xa8",
+                b"\x43",
+                b"\x42",
+                b"\xbe",
+                b"\x25",
+                b"\x51",
+            ]
 
             modified = False
             for cmd_code in scsi_command_codes:
                 offset = 0
                 count = 0
-                while True and count < 50:
+                while count < 50:
                     offset = data.find(cmd_code, offset)
                     if offset == -1:
                         break
@@ -776,7 +838,12 @@ class SecuROMBypass:
 
         success = len(details) > 0
 
-        return BypassResult(success=success, technique="Product Key Bypass", details="; ".join(details), errors=errors)
+        return BypassResult(
+            success=success,
+            technique="Product Key Bypass",
+            details="; ".join(details),
+            errors=errors,
+        )
 
     def _patch_key_validation(self, target_exe: Path) -> bool:
         """Patch product key validation logic."""
@@ -823,7 +890,9 @@ class SecuROMBypass:
         except OSError:
             return False
 
-    def block_phone_home(self, target_exe: Path, server_urls: list[str] | None = None) -> BypassResult:
+    def block_phone_home(
+        self, target_exe: Path, server_urls: list[str] | None = None
+    ) -> BypassResult:
         """Block phone-home mechanisms.
 
         Args:
@@ -854,7 +923,12 @@ class SecuROMBypass:
 
         success = len(details) > 0
 
-        return BypassResult(success=success, technique="Phone-Home Blocking", details="; ".join(details), errors=errors)
+        return BypassResult(
+            success=success,
+            technique="Phone-Home Blocking",
+            details="; ".join(details),
+            errors=errors,
+        )
 
     def _patch_network_calls(self, target_exe: Path) -> bool:
         """Patch network API calls to return immediately."""
@@ -890,14 +964,20 @@ class SecuROMBypass:
         try:
             hosts_path = Path(r"C:\Windows\System32\drivers\etc\hosts")
 
-            default_servers = ["activation.securom.com", "validation.securom.com", "online.securom.com"]
+            default_servers = [
+                "activation.securom.com",
+                "validation.securom.com",
+                "online.securom.com",
+            ]
 
             all_servers = server_urls + default_servers
 
             with open(hosts_path, "a") as f:
                 f.write("\n# SecuROM Activation Server Blocking\n")
                 for server in all_servers:
-                    clean_server = server.replace("https://", "").replace("http://", "").split("/")[0]
+                    clean_server = (
+                        server.replace("https://", "").replace("http://", "").split("/")[0]
+                    )
                     f.write(f"127.0.0.1 {clean_server}\n")
 
             return True
@@ -965,7 +1045,12 @@ class SecuROMBypass:
 
         success = len(details) > 0
 
-        return BypassResult(success=success, technique="Challenge-Response Defeat", details="; ".join(details), errors=errors)
+        return BypassResult(
+            success=success,
+            technique="Challenge-Response Defeat",
+            details="; ".join(details),
+            errors=errors,
+        )
 
     def _patch_challenge_generation(self, target_exe: Path) -> bool:
         """Patch challenge generation to return fixed value."""
@@ -973,7 +1058,11 @@ class SecuROMBypass:
             with open(target_exe, "r+b") as f:
                 data = bytearray(f.read())
 
-            challenge_keywords = [b"GetActivationChallenge", b"GenerateChallenge", b"CreateChallenge"]
+            challenge_keywords = [
+                b"GetActivationChallenge",
+                b"GenerateChallenge",
+                b"CreateChallenge",
+            ]
 
             modified = False
             for keyword in challenge_keywords:

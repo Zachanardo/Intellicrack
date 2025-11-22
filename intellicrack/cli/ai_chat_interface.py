@@ -26,6 +26,7 @@ import time
 from datetime import datetime
 from typing import Any
 
+
 # Rich imports for beautiful terminal UI
 try:
     from rich.align import Align
@@ -54,7 +55,9 @@ sys.path.insert(0, project_root)
 class AITerminalChat:
     """Terminal-based AI chat interface with rich formatting."""
 
-    def __init__(self, binary_path: str | None = None, analysis_results: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, binary_path: str | None = None, analysis_results: dict[str, Any] | None = None
+    ) -> None:
         """Initialize AI chat interface.
 
         Args:
@@ -121,13 +124,16 @@ class AITerminalChat:
             if hasattr(self.ai_backend, "health_check"):
                 health_status = self.ai_backend.health_check()
                 if not health_status.get("healthy", False):
-                    raise Exception(f"Backend health check failed: {health_status.get('error', 'Unknown error')}")
+                    raise Exception(
+                        f"Backend health check failed: {health_status.get('error', 'Unknown error')}"
+                    )
 
+            backend_name = type(self.ai_backend).__name__
             if self.console:
-                backend_name = type(self.ai_backend).__name__
-                self.console.print(f"[green]AI backend ({backend_name}) initialized successfully[/green]")
+                self.console.print(
+                    f"[green]AI backend ({backend_name}) initialized successfully[/green]"
+                )
             else:
-                backend_name = type(self.ai_backend).__name__
                 print(f"AI backend ({backend_name}) initialized successfully")
 
         except Exception as e:
@@ -201,9 +207,7 @@ class AITerminalChat:
                 # Process AI query
                 self._process_ai_query(user_input)
 
-        except KeyboardInterrupt:
-            self.console.print("\n[yellow]Chat session ended[/yellow]")
-        except EOFError:
+        except (KeyboardInterrupt, EOFError):
             self.console.print("\n[yellow]Chat session ended[/yellow]")
 
     def _start_basic_chat(self) -> None:
@@ -240,9 +244,7 @@ class AITerminalChat:
                 # Process AI query
                 self._process_ai_query_basic(user_input)
 
-        except KeyboardInterrupt:
-            print("\nChat session ended")
-        except EOFError:
+        except (KeyboardInterrupt, EOFError):
             print("\nChat session ended")
 
     def _process_ai_query(self, user_input: str) -> None:
@@ -272,7 +274,9 @@ class AITerminalChat:
 
             # Check if response contains code and prepare syntax highlighting
             if "```" in response:
-                progress.update(thinking_task, advance=15, description="[yellow]Formatting code blocks...")
+                progress.update(
+                    thinking_task, advance=15, description="[yellow]Formatting code blocks..."
+                )
 
             progress.update(thinking_task, advance=10, description="[green]Finalizing response...")
 
@@ -333,7 +337,9 @@ class AITerminalChat:
                 response = self.ai_backend.chat_with_context(
                     user_input=user_input,
                     context=enriched_context,
-                    session_history=self.conversation_history[-10:],  # Last 10 exchanges for context
+                    session_history=self.conversation_history[
+                        -10:
+                    ],  # Last 10 exchanges for context
                 )
 
                 if isinstance(response, dict):
@@ -357,13 +363,19 @@ class AITerminalChat:
                 # Build contextual question with binary and analysis info
                 contextual_question = user_input
                 if self.binary_path:
-                    contextual_question = f"Binary: {os.path.basename(self.binary_path)}\n{user_input}"
+                    contextual_question = (
+                        f"Binary: {os.path.basename(self.binary_path)}\n{user_input}"
+                    )
 
                 if self.analysis_results:
                     # Add key analysis findings to context
-                    vuln_count = len(self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", []))
+                    vuln_count = len(
+                        self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", [])
+                    )
                     if vuln_count > 0:
-                        contextual_question = f"Context: Found {vuln_count} vulnerabilities\n{contextual_question}"
+                        contextual_question = (
+                            f"Context: Found {vuln_count} vulnerabilities\n{contextual_question}"
+                        )
 
                 response = self.ai_backend.ask_question(contextual_question)
                 return str(response)
@@ -376,7 +388,9 @@ class AITerminalChat:
             # Direct LLM manager usage as final attempt
             if self.llm_manager:
                 response = self.llm_manager.generate_response(
-                    prompt=user_input, context=enriched_context.get("binary_analysis", {}), max_tokens=1500,
+                    prompt=user_input,
+                    context=enriched_context.get("binary_analysis", {}),
+                    max_tokens=1500,
                 )
 
                 if isinstance(response, dict):
@@ -396,7 +410,9 @@ class AITerminalChat:
                     )
 
                     if isinstance(fallback_response, dict):
-                        content = fallback_response.get("content", fallback_response.get("text", str(fallback_response)))
+                        content = fallback_response.get(
+                            "content", fallback_response.get("text", str(fallback_response))
+                        )
                         return f"{content}\n\n[Note: Primary AI backend encountered an error, using fallback response]"
 
                     return f"{fallback_response!s}\n\n[Note: Primary AI backend encountered an error, using fallback response]"
@@ -445,12 +461,16 @@ class AITerminalChat:
                 protections = self.analysis_results["protections"]
                 if isinstance(protections, dict):
                     enabled_protections = [name for name, enabled in protections.items() if enabled]
-                    disabled_protections = [name for name, enabled in protections.items() if not enabled]
+                    disabled_protections = [
+                        name for name, enabled in protections.items() if not enabled
+                    ]
 
                     enriched_context["protection_analysis"] = {
                         "enabled_protections": enabled_protections,
                         "disabled_protections": disabled_protections,
-                        "protection_score": len(enabled_protections) / len(protections) if protections else 0,
+                        "protection_score": len(enabled_protections) / len(protections)
+                        if protections
+                        else 0,
                     }
 
             # Add interesting strings context
@@ -458,7 +478,15 @@ class AITerminalChat:
                 strings = self.analysis_results["strings"]
                 if isinstance(strings, list) and len(strings) > 0:
                     # Identify potentially interesting strings
-                    interesting_keywords = ["password", "key", "license", "admin", "secret", "token", "api"]
+                    interesting_keywords = [
+                        "password",
+                        "key",
+                        "license",
+                        "admin",
+                        "secret",
+                        "token",
+                        "api",
+                    ]
                     interesting_strings = [
                         s
                         for s in strings[:100]  # Limit to first 100 strings
@@ -468,7 +496,9 @@ class AITerminalChat:
                     enriched_context["string_analysis"] = {
                         "total_strings": len(strings),
                         "interesting_strings_found": len(interesting_strings),
-                        "sample_interesting": interesting_strings[:5],  # First 5 interesting strings
+                        "sample_interesting": interesting_strings[
+                            :5
+                        ],  # First 5 interesting strings
                     }
 
         # Add conversation context
@@ -477,7 +507,10 @@ class AITerminalChat:
             for entry in self.conversation_history[-5:]:  # Last 5 exchanges
                 if entry.get("type") == "user":
                     content = entry.get("content", "").lower()
-                    if any(topic in content for topic in ["vulnerability", "security", "exploit", "protection"]):
+                    if any(
+                        topic in content
+                        for topic in ["vulnerability", "security", "exploit", "protection"]
+                    ):
                         recent_topics.append("security_analysis")
                     elif any(topic in content for topic in ["string", "text", "data"]):
                         recent_topics.append("string_analysis")
@@ -497,14 +530,36 @@ class AITerminalChat:
         if not self.conversation_history:
             return "beginner"
 
-        user_messages = [entry.get("content", "").lower() for entry in self.conversation_history if entry.get("type") == "user"]
+        user_messages = [
+            entry.get("content", "").lower()
+            for entry in self.conversation_history
+            if entry.get("type") == "user"
+        ]
 
         # Count technical terms
-        advanced_terms = ["rop", "gadget", "shellcode", "heap", "stack", "assembly", "disassembly", "reverse engineering"]
-        intermediate_terms = ["vulnerability", "exploit", "buffer overflow", "injection", "authentication", "encryption"]
+        advanced_terms = [
+            "rop",
+            "gadget",
+            "shellcode",
+            "heap",
+            "stack",
+            "assembly",
+            "disassembly",
+            "reverse engineering",
+        ]
+        intermediate_terms = [
+            "vulnerability",
+            "exploit",
+            "buffer overflow",
+            "injection",
+            "authentication",
+            "encryption",
+        ]
 
         advanced_count = sum(1 for msg in user_messages for term in advanced_terms if term in msg)
-        intermediate_count = sum(1 for msg in user_messages for term in intermediate_terms if term in msg)
+        intermediate_count = sum(
+            1 for msg in user_messages for term in intermediate_terms if term in msg
+        )
 
         if advanced_count > 2:
             return "advanced"
@@ -525,14 +580,18 @@ class AITerminalChat:
             context["binary_info"] = {
                 "name": os.path.basename(self.binary_path),
                 "path": self.binary_path,
-                "size": os.path.getsize(self.binary_path) if os.path.exists(self.binary_path) else 0,
+                "size": os.path.getsize(self.binary_path)
+                if os.path.exists(self.binary_path)
+                else 0,
             }
 
         if self.analysis_results:
             # Summarize analysis results for context
             context["analysis_summary"] = {
                 "categories": list(self.analysis_results.keys()),
-                "vulnerability_count": len(self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", [])),
+                "vulnerability_count": len(
+                    self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", [])
+                ),
                 "string_count": len(self.analysis_results.get("strings", [])),
                 "has_protections": "protections" in self.analysis_results,
             }
@@ -659,7 +718,9 @@ class AITerminalChat:
 
         if "vulnerabilities" in self.analysis_results:
             vuln_data = self.analysis_results["vulnerabilities"]
-            vuln_count = len(vuln_data.get("vulnerabilities", [])) if isinstance(vuln_data, dict) else 0
+            vuln_count = (
+                len(vuln_data.get("vulnerabilities", [])) if isinstance(vuln_data, dict) else 0
+            )
             panels.append(
                 Panel(
                     f"[red]{vuln_count}[/red] vulnerabilities found",
@@ -680,7 +741,9 @@ class AITerminalChat:
 
         if "protections" in self.analysis_results:
             protection_data = self.analysis_results["protections"]
-            protection_count = len(protection_data) if isinstance(protection_data, (list, dict)) else 1
+            protection_count = (
+                len(protection_data) if isinstance(protection_data, (list, dict)) else 1
+            )
             panels.append(
                 Panel(
                     f"[yellow]{protection_count}[/yellow] protections detected",
@@ -781,10 +844,7 @@ class AITerminalChat:
 
         if self.analysis_results:
             for category, data in self.analysis_results.items():
-                if isinstance(data, (dict, list)):
-                    count = len(data)
-                else:
-                    count = 1
+                count = len(data) if isinstance(data, (dict, list)) else 1
                 overview += f" {category.replace('_', ' ').title()}: {count} items\n"
         else:
             overview += "No analysis results available. Run analysis first."
@@ -878,16 +938,12 @@ class AITerminalChat:
 
             try:
                 # Switch backend using LLM manager
-                if self.llm_manager:
-                    success = self.llm_manager.switch_backend(backend_name)
-                else:
+                if not self.llm_manager:
                     # Reinitialize LLM manager if not available
                     from intellicrack.ai.llm_config_manager import LLMConfigManager
 
                     self.llm_manager = LLMConfigManager()
-                    success = self.llm_manager.switch_backend(backend_name)
-
-                if success:
+                if success := self.llm_manager.switch_backend(backend_name):
                     # Reinitialize AI backends with new LLM manager
                     self._reinitialize_ai_with_backend(backend_name)
 
@@ -940,13 +996,16 @@ class AITerminalChat:
             if hasattr(self.ai_backend, "health_check"):
                 health_status = self.ai_backend.health_check()
                 if not health_status.get("healthy", False):
-                    raise Exception(f"New backend health check failed: {health_status.get('error', 'Unknown error')}")
+                    raise Exception(
+                        f"New backend health check failed: {health_status.get('error', 'Unknown error')}"
+                    )
 
+            backend_class_name = type(self.ai_backend).__name__
             if self.console:
-                backend_class_name = type(self.ai_backend).__name__
-                self.console.print(f"[green]AI backend ({backend_class_name}) reinitialized with {backend_name}[/green]")
+                self.console.print(
+                    f"[green]AI backend ({backend_class_name}) reinitialized with {backend_name}[/green]"
+                )
             else:
-                backend_class_name = type(self.ai_backend).__name__
                 print(f"AI backend ({backend_class_name}) reinitialized with {backend_name}")
 
         except Exception as e:
@@ -963,7 +1022,9 @@ class AITerminalChat:
 
             except Exception as fallback_error:
                 if self.console:
-                    self.console.print(f"[red]Failed to reinitialize AI backend: {fallback_error}[/red]")
+                    self.console.print(
+                        f"[red]Failed to reinitialize AI backend: {fallback_error}[/red]"
+                    )
                 else:
                     print(f"Failed to reinitialize AI backend: {fallback_error}")
                 self.ai_backend = None
@@ -1081,7 +1142,9 @@ class AITerminalChat:
                 f.write(f"*{timestamp}*\n\n---\n\n")
 
 
-def launch_ai_chat(binary_path: str | None = None, analysis_results: dict[str, Any] | None = None) -> bool:
+def launch_ai_chat(
+    binary_path: str | None = None, analysis_results: dict[str, Any] | None = None
+) -> bool:
     """Launch AI chat interface.
 
     Args:

@@ -27,6 +27,7 @@ from intellicrack.handlers.psutil_handler import psutil
 
 from ...utils.logger import get_logger
 
+
 P = ParamSpec("P")
 
 logger = get_logger(__name__)
@@ -85,7 +86,7 @@ class ResourceUsage:
             process: psutil Process instance to update from
 
         """
-        try:
+        with contextlib.suppress(psutil.NoSuchProcess, psutil.AccessDenied):
             self.cpu_percent = process.cpu_percent(interval=0.1)
             self.memory_mb = process.memory_info().rss / (1024 * 1024)
 
@@ -93,8 +94,6 @@ class ResourceUsage:
             self.disk_io_mb = (io_counters.read_bytes + io_counters.write_bytes) / (1024 * 1024)
 
             self.last_update = datetime.now()
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            pass
 
     def get_duration(self) -> timedelta:
         """Get resource usage duration.
@@ -269,12 +268,10 @@ class VMResource(ManagedResource):
         if self.vm_process and self.vm_process.poll() is None:
             self.vm_process.kill()
 
-        try:
+        with contextlib.suppress(ImportError):
             from ..logging.audit_logger import get_audit_logger
 
             get_audit_logger().log_vm_operation("stop", self.vm_name, success=True)
-        except ImportError:
-            pass
 
 
 class ResourceManager:
@@ -310,7 +307,9 @@ class ResourceManager:
         self._lock = threading.RLock()
 
         # Cleanup thread (skip during testing)
-        if not (os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")):
+        if not (
+            os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")
+        ):
             self._cleanup_thread = threading.Thread(target=self._cleanup_loop, daemon=True)
             self._cleanup_thread.start()
             logger.info("Resource cleanup thread started")
@@ -371,9 +370,8 @@ class ResourceManager:
 
             for resource_id, resource in self._resources.items():
                 # Check if process resources are still alive
-                if isinstance(resource, ProcessResource):
-                    if resource.process.poll() is not None:
-                        stale_resources.append(resource_id)
+                if isinstance(resource, ProcessResource) and resource.process.poll() is not None:
+                    stale_resources.append(resource_id)
 
             for resource_id in stale_resources:
                 self.release_resource(resource_id)
@@ -391,7 +389,10 @@ class ResourceManager:
         with self._lock:
             # Check process limit
             resource_count = len(self._resources_by_type.get(resource.resource_type, set()))
-            if resource.resource_type == ResourceType.PROCESS and resource_count >= self.max_processes:
+            if (
+                resource.resource_type == ResourceType.PROCESS
+                and resource_count >= self.max_processes
+            ):
                 error_msg = f"Process limit reached: {self.max_processes}"
                 logger.error(error_msg)
                 raise RuntimeError(error_msg)
@@ -399,7 +400,10 @@ class ResourceManager:
                 error_msg = f"VM limit reached: {self.max_vms}"
                 logger.error(error_msg)
                 raise RuntimeError(error_msg)
-            if resource.resource_type == ResourceType.CONTAINER and resource_count >= self.max_containers:
+            if (
+                resource.resource_type == ResourceType.CONTAINER
+                and resource_count >= self.max_containers
+            ):
                 error_msg = f"Container limit reached: {self.max_containers}"
                 logger.error(error_msg)
                 raise RuntimeError(error_msg)
@@ -480,7 +484,9 @@ class ResourceManager:
             self.release_resource(resource.resource_id)
 
     @contextlib.contextmanager
-    def managed_vm(self, vm_name: str, vm_process: subprocess.Popen | None = None) -> Generator[VMResource, None, None]:
+    def managed_vm(
+        self, vm_name: str, vm_process: subprocess.Popen | None = None
+    ) -> Generator[VMResource, None, None]:
         """Context manager for managed VMs.
 
         Args:
@@ -495,12 +501,10 @@ class ResourceManager:
 
         try:
             self.register_resource(resource)
-            try:
+            with contextlib.suppress(ImportError):
                 from ..logging.audit_logger import get_audit_logger
 
                 get_audit_logger().log_vm_operation("start", vm_name, success=True)
-            except ImportError:
-                pass
             yield resource
         finally:
             self.release_resource(resource.resource_id)
@@ -527,7 +531,9 @@ class ResourceManager:
             except Exception as e:
                 logger.error(f"Failed to remove temp directory {temp_dir}: {e}")
 
-        resource = ManagedResource(resource_id=temp_dir, resource_type=ResourceType.TEMP_DIR, cleanup_func=cleanup_temp)
+        resource = ManagedResource(
+            resource_id=temp_dir, resource_type=ResourceType.TEMP_DIR, cleanup_func=cleanup_temp
+        )
 
         try:
             self.register_resource(resource)
@@ -558,7 +564,10 @@ class ResourceManager:
         return self
 
     def __exit__(
-        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None,
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
     ) -> bool:
         """Context manager exit with cleanup."""
         self.cleanup_all()
@@ -679,11 +688,12 @@ class ResourceManager:
             resource_ids = list(self._resources.keys())
             for resource_id in resource_ids:
                 resource = self._resources.get(resource_id)
-                if resource and (current_time - resource.created_at) > max_age_seconds:
-                    if self._cleanup_resource(resource_id):
-                        cleaned_count += 1
+                if resource and (current_time - resource.created_at) > max_age_seconds and self._cleanup_resource(resource_id):
+                    cleaned_count += 1
 
-        logger.info(f"Force cleaned {cleaned_count} expired resources (older than {max_age_seconds}s)")
+        logger.info(
+            f"Force cleaned {cleaned_count} expired resources (older than {max_age_seconds}s)"
+        )
         return cleaned_count
 
     def set_resource_limits(self, **limits: int) -> None:
@@ -738,13 +748,10 @@ class ResourceManager:
             Number of resources cleaned
 
         """
-        cleaned_count = 0
         owned_resources = self.get_resources_by_owner(owner)
 
-        for resource in owned_resources:
-            if self._cleanup_resource(resource.resource_id):
-                cleaned_count += 1
-
+        cleaned_count = sum(bool(self._cleanup_resource(resource.resource_id))
+                        for resource in owned_resources)
         logger.info(f"Cleaned {cleaned_count} resources owned by {owner}")
         return cleaned_count
 
@@ -757,10 +764,10 @@ class ResourceManager:
         """
         logger.warning("Performing emergency cleanup of all resources")
 
-        results = {}
-        for resource_type in ResourceType:
-            results[resource_type.value] = self.force_cleanup_by_type(resource_type)
-
+        results = {
+            resource_type.value: self.force_cleanup_by_type(resource_type)
+            for resource_type in ResourceType
+        }
         # Force garbage collection
         import gc
 
@@ -794,20 +801,27 @@ class ResourceManager:
                     f"VM count exceeds limit: {len(self._resources_by_type.get(ResourceType.VM, set()))} > {self.max_vms}",
                 )
 
-            if len(self._resources_by_type.get(ResourceType.CONTAINER, set())) > self.max_containers:
+            if (
+                len(self._resources_by_type.get(ResourceType.CONTAINER, set()))
+                > self.max_containers
+            ):
                 health["issues"].append(
                     f"Container count exceeds limit: {len(self._resources_by_type.get(ResourceType.CONTAINER, set()))} > {self.max_containers}",
                 )
 
             # Check for stuck resources
             current_time = time.time()
-            stuck_resources = []
-            for resource in self._resources.values():
-                if resource.state == ResourceState.CLEANING and (current_time - resource.created_at.timestamp()) > 300:  # 5 minutes
-                    stuck_resources.append(resource.resource_id)
-
-            if stuck_resources:
-                health["warnings"].append(f"Found {len(stuck_resources)} stuck resources in cleanup state")
+            if stuck_resources := [
+                resource.resource_id
+                for resource in self._resources.values()
+                if (
+                    resource.state == ResourceState.CLEANING
+                    and (current_time - resource.created_at.timestamp()) > 300
+                )
+            ]:
+                health["warnings"].append(
+                    f"Found {len(stuck_resources)} stuck resources in cleanup state"
+                )
 
             # Check memory usage
             memory_stats = self._get_memory_usage()
@@ -829,13 +843,19 @@ class ResourceManager:
         if HAS_TERMINAL_MANAGER:
             try:
                 terminal_manager = get_terminal_manager()
-                terminal_manager.log_terminal_message(f"Resource manager health: {health['status']}")
+                terminal_manager.log_terminal_message(
+                    f"Resource manager health: {health['status']}"
+                )
                 if health["issues"]:
                     for issue in health["issues"]:
-                        terminal_manager.log_terminal_message(f"Health issue: {issue}", level="error")
+                        terminal_manager.log_terminal_message(
+                            f"Health issue: {issue}", level="error"
+                        )
                 if health["warnings"]:
                     for warning in health["warnings"]:
-                        terminal_manager.log_terminal_message(f"Health warning: {warning}", level="warning")
+                        terminal_manager.log_terminal_message(
+                            f"Health warning: {warning}", level="warning"
+                        )
             except Exception as e:
                 logger.warning(f"Could not report to terminal manager: {e}")
 
@@ -864,7 +884,10 @@ class ResourceContext:
         return self
 
     def __exit__(
-        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None,
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
     ) -> bool:
         """Exit resource context with cleanup."""
         if self._entered:
@@ -900,7 +923,9 @@ class ResourceContext:
         metadata["owner"] = self.owner
         metadata["context_managed"] = True
 
-        resource_id = self.resource_manager.register_resource(resource_type, resource_handle, cleanup_func, metadata)
+        resource_id = self.resource_manager.register_resource(
+            resource_type, resource_handle, cleanup_func, metadata
+        )
         self.managed_resources.append(resource_id)
         return resource_id
 
@@ -912,7 +937,9 @@ class ResourceContext:
 
         """
         cleaned_count = 0
-        for resource_id in self.managed_resources[:]:  # Copy list to avoid modification during iteration
+        for resource_id in self.managed_resources[
+            :
+        ]:  # Copy list to avoid modification during iteration
             if self.resource_manager._cleanup_resource(resource_id):
                 cleaned_count += 1
                 self.managed_resources.remove(resource_id)
@@ -1071,7 +1098,9 @@ class FallbackHandler:
         """
         if tool_name in self.fallback_registry:
             try:
-                fallback_func: Callable[..., object | None] = cast("Callable[..., object | None]", self.fallback_registry[tool_name])
+                fallback_func: Callable[..., object | None] = cast(
+                    "Callable[..., object | None]", self.fallback_registry[tool_name]
+                )
                 return fallback_func(*args, **kwargs)
             except Exception as e:
                 logger.error(f"Fallback for {tool_name} failed: {e}")
@@ -1092,7 +1121,6 @@ class FallbackHandler:
 
         """
         try:
-            strings = []
             with open(binary_path, "rb") as f:
                 data = f.read()
 
@@ -1101,12 +1129,13 @@ class FallbackHandler:
 
             ascii_pattern = rb"[\x20-\x7E]{" + str(min_length).encode() + rb",}"
             ascii_strings = re.findall(ascii_pattern, data)
-            strings.extend([s.decode("ascii") for s in ascii_strings])
-
+            strings = [s.decode("ascii") for s in ascii_strings]
             # Extract Unicode strings
             unicode_pattern = rb"(?:[\x20-\x7E]\x00){" + str(min_length).encode() + rb",}"
             unicode_strings = re.findall(unicode_pattern, data)
-            strings.extend([s.decode("utf-16le", errors="ignore").rstrip("\x00") for s in unicode_strings])
+            strings.extend(
+                [s.decode("utf-16le", errors="ignore").rstrip("\x00") for s in unicode_strings]
+            )
 
             return list(set(strings))  # Remove duplicates
 
@@ -1126,13 +1155,10 @@ class FallbackHandler:
         """
         try:
             # Try python-magic first
-            try:
+            with contextlib.suppress(ImportError):
                 import magic
 
                 return magic.from_file(file_path)
-            except ImportError:
-                pass
-
             # Fallback to basic detection
             import mimetypes
 
@@ -1187,12 +1213,14 @@ class FallbackHandler:
                 pe = pefile.PE(binary_path)
 
                 if "-h" in (options or []):
-                    # Headers
-                    result.append(f"File: {binary_path}")
-                    result.append(f"Machine: {hex(pe.FILE_HEADER.Machine)}")
-                    result.append(f"Number of sections: {pe.FILE_HEADER.NumberOfSections}")
-                    result.append(f"Characteristics: {hex(pe.FILE_HEADER.Characteristics)}")
-
+                    result.extend(
+                        (
+                            f"File: {binary_path}",
+                            f"Machine: {hex(pe.FILE_HEADER.Machine)}",
+                            f"Number of sections: {pe.FILE_HEADER.NumberOfSections}",
+                            f"Characteristics: {hex(pe.FILE_HEADER.Characteristics)}",
+                        )
+                    )
                 if "-S" in (options or []):
                     # Section headers
                     result.append("\nSections:")
@@ -1218,10 +1246,13 @@ class FallbackHandler:
                     elf = ELFFile(f)
 
                     if "-h" in (options or []):
-                        result.append(f"File: {binary_path}")
-                        result.append(f"Class: {elf.get_machine_arch()}")
-                        result.append(f"Type: {elf.header['e_type']}")
-
+                        result.extend(
+                            (
+                                f"File: {binary_path}",
+                                f"Class: {elf.get_machine_arch()}",
+                                f"Type: {elf.header['e_type']}",
+                            )
+                        )
                     if "-S" in (options or []):
                         result.append("\nSections:")
                         for section in elf.iter_sections():
@@ -1264,13 +1295,16 @@ class FallbackHandler:
                 if "-h" in (options or []):
                     # ELF header
                     header = elf.header
-                    result.append("ELF Header:")
-                    result.append(f"  Class: {header['e_ident']['EI_CLASS']}")
-                    result.append(f"  Data: {header['e_ident']['EI_DATA']}")
-                    result.append(f"  Type: {header['e_type']}")
-                    result.append(f"  Machine: {header['e_machine']}")
-                    result.append(f"  Entry point: {hex(header['e_entry'])}")
-
+                    result.extend(
+                        (
+                            "ELF Header:",
+                            f"  Class: {header['e_ident']['EI_CLASS']}",
+                            f"  Data: {header['e_ident']['EI_DATA']}",
+                            f"  Type: {header['e_type']}",
+                            f"  Machine: {header['e_machine']}",
+                            f"  Entry point: {hex(header['e_entry'])}",
+                        )
+                    )
                 if "-S" in (options or []):
                     # Section headers
                     result.append("\nSection Headers:")
@@ -1356,20 +1390,22 @@ class FallbackHandler:
         try:
             from intellicrack.handlers.psutil_handler import psutil
 
-            connections = []
-            for conn in psutil.net_connections():
-                connections.append(
-                    {
-                        "protocol": "TCP" if conn.type == socket.SOCK_STREAM else "UDP",
-                        "local_address": f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else "",
-                        "remote_address": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "",
-                        "status": conn.status,
-                        "pid": conn.pid,
-                    },
-                )
-
-            return connections
-
+            return [
+                {
+                    "protocol": (
+                        "TCP" if conn.type == socket.SOCK_STREAM else "UDP"
+                    ),
+                    "local_address": (
+                        f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else ""
+                    ),
+                    "remote_address": (
+                        f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else ""
+                    ),
+                    "status": conn.status,
+                    "pid": conn.pid,
+                }
+                for conn in psutil.net_connections()
+            ]
         except ImportError:
             return [{"error": "psutil not available for netstat fallback"}]
         except Exception as e:
@@ -1513,7 +1549,9 @@ def execute_with_fallback(
         logger.warning(f"Primary command failed for {tool_name}: {e}")
 
         # Try fallback
-        fallback_result = fallback_handler.get_fallback(tool_name, *(fallback_args or ()), **(fallback_kwargs or {}))
+        fallback_result = fallback_handler.get_fallback(
+            tool_name, *(fallback_args or ()), **(fallback_kwargs or {})
+        )
 
         if fallback_result is not None:
             return {"status": "fallback", "output": fallback_result, "method": "fallback"}
@@ -1535,7 +1573,7 @@ def validate_external_dependencies() -> dict[str, Any]:
         missing_required = external_tools_manager.get_missing_required_tools()
 
         validation_result = {
-            "status": "success" if not missing_required else "warning",
+            "status": "warning" if missing_required else "success",
             "missing_required_tools": missing_required,
             "all_tools_status": tool_status,
             "fallback_configs": {},
@@ -1552,9 +1590,12 @@ def validate_external_dependencies() -> dict[str, Any]:
         # Add installation recommendations
         for tool_name, status in tool_status.items():
             if status != external_tools_manager.tools[tool_name].status.AVAILABLE:
-                install_script = external_tools_manager.get_installation_script(tool_name)
-                if install_script:
-                    validation_result["recommendations"].append(f"Install {tool_name}: {install_script.strip()}")
+                if install_script := external_tools_manager.get_installation_script(
+                    tool_name
+                ):
+                    validation_result["recommendations"].append(
+                        f"Install {tool_name}: {install_script.strip()}"
+                    )
 
         return validation_result
 

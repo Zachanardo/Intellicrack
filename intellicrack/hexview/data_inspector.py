@@ -43,6 +43,7 @@ from ..handlers.pyqt6_handler import (
     pyqtSignal,
 )
 
+
 logger = logging.getLogger(__name__)
 
 __all__ = ["DataInspector", "DataInterpreter", "DataType"]
@@ -102,16 +103,12 @@ class DataInterpreter:
     @staticmethod
     def _handle_uint8(data: bytes) -> str:
         """Handle UINT8 data type."""
-        if len(data) >= 1:
-            return str(data[0])
-        return "Insufficient data"
+        return str(data[0]) if data else "Insufficient data"
 
     @staticmethod
     def _handle_int8(data: bytes) -> str:
         """Handle INT8 data type."""
-        if len(data) >= 1:
-            return str(struct.unpack("b", data[:1])[0])
-        return "Insufficient data"
+        return str(struct.unpack("b", data[:1])[0]) if data else "Insufficient data"
 
     @staticmethod
     def _handle_uint16_le(data: bytes) -> str:
@@ -234,10 +231,7 @@ class DataInterpreter:
         """Handle ASCII data type."""
         try:
             null_pos = data.find(b"\x00")
-            if null_pos >= 0:
-                text_data = data[:null_pos]
-            else:
-                text_data = data
+            text_data = data[:null_pos] if null_pos >= 0 else data
             return text_data.decode("ascii", errors="replace")
         except (UnicodeDecodeError, AttributeError) as e:
             logger.error("Error in data_inspector: %s", e)
@@ -248,10 +242,7 @@ class DataInterpreter:
         """Handle UTF8 data type."""
         try:
             null_pos = data.find(b"\x00")
-            if null_pos >= 0:
-                text_data = data[:null_pos]
-            else:
-                text_data = data
+            text_data = data[:null_pos] if null_pos >= 0 else data
             return text_data.decode("utf-8", errors="replace")
         except (UnicodeDecodeError, AttributeError) as e:
             logger.error("Error in data_inspector: %s", e)
@@ -262,10 +253,7 @@ class DataInterpreter:
         """Handle UTF16_LE data type."""
         try:
             null_pos = data.find(b"\x00\x00")
-            if null_pos >= 0 and null_pos % 2 == 0:
-                text_data = data[:null_pos]
-            else:
-                text_data = data
+            text_data = data[:null_pos] if null_pos >= 0 and null_pos % 2 == 0 else data
             return text_data.decode("utf-16le", errors="replace")
         except (UnicodeDecodeError, AttributeError) as e:
             logger.error("Error in data_inspector: %s", e)
@@ -276,10 +264,7 @@ class DataInterpreter:
         """Handle UTF16_BE data type."""
         try:
             null_pos = data.find(b"\x00\x00")
-            if null_pos >= 0 and null_pos % 2 == 0:
-                text_data = data[:null_pos]
-            else:
-                text_data = data
+            text_data = data[:null_pos] if null_pos >= 0 and null_pos % 2 == 0 else data
             return text_data.decode("utf-16be", errors="replace")
         except (UnicodeDecodeError, AttributeError) as e:
             logger.error("Error in data_inspector: %s", e)
@@ -342,6 +327,7 @@ class DataInterpreter:
                 second = (dos_time & 0x1F) * 2
 
                 from datetime import timezone
+
                 dt = datetime.datetime(year, month, day, hour, minute, second, tzinfo=datetime.UTC)
                 return dt.strftime("%Y-%m-%d %H:%M:%S")
             except (ValueError, OSError) as e:
@@ -364,8 +350,9 @@ class DataInterpreter:
         """Handle GUID data type."""
         if len(data) >= 16:
             guid_parts = struct.unpack("<IHH8B", data[:16])
-            return f"{guid_parts[0]:08X}-{guid_parts[1]:04X}-{guid_parts[2]:04X}-{guid_parts[3]:02X}{guid_parts[4]:02X}-" + "".join(
-                f"{guid_parts[_i]:02X}" for _i in range(5, 11)
+            return (
+                f"{guid_parts[0]:08X}-{guid_parts[1]:04X}-{guid_parts[2]:04X}-{guid_parts[3]:02X}{guid_parts[4]:02X}-"
+                + "".join(f"{guid_parts[_i]:02X}" for _i in range(5, 11))
             )
         return "Insufficient data"
 
@@ -442,9 +429,7 @@ class DataInterpreter:
             DataType.MAC_ADDRESS: DataInterpreter._handle_mac_address,
         }
 
-        # Get the handler for this data type
-        handler = handlers.get(data_type)
-        if handler:
+        if handler := handlers.get(data_type):
             try:
                 return handler(data)
             except (OSError, ValueError, RuntimeError) as e:
@@ -994,7 +979,7 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
                 # Parse hex input
                 hex_clean = value_text.replace(" ", "").replace("-", "")
                 if len(hex_clean) % 2 != 0:
-                    hex_clean = "0" + hex_clean
+                    hex_clean = f"0{hex_clean}"
                 new_data = bytes.fromhex(hex_clean)
 
             elif input_type == "Decimal":

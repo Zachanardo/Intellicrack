@@ -126,6 +126,7 @@ import frida
 
 from intellicrack.utils.core.plugin_paths import get_frida_scripts_dir
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -185,10 +186,14 @@ class FridaCertificateHooks:
     bypass modes (WinHTTP, Schannel, OpenSSL, CryptoAPI, etc.).
 
     Example:
-        >>> hooks = FridaCertificateHooks()
+        >>> hooks = (
+        ...     FridaCertificateHooks()
+        ... )
         >>> hooks.attach("target_app.exe")
         >>> hooks.inject_universal_bypass()
-        >>> status = hooks.get_bypass_status()
+        >>> status = (
+        ...     hooks.get_bypass_status()
+        ... )
         >>> hooks.detach()
 
     """
@@ -696,9 +701,7 @@ class FridaCertificateHooks:
 
         """
         with self._message_lock:
-            if count is None:
-                return self.messages.copy()
-            return self.messages[-count:]
+            return self.messages.copy() if count is None else self.messages[-count:]
 
     def clear_logs(self) -> bool:
         """Clear all local logs and optionally remote script logs.

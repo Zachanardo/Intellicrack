@@ -50,6 +50,7 @@ import networkx as nx
 
 from intellicrack.utils.log_message import log_message
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -111,13 +112,15 @@ class CfgExplorerInner:
 
         """
         try:
-            from ..core.analysis.cfg_explorer import run_cfg_explorer as core_cfg_explorer  # noqa: TID252
+            from ..core.analysis.cfg_explorer import run_cfg_explorer as core_cfg_explorer
 
             return core_cfg_explorer(app, *args, **kwargs)
         except ImportError:
             logger.exception("Import error in main_app.py")
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[CFG Explorer] Starting control flow graph explorer..."))
+                app.update_output.emit(
+                    log_message("[CFG Explorer] Starting control flow graph explorer...")
+                )
 
             self._initialize_cfg_explorer_config(app)
             self._initialize_cfg_analysis_tools(app)
@@ -133,12 +136,18 @@ class CfgExplorerInner:
             self._compile_cfg_analysis_results(app)
 
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[CFG Explorer] Control flow graph explorer initialized successfully"))
+                app.update_output.emit(
+                    log_message(
+                        "[CFG Explorer] Control flow graph explorer initialized successfully"
+                    )
+                )
 
         except (OSError, ValueError, RuntimeError) as explorer_error:
             logger.exception("Error in main_app.py")
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message(f"[CFG Explorer] Error running CFG explorer: {explorer_error}"))
+                app.update_output.emit(
+                    log_message(f"[CFG Explorer] Error running CFG explorer: {explorer_error}")
+                )
 
     def _initialize_cfg_explorer_config(self, app: object) -> None:
         """Initialize CFG explorer configuration.
@@ -203,13 +212,16 @@ class CfgExplorerInner:
 
             app.cfg_analysis_tools["networkx_available"] = True
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[CFG Explorer] NetworkX available for graph analysis"))
+                app.update_output.emit(
+                    log_message("[CFG Explorer] NetworkX available for graph analysis")
+                )
 
             if not hasattr(app, "cfg_graph"):
                 app.cfg_graph = nx.DiGraph()
 
             def build_cfg_with_networkx(
-                functions: list[dict[str, object]], edges: list[dict[str, object]],
+                functions: list[dict[str, object]],
+                edges: list[dict[str, object]],
             ) -> dict[str, object]:
                 """Build Control Flow Graph using NetworkX.
 
@@ -250,8 +262,12 @@ class CfgExplorerInner:
                 metrics = {
                     "nodes": app.cfg_graph.number_of_nodes(),
                     "edges": app.cfg_graph.number_of_edges(),
-                    "density": nx.density(app.cfg_graph) if app.cfg_graph.number_of_nodes() > 0 else 0,
-                    "is_connected": nx.is_weakly_connected(app.cfg_graph) if app.cfg_graph.number_of_nodes() > 0 else False,
+                    "density": nx.density(app.cfg_graph)
+                    if app.cfg_graph.number_of_nodes() > 0
+                    else 0,
+                    "is_connected": nx.is_weakly_connected(app.cfg_graph)
+                    if app.cfg_graph.number_of_nodes() > 0
+                    else False,
                 }
 
                 # Find important nodes
@@ -269,7 +285,9 @@ class CfgExplorerInner:
         except ImportError:
             logger.exception("Import error in main_app.py")
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[CFG Explorer] NetworkX not available, using basic analysis"))
+                app.update_output.emit(
+                    log_message("[CFG Explorer] NetworkX not available, using basic analysis")
+                )
 
     def _setup_matplotlib_integration(self, app: object) -> None:
         """Set up Matplotlib visualization integration.
@@ -285,12 +303,14 @@ class CfgExplorerInner:
 
         """
         try:
-            from intellicrack.handlers.matplotlib_handler import HAS_MATPLOTLIB
-            from intellicrack.handlers.matplotlib_handler import plt as matplotlib_pyplot
+            from intellicrack.handlers.matplotlib_handler import (
+                HAS_MATPLOTLIB,
+                plt as matplotlib_pyplot,
+            )
 
             app.cfg_analysis_tools["matplotlib_available"] = HAS_MATPLOTLIB
 
-            def visualize_cfg_with_matplotlib(save_path: Optional[str] = None) -> dict[str, object]:
+            def visualize_cfg_with_matplotlib(save_path: str | None = None) -> dict[str, object]:
                 """Visualize CFG using matplotlib and networkx.
 
                 Renders the control flow graph with color-coded nodes based on confidence scores,
@@ -305,7 +325,9 @@ class CfgExplorerInner:
                     Dictionary with status (success/error) and either the save path or error message.
 
                 """
-                if not app.cfg_analysis_tools.get("networkx_available") or not hasattr(app, "cfg_graph"):
+                if not app.cfg_analysis_tools.get("networkx_available") or not hasattr(
+                    app, "cfg_graph"
+                ):
                     return {"error": "NetworkX not available or no graph data"}
 
                 if app.cfg_graph.number_of_nodes() == 0:
@@ -407,7 +429,9 @@ class CfgExplorerInner:
 
             app.cfg_analysis_tools["radare2_available"] = True
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[CFG Explorer] Radare2 available for binary analysis"))
+                app.update_output.emit(
+                    log_message("[CFG Explorer] Radare2 available for binary analysis")
+                )
 
             def analyze_with_r2pipe(binary_path: str) -> dict[str, object]:
                 """Analyze binary using radare2 via r2pipe.
@@ -462,7 +486,10 @@ class CfgExplorerInner:
                     license_strings = []
                     for s in strings:
                         string_val = s.get("string", "").lower()
-                        if any(kw in string_val for kw in ["license", "key", "serial", "activation", "trial"]):
+                        if any(
+                            kw in string_val
+                            for kw in ["license", "key", "serial", "activation", "trial"]
+                        ):
                             license_strings.append(
                                 {
                                     "address": hex(s.get("vaddr", 0)),
@@ -494,7 +521,11 @@ class CfgExplorerInner:
         except ImportError:
             logger.exception("Import error in main_app.py")
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[CFG Explorer] Radare2 not available, using pattern-based analysis"))
+                app.update_output.emit(
+                    log_message(
+                        "[CFG Explorer] Radare2 not available, using pattern-based analysis"
+                    )
+                )
 
     def _setup_capstone_integration(self, app: object) -> None:
         """Set up Capstone disassembler integration.
@@ -516,7 +547,10 @@ class CfgExplorerInner:
             app.cfg_analysis_tools["capstone_available"] = True
 
             def disassemble_with_capstone(
-                binary_data: bytes, offset: int = 0, arch: str = "x86", mode: str = "64",
+                binary_data: bytes,
+                offset: int = 0,
+                arch: str = "x86",
+                mode: str = "64",
             ) -> dict[str, object]:
                 """Disassemble binary data using Capstone disassembler.
 
@@ -721,20 +755,32 @@ class CfgExplorerInner:
                 app.cfg_detected_functions = function_patterns[:20]
 
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message(f"[CFG Explorer] Detected {len(app.cfg_detected_functions)} potential functions"))
+                    app.update_output.emit(
+                        log_message(
+                            f"[CFG Explorer] Detected {len(app.cfg_detected_functions)} potential functions"
+                        )
+                    )
 
                 license_hits = self._search_license_patterns(app, binary_data)
                 app.cfg_license_hits = license_hits[:10]
 
                 if license_hits and hasattr(app, "update_output"):
-                    app.update_output.emit(log_message(f"[CFG Explorer] Found {len(license_hits)} license-related keywords"))
+                    app.update_output.emit(
+                        log_message(
+                            f"[CFG Explorer] Found {len(license_hits)} license-related keywords"
+                        )
+                    )
                     for hit in license_hits[:3]:
-                        app.update_output.emit(log_message(f"[CFG Explorer] - '{hit['keyword']}' at {hit['address']}"))
+                        app.update_output.emit(
+                            log_message(f"[CFG Explorer] - '{hit['keyword']}' at {hit['address']}")
+                        )
 
             except (OSError, ValueError, RuntimeError) as cfg_error:
                 logger.exception("Error in main_app.py")
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message(f"[CFG Explorer] Error analyzing binary: {cfg_error}"))
+                    app.update_output.emit(
+                        log_message(f"[CFG Explorer] Error analyzing binary: {cfg_error}")
+                    )
         elif hasattr(app, "update_output"):
             app.update_output.emit(log_message("[CFG Explorer] No binary loaded for analysis"))
 
@@ -761,13 +807,22 @@ class CfgExplorerInner:
             binary_format = "ELF"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message("[CFG Explorer] Detected ELF executable format"))
-        elif binary_data[:4] in [b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe"]:
+        elif binary_data[:4] in [
+            b"\xfe\xed\xfa\xce",
+            b"\xce\xfa\xed\xfe",
+            b"\xfe\xed\xfa\xcf",
+            b"\xcf\xfa\xed\xfe",
+        ]:
             binary_format = "Mach-O"
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[CFG Explorer] Detected Mach-O executable format"))
+                app.update_output.emit(
+                    log_message("[CFG Explorer] Detected Mach-O executable format")
+                )
         return binary_format
 
-    def _detect_function_patterns(self, _app: object, binary_data: bytes, binary_format: str) -> list[dict[str, object]]:
+    def _detect_function_patterns(
+        self, _app: object, binary_data: bytes, binary_format: str
+    ) -> list[dict[str, object]]:
         """Detect function patterns in binary data.
 
         Identifies function entry points and prologues using architecture-specific patterns.
@@ -784,19 +839,19 @@ class CfgExplorerInner:
         """
         function_patterns = []
         if binary_format == "PE":
-            from ..utils.analysis.pattern_search import find_function_prologues  # noqa: TID252
+            from ..utils.analysis.pattern_search import find_function_prologues
 
             found_funcs = find_function_prologues(binary_data, base_address=0x400000)
 
-            for func in found_funcs:
-                function_patterns.append(
-                    {
-                        "address": hex(func["address"]),
-                        "pattern": func["pattern_hex"],
-                        "type": func["type"],
-                        "confidence": func["confidence"],
-                    },
-                )
+            function_patterns.extend(
+                {
+                    "address": hex(func["address"]),
+                    "pattern": func["pattern_hex"],
+                    "type": func["type"],
+                    "confidence": func["confidence"],
+                }
+                for func in found_funcs
+            )
         return function_patterns
 
     def _search_license_patterns(self, app: object, binary_data: bytes) -> list[dict[str, object]]:
@@ -862,32 +917,38 @@ class CfgExplorerInner:
             None
 
         """
-        if hasattr(app, "cfg_detected_functions") and app.cfg_detected_functions:
-            sample_nodes = []
-            sample_edges = []
+        if (
+            not hasattr(app, "cfg_detected_functions")
+            or not app.cfg_detected_functions
+        ):
+            return
+        sample_edges = []
 
-            for i, func in enumerate(app.cfg_detected_functions[:10]):
-                sample_nodes.append(
-                    {
-                        "id": f"func_{i}",
-                        "label": f"Function at {func['address']}",
-                        "address": func["address"],
-                        "type": "function",
-                        "confidence": func.get("confidence", 0.5),
-                    },
-                )
+        sample_nodes = [
+            {
+                "id": f"func_{i}",
+                "label": f"Function at {func['address']}",
+                "address": func["address"],
+                "type": "function",
+                "confidence": func.get("confidence", 0.5),
+            }
+            for i, func in enumerate(app.cfg_detected_functions[:10])
+        ]
+        sample_edges = self._perform_real_cfg_analysis(app, sample_nodes)
 
-            sample_edges = self._perform_real_cfg_analysis(app, sample_nodes)
+        app.cfg_graph_data["nodes"] = sample_nodes
+        app.cfg_graph_data["edges"] = sample_edges
 
-            app.cfg_graph_data["nodes"] = sample_nodes
-            app.cfg_graph_data["edges"] = sample_edges
+        if hasattr(app, "update_output"):
+            app.update_output.emit(
+                log_message(
+                    f"[CFG Explorer] Built CFG with {len(sample_nodes)} nodes and {len(sample_edges)} edges"
+                ),
+            )
 
-            if hasattr(app, "update_output"):
-                app.update_output.emit(
-                    log_message(f"[CFG Explorer] Built CFG with {len(sample_nodes)} nodes and {len(sample_edges)} edges"),
-                )
-
-    def _perform_real_cfg_analysis(self, _app: object, sample_nodes: list[dict[str, object]]) -> list[dict[str, object]]:
+    def _perform_real_cfg_analysis(
+        self, _app: object, sample_nodes: list[dict[str, object]]
+    ) -> list[dict[str, object]]:
         """Perform real CFG analysis to establish function relationships.
 
         Analyzes detected functions to establish control flow edges based on function
@@ -901,17 +962,15 @@ class CfgExplorerInner:
             List of edge dictionaries representing control flow between functions.
 
         """
-        sample_edges = []
-        for i, node in enumerate(sample_nodes[:-1]):
-            sample_edges.append(
-                {
-                    "from": node["id"],
-                    "to": sample_nodes[i + 1]["id"],
-                    "type": "sequential",
-                    "weight": 1,
-                },
-            )
-        return sample_edges
+        return [
+            {
+                "from": node["id"],
+                "to": sample_nodes[i + 1]["id"],
+                "type": "sequential",
+                "weight": 1,
+            }
+            for i, node in enumerate(sample_nodes[:-1])
+        ]
 
     def _compile_cfg_analysis_results(self, app: object) -> None:
         """Compile and store CFG analysis results.
@@ -934,13 +993,17 @@ class CfgExplorerInner:
         app.analyze_results.append("Analysis tools available:")
         app.analyze_results.append(f"- NetworkX: {app.cfg_analysis_tools['networkx_available']}")
         app.analyze_results.append(f"- Radare2: {app.cfg_analysis_tools['radare2_available']}")
-        app.analyze_results.append(f"- Matplotlib: {app.cfg_analysis_tools['matplotlib_available']}")
+        app.analyze_results.append(
+            f"- Matplotlib: {app.cfg_analysis_tools['matplotlib_available']}"
+        )
         app.analyze_results.append(f"- Capstone: {app.cfg_analysis_tools['capstone_available']}")
 
         if hasattr(app, "cfg_detected_functions"):
             app.analyze_results.append(f"\nDetected functions: {len(app.cfg_detected_functions)}")
             for func in app.cfg_detected_functions[:5]:
-                app.analyze_results.append(f"- Function at {func['address']} (confidence: {func['confidence']:.2f})")
+                app.analyze_results.append(
+                    f"- Function at {func['address']} (confidence: {func['confidence']:.2f})"
+                )
             if len(app.cfg_detected_functions) > 5:
                 app.analyze_results.append(f"- ... and {len(app.cfg_detected_functions) - 5} more")
 

@@ -28,6 +28,7 @@ from typing import Any
 from .frida_constants import ProtectionType
 from .frida_presets import WIZARD_CONFIGS, get_preset_by_software, get_scripts_for_protection
 
+
 """
 Automated Bypass Wizard for Frida Operations
 
@@ -232,7 +233,9 @@ class FridaBypassWizard:
         else:
             logger.warning(f"Unknown mode: {mode}, using balanced")
 
-    def set_callbacks(self, progress_callback: Callable = None, status_callback: Callable = None) -> None:
+    def set_callbacks(
+        self, progress_callback: Callable = None, status_callback: Callable = None
+    ) -> None:
         """Set callback functions for progress and status updates.
 
         Args:
@@ -369,16 +372,15 @@ class FridaBypassWizard:
 
             # Create temporary analysis script
             temp_script = Path("temp_analysis.js")
-            await asyncio.to_thread(lambda: temp_script.write_text(analysis_script, encoding="utf-8"))
+            await asyncio.to_thread(
+                lambda: temp_script.write_text(analysis_script, encoding="utf-8")
+            )
 
-            # Load and run analysis
-            success = self.frida_manager.load_script(
+            if success := self.frida_manager.load_script(
                 self.session_id,
                 str(temp_script),
                 {"analysis_mode": True},
-            )
-
-            if success:
+            ):
                 # Wait for analysis results
                 await asyncio.sleep(2)  # Give script time to analyze
 
@@ -644,19 +646,14 @@ class FridaBypassWizard:
 
         process_name = self.target_process.get("name", "").lower()
 
+        self.detected_protections[ProtectionType.LICENSE] = True
         # Common patterns
         if "adobe" in process_name or "office" in process_name or "microsoft" in process_name:
-            self.detected_protections[ProtectionType.LICENSE] = True
             self.detected_protections[ProtectionType.CLOUD] = True
         elif "autodesk" in process_name:
-            self.detected_protections[ProtectionType.LICENSE] = True
             self.detected_protections[ProtectionType.HARDWARE] = True
         elif "vmware" in process_name:
-            self.detected_protections[ProtectionType.LICENSE] = True
             self.detected_protections[ProtectionType.TIME] = True
-        else:
-            # Default assumption for unknown software
-            self.detected_protections[ProtectionType.LICENSE] = True
 
     async def _plan_strategy(self) -> None:
         """Plan the bypass strategy based on detected protections.
@@ -818,16 +815,16 @@ class FridaBypassWizard:
                 options["wizard_mode"] = True
                 options["protection_type"] = strategy.protection_type.value
 
-                success = self.frida_manager.load_script(
+                if success := self.frida_manager.load_script(
                     self.session_id,
                     script_name,
                     options,
-                )
-
-                if success:
+                ):
                     success_count += 1
                     self.metrics["scripts_loaded"] += 1
-                    logger.info(f"Successfully loaded {script_name} for {strategy.protection_type.value}")
+                    logger.info(
+                        f"Successfully loaded {script_name} for {strategy.protection_type.value}"
+                    )
                 else:
                     logger.warning(f"Failed to load {script_name}")
 
@@ -871,7 +868,8 @@ class FridaBypassWizard:
                     verification_results[strategy.protection_type] = not still_detected
 
             # Update success metrics based on verification
-            verified_count = sum(1 for v in verification_results.values() if v)
+            verified_count = sum(bool(v)
+                             for v in verification_results.values())
             self._update_progress(
                 95,
                 f"Verified {verified_count}/{len(verification_results)} bypasses",
@@ -958,7 +956,9 @@ class FridaBypassWizard:
 
             # Run detection script
             temp_script = Path("anti_debug_check.js")
-            await asyncio.to_thread(lambda: temp_script.write_text(detection_script, encoding="utf-8"))
+            await asyncio.to_thread(
+                lambda: temp_script.write_text(detection_script, encoding="utf-8")
+            )
 
             result = await self._run_detection_script(temp_script)
             temp_script.unlink()
@@ -1031,7 +1031,9 @@ class FridaBypassWizard:
 
             # Run detection script
             temp_script = Path("anti_attach_check.js")
-            await asyncio.to_thread(lambda: temp_script.write_text(detection_script, encoding="utf-8"))
+            await asyncio.to_thread(
+                lambda: temp_script.write_text(detection_script, encoding="utf-8")
+            )
 
             result = await self._run_detection_script(temp_script)
             temp_script.unlink()
@@ -1127,7 +1129,9 @@ class FridaBypassWizard:
 
             # Run detection script
             temp_script = Path("ssl_pinning_check.js")
-            await asyncio.to_thread(lambda: temp_script.write_text(detection_script, encoding="utf-8"))
+            await asyncio.to_thread(
+                lambda: temp_script.write_text(detection_script, encoding="utf-8")
+            )
 
             result = await self._run_detection_script(temp_script)
             temp_script.unlink()
@@ -1180,10 +1184,9 @@ class FridaBypassWizard:
             if not success and retry_count < max_retries:
                 logger.info(f"Attempting adaptive retry for {prot_type.value}")
 
-                # Select alternative strategy based on protection type
-                alternative_strategy = self._get_alternative_strategy(prot_type)
-
-                if alternative_strategy:
+                if alternative_strategy := self._get_alternative_strategy(
+                    prot_type
+                ):
                     try:
                         # Apply alternative bypass
                         retry_success = await self._apply_strategy(alternative_strategy)
@@ -1194,10 +1197,14 @@ class FridaBypassWizard:
                             verify_success = await self._verify_bypass(prot_type)
 
                             if verify_success:
-                                logger.info(f"Alternative strategy successful for {prot_type.value}")
+                                logger.info(
+                                    f"Alternative strategy successful for {prot_type.value}"
+                                )
                                 self.metrics["retry_successes"] += 1
                             else:
-                                logger.warning(f"Alternative strategy failed verification for {prot_type.value}")
+                                logger.warning(
+                                    f"Alternative strategy failed verification for {prot_type.value}"
+                                )
                                 self.metrics["retry_failures"] += 1
                         else:
                             self.metrics["retry_failures"] += 1
@@ -1270,7 +1277,7 @@ class FridaBypassWizard:
         """
         duration = self.metrics["end_time"] - self.metrics["start_time"]
 
-        report = {
+        return {
             "success": self.state == WizardState.COMPLETE,
             "mode": self.mode,
             "duration": duration,
@@ -1278,14 +1285,18 @@ class FridaBypassWizard:
             "detections": {
                 "total": self.metrics["protections_detected"],
                 "types": [p.value for p in self.detected_protections],
-                "evidence": {p.value: e for p, e in self.protection_evidence.items()},
+                "evidence": {
+                    p.value: e for p, e in self.protection_evidence.items()
+                },
             },
             "bypasses": {
                 "attempted": self.metrics["bypasses_attempted"],
                 "successful": self.metrics["bypasses_successful"],
                 "failed": len(self.failed_bypasses),
                 "success_rate": (
-                    self.metrics["bypasses_successful"] / self.metrics["bypasses_attempted"] * 100
+                    self.metrics["bypasses_successful"]
+                    / self.metrics["bypasses_attempted"]
+                    * 100
                     if self.metrics["bypasses_attempted"] > 0
                     else 0
                 ),
@@ -1302,8 +1313,6 @@ class FridaBypassWizard:
             ],
             "metrics": self.metrics,
         }
-
-        return report
 
     def stop(self) -> None:
         """Stop the wizard if running.

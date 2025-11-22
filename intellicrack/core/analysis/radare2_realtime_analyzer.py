@@ -48,6 +48,7 @@ class R2Session(Protocol):
     def cmdj(self, command: str) -> dict[str, Any] | list[Any] | None:
         """Execute radare2 command and return JSON result."""
 
+
 # Optional import for file monitoring capabilities
 try:
     from watchdog.events import FileSystemEventHandler
@@ -248,9 +249,8 @@ class BinaryFileWatcher(FileSystemEventHandler):
 
         # Debounce rapid modifications
         current_time = time.time()
-        if file_path in self.last_modified:
-            if current_time - self.last_modified[file_path] < self.debounce_delay:
-                return
+        if file_path in self.last_modified and current_time - self.last_modified[file_path] < self.debounce_delay:
+            return
 
         self.last_modified[file_path] = current_time
 
@@ -300,7 +300,9 @@ class R2RealtimeAnalyzer:
         self.analysis_queue = queue.Queue(maxsize=100)
 
         # Event system
-        self.event_callbacks: dict[AnalysisEvent, list[Callable]] = {event: [] for event in AnalysisEvent}
+        self.event_callbacks: dict[AnalysisEvent, list[Callable]] = {
+            event: [] for event in AnalysisEvent
+        }
 
         # File watching
         self.file_observer = None
@@ -312,7 +314,9 @@ class R2RealtimeAnalyzer:
         self.update_thread = None
 
         # Performance optimization
-        self.performance_optimizer = create_performance_optimizer(OptimizationStrategy.SPEED_OPTIMIZED)
+        self.performance_optimizer = create_performance_optimizer(
+            OptimizationStrategy.SPEED_OPTIMIZED
+        )
 
         # Results storage
         self.latest_results: dict[str, dict[str, Any]] = {}
@@ -576,7 +580,9 @@ class R2RealtimeAnalyzer:
         except Exception as e:
             self.logger.error(f"Error handling file change for {file_path}: {e}")
 
-    def _schedule_analysis(self, binary_path: str, event_type: AnalysisEvent, priority: str = "normal") -> None:
+    def _schedule_analysis(
+        self, binary_path: str, event_type: AnalysisEvent, priority: str = "normal"
+    ) -> None:
         """Schedule analysis for binary."""
         try:
             # Check if analysis is already running for this binary
@@ -688,10 +694,13 @@ class R2RealtimeAnalyzer:
             analysis_id = f"rt_{int(time.time())}_{hash(binary_path) % 10000}"
 
             # Perform analysis using r2
-            with r2_error_context("realtime_analysis", binary_path=binary_path), r2pipe.open(
-                binary_path,
-                flags=config.get("r2_flags", []),
-            ) as r2:
+            with (
+                        r2_error_context("realtime_analysis", binary_path=binary_path),
+                        r2pipe.open(
+                            binary_path,
+                            flags=config.get("r2_flags", []),
+                        ) as r2,
+                    ):
                 # Apply optimizations
                 self.performance_optimizer.optimize_r2_session(r2, config)
 
@@ -703,12 +712,15 @@ class R2RealtimeAnalyzer:
                 # Run specific analysis components
                 for component in analysis_components:
                     try:
-                        component_result = self._run_analysis_component(r2, component, binary_path)
-                        if component_result:
+                        if component_result := self._run_analysis_component(
+                            r2, component, binary_path
+                        ):
                             results[component] = component_result
 
                             # Check for significant findings
-                            self._check_for_significant_findings(binary_path, component, component_result)
+                            self._check_for_significant_findings(
+                                binary_path, component, component_result
+                            )
 
                     except Exception as e:
                         self.logger.error(f"Component {component} failed for {binary_path}: {e}")
@@ -767,7 +779,9 @@ class R2RealtimeAnalyzer:
                 ),
             )
 
-    def _determine_analysis_components(self, binary_path: str, trigger_event: AnalysisEvent) -> list[str]:
+    def _determine_analysis_components(
+        self, binary_path: str, trigger_event: AnalysisEvent
+    ) -> list[str]:
         """Determine which analysis components to run based on binary characteristics."""
         # Base components for different triggers
         base_components = ["strings", "enhanced_strings", "imports"]
@@ -783,13 +797,12 @@ class R2RealtimeAnalyzer:
             self.logger.error("Exception in radare2_realtime_analyzer: %s", e)
 
         # Check if this binary has been analyzed before
-        is_initial_analysis = binary_path not in self.latest_results or not self.latest_results[binary_path]
+        is_initial_analysis = (
+            binary_path not in self.latest_results or not self.latest_results[binary_path]
+        )
 
         # Determine components based on file type and characteristics
-        components = []
-
-        # Always include base components
-        components.extend(base_components)
+        components = list(base_components)
 
         # Add components based on trigger event
         if trigger_event == AnalysisEvent.FILE_MODIFIED:
@@ -816,11 +829,9 @@ class R2RealtimeAnalyzer:
 
         # Add components based on file characteristics
         # Large files get optimized analysis
-        if file_size > 50 * 1024 * 1024:  # > 50MB
-            # Remove some heavy components for large files
-            if "functions" in components and file_size > 100 * 1024 * 1024:
-                components.remove("functions")
-                components.append("functions_summary")  # Lighter alternative
+        if file_size > 50 * 1024 * 1024 and ("functions" in components and file_size > 100 * 1024 * 1024):
+            components.remove("functions")
+            components.append("functions_summary")  # Lighter alternative
 
         # Packed/encrypted binaries
         if binary_path in self.latest_results:
@@ -830,11 +841,9 @@ class R2RealtimeAnalyzer:
 
         # Add components based on file extension
         if file_extension == ".dll":
-            components.append("exports")
-            components.append("dll_characteristics")
+            components.extend(("exports", "dll_characteristics"))
         elif file_extension == ".so":
-            components.append("elf_analysis")
-            components.append("symbols")
+            components.extend(("elf_analysis", "symbols"))
         elif file_extension == ".dylib":
             components.append("macho_analysis")
         elif file_extension in [".sys", ".drv"]:
@@ -843,30 +852,30 @@ class R2RealtimeAnalyzer:
         # Add components based on filename patterns
         license_patterns = ["license", "auth", "serial", "key", "activate", "trial"]
         if any(pattern in file_name for pattern in license_patterns):
-            components.append("license_analysis")
-            components.append("crypto_detection")
-
+            components.extend(("license_analysis", "crypto_detection"))
         network_patterns = ["net", "sock", "http", "tcp", "udp", "comm"]
         if any(pattern in file_name for pattern in network_patterns):
             components.append("network_analysis")
 
         security_patterns = ["crypt", "secure", "auth", "protect", "guard"]
         if any(pattern in file_name for pattern in security_patterns):
-            components.append("crypto_detection")
-            components.append("security_features")
-
+            components.extend(("crypto_detection", "security_features"))
         # Based on previous analysis results, adapt components
         if self.result_history.get(binary_path):
             recent_events = self.result_history[binary_path][-5:]  # Last 5 events
 
             # If vulnerabilities were found before, prioritize vulnerability scanning
-            if any(event.event_type == AnalysisEvent.VULNERABILITY_DETECTED for event in recent_events):
+            if any(
+                event.event_type == AnalysisEvent.VULNERABILITY_DETECTED for event in recent_events
+            ):
                 if "vulnerabilities" not in components:
                     components.append("vulnerabilities")
                 components.append("exploit_detection")
 
             # If license patterns were found, add detailed license analysis
-            if any(event.event_type == AnalysisEvent.LICENSE_PATTERN_FOUND for event in recent_events):
+            if any(
+                event.event_type == AnalysisEvent.LICENSE_PATTERN_FOUND for event in recent_events
+            ):
                 if "license_analysis" not in components:
                     components.append("license_analysis")
                 components.append("string_analysis_deep")
@@ -889,7 +898,9 @@ class R2RealtimeAnalyzer:
 
         return unique_components
 
-    def _run_analysis_component(self, r2: R2Session, component: str, binary_path: str) -> dict[str, Any] | None:
+    def _run_analysis_component(
+        self, r2: R2Session, component: str, binary_path: str
+    ) -> dict[str, Any] | None:
         """Run specific analysis component with context awareness.
 
         Args:
@@ -909,8 +920,9 @@ class R2RealtimeAnalyzer:
 
             # Check cache first for some components
             if self._is_analysis_cached(binary_path, component):
-                cached_result = self.analysis_cache[binary_path][component].get("result")
-                if cached_result:
+                if cached_result := self.analysis_cache[binary_path][
+                    component
+                ].get("result"):
                     return cached_result
 
             result = None
@@ -925,7 +937,10 @@ class R2RealtimeAnalyzer:
                     filtered_strings = [
                         s
                         for s in strings
-                        if any(keyword in s.get("string", "").lower() for keyword in ["license", "key", "serial", "activation", "trial"])
+                        if any(
+                            keyword in s.get("string", "").lower()
+                            for keyword in ["license", "key", "serial", "activation", "trial"]
+                        )
                     ]
                     result = {"strings": strings, "filtered_strings": filtered_strings}
                 else:
@@ -948,7 +963,11 @@ class R2RealtimeAnalyzer:
                         "WriteProcessMemory",
                         "CreateRemoteThread",
                     ]
-                    suspicious_imports = [imp for imp in imports if any(pattern in imp.get("name", "") for pattern in suspicious_patterns)]
+                    suspicious_imports = [
+                        imp
+                        for imp in imports
+                        if any(pattern in imp.get("name", "") for pattern in suspicious_patterns)
+                    ]
 
                 result = {
                     "imports": imports,
@@ -974,7 +993,10 @@ class R2RealtimeAnalyzer:
                     suspicious_funcs = [
                         f
                         for f in functions
-                        if any(pattern in f.get("name", "").lower() for pattern in ["decrypt", "unpack", "inject", "hook"])
+                        if any(
+                            pattern in f.get("name", "").lower()
+                            for pattern in ["decrypt", "unpack", "inject", "hook"]
+                        )
                     ]
 
                     result = {
@@ -1018,14 +1040,20 @@ class R2RealtimeAnalyzer:
                 elif "net" in file_name or "sock" in file_name:
                     vuln_patterns.extend(["recv", "recvfrom"])
 
-                vuln_imports = [imp for imp in imports if any(vuln in imp.get("name", "").lower() for vuln in vuln_patterns)]
+                vuln_imports = [
+                    imp
+                    for imp in imports
+                    if any(vuln in imp.get("name", "").lower() for vuln in vuln_patterns)
+                ]
 
                 # Check for specific vulnerability patterns in functions
                 functions = r2.cmdj("aflj") or []
                 vuln_functions = []
                 for func in functions[:100]:  # Check first 100 functions
                     func_name = func.get("name", "").lower()
-                    if any(pattern in func_name for pattern in ["overflow", "vulnerable", "exploit"]):
+                    if any(
+                        pattern in func_name for pattern in ["overflow", "vulnerable", "exploit"]
+                    ):
                         vuln_functions.append(func)
 
                 result = {
@@ -1042,13 +1070,19 @@ class R2RealtimeAnalyzer:
                 license_strings = [
                     s
                     for s in strings
-                    if any(keyword in s.get("string", "").lower() for keyword in ["license", "serial", "activation", "trial", "expire"])
+                    if any(
+                        keyword in s.get("string", "").lower()
+                        for keyword in ["license", "serial", "activation", "trial", "expire"]
+                    )
                 ]
 
                 license_imports = [
                     imp
                     for imp in imports
-                    if any(api in imp.get("name", "").lower() for api in ["regquery", "regopen", "getvolume", "getsystem"])
+                    if any(
+                        api in imp.get("name", "").lower()
+                        for api in ["regquery", "regopen", "getvolume", "getsystem"]
+                    )
                 ]
 
                 result = {
@@ -1063,14 +1097,20 @@ class R2RealtimeAnalyzer:
                 network_imports = [
                     imp
                     for imp in imports
-                    if any(api in imp.get("name", "").lower() for api in ["socket", "connect", "send", "recv", "internet", "http"])
+                    if any(
+                        api in imp.get("name", "").lower()
+                        for api in ["socket", "connect", "send", "recv", "internet", "http"]
+                    )
                 ]
 
                 strings = r2.cmdj("izzj") or []
                 url_strings = [
                     s
                     for s in strings
-                    if any(pattern in s.get("string", "") for pattern in ["http://", "https://", "ftp://", "tcp://", "udp://"])
+                    if any(
+                        pattern in s.get("string", "")
+                        for pattern in ["http://", "https://", "ftp://", "tcp://", "udp://"]
+                    )
                 ]
 
                 result = {
@@ -1085,12 +1125,20 @@ class R2RealtimeAnalyzer:
                 crypto_imports = [
                     imp
                     for imp in imports
-                    if any(api in imp.get("name", "").lower() for api in ["crypt", "hash", "aes", "rsa", "encrypt", "decrypt"])
+                    if any(
+                        api in imp.get("name", "").lower()
+                        for api in ["crypt", "hash", "aes", "rsa", "encrypt", "decrypt"]
+                    )
                 ]
 
                 strings = r2.cmdj("izzj") or []
                 crypto_strings = [
-                    s for s in strings if any(pattern in s.get("string", "").lower() for pattern in ["aes", "rsa", "sha", "md5", "encrypt"])
+                    s
+                    for s in strings
+                    if any(
+                        pattern in s.get("string", "").lower()
+                        for pattern in ["aes", "rsa", "sha", "md5", "encrypt"]
+                    )
                 ]
 
                 result = {
@@ -1113,7 +1161,10 @@ class R2RealtimeAnalyzer:
                 for section in sections:
                     # Check for suspicious section names
                     name = section.get("name", "").lower()
-                    if any(pattern in name for pattern in ["upx", "pack", ".0", "crypt"]) or section.get("entropy", 0) > 7.5:
+                    if (
+                        any(pattern in name for pattern in ["upx", "pack", ".0", "crypt"])
+                        or section.get("entropy", 0) > 7.5
+                    ):
                         anomalous_sections.append(section)
 
                 result = {
@@ -1137,7 +1188,9 @@ class R2RealtimeAnalyzer:
             self.logger.error(f"Analysis component {component} failed for {binary_path}: {e}")
             return None
 
-    def _check_for_significant_findings(self, binary_path: str, component: str, result: dict[str, Any]) -> None:
+    def _check_for_significant_findings(
+        self, binary_path: str, component: str, result: dict[str, Any]
+    ) -> None:
         """Check analysis results for significant findings and emit events."""
         try:
             if component == "vulnerabilities" and result.get("potential_vulnerabilities"):
@@ -1156,9 +1209,14 @@ class R2RealtimeAnalyzer:
                 strings = result.get("strings", [])
                 license_keywords = ["license", "copyright", "patent", "proprietary"]
 
-                license_strings = [s for s in strings if any(keyword in s.get("string", "").lower() for keyword in license_keywords)]
-
-                if license_strings:
+                if license_strings := [
+                    s
+                    for s in strings
+                    if any(
+                        keyword in s.get("string", "").lower()
+                        for keyword in license_keywords
+                    )
+                ]:
                     self._emit_event(
                         AnalysisUpdate(
                             timestamp=datetime.now(),
@@ -1186,7 +1244,9 @@ class R2RealtimeAnalyzer:
         cache_time = cache_entry.get("timestamp", 0)
         return time.time() - cache_time < 300
 
-    def _cache_analysis_result(self, binary_path: str, analysis_type: str, result: dict[str, Any]) -> None:
+    def _cache_analysis_result(
+        self, binary_path: str, analysis_type: str, result: dict[str, Any]
+    ) -> None:
         """Cache analysis result."""
         if binary_path not in self.analysis_cache:
             self.analysis_cache[binary_path] = {}
@@ -1220,9 +1280,7 @@ class R2RealtimeAnalyzer:
 
                     binary_config = self.watched_binaries[binary_path]
 
-                    # Check if enough time has passed since last analysis
-                    last_analysis = binary_config.get("last_analysis")
-                    if last_analysis:
+                    if last_analysis := binary_config.get("last_analysis"):
                         time_since_last = datetime.now() - last_analysis
                         if time_since_last.total_seconds() < self.update_interval:
                             continue
@@ -1265,7 +1323,9 @@ class R2RealtimeAnalyzer:
 
             # Keep only last 100 updates
             if len(self.result_history[update.binary_path]) > 100:
-                self.result_history[update.binary_path] = self.result_history[update.binary_path][-100:]
+                self.result_history[update.binary_path] = self.result_history[update.binary_path][
+                    -100:
+                ]
 
             # Call registered callbacks
             callbacks = self.event_callbacks.get(update.event_type, [])
@@ -1376,7 +1436,9 @@ class R2RealtimeAnalyzer:
                     "license_keys": license_keys,
                     "crypto_strings": crypto_strings,
                     "api_strings": api_strings,
-                    "regular_strings": regular_strings[:50],  # Limit regular strings for performance
+                    "regular_strings": regular_strings[
+                        :50
+                    ],  # Limit regular strings for performance
                 },
                 "analysis_summary": {
                     "license_key_count": len(license_keys),
@@ -1395,7 +1457,7 @@ class R2RealtimeAnalyzer:
             }
 
             # Emit enhanced string analysis event if significant patterns found
-            if len(license_keys) > 0 or len(crypto_strings) > 5:
+            if license_keys or len(crypto_strings) > 5:
                 self._emit_event(
                     AnalysisUpdate(
                         timestamp=datetime.now(),
@@ -1442,10 +1504,10 @@ class R2RealtimeAnalyzer:
                         addr_start = mem_map.get("addr", 0)
                         addr_end = mem_map.get("addr_end", addr_start)
 
-                        if addr_end > addr_start and (addr_end - addr_start) < 1024 * 1024:  # Limit to 1MB
-                            # Read memory region and extract strings
-                            mem_strings = r2.cmdj(f"ps @ {addr_start}") or []
-                            if mem_strings:
+                        if (
+                            addr_end > addr_start and (addr_end - addr_start) < 1024 * 1024
+                        ):  # Limit to 1MB
+                            if mem_strings := r2.cmdj(f"ps @ {addr_start}") or []:
                                 memory_strings.extend(
                                     [
                                         {

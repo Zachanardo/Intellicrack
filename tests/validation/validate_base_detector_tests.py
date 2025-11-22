@@ -19,7 +19,7 @@ def analyze_test_file(test_file_path):
         return False
 
     try:
-        with open(test_file_path, 'r') as f:
+        with open(test_file_path) as f:
             content = f.read()
 
         # Parse the AST
@@ -147,7 +147,7 @@ def estimate_coverage(test_file_path, target_module_path):
 
     # Get test methods count
     try:
-        with open(test_file_path, 'r') as f:
+        with open(test_file_path) as f:
             test_content = f.read()
 
         test_tree = ast.parse(test_content)
@@ -165,7 +165,7 @@ def estimate_coverage(test_file_path, target_module_path):
 
     # Get target module methods
     try:
-        with open(target_module_path, 'r') as f:
+        with open(target_module_path) as f:
             target_content = f.read()
 
         target_tree = ast.parse(target_content)

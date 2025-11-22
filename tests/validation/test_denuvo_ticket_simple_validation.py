@@ -20,7 +20,7 @@ else:
 print("\n2. Syntax validation...")
 try:
     import ast
-    with open(analyzer_path, 'r', encoding='utf-8') as f:
+    with open(analyzer_path, encoding='utf-8') as f:
         content = f.read()
         ast.parse(content)
     print("   OK Python syntax valid")
@@ -30,7 +30,7 @@ except SyntaxError as e:
     sys.exit(1)
 
 print("\n3. Code structure validation...")
-with open(analyzer_path, 'r', encoding='utf-8') as f:
+with open(analyzer_path, encoding='utf-8') as f:
     content = f.read()
 
 required_classes = [
@@ -120,7 +120,7 @@ else:
 print("\n7. Integration check...")
 detector_path = "D:/Intellicrack/intellicrack/protection/protection_detector.py"
 if os.path.exists(detector_path):
-    with open(detector_path, 'r', encoding='utf-8') as f:
+    with open(detector_path, encoding='utf-8') as f:
         detector_content = f.read()
 
     integration_methods = [

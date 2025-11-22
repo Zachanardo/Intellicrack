@@ -37,6 +37,7 @@ from typing import Any, Optional, Union
 
 from intellicrack.utils.logger import log_all_methods, logger
 
+
 # Frida availability detection and import handling (must come before terminal_manager to avoid circular imports)
 try:
     import frida
@@ -85,7 +86,10 @@ except ImportError as e:
         """
 
         def __init__(
-            self, device_id: str = "local", name: str = "Local System", device_type: str = "local",
+            self,
+            device_id: str = "local",
+            name: str = "Local System",
+            device_type: str = "local",
         ) -> None:
             """Initialize fallback device.
 
@@ -118,21 +122,21 @@ except ImportError as e:
 
             try:
                 # Build command based on platform
-                if sys.platform == "win32":
-                    wmic_path = shutil.which("wmic")
-                    if wmic_path:
-                        cmd = [wmic_path, "process", "get", "ProcessId,Name,ExecutablePath"]
-                    else:
-                        cmd = None
+                if sys.platform == "win32" and (wmic_path := shutil.which("wmic")):
+                    cmd = [wmic_path, "process", "get", "ProcessId,Name,ExecutablePath"]
+                elif (
+                    (sys.platform == "win32"
+                    and not (wmic_path := shutil.which("wmic")))
+                    or (sys.platform != "win32"
+                    and not (ps_path := shutil.which("ps")))
+                ):
+                    cmd = None
                 else:
-                    ps_path = shutil.which("ps")
-                    if ps_path:
-                        cmd = [ps_path, "aux"]
-                    else:
-                        cmd = None
-
+                    cmd = [ps_path, "aux"]
                 if not cmd:
-                    logger.error("Process enumeration command not found for platform: %s", sys.platform)
+                    logger.error(
+                        "Process enumeration command not found for platform: %s", sys.platform
+                    )
                     return processes
 
                 # Execute command (with or without terminal)
@@ -142,8 +146,12 @@ except ImportError as e:
 
                         logger.info("Enumerating processes in terminal: %s", cmd)
                         terminal_mgr = get_terminal_manager()
-                        terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=True, cwd=None)
-                        logger.info("Process enumeration launched in terminal (results displayed interactively)")
+                        terminal_mgr.execute_command(
+                            command=cmd, capture_output=False, auto_switch=True, cwd=None
+                        )
+                        logger.info(
+                            "Process enumeration launched in terminal (results displayed interactively)"
+                        )
                         return processes
                     except ImportError:
                         logger.warning("Terminal manager not available, falling back to subprocess")
@@ -165,9 +173,8 @@ except ImportError as e:
                 # Parse output based on platform
                 lines = result.stdout.strip().split("\n")[1:]  # Skip header
 
-                if sys.platform == "win32":
-                    # Windows WMIC format
-                    for line in lines:
+                for line in lines:
+                    if sys.platform == "win32":
                         parts = line.strip().split()
                         if len(parts) >= 2:
                             try:
@@ -177,9 +184,7 @@ except ImportError as e:
                                 processes.append(process)
                             except (ValueError, IndexError):
                                 continue
-                else:
-                    # Linux/Mac ps format
-                    for line in lines:
+                    else:
                         parts = line.split(None, 10)
                         if len(parts) >= 11:
                             try:
@@ -210,16 +215,7 @@ except ImportError as e:
                 FallbackSession object for the attached process.
 
             """
-            # Find process
-            process = None
-            for p in self._processes:
-                if p.pid == pid:
-                    process = p
-                    break
-
-            if not process:
-                # Try to get process info directly
-                process = FallbackProcess(pid, f"Process-{pid}")
+            process = next((p for p in self._processes if p.pid == pid), None) or FallbackProcess(pid, f"Process-{pid}")
 
             session = FallbackSession(process, self)
             self._attached_sessions[pid] = session
@@ -227,11 +223,11 @@ except ImportError as e:
 
         def spawn(
             self,
-            program: Union[str, list[str]],
-            argv: Optional[list[str]] = None,
-            envp: Optional[dict[str, str]] = None,
-            env: Optional[dict[str, str]] = None,
-            cwd: Optional[str] = None,
+            program: str | list[str],
+            argv: list[str] | None = None,
+            envp: dict[str, str] | None = None,
+            env: dict[str, str] | None = None,
+            cwd: str | None = None,
             use_terminal: bool = False,
         ) -> int:
             """Spawn a new process.
@@ -259,17 +255,13 @@ except ImportError as e:
                 argv = []
 
             # Build command
-            if isinstance(program, str):
-                cmd = [program] + (argv or [])
-            else:
-                cmd = program
-
+            cmd = [program] + (argv or []) if isinstance(program, str) else program
             # Handle environment
             import os
 
             process_env = os.environ.copy()
             if env:
-                process_env.update(env)
+                process_env |= env
             if envp:
                 process_env.update(envp)
 
@@ -281,7 +273,9 @@ except ImportError as e:
 
                         logger.info("Spawning process in terminal: %s", cmd)
                         terminal_mgr = get_terminal_manager()
-                        session_id = terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=True, cwd=cwd)
+                        session_id = terminal_mgr.execute_command(
+                            command=cmd, capture_output=False, auto_switch=True, cwd=cwd
+                        )
 
                         # Give terminal process time to start
                         time.sleep(0.5)
@@ -291,7 +285,9 @@ except ImportError as e:
                         name = program if isinstance(program, str) else program[0]
                         FallbackProcess(pid, name, None)
 
-                        logger.info("Process spawned in terminal (PID: %d, Session: %s)", pid, session_id)
+                        logger.info(
+                            "Process spawned in terminal (PID: %d, Session: %s)", pid, session_id
+                        )
                         return pid
                     except ImportError:
                         logger.warning("Terminal manager not available, falling back to subprocess")
@@ -349,8 +345,7 @@ except ImportError as e:
             """
             try:
                 if sys.platform == "win32":
-                    taskkill_path = shutil.which("taskkill")
-                    if taskkill_path:
+                    if taskkill_path := shutil.which("taskkill"):
                         subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                             [taskkill_path, "/F", "/PID", str(pid)],
                             check=False,
@@ -376,12 +371,18 @@ except ImportError as e:
                 FallbackProcess object if found, None otherwise.
 
             """
-            for process in self.enumerate_processes():
-                if process.name == name or name in process.name:
-                    return process
-            return None
+            return next(
+                (
+                    process
+                    for process in self.enumerate_processes()
+                    if process.name == name or name in process.name
+                ),
+                None,
+            )
 
-        def inject_library_file(self, pid: int, path: str, entrypoint: str, data: Union[dict[str, Any], bytes, None]) -> bool:
+        def inject_library_file(
+            self, pid: int, path: str, entrypoint: str, data: dict[str, Any] | bytes | None
+        ) -> bool:
             """Inject library into process (fallback returns success).
 
             Fallback implementation that logs library injection attempts
@@ -400,7 +401,9 @@ except ImportError as e:
             logger.info("Library injection fallback for PID %d: %s", pid, path)
             return True
 
-        def inject_library_blob(self, pid: int, blob: bytes, entrypoint: str, data: Union[dict[str, Any], bytes, None]) -> bool:
+        def inject_library_blob(
+            self, pid: int, blob: bytes, entrypoint: str, data: dict[str, Any] | bytes | None
+        ) -> bool:
             """Inject library blob into process (fallback returns success).
 
             Fallback implementation for binary blob injection that logs
@@ -469,7 +472,9 @@ except ImportError as e:
         targeting.
         """
 
-        def __init__(self, pid: int, name: str, subprocess_obj: Optional[subprocess.Popen[bytes]] = None) -> None:
+        def __init__(
+            self, pid: int, name: str, subprocess_obj: subprocess.Popen[bytes] | None = None
+        ) -> None:
             """Initialize process object.
 
             Args:
@@ -498,7 +503,11 @@ except ImportError as e:
             params: dict[str, str] = {
                 "arch": "x64" if sys.maxsize > 2**32 else "x86",
                 "platform": sys.platform,
-                "os": "windows" if sys.platform == "win32" else "linux" if sys.platform.startswith("linux") else "darwin",
+                "os": "windows"
+                if sys.platform == "win32"
+                else "linux"
+                if sys.platform.startswith("linux")
+                else "darwin",
             }
             return params
 
@@ -534,7 +543,9 @@ except ImportError as e:
             self._on_detached_handlers: list[Callable[[str, Any], None]] = []
             self._detached = False
 
-        def create_script(self, source: str, name: Optional[str] = None, runtime: str = "v8") -> "FallbackScript":
+        def create_script(
+            self, source: str, name: str | None = None, runtime: str = "v8"
+        ) -> "FallbackScript":
             """Create a script object.
 
             Creates a FallbackScript object for script injection and message
@@ -553,7 +564,9 @@ except ImportError as e:
             self._scripts.append(script)
             return script
 
-        def compile_script(self, source: str, name: Optional[str] = None, runtime: str = "v8") -> "FallbackScript":
+        def compile_script(
+            self, source: str, name: str | None = None, runtime: str = "v8"
+        ) -> "FallbackScript":
             """Compile a script (returns compiled script object).
 
             Validates JavaScript syntax and compiles the script for
@@ -662,7 +675,13 @@ except ImportError as e:
         within target processes.
         """
 
-        def __init__(self, source: str, session: "FallbackSession", name: Optional[str] = None, runtime: str = "v8") -> None:
+        def __init__(
+            self,
+            source: str,
+            session: "FallbackSession",
+            name: str | None = None,
+            runtime: str = "v8",
+        ) -> None:
             """Initialize script.
 
             Args:
@@ -690,7 +709,9 @@ except ImportError as e:
 
             self._parse_script()
 
-            self._send_internal_message({"type": "send", "payload": {"type": "ready", "script": self.name}})
+            self._send_internal_message(
+                {"type": "send", "payload": {"type": "ready", "script": self.name}}
+            )
 
         def unload(self) -> None:
             """Unload the script.
@@ -717,7 +738,9 @@ except ImportError as e:
                     msg = self._pending_messages.pop(0)
                     handler(msg, None)
 
-        def post(self, message: Union[dict[str, Any], str, int], data: Optional[Union[bytes, dict[str, Any]]] = None) -> None:
+        def post(
+            self, message: dict[str, Any] | str | int, data: bytes | dict[str, Any] | None = None
+        ) -> None:
             """Post message to script.
 
             Sends a message to the loaded script and processes its response,
@@ -732,8 +755,7 @@ except ImportError as e:
                 logger.warning("Cannot post to unloaded script")
                 return
 
-            response = self._process_message(message, data)
-            if response:
+            if response := self._process_message(message, data):
                 self._send_internal_message(response)
 
         def exports(self) -> dict[str, Callable[..., dict[str, Any]]]:
@@ -760,10 +782,8 @@ except ImportError as e:
 
             # Extract RPC exports
             rpc_pattern = r"rpc\.exports\s*=\s*{([^}]+)}"
-            rpc_match = re.search(rpc_pattern, self.source)
-
-            if rpc_match:
-                methods_text = rpc_match.group(1)
+            if rpc_match := re.search(rpc_pattern, self.source):
+                methods_text = rpc_match[1]
                 method_pattern = r"(\w+)\s*:\s*function"
                 methods = re.findall(method_pattern, methods_text)
 
@@ -783,13 +803,25 @@ except ImportError as e:
                 Callable RPC method.
 
             """
-            def rpc_method(*args: Union[str, int, bool, dict[str, Any]], **kwargs: Union[str, int, bool, dict[str, Any]]) -> dict[str, Any]:
+
+            def rpc_method(
+                *args: str | int | bool | dict[str, Any],
+                **kwargs: str | int | bool | dict[str, Any],
+            ) -> dict[str, Any]:
                 logger.info("RPC call to %s with args: %s, kwargs: %s", method_name, args, kwargs)
-                return {"status": "success", "method": method_name, "fallback": True, "args": args, "kwargs": kwargs}
+                return {
+                    "status": "success",
+                    "method": method_name,
+                    "fallback": True,
+                    "args": args,
+                    "kwargs": kwargs,
+                }
 
             return rpc_method
 
-        def _process_message(self, message: Union[dict[str, Any], str, int], data: Optional[Union[bytes, dict[str, Any]]]) -> Optional[dict[str, Any]]:
+        def _process_message(
+            self, message: dict[str, Any] | str | int, data: bytes | dict[str, Any] | None
+        ) -> dict[str, Any] | None:
             """Process incoming message from host.
 
             Handles different message types like ping and evaluate requests,
@@ -811,8 +843,13 @@ except ImportError as e:
                     return {"type": "send", "payload": {"type": "pong"}}
                 if msg_type == "evaluate":
                     code = message.get("code", "")
-                    logger.debug("Processing evaluation request in fallback mode for: %s", code[:100])
-                    return {"type": "send", "payload": {"type": "result", "value": f"Evaluated: {code[:50]}..."}}
+                    logger.debug(
+                        "Processing evaluation request in fallback mode for: %s", code[:100]
+                    )
+                    return {
+                        "type": "send",
+                        "payload": {"type": "result", "value": f"Evaluated: {code[:50]}..."},
+                    }
 
             return None
 
@@ -881,7 +918,7 @@ except ImportError as e:
             """
             return list(self._devices.values())
 
-        def add_remote_device(self, address: str, **kwargs: Union[str, int, bool]) -> "FallbackDevice":
+        def add_remote_device(self, address: str, **kwargs: str | int | bool) -> "FallbackDevice":
             """Add a remote device.
 
             Registers a remote device for analysis and instrumentation.
@@ -1021,7 +1058,9 @@ except ImportError as e:
         supporting RPC calls and data transfer for dynamic analysis.
         """
 
-        def __init__(self, message_type: str, payload: dict[str, Any], data: Optional[bytes] = None) -> None:
+        def __init__(
+            self, message_type: str, payload: dict[str, Any], data: bytes | None = None
+        ) -> None:
             """Initialize script message.
 
             Args:
@@ -1045,7 +1084,7 @@ except ImportError as e:
         manager = FallbackDeviceManager()
         return manager.get_local_device()
 
-    def get_remote_device(address: str, **kwargs: Union[str, int, bool]) -> "FallbackDevice":
+    def get_remote_device(address: str, **kwargs: str | int | bool) -> "FallbackDevice":
         """Get a remote device.
 
         Registers and returns a remote device for network-based analysis.
@@ -1085,7 +1124,7 @@ except ImportError as e:
         """
         return FallbackDeviceManager()
 
-    def attach(target: Union[int, str]) -> "FallbackSession":
+    def attach(target: int | str) -> "FallbackSession":
         """Attach to a process.
 
         Attaches to a target process by PID or process name, creating
@@ -1107,8 +1146,7 @@ except ImportError as e:
         if isinstance(target, int):
             return device.attach(target)
         if isinstance(target, str):
-            process = device.get_process(target)
-            if process:
+            if process := device.get_process(target):
                 return device.attach(process.pid)
             error_msg = f"Process not found: {target}"
             logger.error(error_msg)
@@ -1118,11 +1156,11 @@ except ImportError as e:
         raise TypeError(error_msg)
 
     def spawn(
-        program: Union[str, list[str]],
-        argv: Optional[list[str]] = None,
-        envp: Optional[dict[str, str]] = None,
-        env: Optional[dict[str, str]] = None,
-        cwd: Optional[str] = None,
+        program: str | list[str],
+        argv: list[str] | None = None,
+        envp: dict[str, str] | None = None,
+        env: dict[str, str] | None = None,
+        cwd: str | None = None,
     ) -> int:
         """Spawn a new process.
 
@@ -1223,6 +1261,7 @@ if not HAS_FRIDA:
     DeviceManager = FallbackDeviceManager
     FileMonitor = FallbackFileMonitor
     ScriptMessage = FallbackScriptMessage
+
     def get_local_device() -> None:
         """Get the local device when Frida is unavailable.
 
@@ -1319,27 +1358,23 @@ if not HAS_FRIDA:
 
 # Export all Frida objects and availability flag
 __all__ = [
-    # Availability flags
-    "HAS_FRIDA",
-    "FRIDA_VERSION",
-    # Main frida module
-    "frida",
-    # Core classes
     "Device",
-    "Process",
-    "Session",
-    "Script",
     "DeviceManager",
+    "FRIDA_VERSION",
     "FileMonitor",
+    "HAS_FRIDA",
+    "Process",
+    "Script",
     "ScriptMessage",
-    # Functions
+    "Session",
+    "attach",
+    "enumerate_devices",
+    "frida",
+    "get_device_manager",
     "get_local_device",
     "get_remote_device",
     "get_usb_device",
-    "get_device_manager",
-    "attach",
-    "spawn",
-    "resume",
     "kill",
-    "enumerate_devices",
+    "resume",
+    "spawn",
 ]

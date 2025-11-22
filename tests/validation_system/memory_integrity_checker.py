@@ -72,12 +72,12 @@ class MemoryIntegrityResult:
     memory_dump_path: str
     text_section_original_hash: str
     text_section_memory_hash: str
-    memory_modifications: List[MemoryModification]
-    hook_detections: List[HookDetection]
-    iat_modifications: List[Dict[str, Any]]
+    memory_modifications: list[MemoryModification]
+    hook_detections: list[HookDetection]
+    iat_modifications: list[dict[str, Any]]
     eat_integrity: bool
     memory_integrity_valid: bool
-    error_messages: List[str]
+    error_messages: list[str]
     timestamp: str = None
 
     def __post_init__(self):
@@ -111,7 +111,7 @@ class MemoryIntegrityChecker:
                 sha256.update(chunk)
         return sha256.hexdigest()
 
-    def _find_existing_process(self, software_name: str) -> Optional[int]:
+    def _find_existing_process(self, software_name: str) -> int | None:
         """
         Find existing running process by name using psutil or Windows API.
         """
@@ -366,7 +366,7 @@ class MemoryIntegrityChecker:
 
             return ""
 
-    def _extract_text_section_from_disk(self, binary_path: str) -> Optional[bytes]:
+    def _extract_text_section_from_disk(self, binary_path: str) -> bytes | None:
         """
         Extract the .text section from the on-disk binary.
         """
@@ -392,7 +392,7 @@ class MemoryIntegrityChecker:
             logger.error(f"Failed to extract text section from disk: {e}")
             return None
 
-    def _extract_text_section_from_memory(self, memory_dump_path: str) -> Optional[bytes]:
+    def _extract_text_section_from_memory(self, memory_dump_path: str) -> bytes | None:
         """
         Extract the .text section from the memory dump using real parsing.
         """
@@ -438,7 +438,7 @@ class MemoryIntegrityChecker:
                 # Handle PowerShell process dump (JSON format)
                 try:
                     import json
-                    with open(memory_dump_path, 'r') as f:
+                    with open(memory_dump_path) as f:
                         process_info = json.loads(f.read())
 
                     # Extract module information for text section analysis
@@ -585,7 +585,7 @@ class MemoryIntegrityChecker:
             logger.error(f"Failed to dump memory regions: {e}")
             return ""
 
-    def _extract_from_raw_memory_dump(self, dump_path: str) -> Optional[bytes]:
+    def _extract_from_raw_memory_dump(self, dump_path: str) -> bytes | None:
         """
         Extract text section from raw memory dump file.
         """
@@ -607,7 +607,7 @@ class MemoryIntegrityChecker:
             logger.error(f"Failed to extract from raw memory dump: {e}")
             return None
 
-    def _extract_text_from_pe_data(self, pe_data: bytes) -> Optional[bytes]:
+    def _extract_text_from_pe_data(self, pe_data: bytes) -> bytes | None:
         """
         Extract .text section from PE data in memory.
         """
@@ -665,7 +665,7 @@ class MemoryIntegrityChecker:
             logger.error(f"Failed to extract text section from PE data: {e}")
             return None
 
-    def _extract_memory_region_via_powershell(self, base_addr: str, size: int) -> Optional[bytes]:
+    def _extract_memory_region_via_powershell(self, base_addr: str, size: int) -> bytes | None:
         """
         Extract memory region using PowerShell and .NET Process class.
         """
@@ -740,7 +740,7 @@ class MemoryIntegrityChecker:
             logger.error(f"Failed to extract memory region via PowerShell: {e}")
             return None
 
-    def _compare_sections(self, disk_section: bytes, memory_section: bytes) -> List[MemoryModification]:
+    def _compare_sections(self, disk_section: bytes, memory_section: bytes) -> list[MemoryModification]:
         """
         Compare disk and memory sections to identify modifications.
         """
@@ -788,7 +788,7 @@ class MemoryIntegrityChecker:
 
         return modifications
 
-    def _detect_common_hooks(self, memory_section: bytes) -> List[HookDetection]:
+    def _detect_common_hooks(self, memory_section: bytes) -> list[HookDetection]:
         """
         Detect common hooking patterns in memory.
         """
@@ -858,7 +858,7 @@ class MemoryIntegrityChecker:
 
         return hooks
 
-    def _check_import_address_table(self, binary_path: str) -> List[Dict[str, Any]]:
+    def _check_import_address_table(self, binary_path: str) -> list[dict[str, Any]]:
         """
         Check Import Address Table (IAT) for modifications.
         """
@@ -1067,7 +1067,7 @@ class MemoryIntegrityChecker:
 
         return result
 
-    def check_all_memory_integrity(self) -> List[MemoryIntegrityResult]:
+    def check_all_memory_integrity(self) -> list[MemoryIntegrityResult]:
         """
         Check memory integrity for all available binaries.
         """
@@ -1130,7 +1130,7 @@ class MemoryIntegrityChecker:
         logger.info(f"Completed memory integrity checks for {len(results)} binaries")
         return results
 
-    def generate_report(self, results: List[MemoryIntegrityResult]) -> str:
+    def generate_report(self, results: list[MemoryIntegrityResult]) -> str:
         """
         Generate a comprehensive report of memory integrity validation results.
         """
@@ -1200,7 +1200,7 @@ class MemoryIntegrityChecker:
 
         return "\n".join(report_lines)
 
-    def save_report(self, results: List[MemoryIntegrityResult], filename: Optional[str] = None) -> str:
+    def save_report(self, results: list[MemoryIntegrityResult], filename: str | None = None) -> str:
         """
         Save the memory integrity validation report to a file.
         """

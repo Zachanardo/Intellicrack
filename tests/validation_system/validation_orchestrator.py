@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ValidationTestResult:
     """Result of validation testing."""
-    statistical_analysis_results: List[StatisticalAnalysisResult]
-    cross_environment_results: List[CrossEnvironmentResult]
+    statistical_analysis_results: list[StatisticalAnalysisResult]
+    cross_environment_results: list[CrossEnvironmentResult]
     overall_success: bool
     timestamp: str = None
 
@@ -35,8 +35,8 @@ class ValidationTestResult:
 class ValidationReport:
     """Comprehensive report of validation."""
     test_results: ValidationTestResult
-    summary: Dict[str, Any]
-    recommendations: List[str]
+    summary: dict[str, Any]
+    recommendations: list[str]
     overall_status: str
     timestamp: str = None
 
@@ -60,7 +60,7 @@ class ValidationOrchestrator:
 
         logger.info("Validation Orchestrator initialized")
 
-    def run_statistical_analysis(self) -> List[StatisticalAnalysisResult]:
+    def run_statistical_analysis(self) -> list[StatisticalAnalysisResult]:
         """
         Run statistical analysis on all available binaries.
         """
@@ -69,7 +69,7 @@ class ValidationOrchestrator:
         logger.info(f"Completed statistical analysis: {len(results)} results")
         return results
 
-    def run_cross_environment_validation(self) -> List[CrossEnvironmentResult]:
+    def run_cross_environment_validation(self) -> list[CrossEnvironmentResult]:
         """
         Run cross-environment validation on all available binaries.
         """

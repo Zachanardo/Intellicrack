@@ -23,12 +23,9 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any
 
+
 try:
-    from .radare2_session_manager import (
-        R2SessionWrapper,
-        get_global_pool,
-        r2_session_pooled,
-    )
+    from .radare2_session_manager import R2SessionWrapper, get_global_pool, r2_session_pooled
 
     SESSION_MANAGER_AVAILABLE = True
 except ImportError:
@@ -36,6 +33,7 @@ except ImportError:
 
 try:
     import r2pipe
+
     R2PIPE_AVAILABLE = True
 except ImportError:
     R2PIPE_AVAILABLE = False
@@ -99,9 +97,7 @@ class DirectR2Session:
         if not self.r2:
             raise RuntimeError("Not connected")
 
-        if expect_json:
-            return self.r2.cmdj(command)
-        return self.r2.cmd(command)
+        return self.r2.cmdj(command) if expect_json else self.r2.cmd(command)
 
 
 @contextmanager
@@ -129,12 +125,11 @@ def get_r2_session(
     else:
         session = DirectR2Session(binary_path, flags)
         try:
-            if session.connect():
-                if auto_analyze:
-                    session.execute("aaa")
-                yield session
-            else:
+            if not session.connect():
                 raise RuntimeError(f"Failed to connect to {binary_path}")
+            if auto_analyze:
+                session.execute("aaa")
+            yield session
         finally:
             session.disconnect()
 
@@ -305,13 +300,13 @@ def migrate_r2pipe_to_pooled(
 
 __all__ = [
     "DirectR2Session",
-    "get_r2_session",
-    "execute_r2_command",
-    "get_pool_statistics",
-    "get_all_session_metrics",
+    "R2CommandBatch",
+    "SESSION_MANAGER_AVAILABLE",
     "cleanup_idle_sessions",
     "configure_global_pool",
-    "R2CommandBatch",
+    "execute_r2_command",
+    "get_all_session_metrics",
+    "get_pool_statistics",
+    "get_r2_session",
     "migrate_r2pipe_to_pooled",
-    "SESSION_MANAGER_AVAILABLE",
 ]

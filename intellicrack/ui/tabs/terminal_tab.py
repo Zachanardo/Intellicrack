@@ -24,16 +24,11 @@ Main tab containing the terminal session widget for interactive process executio
 import logging
 
 from intellicrack.core.terminal_manager import get_terminal_manager
-from intellicrack.handlers.pyqt6_handler import (
-    QFileDialog,
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QVBoxLayout,
-)
+from intellicrack.handlers.pyqt6_handler import QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 from intellicrack.ui.widgets import TerminalSessionWidget
 
 from .base_tab import BaseTab
+
 
 logger = logging.getLogger(__name__)
 
@@ -71,8 +66,7 @@ class TerminalTab(BaseTab):
         from intellicrack.handlers.pyqt6_handler import QSizePolicy
 
         try:
-            old_layout = self.layout()
-            if old_layout:
+            if old_layout := self.layout():
                 while old_layout.count():
                     item = old_layout.takeAt(0)
                     if item.widget():
@@ -87,7 +81,9 @@ class TerminalTab(BaseTab):
             layout.addLayout(toolbar, stretch=0)
 
             self.terminal_widget = TerminalSessionWidget(self)
-            self.terminal_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+            self.terminal_widget.setSizePolicy(
+                QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+            )
             self.terminal_widget.setMinimumSize(640, 500)
             layout.addWidget(self.terminal_widget, stretch=1)
 
@@ -203,7 +199,12 @@ class TerminalTab(BaseTab):
             logger.warning("No active terminal session to export")
             return
 
-        filename, _ = QFileDialog.getSaveFileName(self, "Export Terminal Log", "", "Text Files (*.txt);;Log Files (*.log);;All Files (*.*)")
+        filename, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Terminal Log",
+            "",
+            "Text Files (*.txt);;Log Files (*.log);;All Files (*.*)",
+        )
 
         if filename:
             try:

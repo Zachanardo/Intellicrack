@@ -22,13 +22,7 @@ from collections import Counter
 import pyqtgraph as pg
 
 from intellicrack.handlers.numpy_handler import numpy as np
-from intellicrack.handlers.pyqt6_handler import (
-    QLabel,
-    Qt,
-    QVBoxLayout,
-    QWidget,
-    pyqtSignal,
-)
+from intellicrack.handlers.pyqt6_handler import QLabel, Qt, QVBoxLayout, QWidget, pyqtSignal
 from intellicrack.utils.logger import logger
 
 
@@ -121,7 +115,9 @@ class EntropyVisualizer(QWidget):
         layout.addWidget(self.plot_widget)
         layout.addWidget(self.info_label)
 
-    def calculate_entropy(self, data: bytes, block_size: int = 1024) -> tuple[list[float], list[float]]:
+    def calculate_entropy(
+        self, data: bytes, block_size: int = 1024
+    ) -> tuple[list[float], list[float]]:
         """Calculate Shannon entropy for data blocks.
 
         Divides binary data into fixed-size blocks and calculates Shannon entropy
@@ -251,8 +247,10 @@ class EntropyVisualizer(QWidget):
                 raise ValueError(error_msg)
 
             # Identify interesting regions
-            high_entropy_blocks = sum(1 for e in self.entropy_data if e > 7.5)
-            low_entropy_blocks = sum(1 for e in self.entropy_data if e < 1.0)
+            high_entropy_blocks = sum(bool(e > 7.5)
+                                  for e in self.entropy_data)
+            low_entropy_blocks = sum(bool(e < 1.0)
+                                 for e in self.entropy_data)
 
             # Update info label
             info_text = (

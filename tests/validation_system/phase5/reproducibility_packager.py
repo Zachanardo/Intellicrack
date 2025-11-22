@@ -46,15 +46,15 @@ class SystemSnapshot:
     cpu_freq: float
     memory_total: int
     memory_available: int
-    disk_usage: Dict[str, Dict]
-    gpu_info: List[Dict]
-    network_interfaces: List[Dict]
-    environment_variables: Dict[str, str]
-    installed_software: List[Dict]
-    system_dlls: List[str]
+    disk_usage: dict[str, dict]
+    gpu_info: list[dict]
+    network_interfaces: list[dict]
+    environment_variables: dict[str, str]
+    installed_software: list[dict]
+    system_dlls: list[str]
     kernel_version: str
-    security_software: List[str]
-    virtualization: Dict[str, bool]
+    security_software: list[str]
+    virtualization: dict[str, bool]
 
 
 @dataclass
@@ -62,29 +62,29 @@ class DependencySnapshot:
     """Complete dependency state for reproduction."""
     python_version: str
     python_executable: str
-    pip_packages: List[Dict]
-    conda_packages: List[Dict]
-    system_packages: List[str]
-    dll_dependencies: List[Dict]
-    virtual_env: Optional[str]
+    pip_packages: list[dict]
+    conda_packages: list[dict]
+    system_packages: list[str]
+    dll_dependencies: list[dict]
+    virtual_env: str | None
     requirements_txt: str
     environment_yml: str
-    pipfile: Optional[str]
-    poetry_lock: Optional[str]
+    pipfile: str | None
+    poetry_lock: str | None
 
 
 @dataclass
 class ConfigurationSnapshot:
     """All configuration files and settings."""
-    intellicrack_config: Dict
-    frida_config: Dict
-    ghidra_config: Dict
-    environment_config: Dict
-    tool_paths: Dict[str, str]
-    api_keys: Dict[str, str]  # Encrypted
-    license_keys: Dict[str, str]  # Encrypted
-    debug_settings: Dict
-    performance_settings: Dict
+    intellicrack_config: dict
+    frida_config: dict
+    ghidra_config: dict
+    environment_config: dict
+    tool_paths: dict[str, str]
+    api_keys: dict[str, str]  # Encrypted
+    license_keys: dict[str, str]  # Encrypted
+    debug_settings: dict
+    performance_settings: dict
 
 
 class EnvironmentRecorder:
@@ -192,7 +192,7 @@ class EnvironmentRecorder:
             virtualization=virtualization
         )
 
-    def _get_installed_software(self) -> List[Dict]:
+    def _get_installed_software(self) -> list[dict]:
         """Get list of installed software on Windows."""
         software_list = []
 
@@ -244,7 +244,7 @@ class EnvironmentRecorder:
 
         return software_list
 
-    def _get_system_dlls(self) -> List[str]:
+    def _get_system_dlls(self) -> list[str]:
         """Get list of system DLLs."""
         dlls = []
 
@@ -255,7 +255,7 @@ class EnvironmentRecorder:
 
         return dlls
 
-    def _detect_security_software(self) -> List[str]:
+    def _detect_security_software(self) -> list[str]:
         """Detect installed security software."""
         security_software = []
 
@@ -291,7 +291,7 @@ class EnvironmentRecorder:
 
         return security_software
 
-    def _detect_virtualization(self) -> Dict[str, bool]:
+    def _detect_virtualization(self) -> dict[str, bool]:
         """Detect if running in virtualized environment."""
         virt = {
             "vmware": False,
@@ -421,7 +421,7 @@ class EnvironmentRecorder:
             poetry_lock=poetry_lock
         )
 
-    def _get_dll_dependencies(self) -> List[Dict]:
+    def _get_dll_dependencies(self) -> list[dict]:
         """Get DLL dependencies for Python and key libraries."""
         dll_deps = []
 
@@ -459,14 +459,14 @@ class EnvironmentRecorder:
 
         return dll_deps
 
-    def _generate_requirements_txt(self, pip_packages: List[Dict]) -> str:
+    def _generate_requirements_txt(self, pip_packages: list[dict]) -> str:
         """Generate requirements.txt from pip packages."""
         requirements = []
         for package in pip_packages:
             requirements.append(f"{package.get('name')}=={package.get('version')}")
         return "\n".join(requirements)
 
-    def _generate_environment_yml(self, conda_packages: List[Dict]) -> str:
+    def _generate_environment_yml(self, conda_packages: list[dict]) -> str:
         """Generate environment.yml from conda packages."""
         env_dict = {
             "name": "intellicrack_validation",
@@ -520,10 +520,10 @@ class ExecutionRecorder:
         self,
         test_id: str,
         command: str,
-        arguments: List[str],
-        environment: Dict[str, str],
+        arguments: list[str],
+        environment: dict[str, str],
         working_dir: Path
-    ) -> Dict:
+    ) -> dict:
         """Record a test execution with full reproducibility data."""
 
         # Snapshot files before execution
@@ -595,7 +595,7 @@ class ExecutionRecorder:
             "file_changes": file_changes
         }
 
-    def _snapshot_directory(self, directory: Path) -> Dict[str, str]:
+    def _snapshot_directory(self, directory: Path) -> dict[str, str]:
         """Create snapshot of directory state."""
         snapshot = {}
 
@@ -610,7 +610,7 @@ class ExecutionRecorder:
 
         return snapshot
 
-    def _detect_file_changes(self, before: Dict[str, str], after: Dict[str, str]) -> Dict:
+    def _detect_file_changes(self, before: dict[str, str], after: dict[str, str]) -> dict:
         """Detect file changes between snapshots."""
         changes = {
             "created": [],
@@ -652,8 +652,8 @@ class ReproducibilityPackager:
 
     def create_reproducibility_package(
         self,
-        test_results: List[Any],
-        test_configs: Dict,
+        test_results: list[Any],
+        test_configs: dict,
         evidence_dir: Path
     ) -> Path:
         """Create complete reproducibility package."""
@@ -769,7 +769,7 @@ class ReproducibilityPackager:
             performance_settings={}  # Would load from performance config
         )
 
-    def _discover_tool_paths(self) -> Dict[str, str]:
+    def _discover_tool_paths(self) -> dict[str, str]:
         """Discover paths to all required tools."""
         tools = {}
 
@@ -789,7 +789,7 @@ class ReproducibilityPackager:
 
         return tools
 
-    def _encrypt_sensitive_data(self, data: Dict) -> Dict:
+    def _encrypt_sensitive_data(self, data: dict) -> dict:
         """Encrypt sensitive configuration data."""
         encrypted = {}
         for key, value in data.items():
@@ -833,7 +833,7 @@ Vagrant.configure("2") do |config|
 end
 """
 
-    def _package_test_binaries(self, output_dir: Path, test_configs: Dict):
+    def _package_test_binaries(self, output_dir: Path, test_configs: dict):
         """Package all test binaries with metadata."""
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -869,7 +869,7 @@ end
         if evidence_dir.exists():
             shutil.copytree(evidence_dir, output_dir, dirs_exist_ok=True)
 
-    def _create_execution_scripts(self, package_path: Path, test_configs: Dict):
+    def _create_execution_scripts(self, package_path: Path, test_configs: dict):
         """Create scripts to re-run validation tests."""
 
         # Windows batch script
@@ -1127,7 +1127,7 @@ End of Instructions
 
         return instructions
 
-    def _save_snapshot(self, path: Path, data: Dict):
+    def _save_snapshot(self, path: Path, data: dict):
         """Save snapshot data as JSON."""
         with open(path, "w") as f:
             json.dump(data, f, indent=2, default=str)

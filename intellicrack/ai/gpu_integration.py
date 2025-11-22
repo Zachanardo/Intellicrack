@@ -23,17 +23,12 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 # Import unified GPU system
 try:
-    from ..utils.gpu_autoloader import (
-        get_device,
-        get_gpu_info,
-        gpu_autoloader,
-        optimize_for_gpu,
-        to_device,
-    )
+    from ..utils.gpu_autoloader import get_device, get_gpu_info, gpu_autoloader, optimize_for_gpu, to_device
 
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError:
@@ -51,10 +46,7 @@ except ImportError:
         from ..utils.torch_gil_safety import safe_torch_import
 
         torch = safe_torch_import()
-        if torch is None:
-            # Return string representation if torch not available
-            return "cpu"
-        return torch.device("cpu")
+        return "cpu" if torch is None else torch.device("cpu")
 
     def get_gpu_info() -> dict[str, Any]:
         """Get GPU information (fallback to CPU info).
@@ -131,8 +123,12 @@ class GPUIntegration:
                     }
                 elif self.gpu_info["type"] == "amd_rocm" and hasattr(torch, "hip"):
                     info["runtime"] = {
-                        "hip_available": torch.hip.is_available() if hasattr(torch.hip, "is_available") else False,
-                        "device_count": torch.hip.device_count() if hasattr(torch.hip, "device_count") else 0,
+                        "hip_available": torch.hip.is_available()
+                        if hasattr(torch.hip, "is_available")
+                        else False,
+                        "device_count": torch.hip.device_count()
+                        if hasattr(torch.hip, "device_count")
+                        else 0,
                     }
             except Exception as e:
                 logger.debug(f"Failed to get runtime info: {e}")
@@ -171,9 +167,7 @@ class GPUIntegration:
 
     def get_memory_usage(self) -> dict[str, Any]:
         """Get current GPU memory usage."""
-        if GPU_AUTOLOADER_AVAILABLE:
-            return gpu_autoloader.get_memory_info()
-        return {}
+        return gpu_autoloader.get_memory_info() if GPU_AUTOLOADER_AVAILABLE else {}
 
     def synchronize(self) -> None:
         """Synchronize GPU operations."""

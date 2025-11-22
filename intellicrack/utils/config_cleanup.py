@@ -45,11 +45,10 @@ class UnusedConfigCodeDetector(ast.NodeVisitor):
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
         """Check for unused configuration imports from modules."""
-        if node.module:
-            if "QtCore" in node.module:
-                for alias in node.names:
-                    if alias.name == "QSettings":
-                        self.unused_imports.add(("QSettings", node.lineno))
+        if node.module and "QtCore" in node.module:
+            for alias in node.names:
+                if alias.name == "QSettings":
+                    self.unused_imports.add(("QSettings", node.lineno))
 
     def visit_Call(self, node: ast.Call) -> None:
         """Check for legacy configuration method calls."""
@@ -58,9 +57,8 @@ class UnusedConfigCodeDetector(ast.NodeVisitor):
                 self.qsettings_usage.append(node.lineno)
         elif isinstance(node.func, ast.Attribute):
             # Check for .setValue, .value, .sync calls
-            if node.func.attr in ["setValue", "value", "sync"]:
-                if hasattr(node.func.value, "id") and "settings" in str(node.func.value.id).lower():
-                    self.legacy_config_patterns.append((node.func.attr, node.lineno))
+            if node.func.attr in ["setValue", "value", "sync"] and (hasattr(node.func.value, "id") and "settings" in str(node.func.value.id).lower()):
+                self.legacy_config_patterns.append((node.func.attr, node.lineno))
 
         self.generic_visit(node)
 
@@ -84,11 +82,13 @@ class UnusedConfigCodeDetector(ast.NodeVisitor):
 
     def _is_likely_unused(self, node: ast.FunctionDef) -> bool:
         """Check if a method is likely unused based on docstring or comments."""
-        if node.body and isinstance(node.body[0], ast.Expr):
-            if isinstance(node.body[0].value, ast.Constant):
-                docstring = node.body[0].value.value
-                if isinstance(docstring, str):
-                    return any(word in docstring.lower() for word in ["deprecated", "unused", "legacy", "old", "migration only"])
+        if node.body and isinstance(node.body[0], ast.Expr) and isinstance(node.body[0].value, ast.Constant):
+            docstring = node.body[0].value.value
+            if isinstance(docstring, str):
+                return any(
+                    word in docstring.lower()
+                    for word in ["deprecated", "unused", "legacy", "old", "migration only"]
+                )
         return False
 
 
@@ -160,20 +160,22 @@ def generate_cleanup_report(results: dict) -> str:
         Formatted report string
 
     """
-    report = []
-    report.append("=" * 60)
-    report.append("CONFIGURATION CODE CLEANUP REPORT")
-    report.append("=" * 60)
-    report.append("")
-
+    report = ["=" * 60, "CONFIGURATION CODE CLEANUP REPORT", "=" * 60, ""]
     total_files = len(results)
     total_issues = sum(
-        len(info["unused_imports"]) + len(info["unused_methods"]) + len(info["qsettings_usage"]) + len(info["legacy_patterns"])
+        len(info["unused_imports"])
+        + len(info["unused_methods"])
+        + len(info["qsettings_usage"])
+        + len(info["legacy_patterns"])
         for info in results.values()
     )
 
-    report.append(f"Files with unused config code: {total_files}")
-    report.append(f"Total issues found: {total_issues}")
+    report.extend(
+        (
+            f"Files with unused config code: {total_files}",
+            f"Total issues found: {total_issues}",
+        )
+    )
     report.append("")
 
     for file_path, info in sorted(results.items()):
@@ -251,10 +253,9 @@ def cleanup_file(file_path: Path, auto_fix: bool = False) -> int:
 
     fixed_count = 0
 
-    if auto_fix and imports:
-        if remove_unused_imports(file_path, imports):
-            fixed_count += len(imports)
-            print(f"Removed {len(imports)} unused imports from {file_path}")
+    if auto_fix and imports and remove_unused_imports(file_path, imports):
+        fixed_count += len(imports)
+        print(f"Removed {len(imports)} unused imports from {file_path}")
 
     # For methods and other patterns, we'll just report them
     # Manual intervention is safer for method removal
@@ -267,9 +268,7 @@ if __name__ == "__main__":
     project_root = Path(__file__).parent.parent.parent
 
     print("Analyzing project for unused configuration code...")
-    results = find_unused_config_code(project_root / "intellicrack")
-
-    if results:
+    if results := find_unused_config_code(project_root / "intellicrack"):
         report = generate_cleanup_report(results)
         print(report)
 

@@ -26,6 +26,7 @@ from typing import Any, Optional, Union
 
 from intellicrack.utils.logger import logger
 
+
 """
 SQLite3 Import Handler with Production-Ready Fallbacks
 
@@ -119,7 +120,7 @@ except ImportError as e:
             self.name: str = name
             self.columns: list[tuple[str, str, str]] = columns
             self.rows: list[dict[str, Any]] = []
-            self.primary_key: Optional[str] = None
+            self.primary_key: str | None = None
             self.indexes: dict[str, Any] = {}
             self.constraints: list[tuple[str, str]] = []
 
@@ -168,7 +169,7 @@ except ImportError as e:
                     elif col_type == "TEXT":
                         value = str(value)
                     elif col_type == "BLOB":
-                        value = bytes(value) if not isinstance(value, bytes) else value
+                        value = value if isinstance(value, bytes) else bytes(value)
 
                 row[col_name] = value
 
@@ -193,10 +194,10 @@ except ImportError as e:
 
         def select(
             self,
-            columns: Optional[list[str]] = None,
-            where: Optional[tuple[str, str, Any]] = None,
-            order_by: Optional[tuple[str, str]] = None,
-            limit: Optional[int] = None,
+            columns: list[str] | None = None,
+            where: tuple[str, str, Any] | None = None,
+            order_by: tuple[str, str] | None = None,
+            limit: int | None = None,
         ) -> list[tuple[Any, ...]]:
             """Select rows from table.
 
@@ -214,9 +215,8 @@ except ImportError as e:
 
             for row in self.rows:
                 # Apply WHERE clause
-                if where:
-                    if not self._evaluate_where(row, where):
-                        continue
+                if where and not self._evaluate_where(row, where):
+                    continue
 
                 # Select columns
                 if columns and columns != ["*"]:
@@ -231,7 +231,9 @@ except ImportError as e:
                 col_name, direction = order_by
                 col_idx = self._get_column_index(col_name)
                 reverse = direction == "DESC"
-                result_rows.sort(key=lambda x: x[col_idx] if x[col_idx] is not None else "", reverse=reverse)
+                result_rows.sort(
+                    key=lambda x: x[col_idx] if x[col_idx] is not None else "", reverse=reverse
+                )
 
             # Apply LIMIT
             if limit:
@@ -242,7 +244,7 @@ except ImportError as e:
         def update(
             self,
             set_values: dict[str, Any],
-            where: Optional[tuple[str, str, Any]] = None,
+            where: tuple[str, str, Any] | None = None,
         ) -> int:
             """Update rows in table.
 
@@ -266,7 +268,7 @@ except ImportError as e:
 
             return updated_count
 
-        def delete(self, where: Optional[tuple[str, str, Any]] = None) -> int:
+        def delete(self, where: tuple[str, str, Any] | None = None) -> int:
             """Delete rows from table.
 
             Args:
@@ -347,10 +349,10 @@ except ImportError as e:
                 The zero-based index of the column, or 0 if not found.
 
             """
-            for i, (name, _, _) in enumerate(self.columns):
-                if name == col_name:
-                    return i
-            return 0
+            return next(
+                (i for i, (name, _, _) in enumerate(self.columns) if name == col_name),
+                0,
+            )
 
     class FallbackDatabase:
         """In-memory database implementation.
@@ -429,7 +431,9 @@ except ImportError as e:
 
             del self.tables[name]
 
-        def execute_sql(self, sql: str, params: Optional[list[Any]] = None) -> list[tuple[Any, ...]] | None:
+        def execute_sql(
+            self, sql: str, params: list[Any] | None = None
+        ) -> list[tuple[Any, ...]] | None:
             """Execute SQL statement.
 
             Args:
@@ -496,8 +500,8 @@ except ImportError as e:
                 logger.error(error_msg)
                 raise ProgrammingError(error_msg)
 
-            table_name = match.group(1)
-            columns_str = match.group(2)
+            table_name = match[1]
+            columns_str = match[2]
 
             # Parse columns
             columns = []
@@ -531,10 +535,10 @@ except ImportError as e:
                 logger.error(error_msg)
                 raise ProgrammingError(error_msg)
 
-            table_name = match.group(1)
+            table_name = match[1]
             self.drop_table(table_name)
 
-        def _execute_insert(self, sql: str, params: Optional[list[Any]]) -> None:
+        def _execute_insert(self, sql: str, params: list[Any] | None) -> None:
             """Execute INSERT statement.
 
             Args:
@@ -549,15 +553,19 @@ except ImportError as e:
                 OperationalError: If table does not exist.
 
             """
-            match = re.match(r"INSERT INTO\s+(\w+)\s*(?:\((.*?)\))?\s*VALUES\s*\((.*?)\)", sql, re.IGNORECASE | re.DOTALL)
+            match = re.match(
+                r"INSERT INTO\s+(\w+)\s*(?:\((.*?)\))?\s*VALUES\s*\((.*?)\)",
+                sql,
+                re.IGNORECASE | re.DOTALL,
+            )
             if not match:
                 error_msg = f"Invalid INSERT syntax: {sql}"
                 logger.error(error_msg)
                 raise ProgrammingError(error_msg)
 
-            table_name = match.group(1)
-            match.group(2)
-            values_str = match.group(3)
+            table_name = match[1]
+            match[2]
+            values_str = match[3]
 
             if table_name not in self.tables:
                 error_msg = f"no such table: {table_name}"
@@ -586,7 +594,7 @@ except ImportError as e:
 
             self.tables[table_name].insert(values)
 
-        def _execute_select(self, sql: str, params: Optional[list[Any]]) -> list[tuple[Any, ...]]:
+        def _execute_select(self, sql: str, params: list[Any] | None) -> list[tuple[Any, ...]]:
             """Execute SELECT statement.
 
             Args:
@@ -613,11 +621,11 @@ except ImportError as e:
                 logger.error(error_msg)
                 raise ProgrammingError(error_msg)
 
-            columns_str = match.group(1)
-            table_name = match.group(2)
-            where_str = match.group(3)
-            order_str = match.group(4)
-            limit_str = match.group(5)
+            columns_str = match[1]
+            table_name = match[2]
+            where_str = match[3]
+            order_str = match[4]
+            limit_str = match[5]
 
             if table_name not in self.tables:
                 error_msg = f"no such table: {table_name}"
@@ -633,9 +641,11 @@ except ImportError as e:
             # Parse WHERE clause
             where = None
             if where_str:
-                # Simple WHERE parsing (column operator value)
-                match = re.match(r"(\w+)\s*(=|!=|>|<|>=|<=|LIKE|IN|IS|IS NOT)\s*(.*)", where_str, re.IGNORECASE)
-                if match:
+                if match := re.match(
+                    r"(\w+)\s*(=|!=|>|<|>=|<=|LIKE|IN|IS|IS NOT)\s*(.*)",
+                    where_str,
+                    re.IGNORECASE,
+                ):
                     col_name = match.group(1)
                     operator = match.group(2).upper()
                     value_str = match.group(3)
@@ -671,7 +681,7 @@ except ImportError as e:
 
             return self.tables[table_name].select(columns, where, order_by, limit)
 
-        def _execute_update(self, sql: str, params: Optional[list[Any]]) -> int:
+        def _execute_update(self, sql: str, params: list[Any] | None) -> int:
             """Execute UPDATE statement.
 
             Args:
@@ -686,16 +696,18 @@ except ImportError as e:
                 OperationalError: If table does not exist.
 
             """
-            match = re.match(r"UPDATE\s+(\w+)\s+SET\s+(.*?)(?:\s+WHERE\s+(.*?))?", sql, re.IGNORECASE | re.DOTALL)
+            match = re.match(
+                r"UPDATE\s+(\w+)\s+SET\s+(.*?)(?:\s+WHERE\s+(.*?))?", sql, re.IGNORECASE | re.DOTALL
+            )
 
             if not match:
                 error_msg = f"Invalid UPDATE syntax: {sql}"
                 logger.error(error_msg)
                 raise ProgrammingError(error_msg)
 
-            table_name = match.group(1)
-            set_str = match.group(2)
-            where_str = match.group(3)
+            table_name = match[1]
+            set_str = match[2]
+            match[3]
 
             if table_name not in self.tables:
                 error_msg = f"no such table: {table_name}"
@@ -723,13 +735,9 @@ except ImportError as e:
 
             # Parse WHERE clause (simplified)
             where = None
-            if where_str:
-                # Reuse SELECT WHERE parsing
-                pass
-
             return self.tables[table_name].update(set_values, where)
 
-        def _execute_delete(self, sql: str, params: Optional[list[Any]]) -> int:
+        def _execute_delete(self, sql: str, params: list[Any] | None) -> int:
             """Execute DELETE statement.
 
             Args:
@@ -744,15 +752,17 @@ except ImportError as e:
                 OperationalError: If table does not exist.
 
             """
-            match = re.match(r"DELETE\s+FROM\s+(\w+)(?:\s+WHERE\s+(.*?))?", sql, re.IGNORECASE | re.DOTALL)
+            match = re.match(
+                r"DELETE\s+FROM\s+(\w+)(?:\s+WHERE\s+(.*?))?", sql, re.IGNORECASE | re.DOTALL
+            )
 
             if not match:
                 error_msg = f"Invalid DELETE syntax: {sql}"
                 logger.error(error_msg)
                 raise ProgrammingError(error_msg)
 
-            table_name = match.group(1)
-            where_str = match.group(2)
+            table_name = match[1]
+            match[2]
 
             if table_name not in self.tables:
                 error_msg = f"no such table: {table_name}"
@@ -761,10 +771,6 @@ except ImportError as e:
 
             # Parse WHERE clause (simplified)
             where = None
-            if where_str:
-                # Reuse SELECT WHERE parsing
-                pass
-
             return self.tables[table_name].delete(where)
 
         def _save_to_file(self) -> None:
@@ -779,9 +785,8 @@ except ImportError as e:
             """
             if self.path != ":memory:":
                 try:
-                    tables_data: dict[str, dict[str, Any]] = {}
-                    for name, table in self.tables.items():
-                        tables_data[name] = {
+                    tables_data: dict[str, dict[str, Any]] = {
+                        name: {
                             "name": table.name,
                             "columns": table.columns,
                             "rows": table.rows,
@@ -789,7 +794,8 @@ except ImportError as e:
                             "indexes": table.indexes,
                             "constraints": table.constraints,
                         }
-
+                        for name, table in self.tables.items()
+                    }
                     serialized_data: dict[str, Any] = {"tables": tables_data, "views": self.views}
 
                     with open(self.path, "w", encoding="utf-8") as f:
@@ -850,14 +856,16 @@ except ImportError as e:
 
             """
             self.connection: Connection = connection
-            self.description: Optional[list[tuple[str, ...]]] = None
+            self.description: list[tuple[str, ...]] | None = None
             self.rowcount: int = -1
-            self.lastrowid: Optional[int] = None
+            self.lastrowid: int | None = None
             self._results: list[tuple[Any, ...]] = []
             self._result_index: int = 0
 
         def execute(
-            self, sql: str, params: Optional[list[Any]] = None,
+            self,
+            sql: str,
+            params: list[Any] | None = None,
         ) -> "Cursor":
             """Execute SQL statement.
 
@@ -884,7 +892,9 @@ except ImportError as e:
                     self.rowcount = -1
 
                 if sql.strip().upper().startswith("SELECT"):
-                    self.description = [("column",) for _ in range(len(self._results[0]) if self._results else 0)]
+                    self.description = [
+                        ("column",) for _ in range(len(self._results[0]) if self._results else 0)
+                    ]
 
                 return self
 
@@ -908,7 +918,7 @@ except ImportError as e:
                 self.execute(sql, params)
             return self
 
-        def fetchone(self) -> Optional[tuple[Any, ...]]:
+        def fetchone(self) -> tuple[Any, ...] | None:
             """Fetch one row.
 
             Args:
@@ -938,7 +948,7 @@ except ImportError as e:
             self._result_index = len(self._results)
             return rows
 
-        def fetchmany(self, size: Optional[int] = None) -> list[tuple[Any, ...]]:
+        def fetchmany(self, size: int | None = None) -> list[tuple[Any, ...]]:
             """Fetch multiple rows.
 
             Args:
@@ -1021,8 +1031,8 @@ except ImportError as e:
             """
             self.database: str = database
             self._db: FallbackDatabase = FallbackDatabase(database)
-            self.isolation_level: Optional[str] = None
-            self.row_factory: Optional[Callable[[Any], Any]] = None
+            self.isolation_level: str | None = None
+            self.row_factory: Callable[[Any], Any] | None = None
 
         def cursor(self) -> Cursor:
             """Create a cursor.
@@ -1036,7 +1046,7 @@ except ImportError as e:
             """
             return Cursor(self)
 
-        def execute(self, sql: str, params: Optional[list[Any]] = None) -> Cursor:
+        def execute(self, sql: str, params: list[Any] | None = None) -> Cursor:
             """Execute SQL directly.
 
             Args:
@@ -1177,13 +1187,12 @@ except ImportError as e:
             """
             if isinstance(key, int):
                 return self.row[key]
-            else:
-                for i, desc in enumerate(self.cursor.description or []):
-                    if desc[0] == key:
-                        return self.row[i]
-                error_msg = str(key)
-                logger.error(error_msg)
-                raise KeyError(error_msg)
+            for i, desc in enumerate(self.cursor.description or []):
+                if desc[0] == key:
+                    return self.row[i]
+            error_msg = str(key)
+            logger.error(error_msg)
+            raise KeyError(error_msg)
 
         def keys(self) -> list[str]:
             """Get column names.
@@ -1294,27 +1303,21 @@ except ImportError as e:
 
 # Export all sqlite3 objects and availability flag
 __all__ = [
-    # Availability flags
-    "HAS_SQLITE3",
+    "Connection",
+    "Cursor",
+    "DatabaseError",
+    "Error",
     "HAS_SQLITE",
+    "HAS_SQLITE3",
+    "IntegrityError",
+    "OperationalError",
+    "PARSE_COLNAMES",
+    "PARSE_DECLTYPES",
+    "ProgrammingError",
+    "Row",
     "SQLITE3_VERSION",
-    # Main module
-    "sqlite3",
-    # Functions
     "connect",
     "register_adapter",
     "register_converter",
-    # Classes
-    "Connection",
-    "Cursor",
-    "Row",
-    # Exceptions
-    "Error",
-    "DatabaseError",
-    "IntegrityError",
-    "OperationalError",
-    "ProgrammingError",
-    # Constants
-    "PARSE_DECLTYPES",
-    "PARSE_COLNAMES",
+    "sqlite3",
 ]

@@ -173,7 +173,7 @@ class IconManager:
 
         """
         # Get the text/emoji for this icon
-        text_representation: str = self.ICON_MAP.get(icon_name, "?")
+        self.ICON_MAP.get(icon_name, "?")
         return QIcon()
 
     def get_icon_text(self, icon_name: str) -> str:
@@ -267,8 +267,7 @@ def set_button_icon(
     if not icon.isNull():
         button.setIcon(icon)
     elif add_text_prefix:
-        emoji: str = manager.get_icon_text(icon_name)
-        if emoji:
+        if emoji := manager.get_icon_text(icon_name):
             current_text: str = button.text()
             if not current_text.startswith(emoji):
                 button.setText(f"{emoji} {current_text}")

@@ -41,6 +41,7 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -179,12 +180,11 @@ class FirstRunSetupDialog(QDialog):
 
     def start_setup(self) -> None:
         """Start the setup process."""
-        # Get selected tasks
-        tasks = []
-        for task_id, checkbox in self.component_checks.items():
-            if checkbox.isChecked():
-                tasks.append(task_id)
-
+        tasks = [
+            task_id
+            for task_id, checkbox in self.component_checks.items()
+            if checkbox.isChecked()
+        ]
         if not tasks:
             self.accept()
             return

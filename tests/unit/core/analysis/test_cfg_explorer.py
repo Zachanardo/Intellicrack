@@ -283,7 +283,7 @@ class TestCFGExplorer(IntellicrackTestBase):
 
         # Should find different types of references
         expected_types = ['call', 'data', 'jump', 'string']
-        found_types = set(t.lower() for t in reference_types)
+        found_types = {t.lower() for t in reference_types}
         type_matches = sum(1 for expected in expected_types if any(expected in found for found in found_types))
         assert type_matches >= 2, f"Should identify at least 2 reference types, found {found_types}"
 
@@ -429,7 +429,7 @@ class TestCFGExplorer(IntellicrackTestBase):
             assert json_file.stat().st_size > 0, "JSON export file should not be empty"
 
             # Verify valid JSON structure
-            with open(json_path, 'r') as f:
+            with open(json_path) as f:
                 exported_data = json.load(f)
 
             assert isinstance(exported_data, dict), "Exported JSON should be structured"

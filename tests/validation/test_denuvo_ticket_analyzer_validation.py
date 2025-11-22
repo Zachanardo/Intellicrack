@@ -20,7 +20,7 @@ else:
 print("\n2. Checking syntax...")
 try:
     import ast
-    with open(analyzer_path, 'r', encoding='utf-8') as f:
+    with open(analyzer_path, encoding='utf-8') as f:
         ast.parse(f.read())
     print("   OK Python syntax valid")
 except SyntaxError as e:
@@ -160,7 +160,7 @@ except Exception as e:
 print("\n10. Checking integration with protection_detector...")
 detector_path = "D:/Intellicrack/intellicrack/protection/protection_detector.py"
 if os.path.exists(detector_path):
-    with open(detector_path, 'r', encoding='utf-8') as f:
+    with open(detector_path, encoding='utf-8') as f:
         detector_content = f.read()
 
     integration_methods = [

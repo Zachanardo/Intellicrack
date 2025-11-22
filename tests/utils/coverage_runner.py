@@ -168,7 +168,7 @@ def analyze_coverage_results(reports_dir):
 
     if coverage_json_path.exists():
         try:
-            with open(coverage_json_path, 'r') as f:
+            with open(coverage_json_path) as f:
                 coverage_data = json.load(f)
 
             # Extract coverage statistics

@@ -34,6 +34,7 @@ from intellicrack.handlers.pyqt6_handler import (
 )
 from intellicrack.utils.logger import logger
 
+
 """
 System Utilities Dialog for Intellicrack.
 
@@ -293,7 +294,9 @@ class SystemUtilitiesDialog(QDialog):
         # Size options
         output_layout.addWidget(QLabel("Size:"), 2, 0)
         self.icon_size_combo = QComboBox()
-        self.icon_size_combo.addItems(["Original", "16x16", "32x32", "48x48", "64x64", "128x128", "256x256"])
+        self.icon_size_combo.addItems(
+            ["Original", "16x16", "32x32", "48x48", "64x64", "128x128", "256x256"]
+        )
         output_layout.addWidget(self.icon_size_combo, 2, 1)
 
         layout.addWidget(output_group)
@@ -599,11 +602,10 @@ class SystemUtilitiesDialog(QDialog):
 
     def browse_icon_output(self) -> None:
         """Browse for output directory."""
-        dir_path = QFileDialog.getExistingDirectory(
+        if dir_path := QFileDialog.getExistingDirectory(
             self,
             "Select Output Directory",
-        )
-        if dir_path:
+        ):
             self.icon_output_edit.setText(dir_path)
 
     def extract_icon(self) -> None:
@@ -613,9 +615,7 @@ class SystemUtilitiesDialog(QDialog):
             QMessageBox.warning(self, "Warning", "Please select a valid executable file.")
             return
 
-        output_path = self.icon_output_edit.text().strip()
-        if not output_path:
-            output_path = os.path.dirname(file_path)
+        output_path = self.icon_output_edit.text().strip() or os.path.dirname(file_path)
 
         self.status_label.setText("Extracting icon...")
         self.progress_bar.setVisible(True)
@@ -644,7 +644,9 @@ class SystemUtilitiesDialog(QDialog):
                 pixmap = QPixmap(result["output_path"])
                 if not pixmap.isNull():
                     # Scale to preview size
-                    scaled_pixmap = pixmap.scaled(128, 128, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                    scaled_pixmap = pixmap.scaled(
+                        128, 128, Qt.KeepAspectRatio, Qt.SmoothTransformation
+                    )
                     self.icon_preview.setPixmap(scaled_pixmap)
                 else:
                     self.icon_preview.setText("Could not load extracted icon")
@@ -841,8 +843,7 @@ class SystemUtilitiesDialog(QDialog):
     def filter_processes(self, filter_text: str) -> None:
         """Filter process table by name."""
         for _i in range(self.process_table.rowCount()):
-            name_item = self.process_table.item(_i, 1)
-            if name_item:
+            if name_item := self.process_table.item(_i, 1):
                 show_row = filter_text.lower() in name_item.text().lower()
                 self.process_table.setRowHidden(_i, not show_row)
 
@@ -853,10 +854,7 @@ class SystemUtilitiesDialog(QDialog):
 
     def kill_selected_process(self) -> None:
         """Kill the selected process."""
-        selected_rows = set()
-        for _item in self.process_table.selectedItems():
-            selected_rows.add(_item.row())
-
+        selected_rows = {_item.row() for _item in self.process_table.selectedItems()}
         if not selected_rows:
             return
 
@@ -880,10 +878,10 @@ class SystemUtilitiesDialog(QDialog):
                 try:
                     from ...utils.system.system_utils import kill_process
 
-                    result = kill_process(int(pid))
-
-                    if result:
-                        QMessageBox.information(self, "Success", f"Process {name} killed successfully.")
+                    if result := kill_process(int(pid)):
+                        QMessageBox.information(
+                            self, "Success", f"Process {name} killed successfully."
+                        )
                         # Refresh process list
                         self.get_process_list()
                     else:

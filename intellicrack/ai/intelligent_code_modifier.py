@@ -31,6 +31,7 @@ from typing import Any
 from ..utils.logger import get_logger
 from .llm_backends import LLMManager, LLMMessage
 
+
 logger = get_logger(__name__)
 
 
@@ -139,7 +140,9 @@ class CodeAnalyzer:
                 from .ai_file_tools import get_ai_file_tools
 
                 ai_file_tools = get_ai_file_tools(getattr(self, "app_instance", None))
-                file_data = ai_file_tools.read_file(file_path, purpose="Code analysis for intelligent modification")
+                file_data = ai_file_tools.read_file(
+                    file_path, purpose="Code analysis for intelligent modification"
+                )
                 if file_data.get("status") == "success" and file_data.get("content"):
                     content = file_data["content"]
             except (ImportError, AttributeError, KeyError):
@@ -279,15 +282,19 @@ class CodeAnalyzer:
 
     def _calculate_complexity(self, tree: ast.AST) -> int:
         """Calculate cyclomatic complexity of Python AST."""
-        complexity = 1  # Base complexity
-
-        for node in ast.walk(tree):
-            if (
-                isinstance(node, (ast.If, ast.While, ast.For, ast.AsyncFor, ast.ExceptHandler, ast.And, ast.Or))
-            ):
-                complexity += 1
-
-        return complexity
+        return 1 + sum(bool(isinstance(
+                                   node,
+                                   (
+                                       ast.If,
+                                       ast.While,
+                                       ast.For,
+                                       ast.AsyncFor,
+                                       ast.ExceptHandler,
+                                       ast.And,
+                                       ast.Or,
+                                   ),
+                               ))
+                   for node in ast.walk(tree))
 
     def _extract_dependencies(self, imports: list[str]) -> list[str]:
         """Extract external dependencies from imports."""
@@ -309,11 +316,7 @@ class CodeAnalyzer:
 
         dependencies = []
         for imp in imports:
-            if "." in imp:
-                base = imp.split(".")[0]
-            else:
-                base = imp
-
+            base = imp.split(".")[0] if "." in imp else imp
             if base not in standard_libs and not imp.startswith("."):
                 dependencies.append(base)
 
@@ -471,7 +474,9 @@ class IntelligentCodeModifier:
         self.backup_directory = Path.home() / ".intellicrack" / "code_backups"
         self.backup_directory.mkdir(parents=True, exist_ok=True)
 
-    def gather_project_context(self, project_root: str, target_files: list[str] = None) -> dict[str, CodeContext]:
+    def gather_project_context(
+        self, project_root: str, target_files: list[str] = None
+    ) -> dict[str, CodeContext]:
         """Gather context about the entire project."""
         logger.info(f"Gathering project context from: {project_root}")
 
@@ -480,7 +485,9 @@ class IntelligentCodeModifier:
 
         # Find relevant files
         if target_files:
-            files_to_analyze = [project_path / f for f in target_files if (project_path / f).exists()]
+            files_to_analyze = [
+                project_path / f for f in target_files if (project_path / f).exists()
+            ]
         else:
             files_to_analyze = []
             for ext in self.analyzer.supported_extensions:
@@ -554,9 +561,11 @@ class IntelligentCodeModifier:
         logger.info(f"Generated {len(changes)} code changes")
         return changes
 
-    def _create_modification_prompt(self, request: ModificationRequest, context: CodeContext) -> str:
+    def _create_modification_prompt(
+        self, request: ModificationRequest, context: CodeContext
+    ) -> str:
         """Create a prompt for AI modification."""
-        prompt = f"""
+        return f"""
 # Code Modification Request
 
 ## Task Description
@@ -609,7 +618,6 @@ Requirements:
 5. Consider security implications of changes
 6. Provide confidence scores (0.0-1.0) for each modification
 """
-        return prompt
 
     def _get_ai_modification_response(self, prompt: str) -> str:
         """Get AI response for modification."""
@@ -629,22 +637,21 @@ Requirements:
             logger.error(f"Failed to get AI response: {e}")
             return ""
 
-    def _parse_modification_response(self, response: str, file_path: str, request: ModificationRequest) -> list[CodeChange]:
+    def _parse_modification_response(
+        self, response: str, file_path: str, request: ModificationRequest
+    ) -> list[CodeChange]:
         """Parse AI response into CodeChange objects."""
         changes = []
 
         try:
             # Extract JSON from response
-            json_match = re.search(r"```json\s*(\{.*?\})\s*```", response, re.DOTALL)
-            if not json_match:
-                # Try to find JSON without code blocks
-                json_match = re.search(r'(\{.*"modifications".*\})', response, re.DOTALL)
+            json_match = re.search(r"```json\s*(\{.*?\})\s*```", response, re.DOTALL) or re.search(r'(\{.*"modifications".*\})', response, re.DOTALL)
 
             if not json_match:
                 logger.warning("No JSON found in AI response")
                 return changes
 
-            data = json.loads(json_match.group(1))
+            data = json.loads(json_match[1])
             modifications = data.get("modifications", [])
 
             for i, mod in enumerate(modifications):
@@ -760,10 +767,7 @@ Requirements:
                     backup_path = self._create_backup(file_path)
                     results["backups_created"].append(str(backup_path))
 
-                # Apply changes to file
-                success = self._apply_changes_to_file(file_path, file_changes)
-
-                if success:
+                if success := self._apply_changes_to_file(file_path, file_changes):
                     for change in file_changes:
                         change.status = ChangeStatus.APPLIED
                         change.applied_at = datetime.now()
@@ -808,7 +812,9 @@ Requirements:
                 from .ai_file_tools import get_ai_file_tools
 
                 ai_file_tools = get_ai_file_tools(getattr(self, "app_instance", None))
-                file_data = ai_file_tools.read_file(file_path, purpose="Read file for applying code modifications")
+                file_data = ai_file_tools.read_file(
+                    file_path, purpose="Read file for applying code modifications"
+                )
                 if file_data.get("status") == "success" and file_data.get("content"):
                     content = file_data["content"]
             except (ImportError, AttributeError, KeyError):

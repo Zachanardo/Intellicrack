@@ -88,25 +88,17 @@ class GPUMonitorWorker(QObject):
         }
 
         if self.platform == "Windows":
-            # Try NVIDIA first
-            nvidia_data = self._get_nvidia_gpu_info()
-            if nvidia_data:
+            if nvidia_data := self._get_nvidia_gpu_info():
                 gpu_data["gpus"].extend(nvidia_data)
 
-            # Try Intel Arc
-            intel_data = self._get_intel_arc_info()
-            if intel_data:
+            if intel_data := self._get_intel_arc_info():
                 gpu_data["gpus"].extend(intel_data)
 
-            # Try AMD
-            amd_data = self._get_amd_gpu_info()
-            if amd_data:
+            if amd_data := self._get_amd_gpu_info():
                 gpu_data["gpus"].extend(amd_data)
 
         elif self.platform == "Linux":
-            # Similar GPU detection for Linux
-            nvidia_data = self._get_nvidia_gpu_info()
-            if nvidia_data:
+            if nvidia_data := self._get_nvidia_gpu_info():
                 gpu_data["gpus"].extend(nvidia_data)
 
         if not gpu_data["gpus"]:
@@ -140,23 +132,43 @@ class GPUMonitorWorker(QObject):
                                 name = parts[1]
 
                                 temp_str = parts[2]
-                                temp = float(temp_str) if temp_str not in ["[N/A]", "[Not Supported]", ""] else 0.0
+                                temp = (
+                                    float(temp_str)
+                                    if temp_str not in ["[N/A]", "[Not Supported]", ""]
+                                    else 0.0
+                                )
                                 temp = min(max(temp, 0.0), 150.0)
 
                                 util_str = parts[3]
-                                utilization = float(util_str) if util_str not in ["[N/A]", "[Not Supported]", ""] else 0.0
+                                utilization = (
+                                    float(util_str)
+                                    if util_str not in ["[N/A]", "[Not Supported]", ""]
+                                    else 0.0
+                                )
                                 utilization = min(max(utilization, 0.0), 100.0)
 
                                 mem_used_str = parts[4]
-                                memory_used = float(mem_used_str) if mem_used_str not in ["[N/A]", "[Not Supported]", ""] else 0.0
+                                memory_used = (
+                                    float(mem_used_str)
+                                    if mem_used_str not in ["[N/A]", "[Not Supported]", ""]
+                                    else 0.0
+                                )
                                 memory_used = max(memory_used, 0.0)
 
                                 mem_total_str = parts[5]
-                                memory_total = float(mem_total_str) if mem_total_str not in ["[N/A]", "[Not Supported]", ""] else 1.0
+                                memory_total = (
+                                    float(mem_total_str)
+                                    if mem_total_str not in ["[N/A]", "[Not Supported]", ""]
+                                    else 1.0
+                                )
                                 memory_total = max(memory_total, 1.0)
 
                                 power_str = parts[6]
-                                power = float(power_str) if power_str not in ["[N/A]", "[Not Supported]", ""] else 0.0
+                                power = (
+                                    float(power_str)
+                                    if power_str not in ["[N/A]", "[Not Supported]", ""]
+                                    else 0.0
+                                )
                                 power = min(max(power, 0.0), 1000.0)
 
                                 gpus.append(
@@ -190,8 +202,9 @@ class GPUMonitorWorker(QObject):
                 if "Intel" in gpu.Name and any(x in gpu.Name for x in ["Arc", "Xe", "Iris", "UHD"]):
                     utilization = 0.0
                     try:
-                        gpu_counters = c.Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine()
-                        if gpu_counters:
+                        if (
+                            gpu_counters := c.Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine()
+                        ):
                             total_util = 0.0
                             engine_count = 0
 
@@ -219,8 +232,9 @@ class GPUMonitorWorker(QObject):
                     memory_total_mb = total_memory_gb * 1024
 
                     try:
-                        gpu_memory = c.Win32_PerfFormattedData_GPUPerformanceCounters_GPUProcessMemory()
-                        if gpu_memory:
+                        if gpu_memory := (
+                            c.Win32_PerfFormattedData_GPUPerformanceCounters_GPUProcessMemory()
+                        ):
                             total_dedicated = 0
                             for mem in gpu_memory:
                                 if hasattr(mem, "DedicatedUsage"):
@@ -236,12 +250,10 @@ class GPUMonitorWorker(QObject):
                         thermal_zones = c.Win32_TemperatureProbe()
                         for zone in thermal_zones:
                             if hasattr(zone, "CurrentReading"):
-                                try:
+                                with contextlib.suppress(ValueError, TypeError):
                                     temp_val = float(zone.CurrentReading) / 10.0
                                     if 0 <= temp_val <= 150:
                                         temperature = max(temperature, temp_val)
-                                except (ValueError, TypeError):
-                                    pass
                     except Exception as e:
                         logger.debug(f"Could not read thermal sensors: {e}")
 
@@ -275,7 +287,7 @@ class GPUMonitorWorker(QObject):
                             "power": round(power, 1),
                         },
                     )
-        except (ImportError, AttributeError, Exception) as e:
+        except Exception as e:
             logger.debug(f"Failed to get Intel GPU info: {e}")
 
         return gpus
@@ -291,8 +303,9 @@ class GPUMonitorWorker(QObject):
                 if "AMD" in gpu.Name or "Radeon" in gpu.Name or "ATI" in gpu.Name:
                     utilization = 0.0
                     try:
-                        gpu_counters = c.Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine()
-                        if gpu_counters:
+                        if (
+                            gpu_counters := c.Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine()
+                        ):
                             total_util = 0.0
                             engine_count = 0
 
@@ -319,8 +332,9 @@ class GPUMonitorWorker(QObject):
                     memory_total_mb = total_memory_gb * 1024
 
                     try:
-                        gpu_memory = c.Win32_PerfFormattedData_GPUPerformanceCounters_GPUProcessMemory()
-                        if gpu_memory:
+                        if gpu_memory := (
+                            c.Win32_PerfFormattedData_GPUPerformanceCounters_GPUProcessMemory()
+                        ):
                             total_dedicated = 0
                             for mem in gpu_memory:
                                 if hasattr(mem, "DedicatedUsage"):
@@ -336,12 +350,10 @@ class GPUMonitorWorker(QObject):
                         thermal_zones = c.Win32_TemperatureProbe()
                         for zone in thermal_zones:
                             if hasattr(zone, "CurrentReading"):
-                                try:
+                                with contextlib.suppress(ValueError, TypeError):
                                     temp_val = float(zone.CurrentReading) / 10.0
                                     if 0 <= temp_val <= 150:
                                         temperature = max(temperature, temp_val)
-                                except (ValueError, TypeError):
-                                    pass
                     except Exception as e:
                         logger.debug(f"Could not read AMD thermal sensors: {e}")
 
@@ -370,7 +382,7 @@ class GPUMonitorWorker(QObject):
                             "power": round(power, 1),
                         },
                     )
-        except (ImportError, AttributeError, Exception) as e:
+        except Exception as e:
             logger.debug(f"Failed to get AMD GPU info: {e}")
 
         return gpus
@@ -491,7 +503,9 @@ class GPUStatusWidget(QWidget):
 
         self.caps_text = QTextEdit()
         self.caps_text.setReadOnly(True)
-        self.caps_text.setToolTip("GPU compute capabilities, supported features, and hardware specifications")
+        self.caps_text.setToolTip(
+            "GPU compute capabilities, supported features, and hardware specifications"
+        )
         self.caps_text.setMinimumHeight(120)
         self.caps_text.setMaximumHeight(200)
         self.caps_text.setPlainText("Detecting GPU capabilities...")
@@ -624,10 +638,14 @@ class GPUStatusWidget(QWidget):
         caps_text = []
 
         if gpu["vendor"] == "NVIDIA":
-            caps_text.append("CUDA Support: Yes")
-            caps_text.append("Tensor Cores: Detecting...")
-            caps_text.append("Ray Tracing: Detecting...")
-            caps_text.append("NVENC: Yes")
+            caps_text.extend(
+                (
+                    "CUDA Support: Yes",
+                    "Tensor Cores: Detecting...",
+                    "Ray Tracing: Detecting...",
+                    "NVENC: Yes",
+                )
+            )
         elif gpu["vendor"] == "Intel":
             caps_text.append("Intel Xe Architecture")
             caps_text.append("AV1 Encoding: Yes")
@@ -637,10 +655,13 @@ class GPUStatusWidget(QWidget):
             caps_text.append("ROCm Support: Detecting...")
             caps_text.append("Ray Accelerators: Detecting...")
 
-        caps_text.append("\nCompute Units: Detecting...")
-        caps_text.append("Max Clock: Detecting...")
-        caps_text.append("Memory Bandwidth: Detecting...")
-
+        caps_text.extend(
+            (
+                "\nCompute Units: Detecting...",
+                "Max Clock: Detecting...",
+                "Memory Bandwidth: Detecting...",
+            )
+        )
         self.caps_text.setPlainText("\n".join(caps_text))
 
     def clear_display(self) -> None:
@@ -663,7 +684,9 @@ class GPUStatusWidget(QWidget):
 
         self.caps_text.setPlainText("No GPU detected")
 
-    def _set_bar_color(self, bar: QProgressBar, value: float, warning: float, critical: float) -> None:
+    def _set_bar_color(
+        self, bar: QProgressBar, value: float, warning: float, critical: float
+    ) -> None:
         """Set progress bar color based on value thresholds."""
         if value >= critical:
             bar.setStyleSheet("QProgressBar::chunk { background-color: #dc3545; }")

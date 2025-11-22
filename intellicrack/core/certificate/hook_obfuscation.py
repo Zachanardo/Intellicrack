@@ -122,6 +122,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -174,19 +175,50 @@ class HookObfuscator:
 
         """
         prefixes = [
-            "process", "handle", "update", "validate", "check", "parse",
-            "format", "convert", "transform", "filter", "sort", "calculate",
+            "process",
+            "handle",
+            "update",
+            "validate",
+            "check",
+            "parse",
+            "format",
+            "convert",
+            "transform",
+            "filter",
+            "sort",
+            "calculate",
         ]
 
         subjects = [
-            "data", "response", "request", "input", "output", "state",
-            "config", "settings", "buffer", "packet", "message", "event",
-            "notification", "callback", "handler", "processor",
+            "data",
+            "response",
+            "request",
+            "input",
+            "output",
+            "state",
+            "config",
+            "settings",
+            "buffer",
+            "packet",
+            "message",
+            "event",
+            "notification",
+            "callback",
+            "handler",
+            "processor",
         ]
 
         suffixes = [
-            "handler", "processor", "manager", "controller", "validator",
-            "formatter", "converter", "filter", "sorter", "calculator",
+            "handler",
+            "processor",
+            "manager",
+            "controller",
+            "validator",
+            "formatter",
+            "converter",
+            "filter",
+            "sorter",
+            "calculator",
         ]
 
         prefix = random.choice(prefixes)  # noqa: S311
@@ -220,7 +252,9 @@ class HookObfuscator:
             True if indirect hook created successfully
 
         """
-        logger.info(f"Creating indirect hook: {hex(target)} -> {hex(handler)} (chain: {chain_length})")
+        logger.info(
+            f"Creating indirect hook: {hex(target)} -> {hex(handler)} (chain: {chain_length})"
+        )
 
         try:
             with self._lock:
@@ -239,7 +273,9 @@ class HookObfuscator:
                     return False
 
                 chain_addresses = self._build_trampoline_chain(
-                    code_cave, handler, chain_length,
+                    code_cave,
+                    handler,
+                    chain_length,
                 )
 
                 if not chain_addresses:
@@ -326,21 +362,19 @@ class HookObfuscator:
         logger.debug(f"Allocating {size} bytes for trampoline")
 
         try:
-            if hasattr(ctypes, 'windll'):
+            if hasattr(ctypes, "windll"):
                 kernel32 = ctypes.windll.kernel32
 
                 MEM_COMMIT = 0x1000
                 MEM_RESERVE = 0x2000
                 PAGE_EXECUTE_READWRITE = 0x40
 
-                addr = kernel32.VirtualAlloc(
+                if addr := kernel32.VirtualAlloc(
                     None,
                     size,
                     MEM_COMMIT | MEM_RESERVE,
                     PAGE_EXECUTE_READWRITE,
-                )
-
-                if addr:
+                ):
                     logger.debug(f"Allocated trampoline space at {hex(addr)}")
                     return addr
 
@@ -364,11 +398,7 @@ class HookObfuscator:
             for i in range(chain_length):
                 chain_addresses.append(current_addr)
 
-                if i == chain_length - 1:
-                    next_target = final_handler
-                else:
-                    next_target = current_addr + 32
-
+                next_target = final_handler if i == chain_length - 1 else current_addr + 32
                 jmp_code = self._generate_jmp_code(next_target)
 
                 if not self._write_memory(current_addr, jmp_code):
@@ -387,18 +417,23 @@ class HookObfuscator:
     def _generate_jmp_code(self, target: int) -> bytes:
         """Generate x86/x64 JMP instruction."""
         import platform
-        is_64bit = platform.machine().endswith('64')
 
-        if is_64bit:
-            return bytes([
-                0x48, 0xB8,
-                *target.to_bytes(8, 'little'),
-                0xFF, 0xE0,
-            ])
-        return bytes([
-            0xE9,
-            *((target - 5) & 0xFFFFFFFF).to_bytes(4, 'little'),
-        ])
+        if is_64bit := platform.machine().endswith("64"):
+            return bytes(
+                [
+                    0x48,
+                    0xB8,
+                    *target.to_bytes(8, "little"),
+                    0xFF,
+                    0xE0,
+                ]
+            )
+        return bytes(
+            [
+                0xE9,
+                *((target - 5) & 0xFFFFFFFF).to_bytes(4, "little"),
+            ]
+        )
 
     def _install_jump_to_chain(self, target: int, chain_start: int) -> bool:
         """Install initial jump from target to trampoline chain."""
@@ -418,7 +453,7 @@ class HookObfuscator:
     def _read_memory(self, address: int, size: int) -> bytes | None:
         """Read memory at address."""
         try:
-            if hasattr(ctypes, 'windll'):
+            if hasattr(ctypes, "windll"):
                 kernel32 = ctypes.windll.kernel32
 
                 buffer = (ctypes.c_ubyte * size)()
@@ -444,7 +479,7 @@ class HookObfuscator:
     def _write_memory(self, address: int, data: bytes) -> bool:
         """Write memory at address."""
         try:
-            if hasattr(ctypes, 'windll'):
+            if hasattr(ctypes, "windll"):
                 kernel32 = ctypes.windll.kernel32
 
                 old_protect = ctypes.c_ulong()
@@ -489,7 +524,7 @@ class HookObfuscator:
     def _flush_instruction_cache(self, address: int, size: int) -> None:
         """Flush instruction cache."""
         try:
-            if hasattr(ctypes, 'windll'):
+            if hasattr(ctypes, "windll"):
                 kernel32 = ctypes.windll.kernel32
                 current_process = kernel32.GetCurrentProcess()
                 kernel32.FlushInstructionCache(
@@ -563,11 +598,11 @@ class HookObfuscator:
     def _check_hook_integrity(self, hook_info: HookInfo) -> bool:
         """Check if hook is still intact."""
         try:
-            current_bytes = self._read_memory(hook_info.target_address, 16)
-            if not current_bytes:
-                return False
+            if current_bytes := self._read_memory(hook_info.target_address, 16):
+                return current_bytes != hook_info.original_bytes
 
-            return current_bytes != hook_info.original_bytes
+            else:
+                return False
 
         except Exception as e:
             logger.debug(f"Integrity check failed: {e}")
@@ -622,7 +657,7 @@ class HookObfuscator:
         logger.info(f"Installing hardware breakpoint hook at {hex(address)}")
 
         try:
-            if not hasattr(ctypes, 'windll'):
+            if not hasattr(ctypes, "windll"):
                 logger.warning("Hardware breakpoints only supported on Windows")
                 return False
 
@@ -650,19 +685,19 @@ class HookObfuscator:
 
             if context.Dr0 == 0:
                 context.Dr0 = address
-                context.Dr7 |= (1 << 0)
+                context.Dr7 |= 1 << 0
                 logger.debug("Set hardware breakpoint in DR0")
             elif context.Dr1 == 0:
                 context.Dr1 = address
-                context.Dr7 |= (1 << 2)
+                context.Dr7 |= 1 << 2
                 logger.debug("Set hardware breakpoint in DR1")
             elif context.Dr2 == 0:
                 context.Dr2 = address
-                context.Dr7 |= (1 << 4)
+                context.Dr7 |= 1 << 4
                 logger.debug("Set hardware breakpoint in DR2")
             elif context.Dr3 == 0:
                 context.Dr3 = address
-                context.Dr7 |= (1 << 6)
+                context.Dr7 |= 1 << 6
                 logger.debug("Set hardware breakpoint in DR3")
             else:
                 logger.error("All debug registers in use")
@@ -697,7 +732,7 @@ class HookObfuscator:
         caves = []
 
         try:
-            if not hasattr(ctypes, 'windll'):
+            if not hasattr(ctypes, "windll"):
                 logger.warning("Code cave detection only supported on Windows")
                 return caves
 
@@ -735,11 +770,8 @@ class HookObfuscator:
             scan_size = 4096
             for offset in range(0, size, scan_size):
                 addr = base_addr + offset
-                data = self._read_memory(addr, min(scan_size, size - offset))
-
-                if data:
-                    cave_addr = self._find_cave_in_data(addr, data)
-                    if cave_addr:
+                if data := self._read_memory(addr, min(scan_size, size - offset)):
+                    if cave_addr := self._find_cave_in_data(addr, data):
                         caves.append(cave_addr)
 
             logger.info(f"Found {len(caves)} code caves in {module}")
@@ -768,10 +800,7 @@ class HookObfuscator:
                 current_cave_start = None
                 current_cave_size = 0
 
-        if current_cave_size >= min_cave_size:
-            return current_cave_start
-
-        return None
+        return current_cave_start if current_cave_size >= min_cave_size else None
 
     def rotate_hooks(self) -> bool:
         """Rotate hooks to different locations.
@@ -805,17 +834,17 @@ class HookObfuscator:
     def _rotate_single_hook(self, hook_info: HookInfo) -> bool:
         """Rotate a single hook to new location."""
         try:
-            new_cave = self._find_code_cave(96)
-            if not new_cave:
+            if new_cave := self._find_code_cave(96):
+                return (
+                    self.create_indirect_hook(
+                                            hook_info.target_address,
+                                            hook_info.handler_address,
+                                        ) if self._write_memory(
+                                            hook_info.target_address, hook_info.original_bytes
+                                        ) else False
+                )
+            else:
                 return False
-
-            if not self._write_memory(hook_info.target_address, hook_info.original_bytes):
-                return False
-
-            return self.create_indirect_hook(
-                hook_info.target_address,
-                hook_info.handler_address,
-            )
 
         except Exception as e:
             logger.debug(f"Single hook rotation failed: {e}")

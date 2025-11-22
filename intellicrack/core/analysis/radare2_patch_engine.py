@@ -26,6 +26,7 @@ from typing import Any
 
 import r2pipe
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -145,7 +146,9 @@ class Radare2PatchEngine:
             self.bits = info["bin"]["bits"]
             self.endian = info["bin"]["endian"]
 
-            logger.info(f"Initialized patch engine for {self.architecture} {self.bits}-bit {self.endian}")
+            logger.info(
+                f"Initialized patch engine for {self.architecture} {self.bits}-bit {self.endian}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to initialize Radare2: {e}")
@@ -165,10 +168,7 @@ class Radare2PatchEngine:
         # Get architecture-specific NOP
         nop = self.NOP_INSTRUCTIONS.get(self.architecture, b"\x90")
 
-        # Calculate number of NOPs needed
-        nop_count = length // len(nop)
-        remainder = length % len(nop)
-
+        nop_count, remainder = divmod(length, len(nop))
         # Create NOP sled
         patch_bytes = nop * nop_count
 
@@ -256,43 +256,19 @@ class Radare2PatchEngine:
             # ARM64/AArch64 branch instruction
             offset = (target - address) // 4
 
-            if jump_type == "call":
-                # BL instruction
-                if -0x2000000 <= offset <= 0x1FFFFFF:
-                    instruction = 0x94000000 | (offset & 0x03FFFFFF)
-                else:
-                    # Use ADRP + ADD + BR for long jumps
-                    page_offset = ((target & ~0xFFF) - (address & ~0xFFF)) >> 12
-                    page_remainder = target & 0xFFF
-
-                    # ADRP X16, target_page
-                    adrp = 0x90000010 | ((page_offset & 0x3) << 29) | ((page_offset >> 2) & 0x7FFFF) << 5
-                    # ADD X16, X16, page_remainder
-                    add = 0x91000210 | ((page_remainder & 0xFFF) << 10)
-                    # BR X16
-                    br = 0xD61F0200
-
-                    patch_bytes = struct.pack("<III", adrp, add, br)
-                    original_bytes = self._read_bytes(address, 12)
-
-                    return PatchInstruction(
-                        address=address,
-                        original_bytes=original_bytes,
-                        patch_bytes=patch_bytes,
-                        patch_type=PatchType.JUMP_MODIFICATION,
-                        description=f"Long {jump_type} at 0x{address:x} to 0x{target:x}",
-                        metadata={"target": target, "jump_type": jump_type},
-                    )
-            # B instruction
-            elif -0x2000000 <= offset <= 0x1FFFFFF:
-                instruction = 0x14000000 | (offset & 0x03FFFFFF)
-            else:
+            if jump_type == "call" and -0x2000000 <= offset <= 0x1FFFFFF:
+                instruction = 0x94000000 | (offset & 0x03FFFFFF)
+            elif jump_type == "call" or not -0x2000000 <= offset <= 0x1FFFFFF:
                 # Use ADRP + ADD + BR for long jumps
                 page_offset = ((target & ~0xFFF) - (address & ~0xFFF)) >> 12
                 page_remainder = target & 0xFFF
 
                 # ADRP X16, target_page
-                adrp = 0x90000010 | ((page_offset & 0x3) << 29) | ((page_offset >> 2) & 0x7FFFF) << 5
+                adrp = (
+                    0x90000010
+                    | ((page_offset & 0x3) << 29)
+                    | ((page_offset >> 2) & 0x7FFFF) << 5
+                )
                 # ADD X16, X16, page_remainder
                 add = 0x91000210 | ((page_remainder & 0xFFF) << 10)
                 # BR X16
@@ -309,18 +285,17 @@ class Radare2PatchEngine:
                     description=f"Long {jump_type} at 0x{address:x} to 0x{target:x}",
                     metadata={"target": target, "jump_type": jump_type},
                 )
-
+            else:
+                instruction = 0x14000000 | (offset & 0x03FFFFFF)
             patch_bytes = struct.pack("<I", instruction)
 
         elif self.architecture == "mips":
+            # JAL (Jump and Link)
+            target_addr = (target & 0x0FFFFFFF) >> 2
             # MIPS jump instruction
             if jump_type == "call":
-                # JAL (Jump and Link)
-                target_addr = (target & 0x0FFFFFFF) >> 2
                 instruction = 0x0C000000 | target_addr
             else:
-                # J (Jump)
-                target_addr = (target & 0x0FFFFFFF) >> 2
                 instruction = 0x08000000 | target_addr
 
             # Add delay slot NOP
@@ -373,7 +348,9 @@ class Radare2PatchEngine:
         # This is architecture-specific but provides a fallback
         if self.bits == 64:
             # 64-bit generic jump
-            return struct.pack("<BQ", 0xFF, target)  # Simplified - would need arch-specific encoding
+            return struct.pack(
+                "<BQ", 0xFF, target
+            )  # Simplified - would need arch-specific encoding
         # 32-bit generic jump
         return struct.pack("<BI", 0xFF, target)  # Simplified - would need arch-specific encoding
 
@@ -390,7 +367,9 @@ class Radare2PatchEngine:
         """
         return self.modify_jump(address, new_function, "call")
 
-    def patch_return_value(self, function_address: int, return_value: int, value_size: int = 4) -> list[PatchInstruction]:
+    def patch_return_value(
+        self, function_address: int, return_value: int, value_size: int = 4
+    ) -> list[PatchInstruction]:
         """Patch a function to return a specific value.
 
         Args:
@@ -440,7 +419,9 @@ class Radare2PatchEngine:
             # NOP remaining bytes if function is longer
             function_size = self._get_function_size(function_address)
             if function_size > len(patch_bytes):
-                nop_patch = self.create_nop_sled(function_address + len(patch_bytes), function_size - len(patch_bytes))
+                nop_patch = self.create_nop_sled(
+                    function_address + len(patch_bytes), function_size - len(patch_bytes)
+                )
                 patches.append(nop_patch)
 
         elif self.architecture == "arm":
@@ -450,7 +431,11 @@ class Radare2PatchEngine:
                 movw = 0xE3000000 | ((return_value & 0xF000) << 4) | (return_value & 0xFFF)
                 # MOVT R0, upper16 (if needed)
                 if return_value > 0xFFFF:
-                    movt = 0xE3400000 | (((return_value >> 16) & 0xF000) << 4) | ((return_value >> 16) & 0xFFF)
+                    movt = (
+                        0xE3400000
+                        | (((return_value >> 16) & 0xF000) << 4)
+                        | ((return_value >> 16) & 0xFFF)
+                    )
                     patch_bytes = struct.pack("<II", movw, movt)
                 else:
                     patch_bytes = struct.pack("<I", movw)
@@ -484,9 +469,7 @@ class Radare2PatchEngine:
                     patch_bytes = struct.pack("<II", movz, movk)
             else:
                 # MOV X0, value (64-bit)
-                instructions = []
-                # MOVZ X0, lowest16
-                instructions.append(0xD2800000 | ((return_value & 0xFFFF) << 5))
+                instructions = [0xD2800000 | (return_value & 0xFFFF) << 5]
                 if return_value > 0xFFFF:
                     # MOVK X0, bits[31:16], lsl #16
                     instructions.append(0xF2A00000 | (((return_value >> 16) & 0xFFFF) << 5))
@@ -679,7 +662,9 @@ class Radare2PatchEngine:
             description=f"Replace function prologue at 0x{address:x}",
         )
 
-    def patch_function_epilogue(self, function_address: int, new_epilogue: bytes) -> PatchInstruction:
+    def patch_function_epilogue(
+        self, function_address: int, new_epilogue: bytes
+    ) -> PatchInstruction:
         """Replace function epilogue with custom code.
 
         Args:
@@ -705,7 +690,9 @@ class Radare2PatchEngine:
             description=f"Replace function epilogue at 0x{epilogue_address:x}",
         )
 
-    def create_jump_table_patch(self, table_address: int, entries: list[int]) -> list[PatchInstruction]:
+    def create_jump_table_patch(
+        self, table_address: int, entries: list[int]
+    ) -> list[PatchInstruction]:
         """Modify a jump table with new entries.
 
         Args:
@@ -817,12 +804,7 @@ class Radare2PatchEngine:
             logger.warning(f"Patch set already applied: {patch_set_name}")
             return True
 
-        success = True
-        for patch in patch_set.patches:
-            if not self.apply_patch(patch):
-                success = False
-                break
-
+        success = all(self.apply_patch(patch) for patch in patch_set.patches)
         if success:
             patch_set.applied = True
             # Calculate new checksum
@@ -922,9 +904,7 @@ class Radare2PatchEngine:
     def _get_function_size(self, address: int) -> int:
         """Get the size of a function."""
         result = self.r2.cmdj(f"afij @ {address}")
-        if result and len(result) > 0:
-            return result[0].get("size", 0)
-        return 0
+        return result[0].get("size", 0) if result and len(result) > 0 else 0
 
     def _calculate_checksum(self) -> str:
         """Calculate binary checksum."""

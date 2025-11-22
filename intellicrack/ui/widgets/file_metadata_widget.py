@@ -36,6 +36,7 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -194,12 +195,10 @@ class FileMetadataWidget(QWidget):
             file_type = "Directory"
         elif file_info.isSymLink():
             file_type = f"Symbolic Link → {file_info.symLinkTarget()}"
+        elif suffix := file_info.suffix():
+            file_type = f"{suffix.upper()} file"
         else:
-            suffix = file_info.suffix()
-            if suffix:
-                file_type = f"{suffix.upper()} file"
-            else:
-                file_type = "Unknown"
+            file_type = "Unknown"
 
         self.type_label.setText(file_type)
 
@@ -215,7 +214,7 @@ class FileMetadataWidget(QWidget):
         self.permissions_label.setText(", ".join(permissions) if permissions else "None")
 
         # Owner
-        self.owner_label.setText(file_info.owner() if file_info.owner() else "Unknown")
+        self.owner_label.setText(file_info.owner() or "Unknown")
 
         # Executable and symlink status
         self.executable_label.setText("Yes" if file_info.isExecutable() else "No")
@@ -276,7 +275,7 @@ class FileMetadataWidget(QWidget):
             "is_readable": file_info.isReadable(),
             "is_writable": file_info.isWritable(),
             "is_executable": file_info.isExecutable(),
-            "owner": file_info.owner() if file_info.owner() else None,
+            "owner": file_info.owner() or None,
             "suffix": file_info.suffix(),
             "complete_suffix": file_info.completeSuffix(),
         }
@@ -410,10 +409,7 @@ class FileTimestampTracker:
             Dictionary with tracking history
 
         """
-        if file_path not in self.tracked_files:
-            return {}
-
-        return self.tracked_files[file_path]
+        return self.tracked_files[file_path] if file_path in self.tracked_files else {}
 
     def stop_tracking(self, file_path: str) -> None:
         """Stop tracking a file.

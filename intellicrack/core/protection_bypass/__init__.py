@@ -20,6 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 
+
 # Set up package logger
 logger = logging.getLogger(__name__)
 
@@ -80,33 +81,26 @@ except ImportError as e:
 
 # Define package exports
 __all__ = [
-    # From tpm_bypass
+    "BypassResult",
+    "HardwareDongleEmulator",
+    "HardwareIDSpoofer",
+    "IntegrityCheckDefeat",
+    "SecuROMBypass",
+    "SecuROMRemovalResult",
+    "StarForceBypass",
     "TPMAnalyzer",
     "TPMProtectionBypass",
-    "analyze_tpm_protection",
-    "bypass_tpm_protection",
-    "detect_tpm_usage",
-    "tpm_research_tools",
-    # From vm_bypass
     "VMDetector",
     "VirtualizationAnalyzer",
     "VirtualizationDetectionBypass",
-    "detect_virtualization",
-    "analyze_vm_protection",
-    "bypass_vm_detection",
-    # From dongle_emulator
-    "HardwareDongleEmulator",
     "activate_hardware_dongle_emulation",
-    # From hardware_id_spoofer
-    "HardwareIDSpoofer",
-    # From integrity_check_defeat
-    "IntegrityCheckDefeat",
-    # From starforce_bypass
-    "StarForceBypass",
-    # From securom_bypass
-    "SecuROMBypass",
-    "BypassResult",
-    "SecuROMRemovalResult",
+    "analyze_tpm_protection",
+    "analyze_vm_protection",
+    "bypass_tpm_protection",
+    "bypass_vm_detection",
+    "detect_tpm_usage",
+    "detect_virtualization",
+    "tpm_research_tools",
 ]
 
 # Filter out items that are not available

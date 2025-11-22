@@ -22,7 +22,7 @@ def analyze_coverage():
     source_file = get_project_root() / "intellicrack/utils/exploitation/payload_result_handler.py"
 
     # Read source code
-    with open(source_file, 'r', encoding='utf-8') as f:
+    with open(source_file, encoding='utf-8') as f:
         source_code = f.read()
 
     # Parse AST to analyze code structure

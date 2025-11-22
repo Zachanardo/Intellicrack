@@ -17,8 +17,6 @@ os.environ["DISABLE_TORCH_XPU"] = "1"
 os.environ["INTELLICRACK_MINIMAL_IMPORTS"] = "1"
 
 # Mock problematic modules before they get imported
-sys.modules["intel_extension_for_pytorch"] = MagicMock()
-sys.modules["ipex"] = MagicMock()
 sys.modules["torch.xpu"] = MagicMock()
 
 # Mock heavy Intellicrack modules that aren't needed for certificate tests

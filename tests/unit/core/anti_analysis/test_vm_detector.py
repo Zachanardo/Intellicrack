@@ -364,7 +364,7 @@ class RealDMISimulator:
     def read_dmi_file(self, file_path: str, vm_type: str = None):
         """Simulate reading DMI file content."""
         if self.simulate_access_error:
-            raise IOError("DMI file access error")
+            raise OSError("DMI file access error")
 
         if vm_type and vm_type in self.vm_dmi_content:
             return self.vm_dmi_content[vm_type].get(file_path, "Unknown")
@@ -624,12 +624,12 @@ class TestCPUIDDetection(unittest.TestCase):
             # On Linux, should attempt to read /proc/cpuinfo if available
             if current_platform == 'Linux':
                 try:
-                    with open('/proc/cpuinfo', 'r') as f:
+                    with open('/proc/cpuinfo') as f:
                         cpuinfo_content = f.read()
                         # Real system test: if hypervisor flag exists, should be detected
                         if 'hypervisor' in cpuinfo_content:
                             self.assertTrue(detected, "Real hypervisor flag should be detected")
-                except (IOError, PermissionError):
+                except (OSError, PermissionError):
                     # /proc/cpuinfo not accessible, test graceful handling
                     pass
 
@@ -982,7 +982,7 @@ class TestHardwareSignatureDetection(unittest.TestCase):
                 for dmi_file in dmi_files:
                     try:
                         if os.path.exists(dmi_file):
-                            with open(dmi_file, 'r') as f:
+                            with open(dmi_file) as f:
                                 content = f.read().strip().lower()
                                 dmi_content[dmi_file] = content
 
@@ -990,7 +990,7 @@ class TestHardwareSignatureDetection(unittest.TestCase):
                                 if any(indicator in content for indicator in vm_indicators):
                                     real_vm_detected = True
 
-                    except (IOError, PermissionError, OSError):
+                    except (OSError, PermissionError):
                         # DMI file not accessible, continue with other files
                         continue
 

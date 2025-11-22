@@ -28,6 +28,7 @@ import lz4.frame
 import msgpack
 import psutil
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -136,7 +137,7 @@ class SharedMemoryManager:
 
             with open(shm_path, "r+b") as f:
                 self.memory = mmap.mmap(f.fileno(), self.size)
-                if self.memory[0:4] != b"INTC":
+                if self.memory[:4] != b"INTC":
                     self._write_header()
 
     def _write_header(self) -> None:
@@ -269,7 +270,9 @@ class SerializationProtocol:
     """Handles serialization/deserialization of tool messages."""
 
     @staticmethod
-    def serialize(message: ToolMessage, format: SerializationFormat = SerializationFormat.MSGPACK) -> bytes:
+    def serialize(
+        message: ToolMessage, format: SerializationFormat = SerializationFormat.MSGPACK
+    ) -> bytes:
         """Serialize message to bytes.
 
         Args:
@@ -300,7 +303,9 @@ class SerializationProtocol:
         return msgpack.packb(data)
 
     @staticmethod
-    def deserialize(data: bytes, format: SerializationFormat = SerializationFormat.MSGPACK) -> ToolMessage | None:
+    def deserialize(
+        data: bytes, format: SerializationFormat = SerializationFormat.MSGPACK
+    ) -> ToolMessage | None:
         """Deserialize bytes to message.
 
         Args:
@@ -410,7 +415,10 @@ class ToolMonitor:
                         # Check heartbeat timeout
                         if time.time() - status.last_heartbeat > 30:
                             status.status = "unresponsive"
-                        elif status.status == "unresponsive" and time.time() - status.last_heartbeat < 30:
+                        elif (
+                            status.status == "unresponsive"
+                            and time.time() - status.last_heartbeat < 30
+                        ):
                             status.status = "running"
 
                     except Exception as e:
@@ -454,7 +462,12 @@ class FailureRecovery:
 
     def __init__(self) -> None:
         """Initialize the FailureRecovery with retry configuration."""
-        self.retry_config = {"max_retries": 3, "base_delay": 1.0, "max_delay": 30.0, "exponential_base": 2}
+        self.retry_config = {
+            "max_retries": 3,
+            "base_delay": 1.0,
+            "max_delay": 30.0,
+            "exponential_base": 2,
+        }
         self.failed_messages: dict[str, list[ToolMessage]] = {}
         self.recovery_handlers: dict[ToolType, Callable] = {}
 
@@ -495,7 +508,9 @@ class FailureRecovery:
 
         # Calculate retry delay
         delay = min(
-            self.retry_config["base_delay"] * (self.retry_config["exponential_base"] ** (retry_count - 1)), self.retry_config["max_delay"],
+            self.retry_config["base_delay"]
+            * (self.retry_config["exponential_base"] ** (retry_count - 1)),
+            self.retry_config["max_delay"],
         )
 
         # Schedule retry
@@ -550,9 +565,16 @@ class ConflictResolver:
             "timestamp_based": self._timestamp_based,
             "authority_based": self._authority_based,
         }
-        self.tool_weights = {ToolType.GHIDRA: 1.0, ToolType.IDA: 1.2, ToolType.RADARE2: 0.9, ToolType.FRIDA: 0.8}
+        self.tool_weights = {
+            ToolType.GHIDRA: 1.0,
+            ToolType.IDA: 1.2,
+            ToolType.RADARE2: 0.9,
+            ToolType.FRIDA: 0.8,
+        }
 
-    def resolve(self, conflicts: list[ToolMessage], strategy: str = "confidence_based") -> object | None:
+    def resolve(
+        self, conflicts: list[ToolMessage], strategy: str = "confidence_based"
+    ) -> object | None:
         """Resolve conflicts between tool results.
 
         Args:
@@ -592,11 +614,14 @@ class ConflictResolver:
 
         # Find majority
         max_votes = max(len(v) for v in votes.values())
-        for _data_hash, voters in votes.items():
-            if len(voters) == max_votes:
-                return voters[0].data
-
-        return None
+        return next(
+            (
+                voters[0].data
+                for voters in votes.values()
+                if len(voters) == max_votes
+            ),
+            None,
+        )
 
     def _weighted_average(self, messages: list[ToolMessage]) -> object | None:
         """Resolve by weighted average.
@@ -724,7 +749,12 @@ class LoadBalancer:
                 self.task_queues[tool] = queue.Queue()
 
             self.tool_instances[tool].append(pid)
-            self.load_metrics[pid] = {"cpu": 0.0, "memory": 0.0, "queue_size": 0, "response_time": 0.0}
+            self.load_metrics[pid] = {
+                "cpu": 0.0,
+                "memory": 0.0,
+                "queue_size": 0,
+                "response_time": 0.0,
+            }
 
     def get_best_instance(self, tool: ToolType) -> int | None:
         """Get best instance for load balancing.
@@ -862,13 +892,12 @@ class RealToolCommunicator:
                     time.sleep(0.001)  # Small delay to prevent CPU spinning
                     continue
 
-                # Deserialize message
-                message = SerializationProtocol.deserialize(raw_message)
-                if not message:
-                    continue
+                if message := SerializationProtocol.deserialize(raw_message):
+                    # Process message
+                    self._process_message(message)
 
-                # Process message
-                self._process_message(message)
+                else:
+                    continue
 
             except Exception as e:
                 logger.error(f"Error in message loop: {e}")
@@ -896,11 +925,15 @@ class RealToolCommunicator:
             try:
                 handler(message)
                 self.monitor.update_status(
-                    message.destination, success_count=self.monitor.get_status(message.destination).success_count + 1,
+                    message.destination,
+                    success_count=self.monitor.get_status(message.destination).success_count + 1,
                 )
             except Exception as e:
                 logger.error(f"Handler failed for {message.destination.value}: {e}")
-                self.monitor.update_status(message.destination, error_count=self.monitor.get_status(message.destination).error_count + 1)
+                self.monitor.update_status(
+                    message.destination,
+                    error_count=self.monitor.get_status(message.destination).error_count + 1,
+                )
                 self.recovery.handle_failure(message, e)
 
     def send_message(self, message: ToolMessage) -> bool:
@@ -930,7 +963,9 @@ class RealToolCommunicator:
             self.recovery.handle_failure(message, e)
             return False
 
-    def broadcast_message(self, source: ToolType, data: object, message_type: MessageType = MessageType.DATA) -> None:
+    def broadcast_message(
+        self, source: ToolType, data: object, message_type: MessageType = MessageType.DATA
+    ) -> None:
         """Broadcast message to all tools.
 
         Args:
@@ -952,7 +987,9 @@ class RealToolCommunicator:
                 )
                 self.send_message(message)
 
-    def resolve_conflicts(self, messages: list[ToolMessage], strategy: str = "confidence_based") -> object | None:
+    def resolve_conflicts(
+        self, messages: list[ToolMessage], strategy: str = "confidence_based"
+    ) -> object | None:
         """Resolve conflicts between tool results.
 
         Args:
@@ -1008,8 +1045,15 @@ def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="Real Tool Communication System")
-    parser.add_argument("--mode", choices=["server", "client"], default="server", help="Run as server or client")
-    parser.add_argument("--tool", choices=[t.value for t in ToolType], default="ghidra", help="Tool type for client mode")
+    parser.add_argument(
+        "--mode", choices=["server", "client"], default="server", help="Run as server or client"
+    )
+    parser.add_argument(
+        "--tool",
+        choices=[t.value for t in ToolType],
+        default="ghidra",
+        help="Tool type for client mode",
+    )
     parser.add_argument("--pid", type=int, default=os.getpid(), help="Process ID to register")
 
     args = parser.parse_args()

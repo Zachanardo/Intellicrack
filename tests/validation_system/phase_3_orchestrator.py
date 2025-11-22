@@ -22,9 +22,9 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Phase3TestResult:
     """Result of Phase 3 testing."""
-    negative_control_results: List[NegativeControlResult]
-    functional_verification_results: List[FunctionalVerificationResult]
-    forensic_evidence_results: List[ForensicEvidence]
+    negative_control_results: list[NegativeControlResult]
+    functional_verification_results: list[FunctionalVerificationResult]
+    forensic_evidence_results: list[ForensicEvidence]
     overall_success: bool
     timestamp: str = None
 
@@ -37,8 +37,8 @@ class Phase3TestResult:
 class Phase3Report:
     """Comprehensive report of Phase 3 validation."""
     test_results: Phase3TestResult
-    summary: Dict[str, Any]
-    recommendations: List[str]
+    summary: dict[str, Any]
+    recommendations: list[str]
     overall_status: str
     timestamp: str = None
 
@@ -63,7 +63,7 @@ class Phase3Orchestrator:
 
         logger.info("Phase 3 Orchestrator initialized")
 
-    def run_negative_control_validation(self) -> List[NegativeControlResult]:
+    def run_negative_control_validation(self) -> list[NegativeControlResult]:
         """
         Run negative control validation on all available binaries.
         """
@@ -72,7 +72,7 @@ class Phase3Orchestrator:
         logger.info(f"Completed negative control validation: {len(results)} results")
         return results
 
-    def run_functional_verification(self) -> List[FunctionalVerificationResult]:
+    def run_functional_verification(self) -> list[FunctionalVerificationResult]:
         """
         Run functional verification on all available binaries.
         """
@@ -81,7 +81,7 @@ class Phase3Orchestrator:
         logger.info(f"Completed functional verification: {len(results)} results")
         return results
 
-    def run_forensic_evidence_collection(self) -> List[ForensicEvidence]:
+    def run_forensic_evidence_collection(self) -> list[ForensicEvidence]:
         """
         Run forensic evidence collection on all available binaries.
         """

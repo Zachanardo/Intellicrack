@@ -20,6 +20,7 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 
+
 logger = logging.getLogger(__name__)
 
 # Import security modules with error handling
@@ -45,7 +46,7 @@ except ImportError as e:
 __all__ = []
 
 if VMSecurityManager is not None:
-    __all__.extend(["VMSecurityManager", "ResourceMonitor", "secure_vm_execution"])
+    __all__.extend(["ResourceMonitor", "VMSecurityManager", "secure_vm_execution"])
 
 # Add other security modules to __all__ if available
 try:

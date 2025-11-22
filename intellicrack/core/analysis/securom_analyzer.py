@@ -12,6 +12,7 @@ from ctypes import wintypes
 from dataclasses import dataclass
 from pathlib import Path
 
+
 try:
     import pefile
 
@@ -310,14 +311,12 @@ class SecuROMAnalyzer:
 
             max_activations = 5
             for i in range(len(data) - 4):
-                if data[i : i + 20] == b"MaxActivations\x00\x00\x00\x00\x00\x00":
-                    if i + 24 < len(data):
-                        potential_max = struct.unpack("<I", data[i + 20 : i + 24])[0]
-                        if 1 <= potential_max <= 100:
-                            max_activations = potential_max
-                            break
+                if data[i : i + 20] == b"MaxActivations\x00\x00\x00\x00\x00\x00" and i + 24 < len(data):
+                    potential_max = struct.unpack("<I", data[i + 20 : i + 24])[0]
+                    if 1 <= potential_max <= 100:
+                        max_activations = potential_max
+                        break
 
-            hardware_binding = []
             hw_indicators = [
                 (b"MachineID", "Machine ID"),
                 (b"HardwareID", "Hardware ID"),
@@ -326,10 +325,9 @@ class SecuROMAnalyzer:
                 (b"CPUID", "CPU ID"),
             ]
 
-            for indicator, name in hw_indicators:
-                if indicator in data:
-                    hardware_binding.append(name)
-
+            hardware_binding = [
+                name for indicator, name in hw_indicators if indicator in data
+            ]
             encryption_algorithm = None
             for algo, patterns in self.CRYPTO_PATTERNS.items():
                 for pattern in patterns:
@@ -410,9 +408,7 @@ class SecuROMAnalyzer:
             return "Status Check"
         if b"contact" in keyword_lower or b"send" in keyword_lower:
             return "Network Communication"
-        if b"phone" in keyword_lower:
-            return "Phone Home"
-        return "Unknown"
+        return "Phone Home" if b"phone" in keyword_lower else "Unknown"
 
     def _get_trigger_description(self, keyword: bytes) -> str:
         """Get human-readable description of trigger."""
@@ -455,9 +451,19 @@ class SecuROMAnalyzer:
                 data = f.read()
 
             key_patterns = [
-                (b"ProductKey", r"[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}", 29, "Dashed Format"),
+                (
+                    b"ProductKey",
+                    r"[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}",
+                    29,
+                    "Dashed Format",
+                ),
                 (b"SerialNumber", r"[A-Z0-9]{20}", 20, "Continuous Format"),
-                (b"ActivationKey", r"[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}", 36, "GUID Format"),
+                (
+                    b"ActivationKey",
+                    r"[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}",
+                    36,
+                    "GUID Format",
+                ),
             ]
 
             for keyword, pattern, length, format_type in key_patterns:
@@ -533,7 +539,9 @@ class SecuROMAnalyzer:
                     scsi_commands = self._extract_scsi_commands(data, offset)
                     signature_checks = self._identify_signature_checks(data, offset)
                     fingerprint_method = self._determine_fingerprint_method(data, offset)
-                    bypass_difficulty = self._assess_bypass_difficulty(scsi_commands, signature_checks)
+                    bypass_difficulty = self._assess_bypass_difficulty(
+                        scsi_commands, signature_checks
+                    )
 
                     routines.append(
                         DiscAuthRoutine(
@@ -564,7 +572,6 @@ class SecuROMAnalyzer:
 
     def _identify_signature_checks(self, data: bytes, offset: int) -> list[str]:
         """Identify disc signature verification methods."""
-        checks = []
         context = data[max(0, offset - 300) : min(len(data), offset + 300)]
 
         check_indicators = [
@@ -575,11 +582,11 @@ class SecuROMAnalyzer:
             (b"SerialNumber", "Disc Serial Number Check"),
         ]
 
-        for indicator, check_name in check_indicators:
-            if indicator in context:
-                checks.append(check_name)
-
-        return checks
+        return [
+            check_name
+            for indicator, check_name in check_indicators
+            if indicator in context
+        ]
 
     def _determine_fingerprint_method(self, data: bytes, offset: int) -> str:
         """Determine disc fingerprinting method."""
@@ -593,15 +600,15 @@ class SecuROMAnalyzer:
             return "Physical Sector Analysis"
         return "Unknown Method"
 
-    def _assess_bypass_difficulty(self, scsi_commands: list[str], signature_checks: list[str]) -> str:
+    def _assess_bypass_difficulty(
+        self, scsi_commands: list[str], signature_checks: list[str]
+    ) -> str:
         """Assess difficulty of bypassing disc authentication."""
         complexity = len(scsi_commands) + len(signature_checks)
 
         if complexity <= 2:
             return "Low"
-        if complexity <= 4:
-            return "Medium"
-        return "High"
+        return "Medium" if complexity <= 4 else "High"
 
     def _detect_phone_home(self, target_path: Path) -> list[PhoneHomeMechanism]:
         """Detect phone-home mechanisms."""
@@ -614,7 +621,12 @@ class SecuROMAnalyzer:
             with open(target_path, "rb") as f:
                 data = f.read()
 
-            network_apis = [b"WinHttpSendRequest", b"InternetOpenUrl", b"HttpSendRequest", b"WSASend"]
+            network_apis = [
+                b"WinHttpSendRequest",
+                b"InternetOpenUrl",
+                b"HttpSendRequest",
+                b"WSASend",
+            ]
 
             for api in network_apis:
                 offset = data.find(api)
@@ -666,7 +678,6 @@ class SecuROMAnalyzer:
 
     def _identify_transmitted_data(self, data: bytes, offset: int) -> list[str]:
         """Identify what data is transmitted in phone-home."""
-        transmitted = []
         context = data[max(0, offset - 500) : min(len(data), offset + 500)]
 
         data_indicators = [
@@ -679,11 +690,7 @@ class SecuROMAnalyzer:
             (b"ComputerName", "Computer Name"),
         ]
 
-        for indicator, name in data_indicators:
-            if indicator in context:
-                transmitted.append(name)
-
-        return transmitted
+        return [name for indicator, name in data_indicators if indicator in context]
 
     def _detect_protocol(self, api_name: bytes) -> str:
         """Detect network protocol used."""
@@ -776,7 +783,6 @@ class SecuROMAnalyzer:
 
     def _identify_validation_checks(self, data: bytes, offset: int) -> list[str]:
         """Identify checks performed in validation function."""
-        checks = []
         context = data[max(0, offset - 300) : min(len(data), offset + 300)]
 
         check_types = [
@@ -788,11 +794,11 @@ class SecuROMAnalyzer:
             (b"Signature", "Digital Signature Verification"),
         ]
 
-        for indicator, check_name in check_types:
-            if indicator in context:
-                checks.append(check_name)
-
-        return checks
+        return [
+            check_name
+            for indicator, check_name in check_types
+            if indicator in context
+        ]
 
     def _extract_return_values(self, data: bytes, offset: int) -> dict[str, str]:
         """Extract possible return values from validation function."""
@@ -894,10 +900,11 @@ class SecuROMAnalyzer:
             pe = pefile.PE(str(target_path))
 
             if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
-                for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
-                    if exp.name:
-                        exports.append(exp.name.decode("utf-8", errors="ignore"))
-
+                exports.extend(
+                    exp.name.decode("utf-8", errors="ignore")
+                    for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols
+                    if exp.name
+                )
             pe.close()
 
         except Exception as e:
@@ -918,7 +925,9 @@ class SecuROMAnalyzer:
             if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
                 for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
                     if hasattr(resource_type, "name"):
-                        res_name = str(resource_type.name) if resource_type.name else str(resource_type.id)
+                        res_name = (
+                            str(resource_type.name) if resource_type.name else str(resource_type.id)
+                        )
                         if hasattr(resource_type, "directory"):
                             resources[res_name] = len(resource_type.directory.entries)
 
@@ -942,10 +951,11 @@ class SecuROMAnalyzer:
 
             keywords = self.ACTIVATION_KEYWORDS + self.TRIGGER_KEYWORDS + self.DISC_AUTH_KEYWORDS
 
-            for keyword in keywords:
-                if keyword in data:
-                    strings.append(keyword.decode("utf-8", errors="ignore"))
-
+            strings.extend(
+                keyword.decode("utf-8", errors="ignore")
+                for keyword in keywords
+                if keyword in data
+            )
         except Exception as e:
             self.logger.warning("Failed to setup Windows API functions: %s", e)
 
@@ -1000,10 +1010,11 @@ class SecuROMAnalyzer:
                 b"SYSTEM\\CurrentControlSet\\Services",
             ]
 
-            for pattern in key_patterns:
-                if pattern in data:
-                    registry_keys.append(pattern.decode("utf-8", errors="ignore"))
-
+            registry_keys.extend(
+                pattern.decode("utf-8", errors="ignore")
+                for pattern in key_patterns
+                if pattern in data
+            )
         except Exception as e:
             self.logger.warning("Failed to setup Windows API functions: %s", e)
 

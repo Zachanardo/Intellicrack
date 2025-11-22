@@ -36,7 +36,7 @@ def build_ghidra_command(
     script_path: str,
     script_name: str,
     overwrite: bool = True,
-) -> List[str]:
+) -> list[str]:
     """Build a standard Ghidra headless command.
 
     Args:
@@ -70,7 +70,7 @@ def build_ghidra_command(
     return cmd
 
 
-def get_ghidra_headless_path() -> Optional[str]:
+def get_ghidra_headless_path() -> str | None:
     """Find the Ghidra headless analyzer path.
 
     Returns:
@@ -90,7 +90,7 @@ def get_ghidra_headless_path() -> Optional[str]:
                 headless_path = os.path.join(ghidra_path, "support", "analyzeHeadless")
                 if os.path.exists(headless_path):
                     return headless_path
-                headless_path_bat = headless_path + ".bat"
+                headless_path_bat = f"{headless_path}.bat"
                 if os.path.exists(headless_path_bat):
                     return headless_path_bat
             else:
@@ -116,8 +116,4 @@ def get_ghidra_headless_path() -> Optional[str]:
         "C:\\Program Files\\ghidra\\support\\analyzeHeadless.bat",
     ]
 
-    for path in common_paths:
-        if os.path.exists(path):
-            return path
-
-    return None
+    return next((path for path in common_paths if os.path.exists(path)), None)

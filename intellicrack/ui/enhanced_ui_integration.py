@@ -54,6 +54,7 @@ from ..utils.logger import get_logger
 from ..utils.resource_helper import get_resource_path
 from .radare2_integration_ui import R2ConfigurationDialog, R2IntegrationWidget
 
+
 logger = get_logger(__name__)
 
 
@@ -387,7 +388,9 @@ class EnhancedAnalysisDashboard(QWidget):
     def _generate_report(self) -> None:
         """Generate report based on template."""
         template = self.report_template_combo.currentText()
-        self.report_editor.setText(f"# {template}\n\nReport generated at {self._get_ui_timestamp()}\n\nNo analysis data available yet.")
+        self.report_editor.setText(
+            f"# {template}\n\nReport generated at {self._get_ui_timestamp()}\n\nNo analysis data available yet."
+        )
         self.add_activity(f"Generated {template} report")
 
     def _save_report(self) -> None:

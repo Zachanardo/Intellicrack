@@ -19,6 +19,7 @@ from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any
 
+
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
 except ImportError:
@@ -32,6 +33,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC as PBKDF2
 
 from intellicrack.handlers.wmi_handler import wmi
 from intellicrack.utils.logger import log_all_methods, logger
+
 
 SERIAL_NUMBER_LABEL = "Serial Number:"
 
@@ -175,7 +177,12 @@ class OfflineActivationEmulator:
                 "hardware_locked": True,
                 "key_length": 25,
             },
-            "adobe_cc": {"type": ActivationType.LICENSE_FILE, "algorithm": "adobe", "hardware_locked": True, "file_format": "xml"},
+            "adobe_cc": {
+                "type": ActivationType.LICENSE_FILE,
+                "algorithm": "adobe",
+                "hardware_locked": True,
+                "file_format": "xml",
+            },
             "autodesk": {
                 "type": ActivationType.CHALLENGE_RESPONSE,
                 "algorithm": "autodesk",
@@ -249,7 +256,9 @@ class OfflineActivationEmulator:
                     return cpu.ProcessorId.strip()
             else:
                 # Linux/Unix
-                result = subprocess.run(["dmidecode", "-t", "processor"], capture_output=True, text=True)
+                result = subprocess.run(
+                    ["dmidecode", "-t", "processor"], capture_output=True, text=True
+                )
                 for line in result.stdout.split("\n"):
                     if "ID:" in line:
                         return line.split("ID:")[1].strip()
@@ -274,7 +283,9 @@ class OfflineActivationEmulator:
                 for board in self.wmi_client.Win32_BaseBoard():
                     return board.SerialNumber.strip()
             else:
-                result = subprocess.run(["dmidecode", "-t", "baseboard"], capture_output=True, text=True)
+                result = subprocess.run(
+                    ["dmidecode", "-t", "baseboard"], capture_output=True, text=True
+                )
                 for line in result.stdout.split("\n"):
                     if SERIAL_NUMBER_LABEL in line:
                         return line.split(":")[1].strip()
@@ -299,7 +310,9 @@ class OfflineActivationEmulator:
                     if disk.SerialNumber:
                         return disk.SerialNumber.strip()
             else:
-                result = subprocess.run(["hdparm", "-I", "/dev/sda"], capture_output=True, text=True)
+                result = subprocess.run(
+                    ["hdparm", "-I", "/dev/sda"], capture_output=True, text=True
+                )
                 for line in result.stdout.split("\n"):
                     if SERIAL_NUMBER_LABEL in line:
                         return line.split(":")[1].strip()
@@ -307,7 +320,9 @@ class OfflineActivationEmulator:
             logger.debug(f"Disk serial extraction failed: {e}")
 
         serial_length = random.randint(12, 16)  # noqa: S311
-        serial_part = "".join(random.choices(string.ascii_uppercase + string.digits, k=serial_length))  # noqa: S311
+        serial_part = "".join(
+            random.choices(string.ascii_uppercase + string.digits, k=serial_length)
+        )
         return f"SER{serial_part}"
 
     def _get_mac_addresses(self) -> list[str]:
@@ -342,10 +357,13 @@ class OfflineActivationEmulator:
             List of MAC addresses from enabled network adapters on Windows.
 
         """
-        macs: list[str] = []
-        for nic in self.wmi_client.Win32_NetworkAdapterConfiguration(IPEnabled=True):
-            if nic.MACAddress:
-                macs.append(nic.MACAddress.replace(":", ""))
+        macs: list[str] = [
+            nic.MACAddress.replace(":", "")
+            for nic in self.wmi_client.Win32_NetworkAdapterConfiguration(
+                IPEnabled=True
+            )
+            if nic.MACAddress
+        ]
         return macs
 
     def _get_non_windows_macs(self) -> list[str]:
@@ -364,9 +382,11 @@ class OfflineActivationEmulator:
         for interface in netifaces.interfaces():
             addrs = netifaces.ifaddresses(interface)
             if netifaces.AF_LINK in addrs:
-                for addr in addrs[netifaces.AF_LINK]:
-                    if "addr" in addr:
-                        macs.append(addr["addr"].replace(":", "").upper())
+                macs.extend(
+                    addr["addr"].replace(":", "").upper()
+                    for addr in addrs[netifaces.AF_LINK]
+                    if "addr" in addr
+                )
         return macs
 
     def _get_fallback_mac(self) -> list[str]:
@@ -422,7 +442,9 @@ class OfflineActivationEmulator:
                 for system in self.wmi_client.Win32_ComputerSystemProduct():
                     return system.UUID.strip()
             else:
-                result = subprocess.run(["dmidecode", "-s", "system-uuid"], capture_output=True, text=True)
+                result = subprocess.run(
+                    ["dmidecode", "-s", "system-uuid"], capture_output=True, text=True
+                )
                 return result.stdout.strip()
         except Exception as e:
             logger.debug(f"System UUID extraction failed: {e}")
@@ -446,7 +468,11 @@ class OfflineActivationEmulator:
                     if "Serial Number" in line:
                         return line.split()[-1]
             else:
-                result = subprocess.run(["blkid", "-o", "value", "-s", "UUID", "/dev/sda1"], capture_output=True, text=True)
+                result = subprocess.run(
+                    ["blkid", "-o", "value", "-s", "UUID", "/dev/sda1"],
+                    capture_output=True,
+                    text=True,
+                )
                 return result.stdout.strip()[:8].upper()
         except Exception as e:
             logger.debug(f"Block device UUID extraction failed: {e}")
@@ -465,7 +491,9 @@ class OfflineActivationEmulator:
         """
         try:
             if platform.system() == "Windows":
-                with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography") as key:
+                with winreg.OpenKey(
+                    winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography"
+                ) as key:
                     return winreg.QueryValueEx(key, "MachineGuid")[0]
             else:
                 # Linux machine-id
@@ -476,7 +504,9 @@ class OfflineActivationEmulator:
 
         return str(uuid.uuid4()).upper()
 
-    def generate_hardware_id(self, profile: HardwareProfile | None = None, algorithm: str = "standard") -> str:
+    def generate_hardware_id(
+        self, profile: HardwareProfile | None = None, algorithm: str = "standard"
+    ) -> str:
         """Generate hardware ID from profile."""
         logger.debug(f"Generating hardware ID using algorithm: {algorithm}")
         if not profile:
@@ -570,12 +600,19 @@ class OfflineActivationEmulator:
         password = (profile.cpu_id + profile.motherboard_serial).encode()
 
         try:
-            kdf = PBKDF2(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=10000, backend=self.backend)
+            kdf = PBKDF2(
+                algorithm=hashes.SHA256(),
+                length=32,
+                salt=salt,
+                iterations=10000,
+                backend=self.backend,
+            )
             key = kdf.derive(password)
-            hw_id = base64.b64encode(key[:24]).decode("ascii")
-            return hw_id
+            return base64.b64encode(key[:24]).decode("ascii")
         except Exception:
-            return hashlib.sha256((profile.cpu_id + profile.motherboard_serial).encode()).hexdigest()[:32]
+            return hashlib.sha256(
+                (profile.cpu_id + profile.motherboard_serial).encode()
+            ).hexdigest()[:32]
 
     def generate_installation_id(self, product_id: str, hardware_id: str) -> str:
         """Generate installation ID binding product to hardware.
@@ -592,7 +629,9 @@ class OfflineActivationEmulator:
             Formatted installation ID with groups of 6 hexadecimal characters.
 
         """
-        logger.debug(f"Generating installation ID for product '{product_id}' with hardware ID '{hardware_id}'.")
+        logger.debug(
+            f"Generating installation ID for product '{product_id}' with hardware ID '{hardware_id}'."
+        )
         # Combine product and hardware
 
         # Generate installation ID
@@ -636,7 +675,9 @@ class OfflineActivationEmulator:
         logger.debug(f"Generated request code: {formatted_request_code}")
         return formatted_request_code
 
-    def generate_activation_response(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+    def generate_activation_response(
+        self, request: ActivationRequest, product_key: str | None = None
+    ) -> ActivationResponse:
         """Generate activation response for offline activation request.
 
         Analyzes the activation request, detects the appropriate algorithm based
@@ -699,7 +740,9 @@ class OfflineActivationEmulator:
         logger.debug(f"Detected activation algorithm for product '{product_id}': {detected_algo}")
         return detected_algo
 
-    def _microsoft_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+    def _microsoft_activation(
+        self, request: ActivationRequest, product_key: str | None = None
+    ) -> ActivationResponse:
         """Generate Microsoft Office activation response with MAK/KMS emulation.
 
         Emulates Microsoft's Multiple Activation Key (MAK) or Key Management
@@ -749,7 +792,9 @@ class OfflineActivationEmulator:
             signature=None,
         )
 
-    def _adobe_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+    def _adobe_activation(
+        self, request: ActivationRequest, product_key: str | None = None
+    ) -> ActivationResponse:
         """Generate Adobe Creative Cloud activation response.
 
         Produces Adobe activation codes by hashing request codes with hardware
@@ -836,7 +881,9 @@ class OfflineActivationEmulator:
 
         return ET.tostring(root, encoding="utf-8")
 
-    def _autodesk_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+    def _autodesk_activation(
+        self, request: ActivationRequest, product_key: str | None = None
+    ) -> ActivationResponse:
         """Generate Autodesk activation response with XOR-based transformation.
 
         Creates Autodesk AutoCAD or Inventor activation codes using XOR operations
@@ -879,7 +926,9 @@ class OfflineActivationEmulator:
             signature=None,
         )
 
-    def _vmware_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+    def _vmware_activation(
+        self, request: ActivationRequest, product_key: str | None = None
+    ) -> ActivationResponse:
         """Generate VMware vSphere activation response.
 
         Creates VMware license keys by encoding hardware hash values using
@@ -919,7 +968,9 @@ class OfflineActivationEmulator:
             signature=None,
         )
 
-    def _matlab_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+    def _matlab_activation(
+        self, request: ActivationRequest, product_key: str | None = None
+    ) -> ActivationResponse:
         """Generate MATLAB activation response with license file generation.
 
         Creates MathWorks MATLAB activation codes and associated license files
@@ -986,7 +1037,9 @@ class OfflineActivationEmulator:
 
         return "\n".join(lines).encode()
 
-    def _solidworks_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+    def _solidworks_activation(
+        self, request: ActivationRequest, product_key: str | None = None
+    ) -> ActivationResponse:
         """Generate SolidWorks activation response with proprietary algorithm.
 
         Creates Dassault Systèmes SolidWorks activation codes using multiplication
@@ -1027,7 +1080,9 @@ class OfflineActivationEmulator:
             signature=None,
         )
 
-    def _rsa_based_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+    def _rsa_based_activation(
+        self, request: ActivationRequest, product_key: str | None = None
+    ) -> ActivationResponse:
         """Generate RSA 2048-bit signature-based activation response.
 
         Creates cryptographic activation codes by generating RSA key pairs and
@@ -1043,7 +1098,9 @@ class OfflineActivationEmulator:
 
         """
         # Generate RSA key pair
-        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=self.backend)
+        private_key = rsa.generate_private_key(
+            public_exponent=65537, key_size=2048, backend=self.backend
+        )
 
         # Create activation data
         activation_data = {
@@ -1057,7 +1114,9 @@ class OfflineActivationEmulator:
         # Sign activation data
         data_bytes = json.dumps(activation_data).encode()
         signature = private_key.sign(
-            data_bytes, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256(),
+            data_bytes,
+            padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
+            hashes.SHA256(),
         )
 
         # Generate activation code
@@ -1073,7 +1132,9 @@ class OfflineActivationEmulator:
             signature=signature,
         )
 
-    def _aes_based_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+    def _aes_based_activation(
+        self, request: ActivationRequest, product_key: str | None = None
+    ) -> ActivationResponse:
         """Generate AES 256-bit encryption-based activation response.
 
         Creates encrypted activation codes using AES-CBC mode with random
@@ -1120,7 +1181,9 @@ class OfflineActivationEmulator:
             signature=None,
         )
 
-    def _ecc_based_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+    def _ecc_based_activation(
+        self, request: ActivationRequest, product_key: str | None = None
+    ) -> ActivationResponse:
         """Generate ECDSA P-256 signature-based activation response.
 
         Creates elliptic curve cryptography-based activation codes using
@@ -1159,7 +1222,9 @@ class OfflineActivationEmulator:
             signature=signature,
         )
 
-    def _default_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
+    def _default_activation(
+        self, request: ActivationRequest, product_key: str | None = None
+    ) -> ActivationResponse:
         """Generate default activation response for unrecognized products.
 
         Provides fallback activation mechanism using SHA256-based code generation
@@ -1252,14 +1317,18 @@ class OfflineActivationEmulator:
 
         """
         # Generate signing key
-        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=self.backend)
-
-        # Sign data
-        signature = private_key.sign(
-            data, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256(),
+        private_key = rsa.generate_private_key(
+            public_exponent=65537, key_size=2048, backend=self.backend
         )
 
-        return signature
+        return private_key.sign(
+            data,
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH,
+            ),
+            hashes.SHA256(),
+        )
 
     def create_license_file(self, response: ActivationResponse, format: str = "xml") -> bytes:
         """Create offline license file in XML, JSON, binary, or text format.
@@ -1345,7 +1414,9 @@ class OfflineActivationEmulator:
             "expiry_date": response.expiry_date.isoformat() if response.expiry_date else None,
             "features": response.features,
             "hardware_locked": response.hardware_locked,
-            "signature": base64.b64encode(response.signature).decode("ascii") if response.signature else None,
+            "signature": base64.b64encode(response.signature).decode("ascii")
+            if response.signature
+            else None,
         }
 
         return json.dumps(license_data, indent=2).encode()
@@ -1428,18 +1499,12 @@ class OfflineActivationEmulator:
         if response.expiry_date:
             lines.append(f"Expiry Date: {response.expiry_date.strftime('%Y-%m-%d')}")
 
-        lines.append("")
-        lines.append("Features:")
-        for feature in response.features:
-            lines.append(f"  - {feature}")
-
+        lines.extend(("", "Features:"))
+        lines.extend(f"  - {feature}" for feature in response.features)
         if response.signature:
-            lines.append("")
-            lines.append("Digital Signature:")
+            lines.extend(("", "Digital Signature:"))
             sig_b64 = base64.b64encode(response.signature).decode("ascii")
-            for i in range(0, len(sig_b64), 64):
-                lines.append(sig_b64[i : i + 64])
-
+            lines.extend(sig_b64[i : i + 64] for i in range(0, len(sig_b64), 64))
         return "\n".join(lines).encode()
 
     def emulate_phone_activation(self, installation_id: str) -> str:
@@ -1551,9 +1616,13 @@ class OfflineActivationEmulator:
         """
         return {
             f"HKEY_LOCAL_MACHINE\\SOFTWARE\\{product_id}\\License": "Activated",
-            f"HKEY_LOCAL_MACHINE\\SOFTWARE\\{product_id}\\LicenseKey": self._generate_product_key("default"),
+            f"HKEY_LOCAL_MACHINE\\SOFTWARE\\{product_id}\\LicenseKey": self._generate_product_key(
+                "default"
+            ),
             f"HKEY_LOCAL_MACHINE\\SOFTWARE\\{product_id}\\ActivationDate": datetime.now().isoformat(),
-            f"HKEY_LOCAL_MACHINE\\SOFTWARE\\{product_id}\\ExpiryDate": (datetime.now() + timedelta(days=3650)).isoformat(),
+            f"HKEY_LOCAL_MACHINE\\SOFTWARE\\{product_id}\\ExpiryDate": (
+                datetime.now() + timedelta(days=3650)
+            ).isoformat(),
             f"HKEY_LOCAL_MACHINE\\SOFTWARE\\{product_id}\\Features": "Premium;Enterprise;Unlimited",
         }
 
@@ -1609,6 +1678,7 @@ class OfflineActivationEmulator:
 
         """
         from datetime import timezone
+
         utc_tz = UTC
         return {
             "system_time_freeze": datetime(2020, 1, 1, tzinfo=utc_tz),
@@ -1774,7 +1844,9 @@ class OfflineActivationEmulator:
             },
         }
 
-    def generate_activation_request(self, product_id: str, serial_number: str, format: RequestFormat = RequestFormat.XML) -> str:
+    def generate_activation_request(
+        self, product_id: str, serial_number: str, format: RequestFormat = RequestFormat.XML
+    ) -> str:
         """Generate offline activation request in specified format.
 
         Creates activation request containing product ID, machine profile, serial
@@ -1790,7 +1862,9 @@ class OfflineActivationEmulator:
             Activation request string in specified format, ready for server submission.
 
         """
-        logger.debug(f"Generating activation request for product '{product_id}' with serial '{serial_number}' in format: {format.value}")
+        logger.debug(
+            f"Generating activation request for product '{product_id}' with serial '{serial_number}' in format: {format.value}"
+        )
         # Generate machine profile if not exists
         if not hasattr(self, "machine_profile"):
             self.machine_profile = self._generate_machine_profile()
@@ -1844,7 +1918,9 @@ class OfflineActivationEmulator:
         machine = ET.SubElement(root, "MachineProfile")
         ET.SubElement(machine, "MachineID").text = request.machine_profile.machine_id
         ET.SubElement(machine, "CPUID").text = request.machine_profile.cpu_id
-        ET.SubElement(machine, "MotherboardSerial").text = request.machine_profile.motherboard_serial
+        ET.SubElement(
+            machine, "MotherboardSerial"
+        ).text = request.machine_profile.motherboard_serial
         ET.SubElement(machine, "DiskSerial").text = request.machine_profile.disk_serial
         ET.SubElement(machine, "MACAddress").text = request.machine_profile.mac_address
         ET.SubElement(machine, "Hostname").text = request.machine_profile.hostname
@@ -1995,14 +2071,18 @@ class OfflineActivationEmulator:
 
         """
         # Generate signing key
-        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
-
-        # Sign data
-        signature = private_key.sign(
-            data, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256(),
+        private_key = rsa.generate_private_key(
+            public_exponent=65537, key_size=2048, backend=default_backend()
         )
 
-        return signature
+        return private_key.sign(
+            data,
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH,
+            ),
+            hashes.SHA256(),
+        )
 
     def _generate_license_key(self, request: ExtendedActivationRequest) -> str:
         """Generate license key using PBKDF2 derivation from request data.
@@ -2022,15 +2102,17 @@ class OfflineActivationEmulator:
 
         # Generate key using PBKDF2
         kdf = PBKDF2(
-            algorithm=hashes.SHA256(), length=32, salt=request.machine_profile.cpu_id.encode(), iterations=100000, backend=default_backend(),
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=request.machine_profile.cpu_id.encode(),
+            iterations=100000,
+            backend=default_backend(),
         )
         key = kdf.derive(data.encode())
 
         # Format as license key
         key_hex = key.hex().upper()
-        formatted = "-".join(key_hex[i : i + 5] for i in range(0, 40, 5))
-
-        return formatted
+        return "-".join(key_hex[i : i + 5] for i in range(0, 40, 5))
 
     def _generate_activation_code(self, request: ExtendedActivationRequest) -> str:
         """Generate activation code using HMAC-SHA256 from machine and serial data.
@@ -2146,7 +2228,10 @@ class OfflineActivationEmulator:
 
         # Generate response using machine profile and challenge data
         response_data = hashlib.sha256(
-            nonce + data + self.machine_profile.machine_id.encode() + self.machine_profile.cpu_id.encode(),
+            nonce
+            + data
+            + self.machine_profile.machine_id.encode()
+            + self.machine_profile.cpu_id.encode(),
         ).digest()
         logger.debug(f"Generated raw response data: {response_data.hex()}")
 

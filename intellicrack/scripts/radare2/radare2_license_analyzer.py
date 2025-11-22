@@ -31,6 +31,7 @@ from enum import Enum
 import networkx as nx
 import r2pipe
 
+
 """
 Radare2 License Analyzer Module
 
@@ -157,7 +158,7 @@ class R2LicenseAnalyzer:
 
     def __init__(self, r2: r2pipe.open = None, filename: str = None) -> None:
         """Initialize the license analyzer."""
-        self.r2 = r2 if r2 else r2pipe.open(filename)
+        self.r2 = r2 or r2pipe.open(filename)
         self.license_functions: list[LicenseFunction] = []
         self.call_graph = nx.DiGraph()
         self.string_refs: dict[int, list[str]] = defaultdict(list)
@@ -204,8 +205,7 @@ class R2LicenseAnalyzer:
             # Find xrefs to this string
             xrefs = self.r2.cmdj(f"axtj @ {vaddr}")
             for xref in xrefs:
-                func_addr = self._get_function_at(xref.get("from", 0))
-                if func_addr:
+                if func_addr := self._get_function_at(xref.get("from", 0)):
                     self.string_refs[func_addr].append(string_val)
 
     def _load_imports(self) -> None:
@@ -218,14 +218,11 @@ class R2LicenseAnalyzer:
 
         for imp in imports:
             name = imp.get("name", "")
-            plt_addr = imp.get("plt", 0)
-
-            if plt_addr:
+            if plt_addr := imp.get("plt", 0):
                 # Find xrefs to this import
                 xrefs = self.r2.cmdj(f"axtj @ {plt_addr}")
                 for xref in xrefs:
-                    func_addr = self._get_function_at(xref.get("from", 0))
-                    if func_addr:
+                    if func_addr := self._get_function_at(xref.get("from", 0)):
                         self.api_refs[func_addr].append(name)
 
     def _build_call_graph(self) -> None:
@@ -240,9 +237,7 @@ class R2LicenseAnalyzer:
             addr = func.get("offset", 0)
             self.call_graph.add_node(addr, **func)
 
-            # Get calls from this function
-            calls = self.r2.cmdj(f"afcfj @ {addr}")
-            if calls:
+            if calls := self.r2.cmdj(f"afcfj @ {addr}"):
                 for callee in calls:
                     self.call_graph.add_edge(addr, callee)
 
@@ -349,7 +344,7 @@ class R2LicenseAnalyzer:
 
         # Check other functions with high string scores
         for addr, strings in self.string_refs.items():
-            if not any(f.address == addr for f in self.license_functions):
+            if all(f.address != addr for f in self.license_functions):
                 score = self._calculate_string_score(strings)
 
                 if score > 0.6:
@@ -381,10 +376,7 @@ class R2LicenseAnalyzer:
                     matches += 1
 
         # Normalize
-        if matches > 0:
-            return min(1.0, total_score / len(strings))
-
-        return 0.0
+        return min(1.0, total_score / len(strings)) if matches > 0 else 0.0
 
     def _determine_license_type(self, indicators: list[str]) -> LicenseType:
         """Determine license type from indicators."""
@@ -435,10 +427,7 @@ class R2LicenseAnalyzer:
                     total_score += weight
                     matches += 1
 
-        if matches > 0:
-            return min(1.0, total_score / len(apis))
-
-        return 0.0
+        return min(1.0, total_score / len(apis)) if matches > 0 else 0.0
 
     def _analyze_control_flow(self) -> None:
         """Analyze control flow complexity."""
@@ -473,7 +462,11 @@ class R2LicenseAnalyzer:
             return False
 
         # Look for multiple return paths
-        return_blocks = [b for b in blocks if b.get("ninstr", 0) > 0 and any("ret" in str(b.get("disasm", "")) for b in blocks)]
+        return_blocks = [
+            b
+            for b in blocks
+            if b.get("ninstr", 0) > 0 and any("ret" in str(b.get("disasm", "")) for b in blocks)
+        ]
 
         # License functions often have multiple returns (success/failure)
         return len(return_blocks) >= 2
@@ -496,7 +489,9 @@ class R2LicenseAnalyzer:
         # Update license functions with crypto info
         for lic_func in self.license_functions:
             for _crypto_type, locations in self.crypto_locations.items():
-                if any(lic_func.address <= loc <= lic_func.address + lic_func.size for loc in locations):
+                if any(
+                    lic_func.address <= loc <= lic_func.address + lic_func.size for loc in locations
+                ):
                     lic_func.type = LicenseType.CRYPTO_SIGNATURE
                     lic_func.protection_level = ProtectionLevel.ADVANCED
                     lic_func.confidence = min(1.0, lic_func.confidence * 1.3)
@@ -512,8 +507,7 @@ class R2LicenseAnalyzer:
             ]
 
             for pattern in search_patterns:
-                results = self.r2.cmd(f"/x {pattern}")
-                if results:
+                if results := self.r2.cmd(f"/x {pattern}"):
                     for line in results.strip().split("\n"):
                         if line.startswith("0x"):
                             addr = int(line.split()[0], 16)
@@ -574,10 +568,9 @@ class R2LicenseAnalyzer:
             string_match = any(s.lower() in string_text for s in required_strings)
 
             if string_match or (required_apis and required_apis.issubset(api_set)):
-                # Found a match
-                existing = next((f for f in self.license_functions if f.address == addr), None)
-
-                if existing:
+                if existing := next(
+                    (f for f in self.license_functions if f.address == addr), None
+                ):
                     existing.type = license_type
                     existing.confidence = min(1.0, existing.confidence * 1.2)
                 else:
@@ -600,25 +593,33 @@ class R2LicenseAnalyzer:
         print("[*] Generating bypass strategies...")
 
         for lic_func in self.license_functions:
-            strategies = []
-
-            # Basic patching strategies
-            strategies.append(f"Patch at 0x{lic_func.address:x}: Change conditional jump to unconditional")
-            strategies.append(f"NOP critical validation code at 0x{lic_func.address:x}")
+            strategies = [
+                f"Patch at 0x{lic_func.address:x}: Change conditional jump to unconditional",
+                f"NOP critical validation code at 0x{lic_func.address:x}",
+            ]
 
             # Type-specific strategies
             if lic_func.type == LicenseType.SERIAL_KEY:
-                strategies.append("Patch string comparison to always return equal")
-                strategies.append("Hook key validation function to return success")
-
+                strategies.extend(
+                    (
+                        "Patch string comparison to always return equal",
+                        "Hook key validation function to return success",
+                    )
+                )
             elif lic_func.type == LicenseType.ONLINE:
-                strategies.append("Redirect network calls to local server")
-                strategies.append("Patch out network validation entirely")
-
+                strategies.extend(
+                    (
+                        "Redirect network calls to local server",
+                        "Patch out network validation entirely",
+                    )
+                )
             elif lic_func.type == LicenseType.HARDWARE:
-                strategies.append("Spoof hardware ID generation")
-                strategies.append("Patch hardware comparison logic")
-
+                strategies.extend(
+                    (
+                        "Spoof hardware ID generation",
+                        "Patch hardware comparison logic",
+                    )
+                )
             elif lic_func.type == LicenseType.TIME_TRIAL:
                 strategies.append("Freeze or extend trial period")
                 strategies.append("Patch time comparison to always pass")
@@ -841,12 +842,35 @@ class R2LicenseAnalyzer:
                     # Verify it's a conditional jump (not unconditional)
                     if self.arch == "x86":
                         # x86 conditional jumps
-                        if insn.mnemonic in ["je", "jne", "jz", "jnz", "jg", "jl", "jge", "jle", "ja", "jb", "jae", "jbe", "jp", "jnp", "jo", "jno", "js", "jns"]:
+                        if insn.mnemonic in [
+                            "je",
+                            "jne",
+                            "jz",
+                            "jnz",
+                            "jg",
+                            "jl",
+                            "jge",
+                            "jle",
+                            "ja",
+                            "jb",
+                            "jae",
+                            "jbe",
+                            "jp",
+                            "jnp",
+                            "jo",
+                            "jno",
+                            "js",
+                            "jns",
+                        ]:
                             # Return the instruction address and bytes
                             return insn.address, insn.bytes
                     elif self.arch == "arm":
                         # ARM conditional branches (check condition codes)
-                        if insn.mnemonic.startswith("b") and insn.mnemonic not in ["b", "bl", "blx"]:
+                        if insn.mnemonic.startswith("b") and insn.mnemonic not in [
+                            "b",
+                            "bl",
+                            "blx",
+                        ]:
                             return insn.address, insn.bytes
                     elif self.arch == "mips":
                         # MIPS conditional branches
@@ -862,7 +886,9 @@ class R2LicenseAnalyzer:
 
         return None, None
 
-    def _find_patch_location_fallback(self, lic_func: LicenseFunction, func_bytes: list) -> tuple[int | None, bytes | None]:
+    def _find_patch_location_fallback(
+        self, lic_func: LicenseFunction, func_bytes: list
+    ) -> tuple[int | None, bytes | None]:
         """Fallback instruction detection without capstone using opcode patterns."""
         if self.arch == "x86":
             # x86/x64 conditional jump opcodes

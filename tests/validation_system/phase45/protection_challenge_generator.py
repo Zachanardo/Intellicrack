@@ -78,18 +78,18 @@ class LicensingSystem(Enum):
 class ProtectionChallenge:
     """Protection challenge configuration."""
     name: str
-    protection_types: List[ProtectionType]
-    licensing_system: Optional[LicensingSystem]
+    protection_types: list[ProtectionType]
+    licensing_system: LicensingSystem | None
     difficulty: int  # 1-10
     obfuscation_level: int  # 1-10
     anti_analysis_level: int  # 1-10
-    custom_parameters: Dict[str, Any]
+    custom_parameters: dict[str, Any]
 
 
 class ProtectionChallengeGenerator:
     """Generates test binaries with sophisticated protection mechanisms."""
 
-    def __init__(self, output_dir: Optional[str] = None):
+    def __init__(self, output_dir: str | None = None):
         """Initialize protection challenge generator.
 
         Args:
@@ -121,7 +121,7 @@ class ProtectionChallengeGenerator:
             ]
         )
 
-    def _load_challenge_templates(self) -> List[ProtectionChallenge]:
+    def _load_challenge_templates(self) -> list[ProtectionChallenge]:
         """Load predefined protection challenge templates.
 
         Returns:
@@ -1274,7 +1274,7 @@ void timing_check() {
         with open(metadata_path, 'w') as f:
             json.dump(metadata, f, indent=2)
 
-    def _generate_hints(self, challenge: ProtectionChallenge) -> List[str]:
+    def _generate_hints(self, challenge: ProtectionChallenge) -> list[str]:
         """Generate hints for solving the challenge.
 
         Args:
@@ -1299,7 +1299,7 @@ void timing_check() {
 
         return hints
 
-    def _generate_solution(self, challenge: ProtectionChallenge) -> Dict:
+    def _generate_solution(self, challenge: ProtectionChallenge) -> dict:
         """Generate solution for the challenge.
 
         Args:
@@ -1353,7 +1353,7 @@ void timing_check() {
 
         return f"PWNED_{flag_hash}"
 
-    def generate_all_challenges(self) -> List[Path]:
+    def generate_all_challenges(self) -> list[Path]:
         """Generate all challenge binaries.
 
         Returns:
@@ -1373,7 +1373,7 @@ void timing_check() {
 
         return binaries
 
-    def _generate_challenge_report(self, binaries: List[Path]) -> None:
+    def _generate_challenge_report(self, binaries: list[Path]) -> None:
         """Generate report of all challenges.
 
         Args:
@@ -1389,7 +1389,7 @@ void timing_check() {
         for binary in binaries:
             metadata_path = binary.with_suffix(".json")
             if metadata_path.exists():
-                with open(metadata_path, 'r') as f:
+                with open(metadata_path) as f:
                     metadata = json.load(f)
                     report["challenges"].append({
                         "name": metadata["name"],

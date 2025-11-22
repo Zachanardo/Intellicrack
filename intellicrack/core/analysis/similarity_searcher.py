@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 # Import the main implementation
 from .binary_similarity_search import BinarySimilaritySearch
 
+
 # Aliases for backward compatibility
 BinarySimilaritySearcher = BinarySimilaritySearch
 SimilaritySearcher = BinarySimilaritySearch

@@ -48,7 +48,9 @@ def secure_hash(data: str | bytes, algorithm: str = "sha256") -> str:
         Hex digest of the hash
 
     """
-    logger.debug(f"Generating secure hash for data (type: {type(data)}) using algorithm: {algorithm}")
+    logger.debug(
+        f"Generating secure hash for data (type: {type(data)}) using algorithm: {algorithm}"
+    )
     if isinstance(data, str):
         data = data.encode("utf-8")
         logger.debug("Data converted to UTF-8 bytes.")
@@ -71,7 +73,9 @@ def secure_hash(data: str | bytes, algorithm: str = "sha256") -> str:
 
 
 @log_function_call
-def secure_subprocess(command: str | list[str], shell: bool = False, timeout: int | None = 30, **kwargs: object) -> subprocess.CompletedProcess[str]:
+def secure_subprocess(
+    command: str | list[str], shell: bool = False, timeout: int | None = 30, **kwargs: object
+) -> subprocess.CompletedProcess[str]:
     """Execute a subprocess command securely.
 
     Args:
@@ -87,9 +91,13 @@ def secure_subprocess(command: str | list[str], shell: bool = False, timeout: in
         SecurityError: If shell=True without whitelist
 
     """
-    logger.debug(f"Executing secure_subprocess command: {command}, shell: {shell}, timeout: {timeout}")
+    logger.debug(
+        f"Executing secure_subprocess command: {command}, shell: {shell}, timeout: {timeout}"
+    )
     if shell:
-        error_msg = "shell=True is not allowed for security reasons. Use a list of arguments instead."
+        error_msg = (
+            "shell=True is not allowed for security reasons. Use a list of arguments instead."
+        )
         logger.error(error_msg)
         raise SecurityError(error_msg)
 
@@ -107,7 +115,9 @@ def secure_subprocess(command: str | list[str], shell: bool = False, timeout: in
             text=True,
             **kwargs,
         )
-        logger.debug(f"Subprocess command completed. Return code: {result.returncode}, Stdout: {result.stdout.strip()}, Stderr: {result.stderr.strip()}")
+        logger.debug(
+            f"Subprocess command completed. Return code: {result.returncode}, Stdout: {result.stdout.strip()}, Stderr: {result.stderr.strip()}"
+        )
         return result
     except subprocess.TimeoutExpired:
         logger.error(f"Subprocess command timed out after {timeout} seconds: {command}")
@@ -166,6 +176,7 @@ def validate_file_path(path: str, allowed_extensions: list[str] | None = None) -
 
     """
     import os
+
     logger.debug(f"Validating file path: '{path}' with allowed extensions: {allowed_extensions}")
     # Prevent path traversal
     if ".." in path or path.startswith("/"):
@@ -212,5 +223,7 @@ def sanitize_input(text: str, max_length: int = 1024) -> str:
 
     text = re.sub(r"[\x00-\x1F\x7F-\x9F]", "", text)
     sanitized_text = text.strip()
-    logger.debug(f"Control characters removed and text stripped. Sanitized output (length: {len(sanitized_text)}): '{sanitized_text[:100]}...'")
+    logger.debug(
+        f"Control characters removed and text stripped. Sanitized output (length: {len(sanitized_text)}): '{sanitized_text[:100]}...'"
+    )
     return sanitized_text

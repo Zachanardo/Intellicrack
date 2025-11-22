@@ -44,6 +44,7 @@ from intellicrack.handlers.pyqt6_handler import (
 )
 from intellicrack.utils.logger import logger
 
+
 """
 Binary Similarity Search Dialog
 
@@ -123,7 +124,9 @@ class BinarySimilaritySearchDialog(QDialog):
 
         # Header with binary info
         header_layout = QHBoxLayout()
-        header_layout.addWidget(QLabel(f"<b>Target Binary:</b> {os.path.basename(self.binary_path)}"))
+        header_layout.addWidget(
+            QLabel(f"<b>Target Binary:</b> {os.path.basename(self.binary_path)}")
+        )
         header_layout.addStretch()
 
         # Database info
@@ -281,7 +284,9 @@ class BinarySimilaritySearchDialog(QDialog):
             def run(self) -> None:
                 """Execute binary similarity search in a separate thread."""
                 try:
-                    results = self.search_engine.search_similar_binaries(self.binary_path, self.threshold)
+                    results = self.search_engine.search_similar_binaries(
+                        self.binary_path, self.threshold
+                    )
                     self.result_signal.emit(results)
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.exception("Binary similarity search failed: %s", e)
@@ -326,9 +331,7 @@ class BinarySimilaritySearchDialog(QDialog):
             return
 
         result = self.similar_binaries[row]
-        patterns = result.get("cracking_patterns", [])
-
-        if patterns:
+        if patterns := result.get("cracking_patterns", []):
             patterns_text = f"Cracking patterns for {os.path.basename(result.get('path', ''))}:\n\n"
 
             for i, pattern in enumerate(patterns):
@@ -361,7 +364,9 @@ class BinarySimilaritySearchDialog(QDialog):
         pattern_to_apply = None
         if len(patterns) > 1:
             pattern_items = [f"Pattern {_i + 1}" for _i in range(len(patterns))]
-            pattern_index, ok = QInputDialog.getItem(self, "Select Pattern", "Choose a pattern to apply:", pattern_items, 0, False)
+            pattern_index, ok = QInputDialog.getItem(
+                self, "Select Pattern", "Choose a pattern to apply:", pattern_items, 0, False
+            )
 
             if ok and pattern_index:
                 index = pattern_items.index(pattern_index)
@@ -426,15 +431,12 @@ class BinarySimilaritySearchDialog(QDialog):
         if not ok:
             return
 
-        patterns = []
-        if patterns_text.strip():
-            patterns = [patterns_text.strip()]
-
+        patterns = [patterns_text.strip()] if patterns_text.strip() else []
         # Add to database
         try:
-            success = self.search_engine.add_binary(self.binary_path, patterns)
-
-            if success:
+            if success := self.search_engine.add_binary(
+                self.binary_path, patterns
+            ):
                 QMessageBox.information(
                     self,
                     "Success",
@@ -471,9 +473,7 @@ class BinarySimilaritySearchDialog(QDialog):
             return None
 
         result = self.similar_binaries[row]
-        patterns = result.get("cracking_patterns", [])
-
-        if patterns:
+        if patterns := result.get("cracking_patterns", []):
             return patterns[0]  # Return first pattern
 
         return None
@@ -488,7 +488,9 @@ class BinarySimilaritySearchDialog(QDialog):
         return self.similar_binaries.copy()
 
 
-def create_similarity_search_dialog(binary_path: str, parent: QWidget | None = None) -> BinarySimilaritySearchDialog:
+def create_similarity_search_dialog(
+    binary_path: str, parent: QWidget | None = None
+) -> BinarySimilaritySearchDialog:
     """Create a BinarySimilaritySearchDialog.
 
     Args:

@@ -36,8 +36,8 @@ class ValidationViolation:
     description: str
     severity: ViolationSeverity
     timestamp: datetime
-    evidence: Dict[str, Any] = field(default_factory=dict)
-    remediation: Optional[str] = None
+    evidence: dict[str, Any] = field(default_factory=dict)
+    remediation: str | None = None
 
     def __post_init__(self):
         if not self.violation_id:
@@ -49,8 +49,8 @@ class ComponentResult:
     """Result from individual validation component."""
     component_name: str
     status: VerdictStatus
-    violations: List[ValidationViolation] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    violations: list[ValidationViolation] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
     execution_time: float = 0.0
     timestamp: datetime = field(default_factory=datetime.now)
 
@@ -70,10 +70,10 @@ class FinalVerdict:
     components_failed: int
     execution_time: float
     timestamp: datetime
-    violations: List[ValidationViolation] = field(default_factory=list)
-    component_results: List[ComponentResult] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    signature: Optional[str] = None
+    violations: list[ValidationViolation] = field(default_factory=list)
+    component_results: list[ComponentResult] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    signature: str | None = None
 
     def __post_init__(self):
         """Generate integrity signature."""
@@ -99,7 +99,7 @@ class FinalVerdictAlgorithm:
     Any single violation at any level results in complete FAIL.
     """
 
-    def __init__(self, config_path: Optional[Path] = None):
+    def __init__(self, config_path: Path | None = None):
         self.config_path = config_path
         self.logger = self._setup_logging()
         self._load_config()
@@ -134,14 +134,14 @@ class FinalVerdictAlgorithm:
 
         if self.config_path and self.config_path.exists():
             try:
-                with open(self.config_path, 'r') as f:
+                with open(self.config_path) as f:
                     file_config = json.load(f)
                     # Override only non-critical settings
                     self.config['fail_fast'] = file_config.get('fail_fast', False)
             except Exception as e:
                 self.logger.warning(f"Failed to load config: {e}, using defaults")
 
-    def evaluate_validation_results(self, component_results: List[ComponentResult]) -> FinalVerdict:
+    def evaluate_validation_results(self, component_results: list[ComponentResult]) -> FinalVerdict:
         """
         Evaluate all component results and generate final verdict.
 
@@ -210,7 +210,7 @@ class FinalVerdictAlgorithm:
 
         return verdict
 
-    def _apply_zero_tolerance_algorithm(self, violations: List[ValidationViolation]) -> VerdictStatus:
+    def _apply_zero_tolerance_algorithm(self, violations: list[ValidationViolation]) -> VerdictStatus:
         """
         Apply zero-tolerance algorithm: any violation = FAIL.
 
@@ -237,7 +237,7 @@ class FinalVerdictAlgorithm:
         # Zero tolerance means ANY violation = FAIL
         return VerdictStatus.FAIL
 
-    def validate_component_integrity(self, component_results: List[ComponentResult]) -> bool:
+    def validate_component_integrity(self, component_results: list[ComponentResult]) -> bool:
         """
         Validate integrity of component results before processing.
 
@@ -341,7 +341,7 @@ class FinalVerdictAlgorithm:
 
         return True
 
-    def generate_verdict_report(self, verdict: FinalVerdict) -> Dict[str, Any]:
+    def generate_verdict_report(self, verdict: FinalVerdict) -> dict[str, Any]:
         """
         Generate comprehensive verdict report.
 
@@ -448,7 +448,7 @@ class FinalVerdictAlgorithm:
             self.logger.error(f"Failed to save verdict: {e}")
             return False
 
-    def load_verdict(self, input_path: Path) -> Optional[FinalVerdict]:
+    def load_verdict(self, input_path: Path) -> FinalVerdict | None:
         """
         Load and verify verdict from file.
 
@@ -463,7 +463,7 @@ class FinalVerdictAlgorithm:
                 self.logger.error(f"Verdict file not found: {input_path}")
                 return None
 
-            with open(input_path, 'r') as f:
+            with open(input_path) as f:
                 data = json.load(f)
 
             # Reconstruct verdict object

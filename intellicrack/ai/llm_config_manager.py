@@ -36,6 +36,7 @@ from ..utils.deprecation_warnings import deprecated_config_method
 from ..utils.logger import get_logger
 from .llm_backends import LLMConfig, LLMProvider, get_llm_manager
 
+
 if TYPE_CHECKING:
     from .llm_backends import LLMManager
 
@@ -94,26 +95,28 @@ class LLMConfigManager:
         try:
             central_config = get_config()
 
-            # Load models from central config
-            central_models = central_config.get("llm_configuration.models", {})
-            if central_models:
+            if central_models := central_config.get(
+                "llm_configuration.models", {}
+            ):
                 self.configs.update(central_models)
 
-            # Load profiles from central config
-            central_profiles = central_config.get("llm_configuration.profiles", {})
-            if central_profiles:
+            if central_profiles := central_config.get(
+                "llm_configuration.profiles", {}
+            ):
                 self.profiles.update(central_profiles)
 
-            # Load metrics from central config
-            central_metrics = central_config.get("llm_configuration.metrics", {})
-            if central_metrics:
+            if central_metrics := central_config.get(
+                "llm_configuration.metrics", {}
+            ):
                 self.metrics.update(central_metrics)
 
         except Exception as e:
             logger.warning(f"Could not load from central config: {e}")
 
     def _load_json_file(
-        self, file_path: Path, default: dict[str, object] | list[object],
+        self,
+        file_path: Path,
+        default: dict[str, object] | list[object],
     ) -> dict[str, object] | list[object]:
         """Load a JSON file with error handling - ONLY for migration purposes.
 
@@ -210,8 +213,12 @@ class LLMConfigManager:
             },
         }
 
-    @deprecated_config_method("IntellicrackConfig.set('llm_configuration.models.{model_id}', config)")
-    def save_model_config(self, model_id: str, config: LLMConfig, metadata: dict | None = None) -> None:
+    @deprecated_config_method(
+        "IntellicrackConfig.set('llm_configuration.models.{model_id}', config)"
+    )
+    def save_model_config(
+        self, model_id: str, config: LLMConfig, metadata: dict | None = None
+    ) -> None:
         """Save a model configuration.
 
         Args:
@@ -271,7 +278,7 @@ class LLMConfigManager:
         try:
             provider = LLMProvider(config_data["provider"])
 
-            config = LLMConfig(
+            return LLMConfig(
                 provider=provider,
                 model_name=config_data["model_name"],
                 api_key=config_data.get("api_key"),
@@ -283,9 +290,6 @@ class LLMConfigManager:
                 tools_enabled=config_data.get("tools_enabled", True),
                 custom_params=config_data.get("custom_params", {}),
             )
-
-            return config
-
         except Exception as e:
             logger.error(f"Failed to load config for {model_id}: {e}")
             return None
@@ -332,10 +336,7 @@ class LLMConfigManager:
 
         # Get configs from central config
         central_config = get_config()
-        central_configs = central_config.get("llm_configuration.models", {})
-
-        # Merge with internal cache (prefer central config)
-        if central_configs:
+        if central_configs := central_config.get("llm_configuration.models", {}):
             # Update internal cache with central config data
             self.configs.update(central_configs)
             return central_configs.copy()
@@ -344,7 +345,8 @@ class LLMConfigManager:
         return self.configs.copy()
 
     def auto_load_models(
-        self, llm_manager: "LLMManager | None" = None,
+        self,
+        llm_manager: "LLMManager | None" = None,
     ) -> tuple[int, int]:
         """Auto-load all saved models into the LLM manager.
 
@@ -363,8 +365,7 @@ class LLMConfigManager:
 
         for model_id, config_data in self.configs.items():
             if config_data.get("metadata", {}).get("auto_load", True):
-                config = self.load_model_config(model_id)
-                if config:
+                if config := self.load_model_config(model_id):
                     try:
                         if llm_manager.register_llm(model_id, config):
                             loaded += 1
@@ -381,7 +382,9 @@ class LLMConfigManager:
         logger.info(f"Auto-load complete: {loaded} loaded, {failed} failed")
         return loaded, failed
 
-    @deprecated_config_method("IntellicrackConfig.set('llm_configuration.profiles.{profile_id}', data)")
+    @deprecated_config_method(
+        "IntellicrackConfig.set('llm_configuration.profiles.{profile_id}', data)"
+    )
     def save_profile(self, profile_id: str, profile_data: dict[str, Any]) -> None:
         """Save a model profile.
 
@@ -435,10 +438,9 @@ class LLMConfigManager:
 
         # Get profiles from central config
         central_config = get_config()
-        central_profiles = central_config.get("llm_configuration.profiles", {})
-
-        # Merge with internal cache (prefer central config)
-        if central_profiles:
+        if central_profiles := central_config.get(
+            "llm_configuration.profiles", {}
+        ):
             # Update internal cache with central config data
             self.profiles.update(central_profiles)
             return central_profiles.copy()
@@ -526,7 +528,8 @@ class LLMConfigManager:
         total_memory = sum(m.get("memory_mb", 0) for m in history if m.get("memory_mb"))
 
         count = len(history)
-        memory_count = sum(1 for m in history if m.get("memory_mb"))
+        memory_count = sum(bool(m.get("memory_mb"))
+                       for m in history)
 
         self.metrics[model_id]["aggregate"] = {
             "total_uses": count,

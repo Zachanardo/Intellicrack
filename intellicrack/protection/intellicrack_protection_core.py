@@ -34,6 +34,7 @@ from typing import TYPE_CHECKING
 
 from ..utils.logger import get_logger
 
+
 if TYPE_CHECKING:
     from .icp_backend import ICPBackend, ICPScanResult, ScanMode
 
@@ -125,11 +126,19 @@ class IntellicrackProtectionCore:
         .. code-block:: python
 
             detector = IntellicrackProtectionCore()
-            analysis = detector.detect_protections("target.exe")
-            for detection in analysis.detections:
-                print(f"Found: {detection.name} ({detection.type.value})")
+            analysis = detector.detect_protections(
+                "target.exe"
+            )
+            for (
+                detection
+            ) in analysis.detections:
+                print(
+                    f"Found: {detection.name} ({detection.type.value})"
+                )
                 for recommendation in detection.bypass_recommendations:
-                    print(f"  - {recommendation}")
+                    print(
+                        f"  - {recommendation}"
+                    )
 
     """
 
@@ -344,15 +353,20 @@ class IntellicrackProtectionCore:
 
         # Determine architecture from file type
         filetype_lower = primary_info.filetype.lower()
-        if "pe64" in filetype_lower or "64" in filetype_lower:
+        if (
+            "pe64" in filetype_lower
+            or "64" in filetype_lower
+            or ("pe32" not in filetype_lower
+            and "32" not in filetype_lower
+            and "elf64" in filetype_lower)
+        ):
             analysis.architecture = "x64"
-        elif "pe32" in filetype_lower or "32" in filetype_lower:
+        elif (
+            "pe32" in filetype_lower
+            or "32" in filetype_lower
+            or "elf32" in filetype_lower
+        ):
             analysis.architecture = "x86"
-        elif "elf64" in filetype_lower:
-            analysis.architecture = "x64"
-        elif "elf32" in filetype_lower:
-            analysis.architecture = "x86"
-
         # Process all detections
         for detection in icp_result.all_detections:
             det_type = self._categorize_detection(detection.type)
@@ -360,7 +374,7 @@ class IntellicrackProtectionCore:
             # Create detection result
             det_result = DetectionResult(
                 name=detection.name,
-                version=detection.version if detection.version else None,
+                version=detection.version or None,
                 type=det_type,
                 confidence=detection.confidence * 100.0,  # Convert to percentage
             )
@@ -370,12 +384,16 @@ class IntellicrackProtectionCore:
 
             # Set compiler info
             if det_type == ProtectionType.COMPILER and not analysis.compiler:
-                analysis.compiler = f"{detection.name} {detection.version}" if detection.version else detection.name
+                analysis.compiler = (
+                    f"{detection.name} {detection.version}" if detection.version else detection.name
+                )
 
             # Set analysis flags
             if det_type == ProtectionType.PACKER:
                 analysis.is_packed = True
-            elif det_type in [ProtectionType.PROTECTOR, ProtectionType.CRYPTOR] or det_type in [
+            elif det_type in [
+                ProtectionType.PROTECTOR,
+                ProtectionType.CRYPTOR,
                 ProtectionType.LICENSE,
                 ProtectionType.DONGLE,
                 ProtectionType.DRM,
@@ -397,17 +415,17 @@ class IntellicrackProtectionCore:
 
         # Add entropy info if available
         if hasattr(icp_result, "metadata") and icp_result.metadata:
-            analysis.metadata.update(icp_result.metadata)
+            analysis.metadata |= icp_result.metadata
 
         return analysis
 
     def _parse_json_output(self, file_path: str, engine_data: dict) -> ProtectionAnalysis:
         """Parse legacy JSON output into structured results (kept for compatibility)."""
-        analysis = ProtectionAnalysis(file_path=file_path, file_type="Unknown", architecture="Unknown")
+        analysis = ProtectionAnalysis(
+            file_path=file_path, file_type="Unknown", architecture="Unknown"
+        )
 
-        # Extract detections from the new format
-        detects = engine_data.get("detects", [])
-        if detects:
+        if detects := engine_data.get("detects", []):
             # Take the first detection (usually the main file)
             main_detect = detects[0]
 
@@ -416,15 +434,16 @@ class IntellicrackProtectionCore:
             analysis.file_type = filetype
 
             # Extract architecture from file type
-            if "PE64" in filetype or "64" in filetype:
+            if (
+                "PE64" in filetype
+                or "64" in filetype
+                or ("PE32" not in filetype
+                and "32" not in filetype
+                and "ELF64" in filetype)
+            ):
                 analysis.architecture = "x64"
-            elif "PE32" in filetype or "32" in filetype:
+            elif "PE32" in filetype or "32" in filetype or "ELF32" in filetype:
                 analysis.architecture = "x86"
-            elif "ELF64" in filetype:
-                analysis.architecture = "x64"
-            elif "ELF32" in filetype:
-                analysis.architecture = "x86"
-
             # Process all values (detections)
             values = main_detect.get("values", [])
             for value in values:
@@ -447,7 +466,7 @@ class IntellicrackProtectionCore:
                 # Create detection result
                 det_result = DetectionResult(
                     name=name,
-                    version=version if version else None,
+                    version=version or None,
                     type=det_type,
                     confidence=100.0,  # Signature-based detections have high confidence
                 )
@@ -458,7 +477,9 @@ class IntellicrackProtectionCore:
                 # Add to appropriate flags
                 if det_type == ProtectionType.PACKER:
                     analysis.is_packed = True
-                elif det_type in [ProtectionType.PROTECTOR, ProtectionType.CRYPTOR] or det_type in [
+                elif det_type in [
+                    ProtectionType.PROTECTOR,
+                    ProtectionType.CRYPTOR,
                     ProtectionType.LICENSE,
                     ProtectionType.DONGLE,
                     ProtectionType.DRM,
@@ -669,8 +690,7 @@ class IntellicrackProtectionCore:
 
     def get_summary(self, analysis: ProtectionAnalysis) -> str:
         """Get a human-readable summary of the analysis."""
-        lines = []
-        lines.append(f"File: {os.path.basename(analysis.file_path)}")
+        lines = [f"File: {os.path.basename(analysis.file_path)}"]
         lines.append(f"Type: {analysis.file_type} ({analysis.architecture})")
 
         if analysis.compiler:
@@ -728,10 +748,10 @@ class IntellicrackProtectionCore:
 
         if output_format == "csv":
             lines = ["File,Type,Architecture,Protection,Version,Category"]
-            for det in analysis.detections:
-                lines.append(
-                    f"{analysis.file_path},{analysis.file_type},{analysis.architecture},{det.name},{det.version or 'N/A'},{det.type.value}",
-                )
+            lines.extend(
+                f"{analysis.file_path},{analysis.file_type},{analysis.architecture},{det.name},{det.version or 'N/A'},{det.type.value}"
+                for det in analysis.detections
+            )
             return "\n".join(lines)
 
         error_msg = f"Unknown output format: {output_format}"

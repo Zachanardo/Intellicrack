@@ -472,7 +472,7 @@ class TestConfigSchemaValidation(IntellicrackTestBase):
         assert self.test_config_file.exists(), "Config file should be created"
 
         # Load and verify
-        with open(self.test_config_file, 'r', encoding='utf-8') as f:
+        with open(self.test_config_file, encoding='utf-8') as f:
             saved_config = json.load(f)
 
         assert saved_config == full_config, "Saved config should match in-memory config"

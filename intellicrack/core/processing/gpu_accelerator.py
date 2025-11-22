@@ -26,6 +26,7 @@ from ...utils.core.import_checks import TENSORFLOW_AVAILABLE
 from ...utils.gpu_autoloader import get_device, get_gpu_info, gpu_autoloader
 from ...utils.logger import get_logger
 
+
 # Optional GPU backend imports
 try:
     import pyopencl.array as cl_array
@@ -53,7 +54,7 @@ class GPUAccelerationManager:
         """Initialize GPU acceleration manager.
 
         Args:
-            use_intel_pytorch: Whether to try Intel Extension for PyTorch (default: True)
+            use_intel_pytorch: Whether to use PyTorch XPU (default: True)
             prefer_intel: Whether to prefer Intel GPUs when multiple GPUs are available (default: True)
 
         """
@@ -70,11 +71,15 @@ class GPUAccelerationManager:
         # Get torch reference if available - respect use_intel_pytorch setting
         if use_intel_pytorch:
             self._torch = gpu_autoloader.get_torch()
-            self._ipex = gpu_autoloader.get_ipex()
+            self._has_xpu = (
+                self._torch and hasattr(self._torch, "xpu") and self._torch.xpu.is_available()
+                if self._torch
+                else False
+            )
         else:
             self._torch = gpu_autoloader.get_torch() if self.gpu_type != "intel_xpu" else None
-            self._ipex = None
-            if self.gpu_type == "intel_xpu" and not use_intel_pytorch:
+            self._has_xpu = False
+            if self.gpu_type == "intel_xpu":
                 self.logger.info("Intel PyTorch disabled by configuration, falling back to OpenCL")
 
         # Legacy attributes for compatibility
@@ -92,12 +97,10 @@ class GPUAccelerationManager:
     def _determine_backend(self) -> str | None:
         """Determine the backend based on GPU type and configuration."""
         if self.gpu_type == "intel_xpu":
-            if self.use_intel_pytorch and self._ipex:
-                return "intel_pytorch"
-            if OPENCL_AVAILABLE:
-                return "pyopencl"
-            return "intel_pytorch"  # fallback even without IPEX
-        if self.gpu_type == "nvidia_cuda":
+            if self.use_intel_pytorch and self._has_xpu:
+                return "pytorch_xpu"
+            return "pyopencl" if OPENCL_AVAILABLE else "pytorch_xpu"
+        elif self.gpu_type == "nvidia_cuda":
             if CUPY_AVAILABLE:
                 return "cupy"
             return "pytorch"
@@ -118,8 +121,9 @@ class GPUAccelerationManager:
 
             for platform in cl.get_platforms():
                 try:
-                    devices = platform.get_devices(device_type=cl.device_type.GPU)
-                    if devices:
+                    if devices := platform.get_devices(
+                        device_type=cl.device_type.GPU
+                    ):
                         best_device = devices[0]
                         best_platform = platform
                         break
@@ -169,7 +173,9 @@ class GPUAccelerationManager:
                 return self._cupy_pattern_matching(data, patterns)
             if self._torch:
                 return self._torch_pattern_matching(data, patterns)
-            self.logger.warning("Pattern matching not implemented for backend: %s", self.gpu_backend)
+            self.logger.warning(
+                "Pattern matching not implemented for backend: %s", self.gpu_backend
+            )
             return self._cpu_pattern_matching(data, patterns)
         except Exception as e:
             self.logger.error("GPU pattern matching failed: %s", e)
@@ -201,7 +207,9 @@ class GPUAccelerationManager:
 
         for pattern in patterns:
             pattern_np = np.frombuffer(pattern, dtype=np.uint8)
-            pattern_tensor = self._torch.tensor(pattern_np, dtype=self._torch.uint8, device=self.device)
+            pattern_tensor = self._torch.tensor(
+                pattern_np, dtype=self._torch.uint8, device=self.device
+            )
 
             # Use convolution for pattern matching
             if len(pattern) <= len(data):
@@ -262,19 +270,25 @@ class GPUAccelerationManager:
 
         all_matches = []
 
+        max_matches = 10000
         for pattern in patterns:
             data_array = np.frombuffer(data, dtype=np.uint8)
             pattern_array = np.frombuffer(pattern, dtype=np.uint8)
 
-            max_matches = 10000
             matches_array = np.zeros(max_matches, dtype=np.int32)
             match_count = np.zeros(1, dtype=np.int32)
 
             mf = self.cl.mem_flags
-            data_buffer = self.cl.Buffer(self.context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=data_array)
-            pattern_buffer = self.cl.Buffer(self.context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=pattern_array)
+            data_buffer = self.cl.Buffer(
+                self.context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=data_array
+            )
+            pattern_buffer = self.cl.Buffer(
+                self.context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=pattern_array
+            )
             matches_buffer = self.cl.Buffer(self.context, mf.WRITE_ONLY, matches_array.nbytes)
-            count_buffer = self.cl.Buffer(self.context, mf.READ_WRITE | mf.COPY_HOST_PTR, hostbuf=match_count)
+            count_buffer = self.cl.Buffer(
+                self.context, mf.READ_WRITE | mf.COPY_HOST_PTR, hostbuf=match_count
+            )
 
             global_size = (len(data_array),)
             local_size = None
@@ -299,7 +313,9 @@ class GPUAccelerationManager:
             if num_matches > 0:
                 all_matches.extend(matches_array[: min(num_matches, max_matches)].tolist())
 
-            self.logger.debug(f"OpenCL found {num_matches} matches for pattern of size {len(pattern)}")
+            self.logger.debug(
+                f"OpenCL found {num_matches} matches for pattern of size {len(pattern)}"
+            )
 
         return sorted(all_matches)
 
@@ -347,15 +363,15 @@ class GPUAccelerationManager:
 
         all_matches = []
 
+        max_matches = 10000
+        threads_per_block = 256
         for pattern in patterns:
             data_gpu = cp.asarray(np.frombuffer(data, dtype=np.uint8))
             pattern_gpu = cp.asarray(np.frombuffer(pattern, dtype=np.uint8))
 
-            max_matches = 10000
             matches_gpu = cp.zeros(max_matches, dtype=cp.int32)
             match_count_gpu = cp.zeros(1, dtype=cp.int32)
 
-            threads_per_block = 256
             blocks_per_grid = (len(data) + threads_per_block - 1) // threads_per_block
 
             pattern_match_kernel(
@@ -371,7 +387,9 @@ class GPUAccelerationManager:
                 matches_cpu = matches_gpu[: min(num_matches, max_matches)].get()
                 all_matches.extend(matches_cpu.tolist())
 
-            self.logger.debug(f"CUDA found {num_matches} matches for pattern of size {len(pattern)}")
+            self.logger.debug(
+                f"CUDA found {num_matches} matches for pattern of size {len(pattern)}"
+            )
 
         return sorted(all_matches)
 
@@ -433,12 +451,13 @@ class GPUAccelerator(GPUAccelerationManager):
 
     def _detect_vendor(self) -> str:
         """Detect GPU vendor from type."""
-        if self.gpu_type and "intel" in self.gpu_type:
-            return "Intel"
-        if self.gpu_type and ("nvidia" in self.gpu_type or "cuda" in self.gpu_type):
-            return "NVIDIA"
-        if self.gpu_type and ("amd" in self.gpu_type or "rocm" in self.gpu_type):
-            return "AMD"
+        if self.gpu_type:
+            if "intel" in self.gpu_type:
+                return "Intel"
+            if ("nvidia" in self.gpu_type or "cuda" in self.gpu_type):
+                return "NVIDIA"
+            if ("amd" in self.gpu_type or "rocm" in self.gpu_type):
+                return "AMD"
         return "Unknown"
 
     def _check_available_backends(self) -> None:

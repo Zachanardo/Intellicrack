@@ -23,9 +23,11 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import math
 from collections import Counter
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from ..utils.logger import get_logger
+
 
 logger = get_logger(__name__)
 
@@ -243,17 +245,15 @@ def calculate_histogram(data: bytes, bins: int = 16) -> list[tuple[str, int]]:
         count = sum(distribution[j] for j in range(start, end))
 
         # Create range label
-        if end - start == 1:
-            label = f"{start:02X}"
-        else:
-            label = f"{start:02X}-{end - 1:02X}"
-
+        label = f"{start:02X}" if end - start == 1 else f"{start:02X}-{end - 1:02X}"
         histogram.append((label, count))
 
     return histogram
 
 
-def find_patterns(data: bytes, min_length: int = 4, max_patterns: int = 10) -> list[tuple[bytes, int]]:
+def find_patterns(
+    data: bytes, min_length: int = 4, max_patterns: int = 10
+) -> list[tuple[bytes, int]]:
     """Find repeating patterns in the data.
 
     Args:

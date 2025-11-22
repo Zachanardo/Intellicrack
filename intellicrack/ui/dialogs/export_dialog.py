@@ -14,6 +14,7 @@ from typing import Any
 
 from PyQt6.QtWidgets import QLayout, QWidget
 
+
 try:
     from xml.etree.ElementTree import Element, ElementTree, SubElement
 except ImportError:
@@ -47,6 +48,7 @@ from intellicrack.handlers.pyqt6_handler import (
 
 from ...utils.logger import get_logger
 from .base_dialog import BaseDialog
+
 
 logger = get_logger(__name__)
 
@@ -137,9 +139,15 @@ class ExportWorker(QThread):
             if hasattr(icp_data, "__dict__"):
                 # Convert analysis object to dict
                 icp_dict = {
-                    "is_protected": icp_data.is_protected if hasattr(icp_data, "is_protected") else False,
-                    "file_type": icp_data.file_type if hasattr(icp_data, "file_type") else "Unknown",
-                    "architecture": icp_data.architecture if hasattr(icp_data, "architecture") else "Unknown",
+                    "is_protected": icp_data.is_protected
+                    if hasattr(icp_data, "is_protected")
+                    else False,
+                    "file_type": icp_data.file_type
+                    if hasattr(icp_data, "file_type")
+                    else "Unknown",
+                    "architecture": icp_data.architecture
+                    if hasattr(icp_data, "architecture")
+                    else "Unknown",
                     "detections": [],
                 }
 
@@ -148,7 +156,9 @@ class ExportWorker(QThread):
                         det_dict = {
                             "name": detection.name if hasattr(detection, "name") else "Unknown",
                             "type": detection.type if hasattr(detection, "type") else "Unknown",
-                            "confidence": detection.confidence if hasattr(detection, "confidence") else 0.0,
+                            "confidence": detection.confidence
+                            if hasattr(detection, "confidence")
+                            else 0.0,
                             "version": detection.version if hasattr(detection, "version") else "",
                         }
                         icp_dict["detections"].append(det_dict)
@@ -169,11 +179,10 @@ class ExportWorker(QThread):
                 self._dict_to_xml(elem, value)
             elif isinstance(value, list):
                 for item in value:
+                    item_elem = SubElement(elem, "item")
                     if isinstance(item, dict):
-                        item_elem = SubElement(elem, "item")
                         self._dict_to_xml(item_elem, item)
                     else:
-                        item_elem = SubElement(elem, "item")
                         item_elem.text = str(item)
             else:
                 elem.text = str(value)
@@ -185,10 +194,7 @@ class ExportWorker(QThread):
         self.progress_update.emit(30, "Preparing CSV data...")
 
         # Create CSV with detection results
-        rows = []
-
-        # Add header
-        rows.append(
+        rows = [
             [
                 "Detection Name",
                 "Type",
@@ -197,8 +203,8 @@ class ExportWorker(QThread):
                 "File Type",
                 "Architecture",
                 "Protected",
-            ],
-        )
+            ]
+        ]
 
         # Extract detection data
         if "icp_analysis" in results:
@@ -209,19 +215,18 @@ class ExportWorker(QThread):
             is_protected = getattr(icp_data, "is_protected", False)
 
             if hasattr(icp_data, "all_detections"):
-                for detection in icp_data.all_detections:
-                    rows.append(
-                        [
-                            getattr(detection, "name", "Unknown"),
-                            getattr(detection, "type", "Unknown"),
-                            f"{getattr(detection, 'confidence', 0.0):.2%}",
-                            getattr(detection, "version", ""),
-                            file_type,
-                            architecture,
-                            str(is_protected),
-                        ],
-                    )
-
+                rows.extend(
+                    [
+                        getattr(detection, "name", "Unknown"),
+                        getattr(detection, "type", "Unknown"),
+                        f"{getattr(detection, 'confidence', 0.0):.2%}",
+                        getattr(detection, "version", ""),
+                        file_type,
+                        architecture,
+                        str(is_protected),
+                    ]
+                    for detection in icp_data.all_detections
+                )
         self.progress_update.emit(70, "Writing CSV file...")
 
         with open(output_path, "w", newline="", encoding="utf-8") as f:
@@ -246,11 +251,7 @@ class ExportWorker(QThread):
 
         # Choose page size based on export configuration
         page_format = self.export_config.get("page_format", "A4")
-        if page_format == "letter":
-            pagesize = letter
-        else:
-            pagesize = A4
-
+        pagesize = letter if page_format == "letter" else A4
         doc = SimpleDocTemplate(output_path, pagesize=pagesize)
         styles = getSampleStyleSheet()
         story = []
@@ -264,13 +265,17 @@ class ExportWorker(QThread):
             spaceAfter=30,
         )
 
-        story.append(Paragraph("Intellicrack Protection Analysis Report", title_style))
-        story.append(Spacer(1, 20))
-
-        # Metadata
-        story.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles["Normal"]))
-        story.append(Spacer(1, 20))
-
+        story.extend(
+            (
+                Paragraph("Intellicrack Protection Analysis Report", title_style),
+                Spacer(1, 20),
+                Paragraph(
+                    f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                    styles["Normal"],
+                ),
+                Spacer(1, 20),
+            )
+        )
         # File Information
         if "file_info" in results:
             story.append(Paragraph("File Information", styles["Heading2"]))
@@ -294,9 +299,7 @@ class ExportWorker(QThread):
                 ),
             )
 
-            story.append(file_table)
-            story.append(Spacer(1, 20))
-
+            story.extend((file_table, Spacer(1, 20)))
         # ICP Analysis Results
         if "icp_analysis" in results:
             story.append(Paragraph("Protection Analysis Results", styles["Heading2"]))
@@ -329,7 +332,9 @@ class ExportWorker(QThread):
                         ],
                     )
 
-                detection_table = Table(detection_data, colWidths=[2 * inch, 1.5 * inch, 1 * inch, 1 * inch])
+                detection_table = Table(
+                    detection_data, colWidths=[2 * inch, 1.5 * inch, 1 * inch, 1 * inch]
+                )
                 detection_table.setStyle(
                     TableStyle(
                         [
@@ -466,7 +471,9 @@ class ExportWorker(QThread):
 class ExportDialog(BaseDialog):
     """Export dialog for ICP analysis results."""
 
-    def __init__(self, analysis_results: dict[str, Any] | None = None, parent: QWidget | None = None) -> None:
+    def __init__(
+        self, analysis_results: dict[str, Any] | None = None, parent: QWidget | None = None
+    ) -> None:
         """Initialize the ExportDialog with default values."""
         super().__init__(parent, "Export ICP Analysis Results")
         self.resize(600, 500)
@@ -580,7 +587,9 @@ class ExportDialog(BaseDialog):
 
         file_layout = QHBoxLayout()
         self.output_path_edit = QLineEdit()
-        self.output_path_edit.setToolTip("Enter or browse to select the output file path for the export")
+        self.output_path_edit.setToolTip(
+            "Enter or browse to select the output file path for the export"
+        )
         self.output_path_edit.setStyleSheet("QLineEdit { color: #666; }")
 
         self.browse_output_btn = QPushButton("Browse...")
@@ -704,13 +713,14 @@ class ExportDialog(BaseDialog):
 
     def browse_output_file(self) -> None:
         """Browse for output file."""
-        # Get selected format
-        selected_format = "json"
-        for button in self.format_group.buttons():
-            if button.isChecked():
-                selected_format = button.property("format_id")
-                break
-
+        selected_format = next(
+            (
+                button.property("format_id")
+                for button in self.format_group.buttons()
+                if button.isChecked()
+            ),
+            "json",
+        )
         # File dialog based on format
         filters = {
             "json": "JSON Files (*.json);;All Files (*.*)",
@@ -767,7 +777,9 @@ class ExportDialog(BaseDialog):
 </intellicrack_analysis>"""
 
             elif preview_format == "csv":
-                preview_text = "Detection Name,Type,Confidence,Version,File Type,Architecture,Protected\n"
+                preview_text = (
+                    "Detection Name,Type,Confidence,Version,File Type,Architecture,Protected\n"
+                )
                 if "icp_analysis" in filtered_results:
                     icp_data = filtered_results["icp_analysis"]
                     if hasattr(icp_data, "all_detections"):
@@ -824,12 +836,12 @@ class ExportDialog(BaseDialog):
 
             # Filter detections by confidence
             if hasattr(icp_data, "all_detections"):
-                filtered_detections = []
-                for detection in icp_data.all_detections:
-                    if getattr(detection, "confidence", 0.0) >= confidence_threshold:
-                        filtered_detections.append(detection)
-
-                # Create filtered ICP data
+                filtered_detections = [
+                    detection
+                    for detection in icp_data.all_detections
+                    if getattr(detection, "confidence", 0.0)
+                    >= confidence_threshold
+                ]
                 class FilteredICPData:
                     def __init__(self, original: object, filtered_detections: list[object]) -> None:
                         self.file_type = getattr(original, "file_type", "Unknown")
@@ -850,13 +862,14 @@ class ExportDialog(BaseDialog):
             QMessageBox.warning(self, "Invalid Output", "Please select an output file path.")
             return
 
-        # Get selected format
-        selected_format = "json"
-        for button in self.format_group.buttons():
-            if button.isChecked():
-                selected_format = button.property("format_id")
-                break
-
+        selected_format = next(
+            (
+                button.property("format_id")
+                for button in self.format_group.buttons()
+                if button.isChecked()
+            ),
+            "json",
+        )
         # Save export preferences to config
         try:
             from ...config import get_config
@@ -950,6 +963,7 @@ def main() -> None:
 
     # Generate actual file for analysis
     import os
+
     temp_file_obj = tempfile.NamedTemporaryFile(suffix=".exe", delete=False)  # noqa: SIM115
     test_file_path = temp_file_obj.name
     temp_file_obj.close()  # Close handle immediately so we can write to the file
@@ -975,7 +989,9 @@ def main() -> None:
             "md5": md5_hash,
             "sha256": sha256_hash,
         },
-        "icp_analysis": ICPAnalysisResult(file_type="PE32", architecture="x86", is_protected=True, all_detections=real_detections),
+        "icp_analysis": ICPAnalysisResult(
+            file_type="PE32", architecture="x86", is_protected=True, all_detections=real_detections
+        ),
     }
 
     dialog = ExportDialog(analysis_results)

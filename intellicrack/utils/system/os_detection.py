@@ -27,6 +27,7 @@ import platform
 import tempfile
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -90,9 +91,7 @@ def get_default_persistence_method() -> str:
 
     if current_os == "windows":
         return "scheduled_task"
-    if current_os == "linux":
-        return "systemd_service"
-    return "cron_job"
+    return "systemd_service" if current_os == "linux" else "cron_job"
 
 
 def get_platform_specific_paths() -> dict[str, str]:
@@ -149,7 +148,12 @@ def detect_file_type(file_path: str) -> str:
                 return "elf"
 
             # Check for Mach-O (macOS executable)
-            if header in [b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe"]:
+            if header in [
+                b"\xfe\xed\xfa\xce",
+                b"\xce\xfa\xed\xfe",
+                b"\xfe\xed\xfa\xcf",
+                b"\xcf\xfa\xed\xfe",
+            ]:
                 return "macho"
 
     except Exception as e:

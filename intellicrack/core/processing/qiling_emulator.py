@@ -34,6 +34,7 @@ from intellicrack.utils.logger import logger
 
 from ...config import get_config
 
+
 """
 Qiling Binary Emulation Framework Integration.
 
@@ -138,11 +139,7 @@ class QilingEmulator:
         self.mapped_files = []  # Track mapped files
 
         # Determine rootfs
-        if rootfs:
-            self.rootfs = rootfs
-        else:
-            self.rootfs = self._get_default_rootfs()
-
+        self.rootfs = rootfs or self._get_default_rootfs()
         # Qiling instance (created on run)
         self.ql = None
 
@@ -351,7 +348,10 @@ class QilingEmulator:
         )
 
         # Check for suspicious patterns
-        if any(keyword in str(params).lower() for keyword in ["license", "serial", "key", "trial", "activation", "registration"]):
+        if any(
+            keyword in str(params).lower()
+            for keyword in ["license", "serial", "key", "trial", "activation", "registration"]
+        ):
             self.license_checks.append(
                 {
                     "api": api_name,
@@ -364,7 +364,9 @@ class QilingEmulator:
         # Log potential license check
         self.logger.info(f"Potential license API: {api_name} at {hex(address)}")
 
-    def hook_memory_access(self, ql: Qiling, access: int, address: int, size: int, value: int) -> None:
+    def hook_memory_access(
+        self, ql: Qiling, access: int, address: int, size: int, value: int
+    ) -> None:
         """Monitor memory access with detailed analysis."""
         access_type = "READ" if access == 1 else "WRITE"
 
@@ -386,7 +388,7 @@ class QilingEmulator:
                     cpu_state["sp"] = hex(ql.arch.regs.rsp)
                 elif hasattr(ql.arch.regs, "sp"):
                     cpu_state["sp"] = hex(ql.arch.regs.sp)
-        except (AttributeError, Exception) as e:
+        except Exception as e:
             self.logger.debug(f"Failed to extract CPU state: {e}")
 
         # Try to read memory content around the access
@@ -394,7 +396,7 @@ class QilingEmulator:
         try:
             if access == 1 and size <= 32:  # READ access, reasonable size
                 memory_content = ql.mem.read(address, size).hex()
-        except (OSError, AttributeError, Exception) as e:
+        except Exception as e:
             self.logger.debug(f"Failed to read memory at {hex(address)}: {e}")
 
         # Check if this is a stack access
@@ -521,7 +523,7 @@ class QilingEmulator:
             results = self._analyze_results()
             results["execution_time"] = execution_time
             results["timeout_occurred"] = timeout_occurred
-            results["timeout_limit"] = timeout if timeout else None
+            results["timeout_limit"] = timeout or None
 
             if timeout_occurred:
                 results["status"] = "timeout"
@@ -544,7 +546,7 @@ class QilingEmulator:
                 "error": str(e),
                 "execution_time": time.time() - start_time,
                 "timeout_occurred": timeout_occurred,
-                "timeout_limit": timeout if timeout else None,
+                "timeout_limit": timeout or None,
                 "api_calls": self.api_calls,
                 "memory_accesses": self.memory_accesses,
                 "license_checks": self.license_checks,
@@ -577,146 +579,145 @@ class QilingEmulator:
 
         # Determine architecture details
         if self.ql_arch in [QL_ARCH.X86]:
-            arch_info.update(
-                {
-                    "bits": 32,
-                    "instruction_set": "x86",
-                    "registers": ["eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp"],
-                },
-            )
+            arch_info |= {
+                "bits": 32,
+                "instruction_set": "x86",
+                "registers": [
+                    "eax",
+                    "ebx",
+                    "ecx",
+                    "edx",
+                    "esi",
+                    "edi",
+                    "ebp",
+                    "esp",
+                ],
+            }
         elif self.ql_arch in [QL_ARCH.X8664]:
-            arch_info.update(
-                {
-                    "bits": 64,
-                    "instruction_set": "x86_64",
-                    "registers": [
-                        "rax",
-                        "rbx",
-                        "rcx",
-                        "rdx",
-                        "rsi",
-                        "rdi",
-                        "rbp",
-                        "rsp",
-                        "r8",
-                        "r9",
-                        "r10",
-                        "r11",
-                        "r12",
-                        "r13",
-                        "r14",
-                        "r15",
-                    ],
-                },
-            )
+            arch_info |= {
+                "bits": 64,
+                "instruction_set": "x86_64",
+                "registers": [
+                    "rax",
+                    "rbx",
+                    "rcx",
+                    "rdx",
+                    "rsi",
+                    "rdi",
+                    "rbp",
+                    "rsp",
+                    "r8",
+                    "r9",
+                    "r10",
+                    "r11",
+                    "r12",
+                    "r13",
+                    "r14",
+                    "r15",
+                ],
+            }
         elif self.ql_arch in [QL_ARCH.ARM]:
-            arch_info.update(
-                {
-                    "bits": 32,
-                    "instruction_set": "arm",
-                    "registers": [
-                        "r0",
-                        "r1",
-                        "r2",
-                        "r3",
-                        "r4",
-                        "r5",
-                        "r6",
-                        "r7",
-                        "r8",
-                        "r9",
-                        "r10",
-                        "r11",
-                        "r12",
-                        "sp",
-                        "lr",
-                        "pc",
-                    ],
-                },
-            )
+            arch_info |= {
+                "bits": 32,
+                "instruction_set": "arm",
+                "registers": [
+                    "r0",
+                    "r1",
+                    "r2",
+                    "r3",
+                    "r4",
+                    "r5",
+                    "r6",
+                    "r7",
+                    "r8",
+                    "r9",
+                    "r10",
+                    "r11",
+                    "r12",
+                    "sp",
+                    "lr",
+                    "pc",
+                ],
+            }
         elif self.ql_arch in [QL_ARCH.ARM64]:
-            arch_info.update(
-                {
-                    "bits": 64,
-                    "instruction_set": "aarch64",
-                    "registers": [
-                        "x0",
-                        "x1",
-                        "x2",
-                        "x3",
-                        "x4",
-                        "x5",
-                        "x6",
-                        "x7",
-                        "x8",
-                        "x9",
-                        "x10",
-                        "x11",
-                        "x12",
-                        "x13",
-                        "x14",
-                        "x15",
-                        "x16",
-                        "x17",
-                        "x18",
-                        "x19",
-                        "x20",
-                        "x21",
-                        "x22",
-                        "x23",
-                        "x24",
-                        "x25",
-                        "x26",
-                        "x27",
-                        "x28",
-                        "x29",
-                        "x30",
-                        "sp",
-                    ],
-                },
-            )
+            arch_info |= {
+                "bits": 64,
+                "instruction_set": "aarch64",
+                "registers": [
+                    "x0",
+                    "x1",
+                    "x2",
+                    "x3",
+                    "x4",
+                    "x5",
+                    "x6",
+                    "x7",
+                    "x8",
+                    "x9",
+                    "x10",
+                    "x11",
+                    "x12",
+                    "x13",
+                    "x14",
+                    "x15",
+                    "x16",
+                    "x17",
+                    "x18",
+                    "x19",
+                    "x20",
+                    "x21",
+                    "x22",
+                    "x23",
+                    "x24",
+                    "x25",
+                    "x26",
+                    "x27",
+                    "x28",
+                    "x29",
+                    "x30",
+                    "sp",
+                ],
+            }
         elif self.ql_arch in [QL_ARCH.MIPS, QL_ARCH.MIPS64]:
-            arch_info.update(
-                {
-                    "bits": 64 if self.ql_arch == QL_ARCH.MIPS64 else 32,
-                    "instruction_set": "mips",
-                    "endianness": "big",  # MIPS is typically big-endian
-                    "registers": [
-                        "zero",
-                        "at",
-                        "v0",
-                        "v1",
-                        "a0",
-                        "a1",
-                        "a2",
-                        "a3",
-                        "t0",
-                        "t1",
-                        "t2",
-                        "t3",
-                        "t4",
-                        "t5",
-                        "t6",
-                        "t7",
-                        "s0",
-                        "s1",
-                        "s2",
-                        "s3",
-                        "s4",
-                        "s5",
-                        "s6",
-                        "s7",
-                        "t8",
-                        "t9",
-                        "k0",
-                        "k1",
-                        "gp",
-                        "sp",
-                        "fp",
-                        "ra",
-                    ],
-                },
-            )
+            arch_info |= {
+                "bits": 64 if self.ql_arch == QL_ARCH.MIPS64 else 32,
+                "instruction_set": "mips",
+                "endianness": "big",  # MIPS is typically big-endian
+                "registers": [
+                    "zero",
+                    "at",
+                    "v0",
+                    "v1",
+                    "a0",
+                    "a1",
+                    "a2",
+                    "a3",
+                    "t0",
+                    "t1",
+                    "t2",
+                    "t3",
+                    "t4",
+                    "t5",
+                    "t6",
+                    "t7",
+                    "s0",
+                    "s1",
+                    "s2",
+                    "s3",
+                    "s4",
+                    "s5",
+                    "s6",
+                    "s7",
+                    "t8",
+                    "t9",
+                    "k0",
+                    "k1",
+                    "gp",
+                    "sp",
+                    "fp",
+                    "ra",
+                ],
+            }
 
         return arch_info
 
@@ -735,45 +736,47 @@ class QilingEmulator:
 
         # Determine OS details
         if self.ql_os == QL_OS.WINDOWS:
-            os_info.update(
-                {
-                    "family": "windows",
-                    "syscall_convention": "stdcall",
-                    "executable_format": "PE",
-                    "path_separator": "\\",
-                    "common_dirs": ["C:\\Windows", "C:\\Program Files", "C:\\ProgramData"],
-                },
-            )
+            os_info |= {
+                "family": "windows",
+                "syscall_convention": "stdcall",
+                "executable_format": "PE",
+                "path_separator": "\\",
+                "common_dirs": [
+                    "C:\\Windows",
+                    "C:\\Program Files",
+                    "C:\\ProgramData",
+                ],
+            }
         elif self.ql_os == QL_OS.LINUX:
-            os_info.update(
-                {
-                    "family": "unix",
-                    "syscall_convention": "sysv",
-                    "executable_format": "ELF",
-                    "path_separator": "/",
-                    "common_dirs": ["/usr", "/etc", "/var", "/tmp", "/home"],  # noqa: S108
-                },
-            )
+            os_info |= {
+                "family": "unix",
+                "syscall_convention": "sysv",
+                "executable_format": "ELF",
+                "path_separator": "/",
+                "common_dirs": [
+                    "/usr",
+                    "/etc",
+                    "/var",
+                    "/tmp",
+                    "/home",
+                ],
+            }
         elif self.ql_os == QL_OS.MACOS:
-            os_info.update(
-                {
-                    "family": "unix",
-                    "syscall_convention": "sysv",
-                    "executable_format": "Mach-O",
-                    "path_separator": "/",
-                    "common_dirs": ["/Applications", "/Library", "/System", "/Users"],
-                },
-            )
+            os_info |= {
+                "family": "unix",
+                "syscall_convention": "sysv",
+                "executable_format": "Mach-O",
+                "path_separator": "/",
+                "common_dirs": ["/Applications", "/Library", "/System", "/Users"],
+            }
         elif self.ql_os == QL_OS.FREEBSD:
-            os_info.update(
-                {
-                    "family": "bsd",
-                    "syscall_convention": "sysv",
-                    "executable_format": "ELF",
-                    "path_separator": "/",
-                    "common_dirs": ["/usr", "/etc", "/var", "/tmp"],  # noqa: S108
-                },
-            )
+            os_info |= {
+                "family": "bsd",
+                "syscall_convention": "sysv",
+                "executable_format": "ELF",
+                "path_separator": "/",
+                "common_dirs": ["/usr", "/etc", "/var", "/tmp"],  # noqa: S108
+            }
 
         return os_info
 
@@ -925,7 +928,10 @@ class QilingEmulator:
                     format_info["imports"].append(
                         {
                             "dll": dll_name,
-                            "functions": [imp.name.decode("utf-8") if imp.name else f"Ordinal_{imp.ordinal}" for imp in entry.imports],
+                            "functions": [
+                                imp.name.decode("utf-8") if imp.name else f"Ordinal_{imp.ordinal}"
+                                for imp in entry.imports
+                            ],
                         },
                     )
 

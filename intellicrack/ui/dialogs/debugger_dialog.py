@@ -239,7 +239,9 @@ class DebuggerDialog(QDialog):
         toolbar.addSeparator()
 
         # Breakpoint controls
-        toolbar.addAction("🔴 Toggle Breakpoint").triggered.connect(self.toggle_current_line_breakpoint)
+        toolbar.addAction("🔴 Toggle Breakpoint").triggered.connect(
+            self.toggle_current_line_breakpoint
+        )
         toolbar.addAction(" Clear All Breakpoints").triggered.connect(self.clear_all_breakpoints)
 
         return toolbar
@@ -432,8 +434,7 @@ class DebuggerDialog(QDialog):
 
     def remove_selected_breakpoint(self) -> None:
         """Remove selected breakpoint."""
-        item = self.breakpoint_list.currentItem()
-        if item:
+        if item := self.breakpoint_list.currentItem():
             bp_id = item.data(Qt.UserRole)
             self.remove_breakpoint(bp_id)
 
@@ -566,7 +567,9 @@ class DebuggerDialog(QDialog):
             self.step_into_action.setEnabled(True)
             self.step_out_action.setEnabled(True)
 
-    def handle_debugger_output(self, msg_type: str, data: dict[str, Any] | str | list[dict[str, Any]]) -> None:
+    def handle_debugger_output(
+        self, msg_type: str, data: dict[str, Any] | str | list[dict[str, Any]]
+    ) -> None:
         """Handle debugger output messages.
 
         Args:
@@ -581,7 +584,9 @@ class DebuggerDialog(QDialog):
             self.console.append(f"⏸️ Paused at {data['file']}:{data['line']} in {data['function']}")
 
         elif msg_type == "breakpoint":
-            self.console.append(f"🔴 Breakpoint hit: {data['file']}:{data['line']} (hit count: {data['hit_count']})")
+            self.console.append(
+                f"🔴 Breakpoint hit: {data['file']}:{data['line']} (hit count: {data['hit_count']})"
+            )
 
         elif msg_type == "stack":
             self.update_stack_display(data)
@@ -591,7 +596,9 @@ class DebuggerDialog(QDialog):
 
         elif msg_type == "eval_result":
             if "error" in data:
-                self.console.append(f"ERROR Error evaluating '{data['expression']}': {data['error']}")
+                self.console.append(
+                    f"ERROR Error evaluating '{data['expression']}': {data['error']}"
+                )
             else:
                 self.console.append(f"OK {data['expression']} = {data['value']}")
 
@@ -777,8 +784,7 @@ class CodeEditorWidget(QTextEdit):
             max_num /= 10
             digits += 1
 
-        space = 3 + self.fontMetrics().horizontalAdvance("9") * (digits + 1)
-        return space
+        return 3 + self.fontMetrics().horizontalAdvance("9") * (digits + 1)
 
     def update_line_number_area_width(self, new_block_count: int) -> None:
         """Update line number area width.
@@ -815,7 +821,9 @@ class CodeEditorWidget(QTextEdit):
         super().resizeEvent(event)
 
         cr = self.contentsRect()
-        self.line_number_area.setGeometry(cr.left(), cr.top(), self.line_number_area_width(), cr.height())
+        self.line_number_area.setGeometry(
+            cr.left(), cr.top(), self.line_number_area_width(), cr.height()
+        )
 
     def line_number_area_paint_event(self, event: QPaintEvent) -> None:
         """Paint line numbers.
@@ -909,17 +917,13 @@ class CodeEditorWidget(QTextEdit):
         cursor.movePosition(QTextCursor.NextBlock, QTextCursor.MoveAnchor, line - 1)
         self.setTextCursor(cursor)
 
-        # Highlight with different color
-        extra_selections = []
-
         selection = QTextEdit.ExtraSelection()
         line_color = QColor(Qt.GlobalColor.green).lighter(160)
         selection.format.setBackground(line_color)
         selection.format.setProperty(QTextFormat.FullWidthSelection, True)
         selection.cursor = cursor
         selection.cursor.clearSelection()
-        extra_selections.append(selection)
-
+        extra_selections = [selection]
         self.setExtraSelections(extra_selections)
 
     def set_code(self, code: str) -> None:

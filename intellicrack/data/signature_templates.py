@@ -15,7 +15,6 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 
-
 class SignatureTemplates:
     """Collection of signature templates for the ICP editor."""
 
@@ -41,7 +40,7 @@ class SignatureTemplates:
             "Basic Patterns": {
                 "Simple Hex Pattern": {
                     "description": "Basic hexadecimal pattern matching",
-                    "template": '''// Name: Simple Pattern
+                    "template": """// Name: Simple Pattern
 // Type: Other
 // Description: Basic hex pattern signature
 
@@ -55,12 +54,11 @@ init:
 ep:
 {
     hex = "48 65 6C 6C 6F";  // "Hello" in ASCII
-}''',
+}""",
                 },
-
                 "Wildcard Pattern": {
                     "description": "Pattern with wildcards for variable bytes",
-                    "template": '''// Name: Wildcard Pattern
+                    "template": """// Name: Wildcard Pattern
 // Type: Other
 // Description: Pattern with wildcard matching
 
@@ -75,12 +73,11 @@ ep:
 {
     hex = "48 ?? 6C ?? 6F";  // "H?l?o" with wildcards
     hex = "4D 5A ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 50 45";  // MZ...PE
-}''',
+}""",
                 },
-
                 "Multiple Patterns": {
                     "description": "Multiple alternative patterns",
-                    "template": '''// Name: Multiple Patterns
+                    "template": """// Name: Multiple Patterns
 // Type: Other
 // Description: Multiple pattern matching
 
@@ -96,13 +93,13 @@ ep:
     hex = "48 65 6C 6C 6F";  // Pattern 1
     hex = "57 6F 72 6C 64";  // Pattern 2
     hex = "54 65 73 74";     // Pattern 3
-}''',
+}""",
                 },
             },
             "PE Headers": {
                 "DOS Header Check": {
                     "description": "Validate DOS MZ header",
-                    "template": '''// Name: DOS Header Check
+                    "template": """// Name: DOS Header Check
 // Type: Compiler
 // Description: DOS header validation
 
@@ -117,12 +114,11 @@ header:
 {
     hex = "4D 5A";  // MZ signature
     offset = 0;
-}''',
+}""",
                 },
-
                 "PE Header Check": {
                     "description": "Validate PE header structure",
-                    "template": '''// Name: PE Header Check
+                    "template": """// Name: PE Header Check
 // Type: Compiler
 // Description: PE header validation
 
@@ -143,12 +139,11 @@ header:
 {
     hex = "0B 01";  // Linker version check
     offset = "PE_OFFSET + 0x18";
-}''',
+}""",
                 },
-
                 "Rich Header": {
                     "description": "Microsoft Rich header detection",
-                    "template": '''// Name: Rich Header
+                    "template": """// Name: Rich Header
 // Type: Compiler
 // Description: Microsoft Rich header
 
@@ -167,13 +162,13 @@ header:
 header:
 {
     hex = "44 61 6E 53";  // "DanS" (stub signature)
-}''',
+}""",
                 },
             },
             "Section Signatures": {
                 "Code Section": {
                     "description": "Standard code section patterns",
-                    "template": '''// Name: Code Section
+                    "template": """// Name: Code Section
 // Type: Compiler
 // Description: Standard code section
 
@@ -189,12 +184,11 @@ section:
     name = ".text";
     hex = "55 8B EC";      // Function prologue
     hex = "C3";            // Return instruction
-}''',
+}""",
                 },
-
                 "UPX Sections": {
                     "description": "UPX packer section detection",
-                    "template": '''// Name: UPX Sections
+                    "template": """// Name: UPX Sections
 // Type: Packer
 // Description: UPX packer sections
 
@@ -219,12 +213,11 @@ section:
 {
     name = ".rsrc";
     after_upx = true;
-}''',
+}""",
                 },
-
                 "High Entropy Section": {
                     "description": "Detect packed/encrypted sections",
-                    "template": '''// Name: High Entropy
+                    "template": """// Name: High Entropy
 // Type: Packer
 // Description: High entropy section detection
 
@@ -240,13 +233,13 @@ section:
     entropy = "> 7.0";
     size = "> 1000";
     characteristics = "executable";
-}''',
+}""",
                 },
             },
             "Import Signatures": {
                 "Crypto APIs": {
                     "description": "Cryptographic API usage",
-                    "template": '''// Name: Crypto APIs
+                    "template": """// Name: Crypto APIs
 // Type: Cryptor
 // Description: Cryptographic API detection
 
@@ -264,12 +257,11 @@ import:
     api = "CryptCreateHash";
     api = "CryptHashData";
     api = "CryptDeriveKey";
-}''',
+}""",
                 },
-
                 "Debug APIs": {
                     "description": "Anti-debugging API usage",
-                    "template": '''// Name: Debug APIs
+                    "template": """// Name: Debug APIs
 // Type: Protector
 // Description: Anti-debugging detection
 
@@ -293,12 +285,11 @@ import:
     dll = "ntdll.dll";
     api = "NtQueryInformationProcess";
     api = "NtSetInformationThread";
-}''',
+}""",
                 },
-
                 "Injection APIs": {
                     "description": "Process injection API usage",
-                    "template": '''// Name: Injection APIs
+                    "template": """// Name: Injection APIs
 // Type: Trojan
 // Description: Process injection detection
 
@@ -316,13 +307,13 @@ import:
     api = "WriteProcessMemory";
     api = "CreateRemoteThread";
     api = "OpenProcess";
-}''',
+}""",
                 },
             },
             "String Signatures": {
                 "ASCII Strings": {
                     "description": "ASCII string matching",
-                    "template": '''// Name: ASCII Strings
+                    "template": """// Name: ASCII Strings
 // Type: Other
 // Description: ASCII string detection
 
@@ -338,12 +329,11 @@ string:
     ascii = "This program cannot be run";
     ascii = "KERNEL32.DLL";
     ascii = "GetProcAddress";
-}''',
+}""",
                 },
-
                 "Unicode Strings": {
                     "description": "Unicode string matching",
-                    "template": '''// Name: Unicode Strings
+                    "template": """// Name: Unicode Strings
 // Type: Other
 // Description: Unicode string detection
 
@@ -359,12 +349,11 @@ string:
     unicode = "Hello World";
     unicode = "Error Message";
     unicode = "Configuration";
-}''',
+}""",
                 },
-
                 "Regex Patterns": {
                     "description": "Regular expression patterns",
-                    "template": '''// Name: Regex Patterns
+                    "template": """// Name: Regex Patterns
 // Type: Other
 // Description: Regular expression matching
 
@@ -380,13 +369,13 @@ string:
     regex = "[a-z]+@[a-z]+\\.[a-z]+";        // Email pattern
     regex = "https?://[\\w.-]+";              // URL pattern
     regex = "\\d{4}-\\d{2}-\\d{2}";          // Date pattern
-}''',
+}""",
                 },
             },
             "Packer Signatures": {
                 "UPX Packer": {
                     "description": "UPX packer detection",
-                    "template": '''// Name: UPX
+                    "template": """// Name: UPX
 // Type: Packer
 // Description: UPX executable packer
 
@@ -413,12 +402,11 @@ section:
 ep:
 {
     hex = "60 BE ?? ?? ?? ?? 8D BE ?? ?? ?? ??";  // UPX stub
-}''',
+}""",
                 },
-
                 "ASPack": {
                     "description": "ASPack packer detection",
-                    "template": '''// Name: ASPack
+                    "template": """// Name: ASPack
 // Type: Packer
 // Description: ASPack executable packer
 
@@ -438,12 +426,11 @@ string:
 {
     ascii = "ASPack";
     ascii = "aPLib";
-}''',
+}""",
                 },
-
                 "PECompact": {
                     "description": "PECompact packer detection",
-                    "template": '''// Name: PECompact
+                    "template": """// Name: PECompact
 // Type: Packer
 // Description: PECompact executable packer
 
@@ -462,13 +449,13 @@ ep:
 section:
 {
     name = "PEC2TO";
-}''',
+}""",
                 },
             },
             "Protector Signatures": {
                 "Themida": {
                     "description": "Themida/WinLicense protector",
-                    "template": '''// Name: Themida
+                    "template": """// Name: Themida
 // Type: Protector
 // Description: Themida/WinLicense protector
 
@@ -496,12 +483,11 @@ import:
     dll = "kernel32.dll";
     api = "VirtualProtect";
     api = "IsDebuggerPresent";
-}''',
+}""",
                 },
-
                 "VMProtect": {
                     "description": "VMProtect virtualization protector",
-                    "template": '''// Name: VMProtect
+                    "template": """// Name: VMProtect
 // Type: Protector
 // Description: VMProtect virtualization
 
@@ -525,12 +511,11 @@ section:
 import:
 {
     dll = "VMProtectSDK.dll";
-}''',
+}""",
                 },
-
                 "Code Virtualizer": {
                     "description": "Code Virtualizer protector",
-                    "template": '''// Name: Code Virtualizer
+                    "template": """// Name: Code Virtualizer
 // Type: Protector
 // Description: Code Virtualizer protection
 
@@ -550,13 +535,13 @@ string:
 {
     ascii = "Code Virtualizer";
     ascii = "Oreans";
-}''',
+}""",
                 },
             },
             "Cryptor Signatures": {
                 "Custom Cryptor": {
                     "description": "Generic cryptor template",
-                    "template": '''// Name: Custom Cryptor
+                    "template": """// Name: Custom Cryptor
 // Type: Cryptor
 // Description: Custom encryption detection
 
@@ -578,12 +563,11 @@ section:
 {
     entropy = "> 7.5";
     characteristics = "executable";
-}''',
+}""",
                 },
-
                 "XOR Cryptor": {
                     "description": "XOR-based encryption",
-                    "template": '''// Name: XOR Cryptor
+                    "template": """// Name: XOR Cryptor
 // Type: Cryptor
 // Description: XOR encryption detection
 
@@ -598,13 +582,13 @@ ep:
 {
     hex = "30 ?? ?? 40 3D ?? ?? ?? ?? 75 ??";  // XOR loop pattern
     hex = "32 ?? ?? 40 81 F? ?? ?? ?? ?? 75 ??";  // XOR with key
-}''',
+}""",
                 },
             },
             "Complex Rules": {
                 "Conditional Logic": {
                     "description": "Complex conditional detection",
-                    "template": '''// Name: Conditional Detection
+                    "template": """// Name: Conditional Detection
 // Type: Other
 // Description: Complex conditional logic
 
@@ -623,12 +607,11 @@ rule:
     upx_section = section_upx0 or section_upx1;
     high_entropy = entropy > 7.0;
     crypto_api = import_crypto;
-}''',
+}""",
                 },
-
                 "Size Constraints": {
                     "description": "File size and structure constraints",
-                    "template": '''// Name: Size Constraints
+                    "template": """// Name: Size Constraints
 // Type: Other
 // Description: Size-based detection
 
@@ -645,12 +628,11 @@ rule:
     sections = "> 3 and < 20";
     imports = "> 10";
     exports = "< 50";
-}''',
+}""",
                 },
-
                 "Multi-Stage Detection": {
                     "description": "Multi-stage analysis",
-                    "template": '''// Name: Multi-Stage
+                    "template": """// Name: Multi-Stage
 // Type: Protector
 // Description: Multi-stage detection
 
@@ -681,7 +663,7 @@ stage3:
 rule:
 {
     condition = stage1 and (stage2 or stage3);
-}''',
+}""",
                 },
             },
         }
@@ -692,7 +674,7 @@ rule:
     def get_sample_signatures() -> dict[str, str]:
         """Get sample signature files for testing."""
         return {
-            "upx_packer.sg": '''// Name: UPX
+            "upx_packer.sg": """// Name: UPX
 // Type: Packer
 // Description: Ultimate Packer for eXecutables
 
@@ -726,9 +708,8 @@ string:
 {
     ascii = "UPX!";
     ascii = "$Id: UPX";
-}''',
-
-            "vmprotect.sg": '''// Name: VMProtect
+}""",
+            "vmprotect.sg": """// Name: VMProtect
 // Type: Protector
 // Description: VMProtect virtualization protector
 
@@ -769,9 +750,8 @@ import:
 ep:
 {
     hex = "68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 59 ?? ?? ?? ?? ?? ?? ?? ??";
-}''',
-
-            "debug_detection.sg": '''// Name: Anti-Debug
+}""",
+            "debug_detection.sg": """// Name: Anti-Debug
 // Type: Protector
 // Description: Generic anti-debugging detection
 
@@ -804,7 +784,7 @@ ep:
 {
     hex = "64 8B 30 85 F6 78 ??";  // PEB BeingDebugged check
     hex = "FF 15 ?? ?? ?? ?? 85 C0 75 ??";  // IsDebuggerPresent
-}''',
+}""",
         }
 
 

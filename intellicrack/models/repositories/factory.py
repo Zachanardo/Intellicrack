@@ -25,6 +25,7 @@ from .base import APIRepositoryBase, RateLimitConfig
 from .interface import ModelRepositoryInterface
 from .local_repository import LocalFileRepository
 
+
 """
 Repository Factory Module
 
@@ -43,7 +44,9 @@ class RepositoryFactory:
     _repository_types: dict[str, type[ModelRepositoryInterface]] = {}
 
     @classmethod
-    def register_repository_type(cls, type_name: str, repository_class: type[ModelRepositoryInterface]) -> None:
+    def register_repository_type(
+        cls, type_name: str, repository_class: type[ModelRepositoryInterface]
+    ) -> None:
         """Register a repository type.
 
         Args:
@@ -102,7 +105,9 @@ class RepositoryFactory:
                 cache_config = config.get("cache", {})
 
                 # Get download directory
-                download_dir = config.get("download_directory", os.path.join(os.path.dirname(__file__), "..", "downloads"))
+                download_dir = config.get(
+                    "download_directory", os.path.join(os.path.dirname(__file__), "..", "downloads")
+                )
 
                 return repo_class(
                     repository_name=repository_name,

@@ -55,7 +55,7 @@ class RealConfigMigrationTester:
         self.old_configs_dir = self.temp_dir / "old_configs"
         self.old_configs_dir.mkdir(exist_ok=True)
 
-    def create_legacy_qsettings_data(self) -> Dict[str, Any]:
+    def create_legacy_qsettings_data(self) -> dict[str, Any]:
         """Create realistic legacy QSettings data structure."""
         return {
             "execution/qemu_preference": "always",
@@ -67,7 +67,7 @@ class RealConfigMigrationTester:
             "execution/max_concurrent": 4
         }
 
-    def create_legacy_theme_data(self) -> Dict[str, Any]:
+    def create_legacy_theme_data(self) -> dict[str, Any]:
         """Create realistic legacy theme configuration data."""
         return {
             "theme/mode": "dark",
@@ -78,7 +78,7 @@ class RealConfigMigrationTester:
             "theme/high_contrast": False
         }
 
-    def create_legacy_llm_configs(self) -> tuple[Dict[str, Any], Dict[str, Any]]:
+    def create_legacy_llm_configs(self) -> tuple[dict[str, Any], dict[str, Any]]:
         """Create realistic legacy LLM configuration files."""
         models_data = {
             "gpt-4": {
@@ -112,7 +112,7 @@ class RealConfigMigrationTester:
 
         return models_data, profiles_data
 
-    def create_legacy_font_config(self) -> Dict[str, Any]:
+    def create_legacy_font_config(self) -> dict[str, Any]:
         """Create realistic legacy font configuration."""
         return {
             "monospace_fonts": {
@@ -246,12 +246,12 @@ class RealLLMConfigManagerCompat:
         self.config = config
         self.model_cache = {}
 
-    def save_model_config(self, model_id: str, config_data: Dict[str, Any]):
+    def save_model_config(self, model_id: str, config_data: dict[str, Any]):
         """Save model configuration with backward compatibility."""
         self.config.set(f"llm_configuration.models.{model_id}", config_data)
         self.model_cache[model_id] = config_data
 
-    def load_model_config(self, model_id: str) -> Optional[Dict[str, Any]]:
+    def load_model_config(self, model_id: str) -> dict[str, Any] | None:
         """Load model configuration with backward compatibility."""
         if model_id in self.model_cache:
             return self.model_cache[model_id]
@@ -261,16 +261,16 @@ class RealLLMConfigManagerCompat:
             self.model_cache[model_id] = config_data
         return config_data
 
-    def get_profile(self, profile_name: str) -> Optional[Dict[str, Any]]:
+    def get_profile(self, profile_name: str) -> dict[str, Any] | None:
         """Get profile configuration with backward compatibility."""
         return self.config.get(f"llm_configuration.profiles.{profile_name}")
 
-    def list_models(self) -> List[str]:
+    def list_models(self) -> list[str]:
         """List available models with backward compatibility."""
         models = self.config.get("llm_configuration.models", {})
         return list(models.keys())
 
-    def save_profile(self, profile_name: str, profile_data: Dict[str, Any]):
+    def save_profile(self, profile_name: str, profile_data: dict[str, Any]):
         """Save profile configuration with backward compatibility."""
         self.config.set(f"llm_configuration.profiles.{profile_name}", profile_data)
 
@@ -297,7 +297,7 @@ class RealFontManagerCompat:
         self.config = config
         self.font_cache = {}
 
-    def get_monospace_font(self, size: Optional[int] = None) -> Dict[str, Any]:
+    def get_monospace_font(self, size: int | None = None) -> dict[str, Any]:
         """Get monospace font with backward compatibility."""
         config_data = self.config.get("font_configuration", {})
 
@@ -313,7 +313,7 @@ class RealFontManagerCompat:
         fallback_fonts = config_data.get("monospace_fonts", {}).get("fallback", ["monospace"])
         return {"family": fallback_fonts[0], "size": size}
 
-    def get_ui_font(self, size: Optional[int] = None) -> Dict[str, Any]:
+    def get_ui_font(self, size: int | None = None) -> dict[str, Any]:
         """Get UI font with backward compatibility."""
         config_data = self.config.get("font_configuration", {})
 
@@ -329,7 +329,7 @@ class RealFontManagerCompat:
         fallback_fonts = config_data.get("ui_fonts", {}).get("fallback", ["sans-serif"])
         return {"family": fallback_fonts[0], "size": size}
 
-    def list_available_fonts(self) -> List[str]:
+    def list_available_fonts(self) -> list[str]:
         """List available font files with backward compatibility."""
         config_data = self.config.get("font_configuration", {})
         return config_data.get("available_fonts", [])

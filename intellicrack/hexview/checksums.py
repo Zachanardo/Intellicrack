@@ -12,6 +12,7 @@ import zlib
 
 from ..utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 
@@ -32,10 +33,7 @@ def calculate_crc16(data: bytes, polynomial: int = 0x8005, initial: int = 0x0000
     for byte in data:
         crc ^= byte << 8
         for _ in range(8):
-            if crc & 0x8000:
-                crc = (crc << 1) ^ polynomial
-            else:
-                crc = crc << 1
+            crc = (crc << 1) ^ polynomial if crc & 0x8000 else crc << 1
             crc &= 0xFFFF  # Keep it 16-bit
 
     return crc
@@ -189,10 +187,7 @@ def calculate_checksum_chunked(file_path: str, algorithm: str, chunk_size: int =
                     for byte in chunk:
                         crc ^= byte << 8
                         for _ in range(8):
-                            if crc & 0x8000:
-                                crc = (crc << 1) ^ 0x8005
-                            else:
-                                crc = crc << 1
+                            crc = (crc << 1) ^ 0x8005 if crc & 0x8000 else crc << 1
                             crc &= 0xFFFF
                 elif algorithm == "CRC-32":
                     crc = zlib.crc32(chunk, crc) & 0xFFFFFFFF
@@ -203,10 +198,7 @@ def calculate_checksum_chunked(file_path: str, algorithm: str, chunk_size: int =
         # Return results
         if algorithm == "CRC-16":
             return f"{crc:04X}"
-        if algorithm == "CRC-32":
-            return f"{crc:08X}"
-        return hasher.hexdigest().upper()
-
+        return f"{crc:08X}" if algorithm == "CRC-32" else hasher.hexdigest().upper()
     except Exception as e:
         logger.error(f"Error calculating {algorithm} for file {file_path}: {e}")
         raise
@@ -263,16 +255,16 @@ class ChecksumCalculator:
         try:
             if algorithm.startswith("CRC"):
                 result = self.algorithms[algorithm](data)
-                if algorithm == "CRC-16":
-                    return f"{result:04X}"
-                return f"{result:08X}"
+                return f"{result:04X}" if algorithm == "CRC-16" else f"{result:08X}"
             return self.algorithms[algorithm](data).upper()
 
         except Exception as e:
             logger.error(f"Error calculating {algorithm}: {e}")
             raise
 
-    def calculate_selection(self, data: bytes, algorithms: list[str] | None = None) -> dict[str, str]:
+    def calculate_selection(
+        self, data: bytes, algorithms: list[str] | None = None
+    ) -> dict[str, str]:
         """Calculate multiple checksums for data.
 
         Args:
@@ -334,11 +326,7 @@ def calculate_crc16_modbus(data: bytes) -> int:
     for byte in data:
         crc ^= byte
         for _ in range(8):
-            if crc & 0x0001:
-                crc = (crc >> 1) ^ 0xA001
-            else:
-                crc = crc >> 1
-
+            crc = (crc >> 1) ^ 0xA001 if crc & 0x0001 else crc >> 1
     return crc
 
 

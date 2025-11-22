@@ -30,6 +30,7 @@ from dataclasses import dataclass, field
 from enum import IntEnum
 from pathlib import Path
 
+
 try:
     from Crypto.Cipher import AES, DES, DES3
     from Crypto.Hash import SHA256
@@ -110,12 +111,21 @@ class USBDescriptor:
     def to_bytes(self) -> bytes:
         """Serialize descriptor to bytes."""
         return struct.pack(
-            '<BBHBBBBHHHBBBB',
-            self.bLength, self.bDescriptorType, self.bcdUSB,
-            self.bDeviceClass, self.bDeviceSubClass, self.bDeviceProtocol,
-            self.bMaxPacketSize0, self.idVendor, self.idProduct,
-            self.bcdDevice, self.iManufacturer, self.iProduct,
-            self.iSerialNumber, self.bNumConfigurations,
+            "<BBHBBBBHHHBBBB",
+            self.bLength,
+            self.bDescriptorType,
+            self.bcdUSB,
+            self.bDeviceClass,
+            self.bDeviceSubClass,
+            self.bDeviceProtocol,
+            self.bMaxPacketSize0,
+            self.idVendor,
+            self.idProduct,
+            self.bcdDevice,
+            self.iManufacturer,
+            self.iProduct,
+            self.iSerialNumber,
+            self.bNumConfigurations,
         )
 
 
@@ -131,7 +141,7 @@ class DongleMemory:
 
     def read(self, region: str, offset: int, length: int) -> bytes:
         """Read from dongle memory region."""
-        memory_map = {'rom': self.rom, 'ram': self.ram, 'eeprom': self.eeprom}
+        memory_map = {"rom": self.rom, "ram": self.ram, "eeprom": self.eeprom}
         if region not in memory_map:
             error_msg = f"Invalid memory region: {region}"
             logger.error(error_msg)
@@ -141,16 +151,16 @@ class DongleMemory:
             error_msg = f"Read beyond memory bounds: {offset}+{length} > {len(mem)}"
             logger.error(error_msg)
             raise ValueError(error_msg)
-        return bytes(mem[offset:offset + length])
+        return bytes(mem[offset : offset + length])
 
     def write(self, region: str, offset: int, data: bytes) -> None:
         """Write to dongle memory region."""
-        memory_map = {'rom': self.rom, 'ram': self.ram, 'eeprom': self.eeprom}
+        memory_map = {"rom": self.rom, "ram": self.ram, "eeprom": self.eeprom}
         if region not in memory_map:
             error_msg = f"Invalid memory region: {region}"
             logger.error(error_msg)
             raise ValueError(error_msg)
-        if region == 'rom':
+        if region == "rom":
             for start, end in self.read_only_areas:
                 if offset >= start and offset < end:
                     error_msg = "Cannot write to read-only area"
@@ -161,14 +171,14 @@ class DongleMemory:
             error_msg = f"Write beyond memory bounds: {offset}+{len(data)} > {len(mem)}"
             logger.error(error_msg)
             raise ValueError(error_msg)
-        mem[offset:offset + len(data)] = data
+        mem[offset : offset + len(data)] = data
 
     def is_protected(self, offset: int, length: int) -> bool:
         """Check if memory range is protected."""
-        for start, end in self.protected_areas:
-            if offset >= start and offset + length <= end:
-                return True
-        return False
+        return any(
+            offset >= start and offset + length <= end
+            for start, end in self.protected_areas
+        )
 
 
 @dataclass
@@ -195,11 +205,11 @@ class HASPDongle:
         if CRYPTO_AVAILABLE and self.rsa_key is None:
             self.rsa_key = RSA.generate(2048)
         self.feature_map[self.feature_id] = {
-            'id': self.feature_id,
-            'type': 'license',
-            'expiration': 0xFFFFFFFF,
-            'max_users': 10,
-            'current_users': 0,
+            "id": self.feature_id,
+            "type": "license",
+            "expiration": 0xFFFFFFFF,
+            "max_users": 10,
+            "current_users": 0,
         }
 
 
@@ -213,7 +223,7 @@ class SentinelDongle:
     serial_number: str = "SN123456789ABCDEF"
     firmware_version: str = "8.0.0"
     memory: DongleMemory = field(default_factory=DongleMemory)
-    algorithms: list[str] = field(default_factory=lambda: ['AES', 'RSA', 'DES', 'HMAC'])
+    algorithms: list[str] = field(default_factory=lambda: ["AES", "RSA", "DES", "HMAC"])
     developer_id: int = 1000
     query_buffer: bytearray = field(default_factory=lambda: bytearray(1024))
     response_buffer: bytearray = field(default_factory=lambda: bytearray(1024))
@@ -250,12 +260,12 @@ class WibuKeyDongle:
     def __post_init__(self) -> None:
         """Initialize license entries."""
         self.license_entries[1] = {
-            'firm_code': self.firm_code,
-            'product_code': self.product_code,
-            'feature_code': self.feature_code,
-            'quantity': 100,
-            'expiration': 0xFFFFFFFF,
-            'enabled': True,
+            "firm_code": self.firm_code,
+            "product_code": self.product_code,
+            "feature_code": self.feature_code,
+            "quantity": 100,
+            "expiration": 0xFFFFFFFF,
+            "enabled": True,
         }
 
 
@@ -275,12 +285,14 @@ class USBEmulator:
 
     def setup_endpoints(self) -> None:
         """Configure USB endpoints."""
-        self.endpoints[0x00] = {'type': 'control', 'max_packet': 64, 'direction': 'both'}
-        self.endpoints[0x81] = {'type': 'bulk', 'max_packet': 512, 'direction': 'in'}
-        self.endpoints[0x02] = {'type': 'bulk', 'max_packet': 512, 'direction': 'out'}
-        self.endpoints[0x83] = {'type': 'interrupt', 'max_packet': 64, 'direction': 'in'}
+        self.endpoints[0x00] = {"type": "control", "max_packet": 64, "direction": "both"}
+        self.endpoints[0x81] = {"type": "bulk", "max_packet": 512, "direction": "in"}
+        self.endpoints[0x02] = {"type": "bulk", "max_packet": 512, "direction": "out"}
+        self.endpoints[0x83] = {"type": "interrupt", "max_packet": 64, "direction": "in"}
 
-    def control_transfer(self, bmRequestType: int, bRequest: int, wValue: int, wIndex: int, data: bytes) -> bytes:
+    def control_transfer(
+        self, bmRequestType: int, bRequest: int, wValue: int, wIndex: int, data: bytes
+    ) -> bytes:
         """Handle USB control transfer."""
         request_key = (bmRequestType << 8) | bRequest
         if request_key in self.control_transfer_handlers:
@@ -295,25 +307,42 @@ class USBEmulator:
             elif descriptor_type == 3:
                 return self.get_string_descriptor(wValue & 0xFF)
 
-        return b''
+        return b""
 
     def get_configuration_descriptor(self) -> bytes:
         """Generate configuration descriptor."""
-        config = struct.pack('<BBHBBBBB',
-            9, 2, 32, 1, 1, 0, 0x80, 100,
+        config = struct.pack(
+            "<BBHBBBBB",
+            9,
+            2,
+            32,
+            1,
+            1,
+            0,
+            0x80,
+            100,
         )
-        interface = struct.pack('<BBBBBBBBB',
-            9, 4, 0, 0, 3, 0xFF, 0xFF, 0xFF, 0,
+        interface = struct.pack(
+            "<BBBBBBBBB",
+            9,
+            4,
+            0,
+            0,
+            3,
+            0xFF,
+            0xFF,
+            0xFF,
+            0,
         )
-        endpoint1 = struct.pack('<BBBBH', 7, 5, 0x81, 2, 512)
-        endpoint2 = struct.pack('<BBBBH', 7, 5, 0x02, 2, 512)
-        endpoint3 = struct.pack('<BBBBH', 7, 5, 0x83, 3, 64)
+        endpoint1 = struct.pack("<BBBBH", 7, 5, 0x81, 2, 512)
+        endpoint2 = struct.pack("<BBBBH", 7, 5, 0x02, 2, 512)
+        endpoint3 = struct.pack("<BBBBH", 7, 5, 0x83, 3, 64)
         return config + interface + endpoint1 + endpoint2 + endpoint3
 
     def get_string_descriptor(self, index: int) -> bytes:
         """Get USB string descriptor."""
         strings = {
-            0: b'\x04\x03\x09\x04',
+            0: b"\x04\x03\x09\x04",
             1: "SafeNet Inc.",
             2: "Sentinel Hardware Key",
             3: "0123456789ABCDEF",
@@ -322,18 +351,20 @@ class USBEmulator:
             if index == 0:
                 return strings[0]
             string = strings[index]
-            string_utf16 = string.encode('utf-16-le')
-            descriptor = struct.pack('<BB', len(string_utf16) + 2, 3) + string_utf16
-            return descriptor + string.encode('ascii')
-        return b''
+            string_utf16 = string.encode("utf-16-le")
+            descriptor = struct.pack("<BB", len(string_utf16) + 2, 3) + string_utf16
+            return descriptor + string.encode("ascii")
+        return b""
 
     def bulk_transfer(self, endpoint: int, data: bytes) -> bytes:
         """Handle USB bulk transfer."""
         if endpoint in self.bulk_transfer_handlers:
             return self.bulk_transfer_handlers[endpoint](data)
-        return b''
+        return b""
 
-    def register_control_handler(self, bmRequestType: int, bRequest: int, handler: Callable) -> None:
+    def register_control_handler(
+        self, bmRequestType: int, bRequest: int, handler: Callable
+    ) -> None:
         """Register handler for control transfer."""
         request_key = (bmRequestType << 8) | bRequest
         self.control_transfer_handlers[request_key] = handler
@@ -350,24 +381,24 @@ class CryptoEngine:
         """Initialize crypto engine."""
         self.logger = logging.getLogger("IntellicrackLogger.DongleCrypto")
 
-    def hasp_encrypt(self, data: bytes, key: bytes, algorithm: str = 'AES') -> bytes:
+    def hasp_encrypt(self, data: bytes, key: bytes, algorithm: str = "AES") -> bytes:
         """Perform HASP encryption operation."""
         if not CRYPTO_AVAILABLE:
             self.logger.warning("Crypto not available, returning XOR encryption")
             return self._xor_encrypt(data, key)
 
         try:
-            if algorithm == 'AES':
+            if algorithm == "AES":
                 cipher = AES.new(key[:32], AES.MODE_ECB)
-                padded_data = data + b'\x00' * (16 - len(data) % 16)
+                padded_data = data + b"\x00" * (16 - len(data) % 16)
                 return cipher.encrypt(padded_data)
-            elif algorithm == 'DES':
+            elif algorithm == "DES":
                 cipher = DES.new(key[:8], DES.MODE_ECB)  # noqa: S304 - Required for HASP dongle emulation
-                padded_data = data + b'\x00' * (8 - len(data) % 8)
+                padded_data = data + b"\x00" * (8 - len(data) % 8)
                 return cipher.encrypt(padded_data)
-            elif algorithm == 'DES3':
+            elif algorithm == "DES3":
                 cipher = DES3.new(key[:24], DES3.MODE_ECB)
-                padded_data = data + b'\x00' * (8 - len(data) % 8)
+                padded_data = data + b"\x00" * (8 - len(data) % 8)
                 return cipher.encrypt(padded_data)
             else:
                 return self._xor_encrypt(data, key)
@@ -375,25 +406,25 @@ class CryptoEngine:
             self.logger.error(f"Encryption error: {e}")
             return self._xor_encrypt(data, key)
 
-    def hasp_decrypt(self, data: bytes, key: bytes, algorithm: str = 'AES') -> bytes:
+    def hasp_decrypt(self, data: bytes, key: bytes, algorithm: str = "AES") -> bytes:
         """Perform HASP decryption operation."""
         if not CRYPTO_AVAILABLE:
             self.logger.warning("Crypto not available, returning XOR decryption")
             return self._xor_encrypt(data, key)
 
         try:
-            if algorithm == 'AES':
+            if algorithm == "AES":
                 cipher = AES.new(key[:32], AES.MODE_ECB)
                 decrypted = cipher.decrypt(data)
-                return decrypted.rstrip(b'\x00')
-            elif algorithm == 'DES':
+                return decrypted.rstrip(b"\x00")
+            elif algorithm == "DES":
                 cipher = DES.new(key[:8], DES.MODE_ECB)  # noqa: S304 - Required for HASP dongle emulation
                 decrypted = cipher.decrypt(data)
-                return decrypted.rstrip(b'\x00')
-            elif algorithm == 'DES3':
+                return decrypted.rstrip(b"\x00")
+            elif algorithm == "DES3":
                 cipher = DES3.new(key[:24], DES3.MODE_ECB)
                 decrypted = cipher.decrypt(data)
-                return decrypted.rstrip(b'\x00')
+                return decrypted.rstrip(b"\x00")
             else:
                 return self._xor_encrypt(data, key)
         except Exception as e:
@@ -431,8 +462,7 @@ class CryptoEngine:
         try:
             h = SHA256.new(data)
             signer = PKCS1_v1_5.new(private_key)
-            signature = signer.sign(h)
-            return signature
+            return signer.sign(h)
         except Exception as e:
             self.logger.error(f"RSA signing error: {e}")
             return hashlib.sha256(data).digest()
@@ -546,8 +576,8 @@ class HardwareDongleEmulator:
                     dongle.memory.protected_areas = [(0, 1024)]
                     dongle.memory.read_only_areas = [(0, 512)]
 
-                    license_info = struct.pack('<IIII', dongle.feature_id, 0xFFFFFFFF, 10, 1)
-                    dongle.license_data[0:len(license_info)] = license_info
+                    license_info = struct.pack("<IIII", dongle.feature_id, 0xFFFFFFFF, 10, 1)
+                    dongle.license_data[:len(license_info)] = license_info
 
                     self.hasp_dongles[hasp_id] = dongle
                     self.virtual_dongles[f"HASP_{hasp_id}"] = {
@@ -586,7 +616,9 @@ class HardwareDongleEmulator:
                         "instance": dongle,
                     }
 
-        self.logger.info(f"Created {len(self.virtual_dongles)} virtual dongles with full memory emulation")
+        self.logger.info(
+            f"Created {len(self.virtual_dongles)} virtual dongles with full memory emulation"
+        )
 
     def _setup_usb_emulation(self, dongle_types: list[str]) -> None:
         """Set up USB device emulation for dongles."""
@@ -633,25 +665,25 @@ class HardwareDongleEmulator:
     def _hasp_control_handler(self, wValue: int, wIndex: int, data: bytes) -> bytes:
         """Handle HASP USB control transfers."""
         if not self.hasp_dongles:
-            return b'\x00' * 64
+            return b"\x00" * 64
 
         dongle = next(iter(self.hasp_dongles.values()))
 
         if wValue == 1:
-            return struct.pack('<I', dongle.hasp_id)
+            return struct.pack("<I", dongle.hasp_id)
         elif wValue == 2:
-            return struct.pack('<HH', dongle.vendor_code, dongle.feature_id)
+            return struct.pack("<HH", dongle.vendor_code, dongle.feature_id)
         elif wValue == 3:
             return dongle.seed_code
 
-        return b'\x00' * 64
+        return b"\x00" * 64
 
     def _hasp_bulk_out_handler(self, data: bytes) -> bytes:
         """Handle HASP bulk OUT transfers."""
         if len(data) < 4:
-            return b''
+            return b""
 
-        command = struct.unpack('<I', data[:4])[0]
+        command = struct.unpack("<I", data[:4])[0]
 
         if command == 1:
             return self._hasp_login(data[4:])
@@ -666,145 +698,146 @@ class HardwareDongleEmulator:
         elif command == 6:
             return self._hasp_write_memory(data[4:])
 
-        return struct.pack('<I', HASPStatus.HASP_STATUS_OK)
+        return struct.pack("<I", HASPStatus.HASP_STATUS_OK)
 
     def _hasp_bulk_in_handler(self, data: bytes) -> bytes:
         """Handle HASP bulk IN transfers."""
         if not self.hasp_dongles:
-            return b'\x00' * 512
+            return b"\x00" * 512
 
         dongle = next(iter(self.hasp_dongles.values()))
         response = bytearray(512)
 
-        info = struct.pack('<IHHQ',
+        info = struct.pack(
+            "<IHHQ",
             dongle.hasp_id,
             dongle.vendor_code,
             dongle.feature_id,
             dongle.rtc_counter,
         )
-        response[0:len(info)] = info
+        response[:len(info)] = info
 
         return bytes(response)
 
     def _hasp_login(self, data: bytes) -> bytes:
         """Handle HASP login operation."""
         if len(data) < 4:
-            return struct.pack('<I', HASPStatus.HASP_TOO_SHORT)
+            return struct.pack("<I", HASPStatus.HASP_TOO_SHORT)
 
-        vendor_code, _feature_id = struct.unpack('<HH', data[:4])
+        vendor_code, _feature_id = struct.unpack("<HH", data[:4])
 
         for dongle in self.hasp_dongles.values():
             if dongle.vendor_code == vendor_code:
                 dongle.logged_in = True
                 dongle.session_handle = 0x12345678 + len(self.hasp_dongles)
-                return struct.pack('<II', HASPStatus.HASP_STATUS_OK, dongle.session_handle)
+                return struct.pack("<II", HASPStatus.HASP_STATUS_OK, dongle.session_handle)
 
-        return struct.pack('<I', HASPStatus.HASP_KEYNOTFOUND)
+        return struct.pack("<I", HASPStatus.HASP_KEYNOTFOUND)
 
     def _hasp_logout(self, data: bytes) -> bytes:
         """Handle HASP logout operation."""
         if len(data) < 4:
-            return struct.pack('<I', HASPStatus.HASP_TOO_SHORT)
+            return struct.pack("<I", HASPStatus.HASP_TOO_SHORT)
 
-        session_handle = struct.unpack('<I', data[:4])[0]
+        session_handle = struct.unpack("<I", data[:4])[0]
 
         for dongle in self.hasp_dongles.values():
             if dongle.session_handle == session_handle:
                 dongle.logged_in = False
-                return struct.pack('<I', HASPStatus.HASP_STATUS_OK)
+                return struct.pack("<I", HASPStatus.HASP_STATUS_OK)
 
-        return struct.pack('<I', HASPStatus.HASP_INV_HND)
+        return struct.pack("<I", HASPStatus.HASP_INV_HND)
 
     def _hasp_encrypt_command(self, data: bytes) -> bytes:
         """Handle HASP encrypt command."""
         if len(data) < 8:
-            return struct.pack('<I', HASPStatus.HASP_TOO_SHORT)
+            return struct.pack("<I", HASPStatus.HASP_TOO_SHORT)
 
-        session_handle, data_length = struct.unpack('<II', data[:8])
-        plaintext = data[8:8+data_length]
+        session_handle, data_length = struct.unpack("<II", data[:8])
+        plaintext = data[8 : 8 + data_length]
 
         for dongle in self.hasp_dongles.values():
             if dongle.session_handle == session_handle and dongle.logged_in:
-                encrypted = self.crypto_engine.hasp_encrypt(plaintext, dongle.aes_key, 'AES')
-                response = struct.pack('<II', HASPStatus.HASP_STATUS_OK, len(encrypted))
+                encrypted = self.crypto_engine.hasp_encrypt(plaintext, dongle.aes_key, "AES")
+                response = struct.pack("<II", HASPStatus.HASP_STATUS_OK, len(encrypted))
                 return response + encrypted
 
-        return struct.pack('<I', HASPStatus.HASP_INV_HND)
+        return struct.pack("<I", HASPStatus.HASP_INV_HND)
 
     def _hasp_decrypt_command(self, data: bytes) -> bytes:
         """Handle HASP decrypt command."""
         if len(data) < 20:
-            return struct.pack('<I', HASPStatus.HASP_TOO_SHORT)
+            return struct.pack("<I", HASPStatus.HASP_TOO_SHORT)
 
-        session_handle, data_length = struct.unpack('<II', data[:8])
-        ciphertext = data[8:8+data_length]
+        session_handle, data_length = struct.unpack("<II", data[:8])
+        ciphertext = data[8 : 8 + data_length]
 
         for dongle in self.hasp_dongles.values():
             if dongle.session_handle == session_handle and dongle.logged_in:
-                decrypted = self.crypto_engine.hasp_decrypt(ciphertext, dongle.aes_key, 'AES')
-                response = struct.pack('<II', HASPStatus.HASP_STATUS_OK, len(decrypted))
+                decrypted = self.crypto_engine.hasp_decrypt(ciphertext, dongle.aes_key, "AES")
+                response = struct.pack("<II", HASPStatus.HASP_STATUS_OK, len(decrypted))
                 return response + decrypted
 
-        return struct.pack('<I', HASPStatus.HASP_INV_HND)
+        return struct.pack("<I", HASPStatus.HASP_INV_HND)
 
     def _hasp_read_memory(self, data: bytes) -> bytes:
         """Handle HASP memory read operation."""
         if len(data) < 12:
-            return struct.pack('<I', HASPStatus.HASP_TOO_SHORT)
+            return struct.pack("<I", HASPStatus.HASP_TOO_SHORT)
 
-        session_handle, offset, length = struct.unpack('<III', data[:12])
+        session_handle, offset, length = struct.unpack("<III", data[:12])
 
         for dongle in self.hasp_dongles.values():
             if dongle.session_handle == session_handle and dongle.logged_in:
                 try:
-                    mem_data = dongle.memory.read('eeprom', offset, length)
-                    response = struct.pack('<II', HASPStatus.HASP_STATUS_OK, len(mem_data))
+                    mem_data = dongle.memory.read("eeprom", offset, length)
+                    response = struct.pack("<II", HASPStatus.HASP_STATUS_OK, len(mem_data))
                     return response + mem_data
                 except (ValueError, PermissionError):
-                    return struct.pack('<I', HASPStatus.HASP_MEM_RANGE)
+                    return struct.pack("<I", HASPStatus.HASP_MEM_RANGE)
 
-        return struct.pack('<I', HASPStatus.HASP_INV_HND)
+        return struct.pack("<I", HASPStatus.HASP_INV_HND)
 
     def _hasp_write_memory(self, data: bytes) -> bytes:
         """Handle HASP memory write operation."""
         if len(data) < 12:
-            return struct.pack('<I', HASPStatus.HASP_TOO_SHORT)
+            return struct.pack("<I", HASPStatus.HASP_TOO_SHORT)
 
-        session_handle, offset, length = struct.unpack('<III', data[:12])
-        write_data = data[12:12+length]
+        session_handle, offset, length = struct.unpack("<III", data[:12])
+        write_data = data[12 : 12 + length]
 
         for dongle in self.hasp_dongles.values():
             if dongle.session_handle == session_handle and dongle.logged_in:
                 try:
-                    dongle.memory.write('eeprom', offset, write_data)
-                    return struct.pack('<I', HASPStatus.HASP_STATUS_OK)
+                    dongle.memory.write("eeprom", offset, write_data)
+                    return struct.pack("<I", HASPStatus.HASP_STATUS_OK)
                 except (ValueError, PermissionError):
-                    return struct.pack('<I', HASPStatus.HASP_MEM_RANGE)
+                    return struct.pack("<I", HASPStatus.HASP_MEM_RANGE)
 
-        return struct.pack('<I', HASPStatus.HASP_INV_HND)
+        return struct.pack("<I", HASPStatus.HASP_INV_HND)
 
     def _sentinel_control_handler(self, wValue: int, wIndex: int, data: bytes) -> bytes:
         """Handle Sentinel USB control transfers."""
         if not self.sentinel_dongles:
-            return b'\x00' * 64
+            return b"\x00" * 64
 
         dongle = next(iter(self.sentinel_dongles.values()))
 
         if wValue == 1:
-            return struct.pack('<I', dongle.device_id)
+            return struct.pack("<I", dongle.device_id)
         elif wValue == 2:
-            return dongle.serial_number.encode('ascii')[:16].ljust(16, b'\x00')
+            return dongle.serial_number.encode("ascii")[:16].ljust(16, b"\x00")
         elif wValue == 3:
-            return dongle.firmware_version.encode('ascii')[:16].ljust(16, b'\x00')
+            return dongle.firmware_version.encode("ascii")[:16].ljust(16, b"\x00")
 
-        return b'\x00' * 64
+        return b"\x00" * 64
 
     def _sentinel_bulk_out_handler(self, data: bytes) -> bytes:
         """Handle Sentinel bulk OUT transfers."""
         if len(data) < 4:
-            return b''
+            return b""
 
-        command = struct.unpack('<I', data[:4])[0]
+        command = struct.unpack("<I", data[:4])[0]
 
         if command == 1:
             return self._sentinel_query(data[4:])
@@ -815,12 +848,12 @@ class HardwareDongleEmulator:
         elif command == 4:
             return self._sentinel_encrypt(data[4:])
 
-        return struct.pack('<I', SentinelStatus.SP_SUCCESS)
+        return struct.pack("<I", SentinelStatus.SP_SUCCESS)
 
     def _sentinel_bulk_in_handler(self, data: bytes) -> bytes:
         """Handle Sentinel bulk IN transfers."""
         if not self.sentinel_dongles:
-            return b'\x00' * 512
+            return b"\x00" * 512
 
         dongle = next(iter(self.sentinel_dongles.values()))
         return bytes(dongle.response_buffer[:512])
@@ -828,90 +861,92 @@ class HardwareDongleEmulator:
     def _sentinel_query(self, data: bytes) -> bytes:
         """Handle Sentinel query operation."""
         if not self.sentinel_dongles:
-            return struct.pack('<I', SentinelStatus.SP_UNIT_NOT_FOUND)
+            return struct.pack("<I", SentinelStatus.SP_UNIT_NOT_FOUND)
 
         dongle = next(iter(self.sentinel_dongles.values()))
 
-        query_data = struct.pack('<I16s16sI',
+        query_data = struct.pack(
+            "<I16s16sI",
             dongle.device_id,
-            dongle.serial_number.encode('ascii')[:16].ljust(16, b'\x00'),
-            dongle.firmware_version.encode('ascii')[:16].ljust(16, b'\x00'),
+            dongle.serial_number.encode("ascii")[:16].ljust(16, b"\x00"),
+            dongle.firmware_version.encode("ascii")[:16].ljust(16, b"\x00"),
             dongle.developer_id,
         )
 
-        dongle.response_buffer[0:len(query_data)] = query_data
+        dongle.response_buffer[:len(query_data)] = query_data
 
-        return struct.pack('<I', SentinelStatus.SP_SUCCESS)
+        return struct.pack("<I", SentinelStatus.SP_SUCCESS)
 
     def _sentinel_read(self, data: bytes) -> bytes:
         """Handle Sentinel read operation."""
         if len(data) < 8:
-            return struct.pack('<I', SentinelStatus.SP_INVALID_FUNCTION_CODE)
+            return struct.pack("<I", SentinelStatus.SP_INVALID_FUNCTION_CODE)
 
-        cell_id, length = struct.unpack('<II', data[:8])
+        cell_id, length = struct.unpack("<II", data[:8])
 
         for dongle in self.sentinel_dongles.values():
             if cell_id in dongle.cell_data:
                 cell_data = dongle.cell_data[cell_id][:length]
-                dongle.response_buffer[0:len(cell_data)] = cell_data
-                return struct.pack('<I', SentinelStatus.SP_SUCCESS)
+                dongle.response_buffer[:len(cell_data)] = cell_data
+                return struct.pack("<I", SentinelStatus.SP_SUCCESS)
 
-        return struct.pack('<I', SentinelStatus.SP_UNIT_NOT_FOUND)
+        return struct.pack("<I", SentinelStatus.SP_UNIT_NOT_FOUND)
 
     def _sentinel_write(self, data: bytes) -> bytes:
         """Handle Sentinel write operation."""
         if len(data) < 8:
-            return struct.pack('<I', SentinelStatus.SP_INVALID_FUNCTION_CODE)
+            return struct.pack("<I", SentinelStatus.SP_INVALID_FUNCTION_CODE)
 
-        cell_id, length = struct.unpack('<II', data[:8])
-        write_data = data[8:8+length]
+        cell_id, length = struct.unpack("<II", data[:8])
+        write_data = data[8 : 8 + length]
 
         for dongle in self.sentinel_dongles.values():
             if cell_id < 64:
-                dongle.cell_data[cell_id] = write_data.ljust(64, b'\x00')
-                return struct.pack('<I', SentinelStatus.SP_SUCCESS)
+                dongle.cell_data[cell_id] = write_data.ljust(64, b"\x00")
+                return struct.pack("<I", SentinelStatus.SP_SUCCESS)
 
-        return struct.pack('<I', SentinelStatus.SP_UNIT_NOT_FOUND)
+        return struct.pack("<I", SentinelStatus.SP_UNIT_NOT_FOUND)
 
     def _sentinel_encrypt(self, data: bytes) -> bytes:
         """Handle Sentinel encryption operation."""
         if len(data) < 4:
-            return struct.pack('<I', SentinelStatus.SP_INVALID_FUNCTION_CODE)
+            return struct.pack("<I", SentinelStatus.SP_INVALID_FUNCTION_CODE)
 
-        data_length = struct.unpack('<I', data[:4])[0]
-        plaintext = data[4:4+data_length]
+        data_length = struct.unpack("<I", data[:4])[0]
+        plaintext = data[4 : 4 + data_length]
 
         for dongle in self.sentinel_dongles.values():
-            encrypted = self.crypto_engine.hasp_encrypt(plaintext, dongle.aes_key, 'AES')
-            dongle.response_buffer[0:len(encrypted)] = encrypted
-            return struct.pack('<I', SentinelStatus.SP_SUCCESS)
+            encrypted = self.crypto_engine.hasp_encrypt(plaintext, dongle.aes_key, "AES")
+            dongle.response_buffer[:len(encrypted)] = encrypted
+            return struct.pack("<I", SentinelStatus.SP_SUCCESS)
 
-        return struct.pack('<I', SentinelStatus.SP_UNIT_NOT_FOUND)
+        return struct.pack("<I", SentinelStatus.SP_UNIT_NOT_FOUND)
 
     def _wibukey_control_handler(self, wValue: int, wIndex: int, data: bytes) -> bytes:
         """Handle WibuKey USB control transfers."""
         if not self.wibukey_dongles:
-            return b'\x00' * 64
+            return b"\x00" * 64
 
         dongle = next(iter(self.wibukey_dongles.values()))
 
         if wValue == 1:
-            return struct.pack('<III',
+            return struct.pack(
+                "<III",
                 dongle.firm_code,
                 dongle.product_code,
                 dongle.serial_number,
             )
         elif wValue == 2:
-            return dongle.version.encode('ascii')[:16].ljust(16, b'\x00')
+            return dongle.version.encode("ascii")[:16].ljust(16, b"\x00")
 
-        return b'\x00' * 64
+        return b"\x00" * 64
 
     def _wibukey_bulk_out_handler(self, data: bytes) -> bytes:
         """Handle WibuKey bulk OUT transfers."""
         if len(data) < 4:
-            return b''
+            return b""
 
-        command = struct.unpack('<I', data[:4])[0]
+        command = struct.unpack("<I", data[:4])[0]
 
         if command == 1:
             return self._wibukey_open(data[4:])
@@ -922,79 +957,79 @@ class HardwareDongleEmulator:
         elif command == 4:
             return self._wibukey_challenge(data[4:])
 
-        return struct.pack('<I', 0)
+        return struct.pack("<I", 0)
 
     def _wibukey_bulk_in_handler(self, data: bytes) -> bytes:
         """Handle WibuKey bulk IN transfers."""
         if not self.wibukey_dongles:
-            return b'\x00' * 512
+            return b"\x00" * 512
 
         dongle = next(iter(self.wibukey_dongles.values()))
         response = bytearray(512)
 
-        info = struct.pack('<IIII',
+        info = struct.pack(
+            "<IIII",
             dongle.firm_code,
             dongle.product_code,
             dongle.feature_code,
             dongle.serial_number,
         )
-        response[0:len(info)] = info
+        response[:len(info)] = info
 
         return bytes(response)
 
     def _wibukey_open(self, data: bytes) -> bytes:
         """Handle WibuKey open operation."""
         if len(data) < 8:
-            return struct.pack('<I', 1)
+            return struct.pack("<I", 1)
 
-        firm_code, product_code = struct.unpack('<II', data[:8])
+        firm_code, product_code = struct.unpack("<II", data[:8])
 
         for dongle in self.wibukey_dongles.values():
             if dongle.firm_code == firm_code and dongle.product_code == product_code:
-                return struct.pack('<II', 0, dongle.container_handle)
+                return struct.pack("<II", 0, dongle.container_handle)
 
-        return struct.pack('<I', 1)
+        return struct.pack("<I", 1)
 
     def _wibukey_access(self, data: bytes) -> bytes:
         """Handle WibuKey access operation."""
         if len(data) < 12:
-            return struct.pack('<I', 1)
+            return struct.pack("<I", 1)
 
-        container_handle, feature_code, _access_type = struct.unpack('<III', data[:12])
+        container_handle, feature_code, _access_type = struct.unpack("<III", data[:12])
 
         for dongle in self.wibukey_dongles.values():
-            if dongle.container_handle == container_handle:
-                if feature_code in dongle.license_entries:
-                    entry = dongle.license_entries[feature_code]
-                    if entry['enabled']:
-                        dongle.active_licenses.add(feature_code)
-                        return struct.pack('<I', 0)
+            if dongle.container_handle == container_handle and feature_code in dongle.license_entries:
+                entry = dongle.license_entries[feature_code]
+                if entry["enabled"]:
+                    dongle.active_licenses.add(feature_code)
+                    return struct.pack("<I", 0)
 
-        return struct.pack('<I', 1)
+        return struct.pack("<I", 1)
 
     def _wibukey_encrypt(self, data: bytes) -> bytes:
         """Handle WibuKey encrypt operation."""
         if len(data) < 8:
-            return struct.pack('<I', 1)
+            return struct.pack("<I", 1)
 
-        container_handle, data_length = struct.unpack('<II', data[:8])
-        plaintext = data[8:8+data_length]
+        container_handle, data_length = struct.unpack("<II", data[:8])
+        plaintext = data[8 : 8 + data_length]
 
         for dongle in self.wibukey_dongles.values():
             if dongle.container_handle == container_handle:
-                encrypted = self.crypto_engine.hasp_encrypt(plaintext, dongle.aes_key, 'AES')
-                response = struct.pack('<II', 0, len(encrypted))
+                encrypted = self.crypto_engine.hasp_encrypt(plaintext, dongle.aes_key, "AES")
+                response = struct.pack("<II", 0, len(encrypted))
                 return response + encrypted
 
-        return struct.pack('<I', 1)
+        return struct.pack("<I", 1)
 
     def _wibukey_challenge(self, data: bytes) -> bytes:
         """Handle WibuKey challenge-response operation."""
         if len(data) < 20:
-            return struct.pack('<I', 1)
+            return struct.pack("<I", 1)
 
-        container_handle, challenge_length = struct.unpack('<II', data[:8])
-        challenge = data[8:8+challenge_length]
+        container_handle, challenge_length = struct.unpack("<II", data[:8])
+        challenge = data[8 : 8 + challenge_length]
 
         for dongle in self.wibukey_dongles.values():
             if dongle.container_handle == container_handle:
@@ -1002,10 +1037,10 @@ class HardwareDongleEmulator:
                     challenge,
                     dongle.challenge_response_key,
                 )
-                result = struct.pack('<II', 0, len(response))
+                result = struct.pack("<II", 0, len(response))
                 return result + response
 
-        return struct.pack('<I', 1)
+        return struct.pack("<I", 1)
 
     def _hook_dongle_apis(self, dongle_types: list[str]) -> None:
         """Install comprehensive Frida hooks for dongle APIs."""
@@ -1321,11 +1356,13 @@ class HardwareDongleEmulator:
         console.log("[Dongle Emulator] All comprehensive dongle API hooks installed!");
         """
 
-        self.hooks.append({
-            "type": "frida",
-            "script": frida_script,
-            "target": f"Dongle APIs: {', '.join(dongle_types)}",
-        })
+        self.hooks.append(
+            {
+                "type": "frida",
+                "script": frida_script,
+                "target": f"Dongle APIs: {', '.join(dongle_types)}",
+            }
+        )
         self.logger.info(f"Comprehensive dongle API hooks installed for: {', '.join(dongle_types)}")
 
     def _patch_dongle_checks(self) -> None:
@@ -1342,14 +1379,46 @@ class HardwareDongleEmulator:
                 binary_data = f.read()
 
             dongle_check_patterns = [
-                {"pattern": b"\x85\xc0\x74", "patch": b"\x85\xc0\xeb", "desc": "TEST EAX, EAX; JZ -> JMP"},
-                {"pattern": b"\x85\xc0\x75", "patch": b"\x85\xc0\xeb", "desc": "TEST EAX, EAX; JNZ -> JMP"},
-                {"pattern": b"\x83\xf8\x00\x74", "patch": b"\x83\xf8\x00\xeb", "desc": "CMP EAX, 0; JZ -> JMP"},
-                {"pattern": b"\x83\xf8\x00\x75", "patch": b"\x83\xf8\x00\xeb", "desc": "CMP EAX, 0; JNZ -> JMP"},
-                {"pattern": b"\x3d\x00\x00\x00\x00\x74", "patch": b"\x3d\x00\x00\x00\x00\xeb", "desc": "CMP EAX, 0; JZ -> JMP"},
-                {"pattern": b"\x3d\x00\x00\x00\x00\x75", "patch": b"\x3d\x00\x00\x00\x00\xeb", "desc": "CMP EAX, 0; JNZ -> JMP"},
-                {"pattern": b"\x48\x85\xc0\x74", "patch": b"\x48\x85\xc0\xeb", "desc": "TEST RAX, RAX; JZ -> JMP (x64)"},
-                {"pattern": b"\x48\x85\xc0\x75", "patch": b"\x48\x85\xc0\xeb", "desc": "TEST RAX, RAX; JNZ -> JMP (x64)"},
+                {
+                    "pattern": b"\x85\xc0\x74",
+                    "patch": b"\x85\xc0\xeb",
+                    "desc": "TEST EAX, EAX; JZ -> JMP",
+                },
+                {
+                    "pattern": b"\x85\xc0\x75",
+                    "patch": b"\x85\xc0\xeb",
+                    "desc": "TEST EAX, EAX; JNZ -> JMP",
+                },
+                {
+                    "pattern": b"\x83\xf8\x00\x74",
+                    "patch": b"\x83\xf8\x00\xeb",
+                    "desc": "CMP EAX, 0; JZ -> JMP",
+                },
+                {
+                    "pattern": b"\x83\xf8\x00\x75",
+                    "patch": b"\x83\xf8\x00\xeb",
+                    "desc": "CMP EAX, 0; JNZ -> JMP",
+                },
+                {
+                    "pattern": b"\x3d\x00\x00\x00\x00\x74",
+                    "patch": b"\x3d\x00\x00\x00\x00\xeb",
+                    "desc": "CMP EAX, 0; JZ -> JMP",
+                },
+                {
+                    "pattern": b"\x3d\x00\x00\x00\x00\x75",
+                    "patch": b"\x3d\x00\x00\x00\x00\xeb",
+                    "desc": "CMP EAX, 0; JNZ -> JMP",
+                },
+                {
+                    "pattern": b"\x48\x85\xc0\x74",
+                    "patch": b"\x48\x85\xc0\xeb",
+                    "desc": "TEST RAX, RAX; JZ -> JMP (x64)",
+                },
+                {
+                    "pattern": b"\x48\x85\xc0\x75",
+                    "patch": b"\x48\x85\xc0\xeb",
+                    "desc": "TEST RAX, RAX; JNZ -> JMP (x64)",
+                },
             ]
 
             patches_applied = 0
@@ -1360,12 +1429,14 @@ class HardwareDongleEmulator:
 
                 offset = binary_data.find(pattern)
                 while offset != -1:
-                    self.patches.append({
-                        "offset": offset,
-                        "original": pattern,
-                        "patch": patch,
-                        "description": f"Dongle check bypass: {desc}",
-                    })
+                    self.patches.append(
+                        {
+                            "offset": offset,
+                            "original": pattern,
+                            "patch": patch,
+                            "description": f"Dongle check bypass: {desc}",
+                        }
+                    )
                     patches_applied += 1
                     offset = binary_data.find(pattern, offset + 1)
 
@@ -1386,14 +1457,44 @@ class HardwareDongleEmulator:
                 return
 
             dongle_registry_entries = [
-                (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\SafeNet", "InstallDir", r"C:\Program Files\SafeNet"),
+                (
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"SOFTWARE\SafeNet",
+                    "InstallDir",
+                    r"C:\Program Files\SafeNet",
+                ),
                 (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\SafeNet\Sentinel", "Version", "8.0.0"),
-                (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Services\Sentinel", "Start", 2),
-                (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Aladdin Knowledge Systems", "HASP", "Installed"),
-                (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Aladdin Knowledge Systems\HASP", "Version", "4.95"),
-                (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WIBU-SYSTEMS", "CodeMeter", r"C:\Program Files\CodeMeter"),
+                (
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"SYSTEM\CurrentControlSet\Services\Sentinel",
+                    "Start",
+                    2,
+                ),
+                (
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"SOFTWARE\Aladdin Knowledge Systems",
+                    "HASP",
+                    "Installed",
+                ),
+                (
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"SOFTWARE\Aladdin Knowledge Systems\HASP",
+                    "Version",
+                    "4.95",
+                ),
+                (
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"SOFTWARE\WIBU-SYSTEMS",
+                    "CodeMeter",
+                    r"C:\Program Files\CodeMeter",
+                ),
                 (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WIBU-SYSTEMS\CodeMeter", "Version", "6.90"),
-                (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Services\CodeMeter", "Start", 2),
+                (
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"SYSTEM\CurrentControlSet\Services\CodeMeter",
+                    "Start",
+                    2,
+                ),
             ]
 
             for hkey, path, name, value in dongle_registry_entries:
@@ -1405,7 +1506,7 @@ class HardwareDongleEmulator:
                         winreg.SetValueEx(key, name, 0, winreg.REG_SZ, value)
                     winreg.CloseKey(key)
                     self.logger.debug(f"Set registry entry {path}\\{name} = {value}")
-                except (OSError, PermissionError) as e:
+                except OSError as e:
                     self.logger.warning(f"Could not set registry entry {path}\\{name}: {e!s}")
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -1424,18 +1525,21 @@ class HardwareDongleEmulator:
         """
         if dongle_id not in self.hasp_dongles:
             self.logger.error(f"HASP dongle {dongle_id} not found")
-            return b''
+            return b""
 
         dongle = self.hasp_dongles[dongle_id]
 
-        if len(challenge) >= 16:
-            response = self.crypto_engine.sentinel_challenge_response(challenge, dongle.aes_key)
-        else:
-            response = hashlib.sha256(challenge + dongle.seed_code).digest()[:16]
+        return (
+            self.crypto_engine.sentinel_challenge_response(
+                challenge, dongle.aes_key
+            )
+            if len(challenge) >= 16
+            else hashlib.sha256(challenge + dongle.seed_code).digest()[:16]
+        )
 
-        return response
-
-    def read_dongle_memory(self, dongle_type: str, dongle_id: int, region: str, offset: int, length: int) -> bytes:
+    def read_dongle_memory(
+        self, dongle_type: str, dongle_id: int, region: str, offset: int, length: int
+    ) -> bytes:
         """Read from dongle memory.
 
         Args:
@@ -1458,12 +1562,14 @@ class HardwareDongleEmulator:
                 return self.wibukey_dongles[dongle_id].memory.read(region, offset, length)
             else:
                 self.logger.error(f"Dongle {dongle_type} {dongle_id} not found")
-                return b''
+                return b""
         except (ValueError, PermissionError) as e:
             self.logger.error(f"Memory read error: {e}")
-            return b''
+            return b""
 
-    def write_dongle_memory(self, dongle_type: str, dongle_id: int, region: str, offset: int, data: bytes) -> bool:
+    def write_dongle_memory(
+        self, dongle_type: str, dongle_id: int, region: str, offset: int, data: bytes
+    ) -> bool:
         """Write to dongle memory.
 
         Args:
@@ -1504,13 +1610,9 @@ class HardwareDongleEmulator:
             str: Complete Frida script for dongle emulation
 
         """
-        base_script = ""
-        for hook in self.hooks:
-            if hook["type"] == "frida":
-                base_script = hook["script"]
-                break
-
-        return base_script
+        return next(
+            (hook["script"] for hook in self.hooks if hook["type"] == "frida"), ""
+        )
 
     def get_emulation_status(self) -> dict[str, Any]:
         """Get the current status of dongle emulation.
@@ -1546,7 +1648,9 @@ class HardwareDongleEmulator:
         self.logger.info("Cleared all dongle emulation hooks and virtual devices")
 
 
-def activate_hardware_dongle_emulation(app: object, dongle_types: list[str] | None = None) -> dict[str, object]:
+def activate_hardware_dongle_emulation(
+    app: object, dongle_types: list[str] | None = None
+) -> dict[str, object]:
     """Activate hardware dongle emulation.
 
     Args:
@@ -1562,16 +1666,16 @@ def activate_hardware_dongle_emulation(app: object, dongle_types: list[str] | No
 
 
 __all__ = [
-    "HardwareDongleEmulator",
-    "activate_hardware_dongle_emulation",
+    "CryptoEngine",
+    "DongleMemory",
     "DongleType",
+    "HASPDongle",
     "HASPStatus",
+    "HardwareDongleEmulator",
+    "SentinelDongle",
     "SentinelStatus",
     "USBDescriptor",
-    "DongleMemory",
-    "HASPDongle",
-    "SentinelDongle",
-    "WibuKeyDongle",
     "USBEmulator",
-    "CryptoEngine",
+    "WibuKeyDongle",
+    "activate_hardware_dongle_emulation",
 ]

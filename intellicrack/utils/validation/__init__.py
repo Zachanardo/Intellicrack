@@ -24,6 +24,7 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 import logging
 from collections.abc import Callable
 
+
 logger: logging.Logger = logging.getLogger(__name__)
 
 # Import validation modules
@@ -69,9 +70,9 @@ def is_validation_available(validation_type: str) -> bool:
 
 
 __all__ = [
+    "HAS_IMPORT_VALIDATOR",
     "get_validation_capabilities",
     "is_validation_available",
-    "HAS_IMPORT_VALIDATOR",
 ]
 
 if ImportValidator:

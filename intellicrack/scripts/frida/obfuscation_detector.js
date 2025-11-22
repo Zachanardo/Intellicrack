@@ -1563,28 +1563,23 @@ const ObfuscationDetector = {
                     this.newProtect = args[2].toInt32();
                 },
                 onLeave: function (retval) {
-                    if (retval.toInt32() !== 0) {
-                        // Check if changing to executable
-                        if (
-                            this.newProtect & 0x10 ||
-                            this.newProtect & 0x20 ||
-                            this.newProtect & 0x40
-                        ) {
-                            unpackingIndicators.push({
-                                type: 'protection_change',
-                                address: this.address,
-                                size: this.size,
-                                protection: this.newProtect,
-                            });
-
-                            // Dump unpacked code
-                            setTimeout(
-                                function () {
-                                    self.dumpUnpackedCode(this.address, this.size);
-                                }.bind(this),
-                                100
-                            );
-                        }
+                    if (retval.toInt32() !== 0 && (this.newProtect & 0x10 ||
+                                                this.newProtect & 0x20 ||
+                                                this.newProtect & 0x40)) {
+                          unpackingIndicators.push({
+                              type: 'protection_change',
+                              address: this.address,
+                              size: this.size,
+                              protection: this.newProtect,
+                          });
+                    
+                          // Dump unpacked code
+                          setTimeout(
+                              function () {
+                                  self.dumpUnpackedCode(this.address, this.size);
+                              }.bind(this),
+                              100
+                          );
                     }
                 },
             });
@@ -1931,27 +1926,26 @@ const ObfuscationDetector = {
 
                 for (var i = 0; i < data.length; i++) {
                     if (data[i] === 0x00 || data[i] === 0x90 || data[i] === 0xcc) {
-                        if (caveStart === -1) {
-                            caveStart = i;
-                        }
-                    } else {
-                        if (caveStart !== -1) {
-                            var caveSize = i - caveStart;
-                            if (caveSize >= minCaveSize) {
-                                caves.push({
-                                    address: range.base.add(caveStart),
-                                    size: caveSize,
-                                    type:
-                                        data[caveStart] === 0x00
-                                            ? 'null'
-                                            : data[caveStart] === 0x90
-                                              ? 'nop'
-                                              : 'int3',
-                                });
-                            }
-                            caveStart = -1;
-                        }
-                    }
+                                            if (caveStart === -1) {
+                                                caveStart = i;
+                                            }
+                                        }
+                    else if (caveStart !== -1) {
+                                                var caveSize = i - caveStart;
+                                                if (caveSize >= minCaveSize) {
+                                                    caves.push({
+                                                        address: range.base.add(caveStart),
+                                                        size: caveSize,
+                                                        type:
+                                                            data[caveStart] === 0x00
+                                                                ? 'null'
+                                                                : data[caveStart] === 0x90
+                                                                  ? 'nop'
+                                                                  : 'int3',
+                                                    });
+                                                }
+                                                caveStart = -1;
+                                            }
                 }
             } catch (e) {
                 // Use e for comprehensive code cave detection error analysis

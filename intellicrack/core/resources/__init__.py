@@ -8,6 +8,7 @@ Licensed under GNU General Public License v3.0
 
 import contextlib
 
+
 with contextlib.suppress(ImportError):
     from .resource_manager import (
         ManagedResource,

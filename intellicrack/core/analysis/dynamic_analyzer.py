@@ -29,6 +29,7 @@ from typing import Any
 from ...utils.core.import_checks import FRIDA_AVAILABLE, PSUTIL_AVAILABLE, frida, psutil
 from ...utils.logger import get_logger, log_message
 
+
 logger = get_logger(__name__)
 
 
@@ -65,7 +66,9 @@ class AdvancedDynamicAnalyzer:
                  runtime analysis, and process behavior information
 
         """
-        self.logger.info(f"Running comprehensive dynamic analysis for {self.binary_path}. Payload provided: {bool(payload)}")
+        self.logger.info(
+            f"Running comprehensive dynamic analysis for {self.binary_path}. Payload provided: {bool(payload)}"
+        )
 
         analysis_results = {
             "subprocess_execution": self._subprocess_analysis(),
@@ -94,7 +97,11 @@ class AdvancedDynamicAnalyzer:
 
         try:
             result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                [self.binary_path], capture_output=True, text=True, timeout=10, check=False,
+                [self.binary_path],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
             )
 
             self.logger.debug(
@@ -579,7 +586,9 @@ class AdvancedDynamicAnalyzer:
             self.logger.error("Process behavior analysis error: %s", e, exc_info=True)
             return {"error": str(e)}
 
-    def scan_memory_for_keywords(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
+    def scan_memory_for_keywords(
+        self, keywords: list[str], target_process: str | None = None
+    ) -> dict[str, Any]:
         """Scan process memory for specific keywords.
 
         Performs real-time memory scanning of the target process or a specified process
@@ -609,7 +618,9 @@ class AdvancedDynamicAnalyzer:
                 "matches": [],
             }
 
-    def _frida_memory_scan(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
+    def _frida_memory_scan(
+        self, keywords: list[str], target_process: str | None = None
+    ) -> dict[str, Any]:
         """Perform memory scanning using Frida instrumentation."""
         try:
             # Get process to attach to
@@ -751,7 +762,9 @@ class AdvancedDynamicAnalyzer:
                 "matches": [],
             }
 
-    def _psutil_memory_scan(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
+    def _psutil_memory_scan(
+        self, keywords: list[str], target_process: str | None = None
+    ) -> dict[str, Any]:
         """Perform real memory scanning using platform-specific memory reading."""
         import platform
 
@@ -800,7 +813,9 @@ class AdvancedDynamicAnalyzer:
             memory_info = target_proc.memory_info()
             memory_maps = []
             with contextlib.suppress(AttributeError, OSError, PermissionError):
-                memory_maps = target_proc.memory_maps() if hasattr(target_proc, "memory_maps") else []
+                memory_maps = (
+                    target_proc.memory_maps() if hasattr(target_proc, "memory_maps") else []
+                )
 
             self.logger.info(f"Memory scan found {len(matches)} matches")
 
@@ -863,15 +878,26 @@ class AdvancedDynamicAnalyzer:
             address = 0
 
             # Scan all memory regions
-            while kernel32.VirtualQueryEx(handle, ctypes.c_void_p(address), ctypes.byref(mbi), ctypes.sizeof(mbi)):
+            while kernel32.VirtualQueryEx(
+                handle, ctypes.c_void_p(address), ctypes.byref(mbi), ctypes.sizeof(mbi)
+            ):
                 # Check if memory is committed and readable
-                if mbi.State == MEM_COMMIT and mbi.Protect in [PAGE_READWRITE, PAGE_READONLY, PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE]:
+                if mbi.State == MEM_COMMIT and mbi.Protect in [
+                    PAGE_READWRITE,
+                    PAGE_READONLY,
+                    PAGE_EXECUTE_READ,
+                    PAGE_EXECUTE_READWRITE,
+                ]:
                     # Read memory region
                     buffer = ctypes.create_string_buffer(mbi.RegionSize)
                     bytes_read = ctypes.c_size_t()
 
                     if kernel32.ReadProcessMemory(
-                        handle, ctypes.c_void_p(mbi.BaseAddress), buffer, mbi.RegionSize, ctypes.byref(bytes_read),
+                        handle,
+                        ctypes.c_void_p(mbi.BaseAddress),
+                        buffer,
+                        mbi.RegionSize,
+                        ctypes.byref(bytes_read),
                     ):
                         # Search for keywords in memory
                         memory_data = buffer.raw[: bytes_read.value]
@@ -1094,20 +1120,24 @@ print(matches)
                 f.write(script)
                 script_path = f.name
 
-            # Execute with lldb (if available)
-            lldb_path = shutil.which("lldb")
-            if lldb_path:
-                try:
+            if lldb_path := shutil.which("lldb"):
+                with contextlib.suppress(OSError, subprocess.SubprocessError):
                     result = subprocess.run([lldb_path, "-P"], capture_output=True, text=True)
                     if result.returncode == 0:
                         # LLDB is available, execute the memory scanning script
-                        lldb_cmd = [lldb_path, "-b", "-o", f"command script import {script_path}", "-o", "quit"]
-                        scan_result = subprocess.run(lldb_cmd, capture_output=True, text=True, timeout=10)
+                        lldb_cmd = [
+                            lldb_path,
+                            "-b",
+                            "-o",
+                            f"command script import {script_path}",
+                            "-o",
+                            "quit",
+                        ]
+                        scan_result = subprocess.run(
+                            lldb_cmd, capture_output=True, text=True, timeout=10
+                        )
                         if scan_result.stdout:
                             self.logger.debug(f"LLDB memory scan output: {scan_result.stdout}")
-                except (FileNotFoundError, OSError, subprocess.SubprocessError):
-                    pass
-
             # Fallback to generic scanning
             return self._generic_memory_scan(psutil.Process(pid), keywords)
 
@@ -1146,7 +1176,7 @@ print(matches)
             try:
                 cmdline = " ".join(process.cmdline())
                 searchable_data.append(("cmdline", cmdline))
-            except (AttributeError, OSError, PermissionError):
+            except (AttributeError, OSError):
                 pass
 
             # Environment variables
@@ -1154,21 +1184,21 @@ print(matches)
                 environ = process.environ()
                 for key, value in environ.items():
                     searchable_data.append((f"env_{key}", value))
-            except (AttributeError, OSError, PermissionError):
+            except (AttributeError, OSError):
                 pass
 
             # Open files
             try:
                 for file in process.open_files():
                     searchable_data.append(("open_file", file.path))
-            except (AttributeError, OSError, PermissionError):
+            except (AttributeError, OSError):
                 pass
 
             # Connections
             try:
                 for conn in process.connections():
                     searchable_data.append(("connection", f"{conn.laddr}:{conn.raddr}"))
-            except (AttributeError, OSError, PermissionError):
+            except (AttributeError, OSError):
                 pass
 
             # Search for keywords in available data
@@ -1204,17 +1234,14 @@ print(matches)
                             },
                         )
 
-            # Try to read actual memory using ctypes if possible
-            if matches and hasattr(process, "_handle"):
-                # Platform-specific memory reading
-                pass
-
         except Exception as e:
             self.logger.error(f"Generic memory scan error: {e}")
 
         return matches
 
-    def _fallback_memory_scan(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
+    def _fallback_memory_scan(
+        self, keywords: list[str], target_process: str | None = None
+    ) -> dict[str, Any]:
         """Fallback memory scanning using binary file analysis."""
         try:
             if target_process:
@@ -1276,7 +1303,9 @@ print(matches)
 
 
 # Convenience functions for application integration
-def run_dynamic_analysis(app: object, binary_path: str | Path | None = None, payload: bytes | None = None) -> dict[str, Any]:
+def run_dynamic_analysis(
+    app: object, binary_path: str | Path | None = None, payload: bytes | None = None
+) -> dict[str, Any]:
     """Run dynamic analysis on a binary with app integration.
 
     Args:
@@ -1325,16 +1354,26 @@ def run_dynamic_analysis(app: object, binary_path: str | Path | None = None, pay
         if frida_result.get("success"):
             analysis_data = frida_result.get("analysis_data", {})
             app.analyze_results.append("\nRuntime Analysis:")
-            app.analyze_results.append(f"  File Operations: {len(analysis_data.get('file_access', []))}")
-            app.analyze_results.append(f"  Registry Operations: {len(analysis_data.get('registry_access', []))}")
-            app.analyze_results.append(f"  Network Connections: {len(analysis_data.get('network_activity', []))}")
-            app.analyze_results.append(f"  License Functions: {len(analysis_data.get('license_function', []))}")
+            app.analyze_results.append(
+                f"  File Operations: {len(analysis_data.get('file_access', []))}"
+            )
+            app.analyze_results.append(
+                f"  Registry Operations: {len(analysis_data.get('registry_access', []))}"
+            )
+            app.analyze_results.append(
+                f"  Network Connections: {len(analysis_data.get('network_activity', []))}"
+            )
+            app.analyze_results.append(
+                f"  License Functions: {len(analysis_data.get('license_function', []))}"
+            )
 
             # Show some details
             if analysis_data.get("license_function"):
                 app.analyze_results.append("\n  Detected License Functions:")
                 for func in analysis_data["license_function"][:5]:
-                    app.analyze_results.append(f"    - {func.get('function', 'Unknown')} in {func.get('module', 'Unknown')}")
+                    app.analyze_results.append(
+                        f"    - {func.get('function', 'Unknown')} in {func.get('module', 'Unknown')}"
+                    )
 
     # Process behavior
     if "process_behavior_analysis" in results:
@@ -1345,7 +1384,9 @@ def run_dynamic_analysis(app: object, binary_path: str | Path | None = None, pay
             app.analyze_results.append(f"  Threads: {behavior.get('threads', 0)}")
             if behavior.get("memory_info"):
                 mem = behavior["memory_info"]
-                app.analyze_results.append(f"  Memory RSS: {mem.get('rss', 0) / 1024 / 1024:.2f} MB")
+                app.analyze_results.append(
+                    f"  Memory RSS: {mem.get('rss', 0) / 1024 / 1024:.2f} MB"
+                )
 
     return results
 

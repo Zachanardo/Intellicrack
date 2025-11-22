@@ -31,6 +31,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -95,8 +96,7 @@ class UserModeNTAPIHooker:
     def _init_linux_usermode_hooks(self) -> None:
         """Initialize Linux user-mode hook infrastructure."""
         try:
-            libc_path = ctypes.util.find_library("c")
-            if libc_path:
+            if libc_path := ctypes.util.find_library("c"):
                 self.libc = ctypes.CDLL(libc_path)
                 self.logger.info("Linux user-mode hook infrastructure initialized")
 
@@ -170,7 +170,9 @@ class UserModeNTAPIHooker:
             shellcode.extend([0xFF, 0xE0])
             shellcode.extend([0x48, 0x31, 0xC0, 0x48, 0x89, 0x01, 0xC3])
         else:
-            shellcode = bytearray([0x83, 0xFA, 0x07, 0x74, 0x12, 0x83, 0xFA, 0x1E, 0x74, 0x0C, 0xB8])
+            shellcode = bytearray(
+                [0x83, 0xFA, 0x07, 0x74, 0x12, 0x83, 0xFA, 0x1E, 0x74, 0x0C, 0xB8]
+            )
             shellcode.extend(struct.pack("<I", original_addr + 16))
             shellcode.extend([0xFF, 0xE0])
             shellcode.extend([0x31, 0xC0, 0x89, 0x01, 0xC2, 0x14, 0x00])
@@ -279,7 +281,9 @@ class UserModeNTAPIHooker:
 
         return bytes(shellcode)
 
-    def _install_inline_hook(self, target_addr: int, hook_code: bytes, original_bytes: bytes) -> bool:
+    def _install_inline_hook(
+        self, target_addr: int, hook_code: bytes, original_bytes: bytes
+    ) -> bool:
         """Install inline hook by patching memory."""
         try:
             if platform.system() != "Windows":
@@ -288,7 +292,9 @@ class UserModeNTAPIHooker:
             old_protect = ctypes.c_ulong()
             size = len(hook_code)
 
-            if not self.kernel32.VirtualProtect(ctypes.c_void_p(target_addr), size, 0x40, ctypes.byref(old_protect)):
+            if not self.kernel32.VirtualProtect(
+                ctypes.c_void_p(target_addr), size, 0x40, ctypes.byref(old_protect)
+            ):
                 return False
 
             bytes_written = ctypes.c_size_t()
@@ -301,10 +307,14 @@ class UserModeNTAPIHooker:
                 size,
                 ctypes.byref(bytes_written),
             ):
-                self.kernel32.VirtualProtect(ctypes.c_void_p(target_addr), size, old_protect.value, ctypes.byref(old_protect))
+                self.kernel32.VirtualProtect(
+                    ctypes.c_void_p(target_addr), size, old_protect.value, ctypes.byref(old_protect)
+                )
                 return False
 
-            self.kernel32.VirtualProtect(ctypes.c_void_p(target_addr), size, old_protect.value, ctypes.byref(old_protect))
+            self.kernel32.VirtualProtect(
+                ctypes.c_void_p(target_addr), size, old_protect.value, ctypes.byref(old_protect)
+            )
 
             self.kernel32.FlushInstructionCache(current_process, ctypes.c_void_p(target_addr), size)
 
@@ -324,7 +334,9 @@ class UserModeNTAPIHooker:
             bytes_read = ctypes.c_size_t()
             current_process = self.kernel32.GetCurrentProcess()
 
-            if self.kernel32.ReadProcessMemory(current_process, ctypes.c_void_p(address), buffer, size, ctypes.byref(bytes_read)):
+            if self.kernel32.ReadProcessMemory(
+                current_process, ctypes.c_void_p(address), buffer, size, ctypes.byref(bytes_read)
+            ):
                 return buffer.raw[: bytes_read.value]
 
             return b""
@@ -357,7 +369,9 @@ class UserModeNTAPIHooker:
             old_protect = ctypes.c_ulong()
             size = len(hook_info.original_bytes)
 
-            self.kernel32.VirtualProtect(ctypes.c_void_p(hook_info.target_address), size, 0x40, ctypes.byref(old_protect))
+            self.kernel32.VirtualProtect(
+                ctypes.c_void_p(hook_info.target_address), size, 0x40, ctypes.byref(old_protect)
+            )
 
             bytes_written = ctypes.c_size_t()
             current_process = self.kernel32.GetCurrentProcess()
@@ -370,9 +384,16 @@ class UserModeNTAPIHooker:
                 ctypes.byref(bytes_written),
             )
 
-            self.kernel32.VirtualProtect(ctypes.c_void_p(hook_info.target_address), size, old_protect.value, ctypes.byref(old_protect))
+            self.kernel32.VirtualProtect(
+                ctypes.c_void_p(hook_info.target_address),
+                size,
+                old_protect.value,
+                ctypes.byref(old_protect),
+            )
 
-            self.kernel32.FlushInstructionCache(current_process, ctypes.c_void_p(hook_info.target_address), size)
+            self.kernel32.FlushInstructionCache(
+                current_process, ctypes.c_void_p(hook_info.target_address), size
+            )
 
             hook_info.active = False
             return True
@@ -398,7 +419,7 @@ class HypervisorDebugger:
             support_info = {"vmx": False, "svm": False, "ept": False, "vpid": False}
 
             if platform.system() == "Windows":
-                support_info.update(self._check_windows_vt_support())
+                support_info |= self._check_windows_vt_support()
             else:
                 support_info.update(self._check_linux_vt_support())
 
@@ -411,11 +432,8 @@ class HypervisorDebugger:
     def _check_windows_vt_support(self) -> dict[str, bool]:
         """Check Windows virtualization support via CPUID."""
         try:
-            support = {}
-
             cpuid_eax1_ecx = self._get_cpuid(1, 0)[2]
-            support["vmx"] = bool(cpuid_eax1_ecx & (1 << 5))
-
+            support = {"vmx": bool(cpuid_eax1_ecx & (1 << 5))}
             cpuid_eax80000001_ecx = self._get_cpuid(0x80000001, 0)[2]
             support["svm"] = bool(cpuid_eax80000001_ecx & (1 << 2))
 
@@ -437,16 +455,15 @@ class HypervisorDebugger:
     def _check_linux_vt_support(self) -> dict[str, bool]:
         """Check Linux virtualization support via /proc/cpuinfo."""
         try:
-            support = {"vmx": False, "svm": False, "ept": False, "vpid": False}
-
             with Path("/proc/cpuinfo").open() as f:
                 cpuinfo = f.read()
 
-            support["vmx"] = "vmx" in cpuinfo
-            support["svm"] = "svm" in cpuinfo
-            support["ept"] = "ept" in cpuinfo
-            support["vpid"] = "vpid" in cpuinfo
-
+            support = {
+                "vmx": "vmx" in cpuinfo,
+                "svm": "svm" in cpuinfo,
+                "ept": "ept" in cpuinfo,
+                "vpid": "vpid" in cpuinfo,
+            }
             return support
 
         except Exception as e:
@@ -610,13 +627,15 @@ class TimingNeutralizer:
 
             kernel32 = ctypes.windll.kernel32
 
-            original_gtc = ctypes.cast(kernel32.GetTickCount, ctypes.c_void_p).value
-            if original_gtc:
+            if original_gtc := ctypes.cast(
+                kernel32.GetTickCount, ctypes.c_void_p
+            ).value:
                 self.hooked_functions["GetTickCount"] = original_gtc
 
             if hasattr(kernel32, "GetTickCount64"):
-                original_gtc64 = ctypes.cast(kernel32.GetTickCount64, ctypes.c_void_p).value
-                if original_gtc64:
+                if original_gtc64 := ctypes.cast(
+                    kernel32.GetTickCount64, ctypes.c_void_p
+                ).value:
                     self.hooked_functions["GetTickCount64"] = original_gtc64
 
             self.logger.info("GetTickCount functions hooked for timing normalization")
@@ -697,9 +716,15 @@ class AdvancedDebuggerBypass:
         try:
             self.logger.info("Installing full anti-anti-debug bypass suite (user-mode)")
 
-            results["usermode_ntapi_hooks"]["NtQueryInformationProcess"] = self.kernel_hooks.hook_ntquery_information_process()
-            results["usermode_ntapi_hooks"]["NtSetInformationThread"] = self.kernel_hooks.hook_ntset_information_thread()
-            results["usermode_ntapi_hooks"]["NtQuerySystemInformation"] = self.kernel_hooks.hook_ntquery_system_information()
+            results["usermode_ntapi_hooks"]["NtQueryInformationProcess"] = (
+                self.kernel_hooks.hook_ntquery_information_process()
+            )
+            results["usermode_ntapi_hooks"]["NtSetInformationThread"] = (
+                self.kernel_hooks.hook_ntset_information_thread()
+            )
+            results["usermode_ntapi_hooks"]["NtQuerySystemInformation"] = (
+                self.kernel_hooks.hook_ntquery_system_information()
+            )
 
             vt_support = self.hypervisor.check_virtualization_support()
             results["hypervisor"]["support"] = vt_support
@@ -724,7 +749,9 @@ class AdvancedDebuggerBypass:
             results["overall_success"] = successful_bypasses > 0
             self.bypass_active = results["overall_success"]
 
-            self.logger.info(f"Bypass installation complete: {successful_bypasses} techniques installed successfully")
+            self.logger.info(
+                f"Bypass installation complete: {successful_bypasses} techniques installed successfully"
+            )
 
             return results
 
@@ -759,9 +786,13 @@ class AdvancedDebuggerBypass:
 
             results["thread_hide_usermode"] = self.kernel_hooks.hook_ntset_information_thread()
 
-            results["system_info_spoof_usermode"] = self.kernel_hooks.hook_ntquery_system_information()
+            results["system_info_spoof_usermode"] = (
+                self.kernel_hooks.hook_ntquery_system_information()
+            )
 
-            self.logger.info(f"ScyllaHide-resistant bypass: {sum(results.values())}/{len(results)} techniques active")
+            self.logger.info(
+                f"ScyllaHide-resistant bypass: {sum(results.values())}/{len(results)} techniques active"
+            )
 
             return results
 
@@ -782,8 +813,7 @@ class AdvancedDebuggerBypass:
             "HardwareBreakpoints": self._defeat_hardware_breakpoints,
         }
 
-        handler = technique_handlers.get(technique_name)
-        if handler:
+        if handler := technique_handlers.get(technique_name):
             try:
                 return handler()
             except Exception as e:
@@ -849,7 +879,9 @@ class AdvancedDebuggerBypass:
         return {
             "active": self.bypass_active,
             "usermode_ntapi_hooks_count": len(self.kernel_hooks.hooks),
-            "usermode_ntapi_hook_details": {name: hook.active for name, hook in self.kernel_hooks.hooks.items()},
+            "usermode_ntapi_hook_details": {
+                name: hook.active for name, hook in self.kernel_hooks.hooks.items()
+            },
             "hypervisor_vmx": self.hypervisor.vmx_enabled,
             "hypervisor_ept": self.hypervisor.ept_enabled,
             "hypervisor_vmcs_shadowing": self.hypervisor.vmcs_shadowing,

@@ -24,6 +24,7 @@ from .api_provider_clients import (
 )
 from .llm_config_manager import get_llm_config_manager
 
+
 logger = get_logger(__name__)
 
 
@@ -73,7 +74,9 @@ class ModelDiscoveryService:
 
         return all_models.copy()
 
-    def discover_provider_models(self, provider_name: str, force_refresh: bool = False) -> list[ModelInfo]:
+    def discover_provider_models(
+        self, provider_name: str, force_refresh: bool = False
+    ) -> list[ModelInfo]:
         """Discover models from a specific provider.
 
         Args:
@@ -108,18 +111,17 @@ class ModelDiscoveryService:
         flat_list.sort(key=lambda x: x[0])
         return flat_list
 
-    def get_configured_and_discovered_models(self, force_refresh: bool = False) -> dict[str, dict[str, Any]]:
+    def get_configured_and_discovered_models(
+        self, force_refresh: bool = False
+    ) -> dict[str, dict[str, Any]]:
         """Get both configured models and API-discovered models.
 
         Returns:
             Dictionary with 'configured' and 'discovered' keys containing model info
 
         """
-        result = {"configured": {}, "discovered": {}}
-
         configured_models = self._config_manager.list_model_configs()
-        result["configured"] = configured_models
-
+        result = {"discovered": {}, "configured": configured_models}
         discovered_models = self.discover_all_models(force_refresh=force_refresh)
         result["discovered"] = {
             provider: [
@@ -147,7 +149,9 @@ class ModelDiscoveryService:
         self._provider_manager.providers.clear()
 
         if "openai" in api_keys:
-            openai_client = OpenAIProviderClient(api_key=api_keys["openai"]["api_key"], base_url=api_keys["openai"].get("api_base"))
+            openai_client = OpenAIProviderClient(
+                api_key=api_keys["openai"]["api_key"], base_url=api_keys["openai"].get("api_base")
+            )
             self._provider_manager.register_provider("OpenAI", openai_client)
             logger.info("Registered OpenAI provider for model discovery")
 
@@ -159,11 +163,15 @@ class ModelDiscoveryService:
             self._provider_manager.register_provider("Anthropic", anthropic_client)
             logger.info("Registered Anthropic provider for model discovery")
 
-        ollama_client = OllamaProviderClient(base_url=api_keys.get("ollama", {}).get("api_base", "http://localhost:11434"))
+        ollama_client = OllamaProviderClient(
+            base_url=api_keys.get("ollama", {}).get("api_base", "http://localhost:11434")
+        )
         self._provider_manager.register_provider("Ollama", ollama_client)
         logger.debug("Registered Ollama provider for model discovery")
 
-        lmstudio_client = LMStudioProviderClient(base_url=api_keys.get("lmstudio", {}).get("api_base", "http://localhost:1234/v1"))
+        lmstudio_client = LMStudioProviderClient(
+            base_url=api_keys.get("lmstudio", {}).get("api_base", "http://localhost:1234/v1")
+        )
         self._provider_manager.register_provider("LM Studio", lmstudio_client)
         logger.debug("Registered LM Studio provider for model discovery")
 
@@ -171,7 +179,9 @@ class ModelDiscoveryService:
         self._provider_manager.register_provider("Local GGUF", local_client)
         logger.debug("Registered Local GGUF provider for model discovery")
 
-    def _extract_api_keys(self, configured_models: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    def _extract_api_keys(
+        self, configured_models: dict[str, dict[str, Any]]
+    ) -> dict[str, dict[str, Any]]:
         """Extract API keys and base URLs from configured models.
 
         Args:

@@ -201,8 +201,7 @@ class IntellicrakGraphVisualization {
         const bounds = this.mainGroup.node().getBBox();
         const fullWidth = this.width;
         const fullHeight = this.height;
-        const width = bounds.width;
-        const height = bounds.height;
+        const {width, height} = bounds;
 
         const midX = bounds.x + width / 2;
         const midY = bounds.y + height / 2;

@@ -24,6 +24,7 @@ import logging
 import time
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -152,7 +153,12 @@ class AutomatedPatchAgent:
 
     def analyze_binary(self, binary_path: str) -> dict[str, Any]:
         """Analyze binary for patch points."""
-        analysis_results = {"protection_schemes": [], "patch_points": [], "vulnerability_score": 0, "recommended_patches": []}
+        analysis_results = {
+            "protection_schemes": [],
+            "patch_points": [],
+            "vulnerability_score": 0,
+            "recommended_patches": [],
+        }
 
         try:
             with open(binary_path, "rb") as f:
@@ -225,7 +231,14 @@ class AutomatedPatchAgent:
                     offset = binary_data.find(pattern, offset)
                     if offset == -1:
                         break
-                    patch_points.append({"offset": offset, "type": patch_type, "pattern": pattern.hex(), "size": len(pattern)})
+                    patch_points.append(
+                        {
+                            "offset": offset,
+                            "type": patch_type,
+                            "pattern": pattern.hex(),
+                            "size": len(pattern),
+                        }
+                    )
                     offset += len(pattern)
 
         return patch_points
@@ -254,7 +267,13 @@ class AutomatedPatchAgent:
 
                 # Log patch
                 self.patch_history.append(
-                    {"timestamp": time.time(), "file": binary_path, "offset": offset, "patch": patch_bytes.hex(), "backup": backup_path},
+                    {
+                        "timestamp": time.time(),
+                        "file": binary_path,
+                        "offset": offset,
+                        "patch": patch_bytes.hex(),
+                        "backup": backup_path,
+                    },
                 )
 
                 return True

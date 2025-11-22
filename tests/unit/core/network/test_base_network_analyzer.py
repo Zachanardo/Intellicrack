@@ -45,7 +45,7 @@ class LicenseProtocol:
     server_endpoint: str
     port: int
     encryption: bool
-    key_exchange_method: Optional[str]
+    key_exchange_method: str | None
     validation_pattern: bytes
 
 
@@ -671,7 +671,7 @@ class TestBaseNetworkAnalyzerIntegration:
 
         # Generate certificate
         subject = issuer = x509.Name([
-            x509.NameAttribute(NameOID.COMMON_NAME, u"test.license.server"),
+            x509.NameAttribute(NameOID.COMMON_NAME, "test.license.server"),
         ])
 
         cert = x509.CertificateBuilder().subject_name(

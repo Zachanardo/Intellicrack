@@ -16,6 +16,7 @@ from enum import IntEnum
 from pathlib import Path
 from typing import Any
 
+
 try:
     from Crypto.Cipher import AES
     from Crypto.Hash import SHA256
@@ -23,6 +24,7 @@ try:
     from Crypto.PublicKey import RSA
     from Crypto.Signature import pkcs1_15
     from Crypto.Util.Padding import unpad
+
     HAS_CRYPTO = True
 except ImportError:
     HAS_CRYPTO = False
@@ -39,6 +41,7 @@ except ImportError:
 
 try:
     import frida
+
     HAS_FRIDA = True
 except ImportError:
     HAS_FRIDA = False
@@ -306,9 +309,15 @@ class TPMBypassEngine:
         """Initialize TPM bypass components."""
         self.pcr_banks = {
             TPM2Algorithm.SHA256: PCRBank(
-                algorithm=TPM2Algorithm.SHA256, pcr_values=[bytes(32) for _ in range(24)], selection_mask=0xFFFFFF,
+                algorithm=TPM2Algorithm.SHA256,
+                pcr_values=[bytes(32) for _ in range(24)],
+                selection_mask=0xFFFFFF,
             ),
-            TPM2Algorithm.SHA1: PCRBank(algorithm=TPM2Algorithm.SHA1, pcr_values=[bytes(20) for _ in range(24)], selection_mask=0xFFFFFF),
+            TPM2Algorithm.SHA1: PCRBank(
+                algorithm=TPM2Algorithm.SHA1,
+                pcr_values=[bytes(20) for _ in range(24)],
+                selection_mask=0xFFFFFF,
+            ),
         }
 
         self.init_memory_attack_vectors()
@@ -330,32 +339,41 @@ class TPMBypassEngine:
                 sd = win32security.SECURITY_DESCRIPTOR()
                 sd.Initialize()
 
-                self.mem_handle = kernel32.CreateFileW(r"\\.\PhysicalMemory", 0x80000000 | 0x40000000, 1 | 2, None, 3, 0, None)
-                system_info = ntdll.NtQuerySystemInformation(2, None, 0, None) if hasattr(ntdll, "NtQuerySystemInformation") else None
+                self.mem_handle = kernel32.CreateFileW(
+                    r"\\.\PhysicalMemory", 0x80000000 | 0x40000000, 1 | 2, None, 3, 0, None
+                )
+                system_info = (
+                    ntdll.NtQuerySystemInformation(2, None, 0, None)
+                    if hasattr(ntdll, "NtQuerySystemInformation")
+                    else None
+                )
                 if system_info is None:
-                    self.logger.debug("Memory access initialized successfully, system information available") if hasattr(
-                        self, "logger",
+                    self.logger.debug(
+                        "Memory access initialized successfully, system information available"
+                    ) if hasattr(
+                        self,
+                        "logger",
                     ) else None
             except (AttributeError, KeyError):
                 self.mem_handle = None
 
         self.memory_map = {
-                "tpm_control": 0xFED40000,
-                "tpm_locality_0": 0xFED40000,
-                "tpm_locality_1": 0xFED41000,
-                "tpm_locality_2": 0xFED42000,
-                "tpm_locality_3": 0xFED43000,
-                "tpm_locality_4": 0xFED44000,
-                "tpm_buffers": 0xFED40080,
-                "tpm_int_enable": 0xFED40008,
-                "tpm_int_vector": 0xFED4000C,
-                "tpm_int_status": 0xFED40010,
-                "tpm_intf_capability": 0xFED40014,
-                "tpm_sts": 0xFED40018,
-                "tpm_data_fifo": 0xFED40024,
-                "tpm_did_vid": 0xFED40F00,
-                "tpm_rid": 0xFED40F04,
-            }
+            "tpm_control": 0xFED40000,
+            "tpm_locality_0": 0xFED40000,
+            "tpm_locality_1": 0xFED41000,
+            "tpm_locality_2": 0xFED42000,
+            "tpm_locality_3": 0xFED43000,
+            "tpm_locality_4": 0xFED44000,
+            "tpm_buffers": 0xFED40080,
+            "tpm_int_enable": 0xFED40008,
+            "tpm_int_vector": 0xFED4000C,
+            "tpm_int_status": 0xFED40010,
+            "tpm_intf_capability": 0xFED40014,
+            "tpm_sts": 0xFED40018,
+            "tpm_data_fifo": 0xFED40024,
+            "tpm_did_vid": 0xFED40F00,
+            "tpm_rid": 0xFED40F04,
+        }
 
     def init_bus_sniffer(self) -> None:
         """Initialize LPC/SPI bus sniffer for TPM communication."""
@@ -456,9 +474,7 @@ class TPMBypassEngine:
         padded += bytes.fromhex("3031300d060960864801650304020105000420")
         padded += hasher.digest()
 
-        signature = bytes.fromhex("".join([f"{b:02x}" for b in os.urandom(256)]))
-
-        return signature
+        return bytes.fromhex("".join([f"{b:02x}" for b in os.urandom(256)]))
 
     def extract_sealed_keys(self, auth_value: bytes = b"") -> dict[str, bytes]:
         """Extract sealed keys from TPM NVRAM and persistent storage."""
@@ -478,20 +494,26 @@ class TPMBypassEngine:
         ]
 
         for index in nvram_indices:
-            key_data = self.read_nvram_raw(index, auth_value)
-            if key_data:
+            if key_data := self.read_nvram_raw(index, auth_value):
                 extracted_keys[f"nvram_0x{index:08x}"] = key_data
 
-        persistent_handles = [0x81000000, 0x81000001, 0x81000002, 0x81010000, 0x81010001, 0x81800000, 0x81800001]
+        persistent_handles = [
+            0x81000000,
+            0x81000001,
+            0x81000002,
+            0x81010000,
+            0x81010001,
+            0x81800000,
+            0x81800001,
+        ]
 
         for handle in persistent_handles:
-            key_data = self.extract_persistent_key(handle)
-            if key_data:
+            if key_data := self.extract_persistent_key(handle):
                 extracted_keys[f"persistent_0x{handle:08x}"] = key_data
 
         if self.mem_handle:
             transient_keys = self.extract_keys_from_memory()
-            extracted_keys.update(transient_keys)
+            extracted_keys |= transient_keys
 
         return extracted_keys
 
@@ -519,17 +541,18 @@ class TPMBypassEngine:
                     data_size = struct.unpack(">H", response[data_offset : data_offset + 2])[0]
                     return response[data_offset + 2 : data_offset + 2 + data_size]
 
-        if index < len(self.virtualized_tpm["nvram"]) and index + 512 <= len(self.virtualized_tpm["nvram"]):
+        if index < len(self.virtualized_tpm["nvram"]) and index + 512 <= len(
+            self.virtualized_tpm["nvram"]
+        ):
             data = self.virtualized_tpm["nvram"][index : index + 512]
             if any(b != 0 for b in data[:32]):
                 return data
 
         nvram_offset = self.virtualized_tpm["nvram_index_map"].get(index)
-        if nvram_offset is not None:
-            if nvram_offset + 512 <= len(self.virtualized_tpm["nvram"]):
-                data = self.virtualized_tpm["nvram"][nvram_offset : nvram_offset + 512]
-                if any(b != 0 for b in data[:32]):
-                    return data
+        if nvram_offset is not None and nvram_offset + 512 <= len(self.virtualized_tpm["nvram"]):
+            data = self.virtualized_tpm["nvram"][nvram_offset : nvram_offset + 512]
+            if any(b != 0 for b in data[:32]):
+                return data
 
         safe_offset = index % len(self.virtualized_tpm["nvram"])
         if safe_offset + 512 <= len(self.virtualized_tpm["nvram"]):
@@ -550,10 +573,7 @@ class TPMBypassEngine:
             if code == 0:
                 return response[10:]
 
-        if self.mem_handle:
-            return self.extract_key_from_memory_handle(handle)
-
-        return None
+        return self.extract_key_from_memory_handle(handle) if self.mem_handle else None
 
     def extract_keys_from_memory(self) -> dict[str, bytes]:
         """Extract keys directly from TPM memory."""
@@ -562,9 +582,9 @@ class TPMBypassEngine:
         if not self.mem_handle:
             return extracted
 
-        tpm_mem = self.read_physical_memory(self.memory_map["tpm_control"], 0x5000)
-
-        if tpm_mem:
+        if tpm_mem := self.read_physical_memory(
+            self.memory_map["tpm_control"], 0x5000
+        ):
             key_patterns = [
                 b"\x00\x01\x00\x00",
                 b"\x00\x23\x00\x00",
@@ -620,7 +640,9 @@ class TPMBypassEngine:
 
         return None
 
-    def spoof_remote_attestation(self, nonce: bytes, expected_pcrs: dict[int, bytes], aik_handle: int = 0x81010001) -> dict[str, Any]:
+    def spoof_remote_attestation(
+        self, nonce: bytes, expected_pcrs: dict[int, bytes], aik_handle: int = 0x81010001
+    ) -> dict[str, Any]:
         """Spoof remote attestation with expected PCR values."""
         for pcr_num, pcr_value in expected_pcrs.items():
             if pcr_num < 24:
@@ -631,7 +653,7 @@ class TPMBypassEngine:
 
         aik_cert = self.generate_aik_certificate(aik_handle)
 
-        response = {
+        return {
             "quote": {
                 "quoted": attestation.attested_data,
                 "signature": attestation.signature,
@@ -644,8 +666,6 @@ class TPMBypassEngine:
             "firmware_version": attestation.firmware_version,
             "qualified_signer": attestation.qualified_signer.hex(),
         }
-
-        return response
 
     def generate_aik_certificate(self, aik_handle: int) -> bytes:
         """Generate AIK certificate for attestation."""
@@ -660,10 +680,14 @@ class TPMBypassEngine:
         )
 
         not_before = b"\x17\x0d" + time.strftime("%y%m%d%H%M%SZ").encode("ascii")
-        not_after = b"\x17\x0d" + time.strftime("%y%m%d%H%M%SZ", time.gmtime(time.time() + 315360000)).encode("ascii")
+        not_after = b"\x17\x0d" + time.strftime(
+            "%y%m%d%H%M%SZ", time.gmtime(time.time() + 315360000)
+        ).encode("ascii")
         validity = b"\x30" + bytes([len(not_before) + len(not_after)]) + not_before + not_after
 
-        subject = bytes.fromhex("30818a3112301006035504030c0941494b5f") + f"{aik_handle:08x}".encode("ascii")
+        subject = bytes.fromhex(
+            "30818a3112301006035504030c0941494b5f"
+        ) + f"{aik_handle:08x}".encode("ascii")
         subject += bytes.fromhex(  # pragma: allowlist secret
             "3113301106035504030c0a41494b2043455254313113301106035504040c0a41494b20434552543131143012060355040513074545453132333435310b3009060355040613025553310e300c06035504080c0554657861733111300f06035504070c0844616c6c6173",
         )
@@ -672,26 +696,35 @@ class TPMBypassEngine:
         modulus = bytes([0x00]) + modulus if modulus[0] >= 0x80 else modulus
         exponent = b"\x01\x00\x01"
 
-        pub_key_info = bytes.fromhex("30820122300d06092a864886f70d01010105000382010f003082010a0282010100")
+        pub_key_info = bytes.fromhex(
+            "30820122300d06092a864886f70d01010105000382010f003082010a0282010100"
+        )
         pub_key_info += modulus + b"\x02\x03" + exponent
 
         key_usage = bytes.fromhex("300e0603551d0f0101ff040403020106")
 
         basic_constraints = bytes.fromhex("300f0603551d130101ff040530030101ff")
 
-        subject_key_id = bytes.fromhex("301d0603551d0e04160414") + hashlib.sha1(pub_key_info).digest()[:20]  # noqa: S324
+        subject_key_id = (
+            bytes.fromhex("301d0603551d0e04160414") + hashlib.sha1(pub_key_info).digest()[:20]
+        )
 
         authority_key_id = bytes.fromhex("30160603551d23040f300d800b") + os.urandom(11)
 
-        extended_key_usage = bytes.fromhex("301d0603551d250416301406082b0601050507030206082b06010505070304")
+        extended_key_usage = bytes.fromhex(
+            "301d0603551d250416301406082b0601050507030206082b06010505070304"
+        )
 
         crl_distribution = bytes.fromhex(
             "30420603551d1f043b3039303730358033a031a02f862d687474703a2f2f63726c2e7470616d66672e636f6d2f74706d2d6563612d30312e63726c",
         )
 
         authority_info_access = bytes.fromhex(
-            "3056" + "06082b060105050701010" + "44a3048304606082b06010505073002" +
-            "863a687474703a2f2f6365727473" + "2e7470616d66672e636f6d2f74706d2d6563612d30312e636572",
+            "3056"
+            "06082b060105050701010"
+            "44a3048304606082b06010505073002"
+            "863a687474703a2f2f6365727473"
+            "2e7470616d66672e636f6d2f74706d2d6563612d30312e636572",
         )
 
         extensions = b"\xa3\x81\xf0\x30\x81\xed"
@@ -703,7 +736,9 @@ class TPMBypassEngine:
         extensions += crl_distribution
         extensions += authority_info_access
 
-        tbs_cert = version + serial + sig_algo + issuer + validity + subject + pub_key_info + extensions
+        tbs_cert = (
+            version + serial + sig_algo + issuer + validity + subject + pub_key_info + extensions
+        )
         tbs_len = len(tbs_cert)
         if tbs_len < 128:
             tbs_cert = b"\x30" + bytes([tbs_len]) + tbs_cert
@@ -726,20 +761,27 @@ class TPMBypassEngine:
 
         with self.command_lock:
             if code in self.command_hooks:
-                hooked_response = self.command_hooks[code](command)
-                if hooked_response:
-                    self.intercepted_commands.append({
-                        'timestamp': time.time(),
-                        'command': command,
-                        'response': hooked_response,
-                        'code': code,
-                    })
+                if hooked_response := self.command_hooks[code](command):
+                    self.intercepted_commands.append(
+                        {
+                            "timestamp": time.time(),
+                            "command": command,
+                            "response": hooked_response,
+                            "code": code,
+                        }
+                    )
                     return hooked_response
 
         if HAS_WIN32:
             try:
                 tpm_device = win32file.CreateFile(
-                    r"\\.\TPM", win32con.GENERIC_READ | win32con.GENERIC_WRITE, 0, None, win32con.OPEN_EXISTING, 0, None,
+                    r"\\.\TPM",
+                    win32con.GENERIC_READ | win32con.GENERIC_WRITE,
+                    0,
+                    None,
+                    win32con.OPEN_EXISTING,
+                    0,
+                    None,
                 )
 
                 win32file.WriteFile(tpm_device, command)
@@ -748,12 +790,14 @@ class TPMBypassEngine:
                 win32file.CloseHandle(tpm_device)
 
                 with self.command_lock:
-                    self.intercepted_commands.append({
-                        'timestamp': time.time(),
-                        'command': command,
-                        'response': response,
-                        'code': code,
-                    })
+                    self.intercepted_commands.append(
+                        {
+                            "timestamp": time.time(),
+                            "command": command,
+                            "response": response,
+                            "code": code,
+                        }
+                    )
 
                 return response
             except Exception as e:
@@ -771,9 +815,10 @@ class TPMBypassEngine:
         if code == TPM2CommandCode.GetRandom:
             param_size = struct.unpack(">H", command[10:12])[0] if len(command) > 11 else 32
             random_bytes = os.urandom(param_size)
-            response = struct.pack(">HIIH", 0x8001, 12 + param_size, 0, param_size) + random_bytes
-            return response
-
+            return (
+                struct.pack(">HIIH", 0x8001, 12 + param_size, 0, param_size)
+                + random_bytes
+            )
         if code == TPM2CommandCode.PCR_Read:
             pcr_select = command[10:] if len(command) > 10 else b"\x00\x01\x03\xff\xff\xff"
             pcr_values = b""
@@ -801,7 +846,9 @@ class TPMBypassEngine:
             nonce = command[10:42] if len(command) > 41 else os.urandom(32)
             attestation = self.bypass_attestation(nonce, list(range(8)))
 
-            response = struct.pack(">HII", 0x8001, 10 + len(attestation.signature) + len(attestation.attested_data), 0)
+            response = struct.pack(
+                ">HII", 0x8001, 10 + len(attestation.signature) + len(attestation.attested_data), 0
+            )
             response += attestation.attested_data + attestation.signature
             return response
 
@@ -809,7 +856,9 @@ class TPMBypassEngine:
             if len(command) > 14:
                 _ = struct.unpack(">I", command[10:14])[0]
                 unsealed_data = os.urandom(32)
-                response = struct.pack(">HIIH", 0x8001, 14 + len(unsealed_data), 0, len(unsealed_data))
+                response = struct.pack(
+                    ">HIIH", 0x8001, 14 + len(unsealed_data), 0, len(unsealed_data)
+                )
                 response += unsealed_data
                 return response
             return struct.pack(">HII", 0x8001, 10, 0)
@@ -840,7 +889,12 @@ class TPMBypassEngine:
             return struct.pack(">HII", 0x8001, 10, 0)
 
         if code == TPM2CommandCode.Clear:
-            self.virtualized_tpm["hierarchy_auth"] = {0x40000001: b"", 0x40000009: b"", 0x4000000C: b"", 0x4000000B: b""}
+            self.virtualized_tpm["hierarchy_auth"] = {
+                0x40000001: b"",
+                0x40000009: b"",
+                0x4000000C: b"",
+                0x4000000B: b"",
+            }
             for key in list(self.virtualized_tpm.get("persistent_handles", {}).keys()):
                 del self.virtualized_tpm["persistent_handles"][key]
             return struct.pack(">HII", 0x8001, 10, 0)
@@ -884,7 +938,9 @@ class TPMBypassEngine:
 
             signature = os.urandom(256)
 
-            response = struct.pack(">HI", 0xC400, 14 + len(quoted_data) + 4 + len(signature)) + struct.pack(">I", 0)
+            response = struct.pack(
+                ">HI", 0xC400, 14 + len(quoted_data) + 4 + len(signature)
+            ) + struct.pack(">I", 0)
             response += struct.pack(">I", len(quoted_data)) + quoted_data
             response += struct.pack(">I", len(signature)) + signature
             return response
@@ -899,14 +955,21 @@ class TPMBypassEngine:
         if ordinal == TPM12CommandCode.OIAP:
             auth_handle = 0x02000000 + len(self.tpm12_auth_sessions)
             nonce_even = os.urandom(20)
-            self.tpm12_auth_sessions[auth_handle] = {"nonce_even": nonce_even, "created": time.time()}
+            self.tpm12_auth_sessions[auth_handle] = {
+                "nonce_even": nonce_even,
+                "created": time.time(),
+            }
             response = struct.pack(">HI", 0xC400, 34) + struct.pack(">I", 0)
             response += struct.pack(">I", auth_handle) + nonce_even
             return response
 
         if ordinal == TPM12CommandCode.LoadKey2:
             key_handle = 0x01000000
-            response = struct.pack(">HI", 0xC400, 14) + struct.pack(">I", 0) + struct.pack(">I", key_handle)
+            response = (
+                struct.pack(">HI", 0xC400, 14)
+                + struct.pack(">I", 0)
+                + struct.pack(">I", key_handle)
+            )
             return response
 
         return struct.pack(">HI", 0xC400, 10) + struct.pack(">I", 0x00000001)
@@ -938,10 +1001,18 @@ class TPMBypassEngine:
         if HAS_WIN32:
             try:
                 tpm_device = win32file.CreateFile(
-                    r"\\.\TPM", win32con.GENERIC_READ | win32con.GENERIC_WRITE, 0, None, win32con.OPEN_EXISTING, 0, None,
+                    r"\\.\TPM",
+                    win32con.GENERIC_READ | win32con.GENERIC_WRITE,
+                    0,
+                    None,
+                    win32con.OPEN_EXISTING,
+                    0,
+                    None,
                 )
 
-                get_cap_cmd = struct.pack(">HIII", 0x8001, 14, TPM2CommandCode.GetCapability, 0x00000006)
+                get_cap_cmd = struct.pack(
+                    ">HIII", 0x8001, 14, TPM2CommandCode.GetCapability, 0x00000006
+                )
                 win32file.WriteFile(tpm_device, get_cap_cmd)
                 response = win32file.ReadFile(tpm_device, 4096)[1]
 
@@ -959,8 +1030,9 @@ class TPMBypassEngine:
                 self.logger.debug(f"TPM device detection failed: {e}")
 
         if self.memory_map:
-            tpm_id_mem = self.read_physical_memory(self.memory_map.get("tpm_did_vid", 0xFED40F00), 8)
-            if tpm_id_mem:
+            if tpm_id_mem := self.read_physical_memory(
+                self.memory_map.get("tpm_did_vid", 0xFED40F00), 8
+            ):
                 did_vid = struct.unpack("<I", tpm_id_mem[:4])[0]
                 if did_vid not in {4294967295, 0}:
                     self.tpm_version = "2.0"
@@ -997,7 +1069,9 @@ class TPMBypassEngine:
         if 0 in target_pcr_state:
             self.manipulate_pcr_values({0: target_pcr_state[0]})
 
-        secure_boot_pcr = bytes.fromhex("a7c06b3f8f927ce2276d0f72093af41c1ac8fac416236ddc88035c135f34c2bb")
+        secure_boot_pcr = bytes.fromhex(
+            "a7c06b3f8f927ce2276d0f72093af41c1ac8fac416236ddc88035c135f34c2bb"
+        )
         self.manipulate_pcr_values({7: secure_boot_pcr})
 
         for pcr, value in target_pcr_state.items():
@@ -1037,13 +1111,15 @@ class TPMBypassEngine:
         for scan_offset in range(0, len(nvram) - 32, 512):
             chunk = nvram[scan_offset : scan_offset + 512]
             if any(b != 0 for b in chunk[:32]):
-                non_zero_count = sum(1 for b in chunk[:32] if b != 0)
+                non_zero_count = sum(bool(b != 0)
+                                 for b in chunk[:32])
                 if non_zero_count >= 16:
                     return bytes(chunk[:32])
 
         if self.mem_handle:
-            tpm_mem = self.read_physical_memory(self.memory_map["tpm_buffers"], 0x10000)
-            if tpm_mem:
+            if tpm_mem := self.read_physical_memory(
+                self.memory_map["tpm_buffers"], 0x10000
+            ):
                 patterns = [b"VMK\x00", b"\x00\x00\x00\x01\x00\x20"]
                 for pattern in patterns:
                     offset = tpm_mem.find(pattern)
@@ -1059,8 +1135,7 @@ class TPMBypassEngine:
         hello_indices = [0x01400002, 0x01800003, 0x01810003]
 
         for index in hello_indices:
-            key_data = self.read_nvram_raw(index, b"")
-            if key_data:
+            if key_data := self.read_nvram_raw(index, b""):
                 hello_keys[f"hello_key_{index:x}"] = key_data
 
         bio_template = os.urandom(512)
@@ -1098,11 +1173,17 @@ class TPMBypassEngine:
             try:
                 # Get current process token to adjust privileges for low-level memory access
                 token = win32security.OpenProcessToken(
-                    win32api.GetCurrentProcess(), win32security.TOKEN_ADJUST_PRIVILEGES | win32security.TOKEN_QUERY,
+                    win32api.GetCurrentProcess(),
+                    win32security.TOKEN_ADJUST_PRIVILEGES | win32security.TOKEN_QUERY,
                 )
 
                 # Enable debug privilege for low-level memory access
-                privileges = [(win32security.LookupPrivilegeValue(None, "SeDebugPrivilege"), win32security.SE_PRIVILEGE_ENABLED)]
+                privileges = [
+                    (
+                        win32security.LookupPrivilegeValue(None, "SeDebugPrivilege"),
+                        win32security.SE_PRIVILEGE_ENABLED,
+                    )
+                ]
                 win32security.AdjustTokenPrivileges(token, False, privileges)
 
                 # Close token handle
@@ -1115,8 +1196,7 @@ class TPMBypassEngine:
             return extracted_secrets
 
         for region_name, address in self.memory_map.items():
-            mem_data = self.read_physical_memory(address, 0x1000)
-            if mem_data:
+            if mem_data := self.read_physical_memory(address, 0x1000):
                 if b"\x00\x01\x00\x00" in mem_data:
                     extracted_secrets[f"{region_name}_rsa"] = mem_data
                 if b"\x00\x23\x00\x00" in mem_data:
@@ -1160,12 +1240,15 @@ class TPMBypassEngine:
 
         command = command[:2] + struct.pack(">I", len(command)) + command[6:]
 
-        response = self.send_tpm_command(command)
-
-        if response:
+        if response := self.send_tpm_command(command):
             _tag, _size, code = struct.unpack(">HII", response[:10])
             if code == 0:
-                self.virtualized_tpm["hierarchy_auth"] = {0x40000001: b"", 0x40000009: b"", 0x4000000C: b"", 0x4000000B: b""}
+                self.virtualized_tpm["hierarchy_auth"] = {
+                    0x40000001: b"",
+                    0x40000009: b"",
+                    0x4000000C: b"",
+                    0x4000000B: b"",
+                }
                 return True
 
         return False
@@ -1200,23 +1283,33 @@ class TPMBypassEngine:
         try:
             tbs = ctypes.windll.tbs
 
-            original_submit = getattr(tbs, 'Tbsip_Submit_Command', None)
+            original_submit = getattr(tbs, "Tbsip_Submit_Command", None)
             if not original_submit:
                 self.logger.warning("Tbsip_Submit_Command not found in TBS")
                 return False
 
-            def hooked_submit_command(context: object, locality: object, priority: object, command_buf: object, command_size: object, result_buf: object, result_size: object) -> object:
+            def hooked_submit_command(
+                context: object,
+                locality: object,
+                priority: object,
+                command_buf: object,
+                command_size: object,
+                result_buf: object,
+                result_size: object,
+            ) -> object:
                 """Hooked TBS command submission."""
                 if command_size >= 10:
                     command_data = ctypes.string_at(command_buf, command_size)
 
                     with self.command_lock:
-                        self.intercepted_commands.append({
-                            'timestamp': time.time(),
-                            'command': command_data,
-                            'locality': locality,
-                            'priority': priority,
-                        })
+                        self.intercepted_commands.append(
+                            {
+                                "timestamp": time.time(),
+                                "command": command_data,
+                                "locality": locality,
+                                "priority": priority,
+                            }
+                        )
 
                     _tag, _size, code = struct.unpack(">HII", command_data[:10])
 
@@ -1226,7 +1319,9 @@ class TPMBypassEngine:
                             ctypes.memmove(command_buf, modified_command, len(modified_command))
                             command_size = len(modified_command)
 
-                return original_submit(context, locality, priority, command_buf, command_size, result_buf, result_size)
+                return original_submit(
+                    context, locality, priority, command_buf, command_size, result_buf, result_size
+                )
 
             self.tbs_context = hooked_submit_command
             self.logger.info("TBS command hooks installed successfully")
@@ -1236,7 +1331,12 @@ class TPMBypassEngine:
             self.logger.error(f"Failed to hook TBS: {e}")
             return False
 
-    def unseal_tpm_key(self, sealed_blob: bytes, auth_value: bytes = b"", pcr_policy: dict[int, bytes] | None = None) -> bytes | None:
+    def unseal_tpm_key(
+        self,
+        sealed_blob: bytes,
+        auth_value: bytes = b"",
+        pcr_policy: dict[int, bytes] | None = None,
+    ) -> bytes | None:
         """Unseal TPM-sealed key by bypassing authorization.
 
         Args:
@@ -1268,7 +1368,9 @@ class TPMBypassEngine:
             self.logger.error(f"Key unsealing failed: {e}")
             return None
 
-    def _unseal_tpm2_private_blob(self, blob: bytes, auth: bytes, pcr_policy: dict[int, bytes] | None) -> bytes | None:
+    def _unseal_tpm2_private_blob(
+        self, blob: bytes, auth: bytes, pcr_policy: dict[int, bytes] | None
+    ) -> bytes | None:
         """Unseal TPM 2.0 private key blob.
 
         Args:
@@ -1289,7 +1391,7 @@ class TPMBypassEngine:
         if len(blob) < offset + 2:
             return None
 
-        integrity_size = struct.unpack(">H", blob[offset:offset+2])[0]
+        integrity_size = struct.unpack(">H", blob[offset : offset + 2])[0]
         offset += 2
 
         if len(blob) < offset + integrity_size:
@@ -1300,13 +1402,13 @@ class TPMBypassEngine:
         if len(blob) < offset + 2:
             return None
 
-        sensitive_size = struct.unpack(">H", blob[offset:offset+2])[0]
+        sensitive_size = struct.unpack(">H", blob[offset : offset + 2])[0]
         offset += 2
 
         if len(blob) < offset + sensitive_size:
             return None
 
-        encrypted_sensitive = blob[offset:offset+sensitive_size]
+        encrypted_sensitive = blob[offset : offset + sensitive_size]
 
         if len(encrypted_sensitive) < 16:
             return None
@@ -1314,7 +1416,7 @@ class TPMBypassEngine:
         iv = encrypted_sensitive[:16]
         ciphertext = encrypted_sensitive[16:]
 
-        key_material = auth if auth else b"WellKnownSecret"
+        key_material = auth or b"WellKnownSecret"
 
         if len(key_material) < 32:
             key_material = hashlib.sha256(key_material).digest()
@@ -1325,8 +1427,7 @@ class TPMBypassEngine:
 
             if len(decrypted) > 0:
                 try:
-                    unpadded = unpad(decrypted, AES.block_size)
-                    return unpadded
+                    return unpad(decrypted, AES.block_size)
                 except ValueError:
                     return decrypted
         except Exception as e:
@@ -1349,15 +1450,15 @@ class TPMBypassEngine:
             return None
 
         offset = 2
-        credential_size = struct.unpack(">H", blob[offset:offset+2])[0]
+        credential_size = struct.unpack(">H", blob[offset : offset + 2])[0]
         offset += 2
 
         if len(blob) < offset + credential_size:
             return None
 
-        encrypted_credential = blob[offset:offset+credential_size]
+        encrypted_credential = blob[offset : offset + credential_size]
 
-        seed = auth if auth else b"DefaultSeed"
+        seed = auth or b"DefaultSeed"
 
         if len(seed) < 32:
             seed = hashlib.sha256(seed).digest()
@@ -1453,7 +1554,7 @@ class TPMBypassEngine:
         if blob[:4] == b"\x00\x01\x00\x00":
             return blob
 
-        if len(blob) >= 66 and blob[0:2] == b"\x00\x20":
+        if len(blob) >= 66 and blob[:2] == b"\x00\x20":
             return blob[2:34]
 
         for pattern in [b"-----BEGIN", b"\x30\x82", b"VMK\x00"]:
@@ -1482,10 +1583,10 @@ class TPMBypassEngine:
         if data.startswith(b"-----BEGIN"):
             return True
 
-        if len(data) >= 2 and data[0:2] in [b"\x30\x82", b"\x00\x20"]:
+        if len(data) >= 2 and data[:2] in [b"\x30\x82", b"\x00\x20"]:
             return True
 
-        entropy = len(set(data)) / len(data) if len(data) > 0 else 0
+        entropy = len(set(data)) / len(data) if data else 0
         return entropy > 0.5
 
     def manipulate_pcr_extend(self, pcr_num: int, extend_value: bytes, block: bool = True) -> bool:
@@ -1500,6 +1601,7 @@ class TPMBypassEngine:
             True if manipulation successful
 
         """
+
         def pcr_extend_hook(command: bytes) -> bytes | None:
             """Process hooked PCR_Extend command."""
             if len(command) < 14:
@@ -1552,9 +1654,7 @@ class TPMBypassEngine:
                 rsa_key = RSA.generate(2048)
                 self.attestation_keys[0x81010001] = rsa_key
 
-            signature = pkcs1_15.new(rsa_key).sign(message_hash)
-            return signature
-
+            return pkcs1_15.new(rsa_key).sign(message_hash)
         except Exception as e:
             self.logger.error(f"Signature forging failed: {e}")
             return os.urandom(256)
@@ -1578,7 +1678,9 @@ class TPMBypassEngine:
             for pcr_num in range(24):
                 pcr_value = self.pcr_banks[TPM2Algorithm.SHA256].pcr_values[pcr_num]
 
-                test_digest = hashlib.sha256(policy_digest + struct.pack(">I", pcr_num) + pcr_value).digest()
+                test_digest = hashlib.sha256(
+                    policy_digest + struct.pack(">I", pcr_num) + pcr_value
+                ).digest()
 
                 if test_digest[:16] == policy_digest[:16]:
                     pcr_policy[pcr_num] = pcr_value
@@ -1586,7 +1688,7 @@ class TPMBypassEngine:
         except Exception as e:
             self.logger.debug(f"PCR policy extraction failed: {e}")
 
-        return pcr_policy if pcr_policy else None
+        return pcr_policy or None
 
     def detect_tpm_usage(self, binary_path: str) -> bool:
         """Detect if binary uses TPM protection.
@@ -1603,30 +1705,32 @@ class TPMBypassEngine:
             if not binary_path.exists():
                 return False
 
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
             tpm_indicators = [
-                b'Tbs.dll',
-                b'Tbsip_Submit_Command',
-                b'Tbsi_Context',
-                b'NCryptOpenStorageProvider',
-                b'NCRYPT_TPM',
-                b'TPM_',
-                b'tpm20.dll',
-                b'Tpm2',
-                b'Platform Configuration Register',
-                b'PCR',
-                b'TPMS_',
-                b'TPMT_',
-                b'TPM2B_',
+                b"Tbs.dll",
+                b"Tbsip_Submit_Command",
+                b"Tbsi_Context",
+                b"NCryptOpenStorageProvider",
+                b"NCRYPT_TPM",
+                b"TPM_",
+                b"tpm20.dll",
+                b"Tpm2",
+                b"Platform Configuration Register",
+                b"PCR",
+                b"TPMS_",
+                b"TPMT_",
+                b"TPM2B_",
             ]
 
             detections = 0
             for indicator in tpm_indicators:
                 if indicator in data:
                     detections += 1
-                    self.logger.info(f"Found TPM indicator: {indicator.decode('latin-1', errors='ignore')}")
+                    self.logger.info(
+                        f"Found TPM indicator: {indicator.decode('latin-1', errors='ignore')}"
+                    )
 
             return detections >= 2
 
@@ -1645,12 +1749,12 @@ class TPMBypassEngine:
 
         """
         analysis = {
-            'tpm_detected': False,
-            'tpm_apis': [],
-            'pcr_usage': [],
-            'nvram_indices': [],
-            'protection_strength': 'none',
-            'bypass_difficulty': 'easy',
+            "tpm_detected": False,
+            "tpm_apis": [],
+            "pcr_usage": [],
+            "nvram_indices": [],
+            "protection_strength": "none",
+            "bypass_difficulty": "easy",
         }
 
         try:
@@ -1658,37 +1762,37 @@ class TPMBypassEngine:
             if not binary_path.exists():
                 return analysis
 
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
             tpm_apis = [
-                b'Tbsip_Submit_Command',
-                b'Tbsi_Context_Create',
-                b'Tpm2_Create',
-                b'Tpm2_Load',
-                b'Tpm2_Unseal',
-                b'Tpm2_Quote',
-                b'Tpm2_PCR_Read',
-                b'Tpm2_PCR_Extend',
-                b'NCryptCreatePersistedKey',
-                b'NCryptOpenKey',
+                b"Tbsip_Submit_Command",
+                b"Tbsi_Context_Create",
+                b"Tpm2_Create",
+                b"Tpm2_Load",
+                b"Tpm2_Unseal",
+                b"Tpm2_Quote",
+                b"Tpm2_PCR_Read",
+                b"Tpm2_PCR_Extend",
+                b"NCryptCreatePersistedKey",
+                b"NCryptOpenKey",
             ]
 
             for api in tpm_apis:
                 if api in data:
-                    analysis['tpm_apis'].append(api.decode('latin-1', errors='ignore'))
+                    analysis["tpm_apis"].append(api.decode("latin-1", errors="ignore"))
 
-            analysis['tpm_detected'] = len(analysis['tpm_apis']) > 0
+            analysis["tpm_detected"] = len(analysis["tpm_apis"]) > 0
 
             for pcr_num in range(24):
                 pcr_pattern = struct.pack(">I", pcr_num)
                 if pcr_pattern in data:
-                    analysis['pcr_usage'].append(pcr_num)
+                    analysis["pcr_usage"].append(pcr_num)
 
             nvram_patterns = [
-                b'\x01\x40\x00',
-                b'\x01\x80\x00',
-                b'\x01\xC0\x00',
+                b"\x01\x40\x00",
+                b"\x01\x80\x00",
+                b"\x01\xc0\x00",
             ]
 
             for pattern in nvram_patterns:
@@ -1698,30 +1802,30 @@ class TPMBypassEngine:
                     if offset == -1:
                         break
                     if offset + 4 <= len(data):
-                        index = struct.unpack(">I", data[offset:offset+4])[0]
-                        if index not in analysis['nvram_indices']:
-                            analysis['nvram_indices'].append(index)
+                        index = struct.unpack(">I", data[offset : offset + 4])[0]
+                        if index not in analysis["nvram_indices"]:
+                            analysis["nvram_indices"].append(index)
                     offset += 1
 
             strength_score = 0
-            if 'Tpm2_Unseal' in str(analysis['tpm_apis']):
+            if "Tpm2_Unseal" in str(analysis["tpm_apis"]):
                 strength_score += 3
-            if 'Tpm2_Quote' in str(analysis['tpm_apis']):
+            if "Tpm2_Quote" in str(analysis["tpm_apis"]):
                 strength_score += 3
-            if len(analysis['pcr_usage']) > 4:
+            if len(analysis["pcr_usage"]) > 4:
                 strength_score += 2
-            if len(analysis['nvram_indices']) > 0:
+            if len(analysis["nvram_indices"]) > 0:
                 strength_score += 2
 
             if strength_score >= 7:
-                analysis['protection_strength'] = 'strong'
-                analysis['bypass_difficulty'] = 'hard'
+                analysis["protection_strength"] = "strong"
+                analysis["bypass_difficulty"] = "hard"
             elif strength_score >= 4:
-                analysis['protection_strength'] = 'medium'
-                analysis['bypass_difficulty'] = 'medium'
+                analysis["protection_strength"] = "medium"
+                analysis["bypass_difficulty"] = "medium"
             elif strength_score > 0:
-                analysis['protection_strength'] = 'weak'
-                analysis['bypass_difficulty'] = 'easy'
+                analysis["protection_strength"] = "weak"
+                analysis["bypass_difficulty"] = "easy"
 
             return analysis
 
@@ -1751,15 +1855,15 @@ class TPMBypassEngine:
             else:
                 output_path = Path(output_path)
 
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = bytearray(f.read())
 
             patches_applied = 0
 
             tpm_api_patches = {
-                b'Tbsip_Submit_Command': b'NOP_Submit_Command',
-                b'Tpm2_Unseal': b'NOP2_Unseal',
-                b'Tpm2_Quote': b'NOP2_Quote\x00',
+                b"Tbsip_Submit_Command": b"NOP_Submit_Command",
+                b"Tpm2_Unseal": b"NOP2_Unseal",
+                b"Tpm2_Quote": b"NOP2_Quote\x00",
             }
 
             tpm_api_locations = []
@@ -1769,7 +1873,7 @@ class TPMBypassEngine:
                     offset = data.find(original, offset)
                     if offset == -1:
                         break
-                    data[offset:offset+len(patched)] = patched
+                    data[offset : offset + len(patched)] = patched
                     tpm_api_locations.append(offset)
                     patches_applied += 1
                     offset += len(patched)
@@ -1780,12 +1884,14 @@ class TPMBypassEngine:
 
             for i in range(len(data) - 1):
                 if data[i] in je_opcodes or data[i] in jne_opcodes:
-                    near_tpm_api = any(abs(i - loc) < proximity_threshold for loc in tpm_api_locations)
+                    near_tpm_api = any(
+                        abs(i - loc) < proximity_threshold for loc in tpm_api_locations
+                    )
                     if near_tpm_api:
-                        data[i:i+2] = b'\xEB\x00'
+                        data[i : i + 2] = b"\xeb\x00"
                         patches_applied += 1
 
-            with open(output_path, 'wb') as f:
+            with open(output_path, "wb") as f:
                 f.write(data)
 
             self.logger.info(f"Applied {patches_applied} patches to {binary_path}")
@@ -1858,7 +1964,10 @@ class TPMBypassEngine:
                 "runtime_unsealing": HAS_FRIDA,
                 "secure_boot_bypass": HAS_FRIDA,
                 "measured_boot_bypass_runtime": HAS_FRIDA,
-                "active_session": self.frida_session is not None and not self.frida_session.is_detached if self.frida_session else False,
+                "active_session": self.frida_session is not None
+                and not self.frida_session.is_detached
+                if self.frida_session
+                else False,
             },
         }
 
@@ -1883,11 +1992,13 @@ class TPMBypassEngine:
                 summary["command_types"][code_name] = 0
             summary["command_types"][code_name] += 1
 
-            summary["timeline"].append({
-                "timestamp": cmd.get("timestamp", 0),
-                "command": code_name,
-                "code": code,
-            })
+            summary["timeline"].append(
+                {
+                    "timestamp": cmd.get("timestamp", 0),
+                    "command": code_name,
+                    "code": code,
+                }
+            )
 
         return summary
 
@@ -1908,7 +2019,9 @@ class TPMBypassEngine:
                 continue
         return f"Unknown_0x{code:08x}"
 
-    def attach_to_process_frida(self, target_binary: str, message_callback: Callable | None = None) -> bool:
+    def attach_to_process_frida(
+        self, target_binary: str, message_callback: Callable | None = None
+    ) -> bool:
         """Attach Frida to target process for runtime TPM bypass.
 
         Args:
@@ -1935,7 +2048,9 @@ class TPMBypassEngine:
                     self.logger.info(f"Attaching to PID: {self.frida_pid}")
                 except ValueError:
                     self.frida_pid = self.frida_device.get_process(target_binary).pid
-                    self.logger.info(f"Attaching to process: {target_binary} (PID: {self.frida_pid})")
+                    self.logger.info(
+                        f"Attaching to process: {target_binary} (PID: {self.frida_pid})"
+                    )
 
             self.frida_session = self.frida_device.attach(self.frida_pid)
             self.frida_message_callback = message_callback
@@ -1958,31 +2073,36 @@ class TPMBypassEngine:
             return False
 
         try:
-            script_path = Path(__file__).parent.parent.parent / "scripts" / "frida" / "tpm_command_interceptor.js"
+            script_path = (
+                Path(__file__).parent.parent.parent
+                / "scripts"
+                / "frida"
+                / "tpm_command_interceptor.js"
+            )
 
             if not script_path.exists():
                 self.logger.error(f"TPM command interceptor script not found: {script_path}")
                 return False
 
-            with open(script_path, encoding='utf-8') as f:
+            with open(script_path, encoding="utf-8") as f:
                 script_source = f.read()
 
             self.frida_script = self.frida_session.create_script(script_source)
 
             def on_message(message: object, data: object) -> None:
-                if message['type'] == 'send':
-                    payload = message.get('payload', '')
+                if message["type"] == "send":
+                    payload = message.get("payload", "")
                     self.logger.info(f"[Frida] {payload}")
 
                     if self.frida_message_callback:
                         self.frida_message_callback(message, data)
-                elif message['type'] == 'error':
+                elif message["type"] == "error":
                     self.logger.error(f"[Frida Error] {message.get('stack', 'Unknown error')}")
 
-            self.frida_script.on('message', on_message)
+            self.frida_script.on("message", on_message)
             self.frida_script.load()
 
-            if self.frida_pid and hasattr(self.frida_device, 'resume'):
+            if self.frida_pid and hasattr(self.frida_device, "resume"):
                 self.frida_device.resume(self.frida_pid)
 
             self.logger.info("TPM command interceptor injected successfully")
@@ -2007,28 +2127,30 @@ class TPMBypassEngine:
             return False
 
         try:
-            script_path = Path(__file__).parent.parent.parent / "scripts" / "frida" / "tpm_pcr_manipulator.js"
+            script_path = (
+                Path(__file__).parent.parent.parent / "scripts" / "frida" / "tpm_pcr_manipulator.js"
+            )
 
             if not script_path.exists():
                 self.logger.error(f"PCR manipulator script not found: {script_path}")
                 return False
 
-            with open(script_path, encoding='utf-8') as f:
+            with open(script_path, encoding="utf-8") as f:
                 script_source = f.read()
 
             self.frida_script = self.frida_session.create_script(script_source)
 
             def on_message(message: object, data: object) -> None:
-                if message['type'] == 'send':
-                    payload = message.get('payload', '')
+                if message["type"] == "send":
+                    payload = message.get("payload", "")
                     self.logger.info(f"[Frida PCR] {payload}")
 
                     if self.frida_message_callback:
                         self.frida_message_callback(message, data)
-                elif message['type'] == 'error':
+                elif message["type"] == "error":
                     self.logger.error(f"[Frida PCR Error] {message.get('stack', 'Unknown error')}")
 
-            self.frida_script.on('message', on_message)
+            self.frida_script.on("message", on_message)
             self.frida_script.load()
 
             if pcr_config:
@@ -2037,7 +2159,7 @@ class TPMBypassEngine:
                     result = self.frida_script.exports_sync.set_spoofed_pcr(pcr_index, hex_value)
                     self.logger.info(f"Set spoofed PCR{pcr_index}: {result}")
 
-            if self.frida_pid and hasattr(self.frida_device, 'resume'):
+            if self.frida_pid and hasattr(self.frida_device, "resume"):
                 self.frida_device.resume(self.frida_pid)
 
             self.logger.info("PCR manipulator injected successfully")
@@ -2070,7 +2192,7 @@ class TPMBypassEngine:
             hex_value = pcr_value.hex()
             result = self.frida_script.exports_sync.set_spoofed_pcr(pcr_index, hex_value)
 
-            if result.get('status') == 'success':
+            if result.get("status") == "success":
                 self.logger.info(f"Successfully spoofed PCR{pcr_index}")
                 self.pcr_banks[TPM2Algorithm.SHA256].pcr_values[pcr_index] = pcr_value
                 return True
@@ -2098,7 +2220,7 @@ class TPMBypassEngine:
         try:
             result = self.frida_script.exports_sync.block_pcr(pcr_index)
 
-            if result.get('status') == 'success':
+            if result.get("status") == "success":
                 self.logger.info(f"Successfully blocked PCR{pcr_index} extend operations")
                 return True
             self.logger.error(f"Failed to block PCR{pcr_index}")
@@ -2122,10 +2244,12 @@ class TPMBypassEngine:
         try:
             result = self.frida_script.exports_sync.spoof_secure_boot()
 
-            if result.get('status') == 'success':
+            if result.get("status") == "success":
                 self.logger.info("Successfully spoofed Secure Boot PCR state")
 
-                secure_boot_enabled = bytes.fromhex('a7c06b3f8f927ce2276d0f72093af41c1ac8fac416236ddc88035c135f34c2bb')
+                secure_boot_enabled = bytes.fromhex(
+                    "a7c06b3f8f927ce2276d0f72093af41c1ac8fac416236ddc88035c135f34c2bb"
+                )
                 self.pcr_banks[TPM2Algorithm.SHA256].pcr_values[7] = secure_boot_enabled
                 return True
             self.logger.error("Failed to spoof Secure Boot state")
@@ -2149,7 +2273,7 @@ class TPMBypassEngine:
         try:
             result = self.frida_script.exports_sync.spoof_clean_boot()
 
-            if result.get('status') == 'success':
+            if result.get("status") == "success":
                 self.logger.info("Successfully spoofed clean boot state (PCRs 0-7)")
 
                 for i in range(8):
@@ -2176,7 +2300,7 @@ class TPMBypassEngine:
 
         try:
             commands = self.frida_script.exports_sync.get_intercepted_commands()
-            return commands if commands else []
+            return commands or []
 
         except Exception as e:
             self.logger.error(f"Failed to get intercepted commands: {e}")
@@ -2195,7 +2319,7 @@ class TPMBypassEngine:
 
         try:
             operations = self.frida_script.exports_sync.get_operations()
-            return operations if operations else []
+            return operations or []
 
         except Exception as e:
             self.logger.error(f"Failed to get PCR operations: {e}")
@@ -2220,7 +2344,9 @@ class TPMBypassEngine:
         except Exception as e:
             self.logger.error(f"Error detaching Frida: {e}")
 
-    def runtime_unseal_bypass(self, target_binary: str, sealed_blob: bytes, pcr_policy: dict[int, bytes] | None = None) -> bytes | None:
+    def runtime_unseal_bypass(
+        self, target_binary: str, sealed_blob: bytes, pcr_policy: dict[int, bytes] | None = None
+    ) -> bytes | None:
         """Perform runtime unsealing bypass using Frida injection.
 
         Args:
@@ -2293,10 +2419,20 @@ class TPMBypassEngine:
             "command_hooks": list(self.command_hooks.keys()),
             "sealed_keys_extracted": len(self.sealed_keys),
             "virtualized_tpm_state": {
-                "state": self.virtualized_tpm.get("state", "unknown") if self.virtualized_tpm else "unknown",
-                "persistent_handles": list(self.virtualized_tpm.get("persistent_handles", {}).keys()) if self.virtualized_tpm else [],
-                "transient_handles": list(self.virtualized_tpm.get("transient_handles", {}).keys()) if self.virtualized_tpm else [],
-                "session_handles": list(self.virtualized_tpm.get("session_handles", {}).keys()) if self.virtualized_tpm else [],
+                "state": self.virtualized_tpm.get("state", "unknown")
+                if self.virtualized_tpm
+                else "unknown",
+                "persistent_handles": list(
+                    self.virtualized_tpm.get("persistent_handles", {}).keys()
+                )
+                if self.virtualized_tpm
+                else [],
+                "transient_handles": list(self.virtualized_tpm.get("transient_handles", {}).keys())
+                if self.virtualized_tpm
+                else [],
+                "session_handles": list(self.virtualized_tpm.get("session_handles", {}).keys())
+                if self.virtualized_tpm
+                else [],
             },
             "frida_session": frida_data,
             "capabilities": self.get_bypass_capabilities(),

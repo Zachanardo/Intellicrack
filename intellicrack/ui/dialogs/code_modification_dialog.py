@@ -56,6 +56,7 @@ from ...ai.intelligent_code_modifier import CodeChange, IntelligentCodeModifier,
 from ...ai.llm_backends import LLMManager
 from ...utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 
@@ -533,8 +534,14 @@ class CodeModificationDialog(QDialog):
             return
 
         # Create request
-        requirements = [req.strip() for req in self.requirements_edit.toPlainText().split("\n") if req.strip()]
-        constraints = [constraint.strip() for constraint in self.constraints_edit.toPlainText().split("\n") if constraint.strip()]
+        requirements = [
+            req.strip() for req in self.requirements_edit.toPlainText().split("\n") if req.strip()
+        ]
+        constraints = [
+            constraint.strip()
+            for constraint in self.constraints_edit.toPlainText().split("\n")
+            if constraint.strip()
+        ]
 
         request = self.modifier.create_modification_request(
             description=description,
@@ -576,7 +583,9 @@ class CodeModificationDialog(QDialog):
         self.progress_bar.setVisible(False)
 
         self.status_label.setText("Analysis failed")
-        QMessageBox.critical(self, "Analysis Error", f"Failed to analyze modifications:\n{error_message}")
+        QMessageBox.critical(
+            self, "Analysis Error", f"Failed to analyze modifications:\n{error_message}"
+        )
 
     def populate_changes_tree(self) -> None:
         """Populate the changes tree with current changes."""
@@ -670,8 +679,7 @@ class CodeModificationDialog(QDialog):
         for i in range(self.changes_tree.topLevelItemCount()):
             item = self.changes_tree.topLevelItem(i)
             if item.checkState(0) == Qt.Checked:
-                change = item.data(0, Qt.UserRole)
-                if change:
+                if change := item.data(0, Qt.UserRole):
                     change_ids.append(change.change_id)
         return change_ids
 
@@ -759,7 +767,9 @@ class CodeModificationDialog(QDialog):
                 item.setText(1, Path(record["file_path"]).name)
                 item.setText(
                     2,
-                    record["description"][:50] + "..." if len(record["description"]) > 50 else record["description"],
+                    record["description"][:50] + "..."
+                    if len(record["description"]) > 50
+                    else record["description"],
                 )
                 item.setText(3, record["type"])
                 item.setText(4, record["status"])

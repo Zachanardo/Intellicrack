@@ -109,7 +109,7 @@ class TestBinarySimilaritySearch(IntellicrackTestBase):
 
         # Verify saved data
         assert os.path.exists(search_engine.database_path)
-        with open(search_engine.database_path, 'r') as f:
+        with open(search_engine.database_path) as f:
             loaded_data = json.load(f)
         assert loaded_data == test_data
 

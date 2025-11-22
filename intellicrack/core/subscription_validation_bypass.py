@@ -73,7 +73,9 @@ class JWTManipulator:
     def _generate_default_rsa_keypair(self) -> tuple[Any, Any]:
         """Generate 2048-bit RSA keypair with public exponent 65537 for instance default, returning private and public key objects."""
         private_key = rsa.generate_private_key(
-            public_exponent=65537, key_size=2048, backend=default_backend(),
+            public_exponent=65537,
+            key_size=2048,
+            backend=default_backend(),
         )
         public_key = private_key.public_key()
         return private_key, public_key
@@ -87,7 +89,9 @@ class JWTManipulator:
     def generate_rsa_keypair(self, key_size: int = 2048) -> tuple[bytes, bytes]:
         """Generate RSA keypair with configurable key size (default 2048-bit) using public exponent 65537 and return PKCS8 private key and SubjectPublicKeyInfo public key as PEM-encoded bytes."""
         private_key = rsa.generate_private_key(
-            public_exponent=65537, key_size=key_size, backend=default_backend(),
+            public_exponent=65537,
+            key_size=key_size,
+            backend=default_backend(),
         )
         public_key = private_key.public_key()
 
@@ -134,18 +138,22 @@ class JWTManipulator:
         payload_data = parts[1]
         signature = parts[2]
 
-        header = json.loads(base64.urlsafe_b64decode(header_data + "=" * (4 - len(header_data) % 4)))
+        header = json.loads(
+            base64.urlsafe_b64decode(header_data + "=" * (4 - len(header_data) % 4))
+        )
         payload = json.loads(
             base64.urlsafe_b64decode(payload_data + "=" * (4 - len(payload_data) % 4)),
         )
 
         return header, payload, signature
 
-    def sign_jwt_rs256(self, payload: dict[str, Any], private_key: RSAPrivateKey | None = None) -> str:
+    def sign_jwt_rs256(
+        self, payload: dict[str, Any], private_key: RSAPrivateKey | None = None
+    ) -> str:
         """Sign JWT payload using RS256 algorithm (RSASSA-PKCS1-v1_5 with SHA-256) with provided RSA private key or instance default, returning signed JWT token string."""
         import jwt
 
-        key_to_use = private_key if private_key else self.rsa_private_key
+        key_to_use = private_key or self.rsa_private_key
 
         private_pem = key_to_use.private_bytes(
             encoding=serialization.Encoding.PEM,
@@ -153,14 +161,15 @@ class JWTManipulator:
             encryption_algorithm=serialization.NoEncryption(),
         )
 
-        token = jwt.encode(payload, private_pem, algorithm="RS256")
-        return token
+        return jwt.encode(payload, private_pem, algorithm="RS256")
 
-    def sign_jwt_rs512(self, payload: dict[str, Any], private_key: RSAPrivateKey | None = None) -> str:
+    def sign_jwt_rs512(
+        self, payload: dict[str, Any], private_key: RSAPrivateKey | None = None
+    ) -> str:
         """Sign JWT payload using RS512 algorithm (RSASSA-PKCS1-v1_5 with SHA-512) with provided RSA private key or instance default, returning signed JWT token string."""
         import jwt
 
-        key_to_use = private_key if private_key else self.rsa_private_key
+        key_to_use = private_key or self.rsa_private_key
 
         private_pem = key_to_use.private_bytes(
             encoding=serialization.Encoding.PEM,
@@ -168,14 +177,15 @@ class JWTManipulator:
             encryption_algorithm=serialization.NoEncryption(),
         )
 
-        token = jwt.encode(payload, private_pem, algorithm="RS512")
-        return token
+        return jwt.encode(payload, private_pem, algorithm="RS512")
 
-    def sign_jwt_es256(self, payload: dict[str, Any], private_key: ECPrivateKey | None = None) -> str:
+    def sign_jwt_es256(
+        self, payload: dict[str, Any], private_key: ECPrivateKey | None = None
+    ) -> str:
         """Sign JWT payload using ES256 algorithm (ECDSA with P-256 curve and SHA-256) with provided EC private key or instance default, returning signed JWT token string."""
         import jwt
 
-        key_to_use = private_key if private_key else self.ec_private_key
+        key_to_use = private_key or self.ec_private_key
 
         private_pem = key_to_use.private_bytes(
             encoding=serialization.Encoding.PEM,
@@ -183,22 +193,19 @@ class JWTManipulator:
             encryption_algorithm=serialization.NoEncryption(),
         )
 
-        token = jwt.encode(payload, private_pem, algorithm="ES256")
-        return token
+        return jwt.encode(payload, private_pem, algorithm="ES256")
 
     def sign_jwt_hs256(self, payload: dict[str, Any], secret: str) -> str:
         """Sign JWT payload using HS256 algorithm (HMAC with SHA-256) with provided secret string, returning signed JWT token string."""
         import jwt
 
-        token = jwt.encode(payload, secret, algorithm="HS256")
-        return token
+        return jwt.encode(payload, secret, algorithm="HS256")
 
     def sign_jwt_hs512(self, payload: dict[str, Any], secret: str) -> str:
         """Sign JWT payload using HS512 algorithm (HMAC with SHA-512) with provided secret string, returning signed JWT token string."""
         import jwt
 
-        token = jwt.encode(payload, secret, algorithm="HS512")
-        return token
+        return jwt.encode(payload, secret, algorithm="HS512")
 
     def brute_force_hs256_secret(self, token: str, wordlist: list[str]) -> str | None:
         """Iterate through wordlist attempting to verify HS256 JWT signature with each candidate secret until valid signature found, returning discovered secret or None."""
@@ -377,7 +384,9 @@ class OAuthTokenGenerator:
                 "sub": user_id,
                 "email": email,
                 "email_verified": True,
-                "at_hash": base64.urlsafe_b64encode(secrets.token_bytes(16)).decode("utf-8").rstrip("="),
+                "at_hash": base64.urlsafe_b64encode(secrets.token_bytes(16))
+                .decode("utf-8")
+                .rstrip("="),
                 "iat": current_time,
                 "exp": current_time + 3600,
             }
@@ -637,8 +646,7 @@ class APIResponseSynthesizer:
                 "data": {
                     "features": {
                         "edges": [
-                            {"node": {"id": str(uuid.uuid4()), "enabled": True}}
-                            for _ in range(100)
+                            {"node": {"id": str(uuid.uuid4()), "enabled": True}} for _ in range(100)
                         ],
                     },
                 },
@@ -761,8 +769,6 @@ class SubscriptionValidationBypass:
             return self.api_synthesizer.synthesize_atlassian_validation()
         if service_type == "salesforce":
             return self.api_synthesizer.synthesize_salesforce_validation()
-        if "validate" in endpoint.lower():
-            return self.api_synthesizer.synthesize_license_validation(product_name, tier)
         return self.api_synthesizer.synthesize_license_validation(product_name, tier)
 
     def manipulate_per_seat_license(
@@ -824,10 +830,7 @@ class SubscriptionValidationBypass:
 
     def detect_subscription_type(self, product_name: str) -> SubscriptionType:
         """Analyze product name for keywords (office, adobe, salesforce) to classify subscription model, defaulting to CLOUD_BASED for all products."""
-        product_lower = product_name.lower()
-
-        if "office" in product_lower or "adobe" in product_lower or "salesforce" in product_lower:
-            return SubscriptionType.CLOUD_BASED
+        product_name.lower()
 
         return SubscriptionType.CLOUD_BASED
 
@@ -839,8 +842,5 @@ class SubscriptionValidationBypass:
         """Auto-detect or use provided subscription type, then return True for all subscription models indicating bypass capability available."""
         if subscription_type is None:
             subscription_type = self.detect_subscription_type(product_name)
-
-        if subscription_type in (SubscriptionType.CLOUD_BASED, SubscriptionType.OAUTH, SubscriptionType.TOKEN_BASED, SubscriptionType.SAAS, SubscriptionType.TIME_BASED, SubscriptionType.USAGE_BASED, SubscriptionType.FEATURE_BASED, SubscriptionType.PER_SEAT):
-            return True
 
         return True

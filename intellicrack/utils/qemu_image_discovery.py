@@ -19,6 +19,7 @@ from pathlib import Path
 
 from .path_resolver import get_project_root
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -89,11 +90,14 @@ class QEMUImageDiscovery:
             "macos": ["macos", "osx", "darwin"],
         }
 
-        for os_type, keywords in patterns.items():
-            if any(keyword in filename_lower for keyword in keywords):
-                return os_type
-
-        return "unknown"
+        return next(
+            (
+                os_type
+                for os_type, keywords in patterns.items()
+                if any(keyword in filename_lower for keyword in keywords)
+            ),
+            "unknown",
+        )
 
     def detect_architecture(self, filename: str) -> str:
         """Detect architecture from filename patterns."""
@@ -106,11 +110,14 @@ class QEMUImageDiscovery:
             "arm": ["arm", "armv7"],
         }
 
-        for arch, keywords in patterns.items():
-            if any(keyword in filename_lower for keyword in keywords):
-                return arch
-
-        return "x86_64"
+        return next(
+            (
+                arch
+                for arch, keywords in patterns.items()
+                if any(keyword in filename_lower for keyword in keywords)
+            ),
+            "x86_64",
+        )
 
     def discover_images(self, force_refresh: bool = False) -> list[QEMUImageInfo]:
         """Discover all QEMU images in search directories."""
@@ -146,7 +153,9 @@ class QEMUImageDiscovery:
                         )
 
                         discovered_images.append(image_info)
-                        logger.debug(f"Found QEMU image: {filename} ({os_type}/{architecture}, {size // (1024**2)}MB)")
+                        logger.debug(
+                            f"Found QEMU image: {filename} ({os_type}/{architecture}, {size // (1024**2)}MB)"
+                        )
 
                     except OSError as e:
                         logger.warning(f"Error accessing QEMU image {image_path}: {e}")

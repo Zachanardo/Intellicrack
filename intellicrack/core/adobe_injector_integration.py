@@ -31,6 +31,7 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 
+
 # Win32 API constants
 GWL_STYLE = -16
 WS_CHILD = 0x40000000
@@ -70,7 +71,9 @@ class Win32API:
         return cls.user32.GetWindowLongW(hwnd, index)
 
     @classmethod
-    def move_window(cls, hwnd: int, x: int, y: int, width: int, height: int, repaint: bool = True) -> bool:
+    def move_window(
+        cls, hwnd: int, x: int, y: int, width: int, height: int, repaint: bool = True
+    ) -> bool:
         """Move and resize window."""
         return cls.user32.MoveWindow(hwnd, x, y, width, height, repaint)
 
@@ -80,7 +83,9 @@ class Win32API:
         return cls.user32.ShowWindow(hwnd, cmd_show)
 
     @classmethod
-    def set_window_pos(cls, hwnd: int, insert_after: int, x: int, y: int, cx: int, cy: int, flags: int) -> bool:
+    def set_window_pos(
+        cls, hwnd: int, insert_after: int, x: int, y: int, cx: int, cy: int, flags: int
+    ) -> bool:
         """Set window position and size."""
         return cls.user32.SetWindowPos(hwnd, insert_after, x, y, cx, cy, flags)
 
@@ -106,7 +111,9 @@ class AdobeInjectorProcess:
     def start(self, silent: bool = False) -> bool:
         """Start Adobe Injector process."""
         if not self.adobe_injector_path.exists():
-            raise FileNotFoundError(f"Adobe Injector executable not found: {self.adobe_injector_path}")
+            raise FileNotFoundError(
+                f"Adobe Injector executable not found: {self.adobe_injector_path}"
+            )
 
         # Prepare command line arguments
         cmd = [str(self.adobe_injector_path)]
@@ -396,7 +403,9 @@ class AutoIt3COMInterface:
         except (AttributeError, OSError):
             self.available = False
 
-    def control_adobe_injector(self, action: str, params: dict[str, str] | None = None) -> bool | str:
+    def control_adobe_injector(
+        self, action: str, params: dict[str, str] | None = None
+    ) -> bool | str:
         """Control Adobe Injector via AutoIt3 COM interface.
 
         Args:
@@ -419,7 +428,9 @@ class AutoIt3COMInterface:
             self.autoit.ControlClick("Adobe Injector", "", params.get("control_id", ""))
         elif action == "set_text":
             # Set text in a control
-            self.autoit.ControlSetText("Adobe Injector", "", params.get("control_id", ""), params.get("text", ""))
+            self.autoit.ControlSetText(
+                "Adobe Injector", "", params.get("control_id", ""), params.get("text", "")
+            )
         elif action == "get_text":
             # Get text from a control
             return self.autoit.ControlGetText("Adobe Injector", "", params.get("control_id", ""))

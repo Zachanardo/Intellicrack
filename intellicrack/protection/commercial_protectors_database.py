@@ -922,7 +922,9 @@ class CommercialProtectorsDatabase:
             ),
         }
 
-    def detect_protector(self, file_data: bytes, pe_header: PE | None = None) -> list[tuple[str, ProtectorSignature, float]]:
+    def detect_protector(
+        self, file_data: bytes, pe_header: PE | None = None
+    ) -> list[tuple[str, ProtectorSignature, float]]:
         """Detect protectors based on file data and PE header.
 
         Args:
@@ -965,8 +967,13 @@ class CommercialProtectorsDatabase:
                                 matches += 1
                                 break
                             # Check section data for pattern
-                            section_data = file_data[section.PointerToRawData : section.PointerToRawData + section.SizeOfRawData]
-                            if section_pattern in section_data[:0x100]:  # Check first 256 bytes of section
+                            section_data = file_data[
+                                section.PointerToRawData : section.PointerToRawData
+                                + section.SizeOfRawData
+                            ]
+                            if (
+                                section_pattern in section_data[:0x100]
+                            ):  # Check first 256 bytes of section
                                 matches += 1
                                 break
                 except Exception:
@@ -975,23 +982,41 @@ class CommercialProtectorsDatabase:
                         pe_offset = struct.unpack("<I", file_data[0x3C:0x40])[0]
                         if pe_offset < len(file_data) - 0x200:
                             # Get number of sections
-                            num_sections = struct.unpack("<H", file_data[pe_offset + 0x06 : pe_offset + 0x08])[0]
-                            optional_header_size = struct.unpack("<H", file_data[pe_offset + 0x14 : pe_offset + 0x16])[0]
+                            num_sections = struct.unpack(
+                                "<H", file_data[pe_offset + 0x06 : pe_offset + 0x08]
+                            )[0]
+                            optional_header_size = struct.unpack(
+                                "<H", file_data[pe_offset + 0x14 : pe_offset + 0x16]
+                            )[0]
                             section_table_offset = pe_offset + 0x18 + optional_header_size
 
-                            for i in range(min(num_sections, 16)):  # Limit to 16 sections for safety
+                            for i in range(
+                                min(num_sections, 16)
+                            ):  # Limit to 16 sections for safety
                                 section_offset = section_table_offset + (i * 40)
                                 if section_offset + 40 <= len(file_data):
-                                    section_name = file_data[section_offset : section_offset + 8].rstrip(b"\x00")
+                                    section_name = file_data[
+                                        section_offset : section_offset + 8
+                                    ].rstrip(b"\x00")
                                     for pattern_name, pattern_bytes in sig.section_patterns.items():
                                         if pattern_name.encode() in section_name:
                                             matches += 1
                                             break
                                         # Check section data
-                                        raw_offset = struct.unpack("<I", file_data[section_offset + 20 : section_offset + 24])[0]
-                                        raw_size = struct.unpack("<I", file_data[section_offset + 16 : section_offset + 20])[0]
+                                        raw_offset = struct.unpack(
+                                            "<I",
+                                            file_data[section_offset + 20 : section_offset + 24],
+                                        )[0]
+                                        raw_size = struct.unpack(
+                                            "<I",
+                                            file_data[section_offset + 16 : section_offset + 20],
+                                        )[0]
                                         if raw_offset < len(file_data) and raw_size > 0:
-                                            section_data = file_data[raw_offset : min(raw_offset + 0x100, raw_offset + raw_size)]
+                                            section_data = file_data[
+                                                raw_offset : min(
+                                                    raw_offset + 0x100, raw_offset + raw_size
+                                                )
+                                            ]
                                             if pattern_bytes in section_data:
                                                 matches += 1
                                                 break
@@ -1106,8 +1131,6 @@ class CommercialProtectorsDatabase:
             List of detected anti-analysis techniques
 
         """
-        techniques = []
-
         # Anti-debugging checks
         anti_debug_apis = [
             b"IsDebuggerPresent",
@@ -1118,12 +1141,15 @@ class CommercialProtectorsDatabase:
             b"DebugActiveProcess",
         ]
 
-        for api in anti_debug_apis:
-            if api in file_data:
-                techniques.append(
-                    {"type": "anti-debug", "method": api.decode(), "description": f"Uses {api.decode()} API for debugger detection"},
-                )
-
+        techniques = [
+            {
+                "type": "anti-debug",
+                "method": api.decode(),
+                "description": f"Uses {api.decode()} API for debugger detection",
+            }
+            for api in anti_debug_apis
+            if api in file_data
+        ]
         # Anti-VM checks
         anti_vm_strings = [
             b"VMware",
@@ -1138,16 +1164,15 @@ class CommercialProtectorsDatabase:
             b"snxhk.dll",  # Avast Sandbox
         ]
 
-        for vm_string in anti_vm_strings:
-            if vm_string in file_data:
-                techniques.append(
-                    {
-                        "type": "anti-vm",
-                        "method": vm_string.decode(),
-                        "description": f"Checks for {vm_string.decode()} (VM/Sandbox detection)",
-                    },
-                )
-
+        techniques.extend(
+            {
+                "type": "anti-vm",
+                "method": vm_string.decode(),
+                "description": f"Checks for {vm_string.decode()} (VM/Sandbox detection)",
+            }
+            for vm_string in anti_vm_strings
+            if vm_string in file_data
+        )
         # Timing checks
         timing_apis = [
             b"GetTickCount",
@@ -1155,12 +1180,15 @@ class CommercialProtectorsDatabase:
             b"rdtsc",
         ]
 
-        for api in timing_apis:
-            if api in file_data:
-                techniques.append(
-                    {"type": "timing", "method": api.decode(), "description": f"Uses {api.decode()} for timing-based detection"},
-                )
-
+        techniques.extend(
+            {
+                "type": "timing",
+                "method": api.decode(),
+                "description": f"Uses {api.decode()} for timing-based detection",
+            }
+            for api in timing_apis
+            if api in file_data
+        )
         # Process/DLL checks
         blacklist_processes = [
             b"ollydbg.exe",
@@ -1172,10 +1200,15 @@ class CommercialProtectorsDatabase:
             b"procmon.exe",
         ]
 
-        for proc in blacklist_processes:
-            if proc in file_data:
-                techniques.append({"type": "process-check", "method": proc.decode(), "description": f"Checks for {proc.decode()} process"})
-
+        techniques.extend(
+            {
+                "type": "process-check",
+                "method": proc.decode(),
+                "description": f"Checks for {proc.decode()} process",
+            }
+            for proc in blacklist_processes
+            if proc in file_data
+        )
         return techniques
 
     def detect_encryption_layers(self, file_data: bytes) -> list[dict[str, Any]]:
@@ -1242,7 +1275,13 @@ class CommercialProtectorsDatabase:
 
         for pattern, description in crypto_patterns.items():
             if pattern in file_data:
-                layers.append({"type": "crypto-signature", "algorithm": pattern.decode(), "description": description})
+                layers.append(
+                    {
+                        "type": "crypto-signature",
+                        "algorithm": pattern.decode(),
+                        "description": description,
+                    }
+                )
 
         # Check for compression signatures
         compression_sigs = {
@@ -1256,7 +1295,13 @@ class CommercialProtectorsDatabase:
 
         for sig, description in compression_sigs.items():
             if sig in file_data[:1024]:
-                layers.append({"type": "compression", "format": description, "offset": hex(file_data.find(sig))})
+                layers.append(
+                    {
+                        "type": "compression",
+                        "format": description,
+                        "offset": hex(file_data.find(sig)),
+                    }
+                )
 
         return layers
 

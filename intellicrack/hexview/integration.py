@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import QDialog, QMessageBox, QToolBar
 from intellicrack.handlers.pyqt6_handler import QAction
 from intellicrack.utils.logger import logger
 
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -44,18 +45,16 @@ except ImportError as e:
     HexViewerDialog = None
 
 try:
-    from .ai_bridge import (
-        wrapper_ai_binary_analyze,
-        wrapper_ai_binary_edit_suggest,
-        wrapper_ai_binary_pattern_search,
-    )
+    from .ai_bridge import wrapper_ai_binary_analyze, wrapper_ai_binary_edit_suggest, wrapper_ai_binary_pattern_search
 except ImportError as e:
     logger.error("Import error in integration: %s", e)
 
     import re
     from collections import Counter
 
-    def wrapper_ai_binary_analyze(app_instance: object, parameters: dict[str, Any]) -> dict[str, Any]:
+    def wrapper_ai_binary_analyze(
+        app_instance: object, parameters: dict[str, Any]
+    ) -> dict[str, Any]:
         """Perform static binary analysis when AI bridge is not available.
 
         Analyzes binary data using entropy calculation, string extraction,
@@ -91,7 +90,9 @@ except ImportError as e:
             logger.error("Error in fallback binary analyze: %s", e)
             return {"error": f"Analysis failed: {e!s}"}
 
-    def wrapper_ai_binary_pattern_search(app_instance: object, parameters: dict[str, Any]) -> dict[str, Any]:
+    def wrapper_ai_binary_pattern_search(
+        app_instance: object, parameters: dict[str, Any]
+    ) -> dict[str, Any]:
         """Search for patterns in binary data when AI bridge is not available.
 
         Performs pattern matching using regex, byte sequences, and common
@@ -126,9 +127,10 @@ except ImportError as e:
                     idx = pos + 1
 
             elif pattern_type == "regex":
-                for match in re.finditer(pattern.encode(), data):
-                    matches.append({"offset": match.start(), "length": len(match.group())})
-
+                matches.extend(
+                    {"offset": match.start(), "length": len(match.group())}
+                    for match in re.finditer(pattern.encode(), data)
+                )
             elif pattern_type == "string":
                 search_bytes = pattern.encode("utf-8")
                 idx = 0
@@ -160,15 +162,28 @@ except ImportError as e:
                         pos = data.find(lp, idx)
                         if pos == -1:
                             break
-                        matches.append({"offset": pos, "length": len(lp), "type": lp.decode("utf-8", errors="ignore")})
+                        matches.append(
+                            {
+                                "offset": pos,
+                                "length": len(lp),
+                                "type": lp.decode("utf-8", errors="ignore"),
+                            }
+                        )
                         idx = pos + 1
 
-            return {"matches": matches, "count": len(matches), "pattern": pattern, "pattern_type": pattern_type}
+            return {
+                "matches": matches,
+                "count": len(matches),
+                "pattern": pattern,
+                "pattern_type": pattern_type,
+            }
         except Exception as e:
             logger.error("Error in fallback pattern search: %s", e)
             return {"error": f"Pattern search failed: {e!s}"}
 
-    def wrapper_ai_binary_edit_suggest(app_instance: object, parameters: dict[str, Any]) -> dict[str, Any]:
+    def wrapper_ai_binary_edit_suggest(
+        app_instance: object, parameters: dict[str, Any]
+    ) -> dict[str, Any]:
         """Suggest binary edits for license bypass when AI bridge is not available.
 
         Analyzes binary code to suggest patches for common license validation
@@ -250,31 +265,29 @@ except ImportError as e:
                         )
 
             elif context == "comparison":
-                for i in range(len(data) - 6):
-                    if data[i : i + 2] in [b"\x3b", b"\x39"]:
-                        suggestions.append(
-                            {
-                                "offset": offset + i,
-                                "description": "Replace comparison with operation that always succeeds",
-                                "original": data[i : i + 2].hex(),
-                                "patched": "3939",
-                                "type": "comparison_bypass",
-                            },
-                        )
-
+                suggestions.extend(
+                    {
+                        "offset": offset + i,
+                        "description": "Replace comparison with operation that always succeeds",
+                        "original": data[i : i + 2].hex(),
+                        "patched": "3939",
+                        "type": "comparison_bypass",
+                    }
+                    for i in range(len(data) - 6)
+                    if data[i : i + 2] in [b"\x3b", b"\x39"]
+                )
             else:
-                for i in range(min(len(data) - 2, 100)):
-                    if data[i] == 0x74 or data[i] == 0x75:
-                        suggestions.append(
-                            {
-                                "offset": offset + i,
-                                "description": f"Conditional jump at offset {offset + i:#x}",
-                                "original": data[i : i + 2].hex(),
-                                "patched": "9090",
-                                "type": "general_conditional_bypass",
-                            },
-                        )
-
+                suggestions.extend(
+                    {
+                        "offset": offset + i,
+                        "description": f"Conditional jump at offset {offset + i:#x}",
+                        "original": data[i : i + 2].hex(),
+                        "patched": "9090",
+                        "type": "general_conditional_bypass",
+                    }
+                    for i in range(min(len(data) - 2, 100))
+                    if data[i] in [0x74, 0x75]
+                )
             return {"suggestions": suggestions, "count": len(suggestions)}
         except Exception as e:
             logger.error("Error in fallback edit suggest: %s", e)
@@ -351,12 +364,14 @@ except ImportError as e:
             return {}
         counter = Counter(data)
         total = len(data)
-        distribution = {
-            "most_common": [{"byte": f"{b:#04x}", "count": c, "percentage": (c / total) * 100} for b, c in counter.most_common(5)],
+        return {
+            "most_common": [
+                {"byte": f"{b:#04x}", "count": c, "percentage": (c / total) * 100}
+                for b, c in counter.most_common(5)
+            ],
             "unique_bytes": len(counter),
             "diversity_ratio": len(counter) / 256.0,
         }
-        return distribution
 
 
 logger = logging.getLogger("Intellicrack.HexView")
@@ -365,7 +380,9 @@ logger = logging.getLogger("Intellicrack.HexView")
 TOOL_REGISTRY = {}
 
 
-def show_enhanced_hex_viewer(app_instance: object, file_path: str | None = None, read_only: bool = True) -> QDialog | None:
+def show_enhanced_hex_viewer(
+    app_instance: object, file_path: str | None = None, read_only: bool = True
+) -> QDialog | None:
     """Show the enhanced hex viewer/editor dialog.
 
     This function creates and shows the enhanced hex viewer dialog, optionally
@@ -516,20 +533,20 @@ def add_hex_viewer_menu(app_instance: object, menu_name: str | None = None) -> N
         logger.info("Skipping hex viewer menu creation - using dedicated tab instead")
         return
 
-    # Find the menu
-    menu = None
-    for action in app_instance.menuBar().actions():
-        if action.text() == menu_name:
-            menu = action.menu()
-            break
-
-    if not menu:
-        # Create the menu if it doesn't exist
-        menu = app_instance.menuBar().addMenu(menu_name)
+    menu = next(
+            (
+                action.menu()
+                for action in app_instance.menuBar().actions()
+                if action.text() == menu_name
+            ),
+            None,
+        ) or app_instance.menuBar().addMenu(menu_name)
 
     # Add view action (read-only)
     enhanced_hex_action = QAction("Hex Viewer (View)", app_instance)
-    enhanced_hex_action.triggered.connect(lambda: show_enhanced_hex_viewer(app_instance, None, True))
+    enhanced_hex_action.triggered.connect(
+        lambda: show_enhanced_hex_viewer(app_instance, None, True)
+    )
     enhanced_hex_action.setStatusTip("Open binary in read-only hex viewer")
     menu.addAction(enhanced_hex_action)
 
@@ -640,7 +657,9 @@ def integrate_enhanced_hex_viewer(app_instance: object) -> bool | None:
 
 
 # Decorator for hex viewer AI tool wrappers
-def hex_viewer_ai_tool(func: Callable[[Any, dict[str, Any]], dict[str, Any]]) -> Callable[[Any, dict[str, Any]], dict[str, Any]]:
+def hex_viewer_ai_tool(
+    func: Callable[[Any, dict[str, Any]], dict[str, Any]],
+) -> Callable[[Any, dict[str, Any]], dict[str, Any]]:
     """Decorate hex viewer AI tool wrappers.
 
     This decorator adds common functionality to all hex viewer AI tool wrappers,

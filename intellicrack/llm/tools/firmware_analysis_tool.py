@@ -24,7 +24,7 @@ class FirmwareAnalysisTool:
         self.analyzer = get_firmware_analyzer()
         self.analysis_cache = {}
 
-    def get_tool_definition(self) -> Dict[str, Any]:
+    def get_tool_definition(self) -> dict[str, Any]:
         """Get tool definition for LLM registration
 
         Returns:
@@ -73,7 +73,7 @@ class FirmwareAnalysisTool:
             },
         }
 
-    def execute(self, **kwargs) -> Dict[str, Any]:
+    def execute(self, **kwargs) -> dict[str, Any]:
         """Execute firmware analysis
 
         Args:
@@ -166,7 +166,7 @@ class FirmwareAnalysisTool:
             logger.error(f"Firmware analysis error: {e}")
             return {"success": False, "error": str(e)}
 
-    def _format_signatures(self, signatures: List[Any]) -> List[Dict[str, Any]]:
+    def _format_signatures(self, signatures: list[Any]) -> list[dict[str, Any]]:
         """Format firmware signatures for LLM consumption"""
         formatted_signatures = []
 
@@ -185,7 +185,7 @@ class FirmwareAnalysisTool:
 
         return formatted_signatures
 
-    def _assess_security_findings(self, findings: List[Any]) -> Dict[str, Any]:
+    def _assess_security_findings(self, findings: list[Any]) -> dict[str, Any]:
         """Assess security implications of firmware findings"""
         assessment = {
             "overall_risk_level": "low",
@@ -234,7 +234,7 @@ class FirmwareAnalysisTool:
 
         return assessment
 
-    def _format_extraction_summary(self, extractions: Optional[Any]) -> Dict[str, Any]:
+    def _format_extraction_summary(self, extractions: Any | None) -> dict[str, Any]:
         """Format extraction summary for LLM consumption"""
         if not extractions or not extractions.success:
             return {
@@ -255,7 +255,7 @@ class FirmwareAnalysisTool:
             "extraction_errors": extractions.errors,
         }
 
-    def _generate_bypass_recommendations(self, analysis_result: Any) -> List[Dict[str, Any]]:
+    def _generate_bypass_recommendations(self, analysis_result: Any) -> list[dict[str, Any]]:
         """Generate bypass recommendations based on firmware analysis"""
         recommendations = []
 
@@ -325,7 +325,7 @@ class FirmwareAnalysisTool:
 
         return recommendations
 
-    def _format_extracted_files(self, extracted_files: List[Any]) -> List[Dict[str, Any]]:
+    def _format_extracted_files(self, extracted_files: list[Any]) -> list[dict[str, Any]]:
         """Format extracted files information"""
         formatted_files = []
 
@@ -349,14 +349,19 @@ class FirmwareAnalysisTool:
 
         return formatted_files
 
-    def _extract_interesting_strings(self, extracted_files: List[Any]) -> List[Dict[str, Any]]:
+    def _extract_interesting_strings(self, extracted_files: list[Any]) -> list[dict[str, Any]]:
         """Extract interesting strings from extracted files"""
         interesting_strings = []
 
         for file_obj in extracted_files:
             if file_obj.extracted_strings:
-                for string in file_obj.extracted_strings:
-                    # Filter for potentially interesting strings
+                interesting_strings.extend(
+                    {
+                        "string": string[:100],  # Limit length
+                        "file": os.path.basename(file_obj.file_path),
+                        "category": self._categorize_string(string),
+                    }
+                    for string in file_obj.extracted_strings
                     if any(
                         keyword in string.lower()
                         for keyword in [
@@ -370,15 +375,8 @@ class FirmwareAnalysisTool:
                             "url",
                             "http",
                         ]
-                    ):
-                        interesting_strings.append(
-                            {
-                                "string": string[:100],  # Limit length
-                                "file": os.path.basename(file_obj.file_path),
-                                "category": self._categorize_string(string),
-                            }
-                        )
-
+                    )
+                )
         return interesting_strings[:50]  # Limit to 50 most interesting
 
     def _categorize_string(self, string: str) -> str:
@@ -396,7 +394,7 @@ class FirmwareAnalysisTool:
         else:
             return "other"
 
-    def _format_security_findings(self, findings: List[Any]) -> List[Dict[str, Any]]:
+    def _format_security_findings(self, findings: list[Any]) -> list[dict[str, Any]]:
         """Format security findings for detailed analysis"""
         formatted_findings = []
 
@@ -416,7 +414,7 @@ class FirmwareAnalysisTool:
 
         return formatted_findings
 
-    def _analyze_embedded_components(self, signatures: List[Any]) -> Dict[str, Any]:
+    def _analyze_embedded_components(self, signatures: list[Any]) -> dict[str, Any]:
         """Analyze embedded components detected in firmware"""
         components = {
             "filesystems": [],
@@ -475,7 +473,7 @@ class FirmwareAnalysisTool:
 
         return components
 
-    def _classify_firmware(self, analysis_result: Any) -> Dict[str, Any]:
+    def _classify_firmware(self, analysis_result: Any) -> dict[str, Any]:
         """Classify firmware based on analysis results"""
         classification = {
             "primary_type": analysis_result.firmware_type.value,
@@ -505,16 +503,17 @@ class FirmwareAnalysisTool:
 
         # Analyze encryption details if found
         if has_encryption:
-            encryption_details = []
-            for sig in analysis_result.signatures:
-                if "encrypt" in sig.description.lower():
-                    encryption_details.append(
-                        {
-                            "type": sig.description,
-                            "offset": hex(sig.offset) if hasattr(sig, "offset") else "unknown",
-                            "confidence": getattr(sig, "confidence", "unknown"),
-                        }
-                    )
+            encryption_details = [
+                {
+                    "type": sig.description,
+                    "offset": (
+                        hex(sig.offset) if hasattr(sig, "offset") else "unknown"
+                    ),
+                    "confidence": getattr(sig, "confidence", "unknown"),
+                }
+                for sig in analysis_result.signatures
+                if "encrypt" in sig.description.lower()
+            ]
             classification["encryption_details"] = encryption_details
             classification["security_features"] = classification.get("security_features", []) + ["encryption"]
 
@@ -539,7 +538,7 @@ class FirmwareAnalysisTool:
 
         return classification
 
-    def _analyze_attack_surface(self, analysis_result: Any) -> Dict[str, Any]:
+    def _analyze_attack_surface(self, analysis_result: Any) -> dict[str, Any]:
         """Analyze potential attack surface of firmware"""
         attack_surface = {
             "network_interfaces": 0,

@@ -22,13 +22,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 from collections.abc import Callable
 from typing import Any
 
-from intellicrack.handlers.pyqt6_handler import (
-    QFont,
-    QLabel,
-    Qt,
-    QVBoxLayout,
-    QWidget,
-)
+from intellicrack.handlers.pyqt6_handler import QFont, QLabel, Qt, QVBoxLayout, QWidget
 
 
 class BaseTab(QWidget):
@@ -37,7 +31,9 @@ class BaseTab(QWidget):
     Provides common functionality including loading states, shared context, and consistent styling.
     """
 
-    def __init__(self, shared_context: dict[str, Any] | None = None, parent: QWidget | None = None) -> None:
+    def __init__(
+        self, shared_context: dict[str, Any] | None = None, parent: QWidget | None = None
+    ) -> None:
         """Initialize base tab with shared application context and parent widget.
 
         Args:
@@ -99,8 +95,7 @@ class BaseTab(QWidget):
         Removes and schedules deletion of all child widgets in the current layout.
         Used to reset the tab UI before loading new content.
         """
-        layout = self.layout()
-        if layout:
+        if layout := self.layout():
             while layout.count():
                 child = layout.takeAt(0)
                 if child.widget():
@@ -156,9 +151,7 @@ class BaseTab(QWidget):
             Task result or future if task manager is available, None otherwise.
 
         """
-        if self.task_manager:
-            return self.task_manager.submit_task(task)
-        return None
+        return self.task_manager.submit_task(task) if self.task_manager else None
 
     def submit_callable(
         self,

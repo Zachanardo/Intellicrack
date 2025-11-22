@@ -36,7 +36,7 @@ class DIEAnalysisTool:
         self.analysis_cache = {}
         self.ai_assistant = IntellicrackAIAssistant()
 
-    def get_tool_definition(self) -> Dict[str, Any]:
+    def get_tool_definition(self) -> dict[str, Any]:
         """Get tool definition for LLM registration
 
         Returns:
@@ -85,7 +85,7 @@ class DIEAnalysisTool:
             },
         }
 
-    def execute(self, **kwargs) -> Dict[str, Any]:
+    def execute(self, **kwargs) -> dict[str, Any]:
         """Execute DIE analysis
 
         Args:
@@ -236,7 +236,7 @@ class DIEAnalysisTool:
             logger.error(f"DIE analysis error: {e}")
             return {"success": False, "error": str(e)}
 
-    def _format_protections(self, analysis: AdvancedProtectionAnalysis) -> List[Dict[str, Any]]:
+    def _format_protections(self, analysis: AdvancedProtectionAnalysis) -> list[dict[str, Any]]:
         """Format protection detections for LLM consumption"""
         protections = []
 
@@ -275,20 +275,16 @@ class DIEAnalysisTool:
         }
         return categories.get(protection_type, "unknown")
 
-    def _generate_bypass_recommendations(self, analysis: AdvancedProtectionAnalysis) -> Dict[str, List[str]]:
+    def _generate_bypass_recommendations(self, analysis: AdvancedProtectionAnalysis) -> dict[str, list[str]]:
         """Generate bypass recommendations based on detections"""
-        recommendations = {}
+        return {
+            detection.name: (
+                detection.bypass_recommendations or self._get_generic_bypass_methods(detection.type)
+            )
+            for detection in analysis.detections
+        }
 
-        for detection in analysis.detections:
-            if detection.bypass_recommendations:
-                recommendations[detection.name] = detection.bypass_recommendations
-            else:
-                # Generate generic recommendations based on type
-                recommendations[detection.name] = self._get_generic_bypass_methods(detection.type)
-
-        return recommendations
-
-    def _get_generic_bypass_methods(self, protection_type: ProtectionType) -> List[str]:
+    def _get_generic_bypass_methods(self, protection_type: ProtectionType) -> list[str]:
         """Get generic bypass methods by protection type"""
         methods = {
             ProtectionType.PACKER: [
@@ -330,7 +326,7 @@ class DIEAnalysisTool:
         }
         return methods.get(protection_type, ["Manual analysis required"])
 
-    def _format_entropy_analysis(self, entropy_info: List[EntropyInfo]) -> Dict[str, Any]:
+    def _format_entropy_analysis(self, entropy_info: list[EntropyInfo]) -> dict[str, Any]:
         """Format entropy analysis for AI interpretation"""
         analysis = {
             "sections": [],
@@ -377,7 +373,7 @@ class DIEAnalysisTool:
 
         return analysis
 
-    def _format_certificates(self, certificates: List[CertificateInfo]) -> List[Dict[str, Any]]:
+    def _format_certificates(self, certificates: list[CertificateInfo]) -> list[dict[str, Any]]:
         """Format certificate information"""
         cert_list = []
 
@@ -399,7 +395,7 @@ class DIEAnalysisTool:
 
         return cert_list
 
-    def _format_strings(self, strings: List[StringInfo]) -> List[Dict[str, Any]]:
+    def _format_strings(self, strings: list[StringInfo]) -> list[dict[str, Any]]:
         """Format suspicious strings"""
         return [
             {
@@ -474,7 +470,7 @@ class DIEAnalysisTool:
 
         return "\n".join(lines)
 
-    def analyze_batch(self, file_paths: List[str], scan_mode: str = "normal") -> Dict[str, Any]:
+    def analyze_batch(self, file_paths: list[str], scan_mode: str = "normal") -> dict[str, Any]:
         """Analyze multiple files in batch
 
         Args:
@@ -516,7 +512,7 @@ class DIEAnalysisTool:
 
         return results
 
-    def compare_files(self, file1: str, file2: str) -> Dict[str, Any]:
+    def compare_files(self, file1: str, file2: str) -> dict[str, Any]:
         """Compare two files for protection similarities
 
         Args:
@@ -593,7 +589,7 @@ class DIEAnalysisTool:
 
         return False
 
-    def _analyze_license_patterns_for_llm(self, file_path: str, analysis: AdvancedProtectionAnalysis) -> Dict[str, Any]:
+    def _analyze_license_patterns_for_llm(self, file_path: str, analysis: AdvancedProtectionAnalysis) -> dict[str, Any]:
         """Analyze license patterns for LLM consumption"""
         try:
             # Prepare input data for AI license analysis
@@ -678,7 +674,7 @@ class DIEAnalysisTool:
             return False
         return "advapi32.dll" in analysis.imports
 
-    def _get_license_llm_guidance(self, license_type: str, detections: List[Any]) -> str:
+    def _get_license_llm_guidance(self, license_type: str, detections: list[Any]) -> str:
         """Get LLM-specific guidance for license analysis"""
         guidance = f"Detected {license_type} licensing. "
 

@@ -26,6 +26,7 @@ import logging
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -200,7 +201,14 @@ class UIConfigManager:
         self._load_from_main_config()
 
         # Change callbacks
-        self.change_callbacks: dict[str, list] = {"theme": [], "font": [], "layout": [], "editor": [], "animation": [], "accessibility": []}
+        self.change_callbacks: dict[str, list] = {
+            "theme": [],
+            "font": [],
+            "layout": [],
+            "editor": [],
+            "animation": [],
+            "accessibility": [],
+        }
 
         logger.info("UIConfigManager initialized with unified config system")
 

@@ -26,6 +26,7 @@ from intellicrack.core.config_manager import get_config
 from .base import APIRepositoryBase, RateLimitConfig
 from .interface import ModelInfo
 
+
 """
 Google Repository Implementation
 
@@ -67,7 +68,9 @@ class GoogleRepository(APIRepositoryBase):
         # Get API endpoint from config if not provided
         if api_endpoint is None:
             config = get_config()
-            api_endpoint = config.get_api_endpoint("google") or "https://generativelanguage.googleapis.com"
+            api_endpoint = (
+                config.get_api_endpoint("google") or "https://generativelanguage.googleapis.com"
+            )
 
         # Get API key from secrets manager if not provided
         if not api_key:
@@ -134,15 +137,13 @@ class GoogleRepository(APIRepositoryBase):
         try:
             # Extract model information from the response
             for model_data in data.get("models", []):
-                model_id = model_data.get("name")
-                if model_id:
+                if model_id := model_data.get("name"):
                     # Extract just the model name from the full path
                     # Format is usually "models/gemini-pro" or similar
                     if "/" in model_id:
                         model_id = model_id.split("/")[-1]
 
-                    model_info = self._create_model_info(model_id, model_data)
-                    if model_info:
+                    if model_info := self._create_model_info(model_id, model_data):
                         models.append(model_info)
 
             return models
@@ -203,11 +204,7 @@ class GoogleRepository(APIRepositoryBase):
             # Extract version
             version = model_data.get("version", "1.0")
 
-            # Extract input/output token limits
-            context_length = None
-            if "inputTokenLimit" in model_data:
-                context_length = model_data["inputTokenLimit"]
-
+            context_length = model_data.get("inputTokenLimit")
             # Extract capabilities
             capabilities = []
             supported_generation_methods = model_data.get("supportedGenerationMethods", [])
@@ -221,14 +218,18 @@ class GoogleRepository(APIRepositoryBase):
 
             # Check for multimodal support
             input_features = list(
-                model_data.get("inputSchema", {}).get("properties", {}).get("parts", {}).get("items", {}).get("properties", {}).keys(),
+                model_data.get("inputSchema", {})
+                .get("properties", {})
+                .get("parts", {})
+                .get("items", {})
+                .get("properties", {})
+                .keys(),
             )
 
             if "inlineData" in input_features:
                 capabilities.append("vision")
 
-            # Create ModelInfo
-            model_info = ModelInfo(
+            return ModelInfo(
                 model_id=model_id,
                 name=name,
                 description=description,
@@ -243,9 +244,6 @@ class GoogleRepository(APIRepositoryBase):
                 download_url=None,
                 local_path=None,
             )
-
-            return model_info
-
         except (KeyError, TypeError) as e:
             logger.error(f"Error creating ModelInfo for {model_id}: {e}")
             return None
@@ -257,5 +255,7 @@ class GoogleRepository(APIRepositoryBase):
             Always returns (False, "Google doesn't support model downloads")
 
         """
-        logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
+        logger.warning(
+            f"Download requested for {model_id} to {destination_path}, but not supported"
+        )
         return False, "Google doesn't support model downloads"

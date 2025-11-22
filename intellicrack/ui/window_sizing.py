@@ -38,8 +38,7 @@ def get_default_window_size(
 
     """
     if QApplication.instance():
-        screen = QApplication.primaryScreen()
-        if screen:
+        if screen := QApplication.primaryScreen():
             screen_rect = screen.availableGeometry()
             width = max(int(screen_rect.width() * width_percentage), min_width)
             height = max(int(screen_rect.height() * height_percentage), min_height)
@@ -55,8 +54,7 @@ def center_window_on_screen(window: object) -> None:
 
     """
     if QApplication.instance():
-        screen = QApplication.primaryScreen()
-        if screen:
+        if screen := QApplication.primaryScreen():
             screen_rect = screen.availableGeometry()
             window_rect = window.frameGeometry()
             center_x = (screen_rect.width() - window_rect.width()) // 2

@@ -25,6 +25,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -92,15 +93,14 @@ class EnvFileManager:
                     if not line or line.startswith("#"):
                         continue
 
-                    # Parse key=value pairs
-                    match = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$", line)
-                    if match:
+                    if match := re.match(
+                        r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$", line
+                    ):
                         key, value = match.groups()
 
                         # Remove surrounding quotes if present
-                        if value and len(value) >= 2:
-                            if (value[0] == value[-1]) and value[0] in ('"', "'"):
-                                value = value[1:-1]
+                        if value and len(value) >= 2 and ((value[0] == value[-1]) and value[0] in ('"', "'")):
+                            value = value[1:-1]
 
                         env_vars[key] = value
                     else:
@@ -132,10 +132,10 @@ class EnvFileManager:
                     for line in f:
                         line = line.rstrip("\n")
 
-                        # Check if it's a key=value line
-                        match = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=", line)
-                        if match:
-                            key = match.group(1)
+                        if match := re.match(
+                            r"^([A-Za-z_][A-Za-z0-9_]*)\s*=", line
+                        ):
+                            key = match[1]
                             existing_keys.add(key)
 
                             # Replace with new value if it exists
@@ -323,13 +323,11 @@ class EnvFileManager:
 
         """
         env_vars = self.read_env()
-        api_keys = {}
-
-        for key, value in env_vars.items():
-            if key.endswith(("_API_KEY", "_API_TOKEN", "_KEY", "_TOKEN")):
-                api_keys[key] = value
-
-        return api_keys
+        return {
+            key: value
+            for key, value in env_vars.items()
+            if key.endswith(("_API_KEY", "_API_TOKEN", "_KEY", "_TOKEN"))
+        }
 
     def set_api_key(self, service: str, api_key: str) -> None:
         """Set an API key for a specific service.
@@ -353,12 +351,7 @@ class EnvFileManager:
         }
 
         service_lower = service.lower()
-        if service_lower in key_mapping:
-            key = key_mapping[service_lower]
-        else:
-            # Default format for unknown services
-            key = f"{service.upper()}_API_KEY"
-
+        key = key_mapping.get(service_lower, f"{service.upper()}_API_KEY")
         self.set_key(key, api_key)
 
     def _sync_to_central_config(self) -> None:
@@ -374,9 +367,7 @@ class EnvFileManager:
     def _sync_from_central_config(self) -> None:
         """Sync environment variables from central config to .env file."""
         try:
-            # Get environment variables from central config
-            env_vars = self.central_config.get("environment.variables", {})
-            if env_vars:
+            if env_vars := self.central_config.get("environment.variables", {}):
                 self.write_env(env_vars)
                 logger.debug(f"Synced {len(env_vars)} environment variables from central config")
         except Exception as e:
@@ -398,7 +389,6 @@ class EnvFileManager:
 
     def auto_load(self) -> None:
         """Automatically load .env file if configured to do so in central config."""
-        auto_load = self.central_config.get("environment.auto_load_env", True)
-        if auto_load:
+        if auto_load := self.central_config.get("environment.auto_load_env", True):
             self.load_into_environment(override=False)
             logger.info("Auto-loaded environment variables from .env file")

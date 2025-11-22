@@ -27,8 +27,10 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+
 try:
     import lief
+
     LIEF_AVAILABLE = True
 except ImportError:
     LIEF_AVAILABLE = False
@@ -36,6 +38,7 @@ except ImportError:
 
 try:
     import pefile
+
     PEFILE_AVAILABLE = True
 except ImportError:
     PEFILE_AVAILABLE = False
@@ -273,19 +276,18 @@ class ArxanDetector:
                 found_count += 1
                 self.logger.debug(f"Found Arxan signature: {sig_str}")
 
-        score = min(found_count / 5.0, 1.0)
-        return score
+        return min(found_count / 5.0, 1.0)
 
     def _check_section_names(self, binary_path: Path, sections: list[str]) -> float:
         """Check for Arxan-specific section names."""
         found_count = 0
 
         try:
-            if binary_path.suffix.lower() in ['.exe', '.dll', '.sys'] and PEFILE_AVAILABLE:
+            if binary_path.suffix.lower() in [".exe", ".dll", ".sys"] and PEFILE_AVAILABLE:
                 pe = pefile.PE(str(binary_path))
 
                 for section in pe.sections:
-                    section_name = section.Name.strip(b'\x00')
+                    section_name = section.Name.strip(b"\x00")
 
                     for arxan_section in self.ARXAN_SECTION_NAMES:
                         if arxan_section in section_name.lower():
@@ -298,8 +300,7 @@ class ArxanDetector:
                 pe.close()
 
             elif LIEF_AVAILABLE:
-                binary = lief.parse(str(binary_path))
-                if binary:
+                if binary := lief.parse(str(binary_path)):
                     for section in binary.sections:
                         section_name = section.name.encode()
 
@@ -313,8 +314,7 @@ class ArxanDetector:
         except Exception as e:
             self.logger.debug(f"Section analysis error: {e}")
 
-        score = min(found_count / 2.0, 1.0)
-        return score
+        return min(found_count / 2.0, 1.0)
 
     def _check_api_imports(self, binary_path: Path, import_hints: list[str]) -> float:
         """Check for API imports commonly used by Arxan."""
@@ -322,7 +322,7 @@ class ArxanDetector:
         suspicious_count = 0
 
         try:
-            if binary_path.suffix.lower() in ['.exe', '.dll', '.sys'] and PEFILE_AVAILABLE:
+            if binary_path.suffix.lower() in [".exe", ".dll", ".sys"] and PEFILE_AVAILABLE:
                 pe = pefile.PE(str(binary_path))
 
                 if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
@@ -330,9 +330,7 @@ class ArxanDetector:
                         for imp in entry.imports:
                             if imp.name:
                                 func_name = (
-                                    imp.name.decode()
-                                    if isinstance(imp.name, bytes)
-                                    else imp.name
+                                    imp.name.decode() if isinstance(imp.name, bytes) else imp.name
                                 )
 
                                 if func_name in self.ARXAN_API_PATTERNS:
@@ -345,8 +343,7 @@ class ArxanDetector:
                 pe.close()
 
             elif LIEF_AVAILABLE:
-                binary = lief.parse(str(binary_path))
-                if binary:
+                if binary := lief.parse(str(binary_path)):
                     for func in binary.imported_functions:
                         if func.name in self.ARXAN_API_PATTERNS:
                             if func.name not in import_hints:
@@ -359,13 +356,11 @@ class ArxanDetector:
             self.logger.debug(f"Import analysis error: {e}")
 
         if found_count >= 8:
-            score = min(suspicious_count / 5.0, 1.0)
+            return min(suspicious_count / 5.0, 1.0)
         elif found_count >= 5:
-            score = 0.5
+            return 0.5
         else:
-            score = 0.0
-
-        return score
+            return 0.0
 
     def _detect_version(self, binary_data: bytes, metadata: dict[str, Any]) -> ArxanVersion:
         """Detect Arxan TransformIT version."""
@@ -391,30 +386,31 @@ class ArxanDetector:
         return best_version
 
     def _heuristic_analysis(
-        self, binary_data: bytes, features: ArxanProtectionFeatures, metadata: dict[str, Any],
+        self,
+        binary_data: bytes,
+        features: ArxanProtectionFeatures,
+        metadata: dict[str, Any],
     ) -> float:
         """Perform heuristic analysis for Arxan protection features."""
         score = 0.0
         feature_count = 0
 
-        anti_debug_count = sum(
-            1 for pattern in self.ANTI_DEBUG_PATTERNS if pattern in binary_data
-        )
+        anti_debug_count = sum(bool(pattern in binary_data)
+                           for pattern in self.ANTI_DEBUG_PATTERNS)
         if anti_debug_count >= 2:
             features.anti_debugging = True
             score += 0.15
             feature_count += 1
 
-        integrity_count = sum(
-            1 for pattern in self.INTEGRITY_CHECK_PATTERNS if pattern in binary_data
-        )
+        integrity_count = sum(bool(pattern in binary_data)
+                          for pattern in self.INTEGRITY_CHECK_PATTERNS)
         if integrity_count >= 2:
             features.integrity_checks = True
             features.anti_tampering = True
             score += 0.15
             feature_count += 1
 
-        entropy = self._calculate_entropy(binary_data[:min(len(binary_data), 100000)])
+        entropy = self._calculate_entropy(binary_data[: min(len(binary_data), 100000)])
         metadata["entropy"] = entropy
 
         if entropy > 7.5:
@@ -488,9 +484,10 @@ class ArxanDetector:
             if binary_data.count(pattern) > 10:
                 return True
 
-        printable_ratio = sum(
-            1 for b in binary_data[:10000] if 32 <= b < 127
-        ) / min(len(binary_data), 10000)
+        printable_ratio = sum(bool(32 <= b < 127)
+                          for b in binary_data[:10000]) / min(
+            len(binary_data), 10000
+        )
 
         return printable_ratio < 0.05
 
@@ -514,11 +511,7 @@ class ArxanDetector:
             b"\x0f\x85..\x00\x00\x0f\x84",
         ]
 
-        for pattern in opaque_predicate_patterns:
-            if pattern in binary_data:
-                return True
-
-        return False
+        return any(pattern in binary_data for pattern in opaque_predicate_patterns)
 
     def _check_rasp_indicators(self, binary_data: bytes) -> bool:
         """Check for Runtime Application Self-Protection indicators."""
@@ -534,7 +527,8 @@ class ArxanDetector:
             b"runtime_check",
         ]
 
-        rasp_count = sum(1 for s in rasp_strings if s in binary_data.lower())
+        rasp_count = sum(bool(s in binary_data.lower())
+                     for s in rasp_strings)
 
         if rasp_count >= 3:
             return True
@@ -545,11 +539,10 @@ class ArxanDetector:
             b"\xff\x15....\x85\xc0\x74",
         ]
 
-        for pattern in exception_handler_patterns:
-            if binary_data.count(pattern) > 5:
-                return True
-
-        return False
+        return any(
+            binary_data.count(pattern) > 5
+            for pattern in exception_handler_patterns
+        )
 
     def _check_license_validation(self, binary_data: bytes) -> bool:
         """Check for license validation routines."""
@@ -566,7 +559,8 @@ class ArxanDetector:
             b"trial",
         ]
 
-        license_count = sum(1 for s in license_strings if s in binary_data.lower())
+        license_count = sum(bool(s in binary_data.lower())
+                        for s in license_strings)
 
         if license_count >= 4:
             return True
@@ -576,11 +570,7 @@ class ArxanDetector:
             b"\x48\x89\x5c\x24\x08\x57\x48\x83\xec\x20\x48\x8b\xf9\x48\x8b\xda",
         ]
 
-        for pattern in crypto_license_patterns:
-            if pattern in binary_data:
-                return True
-
-        return False
+        return any(pattern in binary_data for pattern in crypto_license_patterns)
 
     def _check_white_box_crypto(self, binary_data: bytes) -> bool:
         """Check for white-box cryptography implementations."""
@@ -588,7 +578,7 @@ class ArxanDetector:
         offset = 0
 
         while offset < len(binary_data) - 1024:
-            chunk = binary_data[offset:offset + 1024]
+            chunk = binary_data[offset : offset + 1024]
 
             unique_bytes = len(set(chunk))
             if unique_bytes > 200:
@@ -600,11 +590,7 @@ class ArxanDetector:
             return True
 
         aes_sbox_partial = b"\x63\x7c\x77\x7b\xf2\x6b\x6f\xc5"
-        if aes_sbox_partial in binary_data:
-            if binary_data.count(aes_sbox_partial) > 4:
-                return True
-
-        return False
+        return bool(aes_sbox_partial in binary_data and binary_data.count(aes_sbox_partial) > 4)
 
 
 def main() -> None:

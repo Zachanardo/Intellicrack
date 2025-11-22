@@ -26,6 +26,7 @@ from threading import Lock
 
 from .interface import DownloadProgressCallback, ModelInfo, ModelRepositoryInterface
 
+
 """Local File Repository Implementation
 
 This module provides an implementation of the model repository interface for
@@ -65,7 +66,10 @@ class LocalFileRepository(ModelRepositoryInterface):
                     metadata = json.load(f)
 
                     # Convert metadata to ModelInfo objects
-                    self.models_cache = {model_id: ModelInfo.from_dict(model_data) for model_id, model_data in metadata.items()}
+                    self.models_cache = {
+                        model_id: ModelInfo.from_dict(model_data)
+                        for model_id, model_data in metadata.items()
+                    }
 
                 logger.info(f"Loaded metadata for {len(self.models_cache)} local models")
             except (OSError, json.JSONDecodeError) as e:
@@ -75,7 +79,9 @@ class LocalFileRepository(ModelRepositoryInterface):
     def _save_metadata(self) -> None:
         """Save metadata for local models."""
         with self._cache_lock:
-            metadata = {model_id: model_info.to_dict() for model_id, model_info in self.models_cache.items()}
+            metadata = {
+                model_id: model_info.to_dict() for model_id, model_info in self.models_cache.items()
+            }
 
         try:
             with open(self.models_metadata_file, "w") as f:
@@ -88,6 +94,7 @@ class LocalFileRepository(ModelRepositoryInterface):
         # Find all GGUF files in the models directory
         os.path.join(self.models_directory, "**", "*.gguf")
         from pathlib import Path
+
         model_files = [str(p) for p in Path(self.models_directory).rglob("*.gguf")]
 
         # Create model entries for files not already in the cache

@@ -1749,16 +1749,13 @@ const DrmBypass = {
                 Interceptor.attach(geoFunc, {
                     onLeave: function (retval) {
                         var config = this.parent.parent.config;
-                        if (config.streaming.spoofGeoLocation) {
-                            // Spoof to US location (typically unrestricted)
-                            if (functionName === 'GetUserGeoID') {
-                                retval.replace(244); // US geo ID
-                                send({
-                                    type: 'bypass',
-                                    target: 'drm_bypass',
-                                    action: 'geo_location_spoofed_to_us',
-                                });
-                            }
+                        if (config.streaming.spoofGeoLocation && functionName === 'GetUserGeoID') {
+                              retval.replace(244); // US geo ID
+                              send({
+                                  type: 'bypass',
+                                  target: 'drm_bypass',
+                                  action: 'geo_location_spoofed_to_us',
+                              });
                         }
                     },
                 });
@@ -2895,18 +2892,14 @@ const DrmBypass = {
                     },
 
                     onLeave: function (retval) {
-                        if (this.allowKeyOperation) {
-                            // Ensure key operations succeed
-                            if (retval.toInt32() === 0) {
-                                // Failed
-                                retval.replace(1); // Success
-                                send({
-                                    type: 'bypass',
-                                    target: 'drm_bypass',
-                                    action: 'key_operation_forced_to_succeed',
-                                    function_name: funcName,
-                                });
-                            }
+                        if (this.allowKeyOperation && retval.toInt32() === 0) {
+                              retval.replace(1); // Success
+                              send({
+                                  type: 'bypass',
+                                  target: 'drm_bypass',
+                                  action: 'key_operation_forced_to_succeed',
+                                  function_name: funcName,
+                              });
                         }
                     },
                 });

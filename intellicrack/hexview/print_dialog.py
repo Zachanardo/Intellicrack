@@ -23,16 +23,8 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 from typing import Optional
 
 from PyQt6.QtCore import QRectF
-from PyQt6.QtGui import (
-    QFont,
-    QFontMetrics,
-    QPainter,
-)
-from PyQt6.QtPrintSupport import (
-    QPrintDialog,
-    QPrinter,
-    QPrintPreviewDialog,
-)
+from PyQt6.QtGui import QFont, QFontMetrics, QPainter
+from PyQt6.QtPrintSupport import QPrintDialog, QPrinter, QPrintPreviewDialog
 from PyQt6.QtWidgets import (
     QCheckBox,
     QDialog,
@@ -51,6 +43,7 @@ from PyQt6.QtWidgets import (
 
 from ..utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 
@@ -59,8 +52,8 @@ class PrintOptionsDialog(QDialog):
 
     def __init__(
         self,
-        parent: Optional[QWidget] = None,
-        hex_viewer: Optional[QWidget] = None,
+        parent: QWidget | None = None,
+        hex_viewer: QWidget | None = None,
     ) -> None:
         """Initialize print options dialog.
 
@@ -94,11 +87,10 @@ class PrintOptionsDialog(QDialog):
         self.selection_check.toggled.connect(self.on_range_changed)
 
         # Check if there's a selection
-        if self.hex_viewer and hasattr(self.hex_viewer, "selection_start"):
-            if self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1:
-                self.selection_check.setEnabled(True)
-                selection_size = self.hex_viewer.selection_end - self.hex_viewer.selection_start
-                self.selection_check.setText(f"Selection only ({selection_size} bytes)")
+        if self.hex_viewer and hasattr(self.hex_viewer, "selection_start") and (self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1):
+            self.selection_check.setEnabled(True)
+            selection_size = self.hex_viewer.selection_end - self.hex_viewer.selection_start
+            self.selection_check.setText(f"Selection only ({selection_size} bytes)")
 
         range_layout.addWidget(self.selection_check)
 
@@ -234,7 +226,9 @@ class PrintOptionsDialog(QDialog):
 
         button_layout.addStretch()
 
-        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
         button_box.accepted.connect(self.print_document)
         button_box.rejected.connect(self.reject)
         button_layout.addWidget(button_box)
@@ -283,7 +277,7 @@ class PrintOptionsDialog(QDialog):
         """
         self.footer_edit.setEnabled(checked)
 
-    def get_print_data(self) -> tuple[Optional[bytes], int]:
+    def get_print_data(self) -> tuple[bytes | None, int]:
         """Get the data to print based on selected range.
 
         Returns:
@@ -355,12 +349,9 @@ class PrintOptionsDialog(QDialog):
         # Add ASCII if enabled
         if self.show_ascii_check.isChecked():
             line += "  "
-            ascii_str = ""
-            for byte in data_chunk:
-                if 32 <= byte < 127:
-                    ascii_str += chr(byte)
-                else:
-                    ascii_str += "."
+            ascii_str = "".join(
+                chr(byte) if 32 <= byte < 127 else "." for byte in data_chunk
+            )
             # Pad ASCII if needed
             if len(data_chunk) < bytes_per_row:
                 ascii_str += " " * (bytes_per_row - len(data_chunk))
@@ -430,10 +421,10 @@ class PrintOptionsDialog(QDialog):
                     break
 
                 data_end = min(data_start + bytes_per_row, page_end)
-                data_chunk = data[data_start:data_end]
-
-                if data_chunk:
-                    line = self.format_hex_line(start_offset + data_start, data_chunk, bytes_per_row)
+                if data_chunk := data[data_start:data_end]:
+                    line = self.format_hex_line(
+                        start_offset + data_start, data_chunk, bytes_per_row
+                    )
                     painter.drawText(content_rect.left(), y_pos, line)
                     y_pos += line_height
 
@@ -475,9 +466,9 @@ class PrintOptionsDialog(QDialog):
         text = text.replace("%filename%", filename)
         text = text.replace("%page%", str(page_num))
         text = text.replace("%total%", str(total_pages))
-        text = text.replace("%date%", datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
-
-        return text
+        return text.replace(
+            "%date%", datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+        )
 
     def calculate_total_pages(self, data: bytes) -> int:
         """Calculate total number of pages.

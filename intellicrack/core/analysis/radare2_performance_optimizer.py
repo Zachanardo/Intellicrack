@@ -32,6 +32,7 @@ from intellicrack.handlers.psutil_handler import psutil
 
 from ...utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 try:
@@ -216,7 +217,9 @@ class R2PerformanceOptimizer:
             "memory_available": psutil.virtual_memory().available,
             "memory_percent": psutil.virtual_memory().percent,
             "cpu_percent": psutil.cpu_percent(interval=1),
-            "disk_usage": psutil.disk_usage("/").percent if os.name != "nt" else psutil.disk_usage("C:\\").percent,
+            "disk_usage": psutil.disk_usage("/").percent
+            if os.name != "nt"
+            else psutil.disk_usage("C:\\").percent,
         }
 
     def optimize_for_binary(self, binary_path: str) -> dict[str, Any]:
@@ -291,24 +294,23 @@ class R2PerformanceOptimizer:
             # Quick r2 analysis for file type and architecture
             with r2pipe.open(binary_path, flags=["-nn"]) as r2:
                 try:
-                    # Get basic file info
-                    info = r2.cmdj("ij")
-                    if info:
+                    if info := r2.cmdj("ij"):
                         characteristics["file_type"] = info.get("core", {}).get("type", "unknown")
                         characteristics["architecture"] = info.get("bin", {}).get("arch", "unknown")
-                        characteristics["is_stripped"] = not info.get("bin", {}).get("stripped", True)
+                        characteristics["is_stripped"] = not info.get("bin", {}).get(
+                            "stripped", True
+                        )
 
-                        # Get section and import counts for complexity estimation
-                        sections = r2.cmdj("iSj")
-                        if sections:
+                        if sections := r2.cmdj("iSj"):
                             characteristics["section_count"] = len(sections)
 
-                        imports = r2.cmdj("iij")
-                        if imports:
+                        if imports := r2.cmdj("iij"):
                             characteristics["import_count"] = len(imports)
 
                     # Estimate complexity
-                    characteristics["complexity_estimate"] = self._estimate_complexity(characteristics)
+                    characteristics["complexity_estimate"] = self._estimate_complexity(
+                        characteristics
+                    )
 
                 except Exception as e:
                     self.logger.warning(f"Failed to get detailed binary info: {e}")
@@ -362,9 +364,7 @@ class R2PerformanceOptimizer:
             return "very_high"
         if complexity_score >= 5:
             return "high"
-        if complexity_score >= 3:
-            return "medium"
-        return "low"
+        return "medium" if complexity_score >= 3 else "low"
 
     def _select_performance_profile(self, binary_info: dict[str, Any]) -> PerformanceProfile:
         """Select appropriate performance profile based on binary characteristics.
@@ -389,7 +389,9 @@ class R2PerformanceOptimizer:
         return self.PERFORMANCE_PROFILES["huge_files"]
 
     def _customize_profile_for_system(
-        self, profile: PerformanceProfile, binary_info: dict[str, Any]
+        self,
+        profile: PerformanceProfile,
+        binary_info: dict[str, Any],
     ) -> dict[str, Any]:
         """Customize profile based on current system resources.
 
@@ -439,7 +441,9 @@ class R2PerformanceOptimizer:
 
         return config
 
-    def _apply_strategy_optimizations(self, config: dict[str, Any], binary_info: dict[str, Any]) -> dict[str, Any]:
+    def _apply_strategy_optimizations(
+        self, config: dict[str, Any], binary_info: dict[str, Any]
+    ) -> dict[str, Any]:
         """Apply strategy-specific optimizations.
 
         Args:
@@ -489,7 +493,7 @@ class R2PerformanceOptimizer:
         config["r2_flags"].extend(memory_flags)
 
         # Use lighter analysis
-        if config["analysis_level"] == "aaaa" or config["analysis_level"] == "aaa":
+        if config["analysis_level"] in ["aaaa", "aaa"]:
             config["analysis_level"] = "aa"
 
         return config
@@ -530,7 +534,9 @@ class R2PerformanceOptimizer:
 
         return config
 
-    def _apply_large_file_optimizations(self, config: dict[str, Any], binary_info: dict[str, Any]) -> dict[str, Any]:
+    def _apply_large_file_optimizations(
+        self, config: dict[str, Any], binary_info: dict[str, Any]
+    ) -> dict[str, Any]:
         """Apply optimizations specifically for large files.
 
         Args:
@@ -669,7 +675,10 @@ class R2PerformanceOptimizer:
         """
         self.logger.warning(f"Emergency optimization triggered: {reason}")
 
-        if reason == "memory_critical":
+        if reason == "cpu_high":
+            # Throttle operations
+            time.sleep(1)
+        elif reason == "memory_critical":
             # Force garbage collection
             gc.collect()
 
@@ -678,10 +687,6 @@ class R2PerformanceOptimizer:
 
             # Reduce monitoring frequency
             time.sleep(2)
-
-        elif reason == "cpu_high":
-            # Throttle operations
-            time.sleep(1)
 
     def optimize_r2_session(self, r2_session: object, config: dict[str, Any]) -> None:
         """Apply optimizations to active r2 session.
@@ -729,7 +734,9 @@ class R2PerformanceOptimizer:
         stats["total_file_size"] += file_size
         stats["avg_file_size"] = stats["total_file_size"] / stats["usage_count"]
 
-        self.logger.debug(f"Profile {profile_name} used {stats['usage_count']} times, avg file size: {stats['avg_file_size']:.2f} bytes")
+        self.logger.debug(
+            f"Profile {profile_name} used {stats['usage_count']} times, avg file size: {stats['avg_file_size']:.2f} bytes"
+        )
 
     def get_performance_report(self) -> dict[str, Any]:
         """Generate comprehensive performance report.
@@ -738,31 +745,47 @@ class R2PerformanceOptimizer:
             Dictionary containing system info, strategy, metrics, and recommendations.
 
         """
-        report = {
+        return {
             "system_info": self._get_system_info(),
             "strategy": self.strategy.value,
             "metrics": {
                 "memory_usage": {
-                    "current": self.performance_metrics["memory_usage"][-1] if self.performance_metrics["memory_usage"] else 0,
-                    "average": sum(self.performance_metrics["memory_usage"]) / len(self.performance_metrics["memory_usage"])
-                    if self.performance_metrics["memory_usage"]
-                    else 0,
+                    "current": (
+                        self.performance_metrics["memory_usage"][-1]
+                        if self.performance_metrics["memory_usage"]
+                        else 0
+                    ),
+                    "average": (
+                        sum(self.performance_metrics["memory_usage"])
+                        / len(self.performance_metrics["memory_usage"])
+                        if self.performance_metrics["memory_usage"]
+                        else 0
+                    ),
                     "peak": self.performance_metrics["resource_peaks"]["memory"],
                 },
                 "cpu_usage": {
-                    "current": self.performance_metrics["cpu_usage"][-1] if self.performance_metrics["cpu_usage"] else 0,
-                    "average": sum(self.performance_metrics["cpu_usage"]) / len(self.performance_metrics["cpu_usage"])
-                    if self.performance_metrics["cpu_usage"]
-                    else 0,
+                    "current": (
+                        self.performance_metrics["cpu_usage"][-1]
+                        if self.performance_metrics["cpu_usage"]
+                        else 0
+                    ),
+                    "average": (
+                        sum(self.performance_metrics["cpu_usage"])
+                        / len(self.performance_metrics["cpu_usage"])
+                        if self.performance_metrics["cpu_usage"]
+                        else 0
+                    ),
                     "peak": self.performance_metrics["resource_peaks"]["cpu"],
                 },
-                "analysis_times": self.performance_metrics["analysis_times"].copy(),
-                "optimization_effectiveness": self.performance_metrics["optimization_effectiveness"].copy(),
+                "analysis_times": self.performance_metrics[
+                    "analysis_times"
+                ].copy(),
+                "optimization_effectiveness": self.performance_metrics[
+                    "optimization_effectiveness"
+                ].copy(),
             },
             "recommendations": self._generate_recommendations(),
         }
-
-        return report
 
     def _generate_recommendations(self) -> list[str]:
         """Generate performance optimization recommendations.
@@ -775,9 +798,12 @@ class R2PerformanceOptimizer:
 
         # Memory recommendations
         if self.performance_metrics["resource_peaks"]["memory"] > 90:
-            recommendations.append("Consider using memory-conservative strategy for future analyses")
-            recommendations.append("Reduce parallel workers to decrease memory usage")
-
+            recommendations.extend(
+                (
+                    "Consider using memory-conservative strategy for future analyses",
+                    "Reduce parallel workers to decrease memory usage",
+                )
+            )
         # CPU recommendations
         if self.performance_metrics["resource_peaks"]["cpu"] > 90:
             recommendations.append("Consider reducing analysis depth for better CPU performance")
@@ -792,7 +818,9 @@ class R2PerformanceOptimizer:
 
         return recommendations
 
-    def benchmark_analysis_types(self, binary_path: str, analysis_types: list[str]) -> dict[str, dict[str, float]]:
+    def benchmark_analysis_types(
+        self, binary_path: str, analysis_types: list[str]
+    ) -> dict[str, dict[str, float]]:
         """Benchmark different analysis types for performance comparison.
 
         Args:

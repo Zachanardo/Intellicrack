@@ -16,6 +16,7 @@ from typing import Any
 
 from ...utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 try:
@@ -153,7 +154,9 @@ class BinaryPatternDetector:
         # Modern VMProtect 3.x detection patterns
         self.add_pattern(
             BinaryPattern(
-                pattern_bytes=bytes.fromhex("E8 00 00 00 00 58 05 00 00 00 00 50 64 FF 35 00 00 00 00"),
+                pattern_bytes=bytes.fromhex(
+                    "E8 00 00 00 00 58 05 00 00 00 00 50 64 FF 35 00 00 00 00"
+                ),
                 mask=bytes.fromhex("FF 00 00 00 00 FF FF 00 00 00 00 FF FF FF FF 00 00 00 00"),
                 name="vmprotect3_mutation_engine",
                 category="protection",
@@ -168,8 +171,12 @@ class BinaryPatternDetector:
         # Denuvo Anti-Tamper v11+ patterns
         self.add_pattern(
             BinaryPattern(
-                pattern_bytes=bytes.fromhex("48 8D 05 00 00 00 00 48 89 44 24 08 48 8D 44 24 30 48 89 04 24"),
-                mask=bytes.fromhex("FF FF FF 00 00 00 00 FF FF FF FF FF FF FF FF FF FF FF FF FF FF"),
+                pattern_bytes=bytes.fromhex(
+                    "48 8D 05 00 00 00 00 48 89 44 24 08 48 8D 44 24 30 48 89 04 24"
+                ),
+                mask=bytes.fromhex(
+                    "FF FF FF 00 00 00 00 FF FF FF FF FF FF FF FF FF FF FF FF FF FF"
+                ),
                 name="denuvo_v11_validation_core",
                 category="licensing",
                 match_type=PatternMatchType.POSITION_INDEPENDENT,
@@ -183,22 +190,32 @@ class BinaryPatternDetector:
         # Steam DRM with CEG (Custom Executable Generation) protection
         self.add_pattern(
             BinaryPattern(
-                pattern_bytes=bytes.fromhex("55 8B EC 53 8B 5D 08 56 8B 75 0C 57 8B 7D 10 85 F6 75 09"),
+                pattern_bytes=bytes.fromhex(
+                    "55 8B EC 53 8B 5D 08 56 8B 75 0C 57 8B 7D 10 85 F6 75 09"
+                ),
                 mask=bytes.fromhex("FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF"),
                 name="steam_ceg_drm_validation",
                 category="licensing",
                 match_type=PatternMatchType.EXACT,
                 description="Steam CEG (Custom Executable Generation) DRM validation routine",
                 confidence=0.91,
-                metadata={"drm_type": "steam_ceg", "patch_priority": "high", "bypass_method": "nop_validation"},
+                metadata={
+                    "drm_type": "steam_ceg",
+                    "patch_priority": "high",
+                    "bypass_method": "nop_validation",
+                },
             ),
         )
 
         # Arxan TransformIT obfuscation pattern
         self.add_pattern(
             BinaryPattern(
-                pattern_bytes=bytes.fromhex("48 83 EC 28 48 8D 0D 00 00 00 00 FF 15 00 00 00 00 85 C0 74 00"),
-                mask=bytes.fromhex("FF FF FF FF FF FF FF 00 00 00 00 FF FF 00 00 00 00 FF FF FF 00"),
+                pattern_bytes=bytes.fromhex(
+                    "48 83 EC 28 48 8D 0D 00 00 00 00 FF 15 00 00 00 00 85 C0 74 00"
+                ),
+                mask=bytes.fromhex(
+                    "FF FF FF FF FF FF FF 00 00 00 00 FF FF 00 00 00 00 FF FF FF 00"
+                ),
                 name="arxan_transformit_check",
                 category="obfuscation",
                 match_type=PatternMatchType.RELOCATION_AWARE,
@@ -212,8 +229,12 @@ class BinaryPatternDetector:
         # Modern hardware-locked licensing (HASP/Sentinel)
         self.add_pattern(
             BinaryPattern(
-                pattern_bytes=bytes.fromhex("68 00 00 00 00 68 00 00 00 00 68 00 00 00 00 E8 00 00 00 00 83 C4 0C 85 C0"),
-                mask=bytes.fromhex("FF 00 00 00 00 FF 00 00 00 00 FF 00 00 00 00 FF 00 00 00 00 FF FF FF FF FF"),
+                pattern_bytes=bytes.fromhex(
+                    "68 00 00 00 00 68 00 00 00 00 68 00 00 00 00 E8 00 00 00 00 83 C4 0C 85 C0"
+                ),
+                mask=bytes.fromhex(
+                    "FF 00 00 00 00 FF 00 00 00 00 FF 00 00 00 00 FF 00 00 00 00 FF FF FF FF FF"
+                ),
                 name="hasp_sentinel_hardware_check",
                 category="licensing",
                 match_type=PatternMatchType.CROSS_REFERENCE,
@@ -227,8 +248,12 @@ class BinaryPatternDetector:
         # FlexLM/FlexNet licensing system
         self.add_pattern(
             BinaryPattern(
-                pattern_bytes=bytes.fromhex("8B 45 FC 50 8B 4D F8 51 8B 55 F4 52 8B 45 F0 50 E8 00 00 00 00"),
-                mask=bytes.fromhex("FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF 00 00 00 00"),
+                pattern_bytes=bytes.fromhex(
+                    "8B 45 FC 50 8B 4D F8 51 8B 55 F4 52 8B 45 F0 50 E8 00 00 00 00"
+                ),
+                mask=bytes.fromhex(
+                    "FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF 00 00 00 00"
+                ),
                 name="flexlm_license_checkout",
                 category="licensing",
                 match_type=PatternMatchType.RELOCATION_AWARE,
@@ -257,7 +282,9 @@ class BinaryPatternDetector:
         # SecuROM v8+ activation system
         self.add_pattern(
             BinaryPattern(
-                pattern_bytes=bytes.fromhex("8D 85 00 00 00 00 50 8D 8D 00 00 00 00 51 FF 15 00 00 00 00"),
+                pattern_bytes=bytes.fromhex(
+                    "8D 85 00 00 00 00 50 8D 8D 00 00 00 00 51 FF 15 00 00 00 00"
+                ),
                 mask=bytes.fromhex("FF FF 00 00 00 00 FF FF FF 00 00 00 00 FF FF FF 00 00 00 00"),
                 name="securom_v8_activation",
                 category="licensing",
@@ -286,7 +313,9 @@ class BinaryPatternDetector:
         # Modern .NET licensing (ConfuserEx + custom)
         self.add_pattern(
             BinaryPattern(
-                pattern_bytes=bytes.fromhex("72 00 00 00 70 28 00 00 00 0A 6F 00 00 00 0A 16 FE 01"),
+                pattern_bytes=bytes.fromhex(
+                    "72 00 00 00 70 28 00 00 00 0A 6F 00 00 00 0A 16 FE 01"
+                ),
                 mask=bytes.fromhex("FF 00 00 00 FF FF 00 00 00 FF FF 00 00 00 FF FF FF FF"),
                 name="dotnet_confuser_license",
                 category="licensing",
@@ -300,7 +329,9 @@ class BinaryPatternDetector:
         # Advanced UPX 4.x with LZMA2 compression
         self.add_pattern(
             BinaryPattern(
-                pattern_bytes=bytes.fromhex("60 BE 00 00 00 00 8D BE 00 00 00 00 57 89 E5 83 EC 10"),
+                pattern_bytes=bytes.fromhex(
+                    "60 BE 00 00 00 00 8D BE 00 00 00 00 57 89 E5 83 EC 10"
+                ),
                 mask=bytes.fromhex("FF FF 00 00 00 00 FF FF 00 00 00 00 FF FF FF FF FF FF"),
                 name="upx4_lzma2_advanced",
                 category="packer",
@@ -330,7 +361,9 @@ class BinaryPatternDetector:
         # Timing-based license expiration check
         self.add_pattern(
             BinaryPattern(
-                pattern_bytes=bytes.fromhex("0F 31 48 C1 E2 20 48 09 D0 48 89 45 F8 E8 00 00 00 00"),
+                pattern_bytes=bytes.fromhex(
+                    "0F 31 48 C1 E2 20 48 09 D0 48 89 45 F8 E8 00 00 00 00"
+                ),
                 mask=bytes.fromhex("FF FF FF FF FF FF FF FF FF FF FF FF FF FF 00 00 00 00"),
                 name="rdtsc_license_timing",
                 category="licensing",
@@ -343,7 +376,9 @@ class BinaryPatternDetector:
         # Elliptic Curve licensing signature (Ed25519/ECDSA)
         self.add_pattern(
             BinaryPattern(
-                pattern_bytes=bytes.fromhex("48 8D 4D E0 48 8D 55 C0 48 8D 45 A0 49 89 C8 E8 00 00 00 00"),
+                pattern_bytes=bytes.fromhex(
+                    "48 8D 4D E0 48 8D 55 C0 48 8D 45 A0 49 89 C8 E8 00 00 00 00"
+                ),
                 mask=bytes.fromhex("FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF 00 00 00 00"),
                 name="ecc_license_signature",
                 category="licensing",
@@ -358,7 +393,9 @@ class BinaryPatternDetector:
         # Blockchain-based license validation
         self.add_pattern(
             BinaryPattern(
-                pattern_bytes=bytes.fromhex("48 8B 05 00 00 00 00 48 85 C0 74 00 48 8B 40 08 48 85 C0"),
+                pattern_bytes=bytes.fromhex(
+                    "48 8B 05 00 00 00 00 48 85 C0 74 00 48 8B 40 08 48 85 C0"
+                ),
                 mask=bytes.fromhex("FF FF FF 00 00 00 00 FF FF FF FF 00 FF FF FF FF FF FF FF"),
                 name="blockchain_license_check",
                 category="licensing",
@@ -373,8 +410,12 @@ class BinaryPatternDetector:
         # Cloud activation with certificate pinning
         self.add_pattern(
             BinaryPattern(
-                pattern_bytes=bytes.fromhex("68 00 00 00 00 68 00 00 00 00 E8 00 00 00 00 83 C4 08 85 C0 0F 84 00 00 00 00"),
-                mask=bytes.fromhex("FF 00 00 00 00 FF 00 00 00 00 FF 00 00 00 00 FF FF FF FF FF FF FF 00 00 00 00"),
+                pattern_bytes=bytes.fromhex(
+                    "68 00 00 00 00 68 00 00 00 00 E8 00 00 00 00 83 C4 08 85 C0 0F 84 00 00 00 00"
+                ),
+                mask=bytes.fromhex(
+                    "FF 00 00 00 00 FF 00 00 00 00 FF 00 00 00 00 FF FF FF FF FF FF FF 00 00 00 00"
+                ),
                 name="cloud_activation_pinning",
                 category="licensing",
                 match_type=PatternMatchType.CROSS_REFERENCE,
@@ -404,17 +445,27 @@ class BinaryPatternDetector:
             current_segment = bytearray()
             current_mask = bytearray()
 
-            for i, (byte, mask) in enumerate(zip(pattern.pattern_bytes, pattern.mask, strict=False)):
+            for i, (byte, mask) in enumerate(
+                zip(pattern.pattern_bytes, pattern.mask, strict=False)
+            ):
                 if mask == 0xFF:
                     current_segment.append(byte)
                     current_mask.append(mask)
                 elif current_segment:
-                    segments.append((bytes(current_segment), bytes(current_mask), i - len(current_segment)))
+                    segments.append(
+                        (bytes(current_segment), bytes(current_mask), i - len(current_segment))
+                    )
                     current_segment = bytearray()
                     current_mask = bytearray()
 
             if current_segment:
-                segments.append((bytes(current_segment), bytes(current_mask), len(pattern.pattern_bytes) - len(current_segment)))
+                segments.append(
+                    (
+                        bytes(current_segment),
+                        bytes(current_mask),
+                        len(pattern.pattern_bytes) - len(current_segment),
+                    )
+                )
 
             self.compiled_patterns[key] = segments
 
@@ -436,7 +487,11 @@ class BinaryPatternDetector:
         instructions = []
 
         for insn in cs.disasm(pattern.pattern_bytes, 0):
-            insn_info = {"mnemonic": insn.mnemonic, "op_count": len(insn.operands), "groups": list(insn.groups)}
+            insn_info = {
+                "mnemonic": insn.mnemonic,
+                "op_count": len(insn.operands),
+                "groups": list(insn.groups),
+            }
 
             # Check for position-dependent operands
             for op in insn.operands:
@@ -453,23 +508,23 @@ class BinaryPatternDetector:
 
     def _build_reloc_pattern(self, pattern: BinaryPattern) -> dict[str, Any]:
         """Build relocation-aware pattern matching structure."""
-        # Identify potential relocation points in pattern
-        reloc_points = []
-
-        # Look for 32/64-bit immediate values that could be addresses
-        for i in range(len(pattern.pattern_bytes) - 3):
-            if pattern.mask[i : i + 4] == b"\x00\x00\x00\x00":
-                # Wildcard 4-byte value - potential relocation
-                reloc_points.append(i)
-
-        return {"base_pattern": pattern.pattern_bytes, "mask": pattern.mask, "reloc_offsets": reloc_points}
+        reloc_points = [
+            i
+            for i in range(len(pattern.pattern_bytes) - 3)
+            if pattern.mask[i : i + 4] == b"\x00\x00\x00\x00"
+        ]
+        return {
+            "base_pattern": pattern.pattern_bytes,
+            "mask": pattern.mask,
+            "reloc_offsets": reloc_points,
+        }
 
     def scan_binary(self, data: bytes, patterns: list[str] | None = None) -> list[PatternMatch]:
         """Scan binary data for all configured patterns."""
         matches = []
 
         # Select patterns to scan
-        categories = patterns if patterns else self.patterns.keys()
+        categories = patterns or self.patterns.keys()
 
         for category in categories:
             for pattern in self.patterns.get(category, []):
@@ -564,22 +619,23 @@ class BinaryPatternDetector:
             match_start = offset - first_offset
 
             # Verify complete pattern match
-            if match_start >= 0 and match_start + pattern_len <= len(data):
-                if self._verify_wildcard_match(data[match_start : match_start + pattern_len], pattern):
-                    # Extract context
-                    ctx_start = max(0, match_start - pattern.context_size)
-                    ctx_end = min(len(data), match_start + pattern_len + pattern.context_size)
+            if match_start >= 0 and match_start + pattern_len <= len(data) and self._verify_wildcard_match(
+                                data[match_start : match_start + pattern_len], pattern
+                            ):
+                ctx_start = max(0, match_start - pattern.context_size)
+                ctx_end = min(len(data), match_start + pattern_len + pattern.context_size)
 
-                    match = PatternMatch(
-                        pattern=pattern,
-                        offset=match_start,
-                        matched_bytes=data[match_start : match_start + pattern_len],
-                        confidence=pattern.confidence * 0.95,  # Slightly lower confidence for wildcards
-                        context_before=data[ctx_start:match_start],
-                        context_after=data[match_start + pattern_len : ctx_end],
-                    )
+                match = PatternMatch(
+                    pattern=pattern,
+                    offset=match_start,
+                    matched_bytes=data[match_start : match_start + pattern_len],
+                    confidence=pattern.confidence
+                    * 0.95,  # Slightly lower confidence for wildcards
+                    context_before=data[ctx_start:match_start],
+                    context_after=data[match_start + pattern_len : ctx_end],
+                )
 
-                    matches.append(match)
+                matches.append(match)
 
             offset += 1
 
@@ -593,11 +649,12 @@ class BinaryPatternDetector:
         if len(data) != len(pattern.pattern_bytes):
             return False
 
-        for _i, (d, p, m) in enumerate(zip(data, pattern.pattern_bytes, pattern.mask, strict=False)):
-            if m == 0xFF and d != p:
-                return False
-
-        return True
+        return not any(
+            m == 0xFF and d != p
+            for d, p, m in zip(
+                data, pattern.pattern_bytes, pattern.mask, strict=False
+            )
+        )
 
     def _pic_match(self, data: bytes, pattern: BinaryPattern) -> list[PatternMatch]:
         """Match position-independent code patterns."""
@@ -615,10 +672,12 @@ class BinaryPatternDetector:
         cs = self.cs_x86  # Default to 32-bit
 
         # Scan for instruction sequences
-        for offset in range(0, len(data) - 100, 1):
+        for offset in range(len(data) - 100):
             if self._match_instruction_sequence(data, offset, pattern_insns, cs):
                 # Calculate match size
-                match_size = self._get_instruction_sequence_size(data, offset, len(pattern_insns), cs)
+                match_size = self._get_instruction_sequence_size(
+                    data, offset, len(pattern_insns), cs
+                )
 
                 # Extract context
                 ctx_start = max(0, offset - pattern.context_size)
@@ -639,7 +698,9 @@ class BinaryPatternDetector:
 
         return matches
 
-    def _match_instruction_sequence(self, data: bytes, offset: int, pattern_insns: list[dict], cs: Cs) -> bool:
+    def _match_instruction_sequence(
+        self, data: bytes, offset: int, pattern_insns: list[dict], cs: Cs
+    ) -> bool:
         """Match instruction sequence semantically."""
         try:
             code = data[offset : offset + 100]
@@ -648,7 +709,9 @@ class BinaryPatternDetector:
             if len(instructions) < len(pattern_insns):
                 return False
 
-            for _i, (insn, pattern) in enumerate(zip(instructions[: len(pattern_insns)], pattern_insns, strict=False)):
+            for _i, (insn, pattern) in enumerate(
+                zip(instructions[: len(pattern_insns)], pattern_insns, strict=False)
+            ):
                 if insn.mnemonic != pattern["mnemonic"]:
                     return False
 
@@ -692,7 +755,9 @@ class BinaryPatternDetector:
 
         # Scan with relocation awareness
         for offset in range(len(data) - len(base_pattern)):
-            if self._match_with_relocations(data[offset:], base_pattern, mask, reloc_offsets, relocations, offset):
+            if self._match_with_relocations(
+                data[offset:], base_pattern, mask, reloc_offsets, relocations, offset
+            ):
                 # Extract context
                 pattern_len = len(base_pattern)
                 ctx_start = max(0, offset - pattern.context_size)
@@ -715,7 +780,13 @@ class BinaryPatternDetector:
         return matches
 
     def _match_with_relocations(
-        self, data: bytes, pattern: bytes, mask: bytes, reloc_offsets: list[int], relocations: list[tuple[int, str]], base_offset: int,
+        self,
+        data: bytes,
+        pattern: bytes,
+        mask: bytes,
+        reloc_offsets: list[int],
+        relocations: list[tuple[int, str]],
+        base_offset: int,
     ) -> bool:
         """Match pattern considering relocations."""
         if len(data) < len(pattern):
@@ -738,7 +809,11 @@ class BinaryPatternDetector:
     def _xref_match(self, data: bytes, pattern: BinaryPattern) -> list[PatternMatch]:
         """Match patterns with cross-reference analysis."""
         # First do basic matching
-        matches = self._wildcard_match(data, pattern) if pattern.mask else self._exact_match(data, pattern)
+        matches = (
+            self._wildcard_match(data, pattern)
+            if pattern.mask
+            else self._exact_match(data, pattern)
+        )
 
         # Enhance with cross-reference data
         for match in matches:
@@ -757,15 +832,18 @@ class BinaryPatternDetector:
 
         try:
             pe = pefile.PE(data=data, fast_load=True)
-            pe.parse_data_directories(directories=[pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_BASERELOC"]])
+            pe.parse_data_directories(
+                directories=[pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_BASERELOC"]]
+            )
 
             relocations = []
             if hasattr(pe, "DIRECTORY_ENTRY_BASERELOC"):
                 for reloc in pe.DIRECTORY_ENTRY_BASERELOC:
-                    for entry in reloc.entries:
-                        if entry.type != 0:  # Not padding
-                            relocations.append((entry.rva, f"TYPE_{entry.type}"))
-
+                    relocations.extend(
+                        (entry.rva, f"TYPE_{entry.type}")
+                        for entry in reloc.entries
+                        if entry.type != 0
+                    )
             return relocations
 
         except Exception as e:
@@ -799,9 +877,8 @@ class BinaryPatternDetector:
                         if insn.group(CS_GRP_JUMP) or insn.group(CS_GRP_CALL):
                             # Check if target is our offset
                             for op in insn.operands:
-                                if op.type == X86_OP_IMM:
-                                    if op.imm == offset:
-                                        xrefs.append(insn.address)
+                                if op.type == X86_OP_IMM and op.imm == offset:
+                                    xrefs.append(insn.address)
                         break  # Only check first instruction
                 except Exception as e:
                     # Log the exception with details for debugging
@@ -835,15 +912,23 @@ class BinaryPatternDetector:
 
         try:
             code = data[offset : offset + size]
-            for insn in cs.disasm(code, offset):
-                disasm.append(f"0x{insn.address:08x}: {insn.mnemonic} {insn.op_str}")
+            disasm.extend(
+                f"0x{insn.address:08x}: {insn.mnemonic} {insn.op_str}"
+                for insn in cs.disasm(code, offset)
+            )
         except Exception as e:
             logger.debug(f"Disassembly failed: {e}")
 
         return disasm
 
     def add_custom_pattern(
-        self, pattern_bytes: str, mask: str, name: str, category: str, match_type: PatternMatchType = PatternMatchType.WILDCARD, **kwargs: object,
+        self,
+        pattern_bytes: str,
+        mask: str,
+        name: str,
+        category: str,
+        match_type: PatternMatchType = PatternMatchType.WILDCARD,
+        **kwargs: object,
     ) -> bool:
         """Add a custom pattern from hex strings."""
         try:
@@ -852,7 +937,14 @@ class BinaryPatternDetector:
             mask_bytes = bytes.fromhex(mask.replace(" ", ""))
 
             # Create pattern object
-            bp = BinaryPattern(pattern_bytes=pattern, mask=mask_bytes, name=name, category=category, match_type=match_type, **kwargs)
+            bp = BinaryPattern(
+                pattern_bytes=pattern,
+                mask=mask_bytes,
+                name=name,
+                category=category,
+                match_type=match_type,
+                **kwargs,
+            )
 
             self.add_pattern(bp)
             return True
@@ -866,26 +958,27 @@ class BinaryPatternDetector:
         try:
             import json
 
-            patterns_data = {}
-            for category, patterns in self.patterns.items():
-                patterns_data[category] = []
-                for pattern in patterns:
-                    patterns_data[category].append(
-                        {
-                            "name": pattern.name,
-                            "bytes": pattern.pattern_bytes.hex(),
-                            "mask": pattern.mask.hex(),
-                            "match_type": pattern.match_type.value,
-                            "confidence": pattern.confidence,
-                            "description": pattern.description,
-                            "metadata": pattern.metadata,
-                        },
-                    )
-
+            patterns_data = {
+                category: [
+                    {
+                        "name": pattern.name,
+                        "bytes": pattern.pattern_bytes.hex(),
+                        "mask": pattern.mask.hex(),
+                        "match_type": pattern.match_type.value,
+                        "confidence": pattern.confidence,
+                        "description": pattern.description,
+                        "metadata": pattern.metadata,
+                    }
+                    for pattern in patterns
+                ]
+                for category, patterns in self.patterns.items()
+            }
             with open(file_path, "w") as f:
                 json.dump(patterns_data, f, indent=2)
 
-            logger.info(f"Exported {sum(len(p) for p in self.patterns.values())} patterns to {file_path}")
+            logger.info(
+                f"Exported {sum(len(p) for p in self.patterns.values())} patterns to {file_path}"
+            )
             return True
 
         except Exception as e:
@@ -925,7 +1018,11 @@ class BinaryPatternDetector:
 
     def get_pattern_statistics(self) -> dict[str, Any]:
         """Get pattern database statistics."""
-        stats = {"total_patterns": sum(len(p) for p in self.patterns.values()), "categories": {}, "match_types": defaultdict(int)}
+        stats = {
+            "total_patterns": sum(len(p) for p in self.patterns.values()),
+            "categories": {},
+            "match_types": defaultdict(int),
+        }
 
         for category, patterns in self.patterns.items():
             stats["categories"][category] = len(patterns)

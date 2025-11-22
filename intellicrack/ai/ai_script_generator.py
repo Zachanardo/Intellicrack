@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+
 try:
     from ..core.analysis.binary_analyzer import BinaryAnalyzer
 except ImportError:
@@ -191,15 +192,16 @@ class AIScriptGenerator:
 
     def _analyze_script_structure(self, script: str) -> dict:
         """Analyze script structure to identify enhancement opportunities."""
-        analysis = {
+        return {
             "has_memory_ops": bool(re.search(r"Memory\.|ptr\(", script)),
             "has_hooks": bool(re.search(r"Interceptor\.", script)),
-            "has_crypto": bool(re.search(r"crypt|hash|sign|key", script, re.IGNORECASE)),
+            "has_crypto": bool(
+                re.search(r"crypt|hash|sign|key", script, re.IGNORECASE)
+            ),
             "has_timing": bool(re.search(r"setTimeout|setInterval|sleep", script)),
             "module_count": len(re.findall(r"Module\.", script)),
             "function_count": self._count_functions_robust(script),
         }
-        return analysis
 
     def _count_functions_robust(self, script: str) -> int:
         """Count JavaScript functions with improved accuracy.
@@ -212,13 +214,7 @@ class AIScriptGenerator:
         # Remove string literals to avoid false positives
         script_cleaned = self._remove_js_strings(script_cleaned)
 
-        count = 0
-
-        # Pattern 1: Traditional function declarations
-        # function name() or function name ()
-        pattern1 = r"\bfunction\s+\w+\s*\("
-        count += len(re.findall(pattern1, script_cleaned))
-
+        count = 0 + len(re.findall(r"\bfunction\s+\w+\s*\(", script_cleaned))
         # Pattern 2: Anonymous function expressions
         # function() or function ()
         pattern2 = r"\bfunction\s*\("
@@ -246,7 +242,10 @@ class AIScriptGenerator:
         # Filter out control structures
         matches = re.findall(pattern6, script_cleaned)
         for match in matches:
-            if not any(keyword in match for keyword in ["if", "for", "while", "switch", "catch"]):
+            if all(
+                keyword not in match
+                for keyword in ["if", "for", "while", "switch", "catch"]
+            ):
                 count += 1
 
         # Pattern 7: Getter/Setter methods
@@ -312,7 +311,9 @@ class AIScriptGenerator:
             registry_emulation = self._generate_registry_emulation()
 
             # HWID spoofer has both data and hooks
-            enhancements_by_position["initialization"].append(self._extract_initialization_code(hwid_spoofer))
+            enhancements_by_position["initialization"].append(
+                self._extract_initialization_code(hwid_spoofer)
+            )
             enhancements_by_position["hooks"].append(self._extract_hook_code(hwid_spoofer))
             enhancements_by_position["hooks"].append(registry_emulation)
 
@@ -334,10 +335,7 @@ class AIScriptGenerator:
             enhancements_by_position["hooks"].append(time_manipulation)
             enhancements_by_position["hooks"].append(date_spoofing)
 
-        # Apply grouped enhancements
-        enhanced_script = self._insert_grouped_enhancements(script, enhancements_by_position)
-
-        return enhanced_script
+        return self._insert_grouped_enhancements(script, enhancements_by_position)
 
     def _extract_initialization_code(self, code: str) -> str:
         """Extract initialization/data definition code from enhancement."""
@@ -358,8 +356,8 @@ class AIScriptGenerator:
                 in_hook_function = True
             if in_hook_function:
                 hook_lines.append(line)
-            if in_hook_function and line.strip() == "};":
-                break
+                if line.strip() == "};":
+                    break
 
         return "\n".join(hook_lines) if hook_lines else code
 
@@ -375,7 +373,11 @@ class AIScriptGenerator:
             stripped = line.strip()
 
             # Find last import/require statement
-            if stripped.startswith("import ") or stripped.startswith("const ") or stripped.startswith("var "):
+            if (
+                stripped.startswith("import ")
+                or stripped.startswith("const ")
+                or stripped.startswith("var ")
+            ):
                 insertion_points["after_imports"] = max(insertion_points["after_imports"], i + 1)
 
             # Find main function or entry point
@@ -411,7 +413,10 @@ class AIScriptGenerator:
 
         if initialization_block:
             # Initialization goes right after imports
-            lines.insert(insertion_points["after_imports"], "\n// === Initialization ===\n" + initialization_block + "\n")
+            lines.insert(
+                insertion_points["after_imports"],
+                "\n// === Initialization ===\n" + initialization_block + "\n",
+            )
 
         return "\n".join(lines)
 
@@ -491,14 +496,10 @@ AntiDetection.normalizeTiming();
                 (r"\bMemory\.readU16\s*\(", "cachedReadU16("),
             ]
 
-            # Apply replacements only if the pattern is safe
-            safe_to_cache = True
-            for pattern, _ in memory_patterns:
-                # Check if there are complex nested calls that might break
-                if re.search(pattern + r"[^)]*Memory\.", optimized):
-                    safe_to_cache = False
-                    break
-
+            safe_to_cache = not any(
+                re.search(pattern + r"[^)]*Memory\.", optimized)
+                for pattern, _ in memory_patterns
+            )
             if safe_to_cache:
                 for pattern, replacement in memory_patterns:
                     optimized = re.sub(pattern, replacement, optimized)
@@ -649,11 +650,17 @@ function getCachedExport(moduleName, exportName) {
             optimized = module_cache + "\n" + optimized
 
             # More targeted replacements with word boundaries
-            optimized = re.sub(r"\bProcess\.getModuleByName\s*\(([^)]+)\)", r"getCachedModule(\1)", optimized)
+            optimized = re.sub(
+                r"\bProcess\.getModuleByName\s*\(([^)]+)\)", r"getCachedModule(\1)", optimized
+            )
 
             # Also optimize Module.findExportByName if present
             if re.search(r"\bModule\.findExportByName\s*\(", optimized):
-                optimized = re.sub(r"\bModule\.findExportByName\s*\(([^,]+),\s*([^)]+)\)", r"getCachedExport(\1, \2)", optimized)
+                optimized = re.sub(
+                    r"\bModule\.findExportByName\s*\(([^,]+),\s*([^)]+)\)",
+                    r"getCachedExport(\1, \2)",
+                    optimized,
+                )
 
         return optimized
 
@@ -772,13 +779,11 @@ Interceptor.attach = ErrorHandler.wrapInterceptor(originalAttach);
 """
 
         # Check if script already has try-catch blocks around Interceptor.attach
-        has_existing_error_handling = bool(re.search(r"Interceptor\.attach\s*\([^)]+\)\s*\{[^}]*try\s*\{", script, re.DOTALL))
+        bool(
+            re.search(r"Interceptor\.attach\s*\([^)]+\)\s*\{[^}]*try\s*\{", script, re.DOTALL)
+        )
 
-        if not has_existing_error_handling:
-            # Script doesn't have error handling, our wrapper will handle it
-            return error_handler + "\n\n" + script
-        # Script already has some error handling, just add our framework
-        # without modifying existing code
+        # Script doesn't have error handling, our wrapper will handle it
         return error_handler + "\n\n" + script
 
     def _add_dynamic_adaptation(self, script: str) -> str:
@@ -1678,11 +1683,7 @@ DateSpoofer.spoofAllDateSources();
         add_spacing_before = insert_index > 0 and lines[insert_index - 1].strip() != ""
         add_spacing_after = insert_index < len(lines) and lines[insert_index].strip() != ""
 
-        # Build the insertion with appropriate spacing
-        insertion = ""
-        if add_spacing_before:
-            insertion = "\n"
-        insertion += enhancement
+        insertion = ("\n" if add_spacing_before else "") + enhancement
         if add_spacing_after:
             insertion += "\n"
 

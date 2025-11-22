@@ -64,7 +64,7 @@ class LicenseTrafficPattern:
     client_port: int
     payload_pattern: bytes
     encryption_detected: bool
-    license_server_type: Optional[str] = None
+    license_server_type: str | None = None
 
 
 @dataclass
@@ -72,10 +72,10 @@ class NetworkAnalysisResult:
     """Expected results from network traffic analysis."""
     total_packets: int
     license_connections: int
-    protocols_detected: List[str]
-    suspicious_indicators: List[str]
-    server_endpoints: List[Tuple[str, int]]
-    statistical_metrics: Dict[str, float]
+    protocols_detected: list[str]
+    suspicious_indicators: list[str]
+    server_endpoints: list[tuple[str, int]]
+    statistical_metrics: dict[str, float]
 
 
 class TestNetworkTrafficAnalyzer:
@@ -142,7 +142,7 @@ class TestNetworkTrafficAnalyzer:
 
                             client.send(response)
                             client.close()
-                        except socket.timeout:
+                        except TimeoutError:
                             continue
                         except Exception:
                             break
@@ -175,7 +175,7 @@ class TestNetworkTrafficAnalyzer:
 
                             client.send(hasp_response)
                             client.close()
-                        except socket.timeout:
+                        except TimeoutError:
                             continue
                         except Exception:
                             break
@@ -245,7 +245,7 @@ class TestNetworkTrafficAnalyzer:
 
                     ssl_client.send(response)
                     ssl_client.close()
-                except socket.timeout:
+                except TimeoutError:
                     continue
                 except Exception:
                     break
@@ -913,7 +913,7 @@ class TestNetworkTrafficAnalyzer:
         assert os.path.exists(report_file), "Report file not created"
 
         # Verify report content
-        with open(report_file, 'r', encoding='utf-8') as f:
+        with open(report_file, encoding='utf-8') as f:
             report_content = f.read()
 
         # Check for required report elements
@@ -1017,7 +1017,7 @@ class TestNetworkTrafficAnalyzer:
 
     # Helper methods for test data generation
 
-    def _create_test_connection_data(self) -> Dict[str, Any]:
+    def _create_test_connection_data(self) -> dict[str, Any]:
         """Create realistic test connection data."""
         connections = {}
 

@@ -126,7 +126,7 @@ class TestEntropyCalculation(unittest.TestCase):
 
     def test_unicode_text_entropy(self):
         """Test entropy of Unicode text data."""
-        text = "Hello 世界 مرحبا мир! 🌍".encode("utf-8") * 50
+        text = "Hello 世界 مرحبا мир! 🌍".encode() * 50
         entropy = self.analyzer.calculate_entropy(text)
         self.assertGreater(entropy, 4.0)
         self.assertLess(entropy, 7.0)

@@ -26,6 +26,7 @@ from collections.abc import Callable
 
 from intellicrack.handlers.psutil_handler import psutil
 
+
 """
 Timing Attack Defense
 
@@ -100,7 +101,9 @@ class TimingAttackDefense:
                     elapsed_thread = time.thread_time() - start_thread_time
                     thread_drift = abs(elapsed_thread - elapsed_perf)
                     if thread_drift > 0.1:
-                        self.logger.warning(f"Thread timing anomaly detected: {thread_drift:.3f}s drift")
+                        self.logger.warning(
+                            f"Thread timing anomaly detected: {thread_drift:.3f}s drift"
+                        )
                         return False
 
                 # Check tick count if available
@@ -109,7 +112,9 @@ class TimingAttackDefense:
                     tick_elapsed = (current_tick - start_tick) / 1000.0  # Convert to seconds
                     tick_drift = abs(tick_elapsed - elapsed_perf)
                     if tick_drift > 0.1:
-                        self.logger.warning(f"Tick count timing anomaly detected: {tick_drift:.3f}s drift")
+                        self.logger.warning(
+                            f"Tick count timing anomaly detected: {tick_drift:.3f}s drift"
+                        )
                         return False
 
                 # Check if time is accelerated
@@ -124,9 +129,10 @@ class TimingAttackDefense:
             final_elapsed = time.time() - start_time
             expected_elapsed = duration
 
-            # Allow 5% tolerance
-            if abs(final_elapsed - expected_elapsed) > (duration * 0.05):
-                self.logger.warning(f"Sleep duration mismatch: expected {duration}s, got {final_elapsed}s")
+            if abs(final_elapsed - expected_elapsed) > expected_elapsed * 0.05:
+                self.logger.warning(
+                    f"Sleep duration mismatch: expected {expected_elapsed}s, got {final_elapsed}s"
+                )
                 return False
 
             return True
@@ -263,11 +269,7 @@ class TimingAttackDefense:
             # Measure time for known operation
             start = time.perf_counter_ns()
 
-            # Known operation (should take ~1ms)
-            total = 0
-            for i in range(100000):
-                total += i
-
+            total = sum(range(100000))
             end = time.perf_counter_ns()
 
             elapsed_ns = end - start
@@ -359,7 +361,7 @@ class TimingAttackDefense:
 
     def generate_timing_defense_code(self) -> str:
         """Generate C code for timing attack defense."""
-        code = """
+        return """
 // Timing Attack Defense
 #include <windows.h>
 #include <time.h>
@@ -455,4 +457,3 @@ void ExecutionDelay() {
 ExecutionDelay();  // Delay execution
 StallExecution(2000);  // 2 second stall
 """
-        return code

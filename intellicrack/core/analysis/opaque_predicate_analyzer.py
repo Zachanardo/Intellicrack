@@ -22,15 +22,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+
 import logging
 from dataclasses import dataclass
 from typing import Any, Protocol
 
 from intellicrack.utils.logger import logger
 
-# Type alias for Z3 expressions
-if False:
-    from z3 import ExprRef
 
 Z3Expr = Any  # Z3 expression type - cannot be typed statically
 
@@ -41,6 +39,7 @@ class BasicBlockProtocol(Protocol):
     instructions: list[dict[str, Any]]
     successors: list[int]
     address: int
+
 
 try:
     import z3
@@ -137,7 +136,8 @@ class ConstantPropagationEngine:
                     self.block_entry_states[successor] = exit_state.copy()
                 else:
                     self.block_entry_states[successor] = self._merge_states(
-                        self.block_entry_states[successor], exit_state,
+                        self.block_entry_states[successor],
+                        exit_state,
                     )
 
                 if successor not in visited:
@@ -166,7 +166,9 @@ class ConstantPropagationEngine:
         return mnemonic, operands
 
     def _analyze_block(
-        self, basic_block: BasicBlockProtocol, entry_state: dict[str, ConstantValue],
+        self,
+        basic_block: BasicBlockProtocol,
+        entry_state: dict[str, ConstantValue],
     ) -> dict[str, ConstantValue]:
         """Analyze a single basic block for constant propagation.
 
@@ -206,14 +208,16 @@ class ConstantPropagationEngine:
             elif mnemonic == "call":
                 self._invalidate_volatile_registers(state)
             elif operands:
-                dest = self._extract_register(operands[0])
-                if dest:
+                if dest := self._extract_register(operands[0]):
                     state.pop(dest, None)
 
         return state
 
     def _handle_mov(
-        self, operands: list[str], inst: dict[str, Any], state: dict[str, ConstantValue],
+        self,
+        operands: list[str],
+        inst: dict[str, Any],
+        state: dict[str, ConstantValue],
     ) -> None:
         """Handle MOV instruction.
 
@@ -236,7 +240,10 @@ class ConstantPropagationEngine:
             try:
                 value = int(src, 16)
                 state[dest] = ConstantValue(
-                    register=dest, value=value, is_constant=True, source_instruction=inst,
+                    register=dest,
+                    value=value,
+                    is_constant=True,
+                    source_instruction=inst,
                 )
             except ValueError:
                 state.pop(dest, None)
@@ -244,7 +251,10 @@ class ConstantPropagationEngine:
             try:
                 value = int(src)
                 state[dest] = ConstantValue(
-                    register=dest, value=value, is_constant=True, source_instruction=inst,
+                    register=dest,
+                    value=value,
+                    is_constant=True,
+                    source_instruction=inst,
                 )
             except ValueError:
                 state.pop(dest, None)
@@ -261,7 +271,10 @@ class ConstantPropagationEngine:
                 state.pop(dest, None)
 
     def _handle_lea(
-        self, operands: list[str], inst: dict[str, Any], state: dict[str, ConstantValue],
+        self,
+        operands: list[str],
+        inst: dict[str, Any],
+        state: dict[str, ConstantValue],
     ) -> None:
         """Handle LEA instruction.
 
@@ -274,8 +287,7 @@ class ConstantPropagationEngine:
         if not operands:
             return
 
-        dest = self._extract_register(operands[0])
-        if dest:
+        if dest := self._extract_register(operands[0]):
             state.pop(dest, None)
 
     def _handle_arithmetic(
@@ -301,7 +313,7 @@ class ConstantPropagationEngine:
         if not dest:
             return
 
-        if mnemonic in ["inc"]:
+        if mnemonic in {"inc"}:
             if dest in state and state[dest].is_constant and state[dest].value is not None:
                 state[dest] = ConstantValue(
                     register=dest,
@@ -417,7 +429,10 @@ class ConstantPropagationEngine:
 
         if mnemonic == "xor" and dest == src_reg:
             state[dest] = ConstantValue(
-                register=dest, value=0, is_constant=True, source_instruction=inst,
+                register=dest,
+                value=0,
+                is_constant=True,
+                source_instruction=inst,
             )
         elif dest in state and state[dest].is_constant and state[dest].value is not None:
             if src.startswith("0x"):
@@ -433,7 +448,10 @@ class ConstantPropagationEngine:
                         state.pop(dest, None)
                         return
                     state[dest] = ConstantValue(
-                        register=dest, value=new_val, is_constant=True, source_instruction=inst,
+                        register=dest,
+                        value=new_val,
+                        is_constant=True,
+                        source_instruction=inst,
                     )
                 except ValueError:
                     state.pop(dest, None)
@@ -450,7 +468,10 @@ class ConstantPropagationEngine:
                         state.pop(dest, None)
                         return
                     state[dest] = ConstantValue(
-                        register=dest, value=new_val, is_constant=True, source_instruction=inst,
+                        register=dest,
+                        value=new_val,
+                        is_constant=True,
+                        source_instruction=inst,
                     )
                 except ValueError:
                     state.pop(dest, None)
@@ -466,7 +487,10 @@ class ConstantPropagationEngine:
                         state.pop(dest, None)
                         return
                     state[dest] = ConstantValue(
-                        register=dest, value=new_val, is_constant=True, source_instruction=inst,
+                        register=dest,
+                        value=new_val,
+                        is_constant=True,
+                        source_instruction=inst,
                     )
                 else:
                     state.pop(dest, None)
@@ -513,16 +537,19 @@ class ConstantPropagationEngine:
                     state.pop(dest, None)
                     return
 
-                if mnemonic in ["shl", "sal"]:
+                if mnemonic in {"shl", "sal"}:
                     new_val = state[dest].value << shift_amount
-                elif mnemonic in ["shr", "sar"]:
+                elif mnemonic in {"shr", "sar"}:
                     new_val = state[dest].value >> shift_amount
                 else:
                     state.pop(dest, None)
                     return
 
                 state[dest] = ConstantValue(
-                    register=dest, value=new_val, is_constant=True, source_instruction=inst,
+                    register=dest,
+                    value=new_val,
+                    is_constant=True,
+                    source_instruction=inst,
                 )
             else:
                 state.pop(dest, None)
@@ -551,7 +578,10 @@ class ConstantPropagationEngine:
         state.pop("edx", None)
 
     def _handle_pop(
-        self, operands: list[str], inst: dict[str, Any], state: dict[str, ConstantValue],
+        self,
+        operands: list[str],
+        inst: dict[str, Any],
+        state: dict[str, ConstantValue],
     ) -> None:
         """Handle POP instruction.
 
@@ -564,8 +594,7 @@ class ConstantPropagationEngine:
         if not operands:
             return
 
-        dest = self._extract_register(operands[0])
-        if dest:
+        if dest := self._extract_register(operands[0]):
             state.pop(dest, None)
 
     def _invalidate_volatile_registers(self, state: dict[str, ConstantValue]) -> None:
@@ -580,7 +609,9 @@ class ConstantPropagationEngine:
             state.pop(reg, None)
 
     def _merge_states(
-        self, state1: dict[str, ConstantValue], state2: dict[str, ConstantValue],
+        self,
+        state1: dict[str, ConstantValue],
+        state2: dict[str, ConstantValue],
     ) -> dict[str, ConstantValue]:
         """Merge two register states (join operation).
 
@@ -595,13 +626,12 @@ class ConstantPropagationEngine:
         merged = {}
 
         for reg, reg_value in state1.items():
-            if reg in state2:
-                if (
-                    reg_value.is_constant
-                    and state2[reg].is_constant
-                    and reg_value.value == state2[reg].value
-                ):
-                    merged[reg] = reg_value
+            if reg in state2 and (
+                                reg_value.is_constant
+                                and state2[reg].is_constant
+                                and reg_value.value == state2[reg].value
+                            ):
+                merged[reg] = reg_value
 
         return merged
 
@@ -656,11 +686,7 @@ class ConstantPropagationEngine:
             "dh",
         ]
 
-        for reg in registers:
-            if reg in operand:
-                return reg
-
-        return None
+        return next((reg for reg in registers if reg in operand), None)
 
 
 class SymbolicExecutionEngine:
@@ -672,7 +698,9 @@ class SymbolicExecutionEngine:
         self.solver = z3.Solver() if Z3_AVAILABLE else None
 
     def analyze_predicate(
-        self, basic_block: BasicBlockProtocol, register_state: dict[str, ConstantValue],
+        self,
+        basic_block: BasicBlockProtocol,
+        register_state: dict[str, ConstantValue],
     ) -> tuple[bool | None, str | None]:
         """Symbolically analyze a conditional predicate.
 
@@ -690,13 +718,14 @@ class SymbolicExecutionEngine:
         try:
             self.solver.reset()
 
-            symbolic_vars = {}
-            for reg, const_val in register_state.items():
-                if const_val.is_constant and const_val.value is not None:
-                    symbolic_vars[reg] = z3.BitVecVal(const_val.value, 64)
-                else:
-                    symbolic_vars[reg] = z3.BitVec(reg, 64)
-
+            symbolic_vars = {
+                reg: (
+                    z3.BitVecVal(const_val.value, 64)
+                    if const_val.is_constant and const_val.value is not None
+                    else z3.BitVec(reg, 64)
+                )
+                for reg, const_val in register_state.items()
+            }
             condition_expr = self._build_symbolic_expression(basic_block, symbolic_vars)
 
             if condition_expr is None:
@@ -724,7 +753,9 @@ class SymbolicExecutionEngine:
             self.logger.debug(f"Symbolic execution failed: {e}")
             return None, None
 
-    def _build_symbolic_expression(self, basic_block: BasicBlockProtocol, symbolic_vars: dict[str, Any]) -> Z3Expr:
+    def _build_symbolic_expression(
+        self, basic_block: BasicBlockProtocol, symbolic_vars: dict[str, Any]
+    ) -> Z3Expr:
         """Build Z3 expression from assembly instructions.
 
         Args:
@@ -741,7 +772,21 @@ class SymbolicExecutionEngine:
         last_inst = basic_block.instructions[-1]
         disasm = last_inst.get("disasm", "").lower()
 
-        if not any(jcc in disasm for jcc in ["je", "jne", "jz", "jnz", "ja", "jb", "jg", "jl", "jge", "jle"]):
+        if all(
+            jcc not in disasm
+            for jcc in [
+                "je",
+                "jne",
+                "jz",
+                "jnz",
+                "ja",
+                "jb",
+                "jg",
+                "jl",
+                "jge",
+                "jle",
+            ]
+        ):
             return None
 
         cmp_inst = None
@@ -764,7 +809,10 @@ class SymbolicExecutionEngine:
         return None
 
     def _build_comparison_expr(
-        self, cmp_inst: dict[str, Any], jump_inst: str, symbolic_vars: dict[str, Any],
+        self,
+        cmp_inst: dict[str, Any],
+        jump_inst: str,
+        symbolic_vars: dict[str, Any],
     ) -> Z3Expr:
         """Build Z3 expression for CMP instruction.
 
@@ -811,13 +859,13 @@ class SymbolicExecutionEngine:
             return op1 < op2
         if "jge" in jump_inst:
             return op1 >= op2
-        if "jle" in jump_inst:
-            return op1 <= op2
-
-        return None
+        return op1 <= op2 if "jle" in jump_inst else None
 
     def _build_test_expr(
-        self, test_inst: dict[str, Any], jump_inst: str, symbolic_vars: dict[str, Any],
+        self,
+        test_inst: dict[str, Any],
+        jump_inst: str,
+        symbolic_vars: dict[str, Any],
     ) -> Z3Expr:
         """Build Z3 expression for TEST instruction.
 
@@ -854,10 +902,7 @@ class SymbolicExecutionEngine:
 
         if "jz" in jump_inst or "je" in jump_inst:
             return result == 0
-        if "jnz" in jump_inst or "jne" in jump_inst:
-            return result != 0
-
-        return None
+        return result != 0 if "jnz" in jump_inst or "jne" in jump_inst else None
 
     def _parse_operand(self, operand: str, symbolic_vars: dict[str, Any]) -> Z3Expr:
         """Parse operand into Z3 expression.
@@ -880,10 +925,9 @@ class SymbolicExecutionEngine:
         elif operand.isdigit():
             return z3.BitVecVal(int(operand), 64)
         else:
-            for reg, var in symbolic_vars.items():
-                if reg in operand:
-                    return var
-            return None
+            return next(
+                (var for reg, var in symbolic_vars.items() if reg in operand), None
+            )
 
 
 class PatternRecognizer:
@@ -971,8 +1015,7 @@ class PatternRecognizer:
 
         """
         for pattern in self.patterns:
-            match_result = pattern["match_func"](basic_block)
-            if match_result:
+            if match_result := pattern["match_func"](basic_block):
                 return pattern["name"], pattern["always_value"]
 
         return None, None
@@ -991,9 +1034,8 @@ class PatternRecognizer:
             disasm = inst.get("disasm", "").lower()
             if "xor" in disasm:
                 _mnemonic, operands = self._parse_operands(disasm)
-                if len(operands) >= 2:
-                    if operands[0] == operands[1]:
-                        return True
+                if len(operands) >= 2 and operands[0] == operands[1]:
+                    return True
         return False
 
     def _match_self_comparison(self, basic_block: BasicBlockProtocol) -> bool:
@@ -1010,9 +1052,8 @@ class PatternRecognizer:
             disasm = inst.get("disasm", "").lower()
             if "cmp" in disasm or "test" in disasm:
                 _mnemonic, operands = self._parse_operands(disasm)
-                if len(operands) >= 2:
-                    if operands[0] == operands[1]:
-                        return True
+                if len(operands) >= 2 and operands[0] == operands[1]:
+                    return True
         return False
 
     def _match_algebraic_identity(self, basic_block: BasicBlockProtocol) -> bool:
@@ -1030,14 +1071,12 @@ class PatternRecognizer:
         for i, inst_disasm in enumerate(instructions):
             if "imul" in inst_disasm or "mul" in inst_disasm:
                 _mnemonic, operands = self._parse_operands(inst_disasm)
-                if len(operands) >= 2:
-                    if operands[0] == operands[1]:
-                        if i + 1 < len(instructions):
-                            next_inst = instructions[i + 1]
-                            if "test" in next_inst:
-                                remaining = instructions[i + 2 : i + 4]
-                                if any("jns" in inst or "jge" in inst for inst in remaining):
-                                    return True
+                if len(operands) >= 2 and operands[0] == operands[1] and i + 1 < len(instructions):
+                    next_inst = instructions[i + 1]
+                    if "test" in next_inst:
+                        remaining = instructions[i + 2 : i + 4]
+                        if any("jns" in inst or "jge" in inst for inst in remaining):
+                            return True
 
         return False
 
@@ -1054,18 +1093,17 @@ class PatternRecognizer:
         instructions = [inst.get("disasm", "").lower() for inst in basic_block.instructions]
 
         for i, inst_disasm in enumerate(instructions):
-            if "and" in inst_disasm and ("1" in inst_disasm or "0x1" in inst_disasm):
-                if i + 1 < len(instructions):
-                    next_inst = instructions[i + 1]
-                    if "cmp" in next_inst:
-                        _mnemonic, operands = self._parse_operands(next_inst)
-                        if len(operands) >= 2:
-                            try:
-                                cmp_val = int(operands[1])
-                                if cmp_val >= 2:
-                                    return True
-                            except ValueError:
-                                pass
+            if "and" in inst_disasm and ("1" in inst_disasm or "0x1" in inst_disasm) and i + 1 < len(instructions):
+                next_inst = instructions[i + 1]
+                if "cmp" in next_inst:
+                    _mnemonic, operands = self._parse_operands(next_inst)
+                    if len(operands) >= 2:
+                        try:
+                            cmp_val = int(operands[1])
+                            if cmp_val >= 2:
+                                return True
+                        except ValueError:
+                            pass
 
         return False
 
@@ -1083,9 +1121,8 @@ class PatternRecognizer:
             disasm = inst.get("disasm", "").lower()
             if "and" in disasm and ("0" in disasm or "0x0" in disasm):
                 parts = disasm.split(",")
-                if len(parts) >= 2:
-                    if parts[1].strip() in ["0", "0x0"]:
-                        return True
+                if len(parts) >= 2 and parts[1].strip() in ["0", "0x0"]:
+                    return True
 
         return False
 
@@ -1141,7 +1178,8 @@ class OpaquePredicateAnalyzer:
             pattern_name, pattern_value = self.pattern_recognizer.recognize_pattern(basic_block)
 
             symbolic_value, symbolic_proof = self.symbolic_execution.analyze_predicate(
-                basic_block, register_state,
+                basic_block,
+                register_state,
             )
 
             constant_value = self._check_constant_predicate(basic_block, register_state)
@@ -1186,7 +1224,9 @@ class OpaquePredicateAnalyzer:
         return opaque_predicates
 
     def _check_constant_predicate(
-        self, basic_block: BasicBlockProtocol, register_state: dict[str, ConstantValue],
+        self,
+        basic_block: BasicBlockProtocol,
+        register_state: dict[str, ConstantValue],
     ) -> bool | None:
         """Check if predicate can be resolved using constant values.
 
@@ -1277,7 +1317,9 @@ class OpaquePredicateAnalyzer:
 
         return None
 
-    def _identify_dead_branch(self, basic_block: BasicBlockProtocol, cfg: nx.DiGraph, always_value: bool) -> int | None:
+    def _identify_dead_branch(
+        self, basic_block: BasicBlockProtocol, cfg: nx.DiGraph, always_value: bool
+    ) -> int | None:
         """Identify which branch is dead based on predicate value.
 
         Args:
@@ -1305,18 +1347,15 @@ class OpaquePredicateAnalyzer:
                 false_successor = edge[1]
 
         if true_successor and false_successor:
-            if always_value:
-                return false_successor
-            return true_successor
-
+            return false_successor if always_value else true_successor
         return None
 
 
 __all__ = [
-    "OpaquePredicateAnalyzer",
-    "PredicateAnalysis",
     "ConstantPropagationEngine",
-    "SymbolicExecutionEngine",
-    "PatternRecognizer",
     "ConstantValue",
+    "OpaquePredicateAnalyzer",
+    "PatternRecognizer",
+    "PredicateAnalysis",
+    "SymbolicExecutionEngine",
 ]

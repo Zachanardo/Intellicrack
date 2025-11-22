@@ -13,7 +13,9 @@ import tempfile
 import subprocess
 import shutil
 from pathlib import Path
-from typing import Any, Optional, Callable
+from typing import Any, Optional
+
+from collections.abc import Callable
 from datetime import datetime
 import threading
 import queue

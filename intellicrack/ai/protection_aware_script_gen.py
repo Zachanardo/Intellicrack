@@ -24,6 +24,7 @@ from typing import Any
 from ..models.protection_knowledge_base import ProtectionSchemeInfo, get_protection_knowledge_base
 from ..protection.unified_protection_engine import UnifiedProtectionResult, get_unified_engine
 
+
 """
 Protection-Aware AI Script Generation
 
@@ -45,7 +46,7 @@ class ProtectionAwareScriptGenerator:
         FlexLM, WinLicense, Steam CEG, VMProtect, Denuvo, and Microsoft
         activation systems.
         """
-        self.logger = logging.getLogger(__name__ + ".ProtectionAwareScriptGenerator")
+        self.logger = logging.getLogger(f"{__name__}.ProtectionAwareScriptGenerator")
         self.unified_engine = get_unified_engine()
         self.kb = get_protection_knowledge_base()
 
@@ -68,7 +69,9 @@ class ProtectionAwareScriptGenerator:
             "safenet_sentinel": self._get_safenet_sentinel_scripts(),
         }
 
-    def generate_bypass_script(self, binary_path: str, script_type: str = "frida") -> dict[str, Any]:
+    def generate_bypass_script(
+        self, binary_path: str, script_type: str = "frida"
+    ) -> dict[str, Any]:
         """Generate a bypass script tailored to the detected protection.
 
         Args:
@@ -146,7 +149,9 @@ class ProtectionAwareScriptGenerator:
             highest_confidence = protections_to_process[primary_protection]["confidence"]
 
         # Get protection info from knowledge base
-        protection_info = self.kb.get_protection_info(primary_protection) if primary_protection else None
+        protection_info = (
+            self.kb.get_protection_info(primary_protection) if primary_protection else None
+        )
 
         # Generate script sections for each protection
         script_sections = []
@@ -158,12 +163,14 @@ class ProtectionAwareScriptGenerator:
 
             if protection_key in self.script_templates:
                 scripts = self.script_templates[protection_key]
-                script_section = scripts.get(script_type, self._get_generic_bypass_script(script_type))
-                script_sections.append(f"// Bypass for {protection_name} (Source: {details['source']})\n{script_section}")
+                script_section = scripts.get(
+                    script_type, self._get_generic_bypass_script(script_type)
+                )
+                script_sections.append(
+                    f"// Bypass for {protection_name} (Source: {details['source']})\n{script_section}"
+                )
 
-                # Get bypass techniques from knowledge base
-                techniques = self.kb.get_bypass_techniques(protection_name)
-                if techniques:
+                if techniques := self.kb.get_bypass_techniques(protection_name):
                     bypass_techniques.extend(techniques)
             else:
                 # Generic bypass for unknown protections
@@ -186,7 +193,9 @@ class ProtectionAwareScriptGenerator:
         final_script = header + combined_script
 
         # Add AI-enhanced instructions
-        ai_prompt = self._generate_ai_prompt(result, primary_protection, highest_confidence, protection_info)
+        ai_prompt = self._generate_ai_prompt(
+            result, primary_protection, highest_confidence, protection_info
+        )
 
         # Generate approach description
         approach = f"Multi-layered analysis detected {len(protections_to_process)} protection(s). "
@@ -202,8 +211,12 @@ class ProtectionAwareScriptGenerator:
             "approach": approach,
             "ai_prompt": ai_prompt,
             "bypass_techniques": self._get_recommended_techniques(protection_info),
-            "estimated_time": self.kb.estimate_bypass_time(primary_protection, "intermediate") if primary_protection else "Variable",
-            "tools_needed": self.kb.get_tools_for_protection(primary_protection) if primary_protection else [],
+            "estimated_time": self.kb.estimate_bypass_time(primary_protection, "intermediate")
+            if primary_protection
+            else "Variable",
+            "tools_needed": self.kb.get_tools_for_protection(primary_protection)
+            if primary_protection
+            else [],
             "icp_analysis": result.icp_analysis,
         }
 
@@ -280,30 +293,26 @@ Focus on the most effective approach for this specific protection type.
                 source = protection.get("source", "Unknown")
                 lines.append(f"- {protection['name']}{ver_str} ({protection['type']}) [{source}]")
 
-        if not lines:
-            return "- None detected"
+        return "\n".join(lines) if lines else "- None detected"
 
-        return "\n".join(lines)
-
-    def _get_recommended_techniques(self, protection_info: ProtectionSchemeInfo | None) -> list[dict[str, Any]]:
+    def _get_recommended_techniques(
+        self, protection_info: ProtectionSchemeInfo | None
+    ) -> list[dict[str, Any]]:
         """Get recommended bypass techniques."""
         if not protection_info:
             return []
 
-        techniques = []
-        for technique in protection_info.bypass_techniques:
-            techniques.append(
-                {
-                    "name": technique.name,
-                    "description": technique.description,
-                    "difficulty": technique.difficulty.value,
-                    "success_rate": technique.success_rate,
-                    "time_estimate": technique.time_estimate,
-                    "tools": technique.tools_required,
-                },
-            )
-
-        return techniques
+        return [
+            {
+                "name": technique.name,
+                "description": technique.description,
+                "difficulty": technique.difficulty.value,
+                "success_rate": technique.success_rate,
+                "time_estimate": technique.time_estimate,
+                "tools": technique.tools_required,
+            }
+            for technique in protection_info.bypass_techniques
+        ]
 
     def _get_hasp_scripts(self) -> dict[str, str]:
         """Enhanced Sentinel HASP/HL bypass scripts with advanced techniques."""
@@ -5227,7 +5236,6 @@ def enhance_ai_script_generation(ai_generator: object | None, binary_path: str) 
                 "techniques": result["bypass_techniques"],
             },
         )
-        result["enhanced_script"] = enhanced_script
     else:
         # Fallback to our own AI script generator
         ai_gen = AIScriptGenerator()
@@ -5240,11 +5248,15 @@ def enhance_ai_script_generation(ai_generator: object | None, binary_path: str) 
                 "techniques": result["bypass_techniques"],
             },
         )
-        result["enhanced_script"] = enhanced_script
-
+    result["enhanced_script"] = enhanced_script
     # Add AI enhancement metadata
     result["ai_enhanced"] = True
     result["enhancement_level"] = "advanced"
-    result["optimization_applied"] = ["memory_caching", "error_recovery", "anti_detection", "dynamic_adaptation"]
+    result["optimization_applied"] = [
+        "memory_caching",
+        "error_recovery",
+        "anti_detection",
+        "dynamic_adaptation",
+    ]
 
     return result

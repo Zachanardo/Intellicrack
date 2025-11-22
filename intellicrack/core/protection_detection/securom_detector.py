@@ -13,16 +13,19 @@ from typing import Any
 
 from intellicrack.utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 try:
     import pefile
+
     PEFILE_AVAILABLE = True
 except ImportError:
     PEFILE_AVAILABLE = False
 
 try:
     import yara
+
     YARA_AVAILABLE = True
 except ImportError:
     YARA_AVAILABLE = False
@@ -77,40 +80,53 @@ class SecuROMDetector:
     """
 
     DRIVER_NAMES = [
-        'secdrv.sys', 'SecuROM.sys',
-        'SR7.sys', 'SR8.sys',
-        'SecuROMv7.sys', 'SecuROMv8.sys',
-        'atapi.sys',
+        "secdrv.sys",
+        "SecuROM.sys",
+        "SR7.sys",
+        "SR8.sys",
+        "SecuROMv7.sys",
+        "SecuROMv8.sys",
+        "atapi.sys",
     ]
 
     SERVICE_NAMES = [
-        'SecuROM', 'SecuROM User Access Service',
-        'SecuROM7', 'SecuROM8',
-        'UserAccess7', 'UserAccess8',
-        'SecDrv', 'SRService',
+        "SecuROM",
+        "SecuROM User Access Service",
+        "SecuROM7",
+        "SecuROM8",
+        "UserAccess7",
+        "UserAccess8",
+        "SecDrv",
+        "SRService",
     ]
 
     REGISTRY_KEYS = [
-        r'SYSTEM\CurrentControlSet\Services\secdrv',
-        r'SYSTEM\CurrentControlSet\Services\SecuROM',
-        r'SYSTEM\CurrentControlSet\Services\UserAccess7',
-        r'SYSTEM\CurrentControlSet\Services\UserAccess8',
-        r'SOFTWARE\SecuROM',
-        r'SOFTWARE\Wow6432Node\SecuROM',
-        r'SOFTWARE\Sony DADC',
-        r'SOFTWARE\Wow6432Node\Sony DADC',
+        r"SYSTEM\CurrentControlSet\Services\secdrv",
+        r"SYSTEM\CurrentControlSet\Services\SecuROM",
+        r"SYSTEM\CurrentControlSet\Services\UserAccess7",
+        r"SYSTEM\CurrentControlSet\Services\UserAccess8",
+        r"SOFTWARE\SecuROM",
+        r"SOFTWARE\Wow6432Node\SecuROM",
+        r"SOFTWARE\Sony DADC",
+        r"SOFTWARE\Wow6432Node\Sony DADC",
     ]
 
     ACTIVATION_KEYS = [
-        r'SOFTWARE\SecuROM\Activation',
-        r'SOFTWARE\Wow6432Node\SecuROM\Activation',
-        r'SOFTWARE\Sony DADC\SecuROM\Activation',
-        r'SOFTWARE\Wow6432Node\Sony DADC\SecuROM\Activation',
+        r"SOFTWARE\SecuROM\Activation",
+        r"SOFTWARE\Wow6432Node\SecuROM\Activation",
+        r"SOFTWARE\Sony DADC\SecuROM\Activation",
+        r"SOFTWARE\Wow6432Node\Sony DADC\SecuROM\Activation",
     ]
 
     SECTION_NAMES = [
-        '.securom', '.sdata', '.cms_t', '.cms_d',
-        '.rdata2', '.protec', '.sr7', '.sr8',
+        ".securom",
+        ".sdata",
+        ".cms_t",
+        ".cms_d",
+        ".rdata2",
+        ".protec",
+        ".sr7",
+        ".sr8",
     ]
 
     def __init__(self) -> None:
@@ -131,16 +147,20 @@ class SecuROMDetector:
 
         """
         try:
-            self._advapi32 = ctypes.WinDLL('advapi32', use_last_error=True)
-            self._kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+            self._advapi32 = ctypes.WinDLL("advapi32", use_last_error=True)
+            self._kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
             self._advapi32.OpenSCManagerW.argtypes = [
-                wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.DWORD,
+                wintypes.LPCWSTR,
+                wintypes.LPCWSTR,
+                wintypes.DWORD,
             ]
             self._advapi32.OpenSCManagerW.restype = wintypes.HANDLE
 
             self._advapi32.OpenServiceW.argtypes = [
-                wintypes.HANDLE, wintypes.LPCWSTR, wintypes.DWORD,
+                wintypes.HANDLE,
+                wintypes.LPCWSTR,
+                wintypes.DWORD,
             ]
             self._advapi32.OpenServiceW.restype = wintypes.HANDLE
 
@@ -166,7 +186,7 @@ class SecuROMDetector:
         if not YARA_AVAILABLE:
             return None
 
-        rules_source = '''
+        rules_source = """
         rule SecuROM_v7 {
             meta:
                 description = "SecuROM v7.x protection"
@@ -259,7 +279,7 @@ class SecuROMDetector:
             condition:
                 2 of ($trigger*) and 1 of ($callback*)
         }
-        '''
+        """
 
         try:
             return yara.compile(source=rules_source)
@@ -303,18 +323,29 @@ class SecuROMDetector:
                 yara_matches = self._yara_scan(target_path)
 
         confidence = self._calculate_confidence(
-            drivers, services, registry_keys, sections, yara_matches, activation_state,
+            drivers,
+            services,
+            registry_keys,
+            sections,
+            yara_matches,
+            activation_state,
         )
 
         detected = confidence > 0.5
 
         details = {
-            'yara_matches': yara_matches,
-            'driver_paths': self._get_driver_paths(drivers),
-            'service_status': self._get_service_status(services),
-            'disc_auth_present': self._detect_disc_authentication(target_path) if target_path.exists() else False,
-            'online_activation_present': self._detect_online_activation(target_path) if target_path.exists() else False,
-            'encryption_detected': self._detect_encryption(target_path) if target_path.exists() else False,
+            "yara_matches": yara_matches,
+            "driver_paths": self._get_driver_paths(drivers),
+            "service_status": self._get_service_status(services),
+            "disc_auth_present": self._detect_disc_authentication(target_path)
+            if target_path.exists()
+            else False,
+            "online_activation_present": self._detect_online_activation(target_path)
+            if target_path.exists()
+            else False,
+            "encryption_detected": self._detect_encryption(target_path)
+            if target_path.exists()
+            else False,
         }
 
         return SecuROMDetection(
@@ -344,13 +375,12 @@ class SecuROMDetector:
         """
         detected = []
 
-        system_root = Path(r'C:\Windows\System32\drivers')
+        system_root = Path(r"C:\Windows\System32\drivers")
         if system_root.exists():
             for driver_name in self.DRIVER_NAMES:
                 driver_path = system_root / driver_name
-                if driver_path.exists():
-                    if self._is_securom_driver(driver_path):
-                        detected.append(driver_name)
+                if driver_path.exists() and self._is_securom_driver(driver_path):
+                    detected.append(driver_name)
 
         return detected
 
@@ -371,15 +401,15 @@ class SecuROMDetector:
 
         """
         try:
-            with open(driver_path, 'rb') as f:
+            with open(driver_path, "rb") as f:
                 data = f.read(8192)
 
             securom_indicators = [
-                b'Sony DADC',
-                b'SecuROM',
-                b'UserAccess',
-                b'SR7',
-                b'SR8',
+                b"Sony DADC",
+                b"SecuROM",
+                b"UserAccess",
+                b"SR7",
+                b"SR8",
             ]
 
             return any(indicator in data for indicator in securom_indicators)
@@ -414,10 +444,11 @@ class SecuROMDetector:
 
             try:
                 for service_name in self.SERVICE_NAMES:
-                    service_handle = self._advapi32.OpenServiceW(
-                        sc_manager, service_name, SERVICE_QUERY_CONFIG,
-                    )
-                    if service_handle:
+                    if service_handle := self._advapi32.OpenServiceW(
+                        sc_manager,
+                        service_name,
+                        SERVICE_QUERY_CONFIG,
+                    ):
                         detected.append(service_name)
                         self._advapi32.CloseServiceHandle(service_handle)
             finally:
@@ -480,33 +511,33 @@ class SecuROMDetector:
                 key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_READ)
 
                 try:
-                    is_activated_val, _ = winreg.QueryValueEx(key, 'Activated')
+                    is_activated_val, _ = winreg.QueryValueEx(key, "Activated")
                     is_activated = bool(is_activated_val)
                 except OSError:
                     is_activated = False
 
                 try:
-                    activation_date, _ = winreg.QueryValueEx(key, 'ActivationDate')
+                    activation_date, _ = winreg.QueryValueEx(key, "ActivationDate")
                 except OSError:
                     activation_date = None
 
                 try:
-                    product_key, _ = winreg.QueryValueEx(key, 'ProductKey')
+                    product_key, _ = winreg.QueryValueEx(key, "ProductKey")
                 except OSError:
                     product_key = None
 
                 try:
-                    machine_id, _ = winreg.QueryValueEx(key, 'MachineID')
+                    machine_id, _ = winreg.QueryValueEx(key, "MachineID")
                 except OSError:
                     machine_id = None
 
                 try:
-                    activation_count, _ = winreg.QueryValueEx(key, 'ActivationCount')
+                    activation_count, _ = winreg.QueryValueEx(key, "ActivationCount")
                 except OSError:
                     activation_count = 0
 
                 try:
-                    max_activations, _ = winreg.QueryValueEx(key, 'MaxActivations')
+                    max_activations, _ = winreg.QueryValueEx(key, "MaxActivations")
                     remaining = max_activations - activation_count
                 except OSError:
                     remaining = -1
@@ -552,17 +583,16 @@ class SecuROMDetector:
             pe = pefile.PE(str(target_path))
 
             for section in pe.sections:
-                section_name = section.Name.decode('utf-8', errors='ignore').rstrip('\x00')
+                section_name = section.Name.decode("utf-8", errors="ignore").rstrip("\x00")
 
                 if any(sr_name in section_name.lower() for sr_name in self.SECTION_NAMES):
                     detected.append(section_name)
 
-                if section.SizeOfRawData == 0 and section.Misc_VirtualSize > 0:
-                    if section.Characteristics & 0x20000000:
-                        detected.append(f"{section_name} (encrypted)")
+                if section.SizeOfRawData == 0 and section.Misc_VirtualSize > 0 and section.Characteristics & 0x20000000:
+                    detected.append(f"{section_name} (encrypted)")
 
                 entropy = self._calculate_section_entropy(section.get_data())
-                if entropy > 7.5 and '.text' not in section_name.lower():
+                if entropy > 7.5 and ".text" not in section_name.lower():
                     detected.append(f"{section_name} (high entropy: {entropy:.2f})")
 
             pe.close()
@@ -626,28 +656,29 @@ class SecuROMDetector:
         try:
             pe = pefile.PE(str(target_path))
 
-            if hasattr(pe, 'VS_VERSIONINFO'):
+            if hasattr(pe, "VS_VERSIONINFO"):
                 for entry in pe.FileInfo:
-                    if hasattr(entry, 'StringTable'):
+                    if hasattr(entry, "StringTable"):
                         for st in entry.StringTable:
                             for _key, value in st.entries.items():
-                                if b'SecuROM' in value or b'Sony DADC' in value:
-                                    version_result = self._parse_version_string(value.decode('utf-8', errors='ignore'))
-                                    if version_result:
+                                if b"SecuROM" in value or b"Sony DADC" in value:
+                                    if version_result := self._parse_version_string(
+                                        value.decode("utf-8", errors="ignore")
+                                    ):
                                         pe.close()
                                         return version_result
 
             data = pe.get_memory_mapped_image()
 
-            if b'UserAccess7' in data or b'SR7' in data:
+            if b"UserAccess7" in data or b"SR7" in data:
                 pe.close()
-                return SecuROMVersion(7, 0, 0, 'Standard')
-            if b'UserAccess8' in data or b'SR8' in data:
-                if b'ProductActivation' in data or b'OnlineActivation' in data:
+                return SecuROMVersion(7, 0, 0, "Standard")
+            if b"UserAccess8" in data or b"SR8" in data:
+                if b"ProductActivation" in data or b"OnlineActivation" in data:
                     pe.close()
-                    return SecuROMVersion(8, 0, 0, 'PA (Product Activation)')
+                    return SecuROMVersion(8, 0, 0, "PA (Product Activation)")
                 pe.close()
-                return SecuROMVersion(8, 0, 0, 'Standard')
+                return SecuROMVersion(8, 0, 0, "Standard")
 
             pe.close()
 
@@ -674,15 +705,17 @@ class SecuROMDetector:
         """
         import re
 
-        pattern = r'SecuROM[^\d]*(\d+)\.(\d+)\.?(\d*)'
-        match = re.search(pattern, version_str)
-
-        if match:
+        pattern = r"SecuROM[^\d]*(\d+)\.(\d+)\.?(\d*)"
+        if match := re.search(pattern, version_str):
             major = int(match.group(1))
             minor = int(match.group(2))
             build = int(match.group(3)) if match.group(3) else 0
 
-            variant = 'PA' if 'activation' in version_str.lower() or 'pa' in version_str.lower() else 'Standard'
+            variant = (
+                "PA"
+                if "activation" in version_str.lower() or "pa" in version_str.lower()
+                else "Standard"
+            )
 
             return SecuROMVersion(major, minor, build, variant)
 
@@ -713,13 +746,14 @@ class SecuROMDetector:
         try:
             results = self._yara_rules.match(str(target_path))
 
-            for match in results:
-                matches.append({
-                    'rule': match.rule,
-                    'version': match.meta.get('version', 'unknown'),
-                    'description': match.meta.get('description', ''),
-                })
-
+            matches.extend(
+                {
+                    "rule": match.rule,
+                    "version": match.meta.get("version", "unknown"),
+                    "description": match.meta.get("description", ""),
+                }
+                for match in results
+            )
         except Exception as e:
             logger.debug("YARA matching failed: %s", e)
 
@@ -793,7 +827,7 @@ class SecuROMDetector:
 
         """
         paths = {}
-        system_root = Path(r'C:\Windows\System32\drivers')
+        system_root = Path(r"C:\Windows\System32\drivers")
 
         for driver in drivers:
             driver_path = system_root / driver
@@ -844,23 +878,23 @@ class SecuROMDetector:
             """
 
             _fields_ = [
-                ('dwServiceType', wintypes.DWORD),
-                ('dwCurrentState', wintypes.DWORD),
-                ('dwControlsAccepted', wintypes.DWORD),
-                ('dwWin32ExitCode', wintypes.DWORD),
-                ('dwServiceSpecificExitCode', wintypes.DWORD),
-                ('dwCheckPoint', wintypes.DWORD),
-                ('dwWaitHint', wintypes.DWORD),
+                ("dwServiceType", wintypes.DWORD),
+                ("dwCurrentState", wintypes.DWORD),
+                ("dwControlsAccepted", wintypes.DWORD),
+                ("dwWin32ExitCode", wintypes.DWORD),
+                ("dwServiceSpecificExitCode", wintypes.DWORD),
+                ("dwCheckPoint", wintypes.DWORD),
+                ("dwWaitHint", wintypes.DWORD),
             ]
 
         states = {
-            1: 'STOPPED',
-            2: 'START_PENDING',
-            3: 'STOP_PENDING',
-            4: 'RUNNING',
-            5: 'CONTINUE_PENDING',
-            6: 'PAUSE_PENDING',
-            7: 'PAUSED',
+            1: "STOPPED",
+            2: "START_PENDING",
+            3: "STOP_PENDING",
+            4: "RUNNING",
+            5: "CONTINUE_PENDING",
+            6: "PAUSE_PENDING",
+            7: "PAUSED",
         }
 
         try:
@@ -870,17 +904,23 @@ class SecuROMDetector:
 
             try:
                 for service_name in services:
-                    service_handle = self._advapi32.OpenServiceW(
-                        sc_manager, service_name, SERVICE_QUERY_STATUS,
-                    )
-                    if service_handle:
+                    if service_handle := self._advapi32.OpenServiceW(
+                        sc_manager,
+                        service_name,
+                        SERVICE_QUERY_STATUS,
+                    ):
                         status = SERVICE_STATUS()
-                        if hasattr(self._advapi32, 'QueryServiceStatus'):
+                        if hasattr(self._advapi32, "QueryServiceStatus"):
                             self._advapi32.QueryServiceStatus.argtypes = [
-                                wintypes.HANDLE, ctypes.POINTER(SERVICE_STATUS),
+                                wintypes.HANDLE,
+                                ctypes.POINTER(SERVICE_STATUS),
                             ]
-                            if self._advapi32.QueryServiceStatus(service_handle, ctypes.byref(status)):
-                                status_info[service_name] = states.get(status.dwCurrentState, 'UNKNOWN')
+                            if self._advapi32.QueryServiceStatus(
+                                service_handle, ctypes.byref(status)
+                            ):
+                                status_info[service_name] = states.get(
+                                    status.dwCurrentState, "UNKNOWN"
+                                )
 
                         self._advapi32.CloseServiceHandle(service_handle)
             finally:
@@ -908,15 +948,15 @@ class SecuROMDetector:
 
         """
         try:
-            with open(target_path, 'rb') as f:
+            with open(target_path, "rb") as f:
                 data = f.read()
 
             disc_indicators = [
-                b'DiscSignature',
-                b'DiscFingerprint',
-                b'\\\\.\\Scsi',
-                b'\\\\.\\CdRom',
-                b'DeviceIoControl',
+                b"DiscSignature",
+                b"DiscFingerprint",
+                b"\\\\.\\Scsi",
+                b"\\\\.\\CdRom",
+                b"DeviceIoControl",
             ]
 
             return any(indicator in data for indicator in disc_indicators)
@@ -941,19 +981,20 @@ class SecuROMDetector:
 
         """
         try:
-            with open(target_path, 'rb') as f:
+            with open(target_path, "rb") as f:
                 data = f.read()
 
             activation_indicators = [
-                b'ProductActivation',
-                b'OnlineActivation',
-                b'ActivationServer',
-                b'https://',
-                b'WinHttpSendRequest',
-                b'InternetOpenUrl',
+                b"ProductActivation",
+                b"OnlineActivation",
+                b"ActivationServer",
+                b"https://",
+                b"WinHttpSendRequest",
+                b"InternetOpenUrl",
             ]
 
-            return sum(1 for indicator in activation_indicators if indicator in data) >= 2
+            return sum(bool(indicator in data)
+                   for indicator in activation_indicators) >= 2
 
         except Exception:
             return False

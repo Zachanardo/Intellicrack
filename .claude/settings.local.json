@@ -9,49 +9,7 @@
       "Bash(pixi run mypy --strict:*)"
     ],
     "deny": [],
-    "ask": [
-      "Git clean",
-      "Write(pixi.toml)",
-      "Edit(pixi.toml)",
-      "Write(pyproject.toml)",
-      "Edit(pyproject.toml)",
-      "Write(.claude/*)",
-      "Edit(.claude/*)",
-      "Write(.env)",
-      "Edit(.env)",
-      "Write(.env.*)",
-      "Edit(.env.*)",
-      "Write(.gitignore)",
-      "Edit(.gitignore)",
-      "Write(.dockerignore)",
-      "Edit(.dockerignore)",
-      "Write(Dockerfile)",
-      "Edit(Dockerfile)",
-      "Write(.github/workflows/*)",
-      "Edit(.github/workflows/*)",
-      "Write(requirements.txt)",
-      "Edit(requirements.txt)",
-      "Bash(git reset --hard:*)",
-      "Bash(git push --force:*)",
-      "Bash(git push -f:*)",
-      "Bash(git branch -D:*)",
-      "Bash(git filter-branch:*)",
-      "Bash(git filter-repo:*)",
-      "Bash(git rebase:*)",
-      "Bash(git cherry-pick --abort:*)",
-      "Bash(git merge --abort:*)",
-      "Bash(rm -rf:*)",
-      "Bash(rm -r:*)",
-      "Bash(rmdir:*)",
-      "Bash(del /s:*)",
-      "Bash(Remove-Item -Recurse:*)",
-      "Bash(pixi remove:*)",
-      "Bash(pip uninstall:*)",
-      "Bash(npm uninstall:*)",
-      "Bash(cargo remove:*)",
-      "Bash(pixi clean:*)",
-      "Bash(pip cache purge:*)"
-    ]
+    "ask": []
   },
   "enableAllProjectMcpServers": false,
   "enabledMcpjsonServers": [
@@ -66,7 +24,7 @@
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": "Write|Edit|MultiEdit|NotebookEdit|mcp__filesystem__write_file|mcp__filesystem__edit_file|mcp__filesystem__create_directory|mcp__desktop-commander__write_file|mcp__desktop-commander__edit_block|mcp__desktop-commander__create_directory|mcp__serena__create_text_file|mcp__serena__replace_regex|mcp__serena__replace_symbol_body|mcp__serena__insert_after_symbol|mcp__serena__insert_before_symbol|mcp__serena__delete_lines|mcp__serena__insert_at_line|mcp__serena__replace_lines",
+        "matcher": "Write|Edit",
         "hooks": [
           {
             "type": "command",

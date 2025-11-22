@@ -27,6 +27,7 @@ from typing import Any
 
 from ..utils.logger import get_logger
 
+
 """
 Enhanced QEMU Test Manager with Real Data Capture
 
@@ -265,7 +266,9 @@ Process.enumerateModules().forEach(module => {{{{
             try:
                 with open(f"{tempfile.gettempdir()}/qemu_test_data.json") as f:
                     detailed_data = json.load(f)
-                    logger.info(f"Loaded execution data: {len(detailed_data.get('api_calls', []))} API calls captured")
+                    logger.info(
+                        f"Loaded execution data: {len(detailed_data.get('api_calls', []))} API calls captured"
+                    )
             except Exception as e:
                 logger.warning(f"Failed to load execution data: {e}")
                 detailed_data = {}
@@ -373,6 +376,4 @@ echo "}}"
             text=True,
         )
 
-        if result.returncode == 0:
-            return json.loads(result.stdout)
-        return {}
+        return json.loads(result.stdout) if result.returncode == 0 else {}

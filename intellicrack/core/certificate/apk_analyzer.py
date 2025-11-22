@@ -97,6 +97,7 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -245,8 +246,7 @@ class APKAnalyzer:
             config = NetworkSecurityConfig()
 
             for domain_config_elem in root.findall(".//domain-config"):
-                domain_config = self._parse_domain_config(domain_config_elem)
-                if domain_config:
+                if domain_config := self._parse_domain_config(domain_config_elem):
                     config.domain_configs.append(domain_config)
 
             base_config_elem = root.find(".//base-config")
@@ -257,7 +257,9 @@ class APKAnalyzer:
             if debug_overrides_elem is not None:
                 config.debug_overrides = self._parse_base_config(debug_overrides_elem)
 
-            logger.info(f"Parsed network security config: {len(config.domain_configs)} domain configs")
+            logger.info(
+                f"Parsed network security config: {len(config.domain_configs)} domain configs"
+            )
             return config
 
         except ET.ParseError as e:
@@ -266,11 +268,11 @@ class APKAnalyzer:
 
     def _parse_domain_config(self, elem: ET.Element) -> DomainConfig | None:
         """Parse domain-config XML element."""
-        domains = []
-        for domain_elem in elem.findall("domain"):
-            if domain_elem.text:
-                domains.append(domain_elem.text.strip())
-
+        domains = [
+            domain_elem.text.strip()
+            for domain_elem in elem.findall("domain")
+            if domain_elem.text
+        ]
         if not domains:
             return None
 
@@ -284,9 +286,20 @@ class APKAnalyzer:
                 digest = pin_elem.get("digest", "SHA-256")
                 if pin_elem.text:
                     pin_hash = pin_elem.text.strip()
-                    pins.append(PinConfig(digest_algorithm=digest, hash_value=pin_hash, source="network_security_config"))
+                    pins.append(
+                        PinConfig(
+                            digest_algorithm=digest,
+                            hash_value=pin_hash,
+                            source="network_security_config",
+                        )
+                    )
 
-            return DomainConfig(domains=domains, pins=pins, include_subdomains=include_subdomains, expiration=expiration)
+            return DomainConfig(
+                domains=domains,
+                pins=pins,
+                include_subdomains=include_subdomains,
+                expiration=expiration,
+            )
         return DomainConfig(domains=domains, pins=[], include_subdomains=include_subdomains)
 
     def _parse_base_config(self, elem: ET.Element) -> DomainConfig | None:
@@ -298,7 +311,11 @@ class APKAnalyzer:
                 digest = pin_elem.get("digest", "SHA-256")
                 if pin_elem.text:
                     pin_hash = pin_elem.text.strip()
-                    pins.append(PinConfig(digest_algorithm=digest, hash_value=pin_hash, source="base_config"))
+                    pins.append(
+                        PinConfig(
+                            digest_algorithm=digest, hash_value=pin_hash, source="base_config"
+                        )
+                    )
 
         if pins:
             return DomainConfig(domains=["*"], pins=pins, include_subdomains=True)
@@ -327,7 +344,8 @@ class APKAnalyzer:
         pinning_infos = []
 
         okhttp_pattern = re.compile(
-            r'CertificatePinner\.Builder\(\).*?\.add\s*\(\s*["\']([^"\']+)["\']\s*,\s*["\']sha256/([^"\']+)["\']', re.DOTALL,
+            r'CertificatePinner\.Builder\(\).*?\.add\s*\(\s*["\']([^"\']+)["\']\s*,\s*["\']sha256/([^"\']+)["\']',
+            re.DOTALL,
         )
 
         smali_files = list(self.decompiled_path.rglob("*.smali"))
@@ -353,14 +371,16 @@ class APKAnalyzer:
                         ),
                     )
 
-                const_string_pattern = re.compile(r'const-string\s+v\d+,\s+"sha256/([A-Za-z0-9+/=]+)"')
+                const_string_pattern = re.compile(
+                    r'const-string\s+v\d+,\s+"sha256/([A-Za-z0-9+/=]+)"'
+                )
                 pin_matches = const_string_pattern.findall(content)
 
                 if pin_matches and "CertificatePinner" in content:
-                    domain_pattern = re.compile(r'const-string\s+v\d+,\s+"([a-z0-9\-\.]+\.[a-z]{2,})"')
-                    domain_matches = domain_pattern.findall(content)
-
-                    if domain_matches:
+                    domain_pattern = re.compile(
+                        r'const-string\s+v\d+,\s+"([a-z0-9\-\.]+\.[a-z]{2,})"'
+                    )
+                    if domain_matches := domain_pattern.findall(content):
                         for pin_hash in pin_matches:
                             pinning_infos.append(
                                 PinningInfo(
@@ -409,8 +429,7 @@ class APKAnalyzer:
 
             for cert_file in search_dir.rglob("*"):
                 if cert_file.is_file() and cert_file.suffix.lower() in cert_extensions:
-                    cert_info = self._extract_certificate_info(cert_file)
-                    if cert_info:
+                    if cert_info := self._extract_certificate_info(cert_file):
                         pinning_infos.append(cert_info)
 
         if self.decompiled_path:
@@ -475,7 +494,8 @@ class APKAnalyzer:
                     return None
 
             public_key_bytes = cert.public_key().public_bytes(
-                encoding=serialization.Encoding.DER, format=serialization.PublicFormat.SubjectPublicKeyInfo,
+                encoding=serialization.Encoding.DER,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
             )
 
             sha256_hash = hashlib.sha256(public_key_bytes).digest()
@@ -515,9 +535,14 @@ class APKAnalyzer:
 
         pinning_infos = []
 
-        cert_begin_pattern = re.compile(r"-----BEGIN CERTIFICATE-----\s*([A-Za-z0-9+/=\s]+?)\s*-----END CERTIFICATE-----", re.MULTILINE)
+        cert_begin_pattern = re.compile(
+            r"-----BEGIN CERTIFICATE-----\s*([A-Za-z0-9+/=\s]+?)\s*-----END CERTIFICATE-----",
+            re.MULTILINE,
+        )
 
-        base64_pattern = re.compile(r'const-string\s+v\d+,\s+"([A-Za-z0-9+/=]{500,})"', re.MULTILINE)
+        base64_pattern = re.compile(
+            r'const-string\s+v\d+,\s+"([A-Za-z0-9+/=]{500,})"', re.MULTILINE
+        )
 
         smali_files = list(self.decompiled_path.rglob("*.smali"))
 
@@ -535,7 +560,8 @@ class APKAnalyzer:
                         from cryptography.hazmat.primitives import serialization
 
                         public_key_bytes = cert.public_key().public_bytes(
-                            encoding=serialization.Encoding.DER, format=serialization.PublicFormat.SubjectPublicKeyInfo,
+                            encoding=serialization.Encoding.DER,
+                            format=serialization.PublicFormat.SubjectPublicKeyInfo,
                         )
 
                         sha256_hash = hashlib.sha256(public_key_bytes).digest()
@@ -566,7 +592,8 @@ class APKAnalyzer:
                             from cryptography.hazmat.primitives import serialization
 
                             public_key_bytes = cert.public_key().public_bytes(
-                                encoding=serialization.Encoding.DER, format=serialization.PublicFormat.SubjectPublicKeyInfo,
+                                encoding=serialization.Encoding.DER,
+                                format=serialization.PublicFormat.SubjectPublicKeyInfo,
                             )
 
                             sha256_hash = hashlib.sha256(public_key_bytes).digest()

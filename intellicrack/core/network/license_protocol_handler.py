@@ -30,6 +30,7 @@ from typing import Any
 
 from intellicrack.utils.logger import logger
 
+
 """
 License Protocol Handler Base Class.
 
@@ -73,9 +74,13 @@ class LicenseProtocolHandler:
 
         # Initialize protocol-specific configuration
         self.port = self.config.get("port", int(os.environ.get("LICENSE_PROTOCOL_PORT", "8080")))
-        self.host = self.config.get("host", os.environ.get("LICENSE_PROTOCOL_HOST", "localhost"))  # Default to localhost for security
+        self.host = self.config.get(
+            "host", os.environ.get("LICENSE_PROTOCOL_HOST", "localhost")
+        )  # Default to localhost for security
         self.bind_host = self.config.get("bind_host", self.host)  # Allow separate bind host
-        self.timeout = self.config.get("timeout", int(os.environ.get("LICENSE_PROTOCOL_TIMEOUT", "30")))
+        self.timeout = self.config.get(
+            "timeout", int(os.environ.get("LICENSE_PROTOCOL_TIMEOUT", "30"))
+        )
 
         self.logger.info("Initialized %s protocol handler", self.__class__.__name__)
 
@@ -258,8 +263,7 @@ class LicenseProtocolHandler:
 
         """
         try:
-            initial_data = client_socket.recv(4096)
-            if initial_data:
+            if initial_data := client_socket.recv(4096):
                 self.handle_connection(client_socket, initial_data)
         except Exception as e:
             self.logger.error("Error handling client %s: %s", client_addr, e)
@@ -431,7 +435,9 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to send FlexLM response: %s", e)
 
-    def _handle_flexlm_client(self, client_socket: socket.socket, client_addr: tuple[str, int]) -> None:
+    def _handle_flexlm_client(
+        self, client_socket: socket.socket, client_addr: tuple[str, int]
+    ) -> None:
         """Handle individual FlexLM client connection.
 
         Args:
@@ -440,9 +446,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
 
         """
         try:
-            # Receive initial data
-            initial_data = client_socket.recv(4096)
-            if initial_data:
+            if initial_data := client_socket.recv(4096):
                 self.handle_connection(client_socket, initial_data)
         except Exception as e:
             self.logger.error("Error handling FlexLM client %s: %s", client_addr, e)
@@ -492,7 +496,9 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
                 # Generate a success response with configurable license details
                 import time
 
-                expiry = "0" if self.license_type == "permanent" else str(int(time.time()) + 86400 * 365)
+                expiry = (
+                    "0" if self.license_type == "permanent" else str(int(time.time()) + 86400 * 365)
+                )
                 response = f"GRANT {feature} {self.feature_version} {self.license_type} {expiry} 0 0 0 HOSTID=ANY\n"
                 return response.encode("utf-8")
             return b"ERROR: Invalid GETLIC request\n"
@@ -623,7 +629,9 @@ class HASPProtocolHandler(LicenseProtocolHandler):
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to send HASP response: %s", e)
 
-    def _handle_hasp_client(self, client_socket: socket.socket, client_addr: tuple[str, int]) -> None:
+    def _handle_hasp_client(
+        self, client_socket: socket.socket, client_addr: tuple[str, int]
+    ) -> None:
         """Handle individual HASP client connection.
 
         Args:
@@ -632,9 +640,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
 
         """
         try:
-            # Receive initial data
-            initial_data = client_socket.recv(4096)
-            if initial_data:
+            if initial_data := client_socket.recv(4096):
                 self.handle_connection(client_socket, initial_data)
         except Exception as e:
             self.logger.error("Error handling HASP client %s: %s", client_addr, e)
@@ -675,7 +681,9 @@ class HASPProtocolHandler(LicenseProtocolHandler):
             # Handle common HASP commands
             if command_id == 0x01:  # HASP_LOGIN
                 # Login response: success status + dynamic handle
-                handle = secrets.randbelow(0x7FFFFFFF - 0x10000000 + 1) + 0x10000000  # Generate dynamic handle
+                handle = (
+                    secrets.randbelow(0x7FFFFFFF - 0x10000000 + 1) + 0x10000000
+                )  # Generate dynamic handle
                 response = struct.pack("<II", 0x00000000, handle)  # Success + handle
                 # Store handle for this session
                 self.session_data["handle"] = handle
@@ -693,12 +701,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                         # Use proper encryption (AES-CTR mode for HASP emulation)
                         import os
 
-                        from intellicrack.handlers.cryptography_handler import (
-                            Cipher,
-                            algorithms,
-                            default_backend,
-                            modes,
-                        )
+                        from intellicrack.handlers.cryptography_handler import Cipher, algorithms, default_backend, modes
 
                         # Generate or use stored key/nonce for this session
                         if self._hasp_aes_key is None:
@@ -717,7 +720,9 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                         return struct.pack("<I", 0x00000000) + encrypted
                     except ImportError:
                         # Fallback to XOR if cryptography not available, but warn
-                        self.logger.warning("cryptography library not available - using weak XOR encryption")
+                        self.logger.warning(
+                            "cryptography library not available - using weak XOR encryption"
+                        )
                         encrypted = bytes(b ^ 0xAA for b in data_to_encrypt)
                         return struct.pack("<I", 0x00000000) + encrypted
                 return struct.pack("<I", 0x00000000)
@@ -728,12 +733,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                     data_to_decrypt = request_data[8:]
                     try:
                         # Use proper decryption (AES-CTR mode for HASP emulation)
-                        from intellicrack.handlers.cryptography_handler import (
-                            Cipher,
-                            algorithms,
-                            default_backend,
-                            modes,
-                        )
+                        from intellicrack.handlers.cryptography_handler import Cipher, algorithms, default_backend, modes
 
                         # Use stored key/nonce from encryption
                         if self._hasp_aes_key is not None:
@@ -752,14 +752,18 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                         return struct.pack("<I", 0x00000000) + decrypted
                     except ImportError:
                         # Fallback to XOR if cryptography not available
-                        self.logger.warning("cryptography library not available - using weak XOR decryption")
+                        self.logger.warning(
+                            "cryptography library not available - using weak XOR decryption"
+                        )
                         decrypted = bytes(b ^ 0xAA for b in data_to_decrypt)
                         return struct.pack("<I", 0x00000000) + decrypted
                 return struct.pack("<I", 0x00000000)
 
             if command_id == 0x05:  # HASP_GET_SIZE
                 # Return size of available memory from configuration
-                return struct.pack("<II", 0x00000000, self.hasp_memory_size)  # Success + configured size
+                return struct.pack(
+                    "<II", 0x00000000, self.hasp_memory_size
+                )  # Success + configured size
 
             if command_id == 0x06:  # HASP_READ
                 # Read memory response

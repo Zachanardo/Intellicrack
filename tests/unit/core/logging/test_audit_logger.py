@@ -384,7 +384,7 @@ class TestAuditLogger:
         assert len(log_files) >= 1
 
         # Read and verify log content
-        with open(log_files[0], 'r') as f:
+        with open(log_files[0]) as f:
             log_content = f.read()
             assert "EXPLOIT_ATTEMPT" in log_content or "EXPLOIT_FAILURE" in log_content
             assert "buffer_overflow" in log_content
@@ -417,7 +417,7 @@ class TestAuditLogger:
         log_files = list(self.log_dir.glob("*.log"))
         assert len(log_files) >= 1
 
-        with open(log_files[0], 'r') as f:
+        with open(log_files[0]) as f:
             log_content = f.read()
             assert "BINARY_LOADED" in log_content or "static_analysis" in log_content
             assert "malware_sample.exe" in log_content
@@ -448,7 +448,7 @@ class TestAuditLogger:
         assert result is True
 
         log_files = list(self.log_dir.glob("*.log"))
-        with open(log_files[0], 'r') as f:
+        with open(log_files[0]) as f:
             log_content = f.read()
             assert "VM_SNAPSHOT" in log_content or "snapshot_create" in log_content
             assert "WinAnalysis_Sandbox" in log_content
@@ -477,7 +477,7 @@ class TestAuditLogger:
         assert result is True
 
         log_files = list(self.log_dir.glob("*.log"))
-        with open(log_files[0], 'r') as f:
+        with open(log_files[0]) as f:
             log_content = f.read()
             assert "CREDENTIAL_ACCESS" in log_content
             assert "mimikatz" in log_content
@@ -509,7 +509,7 @@ class TestAuditLogger:
         assert result is True
 
         log_files = list(self.log_dir.glob("*.log"))
-        with open(log_files[0], 'r') as f:
+        with open(log_files[0]) as f:
             log_content = f.read()
             assert "TOOL_EXECUTION" in log_content
             assert "x64dbg" in log_content
@@ -1453,7 +1453,7 @@ class TestTelemetryCollector:
             assert os.path.exists(export_path)
 
             # Verify export content
-            with open(export_path, 'r') as f:
+            with open(export_path) as f:
                 telemetry_data = json.load(f)
 
             assert isinstance(telemetry_data, dict)

@@ -26,16 +26,9 @@ from collections.abc import Callable
 
 from intellicrack.utils.logger import logger
 
+
 try:
-    from PyQt6.QtWidgets import (
-        QFileDialog,
-        QGroupBox,
-        QHBoxLayout,
-        QLabel,
-        QLineEdit,
-        QMessageBox,
-        QPushButton,
-    )
+    from PyQt6.QtWidgets import QFileDialog, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton
 
     HAS_PYQT = True
 except ImportError as e:
@@ -116,9 +109,8 @@ def get_save_filename(
             filter_str,
         )
 
-        if filename and default_suffix:
-            if not filename.endswith(default_suffix):
-                filename += default_suffix
+        if filename and default_suffix and not filename.endswith(default_suffix):
+            filename += default_suffix
 
         return filename
     except Exception as e:
@@ -153,12 +145,9 @@ def create_binary_selection_header(
     if not HAS_PYQT:
         return {}
 
-    widgets = {"extra_buttons": {}}
-
     header_group = QGroupBox("Target Binary")
     header_layout = QHBoxLayout(header_group)
-    widgets["group"] = header_group
-
+    widgets = {"extra_buttons": {}, "group": header_group}
     if show_label:
         header_layout.addWidget(QLabel("Binary Path:"))
 

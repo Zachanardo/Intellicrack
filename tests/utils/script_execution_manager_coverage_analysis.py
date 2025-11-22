@@ -184,10 +184,10 @@ def analyze_test_coverage_manually():
         return
 
     try:
-        with open(test_file, 'r') as f:
+        with open(test_file) as f:
             test_content = f.read()
 
-        with open(source_file, 'r') as f:
+        with open(source_file) as f:
             source_content = f.read()
 
         # Count test methods

@@ -66,7 +66,7 @@ class R2Session:
     - Advanced scripting support
     """
 
-    def __init__(self, binary_path: str, radare2_path: Optional[str] = None):
+    def __init__(self, binary_path: str, radare2_path: str | None = None):
         """Initialize radare2 session.
 
         Args:
@@ -107,9 +107,7 @@ class R2Session:
 
                 flags = []
                 if self.radare2_path and os.path.exists(self.radare2_path):
-                    flags.append("-e")
-                    flags.append(f"bin.radare2={self.radare2_path}")
-
+                    flags.extend(("-e", f"bin.radare2={self.radare2_path}"))
                 self.r2 = r2pipe.open(self.binary_path, flags=flags)
                 self.is_connected = True
 
@@ -131,12 +129,11 @@ class R2Session:
                 self.r2.quit()
             except Exception as e:
                 self.logger.error("Exception in radare2_utils: %s", e)
-                pass
             self.r2 = None
             self.is_connected = False
             self.logger.info("Disconnected from radare2")
 
-    def _execute_command(self, cmd: str, expect_json: bool = False) -> Union[str, Dict, List]:
+    def _execute_command(self, cmd: str, expect_json: bool = False) -> str | dict | list:
         """Execute radare2 command with error handling.
 
         Args:
@@ -152,11 +149,10 @@ class R2Session:
 
         with r2_error_context("r2_command", command=cmd, binary_path=self.binary_path):
             try:
-                if expect_json:
-                    result = self.r2.cmdj(cmd)
-                    return result if result is not None else {}
-                else:
+                if not expect_json:
                     return self.r2.cmd(cmd)
+                result = self.r2.cmdj(cmd)
+                return result if result is not None else {}
             except Exception as e:
                 self.logger.error(f"Command failed: {cmd}, Error: {e}")
                 error_handler.handle_error(
@@ -186,21 +182,21 @@ class R2Session:
             self.logger.error("R2Exception in radare2_utils: %s", e)
             return False
 
-    def get_info(self) -> Dict[str, Any]:
+    def get_info(self) -> dict[str, Any]:
         """Get binary information."""
         return self._execute_command("ij", expect_json=True)
 
-    def get_functions(self) -> List[Dict[str, Any]]:
+    def get_functions(self) -> list[dict[str, Any]]:
         """Get list of all functions."""
         return self._execute_command("aflj", expect_json=True)
 
-    def get_function_info(self, address: Union[str, int]) -> Dict[str, Any]:
+    def get_function_info(self, address: str | int) -> dict[str, Any]:
         """Get detailed function information."""
         addr = hex(address) if isinstance(address, int) else address
         return self._execute_command(f"afij @ {addr}", expect_json=True)
 
     # Decompilation Features
-    def decompile_function(self, address: Union[str, int]) -> str:
+    def decompile_function(self, address: str | int) -> str:
         """Decompile function to pseudocode.
 
         Args:
@@ -213,7 +209,7 @@ class R2Session:
         addr = hex(address) if isinstance(address, int) else address
         return self._execute_command(f"pdc @ {addr}")
 
-    def get_function_graph(self, address: Union[str, int]) -> Dict[str, Any]:
+    def get_function_graph(self, address: str | int) -> dict[str, Any]:
         """Get function control flow graph with decompilation.
 
         Args:
@@ -226,13 +222,13 @@ class R2Session:
         addr = hex(address) if isinstance(address, int) else address
         return self._execute_command(f"pdgj @ {addr}", expect_json=True)
 
-    def get_function_signature(self, address: Union[str, int]) -> str:
+    def get_function_signature(self, address: str | int) -> str:
         """Get function signature."""
         addr = hex(address) if isinstance(address, int) else address
         return self._execute_command(f"afv @ {addr}")
 
     # String Analysis
-    def get_strings(self, min_length: int = 4) -> List[Dict[str, Any]]:
+    def get_strings(self, min_length: int = 4) -> list[dict[str, Any]]:
         """Get all strings from binary.
 
         Args:
@@ -244,11 +240,11 @@ class R2Session:
         """
         return self._execute_command(f"izzj~{{length}}gte:{min_length}", expect_json=True)
 
-    def get_strings_with_xrefs(self) -> List[Dict[str, Any]]:
+    def get_strings_with_xrefs(self) -> list[dict[str, Any]]:
         """Get strings with cross-references."""
         return self._execute_command("izzj", expect_json=True)
 
-    def search_strings(self, pattern: str) -> List[Dict[str, Any]]:
+    def search_strings(self, pattern: str) -> list[dict[str, Any]]:
         """Search for strings matching pattern.
 
         Args:
@@ -260,7 +256,7 @@ class R2Session:
         """
         return self._execute_command(f"/j {pattern}", expect_json=True)
 
-    def get_license_strings(self) -> List[Dict[str, Any]]:
+    def get_license_strings(self) -> list[dict[str, Any]]:
         """Find potential license-related strings."""
         license_patterns = [
             "license",
@@ -284,8 +280,7 @@ class R2Session:
         all_strings = []
         for pattern in license_patterns:
             try:
-                results = self.search_strings(pattern)
-                if results:
+                if results := self.search_strings(pattern):
                     all_strings.extend(results)
             except R2Exception as e:
                 self.logger.error("R2Exception in radare2_utils: %s", e)
@@ -294,23 +289,23 @@ class R2Session:
         return all_strings
 
     # Import/Export Analysis
-    def get_imports(self) -> List[Dict[str, Any]]:
+    def get_imports(self) -> list[dict[str, Any]]:
         """Get imported functions."""
         return self._execute_command("iij", expect_json=True)
 
-    def get_exports(self) -> List[Dict[str, Any]]:
+    def get_exports(self) -> list[dict[str, Any]]:
         """Get exported functions."""
         return self._execute_command("iEj", expect_json=True)
 
-    def get_symbols(self) -> List[Dict[str, Any]]:
+    def get_symbols(self) -> list[dict[str, Any]]:
         """Get all symbols."""
         return self._execute_command("isj", expect_json=True)
 
-    def get_relocations(self) -> List[Dict[str, Any]]:
+    def get_relocations(self) -> list[dict[str, Any]]:
         """Get relocations."""
         return self._execute_command("irj", expect_json=True)
 
-    def analyze_api_calls(self) -> Dict[str, List[str]]:
+    def analyze_api_calls(self) -> dict[str, list[str]]:
         """Analyze API calls and categorize them.
 
         Returns:
@@ -367,7 +362,7 @@ class R2Session:
             self.logger.error("R2Exception in radare2_utils: %s", e)
             return False
 
-    def step_esil(self, address: Union[str, int], steps: int = 1) -> str:
+    def step_esil(self, address: str | int, steps: int = 1) -> str:
         """Step through ESIL instructions.
 
         Args:
@@ -381,11 +376,11 @@ class R2Session:
         addr = hex(address) if isinstance(address, int) else address
         return self._execute_command(f"{steps}aes @ {addr}")
 
-    def get_esil_registers(self) -> Dict[str, Any]:
+    def get_esil_registers(self) -> dict[str, Any]:
         """Get ESIL register state."""
         return self._execute_command("drj", expect_json=True)
 
-    def emulate_function(self, address: Union[str, int]) -> Dict[str, Any]:
+    def emulate_function(self, address: str | int) -> dict[str, Any]:
         """Emulate function execution using ESIL.
 
         Args:
@@ -413,9 +408,7 @@ class R2Session:
             # Get initial register state
             results["initial_registers"] = self.get_esil_registers()
 
-            # Get function info for emulation bounds
-            func_info = self.get_function_info(address)
-            if func_info:
+            if func_info := self.get_function_info(address):
                 func_size = func_info.get("size", 100)
 
                 # Step through function
@@ -441,13 +434,13 @@ class R2Session:
             self.logger.error("R2Exception in radare2_utils: %s", e)
             return False
 
-    def get_identified_functions(self) -> List[Dict[str, Any]]:
+    def get_identified_functions(self) -> list[dict[str, Any]]:
         """Get functions identified by signatures."""
         functions = self.get_functions()
         return [f for f in functions if f.get("name", "").startswith("sym.")]
 
     # Vulnerability Detection
-    def detect_vulnerabilities(self) -> Dict[str, List[Dict[str, Any]]]:
+    def detect_vulnerabilities(self) -> dict[str, list[dict[str, Any]]]:
         """Detect potential vulnerabilities using radare2 analysis.
 
         Returns:
@@ -483,7 +476,7 @@ class R2Session:
 
         return vulnerabilities
 
-    def _analyze_function_vulnerabilities(self, address: Union[str, int]) -> Dict[str, List[Dict[str, Any]]]:
+    def _analyze_function_vulnerabilities(self, address: str | int) -> dict[str, list[dict[str, Any]]]:
         """Analyze single function for vulnerabilities."""
         addr = hex(address) if isinstance(address, int) else address
         vulns = {
@@ -520,32 +513,29 @@ class R2Session:
                     )
 
                 # Format string detection
-                if any(func in line_lower for func in format_functions):
-                    if "mov" in line_lower and "%" in line_lower:
-                        vulns["format_string"].append(
-                            {
-                                "line": line.strip(),
-                                "function": addr,
-                                "type": "potential_format_string",
-                                "line_number": i,
-                            }
-                        )
+                if any(func in line_lower for func in format_functions) and ("mov" in line_lower and "%" in line_lower):
+                    vulns["format_string"].append(
+                        {
+                            "line": line.strip(),
+                            "function": addr,
+                            "type": "potential_format_string",
+                            "line_number": i,
+                        }
+                    )
 
                 # Memory management issues
-                if any(func in line_lower for func in memory_functions):
-                    if "free" in line_lower:
-                        # Check for double free by looking ahead
-                        for j in range(i + 1, min(i + 10, len(lines))):
-                            if "free" in lines[j].lower():
-                                vulns["double_free"].append(
-                                    {
-                                        "line": line.strip(),
-                                        "function": addr,
-                                        "type": "potential_double_free",
-                                        "line_number": i,
-                                    }
-                                )
-                                break
+                if any(func in line_lower for func in memory_functions) and "free" in line_lower:
+                    for j in range(i + 1, min(i + 10, len(lines))):
+                        if "free" in lines[j].lower():
+                            vulns["double_free"].append(
+                                {
+                                    "line": line.strip(),
+                                    "function": addr,
+                                    "type": "potential_double_free",
+                                    "line_number": i,
+                                }
+                            )
+                            break
 
                 # Null pointer dereference
                 if "mov" in line_lower and ("dword ptr [0]" in line_lower or "qword ptr [0]" in line_lower):
@@ -560,11 +550,9 @@ class R2Session:
 
         except R2Exception as e:
             logger.error("R2Exception in radare2_utils: %s", e)
-            pass
-
         return vulns
 
-    def analyze_function_deeper(self, address: Union[str, int]) -> bool:
+    def analyze_function_deeper(self, address: str | int) -> bool:
         """Perform deeper analysis on a specific function.
 
         Args:
@@ -586,7 +574,7 @@ class R2Session:
             self.logger.error("R2Exception in radare2_utils: %s", e)
             return False
 
-    def run_optimization_passes(self, address: Union[str, int]) -> bool:
+    def run_optimization_passes(self, address: str | int) -> bool:
         """Run optimization passes on a function for better decompilation.
 
         Args:
@@ -609,7 +597,7 @@ class R2Session:
 
 
 @contextmanager
-def r2_session(binary_path: str, radare2_path: Optional[str] = None, use_pooling: bool = True):
+def r2_session(binary_path: str, radare2_path: str | None = None, use_pooling: bool = True):
     """Context manager for radare2 sessions.
 
     Args:
@@ -626,9 +614,8 @@ def r2_session(binary_path: str, radare2_path: Optional[str] = None, use_pooling
         if radare2_path and os.path.exists(radare2_path):
             flags.extend(["-e", f"bin.radare2={radare2_path}"])
 
-        with r2_session_pooled(binary_path, flags=flags if flags else None) as pooled_session:
-            wrapper = R2SessionPoolAdapter(pooled_session)
-            yield wrapper
+        with r2_session_pooled(binary_path, flags=flags or None) as pooled_session:
+            yield R2SessionPoolAdapter(pooled_session)
     else:
         session = R2Session(binary_path, radare2_path)
         try:
@@ -653,7 +640,7 @@ class R2SessionPoolAdapter:
         self.is_connected = session_wrapper.state.value == "active"
         self.logger = logging.getLogger(__name__)
 
-    def _execute_command(self, cmd: str, expect_json: bool = False) -> Union[str, Dict, List]:
+    def _execute_command(self, cmd: str, expect_json: bool = False) -> str | dict | list:
         """Execute radare2 command with error handling.
 
         Args:
@@ -693,20 +680,20 @@ class R2SessionPoolAdapter:
             self.logger.error("R2Exception in radare2_utils: %s", e)
             return False
 
-    def get_info(self) -> Dict[str, Any]:
+    def get_info(self) -> dict[str, Any]:
         """Get binary information."""
         return self._execute_command("ij", expect_json=True)
 
-    def get_functions(self) -> List[Dict[str, Any]]:
+    def get_functions(self) -> list[dict[str, Any]]:
         """Get list of all functions."""
         return self._execute_command("aflj", expect_json=True)
 
-    def get_function_info(self, address: Union[str, int]) -> Dict[str, Any]:
+    def get_function_info(self, address: str | int) -> dict[str, Any]:
         """Get detailed function information."""
         addr = hex(address) if isinstance(address, int) else address
         return self._execute_command(f"afij @ {addr}", expect_json=True)
 
-    def decompile_function(self, address: Union[str, int]) -> str:
+    def decompile_function(self, address: str | int) -> str:
         """Decompile function to pseudocode.
 
         Args:
@@ -719,7 +706,7 @@ class R2SessionPoolAdapter:
         addr = hex(address) if isinstance(address, int) else address
         return self._execute_command(f"pdc @ {addr}")
 
-    def get_function_graph(self, address: Union[str, int]) -> Dict[str, Any]:
+    def get_function_graph(self, address: str | int) -> dict[str, Any]:
         """Get function control flow graph with decompilation.
 
         Args:
@@ -732,12 +719,12 @@ class R2SessionPoolAdapter:
         addr = hex(address) if isinstance(address, int) else address
         return self._execute_command(f"pdgj @ {addr}", expect_json=True)
 
-    def get_function_signature(self, address: Union[str, int]) -> str:
+    def get_function_signature(self, address: str | int) -> str:
         """Get function signature."""
         addr = hex(address) if isinstance(address, int) else address
         return self._execute_command(f"afv @ {addr}")
 
-    def get_strings(self, min_length: int = 4) -> List[Dict[str, Any]]:
+    def get_strings(self, min_length: int = 4) -> list[dict[str, Any]]:
         """Get all strings from binary.
 
         Args:
@@ -749,11 +736,11 @@ class R2SessionPoolAdapter:
         """
         return self._execute_command(f"izzj~{{length}}gte:{min_length}", expect_json=True)
 
-    def get_strings_with_xrefs(self) -> List[Dict[str, Any]]:
+    def get_strings_with_xrefs(self) -> list[dict[str, Any]]:
         """Get strings with cross-references."""
         return self._execute_command("izzj", expect_json=True)
 
-    def search_strings(self, pattern: str) -> List[Dict[str, Any]]:
+    def search_strings(self, pattern: str) -> list[dict[str, Any]]:
         """Search for strings matching pattern.
 
         Args:
@@ -765,7 +752,7 @@ class R2SessionPoolAdapter:
         """
         return self._execute_command(f"/j {pattern}", expect_json=True)
 
-    def get_license_strings(self) -> List[Dict[str, Any]]:
+    def get_license_strings(self) -> list[dict[str, Any]]:
         """Find potential license-related strings."""
         license_patterns = [
             "license",
@@ -789,8 +776,7 @@ class R2SessionPoolAdapter:
         all_strings = []
         for pattern in license_patterns:
             try:
-                results = self.search_strings(pattern)
-                if results:
+                if results := self.search_strings(pattern):
                     all_strings.extend(results)
             except R2Exception as e:
                 self.logger.error("R2Exception in radare2_utils: %s", e)
@@ -798,23 +784,23 @@ class R2SessionPoolAdapter:
 
         return all_strings
 
-    def get_imports(self) -> List[Dict[str, Any]]:
+    def get_imports(self) -> list[dict[str, Any]]:
         """Get imported functions."""
         return self._execute_command("iij", expect_json=True)
 
-    def get_exports(self) -> List[Dict[str, Any]]:
+    def get_exports(self) -> list[dict[str, Any]]:
         """Get exported functions."""
         return self._execute_command("iEj", expect_json=True)
 
-    def get_symbols(self) -> List[Dict[str, Any]]:
+    def get_symbols(self) -> list[dict[str, Any]]:
         """Get all symbols."""
         return self._execute_command("isj", expect_json=True)
 
-    def get_relocations(self) -> List[Dict[str, Any]]:
+    def get_relocations(self) -> list[dict[str, Any]]:
         """Get relocations."""
         return self._execute_command("irj", expect_json=True)
 
-    def analyze_api_calls(self) -> Dict[str, List[str]]:
+    def analyze_api_calls(self) -> dict[str, list[str]]:
         """Analyze API calls and categorize them.
 
         Returns:
@@ -870,7 +856,7 @@ class R2SessionPoolAdapter:
             self.logger.error("R2Exception in radare2_utils: %s", e)
             return False
 
-    def step_esil(self, address: Union[str, int], steps: int = 1) -> str:
+    def step_esil(self, address: str | int, steps: int = 1) -> str:
         """Step through ESIL instructions.
 
         Args:
@@ -884,11 +870,11 @@ class R2SessionPoolAdapter:
         addr = hex(address) if isinstance(address, int) else address
         return self._execute_command(f"{steps}aes @ {addr}")
 
-    def get_esil_registers(self) -> Dict[str, Any]:
+    def get_esil_registers(self) -> dict[str, Any]:
         """Get ESIL register state."""
         return self._execute_command("drj", expect_json=True)
 
-    def emulate_function(self, address: Union[str, int]) -> Dict[str, Any]:
+    def emulate_function(self, address: str | int) -> dict[str, Any]:
         """Emulate function execution using ESIL.
 
         Args:
@@ -914,8 +900,7 @@ class R2SessionPoolAdapter:
 
             results["initial_registers"] = self.get_esil_registers()
 
-            func_info = self.get_function_info(address)
-            if func_info:
+            if func_info := self.get_function_info(address):
                 func_size = func_info.get("size", 100)
 
                 trace = self.step_esil(address, min(func_size // 4, 50))
@@ -938,12 +923,12 @@ class R2SessionPoolAdapter:
             self.logger.error("R2Exception in radare2_utils: %s", e)
             return False
 
-    def get_identified_functions(self) -> List[Dict[str, Any]]:
+    def get_identified_functions(self) -> list[dict[str, Any]]:
         """Get functions identified by signatures."""
         functions = self.get_functions()
         return [f for f in functions if f.get("name", "").startswith("sym.")]
 
-    def detect_vulnerabilities(self) -> Dict[str, List[Dict[str, Any]]]:
+    def detect_vulnerabilities(self) -> dict[str, list[dict[str, Any]]]:
         """Detect potential vulnerabilities using radare2 analysis.
 
         Returns:
@@ -977,7 +962,7 @@ class R2SessionPoolAdapter:
 
         return vulnerabilities
 
-    def _analyze_function_vulnerabilities(self, address: Union[str, int]) -> Dict[str, List[Dict[str, Any]]]:
+    def _analyze_function_vulnerabilities(self, address: str | int) -> dict[str, list[dict[str, Any]]]:
         """Analyze single function for vulnerabilities."""
         addr = hex(address) if isinstance(address, int) else address
         vulns = {
@@ -1010,30 +995,28 @@ class R2SessionPoolAdapter:
                         }
                     )
 
-                if any(func in line_lower for func in format_functions):
-                    if "mov" in line_lower and "%" in line_lower:
-                        vulns["format_string"].append(
-                            {
-                                "line": line.strip(),
-                                "function": addr,
-                                "type": "potential_format_string",
-                                "line_number": i,
-                            }
-                        )
+                if any(func in line_lower for func in format_functions) and ("mov" in line_lower and "%" in line_lower):
+                    vulns["format_string"].append(
+                        {
+                            "line": line.strip(),
+                            "function": addr,
+                            "type": "potential_format_string",
+                            "line_number": i,
+                        }
+                    )
 
-                if any(func in line_lower for func in memory_functions):
-                    if "free" in line_lower:
-                        for j in range(i + 1, min(i + 10, len(lines))):
-                            if "free" in lines[j].lower():
-                                vulns["double_free"].append(
-                                    {
-                                        "line": line.strip(),
-                                        "function": addr,
-                                        "type": "potential_double_free",
-                                        "line_number": i,
-                                    }
-                                )
-                                break
+                if any(func in line_lower for func in memory_functions) and "free" in line_lower:
+                    for j in range(i + 1, min(i + 10, len(lines))):
+                        if "free" in lines[j].lower():
+                            vulns["double_free"].append(
+                                {
+                                    "line": line.strip(),
+                                    "function": addr,
+                                    "type": "potential_double_free",
+                                    "line_number": i,
+                                }
+                            )
+                            break
 
                 if "mov" in line_lower and ("dword ptr [0]" in line_lower or "qword ptr [0]" in line_lower):
                     vulns["null_pointer"].append(
@@ -1047,11 +1030,9 @@ class R2SessionPoolAdapter:
 
         except R2Exception as e:
             logger.error("R2Exception in radare2_utils: %s", e)
-            pass
-
         return vulns
 
-    def analyze_function_deeper(self, address: Union[str, int]) -> bool:
+    def analyze_function_deeper(self, address: str | int) -> bool:
         """Perform deeper analysis on a specific function.
 
         Args:
@@ -1072,7 +1053,7 @@ class R2SessionPoolAdapter:
             self.logger.error("R2Exception in radare2_utils: %s", e)
             return False
 
-    def run_optimization_passes(self, address: Union[str, int]) -> bool:
+    def run_optimization_passes(self, address: str | int) -> bool:
         """Run optimization passes on a function for better decompilation.
 
         Args:
@@ -1108,7 +1089,7 @@ class R2BinaryDiff:
         self.binary2 = binary2
         self.logger = logging.getLogger(__name__)
 
-    def compare_functions(self) -> Dict[str, Any]:
+    def compare_functions(self) -> dict[str, Any]:
         """Compare functions between two binaries.
 
         Returns:
@@ -1157,7 +1138,7 @@ class R2BinaryDiff:
 
         return results
 
-    def compare_strings(self) -> Dict[str, Any]:
+    def compare_strings(self) -> dict[str, Any]:
         """Compare strings between binaries."""
         results = {
             "binary1": self.binary1,
@@ -1174,7 +1155,7 @@ class R2BinaryDiff:
                     strings2 = {s["string"]: s for s in r2_2.get_strings()}
 
                     # Compare strings
-                    for string, _ in strings1.items():
+                    for string in strings1:
                         if string in strings2:
                             results["common_strings"].append(string)
                         else:
@@ -1191,7 +1172,7 @@ class R2BinaryDiff:
         return results
 
 
-def analyze_binary_comprehensive(binary_path: str, radare2_path: Optional[str] = None) -> Dict[str, Any]:
+def analyze_binary_comprehensive(binary_path: str, radare2_path: str | None = None) -> dict[str, Any]:
     """Perform comprehensive radare2 analysis on a binary.
 
     Args:
@@ -1241,8 +1222,7 @@ def analyze_binary_comprehensive(binary_path: str, radare2_path: Optional[str] =
             # Decompile a few key functions
             functions = results["functions"][:5]  # Sample first 5 functions
             for func in functions:
-                addr = func.get("offset")
-                if addr:
+                if addr := func.get("offset"):
                     try:
                         decompiled = r2.decompile_function(addr)
                         if decompiled:
@@ -1259,8 +1239,6 @@ def analyze_binary_comprehensive(binary_path: str, radare2_path: Optional[str] =
                     results["esil_analysis"] = esil_result
                 except R2Exception as e:
                     logger.error("R2Exception in radare2_utils: %s", e)
-                    pass
-
     except Exception as e:
         error_msg = f"Comprehensive analysis failed: {e}"
         results["errors"].append(error_msg)
@@ -1270,11 +1248,11 @@ def analyze_binary_comprehensive(binary_path: str, radare2_path: Optional[str] =
 
 
 __all__ = [
-    "R2Session",
-    "R2Exception",
     "R2BinaryDiff",
+    "R2Exception",
+    "R2Session",
     "R2SessionPoolAdapter",
-    "r2_session",
-    "analyze_binary_comprehensive",
     "SESSION_MANAGER_AVAILABLE",
+    "analyze_binary_comprehensive",
+    "r2_session",
 ]

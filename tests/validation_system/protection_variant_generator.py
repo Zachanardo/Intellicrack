@@ -62,11 +62,11 @@ class MutationResult:
     original_hash: str
     mutated_hash: str
     mutation_type: MutationType
-    mutations_applied: List[Dict[str, Any]]
+    mutations_applied: list[dict[str, Any]]
     binary_path: str
     success: bool
     verification_passed: bool
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class ProtectionVariantGenerator:
@@ -108,7 +108,7 @@ class ProtectionVariantGenerator:
         ]
 
         # Track generated variants
-        self.variants: List[MutationResult] = []
+        self.variants: list[MutationResult] = []
 
     def generate_variant(self, binary_path: str, mutation_type: MutationType) -> MutationResult:
         """Generate a single variant with specified mutation type."""
@@ -173,7 +173,7 @@ class ProtectionVariantGenerator:
                 error_message=str(e)
             )
 
-    def _modify_constants(self, binary_path: str) -> List[Dict[str, Any]]:
+    def _modify_constants(self, binary_path: str) -> list[dict[str, Any]]:
         """Modify protection constants and magic numbers in binary."""
         mutations = []
 
@@ -232,7 +232,7 @@ class ProtectionVariantGenerator:
         logger.info(f"Modified {len(mutations)} constants")
         return mutations
 
-    def _substitute_opcodes(self, binary_path: str) -> List[Dict[str, Any]]:
+    def _substitute_opcodes(self, binary_path: str) -> list[dict[str, Any]]:
         """Substitute conditional jump opcodes to alter control flow."""
         mutations = []
 
@@ -293,7 +293,7 @@ class ProtectionVariantGenerator:
         logger.info(f"Substituted {len(mutations)} opcodes")
         return mutations
 
-    def _reorder_flow(self, binary_path: str) -> List[Dict[str, Any]]:
+    def _reorder_flow(self, binary_path: str) -> list[dict[str, Any]]:
         """Reorder non-dependent protection checks."""
         mutations = []
 
@@ -356,7 +356,7 @@ class ProtectionVariantGenerator:
         logger.info(f"Reordered {len(mutations)} code blocks")
         return mutations
 
-    def _insert_nops(self, binary_path: str) -> List[Dict[str, Any]]:
+    def _insert_nops(self, binary_path: str) -> list[dict[str, Any]]:
         """Insert NOP sleds between protection checks."""
         mutations = []
 
@@ -409,7 +409,7 @@ class ProtectionVariantGenerator:
         logger.info(f"Inserted {len(mutations)} NOP sleds")
         return mutations
 
-    def _add_junk_code(self, binary_path: str) -> List[Dict[str, Any]]:
+    def _add_junk_code(self, binary_path: str) -> list[dict[str, Any]]:
         """Add junk code between protection checks."""
         mutations = []
 
@@ -469,7 +469,7 @@ class ProtectionVariantGenerator:
         logger.info(f"Added {len(mutations)} junk code segments")
         return mutations
 
-    def _add_obfuscation(self, binary_path: str) -> List[Dict[str, Any]]:
+    def _add_obfuscation(self, binary_path: str) -> list[dict[str, Any]]:
         """Add obfuscation layer to the binary."""
         mutations = []
 
@@ -527,7 +527,7 @@ class ProtectionVariantGenerator:
         logger.info(f"Added {len(mutations)} obfuscation layers")
         return mutations
 
-    def _apply_packing(self, binary_path: str) -> List[Dict[str, Any]]:
+    def _apply_packing(self, binary_path: str) -> list[dict[str, Any]]:
         """Apply packing to the binary (UPX simulation)."""
         mutations = []
 
@@ -576,7 +576,7 @@ class ProtectionVariantGenerator:
 
         return mutations
 
-    def _recompile_with_flags(self, binary_path: str) -> List[Dict[str, Any]]:
+    def _recompile_with_flags(self, binary_path: str) -> list[dict[str, Any]]:
         """Simulate recompilation with different compiler flags."""
         mutations = []
 
@@ -665,7 +665,7 @@ class ProtectionVariantGenerator:
 
         return True
 
-    def _generate_deobfuscation_stub(self, xor_key: int, mutations: List) -> Optional[bytes]:
+    def _generate_deobfuscation_stub(self, xor_key: int, mutations: list) -> bytes | None:
         """Generate a deobfuscation stub."""
         # Simple x86 deobfuscation loop
         stub = bytearray()
@@ -699,7 +699,7 @@ class ProtectionVariantGenerator:
 
         return bytes(stub) if len(stub) < 1000 else None
 
-    def _find_code_cave(self, pe: pefile.PE, size: int) -> Optional[int]:
+    def _find_code_cave(self, pe: pefile.PE, size: int) -> int | None:
         """Find a code cave in the PE file."""
         for section in pe.sections:
             data = section.get_data()
@@ -840,7 +840,7 @@ class ProtectionVariantGenerator:
             logger.error(f"Error verifying protection: {e}")
             return False
 
-    def generate_all_variants(self, binary_path: str) -> List[MutationResult]:
+    def generate_all_variants(self, binary_path: str) -> list[MutationResult]:
         """Generate all 5 required variants for a binary."""
         logger.info(f"Generating all variants for {binary_path}")
 

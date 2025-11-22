@@ -78,7 +78,11 @@ class DashboardManager:
         Gathers information about the currently loaded binary file including
         size, path, and last modified timestamp. Updates stats dictionary.
         """
-        if hasattr(self.app, "binary_path") and self.app.binary_path and os.path.exists(self.app.binary_path):
+        if (
+            hasattr(self.app, "binary_path")
+            and self.app.binary_path
+            and os.path.exists(self.app.binary_path)
+        ):
             try:
                 binary_size: int = os.path.getsize(self.app.binary_path)
                 binary_name: str = os.path.basename(self.app.binary_path)
@@ -89,7 +93,9 @@ class DashboardManager:
                     "path": self.app.binary_path,
                     "size": binary_size,
                     "size_formatted": self._format_size(binary_size),
-                    "last_modified": datetime.datetime.fromtimestamp(last_modified).strftime("%Y-%m-%d %H:%M:%S"),
+                    "last_modified": datetime.datetime.fromtimestamp(last_modified).strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    ),
                 }
             except (OSError, ValueError):
                 self.logger.exception("Failed to update binary stats.")

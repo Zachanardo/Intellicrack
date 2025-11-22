@@ -79,7 +79,7 @@ class TestBackupRestoreFunctionality(IntellicrackTestBase):
         self.config._save_config()
 
         # Verify backup contains original data
-        with open(backup_path, 'r', encoding='utf-8') as f:
+        with open(backup_path, encoding='utf-8') as f:
             backup_data = json.load(f)
 
         assert backup_data["application"]["version"] == "3.0"
@@ -139,7 +139,7 @@ class TestBackupRestoreFunctionality(IntellicrackTestBase):
         assert success, "Restore should succeed"
 
         # Verify restoration
-        with open(config_file, 'r', encoding='utf-8') as f:
+        with open(config_file, encoding='utf-8') as f:
             restored_config = json.load(f)
 
         assert restored_config["application"]["version"] == "3.5.0"
@@ -188,7 +188,7 @@ class TestBackupRestoreFunctionality(IntellicrackTestBase):
         version_2_backup = backup_paths[2]
         self.backup_manager.restore_backup(version_2_backup, config_file)
 
-        with open(config_file, 'r', encoding='utf-8') as f:
+        with open(config_file, encoding='utf-8') as f:
             restored = json.load(f)
 
         assert restored["iteration"] == 2
@@ -234,7 +234,7 @@ class TestBackupRestoreFunctionality(IntellicrackTestBase):
             self.backup_manager.restore_backup(backup_path, config_file)
 
         # Verify rollback worked
-        with open(config_file, 'r', encoding='utf-8') as f:
+        with open(config_file, encoding='utf-8') as f:
             recovered_config = json.load(f)
 
         assert recovered_config == valid_config
@@ -271,7 +271,7 @@ class TestBackupRestoreFunctionality(IntellicrackTestBase):
         # Verify newest backups were kept
         remaining_iterations = []
         for backup in remaining_backups:
-            with open(backup, 'r', encoding='utf-8') as f:
+            with open(backup, encoding='utf-8') as f:
                 data = json.load(f)
                 remaining_iterations.append(data.get("iteration", -1))
 
@@ -315,7 +315,7 @@ class TestBackupRestoreFunctionality(IntellicrackTestBase):
 
         # Corrupted backup should fail to load
         try:
-            with open(corrupted_backup, 'r', encoding='utf-8') as f:
+            with open(corrupted_backup, encoding='utf-8') as f:
                 json.load(f)
             assert False, "Should fail to load corrupted backup"
         except json.JSONDecodeError:
@@ -393,7 +393,7 @@ class TestBackupRestoreFunctionality(IntellicrackTestBase):
         )
 
         # Check backup file contains data
-        with open(backup_path, 'r', encoding='utf-8') as f:
+        with open(backup_path, encoding='utf-8') as f:
             backup_data = json.load(f)
 
         assert backup_data == config_data
@@ -435,7 +435,7 @@ class TestBackupRestoreFunctionality(IntellicrackTestBase):
         self.backup_manager.restore_backup(backup_path, config_file)
 
         # Verify paths were restored correctly
-        with open(config_file, 'r', encoding='utf-8') as f:
+        with open(config_file, encoding='utf-8') as f:
             restored = json.load(f)
 
         assert restored["directories"]["workspace"] == "C:\\Users\\test\\workspace"

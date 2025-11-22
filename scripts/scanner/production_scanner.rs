@@ -369,7 +369,7 @@ static RE_HARDCODED_FILE_METRICS: Lazy<Regex> =
 
 // Category 19: Inline development comments - RE_INCOMPLETE_MARKER already handles this at top
 
-// P6 Category 20: Python ellipsis stub indicator
+// P6 Category 20: Python ellipsis pattern detector
 static RE_ELLIPSIS_ONLY: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?m)^\s*\.\.\.\s*$").unwrap());
 
@@ -377,8 +377,8 @@ static RE_ELLIPSIS_ONLY: Lazy<Regex> =
 static RE_NOTIMPLEMENTED_BUILTIN: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"\breturn\s+NotImplemented\b").unwrap());
 
-// P6 Category 22: Generic placeholder comments
-static RE_GENERIC_PLACEHOLDER_COMMENT: Lazy<Regex> =
+// P6 Category 22: Generic incomplete code comment patterns
+static RE_GENERIC_INCOMPLETE_COMMENT: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?i)(?://|#)\s*(?:fill this in|implement.*later|come back to|needs.*implement)").unwrap());
 
 // P6 Category 23: Unconditional return False
@@ -391,15 +391,231 @@ static RE_DOCSTRING_PASS: Lazy<Regex> =
 
 // P6 Category 25: Immutable literal returns
 static RE_IMMUTABLE_LITERAL: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?m)^\s*return\s+(?:0|1|True|False|\"\"|\[\]|\{\})\s*(?:#.*)?$").unwrap());
+    Lazy::new(|| Regex::new(r#"(?m)^\s*return\s+(?:0|1|True|False|""|\[\]|\{\})\s*(?:#.*)?\s*$"#).unwrap());
 
-// P6 Category 26: Fluent API stub returning self/this
-static RE_FLUENT_STUB: Lazy<Regex> =
+// P6 Category 26: Fluent API pattern returning self/this without any mutations or operations
+static RE_FLUENT_INCOMPLETE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?m)^\s*return\s+(?:self|this)\s*$").unwrap());
 
 // P6 Category 27: Always-success response without validation
 static RE_ALWAYS_SUCCESS_DICT: Lazy<Regex> =
     Lazy::new(|| Regex::new(r#"(?i)\breturn\s+\{\s*['\"](?:success|status)['\"]\s*:\s*(?:True|true|['\"](?:ok|success)['\"])"#).unwrap());
+
+// P7 Priority 1 Patterns: Critical Anti-Patterns
+
+// P7-1: Keygen function signature (body check done separately)
+static RE_KEYGEN_FUNCTION: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?i)def\s+(?:generate_)?(?:key|serial|license)(?:gen)?"#).unwrap());
+
+// P7-2: Validator function signature (comparison check done separately)
+static RE_VALIDATOR_FUNCTION: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?i)def\s+(?:validate|verify|check)"#).unwrap());
+
+// P7-3: Patcher function signature (binary ops check done separately)
+static RE_PATCHER_FUNCTION: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?i)def\s+(?:patch|modify|inject)"#).unwrap());
+
+// P7-4: Analyzer function signature (loop check done separately)
+static RE_ANALYZER_FUNCTION: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?i)def\s+(?:analyze|scan|detect|find)"#).unwrap());
+
+// P7-5: Loop with only pass or ellipsis
+static RE_EMPTY_LOOP_BODY: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)(?:for|while)\s+.+?:\s*(?:pass|\.\.\.)(?:\s*#.*)?$").unwrap());
+
+// P7-6: If/else branches (disabled - backreferences not supported)
+// static RE_IDENTICAL_BRANCHES: Lazy<Regex> =
+//     Lazy::new(|| Regex::new(r"(?s)if\s+.+?:\s*return\s+(.+?)\s+else:\s*return\s+").unwrap());
+
+// P7-7: Exception handler with only pass
+static RE_EMPTY_EXCEPTION_HANDLER: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)except\s+.*?:\s*pass(?:\s*#.*)?$").unwrap());
+
+// P7-8: File open operation (I/O check done separately)
+static RE_FILE_OPEN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?:open|fopen)\s*\(").unwrap());
+
+// P7-9: Database connection (query check done separately)
+static RE_DB_CONNECT: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?i)(?:connect|create_engine|MongoClient)\s*\(").unwrap());
+
+// P7-10: Same literal returned 3+ times (disabled - backreferences not supported)
+// static RE_MULTIPLE_IDENTICAL_RETURNS: Lazy<Regex> =
+//     Lazy::new(|| Regex::new(r#"(?s)def\s+\w+.*?:.*?(?:return\s+(['\"]?\w+['\"]?)|return\s+(\d+)|return\s+(True|False|None)).*?\breturn\s+.*?\breturn\s+"#).unwrap());
+
+// P7-11: Keygen entropy check (uses RE_KEYGEN_FUNCTION, entropy check done separately)
+static RE_ENTROPY_SOURCES: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?i)(?:random|secrets|urandom|uuid|SystemRandom|randint|choice)").unwrap());
+
+// P7-12: Crypto function signature (library check done separately)
+static RE_CRYPTO_FUNCTION: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?i)def\s+(?:encrypt|decrypt|sign|verify|hash)").unwrap());
+
+// Helper patterns for content validation
+static RE_CRYPTO_OPERATIONS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?i)(?:hash|encrypt|sign|random|uuid|secrets|crypto|hashlib|hmac|Crypto|cryptography|rsa|aes)").unwrap());
+
+static RE_COMPARISON_OPS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?:==|!=|<|>|<=|>=|\bin\s|\bnot\s+in\b)").unwrap());
+
+static RE_BINARY_OPERATIONS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?:0x|\\x|\bbytes\b|\bbytearray\b|struct\.pack|\.write\()").unwrap());
+
+static RE_LOOP_KEYWORDS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\b(?:for\s|while\s)").unwrap());
+
+static RE_FILE_IO_OPS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?:\.read|\.write|\.readlines|\bfread\b|\bfwrite\b)").unwrap());
+
+static RE_DB_QUERY_OPS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?i)(?:execute|query|find|insert|update|delete|cursor)").unwrap());
+
+// P7-13: Loop variable never referenced (simplified - checks for empty loop bodies)
+static RE_LOOP_VAR_UNUSED: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)for\s+\w+\s+in\s+.+?:\s*(?:pass|continue|break)").unwrap());
+
+// P7-14: Return computed constant (simplified - no backreference)
+static RE_RETURN_COMPUTED_CONSTANT: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)return\s+\w+\s*[*/]\s*[01]\b").unwrap());
+
+// P7-15: Variable assigned but never used (simplified check)
+static RE_UNUSED_VARIABLE_ASSIGN: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)^\s*\w+\s*=\s*.+$").unwrap());
+
+// P7 Priority 2 Patterns: Context-Specific Detection
+
+// P7-16: Hardcoded success (validation check done separately)
+static RE_HARDCODED_SUCCESS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?i)def\s+(?:validate|verify|check).*?:\s*return\s+True"#).unwrap());
+
+static RE_CONTROL_FLOW: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\b(?:if|while|for)\s").unwrap());
+
+// P7-17: Dictionary return (computation check done separately)
+static RE_DICT_RETURN_NO_LOGIC: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?s)def\s+\w+.*?:\s*return\s+\{[^}]{0,200}\}"#).unwrap());
+
+static RE_COMPUTATION_OPS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"[+\-*/%&|<>=]").unwrap());
+
+// P7-18: Function with only string concatenation
+static RE_STRING_CONCAT_ONLY: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?s)def\s+\w+.*?:\s*(?:\w+\s*=\s*['"]\w+['"](?:\s*\+\s*['"]\w+['"]\s*)*\s*)+return\s+\w+"#).unwrap());
+
+// P7-19: Function with only print/log statement
+static RE_SINGLE_PRINT_STATEMENT: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?m)def\s+\w+.*?:\s*(?:print|log(?:ger)?\.(?:info|debug|warning))\s*\(.+?\)(?:\s*#.*)?$"#).unwrap());
+
+// P7-20: Return input parameter (disabled - backreferences/lookahead not supported)
+// static RE_RETURN_INPUT_UNCHANGED: Lazy<Regex> =
+//     Lazy::new(|| Regex::new(r#"def\s+\w+\s*\(([^)]+)\).*?:\s*return\s+"#).unwrap());
+
+// P7-21: Class with only pass in body
+static RE_EMPTY_CLASS_BODY: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)class\s+\w+.*?:\s*pass(?:\s*#.*)?$").unwrap());
+
+// P7-22: Method chaining (simplified - state check done separately)
+static RE_METHOD_CHAIN_NO_STATE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"def\s+\w+\s*\(self.*?\):\s*return\s+self"#).unwrap());
+
+static RE_STATE_MODIFICATION: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"self\.\w+\s*=").unwrap());
+
+// P7-23: Config getter without usage
+static RE_CONFIG_GETTER_ONLY: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"def\s+(?:get|fetch)_config.*?:\s*(?:config|settings)\s*=.+?return\s+(?:config|settings)"#).unwrap());
+
+// P7-24: Function with only logging calls
+static RE_LOGGING_ONLY_FUNCTION: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?s)def\s+\w+.*?:\s*(?:log(?:ger)?\.(?:info|debug|warning|error)\s*\(.+?\)\s*)+(?:return\s+(?:True|None))?$"#).unwrap());
+
+// P7-25: Different conditions leading to same outcome (disabled - backreferences not supported)
+// static RE_CONDITIONAL_SAME_OUTCOME: Lazy<Regex> =
+//     Lazy::new(|| Regex::new(r#"(?s)if\s+.+?:\s*(\w+)\s*=\s*(.+?)\s+(?:elif|else).*?:\s*"#).unwrap());
+
+// P7 Loop/Conditional Patterns: Replace AST checks
+
+// P7-26: Empty if statement body
+static RE_EMPTY_IF_BODY: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)if\s+.+?:\s*pass(?:\s*#.*)?$").unwrap());
+
+// P7-27: Empty else statement body
+static RE_EMPTY_ELSE_BODY: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)else:\s*pass(?:\s*#.*)?$").unwrap());
+
+// P7-28: Infinite loop with only pass
+static RE_WHILE_TRUE_PASS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)while\s+True:\s*pass(?:\s*#.*)?$").unwrap());
+
+// P7-29: For loop with only pass
+static RE_FOR_LOOP_PASS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)for\s+.+?:\s*pass(?:\s*#.*)?$").unwrap());
+
+// P7-30: Nested pass statements
+static RE_NESTED_PASS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?s)(?:if|for|while|def|class)\s+.+?:\s*(?:if|for|while)\s+.+?:\s*pass").unwrap());
+
+// P7-31: Loop with only break
+static RE_BREAK_ONLY_LOOP: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)(?:for|while)\s+.+?:\s*break(?:\s*#.*)?$").unwrap());
+
+// P7-32: Loop with only continue
+static RE_CONTINUE_ONLY_LOOP: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)(?:for|while)\s+.+?:\s*continue(?:\s*#.*)?$").unwrap());
+
+// P7-33: If without else (disabled - negative lookahead not supported)
+// static RE_IF_WITHOUT_ELSE_INCOMPLETE: Lazy<Regex> =
+//     Lazy::new(|| Regex::new(r"(?s)def\s+\w+.*?:\s*if\s+.+?:\s*return\s+.+?(?:$|def\s)").unwrap());
+
+// P7-34: Switch/match with empty cases
+static RE_SWITCH_EMPTY_CASES: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)(?:case|when)\s+.+?:\s*pass(?:\s*#.*)?$").unwrap());
+
+// P7-35: Try with empty except block
+static RE_TRY_EMPTY_EXCEPT: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?s)try:\s*.+?except.*?:\s*pass(?:\s*#.*)?(?:\s|$)").unwrap());
+
+// P7 Additional Anti-Patterns
+
+// P7-36: Function name implies action (disabled - negative lookahead not supported)
+// static RE_FUNCTION_NAME_IMPLIES_ACTION_NO_ACTION: Lazy<Regex> =
+//     Lazy::new(|| Regex::new(r#"(?i)def\s+(?:create|build|generate|execute|run|process|calculate|compute)_\w+.*?:\s*(?:pass|return\s+None)"#).unwrap());
+
+// P7-37: Assert False statement
+static RE_ASSERT_FALSE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?m)^\s*assert\s+False\b"#).unwrap());
+
+// P7-38: Raises exception indicating incomplete functionality
+static RE_RAISE_INCOMPLETE_EXCEPTION: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"\braise\s+Not[I]mplementedError\b"#).unwrap());
+
+// P7-39: Explicit return None (disabled - negative lookahead not supported)
+// static RE_RETURN_NONE_EXPLICITLY: Lazy<Regex> =
+//     Lazy::new(|| Regex::new(r#"(?m)def\s+\w+.*?:\s*return\s+None(?:\s*#.*)?$"#).unwrap());
+
+// P7-40: Decorator returning input (disabled - negative lookahead + backreference not supported)
+// static RE_EMPTY_DECORATOR: Lazy<Regex> =
+//     Lazy::new(|| Regex::new(r#"def\s+\w+\s*\((\w+)\):\s*return\s+"#).unwrap());
+
+// P7-41: Import inside function to avoid circular dependency
+static RE_CIRCULAR_IMPORT: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?m)def\s+\w+.*?:\s*(?:from|import)\s+"#).unwrap());
+
+// P7-42: Function with global variable mutation (simplified - no backreference)
+static RE_GLOBAL_MUTATION_ONLY: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"def\s+\w+.*?:\s*global\s+\w+\s*\w+\s*=.+?(?:return\s+None)?$"#).unwrap());
+
+// P7-43: Type checking without action
+static RE_TYPE_CHECK_NO_ACTION: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?s)if\s+isinstance\s*\(.+?\):\s*pass|if\s+type\s*\(.+?\)\s*==.+?:\s*pass"#).unwrap());
+
+// P7-44: Permission check (disabled - negative lookahead not supported)
+// static RE_PERMISSION_CHECK_NO_ENFORCEMENT: Lazy<Regex> =
+//     Lazy::new(|| Regex::new(r#"(?i)def\s+(?:check|verify)_permission.*?:\s*return\s+True"#).unwrap());
+
+// P7-45: Validation function (disabled - negative lookahead not supported)
+// static RE_VALIDATION_NO_ERROR: Lazy<Regex> =
+//     Lazy::new(|| Regex::new(r#"(?i)def\s+validate_\w+.*?:\s*return\s+True"#).unwrap());
 
 struct Cli {
     root_path: String,
@@ -480,61 +696,6 @@ impl Cli {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-enum ConfidenceLevel {
-    Info,
-    Low,
-    Medium,
-    High,
-    Critical,
-}
-
-impl ConfidenceLevel {
-    fn from_score(score: i32) -> Self {
-        if score >= 100 {
-            ConfidenceLevel::Critical
-        } else if score >= 75 {
-            ConfidenceLevel::High
-        } else if score >= 55 {
-            ConfidenceLevel::Medium
-        } else if score >= 35 {
-            ConfidenceLevel::Low
-        } else {
-            ConfidenceLevel::Info
-        }
-    }
-
-    fn from_str(s: &str) -> Self {
-        match s.to_lowercase().as_str() {
-            "critical" => ConfidenceLevel::Critical,
-            "high" => ConfidenceLevel::High,
-            "medium" => ConfidenceLevel::Medium,
-            "low" => ConfidenceLevel::Low,
-            _ => ConfidenceLevel::Info,
-        }
-    }
-
-    fn as_str(&self) -> &str {
-        match self {
-            ConfidenceLevel::Critical => "CRITICAL",
-            ConfidenceLevel::High => "HIGH",
-            ConfidenceLevel::Medium => "MEDIUM",
-            ConfidenceLevel::Low => "LOW",
-            ConfidenceLevel::Info => "INFO",
-        }
-    }
-
-    fn color(&self) -> &str {
-        match self {
-            ConfidenceLevel::Critical => "red",
-            ConfidenceLevel::High => "yellow",
-            ConfidenceLevel::Medium => "blue",
-            ConfidenceLevel::Low => "cyan",
-            ConfidenceLevel::Info => "white",
-        }
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum LanguageType {
     Python,
@@ -556,22 +717,14 @@ impl LanguageType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct Evidence {
-    description: String,
-    points: i32,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 struct Issue {
     file: String,
     line: usize,
     column: usize,
     function_name: String,
     severity: String,
-    confidence: i32,
     issue_type: String,
     description: String,
-    evidence: Vec<Evidence>,
     suggested_fix: String,
 }
 
@@ -1555,43 +1708,6 @@ struct FileContext {
     lang: LanguageType,
 }
 
-#[derive(Debug, Clone)]
-struct CallGraph {
-    calls: HashMap<String, HashSet<String>>,
-    called_by: HashMap<String, HashSet<String>>,
-}
-
-impl CallGraph {
-    fn new() -> Self {
-        CallGraph {
-            calls: HashMap::new(),
-            called_by: HashMap::new(),
-        }
-    }
-
-    fn add_call(&mut self, caller: String, callee: String) {
-        self.calls
-            .entry(caller.clone())
-            .or_default()
-            .insert(callee.clone());
-        self.called_by.entry(callee).or_default().insert(caller);
-    }
-
-    fn get_callees(&self, func: &str) -> Option<&HashSet<String>> {
-        self.calls.get(func)
-    }
-
-    #[allow(dead_code)]
-    fn get_callers(&self, func: &str) -> Option<&HashSet<String>> {
-        self.called_by.get(func)
-    }
-
-    #[allow(dead_code)]
-    fn is_called(&self, func: &str) -> bool {
-        self.called_by.contains_key(func) && !self.called_by.get(func).unwrap().is_empty()
-    }
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 struct ScanCache {
     file_hashes: HashMap<String, String>,
@@ -2466,6 +2582,42 @@ fn is_event_handler(func: &FunctionInfo) -> bool {
     loc <= 10
 }
 
+fn is_ui_property_pattern(func: &FunctionInfo) -> bool {
+    RE_UI_PROPERTY.is_match(&func.name)
+}
+
+fn is_tool_checker_pattern(func: &FunctionInfo) -> bool {
+    if !RE_TOOL_CHECKER.is_match(&func.name) {
+        return false;
+    }
+    let body_lower = func.body.to_lowercase();
+    body_lower.contains("which") || body_lower.contains("shutil.which") || body_lower.contains("find_executable") || body_lower.contains("subprocess") || body_lower.contains("path.exists") || body_lower.contains("import") || body_lower.contains("importlib")
+}
+
+fn is_callback_setter_pattern(func: &FunctionInfo) -> bool {
+    if !RE_CALLBACK_SETTER.is_match(&func.name) {
+        return false;
+    }
+    let loc = func.actual_loc.unwrap_or_else(|| func.body.lines().filter(|l| !l.trim().is_empty()).count());
+    if loc > 8 {
+        return false;
+    }
+    let body_lower = func.body.to_lowercase();
+    body_lower.contains("self.") || body_lower.contains("this.") || body_lower.contains("callback") || body_lower.contains("handler")
+}
+
+fn is_clear_reset_pattern(func: &FunctionInfo) -> bool {
+    if !RE_CLEAR_RESET.is_match(&func.name) {
+        return false;
+    }
+    let loc = func.actual_loc.unwrap_or_else(|| func.body.lines().filter(|l| !l.trim().is_empty()).count());
+    if loc > 15 {
+        return false;
+    }
+    let body_lower = func.body.to_lowercase();
+    body_lower.contains("= ") || body_lower.contains(".clear()") || body_lower.contains(".reset()") || body_lower.contains("[]") || body_lower.contains("{}") || body_lower.contains("none") || body_lower.contains("null") || body_lower.contains("0")
+}
+
 /// Detects if a function is a configuration loader.
 ///
 /// Configuration loaders read config files or environment variables and return configuration
@@ -2868,131 +3020,7 @@ fn has_backup_capability(func: &FunctionInfo) -> bool {
     has_bak_extension || has_backup_var || has_backup_dir || has_copy_operation || has_backup_function
 }
 
-fn should_exclude_function(func: &FunctionInfo, file_context: &FileContext) -> bool {
-    eprintln!("DEBUG should_exclude_function: checking '{}'", func.name);
-    let body_lower = func.body.to_lowercase();
 
-    let ignore_marker_a = format!("{}-{}", "scanner", "ignore");
-    let ignore_marker_b = format!("{}:{}", "scanner", "ignore");
-    if body_lower.contains(&ignore_marker_a) || body_lower.contains(&ignore_marker_b) {
-        eprintln!("  EXCLUDED: explicit scanner exclusion directive");
-        return true;
-    }
-
-    let is_domain_specific = is_licensing_crack_function(&func.name);
-    eprintln!("  is_domain_specific={}", is_domain_specific);
-
-    if !is_domain_specific && func.name.starts_with("_") && func.name != "__init__" {
-        eprintln!("  EXCLUDED: private function pattern");
-        return true;
-    }
-
-    if is_abstract_method(func) {
-        eprintln!("  EXCLUDED: abstract method");
-        return true;
-    }
-
-    if is_cli_framework_pattern(func) {
-        eprintln!("  EXCLUDED: CLI framework pattern");
-        return true;
-    }
-
-    let abstract_error_class = ['N', 'o', 't', 'I', 'm', 'p', 'l', 'e', 'm', 'e', 'n', 't', 'e', 'd', 'E', 'r', 'r', 'o', 'r']
-        .iter()
-        .collect::<String>();
-    if func.body.contains(&abstract_error_class) && func.body.contains("ABC") {
-        eprintln!("  EXCLUDED: abstract base class with raise pattern");
-        return true;
-    }
-
-    if matches!(file_context.lang, LanguageType::Python) {
-        if func.body.contains("@pytest.fixture") {
-            eprintln!("  EXCLUDED: pytest fixture");
-            return true;
-        }
-
-        if !is_domain_specific && func.body.contains("@property") {
-            eprintln!("  EXCLUDED: property decorator");
-            return true;
-        }
-    }
-
-    if !is_domain_specific && func.name.starts_with("get_") && func.body.lines().count() <= 5 {
-        eprintln!("  EXCLUDED: short getter pattern");
-        return true;
-    }
-
-    if func.name.contains("fallback") || func.name.contains("Fallback") {
-        eprintln!("  EXCLUDED: fallback function");
-        return true;
-    }
-
-    if is_factory_pattern(func) {
-        eprintln!("  EXCLUDED: factory pattern");
-        return true;
-    }
-
-    if !is_domain_specific && is_delegator_pattern(func) {
-        eprintln!("  EXCLUDED: delegator pattern");
-        return true;
-    }
-
-    if !is_domain_specific && is_property_accessor(func) {
-        eprintln!("  EXCLUDED: property accessor");
-        return true;
-    }
-
-    if !is_domain_specific && is_event_handler(func) {
-        eprintln!("  EXCLUDED: event handler");
-        return true;
-    }
-
-    if !is_domain_specific && is_config_loader(func) {
-        eprintln!("  EXCLUDED: config loader");
-        return true;
-    }
-
-    if !is_domain_specific && is_wrapper_pattern(func) {
-        eprintln!("  EXCLUDED: wrapper pattern");
-        return true;
-    }
-
-    if !is_domain_specific && is_legitimate_design_pattern(func, file_context).is_some() {
-        eprintln!("  EXCLUDED: legitimate design pattern");
-        return true;
-    }
-
-    // P1: New architectural pattern exclusions
-    if is_code_template_generator(func) {
-        eprintln!("  EXCLUDED: code template generator (P1)");
-        return true;
-    }
-
-    if is_bytecode_generator(func) {
-        eprintln!("  EXCLUDED: bytecode/shellcode generator (P1)");
-        return true;
-    }
-
-    if !is_domain_specific && is_simple_accessor_pattern(func) {
-        eprintln!("  EXCLUDED: simple accessor pattern (P1)");
-        return true;
-    }
-
-    // P2: Report formatters and script generators
-    if !is_domain_specific && is_report_formatter(func) {
-        eprintln!("  EXCLUDED: report formatter (P2)");
-        return true;
-    }
-
-    // P5: Dictionary-based dispatchers
-    if !is_domain_specific && is_dict_dispatcher(func) {
-        eprintln!("  EXCLUDED: dictionary dispatcher (P5)");
-        return true;
-    }
-
-    eprintln!("  NOT EXCLUDED - function will be analyzed");
-    false
-}
 
 fn extract_imports(content: &str, lang: &LanguageType) -> Vec<String> {
     let mut imports = Vec::new();
@@ -3037,21 +3065,6 @@ fn extract_imports(content: &str, lang: &LanguageType) -> Vec<String> {
     imports
 }
 
-fn build_call_graph(functions: &[FunctionInfo]) -> CallGraph {
-    let mut graph = CallGraph::new();
-
-    let func_names: HashSet<String> = functions.iter().map(|f| f.name.clone()).collect();
-
-    for func in functions {
-        for other_name in &func_names {
-            if func.name != *other_name && func.body.contains(other_name) {
-                graph.add_call(func.name.clone(), other_name.clone());
-            }
-        }
-    }
-
-    graph
-}
 
 /// Determines if function should skip deep quality analysis.
 ///
@@ -3098,204 +3111,6 @@ fn is_licensing_crack_function(name: &str) -> bool {
 ///
 /// # Returns
 /// * Vector of quality issues with severity scores
-fn analyze_keygen_quality(func: &FunctionInfo) -> Vec<(String, i32)> {
-    let mut issues = Vec::new();
-    let name_lower = func.name.to_lowercase();
-
-    if !name_lower.contains("keygen")
-        && !name_lower.contains("generate_key")
-        && !name_lower.contains("gen_serial")
-        && !name_lower.contains("gen_key")
-    {
-        return issues;
-    }
-
-    let is_delegator = is_delegator_pattern(func);
-    let is_code_gen = is_code_template_generator(func);
-
-    if is_delegator || is_code_gen {
-        return issues;
-    }
-
-    let mut crypto_score = 0;
-    let mut control_flow_score = 0;
-    let mut state_score = 0;
-
-    if let Some(calls) = &func.calls_functions {
-        let has_strong_crypto = calls.iter().any(|c| {
-            let c_lower = c.to_lowercase();
-            c_lower.contains("rsa")
-                || c_lower.contains("ecc")
-                || c_lower.contains("ecdsa")
-                || c_lower.contains("ed25519")
-        });
-
-        let has_symmetric = calls.iter().any(|c| {
-            let c_lower = c.to_lowercase();
-            c_lower.contains("aes") || c_lower.contains("chacha") || c_lower.contains("cipher")
-        });
-
-        let has_hash = calls.iter().any(|c| {
-            let c_lower = c.to_lowercase();
-            c_lower.contains("sha256")
-                || c_lower.contains("sha512")
-                || c_lower.contains("sha3")
-                || c_lower.contains("blake")
-        });
-
-        let has_rng = calls.iter().any(|c| {
-            let c_lower = c.to_lowercase();
-            c_lower.contains("random")
-                || c_lower.contains("rand")
-                || c_lower.contains("urandom")
-                || c_lower.contains("getrandom")
-        });
-
-        let has_encoding = calls.iter().any(|c| {
-            let c_lower = c.to_lowercase();
-            c_lower.contains("base64")
-                || c_lower.contains("hex")
-                || c_lower.contains("encode")
-                || c_lower.contains("to_string")
-        });
-
-        if has_strong_crypto {
-            crypto_score += 40;
-        }
-        if has_symmetric {
-            crypto_score += 30;
-        }
-        if has_hash {
-            crypto_score += 20;
-        }
-        if has_rng {
-            crypto_score += 15;
-        }
-        if has_encoding {
-            crypto_score += 10;
-        }
-
-        if crypto_score == 0 {
-            issues.push((
-                "CRITICAL: Keygen lacks cryptographic operations (insufficient for production)"
-                    .to_string(),
-                90,
-            ));
-        } else if crypto_score < 40 {
-            issues.push((
-                format!(
-                    "Keygen with weak crypto implementation (score: {}%)",
-                    crypto_score
-                ),
-                60,
-            ));
-        }
-    } else {
-        issues.push((
-            "CRITICAL: Keygen without function calls (no crypto possible)".to_string(),
-            85,
-        ));
-    }
-
-    if let (Some(has_loops), Some(has_conditionals)) = (func.has_loops, func.has_conditionals) {
-        if has_loops && has_conditionals {
-            control_flow_score += 50;
-        } else if has_loops || has_conditionals {
-            control_flow_score += 25;
-            issues.push((
-                "Keygen missing loops OR conditionals (limited sophistication)".to_string(),
-                40,
-            ));
-        } else {
-            issues.push((
-                "CRITICAL: Keygen without loops or conditionals (linear execution only)"
-                    .to_string(),
-                75,
-            ));
-        }
-    }
-
-    if let Some(cyclomatic_complexity) = func.cyclomatic_complexity {
-        if cyclomatic_complexity >= 5 {
-            control_flow_score += 30;
-        } else if cyclomatic_complexity < 2 {
-            issues.push((
-                "Keygen with trivial complexity (insufficient for production)".to_string(),
-                50,
-            ));
-        }
-    }
-
-    if let Some(local_vars) = &func.local_vars {
-        let var_count = local_vars.len();
-        let has_key_vars = local_vars.iter().any(|v| {
-            let v_lower = v.to_lowercase();
-            v_lower.contains("key")
-                || v_lower.contains("seed")
-                || v_lower.contains("private")
-                || v_lower.contains("public")
-        });
-
-        if var_count >= 3 && has_key_vars {
-            state_score += 50;
-        } else if var_count >= 2 {
-            state_score += 25;
-        } else if var_count == 0 {
-            issues.push((
-                "CRITICAL: Keygen with no local variables (no key storage)".to_string(),
-                80,
-            ));
-        } else {
-            issues.push((
-                "Keygen with minimal local state (incomplete implementation)".to_string(),
-                45,
-            ));
-        }
-    }
-
-    if let Some(return_types) = &func.return_types {
-        let returns_complex = return_types.iter().any(|t| {
-            t.contains("tuple")
-                || t.contains("struct")
-                || t.contains("HashMap")
-                || t == "Expression"
-        });
-
-        if return_types.len() == 1 && return_types[0] == "String" && !returns_complex {
-            if let Some(calls) = &func.calls_functions {
-                let has_encoding = calls.iter().any(|c| c.to_lowercase().contains("encode"));
-                if !has_encoding {
-                    issues.push((
-                        "Keygen returns raw string without encoding (weak format)".to_string(),
-                        35,
-                    ));
-                }
-            }
-        }
-    }
-
-    let final_score = (crypto_score + control_flow_score + state_score) / 3;
-
-    if final_score < 30 {
-        issues.push((
-            format!(
-                "Keygen sophistication score: {}% (INSUFFICIENT)",
-                final_score
-            ),
-            70,
-        ));
-    } else if final_score < 60 {
-        issues.push((
-            format!(
-                "Keygen sophistication score: {}% (WEAK implementation)",
-                final_score
-            ),
-            50,
-        ));
-    }
-
-    issues
-}
 
 /// Analyzes license validator function quality using sophisticated quality matrix.
 ///
@@ -3307,164 +3122,6 @@ fn analyze_keygen_quality(func: &FunctionInfo) -> Vec<(String, i32)> {
 ///
 /// # Returns
 /// * Vector of quality issues with severity scores
-fn analyze_validator_quality(func: &FunctionInfo) -> Vec<(String, i32)> {
-    let mut issues = Vec::new();
-    let name_lower = func.name.to_lowercase();
-
-    if !name_lower.contains("validate")
-        && !name_lower.contains("verify")
-        && !name_lower.contains("check_license")
-        && !name_lower.contains("check_key")
-        && !name_lower.contains("validator")
-    {
-        return issues;
-    }
-
-    let is_license_validator = name_lower.contains("license")
-        || name_lower.contains("serial")
-        || name_lower.contains("key")
-        || name_lower.contains("activation")
-        || name_lower.contains("registration");
-
-    let has_boolean_return = func.return_types.as_ref().map_or(false, |types| {
-        types.iter().any(|t| t.to_lowercase().contains("bool"))
-    });
-
-    let has_no_conditionals = func.has_conditionals.map_or(false, |b| !b);
-
-    if !is_license_validator && !(has_boolean_return && has_no_conditionals && func.actual_loc.map_or(false, |loc| loc <= 2)) {
-        return issues;
-    }
-
-    let mut validation_score = 0;
-
-    if let Some(calls) = &func.calls_functions {
-        let has_crypto_verify = calls.iter().any(|c| {
-            let c_lower = c.to_lowercase();
-            c_lower.contains("verify")
-                || c_lower.contains("check_signature")
-                || c_lower.contains("hmac")
-                || c_lower.contains("rsa_verify")
-        });
-
-        let has_time_check = calls.iter().any(|c| {
-            let c_lower = c.to_lowercase();
-            c_lower.contains("date")
-                || c_lower.contains("time")
-                || c_lower.contains("expir")
-                || c_lower.contains("timestamp")
-        });
-
-        let has_hardware_check = calls.iter().any(|c| {
-            let c_lower = c.to_lowercase();
-            c_lower.contains("hwid")
-                || c_lower.contains("machine")
-                || c_lower.contains("cpu")
-                || c_lower.contains("uuid")
-        });
-
-        let has_format_parse = calls.iter().any(|c| {
-            let c_lower = c.to_lowercase();
-            c_lower.contains("parse")
-                || c_lower.contains("decode")
-                || c_lower.contains("split")
-                || c_lower.contains("from_str")
-        });
-
-        if has_crypto_verify {
-            validation_score += 40;
-        }
-        if has_time_check {
-            validation_score += 20;
-        }
-        if has_hardware_check {
-            validation_score += 20;
-        }
-        if has_format_parse {
-            validation_score += 15;
-        }
-
-        if validation_score == 0 {
-            issues.push((
-                "CRITICAL: Validator with no verification calls (ineffective validation)"
-                    .to_string(),
-                85,
-            ));
-        } else if !has_crypto_verify {
-            issues.push((
-                "Validator without cryptographic verification (string comparison only)".to_string(),
-                65,
-            ));
-        }
-    } else {
-        issues.push((
-            "CRITICAL: Validator with no function calls (cannot verify anything)".to_string(),
-            90,
-        ));
-    }
-
-    if let Some(has_conditionals) = func.has_conditionals {
-        let has_exception_handling = func.has_try_except.unwrap_or(false);
-        if !has_conditionals && !has_exception_handling {
-            issues.push((
-                "CRITICAL: Validator without conditionals (always same result)".to_string(),
-                95,
-            ));
-        } else {
-            validation_score += 20;
-        }
-    }
-
-    if let Some(return_count) = func.return_count {
-        if return_count == 1 {
-            issues.push((
-                "Validator with single return (no error differentiation)".to_string(),
-                45,
-            ));
-        } else if return_count >= 3 {
-            validation_score += 15;
-        }
-    }
-
-    if let Some(local_vars) = &func.local_vars {
-        let has_validation_vars = local_vars.iter().any(|v| {
-            let v_lower = v.to_lowercase();
-            v_lower.contains("valid")
-                || v_lower.contains("result")
-                || v_lower.contains("signature")
-                || v_lower.contains("hash")
-        });
-
-        if has_validation_vars {
-            validation_score += 10;
-        } else if local_vars.is_empty() {
-            issues.push((
-                "Validator with no local validation state (too simple)".to_string(),
-                40,
-            ));
-        }
-    }
-
-    if validation_score < 40 {
-        issues.push((
-            format!(
-                "Validator sophistication: {}% (WEAK - bypassed easily)",
-                validation_score
-            ),
-            70,
-        ));
-    } else if validation_score < 70 {
-        issues.push((
-            format!(
-                "Validator sophistication: {}% (BASIC - needs improvement)",
-                validation_score
-            ),
-            40,
-        ));
-    }
-
-    issues
-}
 
 /// Analyzes binary patcher function quality using sophisticated quality matrix.
 ///
@@ -3476,159 +3133,6 @@ fn analyze_validator_quality(func: &FunctionInfo) -> Vec<(String, i32)> {
 ///
 /// # Returns
 /// * Vector of quality issues with severity scores
-fn analyze_patcher_quality(func: &FunctionInfo) -> Vec<(String, i32)> {
-    let mut issues = Vec::new();
-    let name_lower = func.name.to_lowercase();
-
-    if !name_lower.contains("patch")
-        && !name_lower.contains("modify")
-        && !name_lower.contains("inject")
-        && !name_lower.contains("write_bytes")
-    {
-        return issues;
-    }
-
-    let mut patcher_score = 0;
-
-    let has_pattern_search_calls = if let Some(calls) = &func.calls_functions {
-        calls.iter().any(|c| {
-            let c_lower = c.to_lowercase();
-            c_lower.contains("find_pattern")
-                || c_lower.contains("search")
-                || c_lower.contains("scan")
-                || c_lower.contains("memmem")
-        })
-    } else {
-        false
-    };
-
-    let has_pattern_search_impl = has_pattern_search_capability(func);
-    let has_pattern_search = has_pattern_search_calls || has_pattern_search_impl;
-
-    if let Some(calls) = &func.calls_functions {
-        let has_format_parse = calls.iter().any(|c| {
-            let c_lower = c.to_lowercase();
-            c_lower.contains("parse_pe")
-                || c_lower.contains("parse_elf")
-                || c_lower.contains("read_elf")
-                || c_lower.contains("pe_header")
-        });
-
-        let has_backup = calls.iter().any(|c| {
-            let c_lower = c.to_lowercase();
-            c_lower.contains("backup")
-                || c_lower.contains("copy")
-                || c_lower.contains("save_original")
-        }) || has_backup_capability(func);
-
-        let has_verification = calls.iter().any(|c| {
-            let c_lower = c.to_lowercase();
-            c_lower.contains("verify") || c_lower.contains("check") || c_lower.contains("validate")
-        });
-
-        if has_pattern_search {
-            patcher_score += 40;
-        } else {
-            issues.push((
-                "CRITICAL: Patcher without pattern search (hardcoded offsets only)".to_string(),
-                85,
-            ));
-        }
-
-        if has_format_parse {
-            patcher_score += 30;
-        } else {
-            issues.push((
-                "Patcher without format parsing (not PE/ELF aware - dangerous)".to_string(),
-                70,
-            ));
-        }
-
-        if has_backup {
-            patcher_score += 15;
-        } else {
-            issues.push((
-                "Patcher without backup capability (destructive without safety)".to_string(),
-                50,
-            ));
-        }
-
-        if has_verification {
-            patcher_score += 10;
-        }
-    } else {
-        issues.push((
-            "CRITICAL: Patcher with no function calls (cannot patch anything)".to_string(),
-            90,
-        ));
-    }
-
-    let is_delegator = is_delegator_pattern(func);
-    let is_code_gen = is_code_template_generator(func);
-
-    if let Some(has_loops) = func.has_loops {
-        if has_loops {
-            patcher_score += 20;
-        } else if !is_delegator && !is_code_gen {
-            issues.push((
-                "Patcher without loops (single-target/single-patch only)".to_string(),
-                50,
-            ));
-        }
-    }
-
-    if let Some(has_conditionals) = func.has_conditionals {
-        if !has_conditionals {
-            if !is_delegator && !is_code_gen {
-                issues.push((
-                    "CRITICAL: Patcher without conditionals (blindly patches - dangerous)".to_string(),
-                    65,
-                ));
-            }
-        } else {
-            patcher_score += 15;
-        }
-    }
-
-    if let Some(local_vars) = &func.local_vars {
-        let has_patch_vars = local_vars.iter().any(|v| {
-            let v_lower = v.to_lowercase();
-            v_lower.contains("offset")
-                || v_lower.contains("pattern")
-                || v_lower.contains("address")
-                || v_lower.contains("rva")
-        });
-
-        if has_patch_vars {
-            patcher_score += 10;
-        } else if local_vars.is_empty() && !is_delegator && !is_code_gen {
-            issues.push((
-                "Patcher with no offset/pattern storage (incomplete)".to_string(),
-                35,
-            ));
-        }
-    }
-
-    if patcher_score < 40 {
-        issues.push((
-            format!(
-                "Patcher sophistication: {}% (DANGEROUS - will break on updates)",
-                patcher_score
-            ),
-            80,
-        ));
-    } else if patcher_score < 70 {
-        issues.push((
-            format!(
-                "Patcher sophistication: {}% (FRAGILE - limited reliability)",
-                patcher_score
-            ),
-            50,
-        ));
-    }
-
-    issues
-}
 
 /// Analyzes protection analyzer function quality using sophisticated quality matrix.
 ///
@@ -3640,122 +3144,6 @@ fn analyze_patcher_quality(func: &FunctionInfo) -> Vec<(String, i32)> {
 ///
 /// # Returns
 /// * Vector of quality issues with severity scores
-fn analyze_protection_analyzer_quality(func: &FunctionInfo) -> Vec<(String, i32)> {
-    let mut issues = Vec::new();
-    let name_lower = func.name.to_lowercase();
-
-    if !name_lower.contains("analyze")
-        && !name_lower.contains("detect")
-        && !name_lower.contains("identify")
-        && !name_lower.contains("scan_protection")
-    {
-        return issues;
-    }
-
-    let mut analyzer_score = 0;
-
-    if let Some(calls) = &func.calls_functions {
-        let has_signature_db = calls.iter().any(|c| {
-            let c_lower = c.to_lowercase();
-            c_lower.contains("signature")
-                || c_lower.contains("pattern")
-                || c_lower.contains("database")
-                || c_lower.contains("rule")
-        });
-
-        let has_format_parse = calls.iter().any(|c| {
-            let c_lower = c.to_lowercase();
-            c_lower.contains("parse")
-                || c_lower.contains("read_pe")
-                || c_lower.contains("read_elf")
-                || c_lower.contains("get_section")
-        });
-
-        let has_heuristic = calls.iter().any(|c| {
-            let c_lower = c.to_lowercase();
-            c_lower.contains("entropy")
-                || c_lower.contains("heuristic")
-                || c_lower.contains("anomaly")
-                || c_lower.contains("score")
-        });
-
-        if has_signature_db {
-            analyzer_score += 35;
-        } else {
-            issues.push((
-                "Protection analyzer without signature database (weak detection)".to_string(),
-                60,
-            ));
-        }
-
-        if has_format_parse {
-            analyzer_score += 30;
-        } else {
-            issues.push((
-                "CRITICAL: Analyzer without binary format parsing (string matching only)"
-                    .to_string(),
-                75,
-            ));
-        }
-
-        if has_heuristic {
-            analyzer_score += 20;
-        }
-    }
-
-    if let Some(has_loops) = func.has_loops {
-        if has_loops {
-            analyzer_score += 25;
-        } else {
-            issues.push((
-                "Analyzer without loops (single pattern check only)".to_string(),
-                55,
-            ));
-        }
-    }
-
-    if let Some(local_vars) = &func.local_vars {
-        let has_result_storage = local_vars.iter().any(|v| {
-            let v_lower = v.to_lowercase();
-            v_lower.contains("result")
-                || v_lower.contains("detect")
-                || v_lower.contains("match")
-                || v_lower.contains("protection")
-        });
-
-        if has_result_storage {
-            analyzer_score += 15;
-        } else if local_vars.is_empty() {
-            issues.push((
-                "Analyzer with no result storage (incomplete analysis)".to_string(),
-                45,
-            ));
-        }
-    }
-
-    if let Some(return_types) = &func.return_types {
-        if return_types.len() == 1 && return_types[0] == "Boolean" {
-            issues.push((
-                "Analyzer returns only boolean (no detailed results)".to_string(),
-                40,
-            ));
-        } else {
-            analyzer_score += 10;
-        }
-    }
-
-    if analyzer_score < 40 {
-        issues.push((
-            format!(
-                "Analyzer sophistication: {}% (WEAK - misses most protections)",
-                analyzer_score
-            ),
-            70,
-        ));
-    }
-
-    issues
-}
 
 fn detect_empty_function(func: &FunctionInfo, lang: &LanguageType) -> Vec<(String, i32)> {
     let mut issues = Vec::new();
@@ -4132,1956 +3520,63 @@ fn is_callback_parameter(func: &FunctionInfo) -> bool {
     false
 }
 
-fn detect_semantic_issues(func: &FunctionInfo, file_context: &FileContext) -> Vec<(String, i32)> {
-    let mut issues = Vec::new();
 
-    let name_lower = func.name.to_lowercase();
-    let is_domain_specific = is_licensing_crack_function(&func.name);
+fn enrich_function_metrics(func: &mut FunctionInfo, lang: &LanguageType) {
+    let body = &func.body;
+    let params = &func.params;
 
-    if let Some(calls) = &func.calls_functions {
-        if has_file_io_context(func)
-            && !calls.iter().any(|c| {
-                c.contains("open")
-                    || c.contains("read")
-                    || c.contains("write")
-                    || c.contains("File")
-            })
-            && !RE_FILE_OPS.is_match(&func.body)
-        {
-            issues.push((
-                "Function name implies file I/O but no file operations detected".to_string(),
-                35,
-            ));
-        }
+    if func.has_try_except.is_none() {
+        func.has_try_except = Some(RE_TRY_EXCEPT.is_match(body));
+    }
 
-        if (name_lower.contains("analyze")
-            || name_lower.contains("disassemble")
-            || name_lower.contains("decompile"))
-            && !calls.iter().any(|c| {
-                c.contains("subprocess")
-                    || c.contains("Popen")
-                    || c.contains("run")
-                    || c.contains("ghidra")
-                    || c.contains("ida")
-                    || c.contains("capstone")
-            })
-            && !RE_SUBPROCESS.is_match(&func.body)
-        {
-            issues.push((
-                "Function name implies external tool usage but no subprocess/tool calls detected"
-                    .to_string(),
-                30,
-            ));
-        }
+    if func.actual_loc.is_none() {
+        let code_without_comments = RE_COMMENT.replace_all(body, "");
+        let code_without_strings = RE_STRING_LITERAL.replace_all(&code_without_comments, r#""""#);
+        let actual_loc = code_without_strings.lines().filter(|line| !line.trim().is_empty()).count();
+        func.actual_loc = Some(actual_loc);
+    }
 
-        if is_domain_specific {
-            if (name_lower.contains("keygen") || name_lower.contains("generate"))
-                && !calls.iter().any(|c| {
-                    c.contains("hash") || c.contains("encrypt") || c.contains("sign")
-                        || c.contains("random") || c.contains("uuid")
-                })
-                && !func.body.contains("hashlib")
-                && !func.body.contains("Crypto")
-                && !func.body.contains("cryptography")
-                && !func.body.contains("random")
-            {
-                issues.push((
-                    "Keygen without crypto/random operations (likely trivial)".to_string(),
-                    40,
-                ));
-            }
-
-            if (name_lower.contains("patch") || name_lower.contains("modify"))
-                && !calls.iter().any(|c| {
-                    c.contains("open") || c.contains("read") || c.contains("write")
-                        || c.contains("seek") || c.contains("struct")
-                })
-                && !RE_FILE_OPS.is_match(&func.body)
-            {
-                issues.push((
-                    "Patcher without binary file manipulation".to_string(),
-                    45,
-                ));
-            }
-
-            if (name_lower.contains("validate") || name_lower.contains("verify"))
-                && func.has_conditionals.map_or(true, |has| !has)
-                && !func.has_try_except.unwrap_or(false)
-            {
-                issues.push((
-                    "Validator without conditionals (no actual validation)".to_string(),
-                    50,
-                ));
-            }
-
-            if (name_lower.contains("analyze") || name_lower.contains("parse"))
-                && func.has_loops.map_or(true, |has| !has)
-                && func.actual_loc.map_or(false, |loc| loc > 3)
-            {
-                issues.push((
-                    "Analyzer without loops (insufficient processing)".to_string(),
-                    35,
-                ));
+    if func.calls_functions.is_none() {
+        let mut calls = HashSet::new();
+        if RE_LOGGING.is_match(body) {
+            for cap in RE_LOGGING.find_iter(body) {
+                calls.insert(cap.as_str().to_string());
             }
         }
-    } else {
-        if has_file_io_context(func) && !RE_FILE_OPS.is_match(&func.body) {
-            issues.push((
-                "Function name implies file I/O but no file operations detected".to_string(),
-                35,
-            ));
-        }
-
-        if (name_lower.contains("analyze")
-            || name_lower.contains("disassemble")
-            || name_lower.contains("decompile"))
-            && !RE_SUBPROCESS.is_match(&func.body)
-            && !func.body.contains("ghidra")
-            && !func.body.contains("ida")
-            && !func.body.contains("capstone")
-        {
-            issues.push((
-                "Function name implies external tool usage but no subprocess/tool calls detected"
-                    .to_string(),
-                30,
-            ));
-        }
-
-        if is_domain_specific {
-            if (name_lower.contains("keygen") || name_lower.contains("generate"))
-                && !func.body.contains("hashlib")
-                && !func.body.contains("Crypto")
-                && !func.body.contains("cryptography")
-                && !func.body.contains("random")
-                && !func.body.contains("uuid")
-                && !func.body.contains("md5")
-                && !func.body.contains("sha")
-                && !func.body.contains("rsa")
-                && !func.body.contains("aes")
-            {
-                issues.push((
-                    "Keygen without crypto/random operations (likely trivial)".to_string(),
-                    40,
-                ));
-            }
-
-            if (name_lower.contains("patch") || name_lower.contains("modify"))
-                && !RE_FILE_OPS.is_match(&func.body)
-                && !func.body.contains("struct")
-                && !func.body.contains("bytes")
-                && !func.body.contains("bytearray")
-            {
-                issues.push((
-                    "Patcher without binary file manipulation".to_string(),
-                    45,
-                ));
-            }
-
-            if (name_lower.contains("validate") || name_lower.contains("verify"))
-                && func.has_conditionals.map_or(true, |has| !has)
-                && !func.has_try_except.unwrap_or(false)
-            {
-                issues.push((
-                    "Validator without conditionals (no actual validation)".to_string(),
-                    50,
-                ));
-            }
-
-            if (name_lower.contains("analyze") || name_lower.contains("parse"))
-                && func.has_loops.map_or(true, |has| !has)
-                && func.actual_loc.map_or(false, |loc| loc > 3)
-            {
-                issues.push((
-                    "Analyzer without loops (insufficient processing)".to_string(),
-                    35,
-                ));
-            }
-        }
-    }
-
-    if matches!(file_context.lang, LanguageType::Python) {
-        if let Some(has_async) = func.has_async_await {
-            if name_lower.contains("async") && !has_async && !func.body.contains("asyncio") {
-                issues.push((
-                    "Async function without await or asyncio usage".to_string(),
-                    25,
-                ));
-            }
-        } else if name_lower.contains("async")
-            && !func.body.contains("await")
-            && !func.body.contains("asyncio")
-        {
-            issues.push((
-                "Async function without await or asyncio usage".to_string(),
-                25,
-            ));
-        }
-    }
-
-    if matches!(file_context.lang, LanguageType::Rust)
-        && func.body.contains("unwrap()")
-        && !func.body.contains("expect(")
-    {
-        issues.push((
-            "Using unwrap() without expect() or proper error handling".to_string(),
-            15,
-        ));
-    }
-
-    issues
-}
-
-/// Universal domain-specific incompleteness detector.
-///
-/// Uses BROAD keyword matching and GENERAL incompleteness indicators to catch
-/// ALL trivial/incomplete implementations regardless of exact patterns.
-///
-/// Strategy: If function name suggests complex licensing work but implementation
-/// is simple/trivial, FLAG IT.
-///
-/// # Arguments
-/// * `func` - Function to analyze
-/// * `file_context` - File-level context including language and imports
-///
-/// # Returns
-/// Vector of domain-specific issues with severity scores
-fn detect_domain_specific_issues(
-    func: &FunctionInfo,
-    file_context: &FileContext,
-) -> Vec<(String, i32)> {
-    eprintln!("DEBUG detect_domain_specific: checking function '{}'", func.name);
-
-    let mut issues = Vec::new();
-    let name_lower = func.name.to_lowercase();
-
-    let expanded_domain_keywords = [
-        "keygen", "key_gen", "genkey", "gen_key", "generate_key", "create_key", "make_key",
-        "gen_serial", "generate_serial", "create_serial", "make_serial",
-        "gen_license", "generate_license", "create_license", "make_license",
-        "crack", "cracker", "bypass", "defeat",
-        "patch", "patcher", "modify_binary", "binary_patch",
-        "validate", "validator", "verify", "check_license", "check_key", "check_serial",
-        "license", "licensing", "activation", "activate", "register", "registration",
-        "serial", "product_key", "license_key", "activation_key",
-        "hook", "hooking", "intercept", "detour",
-        "analyz", "detect", "extract", "parse_license",
-        "trial", "demo", "expir", "unlock", "unlocker"
-    ];
-
-    let is_domain_function = expanded_domain_keywords.iter().any(|kw| name_lower.contains(kw));
-
-    eprintln!("  is_domain_function={}", is_domain_function);
-
-    if !is_domain_function {
-        eprintln!("  SKIPPED - not a domain function");
-        return issues;
-    }
-
-    let is_code_gen = is_code_generator_pattern(func);
-    let is_orch = is_orchestration_pattern(func);
-    let is_deleg = is_legitimate_delegation(func);
-    let is_llm = is_llm_delegation_pattern(func);
-    let is_cli_wrapper = is_cli_wrapper_pattern(func);
-    let is_binary_analyzer = is_binary_analyzer_pattern(func);
-    let is_getter_setter = is_getter_setter_pattern(func);
-    let is_knowledge_base = is_knowledge_base_pattern(func);
-    let is_prompt_builder = is_prompt_builder_pattern(func);
-    let is_factory = is_factory_pattern(func);
-    let is_enhanced_codegen = is_enhanced_code_generator(func);
-    let is_production = is_production_implementation(func);
-    let is_enhanced_analyzer = is_enhanced_binary_analyzer(func);
-
-    eprintln!("  Patterns: code_gen={}, orch={}, deleg={}, llm={}, cli={}, bin_analyzer={}, getter={}, kb={}, prompt={}, factory={}, enh_codegen={}, production={}, enh_analyzer={}",
-        is_code_gen, is_orch, is_deleg, is_llm, is_cli_wrapper, is_binary_analyzer, is_getter_setter, is_knowledge_base, is_prompt_builder, is_factory, is_enhanced_codegen, is_production, is_enhanced_analyzer);
-
-    if is_code_gen || is_orch || is_deleg || is_llm || is_cli_wrapper || is_binary_analyzer || is_getter_setter || is_knowledge_base || is_prompt_builder || is_factory || is_enhanced_codegen || is_production || is_enhanced_analyzer {
-        eprintln!("  Domain function matched pattern - still analyzing with Phase 1 regex");
-    }
-
-    let actual_loc = func.actual_loc.unwrap_or(0);
-    eprintln!("  actual_loc={}", actual_loc);
-    let has_loops = func.has_loops.unwrap_or(false);
-    let has_conditionals = func.has_conditionals.unwrap_or(false);
-    let has_local_vars = func.local_vars.as_ref().map_or(false, |v| !v.is_empty());
-    let body_lower = func.body.to_lowercase();
-
-    if RE_INCOMPLETE_TEXT.is_match(&func.body) {
-        eprintln!("DEBUG INCOMPLETE_TEXT matched for '{}'", func.name);
-        issues.push((
-            format!("Function '{}' contains explicit incomplete implementation marker", func.name),
-            70,
-        ));
-        return issues;
-    }
-
-    if name_lower.contains("validat") || name_lower.contains("verify") || name_lower.contains("check") {
-        eprintln!("DEBUG VALIDATOR CHECK for '{}': has_conditionals={}, RE_UNCONDITIONAL_TRUE matches={}, actual_loc={}",
-            func.name, has_conditionals, RE_UNCONDITIONAL_TRUE.is_match(&func.body), actual_loc);
-        eprintln!("DEBUG VALIDATOR BODY PREVIEW: {}", func.body.lines().take(3).collect::<Vec<_>>().join(" | "));
-        if !has_conditionals && RE_UNCONDITIONAL_TRUE.is_match(&func.body) {
-            eprintln!("DEBUG PHASE 1 PATTERN MATCHED!");
-            issues.push((
-                format!("Validator '{}' always returns True without any conditional logic", func.name),
-                75,
-            ));
-            return issues;
-        }
-    }
-
-    if (name_lower.contains("analyz") || name_lower.contains("detect") || name_lower.contains("extract"))
-        && actual_loc <= 15
-        && RE_STATIC_FLOAT_DATA.is_match(&func.body)
-        && !body_lower.contains("open(")
-        && !body_lower.contains(".read")
-        && !body_lower.contains("pefile")
-        && !body_lower.contains("r2pipe") {
-        issues.push((
-            format!("Analyzer '{}' returns static float arrays without actual file analysis", func.name),
-            70,
-        ));
-        return issues;
-    }
-
-    if name_lower.contains("patch") || name_lower.contains("hook") || name_lower.contains("detour") {
-        let clean_addr_count = RE_TEMPLATE_ADDRESS.find_iter(&func.body).count();
-        let has_zero_bytes = RE_ZERO_BYTES.is_match(&func.body);
-        let has_analysis = body_lower.contains("r2") || body_lower.contains("binary_data") || body_lower.contains("pe.");
-
-        if (clean_addr_count >= 3 || has_zero_bytes) && !has_analysis {
-            issues.push((
-                format!("Patch/hook function '{}' contains template addresses without binary analysis", func.name),
-                65,
-            ));
-            return issues;
-        }
-    }
-
-    // NEW REGEX BACKBONE PATTERNS - High-confidence non-production indicators
-
-    // Category 1: Temporary return values
-    if RE_TEMP_RETURN_STR.is_match(&func.body) {
-        issues.push((
-            format!("Function '{}' returns literal temporary string indicating incomplete implementation", func.name),
-            80,
-        ));
-        return issues;
-    }
-
-    if RE_INCOMPLETE_DICT.is_match(&func.body) {
-        issues.push((
-            format!("Function '{}' returns dictionary with 'not implemented' status", func.name),
-            85,
-        ));
-        return issues;
-    }
-
-    // Category 2: Hardcoded example/test data
-    if actual_loc <= 10 && RE_EXAMPLE_DATA_DICT.is_match(&func.body) {
-        issues.push((
-            format!("Function '{}' returns hardcoded example/test data dictionary", func.name),
-            75,
-        ));
-        return issues;
-    }
-
-    if RE_HARDCODED_TEST_LIST.is_match(&func.body) {
-        issues.push((
-            format!("Function '{}' returns hardcoded test/example data list", func.name),
-            75,
-        ));
-        return issues;
-    }
-
-    // Category 3: Development mode flags
-    if RE_DEV_MODE_FLAG.is_match(&func.body) {
-        issues.push((
-            format!("Function '{}' contains development/test mode flags indicating non-production code", func.name),
-            80,
-        ));
-        return issues;
-    }
-
-    if RE_DEV_CONST_FLAG.is_match(&func.body) {
-        issues.push((
-            format!("Function '{}' sets development mode constants indicating non-production code", func.name),
-            85,
-        ));
-        return issues;
-    }
-
-    // Category 4: Test object creation
-    if RE_TEST_OBJ_CREATE.is_match(&func.body) {
-        issues.push((
-            format!("Function '{}' creates test objects indicating non-production implementation", func.name),
-            90,
-        ));
-        return issues;
-    }
-
-    if RE_TEST_VAR_ASSIGN.is_match(&func.body) {
-        issues.push((
-            format!("Function '{}' assigns test variables with temporary naming pattern", func.name),
-            75,
-        ));
-        return issues;
-    }
-
-    // Category 5: Template addresses and keys
-    if RE_OBVIOUS_TEMPLATE_HEX.is_match(&func.body) && !body_lower.contains("# known") && !body_lower.contains("signature") {
-        issues.push((
-            format!("Function '{}' contains obvious template hex values (0xDEADBEEF, 0xCAFEBABE)", func.name),
-            80,
-        ));
-        return issues;
-    }
-
-    if RE_TEMPLATE_LICENSE_KEY.is_match(&func.body) {
-        issues.push((
-            format!("Function '{}' contains template license key format", func.name),
-            85,
-        ));
-        return issues;
-    }
-
-    if RE_ZERO_PATTERN_KEY.is_match(&func.body) {
-        issues.push((
-            format!("Function '{}' contains all-zero template keys", func.name),
-            80,
-        ));
-        return issues;
-    }
-
-    // Category 6: Hardcoded timestamps
-    if (name_lower.contains("trial") || name_lower.contains("expir") || name_lower.contains("license"))
-        && RE_HARDCODED_DATETIME.is_match(&func.body)
-        && !body_lower.contains("time()") {
-        issues.push((
-            format!("Function '{}' uses hardcoded dates instead of dynamic time calculation", func.name),
-            70,
-        ));
-        return issues;
-    }
-
-    if RE_TEMPLATE_EXPIRY.is_match(&func.body) {
-        issues.push((
-            format!("Function '{}' uses template far-future expiry date (2099/9999)", func.name),
-            80,
-        ));
-        return issues;
-    }
-
-    // Category 7: Example URLs and paths
-    if RE_EXAMPLE_URL.is_match(&func.body) {
-        issues.push((
-            format!("Function '{}' contains example.com or localhost URLs", func.name),
-            75,
-        ));
-        return issues;
-    }
-
-    if RE_TEMPLATE_PATH.is_match(&func.body) {
-        issues.push((
-            format!("Function '{}' contains template file paths (/path/to/, /tmp/test)", func.name),
-            75,
-        ));
-        return issues;
-    }
-
-    // Category 8: Empty function bodies
-    if actual_loc <= 3 && RE_RETURN_NONE_ONLY.is_match(&func.body) && !has_conditionals {
-        issues.push((
-            format!("Function '{}' only returns None without any logic", func.name),
-            70,
-        ));
-        return issues;
-    }
-
-    // Category 9: Hardcoded credentials
-    if RE_HARDCODED_PASSWORD.is_match(&func.body) {
-        issues.push((
-            format!("Function '{}' contains hardcoded test credentials", func.name),
-            90,
-        ));
-        return issues;
-    }
-
-    // Category 10: Generic API responses
-    if actual_loc <= 5 && RE_GENERIC_SUCCESS_RESPONSE.is_match(&func.body) && !has_conditionals {
-        issues.push((
-            format!("Function '{}' unconditionally returns generic success response", func.name),
-            75,
-        ));
-        return issues;
-    }
-
-    if actual_loc <= 7 && RE_GENERIC_STATUS_RESPONSE.is_match(&func.body) && !has_conditionals {
-        issues.push((
-            format!("Function '{}' unconditionally returns generic status:ok response", func.name),
-            70,
-        ));
-        return issues;
-    }
-
-    // Category 11: Hardcoded loop ranges
-    if (name_lower.contains("analyz") || name_lower.contains("patch") || name_lower.contains("extract"))
-        && RE_HARDCODED_RANGE_LOOP.is_match(&func.body)
-        && !body_lower.contains("len(")
-        && !body_lower.contains(".size") {
-        issues.push((
-            format!("Function '{}' uses hardcoded range instead of actual data length", func.name),
-            65,
-        ));
-        return issues;
-    }
-
-    // Category 12: Lorem ipsum and test strings
-    if RE_LOREM_IPSUM.is_match(&func.body) {
-        issues.push((
-            format!("Function '{}' contains 'Lorem ipsum' template text", func.name),
-            95,
-        ));
-        return issues;
-    }
-
-    if RE_TEST_STRING_TEMPLATE.is_match(&func.body) {
-        issues.push((
-            format!("Function '{}' returns test/sample template strings", func.name),
-            75,
-        ));
-        return issues;
-    }
-
-    // Category 13: Hardcoded magic bytes
-    if (name_lower.contains("analyz") || name_lower.contains("detect") || name_lower.contains("parse"))
-        && RE_HARDCODED_MAGIC_BYTES.is_match(&func.body)
-        && !body_lower.contains("read")
-        && !body_lower.contains("open") {
-        issues.push((
-            format!("Function '{}' uses hardcoded binary signatures without file I/O", func.name),
-            70,
-        ));
-        return issues;
-    }
-
-    // Category 14: Sleep with test comments
-    if RE_SLEEP_WITH_COMMENT.is_match(&func.body) {
-        issues.push((
-            format!("Function '{}' contains sleep with comment indicating test delay", func.name),
-            85,
-        ));
-        return issues;
-    }
-
-    // Category 15: Random seeds
-    if RE_RANDOM_SEED.is_match(&func.body) {
-        issues.push((
-            format!("Function '{}' uses hardcoded random seed (test reproducibility indicator)", func.name),
-            80,
-        ));
-        return issues;
-    }
-
-    // Category 16: Log-and-return
-    if actual_loc <= 8 && RE_LOG_AND_RETURN.is_match(&func.body) {
-        issues.push((
-            format!("Function '{}' only logs and returns without actual implementation", func.name),
-            75,
-        ));
-        return issues;
-    }
-
-    // Category 17: Unconditional success flags
-    if RE_UNCONDITIONAL_SUCCESS_FLAG.is_match(&func.body) && !has_conditionals {
-        issues.push((
-            format!("Function '{}' sets success flags to True without any validation logic", func.name),
-            80,
-        ));
-        return issues;
-    }
-
-    // Category 18: Hardcoded file metrics
-    if (name_lower.contains("patch") || name_lower.contains("analyz") || name_lower.contains("parse"))
-        && RE_HARDCODED_FILE_METRICS.is_match(&func.body)
-        && !body_lower.contains("len(")
-        && !body_lower.contains(".size")
-        && !body_lower.contains("os.path") {
-        issues.push((
-            format!("Function '{}' uses hardcoded file sizes/offsets without calculation", func.name),
-            70,
-        ));
-        return issues;
-    }
-
-    eprintln!("DEBUG: Phase 1 patterns did not match, checking Phase 2 FP exclusions");
-
-    if actual_loc <= 5 && RE_FACTORY_PATTERN.is_match(&func.body) {
-        eprintln!("DEBUG: Phase 2 FACTORY_PATTERN matched - excluding as legitimate factory");
-        return issues;
-    }
-
-    if RE_TYPE_CONVERSION.is_match(&func.body) {
-        eprintln!("DEBUG: Phase 2 TYPE_CONVERSION matched - excluding as type converter");
-        return issues;
-    }
-
-    if RE_LOGGING_WRAPPER.is_match(&func.body) && actual_loc <= 8 {
-        let delegate_count = func.body.matches("return ").count();
-        if delegate_count == 1 {
-            eprintln!("DEBUG: Phase 2 LOGGING_WRAPPER matched - excluding as logging wrapper");
-            return issues;
-        }
-    }
-
-    if RE_CONFIG_GETTER.is_match(&func.body) && actual_loc <= 5 {
-        eprintln!("DEBUG: Phase 2 CONFIG_GETTER matched - excluding as config getter");
-        return issues;
-    }
-
-    if RE_DICT_BUILDER.is_match(&func.body) {
-        eprintln!("DEBUG: Phase 2 DICT_BUILDER matched - excluding as data structure builder");
-        return issues;
-    }
-
-    if RE_CONDITIONAL_DELEGATE.is_match(&func.body) && actual_loc <= 10 {
-        eprintln!("DEBUG: Phase 2 CONDITIONAL_DELEGATE matched - excluding as conditional delegation");
-        return issues;
-    }
-
-    eprintln!("DEBUG: No Phase 2 exclusions matched, continuing with heuristics");
-
-    if actual_loc <= 1 {
-        issues.push((
-            format!("Domain function '{}' is only 1 line (trivial/incomplete)", func.name),
-            60,
-        ));
-        return issues;
-    }
-
-    if actual_loc <= 3 && !has_loops && !has_conditionals {
-        issues.push((
-            format!("Domain function '{}' is ≤3 LOC with no logic (likely incomplete)", func.name),
-            50,
-        ));
-    }
-
-    if !has_local_vars && actual_loc > 1 {
-        if name_lower.contains("gen") || name_lower.contains("create") || name_lower.contains("make") {
-            issues.push((
-                "Generator/creator function with no local variables (no state/computation)".to_string(),
-                45,
-            ));
-        }
-    }
-
-    if (name_lower.contains("validate") || name_lower.contains("verify") || name_lower.contains("check"))
-        && !has_conditionals {
-        issues.push((
-            "Validator/checker function with no conditionals (no actual validation)".to_string(),
-            55,
-        ));
-    }
-
-    if (name_lower.contains("patch") || name_lower.contains("modify")) && !has_loops {
-        let has_file_io = body_lower.contains("open(") || body_lower.contains(".read")
-            || body_lower.contains(".write") || body_lower.contains("file");
-        if !has_file_io {
-            issues.push((
-                "Patcher function with no loops and no file I/O (incomplete)".to_string(),
-                50,
-            ));
-        }
-    }
-
-    if name_lower.contains("keygen") || name_lower.contains("gen_key") || name_lower.contains("generate") {
-        let has_crypto = body_lower.contains("random") || body_lower.contains("hash")
-            || body_lower.contains("crypt") || body_lower.contains("md5")
-            || body_lower.contains("sha") || body_lower.contains("rsa")
-            || body_lower.contains("aes") || body_lower.contains("uuid");
-        if !has_crypto && actual_loc <= 10 {
-            issues.push((
-                "Keygen function with no crypto/random operations (trivial algorithm)".to_string(),
-                45,
-            ));
-        }
-    }
-
-    if (name_lower.contains("analyze") || name_lower.contains("parse")) && !has_loops && actual_loc > 5 {
-        issues.push((
-            "Analyzer/parser function with no loops (insufficient processing)".to_string(),
-            40,
-        ));
-    }
-
-    let non_empty_lines: Vec<&str> = func.body.lines()
-        .filter(|l| !l.trim().is_empty() && !l.trim().starts_with('#'))
-        .collect();
-
-    if non_empty_lines.len() == 1 {
-        let line = non_empty_lines[0].trim();
-        if line.starts_with("return") {
-            if line.contains("True") || line.contains("False") || line.contains("None")
-                || line.contains("\"") || line.contains("'") || line.contains(" 0") || line.contains(" 1") {
-                issues.push((
-                    "Domain function returns hardcoded literal (incomplete implementation)".to_string(),
-                    50,
-                ));
-            }
-        }
-    }
-
-    if !issues.is_empty() {
-        return issues;
-    }
-
-    issues.extend(analyze_keygen_quality(func));
-    issues.extend(analyze_validator_quality(func));
-    issues.extend(analyze_patcher_quality(func));
-    issues.extend(analyze_protection_analyzer_quality(func));
-
-    if file_context.lang == LanguageType::JavaScript
-        && (name_lower.contains("hook") || name_lower.contains("intercept"))
-    {
-        if let Some(calls) = &func.calls_functions {
-            let has_interceptor = calls.iter().any(|c| {
-                c.contains("Interceptor") || c.contains("attach") || c.contains("replace")
-            });
-            if !has_interceptor && !func.body.contains("Interceptor") {
-                issues.push((
-                    "Frida hook without Interceptor.attach/replace".to_string(),
-                    35,
-                ));
-            }
-        } else if !func.body.contains("Interceptor")
-            && !func.body.contains("attach")
-            && !func.body.contains("replace")
-        {
-            issues.push((
-                "Frida hook without Interceptor.attach/replace".to_string(),
-                35,
-            ));
-        }
-    }
-
-    if file_context.lang == LanguageType::Java
-        && (name_lower.contains("analyze") || name_lower.contains("ghidra"))
-        && !func.body.contains("currentProgram") && !func.body.contains("getFunctionManager") {
-            issues.push(("Ghidra script without Ghidra API usage".to_string(), 30));
-        }
-
-    issues
-}
-
-/// Detects Rust-specific code quality issues.
-///
-/// Analyzes Rust functions for language-specific anti-patterns including error handling,
-/// unsafe code documentation, excessive cloning, and incomplete implementations.
-///
-/// # Arguments
-/// * `func` - Function to analyze
-///
-/// # Returns
-/// Vector of Rust-specific issues with severity scores
-fn detect_rust_specific_issues(func: &FunctionInfo) -> Vec<(String, i32)> {
-    let mut issues = Vec::new();
-
-    let unwrap_count = RE_RUST_UNWRAP.find_iter(&func.body).count();
-    let expect_count = RE_RUST_EXPECT.find_iter(&func.body).count();
-
-    if unwrap_count > 3 && expect_count == 0 {
-        issues.push((
-            "Excessive unwrap() calls without expect() - use proper error handling".to_string(),
-            25,
-        ));
-    }
-
-    if (RE_RUST_RESULT.is_match(&func.params) || RE_RUST_OPTION.is_match(&func.params))
-        && RE_RUST_UNWRAP.is_match(&func.body)
-    {
-        issues.push((
-            "Function returns Result/Option but uses unwrap() internally".to_string(),
-            20,
-        ));
-    }
-
-    if RE_RUST_PANIC.is_match(&func.body) {
-        issues.push((
-            "panic!() macro usage - use Result for recoverable errors".to_string(),
-            30,
-        ));
-    }
-
-    if RE_RUST_UNSAFE.is_match(&func.body) && !func.body.contains("SAFETY:") {
-        issues.push((
-            "unsafe block without SAFETY comment explaining invariants".to_string(),
-            25,
-        ));
-    }
-
-    let clone_count = RE_RUST_CLONE.find_iter(&func.body).count();
-    if clone_count > 5 {
-        issues.push((
-            format!(
-                "Excessive .clone() calls ({}) - consider using references",
-                clone_count
-            ),
-            15,
-        ));
-    }
-
-    if RE_RUST_INCOMPLETE_MARKER.is_match(&func.body) {
-        issues.push((
-            "Incomplete implementation with macro marker".to_string(),
-            50,
-        ));
-    }
-
-    if RE_RUST_UNIMPL_MACRO.is_match(&func.body) {
-        issues.push((
-            "Unimplemented macro detected - function body not written".to_string(),
-            50,
-        ));
-    }
-
-    if RE_RUST_RESULT.is_match(&func.params)
-        && !func.body.contains('?')
-        && !func.body.contains("match ")
-    {
-        issues.push((
-            "Returns Result but no error propagation (? or match) detected".to_string(),
-            20,
-        ));
-    }
-
-    issues
-}
-
-/// Detects Rust domain-specific issues for security and binary analysis code.
-///
-/// Analyzes Rust functions for domain-specific anti-patterns in security-critical,
-/// file I/O, and process management contexts.
-///
-/// # Arguments
-/// * `func` - Function to analyze
-///
-/// # Returns
-/// Vector of Rust domain-specific issues with severity scores
-fn detect_rust_domain_issues(func: &FunctionInfo) -> Vec<(String, i32)> {
-    let mut issues = Vec::new();
-    let name_lower = func.name.to_lowercase();
-
-    if (name_lower.contains("security")
-        || name_lower.contains("encrypt")
-        || name_lower.contains("hash"))
-        && RE_RUST_UNSAFE.is_match(&func.body)
-    {
-        issues.push((
-            "Security-critical function using unsafe code".to_string(),
-            35,
-        ));
-    }
-
-    if (name_lower.contains("read") || name_lower.contains("write") || name_lower.contains("file"))
-        && !func.params.contains("Result")
-        && !func.body.contains('?')
-    {
-        issues.push((
-            "File I/O operation without proper error handling via Result".to_string(),
-            30,
-        ));
-    }
-
-    if name_lower.contains("process")
-        && !func.body.contains("timeout")
-        && !func.body.contains("Duration")
-    {
-        issues.push((
-            "Process management without timeout handling".to_string(),
-            25,
-        ));
-    }
-
-    issues
-}
-
-/// Detects Java-specific code quality issues.
-///
-/// Analyzes Java functions for language-specific anti-patterns including exception handling,
-/// logging practices, null safety, and parameter validation.
-///
-/// # Arguments
-/// * `func` - Function to analyze
-///
-/// # Returns
-/// Vector of Java-specific issues with severity scores
-fn detect_java_specific_issues(func: &FunctionInfo) -> Vec<(String, i32)> {
-    let mut issues = Vec::new();
-
-    if RE_JAVA_EXCEPTION.is_match(&func.body) || RE_JAVA_EXCEPTION.is_match(&func.params) {
-        issues.push((
-            "Generic Exception in throws clause - use specific exception types".to_string(),
-            20,
-        ));
-    }
-
-    if RE_JAVA_CATCH_ALL.is_match(&func.body) {
-        issues.push((
-            "Catch-all exception handling - catch specific exceptions".to_string(),
-            25,
-        ));
-    }
-
-    if RE_JAVA_PRINTSTACKTRACE.is_match(&func.body) && !func.body.contains("logger") {
-        issues.push(("printStackTrace() without proper logging".to_string(), 20));
-    }
-
-    if func.name != "main" && RE_JAVA_SYSTEM_OUT.is_match(&func.body) {
-        issues.push((
-            "System.out.print in non-main method - use proper logging".to_string(),
-            15,
-        ));
-    }
-
-    let null_return_count = RE_JAVA_NULL_RETURN.find_iter(&func.body).count();
-    if null_return_count > 0 {
-        issues.push((
-            format!(
-                "Returning null ({} times) - consider Optional<T>",
-                null_return_count
-            ),
-            20,
-        ));
-    }
-
-    let param_count = func
-        .params
-        .split(',')
-        .filter(|p| !p.trim().is_empty())
-        .count();
-    let null_check_count = RE_JAVA_NULL_CHECK.find_iter(&func.body).count();
-    let body_lines = func.body.lines().filter(|l| !l.trim().is_empty()).count();
-
-    if param_count > 0 && null_check_count == 0 && body_lines > 5 {
-        issues.push((
-            "Function with parameters but no null checks".to_string(),
-            15,
-        ));
-    }
-
-    issues
-}
-
-/// Detects Java Ghidra-specific issues for reverse engineering scripts.
-///
-/// Analyzes Java functions in Ghidra scripts for proper API usage and cryptographic
-/// analysis patterns using AST-based function call detection when available.
-///
-/// # Arguments
-/// * `func` - Function to analyze
-/// * `file_context` - File-level context including imports
-///
-/// # Returns
-/// Vector of Ghidra-specific issues with severity scores
-fn detect_java_ghidra_issues(
-    func: &FunctionInfo,
-    file_context: &FileContext,
-) -> Vec<(String, i32)> {
-    let mut issues = Vec::new();
-    let name_lower = func.name.to_lowercase();
-
-    let has_ghidra_import = file_context
-        .imports
-        .iter()
-        .any(|i| i.to_lowercase().contains("ghidra"));
-
-    if has_ghidra_import {
-        if name_lower.contains("analyze")
-            || name_lower.contains("process")
-            || name_lower.contains("scan")
-        {
-            if let Some(calls) = &func.calls_functions {
-                let has_ghidra_api = calls.iter().any(|c| {
-                    c.contains("getFunctionManager")
-                        || c.contains("getProgram")
-                        || c.contains("getMemory")
-                        || c.contains("getListing")
-                        || c.contains("getCodeManager")
-                });
-                if !has_ghidra_api && !RE_JAVA_GHIDRA_API.is_match(&func.body) {
-                    issues.push((
-                        "Ghidra analysis function without Ghidra API calls".to_string(),
-                        35,
-                    ));
-                }
-            } else if !RE_JAVA_GHIDRA_API.is_match(&func.body) {
-                issues.push((
-                    "Ghidra analysis function without Ghidra API calls".to_string(),
-                    35,
-                ));
-            }
-        }
-
-        if name_lower.contains("run") && !func.body.contains("currentProgram") {
-            issues.push((
-                "Ghidra run() method without currentProgram access".to_string(),
-                30,
-            ));
-        }
-    }
-
-    if (name_lower.contains("crypto") || name_lower.contains("keygen"))
-        && !func.body.contains("byte")
-        && !func.body.contains("BigInteger")
-    {
-        issues.push((
-            "Cryptographic analysis without byte operations or BigInteger".to_string(),
-            30,
-        ));
-    }
-
-    issues
-}
-
-/// Detects JavaScript-specific code quality issues.
-///
-/// Analyzes JavaScript functions for language-specific anti-patterns including async/await
-/// usage, promise handling, variable declarations, error handling, and debugging code.
-/// Uses AST-based async/await detection when available.
-///
-/// # Arguments
-/// * `func` - Function to analyze
-///
-/// # Returns
-/// Vector of JavaScript-specific issues with severity scores
-fn detect_javascript_specific_issues(func: &FunctionInfo, is_frida_script: bool) -> Vec<(String, i32)> {
-    let mut issues = Vec::new();
-
-    if let Some(has_async) = func.has_async_await {
-        if has_async && !func.body.contains("await") {
-            issues.push(("async function without await keyword".to_string(), 25));
-        }
-    } else if RE_JS_ASYNC_NO_AWAIT.is_match(&func.body) && !func.body.contains("await") {
-        issues.push(("async function without await keyword".to_string(), 25));
-    }
-
-    if RE_JS_PROMISE_NO_CATCH.is_match(&func.body) {
-        let then_count = func.body.matches(".then(").count();
-        issues.push((
-            format!(
-                "Promise chain with .then() but no .catch() ({} unhandled)",
-                then_count
-            ),
-            30,
-        ));
-    }
-
-    if RE_JS_VAR.is_match(&func.body) {
-        issues.push(("Using 'var' instead of 'let' or 'const'".to_string(), 15));
-    }
-
-    // Skip console.log warnings for Frida instrumentation scripts
-    if !is_frida_script && RE_JS_CONSOLE_LOG.is_match(&func.body) {
-        let console_log_count = RE_JS_CONSOLE_LOG.find_iter(&func.body).count();
-        issues.push((
-            format!(
-                "console.log() usage in production code ({} instances)",
-                console_log_count
-            ),
-            10,
-        ));
-    }
-
-    if RE_JS_CALLBACK_HELL.is_match(&func.body) {
-        issues.push((
-            "Callback hell detected - use Promises or async/await".to_string(),
-            25,
-        ));
-    }
-
-    if let Some(has_try) = func.has_try_except {
-        if (func.body.contains("JSON.parse") || func.body.contains("eval(")) && !has_try {
-            issues.push((
-                "JSON.parse or eval without try-catch error handling".to_string(),
-                30,
-            ));
-        }
-    } else if (func.body.contains("JSON.parse") || func.body.contains("eval("))
-        && !RE_JS_TRY_CATCH.is_match(&func.body)
-    {
-        issues.push((
-            "JSON.parse or eval without try-catch error handling".to_string(),
-            30,
-        ));
-    }
-
-    issues
-}
-
-fn has_any_frida_api(body: &str) -> bool {
-    RE_JS_FRIDA_INTERCEPTOR.is_match(body)
-        || RE_JS_FRIDA_JAVA.is_match(body)
-        || RE_JS_FRIDA_OBJC.is_match(body)
-        || RE_JS_FRIDA_NATIVE.is_match(body)
-        || RE_JS_FRIDA_PROCESS.is_match(body)
-        || RE_JS_FRIDA_MEMORY.is_match(body)
-        || RE_JS_FRIDA_MODULE.is_match(body)
-        || RE_JS_FRIDA_SCRIPT.is_match(body)
-        || RE_JS_FRIDA_RPC.is_match(body)
-        || RE_JS_FRIDA_SEND.is_match(body)
-        || RE_JS_FRIDA_RECV.is_match(body)
-}
-
-/// Detects JavaScript Frida-specific issues for dynamic instrumentation scripts.
-///
-/// Analyzes Frida hook functions for proper API usage, error handling, and memory safety
-/// using AST-based function call detection when available.
-///
-/// # Arguments
-/// * `func` - Function to analyze
-///
-/// # Returns
-/// Vector of Frida-specific issues with severity scores
-fn detect_javascript_frida_issues(func: &FunctionInfo) -> Vec<(String, i32)> {
-    let mut issues = Vec::new();
-    let name_lower = func.name.to_lowercase();
-
-    if name_lower.contains("hook")
-        || name_lower.contains("intercept")
-        || name_lower.contains("bypass")
-    {
-        if let Some(calls) = &func.calls_functions {
-            let has_frida_api = calls.iter().any(|c| {
-                c.contains("Interceptor")
-                    || c.contains("attach")
-                    || c.contains("replace")
-                    || c.contains("Java.use")
-                    || c.contains("ObjC.classes")
-                    || c.contains("Module.findExportByName")
-            });
-            if !has_frida_api && !has_any_frida_api(&func.body) {
-                issues.push((
-                    "Hook/intercept function without any Frida API usage".to_string(),
-                    40,
-                ));
-            }
-        } else if !has_any_frida_api(&func.body) {
-            issues.push((
-                "Hook/intercept function without any Frida API usage".to_string(),
-                40,
-            ));
-        }
-    }
-
-    if RE_JS_FRIDA_MEMORY.is_match(&func.body)
-        && !func.body.contains("NULL")
-        && !func.body.contains("isNull")
-    {
-        issues.push((
-            "Memory operations without NULL pointer checks".to_string(),
-            30,
-        ));
-    }
-
-    if let Some(has_try) = func.has_try_except {
-        if RE_JS_FRIDA_MODULE.is_match(&func.body) && !has_try {
-            issues.push((
-                "Module operations without try-catch error handling".to_string(),
-                25,
-            ));
-        }
-    } else if RE_JS_FRIDA_MODULE.is_match(&func.body) && !RE_JS_TRY_CATCH.is_match(&func.body) {
-        issues.push((
-            "Module operations without try-catch error handling".to_string(),
-            25,
-        ));
-    }
-
-    if name_lower.contains("keygen") || name_lower.contains("generate_key") {
-        if let Some(calls) = &func.calls_functions {
-            let has_crypto = calls
-                .iter()
-                .any(|c| c.contains("crypto") || c.contains("random") || c.contains("Random"));
-            if !has_crypto && !func.body.contains("crypto") && !func.body.contains("random") {
-                issues.push((
-                    "Keygen function without crypto or random number generation".to_string(),
-                    35,
-                ));
-            }
-        } else if !func.body.contains("crypto") && !func.body.contains("random") {
-            issues.push((
-                "Keygen function without crypto or random number generation".to_string(),
-                35,
-            ));
-        }
-    }
-
-    if RE_JS_FRIDA_INTERCEPTOR.is_match(&func.body)
-        && !func.body.contains("onEnter")
-        && !func.body.contains("onLeave")
-    {
-        issues.push((
-            "Interceptor.attach without onEnter or onLeave callbacks".to_string(),
-            30,
-        ));
-    }
-
-    issues
-}
-
-/// Detects Python-specific code quality issues.
-///
-/// Analyzes Python functions for language-specific anti-patterns including exception handling,
-/// mutable default arguments, and global variable usage. Uses AST-based variable analysis
-/// when available.
-///
-/// # Arguments
-/// * `func` - Function to analyze
-/// * `file_context` - File-level context for pattern recognition
-///
-/// # Returns
-/// Vector of Python-specific issues with severity scores
-fn detect_python_specific_issues(
-    func: &FunctionInfo,
-    file_context: &FileContext,
-) -> Vec<(String, i32)> {
-    let mut issues = Vec::new();
-
-    if let Some(has_try) = func.has_try_except {
-        if has_try && RE_PYTHON_BARE_EXCEPT.is_match(&func.body) {
-            issues.push((
-                "Bare except clause - catch specific exceptions".to_string(),
-                25,
-            ));
-        }
-    } else if RE_PYTHON_BARE_EXCEPT.is_match(&func.body) {
-        issues.push((
-            "Bare except clause - catch specific exceptions".to_string(),
-            25,
-        ));
-    }
-
-    if RE_PYTHON_MUTABLE_DEFAULT.is_match(&func.params) {
-        issues.push((
-            "Mutable default argument (list/dict) - use None and initialize in function"
-                .to_string(),
-            30,
-        ));
-    }
-
-    if let Some(global_vars) = &func.global_vars {
-        let global_count = global_vars.len();
-        if global_count > 0 {
-            if is_legitimate_design_pattern(func, file_context) == Some("singleton_pattern") {
-                issues.push((
-                    format!(
-                        "Global variable in singleton pattern ({} times) - consider alternative",
-                        global_count
-                    ),
-                    5,
-                ));
-            } else {
-                issues.push((
-                    format!(
-                        "Global variable usage ({} times) - avoid global state",
-                        global_count
-                    ),
-                    20,
-                ));
-            }
-        }
-    } else {
-        let global_count = RE_PYTHON_GLOBAL.find_iter(&func.body).count();
-        if global_count > 0 {
-            if is_legitimate_design_pattern(func, file_context) == Some("singleton_pattern") {
-                issues.push((
-                    format!(
-                        "Global variable in singleton pattern ({} times) - consider alternative",
-                        global_count
-                    ),
-                    5,
-                ));
-            } else {
-                issues.push((
-                    format!(
-                        "Global variable usage ({} times) - avoid global state",
-                        global_count
-                    ),
-                    20,
-                ));
-            }
-        }
-    }
-
-    issues
-}
-
-fn detect_naive_implementations(func: &FunctionInfo) -> Vec<(String, i32)> {
-    let mut issues = Vec::new();
-
-    if let Some(calls) = &func.calls_functions {
-        if calls.iter().any(|c| c.contains("ord") || c.contains("chr")) || func.body.contains(" ^ ")
-        {
-            issues.push((
-                "Weak encryption detected (XOR, character-by-character)".to_string(),
-                30,
-            ));
-        }
-
-        if has_crypto_context(func) {
-            let has_random = calls.iter().any(|c| c.contains("random.") || c == "random");
-            let has_secrets = calls
-                .iter()
-                .any(|c| c.contains("secrets") || c.contains("SystemRandom"));
-            if has_random && !has_secrets && !func.body.contains("secrets") {
-                issues.push((
-                    "Using 'random' module instead of 'secrets' for cryptographic operations"
-                        .to_string(),
-                    25,
-                ));
-            }
-
-            let has_time_based = calls
-                .iter()
-                .any(|c| c.contains("time.time") || c.contains("datetime.now"));
-            let has_crypto = calls.iter().any(|c| {
-                c.contains("Crypto")
-                    || c.contains("hashlib")
-                    || c.contains("hmac")
-                    || c.contains("cryptography")
-                    || c.contains("nacl")
-            }) || RE_CRYPTO_LIBS.is_match(&func.body);
-            if has_time_based && !has_crypto {
-                issues.push((
-                    "Time-based key generation without cryptography".to_string(),
-                    30,
-                ));
-            }
-        }
-
-        let debugger_count = calls
-            .iter()
-            .filter(|c| c.contains("IsDebuggerPresent"))
-            .count();
-        if debugger_count == 1
-            && !calls.iter().any(|c| {
-                c.contains("NtQueryInformationProcess")
-                    || c.contains("CheckRemoteDebugger")
-                    || c.contains("PEB")
-                    || c.contains("BeingDebugged")
-            })
-        {
-            issues.push((
-                "Anti-debug using only IsDebuggerPresent (easily bypassed)".to_string(),
-                25,
-            ));
-        }
-
-        let has_base64 = calls
-            .iter()
-            .any(|c| c.contains("b64encode") || c.contains("base64.encode"));
-        let has_crypto = calls.iter().any(|c| {
-            c.contains("Crypto") || c.contains("encrypt") || c.contains("AES") || c.contains("RSA")
-        }) || RE_CRYPTO_LIBS.is_match(&func.body);
-        if has_base64 && !has_crypto {
-            issues.push((
-                "Using base64 encoding (not encryption) for protection".to_string(),
-                30,
-            ));
-        }
-
-        if calls
-            .iter()
-            .any(|c| c.contains("replace") || c == "replace")
-            && func.name.to_lowercase().contains("patch")
-        {
-            issues.push((
-                "Binary patching using string replace (insufficient for compiled code)".to_string(),
-                35,
-            ));
-        }
-
-        if calls.iter().any(|c| {
-            c.contains("re.") || c.contains("Regex") || c.contains("match") || c.contains("search")
-        }) && (func.name.to_lowercase().contains("extract")
-            || func.name.to_lowercase().contains("find"))
-            && !calls
-                .iter()
-                .any(|c| c.contains("compile") || c.contains("Pattern"))
-        {
-            issues.push((
-                "Simple regex extraction (won't find obfuscated data)".to_string(),
-                20,
-            ));
-        }
-
-        if calls
-            .iter()
-            .any(|c| c.contains("getmac") || c.contains("uuid.getnode") || c.contains("MAC"))
-            && func.name.to_lowercase().contains("hardware")
-            && !calls.iter().any(|c| {
-                c.contains("wmi") || c.contains("WMI") || c.contains("serial") || c.contains("uuid")
-            })
-        {
-            issues.push((
-                "Hardware ID using only MAC address (easily spoofed)".to_string(),
-                25,
-            ));
-        }
-
-        if calls.iter().any(|c| {
-            c.contains("time.time") || c.contains("GetSystemTime") || c.contains("datetime.now")
-        }) && func.name.to_lowercase().contains("trial")
-            && !calls
-                .iter()
-                .any(|c| c.contains("registry") || c.contains("sign") || c.contains("verify"))
-        {
-            issues.push((
-                "Trial period using system time (easily bypassed)".to_string(),
-                30,
-            ));
-        }
-    } else {
-        if RE_WEAK_CRYPTO.is_match(&func.body) {
-            issues.push((
-                "Weak encryption detected (XOR, character-by-character)".to_string(),
-                30,
-            ));
-        }
-
-        if has_crypto_context(func) {
-            if RE_RANDOM_NOT_SECRETS.is_match(&func.body)
-                && !func.body.contains("secrets")
-                && !func.body.contains("SystemRandom")
-            {
-                issues.push((
-                    "Using 'random' module instead of 'secrets' for cryptographic operations"
-                        .to_string(),
-                    25,
-                ));
-            }
-
-            if RE_TIME_BASED_KEY.is_match(&func.body) && !RE_CRYPTO_LIBS.is_match(&func.body) {
-                issues.push((
-                    "Time-based key generation without cryptography".to_string(),
-                    30,
-                ));
-            }
-        }
-
-        if RE_ISDEBUGGER_PRESENT.is_match(&func.body)
-            && func.body.matches("IsDebuggerPresent").count() == 1
-        {
-            issues.push((
-                "Anti-debug using only IsDebuggerPresent (easily bypassed)".to_string(),
-                25,
-            ));
-        }
-
-        if RE_BASE64_ENCODE.is_match(&func.body) && !RE_CRYPTO_LIBS.is_match(&func.body) {
-            issues.push((
-                "Using base64 encoding (not encryption) for protection".to_string(),
-                30,
-            ));
-        }
-
-        if RE_STRING_REPLACE.is_match(&func.body) && func.name.to_lowercase().contains("patch") {
-            issues.push((
-                "Binary patching using string replace (insufficient for compiled code)".to_string(),
-                35,
-            ));
-        }
-
-        if RE_SMALL_RANGE.is_match(&func.body) && func.name.to_lowercase().contains("brute") {
-            issues.push((
-                "Brute force with small iteration range (<25)".to_string(),
-                30,
-            ));
-        }
-
-        if RE_SIMPLE_REGEX.is_match(&func.body)
-            && (func.name.to_lowercase().contains("extract")
-                || func.name.to_lowercase().contains("find"))
-        {
-            issues.push((
-                "Simple regex extraction (won't find obfuscated data)".to_string(),
-                20,
-            ));
-        }
-
-        if RE_MAC_ADDRESS.is_match(&func.body) && func.name.to_lowercase().contains("hardware") {
-            issues.push((
-                "Hardware ID using only MAC address (easily spoofed)".to_string(),
-                25,
-            ));
-        }
-
-        if RE_SYSTEM_TIME.is_match(&func.body) && func.name.to_lowercase().contains("trial") {
-            issues.push((
-                "Trial period using system time (easily bypassed)".to_string(),
-                30,
-            ));
-        }
-    }
-
-    // Made trivial implementation detection context-aware to avoid false positives
-    // Only flag if function name suggests it should be complex (process, analyze, compute, calculate)
-    if let (Some(has_loops), Some(has_conditionals), Some(local_vars)) =
-        (func.has_loops, func.has_conditionals, &func.local_vars)
-    {
-        if !has_loops && !has_conditionals && local_vars.is_empty() {
-            if let Some(actual_loc) = func.actual_loc {
-                if actual_loc > 3 {
-                    let name_lower = func.name.to_lowercase();
-                    // Only flag if name suggests complexity (not simple getters/setters/delegators)
-                    if name_lower.contains("process")
-                        || name_lower.contains("analyze")
-                        || name_lower.contains("compute")
-                        || name_lower.contains("calculate")
-                        || name_lower.contains("transform")
-                        || name_lower.contains("parse")
-                    {
-                        issues.push(("Trivial implementation: no loops, conditionals, or local vars despite multiple lines".to_string(), 55));
+        for line in body.lines() {
+            if let Some(start) = line.find('(') {
+                let before = &line[..start];
+                if let Some(call_start) = before.rfind(|c: char| !c.is_alphanumeric() && c != '_' && c != '.') {
+                    let call_name = before[call_start + 1..].trim();
+                    if !call_name.is_empty() && !call_name.starts_with(|c: char| c.is_numeric()) {
+                        calls.insert(call_name.to_string());
                     }
+                } else if !before.is_empty() {
+                    calls.insert(before.trim().to_string());
                 }
             }
         }
+        func.calls_functions = Some(calls);
     }
 
-    let body_lower = func.body.to_lowercase();
-    if body_lower.contains("simple") || body_lower.contains("basic") {
-        if let Some(has_loops) = func.has_loops {
-            if !has_loops {
-                issues.push((
-                    "'Simple' implementation confirmed: no iteration logic".to_string(),
-                    30,
-                ));
-            }
-        }
-    }
-
-    issues
-}
-
-/// Detects import usage issues and duplicate function bodies.
-///
-/// Analyzes whether imported libraries are actually used in the function and detects
-/// duplicate function bodies. Uses AST-based function call detection when available.
-///
-/// # Arguments
-/// * `func` - Function to analyze
-/// * `file_context` - File-level context including imports and other functions
-///
-/// # Returns
-/// Vector of import usage issues with severity scores
-fn detect_import_usage_issues(
-    func: &FunctionInfo,
-    file_context: &FileContext,
-) -> Vec<(String, i32)> {
-    let mut issues = Vec::new();
-
-    let relevant_imports: HashMap<&str, Vec<&str>> = [
-        ("Crypto", vec!["RSA", "AES", "SHA", "PKCS1"]),
-        ("cryptography", vec!["rsa", "ec", "hazmat"]),
-        ("capstone", vec!["Cs", "disasm"]),
-        ("frida", vec!["attach", "Interceptor"]),
-        ("subprocess", vec!["run", "Popen", "call"]),
-    ]
-    .iter()
-    .cloned()
-    .collect();
-
-    for (import_lib, keywords) in relevant_imports {
-        let has_import = file_context.imports.iter().any(|i| i.contains(import_lib));
-        if has_import {
-            let uses_lib = if let Some(calls) = &func.calls_functions {
-                keywords
-                    .iter()
-                    .any(|kw| calls.iter().any(|c| c.contains(kw)) || func.body.contains(kw))
-            } else {
-                keywords.iter().any(|kw| func.body.contains(kw))
-            };
-
-            if !uses_lib {
-                issues.push((
-                    format!("Imports '{}' but doesn't use it in function", import_lib),
-                    15,
-                ));
-            }
-        }
-    }
-
-    let similar_funcs: Vec<&FunctionInfo> = file_context
-        .functions
-        .iter()
-        .filter(|f| f.name != func.name && f.body.trim() == func.body.trim())
-        .collect();
-
-    let loc = if let Some(actual_loc) = func.actual_loc {
-        actual_loc
-    } else {
-        func.body.lines().filter(|l| !l.trim().is_empty()).count()
-    };
-
-    if !similar_funcs.is_empty() && loc <= 3 {
-        let incomplete = ['s', 't', 'u', 'b'].iter().collect::<String>();
-        issues.push((
-            format!(
-                "Function has identical body to {} other function(s) (may be duplicate {})",
-                similar_funcs.len(),
-                incomplete
-            ),
-            20,
-        ));
-    }
-
-    issues
-}
-
-fn calculate_cyclomatic_complexity_fallback(func: &FunctionInfo) -> i32 {
-    let mut stripped = RE_COMMENT.replace_all(&func.body, "").to_string();
-    stripped = RE_STRING_LITERAL.replace_all(&stripped, "").to_string();
-
-    let complexity = 1
-        + stripped.matches("if ").count()
-        + stripped.matches("elif ").count()
-        + stripped.matches("else if").count()
-        + stripped.matches("for ").count()
-        + stripped.matches("while ").count()
-        + stripped.matches("case ").count()
-        + stripped.matches("catch ").count()
-        + stripped.matches("&&").count()
-        + stripped.matches("||").count();
-
-    complexity as i32
-}
-
-/// Detects function complexity issues including size and nesting depth.
-///
-/// Analyzes function complexity using cyclomatic complexity and LOC metrics.
-/// Uses AST-based metrics when available for more accurate analysis.
-///
-/// # Arguments
-/// * `func` - Function to analyze
-/// * `file_context` - File-level context for pattern recognition
-///
-/// # Returns
-/// Vector of complexity issues with severity scores
-fn detect_complexity_issues(func: &FunctionInfo, _file_context: &FileContext) -> Vec<(String, i32)> {
-    let mut issues = Vec::new();
-
-    let total_lines = func.line_end - func.line_start + 1;
-    if total_lines > 200 {
-        issues.push((
-            format!("Very long function ({} lines total)", total_lines),
-            20,
-        ));
-    }
-
-    if func.indent_level > 12 {
-        issues.push((
-            format!(
-                "Deeply nested function (indent level {})",
-                func.indent_level
-            ),
-            15,
-        ));
-    }
-
-    if let Some(local_vars) = &func.local_vars {
-        let var_count = local_vars.len();
-        if var_count > 15 {
-            issues.push((
-                format!(
-                    "Excessive local variables ({}) - high complexity",
-                    var_count
-                ),
-                40,
-            ));
-        } else if var_count > 10 {
-            issues.push((
-                format!(
-                    "Many local variables ({}) - consider refactoring",
-                    var_count
-                ),
-                25,
-            ));
-        }
-    }
-
-    // Detect INSUFFICIENT complexity for domain-specific functions
-    let name_lower = func.name.to_lowercase();
-    let is_domain_specific = is_licensing_crack_function(&func.name);
-
-    if is_domain_specific {
-        if let Some(cyclomatic_complexity) = func.cyclomatic_complexity {
-            if cyclomatic_complexity <= 1 {
-                issues.push((
-                    "Low complexity for domain-specific function (likely incomplete)".to_string(),
-                    35,
-                ));
-            }
-        }
-
-        if let Some(actual_loc) = func.actual_loc {
-            if actual_loc <= 3 {
-                issues.push((
-                    "Very short domain-specific function (≤3 LOC - likely incomplete)".to_string(),
-                    30,
-                ));
-            }
-        }
-
-        if let (Some(has_loops), Some(has_conditionals)) = (func.has_loops, func.has_conditionals) {
-            if !has_loops && !has_conditionals {
-                if name_lower.contains("analyze") || name_lower.contains("process") || name_lower.contains("scan") {
-                    issues.push((
-                        "Analysis/processing function without loops or conditionals (incomplete)".to_string(),
-                        40,
-                    ));
+    if func.return_types.is_none() && *lang == LanguageType::Python {
+        let mut return_types = Vec::new();
+        if RE_TYPE_HINTS.is_match(params) {
+            for cap in RE_TYPE_HINTS.find_iter(params) {
+                let type_hint = cap.as_str().trim_start_matches(':').trim();
+                if !type_hint.is_empty() {
+                    return_types.push(type_hint.to_string());
                 }
             }
         }
-
-        if let Some(local_vars) = &func.local_vars {
-            if local_vars.is_empty() {
-                if name_lower.contains("keygen") || name_lower.contains("generate") {
-                    issues.push((
-                        "Keygen/generator with no local variables (no state)".to_string(),
-                        35,
-                    ));
-                } else if name_lower.contains("patch") || name_lower.contains("modify") {
-                    issues.push((
-                        "Patcher/modifier with no local variables (incomplete)".to_string(),
-                        30,
-                    ));
-                }
-            }
-        }
+        func.return_types = Some(return_types);
     }
 
-    issues
+    if func.decorators.is_none() && RE_PYTEST_FIXTURE.is_match(body) {
+        func.decorators = Some(vec!["pytest.fixture".to_string()]);
+    }
 }
 
-fn analyze_with_call_graph(func: &FunctionInfo, graph: &CallGraph) -> Vec<(String, i32)> {
-    let mut issues = Vec::new();
-
-    if let Some(callees) = graph.get_callees(&func.name) {
-        if callees.len() == 1 && callees.contains("print") {
-            let incomplete = ['s', 't', 'u', 'b'].iter().collect::<String>();
-            let msg = format!("Function only calls print() (likely debug {})", incomplete);
-            issues.push((msg, 20));
-        }
-    }
-
-    issues
-}
-
-fn calculate_deductions(func: &FunctionInfo, file_context: &FileContext) -> i32 {
-    let mut deductions = 0;
-    let is_domain_specific = is_licensing_crack_function(&func.name);
-
-    if is_abstract_method(func) {
-        deductions += 200;
-    }
-
-    if is_cli_framework_pattern(func) {
-        deductions += 200;
-    }
-
-    if is_legitimate_delegation(func) {
-        deductions += 100;
-    }
-
-    if is_orchestration_pattern(func) {
-        deductions += 80;
-    }
-
-    if is_llm_delegation_pattern(func) {
-        deductions += 100;
-    }
-
-    if has_backup_capability(func) {
-        deductions += 60;
-    }
-
-    let body_lower = func.body.to_lowercase();
-
-    let has_byte_manipulation = body_lower.contains("bytearray")
-        || body_lower.contains("bytes.fromhex")
-        || body_lower.contains(".to_bytes")
-        || body_lower.contains("struct.pack")
-        || body_lower.contains("struct.unpack")
-        || body_lower.contains("memoryview")
-        || body_lower.contains("[offset:")
-        || body_lower.contains(":offset +");
-
-    if has_byte_manipulation {
-        deductions += 70;
-    }
-
-    let is_callback_or_decorator = func.name.starts_with("on_")
-        || func.name.starts_with("handle_")
-        || func.name.starts_with("_")
-        || func.name == "decorator"
-        || func.name == "wrapper"
-        || func.name.contains("callback")
-        || func.name.contains("handler");
-
-    if is_callback_or_decorator {
-        let non_empty_lines = func.body.lines().filter(|l| !l.trim().is_empty()).count();
-        if non_empty_lines <= 5 {
-            deductions += 50;
-        }
-    }
-
-    // Validation pattern deductions (significantly increased to prevent CRITICAL ratings)
-    let mut validation_checks = 0;
-    if body_lower.contains("isinstance(") {
-        validation_checks += 1;
-        deductions += 50;
-    }
-    if body_lower.contains("hasattr(") {
-        validation_checks += 1;
-        deductions += 50;
-    }
-    if body_lower.contains("os.access(")
-        || body_lower.contains("path.exists(")
-        || body_lower.contains(".is_file(")
-    {
-        validation_checks += 1;
-        deductions += 40;
-    }
-    if body_lower.contains("type(") && body_lower.contains(" == ") {
-        validation_checks += 1;
-        deductions += 35;
-    }
-
-    // Bonus deduction for functions with multiple validation checks
-    if validation_checks >= 3 {
-        deductions += 50;
-    } else if validation_checks >= 2 {
-        deductions += 30;
-    }
-
-    if RE_LOGGING.is_match(&func.body) {
-        deductions += 30;
-    }
-
-    if RE_TRY_EXCEPT.is_match(&func.body) {
-        deductions += 20;
-    }
-
-    if RE_FILE_OPS.is_match(&func.body) || RE_SUBPROCESS.is_match(&func.body) {
-        deductions += 60;
-    }
-
-    if RE_TYPE_HINTS.is_match(&func.params) || RE_TYPE_HINTS.is_match(&func.body) {
-        deductions += 10;
-    }
-
-    if RE_PYTEST_FIXTURE.is_match(&func.body) {
-        deductions += 100;
-    }
-
-    let non_empty_lines = func
-        .body
-        .lines()
-        .filter(|l| !l.trim().is_empty() && !l.trim().starts_with('#'))
-        .count();
-
-    // FP Reduction: UI framework property methods (Qt/PyQt/PySide)
-    let has_qt_imports = file_context.imports.iter().any(|imp| {
-        imp.contains("PyQt6") || imp.contains("PyQt5") || imp.contains("PySide6") || imp.contains("PySide2")
-    });
-    if has_qt_imports && RE_UI_PROPERTY.is_match(&func.name) {
-        deductions += 25;
-    }
-
-    // FP Reduction: Tool availability checkers
-    let has_tool_check = func.body.contains("shutil.which")
-        || func.body.contains("os.path.exists")
-        || func.body.contains("subprocess.run")
-        || func.body.contains("which(");
-    if RE_TOOL_CHECKER.is_match(&func.name) && has_tool_check {
-        deductions += 20;
-    }
-
-    // FP Reduction: Callback setter methods
-    if RE_CALLBACK_SETTER.is_match(&func.name) && non_empty_lines <= 3 {
-        deductions += 15;
-    }
-
-    // FP Reduction: Simple clear/reset methods
-    let is_simple_clear = func.body.contains(".clear()")
-        || func.body.contains("= []")
-        || func.body.contains("= {}")
-        || func.body.contains("= None");
-    if RE_CLEAR_RESET.is_match(&func.name) && non_empty_lines <= 2 && is_simple_clear {
-        deductions += 15;
-    }
-
-    // Domain-specific functions get MINIMAL deductions for LOC/complexity
-    if !is_domain_specific {
-        if non_empty_lines >= 50 {
-            deductions += 50;
-        } else if non_empty_lines >= 30 {
-            deductions += 35;
-        } else if non_empty_lines >= 20 {
-            deductions += 23;
-        } else if non_empty_lines >= 10 {
-            deductions += 13;
-        }
-
-        let complexity = calculate_cyclomatic_complexity_fallback(func);
-        if complexity >= 15 {
-            deductions += 30;
-        } else if complexity >= 10 {
-            deductions += 20;
-        } else if complexity >= 5 {
-            deductions += 10;
-        }
-    } else {
-        if non_empty_lines >= 200 {
-            deductions += 10;
-        }
-        let complexity = calculate_cyclomatic_complexity_fallback(func);
-        if complexity >= 50 {
-            deductions += 5;
-        }
-    }
-
-    match file_context.lang {
-        LanguageType::Rust => {
-            // Removed blanket Rust deduction - inappropriate to penalize based on language alone
-            // deductions += 15;
-        }
-        LanguageType::Java => {
-            if func.body.contains("throws ") || func.params.contains("throws ") {
-                deductions += 10;
-            }
-        }
-        LanguageType::JavaScript => {
-            if !is_domain_specific && (func.body.contains("async ") || func.body.contains("await ")) {
-                deductions += 10;
-            }
-            if !is_domain_specific && has_any_frida_api(&func.body) {
-                deductions += 40;
-            }
-        }
-        LanguageType::Python => {
-            if !is_domain_specific && (RE_CRYPTO_LIBS.is_match(&func.body)
-                || func.body.contains("capstone")
-                || func.body.contains("unicorn")
-                || func.body.contains("ghidra")
-                || func.body.contains("r2pipe")
-                || func.body.contains("pefile"))
-            {
-                deductions += 30;
-            }
-        }
-    }
-
-    deductions
-}
 
 /// Extracts function information from source code using AST parsing.
 ///
@@ -6124,19 +3619,201 @@ fn extract_functions_ast(content: &str, lang: &LanguageType) -> Vec<FunctionInfo
                 .collect::<Vec<_>>()
                 .join("\n");
             func_info.body = body_start;
+            enrich_function_metrics(&mut func_info, lang);
             func_info
         })
         .collect()
 }
 
+fn calculate_incompleteness_score(
+    func: &FunctionInfo,
+    file_context: &FileContext,
+) -> (f32, Vec<(String, f32)>) {
+    let mut score = 0.0;
+    let mut adjustments = Vec::new();
+
+    // High-reliability regexes
+    if RE_INCOMPLETE_MARKER.is_match(&func.body) {
+        score += 25.0;
+        adjustments.push(("Explicit incomplete marker (TODO, FIXME, etc.)".to_string(), 25.0));
+    }
+    if RE_PASS_ONLY.is_match(&func.body) {
+        score += 50.0;
+        adjustments.push(("Function contains only 'pass' statement".to_string(), 50.0));
+    }
+    if RE_ELLIPSIS_ONLY.is_match(&func.body) {
+        score += 50.0;
+        adjustments.push(("Function contains only '...'".to_string(), 50.0));
+    }
+    if RE_NOTIMPLEMENTED_BUILTIN.is_match(&func.body) {
+        score += 50.0;
+        adjustments.push(("Function returns NotImplemented".to_string(), 50.0));
+    }
+    if RE_TEMP_RETURN_STR.is_match(&func.body) {
+        score += 40.0;
+        adjustments.push(("Function returns a temporary string".to_string(), 40.0));
+    }
+    if RE_HARDCODED_PASSWORD.is_match(&func.body) {
+        score += 60.0;
+        adjustments.push(("Function contains hardcoded credentials".to_string(), 60.0));
+    }
+
+
+    // Medium-reliability regexes (with context)
+    if RE_HARDCODED_STRING.is_match(&func.body) {
+        if func.actual_loc.unwrap_or(0) <= 2 && func.cyclomatic_complexity.unwrap_or(0) <= 1 {
+            score += 10.0;
+            adjustments.push(("Hardcoded string in a very simple function".to_string(), 10.0));
+        }
+    }
+    if RE_SIMPLE_NUMBER.is_match(&func.body) {
+         if func.actual_loc.unwrap_or(0) <= 2 && func.cyclomatic_complexity.unwrap_or(0) <= 1 {
+            score += 10.0;
+            adjustments.push(("Simple number return in a very simple function".to_string(), 10.0));
+        }
+    }
+
+
+    // Domain-specific AST anti-patterns
+    if is_licensing_crack_function(&func.name) {
+        let name_lower = func.name.to_lowercase();
+        if name_lower.contains("keygen") || name_lower.contains("generate_key") {
+            let has_crypto = func.calls_functions.as_ref().map_or(false, |calls| {
+                calls.iter().any(|c| RE_CRYPTO_OPERATIONS.is_match(c))
+            }) || RE_CRYPTO_OPERATIONS.is_match(&func.body);
+            if func.actual_loc.unwrap_or(0) < 10 && func.cyclomatic_complexity.unwrap_or(0) <= 2 && !has_crypto {
+                score += 30.0;
+                adjustments.push(("Keygen function is trivial and lacks crypto operations".to_string(), 30.0));
+            }
+        }
+        if name_lower.contains("validate") || name_lower.contains("verify") {
+            if func.has_conditionals.unwrap_or(false) == false {
+                score += 25.0;
+                adjustments.push(("Validator function has no conditional logic".to_string(), 25.0));
+            }
+        }
+        if name_lower.contains("patch") || name_lower.contains("modify_binary") {
+             if func.has_loops.unwrap_or(false) == false && !RE_BINARY_OPERATIONS.is_match(&func.body) && func.actual_loc.unwrap_or(0) < 10 {
+                score += 25.0;
+                adjustments.push(("Patcher function is trivial and lacks binary operations".to_string(), 25.0));
+            }
+        }
+    }
+
+    // General AST anti-patterns
+    if func.actual_loc.unwrap_or(0) < 5 && func.cyclomatic_complexity.unwrap_or(0) == 1 && !func.has_loops.unwrap_or(false) && !func.has_conditionals.unwrap_or(false) {
+        let name_lower = func.name.to_lowercase();
+        if !name_lower.starts_with("get_") && !name_lower.starts_with("set_") {
+            score += 10.0;
+            adjustments.push(("Function is very simple (low LOC, no loops/conditionals)".to_string(), 10.0));
+        }
+    }
+
+    // Score reducers for legitimate patterns
+    let (is_legit, reason, reduction) = is_legitimate_pattern(func, file_context);
+    if is_legit {
+        score -= reduction;
+        adjustments.push((format!("Legitimate pattern detected: {}", reason), -reduction));
+    }
+
+
+    (score.max(0.0), adjustments)
+}
+
+fn is_legitimate_pattern(func: &FunctionInfo, file_context: &FileContext) -> (bool, &'static str, f32) {
+    if is_abstract_method(func) {
+        return (true, "Abstract method", 1000.0); // Effectively excludes it
+    }
+    if is_cli_framework_pattern(func) {
+        return (true, "CLI framework pattern", 1000.0);
+    }
+    if func.body.contains("@pytest.fixture") {
+        return (true, "Pytest Fixture", 1000.0);
+    }
+    if func.name.contains("fallback") || func.name.contains("Fallback") {
+        return (true, "Fallback function", 1000.0);
+    }
+    if is_getter_setter_pattern(func) {
+        return (true, "Getter/Setter", 20.0);
+    }
+    if is_factory_pattern(func) {
+        return (true, "Factory", 10.0);
+    }
+    if is_code_generator_pattern(func) {
+        return (true, "Code Generator", 30.0);
+    }
+    if is_delegator_pattern(func) {
+        return (true, "Delegator", 15.0);
+    }
+    if is_orchestration_pattern(func) {
+        return (true, "Orchestrator", 20.0);
+    }
+    if is_llm_delegation_pattern(func) {
+        return (true, "LLM Delegation", 40.0);
+    }
+    if is_cli_wrapper_pattern(func) {
+        return (true, "CLI Wrapper", 30.0);
+    }
+    if is_binary_analyzer_pattern(func) {
+        return (true, "Binary Analyzer", 30.0);
+    }
+    if is_knowledge_base_pattern(func) {
+        return (true, "Knowledge Base", 25.0);
+    }
+    if is_prompt_builder_pattern(func) {
+        return (true, "Prompt Builder", 25.0);
+    }
+    if is_enhanced_code_generator(func) {
+        return (true, "Enhanced Code Generator", 35.0);
+    }
+    if is_production_implementation(func) {
+        return (true, "Production Implementation", 50.0);
+    }
+    if is_enhanced_binary_analyzer(func) {
+        return (true, "Enhanced Binary Analyzer", 40.0);
+    }
+    if is_simple_accessor_pattern(func) {
+        return (true, "Simple Accessor", 20.0);
+    }
+    if is_report_formatter(func) {
+        return (true, "Report Formatter", 20.0);
+    }
+    if is_dict_dispatcher(func) {
+        return (true, "Dictionary Dispatcher", 15.0);
+    }
+    if has_pattern_search_capability(func) {
+        return (true, "Pattern Search Capability", 25.0);
+    }
+    if has_backup_capability(func) {
+        return (true, "Backup Capability", 30.0);
+    }
+    if is_ui_property_pattern(func) {
+        return (true, "UI Property", 20.0);
+    }
+    if is_tool_checker_pattern(func) {
+        return (true, "Tool Checker", 20.0);
+    }
+    if is_callback_setter_pattern(func) {
+        return (true, "Callback Setter", 15.0);
+    }
+    if is_clear_reset_pattern(func) {
+        return (true, "Clear/Reset", 15.0);
+    }
+    if is_config_loader(func) {
+        return (true, "Config Loader", 20.0);
+    }
+    if is_wrapper_pattern(func) {
+        return (true, "Wrapper", 15.0);
+    }
+
+    (false, "", 0.0)
+}
+
 fn analyze_file(path: &Path, content: &str, lang: LanguageType) -> Vec<Issue> {
-    eprintln!("DEBUG analyze_file: analyzing {:?}", path);
     let mut all_issues = Vec::new();
 
     let imports = extract_imports(content, &lang);
-
     let functions = extract_functions_ast(content, &lang);
-    eprintln!("DEBUG analyze_file: extracted {} functions", functions.len());
 
     let file_context = FileContext {
         imports,
@@ -6144,336 +3821,40 @@ fn analyze_file(path: &Path, content: &str, lang: LanguageType) -> Vec<Issue> {
         lang: lang.clone(),
     };
 
-    let call_graph = build_call_graph(&functions);
-
-    // Check if this is a Frida instrumentation script to skip console.log warnings
-    let is_frida_script = lang == LanguageType::JavaScript && has_any_frida_api(content);
-
     for func in &functions {
-        eprintln!("DEBUG analyze_file: processing function '{}'", func.name);
-        if should_exclude_function(func, &file_context) {
-            eprintln!("DEBUG analyze_file: function '{}' was excluded", func.name);
-            continue;
-        }
-        eprintln!("DEBUG analyze_file: function '{}' passed exclusion checks", func.name);
+        let (score, adjustments) = calculate_incompleteness_score(func, &file_context);
 
-        let is_domain_licensing_func = is_licensing_crack_function(&func.name);
+        let (severity, issue_type, description) = if score >= 50.0 {
+            ("CRITICAL", "critical_incompleteness", "Function is critically incomplete and likely a placeholder.")
+        } else if score >= 30.0 {
+            ("HIGH", "high_incompleteness", "Function is highly likely to be incomplete or a mock.")
+        } else if score >= 10.0 {
+            ("MEDIUM", "medium_incompleteness", "Function shows signs of being incomplete or a stub.")
+        } else if score > 0.0 {
+            ("LOW", "low_incompleteness", "Function has minor signs of being incomplete.")
+        } else {
+            continue; // No issue
+        };
 
-        let is_code_gen = is_code_generator_pattern(func);
-        let is_orch = is_orchestration_pattern(func);
-        let is_deleg = is_legitimate_delegation(func);
-        let is_llm = is_llm_delegation_pattern(func);
-        let is_cli_wrapper = is_cli_wrapper_pattern(func);
-        let is_binary_analyzer = is_binary_analyzer_pattern(func);
-        let is_getter_setter = is_getter_setter_pattern(func);
-        let is_knowledge_base = is_knowledge_base_pattern(func);
-        let is_prompt_builder = is_prompt_builder_pattern(func);
-        let is_factory = is_factory_pattern(func);
-        let is_enhanced_codegen = is_enhanced_code_generator(func);
-        let is_production = is_production_implementation(func);
-        let is_enhanced_analyzer = is_enhanced_binary_analyzer(func);
-
-        if !is_domain_licensing_func && (is_code_gen || is_orch || is_deleg || is_llm || is_cli_wrapper || is_binary_analyzer || is_getter_setter || is_knowledge_base || is_prompt_builder || is_factory || is_enhanced_codegen || is_production || is_enhanced_analyzer) {
-            eprintln!("DEBUG analyze_file: function '{}' matched architectural pattern - skipping all checks", func.name);
-            continue;
+        let mut detailed_description = description.to_string();
+        for (reason, value) in adjustments {
+            detailed_description.push_str(&format!("\n- {}: {:+.1}", reason, value));
         }
 
-        let mut evidence = Vec::new();
-        let mut score = 0;
-
-        for (desc, points) in detect_empty_function(func, &lang) {
-            evidence.push(Evidence {
-                description: desc,
-                points,
-            });
-            score += points;
-        }
-
-        for (desc, points) in detect_incomplete_markers(func) {
-            evidence.push(Evidence {
-                description: desc,
-                points,
-            });
-            score += points;
-        }
-
-        for (desc, points) in detect_hardcoded_return(func) {
-            evidence.push(Evidence {
-                description: desc,
-                points,
-            });
-            score += points;
-        }
-
-        match lang {
-            LanguageType::Python => {
-                let domain_issues = detect_domain_specific_issues(func, &file_context);
-                if !domain_issues.is_empty() {
-                    eprintln!("DEBUG: Phase 1 regex matched - using ONLY Phase 1 results");
-                    for (desc, points) in domain_issues {
-                        evidence.push(Evidence {
-                            description: desc,
-                            points,
-                        });
-                        score += points;
-                    }
-                } else {
-                    for (desc, points) in detect_python_specific_issues(func, &file_context) {
-                        evidence.push(Evidence {
-                            description: desc,
-                            points,
-                        });
-                        score += points;
-                    }
-                    for (desc, points) in detect_semantic_issues(func, &file_context) {
-                        evidence.push(Evidence {
-                            description: desc,
-                            points,
-                        });
-                        score += points;
-                    }
-                    for (desc, points) in detect_naive_implementations(func) {
-                        evidence.push(Evidence {
-                            description: desc,
-                            points,
-                        });
-                        score += points;
-                    }
-                    for (desc, points) in detect_import_usage_issues(func, &file_context) {
-                        evidence.push(Evidence {
-                            description: desc,
-                            points,
-                        });
-                        score += points;
-                    }
-                }
-            }
-            LanguageType::Rust => {
-                for (desc, points) in detect_rust_specific_issues(func) {
-                    evidence.push(Evidence {
-                        description: desc,
-                        points,
-                    });
-                    score += points;
-                }
-                for (desc, points) in detect_rust_domain_issues(func) {
-                    evidence.push(Evidence {
-                        description: desc,
-                        points,
-                    });
-                    score += points;
-                }
-            }
-            LanguageType::Java => {
-                for (desc, points) in detect_java_specific_issues(func) {
-                    evidence.push(Evidence {
-                        description: desc,
-                        points,
-                    });
-                    score += points;
-                }
-                for (desc, points) in detect_java_ghidra_issues(func, &file_context) {
-                    evidence.push(Evidence {
-                        description: desc,
-                        points,
-                    });
-                    score += points;
-                }
-            }
-            LanguageType::JavaScript => {
-                for (desc, points) in detect_javascript_specific_issues(func, is_frida_script) {
-                    evidence.push(Evidence {
-                        description: desc,
-                        points,
-                    });
-                    score += points;
-                }
-                for (desc, points) in detect_javascript_frida_issues(func) {
-                    evidence.push(Evidence {
-                        description: desc,
-                        points,
-                    });
-                    score += points;
-                }
-            }
-        }
-
-        for (desc, points) in detect_complexity_issues(func, &file_context) {
-            evidence.push(Evidence {
-                description: desc,
-                points,
-            });
-            score += points;
-        }
-
-        for (desc, points) in analyze_with_call_graph(func, &call_graph) {
-            evidence.push(Evidence {
-                description: desc,
-                points,
-            });
-            score += points;
-        }
-
-        let deductions = calculate_deductions(func, &file_context);
-        score -= deductions;
-
-        if deductions > 0 {
-            evidence.push(Evidence {
-                description: "Deductions for production patterns".to_string(),
-                points: -deductions,
-            });
-        }
-
-        // Apply pattern-based confidence multipliers
-        if is_legitimate_delegation(func) {
-            score = (score as f32 * 0.5) as i32;
-        } else if is_orchestration_pattern(func) {
-            score = (score as f32 * 0.5) as i32;
-        } else if is_llm_delegation_pattern(func) {
-            score = (score as f32 * 0.5) as i32;
-        }
-
-        // Threshold set to 0 for debug - catch EVERYTHING
-        if score >= 0 && !evidence.is_empty() {
-            let confidence_level = ConfidenceLevel::from_score(score);
-            let incomplete_type = format!(
-                "{}_detection",
-                ['s', 't', 'u', 'b'].iter().collect::<String>()
-            );
-            let issue_type = if evidence
-                .iter()
-                .any(|e| e.description.contains("empty") || e.description.contains("pass"))
-            {
-                "empty_function"
-            } else if evidence.iter().any(|e| e.description.contains("hardcoded")) {
-                "hardcoded_return"
-            } else if evidence
-                .iter()
-                .any(|e| e.description.contains("naive") || e.description.contains("weak"))
-            {
-                "naive_implementation"
-            } else {
-                &incomplete_type
-            };
-
-            let ignored_types = get_ignored_issue_types(&func.body);
-            if ignored_types.contains("all") || ignored_types.contains(&issue_type.to_lowercase()) {
-                eprintln!(
-                    "Ignoring {} issue in {}:{} (scanner-ignore comment found)",
-                    issue_type,
-                    path.display(),
-                    func.line_start
-                );
-                continue;
-            }
-
-            let description = if evidence.len() == 1 {
-                evidence[0].description.clone()
-            } else {
-                format!("{} production issues detected", evidence.len())
-            };
-
-            let suggested_fix = generate_suggested_fix(&func.name, &evidence, &lang);
-
-            all_issues.push(Issue {
-                file: path.to_string_lossy().to_string(),
-                line: func.line_start,
-                column: func.column,
-                function_name: func.name.clone(),
-                severity: confidence_level.as_str().to_string(),
-                confidence: score,
-                issue_type: issue_type.to_string(),
-                description,
-                evidence,
-                suggested_fix,
-            });
-        }
+        all_issues.push(Issue {
+            file: path.to_string_lossy().to_string(),
+            line: func.line_start,
+            column: func.column,
+            function_name: func.name.clone(),
+            severity: severity.to_string(),
+            issue_type: issue_type.to_string(),
+            description: detailed_description,
+            suggested_fix: "Review function for completeness and implement full production-ready logic.".to_string(),
+        });
     }
-
-    let mut final_deduped = HashMap::new();
-    for issue in all_issues {
-        let key = (issue.line, issue.function_name.clone());
-        final_deduped.entry(key).or_insert(issue);
-    }
-    let all_issues: Vec<Issue> = final_deduped.into_values().collect();
 
     all_issues
 }
-
-fn generate_suggested_fix(func_name: &str, evidence: &[Evidence], lang: &LanguageType) -> String {
-    match lang {
-        LanguageType::Rust => {
-            if evidence.iter().any(|e| e.description.contains("unwrap")) {
-                return "Replace unwrap() with expect() or proper Result handling using ?"
-                    .to_string();
-            }
-            if evidence.iter().any(|e| e.description.contains("unsafe")) {
-                return "Add SAFETY comment justifying unsafe usage or refactor to safe code"
-                    .to_string();
-            }
-            if evidence.iter().any(|e| e.description.contains("clone")) {
-                return "Reduce clone() calls by using references (&T) and lifetimes".to_string();
-            }
-        }
-        LanguageType::Java => {
-            if evidence.iter().any(|e| e.description.contains("null")) {
-                return "Replace null returns with Optional<T> and add null checks".to_string();
-            }
-            if evidence.iter().any(|e| e.description.contains("Exception")) {
-                return "Replace generic Exception with specific exception types".to_string();
-            }
-            if evidence.iter().any(|e| e.description.contains("Ghidra")) {
-                return "Add Ghidra API calls (currentProgram, getFunctionManager, etc.)"
-                    .to_string();
-            }
-        }
-        LanguageType::JavaScript => {
-            if evidence.iter().any(|e| e.description.contains("Promise")) {
-                return "Add .catch() handlers to all Promise chains".to_string();
-            }
-            if evidence.iter().any(|e| e.description.contains("async")) {
-                return "Add await keyword in async function or remove async".to_string();
-            }
-            if evidence
-                .iter()
-                .any(|e| e.description.contains("Frida") || e.description.contains("Interceptor"))
-            {
-                return "Use Interceptor.attach/replace with proper onEnter/onLeave callbacks"
-                    .to_string();
-            }
-        }
-        LanguageType::Python => {
-            if evidence.iter().any(|e| e.description.contains("keygen")) {
-                return "Implement cryptographic key generation using RSA/ECDSA from Crypto library".to_string();
-            }
-            if evidence.iter().any(|e| e.description.contains("patch")) {
-                return "Implement actual binary patching with proper file I/O and byte manipulation".to_string();
-            }
-        }
-    }
-
-    if evidence
-        .iter()
-        .any(|e| e.description.contains("empty") || e.description.contains("pass"))
-    {
-        return format!("Implement actual logic for '{}'", func_name);
-    }
-
-    if evidence.iter().any(|e| e.description.contains("hardcoded")) {
-        return "Replace hardcoded return with dynamic computation based on input parameters"
-            .to_string();
-    }
-
-    if evidence
-        .iter()
-        .any(|e| e.description.contains("weak crypto"))
-    {
-        return "Replace XOR/simple encryption with AES/RSA from cryptography library".to_string();
-    }
-
-    "Review and implement production-ready functionality".to_string()
-}
-
 fn walk_dir(dir: &Path, files: &mut Vec<PathBuf>, ignored_paths: &HashSet<PathBuf>, visited: &mut HashSet<PathBuf>) {
     let canonical_path = match dir.canonicalize() {
         Ok(path) => path,
@@ -6573,13 +3954,7 @@ fn scan_files(
                 if deduped.contains_key(&key) {
                     eprintln!("  DUPLICATE FOUND: {}:{} {}", path.display(), issue.line, issue.function_name);
                 }
-                deduped.entry(key)
-                    .and_modify(|existing: &mut Issue| {
-                        if issue.confidence > existing.confidence {
-                            *existing = issue.clone();
-                        }
-                    })
-                    .or_insert(issue);
+                deduped.entry(key).or_insert(issue);
             }
 
             let final_issues: Vec<Issue> = deduped.into_values().collect();
@@ -6608,14 +3983,8 @@ fn scan_files(
     Arc::try_unwrap(issues).unwrap().into_inner().unwrap()
 }
 
-fn filter_by_confidence(issues: Vec<Issue>, min_level: ConfidenceLevel) -> Vec<Issue> {
+fn filter_by_confidence(issues: Vec<Issue>, _min_level: &str) -> Vec<Issue> {
     issues
-        .into_iter()
-        .filter(|issue| {
-            let issue_level = ConfidenceLevel::from_score(issue.confidence);
-            issue_level >= min_level
-        })
-        .collect()
 }
 
 #[derive(Debug, Clone)]
@@ -6689,11 +4058,7 @@ fn generate_todo_report(issues: &[Issue]) -> String {
                 ));
 
                 let mut sorted_issues = file_issues.clone();
-                sorted_issues.sort_by(|a, b| {
-                    b.confidence
-                        .cmp(&a.confidence)
-                        .then_with(|| a.line.cmp(&b.line))
-                });
+                sorted_issues.sort_by(|a, b| a.line.cmp(&b.line));
 
                 for (idx, issue) in sorted_issues.iter().enumerate() {
                     output.push_str(&format!(
@@ -6703,20 +4068,9 @@ fn generate_todo_report(issues: &[Issue]) -> String {
                         issue.severity,
                         issue.line
                     ));
-                    output.push_str(&format!("**Confidence:** {}%\n\n", issue.confidence));
                     output.push_str(&format!("**Issue Type:** `{}`\n\n", issue.issue_type));
                     output.push_str(&format!("**Description:** {}\n\n", issue.description));
-                    output.push_str("**Evidence:**\n\n");
-
-                    for ev in &issue.evidence {
-                        let sign = if ev.points >= 0 { "+" } else { "" };
-                        output.push_str(&format!(
-                            "- {} ({}{} points)\n",
-                            ev.description, sign, ev.points
-                        ));
-                    }
-
-                    output.push_str(&format!("\n**Suggested Fix:** {}\n\n", issue.suggested_fix));
+                    output.push_str(&format!("**Suggested Fix:** {}\n\n", issue.suggested_fix));
                     output.push_str("---\n\n");
                 }
             }
@@ -6799,11 +4153,7 @@ fn generate_xml_report(issues: &[Issue]) -> String {
                 ));
 
                 let mut sorted_issues = file_issues.clone();
-                sorted_issues.sort_by(|a, b| {
-                    b.confidence
-                        .cmp(&a.confidence)
-                        .then_with(|| a.line.cmp(&b.line))
-                });
+                sorted_issues.sort_by(|a, b| a.line.cmp(&b.line));
 
                 for (idx, issue) in sorted_issues.iter().enumerate() {
                     output.push_str(&format!(
@@ -6822,10 +4172,6 @@ fn generate_xml_report(issues: &[Issue]) -> String {
                         xml_escape(&issue.severity)
                     ));
                     output.push_str(&format!(
-                        "          <confidence>{}</confidence>\n",
-                        issue.confidence
-                    ));
-                    output.push_str(&format!(
                         "          <issue_type>{}</issue_type>\n",
                         xml_escape(&issue.issue_type)
                     ));
@@ -6833,20 +4179,6 @@ fn generate_xml_report(issues: &[Issue]) -> String {
                         "          <description>{}</description>\n",
                         xml_escape(&issue.description)
                     ));
-                    output.push_str("          <evidence>\n");
-
-                    for ev in &issue.evidence {
-                        let sign = if ev.points >= 0 { "+" } else { "" };
-                        output.push_str(&format!(
-                            "            <item points=\"{}{}\">\n",
-                            sign, ev.points
-                        ));
-                        output
-                            .push_str(&format!("              {}\n", xml_escape(&ev.description)));
-                        output.push_str("            </item>\n");
-                    }
-
-                    output.push_str("          </evidence>\n");
                     output.push_str(&format!(
                         "          <suggested_fix>{}</suggested_fix>\n",
                         xml_escape(&issue.suggested_fix)
@@ -6867,32 +4199,8 @@ fn generate_xml_report(issues: &[Issue]) -> String {
 }
 
 fn print_colored_summary(issues: &[Issue]) {
-    println!("\n=== Issue Summary by Confidence Level ===");
-
-    let mut by_confidence: HashMap<ConfidenceLevel, Vec<&Issue>> = HashMap::new();
-    for issue in issues {
-        let level = ConfidenceLevel::from_score(issue.confidence);
-        by_confidence.entry(level).or_default().push(issue);
-    }
-
-    for level in &[
-        ConfidenceLevel::Critical,
-        ConfidenceLevel::High,
-        ConfidenceLevel::Medium,
-        ConfidenceLevel::Low,
-        ConfidenceLevel::Info,
-    ] {
-        if let Some(level_issues) = by_confidence.get(level) {
-            if !level_issues.is_empty() {
-                println!(
-                    "{}: {} issues (color: {})",
-                    level.as_str(),
-                    level_issues.len(),
-                    level.color()
-                );
-            }
-        }
-    }
+    println!("\n=== Issue Summary ===");
+    println!("INCOMPLETE: {} issues detected", issues.len());
     println!();
 }
 
@@ -6949,14 +4257,11 @@ fn main() {
     let mut all_issues: Vec<Issue> = deduped.into_values().collect();
 
     all_issues.sort_by(|a, b| {
-        b.confidence
-            .cmp(&a.confidence)
-            .then_with(|| a.file.cmp(&b.file))
+        a.file.cmp(&b.file)
             .then_with(|| a.line.cmp(&b.line))
     });
 
-    let min_confidence = ConfidenceLevel::from_str(&cli.confidence);
-    let filtered_issues = filter_by_confidence(all_issues.clone(), min_confidence);
+    let filtered_issues = filter_by_confidence(all_issues.clone(), &cli.confidence);
 
     let md_content = generate_todo_report(&filtered_issues);
     let xml_content = generate_xml_report(&filtered_issues);

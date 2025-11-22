@@ -1113,20 +1113,20 @@ const MlLicenseDetector = {
                 var actual = result.bypass.applied;
 
                 if (predicted === actual) {
-                    correct++;
-
-                    if (actual) {
-                        metrics.true_positives++;
-                    } else {
-                        metrics.true_negatives++;
-                    }
-                } else {
-                    if (predicted && !actual) {
-                        metrics.false_positives++;
-                    } else {
-                        metrics.false_negatives++;
-                    }
-                }
+                                    correct++;
+                
+                                    if (actual) {
+                                        metrics.true_positives++;
+                                    } else {
+                                        metrics.true_negatives++;
+                                    }
+                                }
+                else if (predicted && !actual) {
+                                        metrics.false_positives++;
+                                    }
+                else {
+                                        metrics.false_negatives++;
+                                    }
             }
         }
 
@@ -1226,7 +1226,7 @@ const MlLicenseDetector = {
         for (var i = 0; i < str.length; i++) {
             var char = str.charCodeAt(i);
             hash = (hash << 5) - hash + char;
-            hash = hash & hash; // Convert to 32-bit integer
+            hash &= hash; // Convert to 32-bit integer
         }
         return hash;
     },

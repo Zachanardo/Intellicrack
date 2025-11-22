@@ -23,14 +23,8 @@ import logging
 import os
 from pathlib import Path
 
-from ..handlers.pyqt6_handler import (
-    QDialog,
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QTextEdit,
-    QVBoxLayout,
-)
+from ..handlers.pyqt6_handler import QDialog, QHBoxLayout, QLabel, QPushButton, QTextEdit, QVBoxLayout
+
 
 logger = logging.getLogger(__name__)
 
@@ -127,7 +121,9 @@ class FileSearchTool:
             "*.sqlite",
         ]
 
-    def search_license_files(self, search_path: str, custom_patterns: list[str] | None = None) -> dict[str, object]:
+    def search_license_files(
+        self, search_path: str, custom_patterns: list[str] | None = None
+    ) -> dict[str, object]:
         """Search for license-related files in the specified path."""
         if not self._request_search_approval(search_path, custom_patterns):
             return {"status": "denied", "message": "User denied file search request"}
@@ -148,7 +144,9 @@ Patterns to search for:
 Purpose: Find licensing-related files for analysis to identify protection mechanisms."""
         return create_approval_dialog("Search", details, self.app_instance)
 
-    def _perform_file_search(self, search_path: str, custom_patterns: list[str] | None) -> dict[str, object]:
+    def _perform_file_search(
+        self, search_path: str, custom_patterns: list[str] | None
+    ) -> dict[str, object]:
         """Perform the actual file search."""
         results = {
             "status": "success",
@@ -183,7 +181,9 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
         self._log_search_results(results)
         return results
 
-    def _process_files_in_directory(self, root: str, files: list[str], patterns: list[str], results: dict[str, object]) -> None:
+    def _process_files_in_directory(
+        self, root: str, files: list[str], patterns: list[str], results: dict[str, object]
+    ) -> None:
         """Process files in a directory and update results."""
         for _file in files:
             results["total_files_checked"] += 1
@@ -235,7 +235,9 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
 class FileReadTool:
     """Tool for AI to read files with user approval."""
 
-    def __init__(self, app_instance: object | None = None, max_file_size: int = 10 * 1024 * 1024) -> None:
+    def __init__(
+        self, app_instance: object | None = None, max_file_size: int = 10 * 1024 * 1024
+    ) -> None:
         """Initialize file read tool with app instance and optional max file size.
 
         Args:
@@ -257,7 +259,9 @@ class FileReadTool:
             raise ValueError("Max file size must be positive")
         self.max_file_size = max_file_size
 
-    def read_file_content(self, file_path: str, purpose: str = DEFAULT_PURPOSE) -> dict[str, object]:
+    def read_file_content(
+        self, file_path: str, purpose: str = DEFAULT_PURPOSE
+    ) -> dict[str, object]:
         """Read the content of a file with user approval.
 
         Args:
@@ -342,7 +346,9 @@ The AI wants to read this file to analyze licensing mechanisms and identify pote
             logger.error("Error reading file %s: %s", file_path, e)
             return {"status": "error", "message": str(e)}
 
-    def read_multiple_files(self, file_paths: list[str], purpose: str = DEFAULT_PURPOSE) -> dict[str, object]:
+    def read_multiple_files(
+        self, file_paths: list[str], purpose: str = DEFAULT_PURPOSE
+    ) -> dict[str, object]:
         """Read multiple files with a single approval request.
 
         Args:
@@ -395,7 +401,9 @@ Files:
 class AIFileTools:
     """Run class providing file system tools for AI analysis."""
 
-    def __init__(self, app_instance: object | None = None, max_file_size: int = 10 * 1024 * 1024) -> None:
+    def __init__(
+        self, app_instance: object | None = None, max_file_size: int = 10 * 1024 * 1024
+    ) -> None:
         """Initialize AI file tools with app instance and optional max file size.
 
         Args:
@@ -407,7 +415,9 @@ class AIFileTools:
         self.search_tool = FileSearchTool(app_instance)
         self.read_tool = FileReadTool(app_instance, max_file_size)
 
-    def search_for_license_files(self, base_path: str, custom_patterns: list[str] | None = None) -> dict[str, object]:
+    def search_for_license_files(
+        self, base_path: str, custom_patterns: list[str] | None = None
+    ) -> dict[str, object]:
         """Search for license-related files."""
         return self.search_tool.search_license_files(base_path, custom_patterns)
 
@@ -415,7 +425,9 @@ class AIFileTools:
         """Read a single file."""
         return self.read_tool.read_file_content(file_path, purpose)
 
-    def read_multiple_files(self, file_paths: list[str], purpose: str = DEFAULT_PURPOSE) -> dict[str, object]:
+    def read_multiple_files(
+        self, file_paths: list[str], purpose: str = DEFAULT_PURPOSE
+    ) -> dict[str, object]:
         """Read multiple files."""
         return self.read_tool.read_multiple_files(file_paths, purpose)
 
@@ -471,7 +483,9 @@ class AIFileTools:
         return analysis
 
 
-def get_ai_file_tools(app_instance: object | None = None, max_file_size: int = 10 * 1024 * 1024) -> AIFileTools:
+def get_ai_file_tools(
+    app_instance: object | None = None, max_file_size: int = 10 * 1024 * 1024
+) -> AIFileTools:
     """Create AI file tools instance.
 
     Args:

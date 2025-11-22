@@ -29,6 +29,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
+
 if TYPE_CHECKING:
     from .llm_backends import LLMBackend, LLMConfig
 
@@ -53,7 +54,10 @@ class DefaultLoadingStrategy(ModelLoadingStrategy):
     def should_preload(self, config: "LLMConfig") -> bool:
         """Don't preload by default, but allow API models for quick initialization."""
         # API models are quick to initialize and don't consume much local resources
-        return bool(hasattr(config, "provider") and config.provider.value in ["openai", "anthropic", "ollama"])
+        return bool(
+            hasattr(config, "provider")
+            and config.provider.value in ["openai", "anthropic", "ollama"]
+        )
 
     def get_load_priority(self, config: "LLMConfig") -> int:
         """Get load priority based on provider type."""
@@ -83,7 +87,7 @@ class SmartLoadingStrategy(ModelLoadingStrategy):
             preload_api_models: Whether to preload API-based models.
 
         """
-        self.logger = logging.getLogger(__name__ + ".SmartLoadingStrategy")
+        self.logger = logging.getLogger(f"{__name__}.SmartLoadingStrategy")
         self.preload_small_models = preload_small_models
         self.small_model_threshold_mb = small_model_threshold_mb
         self.preload_api_models = preload_api_models
@@ -144,7 +148,7 @@ class LazyModelWrapper:
             load_callback: Optional callback function called with (model_name, success) after loading.
 
         """
-        self.logger = logging.getLogger(__name__ + ".LazyModelWrapper")
+        self.logger = logging.getLogger(f"{__name__}.LazyModelWrapper")
         self.backend_class = backend_class
         self.config = config
         self.load_callback = load_callback
@@ -160,8 +164,10 @@ class LazyModelWrapper:
         self.access_count = 0
 
         if preload:
-            # Start loading in background (skip during testing)
-            if not (os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")):
+            if not (
+                os.environ.get("INTELLICRACK_TESTING")
+                or os.environ.get("DISABLE_BACKGROUND_THREADS")
+            ):
                 threading.Thread(target=self._initialize_backend, daemon=True).start()
             else:
                 logger.info("Skipping preload background initialization (testing mode)")
@@ -323,7 +329,9 @@ class LazyModelManager:
         self.idle_unload_time = 1800  # Unload after 30 minutes of inactivity
 
         # Start background cleanup thread (skip during testing)
-        if not (os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")):
+        if not (
+            os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")
+        ):
             self._cleanup_thread = threading.Thread(target=self._background_cleanup, daemon=True)
             self._cleanup_thread.start()
             logger.info("Started background cleanup thread")
@@ -343,7 +351,9 @@ class LazyModelManager:
             except Exception as e:
                 logger.warning(f"Error in load callback: {e}")
 
-    def register_model(self, model_id: str, backend_class: type["LLMBackend"], config: "LLMConfig") -> LazyModelWrapper:
+    def register_model(
+        self, model_id: str, backend_class: type["LLMBackend"], config: "LLMConfig"
+    ) -> LazyModelWrapper:
         """Register a model for lazy loading."""
         with self._access_lock:
             preload = self.loading_strategy.should_preload(config)
@@ -396,9 +406,7 @@ class LazyModelManager:
         """Get information about models."""
         with self._access_lock:
             if model_id:
-                if model_id in self.models:
-                    return self.models[model_id].get_info()
-                return {}
+                return self.models[model_id].get_info() if model_id in self.models else {}
             return [wrapper.get_info() for wrapper in self.models.values()]
 
     def get_loaded_models(self) -> list[str]:
@@ -415,12 +423,11 @@ class LazyModelManager:
 
     def _cleanup_least_used_models(self, count_to_unload: int) -> None:
         """Unload the least recently used models."""
-        # Get loaded models sorted by last access time
-        loaded_models = []
-        for model_id, wrapper in self.models.items():
-            if wrapper.is_loaded and wrapper.last_access_time:
-                loaded_models.append((wrapper.last_access_time, model_id, wrapper))
-
+        loaded_models = [
+            (wrapper.last_access_time, model_id, wrapper)
+            for model_id, wrapper in self.models.items()
+            if wrapper.is_loaded and wrapper.last_access_time
+        ]
         # Sort by access time (oldest first)
         loaded_models.sort(key=lambda x: x[0])
 
@@ -445,7 +452,11 @@ class LazyModelManager:
 
         with self._access_lock:
             for model_id, wrapper in list(self.models.items()):
-                if wrapper.is_loaded and wrapper.last_access_time and current_time - wrapper.last_access_time > self.idle_unload_time:
+                if (
+                    wrapper.is_loaded
+                    and wrapper.last_access_time
+                    and current_time - wrapper.last_access_time > self.idle_unload_time
+                ):
                     wrapper.unload()
                     logger.info(f"Auto-unloaded idle model: {model_id}")
 
@@ -478,7 +489,9 @@ def configure_lazy_loading(
         manager.loading_strategy = loading_strategy
 
 
-def register_lazy_model(model_id: str, backend_class: type["LLMBackend"], config: "LLMConfig") -> LazyModelWrapper:
+def register_lazy_model(
+    model_id: str, backend_class: type["LLMBackend"], config: "LLMConfig"
+) -> LazyModelWrapper:
     """Register a model for lazy loading."""
     return get_lazy_manager().register_model(model_id, backend_class, config)
 
@@ -486,5 +499,3 @@ def register_lazy_model(model_id: str, backend_class: type["LLMBackend"], config
 def get_lazy_model(model_id: str) -> "LLMBackend | None":
     """Get a lazy-loaded model."""
     return get_lazy_manager().get_model(model_id)
-
-

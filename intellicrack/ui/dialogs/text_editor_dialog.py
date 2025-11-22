@@ -56,6 +56,7 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -282,10 +283,11 @@ if HAS_PYQT and QDialog:
 
     def replace_all(self: TextEditorDialog) -> None:
         """Replace all occurrences."""
-        if self.text_editor and hasattr(self.text_editor, "replace_all_text"):
-            count = self.text_editor.replace_all_text(self.find_edit.text(), self.replace_edit.text())
-            if HAS_PYQT:
-                QMessageBox.information(self, "Replace All", f"Replaced {count} occurrences")
+        if self.text_editor and hasattr(self.text_editor, "replace_all_text") and HAS_PYQT:
+            count = self.text_editor.replace_all_text(
+                self.find_edit.text(), self.replace_edit.text()
+            )
+            QMessageBox.information(self, "Replace All", f"Replaced {count} occurrences")
 
 else:
 
@@ -405,7 +407,9 @@ if HAS_PYQT and QDialog:
         self.file_path: str | None = None
         self.original_content: str = ""
         if self.file_path and self.file_path.endswith(".py"):
-            self.highlighter: PythonSyntaxHighlighter = PythonSyntaxHighlighter(self.text_edit.document())
+            self.highlighter: PythonSyntaxHighlighter = PythonSyntaxHighlighter(
+                self.text_edit.document()
+            )
 
         main_layout.addWidget(self.text_edit)
 
@@ -840,7 +844,9 @@ if HAS_PYQT and QDialog:
                 with open(file_path, "w", encoding="utf-8") as f:
                     if include_line_numbers:
                         lines = content.split("\n")
-                        numbered_content = "\n".join(f"{i + 1:4d}: {line}" for i, line in enumerate(lines))
+                        numbered_content = "\n".join(
+                            f"{i + 1:4d}: {line}" for i, line in enumerate(lines)
+                        )
                         f.write(numbered_content)
                     else:
                         f.write(content)
@@ -898,7 +904,8 @@ if HAS_PYQT and QDialog:
         elif include_line_numbers:
             lines = content.split("\n")
             formatted_content = "\n".join(
-                f'<span class="line-number">{i + 1:4d}:</span> {self._escape_html(line)}' for i, line in enumerate(lines)
+                f'<span class="line-number">{i + 1:4d}:</span> {self._escape_html(line)}'
+                for i, line in enumerate(lines)
             )
         else:
             formatted_content = self._escape_html(content)
@@ -938,7 +945,9 @@ if HAS_PYQT and QDialog:
             # Format content
             if include_line_numbers:
                 lines: list[str] = content.split("\n")
-                formatted_content: str = "\n".join(f"{i + 1:4d}: {line}" for i, line in enumerate(lines))
+                formatted_content: str = "\n".join(
+                    f"{i + 1:4d}: {line}" for i, line in enumerate(lines)
+                )
             else:
                 formatted_content = content
 
@@ -1070,7 +1079,9 @@ if HAS_PYQT and QDialog:
         """
         return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
-    def _apply_python_highlighting(self: TextEditorDialog, content: str, include_line_numbers: bool) -> str:
+    def _apply_python_highlighting(
+        self: TextEditorDialog, content: str, include_line_numbers: bool
+    ) -> str:
         """Apply simple Python syntax highlighting for HTML export.
 
         Args:
@@ -1101,13 +1112,18 @@ if HAS_PYQT and QDialog:
             content,
             flags=re.MULTILINE,
         )
-        content = re.sub(r'"[^"]*"|\'[^\']*\'', lambda m: f'<span class="string">{m.group()}</span>', content)
+        content = re.sub(
+            r'"[^"]*"|\'[^\']*\'', lambda m: f'<span class="string">{m.group()}</span>', content
+        )
         content = re.sub(r"\b\d+\b", lambda m: f'<span class="number">{m.group()}</span>', content)
         content = re.sub(r"\bdef\s+(\w+)", r'def <span class="function">\1</span>', content)
 
         if include_line_numbers:
             lines: list[str] = content.split("\n")
-            content = "\n".join(f'<span class="line-number">{i + 1:4d}:</span> {line}' for i, line in enumerate(lines))
+            content = "\n".join(
+                f'<span class="line-number">{i + 1:4d}:</span> {line}'
+                for i, line in enumerate(lines)
+            )
 
         return content
 
@@ -1283,7 +1299,12 @@ else:
     class TextEditorDialog:
         """Fallback text editor dialog when PyQt6 is not available."""
 
-        def __init__(self: TextEditorDialog, parent: object | None = None, title: str = "Text Editor", content: str = "") -> None:
+        def __init__(
+            self: TextEditorDialog,
+            parent: object | None = None,
+            title: str = "Text Editor",
+            content: str = "",
+        ) -> None:
             """Initialize fallback text editor dialog.
 
             Args:

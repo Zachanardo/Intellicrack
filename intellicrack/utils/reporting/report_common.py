@@ -69,13 +69,11 @@ def generate_analysis_report(
     if not filename.endswith(".html"):
         filename += ".html"
 
-    # Generate report using provided function or default
-    if generator_func:
-        report_path = generator_func(filename, results_data)
-    else:
-        report_path = _generate_default_report(filename, report_type, results_data)
-
-    return report_path
+    return (
+        generator_func(filename, results_data)
+        if generator_func
+        else _generate_default_report(filename, report_type, results_data)
+    )
 
 
 def _generate_default_report(filename: str, report_type: str, results_data: object) -> str | None:
@@ -132,9 +130,7 @@ def ensure_html_extension(filename: str) -> str:
         Filename with .html extension
 
     """
-    if not filename.endswith(".html"):
-        return filename + ".html"
-    return filename
+    return filename if filename.endswith(".html") else f"{filename}.html"
 
 
 def handle_pyqt6_report_generation(app: object, report_type: str, generator: object) -> str | None:
@@ -163,20 +159,14 @@ def handle_pyqt6_report_generation(app: object, report_type: str, generator: obj
 
     from ..ui.ui_helpers import ask_yes_no_question, show_file_dialog
 
-    generate_report = ask_yes_no_question(
+    if generate_report := ask_yes_no_question(
         app,
         "Generate Report",
         f"Do you want to generate a report of the {report_type} results?",
-    )
-
-    if generate_report:
-        filename = show_file_dialog(app, "Save Report")
-
-        if filename:
+    ):
+        if filename := show_file_dialog(app, "Save Report"):
             if not filename.endswith(".html"):
                 filename += ".html"
 
-            report_path = generator.generate_report(filename)
-            return report_path
-
+            return generator.generate_report(filename)
     return None

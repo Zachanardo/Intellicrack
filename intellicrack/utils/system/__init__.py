@@ -30,6 +30,7 @@ from .os_detection import (
 )
 from .os_detection_mixin import OSDetectionMixin
 
+
 __all__ = [
     "OSDetectionMixin",
     "detect_operating_system",

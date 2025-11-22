@@ -65,7 +65,9 @@ class ConsoleSyntaxHighlighter(QSyntaxHighlighter):
         # Timestamps
         timestamp_format = QTextCharFormat()
         timestamp_format.setForeground(QColor("#666666"))
-        self.rules.append((QRegularExpression(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"), timestamp_format))
+        self.rules.append(
+            (QRegularExpression(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"), timestamp_format)
+        )
         self.rules.append((QRegularExpression(r"\d{2}:\d{2}:\d{2}"), timestamp_format))
 
         # Log levels
@@ -78,7 +80,9 @@ class ConsoleSyntaxHighlighter(QSyntaxHighlighter):
         # WARNING
         warning_format = QTextCharFormat()
         warning_format.setForeground(QColor("#ffa500"))
-        self.rules.append((QRegularExpression(r"\[WARNING\]|\[WARN\]|WARNING:|WARN:"), warning_format))
+        self.rules.append(
+            (QRegularExpression(r"\[WARNING\]|\[WARN\]|WARNING:|WARN:"), warning_format)
+        )
 
         # SUCCESS
         success_format = QTextCharFormat()
@@ -116,7 +120,9 @@ class ConsoleSyntaxHighlighter(QSyntaxHighlighter):
         # IP addresses
         ip_format = QTextCharFormat()
         ip_format.setForeground(QColor("#06b6d4"))
-        self.rules.append((QRegularExpression(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b"), ip_format))
+        self.rules.append(
+            (QRegularExpression(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b"), ip_format)
+        )
 
         # Hex values
         hex_format = QTextCharFormat()
@@ -246,7 +252,9 @@ class ConsoleWidget(QWidget):
             }
         """)
 
-        self.highlighter: ConsoleSyntaxHighlighter = ConsoleSyntaxHighlighter(self.output.document())
+        self.highlighter: ConsoleSyntaxHighlighter = ConsoleSyntaxHighlighter(
+            self.output.document()
+        )
 
         layout.addWidget(self.output)
 
@@ -522,25 +530,24 @@ class ConsoleWidget(QWidget):
             bool: True if event was handled (key press intercepted), False otherwise.
 
         """
-        if hasattr(self, "command_input") and obj == self.command_input:
-            if event.type() == event.KeyPress:
-                if event.key() == Qt.Key_Up:
-                    if self.history_index > 0:
-                        self.history_index -= 1
-                        self.command_input.setText(
-                            self.command_history[self.history_index],
-                        )
-                    return True
-                if event.key() == Qt.Key_Down:
-                    if self.history_index < len(self.command_history) - 1:
-                        self.history_index += 1
-                        self.command_input.setText(
-                            self.command_history[self.history_index],
-                        )
-                    elif self.history_index == len(self.command_history) - 1:
-                        self.history_index = len(self.command_history)
-                        self.command_input.clear()
-                    return True
+        if hasattr(self, "command_input") and obj == self.command_input and event.type() == event.KeyPress:
+            if event.key() == Qt.Key_Up:
+                if self.history_index > 0:
+                    self.history_index -= 1
+                    self.command_input.setText(
+                        self.command_history[self.history_index],
+                    )
+                return True
+            if event.key() == Qt.Key_Down:
+                if self.history_index < len(self.command_history) - 1:
+                    self.history_index += 1
+                    self.command_input.setText(
+                        self.command_history[self.history_index],
+                    )
+                elif self.history_index == len(self.command_history) - 1:
+                    self.history_index = len(self.command_history)
+                    self.command_input.clear()
+                return True
 
         return super().eventFilter(obj, event)
 

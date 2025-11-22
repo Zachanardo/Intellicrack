@@ -13,6 +13,7 @@ from intellicrack.utils.logger import logger
 from ...utils.binary.binary_io import analyze_binary_for_strings
 from ...utils.core.import_checks import FRIDA_AVAILABLE, WINREG_AVAILABLE, winreg
 
+
 """
 Virtualization Detection Bypass Module
 
@@ -124,8 +125,12 @@ class VirtualizationDetectionBypass:
         """Get Windows driver path dynamically."""
         # Common driver paths on Windows
         driver_paths = [
-            os.path.join(os.environ.get("SYSTEMROOT", "C:\\Windows"), "System32", "drivers", driver_name),
-            os.path.join(os.environ.get("SYSTEMROOT", "C:\\Windows"), "SysWOW64", "drivers", driver_name),
+            os.path.join(
+                os.environ.get("SYSTEMROOT", "C:\\Windows"), "System32", "drivers", driver_name
+            ),
+            os.path.join(
+                os.environ.get("SYSTEMROOT", "C:\\Windows"), "SysWOW64", "drivers", driver_name
+            ),
             os.path.join("C:\\Windows", "System32", "drivers", driver_name),
         ]
         for path in driver_paths:
@@ -329,10 +334,10 @@ class VirtualizationDetectionBypass:
         self.logger.info("Hiding VM artifacts")
 
         try:
-            # Hide VM processes
-            vm_processes = ["VBoxService.exe", "VBoxTray.exe", "vmtoolsd.exe", "vmware.exe"]
-
             if FRIDA_AVAILABLE:
+                # Hide VM processes
+                vm_processes = ["VBoxService.exe", "VBoxTray.exe", "vmtoolsd.exe", "vmware.exe"]
+
                 # Use Frida to hide processes
                 vm_process_list = "|".join(vm_processes)  # Create searchable string
                 hide_process_script = (
@@ -435,7 +440,7 @@ class VirtualizationDetectionBypass:
                         Path(vm_file).rename(new_name)
                         renamed_files += 1
                         self.logger.info(f"Renamed {vm_file} to {new_name}")
-                    except (OSError, PermissionError) as e:
+                    except OSError as e:
                         self.logger.debug(f"Could not rename {vm_file}: {e}")
 
             return True
@@ -520,7 +525,7 @@ class VirtualizationDetectionBypass:
 
                     winreg.CloseKey(key)
 
-                except (OSError, PermissionError) as e:
+                except OSError as e:
                     self.logger.debug(f"Could not modify {path}\\{name}: {e}")
 
             # Hook WMI queries to return modified information
@@ -587,7 +592,7 @@ class VirtualizationDetectionBypass:
                         f.write(value)
                     modifications_applied += 1
                     self.logger.info(f"Modified {path} = {value}")
-                except (OSError, PermissionError) as e:
+                except OSError as e:
                     self.logger.debug(f"Could not modify {path}: {e}")
 
             return modifications_applied > 0
@@ -730,8 +735,12 @@ class VMDetector:
         """Get Windows VM driver path dynamically for detection."""
         # Common driver paths on Windows
         driver_paths = [
-            os.path.join(os.environ.get("SYSTEMROOT", "C:\\Windows"), "System32", "drivers", driver_name),
-            os.path.join(os.environ.get("SYSTEMROOT", "C:\\Windows"), "SysWOW64", "drivers", driver_name),
+            os.path.join(
+                os.environ.get("SYSTEMROOT", "C:\\Windows"), "System32", "drivers", driver_name
+            ),
+            os.path.join(
+                os.environ.get("SYSTEMROOT", "C:\\Windows"), "SysWOW64", "drivers", driver_name
+            ),
             os.path.join("C:\\Windows", "System32", "drivers", driver_name),
         ]
         for path in driver_paths:
@@ -746,13 +755,6 @@ class VMDetector:
             dict: Detection results including VM type and confidence
 
         """
-        results = {
-            "is_vm": False,
-            "vm_type": None,
-            "indicators": [],
-            "confidence": 0.0,
-        }
-
         # Check various VM indicators
         indicators = []
 
@@ -761,8 +763,7 @@ class VMDetector:
             import subprocess
 
             if platform.system() == "Windows":
-                wmic_path = shutil.which("wmic")
-                if wmic_path:
+                if wmic_path := shutil.which("wmic"):
                     result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                         [wmic_path, "cpu", "get", "name"],
                         capture_output=True,
@@ -822,10 +823,12 @@ class VMDetector:
         # Store indicators in instance variable for later analysis
         self.vm_indicators = indicators.copy()
 
-        results["indicators"] = indicators
-        results["is_vm"] = len(indicators) > 0
-        results["confidence"] = min(len(indicators) * 0.25, 1.0)
-
+        results = {
+            "vm_type": None,
+            "indicators": indicators,
+            "is_vm": len(indicators) > 0,
+            "confidence": min(len(indicators) * 0.25, 1.0),
+        }
         # Log detected indicators for debugging
         for indicator in self.vm_indicators:
             self.logger.debug(f"VM indicator detected: {indicator}")
@@ -962,7 +965,9 @@ class VMDetector:
                 "implementation_script": script_content,
                 "stealth_level": "high" if len(bypass_techniques) > 5 else "medium",
                 "estimated_duration": f"{len(bypass_techniques) * 2}-{len(bypass_techniques) * 5} minutes",
-                "risk_level": "high" if "registry" in str(registry_modifications).lower() else "medium",
+                "risk_level": "high"
+                if "registry" in str(registry_modifications).lower()
+                else "medium",
             }
 
         except Exception as e:
@@ -977,7 +982,9 @@ class VMDetector:
                 "stealth_level": "none",
             }
 
-    def _generate_bypass_script(self, vm_type: str, techniques: list[str], registry_mods: list[str], file_ops: list[str]) -> str:
+    def _generate_bypass_script(
+        self, vm_type: str, techniques: list[str], registry_mods: list[str], file_ops: list[str]
+    ) -> str:
         """Generate implementation script for VM detection bypass."""
         script_lines = [
             f"# VM Detection Bypass Script for {vm_type}",
@@ -1051,8 +1058,12 @@ class VMDetector:
                 ],
             )
             for reg_key in registry_mods[:3]:  # Limit to first 3 for safety
-                script_lines.append(f"        # Hide/modify {reg_key}")
-                script_lines.append(f"        # winreg.DeleteKey(winreg.HKEY_LOCAL_MACHINE, '{reg_key}')")
+                script_lines.extend(
+                    (
+                        f"        # Hide/modify {reg_key}",
+                        f"        # winreg.DeleteKey(winreg.HKEY_LOCAL_MACHINE, '{reg_key}')",
+                    )
+                )
             script_lines.extend(
                 [
                     "    except Exception as e:",
@@ -1069,8 +1080,7 @@ class VMDetector:
                     "    try:",
                 ],
             )
-            for file_op in file_ops[:3]:  # Limit for safety
-                script_lines.append(f"        # {file_op}")
+            script_lines.extend(f"        # {file_op}" for file_op in file_ops[:3])
             script_lines.extend(
                 [
                     "    except Exception as e:",
@@ -1095,7 +1105,7 @@ class VMDetector:
         base_probability = 0.3  # Base 30% success rate
 
         # Boost for known VM types
-        if vm_type.lower() in ["vmware", "virtualbox", "vbox"]:
+        if vm_type.lower() in {"vmware", "virtualbox", "vbox"}:
             base_probability += 0.3
 
         # Boost for number of techniques

@@ -61,7 +61,7 @@ class SettingsTab(BaseTab):
     settings_changed = pyqtSignal(str, object)
     theme_changed = pyqtSignal(str)
 
-    def __init__(self, shared_context: Optional[Dict] = None, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, shared_context: Dict | None = None, parent: QWidget | None = None) -> None:
         """Initialize settings tab with application configuration and preferences.
 
         Args:
@@ -71,7 +71,7 @@ class SettingsTab(BaseTab):
         """
         from intellicrack.core.config_manager import IntellicrackConfig
 
-        self.logger = logging.getLogger(__name__ + ".SettingsTab")
+        self.logger = logging.getLogger(f"{__name__}.SettingsTab")
 
         # Use centralized configuration system
         self.config = IntellicrackConfig()
@@ -144,7 +144,9 @@ class SettingsTab(BaseTab):
         save_btn.setObjectName("saveButton")
 
         reset_btn = QPushButton("Reset to Defaults")
-        reset_btn.setToolTip("Reset all settings to their default values. This action cannot be undone")
+        reset_btn.setToolTip(
+            "Reset all settings to their default values. This action cannot be undone"
+        )
         reset_btn.clicked.connect(self.reset_to_defaults)
         reset_btn.setObjectName("resetButton")
 
@@ -194,7 +196,9 @@ class SettingsTab(BaseTab):
         self.accent_color_btn = QPushButton("Select Color")
         self.accent_color_btn.clicked.connect(self.select_accent_color)
         current_color = self.settings.get("accent_color", "#0078d4")
-        self.accent_color_btn.setStyleSheet(f"background-color: {current_color}; color: white; border: 2px solid #888888;")
+        self.accent_color_btn.setStyleSheet(
+            f"background-color: {current_color}; color: white; border: 2px solid #888888;"
+        )
         color_layout.addWidget(self.accent_color_btn)
         color_layout.addStretch()
 
@@ -553,15 +557,21 @@ class SettingsTab(BaseTab):
         output_layout = QVBoxLayout(output_group)
 
         # Output directory
-        output_dir_widget = self.create_directory_entry("output_directory", "Output Directory", "Select Output Directory")
+        output_dir_widget = self.create_directory_entry(
+            "output_directory", "Output Directory", "Select Output Directory"
+        )
         output_layout.addWidget(output_dir_widget)
 
         # Reports directory
-        reports_dir_widget = self.create_directory_entry("reports_directory", "Reports Directory", "Select Reports Directory")
+        reports_dir_widget = self.create_directory_entry(
+            "reports_directory", "Reports Directory", "Select Reports Directory"
+        )
         output_layout.addWidget(reports_dir_widget)
 
         # Scripts directory
-        scripts_dir_widget = self.create_directory_entry("scripts_directory", "Scripts Directory", "Select Scripts Directory")
+        scripts_dir_widget = self.create_directory_entry(
+            "scripts_directory", "Scripts Directory", "Select Scripts Directory"
+        )
         output_layout.addWidget(scripts_dir_widget)
 
         layout.addWidget(tools_group)
@@ -573,7 +583,9 @@ class SettingsTab(BaseTab):
 
         return tab
 
-    def create_enhanced_tool_entry(self, tool_key: str, tool_label: str, browse_title: str) -> QWidget:
+    def create_enhanced_tool_entry(
+        self, tool_key: str, tool_label: str, browse_title: str
+    ) -> QWidget:
         """Create an enhanced tool path entry with auto-discovery and status indicators.
 
         Args:
@@ -599,10 +611,11 @@ class SettingsTab(BaseTab):
 
         # Path input
         path_edit = QLineEdit()
-        current_path = self.settings.get(f"{tool_key}_path", "")
-        if current_path:
+        if current_path := self.settings.get(f"{tool_key}_path", ""):
             path_edit.setText(current_path)
-        path_edit.textChanged.connect(lambda text, key=tool_key: self.on_tool_path_changed(key, text))
+        path_edit.textChanged.connect(
+            lambda text, key=tool_key: self.on_tool_path_changed(key, text)
+        )
 
         # Status indicator
         status_label = QLabel("⚪")
@@ -613,7 +626,9 @@ class SettingsTab(BaseTab):
         browse_btn = QPushButton("")
         browse_btn.setMaximumWidth(40)
         browse_btn.setToolTip("Browse for tool executable")
-        browse_btn.clicked.connect(lambda checked, edit=path_edit, title=browse_title: self.browse_tool_path(edit, title))
+        browse_btn.clicked.connect(
+            lambda checked, edit=path_edit, title=browse_title: self.browse_tool_path(edit, title)
+        )
 
         # Clear/Reset button
         reset_btn = QPushButton("↻")
@@ -667,15 +682,16 @@ class SettingsTab(BaseTab):
 
         # Path input
         path_edit = QLineEdit()
-        current_dir_path = self.settings.get(dir_key, "")
-        if current_dir_path:
+        if current_dir_path := self.settings.get(dir_key, ""):
             path_edit.setText(current_dir_path)
 
         # Browse button
         browse_btn = QPushButton("")
         browse_btn.setMaximumWidth(40)
         browse_btn.setToolTip("Browse for directory")
-        browse_btn.clicked.connect(lambda checked, edit=path_edit, title=browse_title: self.browse_directory(edit, title))
+        browse_btn.clicked.connect(
+            lambda checked, edit=path_edit, title=browse_title: self.browse_directory(edit, title)
+        )
 
         layout.addWidget(path_edit)
         layout.addWidget(browse_btn)
@@ -745,20 +761,26 @@ class SettingsTab(BaseTab):
                     status_label.setToolTip("Tool found and healthy")
                     version = health_info.get("version", "Unknown version")
                     status_details.setText(f"OK Found: {version}")
-                    status_details.setStyleSheet("color: #28a745; font-size: 10px; margin-left: 85px;")
+                    status_details.setStyleSheet(
+                        "color: #28a745; font-size: 10px; margin-left: 85px;"
+                    )
 
                 elif health_info.get("available"):
                     status_label.setText("🟡")
                     status_label.setToolTip("Tool found but has issues")
                     issues = ", ".join(health_info.get("issues", ["Unknown issues"]))
                     status_details.setText(f"WARNING Issues: {issues}")
-                    status_details.setStyleSheet("color: #ffc107; font-size: 10px; margin-left: 85px;")
+                    status_details.setStyleSheet(
+                        "color: #ffc107; font-size: 10px; margin-left: 85px;"
+                    )
 
                 else:
                     status_label.setText("🔴")
                     status_label.setToolTip("Tool path exists but not functional")
                     status_details.setText("FAIL Not functional")
-                    status_details.setStyleSheet("color: #dc3545; font-size: 10px; margin-left: 85px;")
+                    status_details.setStyleSheet(
+                        "color: #dc3545; font-size: 10px; margin-left: 85px;"
+                    )
 
             except Exception as e:
                 status_label.setText("🟡")
@@ -820,16 +842,19 @@ class SettingsTab(BaseTab):
         # Re-discover the tool
         try:
             tool_info = self.tool_discovery.discover_tool(
-                tool_key, {"executables": self.get_tool_executables(tool_key), "search_strategy": "installation_based", "required": False},
+                tool_key,
+                {
+                    "executables": self.get_tool_executables(tool_key),
+                    "search_strategy": "installation_based",
+                    "required": False,
+                },
             )
 
             if tool_info.get("available") and tool_info.get("path"):
                 widgets["path_edit"].setText(tool_info["path"])
-                self.update_tool_status(tool_key, tool_info)
             else:
                 widgets["path_edit"].clear()
-                self.update_tool_status(tool_key, tool_info)
-
+            self.update_tool_status(tool_key, tool_info)
         except Exception as e:
             self.log_message(f"Failed to reset path for {tool_key}: {e}", "error")
 
@@ -898,7 +923,9 @@ class SettingsTab(BaseTab):
         self.log_file_path = QLineEdit()
         self.log_file_path.setText(self.settings.get("log_file_path", "intellicrack.log"))
         browse_log_btn = QPushButton("Browse")
-        browse_log_btn.clicked.connect(lambda: self.browse_file(self.log_file_path, "Select Log File"))
+        browse_log_btn.clicked.connect(
+            lambda: self.browse_file(self.log_file_path, "Select Log File")
+        )
         log_file_layout.addWidget(self.log_file_path)
         log_file_layout.addWidget(browse_log_btn)
 
@@ -934,8 +961,7 @@ class SettingsTab(BaseTab):
         proxy_layout = QHBoxLayout()
         proxy_layout.addWidget(QLabel("Proxy:"))
         self.proxy_edit = QLineEdit()
-        current_proxy = self.settings.get("proxy", "")
-        if current_proxy:
+        if current_proxy := self.settings.get("proxy", ""):
             self.proxy_edit.setText(current_proxy)
         proxy_layout.addWidget(self.proxy_edit)
 
@@ -1323,8 +1349,7 @@ class SettingsTab(BaseTab):
             title: The title to show in the directory browser dialog.
 
         """
-        dir_path = QFileDialog.getExistingDirectory(self, title)
-        if dir_path:
+        if dir_path := QFileDialog.getExistingDirectory(self, title):
             line_edit.setText(dir_path)
 
     def browse_file(self, line_edit: QLineEdit, title: str) -> None:
@@ -1374,7 +1399,9 @@ class SettingsTab(BaseTab):
         if color.isValid():
             color_hex = color.name()
             self.settings["accent_color"] = color_hex
-            self.accent_color_btn.setStyleSheet(f"background-color: {color_hex}; color: white; border: 2px solid #888888;")
+            self.accent_color_btn.setStyleSheet(
+                f"background-color: {color_hex}; color: white; border: 2px solid #888888;"
+            )
             self.apply_accent_color(color_hex)
             self.update_preview()
 
@@ -1444,7 +1471,9 @@ class SettingsTab(BaseTab):
         if not app:
             return
 
-        font = QFont(self.settings.get("ui_font", "Segoe UI"), self.settings.get("ui_font_size", 10))
+        font = QFont(
+            self.settings.get("ui_font", "Segoe UI"), self.settings.get("ui_font_size", 10)
+        )
         app.setFont(font)
 
     def on_console_font_changed(self, font: QFont) -> None:
@@ -1477,7 +1506,10 @@ class SettingsTab(BaseTab):
         if not app:
             return
 
-        console_font = QFont(self.settings.get("console_font", "Consolas"), self.settings.get("console_font_size", 10))
+        console_font = QFont(
+            self.settings.get("console_font", "Consolas"),
+            self.settings.get("console_font_size", 10),
+        )
         console_font.setFixedPitch(True)
 
         widgets_updated = 0
@@ -1488,7 +1520,15 @@ class SettingsTab(BaseTab):
 
                 is_console = any(
                     keyword in widget_name or keyword in widget_class
-                    for keyword in ["console", "terminal", "output", "log", "command", "shell", "script"]
+                    for keyword in [
+                        "console",
+                        "terminal",
+                        "output",
+                        "log",
+                        "command",
+                        "shell",
+                        "script",
+                    ]
                 )
 
                 if is_console or widget.font().fixedPitch():
@@ -1531,8 +1571,7 @@ class SettingsTab(BaseTab):
             for widget in all_widgets:
                 if widget is None:
                     continue
-                tooltip = widget.toolTip()
-                if tooltip:
+                if tooltip := widget.toolTip():
                     try:
                         self._original_tooltips[widget] = tooltip
                         widget.setToolTip("")
@@ -1583,26 +1622,6 @@ class SettingsTab(BaseTab):
 
         current_stylesheet = app.styleSheet()
 
-        disable_animations = """
-/* Disable all animations - instant transitions */
-* {
-    transition-duration: 0s !important;
-    animation-duration: 0s !important;
-}
-"""
-
-        enable_animations = """
-/* Enable smooth animations and transitions */
-QPushButton, QComboBox, QCheckBox::indicator, QRadioButton::indicator,
-QSlider::handle, QTabBar::tab {
-    transition: all 0.2s ease-in-out;
-}
-
-QPushButton:hover, QComboBox:hover, QTabBar::tab:hover {
-    transition: all 0.15s ease-in-out;
-}
-"""
-
         marker_disable = "/* Disable all animations - instant transitions */"
         marker_enable = "/* Enable smooth animations and transitions */"
 
@@ -1615,9 +1634,23 @@ QPushButton:hover, QComboBox:hover, QTabBar::tab:hover {
                 end_idx = current_stylesheet.find("}", start_idx)
                 if end_idx != -1:
                     end_idx += 1
-                    current_stylesheet = current_stylesheet[:start_idx] + current_stylesheet[end_idx:]
+                    current_stylesheet = (
+                        current_stylesheet[:start_idx] + current_stylesheet[end_idx:]
+                    )
 
             if not has_enable:
+                enable_animations = """
+/* Enable smooth animations and transitions */
+QPushButton, QComboBox, QCheckBox::indicator, QRadioButton::indicator,
+QSlider::handle, QTabBar::tab {
+    transition: all 0.2s ease-in-out;
+}
+
+QPushButton:hover, QComboBox:hover, QTabBar::tab:hover {
+    transition: all 0.15s ease-in-out;
+}
+"""
+
                 current_stylesheet = current_stylesheet + enable_animations
 
             self.logger.info("Smooth animations enabled")
@@ -1627,9 +1660,19 @@ QPushButton:hover, QComboBox:hover, QTabBar::tab:hover {
                 end_idx = current_stylesheet.find("}", start_idx)
                 if end_idx != -1:
                     end_idx = current_stylesheet.find("}", end_idx + 1) + 1
-                    current_stylesheet = current_stylesheet[:start_idx] + current_stylesheet[end_idx:]
+                    current_stylesheet = (
+                        current_stylesheet[:start_idx] + current_stylesheet[end_idx:]
+                    )
 
             if not has_disable:
+                disable_animations = """
+/* Disable all animations - instant transitions */
+* {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+}
+"""
+
                 current_stylesheet = current_stylesheet + disable_animations
 
             self.logger.info("Animations disabled")
@@ -1639,7 +1682,9 @@ QPushButton:hover, QComboBox:hover, QTabBar::tab:hover {
     def populate_ai_providers(self) -> None:
         """Populate AI provider dropdown with dynamically detected providers."""
         current_selection = (
-            self.ai_provider_combo.currentText() if self.ai_provider_combo.count() > 0 else self.settings.get("ai_provider", "")
+            self.ai_provider_combo.currentText()
+            if self.ai_provider_combo.count() > 0
+            else self.settings.get("ai_provider", "")
         )
 
         self.ai_provider_combo.clear()
@@ -1653,10 +1698,11 @@ QPushButton:hover, QComboBox:hover, QTabBar::tab:hover {
 
             discovered_models = discovery_service.discover_all_models(force_refresh=True)
 
-            for provider_name, models in discovered_models.items():
-                if models:
-                    available_providers.append(provider_name)
-
+            available_providers.extend(
+                provider_name
+                for provider_name, models in discovered_models.items()
+                if models
+            )
         except Exception as e:
             self.logger.warning(f"Failed to discover AI providers dynamically: {e}")
 

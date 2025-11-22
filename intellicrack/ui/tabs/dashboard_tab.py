@@ -80,7 +80,10 @@ class DashboardTab(BaseTab):
         layout = self.layout()  # Use existing layout from BaseTab
         layout.setSpacing(layout_config.panel_spacing)
         layout.setContentsMargins(
-            layout_config.margin_size, layout_config.margin_size, layout_config.margin_size, layout_config.margin_size,
+            layout_config.margin_size,
+            layout_config.margin_size,
+            layout_config.margin_size,
+            layout_config.margin_size,
         )
 
         # Top section - Quick Start (prominent)
@@ -179,7 +182,9 @@ class DashboardTab(BaseTab):
         # Open Project button
         open_project_btn = QPushButton(" Open Project")
         open_project_btn.setMinimumHeight(60)
-        open_project_btn.setToolTip("Open an existing Intellicrack project workspace with saved analysis sessions and configurations")
+        open_project_btn.setToolTip(
+            "Open an existing Intellicrack project workspace with saved analysis sessions and configurations"
+        )
         self._style_quick_start_button(open_project_btn, theme.success_color)
         open_project_btn.clicked.connect(self.open_project)
         buttons_layout.addWidget(open_project_btn)
@@ -211,7 +216,9 @@ class DashboardTab(BaseTab):
 
         # Recent Files List with theme styling
         self.recent_files_list = QListWidget()
-        self.recent_files_list.setToolTip("Double-click any file to open it for analysis. Files are sorted by last access time")
+        self.recent_files_list.setToolTip(
+            "Double-click any file to open it for analysis. Files are sorted by last access time"
+        )
         self.recent_files_list.setAlternatingRowColors(True)
 
         # Apply theme-based styling
@@ -247,7 +254,9 @@ class DashboardTab(BaseTab):
         font_config = self.config_manager.get_font_config()
 
         refresh_recent_btn = QPushButton("Refresh")
-        refresh_recent_btn.setToolTip("Reload the list of recently accessed files from the analysis history")
+        refresh_recent_btn.setToolTip(
+            "Reload the list of recently accessed files from the analysis history"
+        )
         refresh_recent_btn.clicked.connect(self.populate_recent_files)
         refresh_recent_btn.setStyleSheet(f"""
             QPushButton {{
@@ -269,7 +278,9 @@ class DashboardTab(BaseTab):
         actions_layout.addWidget(refresh_recent_btn)
 
         clear_recent_btn = QPushButton("Clear All")
-        clear_recent_btn.setToolTip("Remove all entries from the recent files history. This action cannot be undone")
+        clear_recent_btn.setToolTip(
+            "Remove all entries from the recent files history. This action cannot be undone"
+        )
         clear_recent_btn.clicked.connect(self.clear_recent_files)
         clear_recent_btn.setStyleSheet(f"""
             QPushButton {{
@@ -332,13 +343,19 @@ class DashboardTab(BaseTab):
 
                     if self.app_context:
                         self.app_context.load_binary(selected_program)
-                        self.log_activity(f"Selected target program: {os.path.basename(selected_program)}")
-                    else:
-                        self.log_activity(f"Selected target program: {os.path.basename(selected_program)}")
+                    self.log_activity(
+                        f"Selected target program: {os.path.basename(selected_program)}"
+                    )
                 elif selected_program:
-                    QMessageBox.warning(self, "File Not Found", f"The selected program file does not exist:\n{selected_program}")
+                    QMessageBox.warning(
+                        self,
+                        "File Not Found",
+                        f"The selected program file does not exist:\n{selected_program}",
+                    )
                 else:
-                    QMessageBox.information(self, "No Selection", "No program was selected from the dialog.")
+                    QMessageBox.information(
+                        self, "No Selection", "No program was selected from the dialog."
+                    )
             else:
                 self.log_activity("Program selection cancelled by user")
 
@@ -380,7 +397,9 @@ class DashboardTab(BaseTab):
         self.system_monitor.alert_triggered.connect(self.handle_system_alert)
 
         # Configure monitoring based on settings
-        refresh_interval = self.config_manager.get_setting("dashboard.monitor_refresh_interval", 5000)
+        refresh_interval = self.config_manager.get_setting(
+            "dashboard.monitor_refresh_interval", 5000
+        )
         self.system_monitor.set_refresh_interval(refresh_interval)
 
         # Only start monitoring if enabled
@@ -395,7 +414,7 @@ class DashboardTab(BaseTab):
         self.log_activity(f"[SYSTEM ALERT - {alert_type}] {message}")
 
         # Show a message box for critical alerts
-        if alert_type in ["CPU", "Memory", "Disk"]:
+        if alert_type in {"CPU", "Memory", "Disk"}:
             QMessageBox.warning(self, f"System Alert - {alert_type}", message)
 
     def create_gpu_status_panel(self) -> GPUStatusWidget:
@@ -472,7 +491,7 @@ class DashboardTab(BaseTab):
                     icon_prefix = "🗃️"  # Default file icon
                     if file_ext in [".exe", ".dll"]:
                         icon_prefix = "[CFG]️"
-                    elif file_ext in [".so", ".dylib"] or file_ext == ".icp":
+                    elif file_ext in [".so", ".dylib", ".icp"]:
                         icon_prefix = ""
                     item.setText(f"{icon_prefix} {os.path.basename(file_path)}")
 
@@ -494,7 +513,9 @@ class DashboardTab(BaseTab):
             # Use AppContext if available
             if self.app_context:
                 self.app_context.load_binary(file_path)
-                self.log_activity(f"Loaded recent file via AppContext: {os.path.basename(file_path)}")
+                self.log_activity(
+                    f"Loaded recent file via AppContext: {os.path.basename(file_path)}"
+                )
             else:
                 self.log_activity(f"Loaded recent file: {os.path.basename(file_path)}")
 
@@ -652,7 +673,10 @@ class DashboardTab(BaseTab):
         if self.layout():
             self.layout().setSpacing(layout_config.panel_spacing)
             self.layout().setContentsMargins(
-                layout_config.margin_size, layout_config.margin_size, layout_config.margin_size, layout_config.margin_size,
+                layout_config.margin_size,
+                layout_config.margin_size,
+                layout_config.margin_size,
+                layout_config.margin_size,
             )
 
     def update_fonts(self) -> None:

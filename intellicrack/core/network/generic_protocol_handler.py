@@ -138,9 +138,7 @@ class GenericProtocolHandler(LicenseProtocolHandler):
                     if data:
                         self.logger.info("UDP packet from %s:%s", client_addr[0], client_addr[1])
 
-                        # Handle UDP packet
-                        response = self.generate_response(data)
-                        if response:
+                        if response := self.generate_response(data):
                             server_socket.sendto(response, client_addr)
 
                 except TimeoutError as e:
@@ -154,7 +152,9 @@ class GenericProtocolHandler(LicenseProtocolHandler):
             server_socket.close()
             self.logger.info("UDP proxy stopped")
 
-    def _handle_tcp_connection(self, client_socket: socket.socket, client_addr: tuple[str, int]) -> None:
+    def _handle_tcp_connection(
+        self, client_socket: socket.socket, client_addr: tuple[str, int]
+    ) -> None:
         """Handle individual TCP connection.
 
         Manages a single TCP client connection by receiving data, processing
@@ -177,18 +177,16 @@ class GenericProtocolHandler(LicenseProtocolHandler):
                 "start_time": time.time(),
             }
 
-            # Receive initial data
-            initial_data = client_socket.recv(4096)
-            if initial_data:
+            if initial_data := client_socket.recv(4096):
                 self.handle_connection(client_socket, initial_data)
 
             # Continue handling connection until closed
             while self.running:
                 try:
-                    more_data = client_socket.recv(4096)
-                    if not more_data:
+                    if more_data := client_socket.recv(4096):
+                        self.handle_connection(client_socket, more_data)
+                    else:
                         break
-                    self.handle_connection(client_socket, more_data)
                 except TimeoutError as e:
                     logger.error("socket.timeout in generic_protocol_handler: %s", e)
                     continue
@@ -215,7 +213,9 @@ class GenericProtocolHandler(LicenseProtocolHandler):
         # Log the request
         self.log_request(
             initial_data,
-            str(client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown"),
+            str(
+                client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown"
+            ),
         )
 
         # Store request for analysis
@@ -224,15 +224,15 @@ class GenericProtocolHandler(LicenseProtocolHandler):
                 "timestamp": time.time(),
                 "data": initial_data,
                 "hex": initial_data.hex(),
-                "source": str(client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown"),
+                "source": str(
+                    client_socket.getpeername()
+                    if hasattr(client_socket, "getpeername")
+                    else "unknown"
+                ),
             },
         )
 
-        # Generate response
-        response = self.generate_response(initial_data)
-
-        # Send response
-        if response:
+        if response := self.generate_response(initial_data):
             try:
                 if hasattr(client_socket, "send"):
                     client_socket.send(response)
@@ -242,7 +242,11 @@ class GenericProtocolHandler(LicenseProtocolHandler):
 
                 self.log_response(
                     response,
-                    str(client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown"),
+                    str(
+                        client_socket.getpeername()
+                        if hasattr(client_socket, "getpeername")
+                        else "unknown"
+                    ),
                 )
 
                 # Store response
@@ -251,7 +255,11 @@ class GenericProtocolHandler(LicenseProtocolHandler):
                         "timestamp": time.time(),
                         "data": response,
                         "hex": response.hex(),
-                        "destination": str(client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown"),
+                        "destination": str(
+                            client_socket.getpeername()
+                            if hasattr(client_socket, "getpeername")
+                            else "unknown"
+                        ),
                     },
                 )
 

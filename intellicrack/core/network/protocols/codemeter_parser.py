@@ -29,6 +29,7 @@ from typing import Any
 
 from intellicrack.utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 
@@ -295,7 +296,9 @@ class CodeMeterProtocolParser:
             )
 
             command_name = self.CODEMETER_COMMANDS.get(command, f"UNKNOWN_{command:04X}")
-            self.logger.info(f"Parsed CodeMeter {command_name} request for product {firm_code}:{product_code}")
+            self.logger.info(
+                f"Parsed CodeMeter {command_name} request for product {firm_code}:{product_code}"
+            )
             return request
 
         except Exception as e:
@@ -466,10 +469,7 @@ class CodeMeterProtocolParser:
 
         if session_id in self.active_sessions:
             del self.active_sessions[session_id]
-            status = 0x00000000  # CM_GCM_OK
-        else:
-            status = 0x00000000  # CM_GCM_OK (allow logout even if not found)
-
+        status = 0x00000000  # CM_GCM_OK
         return CodeMeterResponse(
             status=status,
             request_id=request.request_id,
@@ -485,7 +485,9 @@ class CodeMeterProtocolParser:
         """Handle challenge-response authentication."""
         # Generate response to challenge
         challenge_response = hashlib.sha256(
-            request.challenge_data + str(request.firm_code).encode() + str(request.product_code).encode(),
+            request.challenge_data
+            + str(request.firm_code).encode()
+            + str(request.product_code).encode(),
         ).digest()
 
         return CodeMeterResponse(
@@ -819,11 +821,8 @@ class CodeMeterProtocolParser:
                     value_bytes = value.encode("utf-8")
                 elif isinstance(value, int):
                     value_bytes = struct.pack("<I", value)
-                elif isinstance(value, (list, dict)):
-                    value_bytes = str(value).encode("utf-8")
                 else:
                     value_bytes = str(value).encode("utf-8")
-
                 serialized.extend(struct.pack("<H", len(key_bytes)))
                 serialized.extend(key_bytes)
                 serialized.extend(struct.pack("<H", len(value_bytes)))

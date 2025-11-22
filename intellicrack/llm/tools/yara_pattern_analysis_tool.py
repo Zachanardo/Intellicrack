@@ -24,7 +24,7 @@ class YARAPatternAnalysisTool:
         self.engine = get_yara_engine()
         self.analysis_cache = {}
 
-    def get_tool_definition(self) -> Dict[str, Any]:
+    def get_tool_definition(self) -> dict[str, Any]:
         """Get tool definition for LLM registration
 
         Returns:
@@ -84,7 +84,7 @@ class YARAPatternAnalysisTool:
             },
         }
 
-    def execute(self, **kwargs) -> Dict[str, Any]:
+    def execute(self, **kwargs) -> dict[str, Any]:
         """Execute YARA pattern analysis
 
         Args:
@@ -190,7 +190,7 @@ class YARAPatternAnalysisTool:
             logger.error(f"YARA pattern analysis error: {e}")
             return {"success": False, "error": str(e)}
 
-    def _format_pattern_matches(self, matches: List[Any], include_strings: bool) -> List[Dict[str, Any]]:
+    def _format_pattern_matches(self, matches: list[Any], include_strings: bool) -> list[dict[str, Any]]:
         """Format pattern matches for LLM consumption"""
         formatted_matches = []
 
@@ -223,7 +223,7 @@ class YARAPatternAnalysisTool:
 
         return formatted_matches
 
-    def _assess_security_findings(self, matches: List[Any]) -> Dict[str, Any]:
+    def _assess_security_findings(self, matches: list[Any]) -> dict[str, Any]:
         """Assess security implications of pattern matches"""
         assessment = {
             "overall_threat_level": "low",
@@ -289,7 +289,8 @@ class YARAPatternAnalysisTool:
             assessment["overall_threat_level"] = "medium"
 
         # Determine protection complexity
-        unique_categories = sum(1 for count in protection_categories.values() if count > 0)
+        unique_categories = sum(bool(count > 0)
+                            for count in protection_categories.values())
         if unique_categories >= 4:
             assessment["protection_complexity"] = "advanced"
         elif unique_categories >= 2:
@@ -302,7 +303,7 @@ class YARAPatternAnalysisTool:
 
         return assessment
 
-    def _generate_bypass_recommendations(self, matches: List[Any]) -> List[Dict[str, Any]]:
+    def _generate_bypass_recommendations(self, matches: list[Any]) -> list[dict[str, Any]]:
         """Generate bypass recommendations based on pattern matches"""
         recommendations = []
         processed_categories = set()
@@ -377,7 +378,7 @@ class YARAPatternAnalysisTool:
 
         return recommendations
 
-    def _categorize_patterns(self, matches: List[Any]) -> Dict[str, List[str]]:
+    def _categorize_patterns(self, matches: list[Any]) -> dict[str, list[str]]:
         """Categorize detected patterns by type"""
         categories = {}
 
@@ -389,14 +390,16 @@ class YARAPatternAnalysisTool:
 
         return categories
 
-    def _analyze_confidence_levels(self, matches: List[Any]) -> Dict[str, Any]:
+    def _analyze_confidence_levels(self, matches: list[Any]) -> dict[str, Any]:
         """Analyze confidence levels of matches"""
         if not matches:
             return {"average": 0.0, "high_confidence_count": 0, "low_confidence_count": 0}
 
         confidences = [match.confidence for match in matches]
-        high_conf = sum(1 for c in confidences if c >= 0.8)
-        low_conf = sum(1 for c in confidences if c < 0.6)
+        high_conf = sum(bool(c >= 0.8)
+                    for c in confidences)
+        low_conf = sum(bool(c < 0.6)
+                   for c in confidences)
 
         return {
             "average": round(sum(confidences) / len(confidences), 3),
@@ -405,7 +408,7 @@ class YARAPatternAnalysisTool:
             "total_matches": len(matches),
         }
 
-    def _extract_threat_indicators(self, matches: List[Any]) -> List[Dict[str, Any]]:
+    def _extract_threat_indicators(self, matches: list[Any]) -> list[dict[str, Any]]:
         """Extract specific threat indicators from matches"""
         indicators = []
 
@@ -433,7 +436,7 @@ class YARAPatternAnalysisTool:
 
         return indicators
 
-    def _analyze_protection_layers(self, matches: List[Any]) -> Dict[str, Any]:
+    def _analyze_protection_layers(self, matches: list[Any]) -> dict[str, Any]:
         """Analyze layered protection schemes"""
         layers = {
             "packing_layer": False,
@@ -468,7 +471,7 @@ class YARAPatternAnalysisTool:
 
         return layers
 
-    def analyze_custom_patterns(self, file_path: str, custom_rules_text: str) -> Dict[str, Any]:
+    def analyze_custom_patterns(self, file_path: str, custom_rules_text: str) -> dict[str, Any]:
         """Analyze file with custom YARA rules provided as text
 
         Args:

@@ -36,11 +36,9 @@ from intellicrack.handlers.pyqt6_handler import (
 from ...ai.ai_file_tools import get_ai_file_tools
 from ...ai.code_analysis_tools import AIAssistant
 from ...ai.interactive_assistant import IntellicrackAIAssistant
-from ...protection.intellicrack_protection_core import (
-    IntellicrackProtectionCore,
-    ProtectionAnalysis,
-)
+from ...protection.intellicrack_protection_core import IntellicrackProtectionCore, ProtectionAnalysis
 from ...utils.logger import get_logger
+
 
 logger = get_logger(__name__)
 
@@ -355,14 +353,18 @@ class IntellicrackProtectionWidget(QWidget):
 
     def display_summary(self, analysis: ProtectionAnalysis) -> None:
         """Display analysis summary."""
-        summary_lines = []
+        summary_lines = [
+            "=== File Analysis Summary ===\n",
+            f"File: {os.path.basename(analysis.file_path)}",
+        ]
 
-        summary_lines.append("=== File Analysis Summary ===\n")
-        summary_lines.append(f"File: {os.path.basename(analysis.file_path)}")
-        summary_lines.append(f"Full Path: {analysis.file_path}")
-        summary_lines.append(f"File Type: {analysis.file_type}")
-        summary_lines.append(f"Architecture: {analysis.architecture}")
-
+        summary_lines.extend(
+            (
+                f"Full Path: {analysis.file_path}",
+                f"File Type: {analysis.file_type}",
+                f"Architecture: {analysis.architecture}",
+            )
+        )
         if analysis.compiler:
             summary_lines.append(f"Compiler: {analysis.compiler}")
 
@@ -380,9 +382,7 @@ class IntellicrackProtectionWidget(QWidget):
             status_flags.append("HAS RESOURCES")
 
         if status_flags:
-            summary_lines.append(f"Status: {' | '.join(status_flags)}")
-            summary_lines.append("")
-
+            summary_lines.extend((f"Status: {' | '.join(status_flags)}", ""))
         # Detection summary
         if analysis.detections:
             summary_lines.append(f"Total Detections: {len(analysis.detections)}")
@@ -391,8 +391,14 @@ class IntellicrackProtectionWidget(QWidget):
 
             for detection in analysis.detections:
                 ver_str = f" v{detection.version}" if detection.version else ""
-                conf_str = f" ({detection.confidence:.0f}% confidence)" if detection.confidence < 100 else ""
-                summary_lines.append(f"   {detection.name}{ver_str} [{detection.type.value}]{conf_str}")
+                conf_str = (
+                    f" ({detection.confidence:.0f}% confidence)"
+                    if detection.confidence < 100
+                    else ""
+                )
+                summary_lines.append(
+                    f"   {detection.name}{ver_str} [{detection.type.value}]{conf_str}"
+                )
         else:
             summary_lines.append("No protections detected")
 
@@ -401,21 +407,19 @@ class IntellicrackProtectionWidget(QWidget):
             summary_lines.append("")
             summary_lines.append(f"License Files Found: {len(analysis.license_files)}")
             for file_info in analysis.license_files[:5]:  # Show up to 5
-                summary_lines.append(f"   {file_info['name']} ({file_info.get('size_str', 'Unknown size')})")
+                summary_lines.append(
+                    f"   {file_info['name']} ({file_info.get('size_str', 'Unknown size')})"
+                )
 
         self.summary_text.setText("\n".join(summary_lines))
 
     def display_technical_details(self, analysis: ProtectionAnalysis) -> None:
         """Display technical details."""
-        details_lines = []
-
-        details_lines.append("=== Technical Details ===\n")
+        details_lines = ["=== Technical Details ===\n"]
 
         # Entry point
         if analysis.entry_point:
-            details_lines.append(f"Entry Point: {analysis.entry_point}")
-            details_lines.append("")
-
+            details_lines.extend((f"Entry Point: {analysis.entry_point}", ""))
         # Sections
         if analysis.sections:
             details_lines.append("Sections:")
@@ -429,8 +433,7 @@ class IntellicrackProtectionWidget(QWidget):
         # Imports
         if analysis.imports:
             details_lines.append(f"Imports ({len(analysis.imports)} DLLs):")
-            for imp in analysis.imports[:10]:  # Show first 10
-                details_lines.append(f"   {imp}")
+            details_lines.extend(f"   {imp}" for imp in analysis.imports[:10])
             if len(analysis.imports) > 10:
                 details_lines.append(f"  ... and {len(analysis.imports) - 10} more")
             details_lines.append("")
@@ -438,9 +441,9 @@ class IntellicrackProtectionWidget(QWidget):
         # Metadata
         if analysis.metadata:
             details_lines.append("Metadata:")
-            for key, value in analysis.metadata.items():
-                details_lines.append(f"   {key}: {value}")
-
+            details_lines.extend(
+                f"   {key}: {value}" for key, value in analysis.metadata.items()
+            )
         self.tech_details_text.setText("\n".join(details_lines))
 
     def on_detection_selected(self) -> None:
@@ -450,9 +453,7 @@ class IntellicrackProtectionWidget(QWidget):
             return
 
         item = items[0]
-        detection = item.data(0, Qt.UserRole)
-
-        if detection:
+        if detection := item.data(0, Qt.UserRole):
             # Display bypass recommendations
             self.display_bypass_recommendations(detection)
 
@@ -463,23 +464,31 @@ class IntellicrackProtectionWidget(QWidget):
             detection: Detection object containing protection information and bypass recommendations.
 
         """
-        bypass_lines = []
-
-        bypass_lines.append(f"=== Bypass Recommendations for {detection.name} ===\n")
+        bypass_lines = [f"=== Bypass Recommendations for {detection.name} ===\n"]
 
         if detection.bypass_recommendations:
-            bypass_lines.append("Recommended approaches:")
-            bypass_lines.append("")
-
+            bypass_lines.extend(("Recommended approaches:", ""))
             for i, recommendation in enumerate(detection.bypass_recommendations, 1):
                 bypass_lines.append(f"{i}. {recommendation}")
 
-            bypass_lines.append("")
-            bypass_lines.append("Note: These are general recommendations. Actual bypass methods may vary based on:")
-            bypass_lines.append("   Specific version of the protection")
-            bypass_lines.append("   Target application implementation")
-            bypass_lines.append("   Additional protections present")
-            bypass_lines.append("   Legal and ethical considerations")
+            bypass_lines.extend(
+                (
+                    "",
+                    "Note: These are general recommendations. Actual bypass methods may vary based on:",
+                )
+            )
+            bypass_lines.extend(
+                (
+                    "   Specific version of the protection",
+                    "   Target application implementation",
+                )
+            )
+            bypass_lines.extend(
+                (
+                    "   Additional protections present",
+                    "   Legal and ethical considerations",
+                )
+            )
         else:
             bypass_lines.append("No specific bypass recommendations available.")
             bypass_lines.append("")
@@ -617,15 +626,15 @@ class IntellicrackProtectionWidget(QWidget):
 
         except Exception as e:
             logger.error("Error in AI reasoning: %s", e)
-            QMessageBox.critical(self, "AI Reasoning Error", f"Error performing AI reasoning:\n{e!s}")
+            QMessageBox.critical(
+                self, "AI Reasoning Error", f"Error performing AI reasoning:\n{e!s}"
+            )
             self.ai_reasoning_btn.setEnabled(True)
             self.status_label.setText("AI reasoning failed")
 
     def display_ai_reasoning(self, reasoning_result: dict) -> None:
         """Display AI reasoning results in the UI."""
-        reasoning_lines = []
-
-        reasoning_lines.append("=== AI Reasoning Analysis ===\n")
+        reasoning_lines = ["=== AI Reasoning Analysis ===\n"]
 
         # Check for errors
         if reasoning_result.get("error"):
@@ -633,11 +642,13 @@ class IntellicrackProtectionWidget(QWidget):
             self.ai_reasoning_text.setText("\n".join(reasoning_lines))
             return
 
-        # Display task type and confidence
-        reasoning_lines.append(f"Task Type: {reasoning_result.get('task_type', 'Unknown')}")
-        reasoning_lines.append(f"Reasoning Confidence: {reasoning_result.get('reasoning_confidence', 0) * 100:.0f}%")
-        reasoning_lines.append("")
-
+        reasoning_lines.extend(
+            (
+                f"Task Type: {reasoning_result.get('task_type', 'Unknown')}",
+                f"Reasoning Confidence: {reasoning_result.get('reasoning_confidence', 0) * 100:.0f}%",
+                "",
+            )
+        )
         # Display evidence
         if reasoning_result.get("evidence"):
             reasoning_lines.append("Evidence Found:")
@@ -661,9 +672,7 @@ class IntellicrackProtectionWidget(QWidget):
 
         # Add protection-specific reasoning
         if self.current_analysis.detections:
-            reasoning_lines.append("Protection-Specific Analysis:")
-            reasoning_lines.append("")
-
+            reasoning_lines.extend(("Protection-Specific Analysis:", ""))
             for detection in self.current_analysis.detections:
                 reasoning_lines.append(f"For {detection.name} ({detection.type.value}):")
 
@@ -671,8 +680,12 @@ class IntellicrackProtectionWidget(QWidget):
                 if detection.bypass_recommendations:
                     reasoning_lines.append("  Bypass Complexity Analysis:")
                     if len(detection.bypass_recommendations) > 3:
-                        reasoning_lines.append("    - Multiple bypass approaches available")
-                        reasoning_lines.append("    - Suggests well-studied protection scheme")
+                        reasoning_lines.extend(
+                            (
+                                "    - Multiple bypass approaches available",
+                                "    - Suggests well-studied protection scheme",
+                            )
+                        )
                     else:
                         reasoning_lines.append("    - Limited bypass options")
                         reasoning_lines.append("    - May require custom approach")
@@ -708,13 +721,13 @@ class IntellicrackProtectionWidget(QWidget):
             license_file_results = ai_file_tools.search_for_license_files(binary_dir)
 
             if license_file_results.get("status") == "success":
-                files_found = license_file_results.get("files_found", [])
-
-                if files_found:
+                if files_found := license_file_results.get("files_found", []):
                     # Display results in a message box
                     message_lines = [f"Found {len(files_found)} potential license files:\n"]
                     for file_info in files_found[:10]:  # Show up to 10
-                        message_lines.append(f" {file_info['name']} ({file_info.get('size_str', 'Unknown size')})")
+                        message_lines.append(
+                            f" {file_info['name']} ({file_info.get('size_str', 'Unknown size')})"
+                        )
                         if file_info.get("match_type"):
                             message_lines.append(f"  Type: {file_info['match_type']}")
 
@@ -731,10 +744,14 @@ class IntellicrackProtectionWidget(QWidget):
                     # Refresh display
                     self.display_summary(self.current_analysis)
                 else:
-                    QMessageBox.information(self, "No License Files", f"No license files found in:\n{binary_dir}")
+                    QMessageBox.information(
+                        self, "No License Files", f"No license files found in:\n{binary_dir}"
+                    )
             else:
                 error_msg = license_file_results.get("error", "Unknown error")
-                QMessageBox.warning(self, "Search Failed", f"License file search failed:\n{error_msg}")
+                QMessageBox.warning(
+                    self, "Search Failed", f"License file search failed:\n{error_msg}"
+                )
 
             self.status_label.setText("License file search complete")
 
@@ -754,12 +771,16 @@ class IntellicrackProtectionWidget(QWidget):
         layout = QVBoxLayout(dialog)
 
         # Instructions
-        instructions = QLabel("Ask questions about binary protections, licensing schemes, or security analysis:")
+        instructions = QLabel(
+            "Ask questions about binary protections, licensing schemes, or security analysis:"
+        )
         layout.addWidget(instructions)
 
         # Question input
         question_input = QLineEdit()
-        question_input.setToolTip("Enter your question about protection mechanisms, bypassing techniques, or licensing systems")
+        question_input.setToolTip(
+            "Enter your question about protection mechanisms, bypassing techniques, or licensing systems"
+        )
         layout.addWidget(question_input)
 
         # Response area
@@ -791,7 +812,9 @@ class IntellicrackProtectionWidget(QWidget):
                     context_parts = []
                     context_parts.append("Current binary analysis context:")
                     for detection in self.current_analysis.detections:
-                        context_parts.append(f"- Detected: {detection.name} ({detection.type.value})")
+                        context_parts.append(
+                            f"- Detected: {detection.name} ({detection.type.value})"
+                        )
                     context = "\n".join(context_parts) + "\n\n"
                     full_question = context + question
                 else:
@@ -837,6 +860,8 @@ class IntellicrackProtectionWidget(QWidget):
                 response_text.append("<b>Suggested questions based on current analysis:</b>")
                 for suggestion in suggestions[:3]:  # Show up to 3 suggestions
                     response_text.append(f" {suggestion}")
-                response_text.append("\n<i>Type your question above or click a suggestion to use it.</i>\n")
+                response_text.append(
+                    "\n<i>Type your question above or click a suggestion to use it.</i>\n"
+                )
 
         dialog.exec()

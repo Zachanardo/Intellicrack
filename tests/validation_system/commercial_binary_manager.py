@@ -26,7 +26,7 @@ class CommercialBinaryManager:
     Provides real functionality for binary acquisition, verification, and storage.
     """
 
-    def safe_extract(self, archive: Union[zipfile.ZipFile, tarfile.TarFile], path: Path) -> None:
+    def safe_extract(self, archive: zipfile.ZipFile | tarfile.TarFile, path: Path) -> None:
         """Safely extract archive avoiding path traversal."""
         members = (archive.getmembers() if hasattr(archive, "getmembers")
                   else archive.infolist())

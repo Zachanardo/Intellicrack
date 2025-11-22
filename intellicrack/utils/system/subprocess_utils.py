@@ -24,6 +24,7 @@ This module provides common subprocess execution patterns.
 import logging
 import subprocess
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -53,10 +54,9 @@ def run_in_terminal(
         if isinstance(cmd, str):
             cmd = cmd.split()
 
-        session_id = terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=auto_switch, cwd=cwd)
-
-        return session_id
-
+        return terminal_mgr.execute_command(
+            command=cmd, capture_output=False, auto_switch=auto_switch, cwd=cwd
+        )
     except Exception as e:
         logger.error("Error running command in terminal: %s", e)
         raise
@@ -141,15 +141,13 @@ def run_subprocess_check(
 
     """
     try:
-        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+        return subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
             cmd,
             capture_output=capture_output,
             text=text,
             timeout=timeout,
             check=check,
         )
-        return result
-
     except subprocess.TimeoutExpired:
         logger.warning("Command timed out after %s seconds: %s", timeout, cmd)
         raise
@@ -161,7 +159,9 @@ def run_subprocess_check(
         raise
 
 
-def create_popen_with_encoding(cmd: list[str], encoding: str = "utf-8", timeout: int | None = None) -> tuple[int, str, str]:
+def create_popen_with_encoding(
+    cmd: list[str], encoding: str = "utf-8", timeout: int | None = None
+) -> tuple[int, str, str]:
     """Create Popen process with encoding and error handling.
 
     Common pattern for process creation with output capture and encoding.

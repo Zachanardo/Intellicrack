@@ -102,8 +102,10 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
+
 try:
     import lief
+
     LIEF_AVAILABLE = True
 except ImportError:
     LIEF_AVAILABLE = False
@@ -119,6 +121,7 @@ from intellicrack.core.certificate.patch_generators import (
     validate_patch_size,
 )
 from intellicrack.core.certificate.patch_templates import select_template
+
 
 logger = logging.getLogger(__name__)
 
@@ -225,7 +228,7 @@ class CertificatePatcher:
                 success=True,
                 patched_functions=[],
                 failed_patches=[],
-                backup_data=b'',
+                backup_data=b"",
             )
 
         patched_functions = []
@@ -240,56 +243,68 @@ class CertificatePatcher:
 
                 patch_bytes = self._generate_patch(func, patch_type)
                 if not patch_bytes:
-                    failed_patches.append(FailedPatch(
-                        address=func.address,
-                        api_name=func.api_name,
-                        error="Failed to generate patch",
-                    ))
+                    failed_patches.append(
+                        FailedPatch(
+                            address=func.address,
+                            api_name=func.api_name,
+                            error="Failed to generate patch",
+                        )
+                    )
                     continue
 
                 original_bytes = self._read_original_bytes(func.address, len(patch_bytes))
 
                 if not self._check_patch_safety(func.address, len(patch_bytes)):
-                    failed_patches.append(FailedPatch(
-                        address=func.address,
-                        api_name=func.api_name,
-                        error="Patch safety check failed",
-                    ))
+                    failed_patches.append(
+                        FailedPatch(
+                            address=func.address,
+                            api_name=func.api_name,
+                            error="Patch safety check failed",
+                        )
+                    )
                     continue
 
                 if not validate_patch_size(patch_bytes, len(original_bytes)):
-                    failed_patches.append(FailedPatch(
-                        address=func.address,
-                        api_name=func.api_name,
-                        error="Patch too large for available space",
-                    ))
+                    failed_patches.append(
+                        FailedPatch(
+                            address=func.address,
+                            api_name=func.api_name,
+                            error="Patch too large for available space",
+                        )
+                    )
                     continue
 
                 if self._apply_patch(func.address, patch_bytes):
                     backup_data.extend(original_bytes)
 
-                    patched_functions.append(PatchedFunction(
-                        address=func.address,
-                        api_name=func.api_name,
-                        patch_type=patch_type,
-                        patch_size=len(patch_bytes),
-                        original_bytes=original_bytes,
-                    ))
+                    patched_functions.append(
+                        PatchedFunction(
+                            address=func.address,
+                            api_name=func.api_name,
+                            patch_type=patch_type,
+                            patch_size=len(patch_bytes),
+                            original_bytes=original_bytes,
+                        )
+                    )
                     logger.info(f"Successfully patched {func.api_name}")
                 else:
-                    failed_patches.append(FailedPatch(
-                        address=func.address,
-                        api_name=func.api_name,
-                        error="Failed to apply patch",
-                    ))
+                    failed_patches.append(
+                        FailedPatch(
+                            address=func.address,
+                            api_name=func.api_name,
+                            error="Failed to apply patch",
+                        )
+                    )
 
             except Exception as e:
                 logger.error(f"Error patching {func.api_name}: {e}")
-                failed_patches.append(FailedPatch(
-                    address=func.address,
-                    api_name=func.api_name,
-                    error=str(e),
-                ))
+                failed_patches.append(
+                    FailedPatch(
+                        address=func.address,
+                        api_name=func.api_name,
+                        error=str(e),
+                    )
+                )
 
         if patched_functions:
             try:
@@ -304,7 +319,7 @@ class CertificatePatcher:
                     backup_data=bytes(backup_data),
                 )
 
-        success = len(patched_functions) > 0 and len(failed_patches) == 0
+        success = len(patched_functions) > 0 and not failed_patches
 
         return PatchResult(
             success=success,
@@ -349,8 +364,7 @@ class CertificatePatcher:
         if not self.architecture:
             return None
 
-        template = select_template(func.api_name, self.architecture)
-        if template:
+        if template := select_template(func.api_name, self.architecture):
             logger.debug(f"Using template: {template.name}")
             return template.patch_bytes
 
@@ -381,26 +395,29 @@ class CertificatePatcher:
 
         """
         if not self.binary:
-            return b''
+            return b""
 
         try:
             if isinstance(self.binary, lief.PE.Binary):
                 rva = address - self.binary.optional_header.imagebase
-                section = self.binary.section_from_rva(rva)
-                if section:
+                if section := self.binary.section_from_rva(rva):
                     offset = rva - section.virtual_address
                     content = bytes(section.content)
-                    return content[offset:offset + size]
+                    return content[offset : offset + size]
             elif isinstance(self.binary, lief.ELF.Binary):
                 for segment in self.binary.segments:
-                    if segment.virtual_address <= address < segment.virtual_address + segment.virtual_size:
+                    if (
+                        segment.virtual_address
+                        <= address
+                        < segment.virtual_address + segment.virtual_size
+                    ):
                         offset = address - segment.virtual_address
                         content = bytes(segment.content)
-                        return content[offset:offset + size]
+                        return content[offset : offset + size]
         except Exception as e:
             logger.error(f"Failed to read original bytes: {e}")
 
-        return b'\x90' * size
+        return b"\x90" * size
 
     def _check_patch_safety(self, address: int, size: int) -> bool:
         """Check if patch can be safely applied.
@@ -444,8 +461,7 @@ class CertificatePatcher:
         try:
             if isinstance(self.binary, lief.PE.Binary):
                 rva = address - self.binary.optional_header.imagebase
-                section = self.binary.section_from_rva(rva)
-                if section:
+                if section := self.binary.section_from_rva(rva):
                     offset = rva - section.virtual_address
                     content = bytearray(section.content)
 
@@ -458,7 +474,11 @@ class CertificatePatcher:
 
             elif isinstance(self.binary, lief.ELF.Binary):
                 for segment in self.binary.segments:
-                    if segment.virtual_address <= address < segment.virtual_address + segment.virtual_size:
+                    if (
+                        segment.virtual_address
+                        <= address
+                        < segment.virtual_address + segment.virtual_size
+                    ):
                         offset = address - segment.virtual_address
                         content = bytearray(segment.content)
 
@@ -480,7 +500,7 @@ class CertificatePatcher:
         if not self.binary:
             return
 
-        output_path = self.binary_path.parent / (self.binary_path.name + ".patched")
+        output_path = self.binary_path.parent / f"{self.binary_path.name}.patched"
         self.binary.write(str(output_path))
 
     def rollback_patches(self, patch_result: PatchResult) -> bool:

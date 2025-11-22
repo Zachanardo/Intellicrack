@@ -406,11 +406,11 @@ class TestGenericProtocolHandlerConnectionManagement:
         # Create a socket-like object that raises exceptions for testing error handling
         class FailingTestSocket:
             def getpeername(self):
-                raise socket.error("Connection lost")
+                raise OSError("Connection lost")
             def send(self, data):
-                raise socket.error("Send failed")
+                raise OSError("Send failed")
             def recv(self, bufsize):
-                raise socket.error("Receive failed")
+                raise OSError("Receive failed")
             def close(self):
                 pass
 

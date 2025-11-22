@@ -22,21 +22,12 @@ from collections.abc import Callable
 
 from intellicrack.utils.logger import logger
 
+
 try:
-    from intellicrack.handlers.pyqt6_handler import (
-        QHBoxLayout,
-        QLabel,
-        QMessageBox,
-        QWidget,
-    )
+    from intellicrack.handlers.pyqt6_handler import QHBoxLayout, QLabel, QMessageBox, QWidget
 except ImportError as e:
     logger.error("Import error in emulator_ui_enhancements: %s", e)
-    from intellicrack.handlers.pyqt6_handler import (
-        QHBoxLayout,
-        QLabel,
-        QMessageBox,
-        QWidget,
-    )
+    from intellicrack.handlers.pyqt6_handler import QHBoxLayout, QLabel, QMessageBox, QWidget
 
 
 class EmulatorStatusWidget(QWidget):
@@ -191,7 +182,9 @@ class EmulatorRequiredDecorator:
                 feature_name = func.__name__.replace("_", " ").title()
                 if show_emulator_warning(self, "QEMU", feature_name):
                     if not manager.ensure_qemu_running(self.binary_path):
-                        QMessageBox.critical(self, "QEMU Error", "Failed to start QEMU. Check the logs for details.")
+                        QMessageBox.critical(
+                            self, "QEMU Error", "Failed to start QEMU. Check the logs for details."
+                        )
                         return None
                 else:
                     return None

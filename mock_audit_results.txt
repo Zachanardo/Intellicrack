@@ -1,0 +1,50 @@
+ Scanning D:/Intellicrack/tests for mock usage...
+This may take a moment...
+
+FAIL MOCK USAGE VIOLATIONS DETECTED
+================================================================================
+🔴 CRITICAL: 67 (Mock framework imports)
+🟡 HIGH:     1469 (Mock objects/assertions)
+🟠 MEDIUM:   62 (Test data violations)
+🔵 LOW:      1059 (Other patterns)
+
+Total files affected: 138
+================================================================================
+
+🚨 CRITICAL VIOLATIONS (Mock framework usage):
+
+📄 D:/Intellicrack/tests/test_startup_optimizations.py
+   Line 15: from unittest.mock import MagicMock, patch
+
+📄 D:/Intellicrack/tests/core/monitoring/test_frida_server_manager.py
+   Line 19: from unittest import mock as test_doubles
+
+📄 D:/Intellicrack/tests/integration/test_backup_restore_functionality.py
+   Line 13: from unittest.mock import patch
+
+📄 D:/Intellicrack/tests/integration/test_central_config_usage.py
+   Line 12: from unittest.mock import patch, Mock
+
+📄 D:/Intellicrack/tests/integration/test_cli_configuration.py
+   Line 13: from unittest.mock import MagicMock, patch, PropertyMock, call
+
+📄 D:/Intellicrack/tests/integration/test_complete_config_system.py
+   Line 15: from unittest.mock import patch, Mock
+
+📄 D:/Intellicrack/tests/integration/test_config_cleanup_after_migration.py
+   Line 13: from unittest.mock import patch, Mock
+
+📄 D:/Intellicrack/tests/integration/test_corrupted_config_handling.py
+   Line 14: from unittest.mock import MagicMock, patch
+
+📄 D:/Intellicrack/tests/integration/test_llm_configuration.py
+   Line 13: from unittest.mock import MagicMock, patch, PropertyMock
+
+📄 D:/Intellicrack/tests/integration/test_llm_config_migration.py
+   Line 18: from unittest.mock import MagicMock, patch
+
+WARNING  REMEDIATION REQUIRED:
+1. Replace unittest.mock imports with real test data
+2. Use fixtures from tests/fixtures/ directory
+3. Implement real API responses for network tests
+4. Use actual binary samples for exploitation tests

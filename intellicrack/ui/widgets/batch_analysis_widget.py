@@ -44,6 +44,7 @@ from intellicrack.handlers.pyqt6_handler import (
 from ...protection.unified_protection_engine import get_unified_engine
 from ...utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 
@@ -72,9 +73,7 @@ class BatchAnalysisResult:
             return "Failed"
         if self.is_protected:
             return "Protected"
-        if self.is_packed:
-            return "Packed"
-        return "Clean"
+        return "Packed" if self.is_packed else "Clean"
 
 
 class BatchAnalysisWorker(QThread):
@@ -90,7 +89,9 @@ class BatchAnalysisWorker(QThread):
     #: error message (type: str)
     error_occurred = pyqtSignal(str)
 
-    def __init__(self, file_paths: list[str], max_workers: int = 4, deep_scan: bool = False) -> None:
+    def __init__(
+        self, file_paths: list[str], max_workers: int = 4, deep_scan: bool = False
+    ) -> None:
         """Initialize batch analysis thread.
 
         Args:
@@ -120,7 +121,10 @@ class BatchAnalysisWorker(QThread):
             # Use ThreadPoolExecutor for parallel processing
             with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
                 # Submit all tasks
-                future_to_path = {executor.submit(self._analyze_file, file_path): file_path for file_path in self.file_paths}
+                future_to_path = {
+                    executor.submit(self._analyze_file, file_path): file_path
+                    for file_path in self.file_paths
+                }
 
                 # Process completed tasks
                 for future in as_completed(future_to_path):
@@ -431,17 +435,13 @@ class BatchAnalysisWidget(QWidget):
 
     def select_folder(self) -> None:
         """Select folder and scan for files."""
-        folder = QFileDialog.getExistingDirectory(
+        if folder := QFileDialog.getExistingDirectory(
             self,
             "Select Folder for Batch Analysis",
-        )
-
-        if folder:
+        ):
             # Scan folder for files based on filter
             filter_type = self.file_filter_combo.currentText()
-            files = self._scan_folder(folder, filter_type)
-
-            if files:
+            if files := self._scan_folder(folder, filter_type):
                 self.selected_files = files
                 self._update_file_selection()
             else:
@@ -649,9 +649,12 @@ class BatchAnalysisWidget(QWidget):
 
         # Update status with summary
         total = len(results)
-        protected = sum(1 for r in results if r.is_protected)
-        packed = sum(1 for r in results if r.is_packed)
-        failed = sum(1 for r in results if not r.success)
+        protected = sum(bool(r.is_protected)
+                    for r in results)
+        packed = sum(bool(r.is_packed)
+                 for r in results)
+        failed = sum(bool(not r.success)
+                 for r in results)
 
         self.status_label.setText(
             f"Analysis complete: {total} files, {protected} protected, {packed} packed, {failed} failed",
@@ -807,13 +810,20 @@ class BatchAnalysisWidget(QWidget):
             return {}
 
         total = len(self.results)
-        successful = sum(1 for r in self.results if r.success)
-        protected = sum(1 for r in self.results if r.is_protected)
-        packed = sum(1 for r in self.results if r.is_packed)
+        successful = sum(bool(r.success)
+                     for r in self.results)
+        protected = sum(bool(r.is_protected)
+                    for r in self.results)
+        packed = sum(bool(r.is_packed)
+                 for r in self.results)
         failed = total - successful
 
         avg_time = sum(r.analysis_time for r in self.results) / total if total > 0 else 0
-        avg_confidence = sum(r.confidence_score for r in self.results if r.success) / successful if successful > 0 else 0
+        avg_confidence = (
+            sum(r.confidence_score for r in self.results if r.success) / successful
+            if successful > 0
+            else 0
+        )
 
         return {
             "total_files": total,

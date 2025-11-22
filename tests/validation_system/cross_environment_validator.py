@@ -42,8 +42,8 @@ class EnvironmentInfo:
     total_memory_gb: float
     gpu_info: str
     virtualization_platform: str
-    security_software: List[str]
-    network_configuration: Dict[str, Any]
+    security_software: list[str]
+    network_configuration: dict[str, Any]
     timestamp: str = None
 
     def __post_init__(self):
@@ -60,9 +60,9 @@ class EnvironmentTestResult:
     environment_info: EnvironmentInfo
     test_passed: bool
     success_rate: float
-    error_messages: List[str]
+    error_messages: list[str]
     test_duration_seconds: float
-    resource_usage: Dict[str, Any]
+    resource_usage: dict[str, Any]
     timestamp: str = None
 
     def __post_init__(self):
@@ -79,9 +79,9 @@ class CrossEnvironmentResult:
     environments_tested: int
     environments_passed: int
     consistency_rate: float
-    environment_results: List[EnvironmentTestResult]
-    inconsistent_behaviors: List[Dict[str, Any]]
-    error_messages: List[str]
+    environment_results: list[EnvironmentTestResult]
+    inconsistent_behaviors: list[dict[str, Any]]
+    error_messages: list[str]
     timestamp: str = None
 
     def __post_init__(self):
@@ -115,7 +115,7 @@ class CrossEnvironmentValidator:
                 sha256.update(chunk)
         return sha256.hexdigest()
 
-    def _get_os_info(self) -> Dict[str, str]:
+    def _get_os_info(self) -> dict[str, str]:
         """Get operating system information."""
         try:
             return {
@@ -135,7 +135,7 @@ class CrossEnvironmentValidator:
                 "processor": "Unknown"
             }
 
-    def _get_cpu_info(self) -> Tuple[str, int]:
+    def _get_cpu_info(self) -> tuple[str, int]:
         """Get CPU information."""
         try:
             if psutil:
@@ -221,7 +221,7 @@ class CrossEnvironmentValidator:
             logger.warning(f"Failed to get virtualization info: {e}")
             return "Unknown Platform"
 
-    def _get_security_software(self) -> List[str]:
+    def _get_security_software(self) -> list[str]:
         """Get list of security software."""
         security_software = []
 
@@ -255,7 +255,7 @@ class CrossEnvironmentValidator:
 
         return security_software
 
-    def _get_network_info(self) -> Dict[str, Any]:
+    def _get_network_info(self) -> dict[str, Any]:
         """Get network configuration information."""
         try:
             network_info = {
@@ -499,7 +499,7 @@ class CrossEnvironmentValidator:
             logger.error(f"Failed to test cracked binary {binary_path}: {e}")
             return False
 
-    def _compare_environments(self, results: List[EnvironmentTestResult]) -> Tuple[float, List[Dict[str, Any]]]:
+    def _compare_environments(self, results: list[EnvironmentTestResult]) -> tuple[float, list[dict[str, Any]]]:
         """
         Compare results across environments to check for consistency.
 
@@ -540,7 +540,7 @@ class CrossEnvironmentValidator:
         return (consistency_rate, inconsistent_behaviors)
 
     def test_in_environment(self, binary_path: str, software_name: str,
-                           environment_info: Optional[EnvironmentInfo] = None) -> EnvironmentTestResult:
+                           environment_info: EnvironmentInfo | None = None) -> EnvironmentTestResult:
         """
         Test software in a specific environment.
 
@@ -690,7 +690,7 @@ class CrossEnvironmentValidator:
 
         return result
 
-    def validate_all_cross_environment(self) -> List[CrossEnvironmentResult]:
+    def validate_all_cross_environment(self) -> list[CrossEnvironmentResult]:
         """
         Validate cross-environment consistency for all available binaries.
         """
@@ -741,7 +741,7 @@ class CrossEnvironmentValidator:
         logger.info(f"Completed cross-environment validation for {len(results)} binaries")
         return results
 
-    def generate_report(self, results: List[CrossEnvironmentResult]) -> str:
+    def generate_report(self, results: list[CrossEnvironmentResult]) -> str:
         """
         Generate a comprehensive report of cross-environment validation results.
         """
@@ -806,7 +806,7 @@ class CrossEnvironmentValidator:
 
         return "\n".join(report_lines)
 
-    def save_report(self, results: List[CrossEnvironmentResult], filename: Optional[str] = None) -> str:
+    def save_report(self, results: list[CrossEnvironmentResult], filename: str | None = None) -> str:
         """
         Save the cross-environment validation report to a file.
         """
@@ -824,7 +824,7 @@ class CrossEnvironmentValidator:
         logger.info(f"Cross-environment validation report saved to {report_path}")
         return str(report_path)
 
-    def _test_in_sandbox_environment(self, binary_path: str, software_name: str, config: Dict[str, Any]) -> CrossEnvironmentTestResult:
+    def _test_in_sandbox_environment(self, binary_path: str, software_name: str, config: dict[str, Any]) -> CrossEnvironmentTestResult:
         """Test binary in Windows Sandbox environment with real isolation."""
         try:
             # Create Windows Sandbox configuration file
@@ -882,7 +882,7 @@ class CrossEnvironmentValidator:
             logger.error(f"Sandbox testing failed: {e}")
             return None
 
-    def _test_with_security_variations(self, binary_path: str, software_name: str, current_env: EnvironmentInfo) -> List[CrossEnvironmentTestResult]:
+    def _test_with_security_variations(self, binary_path: str, software_name: str, current_env: EnvironmentInfo) -> list[CrossEnvironmentTestResult]:
         """Test with different security software configurations using real security tools."""
         results = []
 

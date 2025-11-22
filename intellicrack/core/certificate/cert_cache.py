@@ -311,9 +311,11 @@ class CertificateCache:
             domain_dir = self.cache_dir / domain_hash
             try:
                 import shutil
+
                 shutil.rmtree(domain_dir, ignore_errors=True)
             except Exception as e:
                 import logging
+
                 logging.getLogger(__name__).debug(f"Failed to evict cache entry: {e}")
 
             del metadata[domain_hash]
@@ -330,6 +332,7 @@ class CertificateCache:
         with self.lock:
             try:
                 import shutil
+
                 for item in self.cache_dir.iterdir():
                     if item.is_dir():
                         shutil.rmtree(item)
@@ -391,11 +394,13 @@ class CertificateCache:
                 domain_dir = self.cache_dir / domain_hash
                 try:
                     import shutil
+
                     shutil.rmtree(domain_dir, ignore_errors=True)
                     del metadata[domain_hash]
                     removed_count += 1
                 except Exception as e:
                     import logging
+
                     logging.getLogger(__name__).debug(f"Failed to remove expired entry: {e}")
 
             if removed_count > 0:

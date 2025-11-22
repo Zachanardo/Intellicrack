@@ -13,12 +13,7 @@ from typing import Any
 import capstone
 import z3
 
-from intellicrack.core.serial_generator import (
-    GeneratedSerial,
-    SerialConstraints,
-    SerialFormat,
-    SerialNumberGenerator,
-)
+from intellicrack.core.serial_generator import GeneratedSerial, SerialConstraints, SerialFormat, SerialNumberGenerator
 
 
 @dataclass
@@ -153,7 +148,9 @@ class ValidationAnalyzer:
         self.md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
         self.md.detail = True
 
-    def analyze(self, binary_code: bytes, entry_point: int = 0, arch: str = "x64") -> ValidationAnalysis:
+    def analyze(
+        self, binary_code: bytes, entry_point: int = 0, arch: str = "x64"
+    ) -> ValidationAnalysis:
         """Analyze binary validation routine and extract algorithm details.
 
         Args:
@@ -181,11 +178,15 @@ class ValidationAnalyzer:
 
         patch_points = self._find_patch_points(instructions)
 
-        algorithm_type, confidence = self._determine_algorithm(crypto_primitives, api_calls, constraints)
+        algorithm_type, confidence = self._determine_algorithm(
+            crypto_primitives, api_calls, constraints
+        )
 
         embedded_constants = self._extract_embedded_constants(binary_code, instructions)
 
-        recommendations = self._generate_recommendations(algorithm_type, crypto_primitives, patch_points)
+        recommendations = self._generate_recommendations(
+            algorithm_type, crypto_primitives, patch_points
+        )
 
         return ValidationAnalysis(
             algorithm_type=algorithm_type,
@@ -198,7 +199,9 @@ class ValidationAnalyzer:
             recommendations=recommendations,
         )
 
-    def _disassemble_routine(self, code: bytes, start: int, max_instructions: int = 500) -> list[Any]:
+    def _disassemble_routine(
+        self, code: bytes, start: int, max_instructions: int = 500
+    ) -> list[Any]:
         """Disassemble validation routine code.
 
         Args:
@@ -223,7 +226,9 @@ class ValidationAnalyzer:
 
         return instructions
 
-    def _detect_crypto_constants(self, instructions: list[Any], binary_code: bytes) -> list[CryptoPrimitive]:
+    def _detect_crypto_constants(
+        self, instructions: list[Any], binary_code: bytes
+    ) -> list[CryptoPrimitive]:
         """Detect cryptographic constants in disassembled code.
 
         Args:
@@ -236,7 +241,7 @@ class ValidationAnalyzer:
         """
         primitives = []
 
-        for _idx, instr in enumerate(instructions):
+        for instr in instructions:
             if instr.mnemonic in {"mov", "movabs", "lea"}:
                 for operand in instr.operands:
                     if operand.type == capstone.x86.X86_OP_IMM:
@@ -293,11 +298,11 @@ class ValidationAnalyzer:
                                 ),
                             )
 
-        xor_chain_count = 0
-        for i in range(len(instructions) - 3):
-            if all(instructions[j].mnemonic == "xor" for j in range(i, min(i + 3, len(instructions)))):
-                xor_chain_count += 1
-
+        xor_chain_count = sum(bool(all(
+                                          instructions[j].mnemonic == "xor"
+                                          for j in range(i, min(i + 3, len(instructions)))
+                                      ))
+                          for i in range(len(instructions) - 3))
         if xor_chain_count > 5:
             primitives.append(
                 CryptoPrimitive(
@@ -358,48 +363,47 @@ class ValidationAnalyzer:
 
         for idx, instr in enumerate(instructions):
             if instr.mnemonic == "cmp":
-                if len(instr.operands) >= 2:
-                    if instr.operands[1].type == capstone.x86.X86_OP_IMM:
-                        imm_value = instr.operands[1].imm
+                if len(instr.operands) >= 2 and instr.operands[1].type == capstone.x86.X86_OP_IMM:
+                    imm_value = instr.operands[1].imm
 
-                        if 8 <= imm_value <= 64:
-                            constraints.append(
-                                ValidationConstraint(
-                                    constraint_type="length",
-                                    value=imm_value,
-                                    offset=instr.address,
-                                    description=f"Key length must be {imm_value}",
-                                ),
-                            )
+                    if 8 <= imm_value <= 64:
+                        constraints.append(
+                            ValidationConstraint(
+                                constraint_type="length",
+                                value=imm_value,
+                                offset=instr.address,
+                                description=f"Key length must be {imm_value}",
+                            ),
+                        )
 
-                        if imm_value == 0x2D:
-                            constraints.append(
-                                ValidationConstraint(
-                                    constraint_type="separator",
-                                    value="-",
-                                    offset=instr.address,
-                                    description="Dash separator detected",
-                                ),
-                            )
+                    if imm_value == 0x2D:
+                        constraints.append(
+                            ValidationConstraint(
+                                constraint_type="separator",
+                                value="-",
+                                offset=instr.address,
+                                description="Dash separator detected",
+                            ),
+                        )
 
-                        if 0x30 <= imm_value <= 0x39:
-                            constraints.append(
-                                ValidationConstraint(
-                                    constraint_type="charset",
-                                    value="numeric",
-                                    offset=instr.address,
-                                    description=f"Numeric character check: {chr(imm_value)}",
-                                ),
-                            )
-                        elif 0x41 <= imm_value <= 0x5A:
-                            constraints.append(
-                                ValidationConstraint(
-                                    constraint_type="charset",
-                                    value="uppercase",
-                                    offset=instr.address,
-                                    description=f"Uppercase letter check: {chr(imm_value)}",
-                                ),
-                            )
+                    if 0x30 <= imm_value <= 0x39:
+                        constraints.append(
+                            ValidationConstraint(
+                                constraint_type="charset",
+                                value="numeric",
+                                offset=instr.address,
+                                description=f"Numeric character check: {chr(imm_value)}",
+                            ),
+                        )
+                    elif 0x41 <= imm_value <= 0x5A:
+                        constraints.append(
+                            ValidationConstraint(
+                                constraint_type="charset",
+                                value="uppercase",
+                                offset=instr.address,
+                                description=f"Uppercase letter check: {chr(imm_value)}",
+                            ),
+                        )
 
             elif instr.mnemonic == "test":
                 if idx + 1 < len(instructions):
@@ -463,23 +467,26 @@ class ValidationAnalyzer:
                         )
 
             elif instr.mnemonic in {"mov", "movabs"}:
-                if len(instr.operands) >= 2:
-                    if instr.operands[0].type == capstone.x86.X86_OP_REG:
-                        reg_name = instr.reg_name(instr.operands[0].reg)
-                        if reg_name in {"eax", "rax", "al"}:
-                            if idx + 1 < len(instructions) and instructions[idx + 1].mnemonic == "ret":
-                                success_patch = b"\xb8\x01\x00\x00\x00" if instr.size >= 5 else b"\xb0\x01"
+                if len(instr.operands) >= 2 and instr.operands[0].type == capstone.x86.X86_OP_REG:
+                    reg_name = instr.reg_name(instr.operands[0].reg)
+                    if reg_name in {"eax", "rax", "al"} and (
+                                                idx + 1 < len(instructions)
+                                                and instructions[idx + 1].mnemonic == "ret"
+                                            ):
+                        success_patch = (
+                            b"\xb8\x01\x00\x00\x00" if instr.size >= 5 else b"\xb0\x01"
+                        )
 
-                                patch_points.append(
-                                    PatchLocation(
-                                        offset=instr.address,
-                                        instruction=f"{instr.mnemonic} {instr.op_str}",
-                                        patch_type="force_success",
-                                        original_bytes=instr.bytes,
-                                        suggested_patch=success_patch,
-                                        description=f"Force return value to success at {hex(instr.address)}",
-                                    ),
-                                )
+                        patch_points.append(
+                            PatchLocation(
+                                offset=instr.address,
+                                instruction=f"{instr.mnemonic} {instr.op_str}",
+                                patch_type="force_success",
+                                original_bytes=instr.bytes,
+                                suggested_patch=success_patch,
+                                description=f"Force return value to success at {hex(instr.address)}",
+                            ),
+                        )
 
         return patch_points
 
@@ -506,11 +513,22 @@ class ValidationAnalyzer:
         algorithm_votes: dict[AlgorithmType, float] = {}
 
         for primitive in crypto_primitives:
-            if primitive.algorithm == "MD5":
+            if primitive.algorithm == "CRC32":
+                algorithm_votes[AlgorithmType.CRC32] = max(
+                    algorithm_votes.get(AlgorithmType.CRC32, 0.0),
+                    primitive.confidence,
+                )
+            elif primitive.algorithm == "MD5":
                 algorithm_votes[AlgorithmType.MD5] = max(
                     algorithm_votes.get(AlgorithmType.MD5, 0.0),
                     primitive.confidence,
                 )
+            elif primitive.algorithm == "RSA":
+                algorithm_votes[AlgorithmType.RSA] = max(
+                    algorithm_votes.get(AlgorithmType.RSA, 0.0),
+                    primitive.confidence,
+                )
+
             elif primitive.algorithm == "SHA1":
                 algorithm_votes[AlgorithmType.SHA1] = max(
                     algorithm_votes.get(AlgorithmType.SHA1, 0.0),
@@ -521,33 +539,31 @@ class ValidationAnalyzer:
                     algorithm_votes.get(AlgorithmType.SHA256, 0.0),
                     primitive.confidence,
                 )
-            elif primitive.algorithm == "CRC32":
-                algorithm_votes[AlgorithmType.CRC32] = max(
-                    algorithm_votes.get(AlgorithmType.CRC32, 0.0),
-                    primitive.confidence,
-                )
-            elif primitive.algorithm == "RSA":
-                algorithm_votes[AlgorithmType.RSA] = max(
-                    algorithm_votes.get(AlgorithmType.RSA, 0.0),
-                    primitive.confidence,
-                )
-
         for api_call in api_calls:
             if "MD5" in api_call:
-                algorithm_votes[AlgorithmType.MD5] = max(algorithm_votes.get(AlgorithmType.MD5, 0.0), 0.8)
+                algorithm_votes[AlgorithmType.MD5] = max(
+                    algorithm_votes.get(AlgorithmType.MD5, 0.0), 0.8
+                )
             elif "SHA1" in api_call:
-                algorithm_votes[AlgorithmType.SHA1] = max(algorithm_votes.get(AlgorithmType.SHA1, 0.0), 0.8)
+                algorithm_votes[AlgorithmType.SHA1] = max(
+                    algorithm_votes.get(AlgorithmType.SHA1, 0.0), 0.8
+                )
             elif "SHA256" in api_call:
-                algorithm_votes[AlgorithmType.SHA256] = max(algorithm_votes.get(AlgorithmType.SHA256, 0.0), 0.8)
+                algorithm_votes[AlgorithmType.SHA256] = max(
+                    algorithm_votes.get(AlgorithmType.SHA256, 0.0), 0.8
+                )
             elif "Crypt" in api_call and "Signature" in api_call:
-                algorithm_votes[AlgorithmType.RSA] = max(algorithm_votes.get(AlgorithmType.RSA, 0.0), 0.85)
+                algorithm_votes[AlgorithmType.RSA] = max(
+                    algorithm_votes.get(AlgorithmType.RSA, 0.0), 0.85
+                )
 
         if algorithm_votes:
-            best_algorithm = max(algorithm_votes.items(), key=lambda x: x[1])
-            return best_algorithm
+            return max(algorithm_votes.items(), key=lambda x: x[1])
         return (AlgorithmType.UNKNOWN, 0.3)
 
-    def _extract_embedded_constants(self, binary_code: bytes, instructions: list[Any]) -> dict[str, bytes]:
+    def _extract_embedded_constants(
+        self, binary_code: bytes, instructions: list[Any]
+    ) -> dict[str, bytes]:
         """Extract embedded constants from binary code.
 
         Args:
@@ -570,16 +586,15 @@ class ValidationAnalyzer:
             elif dword in self.CRC32_POLYNOMIALS:
                 constants[f"crc32_poly_{hex(dword)}"] = binary_code[idx : idx + 4]
 
-        for idx in range(0, len(binary_code) - 32, 1):
+        for idx in range(len(binary_code) - 32):
             chunk = binary_code[idx : idx + 32]
-            if len(set(chunk)) > 16:
-                if all(32 <= b < 127 or b in {9, 10, 13} for b in chunk):
-                    try:
-                        ascii_str = chunk.decode("ascii").rstrip("\x00")
-                        if len(ascii_str) >= 8:
-                            constants[f"string_{hex(idx)}"] = chunk
-                    except (UnicodeDecodeError, ValueError):
-                        pass
+            if len(set(chunk)) > 16 and all(32 <= b < 127 or b in {9, 10, 13} for b in chunk):
+                try:
+                    ascii_str = chunk.decode("ascii").rstrip("\x00")
+                    if len(ascii_str) >= 8:
+                        constants[f"string_{hex(idx)}"] = chunk
+                except ValueError:
+                    pass
 
         return constants
 
@@ -603,34 +618,60 @@ class ValidationAnalyzer:
         recommendations = []
 
         if algorithm_type == AlgorithmType.MD5:
-            recommendations.append("MD5 hash detected - consider rainbow table attack or keygen with hash matching")
-            recommendations.append("Look for input transformation before MD5 - may reveal key format requirements")
+            recommendations.extend(
+                (
+                    "MD5 hash detected - consider rainbow table attack or keygen with hash matching",
+                    "Look for input transformation before MD5 - may reveal key format requirements",
+                )
+            )
         elif algorithm_type == AlgorithmType.SHA1:
-            recommendations.append("SHA1 hash detected - analyze input preparation for keygen creation")
+            recommendations.append(
+                "SHA1 hash detected - analyze input preparation for keygen creation"
+            )
         elif algorithm_type == AlgorithmType.SHA256:
-            recommendations.append("SHA256 hash detected - strong algorithm, focus on input analysis or patching")
+            recommendations.append(
+                "SHA256 hash detected - strong algorithm, focus on input analysis or patching"
+            )
         elif algorithm_type == AlgorithmType.CRC32:
-            recommendations.append("CRC32 checksum detected - easily reversible, create keygen with CRC matching")
-            recommendations.append("Extract CRC polynomial and generate valid checksums")
+            recommendations.extend(
+                (
+                    "CRC32 checksum detected - easily reversible, create keygen with CRC matching",
+                    "Extract CRC polynomial and generate valid checksums",
+                )
+            )
         elif algorithm_type == AlgorithmType.RSA:
-            recommendations.append("RSA signature detected - extract public key and analyze key format")
-            recommendations.append("Consider patching signature verification instead of key generation")
+            recommendations.extend(
+                (
+                    "RSA signature detected - extract public key and analyze key format",
+                    "Consider patching signature verification instead of key generation",
+                )
+            )
         elif algorithm_type == AlgorithmType.CUSTOM:
-            recommendations.append("Custom algorithm detected - perform dynamic analysis to trace validation logic")
-            recommendations.append("Use debugger to capture input/output of validation function")
-
+            recommendations.extend(
+                (
+                    "Custom algorithm detected - perform dynamic analysis to trace validation logic",
+                    "Use debugger to capture input/output of validation function",
+                )
+            )
         if patch_points:
-            recommendations.append(f"Found {len(patch_points)} potential patch points for binary modification")
-            recommendations.append("Priority: Patch conditional jumps to bypass validation checks")
-
+            recommendations.extend(
+                (
+                    f"Found {len(patch_points)} potential patch points for binary modification",
+                    "Priority: Patch conditional jumps to bypass validation checks",
+                )
+            )
         if crypto_primitives:
             hash_primitives = [p for p in crypto_primitives if p.crypto_type == CryptoType.HASH]
             if len(hash_primitives) > 1:
-                recommendations.append("Multiple hash algorithms detected - composite validation scheme")
+                recommendations.append(
+                    "Multiple hash algorithms detected - composite validation scheme"
+                )
 
         if not patch_points and algorithm_type == AlgorithmType.UNKNOWN:
             recommendations.append("Limited information - recommend dynamic analysis with debugger")
-            recommendations.append("Set breakpoints on string comparison functions (strcmp, memcmp)")
+            recommendations.append(
+                "Set breakpoints on string comparison functions (strcmp, memcmp)"
+            )
 
         return recommendations
 
@@ -661,8 +702,7 @@ class ConstraintExtractor:
         algorithm_types = self._group_constraints_by_algorithm(constraints)
 
         for algo_type, algo_constraints in algorithm_types.items():
-            algorithm = self._build_algorithm(algo_type, algo_constraints)
-            if algorithm:
+            if algorithm := self._build_algorithm(algo_type, algo_constraints):
                 self.algorithms.append(algorithm)
 
         if not self.algorithms:
@@ -670,7 +710,9 @@ class ConstraintExtractor:
 
         return self.algorithms
 
-    def _group_constraints_by_algorithm(self, constraints: list[KeyConstraint]) -> dict[str, list[KeyConstraint]]:
+    def _group_constraints_by_algorithm(
+        self, constraints: list[KeyConstraint]
+    ) -> dict[str, list[KeyConstraint]]:
         groups = {}
 
         for constraint in constraints:
@@ -685,7 +727,9 @@ class ConstraintExtractor:
 
         return groups
 
-    def _build_algorithm(self, algo_type: str, constraints: list[KeyConstraint]) -> ExtractedAlgorithm | None:
+    def _build_algorithm(
+        self, algo_type: str, constraints: list[KeyConstraint]
+    ) -> ExtractedAlgorithm | None:
         if algo_type == "crc":
             return self._build_crc_algorithm(constraints)
         if algo_type in {"md5", "sha1", "sha256"}:
@@ -701,11 +745,7 @@ class ConstraintExtractor:
 
         for constraint in constraints:
             if "CRC32" in str(constraint.value):
-                if "reversed" in str(constraint.value):
-                    polynomial = 0xEDB88320
-                else:
-                    polynomial = 0x04C11DB7
-
+                polynomial = 0xEDB88320 if "reversed" in str(constraint.value) else 0x04C11DB7
         def crc32_validate(key: str) -> int:
             return zlib.crc32(key.encode()) & 0xFFFFFFFF
 
@@ -718,7 +758,9 @@ class ConstraintExtractor:
             confidence=0.85,
         )
 
-    def _build_hash_algorithm(self, algo_type: str, constraints: list[KeyConstraint]) -> ExtractedAlgorithm:
+    def _build_hash_algorithm(
+        self, algo_type: str, constraints: list[KeyConstraint]
+    ) -> ExtractedAlgorithm:
         hash_functions = {
             "md5": hashlib.md5,
             "sha1": hashlib.sha1,
@@ -739,7 +781,9 @@ class ConstraintExtractor:
             confidence=0.9,
         )
 
-    def _build_multiplicative_algorithm(self, constraints: list[KeyConstraint]) -> ExtractedAlgorithm:
+    def _build_multiplicative_algorithm(
+        self, constraints: list[KeyConstraint]
+    ) -> ExtractedAlgorithm:
         def multiplicative_validate(key: str) -> int:
             result = 0
             multiplier = 31
@@ -841,10 +885,7 @@ class KeySynthesizer:
     ) -> GeneratedSerial:
         constraints = self._build_serial_constraints(algorithm)
 
-        seed = None
-        if target_data:
-            seed = target_data
-
+        seed = target_data or None
         return self.generator.generate_serial(constraints, seed=seed)
 
     def _build_serial_constraints(self, algorithm: ExtractedAlgorithm) -> SerialConstraints:
@@ -895,10 +936,10 @@ class KeySynthesizer:
         keys = []
         generated_set = set()
 
+        max_retries = 10
         for i in range(count):
             target_data = {"index": i} if unique else None
 
-            max_retries = 10
             for retry in range(max_retries):
                 key = self.synthesize_key(algorithm, target_data)
 
@@ -945,12 +986,14 @@ class KeySynthesizer:
         """Synthesize a key using Z3 constraint solver."""
         self.solver.reset()
 
-        key_length = 16
-        for constraint in constraints:
-            if constraint.constraint_type == "length":
-                key_length = constraint.value
-                break
-
+        key_length = next(
+            (
+                constraint.value
+                for constraint in constraints
+                if constraint.constraint_type == "length"
+            ),
+            16,
+        )
         key_vars = [z3.BitVec(f"k{i}", 8) for i in range(key_length)]
 
         for constraint in constraints:
@@ -1023,7 +1066,19 @@ class LicenseKeygen:
         **kwargs: object,
     ) -> GeneratedSerial:
         """Generate a key from a known algorithm."""
-        if algorithm_name == "microsoft":
+        if algorithm_name == "crc32":
+            return GeneratedSerial(
+                serial=self.generator._generate_crc32_serial(kwargs.get("length", 16)),
+                algorithm="crc32",
+                confidence=0.85,
+            )
+        elif algorithm_name == "luhn":
+            return GeneratedSerial(
+                serial=self.generator._generate_luhn_serial(kwargs.get("length", 16)),
+                algorithm="luhn",
+                confidence=0.9,
+            )
+        elif algorithm_name == "microsoft":
             constraints = SerialConstraints(
                 length=25,
                 format=SerialFormat.MICROSOFT,
@@ -1033,18 +1088,6 @@ class LicenseKeygen:
             constraints = SerialConstraints(
                 length=36,
                 format=SerialFormat.UUID,
-            )
-        elif algorithm_name == "luhn":
-            return GeneratedSerial(
-                serial=self.generator._generate_luhn_serial(kwargs.get("length", 16)),
-                algorithm="luhn",
-                confidence=0.9,
-            )
-        elif algorithm_name == "crc32":
-            return GeneratedSerial(
-                serial=self.generator._generate_crc32_serial(kwargs.get("length", 16)),
-                algorithm="crc32",
-                confidence=0.85,
             )
         else:
             constraints = SerialConstraints(

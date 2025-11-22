@@ -35,6 +35,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, TypeVar, overload
 
+
 try:
     from sklearn.cluster import DBSCAN, AgglomerativeClustering, KMeans
     from sklearn.metrics import silhouette_score
@@ -58,6 +59,7 @@ from pathlib import Path
 
 from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.sqlite3_handler import sqlite3
+
 
 """
 Pattern Evolution Tracker with Adaptive Learning
@@ -141,7 +143,9 @@ if not SKLEARN_AVAILABLE:
     class KMeans:
         """Fallback K-Means clustering implementation."""
 
-        def __init__(self, n_clusters: int = 8, random_state: int | None = None, n_init: int = 10) -> None:
+        def __init__(
+            self, n_clusters: int = 8, random_state: int | None = None, n_init: int = 10
+        ) -> None:
             """Initialize the KMeans clustering algorithm.
 
             Args:
@@ -260,9 +264,12 @@ if not SCIPY_AVAILABLE:
             Hamming distance between u and v.
 
         """
-        return sum(1 for x, y in zip(u, v, strict=False) if x != y) / len(u)
+        return sum(bool(x != y)
+               for x, y in zip(u, v, strict=False)) / len(u)
 
-    def jaccard(u: list[float] | set[Any] | np.ndarray, v: list[float] | set[Any] | np.ndarray) -> float:
+    def jaccard(
+        u: list[float] | set[Any] | np.ndarray, v: list[float] | set[Any] | np.ndarray
+    ) -> float:
         """Jaccard distance fallback.
 
         Args:
@@ -273,8 +280,8 @@ if not SCIPY_AVAILABLE:
             Jaccard distance between u and v.
 
         """
-        set_u = set(u) if not isinstance(u, set) else u
-        set_v = set(v) if not isinstance(v, set) else v
+        set_u = u if isinstance(u, set) else set(u)
+        set_v = v if isinstance(v, set) else set(v)
         return 1.0 - len(set_u & set_v) / len(set_u | set_v) if (set_u | set_v) else 0.0
 
     def cosine(u: np.ndarray | list[float], v: np.ndarray | list[float]) -> float:
@@ -308,9 +315,7 @@ if not SCIPY_AVAILABLE:
         """
         pk = np.asarray(pk)
         pk = pk[pk > 0]
-        if len(pk) == 0:
-            return 0.0
-        return -np.sum(pk * np.log(pk) / np.log(base))
+        return 0.0 if len(pk) == 0 else -np.sum(pk * np.log(pk) / np.log(base))
 
 
 class RestrictedUnpickler(pickle.Unpickler):
@@ -470,7 +475,9 @@ class PatternGene:
             metadata=self.metadata.copy(),
         )
 
-    def _apply_mutation(self, data: bytes | list[str] | str, mutation_type: MutationType, rate: float) -> bytes | list[str] | str:
+    def _apply_mutation(
+        self, data: bytes | list[str] | str, mutation_type: MutationType, rate: float
+    ) -> bytes | list[str] | str:
         """Apply specific mutation to pattern data.
 
         Args:
@@ -520,7 +527,9 @@ class PatternGene:
 
         return bytes(byte_list)
 
-    def _mutate_api_sequence(self, data: list[str], mutation_type: MutationType, rate: float) -> list[str]:
+    def _mutate_api_sequence(
+        self, data: list[str], mutation_type: MutationType, rate: float
+    ) -> list[str]:
         """Mutate API sequence pattern based on mutation rate."""
         api_list = data.copy()
 
@@ -573,18 +582,19 @@ class PatternGene:
             if "?" not in data and random.random() < rate:  # noqa: S311 - ML string pattern mutation probability
                 # Make last character optional
                 data = data[:-1] + data[-1] + "?"
-            # Add character class
             elif "[" not in data and random.random() < rate:  # noqa: S311 - ML string pattern mutation probability
                 # Replace a character with character class
-                if len(data) > 0:
+                if data != "":
                     pos = random.randint(0, len(data) - 1)  # noqa: S311 - ML string pattern character position
                     char = data[pos]
                     if char.isalpha():
-                        data = data[:pos] + f"[{char.lower()}{char.upper()}]" + data[pos + 1 :]
+                        data = f"{data[:pos]}[{char.lower()}{char.upper()}]{data[pos + 1:]}"
 
         return data
 
-    def _mutate_opcode_sequence(self, data: list[str], mutation_type: MutationType, rate: float) -> list[str]:
+    def _mutate_opcode_sequence(
+        self, data: list[str], mutation_type: MutationType, rate: float
+    ) -> list[str]:
         """Mutate opcode sequence pattern based on mutation rate."""
         opcode_list = data.copy()
 
@@ -629,7 +639,9 @@ class PatternGene:
 
         return opcode_list
 
-    def crossover(self, other: "PatternGene", crossover_point: int | None = None) -> tuple["PatternGene", "PatternGene"]:
+    def crossover(
+        self, other: "PatternGene", crossover_point: int | None = None
+    ) -> tuple["PatternGene", "PatternGene"]:
         """Perform crossover with another gene."""
         if self.type != other.type:
             # Can't crossover different types
@@ -712,7 +724,9 @@ class QLearningAgent:
         state_key = self.get_state_key(state)
         return np.argmax(self.q_table[state_key])
 
-    def remember(self, state: np.ndarray, action: int, reward: float, next_state: np.ndarray, done: bool) -> None:
+    def remember(
+        self, state: np.ndarray, action: int, reward: float, next_state: np.ndarray, done: bool
+    ) -> None:
         """Store experience in replay buffer."""
         self.memory.append((state, action, reward, next_state, done))
 
@@ -732,7 +746,9 @@ class QLearningAgent:
                 target = reward + self.discount_factor * np.max(self.q_table[next_state_key])
 
             # Q-learning update
-            self.q_table[state_key][action] = (1 - self.learning_rate) * self.q_table[state_key][action] + self.learning_rate * target
+            self.q_table[state_key][action] = (1 - self.learning_rate) * self.q_table[state_key][
+                action
+            ] + self.learning_rate * target
 
         # Decay epsilon
         if self.epsilon > self.epsilon_min:
@@ -745,7 +761,9 @@ class PatternStorage:
     def __init__(self, db_path: str | None = None) -> None:
         """Initialize pattern storage with SQLite database and thread safety."""
         if db_path is None:
-            db_path = str(Path(__file__).parent.parent / "data" / "database" / "pattern_evolution.db")
+            db_path = str(
+                Path(__file__).parent.parent / "data" / "database" / "pattern_evolution.db"
+            )
         self.db_path = db_path
         self.conn = sqlite3.connect(db_path, check_same_thread=False)
         self.lock = threading.Lock()
@@ -801,7 +819,9 @@ class PatternStorage:
             # Create indexes
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_patterns_type ON patterns(type)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_patterns_fitness ON patterns(fitness)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_metrics_pattern ON pattern_metrics(pattern_id)")
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_metrics_pattern ON pattern_metrics(pattern_id)"
+            )
 
             self.conn.commit()
 
@@ -874,20 +894,22 @@ class PatternStorage:
                 metadata_json,
             ) = row
 
-            pattern = PatternGene(
+            return PatternGene(
                 id=pattern_id,
                 type=PatternType(type_str),
                 pattern_data=secure_pickle_loads(pattern_blob),
                 fitness=fitness,
                 generation=generation,
                 parent_ids=json.loads(parent_ids_json),
-                mutation_history=[MutationType(m) for m in json.loads(mutation_history_json)],
+                mutation_history=[
+                    MutationType(m) for m in json.loads(mutation_history_json)
+                ],
                 metadata=json.loads(metadata_json),
             )
 
-            return pattern
-
-    def get_top_patterns(self, pattern_type: PatternType | None = None, limit: int = 10) -> list[PatternGene]:
+    def get_top_patterns(
+        self, pattern_type: PatternType | None = None, limit: int = 10
+    ) -> list[PatternGene]:
         """Get top performing patterns."""
         with self.lock:
             cursor = self.conn.cursor()
@@ -916,7 +938,9 @@ class PatternStorage:
 
         return [self.load_pattern(pid) for pid in pattern_ids if pid]
 
-    def update_metrics(self, pattern_id: str, tp: int, fp: int, tn: int, fn: int, detection_time_ms: float) -> None:
+    def update_metrics(
+        self, pattern_id: str, tp: int, fp: int, tn: int, fn: int, detection_time_ms: float
+    ) -> None:
         """Update pattern performance metrics."""
         with self.lock:
             cursor = self.conn.cursor()
@@ -934,7 +958,9 @@ class PatternStorage:
             # Update pattern fitness based on metrics
             precision = tp / (tp + fp) if (tp + fp) > 0 else 0
             recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-            f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+            f1_score = (
+                2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+            )
 
             # Factor in speed (bonus for faster detection)
             speed_factor = 1.0 / (1.0 + detection_time_ms / 1000.0)  # Normalize to ~0-1
@@ -1029,7 +1055,8 @@ class PatternMatcher:
         if min_len == 0:
             return 0.0
 
-        matches = sum(1 for i in range(min_len) if data[i] == pattern[i])
+        matches = sum(bool(data[i] == pattern[i])
+                  for i in range(min_len))
         return matches / len(pattern)
 
     def _match_string_pattern(self, data: bytes, pattern: PatternGene) -> float:
@@ -1041,8 +1068,7 @@ class PatternMatcher:
             text = data.decode("utf-8", errors="ignore")
             regex = self.compiled_patterns[pattern.id]
 
-            matches = regex.findall(text)
-            if matches:
+            if matches := regex.findall(text):
                 # Confidence based on number of matches
                 return min(1.0, len(matches) / 10.0)
         except (re.error, KeyError, AttributeError) as e:
@@ -1057,16 +1083,8 @@ class PatternMatcher:
         # Extract API calls from data (simplified)
         text = data.decode("utf-8", errors="ignore")
 
-        # Look for API names in data
-        found_apis = []
-        for api in pattern:
-            if api in text:
-                found_apis.append(api)
-
-        if not pattern:
-            return 0.0
-
-        return len(found_apis) / len(pattern)
+        found_apis = [api for api in pattern if api in text]
+        return len(found_apis) / len(pattern) if pattern else 0.0
 
     def _match_opcode_sequence(self, data: bytes, pattern: list[str]) -> float:
         """Match opcode sequence by analyzing binary data for instruction patterns."""
@@ -1159,7 +1177,9 @@ class PatternEvolutionTracker:
         self.family_representatives = {}  # family_id -> representative pattern_id
 
         # Pattern populations by type
-        self.populations: dict[PatternType, list[PatternGene]] = {ptype: [] for ptype in PatternType}
+        self.populations: dict[PatternType, list[PatternGene]] = {
+            ptype: [] for ptype in PatternType
+        }
 
         # Observers for pattern updates
         self.observers = []
@@ -1210,7 +1230,7 @@ class PatternEvolutionTracker:
             if pattern_type == PatternType.BYTE_SEQUENCE:
                 # Random byte sequence
                 length = random.randint(4, 32)  # noqa: S311 - ML training data byte sequence length generation
-                data = bytes([random.randint(0, 255) for _ in range(length)])  # noqa: S311 - ML training data byte generation
+                data = bytes(random.randint(0, 255) for _ in range(length))
 
             elif pattern_type == PatternType.API_SEQUENCE:
                 # Random API sequence
@@ -1283,7 +1303,11 @@ class PatternEvolutionTracker:
     def _calculate_pattern_similarity(self, pattern1: PatternGene, pattern2: PatternGene) -> float:
         """Calculate similarity between two patterns."""
         # Use chi2_contingency for calculating similarity if available
-        if SCIPY_AVAILABLE and pattern1.type == PatternType.STRING_PATTERN and pattern2.type == PatternType.STRING_PATTERN:
+        if (
+            SCIPY_AVAILABLE
+            and pattern1.type == PatternType.STRING_PATTERN
+            and pattern2.type == PatternType.STRING_PATTERN
+        ):
             # Create contingency table for chi2 test
             try:
                 # Extract common features for both patterns
@@ -1297,7 +1321,9 @@ class PatternEvolutionTracker:
                 neither = 0  # For this simple case, assume all items are in at least one set
 
                 # Create contingency table
-                contingency_table = np.array([[intersection, only_in_p2], [only_in_p1, neither + 1]])  # Adding 1 to avoid zero issues
+                contingency_table = np.array(
+                    [[intersection, only_in_p2], [only_in_p1, neither + 1]]
+                )  # Adding 1 to avoid zero issues
 
                 # Calculate chi2 contingency if possible
                 _chi2, p_value, _dof, _expected = chi2_contingency(contingency_table)
@@ -1315,14 +1341,15 @@ class PatternEvolutionTracker:
         mutations = []
 
         for parent_id in pattern.parent_ids:
-            parent = self.storage.load_pattern(parent_id)
-            if parent:
+            if parent := self.storage.load_pattern(parent_id):
                 mutation_info = self.mutation_detector.detect_mutation(parent, pattern)
                 mutations.append({"parent_id": parent_id, "mutation_info": mutation_info})
 
         return mutations
 
-    def cluster_into_families(self, pattern_type: PatternType, similarity_threshold: float = 0.7) -> dict[str, set[str]]:
+    def cluster_into_families(
+        self, pattern_type: PatternType, similarity_threshold: float = 0.7
+    ) -> dict[str, set[str]]:
         """Cluster patterns into families based on similarity."""
         population = self.populations[pattern_type]
         if not population:
@@ -1357,8 +1384,7 @@ class PatternEvolutionTracker:
 
         # Select family representatives (highest fitness in each family)
         for family_id, pattern_ids in families.items():
-            patterns = [p for p in population if p.id in pattern_ids]
-            if patterns:
+            if patterns := [p for p in population if p.id in pattern_ids]:
                 representative = max(patterns, key=lambda p: p.fitness)
                 self.family_representatives[family_id] = representative.id
 
@@ -1385,11 +1411,7 @@ class PatternEvolutionTracker:
 
     def evolve_generation(self, pattern_type: PatternType | None = None) -> None:
         """Evolve one generation of patterns with advanced learning."""
-        if pattern_type:
-            types_to_evolve = [pattern_type]
-        else:
-            types_to_evolve = list(PatternType)
-
+        types_to_evolve = [pattern_type] if pattern_type else list(PatternType)
         for ptype in types_to_evolve:
             self.logger.info(f"Evolving {ptype.value} patterns")
 
@@ -1457,8 +1479,7 @@ class PatternEvolutionTracker:
             # Detect mutations in new patterns
             for pattern in self.populations[ptype]:
                 if pattern.parent_ids:
-                    mutations = self.detect_pattern_mutations(pattern)
-                    if mutations:
+                    if mutations := self.detect_pattern_mutations(pattern):
                         pattern.metadata["detected_mutations"] = mutations
 
             # Cluster into families
@@ -1519,7 +1540,9 @@ class PatternEvolutionTracker:
 
         return min(1.0, final_fitness)
 
-    def _tournament_selection(self, population: list[PatternGene], tournament_size: int = 3) -> PatternGene:
+    def _tournament_selection(
+        self, population: list[PatternGene], tournament_size: int = 3
+    ) -> PatternGene:
         """Tournament selection for genetic algorithm."""
         tournament = random.sample(population, min(tournament_size, len(population)))
         return max(tournament, key=lambda p: p.fitness)
@@ -1539,8 +1562,7 @@ class PatternEvolutionTracker:
             matches = self.matcher.match(data, ptype)
 
             for pattern_id, confidence in matches:
-                pattern = self.storage.load_pattern(pattern_id)
-                if pattern:
+                if pattern := self.storage.load_pattern(pattern_id):
                     results["detections"].append(
                         {
                             "pattern_id": pattern_id,
@@ -1582,10 +1604,7 @@ class PatternEvolutionTracker:
 
     def _extract_state_features(self, data: bytes) -> np.ndarray:
         """Extract features from data for Q-learning state."""
-        features = []
-
-        # Size features
-        features.append(len(data))
+        features = [len(data)]
 
         # Entropy
         if data:
@@ -1598,10 +1617,9 @@ class PatternEvolutionTracker:
 
         # String features
         text = data.decode("utf-8", errors="ignore")
-        features.append(text.count("license"))
-        features.append(text.count("serial"))
-        features.append(text.count("key"))
-
+        features.extend(
+            (text.count("license"), text.count("serial"), text.count("key"))
+        )
         # Pad to state size
         while len(features) < 50:
             features.append(0)
@@ -1616,14 +1634,16 @@ class PatternEvolutionTracker:
 
         # Update metrics
         if correct:
-            self.storage.update_metrics(pattern_id, tp=1, fp=0, tn=0, fn=0, detection_time_ms=detection_time_ms)
+            self.storage.update_metrics(
+                pattern_id, tp=1, fp=0, tn=0, fn=0, detection_time_ms=detection_time_ms
+            )
         else:
-            self.storage.update_metrics(pattern_id, tp=0, fp=1, tn=0, fn=0, detection_time_ms=detection_time_ms)
+            self.storage.update_metrics(
+                pattern_id, tp=0, fp=1, tn=0, fn=0, detection_time_ms=detection_time_ms
+            )
             self.stats["false_positives"] += 1
 
-        # Reload pattern with updated fitness
-        updated_pattern = self.storage.load_pattern(pattern_id)
-        if updated_pattern:
+        if updated_pattern := self.storage.load_pattern(pattern_id):
             # Update in population
             for ptype in PatternType:
                 for i, p in enumerate(self.populations[ptype]):
@@ -1652,11 +1672,7 @@ class PatternEvolutionTracker:
         """Export patterns to JSON file."""
         patterns_data = []
 
-        if pattern_type:
-            types_to_export = [pattern_type]
-        else:
-            types_to_export = list(PatternType)
-
+        types_to_export = [pattern_type] if pattern_type else list(PatternType)
         for ptype in types_to_export:
             for pattern in self.populations[ptype]:
                 pattern_dict = {
@@ -1743,15 +1759,16 @@ class PatternEvolutionTracker:
 
         # Add population statistics
         for ptype in PatternType:
-            population = self.populations[ptype]
-            if population:
+            if population := self.populations[ptype]:
                 stats[f"{ptype.value}_count"] = len(population)
                 stats[f"{ptype.value}_avg_fitness"] = np.mean([p.fitness for p in population])
                 stats[f"{ptype.value}_best_fitness"] = max(p.fitness for p in population)
 
         return stats
 
-    def cluster_patterns(self, pattern_type: PatternType, min_samples: int = 5) -> dict[int, list[PatternGene]]:
+    def cluster_patterns(
+        self, pattern_type: PatternType, min_samples: int = 5
+    ) -> dict[int, list[PatternGene]]:
         """Cluster similar patterns using DBSCAN."""
         population = self.populations[pattern_type]
         if len(population) < min_samples:
@@ -1762,7 +1779,9 @@ class PatternEvolutionTracker:
         for pattern in population:
             if pattern_type == PatternType.BYTE_SEQUENCE:
                 # Use byte histogram as features
-                hist = np.bincount(np.frombuffer(pattern.pattern_data, dtype=np.uint8), minlength=256)
+                hist = np.bincount(
+                    np.frombuffer(pattern.pattern_data, dtype=np.uint8), minlength=256
+                )
                 features.append(hist / hist.sum())
             else:
                 # Use fitness and generation as simple features
@@ -1793,7 +1812,9 @@ class PatternUpdateObserver:
     def on_patterns_updated(self, tracker: PatternEvolutionTracker) -> None:
         """Handle pattern updates."""
         stats = tracker.get_statistics()
-        print(f"Generation {stats['generations']}: Best fitness: {stats.get('best_fitness', 0):.3f}, Detections: {stats['detections']}")
+        print(
+            f"Generation {stats['generations']}: Best fitness: {stats.get('best_fitness', 0):.3f}, Detections: {stats['detections']}"
+        )
 
 
 def main() -> None:
@@ -1834,7 +1855,9 @@ def main() -> None:
             print(f"  Patterns matched: {len(results['patterns_matched'])}")
 
             for detection in results["detections"]:
-                print(f"  - {detection['type']}: {detection['confidence']:.3f} (gen {detection['generation']})")
+                print(
+                    f"  - {detection['type']}: {detection['confidence']:.3f} (gen {detection['generation']})"
+                )
 
         if args.export:
             tracker.export_patterns(args.export)

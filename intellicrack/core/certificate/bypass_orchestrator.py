@@ -144,6 +144,7 @@ from intellicrack.core.certificate.detection_report import BypassMethod, Detecti
 from intellicrack.core.certificate.frida_cert_hooks import FridaCertificateHooks
 from intellicrack.core.certificate.validation_detector import CertificateValidationDetector
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -241,7 +242,8 @@ class CertificateBypassOrchestrator:
             if method is None:
                 target_state = "running" if is_running else "static"
                 method = self.strategy_selector.select_optimal_strategy(
-                    detection_report, target_state,
+                    detection_report,
+                    target_state,
                 )
 
             logger.info(f"Executing bypass with method: {method.value}")
@@ -312,7 +314,7 @@ class CertificateBypassOrchestrator:
         """
         target_path = Path(target)
 
-        if target_path.exists() and target_path.is_file():
+        if target_path.is_file():
             is_running = self._is_process_running(target_path.name)
             return target_path, is_running
 
@@ -323,10 +325,10 @@ class CertificateBypassOrchestrator:
         except (ValueError, psutil.NoSuchProcess):
             pass
 
-        for proc in psutil.process_iter(['name', 'exe']):
+        for proc in psutil.process_iter(["name", "exe"]):
             try:
-                if proc.info['name'] == target:
-                    return Path(proc.info['exe']), True
+                if proc.info["name"] == target:
+                    return Path(proc.info["exe"]), True
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
 
@@ -342,9 +344,9 @@ class CertificateBypassOrchestrator:
             True if process is running
 
         """
-        for proc in psutil.process_iter(['name']):
+        for proc in psutil.process_iter(["name"]):
             try:
-                if proc.info['name'] == process_name:
+                if proc.info["name"] == process_name:
                     return True
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
@@ -408,7 +410,9 @@ class CertificateBypassOrchestrator:
             status = self.frida_hooks.get_bypass_status()
             status["success"] = True
 
-            logger.info(f"Frida hook successful: {len(status.get('active_hooks', []))} hooks active")
+            logger.info(
+                f"Frida hook successful: {len(status.get('active_hooks', []))} hooks active"
+            )
 
             return status
 
@@ -438,9 +442,7 @@ class CertificateBypassOrchestrator:
             from cryptography.hazmat.primitives import serialization
 
             from intellicrack.core.certificate.cert_cache import CertificateCache
-            from intellicrack.core.certificate.cert_chain_generator import (
-                CertificateChainGenerator,
-            )
+            from intellicrack.core.certificate.cert_chain_generator import CertificateChainGenerator
 
             domains = self._extract_licensing_domains(target)
             if not domains:
@@ -524,12 +526,22 @@ class CertificateBypassOrchestrator:
             with BinaryScanner(str(target_path)) as scanner:
                 strings = scanner.scan_strings()
 
-                url_pattern = r'https?://([a-zA-Z0-9][-a-zA-Z0-9.]*\.[a-zA-Z]{2,})'
+                url_pattern = r"https?://([a-zA-Z0-9][-a-zA-Z0-9.]*\.[a-zA-Z]{2,})"
 
                 licensing_keywords = [
-                    "license", "licensing", "activation", "activate",
-                    "auth", "api", "server", "cloud", "online",
-                    "verify", "validation", "registration", "register",
+                    "license",
+                    "licensing",
+                    "activation",
+                    "activate",
+                    "auth",
+                    "api",
+                    "server",
+                    "cloud",
+                    "online",
+                    "verify",
+                    "validation",
+                    "registration",
+                    "register",
                 ]
 
                 for string in strings:
@@ -537,15 +549,13 @@ class CertificateBypassOrchestrator:
                     for domain in matches:
                         domain_lower = domain.lower()
 
-                        if any(kw in domain_lower for kw in licensing_keywords):
-                            if domain not in domains:
-                                domains.append(domain)
-                                logger.debug(f"Found licensing domain: {domain}")
+                        if any(kw in domain_lower for kw in licensing_keywords) and domain not in domains:
+                            domains.append(domain)
+                            logger.debug(f"Found licensing domain: {domain}")
 
-                        if any(kw in string.lower() for kw in licensing_keywords):
-                            if domain not in domains:
-                                domains.append(domain)
-                                logger.debug(f"Found domain in licensing context: {domain}")
+                        if any(kw in string.lower() for kw in licensing_keywords) and domain not in domains:
+                            domains.append(domain)
+                            logger.debug(f"Found domain in licensing context: {domain}")
 
             return list(set(domains))
 
@@ -699,14 +709,17 @@ class CertificateBypassOrchestrator:
                 cert_strings = scanner.find_certificate_references()
 
                 bypass_indicators = [
-                    "bypass", "patched", "hooked", "disabled",
-                    "ignored", "skipped", "override",
+                    "bypass",
+                    "patched",
+                    "hooked",
+                    "disabled",
+                    "ignored",
+                    "skipped",
+                    "override",
                 ]
 
-                bypass_count = sum(
-                    1 for s in cert_strings
-                    if any(indicator in s.lower() for indicator in bypass_indicators)
-                )
+                bypass_count = sum(bool(any(indicator in s.lower() for indicator in bypass_indicators))
+                               for s in cert_strings)
 
                 if bypass_count > 0:
                     logger.debug(f"Found {bypass_count} bypass indicators in strings")

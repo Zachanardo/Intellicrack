@@ -12,6 +12,7 @@ import os
 import subprocess
 import sys
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,7 +37,11 @@ class GPUAutoLoader:
             return True
 
         # Check if Intel XPU should be skipped due to GIL issues
-        skip_intel = os.environ.get("INTELLICRACK_SKIP_INTEL_XPU", "").lower() in ("1", "true", "yes")
+        skip_intel = os.environ.get("INTELLICRACK_SKIP_INTEL_XPU", "").lower() in (
+            "1",
+            "true",
+            "yes",
+        )
 
         logger.info("Starting GPU auto-detection...")
 
@@ -79,7 +84,6 @@ class GPUAutoLoader:
     def _try_intel_xpu(self) -> bool:
         """Try to use Intel Arc/XPU through native PyTorch."""
         try:
-
             # Use thread-safe PyTorch import
             from .torch_gil_safety import safe_torch_import
 
@@ -90,7 +94,7 @@ class GPUAutoLoader:
             self._torch = torch
 
             # Check for XPU support in PyTorch
-            if not hasattr(torch, 'xpu'):
+            if not hasattr(torch, "xpu"):
                 logger.debug("PyTorch XPU backend not available")
                 return False
 
@@ -107,8 +111,10 @@ class GPUAutoLoader:
                         device_count = torch.xpu.device_count()
                         self.gpu_info = {
                             "device_count": device_count,
-                            "backend": "Intel Extension for PyTorch",
-                            "driver_version": torch.xpu.get_driver_version() if hasattr(torch.xpu, "get_driver_version") else "Unknown",
+                            "backend": "PyTorch XPU",
+                            "driver_version": torch.xpu.get_driver_version()
+                            if hasattr(torch.xpu, "get_driver_version")
+                            else "Unknown",
                         }
 
                         # Get info for first device
@@ -117,7 +123,9 @@ class GPUAutoLoader:
                                 self.gpu_info["device_name"] = torch.xpu.get_device_name(0)
                                 props = torch.xpu.get_device_properties(0)
                                 self.gpu_info["total_memory"] = (
-                                    f"{props.total_memory / (1024**3):.1f} GB" if hasattr(props, "total_memory") else "Unknown"
+                                    f"{props.total_memory / (1024**3):.1f} GB"
+                                    if hasattr(props, "total_memory")
+                                    else "Unknown"
                                 )
                             except Exception as e:
                                 logger.debug(f"Failed to get XPU device info: {e}")
@@ -204,7 +212,9 @@ class GPUAutoLoader:
                 self.gpu_info = {
                     "device_count": device_count,
                     "backend": "AMD ROCm",
-                    "hip_version": torch.version.hip if hasattr(torch.version, "hip") else "Unknown",
+                    "hip_version": torch.version.hip
+                    if hasattr(torch.version, "hip")
+                    else "Unknown",
                 }
 
                 # Get info for first device
@@ -212,7 +222,9 @@ class GPUAutoLoader:
                     self.gpu_info["device_name"] = torch.hip.get_device_name(0)
                     props = torch.hip.get_device_properties(0)
                     self.gpu_info["total_memory"] = (
-                        f"{props.total_memory / (1024**3):.1f} GB" if hasattr(props, "total_memory") else "Unknown"
+                        f"{props.total_memory / (1024**3):.1f} GB"
+                        if hasattr(props, "total_memory")
+                        else "Unknown"
                     )
 
                 return True
@@ -236,7 +248,9 @@ class GPUAutoLoader:
             self.gpu_available = True
             self.gpu_type = "directml"
             self._torch = torch
-            self._device = torch.device("cpu") if torch else None  # DirectML uses CPU device designation
+            self._device = (
+                torch.device("cpu") if torch else None
+            )  # DirectML uses CPU device designation
             self._device_string = "cpu"  # DirectML operations happen through CPU API
 
             self.gpu_info = {
@@ -265,11 +279,7 @@ class GPUAutoLoader:
             self.gpu_type = "cpu"
 
             # Only create torch device if torch is available
-            if torch is not None:
-                self._device = torch.device("cpu")
-            else:
-                self._device = None  # No torch available
-
+            self._device = torch.device("cpu") if torch is not None else None
             self._device_string = "cpu"
 
             self.gpu_info = {
@@ -283,7 +293,6 @@ class GPUAutoLoader:
             logger.error(f"Even CPU initialization failed: {e}")
             return False
 
-
     def get_device(self) -> object | None:
         """Get the configured device object."""
         return self._device
@@ -291,7 +300,6 @@ class GPUAutoLoader:
     def get_torch(self) -> object | None:
         """Get the torch module if available."""
         return self._torch
-
 
     def to_device(self, tensor_or_model: object) -> object:
         """Move a tensor or model to the configured device."""
@@ -411,7 +419,7 @@ def detect_gpu_frameworks() -> dict[str, object]:
         "opencl_version": None,
         "directml": False,
         "intel_xpu": False,
-        "ipex_version": None,
+        "xpu_version": None,
         "vulkan": False,
         "metal": False,
         "available_frameworks": [],
@@ -480,11 +488,16 @@ def detect_gpu_frameworks() -> dict[str, object]:
                 devices = platform.get_devices()
                 for device in devices:
                     frameworks["gpu_devices"].append(
-                        {"type": "OpenCL", "name": device.name, "vendor": device.vendor, "memory": device.global_mem_size},
+                        {
+                            "type": "OpenCL",
+                            "name": device.name,
+                            "vendor": device.vendor,
+                            "memory": device.global_mem_size,
+                        },
                     )
-            # Get OpenCL version from first platform
-            if platforms:
-                frameworks["opencl_version"] = platforms[0].version.strip()
+        # Get OpenCL version from first platform
+        if platforms:
+            frameworks["opencl_version"] = platforms[0].version.strip()
     except ImportError:
         pass
 
@@ -500,7 +513,9 @@ def detect_gpu_frameworks() -> dict[str, object]:
                 device_count = torch_directml.device_count()
                 for i in range(device_count):
                     device_name = torch_directml.device_name(i)
-                    frameworks["gpu_devices"].append({"type": "DirectML", "index": i, "name": device_name})
+                    frameworks["gpu_devices"].append(
+                        {"type": "DirectML", "index": i, "name": device_name}
+                    )
             except Exception as e:
                 logger.debug(f"Failed to enumerate DirectML devices: {e}")
         except ImportError:
@@ -516,8 +531,10 @@ def detect_gpu_frameworks() -> dict[str, object]:
             frameworks["available_frameworks"].append("Intel XPU")
             # Get XPU device info
             for i in range(torch.xpu.device_count()):
-                frameworks["gpu_devices"].append({"type": "Intel XPU", "index": i, "name": torch.xpu.get_device_name(i)})
-    except (ImportError, Exception) as e:
+                frameworks["gpu_devices"].append(
+                    {"type": "Intel XPU", "index": i, "name": torch.xpu.get_device_name(i)}
+                )
+    except Exception as e:
         logger.debug(f"XPU device detection failed: {e}")
 
     # Check for Vulkan compute
@@ -556,6 +573,8 @@ def detect_gpu_frameworks() -> dict[str, object]:
 
     # Add summary information
     frameworks["gpu_count"] = len(frameworks["gpu_devices"])
-    frameworks["primary_framework"] = frameworks["available_frameworks"][0] if frameworks["available_frameworks"] else None
+    frameworks["primary_framework"] = (
+        frameworks["available_frameworks"][0] if frameworks["available_frameworks"] else None
+    )
 
     return frameworks

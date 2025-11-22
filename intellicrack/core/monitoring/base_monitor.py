@@ -78,7 +78,11 @@ class MonitorEvent:
             "event_type": self.event_type.value,
             "severity": self.severity.value,
             "details": self.details,
-            "process_info": {"pid": self.process_info.pid, "name": self.process_info.name, "path": self.process_info.path}
+            "process_info": {
+                "pid": self.process_info.pid,
+                "name": self.process_info.name,
+                "path": self.process_info.path,
+            }
             if self.process_info
             else None,
             "call_stack": self.call_stack,

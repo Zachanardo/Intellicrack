@@ -24,6 +24,7 @@ This module provides utilities for finding Windows driver paths.
 import logging
 import os
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -41,8 +42,7 @@ def get_driver_path(driver_name: str) -> str:
     try:
         from .core.path_discovery import get_system_path
 
-        drivers_dir = get_system_path("windows_drivers")
-        if drivers_dir:
+        if drivers_dir := get_system_path("windows_drivers"):
             return os.path.join(drivers_dir, driver_name)
     except ImportError:
         # Fall back to standard Windows driver paths

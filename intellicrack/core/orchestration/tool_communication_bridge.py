@@ -37,6 +37,7 @@ from typing import Any
 import msgpack
 import zmq
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -134,6 +135,9 @@ class ToolCommunicationBridge:
         # Performance metrics
         self.message_stats = defaultdict(int)
         self.latency_stats = defaultdict(list)
+
+        # Timeout configuration
+        self.response_timeout: float = 30.0  # Default response timeout in seconds
 
     def _generate_auth_key(self) -> str:
         """Generate secure authentication key for IPC."""
@@ -250,7 +254,12 @@ class ToolCommunicationBridge:
     def _generate_message_auth(self, message: IPCMessage) -> str:
         """Generate HMAC authentication for message."""
         msg_bytes = json.dumps(
-            {"id": message.id, "source": message.source.value, "type": message.message_type.value, "timestamp": message.timestamp},
+            {
+                "id": message.id,
+                "source": message.source.value,
+                "type": message.message_type.value,
+                "timestamp": message.timestamp,
+            },
         ).encode()
 
         return hmac.new(self.auth_key.encode(), msg_bytes, hashlib.sha256).hexdigest()
@@ -263,7 +272,13 @@ class ToolCommunicationBridge:
         expected_auth = self._generate_message_auth(message)
         return hmac.compare_digest(message.payload["auth"], expected_auth)
 
-    async def send_and_wait(self, message: IPCMessage, timeout: float = 30.0) -> IPCMessage | None:
+    def add_message_handler(self, message_type: MessageType, handler: Callable) -> None:
+        """Add a message handler for a specific message type."""
+        if message_type not in self.message_handlers:
+            self.message_handlers[message_type] = []
+        self.message_handlers[message_type].append(handler)
+
+    async def send_and_wait(self, message: IPCMessage) -> IPCMessage | None:
         """Send message and wait for response."""
         message.requires_response = True
         msg_id = self.send_message(message)
@@ -271,7 +286,8 @@ class ToolCommunicationBridge:
         if msg_id and msg_id in self.pending_responses:
             try:
                 future = self.pending_responses[msg_id]
-                response = await asyncio.wait_for(future, timeout=timeout)
+                async with asyncio.timeout(self.response_timeout):
+                    response = await future
                 del self.pending_responses[msg_id]
                 return response
             except TimeoutError:
@@ -303,10 +319,14 @@ class ToolCommunicationBridge:
 
                     # Validate ZeroMQ router protocol (empty delimiter frame)
                     if empty != b"":
-                        logger.warning(f"Invalid ZeroMQ router protocol: expected empty delimiter, got {empty[:20]}")
+                        logger.warning(
+                            f"Invalid ZeroMQ router protocol: expected empty delimiter, got {empty[:20]}"
+                        )
                         # Send error response
                         error_msg = IPCMessage(
-                            type=MessageType.RESPONSE, data={"error": "Protocol violation: non-empty delimiter"}, sender="bridge",
+                            type=MessageType.RESPONSE,
+                            data={"error": "Protocol violation: non-empty delimiter"},
+                            sender="bridge",
                         )
                         self.router.send_multipart([identity, b"", error_msg.to_bytes()])
                         continue
@@ -410,12 +430,10 @@ class ToolCommunicationBridge:
 
         # Synchronous wrapper for async operation
         loop = asyncio.new_event_loop()
-        response = loop.run_until_complete(self.send_and_wait(message, timeout=10.0))
+        response = loop.run_until_complete(self.send_and_wait(message))
         loop.close()
 
-        if response:
-            return response.payload
-        return None
+        return response.payload if response else None
 
     def synchronize_breakpoints(self, breakpoints: list[int]) -> None:
         """Synchronize breakpoints across all debugging tools."""
@@ -459,7 +477,7 @@ class ToolCommunicationBridge:
         )
 
         loop = asyncio.new_event_loop()
-        verification = loop.run_until_complete(self.send_and_wait(verify_msg, timeout=15.0))
+        verification = loop.run_until_complete(self.send_and_wait(verify_msg))
         loop.close()
 
         if not verification or not verification.payload.get("valid", False):
@@ -479,7 +497,7 @@ class ToolCommunicationBridge:
             )
 
             loop = asyncio.new_event_loop()
-            result = loop.run_until_complete(self.send_and_wait(apply_msg, timeout=10.0))
+            result = loop.run_until_complete(self.send_and_wait(apply_msg))
             loop.close()
 
             if not result or not result.payload.get("success", False):
@@ -531,7 +549,9 @@ class ToolCommunicationBridge:
 class ToolConnector:
     """Client connector for individual tools to communicate with bridge."""
 
-    def __init__(self, tool_type: ToolType, bridge_host: str = "127.0.0.1", bridge_port: int = 5555) -> None:
+    def __init__(
+        self, tool_type: ToolType, bridge_host: str = "127.0.0.1", bridge_port: int = 5555
+    ) -> None:
         """Initialize tool connector."""
         self.tool_type = tool_type
         self.bridge_host = bridge_host

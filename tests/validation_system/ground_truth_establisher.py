@@ -78,7 +78,7 @@ class GroundTruthEstablisher:
         logger.addHandler(console_handler)
         logger.setLevel(logging.DEBUG)
 
-    def _load_protection_signatures(self) -> Dict[str, Any]:
+    def _load_protection_signatures(self) -> dict[str, Any]:
         """
         Load known protection signatures from external sources.
         These are well-documented protection patterns from security research.
@@ -156,7 +156,7 @@ class GroundTruthEstablisher:
                     except Exception:
                         logger.warning(f"External tool not found: {tool_name}")
 
-    def scan_with_protection_scanner(self, binary_path: Path, scanner_name: str) -> Dict[str, Any]:
+    def scan_with_protection_scanner(self, binary_path: Path, scanner_name: str) -> dict[str, Any]:
         """
         Scan binary with external protection scanner.
         Returns detected protections and confidence scores.
@@ -189,7 +189,7 @@ class GroundTruthEstablisher:
             logger.error(f"Scanner {scanner_name} failed: {e}")
             return {}
 
-    def _parse_scanner_output(self, output: str, scanner_name: str) -> List[Dict[str, Any]]:
+    def _parse_scanner_output(self, output: str, scanner_name: str) -> list[dict[str, Any]]:
         """Parse protection scanner output to extract protection information."""
         protections = []
 
@@ -219,7 +219,7 @@ class GroundTruthEstablisher:
 
         return protections
 
-    def analyze_with_binary_analyzer(self, binary_path: Path, analyzer_name: str) -> Dict[str, Any]:
+    def analyze_with_binary_analyzer(self, binary_path: Path, analyzer_name: str) -> dict[str, Any]:
         """
         Analyze binary with external binary analysis tool.
         Extracts imports, strings, and protection indicators.
@@ -252,7 +252,7 @@ class GroundTruthEstablisher:
             logger.error(f"Analyzer {analyzer_name} failed: {e}")
             return {}
 
-    def _analyze_with_radare2(self, binary_path: Path) -> Dict[str, Any]:
+    def _analyze_with_radare2(self, binary_path: Path) -> dict[str, Any]:
         """Use radare2 for binary analysis if available."""
         results = {"imports": [], "strings": [], "protection_indicators": []}
 
@@ -276,7 +276,7 @@ class GroundTruthEstablisher:
 
         return results
 
-    def _analyze_with_pe_headers(self, binary_path: Path) -> Dict[str, Any]:
+    def _analyze_with_pe_headers(self, binary_path: Path) -> dict[str, Any]:
         """
         Analyze PE headers directly to extract protection information.
         This is a fallback when external tools aren't available.
@@ -324,7 +324,7 @@ class GroundTruthEstablisher:
 
         return results
 
-    def check_with_yara_rules(self, binary_path: Path) -> List[Dict[str, Any]]:
+    def check_with_yara_rules(self, binary_path: Path) -> list[dict[str, Any]]:
         """
         Check binary against YARA rules for protection detection.
         Uses protection-specific YARA rules, not malware rules.
@@ -392,7 +392,7 @@ rule FlexNet_Protection {
 
         return yara_results
 
-    def consult_vendor_documentation(self, software_name: str) -> Dict[str, Any]:
+    def consult_vendor_documentation(self, software_name: str) -> dict[str, Any]:
         """
         Consult vendor documentation for protection information.
         This would normally access vendor APIs or documentation databases.
@@ -446,7 +446,7 @@ rule FlexNet_Protection {
 
     def create_consensus_ground_truth(
         self, binary_path: Path, software_name: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create consensus ground truth from multiple independent sources.
         Requires at least 3 sources to agree for each protection detected.
@@ -517,7 +517,7 @@ rule FlexNet_Protection {
         return all_evidence
 
     def cryptographically_sign_ground_truth(
-        self, ground_truth: Dict[str, Any], software_name: str
+        self, ground_truth: dict[str, Any], software_name: str
     ) -> str:
         """
         Cryptographically sign the ground truth data.
@@ -546,7 +546,7 @@ rule FlexNet_Protection {
 
         return sha256_hash
 
-    def save_certified_ground_truth(self, ground_truth: Dict[str, Any], software_name: str):
+    def save_certified_ground_truth(self, ground_truth: dict[str, Any], software_name: str):
         """
         Save the certified ground truth with cryptographic signature.
         This is the final, authoritative ground truth for validation.
@@ -612,7 +612,7 @@ rule FlexNet_Protection {
             logger.warning(f"Could not verify Intellicrack absence: {e}")
             return True
 
-    def generate_ground_truth_report(self) -> Dict[str, Any]:
+    def generate_ground_truth_report(self) -> dict[str, Any]:
         """Generate a comprehensive report of all ground truth data."""
         report = {
             "report_generated": datetime.now().isoformat(),
@@ -629,7 +629,7 @@ rule FlexNet_Protection {
         for gt_file in self.ground_truth_dir.glob("*.json"):
             if "_signature" not in gt_file.name and "_verification" not in gt_file.name:
                 try:
-                    with open(gt_file, 'r') as f:
+                    with open(gt_file) as f:
                         gt_data = json.load(f)
                         report["ground_truths"].append({
                             "software": gt_data.get("software_name", "Unknown"),

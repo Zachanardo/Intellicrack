@@ -23,10 +23,13 @@ Utility functions for hex manipulation and display.
 
 import logging
 
+
 logger = logging.getLogger(__name__)
 
 
-def create_hex_dump(data: bytes | bytearray, bytes_per_line: int = 16, start_offset: int = 0) -> str:
+def create_hex_dump(
+    data: bytes | bytearray, bytes_per_line: int = 16, start_offset: int = 0
+) -> str:
     """Create a formatted hex dump of binary data.
 
     Args:
@@ -98,17 +101,13 @@ def bytes_to_hex(data: bytes, format_style: str = "plain", uppercase: bool = Fal
         Formatted hex string
 
     """
-    if uppercase:
-        hex_str = data.hex().upper()
-    else:
-        hex_str = data.hex()
-
+    hex_str = data.hex().upper() if uppercase else data.hex()
     if format_style == "plain":
         return hex_str
     if format_style == "spaces":
         return " ".join(hex_str[i : i + 2] for i in range(0, len(hex_str), 2))
     if format_style == "0x":
-        return "0x" + hex_str
+        return f"0x{hex_str}"
     if format_style == "\\x":
         return "\\x".join([""] + [hex_str[i : i + 2] for i in range(0, len(hex_str), 2)])
     if format_style == "c_array":
@@ -234,9 +233,8 @@ def nop_range(data: bytearray, start: int, end: int, arch: str = "x86") -> bool:
     # Fill with NOPs
     patch_data = nop * nop_count
 
-    # Handle remainder with single-byte NOPs if possible
     if remainder > 0:
-        if arch in ["x86", "x64"]:
+        if arch in {"x86", "x64"}:
             patch_data += b"\x90" * remainder
         else:
             logger.warning(f"Cannot perfectly fill {remainder} bytes on {arch}")
@@ -351,7 +349,7 @@ def detect_encoding(data: bytes) -> str | None:
         try:
             data.decode(encoding)
             return encoding
-        except (UnicodeDecodeError, UnicodeError) as e:
+        except UnicodeError as e:
             logger.error("Error in hex_utils: %s", e)
             continue
 

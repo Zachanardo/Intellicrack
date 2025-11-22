@@ -26,6 +26,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+
 # Module logger
 logger = logging.getLogger(__name__)
 
@@ -134,10 +135,10 @@ def read_binary(file_path: str | Path, chunk_size: int = 8192) -> bytes:
         with open(file_path, "rb") as f:
             chunks = []
             while True:
-                chunk = f.read(chunk_size)
-                if not chunk:
+                if chunk := f.read(chunk_size):
+                    chunks.append(chunk)
+                else:
                     break
-                chunks.append(chunk)
             return b"".join(chunks)
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error reading binary file %s: %s", file_path, e)
@@ -162,7 +163,7 @@ def write_binary(file_path: str | Path, data: bytes, create_backup: bool = True)
 
         # Create backup if file exists and backup requested
         if create_backup and file_path.exists():
-            backup_path = file_path.with_suffix(file_path.suffix + ".bak")
+            backup_path = file_path.with_suffix(f"{file_path.suffix}.bak")
             import shutil
 
             shutil.copy2(file_path, backup_path)
@@ -212,9 +213,8 @@ def analyze_binary_format(file_path: str | Path) -> dict[str, Any]:
             # Check for PE signature
             if len(header) > 0x3C:
                 pe_offset = int.from_bytes(header[0x3C:0x40], "little")
-                if len(header) > pe_offset + 4:
-                    if header[pe_offset : pe_offset + 4] == b"PE\x00\x00":
-                        format_info["type"] = "PE32/PE32+"
+                if len(header) > pe_offset + 4 and header[pe_offset : pe_offset + 4] == b"PE\x00\x00":
+                    format_info["type"] = "PE32/PE32+"
 
         elif header.startswith(b"\x7fELF"):
             format_info["type"] = "ELF"
@@ -322,7 +322,9 @@ def check_suspicious_pe_sections(pe_obj: object) -> list[str]:
                 section_name = section.Name.decode("utf-8", errors="ignore").strip("\x00")
 
                 # Check if section is both writable and executable (security risk)
-                if (section.Characteristics & 0x20000000) and (section.Characteristics & 0x80000000):
+                if (section.Characteristics & 0x20000000) and (
+                    section.Characteristics & 0x80000000
+                ):
                     suspicious_sections.append(section_name)
     except (AttributeError, ValueError) as e:
         logger.debug("Error checking PE sections: %s", e)

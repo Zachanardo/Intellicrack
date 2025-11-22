@@ -18,7 +18,9 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+
 import logging
+
 
 # Set up package logger
 logger = logging.getLogger(__name__)
@@ -36,18 +38,13 @@ except ImportError as e:
     logger.warning("Failed to import guided_workflow_wizard: %s", e)
 
 try:
-    from .model_finetuning_dialog import (
-        AugmentationConfig,
-        ModelFinetuningDialog,
-        TrainingConfig,
-        TrainingThread,
-    )
+    from .model_finetuning_dialog import AugmentationConfig, ModelFinetuningDialog, TrainingConfig, TrainingThread
 except ImportError as e:
     logger.warning("Failed to import model_finetuning_dialog: %s", e)
 
 try:
     from .plugin_manager_dialog import PluginManagerDialog
-except (ImportError, IndentationError, SyntaxError) as e:
+except (ImportError, SyntaxError) as e:
     logger.warning("Failed to import plugin_manager_dialog: %s", e)
 
 try:
@@ -109,11 +106,7 @@ except ImportError as e:
     logger.warning("Failed to import debugger_dialog: %s", e)
 
 try:
-    from .program_selector_dialog import (
-        ProgramSelectorDialog,
-        show_program_selector,
-        show_smart_program_selector,
-    )
+    from .program_selector_dialog import ProgramSelectorDialog, show_program_selector, show_smart_program_selector
 except ImportError as e:
     logger.warning("Failed to import program_selector_dialog: %s", e)
 
@@ -128,7 +121,9 @@ if "GuidedWorkflowWizard" in locals():
     __all__.append("GuidedWorkflowWizard")
 
 if "ModelFinetuningDialog" in locals():
-    __all__.extend(["AugmentationConfig", "ModelFinetuningDialog", "TrainingConfig", "TrainingThread"])
+    __all__.extend(
+        ["AugmentationConfig", "ModelFinetuningDialog", "TrainingConfig", "TrainingThread"]
+    )
 
 if "PluginManagerDialog" in locals():
     __all__.append("PluginManagerDialog")
@@ -170,7 +165,9 @@ if "DebuggerDialog" in locals():
     __all__.append("DebuggerDialog")
 
 if "ProgramSelectorDialog" in locals():
-    __all__.extend(["ProgramSelectorDialog", "show_program_selector", "show_smart_program_selector"])
+    __all__.extend(
+        ["ProgramSelectorDialog", "show_program_selector", "show_smart_program_selector"]
+    )
 
 # Package metadata
 __version__ = "0.1.0"

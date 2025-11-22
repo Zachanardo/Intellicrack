@@ -40,8 +40,7 @@ class ResultMixin:
         result = {
             "success": False,
             "error": None,
-        }
-        result.update(kwargs)
+        } | kwargs
         return result
 
     def create_analysis_result(self, **kwargs: object) -> dict[str, object]:

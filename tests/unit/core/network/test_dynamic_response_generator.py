@@ -66,8 +66,8 @@ class LicenseRequest:
     source_port: int
     dest_port: int
     timestamp: datetime
-    headers: Optional[Dict[str, str]] = None
-    payload: Optional[Union[Dict, bytes]] = None
+    headers: dict[str, str] | None = None
+    payload: dict | bytes | None = None
 
 
 @dataclass

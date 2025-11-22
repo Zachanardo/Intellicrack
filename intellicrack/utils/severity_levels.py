@@ -111,9 +111,7 @@ def get_severity_from_score(score: float) -> SeverityLevel:
         return SeverityLevel.HIGH
     if score >= 4.0:
         return SeverityLevel.MEDIUM
-    if score >= 2.0:
-        return SeverityLevel.LOW
-    return SeverityLevel.INFO
+    return SeverityLevel.LOW if score >= 2.0 else SeverityLevel.INFO
 
 
 def get_threat_from_score(score: float) -> ThreatLevel:
@@ -124,12 +122,12 @@ def get_threat_from_score(score: float) -> ThreatLevel:
         return ThreatLevel.LIKELY
     if score >= 3.0:
         return ThreatLevel.POSSIBLE
-    if score >= 1.0:
-        return ThreatLevel.UNLIKELY
-    return ThreatLevel.NONE
+    return ThreatLevel.UNLIKELY if score >= 1.0 else ThreatLevel.NONE
 
 
-def calculate_risk_score(severity: SeverityLevel, threat: ThreatLevel, confidence: ConfidenceLevel) -> float:
+def calculate_risk_score(
+    severity: SeverityLevel, threat: ThreatLevel, confidence: ConfidenceLevel
+) -> float:
     """Calculate overall risk score from severity, threat, and confidence."""
     severity_score = SEVERITY_SCORES.get(severity, 1.0)
     threat_score = THREAT_SCORES.get(threat, 0.0)
@@ -172,15 +170,15 @@ def format_severity_report(findings: list[dict]) -> str:
     for severity in severity_order:
         if severity in severity_groups:
             count = len(severity_groups[severity])
-            report_lines.append(f"\n{severity.value.upper()}: {count} finding(s)")
-            report_lines.append("-" * 30)
-
+            report_lines.extend(
+                (f"\n{severity.value.upper()}: {count} finding(s)", "-" * 30)
+            )
             for i, finding in enumerate(severity_groups[severity][:5], 1):
                 title = finding.get("title", "Unknown finding")
                 description = finding.get("description", "No description")
                 report_lines.append(f"{i}. {title}")
                 if len(description) > 80:
-                    description = description[:77] + "..."
+                    description = f"{description[:77]}..."
                 report_lines.append(f"   {description}")
 
             if count > 5:
@@ -243,9 +241,9 @@ def prioritize_findings(findings: list[dict]) -> list[dict]:
 
 # Export commonly used classes and functions
 __all__ = [
+    "ConfidenceLevel",
     "SEVERITY_COLORS",
     "SEVERITY_SCORES",
-    "ConfidenceLevel",
     "SecurityRelevance",
     "SeverityLevel",
     "ThreatLevel",

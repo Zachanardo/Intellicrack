@@ -31,6 +31,7 @@ from pathlib import Path
 from types import TracebackType
 from typing import Any
 
+
 try:
     import r2pipe
 
@@ -38,10 +39,8 @@ try:
 except ImportError:
     R2PIPE_AVAILABLE = False
 
-from intellicrack.core.analysis.radare2_session_manager import (
-    R2SessionPool,
-    R2SessionWrapper,
-)
+from intellicrack.core.analysis.radare2_session_manager import R2SessionPool, R2SessionWrapper
+
 
 logger = logging.getLogger(__name__)
 
@@ -208,7 +207,9 @@ class RadareESILEmulator:
             self.arch = info.get("bin", {}).get("arch", "x86")
             self.bits = info.get("bin", {}).get("bits", 64)
 
-            logger.info(f"Initialized ESIL emulator for {self.arch}-{self.bits} binary: {self.binary_path}")
+            logger.info(
+                f"Initialized ESIL emulator for {self.arch}-{self.bits} binary: {self.binary_path}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to initialize ESIL session: {e}")
@@ -236,8 +237,7 @@ class RadareESILEmulator:
                 logger.debug(f"Set entry point to 0x{self.entry_point:x}")
             else:
                 logger.warning("Could not determine entry point, using current address")
-                pc_info = self.session.execute("drj", expect_json=True)
-                if pc_info:
+                if pc_info := self.session.execute("drj", expect_json=True):
                     for reg in pc_info:
                         if reg.get("role") == "PC" or reg.get("name") in ["rip", "eip", "pc"]:
                             self.entry_point = reg.get("value", 0)
@@ -302,7 +302,9 @@ class RadareESILEmulator:
 
                     if addr and size:
                         self.session.execute(f"aeim {addr} {size} {name}")
-                        logger.debug(f"Mapped memory region: {name} at 0x{addr:x} (size: 0x{size:x})")
+                        logger.debug(
+                            f"Mapped memory region: {name} at 0x{addr:x} (size: 0x{size:x})"
+                        )
 
             self.session.execute("aeim 0x200000 0x100000 heap")
             logger.debug("Mapped heap region at 0x200000")
@@ -359,7 +361,9 @@ class RadareESILEmulator:
                 else:
                     self.session.execute(f"dr {register}={value}")
                     if register in self.registers:
-                        self.registers[register].value = value if isinstance(value, int) else int(value)
+                        self.registers[register].value = (
+                            value if isinstance(value, int) else int(value)
+                        )
                         self.registers[register].symbolic = False
 
                 logger.debug(f"Set register {register} = {value} (symbolic={symbolic})")
@@ -513,7 +517,11 @@ class RadareESILEmulator:
                 prev_registers = self._get_register_state()
                 prev_pc_info = self.session.execute("drj", expect_json=True)
                 prev_pc = next(
-                    (r["value"] for r in prev_pc_info if r.get("role") == "PC" or r.get("name") in ["rip", "eip", "pc"]),
+                    (
+                        r["value"]
+                        for r in prev_pc_info
+                        if r.get("role") == "PC" or r.get("name") in ["rip", "eip", "pc"]
+                    ),
                     0,
                 )
 
@@ -532,7 +540,11 @@ class RadareESILEmulator:
                 new_registers = self._get_register_state()
                 new_pc_info = self.session.execute("drj", expect_json=True)
                 new_pc = next(
-                    (r["value"] for r in new_pc_info if r.get("role") == "PC" or r.get("name") in ["rip", "eip", "pc"]),
+                    (
+                        r["value"]
+                        for r in new_pc_info
+                        if r.get("role") == "PC" or r.get("name") in ["rip", "eip", "pc"]
+                    ),
                     prev_pc,
                 )
 
@@ -540,9 +552,8 @@ class RadareESILEmulator:
                 for reg, new_val in new_registers.items():
                     if reg in prev_registers and prev_registers[reg] != new_val:
                         changed_regs[reg] = {"old": prev_registers[reg], "new": new_val}
-                        if self._is_register_tainted(reg):
-                            if reg in self.registers:
-                                self.registers[reg].tainted = True
+                        if self._is_register_tainted(reg) and reg in self.registers:
+                            self.registers[reg].tainted = True
 
                 mem_accesses = self._get_memory_accesses(inst_esil, inst_addr, new_registers)
                 self.memory_accesses.extend(mem_accesses)
@@ -558,19 +569,20 @@ class RadareESILEmulator:
                 if new_pc in self.breakpoints:
                     bp = self.breakpoints[new_pc]
                     bp.hit_count += 1
-                    if bp.enabled:
-                        if not bp.condition or self._evaluate_condition(bp.condition):
-                            self.state = ESILState.BREAKPOINT
-                            if bp.callback:
-                                bp.callback(self, inst)
+                    if bp.enabled and (not bp.condition or self._evaluate_condition(bp.condition)):
+                        self.state = ESILState.BREAKPOINT
+                        if bp.callback:
+                            bp.callback(self, inst)
 
                 if "call" in inst_opcode.lower():
-                    self.call_stack.append({
-                        "from": inst_addr,
-                        "to": new_pc,
-                        "instruction": inst_opcode,
-                        "stack_ptr": new_registers.get("rsp", new_registers.get("esp", 0)),
-                    })
+                    self.call_stack.append(
+                        {
+                            "from": inst_addr,
+                            "to": new_pc,
+                            "instruction": inst_opcode,
+                            "stack_ptr": new_registers.get("rsp", new_registers.get("esp", 0)),
+                        }
+                    )
                 elif "ret" in inst_opcode.lower() and self.call_stack:
                     self.call_stack.pop()
 
@@ -605,7 +617,9 @@ class RadareESILEmulator:
             return "call"
         if "ret" in opcode_lower:
             return "ret"
-        if any(j in opcode_lower for j in ["jmp", "je", "jne", "jz", "jnz", "jg", "jl", "ja", "jb"]):
+        if any(
+            j in opcode_lower for j in ["jmp", "je", "jne", "jz", "jnz", "jg", "jl", "ja", "jb"]
+        ):
             return "jump"
         return "other"
 
@@ -620,8 +634,7 @@ class RadareESILEmulator:
             reg_info = self.session.execute("drj", expect_json=True)
             regs = {}
             for reg in reg_info:
-                name = reg.get("name", "")
-                if name:
+                if name := reg.get("name", ""):
                     regs[name] = reg.get("value", 0)
             return regs
         except Exception as e:
@@ -673,14 +686,16 @@ class RadareESILEmulator:
                         if addr is not None and addr > 0x1000:
                             try:
                                 mem_val = self.get_memory(addr, 8)
-                                accesses.append(ESILMemoryAccess(
-                                    address=addr,
-                                    size=8,
-                                    value=mem_val,
-                                    operation="read",
-                                    instruction_address=inst_addr,
-                                    register_state=registers.copy(),
-                                ))
+                                accesses.append(
+                                    ESILMemoryAccess(
+                                        address=addr,
+                                        size=8,
+                                        value=mem_val,
+                                        operation="read",
+                                        instruction_address=inst_addr,
+                                        register_state=registers.copy(),
+                                    )
+                                )
                             except Exception as e:
                                 logger.debug(f"Failed to read memory during access tracking: {e}")
                     except Exception as e:
@@ -696,14 +711,16 @@ class RadareESILEmulator:
                         addr = self._evaluate_esil_expr(addr_expr, registers)
                         value = self._evaluate_esil_expr(value_expr, registers)
                         if addr is not None and value is not None and addr > 0x1000:
-                            accesses.append(ESILMemoryAccess(
-                                address=addr,
-                                size=8,
-                                value=struct.pack("<Q", value)[:8],
-                                operation="write",
-                                instruction_address=inst_addr,
-                                register_state=registers.copy(),
-                            ))
+                            accesses.append(
+                                ESILMemoryAccess(
+                                    address=addr,
+                                    size=8,
+                                    value=struct.pack("<Q", value)[:8],
+                                    operation="write",
+                                    instruction_address=inst_addr,
+                                    register_state=registers.copy(),
+                                )
+                            )
                     except Exception as e:
                         logger.debug(f"Failed to track memory write operation: {e}")
 
@@ -758,10 +775,7 @@ class RadareESILEmulator:
             import ast
 
             node = ast.parse(condition, mode="eval")
-            if not self._validate_ast_node(node):
-                return False
-
-            return self._eval_node(node.body)
+            return self._eval_node(node.body) if self._validate_ast_node(node) else False
         except Exception:
             return False
 
@@ -775,17 +789,41 @@ class RadareESILEmulator:
             True if node is safe
 
         """
-        for subnode in ast.walk(node):
-            if not isinstance(subnode, (
-                ast.Expression, ast.Compare, ast.BinOp, ast.UnaryOp,
-                ast.Name, ast.Constant, ast.Load, ast.Eq, ast.NotEq,
-                ast.Lt, ast.LtE, ast.Gt, ast.GtE, ast.Add, ast.Sub,
-                ast.Mult, ast.Div, ast.Mod, ast.Pow, ast.BitAnd,
-                ast.BitOr, ast.BitXor, ast.LShift, ast.RShift,
-                ast.UAdd, ast.USub, ast.Invert,
-            )):
-                return False
-        return True
+        return all(
+            isinstance(
+                subnode,
+                (
+                    ast.Expression,
+                    ast.Compare,
+                    ast.BinOp,
+                    ast.UnaryOp,
+                    ast.Name,
+                    ast.Constant,
+                    ast.Load,
+                    ast.Eq,
+                    ast.NotEq,
+                    ast.Lt,
+                    ast.LtE,
+                    ast.Gt,
+                    ast.GtE,
+                    ast.Add,
+                    ast.Sub,
+                    ast.Mult,
+                    ast.Div,
+                    ast.Mod,
+                    ast.Pow,
+                    ast.BitAnd,
+                    ast.BitOr,
+                    ast.BitXor,
+                    ast.LShift,
+                    ast.RShift,
+                    ast.UAdd,
+                    ast.USub,
+                    ast.Invert,
+                ),
+            )
+            for subnode in ast.walk(node)
+        )
 
     def _eval_node(self, node: ast.AST) -> int | float | str | bool:
         """Evaluate the parsed AST manually instead of using eval.
@@ -840,7 +878,7 @@ class RadareESILEmulator:
         if isinstance(node.op, ast.Mod):
             return left % right if right != 0 else 0
         if isinstance(node.op, ast.Pow):
-            return left ** right
+            return left**right
         if isinstance(node.op, ast.BitAnd):
             return left & right
         if isinstance(node.op, ast.BitOr):
@@ -849,9 +887,7 @@ class RadareESILEmulator:
             return left ^ right
         if isinstance(node.op, ast.LShift):
             return left << right
-        if isinstance(node.op, ast.RShift):
-            return left >> right
-        return 0
+        return left >> right if isinstance(node.op, ast.RShift) else 0
 
     def _eval_unaryop(self, node: ast.UnaryOp) -> int:
         """Evaluate unary operations.
@@ -868,9 +904,7 @@ class RadareESILEmulator:
             return +operand
         if isinstance(node.op, ast.USub):
             return -operand
-        if isinstance(node.op, ast.Invert):
-            return ~operand
-        return 0
+        return ~operand if isinstance(node.op, ast.Invert) else 0
 
     def _eval_compare(self, node: ast.Compare) -> bool:
         """Evaluate comparison operations.
@@ -997,15 +1031,16 @@ class RadareESILEmulator:
             imports = self.session.execute("iij", expect_json=True)
             import_addrs = {imp.get("plt", 0): imp.get("name", "") for imp in imports}
 
-            for entry in self.call_stack:
-                if entry["to"] in import_addrs:
-                    api_calls.append({
-                        "address": entry["from"],
-                        "api": import_addrs[entry["to"]],
-                        "stack_ptr": entry["stack_ptr"],
-                        "arguments": self._extract_call_arguments(entry["from"]),
-                    })
-
+            api_calls.extend(
+                {
+                    "address": entry["from"],
+                    "api": import_addrs[entry["to"]],
+                    "stack_ptr": entry["stack_ptr"],
+                    "arguments": self._extract_call_arguments(entry["from"]),
+                }
+                for entry in self.call_stack
+                if entry["to"] in import_addrs
+            )
         except Exception as e:
             logger.warning(f"Failed to extract API calls: {e}")
 
@@ -1027,9 +1062,7 @@ class RadareESILEmulator:
         if self.arch == "x86":
             if self.bits == 64:
                 arg_regs = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
-                for reg in arg_regs:
-                    if reg in registers:
-                        args.append(registers[reg])
+                args.extend(registers[reg] for reg in arg_regs if reg in registers)
             else:
                 esp = registers.get("esp", 0)
                 for i in range(6):
@@ -1087,13 +1120,15 @@ class RadareESILEmulator:
                                 if block.get("offset", 0) == addr:
                                     jumps = block.get("jump", [])
                                     if len(jumps) > 1:
-                                        license_patterns.append({
-                                            "address": addr,
-                                            "type": "conditional_branch",
-                                            "pattern": pattern,
-                                            "true_path": jumps[0],
-                                            "false_path": jumps[1] if len(jumps) > 1 else None,
-                                        })
+                                        license_patterns.append(
+                                            {
+                                                "address": addr,
+                                                "type": "conditional_branch",
+                                                "pattern": pattern,
+                                                "true_path": jumps[0],
+                                                "false_path": jumps[1] if len(jumps) > 1 else None,
+                                            }
+                                        )
                     except Exception as e:
                         logger.debug(f"Failed to analyze license check pattern: {e}")
 
@@ -1121,7 +1156,10 @@ class RadareESILEmulator:
             for step in trace:
                 inst = step.get("instruction", "")
 
-                if any(cond in inst.lower() for cond in ["je", "jne", "jz", "jnz", "jg", "jl", "ja", "jb"]):
+                if any(
+                    cond in inst.lower()
+                    for cond in ["je", "jne", "jz", "jnz", "jg", "jl", "ja", "jb"]
+                ):
                     esil = step.get("esil", "")
                     if "?{" in esil:
                         condition = esil.split("?{")[0]
@@ -1174,8 +1212,7 @@ class RadareESILEmulator:
                     for acc in self.memory_accesses
                 ],
                 "tainted_registers": [
-                    reg for reg, state in self.registers.items()
-                    if state.tainted
+                    reg for reg, state in self.registers.items() if state.tainted
                 ],
                 "path_constraints": self.path_constraints,
                 "call_stack_max_depth": max(len(self.call_stack), 1),
@@ -1264,9 +1301,9 @@ class RadareESILEmulator:
 
 
 __all__ = [
-    "ESILState",
-    "ESILRegister",
-    "ESILMemoryAccess",
     "ESILBreakpoint",
+    "ESILMemoryAccess",
+    "ESILRegister",
+    "ESILState",
     "RadareESILEmulator",
 ]

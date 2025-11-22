@@ -26,6 +26,7 @@ from PyQt6.QtGui import QFont, QFontDatabase
 
 from intellicrack.utils.resource_helper import get_resource_path
 
+
 logger = logging.getLogger(__name__)
 
 

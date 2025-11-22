@@ -30,8 +30,14 @@ from typing import Any, Optional, Union
 
 from intellicrack.utils.logger import logger
 
+
 # Suppress pkg_resources deprecation warning from capstone
-warnings.filterwarnings("ignore", message="pkg_resources is deprecated as an API.*", category=UserWarning, module="capstone.*")
+warnings.filterwarnings(
+    "ignore",
+    message="pkg_resources is deprecated as an API.*",
+    category=UserWarning,
+    module="capstone.*",
+)
 
 # Capstone availability detection and import handling
 try:
@@ -135,11 +141,12 @@ except ImportError as e:
     class CsError(Exception):
         """Capstone error exception."""
 
-
     class CsInsn:
         """Functional instruction representation for capstone fallback."""
 
-        def __init__(self, address: int, size: int, mnemonic: str, op_str: str, bytes_data: bytes) -> None:
+        def __init__(
+            self, address: int, size: int, mnemonic: str, op_str: str, bytes_data: bytes
+        ) -> None:
             """Initialize instruction.
 
             Args:
@@ -263,8 +270,7 @@ except ImportError as e:
 
             while idx < len(code):
                 try:
-                    insn: Optional[CsInsn] = self._decode_instruction(code[idx:], offset + idx)
-                    if insn:
+                    if insn := self._decode_instruction(code[idx:], offset + idx):
                         instructions.append(insn)
                         idx += insn.size
                     else:
@@ -302,7 +308,7 @@ except ImportError as e:
             insn.groups = [CS_GRP_RET]
             return insn
 
-        def _handle_ret_imm16(self, code: bytes, offset: int) -> Optional[CsInsn]:
+        def _handle_ret_imm16(self, code: bytes, offset: int) -> CsInsn | None:
             """Handle RET imm16 instruction (0xC2).
 
             Args:
@@ -335,7 +341,7 @@ except ImportError as e:
             insn.groups = [CS_GRP_INT]
             return insn
 
-        def _handle_int_imm8(self, code: bytes, offset: int) -> Optional[CsInsn]:
+        def _handle_int_imm8(self, code: bytes, offset: int) -> CsInsn | None:
             """Handle INT imm8 instruction (0xCD).
 
             Args:
@@ -353,7 +359,7 @@ except ImportError as e:
             insn.groups = [CS_GRP_INT]
             return insn
 
-        def _handle_call_rel32(self, code: bytes, offset: int) -> Optional[CsInsn]:
+        def _handle_call_rel32(self, code: bytes, offset: int) -> CsInsn | None:
             """Handle CALL rel32 instruction (0xE8).
 
             Args:
@@ -372,7 +378,7 @@ except ImportError as e:
             insn.groups = [CS_GRP_CALL, CS_GRP_BRANCH_RELATIVE]
             return insn
 
-        def _handle_jmp_rel32(self, code: bytes, offset: int) -> Optional[CsInsn]:
+        def _handle_jmp_rel32(self, code: bytes, offset: int) -> CsInsn | None:
             """Handle JMP rel32 instruction (0xE9).
 
             Args:
@@ -391,7 +397,7 @@ except ImportError as e:
             insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
             return insn
 
-        def _handle_jmp_rel8(self, code: bytes, offset: int) -> Optional[CsInsn]:
+        def _handle_jmp_rel8(self, code: bytes, offset: int) -> CsInsn | None:
             """Handle JMP rel8 instruction (0xEB).
 
             Args:
@@ -410,7 +416,7 @@ except ImportError as e:
             insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
             return insn
 
-        def _handle_jcc_rel8(self, code: bytes, offset: int, opcode: int) -> Optional[CsInsn]:
+        def _handle_jcc_rel8(self, code: bytes, offset: int, opcode: int) -> CsInsn | None:
             """Handle Jcc rel8 instructions (0x70-0x7F).
 
             Args:
@@ -449,7 +455,7 @@ except ImportError as e:
             insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
             return insn
 
-        def _handle_two_byte_opcodes(self, code: bytes, offset: int) -> Optional[CsInsn]:
+        def _handle_two_byte_opcodes(self, code: bytes, offset: int) -> CsInsn | None:
             """Handle two-byte opcodes starting with 0x0F.
 
             Args:
@@ -494,7 +500,9 @@ except ImportError as e:
 
             return None
 
-        def _handle_push_reg(self, code: bytes, offset: int, opcode: int, rex: Optional[int]) -> CsInsn:
+        def _handle_push_reg(
+            self, code: bytes, offset: int, opcode: int, rex: int | None
+        ) -> CsInsn:
             """Handle PUSH register instructions (0x50-0x57).
 
             Args:
@@ -515,7 +523,7 @@ except ImportError as e:
             reg: str = reg_names[opcode - 0x50]
             return CsInsn(offset, 1, "push", reg, code[:1])
 
-        def _handle_pop_reg(self, code: bytes, offset: int, opcode: int, rex: Optional[int]) -> CsInsn:
+        def _handle_pop_reg(self, code: bytes, offset: int, opcode: int, rex: int | None) -> CsInsn:
             """Handle POP register instructions (0x58-0x5F).
 
             Args:
@@ -536,7 +544,7 @@ except ImportError as e:
             reg: str = reg_names[opcode - 0x58]
             return CsInsn(offset, 1, "pop", reg, code[:1])
 
-        def _handle_mov_rm_r(self, code: bytes, offset: int) -> Optional[CsInsn]:
+        def _handle_mov_rm_r(self, code: bytes, offset: int) -> CsInsn | None:
             """Handle MOV r/m, r instruction (0x89).
 
             Args:
@@ -551,20 +559,20 @@ except ImportError as e:
                 return None
             modrm: int = code[1]
             mod: int = (modrm >> 6) & 0x03
-            reg: int = (modrm >> 3) & 0x07
-            rm: int = modrm & 0x07
-
             reg_names: list[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
             if self.is_64bit:
                 reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
 
             if mod == 0x03:
+                reg: int = (modrm >> 3) & 0x07
                 src: str = reg_names[reg]
+                rm: int = modrm & 0x07
+
                 dst: str = reg_names[rm]
                 return CsInsn(offset, 2, "mov", f"{dst}, {src}", code[:2])
             return None
 
-        def _handle_mov_r_rm(self, code: bytes, offset: int) -> Optional[CsInsn]:
+        def _handle_mov_r_rm(self, code: bytes, offset: int) -> CsInsn | None:
             """Handle MOV r, r/m instruction (0x8B).
 
             Args:
@@ -579,20 +587,22 @@ except ImportError as e:
                 return None
             modrm: int = code[1]
             mod: int = (modrm >> 6) & 0x03
-            reg: int = (modrm >> 3) & 0x07
-            rm: int = modrm & 0x07
-
             reg_names: list[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
             if self.is_64bit:
                 reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
 
             if mod == 0x03:
+                rm: int = modrm & 0x07
+
                 src: str = reg_names[rm]
+                reg: int = (modrm >> 3) & 0x07
                 dst: str = reg_names[reg]
                 return CsInsn(offset, 2, "mov", f"{dst}, {src}", code[:2])
             return None
 
-        def _handle_mov_reg_imm(self, code: bytes, offset: int, opcode: int, rex: Optional[int]) -> Optional[CsInsn]:
+        def _handle_mov_reg_imm(
+            self, code: bytes, offset: int, opcode: int, rex: int | None
+        ) -> CsInsn | None:
             """Handle MOV reg, imm instructions (0xB8-0xBF).
 
             Args:
@@ -634,7 +644,7 @@ except ImportError as e:
 
             return None
 
-        def _handle_xor_rm_r(self, code: bytes, offset: int) -> Optional[CsInsn]:
+        def _handle_xor_rm_r(self, code: bytes, offset: int) -> CsInsn | None:
             """Handle XOR r/m, r instruction (0x31).
 
             Args:
@@ -649,20 +659,20 @@ except ImportError as e:
                 return None
             modrm: int = code[1]
             mod: int = (modrm >> 6) & 0x03
-            reg: int = (modrm >> 3) & 0x07
-            rm: int = modrm & 0x07
-
             reg_names: list[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
             if self.is_64bit:
                 reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
 
             if mod == 0x03:
+                reg: int = (modrm >> 3) & 0x07
                 src: str = reg_names[reg]
+                rm: int = modrm & 0x07
+
                 dst: str = reg_names[rm]
                 return CsInsn(offset, 2, "xor", f"{dst}, {src}", code[:2])
             return None
 
-        def _decode_instruction(self, code: bytes, offset: int) -> Optional[CsInsn]:
+        def _decode_instruction(self, code: bytes, offset: int) -> CsInsn | None:
             """Decode a single x86 instruction.
 
             Args:
@@ -673,12 +683,12 @@ except ImportError as e:
                 Decoded instruction or None if decoding fails.
 
             """
-            if len(code) == 0:
+            if not code:
                 return None
 
             opcode: int = code[0]
 
-            rex: Optional[int] = None
+            rex: int | None = None
             if self.is_64bit and 0x40 <= opcode <= 0x4F:
                 rex = opcode
                 code = code[1:]
@@ -686,7 +696,7 @@ except ImportError as e:
                     return None
                 opcode = code[0]
 
-            handlers: dict[int, Callable[[], Optional[CsInsn]]] = {
+            handlers: dict[int, Callable[[], CsInsn | None]] = {
                 0x90: lambda: self._handle_nop(code, offset),
                 0xC3: lambda: self._handle_ret(code, offset),
                 0xC2: lambda: self._handle_ret_imm16(code, offset),
@@ -745,16 +755,16 @@ except ImportError as e:
 
             if self.is_thumb:
                 while idx < len(code) - 1:
-                    insn: Optional[CsInsn] = self._decode_thumb_instruction(code[idx:], offset + idx)
-                    if insn:
+                    if insn := self._decode_thumb_instruction(
+                        code[idx:], offset + idx
+                    ):
                         instructions.append(insn)
                         idx += insn.size
                     else:
                         idx += 2
             else:
                 while idx < len(code) - 3:
-                    insn = self._decode_arm_instruction(code[idx:], offset + idx)
-                    if insn:
+                    if insn := self._decode_arm_instruction(code[idx:], offset + idx):
                         instructions.append(insn)
                         idx += insn.size
                     else:
@@ -762,7 +772,7 @@ except ImportError as e:
 
             return instructions
 
-        def _decode_arm_instruction(self, code: bytes, offset: int) -> Optional[CsInsn]:
+        def _decode_arm_instruction(self, code: bytes, offset: int) -> CsInsn | None:
             """Decode a single ARM instruction.
 
             Args:
@@ -797,8 +807,7 @@ except ImportError as e:
             if (insn_word & 0x0FFF0000) == 0x03A00000:
                 rd: int = (insn_word >> 12) & 0x0F
                 imm: int = insn_word & 0xFF
-                rotate: int = ((insn_word >> 8) & 0x0F) * 2
-                if rotate:
+                if rotate := ((insn_word >> 8) & 0x0F) * 2:
                     imm = (imm >> rotate) | (imm << (32 - rotate))
                 imm &= 0xFFFFFFFF
 
@@ -809,7 +818,7 @@ except ImportError as e:
 
             return CsInsn(offset, 4, "dcd", hex(insn_word), code[:4])
 
-        def _decode_thumb_instruction(self, code: bytes, offset: int) -> Optional[CsInsn]:
+        def _decode_thumb_instruction(self, code: bytes, offset: int) -> CsInsn | None:
             """Decode a single Thumb instruction.
 
             Args:
@@ -846,7 +855,9 @@ except ImportError as e:
                     i1: int = ~(j1 ^ s) & 1
                     i2: int = ~(j2 ^ s) & 1
 
-                    offset_val: int = (s << 24) | (i1 << 23) | (i2 << 22) | (imm10 << 12) | (imm11 << 1)
+                    offset_val: int = (
+                        (s << 24) | (i1 << 23) | (i2 << 22) | (imm10 << 12) | (imm11 << 1)
+                    )
                     if s:
                         offset_val |= 0xFE000000
 
@@ -897,7 +908,7 @@ except ImportError as e:
             self.skipdata: bool = False
 
             if arch == CS_ARCH_X86:
-                self._disasm_impl: Optional[object] = X86Disassembler(mode)
+                self._disasm_impl: object | None = X86Disassembler(mode)
             elif arch == CS_ARCH_ARM:
                 self._disasm_impl = ARMDisassembler(mode)
             elif arch == CS_ARCH_ARM64:
@@ -905,7 +916,7 @@ except ImportError as e:
             else:
                 self._disasm_impl = None
 
-        def disasm(self, code: Union[bytes, str], offset: int, count: int = 0) -> list[CsInsn]:
+        def disasm(self, code: bytes | str, offset: int, count: int = 0) -> list[CsInsn]:
             """Disassemble code.
 
             Args:
@@ -933,7 +944,7 @@ except ImportError as e:
 
             return instructions
 
-        def set_option(self, option: int, value: Union[int, bool]) -> None:
+        def set_option(self, option: int, value: int | bool) -> None:
             """Set disassembler option.
 
             Args:
@@ -986,10 +997,7 @@ except ImportError as e:
                     instructions: list[CsInsn] = []
                     idx: int = 0
 
-                    while idx < len(code) - 3:
-                        if len(code[idx:]) < 4:
-                            break
-
+                    while idx < len(code) - 3 and not len(code[idx:]) < 4:
                         if self.is_big_endian:
                             insn_word: int = struct.unpack(">I", code[idx : idx + 4])[0]
                         else:
@@ -1015,7 +1023,9 @@ except ImportError as e:
                             insn = CsInsn(offset + idx, 4, "b", hex(target), code[idx : idx + 4])
                             insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
                         else:
-                            insn = CsInsn(offset + idx, 4, "dcd", hex(insn_word), code[idx : idx + 4])
+                            insn = CsInsn(
+                                offset + idx, 4, "dcd", hex(insn_word), code[idx : idx + 4]
+                            )
 
                         instructions.append(insn)
                         idx += 4
@@ -1024,7 +1034,9 @@ except ImportError as e:
 
             return ARM64Disassembler(mode)
 
-    def cs_disasm_quick(arch: int, mode: int, code: Union[bytes, str], offset: int, count: int = 0) -> list[CsInsn]:
+    def cs_disasm_quick(
+        arch: int, mode: int, code: bytes | str, offset: int, count: int = 0
+    ) -> list[CsInsn]:
         """Quick disassembly function.
 
         Args:
@@ -1115,7 +1127,9 @@ except ImportError as e:
         CsInsn: type = CsInsn
         CsError: type = CsError
 
-        cs_disasm_quick: Callable[[int, int, Union[bytes, str], int, int], list[CsInsn]] = staticmethod(cs_disasm_quick)
+        cs_disasm_quick: Callable[[int, int, bytes | str, int, int], list[CsInsn]] = staticmethod(
+            cs_disasm_quick
+        )
         cs_version: Callable[[], tuple[int, int, int]] = staticmethod(cs_version)
         version_bind: Callable[[], tuple[int, int, int]] = staticmethod(version_bind)
         debug: Callable[[], None] = staticmethod(debug)
@@ -1125,55 +1139,47 @@ except ImportError as e:
 
 # Export all Capstone objects and availability flag
 __all__ = [
-    # Availability flags
-    "HAS_CAPSTONE",
     "CAPSTONE_AVAILABLE",
     "CAPSTONE_VERSION",
-    # Main module
-    "capstone",
-    # Core classes
-    "Cs",
-    "CsInsn",
-    "CsError",
-    # Architecture constants
     "CS_ARCH_ARM",
     "CS_ARCH_ARM64",
     "CS_ARCH_MIPS",
-    "CS_ARCH_X86",
     "CS_ARCH_PPC",
     "CS_ARCH_SPARC",
     "CS_ARCH_SYSZ",
+    "CS_ARCH_X86",
     "CS_ARCH_XCORE",
-    # Mode constants
-    "CS_MODE_LITTLE_ENDIAN",
-    "CS_MODE_ARM",
+    "CS_GRP_BRANCH_RELATIVE",
+    "CS_GRP_CALL",
+    "CS_GRP_INT",
+    "CS_GRP_IRET",
+    "CS_GRP_JUMP",
+    "CS_GRP_PRIVILEGE",
+    "CS_GRP_RET",
     "CS_MODE_16",
     "CS_MODE_32",
     "CS_MODE_64",
-    "CS_MODE_THUMB",
+    "CS_MODE_ARM",
+    "CS_MODE_BIG_ENDIAN",
+    "CS_MODE_LITTLE_ENDIAN",
     "CS_MODE_MIPS32",
     "CS_MODE_MIPS64",
-    "CS_MODE_BIG_ENDIAN",
-    # Option constants
-    "CS_OPT_SYNTAX",
+    "CS_MODE_THUMB",
     "CS_OPT_DETAIL",
     "CS_OPT_SKIPDATA",
+    "CS_OPT_SYNTAX",
+    "CS_OPT_SYNTAX_ATT",
     "CS_OPT_SYNTAX_DEFAULT",
     "CS_OPT_SYNTAX_INTEL",
-    "CS_OPT_SYNTAX_ATT",
-    "CS_OPT_SYNTAX_NOREGNAME",
     "CS_OPT_SYNTAX_MASM",
-    # Group constants
-    "CS_GRP_JUMP",
-    "CS_GRP_CALL",
-    "CS_GRP_RET",
-    "CS_GRP_INT",
-    "CS_GRP_IRET",
-    "CS_GRP_PRIVILEGE",
-    "CS_GRP_BRANCH_RELATIVE",
-    # Functions
+    "CS_OPT_SYNTAX_NOREGNAME",
+    "Cs",
+    "CsError",
+    "CsInsn",
+    "HAS_CAPSTONE",
+    "capstone",
     "cs_disasm_quick",
     "cs_version",
-    "version_bind",
     "debug",
+    "version_bind",
 ]

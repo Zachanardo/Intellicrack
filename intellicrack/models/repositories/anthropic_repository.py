@@ -26,6 +26,7 @@ from intellicrack.core.config_manager import get_config
 from .base import APIRepositoryBase, RateLimitConfig
 from .interface import ModelInfo
 
+
 """
 Anthropic Repository Implementation
 
@@ -134,8 +135,7 @@ class AnthropicRepository(APIRepositoryBase):
             # Extract model information from the response
             for model_data in data.get("data", []):
                 model_id = model_data.get("id")
-                model_info = self._create_model_info(model_id, model_data)
-                if model_info:
+                if model_info := self._create_model_info(model_id, model_data):
                     models.append(model_info)
 
             return models
@@ -167,14 +167,14 @@ class AnthropicRepository(APIRepositoryBase):
             return None
 
         try:
-            # Find the specific model in the list
-            for model_data in data.get("data", []):
-                if model_data.get("id") == model_id:
-                    return self._create_model_info(model_id, model_data)
-
-            # Model not found
-            return None
-
+            return next(
+                (
+                    self._create_model_info(model_id, model_data)
+                    for model_data in data.get("data", [])
+                    if model_data.get("id") == model_id
+                ),
+                None,
+            )
         except (KeyError, TypeError) as e:
             logger.error(f"Error parsing Anthropic model details for {model_id}: {e}")
             return None
@@ -200,8 +200,7 @@ class AnthropicRepository(APIRepositoryBase):
             if model_data.get("input_audio_format") is not None:
                 capabilities.append("audio")
 
-            # Extract model information
-            model_info = ModelInfo(
+            return ModelInfo(
                 model_id=model_id,
                 name=model_data.get("name", model_id),
                 description=model_data.get("description", ""),
@@ -216,9 +215,6 @@ class AnthropicRepository(APIRepositoryBase):
                 download_url=None,
                 local_path=None,
             )
-
-            return model_info
-
         except (KeyError, TypeError) as e:
             logger.error(f"Error creating ModelInfo for {model_id}: {e}")
             return None
@@ -230,5 +226,7 @@ class AnthropicRepository(APIRepositoryBase):
             Always returns (False, "Anthropic doesn't support model downloads")
 
         """
-        logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
+        logger.warning(
+            f"Download requested for {model_id} to {destination_path}, but not supported"
+        )
         return False, "Anthropic doesn't support model downloads"

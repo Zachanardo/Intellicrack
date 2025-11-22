@@ -23,6 +23,7 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 
+
 logger = logging.getLogger(__name__)
 
 # Attempt to import available ML modules

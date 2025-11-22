@@ -31,7 +31,7 @@ class RealBinaryTestBase(unittest.TestCase):
         if not manifest_path.exists():
             return []
 
-        with open(manifest_path, 'r') as f:
+        with open(manifest_path) as f:
             return json.load(f)
 
     @classmethod

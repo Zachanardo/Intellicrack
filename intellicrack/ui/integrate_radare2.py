@@ -26,6 +26,7 @@ import sys
 from ..utils.logger import get_logger
 from .comprehensive_integration import integrate_radare2_comprehensive
 
+
 logger = get_logger(__name__)
 
 
@@ -37,14 +38,22 @@ def add_radare2_to_intellicrack_app(app_instance: object) -> bool:
 
     Usage::
 
-        from intellicrack.ui.integrate_radare2 import add_radare2_to_intellicrack_app
+        from intellicrack.ui.integrate_radare2 import (
+            add_radare2_to_intellicrack_app,
+        )
 
         # In your main application initialization:
-        success = add_radare2_to_intellicrack_app(your_app_instance)
+        success = add_radare2_to_intellicrack_app(
+            your_app_instance
+        )
         if success:
-            print("Radare2 integration successful!")
+            print(
+                "Radare2 integration successful!"
+            )
         else:
-            print("Radare2 integration failed!")
+            print(
+                "Radare2 integration failed!"
+            )
 
     Args:
         app_instance: The main IntellicrackApp instance
@@ -120,8 +129,7 @@ def integrate_with_main_app() -> bool:
         # Method 1: Check if running in QApplication context
         from intellicrack.handlers.pyqt6_handler import QApplication
 
-        app = QApplication.instance()
-        if app:
+        if app := QApplication.instance():
             # Look for IntellicrackApp in top-level widgets
             for widget in app.topLevelWidgets():
                 if hasattr(widget, "__class__") and "IntellicrackApp" in str(type(widget)):
@@ -132,16 +140,17 @@ def integrate_with_main_app() -> bool:
         if not main_app:
             import __main__
 
-            if hasattr(__main__, "app") and hasattr(__main__.app, "__class__"):
-                if "IntellicrackApp" in str(type(__main__.app)):
-                    main_app = __main__.app
+            if hasattr(__main__, "app") and hasattr(__main__.app, "__class__") and "IntellicrackApp" in str(type(__main__.app)):
+                main_app = __main__.app
 
         # Method 3: Check sys.modules for app instance
         if not main_app:
             for _, module in sys.modules.items():
                 if hasattr(module, "app"):
                     app_candidate = module.app
-                    if hasattr(app_candidate, "__class__") and "IntellicrackApp" in str(type(app_candidate)):
+                    if hasattr(app_candidate, "__class__") and "IntellicrackApp" in str(
+                        type(app_candidate)
+                    ):
                         main_app = app_candidate
                         break
 

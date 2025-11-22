@@ -72,35 +72,34 @@ class GhidraScript:
     def _extract_metadata(self):
         """Extract metadata from script comments."""
         try:
-            with open(self.path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(self.path, encoding="utf-8", errors="ignore") as f:
                 content = f.read()
 
             # Java-style comments
             if self.type == "java":
-                # Look for @description, @author, @category tags
-                desc_match = re.search(r"@description\s+(.+?)(?:\n|$)", content)
-                if desc_match:
-                    self.description = desc_match.group(1).strip()
+                if desc_match := re.search(
+                    r"@description\s+(.+?)(?:\n|$)", content
+                ):
+                    self.description = desc_match[1].strip()
 
-                author_match = re.search(r"@author\s+(.+?)(?:\n|$)", content)
-                if author_match:
-                    self.author = author_match.group(1).strip()
+                if author_match := re.search(r"@author\s+(.+?)(?:\n|$)", content):
+                    self.author = author_match[1].strip()
 
-                category_match = re.search(r"@category\s+(.+?)(?:\n|$)", content)
-                if category_match:
-                    self.category = category_match.group(1).strip()
+                if category_match := re.search(
+                    r"@category\s+(.+?)(?:\n|$)", content
+                ):
+                    self.category = category_match[1].strip()
 
                 # Also check for /* */ style description
                 block_match = re.search(r"/\*\s*\n\s*\*\s*(.+?)\n", content)
                 if block_match and self.description == "No description available":
-                    self.description = block_match.group(1).strip("* ")
+                    self.description = block_match[1].strip("* ")
 
-            # Python-style docstrings
             elif self.type == "python":
-                # Triple quotes docstring
-                docstring_match = re.search(r'"""(.+?)"""', content, re.DOTALL)
-                if docstring_match:
-                    lines = docstring_match.group(1).strip().split("\n")
+                if docstring_match := re.search(
+                    r'"""(.+?)"""', content, re.DOTALL
+                ):
+                    lines = docstring_match[1].strip().split("\n")
                     if lines:
                         self.description = lines[0].strip()
 
@@ -113,10 +112,8 @@ class GhidraScript:
                     elif line.strip().startswith("# @version"):
                         self.version = line.split("@version", 1)[1].strip()
 
-            # Extract tags from description or special tag line
-            tag_match = re.search(r"@tags?\s+(.+?)(?:\n|$)", content)
-            if tag_match:
-                self.tags = [t.strip() for t in tag_match.group(1).split(",")]
+            if tag_match := re.search(r"@tags?\s+(.+?)(?:\n|$)", content):
+                self.tags = [t.strip() for t in tag_match[1].split(",")]
 
         except Exception as e:
             logger.warning(f"Failed to extract metadata from {self.filename}: {e}")
@@ -126,7 +123,7 @@ class GhidraScript:
         self.validation_errors = []
 
         try:
-            with open(self.path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(self.path, encoding="utf-8", errors="ignore") as f:
                 content = f.read()
 
             if self.type == "java":
@@ -147,14 +144,14 @@ class GhidraScript:
                 if len(content.strip()) < 10:
                     self.validation_errors.append("Script appears to be empty")
 
-            self.is_valid = len(self.validation_errors) == 0
+            self.is_valid = not self.validation_errors
 
         except Exception as e:
             logger.error("Exception in ghidra_script_manager: %s", e)
             self.validation_errors.append(f"Failed to validate: {e}")
             self.is_valid = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert script info to dictionary."""
         return {
             "path": self.path,
@@ -183,7 +180,7 @@ class GhidraScriptManager:
     # Script metadata cache file
     CACHE_FILE = "ghidra_scripts_cache.json"
 
-    def __init__(self, additional_dirs: Optional[List[str]] = None):
+    def __init__(self, additional_dirs: list[str] | None = None):
         """Initialize the script manager.
 
         Args:
@@ -194,8 +191,8 @@ class GhidraScriptManager:
         if additional_dirs:
             self.script_dirs.extend(additional_dirs)
 
-        self.scripts: Dict[str, GhidraScript] = {}
-        self.categories: Dict[str, List[str]] = {}
+        self.scripts: dict[str, GhidraScript] = {}
+        self.categories: dict[str, list[str]] = {}
         self.last_scan = None
 
         # Create default directories if they don't exist
@@ -228,7 +225,7 @@ class GhidraScriptManager:
                 except Exception as e:
                     logger.warning(f"Failed to create directory {dir_path}: {e}")
 
-    def scan_scripts(self, force_rescan: bool = False) -> Dict[str, GhidraScript]:
+    def scan_scripts(self, force_rescan: bool = False) -> dict[str, GhidraScript]:
         """Scan all directories for Ghidra scripts.
 
         Args:
@@ -239,10 +236,8 @@ class GhidraScriptManager:
 
         """
         # Check if we need to rescan
-        if not force_rescan and self.scripts and self.last_scan:
-            # If scanned within last 5 minutes, use cache
-            if (datetime.now() - self.last_scan).seconds < 300:
-                return self.scripts
+        if not force_rescan and self.scripts and self.last_scan and (datetime.now() - self.last_scan).seconds < 300:
+            return self.scripts
 
         logger.info("Scanning for Ghidra scripts...")
         self.scripts.clear()
@@ -286,18 +281,19 @@ class GhidraScriptManager:
 
         return self.scripts
 
-    def get_scripts_by_category(self) -> Dict[str, List[GhidraScript]]:
+    def get_scripts_by_category(self) -> dict[str, list[GhidraScript]]:
         """Get scripts organized by category."""
         if not self.scripts:
             self.scan_scripts()
 
-        result = {}
-        for category, paths in self.categories.items():
-            result[category] = [self.scripts[path] for path in paths if path in self.scripts]
+        return {
+            category: [
+                self.scripts[path] for path in paths if path in self.scripts
+            ]
+            for category, paths in self.categories.items()
+        }
 
-        return result
-
-    def get_script(self, identifier: str) -> Optional[GhidraScript]:
+    def get_script(self, identifier: str) -> GhidraScript | None:
         """Get a script by path, filename, or name.
 
         Args:
@@ -314,14 +310,16 @@ class GhidraScriptManager:
         if identifier in self.scripts:
             return self.scripts[identifier]
 
-        # Try by filename or name
-        for _, script in self.scripts.items():
-            if script.filename == identifier or script.name == identifier:
-                return script
+        return next(
+            (
+                script
+                for _, script in self.scripts.items()
+                if script.filename == identifier or script.name == identifier
+            ),
+            None,
+        )
 
-        return None
-
-    def validate_script(self, script_path: str) -> Tuple[bool, List[str]]:
+    def validate_script(self, script_path: str) -> tuple[bool, list[str]]:
         """Validate a specific script.
 
         Args:
@@ -357,14 +355,14 @@ class GhidraScriptManager:
 
         # If Java script, check for accompanying class files
         if script.type == "java":
-            class_file = script.name + ".class"
+            class_file = f"{script.name}.class"
             class_path = os.path.join(script.directory, class_file)
             if os.path.exists(class_path):
                 shutil.copy2(class_path, os.path.join(destination_dir, class_file))
 
         return dest_path
 
-    def search_scripts(self, query: str) -> List[GhidraScript]:
+    def search_scripts(self, query: str) -> list[GhidraScript]:
         """Search scripts by name, description, or tags.
 
         Args:
@@ -378,10 +376,9 @@ class GhidraScriptManager:
             self.scan_scripts()
 
         query_lower = query.lower()
-        results = []
-
-        for script in self.scripts.values():
-            # Search in various fields
+        return [
+            script
+            for script in self.scripts.values()
             if any(
                 query_lower in field.lower()
                 for field in [
@@ -391,12 +388,10 @@ class GhidraScriptManager:
                     script.category,
                     " ".join(script.tags),
                 ]
-            ):
-                results.append(script)
+            )
+        ]
 
-        return results
-
-    def add_user_script(self, source_path: str, category: str = "User Scripts") -> Optional[GhidraScript]:
+    def add_user_script(self, source_path: str, category: str = "User Scripts") -> GhidraScript | None:
         """Add a user script to the user scripts directory.
 
         Args:
@@ -458,7 +453,7 @@ class GhidraScriptManager:
             return
 
         try:
-            with open(cache_path, "r") as f:
+            with open(cache_path) as f:
                 data = json.load(f)
 
             # Check cache version
@@ -513,7 +508,7 @@ class GhidraScriptManager:
 
 
 # Global instance
-_script_manager: Optional[GhidraScriptManager] = None
+_script_manager: GhidraScriptManager | None = None
 
 
 def get_script_manager() -> GhidraScriptManager:

@@ -38,7 +38,9 @@ class AdobeInjectorTab(BaseTab):
     injector_started = pyqtSignal(str)
     patch_completed = pyqtSignal(bool, str)
 
-    def __init__(self, shared_context: dict[str, Any] | None = None, parent: QWidget | None = None) -> None:
+    def __init__(
+        self, shared_context: dict[str, Any] | None = None, parent: QWidget | None = None
+    ) -> None:
         """Initialize Adobe Injector tab.
 
         Args:
@@ -61,7 +63,13 @@ class AdobeInjectorTab(BaseTab):
         method_layout.addWidget(QLabel("Method:"))
         self.method_combo = QComboBox()
         self.method_combo.addItems(
-            ["Embedded Window (Native)", "Subprocess Control", "Terminal Execution", "DLL Injection", "AutoIt3X COM"],
+            [
+                "Embedded Window (Native)",
+                "Subprocess Control",
+                "Terminal Execution",
+                "DLL Injection",
+                "AutoIt3X COM",
+            ],
         )
         self.method_combo.currentTextChanged.connect(self.on_method_changed)
 
@@ -291,8 +299,7 @@ class AdobeInjectorTab(BaseTab):
 
         try:
             cmd = [str(adobe_injector_path)]
-            args = self.cmd_args.text().strip()
-            if args:
+            if args := self.cmd_args.text().strip():
                 cmd.extend(args.split())
 
             if hidden:
@@ -306,7 +313,12 @@ class AdobeInjectorTab(BaseTab):
                     error_msg = f"Unsafe command: {cmd}"
                     logger.error(error_msg)
                     raise ValueError(error_msg)
-                cwd_str = str(adobe_injector_path.parent).replace(";", "").replace("|", "").replace("&", "")
+                cwd_str = (
+                    str(adobe_injector_path.parent)
+                    .replace(";", "")
+                    .replace("|", "")
+                    .replace("&", "")
+                )
                 self.adobe_injector_process = subprocess.Popen(
                     cmd,
                     stdout=subprocess.PIPE,
@@ -328,7 +340,12 @@ class AdobeInjectorTab(BaseTab):
                     error_msg = f"Unsafe command: {cmd}"
                     logger.error(error_msg)
                     raise ValueError(error_msg)
-                cwd_str = str(adobe_injector_path.parent).replace(";", "").replace("|", "").replace("&", "")
+                cwd_str = (
+                    str(adobe_injector_path.parent)
+                    .replace(";", "")
+                    .replace("|", "")
+                    .replace("&", "")
+                )
                 self.adobe_injector_process = subprocess.Popen(cmd, cwd=cwd_str, shell=False)
                 self.subprocess_output.append("Adobe Injector launched in visible mode")
 
@@ -360,8 +377,7 @@ class AdobeInjectorTab(BaseTab):
 
     def custom_terminal_command(self) -> None:
         """Execute custom command in terminal."""
-        cmd = self.terminal_cmd.text()
-        if cmd:
+        if cmd := self.terminal_cmd.text():
             self.execute_in_terminal(cmd)
 
     def execute_terminal_command(self) -> None:
@@ -374,18 +390,19 @@ class AdobeInjectorTab(BaseTab):
             terminal_manager = get_terminal_manager()
 
             if not terminal_manager.is_terminal_available():
-                self.terminal_display.append("Terminal not available. Please open Terminal tab first.")
+                self.terminal_display.append(
+                    "Terminal not available. Please open Terminal tab first."
+                )
                 return
 
             adobe_injector_dir = get_project_root() / "tools/AdobeInjector"
 
-            if isinstance(command, str):
-                command_parts = command.split()
-            else:
-                command_parts = command
-
+            command_parts = command.split() if isinstance(command, str) else command
             session_id = terminal_manager.execute_command(
-                command_parts, capture_output=False, auto_switch=True, cwd=str(adobe_injector_dir),
+                command_parts,
+                capture_output=False,
+                auto_switch=True,
+                cwd=str(adobe_injector_dir),
             )
 
             self.terminal_display.append(f"Executed in terminal: {command}")
@@ -403,7 +420,9 @@ class AdobeInjectorTab(BaseTab):
     def register_autoit_com(self) -> None:
         """Register AutoIt3X.dll for COM usage."""
         try:
-            result = subprocess.run(["regsvr32", "/s", "AutoIt3X.dll"], capture_output=True, text=True)
+            result = subprocess.run(
+                ["regsvr32", "/s", "AutoIt3X.dll"], capture_output=True, text=True
+            )
             if result.returncode == 0:
                 self.subprocess_output.append("AutoIt3X.dll registered successfully")
             else:

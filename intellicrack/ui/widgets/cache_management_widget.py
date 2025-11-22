@@ -33,6 +33,7 @@ from ...protection.analysis_cache import get_analysis_cache
 from ...protection.unified_protection_engine import get_unified_engine
 from ...utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 
@@ -373,16 +374,31 @@ class CacheManagementWidget(QWidget):
 
         stats_data = stats.get("stats", {})
 
-        details.append(f"Cache Directory: {stats.get('cache_directory', 'Unknown')}")
-        details.append(f"Total Entries: {stats_data.get('total_entries', 0)}")
-        details.append(f"Cache Hits: {stats_data.get('cache_hits', 0)}")
-        details.append(f"Cache Misses: {stats_data.get('cache_misses', 0)}")
-        details.append(f"Cache Invalidations: {stats_data.get('cache_invalidations', 0)}")
-        details.append(f"Hit Rate: {stats_data.get('hit_rate', 0):.2f}%")
-        details.append(f"Total Size: {stats_data.get('total_size_bytes', 0) / 1024 / 1024:.2f} MB")
-        details.append(f"Max Entries: {stats.get('max_entries', 0)}")
-        details.append(f"Max Size: {stats.get('max_size_mb', 0):.1f} MB")
-
+        details.extend(
+            (
+                f"Cache Directory: {stats.get('cache_directory', 'Unknown')}",
+                f"Total Entries: {stats_data.get('total_entries', 0)}",
+            )
+        )
+        details.extend(
+            (
+                f"Cache Hits: {stats_data.get('cache_hits', 0)}",
+                f"Cache Misses: {stats_data.get('cache_misses', 0)}",
+            )
+        )
+        details.extend(
+            (
+                f"Cache Invalidations: {stats_data.get('cache_invalidations', 0)}",
+                f"Hit Rate: {stats_data.get('hit_rate', 0):.2f}%",
+            )
+        )
+        details.extend(
+            (
+                f"Total Size: {stats_data.get('total_size_bytes', 0) / 1024 / 1024:.2f} MB",
+                f"Max Entries: {stats.get('max_entries', 0)}",
+                f"Max Size: {stats.get('max_size_mb', 0):.1f} MB",
+            )
+        )
         # Add AI coordination layer performance statistics if available
         try:
             main_window = None
@@ -404,8 +420,12 @@ class CacheManagementWidget(QWidget):
                 details.append(f"Average LLM Time: {ai_stats.get('avg_llm_time', 0):.2f}s")
                 details.append("Components Available:")
                 components = ai_stats.get("components_available", {})
-                details.append(f"  - ML Predictor: {'Yes' if components.get('ml_predictor', False) else 'No'}")
-                details.append(f"  - Model Manager: {'Yes' if components.get('model_manager', False) else 'No'}")
+                details.append(
+                    f"  - ML Predictor: {'Yes' if components.get('ml_predictor', False) else 'No'}"
+                )
+                details.append(
+                    f"  - Model Manager: {'Yes' if components.get('model_manager', False) else 'No'}"
+                )
         except Exception as e:
             logger.debug(f"Could not retrieve AI coordination stats: {e}")
 
@@ -499,12 +519,15 @@ class CacheManagementWidget(QWidget):
 
                 # Also clear AI coordination layer cache if available
                 try:
-                    main_window = None
-                    for widget in QApplication.allWidgets():
-                        if hasattr(widget, "ai_coordinator") and widget.ai_coordinator:
-                            main_window = widget
-                            break
-
+                    main_window = next(
+                        (
+                            widget
+                            for widget in QApplication.allWidgets()
+                            if hasattr(widget, "ai_coordinator")
+                            and widget.ai_coordinator
+                        ),
+                        None,
+                    )
                     if main_window and hasattr(main_window.ai_coordinator, "clear_cache"):
                         main_window.ai_coordinator.clear_cache()
                         logger.info("AI coordination cache cleared")

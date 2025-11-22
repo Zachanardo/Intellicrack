@@ -14,19 +14,23 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+
 try:
     import lief
+
     LIEF_AVAILABLE = True
 except ImportError:
     LIEF_AVAILABLE = False
 
 try:
     from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
+
     CAPSTONE_AVAILABLE = True
 except ImportError:
     CAPSTONE_AVAILABLE = False
 
 from ..utils.logger import get_logger
+
 
 logger = get_logger(__name__)
 
@@ -113,11 +117,11 @@ class ThemidaAnalyzer:
     """Advanced Themida/WinLicense virtualization analyzer."""
 
     THEMIDA_SIGNATURES = {
-        b"\x8B\xC5\x8B\xD4\x60\xE8\x00\x00\x00\x00": "Themida 1.x Entry",
-        b"\xB8\x00\x00\x00\x00\x60\x0B\xC0\x74": "Themida 2.x Entry",
-        b"\x55\x8B\xEC\x83\xC4\xF0\x53\x56\x57": "Themida 3.x Entry",
-        b"\x68\x00\x00\x00\x00\x9C\x60\xE8": "WinLicense 1.x Entry",
-        b"\xEB\x10\x66\x62\x3A\x43\x2B\x2B\x48\x4F\x4F\x4B": "WinLicense Marker",
+        b"\x8b\xc5\x8b\xd4\x60\xe8\x00\x00\x00\x00": "Themida 1.x Entry",
+        b"\xb8\x00\x00\x00\x00\x60\x0b\xc0\x74": "Themida 2.x Entry",
+        b"\x55\x8b\xec\x83\xc4\xf0\x53\x56\x57": "Themida 3.x Entry",
+        b"\x68\x00\x00\x00\x00\x9c\x60\xe8": "WinLicense 1.x Entry",
+        b"\xeb\x10\x66\x62\x3a\x43\x2b\x2b\x48\x4f\x4f\x4b": "WinLicense Marker",
     }
 
     VM_SECTION_NAMES = [
@@ -130,56 +134,56 @@ class ThemidaAnalyzer:
     ]
 
     CISC_HANDLER_PATTERNS = {
-        0x00: b"\x8B\x45\x00\x89\x45\x04",
-        0x01: b"\x8B\x45\x00\x03\x45\x04",
-        0x02: b"\x8B\x45\x00\x2B\x45\x04",
-        0x03: b"\x8B\x45\x00\x0F\xAF\x45\x04",
-        0x04: b"\x8B\x45\x00\x33\x45\x04",
-        0x05: b"\x8B\x45\x00\x0B\x45\x04",
-        0x06: b"\x8B\x45\x00\x23\x45\x04",
-        0x07: b"\xF7\x45\x00",
-        0x08: b"\x8B\x45\x00\xD1\xE0",
-        0x09: b"\x8B\x45\x00\xD1\xE8",
-        0x0A: b"\x83\x7D\x00\x00\x74",
-        0x0B: b"\x83\x7D\x00\x00\x75",
-        0x0C: b"\xE9",
-        0x0D: b"\xEB",
-        0x0E: b"\x8B\x45\x00\xFF\xE0",
-        0x0F: b"\xC3",
+        0x00: b"\x8b\x45\x00\x89\x45\x04",
+        0x01: b"\x8b\x45\x00\x03\x45\x04",
+        0x02: b"\x8b\x45\x00\x2b\x45\x04",
+        0x03: b"\x8b\x45\x00\x0f\xaf\x45\x04",
+        0x04: b"\x8b\x45\x00\x33\x45\x04",
+        0x05: b"\x8b\x45\x00\x0b\x45\x04",
+        0x06: b"\x8b\x45\x00\x23\x45\x04",
+        0x07: b"\xf7\x45\x00",
+        0x08: b"\x8b\x45\x00\xd1\xe0",
+        0x09: b"\x8b\x45\x00\xd1\xe8",
+        0x0A: b"\x83\x7d\x00\x00\x74",
+        0x0B: b"\x83\x7d\x00\x00\x75",
+        0x0C: b"\xe9",
+        0x0D: b"\xeb",
+        0x0E: b"\x8b\x45\x00\xff\xe0",
+        0x0F: b"\xc3",
     }
 
     RISC_HANDLER_PATTERNS = {
-        0x00: b"\xE2\x8F\x00\x00",
-        0x01: b"\xE0\x80\x00\x00",
-        0x02: b"\xE0\x40\x00\x00",
-        0x03: b"\xE0\x00\x00\x00",
-        0x04: b"\xE2\x00\x00\x00",
-        0x05: b"\xE1\x80\x00\x00",
-        0x06: b"\xE0\x00\x00\x01",
-        0x07: b"\xE2\x61\x00\x00",
-        0x08: b"\xE1\xA0\x00\x00",
-        0x09: b"\xE1\xA0\x00\x20",
-        0x0A: b"\xEA\x00\x00\x00",
-        0x0B: b"\xE3\x50\x00\x00",
+        0x00: b"\xe2\x8f\x00\x00",
+        0x01: b"\xe0\x80\x00\x00",
+        0x02: b"\xe0\x40\x00\x00",
+        0x03: b"\xe0\x00\x00\x00",
+        0x04: b"\xe2\x00\x00\x00",
+        0x05: b"\xe1\x80\x00\x00",
+        0x06: b"\xe0\x00\x00\x01",
+        0x07: b"\xe2\x61\x00\x00",
+        0x08: b"\xe1\xa0\x00\x00",
+        0x09: b"\xe1\xa0\x00\x20",
+        0x0A: b"\xea\x00\x00\x00",
+        0x0B: b"\xe3\x50\x00\x00",
     }
 
     FISH_HANDLER_PATTERNS = {
-        0x00: b"\x48\x8B\x00",
+        0x00: b"\x48\x8b\x00",
         0x01: b"\x48\x01\x00",
         0x02: b"\x48\x29\x00",
-        0x03: b"\x48\x0F\xAF\x00",
+        0x03: b"\x48\x0f\xaf\x00",
         0x04: b"\x48\x31\x00",
         0x05: b"\x48\x09\x00",
         0x06: b"\x48\x21\x00",
-        0x07: b"\x48\xF7\x18",
-        0x08: b"\x48\xD1\xE0",
-        0x09: b"\x48\xD1\xE8",
-        0x0A: b"\x48\x85\xC0\x74",
-        0x0B: b"\x48\x85\xC0\x75",
-        0x0C: b"\xE9",
-        0x0D: b"\xEB",
-        0x0E: b"\xFF\xE0",
-        0x0F: b"\xC3",
+        0x07: b"\x48\xf7\x18",
+        0x08: b"\x48\xd1\xe0",
+        0x09: b"\x48\xd1\xe8",
+        0x0A: b"\x48\x85\xc0\x74",
+        0x0B: b"\x48\x85\xc0\x75",
+        0x0C: b"\xe9",
+        0x0D: b"\xeb",
+        0x0E: b"\xff\xe0",
+        0x0F: b"\xc3",
     }
 
     def __init__(self) -> None:
@@ -238,7 +242,9 @@ class ThemidaAnalyzer:
         result.vm_entry_points = self._find_vm_entry_points()
         result.vm_architecture = self._detect_vm_architecture()
         result.handler_table_address = self._find_handler_table()
-        result.handlers = self._extract_handlers(result.handler_table_address, result.vm_architecture)
+        result.handlers = self._extract_handlers(
+            result.handler_table_address, result.vm_architecture
+        )
         result.vm_contexts = self._extract_vm_contexts(result.vm_entry_points)
         result.encryption_keys = self._extract_encryption_keys()
         result.anti_debug_locations = self._find_anti_debug_checks()
@@ -247,7 +253,9 @@ class ThemidaAnalyzer:
         result.devirtualized_sections = self._devirtualize_code(result.handlers, result.vm_contexts)
         result.confidence = self._calculate_confidence(result)
 
-        logger.info(f"Themida analysis complete: {result.version.value}, VM: {result.vm_architecture.value}, Confidence: {result.confidence:.1f}%")
+        logger.info(
+            f"Themida analysis complete: {result.version.value}, VM: {result.vm_architecture.value}, Confidence: {result.confidence:.1f}%"
+        )
         return result
 
     def _detect_themida_presence(self) -> bool:
@@ -258,7 +266,9 @@ class ThemidaAnalyzer:
 
         if self.binary:
             for section in self.binary.sections:
-                section_name = section.name.encode() if isinstance(section.name, str) else section.name
+                section_name = (
+                    section.name.encode() if isinstance(section.name, str) else section.name
+                )
                 for vm_section in self.VM_SECTION_NAMES:
                     if vm_section in section_name:
                         return True
@@ -268,11 +278,11 @@ class ThemidaAnalyzer:
     def _detect_version(self) -> ThemidaVersion:
         """Detect Themida/WinLicense version."""
         version_patterns = {
-            b"\x8B\xC5\x8B\xD4\x60\xE8\x00\x00\x00\x00": ThemidaVersion.THEMIDA_1X,
-            b"\xB8\x00\x00\x00\x00\x60\x0B\xC0\x74": ThemidaVersion.THEMIDA_2X,
-            b"\x55\x8B\xEC\x83\xC4\xF0\x53\x56\x57": ThemidaVersion.THEMIDA_3X,
-            b"\x68\x00\x00\x00\x00\x9C\x60\xE8": ThemidaVersion.WINLICENSE_1X,
-            b"\xEB\x10\x66\x62\x3A\x43\x2B\x2B\x48\x4F\x4F\x4B": ThemidaVersion.WINLICENSE_2X,
+            b"\x8b\xc5\x8b\xd4\x60\xe8\x00\x00\x00\x00": ThemidaVersion.THEMIDA_1X,
+            b"\xb8\x00\x00\x00\x00\x60\x0b\xc0\x74": ThemidaVersion.THEMIDA_2X,
+            b"\x55\x8b\xec\x83\xc4\xf0\x53\x56\x57": ThemidaVersion.THEMIDA_3X,
+            b"\x68\x00\x00\x00\x00\x9c\x60\xe8": ThemidaVersion.WINLICENSE_1X,
+            b"\xeb\x10\x66\x62\x3a\x43\x2b\x2b\x48\x4f\x4f\x4b": ThemidaVersion.WINLICENSE_2X,
         }
 
         for pattern, version in version_patterns.items():
@@ -300,9 +310,8 @@ class ThemidaAnalyzer:
                     vm_sections.append(section_name)
                     break
 
-            if section.characteristics & 0x20000000:
-                if section.entropy > 7.5:
-                    vm_sections.append(section_name)
+            if section.characteristics & 0x20000000 and section.entropy > 7.5:
+                vm_sections.append(section_name)
 
         return vm_sections
 
@@ -311,10 +320,10 @@ class ThemidaAnalyzer:
         entry_points = []
 
         entry_patterns = [
-            b"\x9C\x60\xE8\x00\x00\x00\x00\x5D\x81\xED",
-            b"\x60\xE8\x00\x00\x00\x00\x5D\x81\xED",
-            b"\x55\x8B\xEC\x83\xC4\xF0\xB8",
-            b"\xE8\x00\x00\x00\x00\x58\x25\xFF\xFF\xFF\x00",
+            b"\x9c\x60\xe8\x00\x00\x00\x00\x5d\x81\xed",
+            b"\x60\xe8\x00\x00\x00\x00\x5d\x81\xed",
+            b"\x55\x8b\xec\x83\xc4\xf0\xb8",
+            b"\xe8\x00\x00\x00\x00\x58\x25\xff\xff\xff\x00",
         ]
 
         for pattern in entry_patterns:
@@ -370,18 +379,16 @@ class ThemidaAnalyzer:
             return VMArchitecture.UNKNOWN
         if max_score == cisc_score:
             return VMArchitecture.CISC
-        if max_score == risc_score:
-            return VMArchitecture.RISC
-        return VMArchitecture.FISH
+        return VMArchitecture.RISC if max_score == risc_score else VMArchitecture.FISH
 
     def _find_handler_table(self) -> int:
         """Find virtual machine handler dispatch table."""
         handler_table_patterns = [
-            b"\xFF\x24\x85",
-            b"\xFF\x24\x8D",
-            b"\xFF\x14\x85",
-            b"\xFF\x14\x8D",
-            b"\x41\xFF\x24\xC5" if self.is_64bit else b"\xFF\x24\x85",
+            b"\xff\x24\x85",
+            b"\xff\x24\x8d",
+            b"\xff\x14\x85",
+            b"\xff\x14\x8d",
+            b"\x41\xff\x24\xc5" if self.is_64bit else b"\xff\x24\x85",
         ]
 
         candidates = []
@@ -394,27 +401,25 @@ class ThemidaAnalyzer:
                     break
 
                 if offset + 7 < len(self.binary_data):
-                    table_addr = struct.unpack("<I", self.binary_data[offset+3:offset+7])[0]
+                    table_addr = struct.unpack("<I", self.binary_data[offset + 3 : offset + 7])[0]
 
                     if 0x400000 <= table_addr <= 0x10000000:
                         candidates.append((table_addr, offset))
 
                 offset += len(pattern)
 
-        pointer_array_pattern = re.compile(b"([\x00-\xFF]{4})" * 16)
+        pointer_array_pattern = re.compile(b"([\x00-\xff]{4})" * 16)
         for match in pointer_array_pattern.finditer(self.binary_data):
             pointers = [struct.unpack("<I", match.group(i))[0] for i in range(1, 17)]
 
-            if all(0x400000 <= p <= 0x10000000 for p in pointers):
-                if len(set(pointers)) > 8:
-                    candidates.append((match.start(), match.start()))
+            if all(0x400000 <= p <= 0x10000000 for p in pointers) and len(set(pointers)) > 8:
+                candidates.append((match.start(), match.start()))
 
-        if candidates:
-            return max(candidates, key=lambda x: x[1])[0]
+        return max(candidates, key=lambda x: x[1])[0] if candidates else 0
 
-        return 0
-
-    def _extract_handlers(self, handler_table_address: int, vm_arch: VMArchitecture) -> dict[int, VMHandler]:
+    def _extract_handlers(
+        self, handler_table_address: int, vm_arch: VMArchitecture
+    ) -> dict[int, VMHandler]:
         """Extract virtual machine handlers.
 
         Args:
@@ -501,11 +506,11 @@ class ThemidaAnalyzer:
     def _estimate_handler_size(self, start_offset: int) -> int:
         """Estimate size of a handler by finding return instruction."""
         max_size = 256
-        ret_patterns = [b"\xC3", b"\xC2", b"\xCB", b"\xCA"]
+        ret_patterns = [b"\xc3", b"\xc2", b"\xcb", b"\xca"]
 
         for i in range(start_offset, min(start_offset + max_size, len(self.binary_data))):
             for ret_pattern in ret_patterns:
-                if self.binary_data[i:i+len(ret_pattern)] == ret_pattern:
+                if self.binary_data[i : i + len(ret_pattern)] == ret_pattern:
                     return i - start_offset + len(ret_pattern)
 
         return max_size
@@ -525,11 +530,12 @@ class ThemidaAnalyzer:
 
         try:
             md = Cs(CS_ARCH_X86, mode)
-            code = self.binary_data[offset:offset+size]
+            code = self.binary_data[offset : offset + size]
 
-            for insn in md.disasm(code, offset):
-                instructions.append((insn.address, insn.mnemonic, insn.op_str))
-
+            instructions.extend(
+                (insn.address, insn.mnemonic, insn.op_str)
+                for insn in md.disasm(code, offset)
+            )
         except Exception as e:
             logger.warning(f"Disassembly failed at {offset:x}: {e}")
 
@@ -561,12 +567,9 @@ class ThemidaAnalyzer:
         if not instructions:
             return 1
 
-        complexity = len(instructions)
-
-        unique_mnemonics = len({insn[1] for insn in instructions})
-        complexity += unique_mnemonics
-
-        branch_count = sum(1 for insn in instructions if insn[1] in ["jmp", "je", "jne", "jg", "jl", "ja", "jb"])
+        complexity = len(instructions) + len({insn[1] for insn in instructions})
+        branch_count = sum(bool(insn[1] in ["jmp", "je", "jne", "jg", "jl", "ja", "jb"])
+                       for insn in instructions)
         complexity += branch_count * 2
 
         return min(max(complexity // 5, 1), 10)
@@ -600,43 +603,41 @@ class ThemidaAnalyzer:
             flags_offset = self._find_flags_offset(entry)
             vm_exit = self._find_vm_exit(entry)
 
-            contexts.append(VMContext(
-                vm_entry=entry,
-                vm_exit=vm_exit,
-                context_size=context_size,
-                register_mapping=register_mapping,
-                stack_offset=stack_offset,
-                flags_offset=flags_offset,
-            ))
+            contexts.append(
+                VMContext(
+                    vm_entry=entry,
+                    vm_exit=vm_exit,
+                    context_size=context_size,
+                    register_mapping=register_mapping,
+                    stack_offset=stack_offset,
+                    flags_offset=flags_offset,
+                )
+            )
 
         return contexts
 
     def _detect_context_size(self, entry: int) -> int:
         """Detect VM context structure size."""
-        sub_esp_pattern = b"\x83\xEC"
-        add_esp_pattern = b"\x81\xEC"
+        sub_esp_pattern = b"\x83\xec"
+        add_esp_pattern = b"\x81\xec"
 
-        search_area = self.binary_data[entry:entry+100]
+        search_area = self.binary_data[entry : entry + 100]
 
         offset = search_area.find(sub_esp_pattern)
         if offset != -1 and offset + 3 <= len(search_area):
-            return struct.unpack("B", search_area[offset+2:offset+3])[0]
+            return struct.unpack("B", search_area[offset + 2 : offset + 3])[0]
 
         offset = search_area.find(add_esp_pattern)
         if offset != -1 and offset + 6 <= len(search_area):
-            return struct.unpack("<I", search_area[offset+2:offset+6])[0]
+            return struct.unpack("<I", search_area[offset + 2 : offset + 6])[0]
 
         return 0x100
 
     def _extract_register_mapping(self, entry: int) -> dict[str, int]:
         """Extract VM register to native register mapping."""
-        mapping = {}
         registers = ["eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp"]
 
-        for i, reg in enumerate(registers):
-            mapping[reg] = i * 4
-
-        return mapping
+        return {reg: i * 4 for i, reg in enumerate(registers)}
 
     def _find_stack_offset(self, entry: int) -> int:
         """Find VM stack offset in context."""
@@ -648,8 +649,8 @@ class ThemidaAnalyzer:
 
     def _find_vm_exit(self, vm_entry: int) -> int:
         """Find VM exit point corresponding to entry."""
-        ret_pattern = b"\x61\x9D\xC3"
-        popad_ret = b"\x61\xC3"
+        ret_pattern = b"\x61\x9d\xc3"
+        popad_ret = b"\x61\xc3"
 
         search_start = vm_entry
         search_end = min(vm_entry + 10000, len(self.binary_data))
@@ -660,24 +661,21 @@ class ThemidaAnalyzer:
             return search_start + offset
 
         offset = search_area.find(popad_ret)
-        if offset != -1:
-            return search_start + offset
-
-        return 0
+        return search_start + offset if offset != -1 else 0
 
     def _extract_encryption_keys(self) -> list[bytes]:
         """Extract encryption keys used by Themida."""
         keys = []
 
         key_patterns = [
-            re.compile(b"[\x00-\xFF]{16}"),
-            re.compile(b"[\x00-\xFF]{32}"),
+            re.compile(b"[\x00-\xff]{16}"),
+            re.compile(b"[\x00-\xff]{32}"),
         ]
 
         high_entropy_threshold = 7.0
 
         for i in range(0, len(self.binary_data) - 32, 4):
-            chunk = self.binary_data[i:i+32]
+            chunk = self.binary_data[i : i + 32]
 
             if self._calculate_entropy_bytes(chunk) > high_entropy_threshold:
                 chunk_16 = chunk[:16]
@@ -701,6 +699,7 @@ class ThemidaAnalyzer:
             frequency[byte] = frequency.get(byte, 0) + 1
 
         import math
+
         entropy = 0.0
         data_len = len(data)
 
@@ -716,12 +715,12 @@ class ThemidaAnalyzer:
         anti_debug_locations = []
 
         anti_debug_patterns = [
-            b"\x64\xA1\x30\x00\x00\x00",
-            b"\x64\x8B\x15\x30\x00\x00\x00",
+            b"\x64\xa1\x30\x00\x00\x00",
+            b"\x64\x8b\x15\x30\x00\x00\x00",
             b"IsDebuggerPresent",
             b"CheckRemoteDebuggerPresent",
             b"NtQueryInformationProcess",
-            b"\x0F\x31",
+            b"\x0f\x31",
         ]
 
         for pattern in anti_debug_patterns:
@@ -743,7 +742,7 @@ class ThemidaAnalyzer:
             b"VirtualProtect",
             b"VirtualAlloc",
             b"WriteProcessMemory",
-            b"\x89\x45\x00\x8B\x45\x04\x89\x45\x08",
+            b"\x89\x45\x00\x8b\x45\x04\x89\x45\x08",
         ]
 
         for pattern in anti_dump_patterns:
@@ -762,10 +761,10 @@ class ThemidaAnalyzer:
         integrity_locations = []
 
         integrity_patterns = [
-            b"\x81\xC1",
-            b"\x81\xC9",
-            b"\x33\xC0\x8B",
-            b"\x0F\xB6",
+            b"\x81\xc1",
+            b"\x81\xc9",
+            b"\x33\xc0\x8b",
+            b"\x0f\xb6",
         ]
 
         crc_references = [b"CRC32", b"checksum", b"integrity"]
@@ -777,7 +776,7 @@ class ThemidaAnalyzer:
                 if offset == -1:
                     break
 
-                nearby_area = self.binary_data[max(0, offset-100):offset+100]
+                nearby_area = self.binary_data[max(0, offset - 100) : offset + 100]
                 if any(ref in nearby_area for ref in crc_references):
                     integrity_locations.append(offset)
 
@@ -785,7 +784,9 @@ class ThemidaAnalyzer:
 
         return sorted(set(integrity_locations))
 
-    def _devirtualize_code(self, handlers: dict[int, VMHandler], contexts: list[VMContext]) -> list[DevirtualizedCode]:
+    def _devirtualize_code(
+        self, handlers: dict[int, VMHandler], contexts: list[VMContext]
+    ) -> list[DevirtualizedCode]:
         """Devirtualize VM-protected code sections.
 
         Args:
@@ -812,23 +813,30 @@ class ThemidaAnalyzer:
             vm_bytecode = self.binary_data[vm_code_start:vm_code_end]
 
             native_code, assembly, handlers_used, confidence = self._translate_vm_to_native(
-                vm_bytecode, handlers, context,
+                vm_bytecode,
+                handlers,
+                context,
             )
 
-            devirtualized.append(DevirtualizedCode(
-                original_rva=vm_code_start,
-                original_size=vm_code_end - vm_code_start,
-                vm_handlers_used=handlers_used,
-                native_code=native_code,
-                assembly=assembly,
-                confidence=confidence,
-            ))
+            devirtualized.append(
+                DevirtualizedCode(
+                    original_rva=vm_code_start,
+                    original_size=vm_code_end - vm_code_start,
+                    vm_handlers_used=handlers_used,
+                    native_code=native_code,
+                    assembly=assembly,
+                    confidence=confidence,
+                )
+            )
 
         logger.info(f"Devirtualized {len(devirtualized)} code sections")
         return devirtualized
 
     def _translate_vm_to_native(
-        self, vm_bytecode: bytes, handlers: dict[int, VMHandler], context: VMContext,
+        self,
+        vm_bytecode: bytes,
+        handlers: dict[int, VMHandler],
+        context: VMContext,
     ) -> tuple[bytes, list[str], list[int], float]:
         """Translate VM bytecode to native x86/x64 code.
 
@@ -842,22 +850,22 @@ class ThemidaAnalyzer:
         confidence = 0.0
 
         opcode_translation = {
-            0x00: (b"\x8B\x45\x00", "mov eax, [ebp+0]"),
+            0x00: (b"\x8b\x45\x00", "mov eax, [ebp+0]"),
             0x01: (b"\x01\x45\x00", "add [ebp+0], eax"),
             0x02: (b"\x29\x45\x00", "sub [ebp+0], eax"),
-            0x03: (b"\x0F\xAF\x45\x00", "imul eax, [ebp+0]"),
+            0x03: (b"\x0f\xaf\x45\x00", "imul eax, [ebp+0]"),
             0x04: (b"\x31\x45\x00", "xor [ebp+0], eax"),
             0x05: (b"\x09\x45\x00", "or [ebp+0], eax"),
             0x06: (b"\x21\x45\x00", "and [ebp+0], eax"),
-            0x07: (b"\xF7\x5D\x00", "neg [ebp+0]"),
-            0x08: (b"\xD1\x65\x00", "shl [ebp+0], 1"),
-            0x09: (b"\xD1\x6D\x00", "shr [ebp+0], 1"),
+            0x07: (b"\xf7\x5d\x00", "neg [ebp+0]"),
+            0x08: (b"\xd1\x65\x00", "shl [ebp+0], 1"),
+            0x09: (b"\xd1\x6d\x00", "shr [ebp+0], 1"),
             0x0A: (b"\x74\x00", "je short 0"),
             0x0B: (b"\x75\x00", "jne short 0"),
-            0x0C: (b"\xE9\x00\x00\x00\x00", "jmp 0"),
-            0x0D: (b"\xEB\x00", "jmp short 0"),
-            0x0E: (b"\xFF\xE0", "jmp eax"),
-            0x0F: (b"\xC3", "ret"),
+            0x0C: (b"\xe9\x00\x00\x00\x00", "jmp 0"),
+            0x0D: (b"\xeb\x00", "jmp short 0"),
+            0x0E: (b"\xff\xe0", "jmp eax"),
+            0x0F: (b"\xc3", "ret"),
         }
 
         i = 0
@@ -865,11 +873,10 @@ class ThemidaAnalyzer:
         total_opcodes = 0
 
         while i < len(vm_bytecode):
-            if i >= len(vm_bytecode):
-                break
-
             opcode = vm_bytecode[i]
             total_opcodes += 1
+
+            i += 1
 
             if opcode in handlers:
                 handlers_used.append(opcode)
@@ -882,18 +889,16 @@ class ThemidaAnalyzer:
                 else:
                     assembly.append(f"vm_handler_{opcode:02x}")
 
-                i += 1
-
-                if i < len(vm_bytecode) and handlers[opcode].category in ["data_transfer", "arithmetic"]:
-                    if i + 4 <= len(vm_bytecode):
-                        operand = struct.unpack("<I", vm_bytecode[i:i+4])[0]
-                        assembly[-1] += f"  ; operand: {operand:08x}"
-                        i += 4
+                if i < len(vm_bytecode) and handlers[opcode].category in [
+                                    "data_transfer",
+                                    "arithmetic",
+                                ] and i + 4 <= len(vm_bytecode):
+                    operand = struct.unpack("<I", vm_bytecode[i : i + 4])[0]
+                    assembly[-1] += f"  ; operand: {operand:08x}"
+                    i += 4
             else:
                 assembly.append(f"db {opcode:02x}h")
                 native_code.append(opcode)
-                i += 1
-
         if total_opcodes > 0:
             confidence = (valid_translations / total_opcodes) * 100.0
         else:
@@ -924,7 +929,9 @@ class ThemidaAnalyzer:
             confidence += min(len(result.handlers) * 0.5, 10.0)
 
         if result.devirtualized_sections:
-            avg_dev_confidence = sum(d.confidence for d in result.devirtualized_sections) / len(result.devirtualized_sections)
+            avg_dev_confidence = sum(d.confidence for d in result.devirtualized_sections) / len(
+                result.devirtualized_sections
+            )
             confidence += min(avg_dev_confidence * 0.1, 10.0)
 
         return min(confidence, 100.0)
@@ -946,7 +953,9 @@ class ThemidaAnalyzer:
             "confidence": f"{result.confidence:.1f}%",
             "vm_sections": result.vm_sections,
             "vm_entry_points": [f"0x{ep:08x}" for ep in result.vm_entry_points],
-            "handler_table": f"0x{result.handler_table_address:08x}" if result.handler_table_address else "Not found",
+            "handler_table": f"0x{result.handler_table_address:08x}"
+            if result.handler_table_address
+            else "Not found",
             "handlers_extracted": len(result.handlers),
             "vm_contexts": len(result.vm_contexts),
             "devirtualized_sections": len(result.devirtualized_sections),
@@ -959,7 +968,9 @@ class ThemidaAnalyzer:
             report["handler_categories"] = {}
             for handler in result.handlers.values():
                 category = handler.category
-                report["handler_categories"][category] = report["handler_categories"].get(category, 0) + 1
+                report["handler_categories"][category] = (
+                    report["handler_categories"].get(category, 0) + 1
+                )
 
         if result.devirtualized_sections:
             report["devirtualization_quality"] = {

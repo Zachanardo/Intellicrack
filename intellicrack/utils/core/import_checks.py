@@ -25,6 +25,7 @@ to avoid code duplication across modules.
 import logging
 import platform
 
+
 logger = logging.getLogger(__name__)
 
 # Binary analysis libraries
@@ -116,7 +117,9 @@ try:
     import os
 
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
-    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
+    os.environ["CUDA_VISIBLE_DEVICES"] = (
+        "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
+    )
 
     # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
     os.environ["MKL_THREADING_LAYER"] = "GNU"
@@ -143,8 +146,10 @@ except ImportError as e:
 
 # Numerical computing
 try:
-    from intellicrack.handlers.numpy_handler import HAS_NUMPY
-    from intellicrack.handlers.numpy_handler import numpy as np
+    from intellicrack.handlers.numpy_handler import (
+        HAS_NUMPY,
+        numpy as np,
+    )
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
     HAS_NUMPY = False
@@ -167,6 +172,7 @@ except ImportError as e:
 # Export all availability flags
 __all__ = [
     "CAPSTONE_AVAILABLE",
+    "ELFFile",
     "FRIDA_AVAILABLE",
     "HAS_NUMPY",
     "HAS_PYQT",
@@ -178,7 +184,6 @@ __all__ = [
     "PYELFTOOLS_AVAILABLE",
     "TENSORFLOW_AVAILABLE",
     "WINREG_AVAILABLE",
-    "ELFFile",
     "capstone",
     "frida",
     "lief",

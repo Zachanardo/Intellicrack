@@ -17,7 +17,7 @@ else:
     sys.exit(1)
 
 print("\n2. Checking file integrity...")
-with open(analyzer_path, 'r', encoding='utf-8') as f:
+with open(analyzer_path, encoding='utf-8') as f:
     content = f.read()
     lines = content.split('\n')
     print(f"   OK Total lines: {len(lines)}")
@@ -78,7 +78,7 @@ for dc in dataclasses:
 print("\n5. Integration check...")
 detector_path = "D:/Intellicrack/intellicrack/protection/protection_detector.py"
 if os.path.exists(detector_path):
-    with open(detector_path, 'r', encoding='utf-8') as f:
+    with open(detector_path, encoding='utf-8') as f:
         detector_content = f.read()
         if 'detect_denuvo_advanced' in detector_content:
             print("   OK detect_denuvo_advanced method found in protection_detector.py")
@@ -95,7 +95,7 @@ else:
 print("\n6. Syntax validation...")
 try:
     import ast
-    with open(analyzer_path, 'r', encoding='utf-8') as f:
+    with open(analyzer_path, encoding='utf-8') as f:
         ast.parse(f.read())
     print("   OK Python syntax is valid")
 except SyntaxError as e:

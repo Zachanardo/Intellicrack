@@ -35,8 +35,14 @@ from typing import Any
 
 # Third-party imports
 from intellicrack.handlers.matplotlib_handler import Figure, FigureCanvasTkAgg
-from intellicrack.handlers.tkinter_handler import filedialog, messagebox, scrolledtext, ttk
-from intellicrack.handlers.tkinter_handler import tkinter as tk
+from intellicrack.handlers.tkinter_handler import (
+    filedialog,
+    messagebox,
+    scrolledtext,
+    tkinter as tk,
+    ttk,
+)
+
 
 """
 UI Enhancement Module
@@ -234,10 +240,14 @@ class RealTimeChart:
             time_range = times[-1] - times[0]
             if time_range < 60:
                 # Show seconds
-                self.axis.set_xticklabels([f"{int(t - times[0])}s" for t in times[:: max(1, len(times) // 5)]])
+                self.axis.set_xticklabels(
+                    [f"{int(t - times[0])}s" for t in times[:: max(1, len(times) // 5)]]
+                )
             else:
                 # Show minutes
-                self.axis.set_xticklabels([f"{int((t - times[0]) / 60)}m" for t in times[:: max(1, len(times) // 5)]])
+                self.axis.set_xticklabels(
+                    [f"{int((t - times[0]) / 60)}m" for t in times[:: max(1, len(times) // 5)]]
+                )
 
         self.canvas.draw()
 
@@ -309,7 +319,9 @@ class LogViewer:
         self.text_widget.tag_configure("ERROR", foreground="#ff4444")
         self.text_widget.tag_configure("CRITICAL", foreground="#ff0000", background="#440000")
         self.text_widget.tag_configure("TIMESTAMP", foreground="#00aaff")
-        self.text_widget.tag_configure("SEARCH_HIGHLIGHT", background="#ffff00", foreground="#000000")
+        self.text_widget.tag_configure(
+            "SEARCH_HIGHLIGHT", background="#ffff00", foreground="#000000"
+        )
 
     def add_log(self, level: str, message: str, source: str = "") -> None:
         """Add log entry."""
@@ -351,9 +363,9 @@ class LogViewer:
             line += f"{entry['level']}: {entry['message']}\n"
 
             # Insert with appropriate tags
-            start_pos = self.text_widget.index(tk.END + "-1c")
+            start_pos = self.text_widget.index(f"{tk.END}-1c")
             self.text_widget.insert(tk.END, line)
-            end_pos = self.text_widget.index(tk.END + "-1c")
+            end_pos = self.text_widget.index(f"{tk.END}-1c")
 
             # Apply level tag
             self.text_widget.tag_add(entry["level"], start_pos, end_pos)
@@ -400,12 +412,14 @@ class LogViewer:
 
     def export_logs(self) -> None:
         """Export logs to file."""
-        filename = filedialog.asksaveasfilename(
+        if filename := filedialog.asksaveasfilename(
             defaultextension=".log",
-            filetypes=[("Log files", "*.log"), ("Text files", "*.txt"), ("All files", "*.*")],
-        )
-
-        if filename:
+            filetypes=[
+                ("Log files", "*.log"),
+                ("Text files", "*.txt"),
+                ("All files", "*.*"),
+            ],
+        ):
             try:
                 with open(filename, "w", encoding="utf-8") as f:
                     for entry in self.log_entries:
@@ -501,9 +515,9 @@ class ProgressTracker:
             # Calculate ETA
             if self.speed_history and self.completed_items > 0:
                 avg_speed = sum(self.speed_history) / len(self.speed_history)
-                remaining_items = self.total_items - self.completed_items
-
                 if avg_speed > 0:
+                    remaining_items = self.total_items - self.completed_items
+
                     eta_seconds = remaining_items / avg_speed
                     eta_str = self.format_time(eta_seconds)
                     self.eta_label.config(text=f"ETA: {eta_str}")
@@ -595,7 +609,9 @@ class FileExplorerPanel:
         tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=2)
 
         # Tree widget with scrollbars
-        self.tree = ttk.Treeview(tree_frame, columns=("size", "modified", "type"), show="tree headings")
+        self.tree = ttk.Treeview(
+            tree_frame, columns=("size", "modified", "type"), show="tree headings"
+        )
 
         # Configure columns
         self.tree.heading("#0", text="Name")
@@ -678,7 +694,9 @@ class FileExplorerPanel:
                         item_type = item.suffix.upper()[1:] if item.suffix else "File"
                         file_count += 1
 
-                    modified = datetime.fromtimestamp(item.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+                    modified = datetime.fromtimestamp(item.stat().st_mtime).strftime(
+                        "%Y-%m-%d %H:%M"
+                    )
 
                     tree_item = self.tree.insert(
                         "",
@@ -702,7 +720,7 @@ class FileExplorerPanel:
                         },
                     )
 
-                except (PermissionError, OSError):
+                except OSError:
                     continue
 
             # Process items for enhanced functionality
@@ -738,7 +756,7 @@ class FileExplorerPanel:
                     try:
                         if item["path"].exists():
                             total_size += item["path"].stat().st_size
-                    except (OSError, PermissionError) as e:
+                    except OSError as e:
                         self.logger.debug("Error updating status bar: %s", e)
 
             # Store analysis for tooltips and future reference
@@ -799,15 +817,13 @@ class FileExplorerPanel:
 
     def on_right_click(self, event: tk.Event) -> None:
         """Handle right-click on tree item."""
-        item = self.tree.identify_row(event.y)
-        if item:
+        if item := self.tree.identify_row(event.y):
             self.tree.selection_set(item)
             self.context_menu.post(event.x_root, event.y_root)
 
     def on_selection_change(self, event: tk.Event) -> None:
         """Handle selection change."""
-        selection = self.tree.selection()
-        if selection:
+        if selection := self.tree.selection():
             item_path = Path(self.tree.set(selection[0], "path"))
             self.status_label.config(text=str(item_path))
 
@@ -815,7 +831,7 @@ class FileExplorerPanel:
         """Handle path entry change."""
         try:
             new_path = Path(self.path_var.get())
-            if new_path.exists() and new_path.is_dir():
+            if new_path.is_dir():
                 self.current_path = new_path
                 self.refresh_tree()
         except Exception as e:
@@ -835,15 +851,13 @@ class FileExplorerPanel:
 
     def browse_folder(self) -> None:
         """Browse for folder."""
-        folder = filedialog.askdirectory(initialdir=str(self.current_path))
-        if folder:
+        if folder := filedialog.askdirectory(initialdir=str(self.current_path)):
             self.current_path = Path(folder)
             self.refresh_tree()
 
     def analyze_selected(self) -> None:
         """Analyze selected file."""
-        selection = self.tree.selection()
-        if selection:
+        if selection := self.tree.selection():
             item_path = Path(self.tree.set(selection[0], "path"))
             if item_path.is_file():
                 self.analyze_file(item_path)
@@ -854,16 +868,14 @@ class FileExplorerPanel:
 
     def generate_scripts(self) -> None:
         """Generate scripts for selected file."""
-        selection = self.tree.selection()
-        if selection:
+        if selection := self.tree.selection():
             item_path = Path(self.tree.set(selection[0], "path"))
             if item_path.is_file():
                 self.ui_controller.generate_scripts(str(item_path))
 
     def open_in_explorer(self) -> None:
         """Open location in system explorer."""
-        selection = self.tree.selection()
-        if selection:
+        if selection := self.tree.selection():
             item_path = Path(self.tree.set(selection[0], "path"))
 
             if sys.platform == "win32":
@@ -875,16 +887,14 @@ class FileExplorerPanel:
 
     def copy_path(self) -> None:
         """Copy file path to clipboard."""
-        selection = self.tree.selection()
-        if selection:
+        if selection := self.tree.selection():
             item_path = Path(self.tree.set(selection[0], "path"))
             self.parent.clipboard_clear()
             self.parent.clipboard_append(str(item_path))
 
     def show_properties(self) -> None:
         """Show file properties dialog."""
-        selection = self.tree.selection()
-        if selection:
+        if selection := self.tree.selection():
             item_path = Path(self.tree.set(selection[0], "path"))
             self.ui_controller.show_file_properties(item_path)
 
@@ -1048,8 +1058,12 @@ class AnalysisViewerPanel:
         toolbar = ttk.Frame(self.history_frame)
         toolbar.pack(fill=tk.X, padx=5, pady=5)
 
-        ttk.Button(toolbar, text="Clear History", command=self.clear_history).pack(side=tk.LEFT, padx=5)
-        ttk.Button(toolbar, text="Export History", command=self.export_history).pack(side=tk.LEFT, padx=5)
+        ttk.Button(toolbar, text="Clear History", command=self.clear_history).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(toolbar, text="Export History", command=self.export_history).pack(
+            side=tk.LEFT, padx=5
+        )
 
         # History tree
         self.history_tree = ttk.Treeview(
@@ -1070,7 +1084,9 @@ class AnalysisViewerPanel:
         self.history_tree.column("confidence", width=100)
         self.history_tree.column("timestamp", width=150)
 
-        history_scroll = ttk.Scrollbar(self.history_frame, orient=tk.VERTICAL, command=self.history_tree.yview)
+        history_scroll = ttk.Scrollbar(
+            self.history_frame, orient=tk.VERTICAL, command=self.history_tree.yview
+        )
         self.history_tree.configure(yscrollcommand=history_scroll.set)
 
         self.history_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -1143,7 +1159,9 @@ class AnalysisViewerPanel:
                     self.details_tree.insert(cat_item, "end", text=key, values=(str(value),))
             elif isinstance(data, list):
                 for i, item in enumerate(data):
-                    self.details_tree.insert(cat_item, "end", text=f"Item {i + 1}", values=(str(item),))
+                    self.details_tree.insert(
+                        cat_item, "end", text=f"Item {i + 1}", values=(str(item),)
+                    )
             else:
                 self.details_tree.set(cat_item, "value", str(data))
 
@@ -1230,143 +1248,164 @@ class AnalysisViewerPanel:
             ),
         )
 
-        # Auto-scroll to latest
-        items = self.history_tree.get_children()
-        if items:
+        if items := self.history_tree.get_children():
             self.history_tree.see(items[-1])
 
     def on_details_select(self, event: tk.Event) -> None:
         """Handle details tree selection."""
-        selection = self.details_tree.selection()
-        if selection:
-            item = selection[0]
+        if not (selection := self.details_tree.selection()):
+            return
+        item = selection[0]
 
-            # Get item details
-            item_text = self.details_tree.item(item, "text")
-            item_value = self.details_tree.item(item, "values")[0] if self.details_tree.item(item, "values") else ""
+        # Get item details
+        item_text = self.details_tree.item(item, "text")
+        item_value = (
+            self.details_tree.item(item, "values")[0]
+            if self.details_tree.item(item, "values")
+            else ""
+        )
 
-            # Show in details text
-            details_content = f"Property: {item_text}\n"
-            if item_value:
-                details_content += f"Value: {item_value}\n"
+        # Show in details text
+        details_content = f"Property: {item_text}\n"
+        if item_value:
+            details_content += f"Value: {item_value}\n"
 
-            # Add children if any
-            children = self.details_tree.get_children(item)
-            if children:
-                details_content += "\nSub-properties:\n"
-                for child in children:
-                    child_text = self.details_tree.item(child, "text")
-                    child_value = self.details_tree.item(child, "values")[0] if self.details_tree.item(child, "values") else ""
-                    details_content += f"  {child_text}: {child_value}\n"
+        if children := self.details_tree.get_children(item):
+            details_content += "\nSub-properties:\n"
+            for child in children:
+                child_text = self.details_tree.item(child, "text")
+                child_value = (
+                    self.details_tree.item(child, "values")[0]
+                    if self.details_tree.item(child, "values")
+                    else ""
+                )
+                details_content += f"  {child_text}: {child_value}\n"
 
-            self.details_text.delete(1.0, tk.END)
-            self.details_text.insert(1.0, details_content)
+        self.details_text.delete(1.0, tk.END)
+        self.details_text.insert(1.0, details_content)
 
     def on_history_double_click(self, event: tk.Event) -> None:
         """Handle history double-click to view details."""
-        selection = self.history_tree.selection()
-        if selection:
-            # Load historical analysis details
-            item = self.history_tree.item(selection[0])
-            values = item["values"]
+        if not (selection := self.history_tree.selection()):
+            return
+        # Load historical analysis details
+        item = self.history_tree.item(selection[0])
+        values = item["values"]
 
-            if len(values) >= 4:
-                file_name = values[0]
-                protection_type = values[1]
-                confidence = values[2]
-                timestamp = values[3]
+        if len(values) >= 4:
+            file_name = values[0]
+            protection_type = values[1]
+            confidence = values[2]
+            timestamp = values[3]
 
-                # Create detail window
-                detail_window = tk.Toplevel(self.parent)
-                detail_window.title(f"Analysis Details - {file_name}")
-                detail_window.geometry("600x400")
+            # Create detail window
+            detail_window = tk.Toplevel(self.parent)
+            detail_window.title(f"Analysis Details - {file_name}")
+            detail_window.geometry("600x400")
 
-                # Create detail frame
-                detail_frame = ttk.Frame(detail_window, padding="10")
-                detail_frame.pack(fill=tk.BOTH, expand=True)
+            # Create detail frame
+            detail_frame = ttk.Frame(detail_window, padding="10")
+            detail_frame.pack(fill=tk.BOTH, expand=True)
 
-                # Add details
-                ttk.Label(detail_frame, text=f"File: {file_name}", font=("TkDefaultFont", 10, "bold")).pack(anchor="w", pady=5)
-                ttk.Label(detail_frame, text=f"Protection Type: {protection_type}").pack(anchor="w", pady=2)
-                ttk.Label(detail_frame, text=f"Confidence: {confidence}%").pack(anchor="w", pady=2)
-                ttk.Label(detail_frame, text=f"Analyzed: {timestamp}").pack(anchor="w", pady=2)
+            # Add details
+            ttk.Label(
+                detail_frame, text=f"File: {file_name}", font=("TkDefaultFont", 10, "bold")
+            ).pack(anchor="w", pady=5)
+            ttk.Label(detail_frame, text=f"Protection Type: {protection_type}").pack(
+                anchor="w", pady=2
+            )
+            ttk.Label(detail_frame, text=f"Confidence: {confidence}%").pack(anchor="w", pady=2)
+            ttk.Label(detail_frame, text=f"Analyzed: {timestamp}").pack(anchor="w", pady=2)
 
-                # Add text area for detailed info
-                ttk.Label(detail_frame, text="Analysis Details:", font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(10, 5))
+            # Add text area for detailed info
+            ttk.Label(
+                detail_frame, text="Analysis Details:", font=("TkDefaultFont", 9, "bold")
+            ).pack(anchor="w", pady=(10, 5))
 
-                detail_text = tk.Text(detail_frame, height=15, width=70, wrap=tk.WORD)
-                detail_text.pack(fill=tk.BOTH, expand=True, pady=5)
+            detail_text = tk.Text(detail_frame, height=15, width=70, wrap=tk.WORD)
+            detail_text.pack(fill=tk.BOTH, expand=True, pady=5)
 
-                # Add scrollbar
-                scrollbar = ttk.Scrollbar(detail_text)
-                scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-                detail_text.config(yscrollcommand=scrollbar.set)
-                scrollbar.config(command=detail_text.yview)
+            # Add scrollbar
+            scrollbar = ttk.Scrollbar(detail_text)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            detail_text.config(yscrollcommand=scrollbar.set)
+            scrollbar.config(command=detail_text.yview)
 
-                # Populate with historical data if available
-                detail_info = f"File: {file_name}\n"
-                detail_info += f"Protection Type: {protection_type}\n"
-                detail_info += f"Confidence Level: {confidence}%\n"
-                detail_info += f"Analysis Timestamp: {timestamp}\n\n"
+            # Populate with historical data if available
+            detail_info = f"File: {file_name}\n"
+            detail_info += f"Protection Type: {protection_type}\n"
+            detail_info += f"Confidence Level: {confidence}%\n"
+            detail_info += f"Analysis Timestamp: {timestamp}\n\n"
 
-                # Add more details if stored in history
-                if hasattr(self, "analysis_history_details"):
-                    history_key = f"{file_name}_{timestamp}"
-                    if history_key in self.analysis_history_details:
-                        detail_info += "Detailed Analysis:\n"
-                        detail_info += self.analysis_history_details[history_key]
-                else:
-                    detail_info += "Detailed analysis data not available for this historical entry.\n"
-                    detail_info += "Future analyses will store complete details."
+            # Add more details if stored in history
+            if hasattr(self, "analysis_history_details"):
+                history_key = f"{file_name}_{timestamp}"
+                if history_key in self.analysis_history_details:
+                    detail_info += "Detailed Analysis:\n"
+                    detail_info += self.analysis_history_details[history_key]
+            else:
+                detail_info += (
+                    "Detailed analysis data not available for this historical entry.\n"
+                )
+                detail_info += "Future analyses will store complete details."
 
-                detail_text.insert("1.0", detail_info)
-                detail_text.config(state="disabled")
+            detail_text.insert("1.0", detail_info)
+            detail_text.config(state="disabled")
 
-                # Add close button
-                ttk.Button(detail_frame, text="Close", command=detail_window.destroy).pack(pady=10)
+            # Add close button
+            ttk.Button(detail_frame, text="Close", command=detail_window.destroy).pack(pady=10)
 
     def clear_history(self) -> None:
         """Clear analysis history."""
-        if messagebox.askyesno("Clear History", "Are you sure you want to clear the analysis history?"):
+        if messagebox.askyesno(
+            "Clear History", "Are you sure you want to clear the analysis history?"
+        ):
             for item in self.history_tree.get_children():
                 self.history_tree.delete(item)
 
     def export_history(self) -> None:
         """Export analysis history."""
-        filename = filedialog.asksaveasfilename(
-            defaultextension=".csv",
-            filetypes=[("CSV files", "*.csv"), ("JSON files", "*.json"), ("All files", "*.*")],
-        )
+        if not (
+            filename := filedialog.asksaveasfilename(
+                defaultextension=".csv",
+                filetypes=[
+                    ("CSV files", "*.csv"),
+                    ("JSON files", "*.json"),
+                    ("All files", "*.*"),
+                ],
+            )
+        ):
+            return
+        try:
+            items = []
+            for item in self.history_tree.get_children():
+                values = self.history_tree.item(item, "values")
+                items.append(
+                    {
+                        "file": values[0],
+                        "protection": values[1],
+                        "confidence": values[2],
+                        "timestamp": values[3],
+                    },
+                )
 
-        if filename:
-            try:
-                items = []
-                for item in self.history_tree.get_children():
-                    values = self.history_tree.item(item, "values")
-                    items.append(
-                        {
-                            "file": values[0],
-                            "protection": values[1],
-                            "confidence": values[2],
-                            "timestamp": values[3],
-                        },
+            if filename.endswith(".json"):
+                with open(filename, "w", encoding="utf-8") as f:
+                    json.dump(items, f, indent=2)
+            else:
+                # CSV format
+                import csv
+
+                with open(filename, "w", newline="", encoding="utf-8") as f:
+                    writer = csv.DictWriter(
+                        f, fieldnames=["file", "protection", "confidence", "timestamp"]
                     )
+                    writer.writeheader()
+                    writer.writerows(items)
 
-                if filename.endswith(".json"):
-                    with open(filename, "w", encoding="utf-8") as f:
-                        json.dump(items, f, indent=2)
-                else:
-                    # CSV format
-                    import csv
-
-                    with open(filename, "w", newline="", encoding="utf-8") as f:
-                        writer = csv.DictWriter(f, fieldnames=["file", "protection", "confidence", "timestamp"])
-                        writer.writeheader()
-                        writer.writerows(items)
-
-                messagebox.showinfo("Export", f"History exported to {filename}")
-            except Exception as e:
-                messagebox.showerror("Export Error", f"Failed to export history: {e}")
+            messagebox.showinfo("Export", f"History exported to {filename}")
+        except Exception as e:
+            messagebox.showerror("Export Error", f"Failed to export history: {e}")
 
 
 class ScriptGeneratorPanel:
@@ -1405,15 +1444,21 @@ class ScriptGeneratorPanel:
         control_frame.pack(fill=tk.X, padx=5, pady=5)
 
         # Target process
-        ttk.Label(control_frame, text="Target Process:").grid(row=0, column=0, sticky="w", padx=5, pady=2)
+        ttk.Label(control_frame, text="Target Process:").grid(
+            row=0, column=0, sticky="w", padx=5, pady=2
+        )
         self.frida_process_var = tk.StringVar()
         process_entry = ttk.Entry(control_frame, textvariable=self.frida_process_var, width=30)
         process_entry.grid(row=0, column=1, sticky="w", padx=5, pady=2)
 
-        ttk.Button(control_frame, text="Browse", command=self.browse_process).grid(row=0, column=2, padx=5, pady=2)
+        ttk.Button(control_frame, text="Browse", command=self.browse_process).grid(
+            row=0, column=2, padx=5, pady=2
+        )
 
         # Script type
-        ttk.Label(control_frame, text="Script Type:").grid(row=1, column=0, sticky="w", padx=5, pady=2)
+        ttk.Label(control_frame, text="Script Type:").grid(
+            row=1, column=0, sticky="w", padx=5, pady=2
+        )
         self.frida_type_var = tk.StringVar(value="License Bypass")
         type_combo = ttk.Combobox(
             control_frame,
@@ -1424,7 +1469,9 @@ class ScriptGeneratorPanel:
         type_combo.grid(row=1, column=1, sticky="w", padx=5, pady=2)
 
         # Generate button
-        ttk.Button(control_frame, text="Generate Script", command=self.generate_frida_script).grid(row=1, column=2, padx=5, pady=2)
+        ttk.Button(control_frame, text="Generate Script", command=self.generate_frida_script).grid(
+            row=1, column=2, padx=5, pady=2
+        )
 
         # Script editor
         editor_frame = ttk.LabelFrame(frida_frame, text="Script Editor")
@@ -1447,9 +1494,15 @@ class ScriptGeneratorPanel:
         action_frame = ttk.Frame(frida_frame)
         action_frame.pack(fill=tk.X, padx=5, pady=5)
 
-        ttk.Button(action_frame, text="Run Script", command=self.run_frida_script).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Save Script", command=self.save_frida_script).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Load Script", command=self.load_frida_script).pack(side=tk.LEFT, padx=5)
+        ttk.Button(action_frame, text="Run Script", command=self.run_frida_script).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(action_frame, text="Save Script", command=self.save_frida_script).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(action_frame, text="Load Script", command=self.load_frida_script).pack(
+            side=tk.LEFT, padx=5
+        )
 
     def create_ghidra_tab(self) -> None:
         """Create Ghidra script tab."""
@@ -1462,15 +1515,21 @@ class ScriptGeneratorPanel:
         control_frame.pack(fill=tk.X, padx=5, pady=5)
 
         # Target binary
-        ttk.Label(control_frame, text="Target Binary:").grid(row=0, column=0, sticky="w", padx=5, pady=2)
+        ttk.Label(control_frame, text="Target Binary:").grid(
+            row=0, column=0, sticky="w", padx=5, pady=2
+        )
         self.ghidra_binary_var = tk.StringVar()
         binary_entry = ttk.Entry(control_frame, textvariable=self.ghidra_binary_var, width=30)
         binary_entry.grid(row=0, column=1, sticky="w", padx=5, pady=2)
 
-        ttk.Button(control_frame, text="Browse", command=self.browse_binary).grid(row=0, column=2, padx=5, pady=2)
+        ttk.Button(control_frame, text="Browse", command=self.browse_binary).grid(
+            row=0, column=2, padx=5, pady=2
+        )
 
         # Script type
-        ttk.Label(control_frame, text="Script Type:").grid(row=1, column=0, sticky="w", padx=5, pady=2)
+        ttk.Label(control_frame, text="Script Type:").grid(
+            row=1, column=0, sticky="w", padx=5, pady=2
+        )
         self.ghidra_type_var = tk.StringVar(value="License Analysis")
         type_combo = ttk.Combobox(
             control_frame,
@@ -1487,7 +1546,9 @@ class ScriptGeneratorPanel:
         type_combo.grid(row=1, column=1, sticky="w", padx=5, pady=2)
 
         # Generate button
-        ttk.Button(control_frame, text="Generate Script", command=self.generate_ghidra_script).grid(row=1, column=2, padx=5, pady=2)
+        ttk.Button(control_frame, text="Generate Script", command=self.generate_ghidra_script).grid(
+            row=1, column=2, padx=5, pady=2
+        )
 
         # Script editor
         editor_frame = ttk.LabelFrame(ghidra_frame, text="Script Editor")
@@ -1510,9 +1571,15 @@ class ScriptGeneratorPanel:
         action_frame = ttk.Frame(ghidra_frame)
         action_frame.pack(fill=tk.X, padx=5, pady=5)
 
-        ttk.Button(action_frame, text="Run in Ghidra", command=self.run_ghidra_script).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Save Script", command=self.save_ghidra_script).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Load Script", command=self.load_ghidra_script).pack(side=tk.LEFT, padx=5)
+        ttk.Button(action_frame, text="Run in Ghidra", command=self.run_ghidra_script).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(action_frame, text="Save Script", command=self.save_ghidra_script).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(action_frame, text="Load Script", command=self.load_ghidra_script).pack(
+            side=tk.LEFT, padx=5
+        )
 
     def create_radare2_tab(self) -> None:
         """Create Radare2 script tab."""
@@ -1524,15 +1591,21 @@ class ScriptGeneratorPanel:
         control_frame.pack(fill=tk.X, padx=5, pady=5)
 
         # Target binary
-        ttk.Label(control_frame, text="Target Binary:").grid(row=0, column=0, sticky="w", padx=5, pady=2)
+        ttk.Label(control_frame, text="Target Binary:").grid(
+            row=0, column=0, sticky="w", padx=5, pady=2
+        )
         self.r2_binary_var = tk.StringVar()
         binary_entry = ttk.Entry(control_frame, textvariable=self.r2_binary_var, width=30)
         binary_entry.grid(row=0, column=1, sticky="w", padx=5, pady=2)
 
-        ttk.Button(control_frame, text="Browse", command=self.browse_r2_binary).grid(row=0, column=2, padx=5, pady=2)
+        ttk.Button(control_frame, text="Browse", command=self.browse_r2_binary).grid(
+            row=0, column=2, padx=5, pady=2
+        )
 
         # Script type
-        ttk.Label(control_frame, text="Script Type:").grid(row=1, column=0, sticky="w", padx=5, pady=2)
+        ttk.Label(control_frame, text="Script Type:").grid(
+            row=1, column=0, sticky="w", padx=5, pady=2
+        )
         self.r2_type_var = tk.StringVar(value="License Analysis")
         type_combo = ttk.Combobox(
             control_frame,
@@ -1549,7 +1622,9 @@ class ScriptGeneratorPanel:
         type_combo.grid(row=1, column=1, sticky="w", padx=5, pady=2)
 
         # Generate button
-        ttk.Button(control_frame, text="Generate Script", command=self.generate_r2_script).grid(row=1, column=2, padx=5, pady=2)
+        ttk.Button(control_frame, text="Generate Script", command=self.generate_r2_script).grid(
+            row=1, column=2, padx=5, pady=2
+        )
 
         # Script editor
         editor_frame = ttk.LabelFrame(radare2_frame, text="Script Editor")
@@ -1572,9 +1647,15 @@ class ScriptGeneratorPanel:
         action_frame = ttk.Frame(radare2_frame)
         action_frame.pack(fill=tk.X, padx=5, pady=5)
 
-        ttk.Button(action_frame, text="Run Script", command=self.run_r2_script).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Save Script", command=self.save_r2_script).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Load Script", command=self.load_r2_script).pack(side=tk.LEFT, padx=5)
+        ttk.Button(action_frame, text="Run Script", command=self.run_r2_script).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(action_frame, text="Save Script", command=self.save_r2_script).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(action_frame, text="Load Script", command=self.load_r2_script).pack(
+            side=tk.LEFT, padx=5
+        )
 
     def create_custom_tab(self) -> None:
         """Create custom script tab."""
@@ -1613,9 +1694,15 @@ class ScriptGeneratorPanel:
         action_frame = ttk.Frame(custom_frame)
         action_frame.pack(fill=tk.X, padx=5, pady=5)
 
-        ttk.Button(action_frame, text="Run Script", command=self.run_custom_script).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Save Script", command=self.save_custom_script).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Load Script", command=self.load_custom_script).pack(side=tk.LEFT, padx=5)
+        ttk.Button(action_frame, text="Run Script", command=self.run_custom_script).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(action_frame, text="Save Script", command=self.save_custom_script).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(action_frame, text="Load Script", command=self.load_custom_script).pack(
+            side=tk.LEFT, padx=5
+        )
 
     def setup_js_syntax_highlighting(self, text_widget: tk.Text) -> None:
         """Configure JavaScript syntax highlighting."""
@@ -1701,7 +1788,9 @@ class ScriptGeneratorPanel:
             "null",
         ]
 
-        text_widget.bind("<KeyRelease>", lambda e: self.highlight_syntax(text_widget, java_keywords))
+        text_widget.bind(
+            "<KeyRelease>", lambda e: self.highlight_syntax(text_widget, java_keywords)
+        )
 
     def setup_python_syntax_highlighting(self, text_widget: tk.Text) -> None:
         """Configure Python syntax highlighting."""
@@ -1739,7 +1828,9 @@ class ScriptGeneratorPanel:
             "None",
         ]
 
-        text_widget.bind("<KeyRelease>", lambda e: self.highlight_syntax(text_widget, python_keywords))
+        text_widget.bind(
+            "<KeyRelease>", lambda e: self.highlight_syntax(text_widget, python_keywords)
+        )
 
     def highlight_syntax(self, text_widget: tk.Text, keywords: list[str]) -> None:
         """Apply basic syntax highlighting to text widget."""
@@ -1787,37 +1878,34 @@ class ScriptGeneratorPanel:
 
     def browse_process(self) -> None:
         """Browse for target process."""
-        filename = filedialog.askopenfilename(
+        if filename := filedialog.askopenfilename(
             title="Select Target Process",
             filetypes=[("Executable files", "*.exe"), ("All files", "*.*")],
-        )
-        if filename:
+        ):
             self.frida_process_var.set(filename)
 
     def browse_binary(self) -> None:
         """Browse for target binary."""
-        filename = filedialog.askopenfilename(
+        if filename := filedialog.askopenfilename(
             title="Select Target Binary",
             filetypes=[
                 ("Executable files", "*.exe"),
                 ("Library files", "*.dll"),
                 ("All files", "*.*"),
             ],
-        )
-        if filename:
+        ):
             self.ghidra_binary_var.set(filename)
 
     def browse_r2_binary(self) -> None:
         """Browse for Radare2 target binary."""
-        filename = filedialog.askopenfilename(
+        if filename := filedialog.askopenfilename(
             title="Select Target Binary",
             filetypes=[
                 ("Executable files", "*.exe"),
                 ("Library files", "*.dll"),
                 ("All files", "*.*"),
             ],
-        )
-        if filename:
+        ):
             self.r2_binary_var.set(filename)
 
     def generate_frida_script(self) -> None:
@@ -1949,17 +2037,23 @@ class ScriptGeneratorPanel:
     def save_frida_script(self) -> None:
         """Save Frida script to file."""
         script = self.frida_editor.get(1.0, tk.END)
-        self.save_script_to_file(script, "Frida Script", [("JavaScript files", "*.js"), ("All files", "*.*")])
+        self.save_script_to_file(
+            script, "Frida Script", [("JavaScript files", "*.js"), ("All files", "*.*")]
+        )
 
     def save_ghidra_script(self) -> None:
         """Save Ghidra script to file."""
         script = self.ghidra_editor.get(1.0, tk.END)
-        self.save_script_to_file(script, "Ghidra Script", [("Java files", "*.java"), ("All files", "*.*")])
+        self.save_script_to_file(
+            script, "Ghidra Script", [("Java files", "*.java"), ("All files", "*.*")]
+        )
 
     def save_r2_script(self) -> None:
         """Save Radare2 script to file."""
         script = self.r2_editor.get(1.0, tk.END)
-        self.save_script_to_file(script, "Radare2 Script", [("Python files", "*.py"), ("All files", "*.*")])
+        self.save_script_to_file(
+            script, "Radare2 Script", [("Python files", "*.py"), ("All files", "*.*")]
+        )
 
     def save_custom_script(self) -> None:
         """Save custom script to file."""
@@ -1975,13 +2069,17 @@ class ScriptGeneratorPanel:
             "C++": [("C++ files", "*.cpp"), ("Header files", "*.h"), ("All files", "*.*")],
         }
 
-        self.save_script_to_file(script, f"{language} Script", filetypes.get(language, [("All files", "*.*")]))
+        self.save_script_to_file(
+            script, f"{language} Script", filetypes.get(language, [("All files", "*.*")])
+        )
 
-    def save_script_to_file(self, script: str, title: str, filetypes: list[tuple[str, str]]) -> None:
+    def save_script_to_file(
+        self, script: str, title: str, filetypes: list[tuple[str, str]]
+    ) -> None:
         """Save script content to file."""
-        filename = filedialog.asksaveasfilename(title=f"Save {title}", filetypes=filetypes)
-
-        if filename:
+        if filename := filedialog.asksaveasfilename(
+            title=f"Save {title}", filetypes=filetypes
+        ):
             try:
                 with open(filename, "w", encoding="utf-8") as f:
                     f.write(script)
@@ -1991,25 +2089,33 @@ class ScriptGeneratorPanel:
 
     def load_frida_script(self) -> None:
         """Load Frida script from file."""
-        self.load_script_to_editor(self.frida_editor, "Frida Script", [("JavaScript files", "*.js"), ("All files", "*.*")])
+        self.load_script_to_editor(
+            self.frida_editor, "Frida Script", [("JavaScript files", "*.js"), ("All files", "*.*")]
+        )
 
     def load_ghidra_script(self) -> None:
         """Load Ghidra script from file."""
-        self.load_script_to_editor(self.ghidra_editor, "Ghidra Script", [("Java files", "*.java"), ("All files", "*.*")])
+        self.load_script_to_editor(
+            self.ghidra_editor, "Ghidra Script", [("Java files", "*.java"), ("All files", "*.*")]
+        )
 
     def load_r2_script(self) -> None:
         """Load Radare2 script from file."""
-        self.load_script_to_editor(self.r2_editor, "Radare2 Script", [("Python files", "*.py"), ("All files", "*.*")])
+        self.load_script_to_editor(
+            self.r2_editor, "Radare2 Script", [("Python files", "*.py"), ("All files", "*.*")]
+        )
 
     def load_custom_script(self) -> None:
         """Load custom script from file."""
         self.load_script_to_editor(self.custom_editor, "Custom Script", [("All files", "*.*")])
 
-    def load_script_to_editor(self, editor: scrolledtext.ScrolledText, title: str, filetypes: list[tuple[str, str]]) -> None:
+    def load_script_to_editor(
+        self, editor: scrolledtext.ScrolledText, title: str, filetypes: list[tuple[str, str]]
+    ) -> None:
         """Load script from file into editor."""
-        filename = filedialog.askopenfilename(title=f"Load {title}", filetypes=filetypes)
-
-        if filename:
+        if filename := filedialog.askopenfilename(
+            title=f"Load {title}", filetypes=filetypes
+        ):
             try:
                 with open(filename, encoding="utf-8") as f:
                     content = f.read()
@@ -2198,7 +2304,9 @@ class UIEnhancementModule:
         file_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="File", menu=file_menu)
         file_menu.add_command(label="Open File...", command=self.open_file, accelerator="Ctrl+O")
-        file_menu.add_command(label="Open Folder...", command=self.open_folder, accelerator="Ctrl+Shift+O")
+        file_menu.add_command(
+            label="Open Folder...", command=self.open_folder, accelerator="Ctrl+Shift+O"
+        )
         file_menu.add_separator()
         file_menu.add_command(label="Recent Files", command=self.show_recent_files)
         file_menu.add_separator()
@@ -2285,10 +2393,14 @@ class UIEnhancementModule:
             self.vm_unwrapper = VMProtectionUnwrapper()
             self.anti_debug = AntiAntiDebugSuite()
 
-            self.log_viewer.add_log("INFO", "Analysis modules initialized successfully", "ModuleInit")
+            self.log_viewer.add_log(
+                "INFO", "Analysis modules initialized successfully", "ModuleInit"
+            )
 
         except Exception as e:
-            self.log_viewer.add_log("ERROR", f"Failed to initialize analysis modules: {e}", "ModuleInit")
+            self.log_viewer.add_log(
+                "ERROR", f"Failed to initialize analysis modules: {e}", "ModuleInit"
+            )
 
     def start_auto_refresh(self) -> None:
         """Start auto-refresh timer."""
@@ -2330,7 +2442,9 @@ class UIEnhancementModule:
         self.state_label.config(text=self.analysis_state.value.title())
         if hasattr(self.state_label, "configure"):
             try:
-                self.state_label.configure(foreground=state_colors.get(self.analysis_state, "#ffffff"))
+                self.state_label.configure(
+                    foreground=state_colors.get(self.analysis_state, "#ffffff")
+                )
             except Exception as e:
                 self.logger.debug("Error updating status bar: %s", e)
 
@@ -2441,7 +2555,9 @@ class UIEnhancementModule:
             self.script_generator.r2_binary_var.set(file_path)
 
         except Exception as e:
-            self.log_viewer.add_log("ERROR", f"Failed to prepare script generation: {e}", "ScriptGen")
+            self.log_viewer.add_log(
+                "ERROR", f"Failed to prepare script generation: {e}", "ScriptGen"
+            )
 
     # Script generation methods
     def generate_frida_script(self, target: str, script_type: str) -> str:
@@ -2665,7 +2781,9 @@ if __name__ == "__main__":
 '''
 
         templates = {
-            "License Analysis": license_template.replace("TARGET_NAME", Path(target).name).replace("TARGET_PATH", target),
+            "License Analysis": license_template.replace("TARGET_NAME", Path(target).name).replace(
+                "TARGET_PATH", target
+            ),
         }
 
         return templates.get(script_type, f"# Template for {script_type} not implemented")
@@ -2677,7 +2795,6 @@ if __name__ == "__main__":
 
         def run_frida() -> None:
             try:
-
                 import frida
 
                 try:
@@ -2689,22 +2806,35 @@ if __name__ == "__main__":
                 script_obj = session.create_script(script)
 
                 def on_message(message: dict[str, Any], data: object) -> None:
-                    if message['type'] == 'send':
-                        payload = message.get('payload', '')
-                        self.root.after(0, lambda: self.log_viewer.add_log("INFO", str(payload), "Frida"))
-                    elif message['type'] == 'error':
-                        stack = message.get('stack', '')
+                    if message["type"] == "send":
+                        payload = message.get("payload", "")
+                        self.root.after(
+                            0, lambda: self.log_viewer.add_log("INFO", str(payload), "Frida")
+                        )
+                    elif message["type"] == "error":
+                        stack = message.get("stack", "")
                         self.root.after(0, lambda: self.log_viewer.add_log("ERROR", stack, "Frida"))
 
-                script_obj.on('message', on_message)
+                script_obj.on("message", on_message)
                 script_obj.load()
 
-                self.root.after(0, lambda: self.log_viewer.add_log("INFO", "Frida script loaded successfully", "ScriptExec"))
+                self.root.after(
+                    0,
+                    lambda: self.log_viewer.add_log(
+                        "INFO", "Frida script loaded successfully", "ScriptExec"
+                    ),
+                )
 
             except Exception as e:
-                self.root.after(0, lambda err=str(e): self.log_viewer.add_log("ERROR", f"Frida execution failed: {err}", "ScriptExec"))
+                self.root.after(
+                    0,
+                    lambda err=str(e): self.log_viewer.add_log(
+                        "ERROR", f"Frida execution failed: {err}", "ScriptExec"
+                    ),
+                )
 
         import threading
+
         threading.Thread(target=run_frida, daemon=True).start()
 
     def execute_ghidra_script(self, script: str, target: str) -> None:
@@ -2718,28 +2848,49 @@ if __name__ == "__main__":
 
                 from intellicrack.utils.tools.ghidra_utils import execute_ghidra_script as run_ghidra_script
 
-                with tempfile.NamedTemporaryFile(mode='w', suffix='.java', delete=False) as f:
+                with tempfile.NamedTemporaryFile(mode="w", suffix=".java", delete=False) as f:
                     f.write(script)
                     script_path = f.name
 
                 try:
                     result = run_ghidra_script(target, script_path)
 
-                    if result.get('success'):
-                        output = result.get('output', '')
-                        self.root.after(0, lambda: self.log_viewer.add_log("INFO", f"Ghidra output:\n{output}", "Ghidra"))
-                        self.root.after(0, lambda: self.log_viewer.add_log("INFO", "Ghidra script execution complete", "ScriptExec"))
+                    if result.get("success"):
+                        output = result.get("output", "")
+                        self.root.after(
+                            0,
+                            lambda: self.log_viewer.add_log(
+                                "INFO", f"Ghidra output:\n{output}", "Ghidra"
+                            ),
+                        )
+                        self.root.after(
+                            0,
+                            lambda: self.log_viewer.add_log(
+                                "INFO", "Ghidra script execution complete", "ScriptExec"
+                            ),
+                        )
                     else:
-                        error = result.get('error', 'Unknown error')
-                        self.root.after(0, lambda: self.log_viewer.add_log("ERROR", f"Ghidra execution failed: {error}", "ScriptExec"))
+                        error = result.get("error", "Unknown error")
+                        self.root.after(
+                            0,
+                            lambda: self.log_viewer.add_log(
+                                "ERROR", f"Ghidra execution failed: {error}", "ScriptExec"
+                            ),
+                        )
                 finally:
                     if os.path.exists(script_path):
                         Path(script_path).unlink()
 
             except Exception as e:
-                self.root.after(0, lambda err=str(e): self.log_viewer.add_log("ERROR", f"Ghidra execution failed: {err}", "ScriptExec"))
+                self.root.after(
+                    0,
+                    lambda err=str(e): self.log_viewer.add_log(
+                        "ERROR", f"Ghidra execution failed: {err}", "ScriptExec"
+                    ),
+                )
 
         import threading
+
         threading.Thread(target=run_ghidra, daemon=True).start()
 
     def execute_r2_script(self, script: str, target: str) -> None:
@@ -2753,28 +2904,49 @@ if __name__ == "__main__":
 
                 from intellicrack.utils.tools.radare2_utils import execute_r2_script as run_r2_script
 
-                with tempfile.NamedTemporaryFile(mode='w', suffix='.r2', delete=False) as f:
+                with tempfile.NamedTemporaryFile(mode="w", suffix=".r2", delete=False) as f:
                     f.write(script)
                     script_path = f.name
 
                 try:
                     result = run_r2_script(target, script_path)
 
-                    if result.get('success'):
-                        output = result.get('output', '')
-                        self.root.after(0, lambda: self.log_viewer.add_log("INFO", f"Radare2 output:\n{output}", "R2"))
-                        self.root.after(0, lambda: self.log_viewer.add_log("INFO", "Radare2 script execution complete", "ScriptExec"))
+                    if result.get("success"):
+                        output = result.get("output", "")
+                        self.root.after(
+                            0,
+                            lambda: self.log_viewer.add_log(
+                                "INFO", f"Radare2 output:\n{output}", "R2"
+                            ),
+                        )
+                        self.root.after(
+                            0,
+                            lambda: self.log_viewer.add_log(
+                                "INFO", "Radare2 script execution complete", "ScriptExec"
+                            ),
+                        )
                     else:
-                        error = result.get('error', 'Unknown error')
-                        self.root.after(0, lambda: self.log_viewer.add_log("ERROR", f"Radare2 execution failed: {error}", "ScriptExec"))
+                        error = result.get("error", "Unknown error")
+                        self.root.after(
+                            0,
+                            lambda: self.log_viewer.add_log(
+                                "ERROR", f"Radare2 execution failed: {error}", "ScriptExec"
+                            ),
+                        )
                 finally:
                     if os.path.exists(script_path):
                         Path(script_path).unlink()
 
             except Exception as e:
-                self.root.after(0, lambda err=str(e): self.log_viewer.add_log("ERROR", f"Radare2 execution failed: {err}", "ScriptExec"))
+                self.root.after(
+                    0,
+                    lambda err=str(e): self.log_viewer.add_log(
+                        "ERROR", f"Radare2 execution failed: {err}", "ScriptExec"
+                    ),
+                )
 
         import threading
+
         threading.Thread(target=run_r2, daemon=True).start()
 
     def execute_custom_script(self, script: str, language: str) -> None:
@@ -2787,43 +2959,80 @@ if __name__ == "__main__":
                 import subprocess
                 import tempfile
 
-                with tempfile.NamedTemporaryFile(mode='w', suffix=f'.{language}', delete=False) as f:
+                with tempfile.NamedTemporaryFile(
+                    mode="w", suffix=f".{language}", delete=False
+                ) as f:
                     f.write(script)
                     script_path = f.name
 
                 try:
-                    if language.lower() == 'python':
-                        result = subprocess.run(['python', script_path], capture_output=True, text=True, timeout=30)
-                    elif language.lower() == 'javascript':
-                        result = subprocess.run(['node', script_path], capture_output=True, text=True, timeout=30)
-                    elif language.lower() == 'ruby':
-                        result = subprocess.run(['ruby', script_path], capture_output=True, text=True, timeout=30)
+                    if language.lower() == "python":
+                        result = subprocess.run(
+                            ["python", script_path], capture_output=True, text=True, timeout=30
+                        )
+                    elif language.lower() == "javascript":
+                        result = subprocess.run(
+                            ["node", script_path], capture_output=True, text=True, timeout=30
+                        )
+                    elif language.lower() == "ruby":
+                        result = subprocess.run(
+                            ["ruby", script_path], capture_output=True, text=True, timeout=30
+                        )
                     else:
-                        self.root.after(0, lambda: self.log_viewer.add_log("ERROR", f"Unsupported language: {language}", "ScriptExec"))
+                        self.root.after(
+                            0,
+                            lambda: self.log_viewer.add_log(
+                                "ERROR", f"Unsupported language: {language}", "ScriptExec"
+                            ),
+                        )
                         return
 
                     output = result.stdout + result.stderr
                     if result.returncode == 0:
-                        self.root.after(0, lambda: self.log_viewer.add_log("INFO", f"Output:\n{output}", language))
-                        self.root.after(0, lambda: self.log_viewer.add_log("INFO", f"{language} script execution complete", "ScriptExec"))
+                        self.root.after(
+                            0,
+                            lambda: self.log_viewer.add_log("INFO", f"Output:\n{output}", language),
+                        )
+                        self.root.after(
+                            0,
+                            lambda: self.log_viewer.add_log(
+                                "INFO", f"{language} script execution complete", "ScriptExec"
+                            ),
+                        )
                     else:
-                        self.root.after(0, lambda: self.log_viewer.add_log("ERROR", f"Script failed:\n{output}", "ScriptExec"))
+                        self.root.after(
+                            0,
+                            lambda: self.log_viewer.add_log(
+                                "ERROR", f"Script failed:\n{output}", "ScriptExec"
+                            ),
+                        )
                 finally:
                     if os.path.exists(script_path):
                         Path(script_path).unlink()
 
             except subprocess.TimeoutExpired:
-                self.root.after(0, lambda: self.log_viewer.add_log("ERROR", "Script execution timed out", "ScriptExec"))
+                self.root.after(
+                    0,
+                    lambda: self.log_viewer.add_log(
+                        "ERROR", "Script execution timed out", "ScriptExec"
+                    ),
+                )
             except Exception as e:
-                self.root.after(0, lambda err=str(e): self.log_viewer.add_log("ERROR", f"Script execution failed: {err}", "ScriptExec"))
+                self.root.after(
+                    0,
+                    lambda err=str(e): self.log_viewer.add_log(
+                        "ERROR", f"Script execution failed: {err}", "ScriptExec"
+                    ),
+                )
 
         import threading
+
         threading.Thread(target=run_custom, daemon=True).start()
 
     # File operations
     def open_file(self) -> None:
         """Open file dialog."""
-        filename = filedialog.askopenfilename(
+        if filename := filedialog.askopenfilename(
             title="Open File",
             filetypes=[
                 ("Executable files", "*.exe"),
@@ -2831,9 +3040,7 @@ if __name__ == "__main__":
                 ("Binary files", "*.bin"),
                 ("All files", "*.*"),
             ],
-        )
-
-        if filename:
+        ):
             # Navigate file explorer to file location
             file_path = Path(filename)
             self.file_explorer.current_path = file_path.parent
@@ -2844,9 +3051,7 @@ if __name__ == "__main__":
 
     def open_folder(self) -> None:
         """Open folder dialog."""
-        folder = filedialog.askdirectory(title="Open Folder")
-
-        if folder:
+        if folder := filedialog.askdirectory(title="Open Folder"):
             self.file_explorer.current_path = Path(folder)
             self.file_explorer.refresh_tree()
 
@@ -2871,7 +3076,7 @@ if __name__ == "__main__":
         recent_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.config(command=recent_listbox.yview)
 
-        recent_files = self.config.get('recent_files', [])
+        recent_files = self.config.get("recent_files", [])
         for file_path in recent_files:
             recent_listbox.insert(tk.END, file_path)
 
@@ -2891,13 +3096,15 @@ if __name__ == "__main__":
 
         def clear_recent() -> None:
             if messagebox.askyesno("Clear Recent Files", "Clear all recent files?"):
-                self.config['recent_files'] = []
+                self.config["recent_files"] = []
                 self.save_config()
                 recent_listbox.delete(0, tk.END)
 
         ttk.Button(button_frame, text="Open", command=open_selected).pack(side=tk.LEFT, padx=5)
         ttk.Button(button_frame, text="Clear All", command=clear_recent).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Close", command=recent_dialog.destroy).pack(side=tk.RIGHT, padx=5)
+        ttk.Button(button_frame, text="Close", command=recent_dialog.destroy).pack(
+            side=tk.RIGHT, padx=5
+        )
 
     def exit_application(self) -> None:
         """Exit application."""
@@ -2918,18 +3125,37 @@ if __name__ == "__main__":
                     backend = IntellicrackProtectionBackend()
                     results = backend.analyze_file(str(self.current_target), quick_mode=True)
 
-                    self.root.after(0, lambda: self.log_viewer.add_log("INFO", "Quick scan complete", "Analysis"))
+                    self.root.after(
+                        0,
+                        lambda: self.log_viewer.add_log("INFO", "Quick scan complete", "Analysis"),
+                    )
 
-                    if results.get('protections_found'):
-                        for protection in results['protections_found']:
-                            self.root.after(0, lambda p=protection: self.log_viewer.add_log("INFO", f"Detected: {p}", "Detection"))
+                    if results.get("protections_found"):
+                        for protection in results["protections_found"]:
+                            self.root.after(
+                                0,
+                                lambda p=protection: self.log_viewer.add_log(
+                                    "INFO", f"Detected: {p}", "Detection"
+                                ),
+                            )
                     else:
-                        self.root.after(0, lambda: self.log_viewer.add_log("INFO", "No protections detected", "Analysis"))
+                        self.root.after(
+                            0,
+                            lambda: self.log_viewer.add_log(
+                                "INFO", "No protections detected", "Analysis"
+                            ),
+                        )
 
                 except Exception as e:
-                    self.root.after(0, lambda err=str(e): self.log_viewer.add_log("ERROR", f"Quick scan failed: {err}", "Analysis"))
+                    self.root.after(
+                        0,
+                        lambda err=str(e): self.log_viewer.add_log(
+                            "ERROR", f"Quick scan failed: {err}", "Analysis"
+                        ),
+                    )
 
             import threading
+
             threading.Thread(target=run_scan, daemon=True).start()
         else:
             messagebox.showwarning("No Target", "Please select a file to analyze")
@@ -2947,28 +3173,59 @@ if __name__ == "__main__":
                     backend = IntellicrackProtectionBackend()
                     results = backend.analyze_file(str(self.current_target), quick_mode=False)
 
-                    self.root.after(0, lambda: self.log_viewer.add_log("INFO", "Running advanced analysis...", "Analysis"))
+                    self.root.after(
+                        0,
+                        lambda: self.log_viewer.add_log(
+                            "INFO", "Running advanced analysis...", "Analysis"
+                        ),
+                    )
 
                     advanced = AdvancedProtectionAnalyzer()
                     advanced_results = advanced.analyze_binary(str(self.current_target))
 
-                    self.root.after(0, lambda: self.log_viewer.add_log("INFO", "Deep analysis complete", "Analysis"))
+                    self.root.after(
+                        0,
+                        lambda: self.log_viewer.add_log(
+                            "INFO", "Deep analysis complete", "Analysis"
+                        ),
+                    )
 
-                    if results.get('protections_found'):
-                        for protection in results['protections_found']:
-                            self.root.after(0, lambda p=protection: self.log_viewer.add_log("INFO", f"Detected: {p}", "Detection"))
+                    if results.get("protections_found"):
+                        for protection in results["protections_found"]:
+                            self.root.after(
+                                0,
+                                lambda p=protection: self.log_viewer.add_log(
+                                    "INFO", f"Detected: {p}", "Detection"
+                                ),
+                            )
 
-                    if advanced_results.get('entropy_sections'):
-                        self.root.after(0, lambda: self.log_viewer.add_log("INFO", "Entropy analysis completed", "Analysis"))
+                    if advanced_results.get("entropy_sections"):
+                        self.root.after(
+                            0,
+                            lambda: self.log_viewer.add_log(
+                                "INFO", "Entropy analysis completed", "Analysis"
+                            ),
+                        )
 
-                    if advanced_results.get('suspicious_patterns'):
-                        for pattern in advanced_results['suspicious_patterns']:
-                            self.root.after(0, lambda p=pattern: self.log_viewer.add_log("WARN", f"Suspicious pattern: {p}", "Detection"))
+                    if advanced_results.get("suspicious_patterns"):
+                        for pattern in advanced_results["suspicious_patterns"]:
+                            self.root.after(
+                                0,
+                                lambda p=pattern: self.log_viewer.add_log(
+                                    "WARN", f"Suspicious pattern: {p}", "Detection"
+                                ),
+                            )
 
                 except Exception as e:
-                    self.root.after(0, lambda err=str(e): self.log_viewer.add_log("ERROR", f"Deep analysis failed: {err}", "Analysis"))
+                    self.root.after(
+                        0,
+                        lambda err=str(e): self.log_viewer.add_log(
+                            "ERROR", f"Deep analysis failed: {err}", "Analysis"
+                        ),
+                    )
 
             import threading
+
             threading.Thread(target=run_deep_analysis, daemon=True).start()
         else:
             messagebox.showwarning("No Target", "Please select a file to analyze")
@@ -2987,7 +3244,7 @@ if __name__ == "__main__":
                     from intellicrack.protection.icp_backend import IntellicrackProtectionBackend
 
                     backend = IntellicrackProtectionBackend()
-                    target_extensions = ['.exe', '.dll', '.so', '.dylib', '.bin']
+                    target_extensions = [".exe", ".dll", ".so", ".dylib", ".bin"]
 
                     files_to_analyze = []
                     for root, _dirs, files in os.walk(folder):
@@ -2996,96 +3253,140 @@ if __name__ == "__main__":
                                 files_to_analyze.append(os.path.join(root, file))
 
                     total_files = len(files_to_analyze)
-                    self.root.after(0, lambda: self.log_viewer.add_log("INFO", f"Found {total_files} files to analyze", "Analysis"))
+                    self.root.after(
+                        0,
+                        lambda: self.log_viewer.add_log(
+                            "INFO", f"Found {total_files} files to analyze", "Analysis"
+                        ),
+                    )
 
                     for idx, file_path in enumerate(files_to_analyze, 1):
                         try:
-                            self.root.after(0, lambda i=idx, t=total_files, f=file_path:
-                                self.log_viewer.add_log("INFO", f"Analyzing {i}/{t}: {os.path.basename(f)}", "Analysis"))
+                            self.root.after(
+                                0,
+                                lambda i=idx, t=total_files, f=file_path: self.log_viewer.add_log(
+                                    "INFO", f"Analyzing {i}/{t}: {os.path.basename(f)}", "Analysis"
+                                ),
+                            )
 
                             results = backend.analyze_file(file_path, quick_mode=True)
 
-                            if results.get('protections_found'):
-                                for protection in results['protections_found']:
-                                    self.root.after(0, lambda f=file_path, p=protection:
-                                        self.log_viewer.add_log("INFO", f"{os.path.basename(f)}: {p}", "Detection"))
+                            if results.get("protections_found"):
+                                for protection in results["protections_found"]:
+                                    self.root.after(
+                                        0,
+                                        lambda f=file_path, p=protection: self.log_viewer.add_log(
+                                            "INFO", f"{os.path.basename(f)}: {p}", "Detection"
+                                        ),
+                                    )
 
                         except Exception as e:
-                            self.root.after(0, lambda f=file_path, err=e:
-                                self.log_viewer.add_log("ERROR", f"Failed to analyze {os.path.basename(f)}: {err}", "Analysis"))
+                            self.root.after(
+                                0,
+                                lambda f=file_path, err=e: self.log_viewer.add_log(
+                                    "ERROR",
+                                    f"Failed to analyze {os.path.basename(f)}: {err}",
+                                    "Analysis",
+                                ),
+                            )
 
-                    self.root.after(0, lambda: self.log_viewer.add_log("INFO", "Batch analysis complete", "Analysis"))
+                    self.root.after(
+                        0,
+                        lambda: self.log_viewer.add_log(
+                            "INFO", "Batch analysis complete", "Analysis"
+                        ),
+                    )
 
                 except Exception as e:
-                    self.root.after(0, lambda err=str(e): self.log_viewer.add_log("ERROR", f"Batch analysis failed: {err}", "Analysis"))
+                    self.root.after(
+                        0,
+                        lambda err=str(e): self.log_viewer.add_log(
+                            "ERROR", f"Batch analysis failed: {err}", "Analysis"
+                        ),
+                    )
 
             import threading
+
             threading.Thread(target=run_batch, daemon=True).start()
 
     def export_results(self) -> None:
         """Export analysis results."""
-        filename = filedialog.asksaveasfilename(
-            title="Export Results",
-            defaultextension=".json",
-            filetypes=[("JSON files", "*.json"), ("PDF files", "*.pdf"), ("All files", "*.*")],
-        )
+        if not (
+            filename := filedialog.asksaveasfilename(
+                title="Export Results",
+                defaultextension=".json",
+                filetypes=[
+                    ("JSON files", "*.json"),
+                    ("PDF files", "*.pdf"),
+                    ("All files", "*.*"),
+                ],
+            )
+        ):
+            return
+        self.log_viewer.add_log("INFO", f"Exporting results to {filename}", "Export")
 
-        if filename:
-            self.log_viewer.add_log("INFO", f"Exporting results to {filename}", "Export")
+        try:
+            import json
+            from datetime import datetime
 
-            try:
-                import json
-                from datetime import datetime
+            results_data = {
+                "timestamp": datetime.now().isoformat(),
+                "target": str(self.current_target) if self.current_target else None,
+                "logs": [],
+            }
 
-                results_data = {
-                    "timestamp": datetime.now().isoformat(),
-                    "target": str(self.current_target) if self.current_target else None,
-                    "logs": [],
-                }
+            log_text = self.log_viewer.log_display.get("1.0", tk.END)
+            results_data["logs"] = log_text.strip().split("\n")
 
-                log_text = self.log_viewer.log_display.get("1.0", tk.END)
-                results_data["logs"] = log_text.strip().split('\n')
+            if filename.endswith(".json"):
+                with open(filename, "w", encoding="utf-8") as f:
+                    json.dump(results_data, f, indent=2)
+            elif filename.endswith(".pdf"):
+                from intellicrack.handlers.matplotlib_handler import PdfPages, plt
 
-                if filename.endswith('.json'):
-                    with open(filename, 'w', encoding='utf-8') as f:
-                        json.dump(results_data, f, indent=2)
-                elif filename.endswith('.pdf'):
-                    from intellicrack.handlers.matplotlib_handler import PdfPages, plt
+                with PdfPages(filename) as pdf:
+                    fig, ax = plt.subplots(figsize=(8.5, 11))
+                    ax.axis("off")
 
-                    with PdfPages(filename) as pdf:
-                        fig, ax = plt.subplots(figsize=(8.5, 11))
-                        ax.axis('off')
+                    text_content = "Intellicrack Analysis Report\n\n"
+                    text_content += f"Timestamp: {results_data['timestamp']}\n"
+                    text_content += f"Target: {results_data['target']}\n\n"
+                    text_content += "Logs:\n" + "\n".join(results_data["logs"][:100])
 
-                        text_content = "Intellicrack Analysis Report\n\n"
-                        text_content += f"Timestamp: {results_data['timestamp']}\n"
-                        text_content += f"Target: {results_data['target']}\n\n"
-                        text_content += "Logs:\n" + "\n".join(results_data['logs'][:100])
+                    ax.text(
+                        0.1,
+                        0.9,
+                        text_content,
+                        transform=ax.transAxes,
+                        fontsize=8,
+                        verticalalignment="top",
+                        family="monospace",
+                    )
 
-                        ax.text(0.1, 0.9, text_content, transform=ax.transAxes,
-                               fontsize=8, verticalalignment='top', family='monospace')
+                    pdf.savefig(fig, bbox_inches="tight")
+                    plt.close()
+            else:
+                with open(filename, "w", encoding="utf-8") as f:
+                    f.write("Intellicrack Analysis Report\n")
+                    f.write(f"Timestamp: {results_data['timestamp']}\n")
+                    f.write(f"Target: {results_data['target']}\n\n")
+                    f.write("Logs:\n")
+                    f.write("\n".join(results_data["logs"]))
 
-                        pdf.savefig(fig, bbox_inches='tight')
-                        plt.close()
-                else:
-                    with open(filename, 'w', encoding='utf-8') as f:
-                        f.write("Intellicrack Analysis Report\n")
-                        f.write(f"Timestamp: {results_data['timestamp']}\n")
-                        f.write(f"Target: {results_data['target']}\n\n")
-                        f.write("Logs:\n")
-                        f.write("\n".join(results_data['logs']))
+            self.log_viewer.add_log("INFO", "Results exported successfully", "Export")
+            messagebox.showinfo("Export Complete", f"Results exported to {filename}")
 
-                self.log_viewer.add_log("INFO", "Results exported successfully", "Export")
-                messagebox.showinfo("Export Complete", f"Results exported to {filename}")
-
-            except Exception as e:
-                self.log_viewer.add_log("ERROR", f"Export failed: {e}", "Export")
-                messagebox.showerror("Export Error", f"Failed to export results: {e}")
+        except Exception as e:
+            self.log_viewer.add_log("ERROR", f"Export failed: {e}", "Export")
+            messagebox.showerror("Export Error", f"Failed to export results: {e}")
 
     # Tool operations
     def open_hex_editor(self) -> None:
         """Open hex editor."""
         if self.current_target:
-            self.log_viewer.add_log("INFO", f"Opening hex editor for {self.current_target}", "Tools")
+            self.log_viewer.add_log(
+                "INFO", f"Opening hex editor for {self.current_target}", "Tools"
+            )
 
             hex_window = tk.Toplevel(self.root)
             hex_window.title(f"Hex Editor - {self.current_target.name}")
@@ -3100,18 +3401,20 @@ if __name__ == "__main__":
             scrollbar = ttk.Scrollbar(text_frame)
             scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-            hex_text = tk.Text(text_frame, wrap=tk.NONE, yscrollcommand=scrollbar.set, font=("Courier", 9))
+            hex_text = tk.Text(
+                text_frame, wrap=tk.NONE, yscrollcommand=scrollbar.set, font=("Courier", 9)
+            )
             hex_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
             scrollbar.config(command=hex_text.yview)
 
             try:
-                with open(self.current_target, 'rb') as f:
+                with open(self.current_target, "rb") as f:
                     data = f.read(1024 * 1024)
 
                 for offset in range(0, len(data), 16):
-                    chunk = data[offset:offset + 16]
-                    hex_part = ' '.join(f'{b:02X}' for b in chunk)
-                    ascii_part = ''.join(chr(b) if 32 <= b < 127 else '.' for b in chunk)
+                    chunk = data[offset : offset + 16]
+                    hex_part = " ".join(f"{b:02X}" for b in chunk)
+                    ascii_part = "".join(chr(b) if 32 <= b < 127 else "." for b in chunk)
                     line = f"{offset:08X}  {hex_part:<48}  {ascii_part}\n"
                     hex_text.insert(tk.END, line)
 
@@ -3126,7 +3429,9 @@ if __name__ == "__main__":
     def open_disassembler(self) -> None:
         """Open disassembler."""
         if self.current_target:
-            self.log_viewer.add_log("INFO", f"Opening disassembler for {self.current_target}", "Tools")
+            self.log_viewer.add_log(
+                "INFO", f"Opening disassembler for {self.current_target}", "Tools"
+            )
 
             disasm_window = tk.Toplevel(self.root)
             disasm_window.title(f"Disassembler - {self.current_target.name}")
@@ -3141,7 +3446,9 @@ if __name__ == "__main__":
             scrollbar = ttk.Scrollbar(text_frame)
             scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-            disasm_text = tk.Text(text_frame, wrap=tk.NONE, yscrollcommand=scrollbar.set, font=("Courier", 9))
+            disasm_text = tk.Text(
+                text_frame, wrap=tk.NONE, yscrollcommand=scrollbar.set, font=("Courier", 9)
+            )
             disasm_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
             scrollbar.config(command=disasm_text.yview)
 
@@ -3149,7 +3456,7 @@ if __name__ == "__main__":
                 import pefile
                 from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
 
-                with open(self.current_target, 'rb') as f:
+                with open(self.current_target, "rb") as f:
                     data = f.read()
 
                 try:
@@ -3163,24 +3470,34 @@ if __name__ == "__main__":
                             section_data = section.get_data()
                             base_addr = pe.OPTIONAL_HEADER.ImageBase + section.VirtualAddress
 
-                            disasm_text.insert(tk.END, f"Section: {section.Name.decode('utf-8', errors='ignore').strip()}\n")
+                            disasm_text.insert(
+                                tk.END,
+                                f"Section: {section.Name.decode('utf-8', errors='ignore').strip()}\n",
+                            )
                             disasm_text.insert(tk.END, f"Address: 0x{base_addr:08X}\n\n")
 
-                            for count, insn in enumerate(md.disasm(section_data[:min(len(section_data), 4096)], base_addr)):
+                            for count, insn in enumerate(
+                                md.disasm(section_data[: min(len(section_data), 4096)], base_addr)
+                            ):
                                 line = f"0x{insn.address:08X}:  {insn.mnemonic:8s} {insn.op_str}\n"
                                 disasm_text.insert(tk.END, line)
                                 if count >= 499:  # 500 instructions (0-indexed)
-                                    disasm_text.insert(tk.END, "\n... (truncated, showing first 500 instructions)\n")
+                                    disasm_text.insert(
+                                        tk.END,
+                                        "\n... (truncated, showing first 500 instructions)\n",
+                                    )
                                     break
 
-                            disasm_text.insert(tk.END, "\n" + "="*80 + "\n\n")
+                            disasm_text.insert(tk.END, "\n" + "=" * 80 + "\n\n")
 
                 except Exception:
                     md = Cs(CS_ARCH_X86, CS_MODE_32)
-                    disasm_text.insert(tk.END, "Binary format not recognized, attempting raw disassembly...\n\n")
+                    disasm_text.insert(
+                        tk.END, "Binary format not recognized, attempting raw disassembly...\n\n"
+                    )
 
                     count = 0
-                    for insn in md.disasm(data[:min(len(data), 4096)], 0x1000):
+                    for insn in md.disasm(data[: min(len(data), 4096)], 0x1000):
                         line = f"0x{insn.address:08X}:  {insn.mnemonic:8s} {insn.op_str}\n"
                         disasm_text.insert(tk.END, line)
                         count += 1
@@ -3202,7 +3519,9 @@ if __name__ == "__main__":
     def open_string_extractor(self) -> None:
         """Open string extractor."""
         if self.current_target:
-            self.log_viewer.add_log("INFO", f"Extracting strings from {self.current_target}", "Tools")
+            self.log_viewer.add_log(
+                "INFO", f"Extracting strings from {self.current_target}", "Tools"
+            )
 
             strings_window = tk.Toplevel(self.root)
             strings_window.title(f"Strings - {self.current_target.name}")
@@ -3217,31 +3536,35 @@ if __name__ == "__main__":
             scrollbar = ttk.Scrollbar(text_frame)
             scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-            strings_text = tk.Text(text_frame, wrap=tk.NONE, yscrollcommand=scrollbar.set, font=("Courier", 9))
+            strings_text = tk.Text(
+                text_frame, wrap=tk.NONE, yscrollcommand=scrollbar.set, font=("Courier", 9)
+            )
             strings_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
             scrollbar.config(command=strings_text.yview)
 
             try:
                 import re
 
-                with open(self.current_target, 'rb') as f:
+                with open(self.current_target, "rb") as f:
                     data = f.read()
 
-                ascii_strings = re.findall(b'[ -~]{4,}', data)
-                unicode_strings = re.findall(b'(?:[ -~]\x00){4,}', data)
+                ascii_strings = re.findall(b"[ -~]{4,}", data)
+                unicode_strings = re.findall(b"(?:[ -~]\x00){4,}", data)
 
                 strings_text.insert(tk.END, f"ASCII Strings ({len(ascii_strings)}):\n")
                 strings_text.insert(tk.END, "=" * 80 + "\n\n")
 
                 for s in ascii_strings[:1000]:
                     try:
-                        decoded = s.decode('ascii')
+                        decoded = s.decode("ascii")
                         strings_text.insert(tk.END, f"{decoded}\n")
                     except (UnicodeDecodeError, AttributeError):
                         pass
 
                 if len(ascii_strings) > 1000:
-                    strings_text.insert(tk.END, f"\n... ({len(ascii_strings) - 1000} more strings not shown)\n")
+                    strings_text.insert(
+                        tk.END, f"\n... ({len(ascii_strings) - 1000} more strings not shown)\n"
+                    )
 
                 strings_text.insert(tk.END, "\n\n" + "=" * 80 + "\n")
                 strings_text.insert(tk.END, f"Unicode Strings ({len(unicode_strings)}):\n")
@@ -3249,13 +3572,15 @@ if __name__ == "__main__":
 
                 for s in unicode_strings[:1000]:
                     try:
-                        decoded = s.decode('utf-16-le')
+                        decoded = s.decode("utf-16-le")
                         strings_text.insert(tk.END, f"{decoded}\n")
                     except (UnicodeDecodeError, AttributeError):
                         pass
 
                 if len(unicode_strings) > 1000:
-                    strings_text.insert(tk.END, f"\n... ({len(unicode_strings) - 1000} more strings not shown)\n")
+                    strings_text.insert(
+                        tk.END, f"\n... ({len(unicode_strings) - 1000} more strings not shown)\n"
+                    )
 
                 strings_text.config(state=tk.DISABLED)
 
@@ -3282,12 +3607,12 @@ if __name__ == "__main__":
         """Toggle panel visibility."""
         self.log_viewer.add_log("INFO", "Toggling panel visibility", "View")
 
-        if hasattr(self, 'file_explorer_visible'):
+        if hasattr(self, "file_explorer_visible"):
             self.file_explorer_visible = not self.file_explorer_visible
         else:
             self.file_explorer_visible = False
 
-        if hasattr(self, 'file_explorer') and self.file_explorer:
+        if hasattr(self, "file_explorer") and self.file_explorer:
             if self.file_explorer_visible:
                 self.file_explorer.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
             else:
@@ -3333,7 +3658,9 @@ if __name__ == "__main__":
         theme_combo.grid(row=0, column=1, sticky="w", padx=5, pady=5)
 
         # Font settings
-        ttk.Label(general_frame, text="Font Family:").grid(row=1, column=0, sticky="w", padx=5, pady=5)
+        ttk.Label(general_frame, text="Font Family:").grid(
+            row=1, column=0, sticky="w", padx=5, pady=5
+        )
         font_var = tk.StringVar(value=self.config.font_family)
         font_combo = ttk.Combobox(
             general_frame,
@@ -3343,19 +3670,27 @@ if __name__ == "__main__":
         )
         font_combo.grid(row=1, column=1, sticky="w", padx=5, pady=5)
 
-        ttk.Label(general_frame, text="Font Size:").grid(row=2, column=0, sticky="w", padx=5, pady=5)
+        ttk.Label(general_frame, text="Font Size:").grid(
+            row=2, column=0, sticky="w", padx=5, pady=5
+        )
         font_size_var = tk.IntVar(value=self.config.font_size)
         font_size_spin = ttk.Spinbox(general_frame, from_=8, to=20, textvariable=font_size_var)
         font_size_spin.grid(row=2, column=1, sticky="w", padx=5, pady=5)
 
         # Auto-refresh settings
         auto_refresh_var = tk.BooleanVar(value=self.config.auto_refresh)
-        auto_refresh_check = ttk.Checkbutton(general_frame, text="Enable auto-refresh", variable=auto_refresh_var)
+        auto_refresh_check = ttk.Checkbutton(
+            general_frame, text="Enable auto-refresh", variable=auto_refresh_var
+        )
         auto_refresh_check.grid(row=3, column=0, columnspan=2, sticky="w", padx=5, pady=5)
 
-        ttk.Label(general_frame, text="Refresh Interval (ms):").grid(row=4, column=0, sticky="w", padx=5, pady=5)
+        ttk.Label(general_frame, text="Refresh Interval (ms):").grid(
+            row=4, column=0, sticky="w", padx=5, pady=5
+        )
         refresh_var = tk.IntVar(value=self.config.refresh_interval)
-        refresh_spin = ttk.Spinbox(general_frame, from_=500, to=10000, increment=500, textvariable=refresh_var)
+        refresh_spin = ttk.Spinbox(
+            general_frame, from_=500, to=10000, increment=500, textvariable=refresh_var
+        )
         refresh_spin.grid(row=4, column=1, sticky="w", padx=5, pady=5)
 
         # Button frame
@@ -3375,13 +3710,19 @@ if __name__ == "__main__":
             self.save_config()
 
             pref_window.destroy()
-            messagebox.showinfo("Preferences", "Preferences saved. Some changes may require restart.")
+            messagebox.showinfo(
+                "Preferences", "Preferences saved. Some changes may require restart."
+            )
 
         def cancel_preferences() -> None:
             pref_window.destroy()
 
-        ttk.Button(button_frame, text="Apply", command=apply_preferences).pack(side=tk.RIGHT, padx=5)
-        ttk.Button(button_frame, text="Cancel", command=cancel_preferences).pack(side=tk.RIGHT, padx=5)
+        ttk.Button(button_frame, text="Apply", command=apply_preferences).pack(
+            side=tk.RIGHT, padx=5
+        )
+        ttk.Button(button_frame, text="Cancel", command=cancel_preferences).pack(
+            side=tk.RIGHT, padx=5
+        )
 
     def show_file_properties(self, file_path: Path) -> None:
         """Show file properties dialog."""

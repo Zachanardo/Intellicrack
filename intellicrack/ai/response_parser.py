@@ -24,7 +24,9 @@ This module provides shared functions for parsing AI responses across different 
 """
 
 
-def parse_ai_response_sections(response: str, section_keywords: dict[str, list[str]]) -> dict[str, list[str]]:
+def parse_ai_response_sections(
+    response: str, section_keywords: dict[str, list[str]]
+) -> dict[str, list[str]]:
     """Parse AI response into categorized sections.
 
     Args:
@@ -33,8 +35,18 @@ def parse_ai_response_sections(response: str, section_keywords: dict[str, list[s
 
             Example::
 
-                {'insights': ['vulnerabilit', 'security', 'risk'],
-                 'suggestions': ['recommend', 'suggest', 'should']}
+                {
+                    "insights": [
+                        "vulnerabilit",
+                        "security",
+                        "risk",
+                    ],
+                    "suggestions": [
+                        "recommend",
+                        "suggest",
+                        "should",
+                    ],
+                }
 
     Returns:
         Dictionary mapping section names to lists of extracted content

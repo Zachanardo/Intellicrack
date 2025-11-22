@@ -29,6 +29,7 @@ from typing import Any
 
 from intellicrack.handlers.psutil_handler import psutil
 
+
 # Optional imports for enhanced dashboard
 try:
     from rich.align import Align
@@ -291,7 +292,11 @@ class TerminalDashboard:
             return None
 
         # Calculate success rate
-        total_attempts = self.analysis_stats.analyses_completed + self.analysis_stats.cache_hits + self.analysis_stats.cache_misses
+        total_attempts = (
+            self.analysis_stats.analyses_completed
+            + self.analysis_stats.cache_hits
+            + self.analysis_stats.cache_misses
+        )
         success_rate = 0.0
         if total_attempts > 0:
             success_rate = (self.analysis_stats.analyses_completed / total_attempts) * 100
@@ -401,7 +406,9 @@ Memory: {"🟢" if self.system_metrics.memory_percent < 80 else "🟡" if self.s
 
         return Panel(content, title="[FAST] Quick Stats", border_style="magenta")
 
-    def _create_progress_bar(self, value: float, max_value: float, label: str, width: int = 20) -> str:
+    def _create_progress_bar(
+        self, value: float, max_value: float, label: str, width: int = 20
+    ) -> str:
         """Create ASCII progress bar.
 
         Args:
@@ -414,11 +421,7 @@ Memory: {"🟢" if self.system_metrics.memory_percent < 80 else "🟡" if self.s
             Formatted progress bar string
 
         """
-        if max_value == 0:
-            percentage = 0
-        else:
-            percentage = min(100, (value / max_value) * 100)
-
+        percentage = 0 if max_value == 0 else min(100, (value / max_value) * 100)
         filled = int((percentage / 100) * width)
         bar = "█" * filled + "░" * (width - filled)
 
@@ -452,9 +455,7 @@ Memory: {"🟢" if self.system_metrics.memory_percent < 80 else "🟡" if self.s
 
         if diff > 5:
             return "↗️"
-        if diff < -5:
-            return "↘️"
-        return "→"
+        return "↘️" if diff < -5 else "→"
 
     def _calculate_commands_per_minute(self) -> float:
         """Calculate commands per minute rate."""
@@ -634,16 +635,26 @@ Memory: {"🟢" if self.system_metrics.memory_percent < 80 else "🟡" if self.s
         """
         self._update_system_metrics()
 
-        cpu_status = "🟢" if self.system_metrics.cpu_percent < 80 else "🟡" if self.system_metrics.cpu_percent < 95 else "🔴"
-        memory_status = "🟢" if self.system_metrics.memory_percent < 80 else "🟡" if self.system_metrics.memory_percent < 95 else "🔴"
+        cpu_status = (
+            "🟢"
+            if self.system_metrics.cpu_percent < 80
+            else "🟡"
+            if self.system_metrics.cpu_percent < 95
+            else "🔴"
+        )
+        memory_status = (
+            "🟢"
+            if self.system_metrics.memory_percent < 80
+            else "🟡"
+            if self.system_metrics.memory_percent < 95
+            else "🔴"
+        )
 
         session_duration = datetime.now() - self.session_info.start_time
 
-        summary = f"""System: {cpu_status} CPU {self.system_metrics.cpu_percent:.0f}% | {memory_status} Memory {self.system_metrics.memory_percent:.0f}%
+        return f"""System: {cpu_status} CPU {self.system_metrics.cpu_percent:.0f}% | {memory_status} Memory {self.system_metrics.memory_percent:.0f}%
 Session: {self.session_info.commands_executed} commands in {self._format_duration(session_duration.total_seconds())}
 Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vulnerabilities_found} vulnerabilities"""
-
-        return summary
 
     def display_metrics_columns(self) -> None:
         """Display system metrics in columns using Columns."""
@@ -676,7 +687,9 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
         columns = Columns([cpu_panel, memory_panel, disk_panel], equal=True, expand=True)
         self.console.print(columns)
 
-    def show_analysis_progress(self, operation_name: str, total_steps: int, current_step: int) -> None:
+    def show_analysis_progress(
+        self, operation_name: str, total_steps: int, current_step: int
+    ) -> None:
         """Show analysis progress using Progress bars.
 
         Args:
@@ -711,7 +724,9 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
 
         with Status(f"[bold green]{activity_title}...", console=self.console):
             # Create activity list
-            activity_items = "\n".join([f" {activity}" for activity in activities[-5:]])  # Show last 5
+            activity_items = "\n".join(
+                [f" {activity}" for activity in activities[-5:]]
+            )  # Show last 5
 
             activity_panel = Panel(
                 activity_items or "No recent activities",
@@ -783,7 +798,9 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
         # Add cache information
         cache_node = tree.add(" [bold yellow]Cache Status[/bold yellow]")
         cache_total = self.analysis_stats.cache_hits + self.analysis_stats.cache_misses
-        cache_hit_rate = (self.analysis_stats.cache_hits / cache_total * 100) if cache_total > 0 else 0
+        cache_hit_rate = (
+            (self.analysis_stats.cache_hits / cache_total * 100) if cache_total > 0 else 0
+        )
         cache_node.add(f"OK Cache Hits: {self.analysis_stats.cache_hits}")
         cache_node.add(f"ERROR Cache Misses: {self.analysis_stats.cache_misses}")
         cache_node.add(f" Hit Rate: {cache_hit_rate:.1f}%")

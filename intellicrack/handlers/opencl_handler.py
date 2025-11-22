@@ -19,6 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 from intellicrack.utils.logger import logger
 
+
 """
 OpenCL Import Handler with Production-Ready Fallbacks
 
@@ -31,15 +32,7 @@ try:
     import pyopencl as cl
 
     # Import basic classes
-    from pyopencl import (
-        Buffer,
-        Context,
-        Device,
-        Platform,
-        Program,
-        create_some_context,
-        get_platforms,
-    )
+    from pyopencl import Buffer, Context, Device, Platform, Program, create_some_context, get_platforms
 
     # Try to import Queue - it may be CommandQueue in some versions
     try:
@@ -65,26 +58,20 @@ except ImportError as e:
     class FallbackContext:
         """Fallback OpenCL context."""
 
-
     class FallbackDevice:
         """Fallback OpenCL device."""
-
 
     class FallbackBuffer:
         """Fallback OpenCL buffer."""
 
-
     class FallbackProgram:
         """Fallback OpenCL program."""
-
 
     class FallbackQueue:
         """Fallback OpenCL command queue."""
 
-
     class FallbackPlatform:
         """Fallback OpenCL platform."""
-
 
     # Assign fallback objects
     cl = None
@@ -106,20 +93,16 @@ except ImportError as e:
 
 # Export all OpenCL objects and availability flag
 __all__ = [
-    # Availability flags
+    "Buffer",
+    "Context",
+    "Device",
     "HAS_OPENCL",
     "OPENCL_AVAILABLE",
     "OPENCL_VERSION",
-    # Main module
-    "cl",
-    # Classes
-    "Context",
-    "Device",
-    "Buffer",
+    "Platform",
     "Program",
     "Queue",
-    "Platform",
-    # Functions
+    "cl",
     "create_some_context",
     "get_platforms",
 ]

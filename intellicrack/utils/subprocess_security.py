@@ -17,6 +17,7 @@ import shlex
 import subprocess
 from pathlib import Path
 
+
 logger = logging.getLogger(__name__)
 
 # Define allowed executable patterns for security research tools
@@ -53,7 +54,26 @@ ALLOWED_TOOLS = {
 }
 
 # Shell metacharacters that could be dangerous
-SHELL_METACHARACTERS = {"&", "|", ";", "$", "`", "\n", "\r", ">", "<", "(", ")", "{", "}", "[", "]", "*", "?", "~"}
+SHELL_METACHARACTERS = {
+    "&",
+    "|",
+    ";",
+    "$",
+    "`",
+    "\n",
+    "\r",
+    ">",
+    "<",
+    "(",
+    ")",
+    "{",
+    "}",
+    "[",
+    "]",
+    "*",
+    "?",
+    "~",
+}
 
 
 class SecureSubprocess:
@@ -78,11 +98,8 @@ class SecureSubprocess:
         base_name = base_name.replace(".exe", "").replace(".bat", "").replace(".sh", "")
 
         # Check if tool is in allowed list
-        if base_name not in ALLOWED_TOOLS:
-            # Check if it's a full path to an allowed tool
-            if not any(tool in executable.lower() for tool in ALLOWED_TOOLS):
-                logger.warning(f"Attempting to execute non-whitelisted tool: {executable}")
-                # For security research, we still allow but log it
+        if base_name not in ALLOWED_TOOLS and all(tool not in executable.lower() for tool in ALLOWED_TOOLS):
+            logger.warning(f"Attempting to execute non-whitelisted tool: {executable}")
 
         # Resolve to absolute path
         if Path(executable).is_absolute():
@@ -92,20 +109,18 @@ class SecureSubprocess:
             import shutil
 
             abs_path = shutil.which(executable)
-            if not abs_path:
-                # Try common locations on Windows
-                if os.name == "nt":
-                    system_root = os.environ.get("SYSTEMROOT", "C:\\Windows")
-                    possible_paths = [
-                        os.path.join(system_root, "System32", executable),
-                        os.path.join(system_root, "System32", f"{executable}.exe"),
-                        os.path.join(system_root, "SysWOW64", executable),
-                        os.path.join(system_root, "SysWOW64", f"{executable}.exe"),
-                    ]
-                    for path in possible_paths:
-                        if os.path.exists(path):
-                            abs_path = path
-                            break
+            if not abs_path and os.name == "nt":
+                system_root = os.environ.get("SYSTEMROOT", "C:\\Windows")
+                possible_paths = [
+                    os.path.join(system_root, "System32", executable),
+                    os.path.join(system_root, "System32", f"{executable}.exe"),
+                    os.path.join(system_root, "SysWOW64", executable),
+                    os.path.join(system_root, "SysWOW64", f"{executable}.exe"),
+                ]
+                for path in possible_paths:
+                    if os.path.exists(path):
+                        abs_path = path
+                        break
 
         if not abs_path or not os.path.exists(abs_path):
             error_msg = f"Executable not found: {executable}"
@@ -131,7 +146,7 @@ class SecureSubprocess:
         """
         # Convert to string if needed
         if not isinstance(arg, str):
-            arg = str(arg)
+            arg = arg
 
         # Check for shell metacharacters
         dangerous_chars = SHELL_METACHARACTERS.copy()
@@ -139,14 +154,17 @@ class SecureSubprocess:
             dangerous_chars -= {"*", "?"}
 
         # Check for command injection attempts
-        if any(char in arg for char in dangerous_chars):
-            # Allow certain safe patterns
-            if arg.startswith("-") or arg.startswith("/") or ("=" in arg and not any(char in arg for char in ["`", "$", ";", "|", "&"])):  # Command flags
-                pass
-            else:
-                error_msg = f"Potentially dangerous argument: {arg}"
-                logger.error(error_msg)
-                raise ValueError(error_msg)
+        if any(char in arg for char in dangerous_chars) and (
+                        not arg.startswith("-")
+                        and not arg.startswith("/")
+                        and (
+                            "=" not in arg
+                            or any(char in arg for char in ["`", "$", ";", "|", "&"])
+                        )
+                    ):
+            error_msg = f"Potentially dangerous argument: {arg}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
         return arg
 
@@ -170,10 +188,7 @@ class SecureSubprocess:
             logger.error(error_msg)
             raise ValueError(error_msg)
 
-        validated = []
-
-        # Validate executable (first argument)
-        validated.append(SecureSubprocess.validate_executable(command[0]))
+        validated = [SecureSubprocess.validate_executable(command[0])]
 
         # Validate remaining arguments
         for arg in command[1:]:
@@ -237,7 +252,15 @@ class SecureSubprocess:
 
         # Execute with security flags
         return subprocess.run(
-            command, shell=shell, capture_output=capture_output, text=text, timeout=timeout, check=check, cwd=cwd, env=env, **kwargs,
+            command,
+            shell=shell,
+            capture_output=capture_output,
+            text=text,
+            timeout=timeout,
+            check=check,
+            cwd=cwd,
+            env=env,
+            **kwargs,
         )
 
     @staticmethod
@@ -290,7 +313,14 @@ class SecureSubprocess:
 
         # Execute with security flags
         return subprocess.Popen(
-            command, shell=shell, stdout=stdout, stderr=stderr, stdin=stdin, cwd=cwd, env=env, **kwargs,
+            command,
+            shell=shell,
+            stdout=stdout,
+            stderr=stderr,
+            stdin=stdin,
+            cwd=cwd,
+            env=env,
+            **kwargs,
         )
 
 

@@ -122,7 +122,7 @@ class RealLinuxSystemSimulator:
             return 0  # Success
         return -1  # Error
 
-    def read_proc_status(self) -> List[str]:
+    def read_proc_status(self) -> list[str]:
         """Simulate reading /proc/self/status."""
         return [
             f"TracerPid:\t{self.tracer_pid}\n",

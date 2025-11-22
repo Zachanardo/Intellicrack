@@ -25,10 +25,13 @@ by wrapping existing patch utilities.
 import logging
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 
-def generate_patch(target_binary: str, patch_config: dict[str, Any] | None = None) -> dict[str, Any]:
+def generate_patch(
+    target_binary: str, patch_config: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Generate a patch for the specified binary.
 
     Args:
@@ -41,8 +44,8 @@ def generate_patch(target_binary: str, patch_config: dict[str, Any] | None = Non
     """
     _ = patch_config
     try:
-        # Basic patch generation using existing utilities
-        result = {
+        logger.info(f"Generated compatibility patch for {target_binary}")
+        return {
             "success": True,
             "patch_data": b"",
             "patch_info": {
@@ -52,10 +55,6 @@ def generate_patch(target_binary: str, patch_config: dict[str, Any] | None = Non
             },
             "message": "Patch generation completed using compatibility layer",
         }
-
-        logger.info(f"Generated compatibility patch for {target_binary}")
-        return result
-
     except Exception as e:
         logger.error(f"Patch generation failed: {e}")
         return {
@@ -73,7 +72,9 @@ class PatchGenerator:
         """Initialize patch generator with logger for binary patching operations."""
         self.logger = logging.getLogger("IntellicrackLogger.PatchGenerator")
 
-    def generate_binary_patch(self, target_path: str, patch_type: str = "license_bypass") -> dict[str, Any]:
+    def generate_binary_patch(
+        self, target_path: str, patch_type: str = "license_bypass"
+    ) -> dict[str, Any]:
         """Generate a binary patch with specified type."""
         return generate_patch(target_path, {"type": patch_type})
 

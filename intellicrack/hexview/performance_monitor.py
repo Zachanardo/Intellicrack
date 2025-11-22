@@ -40,6 +40,7 @@ from ..handlers.pyqt6_handler import (
     QWidget,
 )
 
+
 logger = logging.getLogger(__name__)
 
 __all__ = ["PerformanceMonitor", "PerformanceWidget"]

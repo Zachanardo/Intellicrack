@@ -14,6 +14,7 @@ from typing import Any
 
 from intellicrack.utils.logger import logger
 
+
 """
 Parallel Processing Manager
 
@@ -137,7 +138,9 @@ class ParallelProcessingManager:
         self.logger.info(f"Added task: {task_type} (ID: {task['id']})")
         return task["id"]
 
-    def process_binary_chunks(self, process_func: Callable[[bytes, int], Any] | None = None) -> list[Any] | None:
+    def process_binary_chunks(
+        self, process_func: Callable[[bytes, int], Any] | None = None
+    ) -> list[Any] | None:
         """Process a binary file in chunks using parallel workers.
 
         Args:
@@ -162,7 +165,9 @@ class ParallelProcessingManager:
         # Calculate number of chunks
         num_chunks = (file_size + self.chunk_size - 1) // self.chunk_size
 
-        self.logger.info(f"Processing {self.binary_path} in {num_chunks} chunks of {self.chunk_size // (1024 * 1024)}MB each")
+        self.logger.info(
+            f"Processing {self.binary_path} in {num_chunks} chunks of {self.chunk_size // (1024 * 1024)}MB each"
+        )
         self.logger.info("Using multiprocessing backend for processing")
 
         return self._process_with_multiprocessing(process_func, num_chunks)
@@ -204,10 +209,14 @@ class ParallelProcessingManager:
         with multiprocessing.Pool(processes=self.num_workers) as pool:
             # Process chunks with progress tracking
             results = []
-            for i, result in enumerate(pool.imap_unordered(read_and_process_chunk, range(num_chunks))):
+            for i, result in enumerate(
+                pool.imap_unordered(read_and_process_chunk, range(num_chunks))
+            ):
                 results.append(result)
                 if (i + 1) % max(1, num_chunks // 10) == 0:  # Report every 10%
-                    self.logger.info(f"Progress: {i + 1}/{num_chunks} chunks processed ({(i + 1) / num_chunks * 100:.1f}%)")
+                    self.logger.info(
+                        f"Progress: {i + 1}/{num_chunks} chunks processed ({(i + 1) / num_chunks * 100:.1f}%)"
+                    )
 
         return results
 
@@ -313,18 +322,26 @@ class ParallelProcessingManager:
 
                 # Process task
                 start_time = time.time()
-                logger.info(f"Worker {worker_id} processing task: {task['type']} (ID: {task['id']})")
+                logger.info(
+                    f"Worker {worker_id} processing task: {task['type']} (ID: {task['id']})"
+                )
 
                 try:
                     # Process task based on type
                     if task["type"] == "find_patterns":
                         result = self._task_find_patterns(worker_id, task, binary_path, chunk_size)
                     elif task["type"] == "analyze_entropy":
-                        result = self._task_analyze_entropy(worker_id, task, binary_path, chunk_size)
+                        result = self._task_analyze_entropy(
+                            worker_id, task, binary_path, chunk_size
+                        )
                     elif task["type"] == "analyze_section":
-                        result = self._task_analyze_section(worker_id, task, binary_path, chunk_size)
+                        result = self._task_analyze_section(
+                            worker_id, task, binary_path, chunk_size
+                        )
                     elif task["type"] == "symbolic_execution":
-                        result = self._task_symbolic_execution(worker_id, task, binary_path, chunk_size)
+                        result = self._task_symbolic_execution(
+                            worker_id, task, binary_path, chunk_size
+                        )
                     else:
                         # Generic task - process a chunk
                         result = self._task_generic(worker_id, task, binary_path, chunk_size)
@@ -355,7 +372,9 @@ class ParallelProcessingManager:
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Worker %s error: %s", worker_id, e)
 
-    def _task_find_patterns(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:
+    def _task_find_patterns(
+        self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int
+    ) -> dict[str, Any]:
         """Process a pattern-finding task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         patterns = task["params"].get("patterns", [])
@@ -392,7 +411,9 @@ class ParallelProcessingManager:
         logger.info(f"Found {len(matches)} pattern matches in chunk at offset {chunk_start}")
         return {"matches": matches, "patterns_found": len(matches)}
 
-    def _task_analyze_entropy(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:
+    def _task_analyze_entropy(
+        self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int
+    ) -> dict[str, Any]:
         """Process an entropy analysis task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         chunk_start = task["params"].get("chunk_start", 0)
@@ -425,7 +446,9 @@ class ParallelProcessingManager:
             )
 
         # Find high entropy regions
-        high_entropy_regions = [_w for _w in window_results if _w["entropy"] > 7.0]  # High entropy threshold
+        high_entropy_regions = [
+            _w for _w in window_results if _w["entropy"] > 7.0
+        ]  # High entropy threshold
 
         logger.info("Analyzed entropy in chunk at offset %s: %f", chunk_start, chunk_entropy)
         return {
@@ -444,10 +467,14 @@ class ParallelProcessingManager:
 
         counts = Counter(data)
         total = len(data)
-        entropy = -sum((_count / total) * math.log2(_count / total) for _count in counts.values())
-        return entropy
+        return -sum(
+            (_count / total) * math.log2(_count / total)
+            for _count in counts.values()
+        )
 
-    def _task_analyze_section(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:  # pylint: disable=unused-argument
+    def _task_analyze_section(
+        self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int
+    ) -> dict[str, Any]:    # pylint: disable=unused-argument
         """Process a section analysis task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         section_name = task["params"].get("section_name", None)
@@ -461,7 +488,9 @@ class ParallelProcessingManager:
         try:
             pe = pefile.PE(binary_path)
 
-            section = next((_s for _s in pe.sections if _s.Name.decode().strip("\x00") == section_name), None)
+            section = next(
+                (_s for _s in pe.sections if _s.Name.decode().strip("\x00") == section_name), None
+            )
             if not section:
                 return {"error": f"Section {section_name} not found"}
 
@@ -471,6 +500,8 @@ class ParallelProcessingManager:
             results = []
             total_strings = []
             total_entropy_samples = []
+
+            min_length = 4  # Minimum string length
 
             # Process data in chunks for better memory efficiency and progress tracking
             for chunk_start in range(0, len(section_data), chunk_size):
@@ -484,8 +515,6 @@ class ParallelProcessingManager:
                 # String extraction for this chunk
                 chunk_strings = []
                 current_string = b""
-                min_length = 4  # Minimum string length
-
                 for _byte in chunk_data:
                     if 32 <= _byte <= 126:  # Printable ASCII
                         current_string += bytes([_byte])
@@ -513,10 +542,16 @@ class ParallelProcessingManager:
                 )
 
             # Calculate overall entropy as average of chunk entropies
-            entropy = sum(total_entropy_samples) / len(total_entropy_samples) if total_entropy_samples else 0.0
+            entropy = (
+                sum(total_entropy_samples) / len(total_entropy_samples)
+                if total_entropy_samples
+                else 0.0
+            )
             strings = total_strings
 
-            logger.info(f"Analyzed section {section_name}: size={len(section_data)}, entropy={entropy:.2f}, strings={len(strings)}")
+            logger.info(
+                f"Analyzed section {section_name}: size={len(section_data)}, entropy={entropy:.2f}, strings={len(strings)}"
+            )
 
             return {
                 "section_name": section_name,
@@ -540,7 +575,9 @@ class ParallelProcessingManager:
             logger.error("Error analyzing section %s: %s", section_name, e)
             return {"error": str(e), "section_name": section_name}
 
-    def _task_symbolic_execution(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:  # pylint: disable=unused-argument
+    def _task_symbolic_execution(
+        self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int
+    ) -> dict[str, Any]:    # pylint: disable=unused-argument
         """Process a symbolic execution task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         target_function = task["params"].get("target_function", None)
@@ -600,7 +637,9 @@ class ParallelProcessingManager:
                     for state in execution_mgr.active:
                         if hasattr(state, "memory") and state.satisfiable():
                             try:
-                                rsp_val = state.regs.rsp if hasattr(state.regs, "rsp") else state.regs.esp
+                                rsp_val = (
+                                    state.regs.rsp if hasattr(state.regs, "rsp") else state.regs.esp
+                                )
                                 if state.solver.satisfiable(extra_constraints=[rsp_val < 0x1000]):
                                     vulnerabilities.append(
                                         {
@@ -610,7 +649,7 @@ class ParallelProcessingManager:
                                             "description": "Stack pointer potentially corrupted",
                                         },
                                     )
-                            except (AttributeError, Exception) as e:
+                            except Exception as e:
                                 logger.debug("Skipping state analysis due to error: %s", e)
 
                 chunk_end_time = time.time()
@@ -623,7 +662,9 @@ class ParallelProcessingManager:
                         "initial_active_states": chunk_start_states,
                         "final_active_states": len(execution_mgr.active),
                         "chunk_duration": chunk_duration,
-                        "vulnerabilities_found": len([v for v in vulnerabilities if v.get("chunk") == chunk_number]),
+                        "vulnerabilities_found": len(
+                            [v for v in vulnerabilities if v.get("chunk") == chunk_number]
+                        ),
                     },
                 )
 
@@ -657,7 +698,9 @@ class ParallelProcessingManager:
                 "vulnerabilities_found": 0,
             }
 
-    def _task_generic(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:
+    def _task_generic(
+        self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int
+    ) -> dict[str, Any]:
         """Process a generic task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         chunk_start = task["params"].get("chunk_start", 0)
@@ -667,7 +710,9 @@ class ParallelProcessingManager:
             f.seek(chunk_start)
             chunk_data = f.read(chunk_size)
 
-        logger.info("Worker %s processed generic task on chunk at offset %s", worker_id, chunk_start)
+        logger.info(
+            "Worker %s processed generic task on chunk at offset %s", worker_id, chunk_start
+        )
         return {
             "worker_id": worker_id,
             "chunk_offset": chunk_start,
@@ -720,7 +765,9 @@ class ParallelProcessingManager:
 
                 # Process result
                 task_type = task["type"]
-                self.logger.info("Processing result from worker %s for task %s", worker_id, task_type)
+                self.logger.info(
+                    "Processing result from worker %s for task %s", worker_id, task_type
+                )
 
                 # Initialize task type in results if not already present
                 if task_type not in self.results["task_results"]:
@@ -811,7 +858,9 @@ class ParallelProcessingManager:
         """
         return self.results
 
-    def run_parallel_pattern_search(self, patterns: list[str | bytes], chunk_size_mb: int = 10) -> list[dict[str, Any]]:
+    def run_parallel_pattern_search(
+        self, patterns: list[str | bytes], chunk_size_mb: int = 10
+    ) -> list[dict[str, Any]]:
         """Search for _patterns in a binary file using parallel processing.
 
         Args:
@@ -867,7 +916,9 @@ class ParallelProcessingManager:
 
         return all_matches
 
-    def run_parallel_entropy_analysis(self, window_size_kb: int = 64, chunk_size_mb: int = 10) -> dict[str, Any]:
+    def run_parallel_entropy_analysis(
+        self, window_size_kb: int = 64, chunk_size_mb: int = 10
+    ) -> dict[str, Any]:
         """Calculate entropy of a binary file using parallel processing.
 
         Args:
@@ -927,7 +978,11 @@ class ParallelProcessingManager:
 
         # Calculate overall entropy (weighted by chunk size)
         total_size = sum(size for _, size in chunk_entropies)
-        overall_entropy = sum(entropy * size for entropy, size in chunk_entropies) / total_size if total_size > 0 else 0
+        overall_entropy = (
+            sum(entropy * size for entropy, size in chunk_entropies) / total_size
+            if total_size > 0
+            else 0
+        )
 
         # Find high entropy regions
         high_entropy_regions = [_w for _w in all_windows if _w["entropy"] > 7.0]
@@ -995,18 +1050,16 @@ class ParallelProcessingManager:
         </html>
         """
 
-        # Save to file if filename provided
-        if filename:
-            try:
-                with open(filename, "w", encoding="utf-8") as f:
-                    f.write(html)
-                self.logger.info("Report saved to %s", filename)
-                return filename
-            except (OSError, ValueError, RuntimeError) as e:
-                self.logger.error("Error saving report: %s", e)
-                return None
-        else:
+        if not filename:
             return html
+        try:
+            with open(filename, "w", encoding="utf-8") as f:
+                f.write(html)
+            self.logger.info("Report saved to %s", filename)
+            return filename
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error saving report: %s", e)
+            return None
 
     def cleanup(self) -> None:
         """Clean up resources."""

@@ -40,11 +40,11 @@ class ReproductionPackage:
     package_id: str
     creation_timestamp: str
     method: ReproducibilityMethod
-    environment_spec: Dict[str, Any]
-    dependencies: List[str]
-    test_data: Dict[str, Any]
-    expected_results: Dict[str, Any]
-    verification_checksums: Dict[str, str]
+    environment_spec: dict[str, Any]
+    dependencies: list[str]
+    test_data: dict[str, Any]
+    expected_results: dict[str, Any]
+    verification_checksums: dict[str, str]
 
 @dataclass
 class ReproductionResult:
@@ -54,8 +54,8 @@ class ReproductionResult:
     execution_time: float
     results_match: bool
     success_rate_difference: float
-    evidence_artifacts: List[Path]
-    error_log: Optional[str] = None
+    evidence_artifacts: list[Path]
+    error_log: str | None = None
 
 class ReproducibilityRequirementsChecker:
     """
@@ -90,9 +90,9 @@ class ReproducibilityRequirementsChecker:
         }
 
 
-    def validate_reproducibility(self, original_results: Dict[str, Any],
+    def validate_reproducibility(self, original_results: dict[str, Any],
                                 reproduction_package: ReproductionPackage,
-                                methods_to_test: List[ReproducibilityMethod] = None) -> Tuple[ReproducibilityResult, Dict[str, Any]]:
+                                methods_to_test: list[ReproducibilityMethod] = None) -> tuple[ReproducibilityResult, dict[str, Any]]:
         """
         Validate reproducibility requirements against Phase 6.6 criteria.
 
@@ -173,7 +173,7 @@ class ReproducibilityRequirementsChecker:
 
     def _attempt_reproduction(self, method: ReproducibilityMethod,
                             package: ReproductionPackage,
-                            original_results: Dict[str, Any]) -> ReproductionResult:
+                            original_results: dict[str, Any]) -> ReproductionResult:
         """Attempt reproduction using specified method."""
         start_time = time.time()
 
@@ -205,7 +205,7 @@ class ReproducibilityRequirementsChecker:
             )
 
     def _reproduce_with_vagrant(self, package: ReproductionPackage,
-                              original_results: Dict[str, Any]) -> ReproductionResult:
+                              original_results: dict[str, Any]) -> ReproductionResult:
         """Reproduce validation using Vagrant VM."""
         start_time = time.time()
 
@@ -278,7 +278,7 @@ class ReproducibilityRequirementsChecker:
             )
 
     def _reproduce_natively(self, package: ReproductionPackage,
-                          original_results: Dict[str, Any]) -> ReproductionResult:
+                          original_results: dict[str, Any]) -> ReproductionResult:
         """Reproduce validation natively on current system."""
         start_time = time.time()
 
@@ -338,9 +338,9 @@ class ReproducibilityRequirementsChecker:
                 error_log=str(e)
             )
 
-    def _validate_success_rate_tolerance(self, reproduction_results: List[ReproductionResult],
-                                       original_results: Dict[str, Any],
-                                       report: Dict[str, Any]) -> bool:
+    def _validate_success_rate_tolerance(self, reproduction_results: list[ReproductionResult],
+                                       original_results: dict[str, Any],
+                                       report: dict[str, Any]) -> bool:
         """6.6.1: Validate success rate within ±5% tolerance."""
         try:
             original_success_rate = original_results.get("success_rate", 0.0)
@@ -376,8 +376,8 @@ class ReproducibilityRequirementsChecker:
             }
             return False
 
-    def _validate_evidence_verification(self, reproduction_results: List[ReproductionResult],
-                                      report: Dict[str, Any]) -> bool:
+    def _validate_evidence_verification(self, reproduction_results: list[ReproductionResult],
+                                      report: dict[str, Any]) -> bool:
         """6.6.2: Validate evidence artifacts can be verified."""
         try:
             verification_results = {}
@@ -415,8 +415,8 @@ class ReproducibilityRequirementsChecker:
             }
             return False
 
-    def _validate_independent_reproduction(self, reproduction_results: List[ReproductionResult],
-                                         report: Dict[str, Any]) -> bool:
+    def _validate_independent_reproduction(self, reproduction_results: list[ReproductionResult],
+                                         report: dict[str, Any]) -> bool:
         """6.6.3: Validate test can be reproduced without assistance."""
         try:
             independence_results = {}
@@ -504,7 +504,7 @@ python3 run_validation.py
 """
         return script
 
-    def _format_env_vars(self, env_vars: Dict[str, str]) -> str:
+    def _format_env_vars(self, env_vars: dict[str, str]) -> str:
         """Format environment variables for Dockerfile."""
         if not env_vars:
             return ""
@@ -575,8 +575,8 @@ if __name__ == "__main__":
 """
         return script
 
-    def _compare_results(self, reproduced_results: Dict[str, Any],
-                        original_results: Dict[str, Any]) -> Tuple[bool, float]:
+    def _compare_results(self, reproduced_results: dict[str, Any],
+                        original_results: dict[str, Any]) -> tuple[bool, float]:
         """Compare reproduced results with original."""
         try:
             original_rate = original_results.get("success_rate", 0.0)
@@ -593,7 +593,7 @@ if __name__ == "__main__":
             self.logger.error(f"Results comparison failed: {e}")
             return False, 1.0
 
-    def _verify_evidence_artifact(self, artifact_path: Path) -> Dict[str, Any]:
+    def _verify_evidence_artifact(self, artifact_path: Path) -> dict[str, Any]:
         """Verify individual evidence artifact."""
         try:
             if not artifact_path.exists():
@@ -655,7 +655,7 @@ if __name__ == "__main__":
 
     # Environment-specific extraction methods for Vagrant
 
-    def _extract_vagrant_results(self, vagrant_dir: Path) -> Dict[str, Any]:
+    def _extract_vagrant_results(self, vagrant_dir: Path) -> dict[str, Any]:
         """Extract results from Vagrant VM."""
         import subprocess
         import json
@@ -793,7 +793,7 @@ if __name__ == "__main__":
 
         return results
 
-    def _collect_evidence_from_vagrant(self, vagrant_dir: Path) -> List[Path]:
+    def _collect_evidence_from_vagrant(self, vagrant_dir: Path) -> list[Path]:
         """Collect evidence artifacts from Vagrant VM."""
         import subprocess
         import tempfile
@@ -994,7 +994,7 @@ if __name__ == "__main__":
             self.logger.error(f"Failed to extract reproduction package: {e}")
             raise RuntimeError(f"Package extraction failed: {e}")
 
-    def _install_dependencies(self, dependencies: List[str], temp_dir: Path) -> None:
+    def _install_dependencies(self, dependencies: list[str], temp_dir: Path) -> None:
         """Install dependencies for native reproduction."""
         import subprocess
         import platform
@@ -1101,7 +1101,7 @@ if __name__ == "__main__":
         else:
             self.logger.info("All dependencies installed successfully")
 
-    def _extract_native_results(self, temp_dir: Path) -> Dict[str, Any]:
+    def _extract_native_results(self, temp_dir: Path) -> dict[str, Any]:
         """Extract results from native reproduction."""
         import json
 
@@ -1129,7 +1129,7 @@ if __name__ == "__main__":
             for results_file in results_files:
                 if results_file.exists():
                     try:
-                        with open(results_file, 'r') as f:
+                        with open(results_file) as f:
                             test_data = json.load(f)
 
                         # Extract test results
@@ -1150,7 +1150,7 @@ if __name__ == "__main__":
                             # Compare with original environment from package metadata
                             metadata_file = temp_dir / "extracted_package" / "package_metadata.json"
                             if metadata_file.exists():
-                                with open(metadata_file, 'r') as f:
+                                with open(metadata_file) as f:
                                     metadata = json.load(f)
                                     original_env = metadata.get('environment_info', {})
 
@@ -1180,7 +1180,7 @@ if __name__ == "__main__":
 
                     for log_file in log_files:
                         try:
-                            with open(log_file, 'r', encoding='utf-8', errors='ignore') as f:
+                            with open(log_file, encoding='utf-8', errors='ignore') as f:
                                 content = f.read().lower()
 
                             # Look for success/failure patterns
@@ -1216,7 +1216,7 @@ if __name__ == "__main__":
 
         return results
 
-    def _collect_evidence_from_native(self, temp_dir: Path) -> List[Path]:
+    def _collect_evidence_from_native(self, temp_dir: Path) -> list[Path]:
         """Collect evidence artifacts from native reproduction."""
         evidence_files = []
 
@@ -1280,7 +1280,7 @@ if __name__ == "__main__":
 
         return evidence_files
 
-    def _compare_environments(self, original_env: Dict[str, Any], current_env: Dict[str, Any]) -> bool:
+    def _compare_environments(self, original_env: dict[str, Any], current_env: dict[str, Any]) -> bool:
         """Compare two environment configurations for compatibility."""
         try:
             # Key environment factors to compare

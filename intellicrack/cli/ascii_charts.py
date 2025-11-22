@@ -22,6 +22,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 from collections import Counter
 from typing import Any
 
+
 # Optional imports for enhanced charts
 try:
     from rich.align import Align
@@ -101,38 +102,29 @@ class ASCIIChartGenerator:
         max_value = max(data.values())
         bar_width = self.width - max_label_len - 15  # Leave space for labels and values
 
-        lines = []
-        lines.append(f" {title} ")
-        lines.append("=" * len(lines[0]))
-        lines.append("")
-
+        lines = [f" {title} "]
+        lines.extend(("=" * len(lines[0]), ""))
         # Sort data by value (descending)
         sorted_data = sorted(data.items(), key=lambda x: x[1], reverse=True)
 
         for label, value in sorted_data:
             # Calculate bar length
-            if max_value > 0:
-                bar_len = int((value / max_value) * bar_width)
-            else:
-                bar_len = 0
-
+            bar_len = int((value / max_value) * bar_width) if max_value > 0 else 0
             # Create bar
             full_bars = bar_len
             bar = self.symbols["bar_full"] * full_bars
 
             # Add value display
-            if show_values:
-                value_str = f" {value}"
-            else:
-                value_str = ""
-
+            value_str = f" {value}" if show_values else ""
             # Format line
             line = f"{label:<{max_label_len}} │{bar:<{bar_width}}{value_str}"
             lines.append(line)
 
         return "\n".join(lines)
 
-    def generate_histogram(self, values: list[int | float], bins: int = 10, title: str = "Histogram") -> str:
+    def generate_histogram(
+        self, values: list[int | float], bins: int = 10, title: str = "Histogram"
+    ) -> str:
         """Generate histogram chart.
 
         Args:
@@ -184,11 +176,8 @@ class ASCIIChartGenerator:
         if not data:
             return "No data to display"
 
-        lines = []
-        lines.append(f" {title} ")
-        lines.append("=" * len(lines[0]))
-        lines.append("")
-
+        lines = [f" {title} "]
+        lines.extend(("=" * len(lines[0]), ""))
         # Prepare data
         sorted_items = sorted(data.items())
         labels = [item[0] for item in sorted_items]
@@ -240,9 +229,11 @@ class ASCIIChartGenerator:
                                 for step in range(1, steps):
                                     intermediate_x = start_x + (end_x - start_x) * step // steps
                                     intermediate_y = start_y + (end_y - start_y) * step // steps
-                                    if 0 <= intermediate_x < chart_width and 0 <= intermediate_y < chart_height:
-                                        if chart[intermediate_y][intermediate_x] == " ":
-                                            chart[intermediate_y][intermediate_x] = "·"
+                                    if (
+                                                                            0 <= intermediate_x < chart_width
+                                                                            and 0 <= intermediate_y < chart_height
+                                                                        ) and chart[intermediate_y][intermediate_x] == " ":
+                                        chart[intermediate_y][intermediate_x] = "·"
 
         # Add chart to lines
         for row in chart:
@@ -340,11 +331,8 @@ class ASCIIChartGenerator:
         if not data:
             return "No data to display"
 
-        lines = []
-        lines.append(f" {title} ")
-        lines.append("=" * len(lines[0]))
-        lines.append("")
-
+        lines = [f" {title} "]
+        lines.extend(("=" * len(lines[0]), ""))
         total = sum(data.values())
         if total == 0:
             return "No data to display"
@@ -367,7 +355,9 @@ class ASCIIChartGenerator:
 
         return "\n".join(lines)
 
-    def generate_scatter_plot(self, points: list[tuple[float, float]], title: str = "Scatter Plot") -> str:
+    def generate_scatter_plot(
+        self, points: list[tuple[float, float]], title: str = "Scatter Plot"
+    ) -> str:
         """Generate scatter plot.
 
         Args:
@@ -381,11 +371,8 @@ class ASCIIChartGenerator:
         if not points:
             return "No data to display"
 
-        lines = []
-        lines.append(f" {title} ")
-        lines.append("=" * len(lines[0]))
-        lines.append("")
-
+        lines = [f" {title} "]
+        lines.extend(("=" * len(lines[0]), ""))
         # Find data bounds
         x_values = [p[0] for p in points]
         y_values = [p[1] for p in points]
@@ -435,14 +422,12 @@ class ASCIIChartGenerator:
         """
         charts = []
 
-        # 1. Analysis categories bar chart
-        category_counts = {}
-        for category, data in analysis_results.items():
-            if isinstance(data, (dict, list)):
-                category_counts[category.replace("_", " ").title()] = len(data)
-            else:
-                category_counts[category.replace("_", " ").title()] = 1
-
+        category_counts = {
+            category.replace("_", " ").title(): (
+                len(data) if isinstance(data, (dict, list)) else 1
+            )
+            for category, data in analysis_results.items()
+        }
         if category_counts:
             charts.append(
                 self.generate_bar_chart(
@@ -463,34 +448,38 @@ class ASCIIChartGenerator:
                         severity_counts[severity.title()] += 1
 
                 if severity_counts:
-                    charts.append("\n" + "=" * 50 + "\n")
-                    charts.append(
-                        self.generate_pie_chart(
-                            dict(severity_counts),
-                            "Vulnerability Severity Distribution",
-                        ),
+                    charts.extend(
+                        (
+                            "\n" + "=" * 50 + "\n",
+                            self.generate_pie_chart(
+                                dict(severity_counts),
+                                "Vulnerability Severity Distribution",
+                            ),
+                        )
                     )
-
         # 3. Protection status
         prot_data = analysis_results.get("protections", {})
         if isinstance(prot_data, dict):
-            enabled_count = sum(1 for v in prot_data.values() if v)
+            enabled_count = sum(bool(v)
+                            for v in prot_data.values())
             disabled_count = len(prot_data) - enabled_count
 
             if enabled_count + disabled_count > 0:
-                charts.append("\n" + "=" * 50 + "\n")
-                charts.append(
-                    self.generate_pie_chart(
-                        {"Enabled": enabled_count, "Disabled": disabled_count},
-                        "Security Protections Status",
-                    ),
+                charts.extend(
+                    (
+                        "\n" + "=" * 50 + "\n",
+                        self.generate_pie_chart(
+                            {"Enabled": enabled_count, "Disabled": disabled_count},
+                            "Security Protections Status",
+                        ),
+                    )
                 )
-
         # 4. String analysis histogram
         strings_data = analysis_results.get("strings", [])
         if isinstance(strings_data, list) and strings_data:
-            string_lengths = [len(s) for s in strings_data if isinstance(s, str)]
-            if string_lengths:
+            if string_lengths := [
+                len(s) for s in strings_data if isinstance(s, str)
+            ]:
                 charts.append("\n" + "=" * 50 + "\n")
                 charts.append(
                     self.generate_histogram(
@@ -522,9 +511,6 @@ class ASCIIChartGenerator:
         )
         self.console.print(title_panel)
 
-        # Create layout with multiple charts
-        charts = []
-
         # Summary statistics table
         stats_table = Table(title="Analysis Summary")
         stats_table.add_column("Category", style="cyan")
@@ -548,8 +534,7 @@ class ASCIIChartGenerator:
                 details,
             )
 
-        charts.append(Panel(stats_table, title=" Summary"))
-
+        charts = [Panel(stats_table, title=" Summary")]
         # Vulnerability chart
         vuln_data = analysis_results.get("vulnerabilities", {})
         if isinstance(vuln_data, dict) and "vulnerabilities" in vuln_data:
@@ -640,7 +625,9 @@ class ASCIIChartGenerator:
         )
 
 
-def create_analysis_charts(analysis_results: dict[str, Any], chart_type: str = "summary", use_rich: bool = True) -> str:
+def create_analysis_charts(
+    analysis_results: dict[str, Any], chart_type: str = "summary", use_rich: bool = True
+) -> str:
     """Create charts from analysis results.
 
     Args:

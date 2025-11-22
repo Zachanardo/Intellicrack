@@ -24,9 +24,10 @@ from collections.abc import Callable, Coroutine
 from functools import wraps
 from typing import Any, TypeVar
 
+
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class PerformanceMonitor:
@@ -98,18 +99,18 @@ class PerformanceMonitor:
             if operation_name not in self.metrics:
                 return {}
 
-            durations = [m["duration"] for m in self.metrics[operation_name]]
-            if not durations:
+            if durations := [m["duration"] for m in self.metrics[operation_name]]:
+                return {
+                    "count": len(durations),
+                    "avg_duration": sum(durations) / len(durations),
+                    "min_duration": min(durations),
+                    "max_duration": max(durations),
+                    "error_rate": self.error_counts[operation_name]
+                    / self.operation_counts[operation_name],
+                    "total_operations": self.operation_counts[operation_name],
+                }
+            else:
                 return {}
-
-            return {
-                "count": len(durations),
-                "avg_duration": sum(durations) / len(durations),
-                "min_duration": min(durations),
-                "max_duration": max(durations),
-                "error_rate": self.error_counts[operation_name] / self.operation_counts[operation_name],
-                "total_operations": self.operation_counts[operation_name],
-            }
 
 
 class AsyncPerformanceMonitor:
@@ -179,7 +180,9 @@ _performance_monitor: PerformanceMonitor = PerformanceMonitor()
 _async_monitor: AsyncPerformanceMonitor = AsyncPerformanceMonitor()
 
 
-def profile_ai_operation(operation_name: str | None = None) -> Callable[[Callable[..., T]], Callable[..., T]]:
+def profile_ai_operation(
+    operation_name: str | None = None,
+) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """Profile AI operations with real performance tracking using a decorator.
 
     Args:

@@ -26,6 +26,7 @@ from typing import Any
 
 from .plugin_config import PLUGIN_SYSTEM_EXPORTS
 
+
 # Set up package logger
 logger = logging.getLogger(__name__)
 
@@ -53,7 +54,9 @@ def load_plugin(plugin_name: str, plugin_type: str = "custom") -> object | None:
     """
     try:
         if plugin_type == "custom":
-            module = importlib.import_module(f".custom_modules.{plugin_name}", package="intellicrack.plugins")
+            module = importlib.import_module(
+                f".custom_modules.{plugin_name}", package="intellicrack.plugins"
+            )
             _plugins[plugin_name] = module
             logger.info("Loaded plugin: %s", plugin_name)
             return module
@@ -98,9 +101,7 @@ def get_frida_script(script_name: str) -> str | None:
 
     """
     script_path = FRIDA_SCRIPTS_DIR / f"{script_name}.js"
-    if script_path.exists():
-        return str(script_path)
-    return None
+    return str(script_path) if script_path.exists() else None
 
 
 def get_ghidra_script(script_name: str) -> str | None:
@@ -145,9 +146,7 @@ def get_plugin_size(plugin_name: str, plugin_type: str = "custom") -> int:
     else:
         return 0
 
-    if plugin_path.exists():
-        return os.path.getsize(plugin_path)
-    return 0
+    return os.path.getsize(plugin_path) if plugin_path.exists() else 0
 
 
 # Import plugin system functions
@@ -258,7 +257,9 @@ except ImportError as e:
             Does nothing when the actual plugin system cannot be imported.
 
         """
-        logger.debug(f"Fallback run_frida_plugin_from_file called with args: {args}, kwargs: {kwargs}")
+        logger.debug(
+            f"Fallback run_frida_plugin_from_file called with args: {args}, kwargs: {kwargs}"
+        )
 
     def run_ghidra_plugin_from_file(*args: object, **kwargs: object) -> None:
         """Fallback function for running Ghidra plugins when plugin system is not available.
@@ -271,7 +272,9 @@ except ImportError as e:
             Does nothing when the actual plugin system cannot be imported.
 
         """
-        logger.debug(f"Fallback run_ghidra_plugin_from_file called with args: {args}, kwargs: {kwargs}")
+        logger.debug(
+            f"Fallback run_ghidra_plugin_from_file called with args: {args}, kwargs: {kwargs}"
+        )
 
     def create_sample_plugins(*args: object, **kwargs: object) -> None:
         """Fallback function for creating sample plugins when plugin system is not available.
@@ -321,8 +324,25 @@ except ImportError as e:
     RemotePluginExecutor = None
 
 # Define package exports
-_plugin_system_exports = ([str(item) for item in PLUGIN_SYSTEM_EXPORTS] if isinstance(PLUGIN_SYSTEM_EXPORTS, (list, tuple)) else []) if PLUGIN_SYSTEM_EXPORTS is not None else []
-__all__ = ["load_plugin", "list_plugins", "get_frida_script", "get_ghidra_script", "CUSTOM_MODULES_DIR", "FRIDA_SCRIPTS_DIR", "GHIDRA_SCRIPTS_DIR", "RemotePluginExecutor", *_plugin_system_exports]
+_plugin_system_exports = (
+    (
+        [str(item) for item in PLUGIN_SYSTEM_EXPORTS]
+        if isinstance(PLUGIN_SYSTEM_EXPORTS, (list, tuple))
+        else []
+    )
+    if PLUGIN_SYSTEM_EXPORTS is not None
+    else []
+)
+__all__ = [
+    "CUSTOM_MODULES_DIR",
+    "FRIDA_SCRIPTS_DIR",
+    "GHIDRA_SCRIPTS_DIR",
+    "RemotePluginExecutor",
+    "get_frida_script",
+    "get_ghidra_script",
+    "list_plugins",
+    "load_plugin",
+]
 
 # Package metadata
 __version__: str = "0.1.0"

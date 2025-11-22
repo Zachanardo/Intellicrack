@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING, Any, BinaryIO, Optional, Union
 
 from intellicrack.utils.logger import logger
 
+
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
@@ -45,7 +46,7 @@ try:
         from elftools.common.py3compat import bytes2str, str2bytes
     except ImportError:
         # Fallback for newer versions without py3compat
-        def bytes2str(b: Union[bytes, str]) -> str:
+        def bytes2str(b: bytes | str) -> str:
             """Convert bytes to string.
 
             Args:
@@ -57,7 +58,7 @@ try:
             """
             return b.decode("utf-8", errors="replace") if isinstance(b, bytes) else b
 
-        def str2bytes(s: Union[str, bytes]) -> bytes:
+        def str2bytes(s: str | bytes) -> bytes:
             """Convert string to bytes.
 
             Args:
@@ -95,13 +96,7 @@ try:
         ENUM_SH_TYPE = None
 
     from elftools.elf.relocation import Relocation, RelocationSection
-    from elftools.elf.sections import (
-        NoteSection,
-        Section,
-        StringTableSection,
-        Symbol,
-        SymbolTableSection,
-    )
+    from elftools.elf.sections import NoteSection, Section, StringTableSection, Symbol, SymbolTableSection
     from elftools.elf.segments import InterpSegment, NoteSegment, Segment
 
     HAS_PYELFTOOLS: bool = True
@@ -119,7 +114,6 @@ except ImportError as e:
     # ELF constants
     class E_FLAGS:  # noqa: N801
         """ELF header flags."""
-
 
     class P_FLAGS:  # noqa: N801
         """Program header flags."""
@@ -207,17 +201,14 @@ except ImportError as e:
     class ELFError(Exception):
         """Base ELF error."""
 
-
     class ELFParseError(ELFError):
         """ELF parsing error."""
-
 
     class DWARFError(Exception):
         """DWARF error."""
 
-
     # Utility functions
-    def bytes2str(data: Union[bytes, str]) -> str:
+    def bytes2str(data: bytes | str) -> str:
         """Convert bytes to string.
 
         Args:
@@ -227,11 +218,9 @@ except ImportError as e:
             String representation.
 
         """
-        if isinstance(data, bytes):
-            return data.decode("latin-1")
-        return data
+        return data.decode("latin-1") if isinstance(data, bytes) else data
 
-    def str2bytes(data: Union[str, bytes]) -> bytes:
+    def str2bytes(data: str | bytes) -> bytes:
         """Convert string to bytes.
 
         Args:
@@ -241,9 +230,7 @@ except ImportError as e:
             Bytes representation.
 
         """
-        if isinstance(data, str):
-            return data.encode("latin-1")
-        return data
+        return data.encode("latin-1") if isinstance(data, str) else data
 
     # Container class for construct compatibility
     class Container(dict):
@@ -283,12 +270,12 @@ except ImportError as e:
         stream: BinaryIO
         little_endian: bool
         elfclass: int
-        header: Optional[Container]
+        header: Container | None
         _section_headers: list[Container]
         _program_headers: list[Container]
         _sections: list[Any]
         _segments: list[Any]
-        _string_table: Optional[bytes]
+        _string_table: bytes | None
 
         def __init__(self, stream: BinaryIO) -> None:
             """Initialize ELF file parser."""
@@ -421,14 +408,18 @@ except ImportError as e:
                     if len(ph_data) < 32:
                         break
 
-                    (p_type, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_flags, p_align) = struct.unpack(f"{endian}IIIIIIII", ph_data)
+                    (p_type, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_flags, p_align) = (
+                        struct.unpack(f"{endian}IIIIIIII", ph_data)
+                    )
                 else:
                     # 64-bit program header
                     ph_data = self.stream.read(56)
                     if len(ph_data) < 56:
                         break
 
-                    (p_type, p_flags, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_align) = struct.unpack(f"{endian}IIQQQQQQ", ph_data)
+                    (p_type, p_flags, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_align) = (
+                        struct.unpack(f"{endian}IIQQQQQQ", ph_data)
+                    )
 
                 ph = Container(
                     p_type=p_type,
@@ -466,8 +457,20 @@ except ImportError as e:
                     if len(sh_data) < 40:
                         break
 
-                    (sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link, sh_info, sh_addralign, sh_entsize) = struct.unpack(
-                        f"{endian}IIIIIIIIII", sh_data,
+                    (
+                        sh_name,
+                        sh_type,
+                        sh_flags,
+                        sh_addr,
+                        sh_offset,
+                        sh_size,
+                        sh_link,
+                        sh_info,
+                        sh_addralign,
+                        sh_entsize,
+                    ) = struct.unpack(
+                        f"{endian}IIIIIIIIII",
+                        sh_data,
                     )
                 else:
                     # 64-bit section header
@@ -475,8 +478,20 @@ except ImportError as e:
                     if len(sh_data) < 64:
                         break
 
-                    (sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link, sh_info, sh_addralign, sh_entsize) = struct.unpack(
-                        f"{endian}IIQQQQIIQQ", sh_data,
+                    (
+                        sh_name,
+                        sh_type,
+                        sh_flags,
+                        sh_addr,
+                        sh_offset,
+                        sh_size,
+                        sh_link,
+                        sh_info,
+                        sh_addralign,
+                        sh_entsize,
+                    ) = struct.unpack(
+                        f"{endian}IIQQQQIIQQ",
+                        sh_data,
                     )
 
                 sh = Container(
@@ -555,7 +570,7 @@ except ImportError as e:
             """
             return len(self._segments)
 
-        def get_section(self, n: int) -> Optional[FallbackSection]:
+        def get_section(self, n: int) -> FallbackSection | None:
             """Get section by index.
 
             Args:
@@ -565,11 +580,9 @@ except ImportError as e:
                 Section object at the specified index, or None if not found.
 
             """
-            if 0 <= n < len(self._sections):
-                return self._sections[n]
-            return None
+            return self._sections[n] if 0 <= n < len(self._sections) else None
 
-        def get_section_by_name(self, name: str) -> Optional[FallbackSection]:
+        def get_section_by_name(self, name: str) -> FallbackSection | None:
             """Get section by name.
 
             Args:
@@ -579,12 +592,11 @@ except ImportError as e:
                 Section object with the specified name, or None if not found.
 
             """
-            for section in self._sections:
-                if section.name == name:
-                    return section
-            return None
+            return next(
+                (section for section in self._sections if section.name == name), None
+            )
 
-        def get_segment(self, n: int) -> Optional[FallbackSegment]:
+        def get_segment(self, n: int) -> FallbackSegment | None:
             """Get segment by index.
 
             Args:
@@ -594,9 +606,7 @@ except ImportError as e:
                 Segment object at the specified index, or None if not found.
 
             """
-            if 0 <= n < len(self._segments):
-                return self._segments[n]
-            return None
+            return self._segments[n] if 0 <= n < len(self._segments) else None
 
         def iter_sections(self) -> Iterator[Any]:
             """Iterate over sections.
@@ -623,21 +633,16 @@ except ImportError as e:
                 True if the file contains DWARF debug sections, False otherwise.
 
             """
-            for section in self._sections:
-                if section.name.startswith(".debug_"):
-                    return True
-            return False
+            return any(section.name.startswith(".debug_") for section in self._sections)
 
-        def get_dwarf_info(self) -> Optional[FallbackDWARFInfo]:
+        def get_dwarf_info(self) -> FallbackDWARFInfo | None:
             """Get DWARF info (basic fallback).
 
             Returns:
                 FallbackDWARFInfo object if debug info is present, None otherwise.
 
             """
-            if not self.has_dwarf_info():
-                return None
-            return FallbackDWARFInfo(self)
+            return FallbackDWARFInfo(self) if self.has_dwarf_info() else None
 
         def get_machine_arch(self) -> str:
             """Get machine architecture.
@@ -649,7 +654,15 @@ except ImportError as e:
             if not self.header:
                 return "unknown"
 
-            arch_map = {0x03: "x86", 0x3E: "x64", 0x28: "ARM", 0xB7: "AArch64", 0x08: "MIPS", 0x14: "PowerPC", 0x02: "SPARC"}
+            arch_map = {
+                0x03: "x86",
+                0x3E: "x64",
+                0x28: "ARM",
+                0xB7: "AArch64",
+                0x08: "MIPS",
+                0x14: "PowerPC",
+                0x02: "SPARC",
+            }
             return arch_map.get(self.header.e_machine, f"Unknown({self.header.e_machine})")
 
     class FallbackSection:
@@ -658,7 +671,7 @@ except ImportError as e:
         header: Container
         name: str
         stream: BinaryIO
-        _data: Optional[bytes]
+        _data: bytes | None
 
         def __init__(self, header: Container, name: str, stream: BinaryIO) -> None:
             """Initialize section."""
@@ -744,7 +757,16 @@ except ImportError as e:
         st_bind: int
         st_type: int
 
-        def __init__(self, st_name: int, st_value: int, st_size: int, st_info: int, st_other: int, st_shndx: int, name: str = "") -> None:
+        def __init__(
+            self,
+            st_name: int,
+            st_value: int,
+            st_size: int,
+            st_info: int,
+            st_other: int,
+            st_shndx: int,
+            name: str = "",
+        ) -> None:
             """Initialize symbol."""
             self.st_name = st_name
             self.st_value = st_value
@@ -776,7 +798,9 @@ except ImportError as e:
         elffile: FallbackELFFile
         _symbols: list[FallbackSymbol]
 
-        def __init__(self, header: Container, name: str, stream: BinaryIO, elffile: FallbackELFFile) -> None:
+        def __init__(
+            self, header: Container, name: str, stream: BinaryIO, elffile: FallbackELFFile
+        ) -> None:
             """Initialize symbol table."""
             super().__init__(header, name, stream)
             self.elffile = elffile
@@ -814,11 +838,13 @@ except ImportError as e:
             while offset + entry_size <= len(data):
                 if self.elffile.elfclass == 32:
                     (st_name, st_value, st_size, st_info, st_other, st_shndx) = struct.unpack(
-                        entry_format, data[offset : offset + entry_size],
+                        entry_format,
+                        data[offset : offset + entry_size],
                     )
                 else:
                     (st_name, st_info, st_other, st_shndx, st_value, st_size) = struct.unpack(
-                        entry_format, data[offset : offset + entry_size],
+                        entry_format,
+                        data[offset : offset + entry_size],
                     )
 
                 # Get symbol name
@@ -826,11 +852,13 @@ except ImportError as e:
                 if strtab and isinstance(strtab, FallbackStringTableSection):
                     name = strtab.get_string(st_name)
 
-                symbol = FallbackSymbol(st_name, st_value, st_size, st_info, st_other, st_shndx, name)
+                symbol = FallbackSymbol(
+                    st_name, st_value, st_size, st_info, st_other, st_shndx, name
+                )
                 self._symbols.append(symbol)
                 offset += entry_size
 
-        def get_symbol(self, index: int) -> Optional[FallbackSymbol]:
+        def get_symbol(self, index: int) -> FallbackSymbol | None:
             """Get symbol by index.
 
             Args:
@@ -840,9 +868,7 @@ except ImportError as e:
                 Symbol object at the specified index, or None if not found.
 
             """
-            if 0 <= index < len(self._symbols):
-                return self._symbols[index]
-            return None
+            return self._symbols[index] if 0 <= index < len(self._symbols) else None
 
         def num_symbols(self) -> int:
             """Get number of symbols.
@@ -896,7 +922,9 @@ except ImportError as e:
         elffile: FallbackELFFile
         _relocations: list[FallbackRelocation]
 
-        def __init__(self, header: Container, name: str, stream: BinaryIO, elffile: FallbackELFFile) -> None:
+        def __init__(
+            self, header: Container, name: str, stream: BinaryIO, elffile: FallbackELFFile
+        ) -> None:
             """Initialize relocation section."""
             super().__init__(header, name, stream)
             self.elffile = elffile
@@ -929,9 +957,13 @@ except ImportError as e:
             offset = 0
             while offset + entry_size <= len(data):
                 if is_rela:
-                    r_offset, r_info, r_addend = struct.unpack(entry_format, data[offset : offset + entry_size])
+                    r_offset, r_info, r_addend = struct.unpack(
+                        entry_format, data[offset : offset + entry_size]
+                    )
                 else:
-                    r_offset, r_info = struct.unpack(entry_format, data[offset : offset + entry_size])
+                    r_offset, r_info = struct.unpack(
+                        entry_format, data[offset : offset + entry_size]
+                    )
                     r_addend = 0
 
                 reloc = FallbackRelocation(r_offset, r_info, r_addend)
@@ -947,7 +979,7 @@ except ImportError as e:
             """
             return len(self._relocations)
 
-        def get_relocation(self, index: int) -> Optional[FallbackRelocation]:
+        def get_relocation(self, index: int) -> FallbackRelocation | None:
             """Get relocation by index.
 
             Args:
@@ -992,7 +1024,9 @@ except ImportError as e:
         elffile: FallbackELFFile
         _dynamics: list[FallbackDynamic]
 
-        def __init__(self, header: Container, name: str, stream: BinaryIO, elffile: FallbackELFFile) -> None:
+        def __init__(
+            self, header: Container, name: str, stream: BinaryIO, elffile: FallbackELFFile
+        ) -> None:
             """Initialize dynamic section."""
             super().__init__(header, name, stream)
             self.elffile = elffile
@@ -1041,7 +1075,7 @@ except ImportError as e:
             """
             return iter(self._dynamics)
 
-        def get_tag(self, tag: int) -> Optional[FallbackDynamic]:
+        def get_tag(self, tag: int) -> FallbackDynamic | None:
             """Get dynamic entry by tag.
 
             Args:
@@ -1051,10 +1085,7 @@ except ImportError as e:
                 Dynamic entry matching the tag, or None if not found.
 
             """
-            for dyn in self._dynamics:
-                if dyn.d_tag == tag:
-                    return dyn
-            return None
+            return next((dyn for dyn in self._dynamics if dyn.d_tag == tag), None)
 
     class FallbackNoteSection(FallbackSection):
         """Note section."""
@@ -1069,11 +1100,7 @@ except ImportError as e:
             data = self.data()
             offset = 0
 
-            while offset < len(data):
-                if offset + 12 > len(data):
-                    break
-
-                # Parse note header
+            while offset < len(data) and not offset + 12 > len(data):
                 n_namesz, n_descsz, n_type = struct.unpack("<III", data[offset : offset + 12])
                 offset += 12
 
@@ -1098,7 +1125,7 @@ except ImportError as e:
 
         header: Container
         stream: BinaryIO
-        _data: Optional[bytes]
+        _data: bytes | None
 
         def __init__(self, header: Container, stream: BinaryIO) -> None:
             """Initialize segment."""
@@ -1208,8 +1235,7 @@ except ImportError as e:
                 Path to the program interpreter (e.g., /lib64/ld-linux-x86-64.so.2).
 
             """
-            data = self.data()
-            if data:
+            if data := self.data():
                 return data.rstrip(b"\x00").decode("latin-1", errors="ignore")
             return ""
 
@@ -1226,11 +1252,7 @@ except ImportError as e:
             data = self.data()
             offset = 0
 
-            while offset < len(data):
-                if offset + 12 > len(data):
-                    break
-
-                # Parse note header
+            while offset < len(data) and not offset + 12 > len(data):
                 n_namesz, n_descsz, n_type = struct.unpack("<III", data[offset : offset + 12])
                 offset += 12
 
@@ -1291,7 +1313,7 @@ except ImportError as e:
         tag: int
         attributes: dict[str, Any]
 
-        def __init__(self, tag: int, attributes: Optional[dict[str, Any]] = None) -> None:
+        def __init__(self, tag: int, attributes: dict[str, Any] | None = None) -> None:
             """Initialize DIE.
 
             Args:
@@ -1349,7 +1371,16 @@ except ImportError as e:
             Human-readable description of the program header type.
 
         """
-        types: dict[int, str] = {0: "PT_NULL", 1: "PT_LOAD", 2: "PT_DYNAMIC", 3: "PT_INTERP", 4: "PT_NOTE", 5: "PT_SHLIB", 6: "PT_PHDR", 7: "PT_TLS"}
+        types: dict[int, str] = {
+            0: "PT_NULL",
+            1: "PT_LOAD",
+            2: "PT_DYNAMIC",
+            3: "PT_INTERP",
+            4: "PT_NOTE",
+            5: "PT_SHLIB",
+            6: "PT_PHDR",
+            7: "PT_TLS",
+        }
         return types.get(p_type, f"Unknown type {p_type}")
 
     def describe_sh_type(sh_type: int) -> str:
@@ -1403,7 +1434,6 @@ except ImportError as e:
     class FallbackElftools:
         """Fallback elftools module."""
 
-
     elftools = FallbackElftools()
     elffile = ELFFile  # Alias for compatibility
 
@@ -1413,56 +1443,45 @@ elffile: type[ELFFile]
 
 if not HAS_PYELFTOOLS:
     elftools = elftools if "elftools" in locals() else None
-    elffile = ELFFile
-else:
-    # When pyelftools is available, create compatibility references
-    elffile = ELFFile
-
+elffile = ELFFile
 # Export all pyelftools objects and availability flag
 __all__ = [
-    # Availability flags
-    "HAS_PYELFTOOLS",
-    "PYELFTOOLS_VERSION",
-    # Module reference
-    "elftools",
-    "elffile",
-    # Main classes
-    "ELFFile",
-    "Section",
-    "StringTableSection",
-    "SymbolTableSection",
-    "Symbol",
-    "RelocationSection",
-    "Relocation",
-    "DynamicSection",
-    "Dynamic",
-    "NoteSection",
-    "Segment",
-    "InterpSegment",
-    "NoteSegment",
-    "DynamicSegment",
-    "DWARFInfo",
+    "Container",
     "DIE",
-    # Constants
-    "E_FLAGS",
-    "P_FLAGS",
-    "SH_FLAGS",
-    "SHN_INDICES",
+    "DWARFError",
+    "DWARFInfo",
+    "DW_TAG_compile_unit",
+    "Dynamic",
+    "DynamicSection",
+    "DynamicSegment",
+    "ELFError",
+    "ELFFile",
+    "ELFParseError",
+    "ENUM_D_TAG",
     "ENUM_E_TYPE",
     "ENUM_SH_TYPE",
-    "ENUM_D_TAG",
-    "DW_TAG_compile_unit",
-    # Exceptions
-    "ELFError",
-    "ELFParseError",
-    "DWARFError",
-    # Utilities
-    "bytes2str",
-    "str2bytes",
-    "Container",
+    "E_FLAGS",
+    "HAS_PYELFTOOLS",
+    "InterpSegment",
+    "NoteSection",
+    "NoteSegment",
+    "PYELFTOOLS_VERSION",
+    "P_FLAGS",
+    "Relocation",
+    "RelocationSection",
+    "SHN_INDICES",
+    "SH_FLAGS",
+    "Section",
+    "Segment",
+    "StringTableSection",
     "Struct",
-    # Description functions
+    "Symbol",
+    "SymbolTableSection",
+    "bytes2str",
     "describe_e_type",
     "describe_p_type",
     "describe_sh_type",
+    "elffile",
+    "elftools",
+    "str2bytes",
 ]

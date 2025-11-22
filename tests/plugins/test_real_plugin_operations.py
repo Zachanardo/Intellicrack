@@ -766,7 +766,7 @@ def create_plugin():
 
         # Modify plugin file (simulate update)
         time.sleep(0.1)  # Ensure different modification time
-        with open(sample_analysis_plugin, 'r') as f:
+        with open(sample_analysis_plugin) as f:
             content = f.read()
 
         # Update version in plugin

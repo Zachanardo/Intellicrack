@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidg
 from ..protection.intellicrack_protection_core import IntellicrackProtectionCore
 from ..utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 
@@ -78,7 +79,9 @@ class IntellicrackHexProtectionIntegration(QObject):
             if offset is not None:
                 # Try command-line offset support first
                 cmd.extend(["--offset", hex(offset)])
-                logger.info(f"Attempting to open {file_path} at offset {hex(offset)} in protection viewer")
+                logger.info(
+                    f"Attempting to open {file_path} at offset {hex(offset)} in protection viewer"
+                )
 
                 # Create offset sync file for advanced integration
                 try:
@@ -187,8 +190,7 @@ class IntellicrackHexProtectionIntegration(QObject):
 
         try:
             with open(incoming_sync_file) as f:
-                offset_str = f.read().strip()
-                if offset_str:
+                if offset_str := f.read().strip():
                     offset = int(offset_str, 0)  # Support both decimal and hex (0x prefix)
 
                     # Only sync if this is a new offset
@@ -366,7 +368,9 @@ class IntellicrackHexProtectionIntegration(QObject):
         try:
             from .performance_monitor import PerformanceMonitor
 
-            _ = PerformanceMonitor.__name__  # Verify performance monitoring capabilities are available
+            _ = (
+                PerformanceMonitor.__name__
+            )  # Verify performance monitoring capabilities are available
             features["Performance Monitoring"] = True
         except ImportError:
             pass
@@ -415,12 +419,12 @@ class IntellicrackHexProtectionIntegration(QObject):
             pass
 
         # Check for hotkey access
-        if self.hex_widget:
-            if hasattr(self.hex_widget, "keyPressEvent"):
-                features["Hotkey Access"] = True
-        else:
-            features["Hotkey Access"] = True  # Usually present in Qt widgets
-
+        if (
+            (self.hex_widget
+            and hasattr(self.hex_widget, "keyPressEvent"))
+            or not self.hex_widget
+        ):
+            features["Hotkey Access"] = True
         # Check for section navigation
         if hasattr(widget_class, "goto_offset") or hasattr(widget_class, "jump_to_offset"):
             features["Section Navigation"] = True
@@ -461,7 +465,9 @@ class ProtectionIntegrationWidget(QWidget):
 
         self.open_in_protection_viewer_btn = QPushButton("Open in Protection Viewer")
         self.open_in_protection_viewer_btn.clicked.connect(self._open_in_protection_viewer)
-        self.open_in_protection_viewer_btn.setToolTip("Open current file in protection viewer (press H for hex viewer)")
+        self.open_in_protection_viewer_btn.setToolTip(
+            "Open current file in protection viewer (press H for hex viewer)"
+        )
         button_layout.addWidget(self.open_in_protection_viewer_btn)
 
         self.sync_sections_btn = QPushButton("Sync Sections")
@@ -482,8 +488,7 @@ class ProtectionIntegrationWidget(QWidget):
     def _open_in_protection_viewer(self) -> None:
         """Open current file in protection viewer."""
         if self.hex_widget and hasattr(self.hex_widget, "file_path"):
-            file_path = self.hex_widget.file_path
-            if file_path:
+            if file_path := self.hex_widget.file_path:
                 self.integration.open_in_icp(file_path)
                 self.info_label.setText("Opened in protection viewer - Press 'H' for hex viewer")
             else:
@@ -494,22 +499,24 @@ class ProtectionIntegrationWidget(QWidget):
     def sync_sections_from_icp(self) -> None:
         """Sync section information from protection viewer."""
         if self.hex_widget and hasattr(self.hex_widget, "file_path"):
-            file_path = self.hex_widget.file_path
-            if file_path:
-                sections = self.integration.get_section_offsets(file_path)
-                if sections:
+            if file_path := self.hex_widget.file_path:
+                if sections := self.integration.get_section_offsets(file_path):
                     # Add bookmarks for sections
                     for name, offset in sections.items():
                         if hasattr(self.hex_widget, "add_bookmark"):
                             self.hex_widget.add_bookmark(offset, f"Section: {name}")
-                    self.info_label.setText(f"Synced {len(sections)} sections from protection viewer")
+                    self.info_label.setText(
+                        f"Synced {len(sections)} sections from protection viewer"
+                    )
                 else:
                     self.info_label.setText("No sections found")
             else:
                 self.info_label.setText("No file loaded")
 
 
-def create_intellicrack_hex_integration(hex_widget: object | None = None) -> IntellicrackHexProtectionIntegration:
+def create_intellicrack_hex_integration(
+    hex_widget: object | None = None,
+) -> IntellicrackHexProtectionIntegration:
     """Create Intellicrack hex viewer integration.
 
     Args:

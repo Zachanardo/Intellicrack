@@ -23,6 +23,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 
+
 logger = logging.getLogger(__name__)
 
 # Lazy-load audit logger to prevent circular imports
@@ -47,17 +48,18 @@ def _load_audit_logger() -> None:
                 log_tool_execution,
                 log_vm_operation,
             )
+
             _audit_exports = {
-                'AuditEvent': AuditEvent,
-                'AuditEventType': AuditEventType,
-                'AuditLogger': AuditLogger,
-                'AuditSeverity': AuditSeverity,
-                'get_audit_logger': get_audit_logger,
-                'log_binary_analysis': log_binary_analysis,
-                'log_credential_access': log_credential_access,
-                'log_exploit_attempt': log_exploit_attempt,
-                'log_tool_execution': log_tool_execution,
-                'log_vm_operation': log_vm_operation,
+                "AuditEvent": AuditEvent,
+                "AuditEventType": AuditEventType,
+                "AuditLogger": AuditLogger,
+                "AuditSeverity": AuditSeverity,
+                "get_audit_logger": get_audit_logger,
+                "log_binary_analysis": log_binary_analysis,
+                "log_credential_access": log_credential_access,
+                "log_exploit_attempt": log_exploit_attempt,
+                "log_tool_execution": log_tool_execution,
+                "log_vm_operation": log_vm_operation,
             }
         except ImportError as e:
             logger.warning("Failed to import audit_logger: %s", e)

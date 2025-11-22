@@ -31,6 +31,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -88,9 +89,10 @@ class ToolValidator:
 
                 if result.returncode == 0:
                     version_text = result.stdout or result.stderr
-                    version_match = re.search(r"(\d+\.\d+(?:\.\d+)?)", version_text)
-                    if version_match:
-                        validation["version"] = version_match.group(1)
+                    if version_match := re.search(
+                        r"(\d+\.\d+(?:\.\d+)?)", version_text
+                    ):
+                        validation["version"] = version_match[1]
 
             except Exception as e:
                 logger.error("Exception in tool_discovery: %s", e)
@@ -135,9 +137,10 @@ class ToolValidator:
 
             if result.returncode == 0:
                 version_text = result.stdout
-                version_match = re.search(r"radare2\s+(\d+\.\d+\.\d+)", version_text)
-                if version_match:
-                    validation["version"] = version_match.group(1)
+                if version_match := re.search(
+                    r"radare2\s+(\d+\.\d+\.\d+)", version_text
+                ):
+                    validation["version"] = version_match[1]
 
                 # Check for common plugins/capabilities
                 if "r2pm" in version_text:
@@ -185,9 +188,10 @@ class ToolValidator:
 
             if result.returncode == 0:
                 version_text = result.stdout or result.stderr
-                version_match = re.search(r"Python\s+(\d+\.\d+\.\d+)", version_text)
-                if version_match:
-                    version = version_match.group(1)
+                if version_match := re.search(
+                    r"Python\s+(\d+\.\d+\.\d+)", version_text
+                ):
+                    version = version_match[1]
                     validation["version"] = version
 
                     # Check version compatibility
@@ -195,7 +199,9 @@ class ToolValidator:
                     if major >= 3 and minor >= 8:
                         validation["capabilities"].append("compatible")
                     else:
-                        validation["issues"].append(f"Python {version} may not be compatible (need 3.8+)")
+                        validation["issues"].append(
+                            f"Python {version} may not be compatible (need 3.8+)"
+                        )
 
                 validation["valid"] = True
             else:
@@ -228,9 +234,8 @@ class ToolValidator:
 
             if result.returncode == 0:
                 version_text = result.stdout
-                version_match = re.search(r"(\d+\.\d+\.\d+)", version_text)
-                if version_match:
-                    validation["version"] = version_match.group(1)
+                if version_match := re.search(r"(\d+\.\d+\.\d+)", version_text):
+                    validation["version"] = version_match[1]
 
                 validation["capabilities"].extend(
                     [
@@ -271,9 +276,10 @@ class ToolValidator:
 
             if result.returncode == 0:
                 version_text = result.stdout
-                version_match = re.search(r"QEMU emulator version\s+(\d+\.\d+\.\d+)", version_text)
-                if version_match:
-                    validation["version"] = version_match.group(1)
+                if version_match := re.search(
+                    r"QEMU emulator version\s+(\d+\.\d+\.\d+)", version_text
+                ):
+                    validation["version"] = version_match[1]
 
                 # Determine architecture support from executable name
                 if "x86_64" in tool_path:
@@ -319,14 +325,20 @@ class ToolValidator:
 
             if result.returncode == 0:
                 version_text = result.stdout
-                # NASM version output: "NASM version 2.16.03 compiled on ..."
-                version_match = re.search(r"NASM version\s+(\d+\.\d+(?:\.\d+)?)", version_text)
-                if version_match:
-                    validation["version"] = version_match.group(1)
+                if version_match := re.search(
+                    r"NASM version\s+(\d+\.\d+(?:\.\d+)?)", version_text
+                ):
+                    validation["version"] = version_match[1]
 
                 # NASM capabilities
                 validation["capabilities"].extend(
-                    ["assembly_compilation", "x86_assembly", "x64_assembly", "multiple_formats", "macro_support"],
+                    [
+                        "assembly_compilation",
+                        "x86_assembly",
+                        "x64_assembly",
+                        "multiple_formats",
+                        "macro_support",
+                    ],
                 )
 
                 validation["valid"] = True
@@ -364,14 +376,21 @@ class ToolValidator:
             # MASM help text contains version information
             version_text = result.stdout or result.stderr
             if "Microsoft (R) Macro Assembler" in version_text:
-                # Extract version number like "Version 14.16.27034.0"
-                version_match = re.search(r"Version\s+(\d+\.\d+\.\d+(?:\.\d+)?)", version_text)
-                if version_match:
-                    validation["version"] = version_match.group(1)
+                if version_match := re.search(
+                    r"Version\s+(\d+\.\d+\.\d+(?:\.\d+)?)", version_text
+                ):
+                    validation["version"] = version_match[1]
 
                 # MASM capabilities
                 validation["capabilities"].extend(
-                    ["assembly_compilation", "x86_assembly", "x64_assembly", "microsoft_formats", "macro_support", "masm_syntax"],
+                    [
+                        "assembly_compilation",
+                        "x86_assembly",
+                        "x64_assembly",
+                        "microsoft_formats",
+                        "macro_support",
+                        "masm_syntax",
+                    ],
                 )
 
                 validation["valid"] = True
@@ -408,11 +427,13 @@ class ToolValidator:
 
             # AccessChk help text contains version information
             version_text = result.stdout or result.stderr
-            if "Sysinternals" in version_text and ("AccessChk" in version_text or "accesschk" in version_text.lower()):
-                # Extract version number like "v6.14" or "Version 6.14"
-                version_match = re.search(r"(?:v|Version\s+)?(\d+\.\d+)", version_text)
-                if version_match:
-                    validation["version"] = version_match.group(1)
+            if "Sysinternals" in version_text and (
+                "AccessChk" in version_text or "accesschk" in version_text.lower()
+            ):
+                if version_match := re.search(
+                    r"(?:v|Version\s+)?(\d+\.\d+)", version_text
+                ):
+                    validation["version"] = version_match[1]
 
                 # AccessChk capabilities
                 validation["capabilities"].extend(
@@ -464,6 +485,7 @@ class AdvancedToolDiscovery:
 
         # Load configuration
         from intellicrack.core.config_manager import get_config
+
         self.config = get_config()
 
         # Load discovered tools from config
@@ -551,7 +573,9 @@ class AdvancedToolDiscovery:
                     # Report successful discovery to terminal manager
                     if HAS_TERMINAL_MANAGER:
                         try:
-                            terminal_manager.log_terminal_message(f"OK {tool_name} found: {tool_info['path']}")
+                            terminal_manager.log_terminal_message(
+                                f"OK {tool_name} found: {tool_info['path']}"
+                            )
                         except Exception as e:
                             logger.debug("Could not log to terminal manager: %s", e)
                 else:
@@ -560,7 +584,9 @@ class AdvancedToolDiscovery:
                     # Report failed discovery to terminal manager
                     if HAS_TERMINAL_MANAGER:
                         try:
-                            terminal_manager.log_terminal_message(f"FAIL {tool_name} not found", level="warning")
+                            terminal_manager.log_terminal_message(
+                                f"FAIL {tool_name} not found", level="warning"
+                            )
                         except Exception as e:
                             logger.debug("Could not log to terminal manager: %s", e)
 
@@ -569,7 +595,9 @@ class AdvancedToolDiscovery:
                 # Report error to terminal manager
                 if HAS_TERMINAL_MANAGER:
                     try:
-                        terminal_manager.log_terminal_message(f"Error discovering {tool_name}: {e}", level="error")
+                        terminal_manager.log_terminal_message(
+                            f"Error discovering {tool_name}: {e}", level="error"
+                        )
                     except Exception as e2:
                         logger.debug("Could not log to terminal manager: %s", e2)
                 results[tool_name] = {
@@ -618,10 +646,9 @@ class AdvancedToolDiscovery:
         if tool_name in cached_tools:
             cached_result = cached_tools[tool_name]
             # Check if cache is still valid (1 hour)
-            if cached_result.get("discovery_time"):
-                if time.time() - cached_result["discovery_time"] < 3600:
-                    logger.debug(f"Using cached result for {tool_name}")
-                    return cached_result
+            if cached_result.get("discovery_time") and time.time() - cached_result["discovery_time"] < 3600:
+                logger.debug(f"Using cached result for {tool_name}")
+                return cached_result
 
         tool_info = {
             "available": False,
@@ -634,30 +661,29 @@ class AdvancedToolDiscovery:
             "capabilities": [],
         }
 
-        # Strategy 1: PATH search
-        found_path = self._search_in_path(config["executables"])
-        if found_path:
-            tool_info.update(self._validate_and_populate(found_path, tool_name))
+        if found_path := self._search_in_path(config["executables"]):
+            tool_info |= self._validate_and_populate(found_path, tool_name)
             tool_info["discovery_method"] = "PATH"
 
         # Strategy 2: Installation-based search
         if not tool_info["available"] and config["search_strategy"] == "installation_based":
-            found_path = self._search_installations(tool_name, config["executables"])
-            if found_path:
+            if found_path := self._search_installations(
+                tool_name, config["executables"]
+            ):
                 tool_info.update(self._validate_and_populate(found_path, tool_name))
                 tool_info["discovery_method"] = "installation_search"
 
         # Strategy 3: Common locations
         if not tool_info["available"]:
-            found_path = self._search_common_locations(tool_name, config["executables"])
-            if found_path:
+            if found_path := self._search_common_locations(
+                tool_name, config["executables"]
+            ):
                 tool_info.update(self._validate_and_populate(found_path, tool_name))
                 tool_info["discovery_method"] = "common_locations"
 
         # Strategy 4: Registry search (Windows)
         if not tool_info["available"] and sys.platform == "win32":
-            found_path = self._search_windows_registry(tool_name)
-            if found_path:
+            if found_path := self._search_windows_registry(tool_name):
                 tool_info.update(self._validate_and_populate(found_path, tool_name))
                 tool_info["discovery_method"] = "registry"
 
@@ -672,8 +698,7 @@ class AdvancedToolDiscovery:
     def _search_in_path(self, executables: list[str]) -> str | None:
         """Search for tool in PATH."""
         for executable in executables:
-            path = shutil.which(executable)
-            if path:
+            if path := shutil.which(executable):
                 return path
         return None
 
@@ -700,7 +725,9 @@ class AdvancedToolDiscovery:
 
     def _search_common_locations(self, tool_name: str, executables: list[str]) -> str | None:
         """Search in common installation locations."""
-        logger.debug(f"Searching common locations for tool: {tool_name} with executables: {executables}")
+        logger.debug(
+            f"Searching common locations for tool: {tool_name} with executables: {executables}"
+        )
         common_paths = []
 
         if sys.platform == "win32":
@@ -762,8 +789,12 @@ class AdvancedToolDiscovery:
                                     try:
                                         display_name = winreg.QueryValueEx(subkey, "DisplayName")[0]
                                         if tool_name.lower() in display_name.lower():
-                                            install_location = winreg.QueryValueEx(subkey, "InstallLocation")[0]
-                                            if install_location and os.path.exists(install_location):
+                                            install_location = winreg.QueryValueEx(
+                                                subkey, "InstallLocation"
+                                            )[0]
+                                            if install_location and os.path.exists(
+                                                install_location
+                                            ):
                                                 return install_location
                                     except FileNotFoundError as e:
                                         logger.error("File not found in tool_discovery: %s", e)
@@ -787,7 +818,26 @@ class AdvancedToolDiscovery:
         """Get tool-specific installation search paths."""
         paths = []
 
-        if tool_name == "ghidra":
+        if tool_name == "accesschk":
+            if sys.platform == "win32":
+                paths.extend(
+                    [
+                        "C:\\SysinternalsSuite",
+                        "C:\\Tools\\SysinternalsSuite",
+                        "C:\\Tools\\Sysinternals",
+                        "C:\\Program Files\\SysinternalsSuite",
+                        "C:\\Program Files (x86)\\SysinternalsSuite",
+                        "C:\\Windows\\System32",
+                        "C:\\Tools\\AccessChk",
+                        "C:\\AccessChk",
+                        os.path.expanduser("~\\Desktop"),
+                        os.path.expanduser("~\\Downloads"),
+                        os.path.expanduser("~\\Documents\\Tools"),
+                        os.path.expanduser("~\\AppData\\Local\\Microsoft\\WinGet\\Packages"),
+                    ],
+                )
+
+        elif tool_name == "ghidra":
             if sys.platform == "win32":
                 paths.extend(
                     [
@@ -805,49 +855,6 @@ class AdvancedToolDiscovery:
                         "/usr/share/ghidra",
                         os.path.expanduser("~/ghidra"),
                         "/Applications/ghidra",
-                    ],
-                )
-
-        elif tool_name == "qemu":
-            if sys.platform == "win32":
-                paths.extend(
-                    [
-                        "C:\\Program Files\\qemu",
-                        "C:\\qemu",
-                    ],
-                )
-            else:
-                paths.extend(
-                    [
-                        "/usr/bin",
-                        "/usr/local/bin",
-                        "/opt/qemu",
-                    ],
-                )
-
-        elif tool_name == "nasm":
-            if sys.platform == "win32":
-                paths.extend(
-                    [
-                        os.path.join(
-                            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "tools", "NASM",
-                        ),  # Primary location
-                        "C:\\Program Files\\NASM",
-                        "C:\\Program Files (x86)\\NASM",
-                        "C:\\NASM",
-                        "C:\\Tools\\nasm",
-                        os.path.expanduser(
-                            "~\\AppData\\Local\\Microsoft\\WinGet\\Packages\\NASM.NASM_Microsoft.Winget.Source_8wekyb3d8bbwe",
-                        ),
-                        "C:\\Users\\%USERNAME%\\AppData\\Local\\Microsoft\\WinGet\\Packages\\NASM.NASM_Microsoft.Winget.Source_8wekyb3d8bbwe",
-                    ],
-                )
-            else:
-                paths.extend(
-                    [
-                        "/usr/bin",
-                        "/usr/local/bin",
-                        "/opt/nasm",
                     ],
                 )
 
@@ -888,22 +895,50 @@ class AdvancedToolDiscovery:
                     ],
                 )
 
-        elif tool_name == "accesschk":
+        elif tool_name == "nasm":
             if sys.platform == "win32":
                 paths.extend(
                     [
-                        "C:\\SysinternalsSuite",
-                        "C:\\Tools\\SysinternalsSuite",
-                        "C:\\Tools\\Sysinternals",
-                        "C:\\Program Files\\SysinternalsSuite",
-                        "C:\\Program Files (x86)\\SysinternalsSuite",
-                        "C:\\Windows\\System32",
-                        "C:\\Tools\\AccessChk",
-                        "C:\\AccessChk",
-                        os.path.expanduser("~\\Desktop"),
-                        os.path.expanduser("~\\Downloads"),
-                        os.path.expanduser("~\\Documents\\Tools"),
-                        os.path.expanduser("~\\AppData\\Local\\Microsoft\\WinGet\\Packages"),
+                        os.path.join(
+                            os.path.dirname(
+                                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                            ),
+                            "tools",
+                            "NASM",
+                        ),  # Primary location
+                        "C:\\Program Files\\NASM",
+                        "C:\\Program Files (x86)\\NASM",
+                        "C:\\NASM",
+                        "C:\\Tools\\nasm",
+                        os.path.expanduser(
+                            "~\\AppData\\Local\\Microsoft\\WinGet\\Packages\\NASM.NASM_Microsoft.Winget.Source_8wekyb3d8bbwe",
+                        ),
+                        "C:\\Users\\%USERNAME%\\AppData\\Local\\Microsoft\\WinGet\\Packages\\NASM.NASM_Microsoft.Winget.Source_8wekyb3d8bbwe",
+                    ],
+                )
+            else:
+                paths.extend(
+                    [
+                        "/usr/bin",
+                        "/usr/local/bin",
+                        "/opt/nasm",
+                    ],
+                )
+
+        elif tool_name == "qemu":
+            if sys.platform == "win32":
+                paths.extend(
+                    [
+                        "C:\\Program Files\\qemu",
+                        "C:\\qemu",
+                    ],
+                )
+            else:
+                paths.extend(
+                    [
+                        "/usr/bin",
+                        "/usr/local/bin",
+                        "/opt/qemu",
                     ],
                 )
 
@@ -917,20 +952,19 @@ class AdvancedToolDiscovery:
             "validation": {},
         }
 
-        # Find appropriate validator
-        validator = None
-        for validator_name, validator_func in self.validators.items():
-            if validator_name in tool_name or tool_name in validator_name:
-                validator = validator_func
-                break
-
-        if validator:
+        if validator := next(
+            (
+                validator_func
+                for validator_name, validator_func in self.validators.items()
+                if validator_name in tool_name or tool_name in validator_name
+            ),
+            None,
+        ):
             validation_result = validator(tool_path)
             result["validation"] = validation_result
             result["available"] = validation_result["valid"]
             result["version"] = validation_result.get("version")
             result["capabilities"] = validation_result.get("capabilities", [])
-        # Basic validation - just check if executable exists and is executable
         elif os.path.exists(tool_path) and os.access(tool_path, os.X_OK):
             result["available"] = True
 
@@ -1082,13 +1116,14 @@ class AdvancedToolDiscovery:
         else:
             health_status["executable"] = True
 
-        # Run validator if available
-        validator = None
-        for validator_name, validator_func in self.validators.items():
-            if validator_name in tool_name or tool_name in validator_name:
-                validator = validator_func
-                break
-
+        validator = next(
+            (
+                validator_func
+                for validator_name, validator_func in self.validators.items()
+                if validator_name in tool_name or tool_name in validator_name
+            ),
+            None,
+        )
         if validator:
             validation_result = validator(tool_path)
             if validation_result["valid"]:
@@ -1100,7 +1135,9 @@ class AdvancedToolDiscovery:
 
         # Determine overall health
         health_status["healthy"] = (
-            health_status["available"] and health_status["executable"] and (health_status["version_valid"] or not validator)
+            health_status["available"]
+            and health_status["executable"]
+            and (health_status["version_valid"] or not validator)
         )
 
         return health_status
@@ -1112,12 +1149,10 @@ class AdvancedToolDiscovery:
             Dictionary mapping tool names to health check results
 
         """
-        results = {}
-
-        # Check all discovered tools
-        for tool_name in self.discovered_tools:
-            results[tool_name] = self.health_check_tool(tool_name)
-
+        results = {
+            tool_name: self.health_check_tool(tool_name)
+            for tool_name in self.discovered_tools
+        }
         # Check manual overrides not in discovered tools
         for tool_name in self.manual_overrides:
             if tool_name not in results:
@@ -1127,16 +1162,26 @@ class AdvancedToolDiscovery:
         if HAS_TERMINAL_MANAGER:
             try:
                 terminal_manager = get_terminal_manager()
-                healthy_count = len([tool_name for tool_name, status in results.items() if status.get("healthy", False)])
+                healthy_count = len(
+                    [
+                        tool_name
+                        for tool_name, status in results.items()
+                        if status.get("healthy", False)
+                    ]
+                )
                 total_count = len(results)
-                terminal_manager.log_terminal_message(f"Health check completed: {healthy_count}/{total_count} tools healthy")
+                terminal_manager.log_terminal_message(
+                    f"Health check completed: {healthy_count}/{total_count} tools healthy"
+                )
 
                 # Report unhealthy tools
                 for tool_name, status in results.items():
                     if not status.get("healthy", False):
-                        issues = status.get("issues", [])
-                        if issues:
-                            terminal_manager.log_terminal_message(f"Unhealthy tool: {tool_name} - {', '.join(issues)}", level="warning")
+                        if issues := status.get("issues", []):
+                            terminal_manager.log_terminal_message(
+                                f"Unhealthy tool: {tool_name} - {', '.join(issues)}",
+                                level="warning",
+                            )
             except Exception as e:
                 logger.warning(f"Could not log health check to terminal manager: {e}")
 
@@ -1154,7 +1199,11 @@ class AdvancedToolDiscovery:
 
         """
         health_results = self.health_check_all_tools()
-        return [tool_name for tool_name, status in health_results.items() if status.get("healthy", False)]
+        return [
+            tool_name
+            for tool_name, status in health_results.items()
+            if status.get("healthy", False)
+        ]
 
     def discover_tool_with_fallbacks(self, tool_name: str, config: dict) -> dict[str, Any]:
         """Enhanced tool discovery with comprehensive fallback mechanisms."""
@@ -1198,7 +1247,9 @@ class AdvancedToolDiscovery:
             try:
                 result = strategy(tool_name, config)
                 if result and result.get("available"):
-                    logger.info(f"Fallback strategy '{strategy.__name__}' succeeded for {tool_name}")
+                    logger.info(
+                        f"Fallback strategy '{strategy.__name__}' succeeded for {tool_name}"
+                    )
                     return result
             except Exception as e:
                 logger.debug(f"Fallback strategy '{strategy.__name__}' failed: {e}")
@@ -1282,8 +1333,7 @@ class AdvancedToolDiscovery:
         ]
 
         for version_name in version_patterns:
-            path = shutil.which(version_name)
-            if path:
+            if path := shutil.which(version_name):
                 result = self._validate_and_populate(path, tool_name)
                 if result.get("available"):
                     result["version_fallback"] = version_name

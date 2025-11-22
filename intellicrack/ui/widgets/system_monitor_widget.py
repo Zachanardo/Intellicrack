@@ -32,6 +32,7 @@ from PyQt6.QtWidgets import (
 from intellicrack.handlers.psutil_handler import psutil
 from intellicrack.utils.logger import logger
 
+
 try:
     import pyqtgraph as pg
 
@@ -112,8 +113,7 @@ class SystemMonitorWorker(QObject):
 
         if GPU_AVAILABLE:
             try:
-                gpus = GPUtil.getGPUs()
-                if gpus:
+                if gpus := GPUtil.getGPUs():
                     gpu = gpus[0]
 
                     gpu_load = gpu.load * 100 if gpu.load is not None else 0.0
@@ -124,7 +124,7 @@ class SystemMonitorWorker(QObject):
 
                     gpu_temperature = gpu.temperature if gpu.temperature is not None else 0.0
                     gpu_temp = min(max(float(gpu_temperature), 0.0), 150.0)
-            except (ImportError, AttributeError, Exception) as e:
+            except Exception as e:
                 logger.debug(f"Failed to get GPU metrics: {e}")
 
         net_io = psutil.net_io_counters()
@@ -343,19 +343,22 @@ class SystemMonitorWidget(QWidget):
 
         # Update progress bars with validated data to match graphs
         cpu_display_value = float(metrics.cpu_percent) if metrics.cpu_percent is not None else 0.0
-        memory_display_value = float(metrics.memory_percent) if metrics.memory_percent is not None else 0.0
+        memory_display_value = (
+            float(metrics.memory_percent) if metrics.memory_percent is not None else 0.0
+        )
 
         self.cpu_bar.setValue(int(cpu_display_value))
         self.cpu_label.setText(f"{cpu_display_value:.1f}%")
 
         self.memory_bar.setValue(int(memory_display_value))
-        self.memory_label.setText(f"{metrics.memory_used_gb:.1f}/{metrics.memory_total_gb:.1f} GB ({memory_display_value:.1f}%)")
+        self.memory_label.setText(
+            f"{metrics.memory_used_gb:.1f}/{metrics.memory_total_gb:.1f} GB ({memory_display_value:.1f}%)"
+        )
 
-        if GPU_AVAILABLE and hasattr(self, "gpu_bar"):
-            if metrics.gpu_percent is not None:
-                gpu_display_value = float(metrics.gpu_percent)
-                self.gpu_bar.setValue(int(gpu_display_value))
-                self.gpu_label.setText(f"{gpu_display_value:.1f}%")
+        if GPU_AVAILABLE and hasattr(self, "gpu_bar") and metrics.gpu_percent is not None:
+            gpu_display_value = float(metrics.gpu_percent)
+            self.gpu_bar.setValue(int(gpu_display_value))
+            self.gpu_label.setText(f"{gpu_display_value:.1f}%")
 
         # Update graphs
         if PYQTGRAPH_AVAILABLE:
@@ -401,7 +404,9 @@ class SystemMonitorWidget(QWidget):
         try:
             # Get top processes by CPU usage
             processes = []
-            for proc in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent", "status"]):
+            for proc in psutil.process_iter(
+                ["pid", "name", "cpu_percent", "memory_percent", "status"]
+            ):
                 try:
                     pinfo = proc.info
                     if pinfo["cpu_percent"] > 0 or pinfo["memory_percent"] > 0:
@@ -419,14 +424,15 @@ class SystemMonitorWidget(QWidget):
                 self.process_table.setItem(row, 0, QTableWidgetItem(str(proc["pid"])))
                 self.process_table.setItem(row, 1, QTableWidgetItem(proc["name"]))
                 self.process_table.setItem(row, 2, QTableWidgetItem(f"{proc['cpu_percent']:.1f}"))
-                self.process_table.setItem(row, 3, QTableWidgetItem(f"{proc['memory_percent']:.1f}"))
+                self.process_table.setItem(
+                    row, 3, QTableWidgetItem(f"{proc['memory_percent']:.1f}")
+                )
                 self.process_table.setItem(row, 4, QTableWidgetItem(proc["status"]))
 
                 # Highlight high usage
                 if proc["cpu_percent"] > 50:
                     for col in range(5):
-                        item = self.process_table.item(row, col)
-                        if item:
+                        if item := self.process_table.item(row, col):
                             item.setBackground(QBrush(QColor(255, 200, 200)))
 
         except Exception as e:
@@ -473,9 +479,7 @@ class SystemMonitorWidget(QWidget):
 
     def get_current_metrics(self) -> SystemMetrics | None:
         """Get the most recent metrics."""
-        if self.metrics_history:
-            return self.metrics_history[-1]
-        return None
+        return self.metrics_history[-1] if self.metrics_history else None
 
     def get_metrics_summary(self) -> dict[str, Any]:
         """Get a summary of recent metrics."""
@@ -488,22 +492,25 @@ class SystemMonitorWidget(QWidget):
         summary = {
             "cpu_current": cpu_values[-1] if cpu_values else 0,
             "cpu_average": sum(cpu_values) / len(cpu_values) if cpu_values else 0,
-            "cpu_max": max(cpu_values) if cpu_values else 0,
+            "cpu_max": max(cpu_values, default=0),
             "memory_current": memory_values[-1] if memory_values else 0,
-            "memory_average": sum(memory_values) / len(memory_values) if memory_values else 0,
+            "memory_average": (
+                sum(memory_values) / len(memory_values) if memory_values else 0
+            ),
             "memory_max": max(memory_values) if memory_values else 0,
         }
 
-        if GPU_AVAILABLE:
-            gpu_values = [m.gpu_percent for m in self.metrics_history if m.gpu_percent is not None]
-            if gpu_values:
-                summary.update(
-                    {
-                        "gpu_current": gpu_values[-1],
-                        "gpu_average": sum(gpu_values) / len(gpu_values),
-                        "gpu_max": max(gpu_values),
-                    },
-                )
+        if gpu_values := [
+            m.gpu_percent
+            for m in self.metrics_history
+            if m.gpu_percent is not None
+        ]:
+            if GPU_AVAILABLE:
+                summary |= {
+                    "gpu_current": gpu_values[-1],
+                    "gpu_average": sum(gpu_values) / len(gpu_values),
+                    "gpu_max": max(gpu_values),
+                }
 
         return summary
 
@@ -528,20 +535,18 @@ class SystemMonitorWidget(QWidget):
         """Export metrics history to file."""
         import json
 
-        data = []
-        for metric in self.metrics_history:
-            data.append(
-                {
-                    "timestamp": metric.timestamp,
-                    "cpu_percent": metric.cpu_percent,
-                    "memory_percent": metric.memory_percent,
-                    "memory_used_gb": metric.memory_used_gb,
-                    "gpu_percent": metric.gpu_percent,
-                    "network_sent_mb": metric.network_sent_mb,
-                    "network_recv_mb": metric.network_recv_mb,
-                },
-            )
-
+        data = [
+            {
+                "timestamp": metric.timestamp,
+                "cpu_percent": metric.cpu_percent,
+                "memory_percent": metric.memory_percent,
+                "memory_used_gb": metric.memory_used_gb,
+                "gpu_percent": metric.gpu_percent,
+                "network_sent_mb": metric.network_sent_mb,
+                "network_recv_mb": metric.network_recv_mb,
+            }
+            for metric in self.metrics_history
+        ]
         with open(filepath, "w") as f:
             json.dump(data, f, indent=2)
 

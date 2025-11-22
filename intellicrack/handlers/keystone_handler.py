@@ -24,19 +24,11 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 
+
 logger = logging.getLogger(__name__)
 
 try:
-    from keystone import (
-        KS_ARCH_ARM,
-        KS_ARCH_ARM64,
-        KS_ARCH_X86,
-        KS_MODE_32,
-        KS_MODE_64,
-        KS_MODE_ARM,
-        KS_MODE_THUMB,
-        Ks,
-    )
+    from keystone import KS_ARCH_ARM, KS_ARCH_ARM64, KS_ARCH_X86, KS_MODE_32, KS_MODE_64, KS_MODE_ARM, KS_MODE_THUMB, Ks
 
     KEYSTONE_AVAILABLE = True
     logger.info("Keystone assembler engine initialized successfully")

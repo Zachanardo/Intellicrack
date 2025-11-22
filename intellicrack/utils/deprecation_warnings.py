@@ -26,6 +26,7 @@ import warnings
 from collections.abc import Callable
 from typing import TypeVar
 
+
 F = TypeVar("F", bound=Callable)
 
 
@@ -187,7 +188,9 @@ class DeprecatedConfigAccess:
         emit_migration_warning(self.system_name)
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object) -> None:
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object
+    ) -> None:
         """Exit context."""
 
 
@@ -222,7 +225,9 @@ def check_deprecated_import(module_name: str) -> None:
 
 
 # Production-ready warning configuration
-def configure_deprecation_warnings(show_warnings: bool = True, error_on_deprecated: bool = False) -> None:
+def configure_deprecation_warnings(
+    show_warnings: bool = True, error_on_deprecated: bool = False
+) -> None:
     """Configure how deprecation warnings are handled.
 
     Args:

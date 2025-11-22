@@ -40,7 +40,10 @@ class UILayoutHelpers:
 
     @staticmethod
     def create_tabbed_dialog_layout(
-        dialog: QWidget, window_title: str, size: tuple[int, int] = (1000, 700), is_modal: bool = False,
+        dialog: QWidget,
+        window_title: str,
+        size: tuple[int, int] = (1000, 700),
+        is_modal: bool = False,
     ) -> tuple[QVBoxLayout, QTabWidget]:
         """Create a standard tabbed dialog layout structure.
 
@@ -70,7 +73,9 @@ class UILayoutHelpers:
         return main_layout, tab_widget
 
     @staticmethod
-    def create_dialog_buttons(button_specs: list[tuple[str, Callable, bool]], layout: QVBoxLayout) -> list[QPushButton]:
+    def create_dialog_buttons(
+        button_specs: list[tuple[str, Callable, bool]], layout: QVBoxLayout
+    ) -> list[QPushButton]:
         """Create standard dialog buttons with consistent layout.
 
         Args:
@@ -144,7 +149,9 @@ class UILayoutHelpers:
         return layout, line_edit, browse_btn
 
     @staticmethod
-    def create_config_group(title: str, use_form_layout: bool = True) -> tuple[QGroupBox, QVBoxLayout]:
+    def create_config_group(
+        title: str, use_form_layout: bool = True
+    ) -> tuple[QGroupBox, QVBoxLayout]:
         """Create a configuration group box with appropriate layout.
 
         Args:
@@ -157,11 +164,7 @@ class UILayoutHelpers:
         """
         group = QGroupBox(title)
 
-        if use_form_layout:
-            layout = QFormLayout()
-        else:
-            layout = QVBoxLayout()
-
+        layout = QFormLayout() if use_form_layout else QVBoxLayout()
         group.setLayout(layout)
         return group, layout
 
@@ -183,7 +186,9 @@ class UILayoutHelpers:
         return widget
 
     @staticmethod
-    def setup_standard_form_field(layout: QVBoxLayout | QFormLayout, label_text: str, widget: QWidget) -> None:
+    def setup_standard_form_field(
+        layout: QVBoxLayout | QFormLayout, label_text: str, widget: QWidget
+    ) -> None:
         """Add a standard form field to a form layout.
 
         Args:
@@ -199,7 +204,9 @@ class UILayoutHelpers:
             layout.addWidget(widget)
 
     @staticmethod
-    def create_tabs_from_specs(tab_widget: QTabWidget, tab_specs: list[tuple[str, QWidget]]) -> None:
+    def create_tabs_from_specs(
+        tab_widget: QTabWidget, tab_specs: list[tuple[str, QWidget]]
+    ) -> None:
         """Add multiple tabs to a tab widget from specifications.
 
         Args:

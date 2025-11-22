@@ -297,7 +297,9 @@ class MultiFormatBinaryAnalyzer:
                 "machine": self._get_machine_type(getattr(pe.FILE_HEADER, "Machine", 0)),
                 "timestamp": self._get_pe_timestamp(getattr(pe.FILE_HEADER, "TimeDateStamp", 0)),
                 "subsystem": getattr(pe.OPTIONAL_HEADER, "Subsystem", 0),
-                "characteristics": self._get_characteristics(getattr(pe.FILE_HEADER, "Characteristics", 0)),
+                "characteristics": self._get_characteristics(
+                    getattr(pe.FILE_HEADER, "Characteristics", 0)
+                ),
                 "sections": [],
                 "imports": [],
                 "exports": [],
@@ -380,7 +382,9 @@ class MultiFormatBinaryAnalyzer:
                 info = {
                     "format": "ELF",
                     "machine": binary.header.machine_type.name,
-                    "class": "64-bit" if binary.header.identity_class.name == "CLASS64" else "32-bit",
+                    "class": "64-bit"
+                    if binary.header.identity_class.name == "CLASS64"
+                    else "32-bit",
                     "type": binary.header.file_type.name,
                     "entry_point": hex(binary.header.entrypoint),
                     "sections": [],
@@ -392,7 +396,9 @@ class MultiFormatBinaryAnalyzer:
                 for _section in binary.sections:
                     section_info = {
                         "name": _section.name,
-                        "type": _section.type.name if hasattr(_section.type, "name") else str(_section.type),
+                        "type": _section.type.name
+                        if hasattr(_section.type, "name")
+                        else str(_section.type),
                         "address": hex(_section.virtual_address),
                         "size": _section.size,
                     }
@@ -408,7 +414,9 @@ class MultiFormatBinaryAnalyzer:
                     if _symbol.name:
                         symbol_info = {
                             "name": _symbol.name,
-                            "type": _symbol.type.name if hasattr(_symbol.type, "name") else str(_symbol.type),
+                            "type": _symbol.type.name
+                            if hasattr(_symbol.type, "name")
+                            else str(_symbol.type),
                             "value": hex(_symbol.value),
                             "size": _symbol.size,
                         }
@@ -485,8 +493,12 @@ class MultiFormatBinaryAnalyzer:
                 # Header information
                 header_info = {
                     "magic": hex(binary.magic),
-                    "cpu_type": binary.header.cpu_type.name if hasattr(binary.header.cpu_type, "name") else str(binary.header.cpu_type),
-                    "file_type": binary.header.file_type.name if hasattr(binary.header.file_type, "name") else str(binary.header.file_type),
+                    "cpu_type": binary.header.cpu_type.name
+                    if hasattr(binary.header.cpu_type, "name")
+                    else str(binary.header.cpu_type),
+                    "file_type": binary.header.file_type.name
+                    if hasattr(binary.header.file_type, "name")
+                    else str(binary.header.file_type),
                 }
                 info["headers"].append(header_info)
 
@@ -557,7 +569,9 @@ class MultiFormatBinaryAnalyzer:
         # For now, return basic PE analysis with .NET note
         result = self.analyze_pe(binary_path)
         if "error" not in result:
-            result["note"] = "This is a .NET assembly. Consider using specialized .NET analysis tools."
+            result["note"] = (
+                "This is a .NET assembly. Consider using specialized .NET analysis tools."
+            )
         return result
 
     def analyze_java(self, _binary_path: str | Path) -> dict[str, Any]:  # pylint: disable=unused-argument
@@ -954,22 +968,30 @@ class MultiFormatBinaryAnalyzer:
                 sector_size = int.from_bytes(header[30:32], byteorder="little")
                 mini_sector_size = int.from_bytes(header[32:34], byteorder="little")
 
-                info.update(
-                    {
-                        "minor_version": minor_version,
-                        "major_version": major_version,
-                        "byte_order": f"0x{byte_order:04X}",
-                        "sector_size": 2**sector_size,
-                        "mini_sector_size": 2**mini_sector_size,
-                        "compound_doc_info": {
-                            "sectors_in_directory_chain": int.from_bytes(header[44:48], byteorder="little"),
-                            "sectors_in_fat": int.from_bytes(header[48:52], byteorder="little"),
-                            "directory_first_sector": int.from_bytes(header[52:56], byteorder="little"),
-                            "transaction_signature": int.from_bytes(header[56:60], byteorder="little"),
-                            "mini_stream_cutoff": int.from_bytes(header[60:64], byteorder="little"),
-                        },
+                info |= {
+                    "minor_version": minor_version,
+                    "major_version": major_version,
+                    "byte_order": f"0x{byte_order:04X}",
+                    "sector_size": 2**sector_size,
+                    "mini_sector_size": 2**mini_sector_size,
+                    "compound_doc_info": {
+                        "sectors_in_directory_chain": int.from_bytes(
+                            header[44:48], byteorder="little"
+                        ),
+                        "sectors_in_fat": int.from_bytes(
+                            header[48:52], byteorder="little"
+                        ),
+                        "directory_first_sector": int.from_bytes(
+                            header[52:56], byteorder="little"
+                        ),
+                        "transaction_signature": int.from_bytes(
+                            header[56:60], byteorder="little"
+                        ),
+                        "mini_stream_cutoff": int.from_bytes(
+                            header[60:64], byteorder="little"
+                        ),
                     },
-                )
+                }
 
                 return info
 
@@ -1033,10 +1055,14 @@ class MultiFormatBinaryAnalyzer:
 
                 # Check for common DOS system calls
                 if b"\\xcd\\x21" in header_bytes:  # INT 21h (DOS interrupt)
-                    info["header_analysis"]["possible_instructions"].append("DOS system call (INT 21h)")
+                    info["header_analysis"]["possible_instructions"].append(
+                        "DOS system call (INT 21h)"
+                    )
 
                 if b"\\xcd\\x20" in header_bytes:  # INT 20h (terminate program)
-                    info["header_analysis"]["possible_instructions"].append("Program termination (INT 20h)")
+                    info["header_analysis"]["possible_instructions"].append(
+                        "Program termination (INT 20h)"
+                    )
 
                 # Calculate basic entropy
                 if len(header_bytes) > 0:
@@ -1125,12 +1151,7 @@ class MultiFormatBinaryAnalyzer:
             0x8000: "Bytes reversed hi",
         }
 
-        result = []
-        for flag, desc in char_flags.items():
-            if characteristics & flag:
-                result.append(desc)
-
-        return result
+        return [desc for flag, desc in char_flags.items() if characteristics & flag]
 
     def analyze(self, binary_path: str | Path) -> dict[str, Any]:
         """Analyze a binary file and extract structure information.
@@ -1159,16 +1180,14 @@ class MultiFormatBinaryAnalyzer:
 
         # Analyze based on format
         if format_type == "PE":
-            result.update(self.analyze_pe(binary_path))
+            result |= self.analyze_pe(binary_path)
         elif format_type == "ELF":
             result.update(self.analyze_elf(binary_path))
         elif format_type == "MACHO":
             result.update(self.analyze_macho(binary_path))
-        # Try generic analysis with LIEF
         elif self.lief_available:
             try:
-                binary = lief.parse(str(binary_path))
-                if binary:
+                if binary := lief.parse(str(binary_path)):
                     result.update(self._analyze_lief_binary(binary))
             except Exception as e:
                 self.logger.error(f"LIEF analysis failed: {e}")
@@ -1186,25 +1205,33 @@ class MultiFormatBinaryAnalyzer:
             endianness, and section details.
 
         """
-        result = {}
-
-        # Get basic info
-        result["architecture"] = str(binary.header.architecture) if hasattr(binary.header, "architecture") else "Unknown"
-        result["endianness"] = str(binary.header.endianness) if hasattr(binary.header, "endianness") else "Unknown"
+        result = {
+            "architecture": (
+                str(binary.header.architecture)
+                if hasattr(binary.header, "architecture")
+                else "Unknown"
+            ),
+            "endianness": (
+                str(binary.header.endianness)
+                if hasattr(binary.header, "endianness")
+                else "Unknown"
+            ),
+        }
 
         # Get sections
         if hasattr(binary, "sections"):
-            sections = []
-            for section in binary.sections:
-                sections.append(
-                    {
-                        "name": section.name,
-                        "virtual_address": section.virtual_address,
-                        "virtual_size": section.virtual_size,
-                        "size": section.size,
-                        "entropy": section.entropy if hasattr(section, "entropy") else 0,
-                    },
-                )
+            sections = [
+                {
+                    "name": section.name,
+                    "virtual_address": section.virtual_address,
+                    "virtual_size": section.virtual_size,
+                    "size": section.size,
+                    "entropy": (
+                        section.entropy if hasattr(section, "entropy") else 0
+                    ),
+                }
+                for section in binary.sections
+            ]
             result["sections"] = sections
 
         return result
@@ -1248,7 +1275,9 @@ def run_multi_format_analysis(app: object, binary_path: str | Path | None = None
         return results
 
     # Display results
-    app.update_output.emit(log_message(f"[Multi-Format] Analysis completed for {binary_format} binary"))
+    app.update_output.emit(
+        log_message(f"[Multi-Format] Analysis completed for {binary_format} binary")
+    )
 
     # Add to analyze results
     if not hasattr(app, "analyze_results"):
@@ -1286,7 +1315,9 @@ def run_multi_format_analysis(app: object, binary_path: str | Path | None = None
         app.analyze_results.append("\nSections:")
         for _section in results["sections"]:
             entropy_str = f", Entropy: {_section['entropy']:.2f}" if "entropy" in _section else ""
-            app.analyze_results.append(f"  {_section['name']} - Addr: {_section['address']}, Size: {_section['size']}{entropy_str}")
+            app.analyze_results.append(
+                f"  {_section['name']} - Addr: {_section['address']}, Size: {_section['size']}{entropy_str}"
+            )
 
         app.analyze_results.append("\nSymbols:")
         for _symbol in results["symbols"][:10]:  # Limit to first 10
@@ -1298,11 +1329,15 @@ def run_multi_format_analysis(app: object, binary_path: str | Path | None = None
 
         app.analyze_results.append("\nSegments:")
         for _segment in results["segments"]:
-            app.analyze_results.append(f"  {_segment['name']} - Addr: {_segment['address']}, Size: {_segment['size']}")
+            app.analyze_results.append(
+                f"  {_segment['name']} - Addr: {_segment['address']}, Size: {_segment['size']}"
+            )
 
             app.analyze_results.append("  Sections:")
             for _section in _segment["sections"]:
-                app.analyze_results.append(f"    {_section['name']} - Addr: {_section['address']}, Size: {_section['size']}")
+                app.analyze_results.append(
+                    f"    {_section['name']} - Addr: {_section['address']}, Size: {_section['size']}"
+                )
 
     elif binary_format == "DEX":
         app.analyze_results.append(f"DEX Version: {results['dex_version']}")
@@ -1334,14 +1369,20 @@ def run_multi_format_analysis(app: object, binary_path: str | Path | None = None
         if results["manifest_info"]["present"]:
             app.analyze_results.append("\nManifest Information:")
             manifest = results["manifest_info"]
-            app.analyze_results.append(f"  Main Class: {manifest.get('main_class', 'Not specified')}")
-            app.analyze_results.append(f"  Manifest Version: {manifest.get('manifest_version', 'Unknown')}")
+            app.analyze_results.append(
+                f"  Main Class: {manifest.get('main_class', 'Not specified')}"
+            )
+            app.analyze_results.append(
+                f"  Manifest Version: {manifest.get('manifest_version', 'Unknown')}"
+            )
             app.analyze_results.append(f"  Created By: {manifest.get('created_by', 'Unknown')}")
 
     elif binary_format == "MSI":
         app.analyze_results.append(f"File Size: {results['file_size']} bytes")
         app.analyze_results.append("Format: Compound Document")
-        app.analyze_results.append(f"Version: {results['major_version']}.{results['minor_version']}")
+        app.analyze_results.append(
+            f"Version: {results['major_version']}.{results['minor_version']}"
+        )
         app.analyze_results.append(f"Sector Size: {results['sector_size']} bytes")
 
     elif binary_format == "COM":
@@ -1350,13 +1391,17 @@ def run_multi_format_analysis(app: object, binary_path: str | Path | None = None
         app.analyze_results.append(f"Entropy: {results.get('entropy', 'N/A')}")
 
         if "first_instruction" in results["header_analysis"]:
-            app.analyze_results.append(f"First Instruction: {results['header_analysis']['first_instruction']}")
+            app.analyze_results.append(
+                f"First Instruction: {results['header_analysis']['first_instruction']}"
+            )
 
     # Add recommendations based on format
     app.analyze_results.append("\nRecommendations:")
     if binary_format == "PE":
         app.analyze_results.append("- Use standard Windows PE analysis techniques")
-        app.analyze_results.append("- Check for high-entropy sections that may indicate packing or encryption")
+        app.analyze_results.append(
+            "- Check for high-entropy sections that may indicate packing or encryption"
+        )
     elif binary_format == "ELF":
         app.analyze_results.append("- Use specialized ELF analysis tools for _deeper inspection")
         app.analyze_results.append("- Consider using dynamic analysis with Linux-specific tools")

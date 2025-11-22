@@ -189,7 +189,7 @@ class TestGenericProtocolHandlerRealNetworkCaptures:
             # Even a small percentage indicates encryption awareness
             assert encrypted_handling_rate >= 0.0, "Must attempt to handle encrypted protocols"
 
-    def _extract_protocol_messages(self, capture_data: bytes) -> List[bytes]:
+    def _extract_protocol_messages(self, capture_data: bytes) -> list[bytes]:
         """Extract protocol messages from network capture data."""
         messages = []
 

@@ -33,7 +33,7 @@ class TestRun:
     success: bool
     execution_time_seconds: float
     timestamp: str
-    metadata: Dict[str, Any] = None
+    metadata: dict[str, Any] = None
 
     def __post_init__(self):
         if self.metadata is None:
@@ -45,12 +45,12 @@ class StatisticalAnalysis:
     total_runs: int
     successful_runs: int
     success_rate: float
-    confidence_interval_99: Tuple[float, float]
+    confidence_interval_99: tuple[float, float]
     p_value: float
     t_statistic: float
     degrees_of_freedom: int
-    outliers_excluded: List[int]
-    sample_statistics: Dict[str, float]
+    outliers_excluded: list[int]
+    sample_statistics: dict[str, float]
 
 class StatisticalRequirementsValidator:
     """
@@ -83,9 +83,9 @@ class StatisticalRequirementsValidator:
         # Create output directory
         self.output_path.mkdir(parents=True, exist_ok=True)
 
-    def validate_statistical_requirements(self, test_runs: List[TestRun],
+    def validate_statistical_requirements(self, test_runs: list[TestRun],
                                         software_name: str,
-                                        protection_name: str) -> Tuple[StatisticalResult, Dict[str, Any]]:
+                                        protection_name: str) -> tuple[StatisticalResult, dict[str, Any]]:
         """
         Validate statistical requirements against Phase 6.4 criteria.
 
@@ -160,7 +160,7 @@ class StatisticalRequirementsValidator:
 
         return validation_report["overall_result"], validation_report
 
-    def _validate_minimum_runs(self, test_runs: List[TestRun], report: Dict[str, Any]) -> bool:
+    def _validate_minimum_runs(self, test_runs: list[TestRun], report: dict[str, Any]) -> bool:
         """6.4.1: Validate minimum 10 test runs requirement."""
         try:
             actual_runs = len(test_runs)
@@ -186,7 +186,7 @@ class StatisticalRequirementsValidator:
             }
             return False
 
-    def _handle_outliers(self, test_runs: List[TestRun]) -> Tuple[List[TestRun], List[TestRun]]:
+    def _handle_outliers(self, test_runs: list[TestRun]) -> tuple[list[TestRun], list[TestRun]]:
         """6.4.5: Handle outliers using 3 standard deviations rule."""
         try:
             if len(test_runs) < 3:
@@ -218,7 +218,7 @@ class StatisticalRequirementsValidator:
             self.logger.error(f"Outlier handling failed: {e}")
             return test_runs, []
 
-    def _calculate_statistical_metrics(self, test_runs: List[TestRun]) -> StatisticalAnalysis:
+    def _calculate_statistical_metrics(self, test_runs: list[TestRun]) -> StatisticalAnalysis:
         """6.4.2: Calculate comprehensive statistical metrics."""
         try:
             total_runs = len(test_runs)
@@ -281,7 +281,7 @@ class StatisticalRequirementsValidator:
             self.logger.error(f"Statistical calculation failed: {e}")
             raise
 
-    def _wilson_score_interval(self, successes: int, trials: int, confidence: float) -> Tuple[float, float]:
+    def _wilson_score_interval(self, successes: int, trials: int, confidence: float) -> tuple[float, float]:
         """Calculate Wilson score interval for proportion confidence interval."""
         try:
             if trials == 0:
@@ -303,7 +303,7 @@ class StatisticalRequirementsValidator:
             self.logger.error(f"Wilson score interval calculation failed: {e}")
             return (0.0, 1.0)
 
-    def _validate_confidence_interval(self, analysis: StatisticalAnalysis, report: Dict[str, Any]) -> bool:
+    def _validate_confidence_interval(self, analysis: StatisticalAnalysis, report: dict[str, Any]) -> bool:
         """6.4.3 & 6.4.6: Validate 99% confidence interval requirements."""
         try:
             ci_lower, ci_upper = analysis.confidence_interval_99
@@ -336,7 +336,7 @@ class StatisticalRequirementsValidator:
             }
             return False
 
-    def _validate_p_value(self, analysis: StatisticalAnalysis, report: Dict[str, Any]) -> bool:
+    def _validate_p_value(self, analysis: StatisticalAnalysis, report: dict[str, Any]) -> bool:
         """6.4.4: Validate p-value requirement."""
         try:
             alpha = self.config["alpha"]
@@ -378,7 +378,7 @@ class StatisticalRequirementsValidator:
             }
             return False
 
-    def _test_normality(self, test_runs: List[TestRun]) -> Dict[str, Any]:
+    def _test_normality(self, test_runs: list[TestRun]) -> dict[str, Any]:
         """Test normality of execution times using Shapiro-Wilk test."""
         try:
             execution_times = [run.execution_time_seconds for run in test_runs]
@@ -404,7 +404,7 @@ class StatisticalRequirementsValidator:
         except Exception as e:
             return {"test": "error", "error": str(e)}
 
-    def _conduct_power_analysis(self, test_runs: List[TestRun]) -> Dict[str, Any]:
+    def _conduct_power_analysis(self, test_runs: list[TestRun]) -> dict[str, Any]:
         """Conduct statistical power analysis."""
         try:
             n = len(test_runs)
@@ -442,7 +442,7 @@ class StatisticalRequirementsValidator:
         except Exception as e:
             return {"error": str(e)}
 
-    def _calculate_effect_size(self, analysis: StatisticalAnalysis) -> Dict[str, Any]:
+    def _calculate_effect_size(self, analysis: StatisticalAnalysis) -> dict[str, Any]:
         """Calculate effect size measures."""
         try:
             # Cohen's h for proportions
@@ -470,10 +470,10 @@ class StatisticalRequirementsValidator:
         except Exception as e:
             return {"error": str(e)}
 
-    def _generate_statistical_plots(self, test_runs: List[TestRun],
+    def _generate_statistical_plots(self, test_runs: list[TestRun],
                                   analysis: StatisticalAnalysis,
                                   software_name: str,
-                                  protection_name: str) -> List[str]:
+                                  protection_name: str) -> list[str]:
         """Generate statistical visualization plots."""
         plot_paths = []
 
@@ -583,7 +583,7 @@ class StatisticalRequirementsValidator:
         """Get ISO timestamp."""
         return datetime.utcnow().isoformat() + 'Z'
 
-    def generate_statistical_report(self, validation_results: List[Tuple[StatisticalResult, Dict[str, Any]]],
+    def generate_statistical_report(self, validation_results: list[tuple[StatisticalResult, dict[str, Any]]],
                                   output_file: Path) -> None:
         """Generate comprehensive statistical validation report."""
         try:

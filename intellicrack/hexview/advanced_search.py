@@ -55,6 +55,7 @@ from ..handlers.pyqt6_handler import (
     pyqtSignal,
 )
 
+
 logger = logging.getLogger(__name__)
 
 __all__ = [
@@ -118,6 +119,7 @@ class SearchHistory:
         """Initialize the SearchHistory with maximum entries limit."""
         # Get configuration instance
         from intellicrack.core.config_manager import get_config
+
         config = get_config()
 
         # Use provided max_entries or get from config
@@ -139,7 +141,9 @@ class SearchHistory:
         }
 
         # Remove duplicate if exists
-        self.entries = [e for e in self.entries if e["pattern"] != pattern or e["type"] != search_type.value]
+        self.entries = [
+            e for e in self.entries if e["pattern"] != pattern or e["type"] != search_type.value
+        ]
 
         # Add to front
         self.entries.insert(0, entry)
@@ -150,7 +154,9 @@ class SearchHistory:
 
         self.save_history()
 
-    def get_recent_searches(self, search_type: SearchType | None = None, limit: int = 10) -> list[str]:
+    def get_recent_searches(
+        self, search_type: SearchType | None = None, limit: int = 10
+    ) -> list[str]:
         """Get recent search patterns."""
         filtered_entries = self.entries
         if search_type:
@@ -188,6 +194,7 @@ class SearchEngine:
 
         # Get configuration instance
         from intellicrack.core.config_manager import get_config
+
         config = get_config()
 
         # Get chunk size from config (convert KB to bytes)
@@ -217,13 +224,18 @@ class SearchEngine:
             First search result or None if not found
 
         """
-        compiled_pattern = self._compile_pattern(pattern, search_type, case_sensitive)
-        if not compiled_pattern:
+        if compiled_pattern := self._compile_pattern(
+            pattern, search_type, case_sensitive
+        ):
+            return (
+                self._search_forward(compiled_pattern, start_offset, whole_words)
+                if direction == "forward"
+                else self._search_backward(
+                    compiled_pattern, start_offset, whole_words
+                )
+            )
+        else:
             return None
-
-        if direction == "forward":
-            return self._search_forward(compiled_pattern, start_offset, whole_words)
-        return self._search_backward(compiled_pattern, start_offset, whole_words)
 
     def search_all(
         self,
@@ -330,10 +342,9 @@ class SearchEngine:
                     if self.file_handler.insert(result.offset, replace_bytes):
                         replaced_ranges.append((result.offset, len(replace_bytes)))
                     else:
-                        # If insert fails, try to restore the original data
-                        # This is a best-effort recovery
-                        original_data = self.file_handler.read(result.offset, result.length)
-                        if original_data:
+                        if original_data := self.file_handler.read(
+                            result.offset, result.length
+                        ):
                             self.file_handler.insert(result.offset, original_data)
                         error_msg = f"Failed to insert replacement at offset {result.offset:#x}"
                         logger.error(error_msg)
@@ -345,7 +356,9 @@ class SearchEngine:
 
         return list(reversed(replaced_ranges))
 
-    def _compile_pattern(self, pattern: str | bytes, search_type: SearchType, case_sensitive: bool) -> bytes | re.Pattern | None:
+    def _compile_pattern(
+        self, pattern: str | bytes, search_type: SearchType, case_sensitive: bool
+    ) -> bytes | re.Pattern | None:
         """Compile pattern based on search type."""
         try:
             if search_type == SearchType.HEX:
@@ -355,17 +368,7 @@ class SearchEngine:
                 return pattern
 
             if search_type == SearchType.TEXT:
-                if isinstance(pattern, bytes):
-                    text_pattern = pattern
-                else:
-                    text_pattern = pattern.encode("utf-8")
-
-                if not case_sensitive:
-                    # For case-insensitive text search, we'll handle this during matching
-                    pass
-
-                return text_pattern
-
+                return pattern if isinstance(pattern, bytes) else pattern.encode("utf-8")
             if search_type == SearchType.REGEX:
                 flags = 0 if case_sensitive else re.IGNORECASE
                 if isinstance(pattern, bytes):
@@ -390,7 +393,9 @@ class SearchEngine:
 
         return None
 
-    def _search_forward(self, compiled_pattern: bytes | re.Pattern, start_offset: int, whole_words: bool) -> SearchResult | None:
+    def _search_forward(
+        self, compiled_pattern: bytes | re.Pattern, start_offset: int, whole_words: bool
+    ) -> SearchResult | None:
         """Search forward from ``start_offset``."""
         file_size = self.file_handler.get_file_size()
         offset = start_offset
@@ -403,15 +408,12 @@ class SearchEngine:
             if not chunk_data:
                 break
 
-            # Find first match in this chunk
-            match = self._find_first_match_in_chunk(
+            if match := self._find_first_match_in_chunk(
                 compiled_pattern,
                 chunk_data,
                 offset,
                 whole_words,
-            )
-
-            if match:
+            ):
                 return match
 
             # Move to next chunk with overlap
@@ -419,7 +421,9 @@ class SearchEngine:
 
         return None
 
-    def _search_backward(self, compiled_pattern: bytes | re.Pattern, start_offset: int, whole_words: bool) -> SearchResult | None:
+    def _search_backward(
+        self, compiled_pattern: bytes | re.Pattern, start_offset: int, whole_words: bool
+    ) -> SearchResult | None:
         """Search backward from ``start_offset``."""
         offset = min(start_offset, self.file_handler.get_file_size())
         overlap_size = 100
@@ -432,16 +436,13 @@ class SearchEngine:
             if not chunk_data:
                 break
 
-            # Find last match in this chunk
-            matches = self._find_matches_in_chunk(
+            if matches := self._find_matches_in_chunk(
                 compiled_pattern,
                 chunk_data,
                 chunk_start,
                 SearchType.HEX,
                 whole_words,
-            )
-
-            if matches:
+            ):
                 return matches[-1]  # Return last match (closest to start_offset)
 
             # Move to previous chunk with overlap
@@ -470,7 +471,9 @@ class SearchEngine:
                     if pos == -1:
                         break
 
-                    if not whole_words or self._is_whole_word_match(chunk_data, pos, len(compiled_pattern)):
+                    if not whole_words or self._is_whole_word_match(
+                        chunk_data, pos, len(compiled_pattern)
+                    ):
                         # Get context around the match
                         context_start = max(0, pos - 16)
                         context_end = min(len(chunk_data), pos + len(compiled_pattern) + 16)
@@ -616,10 +619,7 @@ class SearchEngine:
                 pass
             elif is_word_char(prev_char):
                 # Previous is a word char, check if current starts a word
-                if not is_word_char(data[pos]):
-                    # Match doesn't start with word char, might be okay
-                    pass
-                else:
+                if is_word_char(data[pos]):
                     # Both are word chars, not a boundary
                     return False
 
@@ -631,10 +631,7 @@ class SearchEngine:
                 pass
             elif is_word_char(next_char):
                 # Next is a word char, check if match ends with word char
-                if not is_word_char(data[pos + length - 1]):
-                    # Match doesn't end with word char, might be okay
-                    pass
-                else:
+                if is_word_char(data[pos + length - 1]):
                     # Both are word chars, not a boundary
                     return False
 
@@ -699,7 +696,9 @@ class SearchThread(QThread if PYQT6_AVAILABLE else object):
 class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
     """Advanced search dialog with comprehensive search options."""
 
-    def __init__(self, parent: object | None = None, search_engine: SearchEngine | None = None) -> None:
+    def __init__(
+        self, parent: object | None = None, search_engine: SearchEngine | None = None
+    ) -> None:
         """Initialize the advanced search dialog with parent widget and search engine."""
         if not PYQT6_AVAILABLE:
             return
@@ -1023,18 +1022,18 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
         # Perform search
         if self.search_engine:
             try:
-                result = self.search_engine.search(
+                if result := self.search_engine.search(
                     pattern,
                     search_type,
                     case_sensitive=options["case_sensitive"],
                     whole_words=options["whole_words"],
                     direction="forward",
-                )
-
-                if result:
+                ):
                     self.search_status_label.setText(f"Found at offset 0x{result.offset:X}")
                     # Emit signal to parent to highlight result
-                    self.parent().hex_viewer.select_range(result.offset, result.offset + result.length)
+                    self.parent().hex_viewer.select_range(
+                        result.offset, result.offset + result.length
+                    )
                 else:
                     self.search_status_label.setText("Pattern not found")
 
@@ -1053,18 +1052,18 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
         # Perform search
         if self.search_engine:
             try:
-                result = self.search_engine.search(
+                if result := self.search_engine.search(
                     pattern,
                     search_type,
                     case_sensitive=self.case_sensitive_check.isChecked(),
                     whole_words=self.whole_words_check.isChecked(),
                     direction="backward",
-                )
-
-                if result:
+                ):
                     self.search_status_label.setText(f"Found at offset 0x{result.offset:X}")
                     # Emit signal to parent to highlight result
-                    self.parent().hex_viewer.select_range(result.offset, result.offset + result.length)
+                    self.parent().hex_viewer.select_range(
+                        result.offset, result.offset + result.length
+                    )
                 else:
                     self.search_status_label.setText("Pattern not found")
 
@@ -1158,8 +1157,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
 
     def use_history_item(self, item: QListWidgetItem) -> None:
         """Use selected history item."""
-        entry = item.data(Qt.UserRole)
-        if entry:
+        if entry := item.data(Qt.UserRole):
             self.search_pattern_combo.setCurrentText(entry["pattern"])
             type_index = self.search_type_combo.findText(entry["type"].title())
             if type_index >= 0:
@@ -1167,8 +1165,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
 
     def use_selected_history(self) -> None:
         """Use currently selected history item."""
-        current_item = self.history_list.currentItem()
-        if current_item:
+        if current_item := self.history_list.currentItem():
             self.use_history_item(current_item)
 
     def clear_history(self) -> None:
@@ -1199,7 +1196,9 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
 class FindAllDialog(QDialog):
     """Dialog for displaying find all results."""
 
-    def __init__(self, parent: object | None = None, results: list[SearchResult] | None = None) -> None:
+    def __init__(
+        self, parent: object | None = None, results: list[SearchResult] | None = None
+    ) -> None:
         """Initialize find all dialog."""
         super().__init__(parent)
         self.results = results or []
@@ -1225,13 +1224,21 @@ class FindAllDialog(QDialog):
         self.results_table.setRowCount(len(self.results))
         for i, result in enumerate(self.results):
             self.results_table.setItem(i, 0, QTableWidgetItem(f"0x{result.offset:08X}"))
-            self.results_table.setItem(i, 1, QTableWidgetItem(result.data.hex() if result.data else ""))
-            ascii_text = "".join(chr(b) if 32 <= b < 127 else "." for b in result.data) if result.data else ""
+            self.results_table.setItem(
+                i, 1, QTableWidgetItem(result.data.hex() if result.data else "")
+            )
+            ascii_text = (
+                "".join(chr(b) if 32 <= b < 127 else "." for b in result.data)
+                if result.data
+                else ""
+            )
             self.results_table.setItem(i, 2, QTableWidgetItem(ascii_text))
             self.results_table.setItem(
                 i,
                 3,
-                QTableWidgetItem(str(result.context_before) + " [MATCH] " + str(result.context_after)),
+                QTableWidgetItem(
+                    f"{result.context_before!s} [MATCH] {result.context_after!s}"
+                ),
             )
 
         layout.addWidget(self.results_table)

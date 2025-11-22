@@ -33,7 +33,7 @@ class VersionSuccessData:
     successful_attempts: int
     success_rate: float
     test_duration_seconds: float
-    failure_reasons: List[str]
+    failure_reasons: list[str]
     notes: str = ""
 
     def __post_init__(self):
@@ -49,11 +49,11 @@ class SuccessRateAnalysis:
     software_name: str
     protection_name: str
     overall_success_rate: float
-    version_data: List[VersionSuccessData]
+    version_data: list[VersionSuccessData]
     meets_90_percent_threshold: bool
     analysis_timestamp: str
-    failure_analysis: Dict[str, Any]
-    recommendations: List[str]
+    failure_analysis: dict[str, Any]
+    recommendations: list[str]
 
     def __post_init__(self):
         if not self.analysis_timestamp:
@@ -68,8 +68,8 @@ class SuccessRateReport:
     protection_name: str
     analysis: SuccessRateAnalysis
     compliance_status: SuccessRateStatus
-    detailed_findings: Dict[str, Any]
-    improvement_plan: List[str]
+    detailed_findings: dict[str, Any]
+    improvement_plan: list[str]
     generated_at: str
 
     def __post_init__(self):
@@ -87,7 +87,7 @@ class SuccessRateVerifier:
     Phase 2.5.2.4: Success rate must be ≥ 90% across versions or documented why not.
     """
 
-    def __init__(self, base_dir: Optional[Path] = None):
+    def __init__(self, base_dir: Path | None = None):
         """Initialize success rate verifier."""
         self.base_dir = base_dir or Path("tests/validation_system")
         self.results_dir = self.base_dir / "success_rate_results"
@@ -101,9 +101,9 @@ class SuccessRateVerifier:
         self.minimum_test_runs = 10  # Minimum runs for statistical significance
 
         # Track verification results
-        self.verification_results: List[SuccessRateReport] = []
+        self.verification_results: list[SuccessRateReport] = []
 
-    def collect_version_success_data(self, software_name: str, protection_name: str) -> List[VersionSuccessData]:
+    def collect_version_success_data(self, software_name: str, protection_name: str) -> list[VersionSuccessData]:
         """
         Collect success rate data across different versions.
 
@@ -162,7 +162,7 @@ class SuccessRateVerifier:
         logger.info(f"Collected success data for {len(version_data)} versions of {protection_name}")
         return version_data
 
-    def analyze_success_rates(self, version_data: List[VersionSuccessData]) -> SuccessRateAnalysis:
+    def analyze_success_rates(self, version_data: list[VersionSuccessData]) -> SuccessRateAnalysis:
         """
         Analyze success rates across versions to determine compliance.
         """
@@ -197,7 +197,7 @@ class SuccessRateVerifier:
         logger.info(f"Success rate analysis: {overall_success_rate:.1%} ({'PASS' if meets_threshold else 'FAIL'} 90% threshold)")
         return analysis
 
-    def _analyze_failures(self, version_data: List[VersionSuccessData], overall_rate: float) -> Dict[str, Any]:
+    def _analyze_failures(self, version_data: list[VersionSuccessData], overall_rate: float) -> dict[str, Any]:
         """Analyze failure patterns across versions."""
         failure_categories = {}
         version_performance = []
@@ -256,8 +256,8 @@ class SuccessRateVerifier:
         else:
             return "Other"
 
-    def _generate_recommendations(self, version_data: List[VersionSuccessData],
-                                overall_rate: float, meets_threshold: bool) -> List[str]:
+    def _generate_recommendations(self, version_data: list[VersionSuccessData],
+                                overall_rate: float, meets_threshold: bool) -> list[str]:
         """Generate improvement recommendations based on failure analysis."""
         recommendations = []
 
@@ -377,7 +377,7 @@ class SuccessRateVerifier:
 
         logger.info(f"Success rate report saved: {report_file}")
 
-    def generate_phase_2_5_2_4_compliance_report(self, software_name: str, protection_name: str) -> Dict[str, Any]:
+    def generate_phase_2_5_2_4_compliance_report(self, software_name: str, protection_name: str) -> dict[str, Any]:
         """
         Generate Phase 2.5.2.4 specific compliance report.
         """

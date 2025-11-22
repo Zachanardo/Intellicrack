@@ -40,11 +40,11 @@ class NegativeControlResult:
     test_end_time: str
     software_refused_execution: bool
     license_error_detected: bool
-    network_attempts_logged: List[Dict[str, Any]]
-    screenshot_path: Optional[str]
-    process_monitoring_data: Dict[str, Any]
+    network_attempts_logged: list[dict[str, Any]]
+    screenshot_path: str | None
+    process_monitoring_data: dict[str, Any]
     test_valid: bool
-    error_message: Optional[str] = None
+    error_message: str | None = None
     timestamp: str = None
 
     def __post_init__(self):
@@ -81,7 +81,7 @@ class NegativeControlValidator:
                 sha256.update(chunk)
         return sha256.hexdigest()
 
-    def _start_network_monitoring(self) -> Optional[subprocess.Popen]:
+    def _start_network_monitoring(self) -> subprocess.Popen | None:
         """
         Start network monitoring to capture license server attempts.
         Uses netsh trace or PowerShell packet capture for real monitoring.
@@ -147,7 +147,7 @@ class NegativeControlValidator:
             logger.error(f"Failed to start network monitoring: {e}")
             return None
 
-    def _stop_network_monitoring(self, process: Optional[subprocess.Popen]) -> List[Dict[str, Any]]:
+    def _stop_network_monitoring(self, process: subprocess.Popen | None) -> list[dict[str, Any]]:
         """
         Stop network monitoring and return captured data.
         """
@@ -217,7 +217,7 @@ class NegativeControlValidator:
 
                         if report_process.returncode == 0 and report_file.exists():
                             # Parse the report file for license server attempts
-                            with open(report_file, 'r', encoding='utf-8', errors='ignore') as f:
+                            with open(report_file, encoding='utf-8', errors='ignore') as f:
                                 report_content = f.read()
 
                             # Look for common license server patterns
@@ -320,7 +320,7 @@ class NegativeControlValidator:
 
         return network_attempts
 
-    def _capture_screenshot(self, filename: str) -> Optional[str]:
+    def _capture_screenshot(self, filename: str) -> str | None:
         """
         Capture a screenshot of the current desktop using Windows APIs.
         """
@@ -472,7 +472,7 @@ class NegativeControlValidator:
             logger.error(f"Failed to capture screenshot: {e}")
             return None
 
-    def _monitor_process(self, process: subprocess.Popen, timeout: int = 60) -> Dict[str, Any]:
+    def _monitor_process(self, process: subprocess.Popen, timeout: int = 60) -> dict[str, Any]:
         """
         Monitor a process for the specified timeout period.
         """
@@ -546,7 +546,7 @@ class NegativeControlValidator:
 
         return monitoring_data
 
-    def _detect_license_error(self, process_monitoring_data: Dict[str, Any]) -> bool:
+    def _detect_license_error(self, process_monitoring_data: dict[str, Any]) -> bool:
         """
         Analyze process monitoring data to detect license errors using comprehensive methods.
         """
@@ -823,7 +823,7 @@ class NegativeControlValidator:
 
         return result
 
-    def validate_all_negative_controls(self) -> List[NegativeControlResult]:
+    def validate_all_negative_controls(self) -> list[NegativeControlResult]:
         """
         Run negative control validation on all available binaries.
         """
@@ -880,7 +880,7 @@ class NegativeControlValidator:
         logger.info(f"Completed negative control validation for {len(results)} binaries")
         return results
 
-    def generate_report(self, results: List[NegativeControlResult]) -> str:
+    def generate_report(self, results: list[NegativeControlResult]) -> str:
         """
         Generate a comprehensive report of negative control validation results.
         """
@@ -927,7 +927,7 @@ class NegativeControlValidator:
 
         return "\n".join(report_lines)
 
-    def save_report(self, results: List[NegativeControlResult], filename: Optional[str] = None) -> str:
+    def save_report(self, results: list[NegativeControlResult], filename: str | None = None) -> str:
         """
         Save the negative control validation report to a file.
         """

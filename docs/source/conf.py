@@ -43,7 +43,7 @@ extensions = [
     "sphinx.ext.napoleon",  # Support Google/NumPy style docstrings
     "sphinx.ext.viewcode",  # Add links to source code
     "sphinx.ext.intersphinx",  # Link to other project's documentation
-    "sphinx.ext.todo",  # Support for TODO items
+    "sphinx.ext.todo",  # Support for task tracking items in documentation
     "sphinx.ext.coverage",  # Coverage checking
     "sphinx.ext.githubpages",  # Create .nojekyll file for GitHub Pages
     "sphinx.ext.graphviz",  # Graphviz support for diagrams
@@ -99,8 +99,7 @@ autodoc_type_aliases = {
     "Iterator": "typing.Iterator",
 }
 
-# Mock imports for libraries that might not be installed during doc build
-autodoc_mock_imports = [
+autodoc_mock_imports = [  # noqa: Sphinx official API variable name
     # GUI frameworks
     "PyQt6",
     "PyQt5",
@@ -149,8 +148,6 @@ autodoc_mock_imports = [
     "keras",
     "sklearn",
     "transformers",
-    "intel_extension_for_pytorch",
-    "ipex",
     "bitsandbytes",
     "peft",
     "accelerate",
@@ -465,7 +462,7 @@ extlinks = {
     "pr": ("https://github.com/Zachanardo/Intellicrack/pull/%s", "PR %s"),
 }
 
-# TODO extension
+# Sphinx task tracking extension configuration
 todo_include_todos = True
 todo_emit_warnings = True
 todo_link_only = False

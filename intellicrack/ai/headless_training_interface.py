@@ -30,6 +30,7 @@ from collections.abc import Callable
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
+
 if TYPE_CHECKING:
     import numpy as np
 
@@ -102,7 +103,10 @@ class HeadlessTrainingInterface:
             raise
 
     def start_training(
-        self, config: dict[str, Any], progress_callback: Callable | None = None, status_callback: Callable | None = None,
+        self,
+        config: dict[str, Any],
+        progress_callback: Callable | None = None,
+        status_callback: Callable | None = None,
     ) -> None:
         """Start AI model training with given configuration.
 
@@ -124,7 +128,9 @@ class HeadlessTrainingInterface:
         self.callbacks["status"] = status_callback
 
         # Start training in separate thread
-        self.training_thread = threading.Thread(target=self._training_worker, args=(config,), daemon=True)
+        self.training_thread = threading.Thread(
+            target=self._training_worker, args=(config,), daemon=True
+        )
         self.training_thread.start()
 
         logger.info("Training started with %d epochs", self.total_epochs)
@@ -212,7 +218,9 @@ class HeadlessTrainingInterface:
             start_time = time.time()
             logger.info("Training worker started")
 
-            learning_rate, batch_size, _, dataset_path, model_config = self._extract_training_parameters(config)
+            learning_rate, batch_size, _, dataset_path, model_config = (
+                self._extract_training_parameters(config)
+            )
             self._validate_dataset_path(dataset_path)
 
             for epoch in range(1, self.total_epochs + 1):
@@ -222,8 +230,20 @@ class HeadlessTrainingInterface:
                 self.current_epoch = epoch
                 self._wait_if_paused()
 
-                train_loss, train_acc, val_loss, val_acc = self._execute_training_epoch(epoch, dataset_path, model_config, config)
-                self._update_metrics(epoch, train_loss, train_acc, val_loss, val_acc, model_config, learning_rate, batch_size, start_time)
+                train_loss, train_acc, val_loss, val_acc = self._execute_training_epoch(
+                    epoch, dataset_path, model_config, config
+                )
+                self._update_metrics(
+                    epoch,
+                    train_loss,
+                    train_acc,
+                    val_loss,
+                    val_acc,
+                    model_config,
+                    learning_rate,
+                    batch_size,
+                    start_time,
+                )
                 self._invoke_callbacks(epoch, train_loss, train_acc, val_loss, val_acc)
 
             self._finalize_training(start_time, config)
@@ -234,7 +254,9 @@ class HeadlessTrainingInterface:
             self.is_training = False
             self.is_paused = False
 
-    def _extract_training_parameters(self, config: dict[str, Any]) -> tuple[float, int, str, str, dict[str, Any]]:
+    def _extract_training_parameters(
+        self, config: dict[str, Any]
+    ) -> tuple[float, int, str, str, dict[str, Any]]:
         learning_rate = config.get("learning_rate", 0.001)
         batch_size = config.get("batch_size", 32)
         model_type = config.get("model_type", "vulnerability_classifier")
@@ -269,7 +291,13 @@ class HeadlessTrainingInterface:
         start_time: float,
     ) -> None:
         self.metrics_history.append(
-            {"epoch": epoch, "train_loss": train_loss, "train_acc": train_acc, "val_loss": val_loss, "val_acc": val_acc},
+            {
+                "epoch": epoch,
+                "train_loss": train_loss,
+                "train_acc": train_acc,
+                "val_loss": val_loss,
+                "val_acc": val_acc,
+            },
         )
         if len(self.metrics_history) > 100:
             self.metrics_history = self.metrics_history[-100:]
@@ -288,7 +316,9 @@ class HeadlessTrainingInterface:
             },
         )
 
-    def _invoke_callbacks(self, epoch: int, train_loss: float, train_acc: float, val_loss: float, val_acc: float) -> None:
+    def _invoke_callbacks(
+        self, epoch: int, train_loss: float, train_acc: float, val_loss: float, val_acc: float
+    ) -> None:
         if self.callbacks.get("progress"):
             progress = (epoch / self.total_epochs) * 100
             self.callbacks["progress"](progress)
@@ -318,7 +348,11 @@ class HeadlessTrainingInterface:
             self.callbacks["status"](f"Training error: {error!s}")
 
     def _execute_training_epoch(
-        self, epoch: int, dataset_path: str, model_config: dict[str, Any], training_config: dict[str, Any],
+        self,
+        epoch: int,
+        dataset_path: str,
+        model_config: dict[str, Any],
+        training_config: dict[str, Any],
     ) -> tuple[float, float, float, float]:
         """Execute a real training epoch with actual data processing.
 
@@ -359,7 +393,9 @@ class HeadlessTrainingInterface:
                 batch_data = train_data[start_idx:end_idx]
 
                 # Forward pass and loss computation
-                batch_loss, batch_correct, batch_total = self._process_training_batch(batch_data, model_config, learning_rate, epoch)
+                batch_loss, batch_correct, batch_total = self._process_training_batch(
+                    batch_data, model_config, learning_rate, epoch
+                )
 
                 train_losses.append(batch_loss)
                 train_correct += batch_correct
@@ -378,7 +414,9 @@ class HeadlessTrainingInterface:
                     batch_data = val_data[start_idx:end_idx]
 
                     # Validation forward pass (no gradient updates)
-                    batch_loss, batch_correct, batch_total = self._process_validation_batch(batch_data, model_config, epoch)
+                    batch_loss, batch_correct, batch_total = self._process_validation_batch(
+                        batch_data, model_config, epoch
+                    )
 
                     val_losses.append(batch_loss)
                     val_correct += batch_correct
@@ -403,7 +441,9 @@ class HeadlessTrainingInterface:
             # Adaptive error recovery using historical metrics
             return self._generate_recovery_metrics(epoch, model_config)
 
-    def _load_training_data(self, dataset_path: str, validation_split: float = 0.2) -> tuple[list, list]:
+    def _load_training_data(
+        self, dataset_path: str, validation_split: float = 0.2
+    ) -> tuple[list, list]:
         """Load training data from dataset path.
 
         Args:
@@ -429,8 +469,7 @@ class HeadlessTrainingInterface:
                 data = []
                 with open(dataset_path, encoding="utf-8") as f:
                     reader = csv.DictReader(f)
-                    for row in reader:
-                        data.append(row)
+                    data.extend(row for row in reader)
             else:
                 # Try to read as text file with simple format
                 with open(dataset_path, encoding="utf-8") as f:
@@ -470,7 +509,9 @@ class HeadlessTrainingInterface:
                     ((i * 17) % 13) * 0.077,  # Feature 3: pseudo-random
                     (i / num_samples),  # Feature 4: normalized position
                     ((i**2) % 50) * 0.02,  # Feature 5: quadratic pattern
-                    (1.0 / (i + 1)) if i < num_samples // 2 else (0.3 / (num_samples - i + 1)),  # Feature 6: inverse
+                    (1.0 / (i + 1))
+                    if i < num_samples // 2
+                    else (0.3 / (num_samples - i + 1)),  # Feature 6: inverse
                 ]
 
                 # Create label based on feature combinations for consistent learning
@@ -486,7 +527,11 @@ class HeadlessTrainingInterface:
             return []
 
     def _process_training_batch(
-        self, batch_data: list, model_config: dict[str, Any], learning_rate: float, epoch: int,
+        self,
+        batch_data: list,
+        model_config: dict[str, Any],
+        learning_rate: float,
+        epoch: int,
     ) -> tuple[float, int, int]:
         """Process a training batch with forward and backward passes.
 
@@ -515,11 +560,7 @@ class HeadlessTrainingInterface:
 
                 # Compute loss (binary cross-entropy approximation)
                 prediction = max(0.001, min(0.999, prediction))  # Clamp to avoid log(0)
-                if label == 1:
-                    loss = -math.log(prediction)
-                else:
-                    loss = -math.log(1 - prediction)
-
+                loss = -math.log(prediction) if label == 1 else -math.log(1 - prediction)
                 # Apply learning rate and regularization
                 loss *= learning_rate
                 total_loss += loss
@@ -536,7 +577,9 @@ class HeadlessTrainingInterface:
             logger.error(f"Training batch processing failed: {e}")
             return 1.0, 0, len(batch_data)
 
-    def _process_validation_batch(self, batch_data: list, model_config: dict[str, Any], epoch: int) -> tuple[float, int, int]:
+    def _process_validation_batch(
+        self, batch_data: list, model_config: dict[str, Any], epoch: int
+    ) -> tuple[float, int, int]:
         """Process a validation batch (inference only, no gradient updates).
 
         Args:
@@ -563,11 +606,7 @@ class HeadlessTrainingInterface:
 
                 # Compute validation loss
                 prediction = max(0.001, min(0.999, prediction))
-                if label == 1:
-                    loss = -math.log(prediction)
-                else:
-                    loss = -math.log(1 - prediction)
-
+                loss = -math.log(prediction) if label == 1 else -math.log(1 - prediction)
                 total_loss += loss
 
                 # Check prediction accuracy
@@ -582,7 +621,9 @@ class HeadlessTrainingInterface:
             logger.error(f"Validation batch processing failed: {e}")
             return 1.0, 0, len(batch_data)
 
-    def _generate_recovery_metrics(self, epoch: int, model_config: dict[str, Any]) -> tuple[float, float, float, float]:
+    def _generate_recovery_metrics(
+        self, epoch: int, model_config: dict[str, Any]
+    ) -> tuple[float, float, float, float]:
         """Generate recovery metrics using historical data and adaptive algorithms.
 
         Args:
@@ -605,10 +646,18 @@ class HeadlessTrainingInterface:
                 weights = [w / weight_sum for w in weights]
 
                 # Calculate weighted averages
-                avg_train_loss = sum(m["train_loss"] * w for m, w in zip(recent_metrics, weights, strict=False))
-                avg_train_acc = sum(m["train_acc"] * w for m, w in zip(recent_metrics, weights, strict=False))
-                avg_val_loss = sum(m["val_loss"] * w for m, w in zip(recent_metrics, weights, strict=False))
-                avg_val_acc = sum(m["val_acc"] * w for m, w in zip(recent_metrics, weights, strict=False))
+                avg_train_loss = sum(
+                    m["train_loss"] * w for m, w in zip(recent_metrics, weights, strict=False)
+                )
+                avg_train_acc = sum(
+                    m["train_acc"] * w for m, w in zip(recent_metrics, weights, strict=False)
+                )
+                avg_val_loss = sum(
+                    m["val_loss"] * w for m, w in zip(recent_metrics, weights, strict=False)
+                )
+                avg_val_acc = sum(
+                    m["val_acc"] * w for m, w in zip(recent_metrics, weights, strict=False)
+                )
 
                 # Apply slight perturbation to indicate error recovery
                 import random
@@ -639,10 +688,23 @@ class HeadlessTrainingInterface:
             optimizer = model_config.get("optimizer", "adam")
 
             # Architecture-specific initial loss estimates
-            architecture_losses = {"deep_cnn": 2.5, "transformer": 3.0, "lstm": 2.8, "gru": 2.6, "resnet": 2.3, "vgg": 2.4}
+            architecture_losses = {
+                "deep_cnn": 2.5,
+                "transformer": 3.0,
+                "lstm": 2.8,
+                "gru": 2.6,
+                "resnet": 2.3,
+                "vgg": 2.4,
+            }
 
             # Optimizer convergence rates
-            optimizer_rates = {"adam": 0.95, "adamw": 0.94, "sgd": 0.98, "rmsprop": 0.96, "adagrad": 0.97}
+            optimizer_rates = {
+                "adam": 0.95,
+                "adamw": 0.94,
+                "sgd": 0.98,
+                "rmsprop": 0.96,
+                "adagrad": 0.97,
+            }
 
             base_loss = architecture_losses.get(architecture, 2.5)
             convergence_rate = optimizer_rates.get(optimizer, 0.95)
@@ -688,7 +750,9 @@ class HeadlessTrainingInterface:
             val_acc = train_acc * 0.95
             return train_loss, train_acc, val_loss, val_acc
 
-    def _forward_pass(self, features: list, model_config: dict[str, Any], epoch: int, validation: bool = False) -> float:
+    def _forward_pass(
+        self, features: list, model_config: dict[str, Any], epoch: int, validation: bool = False
+    ) -> float:
         """Perform forward pass through the neural network model.
 
         Args:
@@ -712,7 +776,10 @@ class HeadlessTrainingInterface:
                 return 0.5  # Default prediction
 
             # Convert features to numpy array
-            feature_array = np.array([float(f) if isinstance(f, (int, float)) else 0.0 for f in features], dtype=np.float32)
+            feature_array = np.array(
+                [float(f) if isinstance(f, (int, float)) else 0.0 for f in features],
+                dtype=np.float32,
+            )
 
             # Normalize features using batch normalization
             mean = np.mean(feature_array)
@@ -722,7 +789,9 @@ class HeadlessTrainingInterface:
             # Ensure correct input dimensions
             if len(normalized_features) < self._input_size:
                 # Pad with zeros if needed
-                normalized_features = np.pad(normalized_features, (0, self._input_size - len(normalized_features)))
+                normalized_features = np.pad(
+                    normalized_features, (0, self._input_size - len(normalized_features))
+                )
             elif len(normalized_features) > self._input_size:
                 # Truncate if too many features
                 normalized_features = normalized_features[: self._input_size]
@@ -755,7 +824,15 @@ class HeadlessTrainingInterface:
 
             # Store activations for backpropagation (if implementing training)
             if not validation:
-                self._last_activations = {"input": normalized_features, "z1": z1, "a1": a1, "z2": z2, "a2": a2, "z3": z3, "output": output}
+                self._last_activations = {
+                    "input": normalized_features,
+                    "z1": z1,
+                    "a1": a1,
+                    "z2": z2,
+                    "a2": a2,
+                    "z3": z3,
+                    "output": output,
+                }
 
             return float(output[0])
 
@@ -839,7 +916,9 @@ class HeadlessTrainingInterface:
             Path where model was saved
 
         """
-        output_dir = config.get("output_directory", os.path.join(os.path.dirname(__file__), "..", "models", "trained"))
+        output_dir = config.get(
+            "output_directory", os.path.join(os.path.dirname(__file__), "..", "models", "trained")
+        )
         os.makedirs(output_dir, exist_ok=True)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -888,7 +967,11 @@ class ConsoleTrainingManager:
             print()
 
             # Start training with console callbacks
-            self.interface.start_training(config, progress_callback=self._progress_callback, status_callback=self._status_callback)
+            self.interface.start_training(
+                config,
+                progress_callback=self._progress_callback,
+                status_callback=self._status_callback,
+            )
 
             # Interactive control loop
             print("Training started. Commands: 'pause', 'resume', 'stop', 'status', 'quit'")

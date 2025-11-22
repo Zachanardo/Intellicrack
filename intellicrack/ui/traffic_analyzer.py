@@ -338,7 +338,13 @@ class NetworkTrafficAnalysisDialog(QDialog):
         controls_layout.addWidget(QLabel("Chart Type:"), 0, 0)
         self.chart_type_combo = QComboBox()
         self.chart_type_combo.addItems(
-            ["Protocol Distribution", "Traffic Over Time", "Port Distribution", "License Traffic Analysis", "Connection Flow Diagram"],
+            [
+                "Protocol Distribution",
+                "Traffic Over Time",
+                "Port Distribution",
+                "License Traffic Analysis",
+                "Connection Flow Diagram",
+            ],
         )
         controls_layout.addWidget(self.chart_type_combo, 0, 1)
 
@@ -436,7 +442,9 @@ class NetworkTrafficAnalysisDialog(QDialog):
             }
 
             # Start capture in separate thread
-            self.capture_thread = threading.Thread(target=self._capture_worker, args=(config,), daemon=True)
+            self.capture_thread = threading.Thread(
+                target=self._capture_worker, args=(config,), daemon=True
+            )
 
             self.capture_thread.start()
 
@@ -473,15 +481,15 @@ class NetworkTrafficAnalysisDialog(QDialog):
                 patterns = [p.strip() for p in patterns if p.strip()]
                 self.analyzer.license_patterns = patterns
 
-                # Set license ports
-                ports_text = self.license_ports_edit.text()
-                if ports_text:
+                if ports_text := self.license_ports_edit.text():
                     ports = [int(p.strip()) for p in ports_text.split(",") if p.strip().isdigit()]
                     self.analyzer.license_ports = ports
 
             # Start capture
             self.analyzer.start_capture(
-                interface=config.get("interface", "auto"), timeout=config.get("timeout", 60), packet_filter=config.get("filter"),
+                interface=config.get("interface", "auto"),
+                timeout=config.get("timeout", 60),
+                packet_filter=config.get("filter"),
             )
 
         except Exception as e:
@@ -579,7 +587,9 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
             license_data = self.analysis_results["license_analysis"]
             details += f"  Suspected License Servers: {len(license_data.get('servers', []))}\n"
             details += f"  License-related Packets: {license_data.get('packet_count', 0)}\n"
-            details += f"  License Traffic Percentage: {license_data.get('traffic_percentage', 0):.2f}%\n"
+            details += (
+                f"  License Traffic Percentage: {license_data.get('traffic_percentage', 0):.2f}%\n"
+            )
 
         self.results_text.setPlainText(details)
 
@@ -597,12 +607,13 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
 
             # Update progress bar
             if self.progress_bar.isVisible():
-                elapsed = getattr(self.analyzer, "_capture_start_time", 0)
-                if elapsed:
+                if elapsed := getattr(self.analyzer, "_capture_start_time", 0):
                     import time
 
                     elapsed_seconds = time.time() - elapsed
-                    self.progress_bar.setValue(min(int(elapsed_seconds), self.progress_bar.maximum()))
+                    self.progress_bar.setValue(
+                        min(int(elapsed_seconds), self.progress_bar.maximum())
+                    )
 
         except Exception as e:
             log_warning(f"Error updating real-time stats: {e}")
@@ -638,7 +649,9 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
             return
 
         try:
-            filename, _ = QFileDialog.getSaveFileName(self, "Export JSON", "traffic_analysis.json", "JSON files (*.json)")
+            filename, _ = QFileDialog.getSaveFileName(
+                self, "Export JSON", "traffic_analysis.json", "JSON files (*.json)"
+            )
 
             if filename:
                 import json
@@ -661,7 +674,9 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
             return
 
         try:
-            filename, _ = QFileDialog.getSaveFileName(self, "Export CSV", "packet_data.csv", "CSV files (*.csv)")
+            filename, _ = QFileDialog.getSaveFileName(
+                self, "Export CSV", "packet_data.csv", "CSV files (*.csv)"
+            )
 
             if filename:
                 import csv
@@ -705,7 +720,9 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
             return
 
         try:
-            filename, _ = QFileDialog.getSaveFileName(self, "Export Report", "traffic_analysis_report.txt", "Text files (*.txt)")
+            filename, _ = QFileDialog.getSaveFileName(
+                self, "Export Report", "traffic_analysis_report.txt", "Text files (*.txt)"
+            )
 
             if filename:
                 if self.analyzer:
@@ -717,7 +734,9 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
                     QMessageBox.information(self, "Success", f"Report exported to {filename}")
                     log_info(f"Analysis report exported: {filename}")
                 else:
-                    QMessageBox.warning(self, "Warning", "Analyzer not available for report generation")
+                    QMessageBox.warning(
+                        self, "Warning", "Analyzer not available for report generation"
+                    )
 
         except Exception as e:
             error_msg = f"Failed to export report: {e}"
@@ -753,7 +772,9 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
             elif chart_type == "Port Distribution":
                 if "port_distribution" in self.analysis_results:
                     viz_text += "Port Distribution Chart:\n"
-                    for port, count in list(self.analysis_results["port_distribution"].items())[:20]:
+                    for port, count in list(self.analysis_results["port_distribution"].items())[
+                        :20
+                    ]:
                         bar = "█" * min(int(count / 10), 50)
                         viz_text += f"Port {port:5d} {bar} {count} connections\n"
 
@@ -762,7 +783,9 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
                     license_data = self.analysis_results["license_analysis"]
                     viz_text += "License Traffic Analysis:\n"
                     viz_text += f"Total License Packets: {license_data.get('packet_count', 0)}\n"
-                    viz_text += f"License Traffic %: {license_data.get('traffic_percentage', 0):.2f}%\n"
+                    viz_text += (
+                        f"License Traffic %: {license_data.get('traffic_percentage', 0):.2f}%\n"
+                    )
                     viz_text += f"Detected Servers: {len(license_data.get('servers', []))}\n"
 
             else:
@@ -778,7 +801,9 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
 
 
 # Network capture management functions for main_app binding
-def start_network_capture(self: object, interface: str | None = None, filter_str: str | None = None) -> bool | None:
+def start_network_capture(
+    self: object, interface: str | None = None, filter_str: str | None = None
+) -> bool | None:
     """Start network packet capture on specified interface.
 
     Args:
@@ -808,11 +833,7 @@ def start_network_capture(self: object, interface: str | None = None, filter_str
                 # Fall back to common interface names
                 import platform
 
-                if platform.system() == "Windows":
-                    interface = "Ethernet"
-                else:
-                    interface = "eth0"
-
+                interface = "Ethernet" if platform.system() == "Windows" else "eth0"
         # Store capture settings
         self._capture_interface = interface
         self._capture_filter = filter_str
@@ -822,7 +843,9 @@ def start_network_capture(self: object, interface: str | None = None, filter_str
         # Start capture in background thread
         import threading
 
-        self._capture_thread = threading.Thread(target=self._perform_network_capture, args=(interface, filter_str), daemon=True)
+        self._capture_thread = threading.Thread(
+            target=self._perform_network_capture, args=(interface, filter_str), daemon=True
+        )
         self._capture_thread.start()
 
         if hasattr(self, "log_message"):
@@ -961,7 +984,9 @@ def _perform_network_capture(self: object, interface: str | None, filter_str: st
 
                     # Store packet data
                     if hasattr(self, "_captured_packets"):
-                        self._captured_packets.append({"data": packet_data, "address": addr, "timestamp": time.time()})
+                        self._captured_packets.append(
+                            {"data": packet_data, "address": addr, "timestamp": time.time()}
+                        )
 
                     # Update UI if possible
                     if hasattr(self, "update_output"):

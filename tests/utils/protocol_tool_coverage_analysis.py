@@ -31,13 +31,13 @@ class ProtocolToolCoverageAnalyzer:
         self.test_analysis = {}
         self.coverage_metrics = {}
 
-    def analyze_source_code(self) -> Dict:
+    def analyze_source_code(self) -> dict:
         """Analyze protocol_tool.py source code structure"""
         if not self.protocol_tool_path.exists():
             return {"error": "protocol_tool.py not found"}
 
         try:
-            with open(self.protocol_tool_path, 'r', encoding='utf-8') as f:
+            with open(self.protocol_tool_path, encoding='utf-8') as f:
                 source_code = f.read()
 
             tree = ast.parse(source_code)
@@ -96,7 +96,7 @@ class ProtocolToolCoverageAnalyzer:
         except Exception as e:
             return {"error": f"Failed to analyze source: {str(e)}"}
 
-    def analyze_test_coverage(self) -> Dict:
+    def analyze_test_coverage(self) -> dict:
         """Analyze test files for coverage of source code elements"""
         test_coverage = {
             'classes_tested': set(),
@@ -113,7 +113,7 @@ class ProtocolToolCoverageAnalyzer:
                 continue
 
             try:
-                with open(test_file, 'r', encoding='utf-8') as f:
+                with open(test_file, encoding='utf-8') as f:
                     test_code = f.read()
 
                 # Analyze test file content
@@ -137,7 +137,7 @@ class ProtocolToolCoverageAnalyzer:
         self.test_analysis = test_coverage
         return test_coverage
 
-    def _analyze_test_file_content(self, test_code: str, filename: str) -> Dict:
+    def _analyze_test_file_content(self, test_code: str, filename: str) -> dict:
         """Analyze individual test file content"""
         classes_tested = set()
         functions_tested = set()
@@ -200,7 +200,7 @@ class ProtocolToolCoverageAnalyzer:
             'test_count': test_count
         }
 
-    def calculate_coverage_metrics(self) -> Dict:
+    def calculate_coverage_metrics(self) -> dict:
         """Calculate comprehensive coverage metrics"""
         if not self.source_analysis or not self.test_analysis:
             return {"error": "Must run source and test analysis first"}
@@ -258,7 +258,7 @@ class ProtocolToolCoverageAnalyzer:
 
         return self.coverage_metrics
 
-    def identify_coverage_gaps(self) -> Dict:
+    def identify_coverage_gaps(self) -> dict:
         """Identify specific coverage gaps and recommendations"""
         gaps = {
             'uncovered_classes': [],

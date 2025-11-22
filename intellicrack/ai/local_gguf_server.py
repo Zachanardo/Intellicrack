@@ -27,6 +27,7 @@ from typing import Any
 
 from ..utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 try:
@@ -57,14 +58,13 @@ except ImportError as e:
 
 # Try to import Intel GPU libraries
 try:
-    from intellicrack.handlers.ipex_handler import HAS_IPEX, ipex
+    import torch
 
-    HAS_INTEL_GPU = HAS_IPEX
+    HAS_INTEL_GPU = hasattr(torch, "xpu") and torch.xpu.is_available()
     if not HAS_INTEL_GPU:
-        logger.debug("Intel Extension for PyTorch not available (see ipex_handler for details)")
+        logger.debug("PyTorch XPU not available")
 except Exception as e:
     logger.error("Import error in local_gguf_server: %s", e)
-    ipex = None
     HAS_INTEL_GPU = False
 
 # Check for Intel GPU support via OpenVINO
@@ -99,7 +99,7 @@ class LocalGGUFServer:
             port: The port number to run the server on.
 
         """
-        self.logger = get_logger(__name__ + ".LocalGGUFServer")
+        self.logger = get_logger(f"{__name__}.LocalGGUFServer")
         self.host = host
         self.port = port
         self.app = None
@@ -152,7 +152,7 @@ class LocalGGUFServer:
             except Exception as e:
                 logger.debug(f"DPCTL GPU detection failed: {e}")
 
-        # Check for Intel GPU via Intel Extension for PyTorch
+        # Check for Intel GPU via native PyTorch XPU
         if HAS_INTEL_GPU:
             try:
                 import torch  # pylint: disable=import-outside-toplevel
@@ -160,31 +160,31 @@ class LocalGGUFServer:
                 if not torch:
                     raise ImportError("Torch not available")
 
-                # Initialize IPEX if available
-                if ipex is not None:
-                    # Check for XPU device support
-                    if hasattr(torch, "xpu") and torch.xpu.is_available():
-                        device_count = torch.xpu.device_count()
-                        for i in range(device_count):
-                            device_name = torch.xpu.get_device_name(i)
-                            self.gpu_devices.append(f"xpu:{i}:{device_name}")
-                            if not self.gpu_backend:
-                                self.gpu_backend = "ipex"
-                            logger.info(f"Found Intel GPU device via IPEX: {device_name}")
+                # Check for XPU device support
+                if hasattr(torch, "xpu") and torch.xpu.is_available():
+                    device_count = torch.xpu.device_count()
+                    for i in range(device_count):
+                        device_name = torch.xpu.get_device_name(i)
+                        self.gpu_devices.append(f"xpu:{i}:{device_name}")
+                        if not self.gpu_backend:
+                            self.gpu_backend = "xpu"
+                        logger.info(f"Found Intel GPU device via PyTorch XPU: {device_name}")
 
-                            # Get device properties via IPEX
-                            device_props = ipex.xpu.get_device_properties(i)
-                            logger.info(f"Intel GPU {i} properties: {device_props}")
+                        # Get device properties
+                        device_props = torch.xpu.get_device_properties(i)
+                        logger.info(f"Intel GPU {i} properties: {device_props}")
 
-                    # Check IPEX version and capabilities
-                    logger.info(f"Intel Extension for PyTorch version: {ipex.__version__}")
+                    # Check PyTorch version
+                    logger.info(f"PyTorch version with XPU support: {torch.__version__}")
 
-                    # Enable IPEX optimizations if available
-                    if hasattr(ipex, "enable_auto_mixed_precision"):
-                        ipex.enable_auto_mixed_precision()
-                        logger.info("Enabled IPEX auto mixed precision")
+                    # Enable mixed precision if available
+                    try:
+                        torch.set_float32_matmul_precision("high")
+                        logger.info("Enabled high precision matrix multiplication")
+                    except Exception as e:
+                        logger.debug(f"Could not set matmul precision: {e}")
             except Exception as e:
-                logger.debug(f"IPEX GPU detection failed: {e}")
+                logger.debug(f"PyTorch XPU GPU detection failed: {e}")
 
         # Check llama.cpp build info for GPU support
         if HAS_LLAMA_CPP and hasattr(llama_cpp, "llama_backend_init"):
@@ -193,11 +193,10 @@ class LocalGGUFServer:
                 llama_cpp.llama_backend_init()
 
                 # Check if llama.cpp was built with GPU support
-                if hasattr(llama_cpp, "LLAMA_SUPPORTS_GPU_OFFLOAD"):
-                    if llama_cpp.LLAMA_SUPPORTS_GPU_OFFLOAD:
-                        logger.info("llama.cpp built with GPU offload support")
-                        if not self.gpu_backend:
-                            self.gpu_backend = "llama_cpp_gpu"
+                if hasattr(llama_cpp, "LLAMA_SUPPORTS_GPU_OFFLOAD") and llama_cpp.LLAMA_SUPPORTS_GPU_OFFLOAD:
+                    logger.info("llama.cpp built with GPU offload support")
+                    if not self.gpu_backend:
+                        self.gpu_backend = "llama_cpp_gpu"
             except Exception as e:
                 logger.debug(f"llama.cpp GPU detection failed: {e}")
 
@@ -216,13 +215,7 @@ class LocalGGUFServer:
         cpu_count = multiprocessing.cpu_count()
 
         # If Intel GPU is available, use fewer CPU threads to avoid contention
-        if self.gpu_backend:
-            # Use half the CPU cores when GPU is available
-            optimal = max(1, cpu_count // 2)
-        else:
-            # Use most CPU cores when no GPU
-            optimal = max(1, cpu_count - 1)
-
+        optimal = max(1, cpu_count // 2) if self.gpu_backend else max(1, cpu_count - 1)
         # Respect environment variable if set
         if "OMP_NUM_THREADS" in os.environ:
             try:
@@ -230,7 +223,9 @@ class LocalGGUFServer:
             except ValueError as e:
                 self.logger.error("Value error in local_gguf_server: %s", e)
 
-        logger.debug(f"Using {optimal} threads (CPU count: {cpu_count}, GPU: {bool(self.gpu_backend)})")
+        logger.debug(
+            f"Using {optimal} threads (CPU count: {cpu_count}, GPU: {bool(self.gpu_backend)})"
+        )
         return optimal
 
     def can_run(self) -> bool:
@@ -279,7 +274,9 @@ class LocalGGUFServer:
             if self.gpu_backend and kwargs.get("auto_gpu", True):
                 # Try to offload all layers to GPU by default
                 auto_gpu_layers = kwargs.get("gpu_layers", -1)  # -1 means all layers
-                logger.info(f"Auto-detected Intel GPU, will attempt to offload {auto_gpu_layers} layers")
+                logger.info(
+                    f"Auto-detected Intel GPU, will attempt to offload {auto_gpu_layers} layers"
+                )
 
             # Default parameters for model loading
             default_params = {
@@ -299,25 +296,19 @@ class LocalGGUFServer:
 
             # Add Intel GPU specific parameters if available
             if self.gpu_backend == "llama_cpp_gpu":
-                default_params.update(
-                    {
-                        "main_gpu": kwargs.get("main_gpu", 0),
-                        "tensor_split": kwargs.get("tensor_split"),
-                        "mul_mat_q": kwargs.get("mul_mat_q", True),
-                    },
-                )
-            elif self.gpu_backend == "ipex" and HAS_INTEL_GPU:
-                # Apply IPEX optimizations if using Intel GPU
-                logger.info("Applying Intel GPU optimizations via IPEX")
-                # These are hypothetical IPEX-specific parameters for llama.cpp
-                # In reality, llama.cpp might need to be built with Intel GPU support
-                default_params.update(
-                    {
-                        "gpu_backend": "intel",
-                        "use_fp16": True,
-                        "optimize_for_intel": True,
-                    },
-                )
+                default_params |= {
+                    "main_gpu": kwargs.get("main_gpu", 0),
+                    "tensor_split": kwargs.get("tensor_split"),
+                    "mul_mat_q": kwargs.get("mul_mat_q", True),
+                }
+            elif self.gpu_backend == "xpu" and HAS_INTEL_GPU:
+                # Apply XPU optimizations if using Intel GPU
+                logger.info("Applying Intel GPU optimizations via native PyTorch XPU")
+                # Note: llama.cpp needs to be built with Intel GPU support
+                default_params |= {
+                    "gpu_backend": "intel",
+                    "use_fp16": True,
+                }
 
             # Filter out None values
             model_params = {k: v for k, v in default_params.items() if v is not None}
@@ -607,7 +598,9 @@ class LocalGGUFServer:
         prompt_parts.append("Assistant:")
         return "\n\n".join(prompt_parts)
 
-    def _complete_response(self, prompt: str, max_tokens: int, temperature: float, top_p: float, stop: list[str]) -> dict[str, Any]:
+    def _complete_response(
+        self, prompt: str, max_tokens: int, temperature: float, top_p: float, stop: list[str]
+    ) -> dict[str, Any]:
         """Generate a complete response."""
         try:
             # Generate completion
@@ -651,7 +644,9 @@ class LocalGGUFServer:
             logger.error(f"Response generation error: {e}")
             raise
 
-    def _stream_response(self, prompt: str, max_tokens: int, temperature: float, top_p: float, stop: list[str]) -> object:
+    def _stream_response(
+        self, prompt: str, max_tokens: int, temperature: float, top_p: float, stop: list[str]
+    ) -> object:
         """Generate a streaming response.
 
         Args:
@@ -775,7 +770,9 @@ class GGUFModelManager:
                             Defaults to ~/.intellicrack/models if not provided.
 
         """
-        self.models_directory = Path(models_directory) if models_directory else Path.home() / ".intellicrack" / "models"
+        self.models_directory = (
+            Path(models_directory) if models_directory else Path.home() / ".intellicrack" / "models"
+        )
         self.models_directory.mkdir(parents=True, exist_ok=True)
 
         self.server = LocalGGUFServer()

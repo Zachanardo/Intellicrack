@@ -32,6 +32,7 @@ from typing import Any, Optional
 
 from intellicrack.utils.logger import logger
 
+
 # PDFKit availability detection and import handling
 try:
     import pdfkit
@@ -72,11 +73,16 @@ except ImportError as e:
             self.objects: list[dict[str, Any]] = []
             self.xref_table: list[int] = []
             self.pages: list[dict[str, Any]] = []
-            self.current_page: Optional[dict[str, Any]] = None
+            self.current_page: dict[str, Any] | None = None
             self.fonts: dict[str, Any] = {}
             self.images: dict[str, Any] = {}
 
-        def create_pdf(self, content: str, output_path: Optional[str] = None, options: Optional[dict[str, Any]] = None) -> bytes | bool:
+        def create_pdf(
+            self,
+            content: str,
+            output_path: str | None = None,
+            options: dict[str, Any] | None = None,
+        ) -> bytes | bool:
             """Create PDF from content.
 
             Converts string or HTML content into a PDF document. Supports both
@@ -103,7 +109,9 @@ except ImportError as e:
             self._add_object({"Type": "/Pages", "Kids": [], "Count": 0})
 
             # Create font object
-            font_obj = self._add_object({"Type": "/Font", "Subtype": "/Type1", "BaseFont": "/Helvetica"})
+            font_obj = self._add_object(
+                {"Type": "/Font", "Subtype": "/Type1", "BaseFont": "/Helvetica"}
+            )
 
             # Process HTML content
             if content.startswith("<"):
@@ -125,9 +133,6 @@ except ImportError as e:
             pdf_data = self._generate_pdf()
 
             if output_path:
-                if not output_path:
-                    # Return bytes
-                    return pdf_data
                 # Write to file
                 with open(output_path, "wb") as f:
                     f.write(pdf_data)
@@ -244,7 +249,7 @@ except ImportError as e:
             if current_page:
                 pages.append("\n".join(current_page))
 
-            return pages if pages else [""]
+            return pages or [""]
 
         def _text_to_pdf_content(self, text: str) -> list[str]:
             """Convert plain text to PDF content.
@@ -274,7 +279,7 @@ except ImportError as e:
             if current_page:
                 pages.append("\n".join(current_page))
 
-            return pages if pages else [""]
+            return pages or [""]
 
         def _generate_pdf(self) -> bytes:
             """Generate the final PDF file.
@@ -345,19 +350,19 @@ except ImportError as e:
                 String representation in PDF dictionary format.
 
             """
-            if isinstance(d, dict):
-                items: list[str] = []
-                for key, value in d.items():
-                    if isinstance(value, dict):
-                        items.append(f"/{key} {self._dict_to_pdf(value)}")
-                    elif isinstance(value, list):
-                        items.append(f"/{key} [{' '.join(str(v) for v in value)}]")
-                    elif key.startswith("/") or key in {"Type", "Subtype", "BaseFont"}:
-                        items.append(f"/{key} {value}")
-                    else:
-                        items.append(f"/{key} {value}")
-                return f"<< {' '.join(items)} >>"
-            return str(d)
+            if not isinstance(d, dict):
+                return str(d)
+            items: list[str] = []
+            for key, value in d.items():
+                if isinstance(value, dict):
+                    items.append(f"/{key} {self._dict_to_pdf(value)}")
+                elif isinstance(value, list):
+                    items.append(f"/{key} [{' '.join(str(v) for v in value)}]")
+                elif key.startswith("/") or key in {"Type", "Subtype", "BaseFont"}:
+                    items.append(f"/{key} {value}")
+                else:
+                    items.append(f"/{key} {value}")
+            return f"<< {' '.join(items)} >>"
 
     class PDFOptions:
         """PDF generation options.
@@ -366,7 +371,7 @@ except ImportError as e:
         margins, and rendering options for compatibility with pdfkit API.
         """
 
-        def __init__(self, options: Optional[dict[str, Any]] = None) -> None:
+        def __init__(self, options: dict[str, Any] | None = None) -> None:
             """Initialize options.
 
             Sets default PDF generation options and applies user-provided overrides.
@@ -397,7 +402,7 @@ except ImportError as e:
         generation. Provides Windows and Unix path detection.
         """
 
-        def __init__(self, wkhtmltopdf: Optional[str] = None) -> None:
+        def __init__(self, wkhtmltopdf: str | None = None) -> None:
             """Initialize configuration.
 
             Configures PDF generator with wkhtmltopdf executable path,
@@ -407,7 +412,7 @@ except ImportError as e:
                 wkhtmltopdf: Optional explicit path to wkhtmltopdf executable.
 
             """
-            self.wkhtmltopdf: Optional[str] = wkhtmltopdf
+            self.wkhtmltopdf: str | None = wkhtmltopdf
 
             # Try to find wkhtmltopdf
             if not self.wkhtmltopdf:
@@ -427,7 +432,15 @@ except ImportError as e:
     # Global PDF generator instance
     _pdf_generator = PDFGenerator()
 
-    def from_string(input: str, output_path: Optional[str] = None, options: Optional[dict[str, Any]] = None, toc: Optional[bool] = None, cover: Optional[str] = None, configuration: Optional[PDFConfiguration] = None, cover_first: bool = False) -> bytes | bool:
+    def from_string(
+        input: str,
+        output_path: str | None = None,
+        options: dict[str, Any] | None = None,
+        toc: bool | None = None,
+        cover: str | None = None,
+        configuration: PDFConfiguration | None = None,
+        cover_first: bool = False,
+    ) -> bytes | bool:
         """Generate PDF from string.
 
         Converts HTML or plain text string into a PDF document. Provides
@@ -451,18 +464,24 @@ except ImportError as e:
             return _pdf_generator.create_pdf(input, output_path, options)
         except Exception as e:
             logger.error("PDF generation failed: %s", e)
-            if output_path and output_path:
+            if output_path:
                 # Create minimal PDF file
                 minimal_pdf = b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Resources<</Font<</F1<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>>>>>Contents 4 0 R>>endobj 4 0 obj<</Length 44>>stream\nBT /F1 12 Tf 50 750 Td (Error) Tj ET\nendstream endobj xref\n0 5\n0000000000 65535 f\n0000000009 00000 n\n0000000058 00000 n\n0000000115 00000 n\n0000000274 00000 n\ntrailer<</Size 5/Root 1 0 R>>startxref\n344\n%%EOF"
 
-                if not output_path:
-                    return minimal_pdf
                 with open(output_path, "wb") as f:
                     f.write(minimal_pdf)
                 return True
             return False
 
-    def from_url(url: str, output_path: Optional[str] = None, options: Optional[dict[str, Any]] = None, toc: Optional[bool] = None, cover: Optional[str] = None, configuration: Optional[PDFConfiguration] = None, cover_first: bool = False) -> bytes | bool:
+    def from_url(
+        url: str,
+        output_path: str | None = None,
+        options: dict[str, Any] | None = None,
+        toc: bool | None = None,
+        cover: str | None = None,
+        configuration: PDFConfiguration | None = None,
+        cover_first: bool = False,
+    ) -> bytes | bool:
         """Generate PDF from URL.
 
         Fetches HTML content from a URL and converts it to PDF. Provides
@@ -491,10 +510,24 @@ except ImportError as e:
         except Exception as e:
             logger.error("Failed to fetch URL %s: %s", url, e)
             return from_string(
-                f"<h1>Error</h1><p>Failed to fetch URL: {url}</p>", output_path, options, toc, cover, configuration, cover_first,
+                f"<h1>Error</h1><p>Failed to fetch URL: {url}</p>",
+                output_path,
+                options,
+                toc,
+                cover,
+                configuration,
+                cover_first,
             )
 
-    def from_file(input: str, output_path: Optional[str] = None, options: Optional[dict[str, Any]] = None, toc: Optional[bool] = None, cover: Optional[str] = None, configuration: Optional[PDFConfiguration] = None, cover_first: bool = False) -> bytes | bool:
+    def from_file(
+        input: str,
+        output_path: str | None = None,
+        options: dict[str, Any] | None = None,
+        toc: bool | None = None,
+        cover: str | None = None,
+        configuration: PDFConfiguration | None = None,
+        cover_first: bool = False,
+    ) -> bytes | bool:
         """Generate PDF from file.
 
         Reads HTML or text file and converts it to PDF. Provides pdfkit
@@ -517,11 +550,19 @@ except ImportError as e:
             # Read file content
             with open(input, encoding="utf-8") as f:
                 content = f.read()
-            return from_string(content, output_path, options, toc, cover, configuration, cover_first)
+            return from_string(
+                content, output_path, options, toc, cover, configuration, cover_first
+            )
         except Exception as e:
             logger.error("Failed to read file %s: %s", input, e)
             return from_string(
-                f"<h1>Error</h1><p>Failed to read file: {input}</p>", output_path, options, toc, cover, configuration, cover_first,
+                f"<h1>Error</h1><p>Failed to read file: {input}</p>",
+                output_path,
+                options,
+                toc,
+                cover,
+                configuration,
+                cover_first,
             )
 
     def configuration(**kwargs: str) -> PDFConfiguration:
@@ -546,7 +587,7 @@ except ImportError as e:
         text, lines, rectangles, and circles. Used for advanced report layouts.
         """
 
-        def __init__(self, filename: Optional[str] = None) -> None:
+        def __init__(self, filename: str | None = None) -> None:
             """Initialize canvas.
 
             Sets up a PDF canvas with default page dimensions and drawing state.
@@ -555,7 +596,7 @@ except ImportError as e:
                 filename: Optional file path to save PDF. If None, returns bytes.
 
             """
-            self.filename: Optional[str] = filename
+            self.filename: str | None = filename
             self.pages: list[list[dict[str, Any]]] = []
             self.current_page: list[dict[str, Any]] = []
             self.current_x: int = 50
@@ -589,7 +630,16 @@ except ImportError as e:
                 text: Text string to draw.
 
             """
-            self.current_page.append({"type": "text", "x": x, "y": y, "text": text, "font": self.font_name, "size": self.font_size})
+            self.current_page.append(
+                {
+                    "type": "text",
+                    "x": x,
+                    "y": y,
+                    "text": text,
+                    "font": self.font_name,
+                    "size": self.font_size,
+                }
+            )
 
         def drawCentredString(self, x: int, y: int, text: str) -> None:
             """Draw centered string.
@@ -635,7 +685,9 @@ except ImportError as e:
             """
             self.current_page.append({"type": "line", "x1": x1, "y1": y1, "x2": x2, "y2": y2})
 
-        def rect(self, x: int, y: int, width: int, height: int, stroke: int = 1, fill: int = 0) -> None:
+        def rect(
+            self, x: int, y: int, width: int, height: int, stroke: int = 1, fill: int = 0
+        ) -> None:
             """Draw rectangle.
 
             Adds a rectangle to the current page.
@@ -649,7 +701,17 @@ except ImportError as e:
                 fill: Whether to fill the rectangle (1 for yes, 0 for no).
 
             """
-            self.current_page.append({"type": "rect", "x": x, "y": y, "width": width, "height": height, "stroke": stroke, "fill": fill})
+            self.current_page.append(
+                {
+                    "type": "rect",
+                    "x": x,
+                    "y": y,
+                    "width": width,
+                    "height": height,
+                    "stroke": stroke,
+                    "fill": fill,
+                }
+            )
 
         def circle(self, x: int, y: int, radius: int, stroke: int = 1, fill: int = 0) -> None:
             """Draw circle.
@@ -664,7 +726,9 @@ except ImportError as e:
                 fill: Whether to fill the circle (1 for yes, 0 for no).
 
             """
-            self.current_page.append({"type": "circle", "x": x, "y": y, "radius": radius, "stroke": stroke, "fill": fill})
+            self.current_page.append(
+                {"type": "circle", "x": x, "y": y, "radius": radius, "stroke": stroke, "fill": fill}
+            )
 
         def showPage(self) -> None:
             """Start new page.
@@ -695,18 +759,15 @@ except ImportError as e:
             # Convert pages to text content
             all_content: list[str] = []
             for page in self.pages:
-                page_text: list[str] = []
-                for item in page:
-                    if item["type"] == "text":
-                        page_text.append(item["text"])
+                page_text: list[str] = [
+                    item["text"] for item in page if item["type"] == "text"
+                ]
                 all_content.append("\n".join(page_text))
 
-            # Create PDF
-            if self.filename:
-                pdf_gen.create_pdf("\n\n".join(all_content), self.filename)
-                return None
-            else:
+            if not self.filename:
                 return pdf_gen.create_pdf("\n\n".join(all_content), False)
+            pdf_gen.create_pdf("\n\n".join(all_content), self.filename)
+            return None
 
     class PDFDocument:
         """High-level PDF document creation.
@@ -781,7 +842,7 @@ except ImportError as e:
             """
             self.keywords.append(keyword)
 
-        def generate(self, output_path: Optional[str] = None) -> bytes | bool:
+        def generate(self, output_path: str | None = None) -> bytes | bool:
             """Generate PDF document.
 
             Converts the document structure to HTML and generates a PDF
@@ -822,7 +883,9 @@ except ImportError as e:
         from story elements (paragraphs, tables, images, etc.).
         """
 
-        def __init__(self, filename: str, pagesize: tuple[int, int] = (612, 792), **kwargs: str) -> None:
+        def __init__(
+            self, filename: str, pagesize: tuple[int, int] = (612, 792), **kwargs: str
+        ) -> None:
             """Initialize template.
 
             Sets up a document template with filename and page dimensions.
@@ -870,7 +933,7 @@ except ImportError as e:
         Represents a text paragraph in a PDF document with optional style.
         """
 
-        def __init__(self, text: str, style: Optional[dict[str, Any]] = None) -> None:
+        def __init__(self, text: str, style: dict[str, Any] | None = None) -> None:
             """Initialize paragraph.
 
             Creates a paragraph with text content and optional styling.
@@ -881,7 +944,7 @@ except ImportError as e:
 
             """
             self.text: str = text
-            self.style: Optional[dict[str, Any]] = style
+            self.style: dict[str, Any] | None = style
 
         def to_html(self) -> str:
             """Convert to HTML.
@@ -898,7 +961,12 @@ except ImportError as e:
         Represents a tabular data structure in a PDF document.
         """
 
-        def __init__(self, data: list[list[Any]], colWidths: Optional[list[int]] = None, rowHeights: Optional[list[int]] = None) -> None:
+        def __init__(
+            self,
+            data: list[list[Any]],
+            colWidths: list[int] | None = None,
+            rowHeights: list[int] | None = None,
+        ) -> None:
             """Initialize table.
 
             Creates a table with data and optional column/row sizing.
@@ -910,8 +978,8 @@ except ImportError as e:
 
             """
             self.data: list[list[Any]] = data
-            self.colWidths: Optional[list[int]] = colWidths
-            self.rowHeights: Optional[list[int]] = rowHeights
+            self.colWidths: list[int] | None = colWidths
+            self.rowHeights: list[int] | None = rowHeights
 
         def to_html(self) -> str:
             """Convert to HTML.
@@ -935,7 +1003,9 @@ except ImportError as e:
         Represents an image embedded in a PDF document.
         """
 
-        def __init__(self, filename: str, width: Optional[int] = None, height: Optional[int] = None) -> None:
+        def __init__(
+            self, filename: str, width: int | None = None, height: int | None = None
+        ) -> None:
             """Initialize image.
 
             Creates an image element with optional dimensions.
@@ -947,8 +1017,8 @@ except ImportError as e:
 
             """
             self.filename: str = filename
-            self.width: Optional[int] = width
-            self.height: Optional[int] = height
+            self.width: int | None = width
+            self.height: int | None = height
 
         def to_html(self) -> str:
             """Convert to HTML.
@@ -1017,25 +1087,21 @@ except ImportError as e:
 
 # Export all pdfkit objects and availability flag
 __all__ = [
-    # Availability flags
     "HAS_PDFKIT",
+    "Image",
+    "PDFCanvas",
+    "PDFConfiguration",
+    "PDFDocument",
     "PDFKIT_AVAILABLE",
     "PDFKIT_VERSION",
-    # Main module
-    "pdfkit",
-    # Functions
+    "PDFOptions",
+    "PageBreak",
+    "Paragraph",
+    "SimpleDocTemplate",
+    "Table",
+    "configuration",
+    "from_file",
     "from_string",
     "from_url",
-    "from_file",
-    "configuration",
-    # Additional classes for advanced PDF generation
-    "PDFCanvas",
-    "PDFDocument",
-    "SimpleDocTemplate",
-    "Paragraph",
-    "Table",
-    "Image",
-    "PageBreak",
-    "PDFOptions",
-    "PDFConfiguration",
+    "pdfkit",
 ]

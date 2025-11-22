@@ -25,6 +25,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Any
 
+
 try:
     import r2pipe
 except ImportError:
@@ -136,7 +137,9 @@ class R2GraphGenerator:
             self.logger.error("R2 session not initialized")
             return GraphData()
 
-        graph_data = GraphData(metadata={"type": "control_flow", "function": function_name, "binary": self.binary_path})
+        graph_data = GraphData(
+            metadata={"type": "control_flow", "function": function_name, "binary": self.binary_path}
+        )
 
         try:
             # Seek to function
@@ -157,7 +160,11 @@ class R2GraphGenerator:
                     type="basic_block",
                     address=addr,
                     size=size,
-                    attributes={"ninstr": ninstr, "traced": block.get("traced", False), "colorize": block.get("colorize", 0)},
+                    attributes={
+                        "ninstr": ninstr,
+                        "traced": block.get("traced", False),
+                        "colorize": block.get("colorize", 0),
+                    },
                 )
 
                 # Set color based on block type
@@ -178,13 +185,27 @@ class R2GraphGenerator:
                 # Jump edge
                 if block.get("jump", 0) > 0:
                     target_id = f"bb_{hex(block['jump'])}"
-                    edge = GraphEdge(source=source_id, target=target_id, type="jump", label="jmp", color="#2ECC71", style="solid")
+                    edge = GraphEdge(
+                        source=source_id,
+                        target=target_id,
+                        type="jump",
+                        label="jmp",
+                        color="#2ECC71",
+                        style="solid",
+                    )
                     graph_data.edges.append(edge)
 
                 # Fail edge (conditional)
                 if block.get("fail", 0) > 0:
                     target_id = f"bb_{hex(block['fail'])}"
-                    edge = GraphEdge(source=source_id, target=target_id, type="conditional", label="fail", color="#E74C3C", style="dashed")
+                    edge = GraphEdge(
+                        source=source_id,
+                        target=target_id,
+                        type="conditional",
+                        label="fail",
+                        color="#E74C3C",
+                        style="dashed",
+                    )
                     graph_data.edges.append(edge)
 
                 # Switch cases
@@ -200,7 +221,9 @@ class R2GraphGenerator:
                     )
                     graph_data.edges.append(edge)
 
-            self.logger.info(f"Generated CFG with {len(graph_data.nodes)} blocks and {len(graph_data.edges)} edges for {function_name}")
+            self.logger.info(
+                f"Generated CFG with {len(graph_data.nodes)} blocks and {len(graph_data.edges)} edges for {function_name}"
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to generate CFG: {e}")
@@ -221,7 +244,9 @@ class R2GraphGenerator:
             self.logger.error("R2 session not initialized")
             return GraphData()
 
-        graph_data = GraphData(metadata={"type": "call_graph", "max_depth": max_depth, "binary": self.binary_path})
+        graph_data = GraphData(
+            metadata={"type": "call_graph", "max_depth": max_depth, "binary": self.binary_path}
+        )
 
         try:
             # Get all functions
@@ -269,12 +294,19 @@ class R2GraphGenerator:
 
                 for call in calls:
                     if call.get("type", "") == "call":
-                        target = call.get("ref", "")
-                        if target:
-                            edge = GraphEdge(source=name, target=target, type="call", color="#34495E", style="solid")
+                        if target := call.get("ref", ""):
+                            edge = GraphEdge(
+                                source=name,
+                                target=target,
+                                type="call",
+                                color="#34495E",
+                                style="solid",
+                            )
                             graph_data.edges.append(edge)
 
-            self.logger.info(f"Generated call graph with {len(graph_data.nodes)} functions and {len(graph_data.edges)} calls")
+            self.logger.info(
+                f"Generated call graph with {len(graph_data.nodes)} functions and {len(graph_data.edges)} calls"
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to generate call graph: {e}")
@@ -295,12 +327,18 @@ class R2GraphGenerator:
             self.logger.error("R2 session not initialized")
             return GraphData()
 
-        graph_data = GraphData(metadata={"type": "xref_graph", "address": address, "binary": self.binary_path})
+        graph_data = GraphData(
+            metadata={"type": "xref_graph", "address": address, "binary": self.binary_path}
+        )
 
         try:
             # Create central node
             central_node = GraphNode(
-                id=f"addr_{hex(address)}", label=f"Address\n{hex(address)}", type="address", address=address, color="#E74C3C",
+                id=f"addr_{hex(address)}",
+                label=f"Address\n{hex(address)}",
+                type="address",
+                address=address,
+                color="#E74C3C",
             )
             graph_data.nodes.append(central_node)
 
@@ -314,13 +352,24 @@ class R2GraphGenerator:
                 func_name = xref.get("fcn_name", f"sub_{hex(from_addr)}")
 
                 node_id = f"from_{hex(from_addr)}"
-                if not any(n.id == node_id for n in graph_data.nodes):
+                if all(n.id != node_id for n in graph_data.nodes):
                     node = GraphNode(
-                        id=node_id, label=f"{func_name}\n@ {hex(from_addr)}", type="reference_from", address=from_addr, color="#3498DB",
+                        id=node_id,
+                        label=f"{func_name}\n@ {hex(from_addr)}",
+                        type="reference_from",
+                        address=from_addr,
+                        color="#3498DB",
                     )
                     graph_data.nodes.append(node)
 
-                edge = GraphEdge(source=node_id, target=central_node.id, type=xref_type, label=xref_type, color="#3498DB", style="dashed")
+                edge = GraphEdge(
+                    source=node_id,
+                    target=central_node.id,
+                    type=xref_type,
+                    label=xref_type,
+                    color="#3498DB",
+                    style="dashed",
+                )
                 graph_data.edges.append(edge)
 
             # Get cross-references from this address
@@ -331,14 +380,29 @@ class R2GraphGenerator:
                 xref_type = xref.get("type", "")
 
                 node_id = f"to_{hex(to_addr)}"
-                if not any(n.id == node_id for n in graph_data.nodes):
-                    node = GraphNode(id=node_id, label=f"Target\n@ {hex(to_addr)}", type="reference_to", address=to_addr, color="#2ECC71")
+                if all(n.id != node_id for n in graph_data.nodes):
+                    node = GraphNode(
+                        id=node_id,
+                        label=f"Target\n@ {hex(to_addr)}",
+                        type="reference_to",
+                        address=to_addr,
+                        color="#2ECC71",
+                    )
                     graph_data.nodes.append(node)
 
-                edge = GraphEdge(source=central_node.id, target=node_id, type=xref_type, label=xref_type, color="#2ECC71", style="solid")
+                edge = GraphEdge(
+                    source=central_node.id,
+                    target=node_id,
+                    type=xref_type,
+                    label=xref_type,
+                    color="#2ECC71",
+                    style="solid",
+                )
                 graph_data.edges.append(edge)
 
-            self.logger.info(f"Generated xref graph with {len(graph_data.nodes)} nodes and {len(graph_data.edges)} references")
+            self.logger.info(
+                f"Generated xref graph with {len(graph_data.nodes)} nodes and {len(graph_data.edges)} references"
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to generate xref graph: {e}")
@@ -360,7 +424,12 @@ class R2GraphGenerator:
 
         try:
             # Create main binary node
-            main_node = GraphNode(id="main_binary", label=os.path.basename(self.binary_path), type="binary", color="#E74C3C")
+            main_node = GraphNode(
+                id="main_binary",
+                label=os.path.basename(self.binary_path),
+                type="binary",
+                color="#E74C3C",
+            )
             graph_data.nodes.append(main_node)
 
             # Get imports
@@ -398,8 +467,7 @@ class R2GraphGenerator:
 
                 # Create nodes for important imports
                 for imp in lib_imports[:10]:  # Limit to first 10 to avoid clutter
-                    func_name = imp.get("name", "")
-                    if func_name:
+                    if func_name := imp.get("name", ""):
                         func_node = GraphNode(
                             id=f"import_{lib}_{func_name}",
                             label=func_name,
@@ -409,10 +477,18 @@ class R2GraphGenerator:
                         )
                         graph_data.nodes.append(func_node)
 
-                        edge = GraphEdge(source=lib_node.id, target=func_node.id, type="provides", color="#2ECC71", style="dotted")
+                        edge = GraphEdge(
+                            source=lib_node.id,
+                            target=func_node.id,
+                            type="provides",
+                            color="#2ECC71",
+                            style="dotted",
+                        )
                         graph_data.edges.append(edge)
 
-            self.logger.info(f"Generated import dependency graph with {len(graph_data.nodes)} nodes")
+            self.logger.info(
+                f"Generated import dependency graph with {len(graph_data.nodes)} nodes"
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to generate import dependency graph: {e}")
@@ -436,7 +512,9 @@ class R2GraphGenerator:
                 # Write nodes
                 for node in graph_data.nodes:
                     label = node.label.replace("\n", "\\n")
-                    f.write(f'    "{node.id}" [label="{label}", fillcolor="{node.color}", style=filled];\n')
+                    f.write(
+                        f'    "{node.id}" [label="{label}", fillcolor="{node.color}", style=filled];\n'
+                    )
 
                 f.write("\n")
 
@@ -444,7 +522,9 @@ class R2GraphGenerator:
                 for edge in graph_data.edges:
                     style_attr = f', style="{edge.style}"' if edge.style != "solid" else ""
                     label_attr = f', label="{edge.label}"' if edge.label else ""
-                    f.write(f'    "{edge.source}" -> "{edge.target}" [color="{edge.color}"{style_attr}{label_attr}];\n')
+                    f.write(
+                        f'    "{edge.source}" -> "{edge.target}" [color="{edge.color}"{style_attr}{label_attr}];\n'
+                    )
 
                 f.write("}\n")
 
@@ -453,7 +533,9 @@ class R2GraphGenerator:
         except Exception as e:
             self.logger.error(f"Failed to export to DOT: {e}")
 
-    def visualize_graph(self, graph_data: GraphData, output_path: str | None = None, layout: str = "spring") -> bool:
+    def visualize_graph(
+        self, graph_data: GraphData, output_path: str | None = None, layout: str = "spring"
+    ) -> bool:
         """Visualize graph using matplotlib/networkx.
 
         Args:
@@ -479,7 +561,9 @@ class R2GraphGenerator:
 
             # Add edges
             for edge in graph_data.edges:
-                G.add_edge(edge.source, edge.target, type=edge.type, label=edge.label, weight=edge.weight)
+                G.add_edge(
+                    edge.source, edge.target, type=edge.type, label=edge.label, weight=edge.weight
+                )
 
             # Calculate layout
             if layout == "spring":
@@ -495,7 +579,9 @@ class R2GraphGenerator:
 
             # Create figure
             plt.figure(figsize=(12, 8))
-            plt.title(f"{graph_data.metadata.get('type', 'Graph')} - {graph_data.metadata.get('binary', '')}")
+            plt.title(
+                f"{graph_data.metadata.get('type', 'Graph')} - {graph_data.metadata.get('binary', '')}"
+            )
 
             # Draw nodes
             node_colors = [graph_data.nodes[i].color for i in range(len(graph_data.nodes))]
@@ -503,7 +589,9 @@ class R2GraphGenerator:
 
             # Draw edges
             edge_colors = [e.color for e in graph_data.edges]
-            nx.draw_networkx_edges(G, pos, edge_color=edge_colors, arrows=True, arrowsize=20, alpha=0.6)
+            nx.draw_networkx_edges(
+                G, pos, edge_color=edge_colors, arrows=True, arrowsize=20, alpha=0.6
+            )
 
             # Draw labels
             labels = {node.id: node.label.split("\n")[0] for node in graph_data.nodes}

@@ -6,6 +6,7 @@ and extracts the first 40 samples to a verification file.
 
 import re
 
+
 with open("D:\\Intellicrack\\scanner_post_fix.txt", encoding="utf-8") as f:
     lines = f.readlines()
 

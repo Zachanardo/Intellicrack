@@ -33,6 +33,7 @@ from typing import Any
 
 from ..utils.logger import get_logger
 
+
 # Try to import GPU autoloader
 GPU_AUTOLOADER_AVAILABLE = False
 get_device = None
@@ -154,15 +155,7 @@ empty_cache = None
 gpu_autoloader = None
 
 try:
-    from ..utils.gpu_autoloader import (
-        empty_cache,
-        get_device,
-        get_gpu_info,
-        gpu_autoloader,
-        memory_allocated,
-        memory_reserved,
-        to_device,
-    )
+    from ..utils.gpu_autoloader import empty_cache, get_device, get_gpu_info, gpu_autoloader, memory_allocated, memory_reserved, to_device
 
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError:
@@ -341,8 +334,7 @@ class ModelCacheManager:
 
         # Check disk cache
         if self.enable_disk_cache and model_id in self.disk_index:
-            loaded = self._load_from_disk(model_id)
-            if loaded:
+            if loaded := self._load_from_disk(model_id):
                 return loaded
 
         # Load using provided function
@@ -416,7 +408,9 @@ class ModelCacheManager:
         memory_size = self._estimate_model_memory(model)
 
         # Check if we need to evict models
-        while self.current_memory_usage + memory_size > self.max_memory_bytes and len(self.cache) > 0:
+        while (
+            self.current_memory_usage + memory_size > self.max_memory_bytes and len(self.cache) > 0
+        ):
             self._evict_lru()
 
         # Detect device
@@ -652,11 +646,8 @@ class ModelCacheManager:
             Dictionary with cache statistics
 
         """
-        hit_rate = 0.0
         total_requests = self.stats["hits"] + self.stats["misses"]
-        if total_requests > 0:
-            hit_rate = self.stats["hits"] / total_requests
-
+        hit_rate = self.stats["hits"] / total_requests if total_requests > 0 else 0.0
         stats_dict = {
             "memory_cache": {
                 "entries": len(self.cache),
@@ -674,7 +665,11 @@ class ModelCacheManager:
                 "misses": self.stats["misses"],
                 "hit_rate": hit_rate,
                 "evictions": self.stats["evictions"],
-                "avg_load_time": (self.stats["total_load_time"] / self.stats["misses"] if self.stats["misses"] > 0 else 0),
+                "avg_load_time": (
+                    self.stats["total_load_time"] / self.stats["misses"]
+                    if self.stats["misses"] > 0
+                    else 0
+                ),
             },
         }
 
@@ -697,23 +692,19 @@ class ModelCacheManager:
             List of model information
 
         """
-        models = []
-
-        # Memory cache
-        for model_id, entry in self.cache.items():
-            models.append(
-                {
-                    "model_id": model_id,
-                    "location": "memory",
-                    "model_type": entry.model_type,
-                    "memory_size_mb": entry.memory_size / (1024 * 1024),
-                    "last_accessed": entry.last_accessed.isoformat(),
-                    "access_count": entry.access_count,
-                    "device": entry.device,
-                    "quantization": entry.quantization,
-                },
-            )
-
+        models = [
+            {
+                "model_id": model_id,
+                "location": "memory",
+                "model_type": entry.model_type,
+                "memory_size_mb": entry.memory_size / (1024 * 1024),
+                "last_accessed": entry.last_accessed.isoformat(),
+                "access_count": entry.access_count,
+                "device": entry.device,
+                "quantization": entry.quantization,
+            }
+            for model_id, entry in self.cache.items()
+        ]
         # Disk cache
         for model_id, info in self.disk_index.items():
             if model_id not in self.cache:

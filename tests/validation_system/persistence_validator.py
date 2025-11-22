@@ -34,7 +34,7 @@ class PersistenceTestResult:
     reboot_persistence: bool
     time_based_persistence: bool
     bypass_persistence_valid: bool
-    error_messages: List[str]
+    error_messages: list[str]
     timestamp: str = None
 
     def __post_init__(self):
@@ -219,7 +219,7 @@ class PersistenceValidator:
                                     })
                                     logger.info(f"Found registry persistence: {name} = {value}")
                                 i += 1
-                            except WindowsError:
+                            except OSError:
                                 break
                 except FileNotFoundError:
                     continue
@@ -532,7 +532,7 @@ class PersistenceValidator:
                                         })
                                         logger.info(f"Found time-related registry entry: {name} = {value}")
                                     i += 1
-                                except WindowsError:
+                                except OSError:
                                     break
                     except (FileNotFoundError, PermissionError):
                         continue
@@ -582,7 +582,7 @@ class PersistenceValidator:
 
         return result
 
-    def validate_persistence(self, binary_path: str, software_name: str) -> List[PersistenceTestResult]:
+    def validate_persistence(self, binary_path: str, software_name: str) -> list[PersistenceTestResult]:
         """
         Run all persistence validation tests for a software binary.
         """
@@ -605,7 +605,7 @@ class PersistenceValidator:
         logger.info(f"Completed full persistence validation for {software_name}")
         return results
 
-    def validate_all_persistence(self) -> List[PersistenceTestResult]:
+    def validate_all_persistence(self) -> list[PersistenceTestResult]:
         """
         Run persistence validation on all available binaries.
         """

@@ -20,6 +20,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import re
 from collections.abc import Callable
 
+
 """
 AI Response Parsing Utilities
 
@@ -60,9 +61,9 @@ class ResponseLineParser:
             if not line:
                 continue
 
-            # Detect section changes
-            detected_section = ResponseLineParser._detect_section(line, section_keywords)
-            if detected_section:
+            if detected_section := ResponseLineParser._detect_section(
+                line, section_keywords
+            ):
                 current_section = detected_section
                 continue
 
@@ -82,7 +83,9 @@ class ResponseLineParser:
 
     @staticmethod
     def parse_lines_with_categorization(
-        response: str, category_keywords: dict[str, list[str]], default_category: str = "other",
+        response: str,
+        category_keywords: dict[str, list[str]],
+        default_category: str = "other",
     ) -> dict[str, list[str]]:
         """Parse response lines and categorize them based on content.
 
@@ -106,19 +109,22 @@ class ResponseLineParser:
             if not line:
                 continue
 
-            # Find matching category
-            matched_category = default_category
-            for category, keywords in category_keywords.items():
-                if any(keyword.lower() in line.lower() for keyword in keywords):
-                    matched_category = category
-                    break
-
+            matched_category = next(
+                (
+                    category
+                    for category, keywords in category_keywords.items()
+                    if any(keyword.lower() in line.lower() for keyword in keywords)
+                ),
+                default_category,
+            )
             categories[matched_category].append(line)
 
         return categories
 
     @staticmethod
-    def extract_structured_content(response: str, patterns: list[str], section_separators: list[str] | None = None) -> list[dict[str, str]]:
+    def extract_structured_content(
+        response: str, patterns: list[str], section_separators: list[str] | None = None
+    ) -> list[dict[str, str]]:
         """Extract structured content using regex patterns.
 
         Args:
@@ -148,14 +154,13 @@ class ResponseLineParser:
 
             # Try to match patterns
             for i, pattern in enumerate(patterns):
-                match = re.search(pattern, line, re.IGNORECASE)
-                if match:
+                if match := re.search(pattern, line, re.IGNORECASE):
                     content = {
                         "pattern_index": i,
                         "section": current_section,
                         "line": line,
                         "match": match.group(),
-                        "groups": match.groups() if match.groups() else [],
+                        "groups": match.groups() or [],
                     }
                     extracted.append(content)
 
@@ -175,14 +180,19 @@ class ResponseLineParser:
         """
         line_lower = line.lower()
 
-        for section, keywords in section_keywords.items():
-            if any(keyword.lower() in line_lower for keyword in keywords):
-                return section
-
-        return None
+        return next(
+            (
+                section
+                for section, keywords in section_keywords.items()
+                if any(keyword.lower() in line_lower for keyword in keywords)
+            ),
+            None,
+        )
 
     @staticmethod
-    def clean_and_filter_lines(lines: list[str], min_length: int = 3, filter_patterns: list[str] | None = None) -> list[str]:
+    def clean_and_filter_lines(
+        lines: list[str], min_length: int = 3, filter_patterns: list[str] | None = None
+    ) -> list[str]:
         """Clean and filter lines based on criteria.
 
         Args:
@@ -205,11 +215,10 @@ class ResponseLineParser:
 
             # Apply filter patterns
             if filter_patterns:
-                skip_line = False
-                for pattern in filter_patterns:
-                    if re.search(pattern, line, re.IGNORECASE):
-                        skip_line = True
-                        break
+                skip_line = any(
+                    re.search(pattern, line, re.IGNORECASE)
+                    for pattern in filter_patterns
+                )
                 if skip_line:
                     continue
 

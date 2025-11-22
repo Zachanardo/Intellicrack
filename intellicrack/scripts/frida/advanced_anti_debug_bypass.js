@@ -893,8 +893,7 @@ const advancedAntiDebugBypass = {
         }
 
         const delta = value.sub(this.qpcBase);
-        const normalized = this.qpcBase.add(delta.mul(this.rdtscMultiplier));
-        return normalized;
+        return this.qpcBase.add(delta.mul(this.rdtscMultiplier));
     },
 
     installationSummary: function () {

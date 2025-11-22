@@ -23,6 +23,7 @@ from typing import Optional, Union
 
 from intellicrack.utils.logger import log_all_methods, logger
 
+
 logger.debug("PEfile handler module loaded")
 
 """
@@ -239,7 +240,7 @@ except ImportError as e:
     class Structure:
         """Base structure for PE components."""
 
-        def __init__(self, format_str: Optional[str] = None, name: Optional[str] = None) -> None:
+        def __init__(self, format_str: str | None = None, name: str | None = None) -> None:
             """Initialize structure.
 
             Args:
@@ -327,7 +328,9 @@ except ImportError as e:
     class FallbackPE:
         """Functional PE file parser implementation."""
 
-        def __init__(self, name: Optional[str] = None, data: Optional[bytes] = None, fast_load: Optional[bool] = None) -> None:
+        def __init__(
+            self, name: str | None = None, data: bytes | None = None, fast_load: bool | None = None
+        ) -> None:
             """Initialize PE parser.
 
             Args:
@@ -428,7 +431,7 @@ except ImportError as e:
             header = _FileHeaderImpl()
             data = self.__data__[offset : offset + 20]
 
-            header.Machine = struct.unpack("<H", data[0:2])[0]
+            header.Machine = struct.unpack("<H", data[:2])[0]
             header.NumberOfSections = struct.unpack("<H", data[2:4])[0]
             header.TimeDateStamp = struct.unpack("<I", data[4:8])[0]
             header.PointerToSymbolTable = struct.unpack("<I", data[8:12])[0]
@@ -455,7 +458,7 @@ except ImportError as e:
             header = _OptionalHeaderImpl()
             data = self.__data__[offset:]
 
-            header.Magic = struct.unpack("<H", data[0:2])[0]
+            header.Magic = struct.unpack("<H", data[:2])[0]
             header.MajorLinkerVersion = data[2]
             header.MinorLinkerVersion = data[3]
             header.SizeOfCode = struct.unpack("<I", data[4:8])[0]
@@ -520,7 +523,7 @@ except ImportError as e:
             header = _OptionalHeaderImpl()
             data = self.__data__[offset:]
 
-            header.Magic = struct.unpack("<H", data[0:2])[0]
+            header.Magic = struct.unpack("<H", data[:2])[0]
             header.MajorLinkerVersion = data[2]
             header.MinorLinkerVersion = data[3]
             header.SizeOfCode = struct.unpack("<I", data[4:8])[0]
@@ -626,10 +629,7 @@ except ImportError as e:
 
             # Parse import descriptors
             offset = import_offset
-            while True:
-                if offset + 20 > len(self.__data__):
-                    break
-
+            while not offset + 20 > len(self.__data__):
                 data = self.__data__[offset : offset + 20]
 
                 # Check for end of imports
@@ -640,22 +640,20 @@ except ImportError as e:
                     pass
 
                 import_desc = ImportDescriptor()
-                import_desc.OriginalFirstThunk = struct.unpack("<I", data[0:4])[0]
+                import_desc.OriginalFirstThunk = struct.unpack("<I", data[:4])[0]
                 import_desc.TimeDateStamp = struct.unpack("<I", data[4:8])[0]
                 import_desc.ForwarderChain = struct.unpack("<I", data[8:12])[0]
                 import_desc.Name = struct.unpack("<I", data[12:16])[0]
                 import_desc.FirstThunk = struct.unpack("<I", data[16:20])[0]
 
-                # Get DLL name
-                name_offset = self.get_offset_from_rva(import_desc.Name)
-                if name_offset:
+                if name_offset := self.get_offset_from_rva(import_desc.Name):
                     dll_name = self._get_string(name_offset)
                     import_desc.dll = dll_name
                     import_desc.imports = []
 
-                    # Parse imports from this DLL
-                    thunk_offset = self.get_offset_from_rva(import_desc.OriginalFirstThunk or import_desc.FirstThunk)
-                    if thunk_offset:
+                    if thunk_offset := self.get_offset_from_rva(
+                        import_desc.OriginalFirstThunk or import_desc.FirstThunk
+                    ):
                         self._parse_import_thunks(import_desc, thunk_offset)
 
                     self.DIRECTORY_ENTRY_IMPORT.append(import_desc)
@@ -673,10 +671,7 @@ except ImportError as e:
             is_64bit = self.OPTIONAL_HEADER.Magic == 0x20B
             thunk_size = 8 if is_64bit else 4
 
-            while True:
-                if offset + thunk_size > len(self.__data__):
-                    break
-
+            while not offset + thunk_size > len(self.__data__):
                 if is_64bit:
                     thunk = struct.unpack("<Q", self.__data__[offset : offset + 8])[0]
                     ordinal_flag = 0x8000000000000000
@@ -699,10 +694,11 @@ except ImportError as e:
                 else:
                     # Import by name
                     name_rva = thunk & 0x7FFFFFFF
-                    name_offset = self.get_offset_from_rva(name_rva)
-                    if name_offset:
+                    if name_offset := self.get_offset_from_rva(name_rva):
                         # Skip hint
-                        import_data.hint = struct.unpack("<H", self.__data__[name_offset : name_offset + 2])[0]
+                        import_data.hint = struct.unpack(
+                            "<H", self.__data__[name_offset : name_offset + 2]
+                        )[0]
                         import_data.name = self._get_string(name_offset + 2)
                         import_data.ordinal = None
 
@@ -734,7 +730,7 @@ except ImportError as e:
                 pass
 
             export = ExportDirectory()
-            export.Characteristics = struct.unpack("<I", data[0:4])[0]
+            export.Characteristics = struct.unpack("<I", data[:4])[0]
             export.TimeDateStamp = struct.unpack("<I", data[4:8])[0]
             export.MajorVersion = struct.unpack("<H", data[8:10])[0]
             export.MinorVersion = struct.unpack("<H", data[10:12])[0]
@@ -746,9 +742,7 @@ except ImportError as e:
             export.AddressOfNames = struct.unpack("<I", data[32:36])[0]
             export.AddressOfNameOrdinals = struct.unpack("<I", data[36:40])[0]
 
-            # Get DLL name
-            name_offset = self.get_offset_from_rva(export.Name)
-            if name_offset:
+            if name_offset := self.get_offset_from_rva(export.Name):
                 export.name = self._get_string(name_offset)
 
             export.symbols = []
@@ -756,8 +750,16 @@ except ImportError as e:
             # Parse exported functions
             if export.NumberOfFunctions > 0 and export.NumberOfFunctions < 65536:
                 func_offset = self.get_offset_from_rva(export.AddressOfFunctions)
-                name_offset = self.get_offset_from_rva(export.AddressOfNames) if export.NumberOfNames > 0 else None
-                ordinal_offset = self.get_offset_from_rva(export.AddressOfNameOrdinals) if export.NumberOfNames > 0 else None
+                name_offset = (
+                    self.get_offset_from_rva(export.AddressOfNames)
+                    if export.NumberOfNames > 0
+                    else None
+                )
+                ordinal_offset = (
+                    self.get_offset_from_rva(export.AddressOfNameOrdinals)
+                    if export.NumberOfNames > 0
+                    else None
+                )
 
                 # Build name to ordinal mapping
                 name_ordinals = {}
@@ -768,11 +770,14 @@ except ImportError as e:
                         if ordinal_offset + i * 2 + 2 > len(self.__data__):
                             break
 
-                        name_rva = struct.unpack("<I", self.__data__[name_offset + i * 4 : name_offset + i * 4 + 4])[0]
-                        ordinal = struct.unpack("<H", self.__data__[ordinal_offset + i * 2 : ordinal_offset + i * 2 + 2])[0]
+                        name_rva = struct.unpack(
+                            "<I", self.__data__[name_offset + i * 4 : name_offset + i * 4 + 4]
+                        )[0]
+                        ordinal = struct.unpack(
+                            "<H", self.__data__[ordinal_offset + i * 2 : ordinal_offset + i * 2 + 2]
+                        )[0]
 
-                        name_file_offset = self.get_offset_from_rva(name_rva)
-                        if name_file_offset:
+                        if name_file_offset := self.get_offset_from_rva(name_rva):
                             func_name = self._get_string(name_file_offset)
                             name_ordinals[ordinal] = func_name
 
@@ -782,9 +787,12 @@ except ImportError as e:
                         if func_offset + i * 4 + 4 > len(self.__data__):
                             break
 
-                        func_rva = struct.unpack("<I", self.__data__[func_offset + i * 4 : func_offset + i * 4 + 4])[0]
+                        func_rva = struct.unpack(
+                            "<I", self.__data__[func_offset + i * 4 : func_offset + i * 4 + 4]
+                        )[0]
 
                         if func_rva != 0:
+
 
                             class ExportSymbol:
                                 pass
@@ -796,9 +804,14 @@ except ImportError as e:
                             symbol.forwarder = None
 
                             # Check if it's a forwarder
-                            if export_dir.VirtualAddress <= func_rva < export_dir.VirtualAddress + export_dir.Size:
-                                forwarder_offset = self.get_offset_from_rva(func_rva)
-                                if forwarder_offset:
+                            if (
+                                export_dir.VirtualAddress
+                                <= func_rva
+                                < export_dir.VirtualAddress + export_dir.Size
+                            ):
+                                if forwarder_offset := self.get_offset_from_rva(
+                                    func_rva
+                                ):
                                     symbol.forwarder = self._get_string(forwarder_offset)
 
                             export.symbols.append(symbol)
@@ -832,7 +845,7 @@ except ImportError as e:
                 end = len(self.__data__)
             return self.__data__[offset:end].decode("ascii", errors="ignore")
 
-        def get_offset_from_rva(self, rva: int) -> Optional[int]:
+        def get_offset_from_rva(self, rva: int) -> int | None:
             """Convert RVA to file offset.
 
             Args:
@@ -842,12 +855,18 @@ except ImportError as e:
                 File offset corresponding to RVA, or None if RVA is not in any section.
 
             """
-            for section in self.sections:
-                if section.VirtualAddress <= rva < section.VirtualAddress + section.VirtualSize:
-                    return rva - section.VirtualAddress + section.PointerToRawData
-            return None
+            return next(
+                (
+                    rva - section.VirtualAddress + section.PointerToRawData
+                    for section in self.sections
+                    if section.VirtualAddress
+                    <= rva
+                    < section.VirtualAddress + section.VirtualSize
+                ),
+                None,
+            )
 
-        def get_rva_from_offset(self, offset: int) -> Optional[int]:
+        def get_rva_from_offset(self, offset: int) -> int | None:
             """Convert file offset to RVA.
 
             Args:
@@ -857,12 +876,20 @@ except ImportError as e:
                 Relative Virtual Address corresponding to file offset, or None if not in any section.
 
             """
-            for section in self.sections:
-                if section.PointerToRawData <= offset < section.PointerToRawData + section.SizeOfRawData:
-                    return offset - section.PointerToRawData + section.VirtualAddress
-            return None
+            return next(
+                (
+                    offset - section.PointerToRawData + section.VirtualAddress
+                    for section in self.sections
+                    if (
+                        section.PointerToRawData
+                        <= offset
+                        < section.PointerToRawData + section.SizeOfRawData
+                    )
+                ),
+                None,
+            )
 
-        def get_data(self, rva: int, length: int) -> Optional[bytes]:
+        def get_data(self, rva: int, length: int) -> bytes | None:
             """Get data at RVA.
 
             Args:
@@ -878,7 +905,7 @@ except ImportError as e:
                 return self.__data__[offset : offset + length]
             return None
 
-        def get_memory_mapped_image(self) -> Optional[bytes]:
+        def get_memory_mapped_image(self) -> bytes | None:
             """Get memory-mapped image.
 
             Returns:
@@ -933,7 +960,7 @@ except ImportError as e:
             imp_str = imp_str.rstrip(",")
             return hashlib.sha256(imp_str.encode()).hexdigest() if imp_str else ""
 
-        def get_rich_header_hash(self) -> Optional[str]:
+        def get_rich_header_hash(self) -> str | None:
             """Calculate Rich header hash.
 
             Returns:
@@ -989,7 +1016,10 @@ except ImportError as e:
 
             """
             if self.FILE_HEADER and self.FILE_HEADER.Characteristics:
-                return bool(self.FILE_HEADER.Characteristics & IMAGE_CHARACTERISTICS.IMAGE_FILE_EXECUTABLE_IMAGE)
+                return bool(
+                    self.FILE_HEADER.Characteristics
+                    & IMAGE_CHARACTERISTICS.IMAGE_FILE_EXECUTABLE_IMAGE
+                )
             return False
 
         def is_dll(self) -> bool:
@@ -1014,7 +1044,7 @@ except ImportError as e:
                 return self.OPTIONAL_HEADER.Subsystem == SUBSYSTEM_TYPE.IMAGE_SUBSYSTEM_NATIVE
             return False
 
-        def write(self, filename: Optional[str] = None) -> bytes:
+        def write(self, filename: str | None = None) -> bytes:
             """Write PE to file.
 
             Args:
@@ -1062,25 +1092,19 @@ except ImportError as e:
 
 # Export all pefile objects and availability flag
 __all__ = [
-    # Availability flags
+    "DEBUG_TYPE",
+    "DIRECTORY_ENTRY",
+    "DLL_CHARACTERISTICS",
     "HAS_PEFILE",
+    "IMAGE_CHARACTERISTICS",
+    "MACHINE_TYPE",
+    "PE",
     "PEFILE_AVAILABLE",
     "PEFILE_VERSION",
-    # Main module
-    "pefile",
-    # Main class
-    "PE",
-    # Exceptions
     "PEFormatError",
-    # Constants
-    "DIRECTORY_ENTRY",
-    "SECTION_CHARACTERISTICS",
-    "DLL_CHARACTERISTICS",
-    "MACHINE_TYPE",
-    "SUBSYSTEM_TYPE",
-    "IMAGE_CHARACTERISTICS",
-    "DEBUG_TYPE",
     "RESOURCE_TYPE",
-    # Structures
+    "SECTION_CHARACTERISTICS",
+    "SUBSYSTEM_TYPE",
     "Structure",
+    "pefile",
 ]

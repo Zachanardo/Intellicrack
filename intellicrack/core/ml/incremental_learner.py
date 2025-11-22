@@ -70,7 +70,12 @@ class IncrementalLearner:
     MIN_CONFIDENCE_FOR_AUTO_LEARNING = 0.85
     BUFFER_SIZE = 500
 
-    def __init__(self, classifier: ProtectionClassifier, buffer_path: Path | None = None, auto_retrain: bool = True) -> None:
+    def __init__(
+        self,
+        classifier: ProtectionClassifier,
+        buffer_path: Path | None = None,
+        auto_retrain: bool = True,
+    ) -> None:
         """Initialize incremental learner.
 
         Args:
@@ -128,13 +133,20 @@ class IncrementalLearner:
 
             self.sample_buffer.append(sample)
             self.logger.info(
-                "Added sample %s (protection: %s, confidence: %.2f, source: %s)", binary_path.name, protection_type, confidence, source,
+                "Added sample %s (protection: %s, confidence: %.2f, source: %s)",
+                binary_path.name,
+                protection_type,
+                confidence,
+                source,
             )
 
             self._save_buffer()
 
             if self.auto_retrain and len(self.sample_buffer) >= self.RETRAIN_THRESHOLD:
-                self.logger.info("Buffer reached threshold (%d samples), triggering retrain", len(self.sample_buffer))
+                self.logger.info(
+                    "Buffer reached threshold (%d samples), triggering retrain",
+                    len(self.sample_buffer),
+                )
                 self.retrain_incremental()
 
             return True
@@ -143,7 +155,9 @@ class IncrementalLearner:
             self.logger.error("Failed to add sample %s: %s", binary_path, e)
             return False
 
-    def retrain_incremental(self, use_all_history: bool = False, n_estimators: int = 200) -> dict[str, Any]:
+    def retrain_incremental(
+        self, use_all_history: bool = False, n_estimators: int = 200
+    ) -> dict[str, Any]:
         """Retrain model with buffered samples.
 
         Args:
@@ -158,9 +172,16 @@ class IncrementalLearner:
             self.logger.warning("No samples in buffer, skipping retrain")
             return {}
 
-        session = LearningSession(session_id=f"session_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}", start_time=datetime.now(UTC))
+        session = LearningSession(
+            session_id=f"session_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}",
+            start_time=datetime.now(UTC),
+        )
 
-        self.logger.info("Starting incremental learning session: %s (%d new samples)", session.session_id, len(self.sample_buffer))
+        self.logger.info(
+            "Starting incremental learning session: %s (%d new samples)",
+            session.session_id,
+            len(self.sample_buffer),
+        )
 
         high_confidence_samples = [s for s in self.sample_buffer if s.confidence >= 0.5]
 
@@ -177,14 +198,20 @@ class IncrementalLearner:
         if use_all_history:
             self.logger.info("Performing full retraining with historical data")
 
-        results = self.classifier.train(X=X_new, y=y_new, n_estimators=n_estimators, cross_validate=True)
+        results = self.classifier.train(
+            X=X_new, y=y_new, n_estimators=n_estimators, cross_validate=True
+        )
 
         session.new_accuracy = results.get("test_accuracy", 0.0)
         session.retrain_triggered = True
 
         self.learning_history.append(session)
 
-        self.logger.info("Incremental learning complete: accuracy=%.4f, samples=%d", session.new_accuracy, session.samples_added)
+        self.logger.info(
+            "Incremental learning complete: accuracy=%.4f, samples=%d",
+            session.new_accuracy,
+            session.samples_added,
+        )
 
         learned_samples = self.sample_buffer.copy()
         self.sample_buffer.clear()
@@ -231,7 +258,9 @@ class IncrementalLearner:
 
         return quality
 
-    def get_uncertain_predictions(self, min_uncertainty: float = 0.3, max_count: int = 20) -> list[tuple[Path, dict[str, Any]]]:
+    def get_uncertain_predictions(
+        self, min_uncertainty: float = 0.3, max_count: int = 20
+    ) -> list[tuple[Path, dict[str, Any]]]:
         """Identify samples where model is uncertain for active learning.
 
         Args:

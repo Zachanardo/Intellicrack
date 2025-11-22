@@ -13,6 +13,7 @@ the Free Software Foundation, either version 3 of the License, or
 
 import logging
 
+
 logger = logging.getLogger(__name__)
 
 __version__ = "1.0.0"
@@ -74,11 +75,16 @@ real_time_dashboard = property(lambda self: _lazy_import_real_time_dashboard())
 # For backwards compatibility, expose the classes and functions
 def __getattr__(name: str) -> object:
     """Lazy attribute access for dashboard components."""
-    if name in ("DashboardLayout", "DashboardManager", "DataSource", "DataSourceType", "create_dashboard_manager"):
-        dm = _lazy_import_dashboard_manager()
-        if dm:
+    if name in {
+        "DashboardLayout",
+        "DashboardManager",
+        "DataSource",
+        "DataSourceType",
+        "create_dashboard_manager",
+    }:
+        if dm := _lazy_import_dashboard_manager():
             return getattr(dm, name)
-    elif name in (
+    elif name in {
         "DashboardWidget",
         "GaugeWidget",
         "HeatmapWidget",
@@ -92,42 +98,43 @@ def __getattr__(name: str) -> object:
         "WidgetFactory",
         "WidgetType",
         "create_widget",
-    ):
-        dw = _lazy_import_dashboard_widgets()
-        if dw:
+    }:
+        if dw := _lazy_import_dashboard_widgets():
             return getattr(dw, name)
-    elif name in ("AnalysisMetrics", "DashboardEvent", "DashboardEventType", "RealTimeDashboard", "create_dashboard"):
-        rtd = _lazy_import_real_time_dashboard()
-        if rtd:
+    elif name in (
+        "AnalysisMetrics",
+        "DashboardEvent",
+        "DashboardEventType",
+        "RealTimeDashboard",
+        "create_dashboard",
+    ):
+        if rtd := _lazy_import_real_time_dashboard():
             return getattr(rtd, name)
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
 __all__ = [
-    # Real-time dashboard
-    "RealTimeDashboard",
+    "AnalysisMetrics",
     "DashboardEvent",
     "DashboardEventType",
-    "AnalysisMetrics",
-    "create_dashboard",
-    # Widgets
-    "DashboardWidget",
-    "WidgetConfig",
-    "WidgetData",
-    "WidgetType",
-    "LineChartWidget",
-    "GaugeWidget",
-    "TableWidget",
-    "HeatmapWidget",
-    "NetworkGraphWidget",
-    "TimelineWidget",
-    "ProgressWidget",
-    "WidgetFactory",
-    "create_widget",
-    # Manager
+    "DashboardLayout",
     "DashboardManager",
+    "DashboardWidget",
     "DataSource",
     "DataSourceType",
-    "DashboardLayout",
+    "GaugeWidget",
+    "HeatmapWidget",
+    "LineChartWidget",
+    "NetworkGraphWidget",
+    "ProgressWidget",
+    "RealTimeDashboard",
+    "TableWidget",
+    "TimelineWidget",
+    "WidgetConfig",
+    "WidgetData",
+    "WidgetFactory",
+    "WidgetType",
+    "create_dashboard",
     "create_dashboard_manager",
+    "create_widget",
 ]

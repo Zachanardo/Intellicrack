@@ -32,6 +32,7 @@ from typing import Any
 # Import from common import checks
 from ..utils.core.import_checks import PSUTIL_AVAILABLE, psutil
 
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -181,12 +182,12 @@ class FileCache:
         """Remove regions that haven't been accessed recently."""
         with self.lock:
             current_time = time.time()
-            old_regions = []
-
-            for offset, region in self.regions.items():
-                if current_time - region.last_accessed > max_age and region.ref_count == 0:
-                    old_regions.append(offset)
-
+            old_regions = [
+                offset
+                for offset, region in self.regions.items()
+                if current_time - region.last_accessed > max_age
+                and region.ref_count == 0
+            ]
             removed_count = 0
             for offset in old_regions:
                 if offset in self.regions:
@@ -247,7 +248,9 @@ class MemoryMonitor:
                     # Get current memory usage
                     process = psutil.Process()
                     memory_info = process.memory_info()
-                    _ = memory_info.rss / (1024 * 1024)  # Memory in MB not used in current implementation
+                    _ = memory_info.rss / (
+                        1024 * 1024
+                    )  # Memory in MB not used in current implementation
 
                     # Get system memory
                     system_memory = psutil.virtual_memory()
@@ -257,21 +260,15 @@ class MemoryMonitor:
                     if memory_percent > self.config.memory_threshold:
                         logger.warning("High system memory usage: %s", memory_percent)
 
-                    # Notify callbacks
-                    for callback in self.callbacks:
-                        try:
-                            callback(memory_percent)
-                        except (OSError, ValueError, RuntimeError) as e:
-                            logger.error("Memory monitor callback error: %s", e)
                 else:
                     # Fallback: use basic estimation
                     memory_percent = 0.5  # Assume 50% usage without psutil
-                    for callback in self.callbacks:
-                        try:
-                            callback(memory_percent)
-                        except (OSError, ValueError, RuntimeError) as e:
-                            logger.error("Memory monitor callback error: %s", e)
-
+                # Notify callbacks
+                for callback in self.callbacks:
+                    try:
+                        callback(memory_percent)
+                    except (OSError, ValueError, RuntimeError) as e:
+                        logger.error("Memory monitor callback error: %s", e)
                 time.sleep(1.0)  # Check every second
 
             except (OSError, ValueError, RuntimeError) as e:
@@ -328,16 +325,16 @@ class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
                     # Load the data
                     try:
                         file.seek(offset)
-                        data = file.read(size)
-
-                        if data:
+                        if data := file.read(size):
                             region = FileRegion(offset=offset, size=len(data), data=data)
                             self.cache.add_region(region)
 
                             if self.region_loaded:
                                 self.region_loaded.emit(region)
 
-                            logger.debug(f"Background loaded: offset=0x{offset:X}, size={len(data)}")
+                            logger.debug(
+                                f"Background loaded: offset=0x{offset:X}, size={len(data)}"
+                            )
 
                     except (OSError, ValueError, RuntimeError) as e:
                         logger.error("Background load error: %s", e)
@@ -360,7 +357,9 @@ class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
 class LargeFileHandler:
     """Enhanced file handler optimized for large files."""
 
-    def __init__(self, file_path: str, read_only: bool = True, config: MemoryConfig | None = None) -> None:
+    def __init__(
+        self, file_path: str, read_only: bool = True, config: MemoryConfig | None = None
+    ) -> None:
         """Initialize the LargeFileHandler with file path, read-only mode, and configuration."""
         from intellicrack.core.config_manager import get_config
 
@@ -374,10 +373,13 @@ class LargeFileHandler:
         if config is None:
             self.config = MemoryConfig(
                 max_memory_mb=app_config.get("hex_viewer.performance.max_memory_mb", 500),
-                chunk_size_mb=app_config.get("hex_viewer.performance.chunk_size_kb", 64) // 1024 or 1,  # Convert KB to MB
+                chunk_size_mb=app_config.get("hex_viewer.performance.chunk_size_kb", 64) // 1024
+                or 1,  # Convert KB to MB
                 cache_size_mb=app_config.get("hex_viewer.performance.cache_size_mb", 100),
                 memory_threshold=0.8,  # Not in config, keeping default
-                enable_compression=app_config.get("hex_viewer.performance.compress_undo_data", True),
+                enable_compression=app_config.get(
+                    "hex_viewer.performance.compress_undo_data", True
+                ),
                 prefetch_chunks=app_config.get("hex_viewer.performance.prefetch_chunks", 3),
             )
         else:
@@ -597,18 +599,20 @@ class LargeFileHandler:
 
     def _prefetch_chunks(self, next_offset: int) -> None:
         """Prefetch chunks for better performance."""
-        if self.config.prefetch_chunks > 0 and self.background_loader and self.loading_strategy == LoadingStrategy.PROGRESSIVE:
+        if (
+            self.config.prefetch_chunks > 0
+            and self.background_loader
+            and self.loading_strategy == LoadingStrategy.PROGRESSIVE
+        ):
             chunk_size = self.config.chunk_size_mb * 1024 * 1024
 
             for i in range(self.config.prefetch_chunks):
                 prefetch_offset = next_offset + (i * chunk_size)
-                if prefetch_offset < self.file_size:
-                    # Check if already cached
-                    if not self.cache.get_region(prefetch_offset, 1):
-                        self.background_loader.queue_load(
-                            prefetch_offset,
-                            min(chunk_size, self.file_size - prefetch_offset),
-                        )
+                if prefetch_offset < self.file_size and not self.cache.get_region(prefetch_offset, 1):
+                    self.background_loader.queue_load(
+                        prefetch_offset,
+                        min(chunk_size, self.file_size - prefetch_offset),
+                    )
 
     def _on_memory_pressure(self, memory_usage: float) -> None:
         """Handle memory pressure by adjusting cache."""
@@ -667,7 +671,8 @@ class LargeFileHandler:
             "cache_stats": cache_stats,
             "access_patterns": len(self.access_patterns),
             "sequential_ratio": sequential_ratio,
-            "background_loader_active": self.background_loader is not None and self.background_loader.isAlive()
+            "background_loader_active": self.background_loader is not None
+            and self.background_loader.isAlive()
             if hasattr(self.background_loader, "isAlive")
             else False,
         }

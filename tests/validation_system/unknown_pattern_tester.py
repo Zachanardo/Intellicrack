@@ -37,8 +37,8 @@ class UnknownProtectionScenario:
     scenario_id: str
     pattern_type: ProtectionPatternType
     description: str
-    protection_characteristics: Dict[str, Any]
-    expected_detection_indicators: List[str]
+    protection_characteristics: dict[str, Any]
+    expected_detection_indicators: list[str]
     complexity_level: str  # low, medium, high
     time_limit_seconds: int
     bypass_required: bool = False
@@ -56,7 +56,7 @@ class DiscoveryProcessStep:
     action_taken: str
     observation: str
     confidence_level: float
-    evidence_found: List[str]
+    evidence_found: list[str]
     hypothesis_formed: str = ""
 
     def __post_init__(self):
@@ -72,13 +72,13 @@ class UnknownPatternTestResult:
     discovery_status: DiscoveryStatus
     protection_identified: bool
     analysis_duration_seconds: float
-    discovery_process: List[DiscoveryProcessStep]
-    evidence_collected: List[str]
-    final_assessment: Dict[str, Any]
+    discovery_process: list[DiscoveryProcessStep]
+    evidence_collected: list[str]
+    final_assessment: dict[str, Any]
     bypass_attempted: bool
     bypass_successful: bool
     compliance_met: bool  # Phase 2.5.3.4: Protection existence must be identified
-    error_details: Optional[str] = None
+    error_details: str | None = None
 
     def __post_init__(self):
         # Phase 2.5.3.4 compliance: Protection MUST be identified even if bypass fails
@@ -89,10 +89,10 @@ class UnknownPatternTestResult:
 class UnknownPatternReport:
     """Comprehensive report for Phase 2.5.3 unknown pattern testing."""
     report_id: str
-    test_scenarios: List[UnknownPatternTestResult]
+    test_scenarios: list[UnknownPatternTestResult]
     overall_compliance: bool
     detection_success_rate: float
-    discovery_process_documentation: Dict[str, Any]
+    discovery_process_documentation: dict[str, Any]
     generated_at: str
 
     def __post_init__(self):
@@ -114,7 +114,7 @@ class UnknownPatternTester:
     - Verifies protection detection even if bypass fails
     """
 
-    def __init__(self, base_dir: Optional[Path] = None):
+    def __init__(self, base_dir: Path | None = None):
         """Initialize unknown pattern tester."""
         self.base_dir = base_dir or Path("tests/validation_system")
         self.test_patterns_dir = self.base_dir / "unknown_patterns"
@@ -124,8 +124,8 @@ class UnknownPatternTester:
         self.reports_dir.mkdir(parents=True, exist_ok=True)
 
         # Test scenarios
-        self.test_scenarios: List[UnknownProtectionScenario] = []
-        self.test_results: List[UnknownPatternTestResult] = []
+        self.test_scenarios: list[UnknownProtectionScenario] = []
+        self.test_results: list[UnknownPatternTestResult] = []
 
         # Initialize test scenarios
         self._initialize_test_scenarios()
@@ -318,7 +318,7 @@ class UnknownPatternTester:
             # Fallback: Create minimal analysis file with real characteristics
             return self._create_fallback_analysis(scenario)
 
-    def _analyze_real_pe_binary(self, binary_path: str, scenario: UnknownProtectionScenario) -> Dict[str, Any]:
+    def _analyze_real_pe_binary(self, binary_path: str, scenario: UnknownProtectionScenario) -> dict[str, Any]:
         """Analyze a real PE binary and extract characteristics."""
         try:
             import os
@@ -397,7 +397,7 @@ class UnknownPatternTester:
             logger.error(f"PE analysis failed: {str(e)}")
             return self._create_basic_analysis_structure(scenario, binary_path)
 
-    def _extract_pe_imports(self, binary_path: str) -> List[Dict[str, Any]]:
+    def _extract_pe_imports(self, binary_path: str) -> list[dict[str, Any]]:
         """Extract import table from PE binary using PowerShell."""
         try:
             import subprocess
@@ -467,7 +467,7 @@ class UnknownPatternTester:
             logger.error(f"Import extraction failed: {str(e)}")
             return [{"dll": "kernel32.dll", "functions": ["CreateThread", "GetTickCount"]}]
 
-    def _get_common_functions_for_dll(self, dll_name: str) -> List[str]:
+    def _get_common_functions_for_dll(self, dll_name: str) -> list[str]:
         """Get common functions for a given DLL."""
         function_map = {
             "kernel32.dll": ["CreateThread", "GetTickCount", "Sleep", "VirtualAlloc", "CreateFileA", "ReadFile"],
@@ -482,7 +482,7 @@ class UnknownPatternTester:
 
         return function_map.get(dll_name, ["Unknown_Function"])
 
-    def _extract_pe_sections(self, binary_path: str) -> List[Dict[str, Any]]:
+    def _extract_pe_sections(self, binary_path: str) -> list[dict[str, Any]]:
         """Extract section information from PE binary."""
         try:
             import subprocess
@@ -548,7 +548,7 @@ class UnknownPatternTester:
             logger.error(f"Section extraction failed: {str(e)}")
             return [{"name": ".text", "virtual_address": "0x00401000", "size": "0x10000", "characteristics": "executable"}]
 
-    def _extract_pe_exports(self, binary_path: str) -> List[str]:
+    def _extract_pe_exports(self, binary_path: str) -> list[str]:
         """Extract export table from PE binary."""
         try:
             import subprocess
@@ -709,7 +709,7 @@ class UnknownPatternTester:
         except Exception as e:
             logger.error(f"Failed to inject multi-DLL markers: {str(e)}")
 
-    def _analyze_real_behavioral_patterns(self, binary_path: str, scenario: UnknownProtectionScenario) -> Dict[str, Any]:
+    def _analyze_real_behavioral_patterns(self, binary_path: str, scenario: UnknownProtectionScenario) -> dict[str, Any]:
         """Analyze real behavioral patterns from the binary."""
         try:
             import subprocess
@@ -805,7 +805,7 @@ class UnknownPatternTester:
                 "process_operations": ["Protection behavior analysis completed"]
             }
 
-    def _create_basic_analysis_structure(self, scenario: UnknownProtectionScenario, binary_path: str) -> Dict[str, Any]:
+    def _create_basic_analysis_structure(self, scenario: UnknownProtectionScenario, binary_path: str) -> dict[str, Any]:
         """Create basic analysis structure when full analysis fails."""
         return {
             "scenario_id": scenario.scenario_id,
@@ -869,7 +869,7 @@ class UnknownPatternTester:
             # Return a minimal file path that the analyzer can handle
             return str(self.test_patterns_dir / f"{scenario.scenario_id}_minimal.json")
 
-    def _generate_fallback_behavioral_patterns(self, scenario: UnknownProtectionScenario) -> Dict[str, Any]:
+    def _generate_fallback_behavioral_patterns(self, scenario: UnknownProtectionScenario) -> dict[str, Any]:
         """Generate behavioral patterns for fallback analysis."""
         base_patterns = {
             "network_activity": [],
@@ -917,7 +917,7 @@ class UnknownPatternTester:
 
         return base_patterns
 
-    def _generate_detection_challenges(self, scenario: UnknownProtectionScenario) -> List[str]:
+    def _generate_detection_challenges(self, scenario: UnknownProtectionScenario) -> list[str]:
         """Generate specific detection challenges for this pattern."""
         challenges = []
 
@@ -1037,7 +1037,7 @@ class UnknownPatternTester:
 
     def _perform_initial_analysis(self, scenario: UnknownProtectionScenario,
                                  simulation_file: str,
-                                 discovery_process: List[DiscoveryProcessStep]) -> Dict[str, Any]:
+                                 discovery_process: list[DiscoveryProcessStep]) -> dict[str, Any]:
         """Perform initial analysis of the unknown binary."""
         step = DiscoveryProcessStep(
             step_number=len(discovery_process) + 1,
@@ -1050,7 +1050,7 @@ class UnknownPatternTester:
         )
 
         # Load simulation data
-        with open(simulation_file, 'r') as f:
+        with open(simulation_file) as f:
             sim_data = json.load(f)
 
         # Analyze binary characteristics
@@ -1081,7 +1081,7 @@ class UnknownPatternTester:
 
     def _perform_pattern_recognition(self, scenario: UnknownProtectionScenario,
                                     simulation_file: str,
-                                    discovery_process: List[DiscoveryProcessStep]) -> Dict[str, Any]:
+                                    discovery_process: list[DiscoveryProcessStep]) -> dict[str, Any]:
         """Perform pattern recognition on the unknown protection."""
         step = DiscoveryProcessStep(
             step_number=len(discovery_process) + 1,
@@ -1094,7 +1094,7 @@ class UnknownPatternTester:
         )
 
         # Load simulation data
-        with open(simulation_file, 'r') as f:
+        with open(simulation_file) as f:
             sim_data = json.load(f)
 
         evidence = []
@@ -1130,7 +1130,7 @@ class UnknownPatternTester:
 
     def _perform_behavioral_analysis(self, scenario: UnknownProtectionScenario,
                                     simulation_file: str,
-                                    discovery_process: List[DiscoveryProcessStep]) -> Dict[str, Any]:
+                                    discovery_process: list[DiscoveryProcessStep]) -> dict[str, Any]:
         """Perform behavioral analysis of the protection."""
         step = DiscoveryProcessStep(
             step_number=len(discovery_process) + 1,
@@ -1143,7 +1143,7 @@ class UnknownPatternTester:
         )
 
         # Load simulation data
-        with open(simulation_file, 'r') as f:
+        with open(simulation_file) as f:
             sim_data = json.load(f)
 
         evidence = []
@@ -1172,7 +1172,7 @@ class UnknownPatternTester:
         return {"evidence": evidence, "confidence": step.confidence_level}
 
     def _perform_protection_identification(self, scenario: UnknownProtectionScenario,
-                                          discovery_process: List[DiscoveryProcessStep]) -> Dict[str, Any]:
+                                          discovery_process: list[DiscoveryProcessStep]) -> dict[str, Any]:
         """Attempt to identify the specific protection type."""
         step = DiscoveryProcessStep(
             step_number=len(discovery_process) + 1,
@@ -1233,7 +1233,7 @@ class UnknownPatternTester:
         }
 
     def _attempt_bypass(self, scenario: UnknownProtectionScenario,
-                       discovery_process: List[DiscoveryProcessStep]) -> Dict[str, Any]:
+                       discovery_process: list[DiscoveryProcessStep]) -> dict[str, Any]:
         """Attempt to bypass the identified protection using real techniques."""
         step = DiscoveryProcessStep(
             step_number=len(discovery_process) + 1,
@@ -1294,7 +1294,7 @@ class UnknownPatternTester:
 
         return {"success": success, "evidence": evidence}
 
-    def _attempt_crypto_bypass(self) -> Dict[str, Any]:
+    def _attempt_crypto_bypass(self) -> dict[str, Any]:
         """Attempt to bypass custom cryptographic protection."""
         try:
             import subprocess
@@ -1377,7 +1377,7 @@ class UnknownPatternTester:
         except Exception as e:
             return {"success": False, "details": [f"Crypto bypass attempt failed: {str(e)}"]}
 
-    def _attempt_dll_hook_bypass(self) -> Dict[str, Any]:
+    def _attempt_dll_hook_bypass(self) -> dict[str, Any]:
         """Attempt to bypass distributed DLL protection using API hooking."""
         try:
             import subprocess
@@ -1472,7 +1472,7 @@ class UnknownPatternTester:
         except Exception as e:
             return {"success": False, "details": [f"DLL hook bypass failed: {str(e)}"]}
 
-    def _attempt_timer_bypass(self) -> Dict[str, Any]:
+    def _attempt_timer_bypass(self) -> dict[str, Any]:
         """Attempt to bypass time-delayed protection triggers."""
         try:
             import subprocess
@@ -1564,7 +1564,7 @@ class UnknownPatternTester:
         except Exception as e:
             return {"success": False, "details": [f"Timer bypass failed: {str(e)}"]}
 
-    def _attempt_hardware_spoof(self) -> Dict[str, Any]:
+    def _attempt_hardware_spoof(self) -> dict[str, Any]:
         """Attempt to spoof hardware fingerprinting."""
         try:
             import subprocess
@@ -1784,7 +1784,7 @@ class UnknownPatternTester:
 
         logger.info(f"Report saved: {report_file}")
 
-    def generate_phase_2_5_3_compliance_report(self) -> Dict[str, Any]:
+    def generate_phase_2_5_3_compliance_report(self) -> dict[str, Any]:
         """
         Generate Phase 2.5.3 specific compliance report.
         """

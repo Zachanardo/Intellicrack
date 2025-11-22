@@ -27,6 +27,7 @@ from intellicrack.utils.logger import get_logger
 
 from .base_tab import BaseTab
 
+
 logger = get_logger(__name__)
 
 
@@ -111,7 +112,9 @@ class APIKeyConfigDialog(QDialog):
         self.status_label.setStyleSheet("color: #666; font-style: italic;")
         layout.addWidget(self.status_label)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -161,7 +164,7 @@ class APIKeyConfigDialog(QDialog):
         """Fetch available models from the selected provider."""
         provider_name = self.provider_combo.currentText()
         api_key = self.api_key_edit.text() if self.api_key_edit.isVisible() else None
-        base_url = self.base_url_edit.text() if self.base_url_edit.text() else None
+        base_url = self.base_url_edit.text() or None
 
         self.status_label.setText("Fetching models...")
         self.fetch_models_btn.setEnabled(False)
@@ -241,9 +244,7 @@ class APIKeyConfigDialog(QDialog):
 
     def get_config(self) -> dict[str, object]:
         """Retrieve the current configuration."""
-        model_id = self.model_combo.currentData()
-        if not model_id:
-            model_id = self.model_combo.currentText()
+        model_id = self.model_combo.currentData() or self.model_combo.currentText()
 
         return {
             "provider": self.provider_combo.currentText(),
@@ -299,23 +300,31 @@ class AIAssistantTab(BaseTab):
         model_selector_layout.addWidget(QLabel("Model:"))
 
         self.model_combo = QComboBox()
-        self.model_combo.setToolTip("Select the AI model to use for analysis. Configure API keys through the Configure button")
+        self.model_combo.setToolTip(
+            "Select the AI model to use for analysis. Configure API keys through the Configure button"
+        )
         model_selector_layout.addWidget(self.model_combo)
 
         self.configure_btn = QPushButton("Configure")
-        self.configure_btn.setToolTip("Set up API keys, endpoints, and parameters for the selected AI model")
+        self.configure_btn.setToolTip(
+            "Set up API keys, endpoints, and parameters for the selected AI model"
+        )
         self.configure_btn.clicked.connect(self.configure_model)
         model_selector_layout.addWidget(self.configure_btn)
 
         # Upload local model button
         self.upload_model_btn = QPushButton("Upload Local Model")
-        self.upload_model_btn.setToolTip("Load a locally hosted AI model for offline analysis capabilities")
+        self.upload_model_btn.setToolTip(
+            "Load a locally hosted AI model for offline analysis capabilities"
+        )
         self.upload_model_btn.clicked.connect(self.upload_local_model)
         model_selector_layout.addWidget(self.upload_model_btn)
 
         # Open model manager button
         self.model_manager_btn = QPushButton("Model Manager")
-        self.model_manager_btn.setToolTip("Manage installed AI models, download new models, and configure model parameters")
+        self.model_manager_btn.setToolTip(
+            "Manage installed AI models, download new models, and configure model parameters"
+        )
         self.model_manager_btn.clicked.connect(self.open_model_manager)
         model_selector_layout.addWidget(self.model_manager_btn)
 
@@ -340,17 +349,23 @@ class AIAssistantTab(BaseTab):
         button_layout = QHBoxLayout()
 
         self.analyze_btn = QPushButton("Analyze")
-        self.analyze_btn.setToolTip("Send your query to the AI model for comprehensive analysis and insights")
+        self.analyze_btn.setToolTip(
+            "Send your query to the AI model for comprehensive analysis and insights"
+        )
         self.analyze_btn.clicked.connect(self.perform_analysis)
         button_layout.addWidget(self.analyze_btn)
 
         self.generate_script_btn = QPushButton("Generate Script")
-        self.generate_script_btn.setToolTip("Generate custom Frida, Ghidra, or IDA scripts based on your requirements")
+        self.generate_script_btn.setToolTip(
+            "Generate custom Frida, Ghidra, or IDA scripts based on your requirements"
+        )
         self.generate_script_btn.clicked.connect(self.generate_script)
         button_layout.addWidget(self.generate_script_btn)
 
         self.clear_btn = QPushButton("Clear")
-        self.clear_btn.setToolTip("Clear both input and output fields to start a new analysis session")
+        self.clear_btn.setToolTip(
+            "Clear both input and output fields to start a new analysis session"
+        )
         self.clear_btn.clicked.connect(self.clear_all)
         button_layout.addWidget(self.clear_btn)
 
@@ -364,14 +379,18 @@ class AIAssistantTab(BaseTab):
 
         self.output_text = QTextEdit()
         self.output_text.setReadOnly(True)
-        self.output_text.setToolTip("AI model responses and generated analysis results. Content can be exported using the buttons below")
+        self.output_text.setToolTip(
+            "AI model responses and generated analysis results. Content can be exported using the buttons below"
+        )
         output_layout.addWidget(self.output_text)
 
         # Export buttons
         export_layout = QHBoxLayout()
 
         self.export_script_btn = QPushButton("Export Script")
-        self.export_script_btn.setToolTip("Save the generated script to a file for use with Frida, Ghidra, or other tools")
+        self.export_script_btn.setToolTip(
+            "Save the generated script to a file for use with Frida, Ghidra, or other tools"
+        )
         self.export_script_btn.clicked.connect(self.export_script)
         self.export_script_btn.setEnabled(False)
         export_layout.addWidget(self.export_script_btn)
@@ -426,7 +445,9 @@ class AIAssistantTab(BaseTab):
             config = dialog.get_config()
 
             if not config.get("model"):
-                QMessageBox.warning(self, "Configuration Error", "No model selected. Please select a model.")
+                QMessageBox.warning(
+                    self, "Configuration Error", "No model selected. Please select a model."
+                )
                 return
 
             model_key = f"{config['provider']}:{config['model']}"
@@ -458,7 +479,9 @@ class AIAssistantTab(BaseTab):
                 )
 
                 if llm_manager.register_llm(model_key, llm_config):
-                    self.status_label.setText(f"{config['provider']} - {config['model']} configured successfully")
+                    self.status_label.setText(
+                        f"{config['provider']} - {config['model']} configured successfully"
+                    )
                     logger.info(f"Model {model_key} configured and registered")
 
                     self.model_combo.addItem(f"{config['provider']}: {config['model']}")
@@ -478,7 +501,9 @@ class AIAssistantTab(BaseTab):
 
             except Exception as e:
                 logger.error(f"Failed to configure model: {e}")
-                QMessageBox.critical(self, "Configuration Error", f"Failed to configure model: {e!s}")
+                QMessageBox.critical(
+                    self, "Configuration Error", f"Failed to configure model: {e!s}"
+                )
                 self.status_label.setText("Configuration failed")
 
         logger.info("Model configuration dialog completed")
@@ -502,7 +527,9 @@ class AIAssistantTab(BaseTab):
                 self.status_label.setText("Analysis complete")
                 self.export_script_btn.setEnabled(True)
             else:
-                self.output_text.setPlainText("AI Assistant not initialized. Please check settings.")
+                self.output_text.setPlainText(
+                    "AI Assistant not initialized. Please check settings."
+                )
                 self.status_label.setText("Error: AI Assistant not available")
         except Exception as e:
             logger.error(f"Analysis failed: {e}")
@@ -533,7 +560,9 @@ class AIAssistantTab(BaseTab):
                 self.status_label.setText("Script generated")
                 self.export_script_btn.setEnabled(True)
             else:
-                self.output_text.setPlainText("AI Assistant not initialized. Please check settings.")
+                self.output_text.setPlainText(
+                    "AI Assistant not initialized. Please check settings."
+                )
                 self.status_label.setText("Error: AI Assistant not available")
         except Exception as e:
             logger.error(f"Script generation failed: {e}")
@@ -625,7 +654,9 @@ class AIAssistantTab(BaseTab):
                     try:
                         repo_models = model_manager.list_available_models(repo_name)
                         for model_info in repo_models:
-                            model_name = model_info.get("name", model_info.get("model_id", "Unknown"))
+                            model_name = model_info.get(
+                                "name", model_info.get("model_id", "Unknown")
+                            )
                             display_name = f"{repo_name.title()}: {model_name}"
                             available_models.append(display_name)
                     except Exception as repo_e:
@@ -653,7 +684,10 @@ class AIAssistantTab(BaseTab):
         from intellicrack.handlers.pyqt6_handler import QFileDialog, QMessageBox
 
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Model File", "", "GGUF Files (*.gguf);;ONNX Files (*.onnx);;All Files (*.*)",
+            self,
+            "Select Model File",
+            "",
+            "GGUF Files (*.gguf);;ONNX Files (*.onnx);;All Files (*.*)",
         )
 
         if file_path:
@@ -663,10 +697,10 @@ class AIAssistantTab(BaseTab):
 
                 model_manager = ModelManager()
 
-                model_info = model_manager.import_local_model(file_path)
-
-                if model_info:
-                    QMessageBox.information(self, "Success", f"Model '{model_info.name}' uploaded successfully!")
+                if model_info := model_manager.import_local_model(file_path):
+                    QMessageBox.information(
+                        self, "Success", f"Model '{model_info.name}' uploaded successfully!"
+                    )
                     # Refresh model list
                     self.load_available_models()
 

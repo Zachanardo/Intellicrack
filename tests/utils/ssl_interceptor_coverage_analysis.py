@@ -43,7 +43,7 @@ def analyze_ssl_interceptor_coverage():
     print("-" * 50)
 
     try:
-        with open(source_file, 'r', encoding='utf-8') as f:
+        with open(source_file, encoding='utf-8') as f:
             source_content = f.read()
 
         source_tree = ast.parse(source_content)
@@ -79,7 +79,7 @@ def analyze_ssl_interceptor_coverage():
     print("-" * 50)
 
     try:
-        with open(test_file, 'r', encoding='utf-8') as f:
+        with open(test_file, encoding='utf-8') as f:
             test_content = f.read()
 
         test_tree = ast.parse(test_content)

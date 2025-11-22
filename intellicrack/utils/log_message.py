@@ -149,18 +149,27 @@ def log_message(
 
     Examples:
         Basic usage:
-        >>> log_message("Analysis started")
+        >>> log_message(
+        ...     "Analysis started"
+        ... )
 
         With error level and category:
-        >>> log_message("Failed to load binary", level="ERROR", category="ANALYSIS")
+        >>> log_message(
+        ...     "Failed to load binary",
+        ...     level="ERROR",
+        ...     category="ANALYSIS",
+        ... )
 
         With context and exception:
         >>> log_message(
         ...     "Network connection failed",
         ...     level="ERROR",
         ...     category="NETWORK",
-        ...     context={"host": "example.com", "port": 443},
-        ...     exception=connection_error
+        ...     context={
+        ...         "host": "example.com",
+        ...         "port": 443,
+        ...     },
+        ...     exception=connection_error,
         ... )
 
     """
@@ -302,7 +311,9 @@ def log_critical(message: str, **kwargs: Unpack[LogMessageKwargs]) -> None:
     log_message(message, level=MessageLevel.CRITICAL, **kwargs)
 
 
-def log_analysis(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]) -> None:
+def log_analysis(
+    message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]
+) -> None:
     """Log an analysis-related message with optional context.
 
     Args:
@@ -314,7 +325,9 @@ def log_analysis(message: str, level: str | MessageLevel = MessageLevel.INFO, **
     log_message(message, level=level, category=MessageCategory.ANALYSIS, **kwargs)
 
 
-def log_ui(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]) -> None:
+def log_ui(
+    message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]
+) -> None:
     """Log a UI-related message with optional context.
 
     Args:
@@ -326,7 +339,11 @@ def log_ui(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs
     log_message(message, level=level, category=MessageCategory.UI, **kwargs)
 
 
-def log_security(message: str, level: str | MessageLevel = MessageLevel.WARNING, **kwargs: Unpack[LogMessageKwargs]) -> None:
+def log_security(
+    message: str,
+    level: str | MessageLevel = MessageLevel.WARNING,
+    **kwargs: Unpack[LogMessageKwargs],
+) -> None:
     """Log a security-related message with optional context.
 
     Args:
@@ -338,7 +355,9 @@ def log_security(message: str, level: str | MessageLevel = MessageLevel.WARNING,
     log_message(message, level=level, category=MessageCategory.SECURITY, **kwargs)
 
 
-def log_performance(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]) -> None:
+def log_performance(
+    message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]
+) -> None:
     """Log a performance-related message with optional context.
 
     Args:
@@ -350,7 +369,9 @@ def log_performance(message: str, level: str | MessageLevel = MessageLevel.INFO,
     log_message(message, level=level, category=MessageCategory.PERFORMANCE, **kwargs)
 
 
-def log_binary_processing(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]) -> None:
+def log_binary_processing(
+    message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]
+) -> None:
     """Log a binary processing message with optional context.
 
     Args:

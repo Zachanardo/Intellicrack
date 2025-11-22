@@ -19,6 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -374,18 +375,21 @@ def generate_bypass_strategy(protections: dict[str, Any]) -> list[str]:
         packer = protections["packer"]
         strategies.append(f"Unpack {packer} protection first")
 
-        if packer == "UPX":
+        if packer == "Themida":
+            strategies.append("Use Themida unpacker or generic unpackers")
+
+        elif packer == "UPX":
             strategies.append("Use 'upx -d' to decompress UPX packed binary")
         elif packer == "VMProtect":
             strategies.append("Consider VMProtect-specific unpacking tools")
-        elif packer == "Themida":
-            strategies.append("Use Themida unpacker or generic unpackers")
-
     if protections.get("anti_debug"):
-        strategies.append("Implement anti-debug bypass hooks")
-        strategies.append("Hook IsDebuggerPresent and NtQueryInformationProcess")
-        strategies.append("Consider using hardware breakpoints instead of software breakpoints")
-
+        strategies.extend(
+            (
+                "Implement anti-debug bypass hooks",
+                "Hook IsDebuggerPresent and NtQueryInformationProcess",
+                "Consider using hardware breakpoints instead of software breakpoints",
+            )
+        )
     if protections.get("vm_detection"):
         strategies.append("Use VM evasion techniques")
         strategies.append("Modify VM artifacts to appear as physical machine")
@@ -742,10 +746,18 @@ def generate_hwid_spoof_config(target_hwid: str) -> dict[str, Any]:
             ],
         },
         "wmi_overrides": {
-            "Win32_BaseBoard": {"SerialNumber": f"MB-{target_hwid[:12].upper()}"},
-            "Win32_Processor": {"ProcessorId": f"BFEBFBFF{target_hwid[:8].upper()}"},
-            "Win32_DiskDrive": {"SerialNumber": f"DSK-{target_hwid[:10].upper()}"},
-            "Win32_NetworkAdapter": {"MACAddress": f"{target_hwid[:2]}:{target_hwid[2:4]}:{target_hwid[4:6]}:00:00:01"},
+            "Win32_BaseBoard": {
+                "SerialNumber": f"MB-{target_hwid[:12].upper()}"
+            },
+            "Win32_Processor": {
+                "ProcessorId": f"BFEBFBFF{target_hwid[:8].upper()}"
+            },
+            "Win32_DiskDrive": {
+                "SerialNumber": f"DSK-{target_hwid[:10].upper()}"
+            },
+            "Win32_NetworkAdapter": {
+                "MACAddress": f"{target_hwid[:2]}:{target_hwid[2:4]}:{target_hwid[4:6]}:00:00:01"
+            },
         },
         "implementation_script": f"""
 # HWID Spoofing Script
@@ -775,18 +787,16 @@ if __name__ == "__main__":
     backup_registry()
     apply_hwid_spoof()
 """,
-    }
-
-    # Add restoration information
-    config["restoration"] = {
-        "backup_location": "hwid_backup.reg",
-        "restore_script": """
+        "restoration": {
+            "backup_location": "hwid_backup.reg",
+            "restore_script": """
 # HWID Restoration Script
 import subprocess
 subprocess.run(['reg', 'import', 'hwid_backup.reg'])
 print("Original HWID restored")
 """,
-        "verification_command": "wmic csproduct get UUID",
+            "verification_command": "wmic csproduct get UUID",
+        },
     }
 
     logger.info("HWID spoof configuration generated")
@@ -942,13 +952,22 @@ if (time_func) {
 
         # Add recommendations
         if config["time_checks_found"] > 3:
-            config["recommendations"].append("Multiple time checks detected - comprehensive bypass recommended")
+            config["recommendations"].append(
+                "Multiple time checks detected - comprehensive bypass recommended"
+            )
 
-        if any("critical" in result.get("severity", "") for result in config["analysis_results"].values()):
-            config["recommendations"].append("Critical time bomb detected - immediate patching required")
+        if any(
+            "critical" in result.get("severity", "")
+            for result in config["analysis_results"].values()
+        ):
+            config["recommendations"].append(
+                "Critical time bomb detected - immediate patching required"
+            )
 
         if config["patches"]:
-            config["recommendations"].append(f"Apply {len(config['patches'])} binary patches for permanent fix")
+            config["recommendations"].append(
+                f"Apply {len(config['patches'])} binary patches for permanent fix"
+            )
 
         config["recommendations"].extend(
             [
@@ -1153,13 +1172,14 @@ console.log('[Telemetry] Telemetry blocker active');
 """
 
     # Add batch script for easy setup
-    config["setup_script"] = f"""@echo off
+    config["setup_script"] = (
+        f"""@echo off
 echo Setting up telemetry blocker for {app_name}...
 
 :: Add hosts entries
 echo.
 echo Adding hosts file entries...
-{"".join(f"echo {entry} >> %WINDIR%" + chr(92) + "System32" + chr(92) + "drivers" + chr(92) + "etc" + chr(92) + "hosts" + chr(10) for entry in config["hosts_entries"][:5])}
+{"".join(f"echo {entry} >> %WINDIR%{chr(92)}System32{chr(92)}drivers{chr(92)}" + "etc" + chr(92) + "hosts" + chr(10) for entry in config["hosts_entries"][:5])}
 
 :: Add firewall rules
 echo.
@@ -1170,6 +1190,7 @@ echo.
 echo Telemetry blocker setup complete!
 pause
 """
+    )
 
     # Add removal script
     config["removal_script"] = f"""@echo off

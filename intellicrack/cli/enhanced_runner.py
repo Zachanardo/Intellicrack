@@ -27,6 +27,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
+
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -43,6 +44,7 @@ from intellicrack.core.analysis.vulnerability_engine import VulnerabilityEngine
 from intellicrack.core.network.traffic_analyzer import NetworkTrafficAnalyzer
 from intellicrack.utils.analysis.binary_analysis import analyze_binary
 from intellicrack.utils.protection_detection import detect_all_protections
+
 
 """
 Enhanced CLI Runner for Intellicrack
@@ -185,7 +187,17 @@ class EnhancedCLIRunner:
             ]
 
             for step_name, progress in scan_steps:
-                if step_name == "Checking dangerous functions":
+                if step_name == "Analyzing buffer overflow risks":
+                    # Look for buffer-related patterns
+                    try:
+                        with open(binary_path, "rb") as f:
+                            data = f.read()
+                            if b"overflow" in data or b"buffer" in data:
+                                self.logger.debug("Found potential buffer overflow risk indicators")
+                    except Exception as e:
+                        self.logger.debug(f"Error analyzing buffer overflow risks: {e}")
+
+                elif step_name == "Checking dangerous functions":
                     # Check for dangerous function usage
                     try:
                         with open(binary_path, "rb") as f:
@@ -196,16 +208,6 @@ class EnhancedCLIRunner:
                                     break
                     except Exception as e:
                         self.logger.debug(f"Error analyzing function names: {e}")
-
-                elif step_name == "Analyzing buffer overflow risks":
-                    # Look for buffer-related patterns
-                    try:
-                        with open(binary_path, "rb") as f:
-                            data = f.read()
-                            if b"overflow" in data or b"buffer" in data:
-                                self.logger.debug("Found potential buffer overflow risk indicators")
-                    except Exception as e:
-                        self.logger.debug(f"Error analyzing buffer overflow risks: {e}")
 
                 self.progress_manager.update_progress(
                     "Vulnerability Scan",
@@ -233,7 +235,19 @@ class EnhancedCLIRunner:
             ]
 
             for step_name, progress in detection_steps:
-                if step_name == "Checking for packer signatures":
+                if step_name == "Analyzing entropy patterns":
+                    # Basic entropy check on file data
+                    try:
+                        with open(binary_path, "rb") as f:
+                            data = f.read(8192)  # Read 8KB sample
+                            if len(set(data)) > 200:  # High entropy indicator
+                                self.logger.debug(
+                                    "Detected high entropy - potentially packed/encrypted"
+                                )
+                    except Exception as e:
+                        self.logger.debug(f"Error analyzing entropy patterns: {e}")
+
+                elif step_name == "Checking for packer signatures":
                     # Look for common packer signatures
                     try:
                         with open(binary_path, "rb") as f:
@@ -244,16 +258,6 @@ class EnhancedCLIRunner:
                                     break
                     except Exception as e:
                         self.logger.debug(f"Error checking anti-debug signatures: {e}")
-
-                elif step_name == "Analyzing entropy patterns":
-                    # Basic entropy check on file data
-                    try:
-                        with open(binary_path, "rb") as f:
-                            data = f.read(8192)  # Read 8KB sample
-                            if len(set(data)) > 200:  # High entropy indicator
-                                self.logger.debug("Detected high entropy - potentially packed/encrypted")
-                    except Exception as e:
-                        self.logger.debug(f"Error analyzing entropy patterns: {e}")
 
                 self.progress_manager.update_progress(
                     "Protection Detection",
@@ -270,7 +274,13 @@ class EnhancedCLIRunner:
 
     def _run_dynamic_analysis(self, binary_path: str) -> dict[str, Any]:
         """Run dynamic analysis with real behavioral monitoring."""
-        results = {"behavior": [], "syscalls": [], "network": [], "files_accessed": [], "registry_keys": []}
+        results = {
+            "behavior": [],
+            "syscalls": [],
+            "network": [],
+            "files_accessed": [],
+            "registry_keys": [],
+        }
 
         steps = [
             ("Setting up sandbox environment", 15),
@@ -282,11 +292,16 @@ class EnhancedCLIRunner:
         ]
 
         for step_name, progress in steps:
-            if step_name == "Setting up sandbox environment":
-                # Verify system has monitoring capabilities
-                import psutil
-
-                results["system_info"] = {"cpu_count": psutil.cpu_count(), "memory_total": psutil.virtual_memory().total}
+            if step_name == "Analyzing network activity":
+                # Check for network connections
+                try:
+                    connections = psutil.net_connections()
+                    active_connections = [c for c in connections if c.status == "ESTABLISHED"]
+                    results["network"] = [
+                        f"Connection to {c.raddr}" for c in active_connections[:3]
+                    ]
+                except Exception:
+                    results["network"] = ["network_monitoring_unavailable"]
 
             elif step_name == "Loading binary in emulator":
                 # Basic file analysis before emulation
@@ -311,6 +326,15 @@ class EnhancedCLIRunner:
                 except Exception:
                     results["syscalls"] = ["monitoring_unavailable"]
 
+            elif step_name == "Setting up sandbox environment":
+                # Verify system has monitoring capabilities
+                import psutil
+
+                results["system_info"] = {
+                    "cpu_count": psutil.cpu_count(),
+                    "memory_total": psutil.virtual_memory().total,
+                }
+
             elif step_name == "Tracking file operations":
                 # Monitor file system for changes
                 import os
@@ -323,15 +347,6 @@ class EnhancedCLIRunner:
                     results["files_accessed"] = temp_files or ["temp_file_monitoring"]
                 except Exception:
                     results["files_accessed"] = ["file_monitoring_unavailable"]
-
-            elif step_name == "Analyzing network activity":
-                # Check for network connections
-                try:
-                    connections = psutil.net_connections()
-                    active_connections = [c for c in connections if c.status == "ESTABLISHED"]
-                    results["network"] = [f"Connection to {c.raddr}" for c in active_connections[:3]]
-                except Exception:
-                    results["network"] = ["network_monitoring_unavailable"]
 
             self.progress_manager.update_progress(
                 "Dynamic Analysis",
@@ -375,33 +390,14 @@ class EnhancedCLIRunner:
             ]
 
             for step_name, progress in analysis_steps:
-                if step_name == "Scanning for network strings":
-                    # Look for network-related strings in binary
-                    try:
-                        with open(binary_path, "rb") as f:
-                            data = f.read()
-                            network_patterns = [b"http://", b"https://", b"ftp://", b"tcp://"]
-                            found_protocols = []
-                            for pattern in network_patterns:
-                                if pattern in data:
-                                    protocol = pattern.decode().replace("://", "").upper()
-                                    found_protocols.append(protocol)
-                            results["protocols"] = found_protocols or ["None detected"]
-                    except Exception:
-                        results["protocols"] = ["Scan error"]
-
-                elif step_name == "Analyzing protocol usage":
+                if step_name == "Analyzing protocol usage":
                     # Check for API endpoints and server references
                     try:
                         with open(binary_path, "rb") as f:
                             data = f.read()
                             # Look for common API patterns
                             api_patterns = [b"api.", b"server.", b"endpoint", b".com", b".org"]
-                            endpoints = []
-                            for pattern in api_patterns:
-                                if pattern in data:
-                                    endpoints.append(pattern.decode())
-
+                            endpoints = [pattern.decode() for pattern in api_patterns if pattern in data]
                             # Add environment variable endpoints
                             env_endpoints = [
                                 os.environ.get("API_SERVER_URL", "").split("//")[-1],
@@ -428,12 +424,26 @@ class EnhancedCLIRunner:
                     results["suspicious"] = len(suspicious_indicators) > 0
                     results["network_indicators"] = suspicious_indicators
 
+                elif step_name == "Scanning for network strings":
+                    # Look for network-related strings in binary
+                    try:
+                        with open(binary_path, "rb") as f:
+                            data = f.read()
+                            network_patterns = [b"http://", b"https://", b"ftp://", b"tcp://"]
+                            found_protocols = []
+                            for pattern in network_patterns:
+                                if pattern in data:
+                                    protocol = pattern.decode().replace("://", "").upper()
+                                    found_protocols.append(protocol)
+                            results["protocols"] = found_protocols or ["None detected"]
+                    except Exception:
+                        results["protocols"] = ["Scan error"]
+
                 # Use analyzer if it has proper methods
                 if hasattr(analyzer, "analyze") and progress == 100:
                     try:
-                        analyzer_results = analyzer.analyze(binary_path)
-                        if analyzer_results:
-                            results.update(analyzer_results)
+                        if analyzer_results := analyzer.analyze(binary_path):
+                            results |= analyzer_results
                     except Exception as e:
                         results["analyzer_error"] = str(e)
 
@@ -493,9 +503,7 @@ class EnhancedCLIRunner:
             return "[green]No vulnerabilities detected[/green]"
 
         lines = [f"[red]Found {len(vulns)} vulnerabilities:[/red]"]
-        for vuln in vulns[:5]:  # Show first 5
-            lines.append(f"   {vuln}")
-
+        lines.extend(f"   {vuln}" for vuln in vulns[:5])
         if len(vulns) > 5:
             lines.append(f"  ... and {len(vulns) - 5} more")
 
@@ -508,10 +516,11 @@ class EnhancedCLIRunner:
             return "[green]No protections detected[/green]"
 
         lines = ["[yellow]Detected protections:[/yellow]"]
-        for protection, details in protections.items():
-            if details:
-                lines.append(f"   {protection}: {details}")
-
+        lines.extend(
+            f"   {protection}: {details}"
+            for protection, details in protections.items()
+            if details
+        )
         return "\n".join(lines)
 
     def _format_generic_results(self, result: dict) -> str:
@@ -551,7 +560,6 @@ def main() -> None:
     # Select operations
     console.print("\n[bold]Select operations to perform:[/bold]")
 
-    operations = []
     available_ops = [
         "Static Analysis",
         "Vulnerability Scan",
@@ -560,10 +568,9 @@ def main() -> None:
         "Network Analysis",
     ]
 
-    for op in available_ops:
-        if Confirm.ask(f"  Run {op}?", default=True):
-            operations.append(op)
-
+    operations = [
+        op for op in available_ops if Confirm.ask(f"  Run {op}?", default=True)
+    ]
     if not operations:
         console.print("[yellow]No operations selected. Exiting.[/yellow]")
         return

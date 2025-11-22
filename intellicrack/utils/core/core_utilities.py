@@ -25,6 +25,7 @@ import traceback
 from collections.abc import Callable
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 # Tool registry for dispatch system
@@ -214,7 +215,9 @@ def run_cli_mode(args: object) -> int:
         return 1
 
 
-def dispatch_tool(app_instance: object, tool_name: str, parameters: dict[str, Any]) -> dict[str, Any]:
+def dispatch_tool(
+    app_instance: object, tool_name: str, parameters: dict[str, Any]
+) -> dict[str, Any]:
     """Dispatch an AI-requested tool to the corresponding function.
 
     Args:
@@ -507,7 +510,9 @@ def retrieve_few_shot_examples(task_type: str, count: int = 5) -> list[dict[str,
     return task_examples[:count]
 
 
-def deep_runtime_monitoring(target_process: str, monitoring_config: dict[str, Any] | None = None) -> dict[str, Any]:
+def deep_runtime_monitoring(
+    target_process: str, monitoring_config: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Perform deep runtime monitoring of a target process.
 
     This function wraps the implementation in dynamic_analyzer.py

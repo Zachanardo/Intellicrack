@@ -15,6 +15,7 @@ import threading
 from collections.abc import Callable
 from types import ModuleType, TracebackType
 
+
 logger = logging.getLogger(__name__)
 
 _torch_lock = threading.RLock()
@@ -84,7 +85,12 @@ class TorchGILSafeContext:
         _torch_lock.acquire()
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Exit the thread-safe PyTorch context."""
         _torch_lock.release()
 
@@ -121,7 +127,9 @@ def configure_pybind11_environment() -> None:
     os.environ.setdefault("NDEBUG", "1")
 
     # Additional pybind11 safety flags
-    os.environ.setdefault("PYBIND11_DISABLE_GIL_CHECKS", "1")  # Not standard but some builds check this
+    os.environ.setdefault(
+        "PYBIND11_DISABLE_GIL_CHECKS", "1"
+    )  # Not standard but some builds check this
 
     # Ensure single-threaded execution for critical libraries
     os.environ.setdefault("PYTORCH_DISABLE_CUDNN_BATCH_NORM", "1")
@@ -158,10 +166,12 @@ def initialize_gil_safety() -> None:
     main_thread = threading.main_thread()
 
     if current_thread is not main_thread:
-        # Check if we're in a launcher environment where this is expected
-        launcher_env = os.environ.get("RUST_LAUNCHER_MODE") or os.environ.get("PYTHON_SUBPROCESS_MODE")
-
-        if not launcher_env:
+        if launcher_env := os.environ.get(
+            "RUST_LAUNCHER_MODE"
+        ) or os.environ.get("PYTHON_SUBPROCESS_MODE"):
+            # In launcher mode, log at debug level instead of warning
+            logger.debug("GIL safety initialized from non-main thread in launcher environment")
+        else:
             import warnings
 
             warnings.warn(
@@ -169,6 +179,3 @@ def initialize_gil_safety() -> None:
                 RuntimeWarning,
                 stacklevel=2,
             )
-        else:
-            # In launcher mode, log at debug level instead of warning
-            logger.debug("GIL safety initialized from non-main thread in launcher environment")

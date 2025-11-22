@@ -19,6 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 
+
 logger: logging.Logger = logging.getLogger(__name__)
 
 DetectionResult: object = None
@@ -31,6 +32,7 @@ get_protection_detector: object = None
 quick_analyze: object = None
 
 _lazy_imports: dict[str, dict[str, object]] = {}
+
 
 def __getattr__(name: str) -> object:
     """Lazy load protection module components to prevent circular imports.
@@ -50,78 +52,75 @@ def __getattr__(name: str) -> object:
             lazy-loaded module.
 
     """
-    if name in ('DetectionResult', 'IntellicrackProtectionCore', 'ProtectionAnalysis', 'ProtectionType'):
-        if 'core_module' not in _lazy_imports:
+    if name in {
+        "DetectionResult",
+        "IntellicrackProtectionCore",
+        "ProtectionAnalysis",
+        "ProtectionType",
+    }:
+        if "core_module" not in _lazy_imports:
             try:
                 from .intellicrack_protection_core import (
                     DetectionResult as DetectionResultAlias,
-                )
-                from .intellicrack_protection_core import (
                     IntellicrackProtectionCore as IntellicrackProtectionCoreAlias,
-                )
-                from .intellicrack_protection_core import (
                     ProtectionAnalysis as ProtectionAnalysisAlias,
-                )
-                from .intellicrack_protection_core import (
                     ProtectionType as ProtectionTypeAlias,
                 )
-                _lazy_imports['core_module'] = {
-                    'DetectionResult': DetectionResultAlias,
-                    'IntellicrackProtectionCore': IntellicrackProtectionCoreAlias,
-                    'ProtectionAnalysis': ProtectionAnalysisAlias,
-                    'ProtectionType': ProtectionTypeAlias,
+
+                _lazy_imports["core_module"] = {
+                    "DetectionResult": DetectionResultAlias,
+                    "IntellicrackProtectionCore": IntellicrackProtectionCoreAlias,
+                    "ProtectionAnalysis": ProtectionAnalysisAlias,
+                    "ProtectionType": ProtectionTypeAlias,
                 }
             except ImportError as e:
                 logger.warning(f"Failed to import intellicrack_protection_core: {e}")
-                _lazy_imports['core_module'] = {
-                    'DetectionResult': None,
-                    'IntellicrackProtectionCore': None,
-                    'ProtectionAnalysis': None,
-                    'ProtectionType': None,
+                _lazy_imports["core_module"] = {
+                    "DetectionResult": None,
+                    "IntellicrackProtectionCore": None,
+                    "ProtectionAnalysis": None,
+                    "ProtectionType": None,
                 }
-        return _lazy_imports['core_module'].get(name)
+        return _lazy_imports["core_module"].get(name)
 
-    if name in ('ProtectionDetector', 'deep_analyze', 'get_protection_detector', 'quick_analyze'):
-        if 'detector_module' not in _lazy_imports:
+    if name in {
+        "ProtectionDetector",
+        "deep_analyze",
+        "get_protection_detector",
+        "quick_analyze",
+    }:
+        if "detector_module" not in _lazy_imports:
             try:
                 from .protection_detector import (
                     ProtectionDetector as ProtectionDetectorAlias,
-                )
-                from .protection_detector import (
                     deep_analyze as da,
-                )
-                from .protection_detector import (
                     get_protection_detector as gpd,
-                )
-                from .protection_detector import (
                     quick_analyze as qa,
                 )
-                _lazy_imports['detector_module'] = {
-                    'ProtectionDetector': ProtectionDetectorAlias,
-                    'deep_analyze': da,
-                    'get_protection_detector': gpd,
-                    'quick_analyze': qa,
+
+                _lazy_imports["detector_module"] = {
+                    "ProtectionDetector": ProtectionDetectorAlias,
+                    "deep_analyze": da,
+                    "get_protection_detector": gpd,
+                    "quick_analyze": qa,
                 }
             except ImportError as e:
                 logger.warning(f"Failed to import protection_detector: {e}")
-                _lazy_imports['detector_module'] = {
-                    'ProtectionDetector': None,
-                    'deep_analyze': None,
-                    'get_protection_detector': None,
-                    'quick_analyze': None,
+                _lazy_imports["detector_module"] = {
+                    "ProtectionDetector": None,
+                    "deep_analyze": None,
+                    "get_protection_detector": None,
+                    "quick_analyze": None,
                 }
-        return _lazy_imports['detector_module'].get(name)
+        return _lazy_imports["detector_module"].get(name)
 
     error_msg = f"module '{__name__}' has no attribute '{name}'"
     logger.error(error_msg)
     raise AttributeError(error_msg)
 
+
 try:
-    from .unified_protection_engine import (
-        UnifiedProtectionEngine,
-        UnifiedProtectionResult,
-        get_unified_engine,
-    )
+    from .unified_protection_engine import UnifiedProtectionEngine, UnifiedProtectionResult, get_unified_engine
 except ImportError as e:
     logger.warning(f"Failed to import unified_protection_engine: {e}")
     UnifiedProtectionEngine = None
@@ -157,23 +156,23 @@ a unified engine that seamlessly combines multiple detection methods.
 
 __all__ = [
     "DetectionResult",
+    "DevirtualizedCode",
     "IntellicrackProtectionCore",
     "ProtectionAnalysis",
     "ProtectionDetector",
     "ProtectionType",
+    "ThemidaAnalysisResult",
+    "ThemidaAnalyzer",
+    "ThemidaVersion",
     "UnifiedProtectionEngine",
     "UnifiedProtectionResult",
+    "VMArchitecture",
+    "VMContext",
+    "VMHandler",
     "deep_analyze",
     "get_protection_detector",
     "get_unified_engine",
     "quick_analyze",
-    "ThemidaAnalysisResult",
-    "ThemidaAnalyzer",
-    "VMArchitecture",
-    "ThemidaVersion",
-    "VMHandler",
-    "VMContext",
-    "DevirtualizedCode",
 ]
 
 __all__ = [item for item in __all__ if item in locals() and locals()[item] is not None]

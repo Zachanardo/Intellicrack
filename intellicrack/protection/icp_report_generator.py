@@ -30,6 +30,7 @@ from typing import Any
 from ..utils.logger import get_logger
 from .unified_protection_engine import UnifiedProtectionResult
 
+
 logger = get_logger(__name__)
 
 
@@ -295,7 +296,13 @@ class ICPReportGenerator:
             HTML string containing executive summary section.
 
         """
-        confidence_class = "high" if result.confidence_score >= 80 else "medium" if result.confidence_score >= 50 else "low"
+        confidence_class = (
+            "high"
+            if result.confidence_score >= 80
+            else "medium"
+            if result.confidence_score >= 50
+            else "low"
+        )
 
         return f"""
         <div class="summary">
@@ -422,7 +429,9 @@ class ICPReportGenerator:
             html += f"<h3>File: {file_info.filetype}</h3>"
 
             if file_info.detections:
-                html += "<table><tr><th>Detection</th><th>Type</th><th>Version</th><th>Info</th></tr>"
+                html += (
+                    "<table><tr><th>Detection</th><th>Type</th><th>Version</th><th>Info</th></tr>"
+                )
 
                 for detection in file_info.detections:
                     html += f"""
@@ -603,13 +612,13 @@ class ICPReportGenerator:
             Path to generated text report file as string.
 
         """
-        lines = []
-        lines.append("=" * 80)
-        lines.append("INTELLICRACK PROTECTION ANALYSIS REPORT")
-        lines.append("=" * 80)
-        lines.append(f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        lines.append("")
-
+        lines = [
+            "=" * 80,
+            "INTELLICRACK PROTECTION ANALYSIS REPORT",
+            "=" * 80,
+            f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            "",
+        ]
         # File information
         lines.append("FILE INFORMATION:")
         lines.append(f"  File: {result.file_path}")
@@ -790,9 +799,7 @@ class ICPReportGenerator:
 
         """
         if isinstance(details, dict):
-            items = []
-            for key, value in details.items():
-                items.append(f"{key}: {value}")
+            items = [f"{key}: {value}" for key, value in details.items()]
             return ", ".join(items)
         return str(details)
 

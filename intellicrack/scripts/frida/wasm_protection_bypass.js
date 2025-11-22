@@ -611,27 +611,24 @@ const wasmProtectionBypass = {
                         const sizeDiff = bodySize - bypassBody.length;
 
                         if (sizeDiff >= 0) {
-                            // Replace function body with bypass code
-                            for (let j = 0; j < bypassBody.length; j++) {
-                                patched[bodyStart + j] = bypassBody[j];
-                            }
-
-                            // Fill remaining space with nop instructions (0x01)
-                            for (let j = bypassBody.length; j < bodySize; j++) {
-                                patched[bodyStart + j] = 0x01; // nop
-                            }
-
-                            patchCount++;
-                        } else {
-                            // Function body is too small for our bypass code
-                            // Apply minimal patch: change first instruction to return 1
-                            if (bodySize >= 3) {
-                                patched[bodyStart] = 0x41; // i32.const
-                                patched[bodyStart + 1] = 0x01; // value: 1
-                                patched[bodyStart + 2] = 0x0f; // return
-                                patchCount++;
-                            }
-                        }
+                                                    // Replace function body with bypass code
+                                                    for (let j = 0; j < bypassBody.length; j++) {
+                                                        patched[bodyStart + j] = bypassBody[j];
+                                                    }
+                        
+                                                    // Fill remaining space with nop instructions (0x01)
+                                                    for (let j = bypassBody.length; j < bodySize; j++) {
+                                                        patched[bodyStart + j] = 0x01; // nop
+                                                    }
+                        
+                                                    patchCount++;
+                                                }
+                        else if (bodySize >= 3) {
+                                                        patched[bodyStart] = 0x41; // i32.const
+                                                        patched[bodyStart + 1] = 0x01; // value: 1
+                                                        patched[bodyStart + 2] = 0x0f; // return
+                                                        patchCount++;
+                                                    }
                     }
 
                     funcPos = bodyEnd;
@@ -943,29 +940,21 @@ const wasmProtectionBypass = {
         const lowerName = funcName.toLowerCase();
 
         // Boolean checks - ensure true
-        if (
-            lowerName.includes('is') ||
-            lowerName.includes('check') ||
-            lowerName.includes('validate') ||
-            lowerName.includes('verify')
-        ) {
-            if (result === 0 || result === false) {
-                return 1; // Return true
-            }
+        if ((lowerName.includes('is') ||
+                    lowerName.includes('check') ||
+                    lowerName.includes('validate') ||
+                    lowerName.includes('verify')) && (result === 0 || result === false)) {
+              return 1;
         }
 
         // Status codes - ensure success
-        if (lowerName.includes('status') || lowerName.includes('code')) {
-            if (result !== 0) {
-                return 0; // Return success code
-            }
+        if ((lowerName.includes('status') || lowerName.includes('code')) && result !== 0) {
+              return 0;
         }
 
         // Expiry dates - return future
-        if (lowerName.includes('expire') || lowerName.includes('expiry')) {
-            if (typeof result === 'number' && result < Date.now() / 1000) {
-                return 4102444800; // Year 2100
-            }
+        if ((lowerName.includes('expire') || lowerName.includes('expiry')) && (typeof result === 'number' && result < Date.now() / 1000)) {
+              return 4102444800;
         }
 
         return result;
@@ -988,7 +977,7 @@ const wasmProtectionBypass = {
     // Scan WASM memory
     scanWASMMemory: function (memory) {
         try {
-            const buffer = memory.buffer;
+            const {buffer} = memory;
             const view = new Uint8Array(buffer);
             const decoder = new TextDecoder();
 
@@ -1644,18 +1633,15 @@ const wasmProtectionBypass = {
         if (typeof WebAssembly !== 'undefined' && WebAssembly.Global) {
             const originalGlobal = WebAssembly.Global;
             WebAssembly.Global = function (descriptor, value) {
-                if (descriptor.value === 'i64' && typeof value === 'bigint') {
-                    // Potential license-related BigInt global
-                    if (value === 0n || value < 0n) {
-                        send({
-                            type: 'bypass',
-                            target: 'wasm_bypass',
-                            action: 'wasm_bigint_global_spoofed',
-                            original_value: value.toString(),
-                            spoofed_value: '1234567890123456789n',
-                        });
-                        value = 1234567890123456789n; // Valid license key
-                    }
+                if (descriptor.value === 'i64' && typeof value === 'bigint' && (value === 0n || value < 0n)) {
+                      send({
+                          type: 'bypass',
+                          target: 'wasm_bypass',
+                          action: 'wasm_bigint_global_spoofed',
+                          original_value: value.toString(),
+                          spoofed_value: '1234567890123456789n',
+                      });
+                      value = 1234567890123456789n;
                 }
                 return new originalGlobal(descriptor, value);
             };
@@ -1699,7 +1685,7 @@ const wasmProtectionBypass = {
                 // Patch memory for license validation
                 setTimeout(() => {
                     try {
-                        const buffer = memory.buffer;
+                        const {buffer} = memory;
                         const view = new Uint32Array(buffer);
 
                         // Look for license validation patterns in memory
@@ -1837,16 +1823,14 @@ const wasmProtectionBypass = {
 
         // Check for new exports in window
         for (const key in window) {
-            if (key.includes('wasm') || key.includes('WASM')) {
-                if (!this.state.wasm_modules.has(key)) {
-                    send({
-                        type: 'info',
-                        target: 'wasm_protection_bypass',
-                        action: 'potential_wasm_object_found',
-                        object_key: key,
-                    });
-                    this.analyzeWindowObject(key, window[key]);
-                }
+            if ((key.includes('wasm') || key.includes('WASM')) && !this.state.wasm_modules.has(key)) {
+                  send({
+                      type: 'info',
+                      target: 'wasm_protection_bypass',
+                      action: 'potential_wasm_object_found',
+                      object_key: key,
+                  });
+                  this.analyzeWindowObject(key, window[key]);
             }
         }
     },
@@ -1858,12 +1842,9 @@ const wasmProtectionBypass = {
             let hasWASMPattern = false;
 
             for (const key in obj) {
-                if (typeof obj[key] === 'function') {
-                    // Check for Emscripten naming pattern
-                    if (key.startsWith('_') || this.isLicenseFunction(key)) {
-                        hasWASMPattern = true;
-                        break;
-                    }
+                if (typeof obj[key] === 'function' && (key.startsWith('_') || this.isLicenseFunction(key))) {
+                      hasWASMPattern = true;
+                      break;
                 }
             }
 
@@ -2221,18 +2202,15 @@ const wasmProtectionBypass = {
                 // Intercept thread communications
                 const originalPostMessage = worker.postMessage;
                 worker.postMessage = function (message, transfer) {
-                    if (message && typeof message === 'object') {
-                        // Modify license validation messages
-                        if (message.type === 'validate_license' || message.checkLicense) {
-                            message.licenseValid = true;
-                            message.licensed = true;
-                            message.expiryDate = Date.now() + 31536000000; // 1 year
-                            send({
-                                type: 'bypass',
-                                target: 'wasm_bypass',
-                                action: 'worker_license_message_modified',
-                            });
-                        }
+                    if (message && typeof message === 'object' && (message.type === 'validate_license' || message.checkLicense)) {
+                          message.licenseValid = true;
+                          message.licensed = true;
+                          message.expiryDate = Date.now() + 31536000000; // 1 year
+                          send({
+                              type: 'bypass',
+                              target: 'wasm_bypass',
+                              action: 'worker_license_message_modified',
+                          });
                     }
                     return originalPostMessage.call(this, message, transfer);
                 };
@@ -2336,21 +2314,17 @@ const wasmProtectionBypass = {
                 window.addEventListener = function (type, listener, options) {
                     if (type === 'error' || type === 'unhandledrejection') {
                         const wrappedListener = function (event) {
-                            if (event && event.message && typeof event.message === 'string') {
-                                if (
-                                    event.message.includes('LICENSE') ||
-                                    event.message.includes('license')
-                                ) {
-                                    send({
-                                        type: 'bypass',
-                                        target: 'wasm_bypass',
-                                        action: 'license_exception_suppressed',
-                                        message: event.message,
-                                    });
-                                    event.preventDefault();
-                                    event.stopPropagation();
-                                    return;
-                                }
+                            if (event && event.message && typeof event.message === 'string' && (event.message.includes('LICENSE') ||
+                                                                event.message.includes('license'))) {
+                                  send({
+                                      type: 'bypass',
+                                      target: 'wasm_bypass',
+                                      action: 'license_exception_suppressed',
+                                      message: event.message,
+                                  });
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  return;
                             }
                             if (listener) {
                                 return listener.call(this, event);
@@ -2635,12 +2609,7 @@ const wasmProtectionBypass = {
                             fd: fd,
                         });
 
-                        const result = originalRead.call(this, fd, iovs, iovsLen, nread);
-
-                        // Modify license file contents
-                        // This would need memory manipulation
-
-                        return result;
+                        return originalRead.call(this, fd, iovs, iovsLen, nread);
                     };
                 }
 
@@ -2736,28 +2705,25 @@ const wasmProtectionBypass = {
 
         // Blazor/.NET WASM patterns
         this.hookBlazorWASM = function () {
-            if (typeof window !== 'undefined' && window.Blazor) {
-                // Hook Blazor initialization
-                if (window.Blazor._internal) {
-                    const internal = window.Blazor._internal;
-
-                    // Hook invoke methods used for license checks
-                    if (internal.invokeJSFromDotNet) {
-                        const originalInvoke = internal.invokeJSFromDotNet;
-                        internal.invokeJSFromDotNet = function (identifier, ...args) {
-                            if (identifier && identifier.includes('License')) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'wasm_bypass',
-                                    action: 'blazor_license_call_intercepted',
-                                    identifier: identifier,
-                                });
-                                return JSON.stringify({ valid: true, licensed: true });
-                            }
-                            return originalInvoke.call(this, identifier, ...args);
-                        };
-                    }
-                }
+            if (typeof window !== 'undefined' && window.Blazor && window.Blazor._internal) {
+                  const internal = window.Blazor._internal;
+            
+                  // Hook invoke methods used for license checks
+                  if (internal.invokeJSFromDotNet) {
+                      const originalInvoke = internal.invokeJSFromDotNet;
+                      internal.invokeJSFromDotNet = function (identifier, ...args) {
+                          if (identifier && identifier.includes('License')) {
+                              send({
+                                  type: 'bypass',
+                                  target: 'wasm_bypass',
+                                  action: 'blazor_license_call_intercepted',
+                                  identifier: identifier,
+                              });
+                              return JSON.stringify({ valid: true, licensed: true });
+                          }
+                          return originalInvoke.call(this, identifier, ...args);
+                      };
+                  }
             }
         };
 

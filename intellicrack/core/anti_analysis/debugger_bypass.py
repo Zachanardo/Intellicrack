@@ -161,7 +161,9 @@ class DebuggerBypass:
                 ]
 
             pbi = ProcessBasicInformation()
-            status = self.ntdll.NtQueryInformationProcess(current_process, 0, ctypes.byref(pbi), ctypes.sizeof(pbi), None)
+            status = self.ntdll.NtQueryInformationProcess(
+                current_process, 0, ctypes.byref(pbi), ctypes.sizeof(pbi), None
+            )
 
             if status != 0:
                 return False
@@ -175,7 +177,11 @@ class DebuggerBypass:
             bytes_written = ctypes.c_size_t()
 
             success = self.kernel32.WriteProcessMemory(
-                current_process, being_debugged_addr, ctypes.byref(zero_byte), 1, ctypes.byref(bytes_written),
+                current_process,
+                being_debugged_addr,
+                ctypes.byref(zero_byte),
+                1,
+                ctypes.byref(bytes_written),
             )
 
             if success and bytes_written.value == 1:
@@ -218,7 +224,9 @@ class DebuggerBypass:
                 ]
 
             pbi = ProcessBasicInformation()
-            status = self.ntdll.NtQueryInformationProcess(current_process, 0, ctypes.byref(pbi), ctypes.sizeof(pbi), None)
+            status = self.ntdll.NtQueryInformationProcess(
+                current_process, 0, ctypes.byref(pbi), ctypes.sizeof(pbi), None
+            )
 
             if status != 0:
                 return False
@@ -231,14 +239,26 @@ class DebuggerBypass:
             zero_byte = ctypes.c_ubyte(0)
             bytes_written = ctypes.c_size_t()
 
-            self.kernel32.WriteProcessMemory(current_process, being_debugged_addr, ctypes.byref(zero_byte), 1, ctypes.byref(bytes_written))
+            self.kernel32.WriteProcessMemory(
+                current_process,
+                being_debugged_addr,
+                ctypes.byref(zero_byte),
+                1,
+                ctypes.byref(bytes_written),
+            )
 
             is_64bit = platform.machine().endswith("64")
             nt_global_flag_offset = 0xBC if is_64bit else 0x68
             nt_global_flag_addr = ctypes.c_void_p(peb_address.value + nt_global_flag_offset)
             zero_dword = ctypes.c_ulong(0)
 
-            self.kernel32.WriteProcessMemory(current_process, nt_global_flag_addr, ctypes.byref(zero_dword), 4, ctypes.byref(bytes_written))
+            self.kernel32.WriteProcessMemory(
+                current_process,
+                nt_global_flag_addr,
+                ctypes.byref(zero_dword),
+                4,
+                ctypes.byref(bytes_written),
+            )
 
             heap_flags_offset = 0x30 if is_64bit else 0x18
             process_heap_addr = ctypes.c_void_p()
@@ -262,9 +282,19 @@ class DebuggerBypass:
                 normal_flags = ctypes.c_ulong(0x00000002)  # HEAP_GROWABLE
                 zero_flags = ctypes.c_ulong(0)
 
-                self.kernel32.WriteProcessMemory(current_process, flags_addr, ctypes.byref(normal_flags), 4, ctypes.byref(bytes_written))
                 self.kernel32.WriteProcessMemory(
-                    current_process, force_flags_addr, ctypes.byref(zero_flags), 4, ctypes.byref(bytes_written),
+                    current_process,
+                    flags_addr,
+                    ctypes.byref(normal_flags),
+                    4,
+                    ctypes.byref(bytes_written),
+                )
+                self.kernel32.WriteProcessMemory(
+                    current_process,
+                    force_flags_addr,
+                    ctypes.byref(zero_flags),
+                    4,
+                    ctypes.byref(bytes_written),
                 )
 
             self.logger.debug("PEB flags neutralized")
@@ -288,15 +318,16 @@ class DebuggerBypass:
             if platform.system() != "Windows":
                 return False
 
-            original_func_addr = ctypes.cast(self.ntdll.NtQueryInformationProcess, ctypes.c_void_p).value
+            original_func_addr = ctypes.cast(
+                self.ntdll.NtQueryInformationProcess, ctypes.c_void_p
+            ).value
 
             if not original_func_addr:
                 return False
 
             self.original_functions["NtQueryInformationProcess"] = original_func_addr
 
-            hook_code = self._generate_ntquery_hook()
-            if hook_code:
+            if hook_code := self._generate_ntquery_hook():
                 self.logger.debug("NtQueryInformationProcess hook prepared")
                 return True
 
@@ -309,48 +340,64 @@ class DebuggerBypass:
     def _generate_ntquery_hook(self) -> bytes:
         """Generate hook code for NtQueryInformationProcess."""
         try:
-            if platform.machine().endswith("64"):
-                hook_code = bytes([
-                    0x48,
-                    0x83,
-                    0xFA,
-                    0x07,  # cmp rdx, 7 (ProcessDebugPort)
-                    0x74,
-                    0x0C,  # je skip_to_zero
-                    0x48,
-                    0xB8,  # mov rax, original_addr
-                    *list(struct.pack("<Q", self.original_functions.get("NtQueryInformationProcess", 0))),
-                    0xFF,
-                    0xE0,  # jmp rax
-                    0x33,
-                    0xC0,  # xor eax, eax (STATUS_SUCCESS)
-                    0x48,
-                    0x89,
-                    0x01,  # mov [rcx], rax (write 0 to output)
-                    0xC3,  # ret
-                ])
-            else:
-                hook_code = bytes([
-                    0x83,
-                    0xFA,
-                    0x07,  # cmp edx, 7
-                    0x74,
-                    0x08,  # je skip_to_zero
-                    0xB8,  # mov eax, original_addr
-                    *list(struct.pack("<I", self.original_functions.get("NtQueryInformationProcess", 0))),
-                    0xFF,
-                    0xE0,  # jmp eax
-                    0x33,
-                    0xC0,  # xor eax, eax
-                    0x89,
-                    0x01,  # mov [ecx], eax
-                    0xC2,
-                    0x14,
-                    0x00,  # ret 0x14
-                ])
-
-            return hook_code
-
+            return (
+                bytes(
+                    [
+                        0x48,
+                        0x83,
+                        0xFA,
+                        0x07,  # cmp rdx, 7 (ProcessDebugPort)
+                        0x74,
+                        0x0C,  # je skip_to_zero
+                        0x48,
+                        0xB8,  # mov rax, original_addr
+                        *list(
+                            struct.pack(
+                                "<Q",
+                                self.original_functions.get(
+                                    "NtQueryInformationProcess", 0
+                                ),
+                            )
+                        ),
+                        0xFF,
+                        0xE0,  # jmp rax
+                        0x33,
+                        0xC0,  # xor eax, eax (STATUS_SUCCESS)
+                        0x48,
+                        0x89,
+                        0x01,  # mov [rcx], rax (write 0 to output)
+                        0xC3,  # ret
+                    ]
+                )
+                if platform.machine().endswith("64")
+                else bytes(
+                    [
+                        0x83,
+                        0xFA,
+                        0x07,  # cmp edx, 7
+                        0x74,
+                        0x08,  # je skip_to_zero
+                        0xB8,  # mov eax, original_addr
+                        *list(
+                            struct.pack(
+                                "<I",
+                                self.original_functions.get(
+                                    "NtQueryInformationProcess", 0
+                                ),
+                            )
+                        ),
+                        0xFF,
+                        0xE0,  # jmp eax
+                        0x33,
+                        0xC0,  # xor eax, eax
+                        0x89,
+                        0x01,  # mov [ecx], eax
+                        0xC2,
+                        0x14,
+                        0x00,  # ret 0x14
+                    ]
+                )
+            )
         except Exception as e:
             self.logger.debug(f"Hook generation failed: {e}")
             return b""
@@ -443,12 +490,14 @@ class DebuggerBypass:
 
             self.timing_base = time.perf_counter()
 
-            original_qpc = ctypes.cast(self.kernel32.QueryPerformanceCounter, ctypes.c_void_p).value
-            if original_qpc:
+            if original_qpc := ctypes.cast(
+                self.kernel32.QueryPerformanceCounter, ctypes.c_void_p
+            ).value:
                 self.original_functions["QueryPerformanceCounter"] = original_qpc
 
-            original_gtc = ctypes.cast(self.kernel32.GetTickCount, ctypes.c_void_p).value
-            if original_gtc:
+            if original_gtc := ctypes.cast(
+                self.kernel32.GetTickCount, ctypes.c_void_p
+            ).value:
                 self.original_functions["GetTickCount"] = original_gtc
 
             self.logger.debug("Timing functions hooked")
@@ -471,12 +520,12 @@ class DebuggerBypass:
 
             libc = ctypes.CDLL(libc_path)
 
-            original_time = ctypes.cast(libc.time, ctypes.c_void_p).value
-            if original_time:
+            if original_time := ctypes.cast(libc.time, ctypes.c_void_p).value:
                 self.original_functions["time"] = original_time
 
-            original_gettimeofday = ctypes.cast(libc.gettimeofday, ctypes.c_void_p).value
-            if original_gettimeofday:
+            if original_gettimeofday := ctypes.cast(
+                libc.gettimeofday, ctypes.c_void_p
+            ).value:
                 self.original_functions["gettimeofday"] = original_gettimeofday
 
             self.logger.debug("Linux timing functions hooked")
@@ -522,8 +571,7 @@ class DebuggerBypass:
             ]
 
             for window_class in debugger_window_classes:
-                hwnd = self.user32.FindWindowA(window_class.encode(), None)
-                if hwnd:
+                if hwnd := self.user32.FindWindowA(window_class.encode(), None):
                     self.user32.ShowWindow(hwnd, 0)  # SW_HIDE
                     self.logger.debug(f"Hidden debugger window: {window_class}")
 

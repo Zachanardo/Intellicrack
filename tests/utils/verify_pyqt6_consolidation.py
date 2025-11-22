@@ -30,7 +30,7 @@ def check_pyqt6_consolidation():
         is_allowed = any(allowed in py_file.name for allowed in allowed_files)
 
         try:
-            with open(py_file, 'r', encoding='utf-8') as f:
+            with open(py_file, encoding='utf-8') as f:
                 content = f.read()
 
             # Find all PyQt6 imports
@@ -96,7 +96,7 @@ def check_pyqt6_consolidation():
     # Also verify common_imports.py has all necessary imports
     common_imports_file = Path("intellicrack/ui/dialogs/common_imports.py")
     if common_imports_file.exists():
-        with open(common_imports_file, 'r', encoding='utf-8') as f:
+        with open(common_imports_file, encoding='utf-8') as f:
             content = f.read()
 
         # Count unique PyQt6 classes imported

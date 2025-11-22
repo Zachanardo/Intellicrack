@@ -26,6 +26,7 @@ from typing import TYPE_CHECKING, Any
 
 from intellicrack.utils.logger import logger
 
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -102,7 +103,9 @@ class NativeConcolicState:
         """Get register value."""
         return self.registers.get(reg, 0)
 
-    def write_memory(self, addr: int, value: int | bytes, size: int = 4, symbolic: bool = False) -> None:
+    def write_memory(
+        self, addr: int, value: int | bytes, size: int = 4, symbolic: bool = False
+    ) -> None:
         """Write to memory."""
         for i in range(size):
             self.memory[addr + i] = (value >> (i * 8)) & 0xFF
@@ -121,8 +124,10 @@ class NativeConcolicState:
 if not MANTICORE_AVAILABLE:
     # Try to use simconcolic as a fallback
     try:
-        from .simconcolic import BinaryAnalyzer as Manticore  # :no-index:
-        from .simconcolic import Plugin  # :no-index:
+        from .simconcolic import (
+            BinaryAnalyzer as Manticore,  # :no-index:
+            Plugin,  # :no-index:
+        )
 
         MANTICORE_AVAILABLE = True
         MANTICORE_TYPE = "simconcolic"
@@ -138,7 +143,9 @@ if not MANTICORE_AVAILABLE:
             capabilities without requiring external dependencies like the Manticore framework.
             """
 
-            def __init__(self, binary_path: str | None = None, *args: object, **kwargs: object) -> None:
+            def __init__(
+                self, binary_path: str | None = None, *args: object, **kwargs: object
+            ) -> None:
                 """Initialize native concolic execution engine.
 
                 Args:
@@ -203,7 +210,9 @@ if not MANTICORE_AVAILABLE:
                             opt_header_offset = pe_offset + 24
                             if opt_header_offset + 16 < len(self.binary_data):
                                 entry_point = int.from_bytes(
-                                    self.binary_data[opt_header_offset + 16 : opt_header_offset + 20],
+                                    self.binary_data[
+                                        opt_header_offset + 16 : opt_header_offset + 20
+                                    ],
                                     "little",
                                 )
                                 return entry_point + 0x400000  # Add image base
@@ -216,16 +225,18 @@ if not MANTICORE_AVAILABLE:
                 try:
                     # Basic ELF parsing
                     if len(self.binary_data) >= 32:
-                        if self.binary_data[4] == 2:  # 64-bit
-                            entry_point = int.from_bytes(self.binary_data[24:32], "little")
-                        else:  # 32-bit
-                            entry_point = int.from_bytes(self.binary_data[24:28], "little")
-                        return entry_point
+                        return (
+                            int.from_bytes(self.binary_data[24:32], "little")
+                            if self.binary_data[4] == 2
+                            else int.from_bytes(self.binary_data[24:28], "little")
+                        )
                 except Exception as e:
                     self.logger.debug(f"Failed to parse ELF entry point: {e}")
                 return 0x8048000  # Default ELF entry point
 
-            def add_hook(self, address: int, callback: "Callable[[NativeConcolicState], None]") -> None:
+            def add_hook(
+                self, address: int, callback: "Callable[[NativeConcolicState], None]"
+            ) -> None:
                 """Add execution hook at specific address."""
                 self.hooks[address] = callback
                 self.logger.debug("Hook added for address 0x%x", address)
@@ -291,9 +302,7 @@ if not MANTICORE_AVAILABLE:
                                 except Exception as e:
                                     self.logger.error("Hook execution failed: %s", e)
 
-                            # Check for branching conditions
-                            new_states = self._check_for_branches(current_state)
-                            if new_states:
+                            if new_states := self._check_for_branches(current_state):
                                 for new_state in new_states:
                                     state_id += 1
                                     self.all_states[state_id] = new_state
@@ -354,11 +363,13 @@ if not MANTICORE_AVAILABLE:
                     self.logger.debug("Instruction execution error at 0x%x: %s", state.pc, e)
                     state.terminate("execution_error")
 
-            def _emulate_instruction(self, state: NativeConcolicState, instruction_bytes: bytes) -> None:
+            def _emulate_instruction(
+                self, state: NativeConcolicState, instruction_bytes: bytes
+            ) -> None:
                 """Emulate instruction execution using real x86/x64 emulation."""
                 import struct
 
-                if len(instruction_bytes) == 0:
+                if not instruction_bytes:
                     state.terminate("empty_instruction")
                     return
 
@@ -385,10 +396,13 @@ if not MANTICORE_AVAILABLE:
                                 rsp = state.registers.get("rsp", state.registers.get("esp", 0))
                                 if rsp in state.memory:
                                     ret_addr = struct.unpack(
-                                        "<Q" if state.arch == "x64" else "<I", state.memory[rsp : rsp + (8 if state.arch == "x64" else 4)],
+                                        "<Q" if state.arch == "x64" else "<I",
+                                        state.memory[rsp : rsp + (8 if state.arch == "x64" else 4)],
                                     )[0]
                                     state.pc = ret_addr
-                                    state.registers["rsp" if state.arch == "x64" else "esp"] = rsp + (8 if state.arch == "x64" else 4)
+                                    state.registers["rsp" if state.arch == "x64" else "esp"] = (
+                                        rsp + (8 if state.arch == "x64" else 4)
+                                    )
                                 else:
                                     state.terminate("invalid_stack_pointer")
 
@@ -407,8 +421,11 @@ if not MANTICORE_AVAILABLE:
                             ret_addr = state.pc + insn.size
                             rsp = state.registers.get("rsp", state.registers.get("esp", 0))
                             rsp -= 8 if state.arch == "x64" else 4
-                            state.memory[rsp : rsp + (8 if state.arch == "x64" else 4)] = struct.pack(
-                                "<Q" if state.arch == "x64" else "<I", ret_addr,
+                            state.memory[rsp : rsp + (8 if state.arch == "x64" else 4)] = (
+                                struct.pack(
+                                    "<Q" if state.arch == "x64" else "<I",
+                                    ret_addr,
+                                )
                             )
                             state.registers["rsp" if state.arch == "x64" else "esp"] = rsp
                             state.pc = target
@@ -464,7 +481,9 @@ if not MANTICORE_AVAILABLE:
                     # Fallback to manual decoding if Capstone not available
                     self._manual_decode_instruction(state, instruction_bytes)
 
-            def _handle_jump(self, state: NativeConcolicState, insn: "Instruction", instruction_bytes: bytes) -> None:
+            def _handle_jump(
+                self, state: NativeConcolicState, insn: "Instruction", instruction_bytes: bytes
+            ) -> None:
                 """Handle jump instructions with proper branching."""
                 import struct
 
@@ -476,7 +495,9 @@ if not MANTICORE_AVAILABLE:
                     if insn.size == 2:  # Short jump
                         displacement = struct.unpack("b", instruction_bytes[1:2])[0]
                     else:  # Near jump
-                        displacement = struct.unpack("<i", instruction_bytes[insn.size - 4 : insn.size])[0]
+                        displacement = struct.unpack(
+                            "<i", instruction_bytes[insn.size - 4 : insn.size]
+                        )[0]
                     target = state.pc + insn.size + displacement
 
                 # Handle different jump types
@@ -539,7 +560,9 @@ if not MANTICORE_AVAILABLE:
                     state.add_constraint(f"{insn.mnemonic}_not_taken_at_{state.pc:x}")
                     self._create_branch_state(state, target, f"{insn.mnemonic}_taken")
 
-            def _create_branch_state(self, state: NativeConcolicState, target: int, constraint: str) -> None:
+            def _create_branch_state(
+                self, state: NativeConcolicState, target: int, constraint: str
+            ) -> None:
                 """Create alternate state for branch exploration."""
                 if len(self.ready_states) < self.max_states:
                     alternate = state.fork()
@@ -574,9 +597,15 @@ if not MANTICORE_AVAILABLE:
                     if insn.mnemonic == "add":
                         result = dst_val + src_val
                         # Update flags
-                        state.flags["CF"] = result > (0xFFFFFFFFFFFFFFFF if state.arch == "x64" else 0xFFFFFFFF)
-                        state.flags["ZF"] = (result & (0xFFFFFFFFFFFFFFFF if state.arch == "x64" else 0xFFFFFFFF)) == 0
-                        state.flags["SF"] = (result & (0x8000000000000000 if state.arch == "x64" else 0x80000000)) != 0
+                        state.flags["CF"] = result > (
+                            0xFFFFFFFFFFFFFFFF if state.arch == "x64" else 0xFFFFFFFF
+                        )
+                        state.flags["ZF"] = (
+                            result & (0xFFFFFFFFFFFFFFFF if state.arch == "x64" else 0xFFFFFFFF)
+                        ) == 0
+                        state.flags["SF"] = (
+                            result & (0x8000000000000000 if state.arch == "x64" else 0x80000000)
+                        ) != 0
 
                     elif insn.mnemonic == "sub":
                         result = dst_val - src_val
@@ -587,21 +616,27 @@ if not MANTICORE_AVAILABLE:
                     elif insn.mnemonic == "xor":
                         result = dst_val ^ src_val
                         state.flags["ZF"] = result == 0
-                        state.flags["SF"] = (result & (0x8000000000000000 if state.arch == "x64" else 0x80000000)) != 0
+                        state.flags["SF"] = (
+                            result & (0x8000000000000000 if state.arch == "x64" else 0x80000000)
+                        ) != 0
                         state.flags["CF"] = False
                         state.flags["OF"] = False
 
                     elif insn.mnemonic == "and":
                         result = dst_val & src_val
                         state.flags["ZF"] = result == 0
-                        state.flags["SF"] = (result & (0x8000000000000000 if state.arch == "x64" else 0x80000000)) != 0
+                        state.flags["SF"] = (
+                            result & (0x8000000000000000 if state.arch == "x64" else 0x80000000)
+                        ) != 0
                         state.flags["CF"] = False
                         state.flags["OF"] = False
 
                     elif insn.mnemonic == "or":
                         result = dst_val | src_val
                         state.flags["ZF"] = result == 0
-                        state.flags["SF"] = (result & (0x8000000000000000 if state.arch == "x64" else 0x80000000)) != 0
+                        state.flags["SF"] = (
+                            result & (0x8000000000000000 if state.arch == "x64" else 0x80000000)
+                        ) != 0
                         state.flags["CF"] = False
                         state.flags["OF"] = False
 
@@ -626,14 +661,18 @@ if not MANTICORE_AVAILABLE:
                         state.flags["CF"] = val1 < val2
                         # Simplified overflow detection
                         state.flags["OF"] = (
-                            (val1 ^ val2) & (val1 ^ result) & (0x8000000000000000 if state.arch == "x64" else 0x80000000)
+                            (val1 ^ val2)
+                            & (val1 ^ result)
+                            & (0x8000000000000000 if state.arch == "x64" else 0x80000000)
                         ) != 0
 
                     elif insn.mnemonic == "test":
                         # TEST is like AND but doesn't store result
                         result = val1 & val2
                         state.flags["ZF"] = result == 0
-                        state.flags["SF"] = (result & (0x8000000000000000 if state.arch == "x64" else 0x80000000)) != 0
+                        state.flags["SF"] = (
+                            result & (0x8000000000000000 if state.arch == "x64" else 0x80000000)
+                        ) != 0
                         state.flags["CF"] = False
                         state.flags["OF"] = False
 
@@ -656,7 +695,8 @@ if not MANTICORE_AVAILABLE:
 
                     # Write to stack memory
                     packed = struct.pack(
-                        "<Q" if state.arch == "x64" else "<I", val & (0xFFFFFFFFFFFFFFFF if state.arch == "x64" else 0xFFFFFFFF),
+                        "<Q" if state.arch == "x64" else "<I",
+                        val & (0xFFFFFFFFFFFFFFFF if state.arch == "x64" else 0xFFFFFFFF),
                     )
                     state.memory[sp : sp + word_size] = packed
 
@@ -703,7 +743,9 @@ if not MANTICORE_AVAILABLE:
                     syscall_num = state.registers.get("eax", 0)
                     self._process_syscall(state, syscall_num, "fast")
 
-            def _process_syscall(self, state: NativeConcolicState, syscall_num: int, arch: str) -> None:
+            def _process_syscall(
+                self, state: NativeConcolicState, syscall_num: int, arch: str
+            ) -> None:
                 """Process system call."""
                 # Common syscalls
                 if syscall_num == 1:  # exit (x86) / write (x64)
@@ -756,12 +798,14 @@ if not MANTICORE_AVAILABLE:
 
                 return 0
 
-            def _set_operand_value(self, state: NativeConcolicState, operand: str, value: int) -> None:
+            def _set_operand_value(
+                self, state: NativeConcolicState, operand: str, value: int
+            ) -> None:
                 """Set value to operand (register or memory)."""
                 import struct
 
                 # Register
-                if operand in [
+                if operand in {
                     "rax",
                     "rbx",
                     "rcx",
@@ -786,10 +830,9 @@ if not MANTICORE_AVAILABLE:
                     "edi",
                     "ebp",
                     "esp",
-                ]:
+                }:
                     state.registers[operand] = value
 
-                # Memory reference
                 elif operand.startswith("[") and operand.endswith("]"):
                     addr_expr = operand[1:-1]
                     addr = self._calculate_effective_address(state, addr_expr)
@@ -797,7 +840,8 @@ if not MANTICORE_AVAILABLE:
                     # Write to memory
                     word_size = 8 if state.arch == "x64" else 4
                     packed = struct.pack(
-                        "<Q" if state.arch == "x64" else "<I", value & (0xFFFFFFFFFFFFFFFF if state.arch == "x64" else 0xFFFFFFFF),
+                        "<Q" if state.arch == "x64" else "<I",
+                        value & (0xFFFFFFFFFFFFFFFF if state.arch == "x64" else 0xFFFFFFFF),
                     )
                     state.memory[addr : addr + word_size] = packed
 
@@ -809,29 +853,27 @@ if not MANTICORE_AVAILABLE:
                 if expr in state.registers:
                     return state.registers[expr]
 
-                # Base + displacement
-                match = re.match(r"(\w+)\s*([+-])\s*(0x[0-9a-f]+|\d+)", expr, re.IGNORECASE)
-                if match:
-                    base_reg = match.group(1)
-                    op = match.group(2)
-                    disp = match.group(3)
+                if match := re.match(
+                    r"(\w+)\s*([+-])\s*(0x[0-9a-f]+|\d+)", expr, re.IGNORECASE
+                ):
+                    base_reg = match[1]
+                    op = match[2]
+                    disp = match[3]
 
                     base = state.registers.get(base_reg, 0)
                     offset = int(disp, 16) if disp.startswith("0x") else int(disp)
 
-                    if op == "+":
-                        return base + offset
-                    return base - offset
-
-                # Base + index*scale + displacement
-                # e.g., [rbp+rax*4+0x10]
-                match = re.match(r"(\w+)\s*\+\s*(\w+)\s*\*\s*(\d+)\s*([+-])\s*(0x[0-9a-f]+|\d+)", expr, re.IGNORECASE)
-                if match:
+                    return base + offset if op == "+" else base - offset
+                if match := re.match(
+                    r"(\w+)\s*\+\s*(\w+)\s*\*\s*(\d+)\s*([+-])\s*(0x[0-9a-f]+|\d+)",
+                    expr,
+                    re.IGNORECASE,
+                ):
                     base_reg = match.group(1)
                     index_reg = match.group(2)
                     scale = int(match.group(3))
-                    op = match.group(4)
-                    disp = match.group(5)
+                    op = match[4]
+                    disp = match[5]
 
                     base = state.registers.get(base_reg, 0)
                     index = state.registers.get(index_reg, 0)
@@ -846,7 +888,9 @@ if not MANTICORE_AVAILABLE:
 
                 return 0
 
-            def _manual_decode_instruction(self, state: NativeConcolicState, instruction_bytes: bytes) -> None:
+            def _manual_decode_instruction(
+                self, state: NativeConcolicState, instruction_bytes: bytes
+            ) -> None:
                 """Manual instruction decoding fallback."""
                 opcode = instruction_bytes[0]
 
@@ -860,7 +904,9 @@ if not MANTICORE_AVAILABLE:
                     sp = state.registers.get(sp_reg, 0)
                     if sp in state.memory:
                         word_size = 8 if state.arch == "x64" else 4
-                        ret_addr = struct.unpack("<Q" if state.arch == "x64" else "<I", state.memory[sp : sp + word_size])[0]
+                        ret_addr = struct.unpack(
+                            "<Q" if state.arch == "x64" else "<I", state.memory[sp : sp + word_size]
+                        )[0]
                         state.pc = ret_addr
                         state.registers[sp_reg] = sp + word_size
                     else:
@@ -879,7 +925,9 @@ if not MANTICORE_AVAILABLE:
                         sp -= 8 if state.arch == "x64" else 4
                         state.registers[sp_reg] = sp
                         word_size = 8 if state.arch == "x64" else 4
-                        state.memory[sp : sp + word_size] = struct.pack("<Q" if state.arch == "x64" else "<I", ret_addr)
+                        state.memory[sp : sp + word_size] = struct.pack(
+                            "<Q" if state.arch == "x64" else "<I", ret_addr
+                        )
 
                         state.pc = target
                     else:
@@ -898,52 +946,50 @@ if not MANTICORE_AVAILABLE:
 
                         displacement = struct.unpack("b", instruction_bytes[1:2])[0]
 
-                        # Check zero flag
-                        take_branch = (opcode == 0x74 and state.flags.get("ZF", False)) or (
-                            opcode == 0x75 and not state.flags.get("ZF", False)
-                        )
-
-                        if take_branch:
+                        if take_branch := (
+                            opcode == 0x74 and state.flags.get("ZF", False)
+                        ) or (opcode == 0x75 and not state.flags.get("ZF", False)):
                             # Create constraint for taken branch
-                            state.add_constraint(f"{'JZ' if opcode == 0x74 else 'JNZ'}_taken_at_{state.pc:x}")
+                            state.add_constraint(
+                                f"{'JZ' if opcode == 0x74 else 'JNZ'}_taken_at_{state.pc:x}"
+                            )
                             state.pc = state.pc + 2 + displacement
                         else:
                             # Create constraint for not taken
-                            state.add_constraint(f"{'JZ' if opcode == 0x74 else 'JNZ'}_not_taken_at_{state.pc:x}")
+                            state.add_constraint(
+                                f"{'JZ' if opcode == 0x74 else 'JNZ'}_not_taken_at_{state.pc:x}"
+                            )
                             state.pc += 2
 
                             # Create alternate state for other branch
                             if len(self.ready_states) < self.max_states:
                                 alternate = state.fork()
                                 alternate.pc = state.pc + displacement
-                                alternate.add_constraint(f"{'JZ' if opcode == 0x74 else 'JNZ'}_taken_at_{state.pc:x}")
+                                alternate.add_constraint(
+                                    f"{'JZ' if opcode == 0x74 else 'JNZ'}_taken_at_{state.pc:x}"
+                                )
                                 self.ready_states.append(alternate)
                     else:
                         state.pc += 2
                 elif opcode in [0x0F]:  # Two-byte opcodes
                     if len(instruction_bytes) >= 2:
                         opcode2 = instruction_bytes[1]
-                        if opcode2 in [0x84, 0x85]:  # JZ/JNZ near
-                            if len(instruction_bytes) >= 6:
-                                import struct
+                        if opcode2 in [0x84, 0x85] and len(instruction_bytes) >= 6:
+                            import struct
 
-                                displacement = struct.unpack("<i", instruction_bytes[2:6])[0]
+                            displacement = struct.unpack("<i", instruction_bytes[2:6])[0]
 
-                                take_branch = (opcode2 == 0x84 and state.flags.get("ZF", False)) or (
-                                    opcode2 == 0x85 and not state.flags.get("ZF", False)
-                                )
-
-                                if take_branch:
-                                    state.pc = state.pc + 6 + displacement
-                                else:
-                                    state.pc += 6
-                                    # Create alternate branch
-                                    if len(self.ready_states) < self.max_states:
-                                        alternate = state.fork()
-                                        alternate.pc = state.pc + displacement - 6
-                                        self.ready_states.append(alternate)
+                            if take_branch := (
+                                opcode2 == 0x84 and state.flags.get("ZF", False)
+                            ) or (opcode2 == 0x85 and not state.flags.get("ZF", False)):
+                                state.pc = state.pc + 6 + displacement
                             else:
-                                state.pc += 2
+                                state.pc += 6
+                                # Create alternate branch
+                                if len(self.ready_states) < self.max_states:
+                                    alternate = state.fork()
+                                    alternate.pc = state.pc + displacement - 6
+                                    self.ready_states.append(alternate)
                         else:
                             state.pc += 2
                     else:
@@ -955,13 +1001,18 @@ if not MANTICORE_AVAILABLE:
 
             def _estimate_instruction_length(self, instruction_bytes: bytes) -> int:
                 """Estimate instruction length for unknown opcodes."""
-                if len(instruction_bytes) == 0:
+                if not instruction_bytes:
                     return 1
 
                 opcode = instruction_bytes[0]
 
                 # Common prefixes
-                if opcode in [0x66, 0x67, 0xF2, 0xF3]:  # Operand/address size override, REP prefixes
+                if opcode in [
+                    0x66,
+                    0x67,
+                    0xF2,
+                    0xF3,
+                ]:  # Operand/address size override, REP prefixes
                     return 1 + self._estimate_instruction_length(instruction_bytes[1:])
 
                 # REX prefixes (x64)
@@ -990,7 +1041,9 @@ if not MANTICORE_AVAILABLE:
                 # Analyze the current instruction for branching opportunities
                 if state.pc in state.memory:
                     # Read instruction at current PC
-                    instruction_bytes = state.memory.get(state.pc, b"")[:15]  # Max x86 instruction is 15 bytes
+                    instruction_bytes = state.memory.get(state.pc, b"")[
+                        :15
+                    ]  # Max x86 instruction is 15 bytes
 
                     if instruction_bytes:
                         # Check for conditional branches
@@ -1034,13 +1087,17 @@ if not MANTICORE_AVAILABLE:
                                     # Fork state for branch taken
                                     branch_state = state.fork()
                                     branch_state.pc = branch_target
-                                    branch_state.add_constraint(f"{mnemonic}_taken_at_{state.pc:x}_{condition}")
+                                    branch_state.add_constraint(
+                                        f"{mnemonic}_taken_at_{state.pc:x}_{condition}"
+                                    )
                                     branch_state.path_predicate.append(condition)
                                     new_states.append(branch_state)
 
                                     # Current state continues with fall-through
                                     not_condition = self._negate_condition(condition)
-                                    state.add_constraint(f"{mnemonic}_not_taken_at_{state.pc:x}_{not_condition}")
+                                    state.add_constraint(
+                                        f"{mnemonic}_not_taken_at_{state.pc:x}_{not_condition}"
+                                    )
                                     state.path_predicate.append(not_condition)
 
                         # Two-byte conditional jumps (0F 8x)
@@ -1082,13 +1139,17 @@ if not MANTICORE_AVAILABLE:
                                         # Create branch state
                                         branch_state = state.fork()
                                         branch_state.pc = branch_target
-                                        branch_state.add_constraint(f"{mnemonic}_taken_at_{state.pc:x}_{condition}")
+                                        branch_state.add_constraint(
+                                            f"{mnemonic}_taken_at_{state.pc:x}_{condition}"
+                                        )
                                         branch_state.path_predicate.append(condition)
                                         new_states.append(branch_state)
 
                                         # Update current state for fall-through path
                                         not_condition = self._negate_condition(condition)
-                                        state.add_constraint(f"{mnemonic}_not_taken_at_{state.pc:x}_{not_condition}")
+                                        state.add_constraint(
+                                            f"{mnemonic}_not_taken_at_{state.pc:x}_{not_condition}"
+                                        )
                                         state.path_predicate.append(not_condition)
                                         state.pc = fall_through
 
@@ -1101,8 +1162,12 @@ if not MANTICORE_AVAILABLE:
                                 if possible_value != branch_info["current_value"]:
                                     # Create state for alternate value
                                     alt_state = state.fork()
-                                    alt_state.set_symbolic_value(branch_info["symbol"], possible_value)
-                                    alt_state.add_constraint(f"{branch_info['symbol']}=={possible_value}")
+                                    alt_state.set_symbolic_value(
+                                        branch_info["symbol"], possible_value
+                                    )
+                                    alt_state.add_constraint(
+                                        f"{branch_info['symbol']}=={possible_value}"
+                                    )
                                     new_states.append(alt_state)
 
                 # Check for indirect branches (computed jumps/calls)
@@ -1118,7 +1183,9 @@ if not MANTICORE_AVAILABLE:
                 # Limit number of states to explore
                 if len(self.ready_states) + len(new_states) > self.max_states:
                     # Prioritize states based on coverage and constraint complexity
-                    new_states = self._prioritize_states(new_states, self.max_states - len(self.ready_states))
+                    new_states = self._prioritize_states(
+                        new_states, self.max_states - len(self.ready_states)
+                    )
 
                 return new_states
 
@@ -1174,7 +1241,9 @@ if not MANTICORE_AVAILABLE:
 
                 return negations.get(condition, f"not({condition})")
 
-            def _is_indirect_branch(self, state: NativeConcolicState, instruction_bytes: bytes) -> bool:
+            def _is_indirect_branch(
+                self, state: NativeConcolicState, instruction_bytes: bytes
+            ) -> bool:
                 """Check if instruction is an indirect branch."""
                 if not instruction_bytes:
                     return False
@@ -1206,7 +1275,9 @@ if not MANTICORE_AVAILABLE:
                         for i in range(min(10, len(state.stack))):
                             addr_bytes = state.memory.get(sp + i * word_size, b"\x00" * word_size)
                             if len(addr_bytes) == word_size:
-                                addr = struct.unpack("<Q" if state.arch == "x64" else "<I", addr_bytes)[0]
+                                addr = struct.unpack(
+                                    "<Q" if state.arch == "x64" else "<I", addr_bytes
+                                )[0]
                                 if self._is_valid_code_address(addr):
                                     targets.append(addr)
 
@@ -1221,13 +1292,14 @@ if not MANTICORE_AVAILABLE:
 
             def _is_valid_code_address(self, addr: int) -> bool:
                 """Check if address points to valid code section."""
-                # Check if address is in code sections
-                for section in self.code_sections:
-                    if section["start"] <= addr < section["end"]:
-                        return True
-                return False
+                return any(
+                    section["start"] <= addr < section["end"]
+                    for section in self.code_sections
+                )
 
-            def _prioritize_states(self, states: list[NativeConcolicState], max_count: int) -> list[NativeConcolicState]:
+            def _prioritize_states(
+                self, states: list[NativeConcolicState], max_count: int
+            ) -> list[NativeConcolicState]:
                 """Prioritize states for exploration based on heuristics."""
                 if len(states) <= max_count:
                     return states
@@ -1293,9 +1365,13 @@ if not MANTICORE_AVAILABLE:
                     **kwargs: Additional keyword arguments from the execution engine
 
                 """
-                self.logger.debug(f"Execution starting on executor {type(executor).__name__} with args={args}, kwargs={kwargs}")
+                self.logger.debug(
+                    f"Execution starting on executor {type(executor).__name__} with args={args}, kwargs={kwargs}"
+                )
 
-            def did_finish_run_callback(self, executor: object, *args: object, **kwargs: object) -> None:
+            def did_finish_run_callback(
+                self, executor: object, *args: object, **kwargs: object
+            ) -> None:
                 """Call after execution completes.
 
                 Args:
@@ -1304,9 +1380,13 @@ if not MANTICORE_AVAILABLE:
                     **kwargs: Additional keyword arguments from the execution engine
 
                 """
-                self.logger.debug(f"Execution finished on executor {type(executor).__name__} with args={args}, kwargs={kwargs}")
+                self.logger.debug(
+                    f"Execution finished on executor {type(executor).__name__} with args={args}, kwargs={kwargs}"
+                )
 
-            def will_fork_state_callback(self, state: object, new_state: object, *args: object, **kwargs: object) -> None:
+            def will_fork_state_callback(
+                self, state: object, new_state: object, *args: object, **kwargs: object
+            ) -> None:
                 """Call before state fork.
 
                 Args:
@@ -1316,9 +1396,13 @@ if not MANTICORE_AVAILABLE:
                     **kwargs: Additional keyword arguments from the execution engine
 
                 """
-                self.logger.debug(f"State fork: PC 0x{state.pc:x} -> 0x{new_state.pc:x} with args={args}, kwargs={kwargs}")
+                self.logger.debug(
+                    f"State fork: PC 0x{state.pc:x} -> 0x{new_state.pc:x} with args={args}, kwargs={kwargs}"
+                )
 
-            def will_execute_instruction_callback(self, state: object, pc: int, insn: object) -> None:
+            def will_execute_instruction_callback(
+                self, state: object, pc: int, insn: object
+            ) -> None:
                 """Call before instruction execution.
 
                 Args:
@@ -1392,7 +1476,9 @@ class ConcolicExecutionEngine:
         self.max_states = 1000
         self.instruction_limit = 100000
 
-    def explore_paths(self, target_address: int | None = None, avoid_addresses: list[int] | None = None) -> dict[str, Any]:
+    def explore_paths(
+        self, target_address: int | None = None, avoid_addresses: list[int] | None = None
+    ) -> dict[str, Any]:
         """Perform concolic execution to explore program paths.
 
         Args:
@@ -1438,9 +1524,13 @@ class ConcolicExecutionEngine:
                         **kwargs: Additional keyword arguments from the execution engine
 
                     """
-                    self.logger.info(f"Starting path exploration with {len(args)} args and {len(kwargs)} kwargs")
+                    self.logger.info(
+                        f"Starting path exploration with {len(args)} args and {len(kwargs)} kwargs"
+                    )
                     if args:
-                        self.logger.debug(f"Exploration args: {[type(arg).__name__ for arg in args]}")
+                        self.logger.debug(
+                            f"Exploration args: {[type(arg).__name__ for arg in args]}"
+                        )
                     if kwargs:
                         self.logger.debug(f"Exploration kwargs: {list(kwargs.keys())}")
 
@@ -1452,13 +1542,17 @@ class ConcolicExecutionEngine:
                         **kwargs: Additional keyword arguments from the execution engine
 
                     """
-                    self.logger.info(f"Finished path exploration with {len(args)} args and {len(kwargs)} kwargs")
+                    self.logger.info(
+                        f"Finished path exploration with {len(args)} args and {len(kwargs)} kwargs"
+                    )
                     if args:
                         self.logger.debug(f"Finish args: {[type(arg).__name__ for arg in args]}")
                     if kwargs:
                         self.logger.debug(f"Finish kwargs: {list(kwargs.keys())}")
 
-                def will_fork_state_callback(self, state: object, *args: object, **kwargs: object) -> None:
+                def will_fork_state_callback(
+                    self, state: object, *args: object, **kwargs: object
+                ) -> None:
                     """Call before a state is about to be forked during exploration.
 
                     Args:
@@ -1467,7 +1561,9 @@ class ConcolicExecutionEngine:
                         **kwargs: Additional keyword arguments from the execution engine
 
                     """
-                    self.logger.debug(f"Forking state at PC: {state.cpu.PC} with {len(args)} args and {len(kwargs)} kwargs")
+                    self.logger.debug(
+                        f"Forking state at PC: {state.cpu.PC} with {len(args)} args and {len(kwargs)} kwargs"
+                    )
                     if args:
                         self.logger.debug(f"Fork args: {[type(arg).__name__ for arg in args]}")
                     if kwargs:
@@ -1499,13 +1595,20 @@ class ConcolicExecutionEngine:
                     results["inputs"].append(
                         {
                             "id": state_id,
-                            "stdin": stdin_data.hex() if isinstance(stdin_data, bytes) else str(stdin_data),
-                            "argv": [_arg.hex() if isinstance(_arg, bytes) else str(_arg) for _arg in argv_data],
+                            "stdin": stdin_data.hex()
+                            if isinstance(stdin_data, bytes)
+                            else str(stdin_data),
+                            "argv": [
+                                _arg.hex() if isinstance(_arg, bytes) else str(_arg)
+                                for _arg in argv_data
+                            ],
                             "termination_reason": state.termination_reason,
                         },
                     )
 
-            self.logger.info("Concolic execution completed. Explored %d paths.", results["paths_explored"])
+            self.logger.info(
+                "Concolic execution completed. Explored %d paths.", results["paths_explored"]
+            )
             return results
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -1551,8 +1654,8 @@ class ConcolicExecutionEngine:
             if license_check_address is None:
                 # Use symbolic execution to find license check
                 license_check_address = self._find_license_check_address()
-                if license_check_address is None:
-                    return {"error": "Could not automatically find license check address"}
+            if license_check_address is None:
+                return {"error": "Could not automatically find license check address"}
 
             self.logger.info("License check identified at address: %s", license_check_address)
 
@@ -1590,7 +1693,9 @@ class ConcolicExecutionEngine:
                     super().__init__()
                     self.logger = logging.getLogger(__name__)
 
-                def will_execute_instruction_callback(self, state: object, pc: int, insn: object) -> None:
+                def will_execute_instruction_callback(
+                    self, state: object, pc: int, insn: object
+                ) -> None:
                     """Execute before each instruction during emulation.
 
                     Monitors for license check functions and attempts to force successful path
@@ -1650,7 +1755,9 @@ class ConcolicExecutionEngine:
                     if isinstance(license_check_address, int)
                     else license_check_address,
                     "stdin": stdin_data.hex() if isinstance(stdin_data, bytes) else str(stdin_data),
-                    "argv": [_arg.hex() if isinstance(_arg, bytes) else str(_arg) for _arg in argv_data],
+                    "argv": [
+                        _arg.hex() if isinstance(_arg, bytes) else str(_arg) for _arg in argv_data
+                    ],
                     "description": "Found input that bypasses license check",
                 }
             return {
@@ -1695,13 +1802,16 @@ class ConcolicExecutionEngine:
 
                 license_patterns = [b"license", b"valid", b"key", b"auth", b"check"]
                 for _pattern in license_patterns:
-                    matches = list(re.finditer(_pattern, binary_data, re.IGNORECASE))
-                    if matches:
+                    if matches := list(
+                        re.finditer(_pattern, binary_data, re.IGNORECASE)
+                    ):
                         # Found license-related string - estimate function address
                         string_offset = matches[0].start()
                         # Heuristic: look for potential function boundaries before the string
                         potential_func_start = max(0, string_offset - 0x1000)  # Look back 4KB
-                        potential_func_start = (potential_func_start // 0x10) * 0x10  # Align to 16 bytes
+                        potential_func_start = (
+                            potential_func_start // 0x10
+                        ) * 0x10  # Align to 16 bytes
 
                         self.logger.info(
                             "Found potential license string at offset 0x%x, estimated function at 0x%x",
@@ -1759,7 +1869,9 @@ class ConcolicExecutionEngine:
             "error": None,
         }
 
-    def _setup_symbolic_input(self, m: object, generate_test_cases: bool, symbolic_stdin_size: int, concrete_seed: object) -> None:
+    def _setup_symbolic_input(
+        self, m: object, generate_test_cases: bool, symbolic_stdin_size: int, concrete_seed: object
+    ) -> None:
         """Set up symbolic input for test case generation.
 
         Args:
@@ -1779,7 +1891,9 @@ class ConcolicExecutionEngine:
                 for i, byte in enumerate(concrete_seed[:symbolic_stdin_size]):
                     m.constrain(stdin_data[i] == byte)
 
-    def _generate_test_cases(self, m: object, analysis_data: dict, symbolic_stdin_size: int) -> list[dict]:
+    def _generate_test_cases(
+        self, m: object, analysis_data: dict, symbolic_stdin_size: int
+    ) -> list[dict]:
         """Generate test cases from terminated states.
 
         Args:
@@ -1818,13 +1932,17 @@ class ConcolicExecutionEngine:
         # Calculate coverage
         if analysis_data["covered_blocks"]:
             total_blocks_estimate = 1000
-            processed_results["coverage"] = (len(analysis_data["covered_blocks"]) / total_blocks_estimate) * 100
+            processed_results["coverage"] = (
+                len(analysis_data["covered_blocks"]) / total_blocks_estimate
+            ) * 100
         else:
             processed_results["coverage"] = 0.0
 
         processed_results["vulnerabilities"] = analysis_data["vulnerabilities"]
         processed_results["constraints"] = list(analysis_data["constraints"].values())
-        processed_results["interesting_addresses"] = [hex(addr) for addr in analysis_data["interesting_addresses"]]
+        processed_results["interesting_addresses"] = [
+            hex(addr) for addr in analysis_data["interesting_addresses"]
+        ]
 
         if find_license_checks:
             license_results = self.find_license_bypass()
@@ -1867,7 +1985,7 @@ class ConcolicExecutionEngine:
         """
         import time
 
-        start_time = time.time()
+        time.time()
 
         if binary_path:
             self.binary_path = binary_path
@@ -1875,61 +1993,14 @@ class ConcolicExecutionEngine:
         self.logger.info(f"Starting concolic execution analysis on {self.binary_path}")
 
         params = self._extract_analysis_parameters(**kwargs)
-        results = self._initialize_analysis_results(params["max_depth"])
+        self._initialize_analysis_results(params["max_depth"])
 
         # Always use native implementation (manticore is removed)
         return self._native_analyze(binary_path, **kwargs)
 
-        # Legacy code kept for reference but never executed
-        try:
-            m = Manticore(self.binary_path)
-            m.set_exec_timeout(params["timeout"])
-
-            analysis_data = {
-                "covered_blocks": set(),
-                "crashed_states": [],
-                "successful_states": [],
-                "test_cases": [],
-                "vulnerabilities": [],
-                "constraints": {},
-                "interesting_addresses": set(),
-            }
-
-            plugin = self._create_analysis_plugin(analysis_data, params["find_vulnerabilities"])
-            m.register_plugin(plugin)
-
-            self._setup_symbolic_input(m, params["generate_test_cases"], params["symbolic_stdin_size"], params["concrete_seed"])
-
-            self.logger.info("Running concolic execution...")
-            m.run(procs=4)
-
-            all_states = list(m.all_states.values()) if hasattr(m.all_states, "values") else m.all_states
-            results["paths_explored"] = len(all_states)
-
-            if params["generate_test_cases"]:
-                results["test_cases"] = self._generate_test_cases(m, analysis_data, params["symbolic_stdin_size"])
-
-            processed_results = self._process_analysis_results(analysis_data, params["find_license_checks"])
-            results.update(processed_results)
-
-            results["execution_time"] = time.time() - start_time
-
-            self.logger.info(
-                f"Concolic analysis completed: {results['paths_explored']} paths explored, "
-                f"{len(results['test_cases'])} test cases generated, "
-                f"{results['coverage']:.2f}% coverage achieved",
-            )
-
-            return results
-
-        except Exception as e:
-            self.logger.error(f"Error during concolic analysis: {e}")
-            self.logger.debug(traceback.format_exc())
-            results["error"] = str(e)
-            results["execution_time"] = time.time() - start_time
-            return results
-
-    def _create_analysis_plugin(self, analysis_data: dict[str, Any], find_vulnerabilities: bool) -> "ComprehensiveAnalysisPlugin":
+    def _create_analysis_plugin(
+        self, analysis_data: dict[str, Any], find_vulnerabilities: bool
+    ) -> "ComprehensiveAnalysisPlugin":
         """Create the comprehensive analysis plugin."""
 
         class ComprehensiveAnalysisPlugin(Plugin):
@@ -1941,7 +2012,9 @@ class ConcolicExecutionEngine:
                 self.analysis_data = analysis_data
                 self.logger = logging.getLogger(__name__)
 
-            def will_execute_instruction_callback(self, state: object, pc: object, insn: object) -> None:
+            def will_execute_instruction_callback(
+                self, state: object, pc: object, insn: object
+            ) -> None:
                 """Track execution and detect interesting behaviors.
 
                 Args:
@@ -1957,11 +2030,12 @@ class ConcolicExecutionEngine:
                     if vuln:
                         self.analysis_data["vulnerabilities"].append(vuln)
 
-                if hasattr(insn, "mnemonic"):
-                    if insn.mnemonic in ["syscall", "int"] or insn.mnemonic == "call":
-                        self.analysis_data["interesting_addresses"].add(pc)
+                if hasattr(insn, "mnemonic") and (insn.mnemonic in ["syscall", "int"] or insn.mnemonic == "call"):
+                    self.analysis_data["interesting_addresses"].add(pc)
 
-            def _check_for_vulnerability(self, state: object, pc: int, insn: object) -> dict[str, object] | None:
+            def _check_for_vulnerability(
+                self, state: object, pc: int, insn: object
+            ) -> dict[str, object] | None:
                 """Check for potential vulnerabilities using execution state.
 
                 Args:
@@ -1976,7 +2050,13 @@ class ConcolicExecutionEngine:
                 vuln = None
 
                 try:
-                    stack_ptr = state.cpu.RSP if hasattr(state.cpu, "RSP") else state.cpu.ESP if hasattr(state.cpu, "ESP") else None
+                    stack_ptr = (
+                        state.cpu.RSP
+                        if hasattr(state.cpu, "RSP")
+                        else state.cpu.ESP
+                        if hasattr(state.cpu, "ESP")
+                        else None
+                    )
 
                     if hasattr(insn, "mnemonic") and insn.mnemonic == "call":
                         call_target = None
@@ -1986,7 +2066,9 @@ class ConcolicExecutionEngine:
                             except (AttributeError, IndexError, TypeError):
                                 # Handle missing operand value - use indirect call detection
                                 call_target = None
-                                self.logger.debug(f"Could not extract call target at {hex(pc)}, treating as indirect call")
+                                self.logger.debug(
+                                    f"Could not extract call target at {hex(pc)}, treating as indirect call"
+                                )
 
                         vuln = {
                             "type": "dangerous_call",
@@ -2023,7 +2105,14 @@ class ConcolicExecutionEngine:
 
                 return vuln
 
-            def will_fork_state_callback(self, state: object, expression: object, solutions: object, *args: object, **kwargs: object) -> None:
+            def will_fork_state_callback(
+                self,
+                state: object,
+                expression: object,
+                solutions: object,
+                *args: object,
+                **kwargs: object,
+            ) -> None:
                 """Track constraints when state forks.
 
                 Args:
@@ -2058,7 +2147,9 @@ class ConcolicExecutionEngine:
 
             def did_run_callback(self) -> None:
                 """Finalize analysis after execution."""
-                self.logger.info(f"Analysis complete. Covered {len(self.analysis_data['covered_blocks'])} blocks")
+                self.logger.info(
+                    f"Analysis complete. Covered {len(self.analysis_data['covered_blocks'])} blocks"
+                )
 
         return ComprehensiveAnalysisPlugin(analysis_data)
 
@@ -2110,10 +2201,16 @@ class ConcolicExecutionEngine:
             for i, state in enumerate(terminated_states[:10]):
                 exploit_vector = {
                     "id": i,
-                    "input": state.input_symbols.get("stdin", b"").hex() if hasattr(state, "input_symbols") else "",
+                    "input": state.input_symbols.get("stdin", b"").hex()
+                    if hasattr(state, "input_symbols")
+                    else "",
                     "triggers": [],
-                    "path_length": len(state.execution_trace) if hasattr(state, "execution_trace") else 0,
-                    "termination_reason": state.termination_reason if hasattr(state, "termination_reason") else "unknown",
+                    "path_length": len(state.execution_trace)
+                    if hasattr(state, "execution_trace")
+                    else 0,
+                    "termination_reason": state.termination_reason
+                    if hasattr(state, "termination_reason")
+                    else "unknown",
                 }
                 results["test_cases"].append(exploit_vector)
 
@@ -2178,7 +2275,12 @@ class ConcolicExecutionEngine:
             self.binary_path = binary_path
 
         # Perform comprehensive analysis
-        return self.analyze(self.binary_path, find_vulnerabilities=True, find_license_checks=True, generate_test_cases=True)
+        return self.analyze(
+            self.binary_path,
+            find_vulnerabilities=True,
+            find_license_checks=True,
+            generate_test_cases=True,
+        )
 
 
 def run_concolic_execution(app: object, target_binary: str) -> dict[str, object]:
@@ -2196,4 +2298,9 @@ def run_concolic_execution(app: object, target_binary: str) -> dict[str, object]
     return engine.execute(target_binary)
 
 
-__all__ = ["ConcolicExecutionEngine", "run_concolic_execution", "NativeConcolicState", "MANTICORE_AVAILABLE"]
+__all__ = [
+    "ConcolicExecutionEngine",
+    "MANTICORE_AVAILABLE",
+    "NativeConcolicState",
+    "run_concolic_execution",
+]

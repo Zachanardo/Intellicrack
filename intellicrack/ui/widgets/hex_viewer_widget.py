@@ -46,6 +46,7 @@ from ...utils.logger import get_logger
 from .pe_file_model import PEFileModel, create_file_model
 from .pe_structure_model import PEStructureModel
 
+
 logger = get_logger(__name__)
 
 
@@ -221,7 +222,9 @@ class HexViewerWidget(QWidget):
         search_layout.addWidget(self.search_type)
 
         self.search_input = QLineEdit()
-        self.search_input.setToolTip("Enter search pattern in selected format (Hex, ASCII, or Unicode)")
+        self.search_input.setToolTip(
+            "Enter search pattern in selected format (Hex, ASCII, or Unicode)"
+        )
         self.search_input.returnPressed.connect(self.search_data)
         search_layout.addWidget(self.search_input)
 
@@ -501,7 +504,9 @@ class HexViewerWidget(QWidget):
 
         # Highlight bytes in the range
         self.bytes_per_line * 3
-        for line_idx in range(start_line, min(end_line + 1, len(self.file_data) // self.bytes_per_line + 1)):
+        for line_idx in range(
+            start_line, min(end_line + 1, len(self.file_data) // self.bytes_per_line + 1)
+        ):
             cursor.movePosition(QTextCursor.StartOfBlock)
 
             if line_idx == start_line:
@@ -516,7 +521,9 @@ class HexViewerWidget(QWidget):
             if line_idx == end_line:
                 bytes_to_highlight = (end - self.current_offset) % self.bytes_per_line + 1
             else:
-                bytes_to_highlight = self.bytes_per_line - (byte_in_line if line_idx == start_line else 0)
+                bytes_to_highlight = self.bytes_per_line - (
+                    byte_in_line if line_idx == start_line else 0
+                )
 
             for _ in range(bytes_to_highlight * 3):
                 cursor.movePosition(QTextCursor.Right, QTextCursor.KeepAnchor)
@@ -548,11 +555,11 @@ class HexViewerWidget(QWidget):
             self.structure_info_text.append(f"RVA: 0x{rva:X}")
             self.structure_info_text.append(f"File Offset: 0x{offset:X}")
 
-            # Find which section contains this RVA
-            section = self.file_model.get_section_at_rva(rva)
-            if section:
+            if section := self.file_model.get_section_at_rva(rva):
                 self.structure_info_text.append(f"Section: {section.name}")
-                self.structure_info_text.append(f"Section Offset: 0x{rva - section.virtual_address:X}")
+                self.structure_info_text.append(
+                    f"Section Offset: 0x{rva - section.virtual_address:X}"
+                )
         else:
             QMessageBox.warning(self, "Invalid RVA", f"RVA 0x{rva:X} is not valid for this file")
 
@@ -662,18 +669,27 @@ class HexViewerWidget(QWidget):
         # 8-bit values
         if available >= 1:
             byte_val = self.file_data[offset]
-            interpretations.append(("UInt8", str(byte_val)))
-            interpretations.append(("Int8", str(struct.unpack("b", bytes([byte_val]))[0])))
-            interpretations.append(("Char", repr(chr(byte_val)) if 32 <= byte_val <= 126 else "N/A"))
-
+            interpretations.extend(
+                (
+                    ("UInt8", str(byte_val)),
+                    ("Int8", str(struct.unpack("b", bytes([byte_val]))[0])),
+                    (
+                        "Char",
+                        repr(chr(byte_val)) if 32 <= byte_val <= 126 else "N/A",
+                    ),
+                )
+            )
         # 16-bit values
         if available >= 2:
             data = self.file_data[offset : offset + 2]
-            interpretations.append(("UInt16 LE", str(struct.unpack("<H", data)[0])))
-            interpretations.append(("UInt16 BE", str(struct.unpack(">H", data)[0])))
-            interpretations.append(("Int16 LE", str(struct.unpack("<h", data)[0])))
-            interpretations.append(("Int16 BE", str(struct.unpack(">h", data)[0])))
-
+            interpretations.extend(
+                (
+                    ("UInt16 LE", str(struct.unpack("<H", data)[0])),
+                    ("UInt16 BE", str(struct.unpack(">H", data)[0])),
+                    ("Int16 LE", str(struct.unpack("<h", data)[0])),
+                    ("Int16 BE", str(struct.unpack(">h", data)[0])),
+                )
+            )
         # 32-bit values
         if available >= 4:
             data = self.file_data[offset : offset + 4]
@@ -724,13 +740,7 @@ class HexViewerWidget(QWidget):
 
                 # Find the colon that separates offset from hex data
                 colon_pos = line.find(":")
-                if colon_pos == -1:
-                    # No offset, assume entire line is hex data
-                    hex_part = line
-                else:
-                    # Skip offset and extract hex part
-                    hex_part = line[colon_pos + 1 :]
-
+                hex_part = line if colon_pos == -1 else line[colon_pos + 1 :]
                 # Remove all spaces and extract hex pairs
                 hex_part = hex_part.replace(" ", "")
 
@@ -837,7 +847,9 @@ class HexViewerWidget(QWidget):
         # Highlight in hex view if valid offset
         if offset is not None and size is not None:
             # Add temporary highlight for clicked structure
-            self.highlighted_regions = [region for region in self.highlighted_regions if not hasattr(region, "_temporary")]
+            self.highlighted_regions = [
+                region for region in self.highlighted_regions if not hasattr(region, "_temporary")
+            ]
 
             # Add new temporary highlight
             highlight_color = QColor(100, 200, 255, 80)  # Light blue
@@ -926,7 +938,9 @@ class HexViewerWidget(QWidget):
 
         # Extract wide strings action
         extract_wide_strings_action = QAction("Extract Wide Strings (Unicode)", self)
-        extract_wide_strings_action.triggered.connect(lambda: self._extract_strings_from_selection(wide=True))
+        extract_wide_strings_action.triggered.connect(
+            lambda: self._extract_strings_from_selection(wide=True)
+        )
         menu.addAction(extract_wide_strings_action)
 
         menu.addSeparator()
@@ -957,16 +971,7 @@ class HexViewerWidget(QWidget):
     def _extract_strings_from_selection(self, wide: bool = False) -> None:
         """Extract strings from selected hex data."""
         try:
-            from PyQt6.QtWidgets import (
-                QCheckBox,
-                QDialog,
-                QHBoxLayout,
-                QLabel,
-                QPushButton,
-                QSpinBox,
-                QTextEdit,
-                QVBoxLayout,
-            )
+            from PyQt6.QtWidgets import QCheckBox, QDialog, QHBoxLayout, QLabel, QPushButton, QSpinBox, QTextEdit, QVBoxLayout
 
             from intellicrack.core.analysis.memory_forensics_engine import MemoryForensicsEngine
 
@@ -1094,7 +1099,14 @@ class HexViewerWidget(QWidget):
                 results.append(f"{'=' * 60}\n")
 
                 # Group strings by potential category
-                categories = {"URLs": [], "Paths": [], "License": [], "Registry": [], "Error Messages": [], "Other": []}
+                categories = {
+                    "URLs": [],
+                    "Paths": [],
+                    "License": [],
+                    "Registry": [],
+                    "Error Messages": [],
+                    "Other": [],
+                }
 
                 for string in strings:
                     if string.startswith("http://") or string.startswith("https://"):
@@ -1106,9 +1118,14 @@ class HexViewerWidget(QWidget):
                             categories["Registry"].append(string)
                         else:
                             categories["Other"].append(string)
-                    elif any(word in string.lower() for word in ["license", "serial", "activation", "key"]):
+                    elif any(
+                        word in string.lower()
+                        for word in ["license", "serial", "activation", "key"]
+                    ):
                         categories["License"].append(string)
-                    elif any(word in string.lower() for word in ["error", "fail", "invalid", "exception"]):
+                    elif any(
+                        word in string.lower() for word in ["error", "fail", "invalid", "exception"]
+                    ):
                         categories["Error Messages"].append(string)
                     else:
                         categories["Other"].append(string)
@@ -1123,19 +1140,26 @@ class HexViewerWidget(QWidget):
                             results.append(f"... and {len(items) - 100} more")
 
                 results_text.setPlainText("\n".join(results))
-                stats_label.setText(f"Total: {len(strings)} strings | Displayed: {min(len(strings), 600)} strings")
+                stats_label.setText(
+                    f"Total: {len(strings)} strings | Displayed: {min(len(strings), 600)} strings"
+                )
 
             def export_strings() -> None:
                 """Export strings to file."""
                 file_path, _ = QFileDialog.getSaveFileName(
-                    dialog, "Export Strings", "extracted_strings.txt", "Text Files (*.txt);;All Files (*)",
+                    dialog,
+                    "Export Strings",
+                    "extracted_strings.txt",
+                    "Text Files (*.txt);;All Files (*)",
                 )
 
                 if file_path:
                     try:
                         with open(file_path, "w", encoding="utf-8", errors="ignore") as f:
                             f.write(results_text.toPlainText())
-                        QMessageBox.information(dialog, "Export Complete", f"Strings exported to {file_path}")
+                        QMessageBox.information(
+                            dialog, "Export Complete", f"Strings exported to {file_path}"
+                        )
                     except Exception as e:
                         QMessageBox.critical(dialog, "Export Error", f"Failed to export: {e!s}")
 
@@ -1171,13 +1195,8 @@ class HexViewerWidget(QWidget):
         while i < len(data) - 1:
             # Check for printable Unicode character
             char_bytes = data[i : i + 2]
-            if char_bytes[1] == 0:  # High byte is 0 (ASCII range)
-                if 32 <= char_bytes[0] <= 126:  # Printable ASCII
-                    current_string += chr(char_bytes[0])
-                else:
-                    if len(current_string) >= min_length:
-                        strings.append(current_string)
-                    current_string = ""
+            if char_bytes[1] == 0 and 32 <= char_bytes[0] <= 126:  # Printable ASCII
+                current_string += chr(char_bytes[0])
             else:
                 if len(current_string) >= min_length:
                     strings.append(current_string)
@@ -1220,14 +1239,7 @@ class HexViewerWidget(QWidget):
         try:
             import re
 
-            from PyQt6.QtWidgets import (
-                QDialog,
-                QHBoxLayout,
-                QLabel,
-                QListWidget,
-                QPushButton,
-                QVBoxLayout,
-            )
+            from PyQt6.QtWidgets import QDialog, QHBoxLayout, QLabel, QListWidget, QPushButton, QVBoxLayout
 
             if not self.file_data:
                 QMessageBox.information(self, "No Data", "Please load a file first")
@@ -1315,8 +1327,7 @@ class HexViewerWidget(QWidget):
     def _copy_hex_selection(self) -> None:
         """Copy selected hex to clipboard."""
         cursor = self.hex_display.textCursor()
-        selected_text = cursor.selectedText()
-        if selected_text:
+        if selected_text := cursor.selectedText():
             # Clean up hex for copying
             hex_only = "".join(c for c in selected_text if c in "0123456789ABCDEFabcdef ")
             clipboard = QApplication.clipboard()
@@ -1325,7 +1336,6 @@ class HexViewerWidget(QWidget):
     def _copy_ascii_selection(self) -> None:
         """Copy ASCII representation to clipboard."""
         cursor = self.ascii_display.textCursor()
-        selected_text = cursor.selectedText()
-        if selected_text:
+        if selected_text := cursor.selectedText():
             clipboard = QApplication.clipboard()
             clipboard.setText(selected_text)

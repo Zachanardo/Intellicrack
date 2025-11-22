@@ -26,6 +26,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -61,7 +62,9 @@ class AnalysisCLI:
         # File handler
         log_dir = Path("logs")
         log_dir.mkdir(exist_ok=True)
-        file_handler = logging.FileHandler(log_dir / f"analysis_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
+        file_handler = logging.FileHandler(
+            log_dir / f"analysis_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+        )
         file_handler.setLevel(logging.DEBUG)
 
         # Formatter
@@ -162,8 +165,9 @@ class AnalysisCLI:
 
                 # Check for suspicious imports
                 if "imports" in pe_results:
-                    suspicious_apis = self._check_suspicious_apis(pe_results["imports"])
-                    if suspicious_apis:
+                    if suspicious_apis := self._check_suspicious_apis(
+                        pe_results["imports"]
+                    ):
                         results["findings"].append(
                             {
                                 "type": "suspicious_api",
@@ -186,7 +190,9 @@ class AnalysisCLI:
                 if "security_features" in elf_results:
                     for feature, enabled in elf_results["security_features"].items():
                         if not enabled:
-                            results["recommendations"].append(f"Enable {feature} for improved security")
+                            results["recommendations"].append(
+                                f"Enable {feature} for improved security"
+                            )
             except Exception as e:
                 self.logger.error(f"ELF analysis failed: {e}")
 
@@ -197,9 +203,7 @@ class AnalysisCLI:
                 strings = self._extract_strings(file_path)
                 results["metadata"]["strings_count"] = len(strings)
 
-                # Check for interesting strings
-                interesting = self._find_interesting_strings(strings)
-                if interesting:
+                if interesting := self._find_interesting_strings(strings):
                     results["findings"].append(
                         {
                             "type": "interesting_strings",
@@ -227,16 +231,15 @@ class AnalysisCLI:
         findings = []
 
         if isinstance(data, dict):
-            for key, value in data.items():
-                if isinstance(value, (str, int, float, bool)):
-                    findings.append(
-                        {
-                            "type": source.lower().replace(" ", "_"),
-                            "description": f"{key}: {value}",
-                            "impact": "low",
-                        },
-                    )
-
+            findings.extend(
+                {
+                    "type": source.lower().replace(" ", "_"),
+                    "description": f"{key}: {value}",
+                    "impact": "low",
+                }
+                for key, value in data.items()
+                if isinstance(value, (str, int, float, bool))
+            )
         return findings
 
     def _check_suspicious_apis(self, imports: dict[str, list[str]]) -> list[str]:
@@ -263,7 +266,7 @@ class AnalysisCLI:
         ]
 
         found = []
-        for _dll, funcs in imports.items():
+        for funcs in imports.values():
             for func in funcs:
                 if func in suspicious_apis:
                     found.append(func)
@@ -348,12 +351,16 @@ class AnalysisCLI:
         """Generate analysis report."""
         self.logger.info(f"Generating {format} report...")
 
-        report_path = self.report_generator.generate_report(results, format=format, output_file=output_file)
+        report_path = self.report_generator.generate_report(
+            results, format=format, output_file=output_file
+        )
 
         self.logger.info(f"Report saved to: {report_path}")
         return report_path
 
-    def run_batch_analysis(self, file_list: list[str], options: dict[str, Any]) -> list[dict[str, Any]]:
+    def run_batch_analysis(
+        self, file_list: list[str], options: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Run analysis on multiple files."""
         results = []
 
@@ -396,9 +403,13 @@ def main() -> None:
 
     parser.add_argument("--no-binary-analysis", action="store_true", help="Skip binary analysis")
 
-    parser.add_argument("--no-protection-analysis", action="store_true", help="Skip protection analysis")
+    parser.add_argument(
+        "--no-protection-analysis", action="store_true", help="Skip protection analysis"
+    )
 
-    parser.add_argument("--no-vulnerability-scan", action="store_true", help="Skip vulnerability scanning")
+    parser.add_argument(
+        "--no-vulnerability-scan", action="store_true", help="Skip vulnerability scanning"
+    )
 
     parser.add_argument("--no-pe-analysis", action="store_true", help="Skip PE-specific analysis")
 
@@ -406,9 +417,13 @@ def main() -> None:
 
     parser.add_argument("--no-strings", action="store_true", help="Skip string extraction")
 
-    parser.add_argument("-b", "--batch", action="store_true", help="Batch mode - analyze all files in directory")
+    parser.add_argument(
+        "-b", "--batch", action="store_true", help="Batch mode - analyze all files in directory"
+    )
 
-    parser.add_argument("-r", "--recursive", action="store_true", help="Recursively analyze files in subdirectories")
+    parser.add_argument(
+        "-r", "--recursive", action="store_true", help="Recursively analyze files in subdirectories"
+    )
 
     parser.add_argument(
         "--extensions",
@@ -421,7 +436,9 @@ def main() -> None:
 
     parser.add_argument("-q", "--quiet", action="store_true", help="Suppress output except errors")
 
-    parser.add_argument("--json-output", action="store_true", help="Output results as JSON to stdout")
+    parser.add_argument(
+        "--json-output", action="store_true", help="Output results as JSON to stdout"
+    )
 
     args = parser.parse_args()
 
@@ -455,11 +472,10 @@ def main() -> None:
 
             # Collect files
             file_list = []
-            if args.recursive:
-                for ext in args.extensions:
+            for ext in args.extensions:
+                if args.recursive:
                     file_list.extend(target_dir.rglob(f"*{ext}"))
-            else:
-                for ext in args.extensions:
+                else:
                     file_list.extend(target_dir.glob(f"*{ext}"))
 
             file_list = [str(f) for f in file_list]
@@ -479,7 +495,9 @@ def main() -> None:
                 # Generate batch report
                 for i, result in enumerate(results):
                     if "error" not in result:
-                        output_file = f"report_{i + 1}_{Path(result['target_file']).stem}.{args.format}"
+                        output_file = (
+                            f"report_{i + 1}_{Path(result['target_file']).stem}.{args.format}"
+                        )
                         cli.generate_report(result, args.format, output_file)
 
                 print(f"Analysis complete. {len(results)} files processed.")

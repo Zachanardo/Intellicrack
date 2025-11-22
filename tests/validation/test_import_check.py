@@ -53,7 +53,7 @@ def check_test_file():
     print(f"OK Test file exists: {test_file}")
 
     try:
-        with open(test_file, 'r') as f:
+        with open(test_file) as f:
             content = f.read()
 
         print(f"Test file size: {len(content)} characters")

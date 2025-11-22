@@ -19,9 +19,7 @@ from pathlib import Path
 
 def get_project_root() -> Path:
     """Get the project root directory."""
-    # First, try to get the root from the environment variable
-    intellicrack_root_env = os.environ.get("INTELLICRACK_ROOT")
-    if intellicrack_root_env:
+    if intellicrack_root_env := os.environ.get("INTELLICRACK_ROOT"):
         return Path(intellicrack_root_env)
 
     # Go up from this file to the project root

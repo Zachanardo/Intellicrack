@@ -27,7 +27,7 @@ def analyze_init_module():
     print("=" * 50)
 
     try:
-        with open(init_file, 'r', encoding='utf-8') as f:
+        with open(init_file, encoding='utf-8') as f:
             content = f.read()
 
         # Parse AST
@@ -75,7 +75,7 @@ def analyze_test_coverage():
     print("=" * 50)
 
     try:
-        with open(test_file, 'r', encoding='utf-8') as f:
+        with open(test_file, encoding='utf-8') as f:
             content = f.read()
 
         # Parse test file

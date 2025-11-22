@@ -23,6 +23,7 @@ import os
 import sys
 from pathlib import Path
 
+
 logger = logging.getLogger(__name__)
 
 # Platform detection
@@ -106,10 +107,14 @@ class FileResolver:
         ".flatpak": FileTypeInfo(".flatpak", "Flatpak Package", "installer", True, "flatpak"),
         ".appimage": FileTypeInfo(".appimage", "AppImage Package", "installer", True, "appimage"),
         # macOS Executables and Packages
-        ".app": FileTypeInfo(".app", "macOS Application Bundle", "executable", True, "macho_bundle"),
+        ".app": FileTypeInfo(
+            ".app", "macOS Application Bundle", "executable", True, "macho_bundle"
+        ),
         ".dylib": FileTypeInfo(".dylib", "macOS Dynamic Library", "library", True, "macho"),
         ".bundle": FileTypeInfo(".bundle", "macOS Bundle", "library", True, "macho_bundle"),
-        ".framework": FileTypeInfo(".framework", "macOS Framework", "library", True, "macho_framework"),
+        ".framework": FileTypeInfo(
+            ".framework", "macOS Framework", "library", True, "macho_framework"
+        ),
         ".pkg": FileTypeInfo(".pkg", "macOS Installer Package", "installer", True, "pkg"),
         ".dmg": FileTypeInfo(".dmg", "macOS Disk Image", "installer", True, "dmg"),
         # Cross-platform formats
@@ -159,7 +164,7 @@ class FileResolver:
         if file_path.suffix.lower() == ".lnk":
             resolved_path, shortcut_info = self._resolve_windows_shortcut(file_path)
             if resolved_path:
-                metadata.update(shortcut_info)
+                metadata |= shortcut_info
                 metadata["is_shortcut"] = True
                 metadata["resolution_method"] = "windows_shortcut"
                 return resolved_path, metadata
@@ -173,8 +178,7 @@ class FileResolver:
 
         # Handle macOS aliases
         if IS_MACOS and self._is_macos_alias(file_path):
-            resolved_path = self._resolve_macos_alias(file_path)
-            if resolved_path:
+            if resolved_path := self._resolve_macos_alias(file_path):
                 metadata["is_shortcut"] = True
                 metadata["resolution_method"] = "macos_alias"
                 return resolved_path, metadata
@@ -194,15 +198,25 @@ class FileResolver:
         file_path = Path(file_path)
         extension = file_path.suffix.lower()
 
-        # Check if it's a directory (like .app bundles)
         if file_path.is_dir():
             if extension == ".app":
-                return self.FILE_TYPES.get(".app", FileTypeInfo(extension, "Unknown Directory", "directory"))
-            if extension == ".framework":
-                return self.FILE_TYPES.get(".framework", FileTypeInfo(extension, "Framework Directory", "directory"))
-            return FileTypeInfo(extension, "Directory", "directory", False)
-
-        return self.FILE_TYPES.get(extension, FileTypeInfo(extension, "Unknown File Type", "unknown", False))
+                return self.FILE_TYPES.get(
+                    ".app", FileTypeInfo(extension, "Unknown Directory", "directory")
+                )
+            else:
+                return (
+                    self.FILE_TYPES.get(
+                        ".framework",
+                        FileTypeInfo(
+                            extension, "Framework Directory", "directory"
+                        ),
+                    )
+                    if extension == ".framework"
+                    else FileTypeInfo(extension, "Directory", "directory", False)
+                )
+        return self.FILE_TYPES.get(
+            extension, FileTypeInfo(extension, "Unknown File Type", "unknown", False)
+        )
 
     def get_supported_file_filters(self) -> str:
         """Generate Qt file dialog filter string for all supported types."""
@@ -216,15 +230,11 @@ class FileResolver:
                     categories[category] = []
                 categories[category].append(f"*{file_type.extension}")
 
-        # Build filter string
-        filters = []
-
         # All supported files first
         all_supported = []
         for exts in categories.values():
             all_supported.extend(exts)
-        filters.append(f"All Supported Files ({' '.join(sorted(set(all_supported)))})")
-
+        filters = [f"All Supported Files ({' '.join(sorted(set(all_supported)))})"]
         # Category-specific filters
         category_names = {
             "executable": "Executable Files",
@@ -239,7 +249,7 @@ class FileResolver:
         }
 
         for category, exts in sorted(categories.items()):
-            category_name = category_names.get(category, category.title() + " Files")
+            category_name = category_names.get(category, f"{category.title()} Files")
             filters.append(f"{category_name} ({' '.join(sorted(exts))})")
 
         # All files last
@@ -397,7 +407,7 @@ class FileResolver:
 
             # Add platform-specific metadata
             if IS_WINDOWS:
-                metadata.update(self._get_windows_metadata(file_path))
+                metadata |= self._get_windows_metadata(file_path)
             elif IS_LINUX:
                 metadata.update(self._get_linux_metadata(file_path))
             elif IS_MACOS:
@@ -497,8 +507,7 @@ class FileResolver:
             try:
                 import xattr
 
-                attrs = list(xattr.xattr(file_path))
-                if attrs:
+                if attrs := list(xattr.xattr(file_path)):
                     metadata["extended_attributes"] = attrs
             except ImportError as e:
                 self.logger.error("Import error in file_resolution: %s", e)

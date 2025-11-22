@@ -23,6 +23,7 @@ import subprocess
 from abc import ABC, abstractmethod
 from typing import Any
 
+
 """
 Base Detector for Anti-Analysis Modules
 
@@ -41,7 +42,9 @@ class BaseDetector(ABC):
         self.logger = logging.getLogger("IntellicrackLogger.AntiAnalysis")
         self.detection_methods = {}
 
-    def run_detection_loop(self, aggressive: bool = False, aggressive_methods: list[str] = None) -> dict[str, Any]:
+    def run_detection_loop(
+        self, aggressive: bool = False, aggressive_methods: list[str] = None
+    ) -> dict[str, Any]:
         """Run the detection loop for all configured methods.
 
         Args:
@@ -114,11 +117,9 @@ class BaseDetector(ABC):
         try:
             if platform.system() == "Windows":
                 result = subprocess.run(["tasklist"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis
-                processes = result.stdout.lower()
             else:
                 result = subprocess.run(["ps", "aux"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis
-                processes = result.stdout.lower()
-
+            processes = result.stdout.lower()
             # Also get individual process names
             process_list = []
             if platform.system() == "Windows":

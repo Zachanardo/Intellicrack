@@ -49,18 +49,18 @@ class ProtectionClassifier:
     """Machine learning classifier for software protection schemes."""
 
     PROTECTION_SCHEMES = [
-        'VMProtect',
-        'Themida',
-        'Enigma',
-        'Obsidium',
-        'ASProtect',
-        'Armadillo',
-        'Arxan',
-        'UPX',
-        'None',
+        "VMProtect",
+        "Themida",
+        "Enigma",
+        "Obsidium",
+        "ASProtect",
+        "Armadillo",
+        "Arxan",
+        "UPX",
+        "None",
     ]
 
-    MODEL_VERSION = '1.0.0'
+    MODEL_VERSION = "1.0.0"
 
     def __init__(self, model_path: Path | None = None) -> None:
         """Initialize the protection classifier.
@@ -73,13 +73,13 @@ class ProtectionClassifier:
         self.feature_extractor = BinaryFeatureExtractor()
 
         if model_path is None:
-            model_path = Path(__file__).parent.parent.parent / 'models' / 'protection_classifier'
+            model_path = Path(__file__).parent.parent.parent / "models" / "protection_classifier"
 
         self.model_path = Path(model_path)
-        self.model_file = self.model_path / 'model.pkl'
-        self.scaler_file = self.model_path / 'scaler.pkl'
-        self.encoder_file = self.model_path / 'encoder.pkl'
-        self.metadata_file = self.model_path / 'metadata.json'
+        self.model_file = self.model_path / "model.pkl"
+        self.scaler_file = self.model_path / "scaler.pkl"
+        self.encoder_file = self.model_path / "encoder.pkl"
+        self.metadata_file = self.model_path / "metadata.json"
 
         self.model: RandomForestClassifier | None = None
         self.scaler: StandardScaler | None = None
@@ -121,7 +121,11 @@ class ProtectionClassifier:
         X_scaled = self.scaler.fit_transform(X)
 
         X_train, X_test, y_train, y_test = train_test_split(
-            X_scaled, y_encoded, test_size=test_size, random_state=random_state, stratify=y_encoded,
+            X_scaled,
+            y_encoded,
+            test_size=test_size,
+            random_state=random_state,
+            stratify=y_encoded,
         )
 
         self.model = RandomForestClassifier(
@@ -129,10 +133,10 @@ class ProtectionClassifier:
             max_depth=20,
             min_samples_split=5,
             min_samples_leaf=2,
-            max_features='sqrt',
+            max_features="sqrt",
             random_state=random_state,
             n_jobs=-1,
-            class_weight='balanced',
+            class_weight="balanced",
         )
 
         self.logger.info("Training Random Forest with %d estimators", n_estimators)
@@ -148,21 +152,26 @@ class ProtectionClassifier:
         self.logger.info("Test accuracy: %.4f", test_accuracy)
 
         results = {
-            'train_accuracy': float(train_accuracy),
-            'test_accuracy': float(test_accuracy),
-            'n_samples': len(X),
-            'n_features': X.shape[1],
-            'n_classes': len(self.label_encoder.classes_),
-            'model_version': self.MODEL_VERSION,
+            "train_accuracy": float(train_accuracy),
+            "test_accuracy": float(test_accuracy),
+            "n_samples": len(X),
+            "n_features": X.shape[1],
+            "n_classes": len(self.label_encoder.classes_),
+            "model_version": self.MODEL_VERSION,
         }
 
         if cross_validate:
             self.logger.info("Performing 5-fold cross-validation")
             cv_scores = cross_val_score(
-                self.model, X_scaled, y_encoded, cv=5, scoring='accuracy', n_jobs=-1,
+                self.model,
+                X_scaled,
+                y_encoded,
+                cv=5,
+                scoring="accuracy",
+                n_jobs=-1,
             )
-            results['cv_mean_accuracy'] = float(cv_scores.mean())
-            results['cv_std_accuracy'] = float(cv_scores.std())
+            results["cv_mean_accuracy"] = float(cv_scores.mean())
+            results["cv_std_accuracy"] = float(cv_scores.std())
             self.logger.info(
                 "Cross-validation accuracy: %.4f (+/- %.4f)",
                 cv_scores.mean(),
@@ -172,20 +181,21 @@ class ProtectionClassifier:
         class_names = self.label_encoder.classes_.tolist()
         conf_matrix = confusion_matrix(y_test, y_test_pred)
         class_report = classification_report(
-            y_test, y_test_pred, target_names=class_names, output_dict=True,
+            y_test,
+            y_test_pred,
+            target_names=class_names,
+            output_dict=True,
         )
 
-        results['confusion_matrix'] = conf_matrix.tolist()
-        results['classification_report'] = class_report
-        results['class_names'] = class_names
+        results["confusion_matrix"] = conf_matrix.tolist()
+        results["classification_report"] = class_report
+        results["class_names"] = class_names
 
         feature_importance = self.model.feature_importances_
         feature_names = self.feature_extractor.feature_names
         top_features_idx = np.argsort(feature_importance)[-20:][::-1]
-        top_features = [
-            (feature_names[i], float(feature_importance[i])) for i in top_features_idx
-        ]
-        results['top_features'] = top_features
+        top_features = [(feature_names[i], float(feature_importance[i])) for i in top_features_idx]
+        results["top_features"] = top_features
 
         self.logger.info("Top 5 important features:")
         for feat_name, importance in top_features[:5]:
@@ -222,8 +232,7 @@ class ProtectionClassifier:
 
         top_indices = np.argsort(probabilities)[-3:][::-1]
         top_predictions = [
-            (self.label_encoder.classes_[idx], float(probabilities[idx]))
-            for idx in top_indices
+            (self.label_encoder.classes_[idx], float(probabilities[idx])) for idx in top_indices
         ]
 
         self.logger.info(
@@ -255,10 +264,10 @@ class ProtectionClassifier:
 
         if output_path is not None:
             self.model_path = Path(output_path)
-            self.model_file = self.model_path / 'model.pkl'
-            self.scaler_file = self.model_path / 'scaler.pkl'
-            self.encoder_file = self.model_path / 'encoder.pkl'
-            self.metadata_file = self.model_path / 'metadata.json'
+            self.model_file = self.model_path / "model.pkl"
+            self.scaler_file = self.model_path / "scaler.pkl"
+            self.encoder_file = self.model_path / "encoder.pkl"
+            self.metadata_file = self.model_path / "metadata.json"
 
         self.model_path.mkdir(parents=True, exist_ok=True)
 
@@ -267,13 +276,13 @@ class ProtectionClassifier:
         joblib.dump(self.label_encoder, self.encoder_file)
 
         self.metadata = {
-            'model_version': self.MODEL_VERSION,
-            'n_features': len(self.feature_extractor.feature_names),
-            'feature_names': self.feature_extractor.feature_names,
-            'classes': self.label_encoder.classes_.tolist(),
+            "model_version": self.MODEL_VERSION,
+            "n_features": len(self.feature_extractor.feature_names),
+            "feature_names": self.feature_extractor.feature_names,
+            "classes": self.label_encoder.classes_.tolist(),
         }
 
-        with open(self.metadata_file, 'w', encoding='utf-8') as f:
+        with open(self.metadata_file, "w", encoding="utf-8") as f:
             json.dump(self.metadata, f, indent=2)
 
         self.logger.info("Model saved to %s", self.model_path)
@@ -290,10 +299,10 @@ class ProtectionClassifier:
         """
         if model_path is not None:
             self.model_path = Path(model_path)
-            self.model_file = self.model_path / 'model.pkl'
-            self.scaler_file = self.model_path / 'scaler.pkl'
-            self.encoder_file = self.model_path / 'encoder.pkl'
-            self.metadata_file = self.model_path / 'metadata.json'
+            self.model_file = self.model_path / "model.pkl"
+            self.scaler_file = self.model_path / "scaler.pkl"
+            self.encoder_file = self.model_path / "encoder.pkl"
+            self.metadata_file = self.model_path / "metadata.json"
 
         if not self.model_file.exists():
             raise FileNotFoundError(f"Model file not found: {self.model_file}")
@@ -303,11 +312,11 @@ class ProtectionClassifier:
         self.label_encoder = joblib.load(self.encoder_file)
 
         if self.metadata_file.exists():
-            with open(self.metadata_file, encoding='utf-8') as f:
+            with open(self.metadata_file, encoding="utf-8") as f:
                 self.metadata = json.load(f)
 
         self.logger.info("Model loaded from %s", self.model_path)
-        self.logger.info("Model version: %s", self.metadata.get('model_version', 'unknown'))
+        self.logger.info("Model version: %s", self.metadata.get("model_version", "unknown"))
 
     def get_feature_importance(self, top_n: int = 20) -> list[tuple[str, float]]:
         """Get top N most important features.

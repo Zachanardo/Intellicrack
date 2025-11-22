@@ -414,14 +414,14 @@ IOS_SIGNATURES = [
 ]
 
 ALL_SIGNATURES = (
-    WINHTTP_SIGNATURES +
-    SCHANNEL_SIGNATURES +
-    CRYPTOAPI_SIGNATURES +
-    OPENSSL_SIGNATURES +
-    OPENSSL_WINDOWS_SIGNATURES +
-    NSS_SIGNATURES +
-    BORINGSSL_SIGNATURES +
-    IOS_SIGNATURES
+    WINHTTP_SIGNATURES
+    + SCHANNEL_SIGNATURES
+    + CRYPTOAPI_SIGNATURES
+    + OPENSSL_SIGNATURES
+    + OPENSSL_WINDOWS_SIGNATURES
+    + NSS_SIGNATURES
+    + BORINGSSL_SIGNATURES
+    + IOS_SIGNATURES
 )
 
 
@@ -436,10 +436,7 @@ def get_signatures_by_library(library_name: str) -> list[APISignature]:
 
     """
     library_name_lower = library_name.lower()
-    return [
-        sig for sig in ALL_SIGNATURES
-        if sig.library.lower() == library_name_lower
-    ]
+    return [sig for sig in ALL_SIGNATURES if sig.library.lower() == library_name_lower]
 
 
 def get_all_signatures() -> list[APISignature]:
@@ -462,10 +459,7 @@ def get_signature_by_name(name: str) -> APISignature | None:
         APISignature object if found, None otherwise
 
     """
-    for sig in ALL_SIGNATURES:
-        if sig.name == name:
-            return sig
-    return None
+    return next((sig for sig in ALL_SIGNATURES if sig.name == name), None)
 
 
 def get_signatures_by_platform(platform: Platform) -> list[APISignature]:
@@ -479,8 +473,7 @@ def get_signatures_by_platform(platform: Platform) -> list[APISignature]:
 
     """
     return [
-        sig for sig in ALL_SIGNATURES
-        if platform in sig.platforms or Platform.ALL in sig.platforms
+        sig for sig in ALL_SIGNATURES if platform in sig.platforms or Platform.ALL in sig.platforms
     ]
 
 

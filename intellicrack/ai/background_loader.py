@@ -30,6 +30,7 @@ from typing import TYPE_CHECKING, Optional
 
 from .llm_types import LoadingProgress, LoadingState, ProgressCallback
 
+
 if TYPE_CHECKING:
     from .llm_backends import LLMBackend, LLMConfig, LLMManager
 
@@ -41,7 +42,9 @@ class ConsoleProgressCallback(ProgressCallback):
 
     def on_progress(self, progress: LoadingProgress) -> None:
         """Print progress to console."""
-        print(f"[{progress.model_id}] {progress.state.value}: {progress.progress:.1%} - {progress.message}")
+        print(
+            f"[{progress.model_id}] {progress.state.value}: {progress.progress:.1%} - {progress.message}"
+        )
 
     def on_completed(self, model_id: str, success: bool, error: str | None = None) -> None:
         """Print completion status."""
@@ -60,7 +63,7 @@ class QueuedProgressCallback(ProgressCallback):
         """
         self.progress_queue = queue.Queue()
         self.completion_queue = queue.Queue()
-        self.logger = logging.getLogger(__name__ + ".QueuedProgressCallback")
+        self.logger = logging.getLogger(f"{__name__}.QueuedProgressCallback")
 
     def on_progress(self, progress: LoadingProgress) -> None:
         """Add progress to queue."""
@@ -127,7 +130,9 @@ class LoadingTask:
         self.error: str | None = None
         self.cancelled = False
 
-    def update_progress(self, progress: float, message: str, state: LoadingState | None = None) -> None:
+    def update_progress(
+        self, progress: float, message: str, state: LoadingState | None = None
+    ) -> None:
         """Update task progress."""
         if state:
             self.state = state
@@ -150,7 +155,9 @@ class LoadingTask:
             )
             self.callback.on_progress(progress_info)
 
-    def mark_completed(self, success: bool, result: Optional["LLMBackend"] = None, error: str | None = None) -> None:
+    def mark_completed(
+        self, success: bool, result: Optional["LLMBackend"] = None, error: str | None = None
+    ) -> None:
         """Mark task as completed."""
         self.end_time = time.time()
         self.result = result
@@ -185,7 +192,7 @@ class BackgroundModelLoader:
             max_concurrent_loads: Maximum number of models to load simultaneously
 
         """
-        self.logger = logging.getLogger(__name__ + ".BackgroundModelLoader")
+        self.logger = logging.getLogger(f"{__name__}.BackgroundModelLoader")
         self.max_concurrent_loads = max_concurrent_loads
         self.pending_tasks: list[LoadingTask] = []
         self.active_tasks: dict[str, LoadingTask] = {}
@@ -196,9 +203,13 @@ class BackgroundModelLoader:
         self.lock = threading.RLock()
 
         # Start worker threads (skip during testing)
-        if not (os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")):
+        if not (
+            os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")
+        ):
             for i in range(max_concurrent_loads):
-                thread = threading.Thread(target=self._worker_thread, name=f"ModelLoader-{i}", daemon=True)
+                thread = threading.Thread(
+                    target=self._worker_thread, name=f"ModelLoader-{i}", daemon=True
+                )
                 thread.start()
                 self.worker_threads.append(thread)
             logger.info(f"Background model loader started with {max_concurrent_loads} workers")
@@ -253,22 +264,17 @@ class BackgroundModelLoader:
                 return self.active_tasks[model_id]
             if model_id in self.completed_tasks:
                 return self.completed_tasks[model_id]
-            for task in self.pending_tasks:
-                if task.model_id == model_id:
-                    return task
-            return None
+            return next(
+                (task for task in self.pending_tasks if task.model_id == model_id),
+                None,
+            )
 
     def get_all_tasks(self) -> dict[str, LoadingTask]:
         """Get all tasks (pending, active, and completed)."""
         with self.lock:
-            all_tasks = {}
-
-            # Add pending tasks
-            for task in self.pending_tasks:
-                all_tasks[task.model_id] = task
-
+            all_tasks = {task.model_id: task for task in self.pending_tasks}
             # Add active tasks
-            all_tasks.update(self.active_tasks)
+            all_tasks |= self.active_tasks
 
             # Add completed tasks
             all_tasks.update(self.completed_tasks)
@@ -286,10 +292,9 @@ class BackgroundModelLoader:
                 "active_workers": len(self.active_tasks),
             }
 
-            # Calculate success rate
-            completed_tasks = list(self.completed_tasks.values())
-            if completed_tasks:
-                successful = sum(1 for task in completed_tasks if task.state == LoadingState.COMPLETED)
+            if completed_tasks := list(self.completed_tasks.values()):
+                successful = sum(bool(task.state == LoadingState.COMPLETED)
+                             for task in completed_tasks)
                 stats["success_rate"] = successful / len(completed_tasks)
             else:
                 stats["success_rate"] = 0.0
@@ -424,7 +429,9 @@ class IntegratedBackgroundLoader:
         if callback in self.progress_callbacks:
             self.progress_callbacks.remove(callback)
 
-    def load_model_in_background(self, model_id: str, backend_class: type, config: "LLMConfig", priority: int = 0) -> LoadingTask:
+    def load_model_in_background(
+        self, model_id: str, backend_class: type, config: "LLMConfig", priority: int = 0
+    ) -> LoadingTask:
         """Load a model in the background with integrated callbacks."""
 
         # Create a callback that notifies all registered callbacks
@@ -485,7 +492,9 @@ class IntegratedBackgroundLoader:
 _integrated_loader: IntegratedBackgroundLoader | None = None
 
 
-def get_background_loader(llm_manager: "LLMManager | None" = None) -> IntegratedBackgroundLoader | None:
+def get_background_loader(
+    llm_manager: "LLMManager | None" = None,
+) -> IntegratedBackgroundLoader | None:
     """Get the global integrated background loader.
 
     Args:

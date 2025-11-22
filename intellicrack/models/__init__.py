@@ -22,6 +22,7 @@ import logging
 from ..utils.severity_levels import SeverityLevel, VulnerabilityLevel
 from .model_manager import ModelManager
 
+
 """
 Intellicrack Models Package
 

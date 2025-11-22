@@ -26,6 +26,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 
+
 try:
     from matplotlib.backends.backend_agg import FigureCanvasAgg
     from matplotlib.figure import Figure
@@ -124,9 +125,21 @@ class DashboardWidget:
             Rendered widget data
 
         """
-        # Default implementation returns basic JSON representation
-        current = self.get_current_data()
-        if not current:
+        if current := self.get_current_data():
+            return {
+                "type": self.config.widget_type.value
+                if hasattr(self.config.widget_type, "value")
+                else "widget",
+                "id": self.config.widget_id,
+                "title": self.config.title,
+                "timestamp": current.timestamp.isoformat(),
+                "values": current.values,
+                "labels": current.labels,
+                "categories": current.categories,
+                "metadata": current.metadata,
+                "last_update": self.last_update.isoformat(),
+            }
+        else:
             return {
                 "type": "widget",
                 "id": self.config.widget_id,
@@ -134,18 +147,6 @@ class DashboardWidget:
                 "status": "no_data",
                 "last_update": self.last_update.isoformat() if self.last_update else None,
             }
-
-        return {
-            "type": self.config.widget_type.value if hasattr(self.config.widget_type, "value") else "widget",
-            "id": self.config.widget_id,
-            "title": self.config.title,
-            "timestamp": current.timestamp.isoformat(),
-            "values": current.values,
-            "labels": current.labels,
-            "categories": current.categories,
-            "metadata": current.metadata,
-            "last_update": self.last_update.isoformat(),
-        }
 
     def get_current_data(self) -> WidgetData | None:
         """Get current widget data.
@@ -224,7 +225,11 @@ class LineChartWidget(DashboardWidget):
             fig.add_trace(go.Scatter(x=x_data, y=values, mode="lines+markers", name=name))
 
         fig.update_layout(
-            title=self.config.title, xaxis_title="Time", yaxis_title="Value", width=self.config.width, height=self.config.height,
+            title=self.config.title,
+            xaxis_title="Time",
+            yaxis_title="Value",
+            width=self.config.width,
+            height=self.config.height,
         )
 
         return fig
@@ -321,11 +326,14 @@ class GaugeWidget(DashboardWidget):
         if not thresholds:
             return []
 
-        steps = []
         colors = ["green", "yellow", "orange", "red"]
-        for i, threshold in enumerate(thresholds):
-            steps.append({"range": [threshold.get("min", 0), threshold.get("max", 100)], "color": colors[min(i, len(colors) - 1)]})
-        return steps
+        return [
+            {
+                "range": [threshold.get("min", 0), threshold.get("max", 100)],
+                "color": colors[min(i, len(colors) - 1)],
+            }
+            for i, threshold in enumerate(thresholds)
+        ]
 
 
 class TableWidget(DashboardWidget):
@@ -428,8 +436,17 @@ class HeatmapWidget(DashboardWidget):
                 "colorscale": self.config.options.get("colorscale", "viridis"),
             }
         if format == "plotly" and HAS_PLOTLY:
-            fig = go.Figure(data=go.Heatmap(z=matrix, x=x_labels, y=y_labels, colorscale=self.config.options.get("colorscale", "viridis")))
-            fig.update_layout(title=self.config.title, width=self.config.width, height=self.config.height)
+            fig = go.Figure(
+                data=go.Heatmap(
+                    z=matrix,
+                    x=x_labels,
+                    y=y_labels,
+                    colorscale=self.config.options.get("colorscale", "viridis"),
+                )
+            )
+            fig.update_layout(
+                title=self.config.title, width=self.config.width, height=self.config.height
+            )
             return fig
         return self.render("json")
 
@@ -467,7 +484,9 @@ class NetworkGraphWidget(DashboardWidget):
             return self._render_plotly_network(nodes, edges)
         return self.render("json")
 
-    def _render_plotly_network(self, nodes: list[dict[str, object]], edges: list[dict[str, object]]) -> object:
+    def _render_plotly_network(
+        self, nodes: list[dict[str, object]], edges: list[dict[str, object]]
+    ) -> object:
         """Render network using Plotly.
 
         Args:
@@ -488,7 +507,9 @@ class NetworkGraphWidget(DashboardWidget):
             node_positions[node["id"]] = (x, y)
 
         # Create edge traces
-        edge_trace = go.Scatter(x=[], y=[], line={"width": 0.5, "color": "#888"}, hoverinfo="none", mode="lines")
+        edge_trace = go.Scatter(
+            x=[], y=[], line={"width": 0.5, "color": "#888"}, hoverinfo="none", mode="lines"
+        )
 
         for edge in edges:
             x0, y0 = node_positions.get(edge["source"], (0, 0))
@@ -509,7 +530,12 @@ class NetworkGraphWidget(DashboardWidget):
                 "colorscale": "YlGnBu",
                 "size": 10,
                 "color": [],
-                "colorbar": {"thickness": 15, "title": "Node Connections", "xanchor": "left", "titleside": "right"},
+                "colorbar": {
+                    "thickness": 15,
+                    "title": "Node Connections",
+                    "xanchor": "left",
+                    "titleside": "right",
+                },
                 "line_width": 2,
             },
         )
@@ -517,7 +543,8 @@ class NetworkGraphWidget(DashboardWidget):
         # Color nodes by connections
         node_adjacencies = []
         for node in nodes:
-            adjacencies = sum(1 for edge in edges if edge["source"] == node["id"] or edge["target"] == node["id"])
+            adjacencies = sum(bool(edge["source"] == node["id"] or edge["target"] == node["id"])
+                          for edge in edges)
             node_adjacencies.append(adjacencies)
 
         node_trace.marker.color = node_adjacencies
@@ -565,19 +592,23 @@ class TimelineWidget(DashboardWidget):
 
         events = []
         for data in self.data_history:
-            for event in data.values.get("events", []):
-                events.append(
-                    {
-                        "timestamp": data.timestamp.isoformat(),
-                        "title": event.get("title", ""),
-                        "description": event.get("description", ""),
-                        "type": event.get("type", "info"),
-                        "tool": event.get("tool", "unknown"),
-                    },
-                )
-
+            events.extend(
+                {
+                    "timestamp": data.timestamp.isoformat(),
+                    "title": event.get("title", ""),
+                    "description": event.get("description", ""),
+                    "type": event.get("type", "info"),
+                    "tool": event.get("tool", "unknown"),
+                }
+                for event in data.values.get("events", [])
+            )
         if format == "json":
-            return {"type": "timeline", "title": self.config.title, "events": events, "groupBy": self.config.options.get("groupBy", "tool")}
+            return {
+                "type": "timeline",
+                "title": self.config.title,
+                "events": events,
+                "groupBy": self.config.options.get("groupBy", "tool"),
+            }
         return self.render("json")
 
 
@@ -628,9 +659,7 @@ class ProgressWidget(DashboardWidget):
             return "red"
         if percentage < 50:
             return "orange"
-        if percentage < 75:
-            return "yellow"
-        return "green"
+        return "yellow" if percentage < 75 else "green"
 
 
 class WidgetFactory:
@@ -665,7 +694,9 @@ class WidgetFactory:
         return widget_class(config)
 
 
-def create_widget(widget_id: str, widget_type: WidgetType, title: str, **kwargs: object) -> DashboardWidget:
+def create_widget(
+    widget_id: str, widget_type: WidgetType, title: str, **kwargs: object
+) -> DashboardWidget:
     """Create a widget.
 
     Args:

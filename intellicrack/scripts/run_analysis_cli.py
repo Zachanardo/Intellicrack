@@ -20,4 +20,5 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 # Re-export the main function from the cli module
 from intellicrack.cli.run_analysis_cli import main
 
+
 __all__ = ["main"]

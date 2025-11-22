@@ -66,7 +66,7 @@ class FinalProductionValidator:
             r'np\.random\.randint'  # Synthetic data
         ]
 
-    def validate_code_quality(self) -> Dict[str, Any]:
+    def validate_code_quality(self) -> dict[str, Any]:
         """
         CRITICAL VALIDATION: Search entire codebase for forbidden patterns
         """
@@ -89,7 +89,7 @@ class FinalProductionValidator:
                     file_path = Path(root) / file
 
                     try:
-                        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        with open(file_path, encoding='utf-8', errors='ignore') as f:
                             content = f.read()
 
                         # Check each forbidden pattern
@@ -124,7 +124,7 @@ class FinalProductionValidator:
             "issues": infected_files
         }
 
-    def validate_functional_methods(self) -> Dict[str, Any]:
+    def validate_functional_methods(self) -> dict[str, Any]:
         """
         Verify all critical methods produce working output
         """
@@ -324,7 +324,7 @@ class FinalProductionValidator:
 
         return test_results
 
-    def validate_deployment_readiness(self) -> Dict[str, Any]:
+    def validate_deployment_readiness(self) -> dict[str, Any]:
         """
         Validate production deployment requirements
         """
@@ -390,7 +390,7 @@ class FinalProductionValidator:
             config_path = self.project_root / "intellicrack_config.json"
 
             if config_path.exists():
-                with open(config_path, 'r') as f:
+                with open(config_path) as f:
                     config = json.load(f)
 
                 if config and isinstance(config, dict):

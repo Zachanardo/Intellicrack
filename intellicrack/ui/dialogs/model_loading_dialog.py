@@ -35,6 +35,7 @@ from ...ai.llm_config_manager import LLMConfig, LLMProvider
 from ..widgets.model_loading_progress_widget import ModelLoadingProgressWidget
 from .base_dialog import BaseDialog
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -189,7 +190,7 @@ class ModelLoadingDialog(BaseDialog):
             config = LLMConfig(
                 provider=provider,
                 model_name=model_name,
-                api_url=api_url if api_url else None,
+                api_url=api_url or None,
                 max_tokens=2048,
                 temperature=0.7,
             )
@@ -197,16 +198,15 @@ class ModelLoadingDialog(BaseDialog):
             # Generate unique ID
             model_id = f"{provider.value}_{model_name}_{self.get_next_id()}"
 
-            # Submit loading task
-            task = self.llm_manager.load_model_in_background(
+            if task := self.llm_manager.load_model_in_background(
                 llm_id=model_id,
                 config=config,
                 priority=priority,
-            )
-
-            if task:
+            ):
                 logger.info(f"Submitted loading task for: {model_id}")
-                QMessageBox.information(self, "Success", f"Model loading task submitted:\n{model_id}")
+                QMessageBox.information(
+                    self, "Success", f"Model loading task submitted:\n{model_id}"
+                )
             else:
                 QMessageBox.critical(self, "Error", "Failed to submit loading task")
 
@@ -227,8 +227,7 @@ class ModelLoadingDialog(BaseDialog):
         available_models = self.llm_manager.get_available_llms()
 
         for model_id in available_models:
-            info = self.llm_manager.get_llm_info(model_id)
-            if info:
+            if info := self.llm_manager.get_llm_info(model_id):
                 item_text = f"{model_id} ({info['provider']}) - {info['model_name']}"
                 if info.get("is_initialized"):
                     item_text += " OK"

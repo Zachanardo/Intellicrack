@@ -468,16 +468,15 @@ class R2ResultsViewer(QWidget if QWidget is not None else object):
             "code_injection",
         ]:
             if category in data:
-                for vuln in data[category]:
-                    vulnerabilities.append(
-                        {
-                            "type": category.replace("_", " ").title(),
-                            "function": vuln.get("function", "Unknown"),
-                            "address": vuln.get("address", "Unknown"),
-                            "severity": vuln.get("severity", "Medium"),
-                        },
-                    )
-
+                vulnerabilities.extend(
+                    {
+                        "type": category.replace("_", " ").title(),
+                        "function": vuln.get("function", "Unknown"),
+                        "address": vuln.get("address", "Unknown"),
+                        "severity": vuln.get("severity", "Medium"),
+                    }
+                    for vuln in data[category]
+                )
         table.setRowCount(len(vulnerabilities))
 
         for i, vuln in enumerate(vulnerabilities):
@@ -560,10 +559,13 @@ class R2ResultsViewer(QWidget if QWidget is not None else object):
             metrics_info.append(f"Functions analyzed: {data['functions_analyzed']}")
         if "complexity_metrics" in data:
             complexity = data["complexity_metrics"]
-            metrics_info.append(f"Nodes: {complexity.get('nodes', 0)}")
-            metrics_info.append(f"Edges: {complexity.get('edges', 0)}")
-            metrics_info.append(f"Cyclomatic complexity: {complexity.get('cyclomatic_complexity', 0)}")
-
+            metrics_info.extend(
+                (
+                    f"Nodes: {complexity.get('nodes', 0)}",
+                    f"Edges: {complexity.get('edges', 0)}",
+                    f"Cyclomatic complexity: {complexity.get('cyclomatic_complexity', 0)}",
+                )
+            )
         metrics_text.setPlainText("\n".join(metrics_info))
         layout.addWidget(metrics_text)
 
@@ -578,7 +580,9 @@ class R2ResultsViewer(QWidget if QWidget is not None else object):
 
             for i, pattern in enumerate(patterns):
                 patterns_widget.setItem(i, 0, QTableWidgetItem(pattern.get("type", "Unknown")))
-                patterns_widget.setItem(i, 1, QTableWidgetItem(str(pattern.get("op_addr", "Unknown"))))
+                patterns_widget.setItem(
+                    i, 1, QTableWidgetItem(str(pattern.get("op_addr", "Unknown")))
+                )
                 patterns_widget.setItem(i, 2, QTableWidgetItem(pattern.get("disasm", "Unknown")))
 
             layout.addWidget(patterns_widget)
@@ -812,7 +816,9 @@ class R2IntegrationWidget(QWidget if QWidget is not None else object):
         self.status_label.setText(f"Starting {analysis_type} analysis...")
 
         # Start worker thread
-        self.current_worker = R2AnalysisWorker(self.binary_path, analysis_type, self.analysis_config)
+        self.current_worker = R2AnalysisWorker(
+            self.binary_path, analysis_type, self.analysis_config
+        )
         self.current_worker.progress_updated.connect(self.progress_bar.setValue)
         self.current_worker.status_updated.connect(self.status_label.setText)
         self.current_worker.analysis_completed.connect(self._on_analysis_completed)

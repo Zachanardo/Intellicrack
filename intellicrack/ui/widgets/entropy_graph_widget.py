@@ -10,20 +10,16 @@ Licensed under GNU General Public License v3.0
 from collections.abc import Sequence
 from typing import Any
 
-from intellicrack.handlers.pyqt6_handler import (
-    QHBoxLayout,
-    QLabel,
-    Qt,
-    QVBoxLayout,
-    QWidget,
-    pyqtSignal,
-)
+from intellicrack.handlers.pyqt6_handler import QHBoxLayout, QLabel, Qt, QVBoxLayout, QWidget, pyqtSignal
 
 from ...utils.logger import get_logger
 
+
 try:
-    from intellicrack.handlers.numpy_handler import HAS_NUMPY
-    from intellicrack.handlers.numpy_handler import numpy as np
+    from intellicrack.handlers.numpy_handler import (
+        HAS_NUMPY,
+        numpy as np,
+    )
 except ImportError:
     np = None
     HAS_NUMPY = False
@@ -45,12 +41,7 @@ except ImportError as e:
     PYQTGRAPH_AVAILABLE = False
     # Fallback to matplotlib if pyqtgraph not available
     try:
-        from intellicrack.handlers.matplotlib_handler import (
-            HAS_MATPLOTLIB,
-            Figure,
-            FigureCanvasQTAgg,
-            plt,
-        )
+        from intellicrack.handlers.matplotlib_handler import HAS_MATPLOTLIB, Figure, FigureCanvasQTAgg, plt
 
         if HAS_MATPLOTLIB:
             plt.style.use("dark_background")
@@ -251,7 +242,9 @@ class EntropyGraphWidget(QWidget):
 
         self.summary_label.setText(summary)
 
-    def _update_pyqtgraph(self, sections: list[str], entropies: list[float], colors: list[str]) -> None:
+    def _update_pyqtgraph(
+        self, sections: list[str], entropies: list[float], colors: list[str]
+    ) -> None:
         """Update PyQtGraph visualization."""
         if not PYQTGRAPH_AVAILABLE:
             return
@@ -279,14 +272,16 @@ class EntropyGraphWidget(QWidget):
         self.plot_widget.addItem(self.bar_graph)
 
         # Update x-axis labels
-        x_labels = [(i, name) for i, name in enumerate(sections)]
+        x_labels = list(enumerate(sections))
         x_axis = self.plot_widget.getAxis("bottom")
         x_axis.setTicks([x_labels])
 
         # Adjust view
         self.plot_widget.setXRange(-0.5, len(sections) - 0.5)
 
-    def _update_matplotlib(self, sections: list[str], entropies: list[float], colors: list[str]) -> None:
+    def _update_matplotlib(
+        self, sections: list[str], entropies: list[float], colors: list[str]
+    ) -> None:
         """Update matplotlib visualization (fallback)."""
         self.ax.clear()
 
@@ -294,7 +289,7 @@ class EntropyGraphWidget(QWidget):
         bars = self.ax.bar(x_pos, entropies, color=colors, alpha=0.8)
 
         # Add value labels on bars
-        for _i, (bar, entropy) in enumerate(zip(bars, entropies, strict=False)):
+        for bar, entropy in zip(bars, entropies, strict=False):
             height = bar.get_height()
             self.ax.text(
                 bar.get_x() + bar.get_width() / 2.0,
@@ -356,9 +351,12 @@ class EntropyGraphWidget(QWidget):
             "total_sections": len(self.entropy_data),
             "average_entropy": sum(entropies) / len(entropies),
             "max_entropy": max(entropies),
-            "packed_sections": sum(1 for info in self.entropy_data if info.packed),
-            "encrypted_sections": sum(1 for info in self.entropy_data if info.encrypted),
-            "high_entropy_sections": sum(1 for e in entropies if e >= 7.0),
+            "packed_sections": sum(bool(info.packed)
+                               for info in self.entropy_data),
+            "encrypted_sections": sum(bool(info.encrypted)
+                                  for info in self.entropy_data),
+            "high_entropy_sections": sum(bool(e >= 7.0)
+                                     for e in entropies),
         }
 
     def export_graph(self, file_path: str) -> None:

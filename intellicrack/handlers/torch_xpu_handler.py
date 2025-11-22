@@ -7,25 +7,25 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
+
 import os
 import warnings
 
 from intellicrack.utils.logger import get_logger
+
 
 logger = get_logger(__name__)
 
 HAS_XPU = False
 
 
-skip_xpu_env_vars = (
+if skip_xpu_env_vars := (
     os.environ.get("PYTEST_CURRENT_TEST")
     or os.environ.get("CI")
     or os.environ.get("INTELLICRACK_TEST_MODE")
     or os.environ.get("INTELLICRACK_DISABLE_GPU")
     or os.environ.get("INTELLICRACK_SKIP_INTEL_XPU")
-)
-
-if skip_xpu_env_vars:
+):
     logger.debug("Skipping XPU initialization in test/CI/disabled environment")
     HAS_XPU = False
 else:
@@ -59,7 +59,7 @@ else:
         else:
             os.environ.pop("TORCH_CPP_LOG_LEVEL", None)
 
-    except (ImportError, RuntimeError, OSError, FileNotFoundError) as e:
+    except (ImportError, RuntimeError, OSError) as e:
         error_msg = str(e)
         logger.info("PyTorch XPU not available: %s", error_msg)
         HAS_XPU = False

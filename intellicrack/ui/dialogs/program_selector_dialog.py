@@ -51,6 +51,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWizardPage,
 )
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -91,7 +92,9 @@ class FileSelectionPage(QWizardPage):
         path_layout.addWidget(QLabel("File Path:"))
 
         self.file_path_edit = QLineEdit()
-        self.file_path_edit.setToolTip("Select a file or enter path manually (e.g., C:\\Program Files\\App\\app.exe)")
+        self.file_path_edit.setToolTip(
+            "Select a file or enter path manually (e.g., C:\\Program Files\\App\\app.exe)"
+        )
         self.file_path_edit.textChanged.connect(self.validate_file_path)
         path_layout.addWidget(self.file_path_edit)
 
@@ -99,10 +102,14 @@ class FileSelectionPage(QWizardPage):
         self.browse_btn.clicked.connect(self.browse_for_file)
         if HAS_PYQT:
             try:
-                self.browse_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView))
+                self.browse_btn.setIcon(
+                    self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView)
+                )
             except AttributeError:
                 with contextlib.suppress(AttributeError):
-                    self.browse_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon))
+                    self.browse_btn.setIcon(
+                        self.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon)
+                    )
         path_layout.addWidget(self.browse_btn)
 
         file_layout.addLayout(path_layout)
@@ -201,7 +208,9 @@ class AnalysisPage(QWizardPage):
         licensing_group = QGroupBox("Licensing Files Analysis")
         licensing_layout = QVBoxLayout()
 
-        licensing_info = QLabel("The following licensing-related files were found in the installation folder:")
+        licensing_info = QLabel(
+            "The following licensing-related files were found in the installation folder:"
+        )
         licensing_layout.addWidget(licensing_info)
 
         # Licensing files tree
@@ -210,9 +219,15 @@ class AnalysisPage(QWizardPage):
         if HAS_PYQT:
             self.licensing_tree.header().setStretchLastSection(False)
             self.licensing_tree.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-            self.licensing_tree.header().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-            self.licensing_tree.header().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-            self.licensing_tree.header().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+            self.licensing_tree.header().setSectionResizeMode(
+                1, QHeaderView.ResizeMode.ResizeToContents
+            )
+            self.licensing_tree.header().setSectionResizeMode(
+                2, QHeaderView.ResizeMode.ResizeToContents
+            )
+            self.licensing_tree.header().setSectionResizeMode(
+                3, QHeaderView.ResizeMode.ResizeToContents
+            )
 
         self.licensing_tree.itemDoubleClicked.connect(self.open_licensing_file)
         licensing_layout.addWidget(self.licensing_tree)
@@ -286,13 +301,17 @@ class AnalysisPage(QWizardPage):
                             }
                             self.licensing_files.append(file_info)
 
-                            self.add_licensing_file_to_tree(file_path, info["type"], info["priority"])
+                            self.add_licensing_file_to_tree(
+                                file_path, info["type"], info["priority"]
+                            )
                             break
 
         except Exception as e:
             logger.error(f"Error analyzing installation folder: {e}")
 
-    def add_licensing_file_to_tree(self, file_path: str | Path, file_type: str, priority: int) -> None:
+    def add_licensing_file_to_tree(
+        self, file_path: str | Path, file_type: str, priority: int
+    ) -> None:
         """Add a licensing file to the tree widget.
 
         Creates a QTreeWidgetItem for the given licensing file and adds it to
@@ -308,22 +327,32 @@ class AnalysisPage(QWizardPage):
             file_path = Path(file_path)
             file_size = self.format_file_size(file_path.stat().st_size)
 
-            item = QTreeWidgetItem([str(file_path.name), file_type, file_size, f"Priority {priority}"])
+            item = QTreeWidgetItem(
+                [file_path.name, file_type, file_size, f"Priority {priority}"]
+            )
 
             # Store full path for opening
             item.setData(0, Qt.UserRole, str(file_path))
 
-            # Set icon based on file type
             if HAS_PYQT:
                 if file_type == "License":
                     try:
-                        item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView))
+                        item.setIcon(
+                            0,
+                            self.style().standardIcon(
+                                QStyle.StandardPixmap.SP_FileDialogDetailedView
+                            ),
+                        )
                     except AttributeError:
                         with contextlib.suppress(AttributeError):
-                            item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon))
+                            item.setIcon(
+                                0, self.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon)
+                            )
                 else:
                     with contextlib.suppress(AttributeError):
-                        item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon))
+                        item.setIcon(
+                            0, self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon)
+                        )
 
             self.licensing_tree.addTopLevelItem(item)
 
@@ -378,17 +407,16 @@ class AnalysisPage(QWizardPage):
                 if sys.platform.startswith("win"):
                     os.startfile(file_path)  # noqa: S606  # Legitimate program file opening for security research target selection
                 elif sys.platform.startswith("darwin"):
-                    open_path = shutil.which("open")
-                    if open_path:
+                    if open_path := shutil.which("open"):
                         subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                            [open_path, file_path], shell=False,
+                            [open_path, file_path],
+                            shell=False,
                         )
-                else:
-                    xdg_open_path = shutil.which("xdg-open")
-                    if xdg_open_path:
-                        subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                            [xdg_open_path, file_path], shell=False,
-                        )
+                elif xdg_open_path := shutil.which("xdg-open"):
+                    subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                        [xdg_open_path, file_path],
+                        shell=False,
+                    )
         except Exception as e:
             logger.error(f"Error opening licensing file: {e}")
             QMessageBox.warning(self, "Error", f"Could not open file: {e}")
@@ -462,16 +490,15 @@ class ProgramSelectorDialog(QWizard):
             - auto_analyze: Boolean flag for automatic analysis
 
         """
-        file_path = self.file_selection_page.get_selected_file()
-        if not file_path:
+        if file_path := self.file_selection_page.get_selected_file():
+            return {
+                "program_info": {"name": os.path.basename(file_path), "path": file_path},
+                "installation_folder": os.path.dirname(file_path),
+                "licensing_files": self.analysis_page.get_licensing_files(),
+                "auto_analyze": True,
+            }
+        else:
             return None
-
-        return {
-            "program_info": {"name": os.path.basename(file_path), "path": file_path},
-            "installation_folder": os.path.dirname(file_path),
-            "licensing_files": self.analysis_page.get_licensing_files(),
-            "auto_analyze": True,
-        }
 
 
 # Convenience function for creating and showing the dialog

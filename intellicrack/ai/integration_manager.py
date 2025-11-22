@@ -38,6 +38,7 @@ from .llm_backends import LLMManager
 from .performance_monitor import performance_monitor, profile_ai_operation
 from .script_generation_agent import AIAgent
 
+
 logger = get_logger(__name__)
 
 # Import QEMU Test Manager with fallback
@@ -65,7 +66,9 @@ except ImportError:
             self.snapshots = {}
             logger.warning("QEMUManager fallback initialized")
 
-        def validate_script_in_vm(self, script: str, target_binary: str, vm_config: dict[str, Any] | None = None) -> dict[str, Any]:
+        def validate_script_in_vm(
+            self, script: str, target_binary: str, vm_config: dict[str, Any] | None = None
+        ) -> dict[str, Any]:
             """Perform safe validation and optional dry-run; no real VM execution in fallback.
 
             Args:
@@ -92,7 +95,14 @@ except ImportError:
 
                 # Set up VM configuration
                 if vm_config is None:
-                    vm_config = {"memory": "512M", "cpu": "qemu64", "timeout": 30, "network": False, "snapshot": True, "dry_run": True}
+                    vm_config = {
+                        "memory": "512M",
+                        "cpu": "qemu64",
+                        "timeout": 30,
+                        "network": False,
+                        "snapshot": True,
+                        "dry_run": True,
+                    }
 
                 # Create isolated execution environment
                 with tempfile.TemporaryDirectory() as execution_env:
@@ -116,7 +126,9 @@ except ImportError:
                             tf.write(b"INTELLICRACK_FALLBACK_TARGET\n")
 
                     # Execute script testing based on type (dry-run only in fallback unless explicitly enabled)
-                    execution_result = self._execute_script_in_environment(script, script_file, target_file, vm_config, execution_dir)
+                    execution_result = self._execute_script_in_environment(
+                        script, script_file, target_file, vm_config, execution_dir
+                    )
 
                     # Calculate execution time
                     runtime_ms = int((time.time() - start_time) * 1000)
@@ -129,12 +141,18 @@ except ImportError:
                         "exit_code": execution_result["exit_code"],
                         "runtime_ms": runtime_ms,
                         "results": {
-                            "real_execution": False if vm_config.get("dry_run", True) else execution_result.get("method") == "qemu",
+                            "real_execution": (
+                                False
+                                if vm_config.get("dry_run", True)
+                                else execution_result.get("method") == "qemu"
+                            ),
                             "script_analyzed": script_info,
-                            "target": str(target_binary),
+                            "target": target_binary,
                             "config": vm_config,
                             "validation_environment": str(execution_dir),
-                            "execution_method": execution_result.get("method", "unknown"),
+                            "execution_method": execution_result.get(
+                                "method", "unknown"
+                            ),
                             "validation_passed": execution_result["success"],
                         },
                     }
@@ -155,7 +173,7 @@ except ImportError:
                         "real_execution": False,
                         "analysis_only": True,
                         "script_analyzed": script_analysis,
-                        "target": str(target_binary),
+                        "target": target_binary,
                         "config": vm_config,
                         "error_details": str(vm_error),
                     },
@@ -241,7 +259,9 @@ Script Analysis:
                 dos_header = b"MZ" + struct.pack("<H", 0x90)  # e_magic
                 dos_header += struct.pack("<H", 3) + struct.pack("<H", 0)  # e_cblp, e_cp
                 dos_header += struct.pack("<H", 4) + struct.pack("<H", 0)  # e_crlc, e_cparhdr
-                dos_header += struct.pack("<H", 0xFFFF) + struct.pack("<H", 0)  # e_minalloc, e_maxalloc
+                dos_header += struct.pack("<H", 0xFFFF) + struct.pack(
+                    "<H", 0
+                )  # e_minalloc, e_maxalloc
                 dos_header += struct.pack("<H", 0) + struct.pack("<H", 0xB8)  # e_ss, e_sp
                 dos_header += struct.pack("<H", 0) + struct.pack("<H", 0)  # e_csum, e_ip
                 dos_header += struct.pack("<H", 0) + struct.pack("<H", 0x40)  # e_cs, e_lfarlc
@@ -262,7 +282,9 @@ Script Analysis:
                 pe_header += struct.pack("<I", 0)  # PointerToSymbolTable
                 pe_header += struct.pack("<I", 0)  # NumberOfSymbols
                 pe_header += struct.pack("<H", 0xF0)  # SizeOfOptionalHeader
-                pe_header += struct.pack("<H", 0x22)  # Characteristics (EXECUTABLE | LARGE_ADDRESS_AWARE)
+                pe_header += struct.pack(
+                    "<H", 0x22
+                )  # Characteristics (EXECUTABLE | LARGE_ADDRESS_AWARE)
 
                 # Optional header with license validation entry point
                 opt_header = struct.pack("<H", 0x20B)  # Magic (PE32+)
@@ -291,12 +313,16 @@ Script Analysis:
                 # Calculate RVA offset from current IP to license_key in .rdata section
                 # Current IP after this instruction = 0x1004, target = 0x2000, RVA = 0x2000 - (0x1004 + 7) = 0xFF5
                 license_key_rva = 0x2000 - (0x1000 + len(license_code) + 7)
-                license_code += b"\x48\x8d\x0d" + struct.pack("<i", license_key_rva)  # lea rcx, [rip+license_key]
+                license_code += b"\x48\x8d\x0d" + struct.pack(
+                    "<i", license_key_rva
+                )  # lea rcx, [rip+license_key]
 
                 # Calculate RVA offset from current IP to CheckLicense IAT entry in .idata
                 # Current IP after lea = 0x100B, target IAT = 0x3000, RVA = 0x3000 - (0x100B + 6) = 0x1FEF
                 check_license_rva = 0x3000 - (0x1000 + len(license_code) + 6)
-                license_code += b"\xff\x15" + struct.pack("<i", check_license_rva)  # call [rip+CheckLicense]
+                license_code += b"\xff\x15" + struct.pack(
+                    "<i", check_license_rva
+                )  # call [rip+CheckLicense]
 
                 license_code += b"\x85\xc0"  # test eax, eax
                 license_code += b"\x74\x05"  # jz invalid_license
@@ -313,7 +339,9 @@ Script Analysis:
                     f.write(b"\x00" * (0x200 - f.tell() % 0x200))  # Align to file alignment
                     f.write(license_code)
 
-                Path(target_path).chmod(0o700)  # Restrictive permissions: only owner can read/write/execute
+                Path(target_path).chmod(
+                    0o700
+                )  # Restrictive permissions: only owner can read/write/execute
 
             except Exception as create_error:
                 logger.error(f"Protected binary creation error: {create_error}")
@@ -327,7 +355,14 @@ Script Analysis:
                     elf_header += b"\x00" * 32  # Rest of header
                     f.write(elf_header)
 
-        def _execute_script_in_environment(self, script: str, script_file: str | Path, target_file: str | Path, vm_config: dict[str, Any] | None, execution_dir: str | Path) -> dict[str, Any]:
+        def _execute_script_in_environment(
+            self,
+            script: str,
+            script_file: str | Path,
+            target_file: str | Path,
+            vm_config: dict[str, Any] | None,
+            execution_dir: str | Path,
+        ) -> dict[str, Any]:
             """Execute in controlled environment; default to validation unless explicit run is enabled.
 
             Args:
@@ -351,14 +386,18 @@ Script Analysis:
                     return self._perform_script_validation(script, script_path, target_path)
 
                 try:
-                    qemu_result = self._try_qemu_execution(script_path, target_path, vm_config)  # may raise
+                    qemu_result = self._try_qemu_execution(
+                        script_path, target_path, vm_config
+                    )  # may raise
                     if qemu_result["success"]:
                         return qemu_result
                 except Exception as qemu_error:
                     logger.debug("QEMU execution failed: %s", qemu_error)
 
                 try:
-                    native_result = self._try_native_execution(script, script_path, target_path, exec_dir)
+                    native_result = self._try_native_execution(
+                        script, script_path, target_path, exec_dir
+                    )
                     if native_result["success"]:
                         return native_result
                 except Exception as native_error:
@@ -376,7 +415,9 @@ Script Analysis:
                     "method": "error_fallback",
                 }
 
-        def _try_qemu_execution(self, script_file: Path, target_file: Path, vm_config: dict[str, Any]) -> dict[str, Any]:
+        def _try_qemu_execution(
+            self, script_file: Path, target_file: Path, vm_config: dict[str, Any]
+        ) -> dict[str, Any]:
             """Attempt QEMU-based script execution (best-effort; requires proper setup).
 
             Args:
@@ -398,12 +439,13 @@ Script Analysis:
 
             qemu_cmd = [qemu_bin]
             if qemu_bin == "qemu-system-x86_64":
-                qemu_cmd += ["-cpu", vm_config.get("cpu", "qemu64"), "-m", str(vm_config.get("memory", "512"))]
+                qemu_cmd += [
+                    "-cpu",
+                    vm_config.get("cpu", "qemu64"),
+                    "-m",
+                    str(vm_config.get("memory", "512")),
+                ]
                 qemu_cmd += ["-nographic", "-no-reboot"]
-            else:
-                # qemu-x86_64 user mode can directly run the binary
-                pass
-
             result = subprocess.run(  # nosec S603
                 [*qemu_cmd, str(target_file)],
                 capture_output=True,
@@ -421,7 +463,9 @@ Script Analysis:
                 "method": "qemu",
             }
 
-        def _try_native_execution(self, script: str, script_file: Path, target_file: Path, execution_dir: Path) -> dict[str, Any]:
+        def _try_native_execution(
+            self, script: str, script_file: Path, target_file: Path, execution_dir: Path
+        ) -> dict[str, Any]:
             """Attempt native script execution in sandbox with allowlisted interpreters.
 
             Args:
@@ -443,7 +487,13 @@ Script Analysis:
             elif script_file.suffix == ".py":
                 cmd = ["python", str(script_file)]
             else:
-                return {"success": False, "output": "Interpreter not available or unsupported", "error": "unsupported", "exit_code": 1, "method": "native"}
+                return {
+                    "success": False,
+                    "output": "Interpreter not available or unsupported",
+                    "error": "unsupported",
+                    "exit_code": 1,
+                    "method": "native",
+                }
 
             result = subprocess.run(  # nosec S603
                 cmd,
@@ -462,7 +512,9 @@ Script Analysis:
                 "method": "native",
             }
 
-        def _perform_script_validation(self, script: str, script_file: Path, target_file: Path) -> dict[str, Any]:
+        def _perform_script_validation(
+            self, script: str, script_file: Path, target_file: Path
+        ) -> dict[str, Any]:
             """Perform script validation and static analysis (ASCII-only output).
 
             Args:
@@ -476,8 +528,7 @@ Script Analysis:
 
             """
             try:
-                validation_results = []
-                validation_results.append("=== Script Validation Results ===")
+                validation_results = ["=== Script Validation Results ==="]
                 validation_results.append(f"Script file: {script_file}")
                 validation_results.append(f"Target binary: {target_file}")
                 validation_results.append(f"Script size: {len(script)} bytes")
@@ -490,15 +541,22 @@ Script Analysis:
                             validation_results.append("WARNING No clear JavaScript patterns found")
 
                     security_patterns = ["hook", "patch", "memory", "bypass", "inject"]
-                    found = [p for p in security_patterns if p in script.lower()]
-                    if found:
-                        validation_results.append("OK Security patterns detected: " + ", ".join(found))
+                    if found := [p for p in security_patterns if p in script.lower()]:
+                        validation_results.append(
+                            "OK Security patterns detected: " + ", ".join(found)
+                        )
 
                     validation_results.append("OK Script validation completed successfully")
                 except Exception as validation_error:
                     validation_results.append(f"WARNING Validation warning: {validation_error}")
 
-                return {"success": True, "output": "\n".join(validation_results), "error": "", "exit_code": 0, "method": "validation"}
+                return {
+                    "success": True,
+                    "output": "\n".join(validation_results),
+                    "error": "",
+                    "exit_code": 0,
+                    "method": "validation",
+                }
 
             except Exception as validation_error:
                 return {
@@ -552,7 +610,7 @@ class IntegrationManager:
             llm_manager: Optional LLM manager for AI components
 
         """
-        self.logger = get_logger(__name__ + ".IntegrationManager")
+        self.logger = get_logger(f"{__name__}.IntegrationManager")
         self.llm_manager = llm_manager or LLMManager()
 
         # Initialize components
@@ -749,28 +807,23 @@ class IntegrationManager:
         target_binary = task.input_data["target_binary"]
         vm_config = task.input_data.get("vm_config", {})
 
-        # Test script in QEMU
-        results = self.qemu_manager.validate_script_in_vm(script, target_binary, vm_config)
-
-        return results
+        return self.qemu_manager.validate_script_in_vm(
+            script, target_binary, vm_config
+        )
 
     def _execute_autonomous_analysis(self, task: IntegrationTask) -> dict[str, Any]:
         """Execute autonomous analysis task."""
         task_config = task.input_data["task_config"]
 
-        # Run autonomous agent
-        results = self.ai_agent.execute_autonomous_task(task_config)
-
-        return results
+        return self.ai_agent.execute_autonomous_task(task_config)
 
     def _execute_result_combination(self, task: IntegrationTask) -> dict[str, Any]:
         """Combine results from dependent tasks."""
-        dependency_results = {}
-
-        for dep_id in task.dependencies:
-            if dep_id in self.completed_tasks:
-                dependency_results[dep_id] = self.completed_tasks[dep_id].result
-
+        dependency_results = {
+            dep_id: self.completed_tasks[dep_id].result
+            for dep_id in task.dependencies
+            if dep_id in self.completed_tasks
+        }
         combination_logic = task.input_data.get("combination_logic", "merge")
 
         if combination_logic == "merge":
@@ -778,7 +831,7 @@ class IntegrationManager:
             combined = {}
             for dep_id, result in dependency_results.items():
                 if isinstance(result, dict):
-                    combined.update(result)
+                    combined |= result
                 else:
                     combined[dep_id] = result
         elif combination_logic == "select_best":
@@ -864,12 +917,11 @@ class IntegrationManager:
         task_mapping = {}
 
         for task_def in tasks:
-            # Map dependency names to task IDs
-            dependencies = []
-            for dep_name in task_def.get("dependencies", []):
-                if dep_name in task_mapping:
-                    dependencies.append(task_mapping[dep_name])
-
+            dependencies = [
+                task_mapping[dep_name]
+                for dep_name in task_def.get("dependencies", [])
+                if dep_name in task_mapping
+            ]
             task_id = self.create_task(
                 task_type=task_def["type"],
                 description=task_def.get("description", task_def["type"]),
@@ -926,7 +978,9 @@ class IntegrationManager:
                         failed_tasks[task_id] = task
 
             if timeout and time.time() - start_time > timeout:
-                raise TimeoutError(f"Workflow {workflow_id} did not complete within {timeout} seconds")
+                raise TimeoutError(
+                    f"Workflow {workflow_id} did not complete within {timeout} seconds"
+                )
 
             time.sleep(0.1)
 
@@ -947,7 +1001,7 @@ class IntegrationManager:
 
         workflow_result = WorkflowResult(
             workflow_id=workflow_id,
-            success=len(failed_tasks) == 0,
+            success=not failed_tasks,
             tasks_completed=len(completed_tasks),
             tasks_failed=len(failed_tasks),
             execution_time=execution_time,
@@ -989,9 +1043,12 @@ class IntegrationManager:
             workflow = self.active_workflows[workflow_id]
             task_ids = list(workflow["tasks"].keys())
 
-            completed = sum(1 for tid in task_ids if tid in self.completed_tasks and self.completed_tasks[tid].status == "completed")
-            failed = sum(1 for tid in task_ids if tid in self.completed_tasks and self.completed_tasks[tid].status == "failed")
-            running = sum(1 for tid in task_ids if tid in self.active_tasks)
+            completed = sum(bool(tid in self.completed_tasks and self.completed_tasks[tid].status == "completed")
+                        for tid in task_ids)
+            failed = sum(bool(tid in self.completed_tasks and self.completed_tasks[tid].status == "failed")
+                     for tid in task_ids)
+            running = sum(bool(tid in self.active_tasks)
+                      for tid in task_ids)
             pending = len(task_ids) - completed - failed - running
 
             return {
@@ -1070,7 +1127,9 @@ class IntegrationManager:
             except Exception as e:
                 logger.error(f"Error in event handler: {e}")
 
-    def create_bypass_workflow(self, target_binary: str, bypass_type: str = "license_validation") -> str:
+    def create_bypass_workflow(
+        self, target_binary: str, bypass_type: str = "license_validation"
+    ) -> str:
         """Create a complete bypass workflow."""
         workflow_def = {
             "name": "Complete Bypass Workflow",
@@ -1157,7 +1216,11 @@ class IntegrationManager:
         if len(self.completed_tasks) > 100:
             sorted_tasks = sorted(
                 self.completed_tasks.items(),
-                key=lambda item: (item[1].completed_at.timestamp() if isinstance(item[1].completed_at, datetime) else float("-inf")),
+                key=lambda item: (
+                    item[1].completed_at.timestamp()
+                    if isinstance(item[1].completed_at, datetime)
+                    else float("-inf")
+                ),
                 reverse=True,
             )
 
@@ -1186,7 +1249,12 @@ class IntegrationManager:
         self.start()
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None) -> bool:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> bool:
         """Context manager exit.
 
         Args:
@@ -1201,7 +1269,9 @@ class IntegrationManager:
         if exc_type:
             logger.error(f"Integration manager exiting due to {exc_type.__name__}: {exc_val}")
             if exc_tb:
-                logger.debug(f"Exception traceback available: {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
+                logger.debug(
+                    f"Exception traceback available: {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}"
+                )
         self.stop()
         return False  # Don't suppress exceptions
 

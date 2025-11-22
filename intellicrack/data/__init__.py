@@ -20,6 +20,7 @@ import logging
 import os
 from pathlib import Path
 
+
 logger: logging.Logger = logging.getLogger(__name__)
 
 DATA_DIR: Path = Path(__file__).parent
@@ -32,12 +33,13 @@ TEMPLATES_DIR: Path = DATA_DIR / "templates"
 YARA_RULES_DIR: Path = DATA_DIR / "yara_rules"
 
 YARA_RULES: dict[str, Path] = {
-    'antidebug': YARA_RULES_DIR / "antidebug.yar",
-    'compilers': YARA_RULES_DIR / "compilers.yar",
-    'licensing': YARA_RULES_DIR / "licensing.yar",
-    'packers': YARA_RULES_DIR / "packers.yar",
-    'protections': YARA_RULES_DIR / "protections.yar",
+    "antidebug": YARA_RULES_DIR / "antidebug.yar",
+    "compilers": YARA_RULES_DIR / "compilers.yar",
+    "licensing": YARA_RULES_DIR / "licensing.yar",
+    "packers": YARA_RULES_DIR / "packers.yar",
+    "protections": YARA_RULES_DIR / "protections.yar",
 }
+
 
 def get_yara_rule_path(rule_name: str) -> Path | None:
     """Get path to a specific YARA rule file.
@@ -54,6 +56,7 @@ def get_yara_rule_path(rule_name: str) -> Path | None:
     """
     return YARA_RULES.get(rule_name)
 
+
 def get_available_yara_rules() -> list[str]:
     """Get list of available YARA rule files.
 
@@ -65,6 +68,7 @@ def get_available_yara_rules() -> list[str]:
 
     """
     return [name for name, path in YARA_RULES.items() if path.exists()]
+
 
 def get_data_file(filename: str) -> Path:
     """Get path to a data file in the data directory.
@@ -81,10 +85,12 @@ def get_data_file(filename: str) -> Path:
     """
     return DATA_DIR / filename
 
+
 HAS_SIGNATURE_TEMPLATES: bool
 
 try:
     from .signature_templates import *
+
     logger.debug("Signature templates loaded successfully")
     HAS_SIGNATURE_TEMPLATES = True
 except ImportError as e:
@@ -92,15 +98,15 @@ except ImportError as e:
     HAS_SIGNATURE_TEMPLATES = False
 
 __all__ = [
-    'DATA_DIR',
-    'C2_SESSIONS_DB',
-    'PROTOCOL_SIGNATURES',
-    'SIGNATURES_DIR',
-    'TEMPLATES_DIR',
-    'YARA_RULES_DIR',
-    'YARA_RULES',
-    'get_yara_rule_path',
-    'get_available_yara_rules',
-    'get_data_file',
-    'HAS_SIGNATURE_TEMPLATES',
+    "C2_SESSIONS_DB",
+    "DATA_DIR",
+    "HAS_SIGNATURE_TEMPLATES",
+    "PROTOCOL_SIGNATURES",
+    "SIGNATURES_DIR",
+    "TEMPLATES_DIR",
+    "YARA_RULES",
+    "YARA_RULES_DIR",
+    "get_available_yara_rules",
+    "get_data_file",
+    "get_yara_rule_path",
 ]

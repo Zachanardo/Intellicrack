@@ -45,11 +45,7 @@ from .entropy_utils import (
     is_high_entropy,
     safe_entropy_calculation,
 )
-from .pattern_search import (
-    find_all_pattern_occurrences,
-    find_function_prologues,
-    find_license_patterns,
-    search_patterns_in_binary,
-)
+from .pattern_search import find_all_pattern_occurrences, find_function_prologues, find_license_patterns, search_patterns_in_binary
+
 
 __all__ = ["analysis_exporter", "binary_analysis", "entropy_utils", "pattern_search"]

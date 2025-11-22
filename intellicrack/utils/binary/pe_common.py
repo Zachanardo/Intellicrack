@@ -24,6 +24,7 @@ This module provides common functions for PE file import parsing.
 import logging
 from collections.abc import Callable
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -53,7 +54,9 @@ def extract_pe_imports(pe_obj: object) -> list[str]:
 
 
 def iterate_pe_imports_with_dll(
-    pe_obj: object, callback: Callable[..., object], include_import_obj: bool = False,
+    pe_obj: object,
+    callback: Callable[..., object],
+    include_import_obj: bool = False,
 ) -> object:
     """Iterate through PE imports with DLL names, calling callback for each.
 

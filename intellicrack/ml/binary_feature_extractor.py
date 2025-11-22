@@ -23,6 +23,7 @@ from typing import Any
 
 import numpy as np
 
+
 try:
     import capstone
     from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
@@ -87,15 +88,11 @@ class BinaryFeatureExtractor:
                 self.pe = pefile.PE(data=self.data, fast_load=True)
                 self.pe.parse_data_directories()
 
+                self.arch = CS_ARCH_X86
                 # Determine architecture
-                if self.pe.FILE_HEADER.Machine == 0x014C:  # IMAGE_FILE_MACHINE_I386
-                    self.arch = CS_ARCH_X86
-                    self.mode = CS_MODE_32
-                elif self.pe.FILE_HEADER.Machine == 0x8664:  # IMAGE_FILE_MACHINE_AMD64
-                    self.arch = CS_ARCH_X86
+                if self.pe.FILE_HEADER.Machine == 0x8664:
                     self.mode = CS_MODE_64
                 else:
-                    self.arch = CS_ARCH_X86
                     self.mode = CS_MODE_32
             except Exception as e:
                 self.logger.warning(f"PE parsing failed: {e}")
@@ -104,14 +101,13 @@ class BinaryFeatureExtractor:
         if LIEF_AVAILABLE and not self.pe:
             try:
                 self.lief_binary = lief.parse(self.data)
-                if self.lief_binary:
-                    if self.lief_binary.format == lief.EXE_FORMATS.PE:
-                        if self.lief_binary.header.machine == lief.PE.MACHINE_TYPES.I386:
-                            self.arch = CS_ARCH_X86
-                            self.mode = CS_MODE_32
-                        elif self.lief_binary.header.machine == lief.PE.MACHINE_TYPES.AMD64:
-                            self.arch = CS_ARCH_X86
-                            self.mode = CS_MODE_64
+                if self.lief_binary and self.lief_binary.format == lief.EXE_FORMATS.PE:
+                    if self.lief_binary.header.machine == lief.PE.MACHINE_TYPES.I386:
+                        self.arch = CS_ARCH_X86
+                        self.mode = CS_MODE_32
+                    elif self.lief_binary.header.machine == lief.PE.MACHINE_TYPES.AMD64:
+                        self.arch = CS_ARCH_X86
+                        self.mode = CS_MODE_64
             except Exception as e:
                 self.logger.warning(f"LIEF parsing failed: {e}")
 
@@ -232,11 +228,13 @@ class BinaryFeatureExtractor:
                     section_va = self.pe.OPTIONAL_HEADER.ImageBase + section.VirtualAddress
                     sections.append((section_data, section_va))
         elif self.lief_binary:
-            for section in self.lief_binary.sections:
-                if section.has_characteristic(lief.PE.SECTION_CHARACTERISTICS.MEM_EXECUTE):
-                    section_data = bytes(section.content)
-                    section_va = section.virtual_address
-                    sections.append((section_data, section_va))
+            sections.extend(
+                (bytes(section.content), section.virtual_address)
+                for section in self.lief_binary.sections
+                if section.has_characteristic(
+                    lief.PE.SECTION_CHARACTERISTICS.MEM_EXECUTE
+                )
+            )
         else:
             # Fallback: treat entire binary as executable
             sections.append((self.data, 0x400000))
@@ -282,9 +280,7 @@ class BinaryFeatureExtractor:
             features["avg_degree"] = np.mean(degrees)
             features["max_degree"] = max(degrees)
 
-            # Get largest component size
-            components = list(nx.weakly_connected_components(cfg))
-            if components:
+            if components := list(nx.weakly_connected_components(cfg)):
                 features["largest_component"] = len(max(components, key=len))
 
         return features
@@ -306,7 +302,20 @@ class BinaryFeatureExtractor:
                     current_block["size"] += insn.size
 
                     # Check if instruction ends basic block
-                    if insn.mnemonic in ["ret", "retn", "jmp", "je", "jne", "jg", "jl", "jge", "jle", "jz", "jnz", "call"]:
+                    if insn.mnemonic in [
+                        "ret",
+                        "retn",
+                        "jmp",
+                        "je",
+                        "jne",
+                        "jg",
+                        "jl",
+                        "jge",
+                        "jle",
+                        "jz",
+                        "jnz",
+                        "call",
+                    ]:
                         if insn.mnemonic == "ret":
                             current_block["type"] = "return"
                         elif insn.mnemonic == "call":
@@ -323,7 +332,12 @@ class BinaryFeatureExtractor:
                         blocks.append(current_block)
 
                         # Start new block
-                        current_block = {"start": insn.address + insn.size, "size": 0, "type": "normal", "targets": []}
+                        current_block = {
+                            "start": insn.address + insn.size,
+                            "size": 0,
+                            "type": "normal",
+                            "targets": [],
+                        }
 
                 # Add final block if it has content
                 if current_block["size"] > 0:
@@ -340,12 +354,53 @@ class BinaryFeatureExtractor:
 
         # License-related API categories
         api_categories = {
-            "registry": ["RegOpenKey", "RegQueryValue", "RegSetValue", "RegCreateKey", "RegDeleteKey", "RegEnumKey"],
-            "crypto": ["CryptHashData", "CryptGenKey", "CryptEncrypt", "CryptDecrypt", "CryptCreateHash", "CryptAcquireContext"],
-            "network": ["InternetOpen", "InternetConnect", "HttpOpenRequest", "HttpSendRequest", "WSAStartup", "connect", "send", "recv"],
-            "hardware": ["GetVolumeInformation", "GetSystemInfo", "GetComputerName", "GetAdaptersInfo", "DeviceIoControl"],
-            "time": ["GetSystemTime", "GetTickCount", "QueryPerformanceCounter", "GetLocalTime", "timeGetTime"],
-            "process": ["CreateProcess", "OpenProcess", "TerminateProcess", "GetCurrentProcess", "GetProcessId"],
+            "registry": [
+                "RegOpenKey",
+                "RegQueryValue",
+                "RegSetValue",
+                "RegCreateKey",
+                "RegDeleteKey",
+                "RegEnumKey",
+            ],
+            "crypto": [
+                "CryptHashData",
+                "CryptGenKey",
+                "CryptEncrypt",
+                "CryptDecrypt",
+                "CryptCreateHash",
+                "CryptAcquireContext",
+            ],
+            "network": [
+                "InternetOpen",
+                "InternetConnect",
+                "HttpOpenRequest",
+                "HttpSendRequest",
+                "WSAStartup",
+                "connect",
+                "send",
+                "recv",
+            ],
+            "hardware": [
+                "GetVolumeInformation",
+                "GetSystemInfo",
+                "GetComputerName",
+                "GetAdaptersInfo",
+                "DeviceIoControl",
+            ],
+            "time": [
+                "GetSystemTime",
+                "GetTickCount",
+                "QueryPerformanceCounter",
+                "GetLocalTime",
+                "timeGetTime",
+            ],
+            "process": [
+                "CreateProcess",
+                "OpenProcess",
+                "TerminateProcess",
+                "GetCurrentProcess",
+                "GetProcessId",
+            ],
             "file": ["CreateFile", "ReadFile", "WriteFile", "GetFileAttributes", "FindFirstFile"],
             "memory": ["VirtualAlloc", "VirtualProtect", "VirtualFree", "HeapAlloc", "GlobalAlloc"],
         }
@@ -377,17 +432,17 @@ class BinaryFeatureExtractor:
             try:
                 if hasattr(self.pe, "DIRECTORY_ENTRY_IMPORT"):
                     for entry in self.pe.DIRECTORY_ENTRY_IMPORT:
-                        for imp in entry.imports:
-                            if imp.name:
-                                imports.append(imp.name.decode("utf-8", errors="ignore"))
+                        imports.extend(
+                            imp.name.decode("utf-8", errors="ignore")
+                            for imp in entry.imports
+                            if imp.name
+                        )
             except Exception as e:
                 self.logger.debug(f"Import extraction error: {e}")
         elif self.lief_binary:
             try:
                 for imported in self.lief_binary.imports:
-                    for entry in imported.entries:
-                        if entry.name:
-                            imports.append(entry.name)
+                    imports.extend(entry.name for entry in imported.entries if entry.name)
             except Exception as e:
                 self.logger.debug(f"LIEF import extraction error: {e}")
 
@@ -411,8 +466,7 @@ class BinaryFeatureExtractor:
             # Calculate entropy for whole binary in chunks
             chunk_size = len(self.data) // 8
             for i in range(8):
-                chunk = self.data[i * chunk_size : (i + 1) * chunk_size]
-                if chunk:
+                if chunk := self.data[i * chunk_size : (i + 1) * chunk_size]:
                     entropy = self._calculate_entropy(chunk)
                     entropies.append(entropy)
 
@@ -490,7 +544,9 @@ class BinaryFeatureExtractor:
 
         return features
 
-    def _extract_strings(self, data: bytes, min_length: int = 4, encoding: str = "ascii") -> list[str]:
+    def _extract_strings(
+        self, data: bytes, min_length: int = 4, encoding: str = "ascii"
+    ) -> list[str]:
         """Extract strings from binary data."""
         strings = []
 
@@ -535,15 +591,13 @@ class BinaryFeatureExtractor:
 
     def extract_all_features(self) -> dict[str, np.ndarray]:
         """Extract all features from binary."""
-        features = {
+        return {
             "opcode_histogram": self.extract_opcode_histogram(),
             "cfg_features": self._cfg_to_vector(self.build_control_flow_graph()),
             "api_sequences": self.extract_api_sequences(),
             "section_entropy": self.calculate_section_entropy(),
             "string_features": self.extract_string_features(),
         }
-
-        return features
 
     def _cfg_to_vector(self, cfg_dict: dict[str, Any]) -> np.ndarray:
         """Convert CFG dictionary to feature vector."""
@@ -565,8 +619,7 @@ def extract_features_for_ml(binary_path: str) -> np.ndarray:
     extractor = BinaryFeatureExtractor(binary_path)
     features = extractor.extract_all_features()
 
-    # Concatenate all features into single vector
-    feature_vector = np.concatenate(
+    return np.concatenate(
         [
             features["opcode_histogram"],
             features["cfg_features"],
@@ -575,5 +628,3 @@ def extract_features_for_ml(binary_path: str) -> np.ndarray:
             features["string_features"],
         ],
     )
-
-    return feature_vector

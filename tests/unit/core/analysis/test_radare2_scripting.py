@@ -100,7 +100,7 @@ class RealScriptGenerator:
         self.generated_scripts = []
         self.optimization_enabled = False
 
-    def generate_analysis_script(self, binary_path: str, options: Dict[str, Any]) -> str:
+    def generate_analysis_script(self, binary_path: str, options: dict[str, Any]) -> str:
         """Generate analysis script with real radare2 commands."""
         script_lines = [
             "#!/usr/bin/env python3",
@@ -132,7 +132,7 @@ class RealScriptGenerator:
         self.generated_scripts.append(script_content)
         return script_content
 
-    def generate_patch_script(self, patches: List[Dict[str, Any]]) -> str:
+    def generate_patch_script(self, patches: list[dict[str, Any]]) -> str:
         """Generate patching script."""
         script_lines = [
             "#!/usr/bin/env python3",
@@ -166,7 +166,7 @@ class RealScriptExecutor:
         self.execution_results = []
         self.r2_session = None
 
-    def execute_script(self, script_content: str, binary_path: str = None) -> Dict[str, Any]:
+    def execute_script(self, script_content: str, binary_path: str = None) -> dict[str, Any]:
         """Execute radare2 script and return results."""
         self.executed_scripts.append(script_content)
 
@@ -245,21 +245,21 @@ class RealScriptLibrary:
 
         return True
 
-    def get_script(self, name: str) -> Optional[str]:
+    def get_script(self, name: str) -> str | None:
         """Retrieve script from library."""
         if name in self.scripts:
             self.scripts[name]['usage_count'] += 1
             return self.scripts[name]['content']
         return None
 
-    def list_scripts(self, category: str = None) -> List[str]:
+    def list_scripts(self, category: str = None) -> list[str]:
         """List available scripts."""
         if category:
             return [name for name, info in self.scripts.items()
                    if info['category'] == category]
         return list(self.scripts.keys())
 
-    def search_scripts(self, keyword: str) -> List[str]:
+    def search_scripts(self, keyword: str) -> list[str]:
         """Search scripts by keyword."""
         results = []
         for name, info in self.scripts.items():
@@ -305,11 +305,11 @@ r2.quit()
 """
         }
 
-    def get_template(self, name: str) -> Optional[str]:
+    def get_template(self, name: str) -> str | None:
         """Get template by name."""
         return self.templates.get(name)
 
-    def render_template(self, name: str, variables: Dict[str, Any]) -> str:
+    def render_template(self, name: str, variables: dict[str, Any]) -> str:
         """Render template with variables."""
         template = self.templates.get(name, "")
         for key, value in variables.items():
@@ -320,7 +320,7 @@ r2.quit()
         """Add new template."""
         self.templates[name] = content
 
-    def list_templates(self) -> List[str]:
+    def list_templates(self) -> list[str]:
         """List available templates."""
         return list(self.templates.keys())
 
@@ -369,7 +369,7 @@ class RealScriptOptimizer:
 
         return '\n'.join(final_lines)
 
-    def analyze_performance(self, script_content: str) -> Dict[str, Any]:
+    def analyze_performance(self, script_content: str) -> dict[str, Any]:
         """Analyze script performance characteristics."""
         metrics = {
             'command_count': script_content.count('r2.cmd'),

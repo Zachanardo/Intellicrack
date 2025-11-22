@@ -29,6 +29,7 @@ import struct
 import threading
 import time
 
+
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
 except ImportError:
@@ -47,6 +48,7 @@ from ..frida_manager import FridaManager
 from .ghidra_analyzer import run_advanced_ghidra_analysis
 from .ghidra_results import GhidraAnalysisResult
 from .radare2_enhanced_integration import EnhancedR2Integration
+
 
 logger = logging.getLogger(__name__)
 
@@ -104,19 +106,23 @@ class SharedMemoryIPC:
         try:
             # Try to create new shared memory
             self.mmap_obj = mmap.mmap(-1, self.size, tagname=self.name, access=mmap.ACCESS_WRITE)
-            self.mmap_obj[0 : self.size] = b"\x00" * self.size
+            self.mmap_obj[:self.size] = b"\x00" * self.size
             self.is_creator = True
             logger.info(f"Created shared memory segment: {self.name}")
         except Exception:
             # Connect to existing shared memory
             try:
-                self.mmap_obj = mmap.mmap(-1, self.size, tagname=self.name, access=mmap.ACCESS_WRITE)
+                self.mmap_obj = mmap.mmap(
+                    -1, self.size, tagname=self.name, access=mmap.ACCESS_WRITE
+                )
                 logger.info(f"Connected to existing shared memory: {self.name}")
             except Exception as conn_err:
                 logger.error(f"Failed to initialize shared memory: {conn_err}")
                 raise
 
-    def send_message(self, msg_type: MessageType, data: dict | list | str | int | bool | None) -> bool:
+    def send_message(
+        self, msg_type: MessageType, data: dict | list | str | int | bool | None
+    ) -> bool:
         """Send message through shared memory.
 
         Args:
@@ -213,7 +219,9 @@ class ResultSerializer:
     PROTOCOL_VERSION = "1.0"
 
     @staticmethod
-    def serialize_result(tool_name: str, result: dict | list | str | object, metadata: dict[str, Any] | None = None) -> bytes:
+    def serialize_result(
+        tool_name: str, result: dict | list | str | object, metadata: dict[str, Any] | None = None
+    ) -> bytes:
         """Serialize analysis result with metadata.
 
         Args:
@@ -266,7 +274,9 @@ class ResultSerializer:
 
             # Validate version
             if package.get("version") != ResultSerializer.PROTOCOL_VERSION:
-                logger.warning(f"Protocol version mismatch: {package.get('version')} != {ResultSerializer.PROTOCOL_VERSION}")
+                logger.warning(
+                    f"Protocol version mismatch: {package.get('version')} != {ResultSerializer.PROTOCOL_VERSION}"
+                )
 
             return package
 
@@ -298,7 +308,12 @@ class ToolMonitor:
             process = psutil.Process(pid)
             self.processes[tool_name] = process
             self.status[tool_name] = ToolStatus.RUNNING
-            self.metrics[tool_name] = {"cpu_percent": [], "memory_mb": [], "io_read_mb": 0, "io_write_mb": 0}
+            self.metrics[tool_name] = {
+                "cpu_percent": [],
+                "memory_mb": [],
+                "io_read_mb": 0,
+                "io_write_mb": 0,
+            }
             logger.info(f"Registered process {pid} for tool {tool_name}")
         except psutil.NoSuchProcess:
             logger.error(f"Process {pid} not found for tool {tool_name}")
@@ -408,7 +423,9 @@ class FailureRecovery:
         self.recovery_strategies[tool_name] = strategy
         logger.info(f"Registered recovery strategy for {tool_name}")
 
-    def handle_failure(self, tool_name: str, error: Exception, context: dict[str, Any] = None) -> bool:
+    def handle_failure(
+        self, tool_name: str, error: Exception, context: dict[str, Any] = None
+    ) -> bool:
         """Handle tool failure with recovery.
 
         Args:
@@ -421,7 +438,9 @@ class FailureRecovery:
 
         """
         # Record failure
-        self.failure_history[tool_name].append({"timestamp": datetime.now().isoformat(), "error": str(error), "context": context or {}})
+        self.failure_history[tool_name].append(
+            {"timestamp": datetime.now().isoformat(), "error": str(error), "context": context or {}}
+        )
 
         # Check retry count
         self.retry_counts[tool_name] = self.retry_counts.get(tool_name, 0) + 1
@@ -429,7 +448,9 @@ class FailureRecovery:
             logger.error(f"Max retries exceeded for {tool_name}")
             return False
 
-        logger.warning(f"Attempting recovery for {tool_name} (attempt {self.retry_counts[tool_name]})")
+        logger.warning(
+            f"Attempting recovery for {tool_name} (attempt {self.retry_counts[tool_name]})"
+        )
 
         # Execute recovery strategy
         if tool_name in self.recovery_strategies:
@@ -515,9 +536,7 @@ class ResultConflictResolver:
             if len(group) == 1:
                 resolved.append(group[0])
             else:
-                # Apply resolution rules
-                resolved_func = self._apply_resolution_rules(group)
-                if resolved_func:
+                if resolved_func := self._apply_resolution_rules(group):
                     resolved.append(resolved_func)
                 else:
                     # Default: merge data with highest confidence
@@ -525,7 +544,14 @@ class ResultConflictResolver:
                     resolved.append(merged)
 
                 # Log conflict
-                self.conflict_log.append({"type": "function", "name": name, "sources": len(group), "resolution": "merged"})
+                self.conflict_log.append(
+                    {
+                        "type": "function",
+                        "name": name,
+                        "sources": len(group),
+                        "resolution": "merged",
+                    }
+                )
 
         return resolved
 
@@ -570,7 +596,8 @@ class ResultConflictResolver:
             return 0.0
 
         # Simple character-based similarity
-        common = sum(1 for c1, c2 in zip(s1, s2, strict=False) if c1 == c2)
+        common = sum(bool(c1 == c2)
+                 for c1, c2 in zip(s1, s2, strict=False))
         return common / max(len(s1), len(s2))
 
     def _apply_resolution_rules(self, group: list[dict]) -> dict | None:
@@ -585,8 +612,7 @@ class ResultConflictResolver:
         """
         for _priority, rule in self.resolution_rules:
             try:
-                result = rule(group)
-                if result:
+                if result := rule(group):
                     return result
             except Exception as e:
                 logger.error(f"Resolution rule failed: {e}")
@@ -624,7 +650,13 @@ class ResultConflictResolver:
             merged.setdefault("notes", []).extend(func.get("notes", []))
 
         # Recalculate confidence
-        sources = sum([1 if merged.get("ghidra_data") else 0, 1 if merged.get("r2_data") else 0, 1 if merged.get("frida_data") else 0])
+        sources = sum(
+            [
+                1 if merged.get("ghidra_data") else 0,
+                1 if merged.get("r2_data") else 0,
+                1 if merged.get("frida_data") else 0,
+            ]
+        )
         merged["confidence_score"] = sources / 3.0
 
         return merged
@@ -682,13 +714,18 @@ class LoadBalancer:
             return False
 
         # Check memory
-        if current_load["memory_percent"] + estimated_resources.get("memory", 0) > self.memory_threshold:
+        if (
+            current_load["memory_percent"] + estimated_resources.get("memory", 0)
+            > self.memory_threshold
+        ):
             logger.warning(f"Memory threshold would be exceeded by starting {tool_name}")
             return False
 
         return True
 
-    def schedule_tool(self, tool_name: str, priority: int = 5, estimated_resources: dict[str, float] = None) -> None:
+    def schedule_tool(
+        self, tool_name: str, priority: int = 5, estimated_resources: dict[str, float] = None
+    ) -> None:
         """Schedule tool for execution.
 
         Args:
@@ -743,7 +780,10 @@ class LoadBalancer:
         for tool in tools:
             resources = tool_resources.get(tool, {"cpu": 20, "memory": 10})
 
-            if current_cpu + resources["cpu"] <= self.cpu_threshold and current_memory + resources["memory"] <= self.memory_threshold:
+            if (
+                current_cpu + resources["cpu"] <= self.cpu_threshold
+                and current_memory + resources["memory"] <= self.memory_threshold
+            ):
                 current_batch.append(tool)
                 current_cpu += resources["cpu"]
                 current_memory += resources["memory"]
@@ -992,9 +1032,13 @@ class CrossToolOrchestrator:
 
                 # Start analysis thread
                 if tool == "ghidra":
-                    thread = threading.Thread(target=self._run_ghidra_analysis_with_ipc, daemon=True)
+                    thread = threading.Thread(
+                        target=self._run_ghidra_analysis_with_ipc, daemon=True
+                    )
                 elif tool == "radare2":
-                    thread = threading.Thread(target=self._run_radare2_analysis_with_ipc, daemon=True)
+                    thread = threading.Thread(
+                        target=self._run_radare2_analysis_with_ipc, daemon=True
+                    )
                 elif tool == "frida" and self.frida_manager:
                     thread = threading.Thread(target=self._run_frida_analysis_with_ipc, daemon=True)
                 else:
@@ -1064,13 +1108,16 @@ class CrossToolOrchestrator:
 
             # Send start message via IPC
             self.ipc_channel.send_message(
-                MessageType.STATUS, {"tool": "ghidra", "status": "starting", "timestamp": datetime.now().isoformat()},
+                MessageType.STATUS,
+                {"tool": "ghidra", "status": "starting", "timestamp": datetime.now().isoformat()},
             )
 
             if self.main_app:
                 # Use GUI integration
                 run_advanced_ghidra_analysis(self.main_app)
-                self.ghidra_results = GhidraAnalysisResult(binary_path=self.binary_path, timestamp=datetime.now())
+                self.ghidra_results = GhidraAnalysisResult(
+                    binary_path=self.binary_path, timestamp=datetime.now()
+                )
             else:
                 # Run Ghidra headless and parse real output
                 import subprocess
@@ -1102,7 +1149,9 @@ class CrossToolOrchestrator:
                     subprocess.run(cmd, capture_output=True, text=True, timeout=300, shell=False)
 
                     # Parse Ghidra output files
-                    output_file = os.path.join(project_dir, f"{os.path.basename(self.binary_path)}_analysis.xml")
+                    output_file = os.path.join(
+                        project_dir, f"{os.path.basename(self.binary_path)}_analysis.xml"
+                    )
                     functions = []
                     strings = []
                     imports = []
@@ -1119,7 +1168,9 @@ class CrossToolOrchestrator:
                                     "address": int(func_elem.get("address", "0"), 16),
                                     "size": int(func_elem.get("size", "0")),
                                     "signature": func_elem.get("signature", ""),
-                                    "xrefs": [int(x.text, 16) for x in func_elem.findall(".//xref")],
+                                    "xrefs": [
+                                        int(x.text, 16) for x in func_elem.findall(".//xref")
+                                    ],
                                 },
                             )
 
@@ -1144,13 +1195,17 @@ class CrossToolOrchestrator:
                             )
 
                     # Create analysis result
-                    self.ghidra_results = GhidraAnalysisResult(binary_path=self.binary_path, timestamp=datetime.now())
+                    self.ghidra_results = GhidraAnalysisResult(
+                        binary_path=self.binary_path, timestamp=datetime.now()
+                    )
                     self.ghidra_results.functions = functions
                     self.ghidra_results.strings = strings
                     self.ghidra_results.imports = imports
 
             # Serialize and send results via IPC
-            serialized = self.result_serializer.serialize_result("ghidra", self.ghidra_results, {"config": config})
+            serialized = self.result_serializer.serialize_result(
+                "ghidra", self.ghidra_results, {"config": config}
+            )
             self.ipc_channel.send_message(MessageType.RESULT, serialized)
 
             with self.analysis_lock:
@@ -1185,7 +1240,8 @@ class CrossToolOrchestrator:
 
             # Send start message via IPC
             self.ipc_channel.send_message(
-                MessageType.STATUS, {"tool": "radare2", "status": "starting", "timestamp": datetime.now().isoformat()},
+                MessageType.STATUS,
+                {"tool": "radare2", "status": "starting", "timestamp": datetime.now().isoformat()},
             )
 
             if not self.r2_integration:
@@ -1196,7 +1252,9 @@ class CrossToolOrchestrator:
             results = self.r2_integration.run_comprehensive_analysis(analysis_types)
 
             # Serialize and send results via IPC
-            serialized = self.result_serializer.serialize_result("radare2", results, {"config": config})
+            serialized = self.result_serializer.serialize_result(
+                "radare2", results, {"config": config}
+            )
             self.ipc_channel.send_message(MessageType.RESULT, serialized)
 
             with self.analysis_lock:
@@ -1238,39 +1296,41 @@ class CrossToolOrchestrator:
 
             # Send start message via IPC
             self.ipc_channel.send_message(
-                MessageType.STATUS, {"tool": "frida", "status": "starting", "timestamp": datetime.now().isoformat()},
+                MessageType.STATUS,
+                {"tool": "frida", "status": "starting", "timestamp": datetime.now().isoformat()},
             )
 
             # Attach to process or spawn
             pid = config.get("pid") if config else None
-            if pid:
-                self.frida_manager.attach_to_process(pid)
-            else:
+            if not pid:
                 # Spawn process for real analysis
                 import subprocess
 
                 # Validate binary_path to prevent command injection
                 if not Path(str(self.binary_path)).is_absolute() or ".." in str(self.binary_path):
                     raise ValueError(f"Unsafe binary path: {self.binary_path}")
-                proc = subprocess.Popen([self.binary_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+                proc = subprocess.Popen(
+                    [self.binary_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False
+                )
                 pid = proc.pid
                 time.sleep(1)  # Let process initialize
-                self.frida_manager.attach_to_process(pid)
-
+            self.frida_manager.attach_to_process(pid)
             # Run standard scripts
             scripts = config.get("scripts", ["memory_scan", "api_monitor", "hook_detection"])
             results = {}
 
             for script_name in scripts:
-                if script_name == "memory_scan":
-                    results["memory"] = self._frida_memory_scan()
-                elif script_name == "api_monitor":
+                if script_name == "api_monitor":
                     results["api_calls"] = self._frida_api_monitor()
                 elif script_name == "hook_detection":
                     results["hooks"] = self._frida_hook_detection()
 
+                elif script_name == "memory_scan":
+                    results["memory"] = self._frida_memory_scan()
             # Serialize and send results via IPC
-            serialized = self.result_serializer.serialize_result("frida", results, {"config": config})
+            serialized = self.result_serializer.serialize_result(
+                "frida", results, {"config": config}
+            )
             self.ipc_channel.send_message(MessageType.RESULT, serialized)
 
             with self.analysis_lock:
@@ -1339,9 +1399,11 @@ class CrossToolOrchestrator:
         try:
             # Execute the memory scan script
             if hasattr(self.frida_manager, "inject_script"):
-                script_result = self.frida_manager.inject_script(self.frida_manager.target_pid, script_code)
+                script_result = self.frida_manager.inject_script(
+                    self.frida_manager.target_pid, script_code
+                )
                 if script_result and "data" in script_result:
-                    results.update(script_result["data"])
+                    results |= script_result["data"]
             else:
                 self.logger.debug("Frida script injection method not available")
         except Exception as e:
@@ -1385,7 +1447,9 @@ class CrossToolOrchestrator:
         try:
             # Execute the API monitoring script
             if hasattr(self.frida_manager, "inject_script"):
-                script_result = self.frida_manager.inject_script(self.frida_manager.target_pid, script_code)
+                script_result = self.frida_manager.inject_script(
+                    self.frida_manager.target_pid, script_code
+                )
                 if script_result and "calls" in script_result:
                     api_calls.extend(script_result["calls"])
             else:
@@ -1440,9 +1504,11 @@ class CrossToolOrchestrator:
         try:
             # Execute the hook detection script
             if hasattr(self.frida_manager, "inject_script"):
-                script_result = self.frida_manager.inject_script(self.frida_manager.target_pid, script_code)
+                script_result = self.frida_manager.inject_script(
+                    self.frida_manager.target_pid, script_code
+                )
                 if script_result and "hooks" in script_result:
-                    hooks.update(script_result["hooks"])
+                    hooks |= script_result["hooks"]
             else:
                 self.logger.debug("Frida script injection method not available")
         except Exception as e:
@@ -1480,9 +1546,14 @@ class CrossToolOrchestrator:
             "tools_used": list(self.analysis_complete.keys()),
             "analysis_complete": all(self.analysis_complete.values()),
             "correlation_confidence": self._calculate_correlation_confidence(),
-            "tool_metrics": {tool: self.tool_monitor.get_metrics(tool) for tool in self.analysis_complete},
+            "tool_metrics": {
+                tool: self.tool_monitor.get_metrics(tool) for tool in self.analysis_complete
+            },
             "conflict_count": len(self.conflict_resolver.conflict_log),
-            "failure_count": sum(len(self.failure_recovery.get_failure_history(tool)) for tool in self.analysis_complete),
+            "failure_count": sum(
+                len(self.failure_recovery.get_failure_history(tool))
+                for tool in self.analysis_complete
+            ),
         }
 
         return result
@@ -1559,8 +1630,10 @@ class CrossToolOrchestrator:
                 cf.notes.append("Has inline hook detected by Frida")
 
         # Calculate confidence scores
-        for _name, cf in function_map.items():
-            sources = sum([1 if cf.ghidra_data else 0, 1 if cf.r2_data else 0, 1 if cf.frida_data else 0])
+        for cf in function_map.values():
+            sources = sum(
+                [1 if cf.ghidra_data else 0, 1 if cf.r2_data else 0, 1 if cf.frida_data else 0]
+            )
             cf.confidence_score = sources / 3.0
             correlated.append(cf)
 
@@ -1637,8 +1710,7 @@ class CrossToolOrchestrator:
         # Add Frida runtime vulnerabilities
         frida_results = self.analysis_results.get("frida", {})
         if frida_results and "hooks" in frida_results:
-            inline_hooks = frida_results["hooks"].get("inline", [])
-            if inline_hooks:
+            if inline_hooks := frida_results["hooks"].get("inline", []):
                 vulnerabilities.append(
                     {
                         "type": "runtime_hooks",
@@ -1655,26 +1727,41 @@ class CrossToolOrchestrator:
         """Identify protection mechanisms from analysis."""
         protections = []
 
-        # Check for anti-debugging
-        r2_results = self.analysis_results.get("radare2", {})
-        if r2_results:
-            # Check for common anti-debug functions
-            anti_debug_apis = ["IsDebuggerPresent", "CheckRemoteDebuggerPresent", "NtQueryInformationProcess", "OutputDebugString"]
-
+        if r2_results := self.analysis_results.get("radare2", {}):
             components = r2_results.get("components", {})
             imports = components.get("imports", {})
             if "imports" in imports:
-                for imp in imports["imports"]:
-                    if any(api in imp.get("name", "") for api in anti_debug_apis):
-                        protections.append({"type": "anti_debugging", "mechanism": imp.get("name"), "confidence": 0.9})
+                # Check for common anti-debug functions
+                anti_debug_apis = [
+                    "IsDebuggerPresent",
+                    "CheckRemoteDebuggerPresent",
+                    "NtQueryInformationProcess",
+                    "OutputDebugString",
+                ]
 
+                protections.extend(
+                    {
+                        "type": "anti_debugging",
+                        "mechanism": imp.get("name"),
+                        "confidence": 0.9,
+                    }
+                    for imp in imports["imports"]
+                    if any(api in imp.get("name", "") for api in anti_debug_apis)
+                )
         # Check for obfuscation
         if self.ghidra_results:
             # High ratio of unnamed functions suggests obfuscation
             total_funcs = len(self.ghidra_results.functions)
-            unnamed_funcs = sum(1 for f in self.ghidra_results.functions if f.get("name", "").startswith("sub_"))
+            unnamed_funcs = sum(bool(f.get("name", "").startswith("sub_"))
+                            for f in self.ghidra_results.functions)
             if total_funcs > 0 and unnamed_funcs / total_funcs > 0.7:
-                protections.append({"type": "obfuscation", "mechanism": "symbol_stripping", "confidence": unnamed_funcs / total_funcs})
+                protections.append(
+                    {
+                        "type": "obfuscation",
+                        "mechanism": "symbol_stripping",
+                        "confidence": unnamed_funcs / total_funcs,
+                    }
+                )
 
         return protections
 
@@ -1702,18 +1789,17 @@ class CrossToolOrchestrator:
             )
 
         # Add strategies based on protections found
-        for protection in self._identify_protections():
-            if protection["type"] == "anti_debugging":
-                strategies.append(
-                    {
-                        "name": f"Bypass {protection['mechanism']}",
-                        "description": f"Hook and bypass {protection['mechanism']} check",
-                        "tool": "frida",
-                        "confidence": 0.8,
-                        "implementation": f"Interceptor.replace({protection['mechanism']}, () => 0);",
-                    },
-                )
-
+        strategies.extend(
+            {
+                "name": f"Bypass {protection['mechanism']}",
+                "description": f"Hook and bypass {protection['mechanism']} check",
+                "tool": "frida",
+                "confidence": 0.8,
+                "implementation": f"Interceptor.replace({protection['mechanism']}, () => 0);",
+            }
+            for protection in self._identify_protections()
+            if protection["type"] == "anti_debugging"
+        )
         return strategies
 
     def _build_unified_call_graph(self) -> dict[str, Any]:
@@ -1722,8 +1808,7 @@ class CrossToolOrchestrator:
 
         # Get R2 call graph
         if self.r2_integration:
-            r2_graph = self.r2_integration.generate_call_graph()
-            if r2_graph:
+            if r2_graph := self.r2_integration.generate_call_graph():
                 graph["nodes"].extend(r2_graph.get("nodes", []))
                 graph["edges"].extend(r2_graph.get("edges", []))
 
@@ -1732,20 +1817,25 @@ class CrossToolOrchestrator:
             # Add Ghidra-specific nodes
             for func in self.ghidra_results.functions:
                 node_id = func.get("name", "")
-                if not any(n["id"] == node_id for n in graph["nodes"]):
-                    graph["nodes"].append({"id": node_id, "label": node_id, "source": "ghidra", "address": func.get("address", 0)})
+                if all(n["id"] != node_id for n in graph["nodes"]):
+                    graph["nodes"].append(
+                        {
+                            "id": node_id,
+                            "label": node_id,
+                            "source": "ghidra",
+                            "address": func.get("address", 0),
+                        }
+                    )
 
         return graph
 
     def _calculate_correlation_confidence(self) -> float:
         """Calculate overall correlation confidence."""
-        tools_complete = sum(1 for v in self.analysis_complete.values() if v)
+        tools_complete = sum(bool(v)
+                         for v in self.analysis_complete.values())
         total_tools = len(self.analysis_complete)
 
-        if total_tools == 0:
-            return 0.0
-
-        return tools_complete / total_tools
+        return 0.0 if total_tools == 0 else tools_complete / total_tools
 
     def export_unified_report(self, output_path: str) -> None:
         """Export unified analysis report.
@@ -1761,7 +1851,13 @@ class CrossToolOrchestrator:
             "binary_path": result.binary_path,
             "timestamp": result.timestamp.isoformat(),
             "functions": [
-                {"name": f.name, "addresses": f.addresses, "sizes": f.sizes, "confidence": f.confidence_score, "notes": f.notes}
+                {
+                    "name": f.name,
+                    "addresses": f.addresses,
+                    "sizes": f.sizes,
+                    "confidence": f.confidence_score,
+                    "notes": f.notes,
+                }
                 for f in result.functions
             ],
             "strings": [

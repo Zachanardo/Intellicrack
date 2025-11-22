@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Sun, Nov 16, 2025 03:48:08 PM
+Generated: Sun, Nov 16, 2025 06:06:05 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -350,7 +350,9 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── license_snapshot.cpython-314.pyc
 │   │   ├── license_validation_bypass.cpython-312.pyc
 │   │   ├── license_validation_bypass.cpython-314.pyc
+│   │   ├── network_capture.cpython-312.pyc
 │   │   ├── network_capture.cpython-314.pyc
+│   │   ├── offline_activation_emulator.cpython-312.pyc
 │   │   ├── offline_activation_emulator.cpython-314.pyc
 │   │   ├── process_manipulation.cpython-314.pyc
 │   │   ├── protection_analyzer.cpython-314.pyc
@@ -540,6 +542,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── api_obfuscation.cpython-314.pyc
 │   │   │   ├── base_detector.cpython-314.pyc
 │   │   │   ├── debugger_bypass.cpython-314.pyc
+│   │   │   ├── debugger_detector.cpython-312.pyc
 │   │   │   ├── debugger_detector.cpython-314.pyc
 │   │   │   ├── sandbox_detector.cpython-314.pyc
 │   │   │   ├── timing_attacks.cpython-314.pyc
@@ -570,6 +573,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── hook_obfuscation.cpython-314.pyc
 │   │   │   ├── layer_detector.cpython-314.pyc
 │   │   │   ├── multilayer_bypass.cpython-314.pyc
+│   │   │   ├── patch_generators.cpython-312.pyc
 │   │   │   ├── patch_generators.cpython-314.pyc
 │   │   │   ├── patch_templates.cpython-314.pyc
 │   │   │   ├── pinning_detector.cpython-314.pyc
@@ -660,9 +664,11 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── monitoring/
 │   │   ├── __pycache__/
 │   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── api_monitor.cpython-312.pyc
 │   │   │   ├── api_monitor.cpython-314.pyc
 │   │   │   ├── base_monitor.cpython-314.pyc
 │   │   │   ├── event_aggregator.cpython-314.pyc
+│   │   │   ├── file_monitor.cpython-312.pyc
 │   │   │   ├── file_monitor.cpython-314.pyc
 │   │   │   ├── frida_server_manager.cpython-314.pyc
 │   │   │   ├── memory_monitor.cpython-314.pyc
@@ -955,6 +961,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── pdfkit_handler.cpython-314.pyc
 │   │   ├── pefile_handler.cpython-314.pyc
 │   │   ├── psutil_handler.cpython-314.pyc
+│   │   ├── pyelftools_handler.cpython-312.pyc
 │   │   ├── pyelftools_handler.cpython-314.pyc
 │   │   ├── pyqt6_handler.cpython-312.pyc
 │   │   ├── pyqt6_handler.cpython-314.pyc
@@ -987,6 +994,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── tensorflow_handler.py
 │   ├── tkinter_handler.py
 │   ├── torch_handler.py
+│   ├── torch_xpu_handler.py
 │   └── wmi_handler.py
 ├── hexview/
 │   ├── __pycache__/
@@ -995,15 +1003,18 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── ai_bridge.cpython-314.pyc
 │   │   ├── api.cpython-314.pyc
 │   │   ├── checksum_dialog.cpython-314.pyc
+│   │   ├── checksums.cpython-312.pyc
 │   │   ├── checksums.cpython-314.pyc
 │   │   ├── compare_dialog.cpython-314.pyc
 │   │   ├── config_defaults.cpython-314.pyc
+│   │   ├── data_inspector.cpython-312.pyc
 │   │   ├── data_inspector.cpython-314.pyc
 │   │   ├── export_dialog.cpython-314.pyc
 │   │   ├── file_compare.cpython-314.pyc
 │   │   ├── file_handler.cpython-314.pyc
 │   │   ├── hex_commands.cpython-314.pyc
 │   │   ├── hex_dialog.cpython-314.pyc
+│   │   ├── hex_highlighter.cpython-312.pyc
 │   │   ├── hex_highlighter.cpython-314.pyc
 │   │   ├── hex_renderer.cpython-314.pyc
 │   │   ├── hex_widget.cpython-314.pyc
@@ -1157,12 +1168,14 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   └── remote_executor.py
 ├── protection/
 │   ├── __pycache__/
+│   │   ├── __init__.cpython-312.pyc
 │   │   ├── __init__.cpython-314.pyc
 │   │   ├── analysis_cache.cpython-314.pyc
 │   │   ├── commercial_protectors_database.cpython-314.pyc
 │   │   ├── denuvo_analyzer.cpython-314.pyc
 │   │   ├── denuvo_ticket_analyzer.cpython-314.pyc
 │   │   ├── icp_backend.cpython-314.pyc
+│   │   ├── icp_report_generator.cpython-312.pyc
 │   │   ├── icp_report_generator.cpython-314.pyc
 │   │   ├── intellicrack_protection_advanced.cpython-314.pyc
 │   │   ├── intellicrack_protection_core.cpython-314.pyc
@@ -1314,6 +1327,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── cfg_explorer_inner.cpython-314.pyc
 │   │   ├── comprehensive_integration.cpython-314.pyc
 │   │   ├── config_manager.cpython-314.pyc
+│   │   ├── dashboard_manager.cpython-312.pyc
 │   │   ├── dashboard_manager.cpython-314.pyc
 │   │   ├── dialog_utils.cpython-314.pyc
 │   │   ├── distributed_processing.cpython-314.pyc
@@ -1321,6 +1335,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── enhanced_ui_integration.cpython-314.pyc
 │   │   ├── exploitation_handlers.cpython-314.pyc
 │   │   ├── gpu_analysis.cpython-314.pyc
+│   │   ├── icon_manager.cpython-312.pyc
 │   │   ├── icon_manager.cpython-314.pyc
 │   │   ├── integrate_radare2.cpython-314.pyc
 │   │   ├── main_app.cpython-314.pyc
@@ -1360,6 +1375,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── ghidra_script_selector.cpython-314.pyc
 │   │   │   ├── guided_workflow_wizard.cpython-314.pyc
 │   │   │   ├── hardware_spoofer_dialog.cpython-314.pyc
+│   │   │   ├── help_documentation_widget.cpython-312.pyc
 │   │   │   ├── help_documentation_widget.cpython-314.pyc
 │   │   │   ├── keygen_dialog.cpython-314.pyc
 │   │   │   ├── llm_config_dialog.cpython-314.pyc
@@ -1375,6 +1391,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── plugin_manager_dialog.cpython-314.pyc
 │   │   │   ├── preferences_dialog.cpython-314.pyc
 │   │   │   ├── program_selector_dialog.cpython-314.pyc
+│   │   │   ├── qemu_test_dialog.cpython-312.pyc
 │   │   │   ├── qemu_test_dialog.cpython-314.pyc
 │   │   │   ├── qemu_test_results_dialog.cpython-314.pyc
 │   │   │   ├── report_manager_dialog.cpython-314.pyc

@@ -20,6 +20,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -232,22 +233,27 @@ class AILearningEngine:
         total_records = self.learning_stats.get("records_processed", 0)
         success_rate = 0.75 if total_records > 0 else 0.0  # Default 75% success for now
 
-        # Prepare comprehensive insights
-        insights = {
+        return {
             "total_records": total_records,
             "success_rate": success_rate,
-            "avg_confidence": 0.85 if total_records > 0 else 0.0,  # Default 85% confidence
+            "avg_confidence": (
+                0.85 if total_records > 0 else 0.0
+            ),  # Default 85% confidence
             "learning_stats": self.learning_stats.copy(),
             "pattern_insights": {
                 "total_patterns": self.learning_stats.get("patterns_evolved", 0),
-                "active_patterns": max(0, self.learning_stats.get("patterns_evolved", 0) - 5),
+                "active_patterns": max(
+                    0, self.learning_stats.get("patterns_evolved", 0) - 5
+                ),
                 "pattern_effectiveness": 0.78,  # Default 78% effectiveness
                 "recent_discoveries": [],
             },
             "failure_insights": {
                 "total_failures": self.learning_stats.get("failures_analyzed", 0),
                 "critical_failures": 0,
-                "resolved_failures": max(0, self.learning_stats.get("failures_analyzed", 0) - 2),
+                "resolved_failures": max(
+                    0, self.learning_stats.get("failures_analyzed", 0) - 2
+                ),
                 "mitigation_success_rate": 0.65,  # Default 65% mitigation success
             },
             "performance_metrics": {
@@ -266,8 +272,6 @@ class AILearningEngine:
                 "Optimize memory usage patterns",
             ],
         }
-
-        return insights
 
 
 _learning_engine: AILearningEngine | None = None

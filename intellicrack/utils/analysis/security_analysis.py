@@ -27,6 +27,7 @@ from intellicrack.handlers.capstone_handler import CAPSTONE_AVAILABLE
 from intellicrack.handlers.pefile_handler import PEFILE_AVAILABLE
 from intellicrack.handlers.psutil_handler import PSUTIL_AVAILABLE
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -107,8 +108,12 @@ def check_buffer_overflow(binary_path: str, functions: list[str] | None = None) 
             # Check security features
             if hasattr(pe, "OPTIONAL_HEADER"):
                 dll_chars = getattr(pe.OPTIONAL_HEADER, "DllCharacteristics", 0)
-                results["dep_enabled"] = bool(dll_chars & 0x0100)  # IMAGE_DLLCHARACTERISTICS_NX_COMPAT
-                results["aslr_enabled"] = bool(dll_chars & 0x0040)  # IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE
+                results["dep_enabled"] = bool(
+                    dll_chars & 0x0100
+                )  # IMAGE_DLLCHARACTERISTICS_NX_COMPAT
+                results["aslr_enabled"] = bool(
+                    dll_chars & 0x0040
+                )  # IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE
 
             # Check imports for vulnerable functions
             # Also need DLL names for detailed analysis
@@ -119,7 +124,12 @@ def check_buffer_overflow(binary_path: str, functions: list[str] | None = None) 
                     return {
                         "function": func_name,
                         "dll": dll_name,
-                        "risk": "high" if func_name.lower() in ["gets", "strcpy", "sprintf"] else "medium",
+                        "risk": (
+                            "high"
+                            if func_name.lower()
+                            in {"gets", "strcpy", "sprintf"}
+                            else "medium"
+                        ),
                     }
                 return None
 
@@ -135,7 +145,9 @@ def check_buffer_overflow(binary_path: str, functions: list[str] | None = None) 
         format_string_pattern = re.compile(rb"%[0-9]*[sdxnp]")
         format_strings = format_string_pattern.findall(data)
         if format_strings:
-            results["unsafe_patterns"].append({"pattern": "Format strings", "count": len(format_strings), "risk": "medium"})
+            results["unsafe_patterns"].append(
+                {"pattern": "Format strings", "count": len(format_strings), "risk": "medium"}
+            )
 
         # Look for stack-based buffer patterns and vulnerability indicators
         if CAPSTONE_AVAILABLE:
@@ -154,7 +166,9 @@ def check_buffer_overflow(binary_path: str, functions: list[str] | None = None) 
         # Check for ROP/JOP gadgets that could be exploited
         gadget_analysis = _analyze_rop_gadgets(data)
         if gadget_analysis["gadget_count"] > 10:
-            results["unsafe_patterns"].append({"pattern": "ROP gadgets", "count": gadget_analysis["gadget_count"], "risk": "high"})
+            results["unsafe_patterns"].append(
+                {"pattern": "ROP gadgets", "count": gadget_analysis["gadget_count"], "risk": "high"}
+            )
 
         # Analyze string operations for potential buffer overflows
         string_analysis = _analyze_string_operations(data)
@@ -244,7 +258,7 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> dict[str, Any]:
                 for section in pe.sections:
                     if section.Characteristics & 0x20000000:  # IMAGE_SCN_MEM_EXECUTE
                         code_sections.append((section.VirtualAddress, section.get_data()))
-            except (OSError, pefile.PEFormatError, Exception) as e:
+            except (pefile.PEFormatError, Exception) as e:
                 logger.error("Error in security_analysis: %s", e)
                 code_sections = [(0, data)]
         else:
@@ -254,7 +268,9 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> dict[str, Any]:
         dangerous_stack_ops = 0
         for base_addr, code_data in code_sections[:1]:  # Limit analysis to first code section
             for i in md.disasm(code_data[:10000], base_addr):  # Analyze first 10KB
-                if (i.mnemonic in ["sub", "add"] and i.op_str.startswith("esp,")) or i.op_str.startswith("rsp,"):
+                if (
+                    i.mnemonic in ["sub", "add"] and i.op_str.startswith("esp,")
+                ) or i.op_str.startswith("rsp,"):
                     try:
                         # Check for large stack allocations
                         size = int(i.op_str.split(",")[1].strip(), 16)
@@ -268,11 +284,13 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> dict[str, Any]:
                                 },
                             )
                             dangerous_stack_ops += 1
-                    except (ValueError, AttributeError, Exception) as e:
+                    except Exception as e:
                         logger.error("Error in security_analysis: %s", e)
 
         if dangerous_stack_ops > 0:
-            results["patterns"].append({"pattern": "Large stack allocations", "count": dangerous_stack_ops, "risk": "high"})
+            results["patterns"].append(
+                {"pattern": "Large stack allocations", "count": dangerous_stack_ops, "risk": "high"}
+            )
 
     except Exception as e:
         logger.error("Error in stack pattern analysis: %s", e)
@@ -524,7 +542,9 @@ def _analyze_string_operations(data: bytes) -> list[dict[str, Any]]:
                 elif b"gets" in pattern or b"strcpy" in pattern:
                     risk = "critical"
 
-                patterns.append({"pattern": f"String operation: {desc}", "count": count, "risk": risk})
+                patterns.append(
+                    {"pattern": f"String operation: {desc}", "count": count, "risk": risk}
+                )
 
         # Look for string length checks (good practice)
         safety_patterns = {
@@ -535,12 +555,11 @@ def _analyze_string_operations(data: bytes) -> list[dict[str, Any]]:
             b"StringCbLength": "Safe string byte length (Windows)",
         }
 
-        safety_count = 0
-        for pattern, _desc in safety_patterns.items():
-            safety_count += data.count(pattern)
-
+        safety_count = sum(data.count(pattern) for pattern in safety_patterns)
         if safety_count > 0:
-            patterns.append({"pattern": "String safety checks present", "count": safety_count, "risk": "low"})
+            patterns.append(
+                {"pattern": "String safety checks present", "count": safety_count, "risk": "low"}
+            )
 
         # Look for bounds checking patterns
         bounds_patterns = [
@@ -553,7 +572,9 @@ def _analyze_string_operations(data: bytes) -> list[dict[str, Any]]:
 
         bounds_count = sum(data.count(p) for p in bounds_patterns)
         if bounds_count > 0:
-            patterns.append({"pattern": "Bounds checking indicators", "count": bounds_count, "risk": "low"})
+            patterns.append(
+                {"pattern": "Bounds checking indicators", "count": bounds_count, "risk": "low"}
+            )
 
     except Exception as e:
         logger.error("Error analyzing string operations: %s", e)
@@ -622,9 +643,14 @@ def check_for_memory_leaks(binary_path: str, process_pid: int | None = None) -> 
 
             imports = extract_pe_imports(pe)
             for func_name in imports:
-                if any(alloc in func_name.lower() for alloc in [f.lower() for f in allocation_funcs]):
+                if any(
+                    alloc in func_name.lower() for alloc in [f.lower() for f in allocation_funcs]
+                ):
                     results["static_analysis"]["allocation_functions"].append(func_name)
-                elif any(dealloc in func_name.lower() for dealloc in [f.lower() for f in deallocation_funcs]):
+                elif any(
+                    dealloc in func_name.lower()
+                    for dealloc in [f.lower() for f in deallocation_funcs]
+                ):
                     results["static_analysis"]["deallocation_functions"].append(func_name)
 
         # Check for imbalance
@@ -632,9 +658,13 @@ def check_for_memory_leaks(binary_path: str, process_pid: int | None = None) -> 
         dealloc_count = len(results["static_analysis"]["deallocation_functions"])
 
         if alloc_count > 0 and dealloc_count == 0:
-            results["static_analysis"]["potential_leaks"].append({"issue": "No deallocation functions found", "severity": "high"})
+            results["static_analysis"]["potential_leaks"].append(
+                {"issue": "No deallocation functions found", "severity": "high"}
+            )
         elif alloc_count > dealloc_count * 2:
-            results["static_analysis"]["potential_leaks"].append({"issue": "Allocation/deallocation imbalance", "severity": "medium"})
+            results["static_analysis"]["potential_leaks"].append(
+                {"issue": "Allocation/deallocation imbalance", "severity": "medium"}
+            )
 
         # Dynamic analysis if process is running
         if process_pid and PSUTIL_AVAILABLE:
@@ -674,8 +704,10 @@ def check_for_memory_leaks(binary_path: str, process_pid: int | None = None) -> 
                 logger.error("Error in dynamic memory analysis: %s", e)
 
         # Calculate risk level
-        high_severity = sum(1 for leak in results["static_analysis"]["potential_leaks"] if leak["severity"] == "high")
-        medium_severity = sum(1 for leak in results["static_analysis"]["potential_leaks"] if leak["severity"] == "medium")
+        high_severity = sum(bool(leak["severity"] == "high")
+                        for leak in results["static_analysis"]["potential_leaks"])
+        medium_severity = sum(bool(leak["severity"] == "medium")
+                          for leak in results["static_analysis"]["potential_leaks"])
 
         if high_severity > 0:
             results["risk_level"] = "high"
@@ -795,7 +827,9 @@ def bypass_tpm_checks(binary_path: str) -> dict[str, Any]:
                     dll_name = entry.dll.decode("utf-8", errors="ignore").lower()
 
                     # Check for TPM-related DLLs
-                    if any(tmp_dll in dll_name for tmp_dll in ["tbs.dll", "ncrypt.dll", "bcrypt.dll"]):
+                    if any(
+                        tmp_dll in dll_name for tmp_dll in ["tbs.dll", "ncrypt.dll", "bcrypt.dll"]
+                    ):
                         for imp in entry.imports:
                             if imp.name:
                                 func_name = imp.name.decode("utf-8", errors="ignore")
@@ -1017,16 +1051,16 @@ def run_vm_bypass(binary_path: str, output_path: str | None = None) -> dict[str,
 
 # Export all functions
 __all__ = [
+    "_analyze_patterns_without_disassembly",
+    "_analyze_rop_gadgets",
+    "_analyze_stack_patterns",
+    "_analyze_string_operations",
+    "_detect_vulnerability_patterns",
+    "bypass_tpm_checks",
     "check_buffer_overflow",
     "check_for_memory_leaks",
     "check_memory_usage",
-    "bypass_tpm_checks",
-    "scan_protectors",
     "run_tpm_bypass",
     "run_vm_bypass",
-    "_analyze_stack_patterns",
-    "_analyze_patterns_without_disassembly",
-    "_detect_vulnerability_patterns",
-    "_analyze_rop_gadgets",
-    "_analyze_string_operations",
+    "scan_protectors",
 ]

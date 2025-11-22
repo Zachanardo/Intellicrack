@@ -10,6 +10,7 @@ from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
 from .radare2_imports import R2ImportExportAnalyzer
 from .radare2_strings import R2StringAnalyzer
 
+
 """
 Radare2 AI/ML Integration Engine for Advanced Pattern Recognition
 
@@ -35,10 +36,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 # Safe ML dependencies with comprehensive fallbacks
 try:
     # Use safe import system
-    from ...utils.dependency_fallbacks import (
-        safe_import_numpy,
-        safe_import_sklearn,
-    )
+    from ...utils.dependency_fallbacks import safe_import_numpy, safe_import_sklearn
 
     np = safe_import_numpy()
     sklearn = safe_import_sklearn()
@@ -46,33 +44,39 @@ try:
     # Try to get specific sklearn components
     try:
         import sys
+
         print("[DEBUG radare2_ai_integration] Importing joblib...")
         sys.stdout.flush()
         import joblib
+
         print("[DEBUG radare2_ai_integration] joblib imported OK")
         sys.stdout.flush()
 
         print("[DEBUG radare2_ai_integration] Importing DBSCAN...")
         sys.stdout.flush()
         from sklearn.cluster import DBSCAN
+
         print("[DEBUG radare2_ai_integration] DBSCAN imported OK")
         sys.stdout.flush()
 
         print("[DEBUG radare2_ai_integration] Importing IsolationForest, RandomForestClassifier...")
         sys.stdout.flush()
         from sklearn.ensemble import IsolationForest, RandomForestClassifier
+
         print("[DEBUG radare2_ai_integration] sklearn.ensemble imported OK")
         sys.stdout.flush()
 
         print("[DEBUG radare2_ai_integration] Importing TfidfVectorizer...")
         sys.stdout.flush()
         from sklearn.feature_extraction.text import TfidfVectorizer
+
         print("[DEBUG radare2_ai_integration] TfidfVectorizer imported OK")
         sys.stdout.flush()
 
         print("[DEBUG radare2_ai_integration] Importing StandardScaler...")
         sys.stdout.flush()
         from sklearn.preprocessing import StandardScaler
+
         print("[DEBUG radare2_ai_integration] StandardScaler imported OK")
         sys.stdout.flush()
 
@@ -232,7 +236,7 @@ class R2AIEngine:
             "file_size": float(binary_info.get("bin", {}).get("size", 0)),
             "entry_point": float(binary_info.get("bin", {}).get("baddr", 0)),
             "architecture_bits": float(binary_info.get("bin", {}).get("bits", 32)),
-            "has_symbols": float(1 if not binary_info.get("bin", {}).get("stripped", True) else 0),
+            "has_symbols": float(0 if binary_info.get("bin", {}).get("stripped", True) else 1),
             "has_debug": float(1 if binary_info.get("bin", {}).get("dbg_file", "") else 0),
             "is_pie": float(1 if binary_info.get("bin", {}).get("pic", False) else 0),
             "has_nx": float(1 if binary_info.get("bin", {}).get("nx", False) else 0),
@@ -277,13 +281,28 @@ class R2AIEngine:
 
         return {
             "total_strings": float(total_strings),
-            "license_string_ratio": float(len(string_analysis.get("license_strings", [])) / max(1, total_strings)),
-            "crypto_string_ratio": float(len(string_analysis.get("crypto_strings", [])) / max(1, total_strings)),
-            "error_string_ratio": float(len(string_analysis.get("error_message_strings", [])) / max(1, total_strings)),
-            "debug_string_ratio": float(len(string_analysis.get("debug_strings", [])) / max(1, total_strings)),
-            "average_entropy": float(string_analysis.get("string_entropy_analysis", {}).get("average_entropy", 0)),
+            "license_string_ratio": float(
+                len(string_analysis.get("license_strings", [])) / max(1, total_strings)
+            ),
+            "crypto_string_ratio": float(
+                len(string_analysis.get("crypto_strings", [])) / max(1, total_strings)
+            ),
+            "error_string_ratio": float(
+                len(string_analysis.get("error_message_strings", [])) / max(1, total_strings)
+            ),
+            "debug_string_ratio": float(
+                len(string_analysis.get("debug_strings", [])) / max(1, total_strings)
+            ),
+            "average_entropy": float(
+                string_analysis.get("string_entropy_analysis", {}).get("average_entropy", 0)
+            ),
             "high_entropy_ratio": float(
-                len(string_analysis.get("string_entropy_analysis", {}).get("high_entropy_strings", [])) / max(1, total_strings),
+                len(
+                    string_analysis.get("string_entropy_analysis", {}).get(
+                        "high_entropy_strings", []
+                    )
+                )
+                / max(1, total_strings),
             ),
             "suspicious_patterns": float(len(string_analysis.get("suspicious_patterns", []))),
         }
@@ -296,25 +315,38 @@ class R2AIEngine:
 
         return {
             "total_imports": float(total_imports),
-            "crypto_api_ratio": float(len(api_categories.get("cryptography", [])) / max(1, total_imports)),
-            "network_api_ratio": float(len(api_categories.get("network_operations", [])) / max(1, total_imports)),
-            "file_api_ratio": float(len(api_categories.get("file_operations", [])) / max(1, total_imports)),
-            "registry_api_ratio": float(len(api_categories.get("registry_operations", [])) / max(1, total_imports)),
-            "process_api_ratio": float(len(api_categories.get("process_management", [])) / max(1, total_imports)),
-            "debug_api_ratio": float(len(api_categories.get("debugging", [])) / max(1, total_imports)),
+            "crypto_api_ratio": float(
+                len(api_categories.get("cryptography", [])) / max(1, total_imports)
+            ),
+            "network_api_ratio": float(
+                len(api_categories.get("network_operations", [])) / max(1, total_imports)
+            ),
+            "file_api_ratio": float(
+                len(api_categories.get("file_operations", [])) / max(1, total_imports)
+            ),
+            "registry_api_ratio": float(
+                len(api_categories.get("registry_operations", [])) / max(1, total_imports)
+            ),
+            "process_api_ratio": float(
+                len(api_categories.get("process_management", [])) / max(1, total_imports)
+            ),
+            "debug_api_ratio": float(
+                len(api_categories.get("debugging", [])) / max(1, total_imports)
+            ),
             "suspicious_api_count": float(len(import_analysis.get("suspicious_apis", []))),
             "anti_analysis_api_count": float(len(import_analysis.get("anti_analysis_apis", []))),
         }
 
-    def _extract_graph_features(self, r2: R2Session, functions: list[dict[str, Any]]) -> dict[str, float]:
+    def _extract_graph_features(
+        self, r2: R2Session, functions: list[dict[str, Any]]
+    ) -> dict[str, float]:
         """Extract control flow graph features."""
         total_blocks = 0
         total_edges = 0
         max_depth = 0
 
         for func in functions[:50]:  # Sample for performance
-            func_addr = func.get("offset", 0)
-            if func_addr:
+            if func_addr := func.get("offset", 0):
                 try:
                     # Get basic blocks for function
                     blocks_data = r2._execute_command(f"agfj @ {hex(func_addr)}", expect_json=True)
@@ -461,14 +493,14 @@ class R2AIEngine:
                 "privilege_escalation",
             ]
 
-            results = {}
-            for i, vuln_type in enumerate(vulnerability_types):
-                if i < len(probabilities):
-                    results[vuln_type] = {
-                        "probability": float(probabilities[i]),
-                        "predicted": bool(predictions == i),
-                    }
-
+            results = {
+                vuln_type: {
+                    "probability": float(probabilities[i]),
+                    "predicted": predictions == i,
+                }
+                for i, vuln_type in enumerate(vulnerability_types)
+                if i < len(probabilities)
+            }
             return {
                 "vulnerability_predictions": results,
                 "overall_risk_score": float(np.mean(probabilities)),
@@ -528,8 +560,12 @@ class R2AIEngine:
                 "function_count": len(cluster_functions),
                 "average_size": np.mean([f.get("size", 0) for f in cluster_functions]),
                 "average_complexity": np.mean([f.get("complexity", 0) for f in cluster_functions]),
-                "has_license_functions": any(f.get("has_license_keywords", 0) for f in cluster_functions),
-                "has_crypto_functions": any(f.get("has_crypto_keywords", 0) for f in cluster_functions),
+                "has_license_functions": any(
+                    f.get("has_license_keywords", 0) for f in cluster_functions
+                ),
+                "has_crypto_functions": any(
+                    f.get("has_crypto_keywords", 0) for f in cluster_functions
+                ),
             }
 
         return {
@@ -549,13 +585,9 @@ class R2AIEngine:
                 "error": "sklearn not available",
             }
 
-        # Combine all features into a single vector
-        combined_features = []
-
         # Add static features
         static_features = features.get("static_features", {})
-        combined_features.extend(list(static_features.values()))
-
+        combined_features = list(static_features.values())
         # Add aggregated string features
         string_features = features.get("string_features", {})
         combined_features.extend(list(string_features.values()))
@@ -579,7 +611,7 @@ class R2AIEngine:
         is_anomaly = anomaly_detector.predict(feature_vector)[0] == -1
 
         return {
-            "is_anomalous": bool(is_anomaly),
+            "is_anomalous": is_anomaly,
             "anomaly_score": float(anomaly_score),
             "anomaly_indicators": self._identify_anomaly_indicators(features),
             "confidence": abs(float(anomaly_score)),
@@ -664,7 +696,9 @@ class R2AIEngine:
         # Calculate overall confidence
         total_strategies = len(suggestions["bypass_strategies"])
         if total_strategies > 0:
-            avg_probability = np.mean([s["success_probability"] for s in suggestions["bypass_strategies"]])
+            avg_probability = np.mean(
+                [s["success_probability"] for s in suggestions["bypass_strategies"]]
+            )
             suggestions["confidence_scores"]["overall_success_probability"] = float(avg_probability)
             suggestions["confidence_scores"]["strategy_count"] = total_strategies
 
@@ -711,14 +745,18 @@ class R2AIEngine:
 
             if len(all_samples) == 0:
                 # Fallback to known patterns if no samples available
-                self.logger.warning("No real binary samples available, using pattern-based approach")
+                self.logger.warning(
+                    "No real binary samples available, using pattern-based approach"
+                )
                 return self._generate_pattern_based_license_data()
 
             # Convert to numpy arrays
             X = np.array(all_samples, dtype=np.float32)
             y = np.array(all_labels, dtype=np.int32)
 
-            self.logger.info(f"Generated license training data: {len(X)} samples with real features")
+            self.logger.info(
+                f"Generated license training data: {len(X)} samples with real features"
+            )
             return X, y
 
         except Exception as e:
@@ -917,17 +955,23 @@ class R2AIEngine:
             for vuln_type, vuln_patterns in vulnerability_classes.items():
                 type_features = self._extract_vulnerability_features(vuln_type, vuln_patterns)
                 vuln_samples.extend(type_features)
-                vuln_labels.extend([self._get_vulnerability_class_id(vuln_type)] * len(type_features))
+                vuln_labels.extend(
+                    [self._get_vulnerability_class_id(vuln_type)] * len(type_features)
+                )
 
-            if len(vuln_samples) == 0:
-                self.logger.warning("No real vulnerability samples available, using CVE-based patterns")
+            if not vuln_samples:
+                self.logger.warning(
+                    "No real vulnerability samples available, using CVE-based patterns"
+                )
                 return self._generate_cve_based_vulnerability_data()
 
             # Convert to numpy arrays
             X = np.array(vuln_samples, dtype=np.float32)
             y = np.array(vuln_labels, dtype=np.int32)
 
-            self.logger.info(f"Generated vulnerability training data: {len(X)} samples from real CVE patterns")
+            self.logger.info(
+                f"Generated vulnerability training data: {len(X)} samples from real CVE patterns"
+            )
             return X, y
 
         except Exception as e:
@@ -993,7 +1037,9 @@ class R2AIEngine:
         }
         return class_mapping.get(vuln_type, 0)
 
-    def _extract_vulnerability_features(self, vuln_type: str, patterns: dict[str, Any]) -> list[list[float]]:
+    def _extract_vulnerability_features(
+        self, vuln_type: str, patterns: dict[str, Any]
+    ) -> list[list[float]]:
         """Extract features from real vulnerability patterns."""
         features = []
 
@@ -1150,9 +1196,7 @@ class R2AIEngine:
 
         if complexity_score > 2:
             return "high"
-        if complexity_score > 1:
-            return "medium"
-        return "low"
+        return "medium" if complexity_score > 1 else "low"
 
     def _predict_bypass_difficulty(self, features: dict[str, Any]) -> str:
         """Predict license bypass difficulty."""
@@ -1160,9 +1204,7 @@ class R2AIEngine:
 
         if complexity == "high":
             return "hard"
-        if complexity == "medium":
-            return "medium"
-        return "easy"
+        return "medium" if complexity == "medium" else "easy"
 
     def _identify_validation_methods(self, features: dict[str, Any]) -> list[str]:
         """Identify license validation methods."""
@@ -1284,7 +1326,9 @@ class R2AIEngine:
         """Get model performance metrics."""
         return {
             "license_detector_status": "trained" if self.license_detector else "not_trained",
-            "vulnerability_classifier_status": "trained" if self.vulnerability_classifier else "not_trained",
+            "vulnerability_classifier_status": "trained"
+            if self.vulnerability_classifier
+            else "not_trained",
             "feature_extraction_success": True,
             "model_versions": {
                 "license_detector": "1.0",

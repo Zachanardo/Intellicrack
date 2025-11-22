@@ -222,7 +222,7 @@ class NetworkForensicsEngine:
             artifacts = []
 
             # Use the provided traffic_data for analysis
-            if not traffic_data or len(traffic_data) == 0:
+            if not traffic_data:
                 return []
 
             # Analyze the raw traffic data directly
@@ -296,11 +296,15 @@ class NetworkForensicsEngine:
                         artifacts.append(
                             {
                                 "type": "Base64_Data",
-                                "value": b64_str[:100] + "..." if len(b64_str) > 100 else b64_str,
+                                "value": (
+                                    f"{b64_str[:100]}..."
+                                    if len(b64_str) > 100
+                                    else b64_str
+                                ),
                                 "offset": data.find(b64),
                                 "length": len(b64),
                                 "full_length": len(b64_str),
-                            },
+                            }
                         )
                 except Exception as e:
                     self.logger.debug(f"Error during data extraction: {e}")
@@ -362,7 +366,9 @@ class NetworkForensicsEngine:
                     unique_artifacts.append(artifact)
 
             # Log artifact extraction progress
-            self.logger.info(f"Extracted {len(unique_artifacts)} unique artifacts from {len(traffic_data)} bytes of traffic data")
+            self.logger.info(
+                f"Extracted {len(unique_artifacts)} unique artifacts from {len(traffic_data)} bytes of traffic data"
+            )
 
             return unique_artifacts
         except Exception as e:
@@ -382,11 +388,15 @@ class NetworkForensicsEngine:
         try:
             protocols = []
 
-            if not packet_data or len(packet_data) == 0:
+            if not packet_data:
                 return protocols
 
             # Analyze packet data for protocol signatures
-            data = packet_data.lower() if isinstance(packet_data, bytes) else packet_data.encode().lower()
+            data = (
+                packet_data.lower()
+                if isinstance(packet_data, bytes)
+                else packet_data.encode().lower()
+            )
 
             # HTTP/HTTPS detection
             http_patterns = [
@@ -437,7 +447,8 @@ class NetworkForensicsEngine:
                 b"to:",
             ]
 
-            smtp_count = sum(1 for pattern in smtp_patterns if pattern in data)
+            smtp_count = sum(bool(pattern in data)
+                         for pattern in smtp_patterns)
             if smtp_count >= 2:  # Multiple SMTP indicators
                 protocols.append("SMTP")
 
@@ -467,10 +478,8 @@ class NetworkForensicsEngine:
                 protocols.append("Telnet")
 
             # ICMP detection (basic)
-            if len(packet_data) >= 20:
-                # Check for ICMP in IP packet
-                if packet_data[9:10] == b"\x01":  # ICMP protocol number
-                    protocols.append("ICMP")
+            if len(packet_data) >= 20 and packet_data[9:10] == b"\x01":
+                protocols.append("ICMP")
 
             # POP3/IMAP detection
             pop_imap_patterns = [
@@ -494,7 +503,9 @@ class NetworkForensicsEngine:
             if protocols:
                 self.logger.info(f"Detected protocols in packet data: {', '.join(protocols)}")
             else:
-                self.logger.debug(f"No known protocols detected in {len(packet_data)} bytes of packet data")
+                self.logger.debug(
+                    f"No known protocols detected in {len(packet_data)} bytes of packet data"
+                )
 
             return list(set(protocols))  # Remove duplicates
 

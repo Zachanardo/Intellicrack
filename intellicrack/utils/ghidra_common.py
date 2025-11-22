@@ -21,6 +21,7 @@ import os
 import subprocess
 from pathlib import Path
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -127,25 +128,25 @@ def _build_ghidra_command(
     overwrite: bool = True,
 ) -> list[str]:
     """Build the Ghidra command line."""
-    command = [ghidra_path]
-
-    # Add project location
-    command.extend([project_dir, project_name])
-
-    # Import binary
-    command.extend(["-import", binary_path])
+    command = [
+        ghidra_path,
+        *[project_dir, project_name],
+        *["-import", binary_path],
+    ]
 
     # Overwrite if requested
     if overwrite:
         command.append("-overwrite")
 
-    # Run script
-    command.extend(["-scriptPath", os.path.dirname(script_path)])
-    command.extend(["-postScript", os.path.basename(script_path)])
-
-    # Run in headless mode
-    command.append("-headless")
-
+    command.extend(
+        [
+            "-scriptPath",
+            os.path.dirname(script_path),
+            "-postScript",
+            os.path.basename(script_path),
+            "-headless",
+        ]
+    )
     return command
 
 
@@ -779,11 +780,11 @@ def get_ghidra_project_info(project_dir: str, project_name: str) -> dict[str, An
             info["size"] = os.path.getsize(project_path)
             info["modified"] = Path(project_path).stat().st_mtime
 
-            # List project files
-            project_files = []
-            for file in os.listdir(project_dir):
-                if file.startswith(project_name):
-                    project_files.append(file)
+            project_files = [
+                file
+                for file in os.listdir(project_dir)
+                if file.startswith(project_name)
+            ]
             info["files"] = project_files
 
     except Exception as e:
@@ -820,7 +821,7 @@ def cleanup_ghidra_project(project_dir: str, project_name: str) -> bool:
 
         # Remove directory if empty
         project_path = Path(project_dir)
-        if project_path.exists() and project_path.is_dir() and not any(project_path.iterdir()):
+        if project_path.is_dir() and not any(project_path.iterdir()):
             project_path.rmdir()
 
         logger.info(f"Cleaned up Ghidra project: {project_name}")

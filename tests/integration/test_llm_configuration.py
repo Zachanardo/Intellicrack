@@ -431,7 +431,7 @@ class TestLLMConfiguration(unittest.TestCase):
         self.assertTrue(export_path.exists())
 
         # Load exported data
-        with open(export_path, 'r') as f:
+        with open(export_path) as f:
             exported = json.load(f)
 
         # Verify API key was redacted

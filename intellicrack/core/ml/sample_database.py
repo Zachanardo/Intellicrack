@@ -65,12 +65,12 @@ class SampleDatabase:
         self.logger = logging.getLogger(__name__)
 
         if database_path is None:
-            database_path = Path(__file__).parent.parent.parent / 'data' / 'training_samples'
+            database_path = Path(__file__).parent.parent.parent / "data" / "training_samples"
 
         self.database_path = Path(database_path)
         self.database_path.mkdir(parents=True, exist_ok=True)
 
-        self.index_file = self.database_path / 'index.json'
+        self.index_file = self.database_path / "index.json"
         self.index: dict[str, SampleMetadata] = {}
 
         self._load_index()
@@ -155,7 +155,9 @@ class SampleDatabase:
 
             self.logger.info(
                 "Added sample %s (%s, confidence: %.2f)",
-                file_hash[:16], protection_type, confidence,
+                file_hash[:16],
+                protection_type,
+                confidence,
             )
 
             return True, file_hash
@@ -180,11 +182,9 @@ class SampleDatabase:
         metadata = self.index[file_hash]
         sample_dir = self.database_path / metadata.protection_type
 
-        for file in sample_dir.iterdir():
-            if file.stem == file_hash:
-                return file
-
-        return None
+        return next(
+            (file for file in sample_dir.iterdir() if file.stem == file_hash), None
+        )
 
     def get_samples_by_protection(self, protection_type: str) -> list[tuple[Path, SampleMetadata]]:
         """Get all samples for a specific protection type.
@@ -200,8 +200,7 @@ class SampleDatabase:
 
         for file_hash, metadata in self.index.items():
             if metadata.protection_type == protection_type:
-                sample_path = self.get_sample_path(file_hash)
-                if sample_path:
+                if sample_path := self.get_sample_path(file_hash):
                     samples.append((sample_path, metadata))
 
         return samples
@@ -216,8 +215,7 @@ class SampleDatabase:
         samples = []
 
         for file_hash in self.index:
-            sample_path = self.get_sample_path(file_hash)
-            if sample_path:
+            if sample_path := self.get_sample_path(file_hash):
                 samples.append((sample_path, self.index[file_hash]))
 
         return samples
@@ -282,7 +280,7 @@ class SampleDatabase:
 
         """
         if not self.index:
-            return {'total_samples': 0}
+            return {"total_samples": 0}
 
         protection_counts: dict[str, int] = {}
         source_counts: dict[str, int] = {}
@@ -291,9 +289,13 @@ class SampleDatabase:
         confidence_values: list[float] = []
 
         for metadata in self.index.values():
-            protection_counts[metadata.protection_type] = protection_counts.get(
-                metadata.protection_type, 0,
-            ) + 1
+            protection_counts[metadata.protection_type] = (
+                protection_counts.get(
+                    metadata.protection_type,
+                    0,
+                )
+                + 1
+            )
             source_counts[metadata.source] = source_counts.get(metadata.source, 0) + 1
 
             if metadata.verified:
@@ -303,14 +305,14 @@ class SampleDatabase:
             confidence_values.append(metadata.confidence)
 
         return {
-            'total_samples': len(self.index),
-            'protection_types': protection_counts,
-            'sources': source_counts,
-            'verified_samples': verified_count,
-            'total_size_mb': total_size / (1024 * 1024),
-            'avg_confidence': float(np.mean(confidence_values)) if confidence_values else 0.0,
-            'min_confidence': float(np.min(confidence_values)) if confidence_values else 0.0,
-            'max_confidence': float(np.max(confidence_values)) if confidence_values else 0.0,
+            "total_samples": len(self.index),
+            "protection_types": protection_counts,
+            "sources": source_counts,
+            "verified_samples": verified_count,
+            "total_size_mb": total_size / (1024 * 1024),
+            "avg_confidence": float(np.mean(confidence_values)) if confidence_values else 0.0,
+            "min_confidence": float(np.min(confidence_values)) if confidence_values else 0.0,
+            "max_confidence": float(np.max(confidence_values)) if confidence_values else 0.0,
         }
 
     def verify_sample(self, file_hash: str, verified: bool = True) -> bool:
@@ -421,9 +423,13 @@ class SampleDatabase:
 
             try:
                 shutil.copy2(sample_path, dest_file)
-                export_counts[metadata.protection_type] = export_counts.get(
-                    metadata.protection_type, 0,
-                ) + 1
+                export_counts[metadata.protection_type] = (
+                    export_counts.get(
+                        metadata.protection_type,
+                        0,
+                    )
+                    + 1
+                )
             except Exception as e:
                 self.logger.error("Failed to copy %s: %s", sample_path, e)
 
@@ -443,7 +449,7 @@ class SampleDatabase:
         """
         sha256 = hashlib.sha256()
 
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             while chunk := f.read(65536):
                 sha256.update(chunk)
 
@@ -453,12 +459,11 @@ class SampleDatabase:
         """Load database index from disk."""
         if self.index_file.exists():
             try:
-                with open(self.index_file, encoding='utf-8') as f:
+                with open(self.index_file, encoding="utf-8") as f:
                     data = json.load(f)
 
                 self.index = {
-                    file_hash: SampleMetadata(**metadata)
-                    for file_hash, metadata in data.items()
+                    file_hash: SampleMetadata(**metadata) for file_hash, metadata in data.items()
                 }
 
                 self.logger.info("Loaded index with %d samples", len(self.index))
@@ -470,12 +475,9 @@ class SampleDatabase:
     def _save_index(self) -> None:
         """Save database index to disk."""
         try:
-            data = {
-                file_hash: asdict(metadata)
-                for file_hash, metadata in self.index.items()
-            }
+            data = {file_hash: asdict(metadata) for file_hash, metadata in self.index.items()}
 
-            with open(self.index_file, 'w', encoding='utf-8') as f:
+            with open(self.index_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
 
         except Exception as e:

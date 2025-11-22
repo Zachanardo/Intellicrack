@@ -25,6 +25,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+
 try:
     from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
 except ImportError:
@@ -69,6 +70,7 @@ from intellicrack.utils.logger import logger
 from ...core.frida_constants import HookCategory, ProtectionType
 from ..widgets.console_widget import ConsoleWidget
 from ..widgets.syntax_highlighters import JavaScriptHighlighter
+
 
 try:
     from ...core.terminal_manager import get_terminal_manager
@@ -357,7 +359,9 @@ class FridaManagerDialog(QDialog):
         self.process_search = QLineEdit()
         self.process_search.setText("")
         self.process_search.textChanged.connect(self.filter_processes)
-        self.process_search.setToolTip("Filter processes by name (e.g., 'notepad') or PID (e.g., '1234'). Supports case-insensitive partial matching.")
+        self.process_search.setToolTip(
+            "Filter processes by name (e.g., 'notepad') or PID (e.g., '1234'). Supports case-insensitive partial matching."
+        )
         search_layout.addWidget(QLabel("Search:"))
         search_layout.addWidget(self.process_search)
 
@@ -675,7 +679,9 @@ class FridaManagerDialog(QDialog):
         self.script_preview = QTextEdit()
         self.script_preview.setMaximumHeight(200)
         self.script_preview.setReadOnly(True)
-        self.script_preview.setText("Awaiting script generation. Select generation options and click 'Generate AI Scripts' to create protection bypass scripts.")
+        self.script_preview.setText(
+            "Awaiting script generation. Select generation options and click 'Generate AI Scripts' to create protection bypass scripts."
+        )
         self.script_preview.setFont(QFont("Consolas", 9))
         preview_layout.addWidget(self.script_preview)
 
@@ -960,7 +966,9 @@ class FridaManagerDialog(QDialog):
             '{\n  "bypass_type": "license_check",\n  "protection": "trial_timer",\n  "enabled": true,\n  "timeout_ms": 5000\n}',
         )
         self.custom_config_text.setFont(QFont("Consolas", 9))
-        self.custom_config_text.setToolTip("Enter custom bypass configuration as valid JSON. Supports all Frida hook configurations and protection bypass options.")
+        self.custom_config_text.setToolTip(
+            "Enter custom bypass configuration as valid JSON. Supports all Frida hook configurations and protection bypass options."
+        )
         custom_layout.addWidget(self.custom_config_text)
 
         custom_btn_layout = QHBoxLayout()
@@ -1116,8 +1124,7 @@ class FridaManagerDialog(QDialog):
 
     def on_process_selected(self) -> None:
         """Handle process selection."""
-        selected = self.process_table.selectedItems()
-        if selected:
+        if selected := self.process_table.selectedItems():
             row = selected[0].row()
             pid = int(self.process_table.item(row, 0).text())
             name = self.process_table.item(row, 1).text()
@@ -1213,7 +1220,9 @@ class FridaManagerDialog(QDialog):
                 return
 
             device_id = device_item.data(1)
-            device = frida.get_device(device_id) if device_id != "local" else frida.get_local_device()
+            device = (
+                frida.get_device(device_id) if device_id != "local" else frida.get_local_device()
+            )
 
             # Prepare spawn options
             spawn_options = {}
@@ -1374,8 +1383,7 @@ class FridaManagerDialog(QDialog):
         content_edit.setFont(QFont("Consolas", 10))
 
         try:
-            with open(script_path) as f:
-                content = f.read()
+            content = Path(script_path).read_text()
             content_edit.setPlainText(content)
 
             # Simple syntax highlighting
@@ -1406,20 +1414,21 @@ class FridaManagerDialog(QDialog):
     def edit_script(self, script_path: Path) -> None:
         """Open script in external editor."""
         try:
-            if sys.platform == "win32":
+            if sys.platform == "darwin":
+                if open_path := shutil.which("open"):
+                    subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                        [open_path, script_path],
+                        shell=False,
+                        check=False,
+                    )
+            elif sys.platform == "win32":
                 os.startfile(script_path)  # noqa: S606  # Legitimate script file opening for security research development
-            elif sys.platform == "darwin":
-                open_path = shutil.which("open")
-                if open_path:
-                    subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                        [open_path, script_path], shell=False, check=False,
-                    )
-            else:
-                xdg_open_path = shutil.which("xdg-open")
-                if xdg_open_path:
-                    subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                        [xdg_open_path, script_path], shell=False, check=False,
-                    )
+            elif xdg_open_path := shutil.which("xdg-open"):
+                subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                    [xdg_open_path, script_path],
+                    shell=False,
+                    check=False,
+                )
         except Exception as e:
             self.logger.error("Exception in frida_manager_dialog: %s", e)
             QMessageBox.warning(
@@ -1593,8 +1602,7 @@ class FridaManagerDialog(QDialog):
 
     def unload_script(self) -> None:
         """Unload selected script."""
-        current_item = self.loaded_scripts_list.currentItem()
-        if current_item:
+        if current_item := self.loaded_scripts_list.currentItem():
             self.loaded_scripts_list.takeItem(self.loaded_scripts_list.row(current_item))
             self.status_label.setText(f"Unloaded script: {current_item.text()}")
 
@@ -1639,9 +1647,7 @@ class FridaManagerDialog(QDialog):
                         self.protection_grid.item(i, 1).setForeground(QColor("#ff6b6b"))
                         evidence = ", ".join(protections[prot_type.value][:3])
                         self.protection_grid.item(i, 2).setText(evidence)
-                        # Enable bypass button
-                        btn = self.protection_grid.cellWidget(i, 3)
-                        if btn:
+                        if btn := self.protection_grid.cellWidget(i, 3):
                             btn.setEnabled(True)
 
             # Update statistics table
@@ -1891,7 +1897,9 @@ class FridaManagerDialog(QDialog):
         binary_layout.addWidget(QLabel("Target Binary:"))
         self.ai_binary_path = QLineEdit()
         self.ai_binary_path.setText("")
-        self.ai_binary_path.setToolTip("Path to executable binary file (.exe, .dll, .so, .dylib, .bin) for AI-powered protection analysis and script generation")
+        self.ai_binary_path.setToolTip(
+            "Path to executable binary file (.exe, .dll, .so, .dylib, .bin) for AI-powered protection analysis and script generation"
+        )
         binary_layout.addWidget(self.ai_binary_path)
 
         self.ai_browse_btn = QPushButton("Browse")
@@ -2038,11 +2046,17 @@ class FridaManagerDialog(QDialog):
             autonomous = self.ai_autonomous.isChecked()
 
             if script_type == "Both":
-                script_request = f"Create both Frida and Ghidra scripts to bypass protections in {binary_path}"
+                script_request = (
+                    f"Create both Frida and Ghidra scripts to bypass protections in {binary_path}"
+                )
             elif "Frida" in script_type:
-                script_request = f"Create a {complexity} Frida script to bypass protections in {binary_path}"
+                script_request = (
+                    f"Create a {complexity} Frida script to bypass protections in {binary_path}"
+                )
             else:
-                script_request = f"Create a {complexity} Ghidra script to bypass protections in {binary_path}"
+                script_request = (
+                    f"Create a {complexity} Ghidra script to bypass protections in {binary_path}"
+                )
 
             if protection_focus != "Auto-detect":
                 script_request += f". Focus on {protection_focus.lower()} protection."
@@ -2059,7 +2073,9 @@ class FridaManagerDialog(QDialog):
                 self.ai_generated_scripts = result.get("scripts", [])
                 self.ai_current_analysis = result.get("analysis", {})
 
-                self.ai_status.setText(f"OK Generated {len(self.ai_generated_scripts)} scripts successfully!")
+                self.ai_status.setText(
+                    f"OK Generated {len(self.ai_generated_scripts)} scripts successfully!"
+                )
                 self.ai_preview_btn.setEnabled(True)
                 self.ai_deploy_btn.setEnabled(True)
                 self.ai_save_btn.setEnabled(True)
@@ -2133,10 +2149,14 @@ class FridaManagerDialog(QDialog):
 
             if task_result:
                 self.ai_status.setText("OK Binary analysis complete!")
-                self.log_console.append_output(f"[AI] Completed analysis of {os.path.basename(binary_path)}")
+                self.log_console.append_output(
+                    f"[AI] Completed analysis of {os.path.basename(binary_path)}"
+                )
             else:
                 self.ai_status.setText("⚠ Analysis timeout - task is still processing")
-                self.log_console.append_output(f"[AI WARNING] Analysis task timeout for {os.path.basename(binary_path)}")
+                self.log_console.append_output(
+                    f"[AI WARNING] Analysis task timeout for {os.path.basename(binary_path)}"
+                )
 
         except Exception as e:
             logger.error("Exception in frida_manager_dialog: %s", e)
@@ -2162,7 +2182,11 @@ class FridaManagerDialog(QDialog):
 
             for i, script in enumerate(self.ai_generated_scripts):
                 script_content = script.content if hasattr(script, "content") else str(script)
-                script_type = script.metadata.script_type.value if hasattr(script, "metadata") else f"Script {i + 1}"
+                script_type = (
+                    script.metadata.script_type.value
+                    if hasattr(script, "metadata")
+                    else f"Script {i + 1}"
+                )
 
                 tab = QWidget()
                 tab_layout = QVBoxLayout()
@@ -2171,7 +2195,9 @@ class FridaManagerDialog(QDialog):
                 info_layout = QHBoxLayout()
                 info_layout.addWidget(QLabel(f"Type: {script_type}"))
                 if hasattr(script, "metadata"):
-                    info_layout.addWidget(QLabel(f"Success Probability: {script.metadata.success_probability:.0%}"))
+                    info_layout.addWidget(
+                        QLabel(f"Success Probability: {script.metadata.success_probability:.0%}")
+                    )
                     info_layout.addWidget(QLabel(f"Target: {script.metadata.target_binary}"))
                 tab_layout.addLayout(info_layout)
 
@@ -2253,7 +2279,10 @@ class FridaManagerDialog(QDialog):
 
             deployed_count = 0
             for script in self.ai_generated_scripts:
-                if hasattr(script, "metadata") and "frida" in script.metadata.script_type.value.lower():
+                if (
+                    hasattr(script, "metadata")
+                    and "frida" in script.metadata.script_type.value.lower()
+                ):
                     script_content = script.content if hasattr(script, "content") else str(script)
                     target_binary = getattr(
                         script.metadata,
@@ -2283,12 +2312,18 @@ class FridaManagerDialog(QDialog):
                         break
                     else:
                         error_msg = result.get("error", "Unknown error")
-                        self.log_console.append_output(f"[AI ERROR] Failed to deploy script: {error_msg}")
+                        self.log_console.append_output(
+                            f"[AI ERROR] Failed to deploy script: {error_msg}"
+                        )
 
             if deployed_count > 0:
                 self.ai_status.setText(f"OK Deployed {deployed_count} scripts!")
-                self.log_console.append_output(f"[AI] Deployed {deployed_count} AI-generated scripts")
-                QMessageBox.information(self, "Success", f"Successfully deployed {deployed_count} AI-generated scripts.")
+                self.log_console.append_output(
+                    f"[AI] Deployed {deployed_count} AI-generated scripts"
+                )
+                QMessageBox.information(
+                    self, "Success", f"Successfully deployed {deployed_count} AI-generated scripts."
+                )
             else:
                 QMessageBox.information(self, "Info", "No deployable Frida scripts found.")
 
@@ -2330,7 +2365,9 @@ class FridaManagerDialog(QDialog):
 
             if saved_count > 0:
                 self.ai_status.setText(f"OK Saved {saved_count} scripts to {save_dir}")
-                QMessageBox.information(self, "Success", f"Successfully saved {saved_count} scripts to:\n{save_dir}")
+                QMessageBox.information(
+                    self, "Success", f"Successfully saved {saved_count} scripts to:\n{save_dir}"
+                )
 
                 # Reload script list to show new scripts
                 self.reload_script_list()
@@ -2360,14 +2397,18 @@ class FridaManagerDialog(QDialog):
 
         self.frida_manager._ui_message_callback = self.display_structured_message
 
-    def display_structured_message(self, message_type: str, session_id: str, script_name: str, payload: dict) -> None:
+    def display_structured_message(
+        self, message_type: str, session_id: str, script_name: str, payload: dict
+    ) -> None:
         """Display structured message in the UI with rich formatting."""
         message = payload.get("message", "")
         target = payload.get("target", "")
         action = payload.get("action", "")
         data = payload.get("data", {})
 
-        formatted_text = self._format_structured_message(message_type, script_name, message, target, action, data)
+        formatted_text = self._format_structured_message(
+            message_type, script_name, message, target, action, data
+        )
 
         if message_type == "error":
             self.log_console.append_error(formatted_text)
@@ -2383,7 +2424,9 @@ class FridaManagerDialog(QDialog):
         if message_type == "detection":
             self._update_protection_display(payload)
 
-    def _format_structured_message(self, msg_type: str, script_name: str, message: str, target: str, action: str, data: dict) -> str:
+    def _format_structured_message(
+        self, msg_type: str, script_name: str, message: str, target: str, action: str, data: dict
+    ) -> str:
         """Format structured message for console display."""
         parts = [f"[{script_name}]" if script_name else "[FRIDA]"]
 
@@ -2395,11 +2438,11 @@ class FridaManagerDialog(QDialog):
 
         parts.append(message)
 
-        if data:
-            if isinstance(data, dict) and data:
-                data_str = ", ".join(f"{k}: {v}" for k, v in data.items() if v)
-                if data_str:
-                    parts.append(f"({data_str})")
+        if data and isinstance(data, dict):
+            if data_str := ", ".join(
+                f"{k}: {v}" for k, v in data.items() if v
+            ):
+                parts.append(f"({data_str})")
 
         return " | ".join(parts)
 
@@ -2419,8 +2462,7 @@ class FridaManagerDialog(QDialog):
                         evidence_text = ", ".join(evidence[:3])
                         self.protection_grid.item(i, 2).setText(evidence_text)
 
-                    btn = self.protection_grid.cellWidget(i, 3)
-                    if btn:
+                    if btn := self.protection_grid.cellWidget(i, 3):
                         btn.setEnabled(True)
                     break
 

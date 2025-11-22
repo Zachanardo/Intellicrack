@@ -34,6 +34,7 @@ from typing import Any, Optional
 from intellicrack.utils.logger import logger
 from intellicrack.utils.subprocess_security import secure_run
 
+
 try:
     from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
@@ -61,7 +62,9 @@ class ReportGenerator:
         self.templates_dir = self._get_templates_directory()
 
         if JINJA_AVAILABLE and self.templates_dir.exists():
-            self.jinja_env = Environment(loader=FileSystemLoader(str(self.templates_dir)), autoescape=True)
+            self.jinja_env = Environment(
+                loader=FileSystemLoader(str(self.templates_dir)), autoescape=True
+            )
         else:
             self.jinja_env = None
 
@@ -143,21 +146,20 @@ class ReportGenerator:
 
         # Add analysis summary
         if "summary" in data:
-            html_parts.append("<section class='summary'>")
-            html_parts.append("<h2>Summary</h2>")
-            html_parts.append(f"<p>{data['summary']}</p>")
-            html_parts.append("</section>")
-
+            html_parts.extend(("<section class='summary'>", "<h2>Summary</h2>"))
+            html_parts.extend((f"<p>{data['summary']}</p>", "</section>"))
         # Add binary information
         if "binary_info" in data:
-            html_parts.append("<section class='binary-info'>")
-            html_parts.append("<h2>Binary Information</h2>")
-            html_parts.append("<table>")
+            html_parts.extend(
+                (
+                    "<section class='binary-info'>",
+                    "<h2>Binary Information</h2>",
+                    "<table>",
+                )
+            )
             for key, value in data["binary_info"].items():
                 html_parts.append(f"<tr><td><strong>{key}:</strong></td><td>{value}</td></tr>")
-            html_parts.append("</table>")
-            html_parts.append("</section>")
-
+            html_parts.extend(("</table>", "</section>"))
         # Add protection analysis
         if "protections" in data:
             html_parts.append("<section class='protections'>")
@@ -165,7 +167,9 @@ class ReportGenerator:
             html_parts.append("<ul>")
             for protection in data["protections"]:
                 status = "OK" if protection.get("bypassed") else "FAIL"
-                html_parts.append(f"<li>{status} {protection.get('name', 'Unknown')}: {protection.get('description', '')}</li>")
+                html_parts.append(
+                    f"<li>{status} {protection.get('name', 'Unknown')}: {protection.get('description', '')}</li>"
+                )
             html_parts.append("</ul>")
             html_parts.append("</section>")
 
@@ -174,7 +178,9 @@ class ReportGenerator:
             html_parts.append("<section class='vulnerabilities'>")
             html_parts.append("<h2>Vulnerabilities Found</h2>")
             html_parts.append("<table>")
-            html_parts.append("<tr><th>Severity</th><th>Type</th><th>Description</th><th>Location</th></tr>")
+            html_parts.append(
+                "<tr><th>Severity</th><th>Type</th><th>Description</th><th>Location</th></tr>"
+            )
             for vuln in data["vulnerabilities"]:
                 severity_class = vuln.get("severity", "unknown").lower()
                 html_parts.append(f"<tr class='severity-{severity_class}'>")
@@ -193,9 +199,13 @@ class ReportGenerator:
             for exploit in data["exploitation"]:
                 html_parts.append("<div class='exploit-result'>")
                 html_parts.append(f"<h3>{exploit.get('technique', 'Unknown Technique')}</h3>")
-                html_parts.append(f"<p><strong>Status:</strong> {exploit.get('status', 'Unknown')}</p>")
+                html_parts.append(
+                    f"<p><strong>Status:</strong> {exploit.get('status', 'Unknown')}</p>"
+                )
                 if exploit.get("payload"):
-                    html_parts.append(f"<p><strong>Payload:</strong> <code>{exploit['payload'][:100]}...</code></p>")
+                    html_parts.append(
+                        f"<p><strong>Payload:</strong> <code>{exploit['payload'][:100]}...</code></p>"
+                    )
                 if exploit.get("output"):
                     html_parts.append(f"<pre class='output'>{exploit['output']}</pre>")
                 html_parts.append("</div>")
@@ -335,13 +345,13 @@ class ReportGenerator:
             Text content as string
 
         """
-        lines = []
-        lines.append("=" * 80)
-        lines.append("INTELLICRACK ANALYSIS REPORT")
-        lines.append("=" * 80)
-        lines.append(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        lines.append("")
-
+        lines = [
+            "=" * 80,
+            "INTELLICRACK ANALYSIS REPORT",
+            "=" * 80,
+            f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            "",
+        ]
         # Add sections
         if "summary" in data:
             lines.append("SUMMARY")
@@ -417,8 +427,8 @@ class ReportGenerator:
         filepath = self.reports_dir / filename
 
         # Write content to file
-        mode = "w" if format in ["html", "json", "txt"] else "wb"
-        encoding = "utf-8" if format in ["html", "json", "txt"] else None
+        mode = "w" if format in {"html", "json", "txt"} else "wb"
+        encoding = "utf-8" if format in {"html", "json", "txt"} else None
 
         with open(filepath, mode, encoding=encoding) as f:
             f.write(content)
@@ -438,13 +448,7 @@ class ReportGenerator:
 
         """
         # Use tempfile to create secure temporary file
-        with tempfile.NamedTemporaryFile(
-            mode="w",
-            suffix=f".{format}",
-            prefix="intellicrack_temp_",
-            delete=False,
-            encoding="utf-8" if format in ["html", "json", "txt"] else None,
-        ) as temp_file:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=f".{format}", prefix="intellicrack_temp_", delete=False, encoding="utf-8" if format in {"html", "json", "txt"} else None) as temp_file:
             temp_file.write(content)
             temp_path = temp_file.name
 
@@ -475,7 +479,12 @@ class ReportGenerator:
             Dictionary mapping formats to MIME types
 
         """
-        return {"html": "text/html", "json": "application/json", "txt": "text/plain", "pdf": "application/pdf"}
+        return {
+            "html": "text/html",
+            "json": "application/json",
+            "txt": "text/plain",
+            "pdf": "application/pdf",
+        }
 
     def create_template_from_string(self, template_string: str) -> Optional["Template"]:
         """Create a Jinja2 template from string content.
@@ -497,7 +506,9 @@ class ReportGenerator:
         return None
 
 
-def generate_report(app_instance: object, format: str = "html", save: bool = True, filename: str | None = None) -> str | None:
+def generate_report(
+    app_instance: object, format: str = "html", save: bool = True, filename: str | None = None
+) -> str | None:
     """Generate an analysis report in the specified format.
 
     Args:
@@ -520,16 +531,20 @@ def generate_report(app_instance: object, format: str = "html", save: bool = Tru
         if hasattr(app_instance, "analyze_results"):
             results = app_instance.analyze_results
             if isinstance(results, list):
-                data["summary"] = "\n".join(results[:5]) if results else "No analysis results available"
+                data["summary"] = (
+                    "\n".join(results[:5]) if results else "No analysis results available"
+                )
                 data["full_results"] = results
             elif isinstance(results, dict):
-                data.update(results)
+                data |= results
 
         # Get binary information
         if hasattr(app_instance, "binary_path") and app_instance.binary_path:
             data["binary_info"] = {
                 "Path": app_instance.binary_path,
-                "Size": os.path.getsize(app_instance.binary_path) if os.path.exists(app_instance.binary_path) else "Unknown",
+                "Size": os.path.getsize(app_instance.binary_path)
+                if os.path.exists(app_instance.binary_path)
+                else "Unknown",
             }
 
         # Get protection analysis
@@ -562,8 +577,6 @@ def generate_report(app_instance: object, format: str = "html", save: bool = Tru
             content = generator.generate_html_report(data)
         elif format == "json":
             content = generator.generate_json_report(data)
-        elif format == "txt":
-            content = generator.generate_text_report(data)
         elif format == "pdf":
             # Generate HTML first, then convert to PDF if possible
             html_content = generator.generate_html_report(data)
@@ -571,12 +584,13 @@ def generate_report(app_instance: object, format: str = "html", save: bool = Tru
                 from intellicrack.core.reporting.pdf_generator import PDFReportGenerator
 
                 pdf_gen = PDFReportGenerator()
-                pdf_path = pdf_gen.generate_from_html(html_content)
-                return pdf_path
+                return pdf_gen.generate_from_html(html_content)
             except ImportError:
                 logger.warning("PDF generation not available, saving as HTML instead")
                 report_format = "html"
                 content = html_content
+        elif format == "txt":
+            content = generator.generate_text_report(data)
         else:
             logger.error(f"Unsupported report format: {report_format}")
             return None
@@ -648,20 +662,26 @@ def view_report(app_instance: object, filepath: str | None = None) -> bool:
             if os.name == "nt":  # Windows
                 secure_run(["cmd", "/c", "start", "", filepath], shell=False)
             elif os.name == "posix":  # macOS and Linux
-                secure_run(["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False)
+                secure_run(
+                    ["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False
+                )
         elif file_ext in [".json", ".txt"]:
             # Open with system text editor
             if os.name == "nt":  # Windows
                 secure_run(["cmd", "/c", "start", "", filepath], shell=False)
             else:
-                secure_run(["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False)
+                secure_run(
+                    ["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False
+                )
         else:
             logger.warning(f"Unknown report format: {file_ext}")
             # Try to open with system default
             if os.name == "nt":
                 secure_run(["cmd", "/c", "start", "", filepath], shell=False)
             else:
-                secure_run(["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False)
+                secure_run(
+                    ["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False
+                )
 
         logger.info(f"Opened report: {filepath}")
 

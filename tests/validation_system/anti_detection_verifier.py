@@ -35,9 +35,9 @@ class AntiDetectionResult:
     detected: bool
     bypassed: bool
     details: str
-    bypass_method: Optional[str] = None
+    bypass_method: str | None = None
     confidence: float = 0.0
-    artifacts: List[str] = field(default_factory=list)
+    artifacts: list[str] = field(default_factory=list)
     timestamp: float = field(default_factory=time.time)
 
 
@@ -314,7 +314,7 @@ class AntiDebugBypass:
             confidence=1.0
         )
 
-    def _get_peb_address(self) -> Optional[int]:
+    def _get_peb_address(self) -> int | None:
         """
         Get Process Environment Block address.
 
@@ -649,7 +649,7 @@ class PackerDetector:
 
         return entropy
 
-    def _check_suspicious_imports(self, pe: pefile.PE) -> List[str]:
+    def _check_suspicious_imports(self, pe: pefile.PE) -> list[str]:
         """
         Check for suspicious import patterns.
 
@@ -713,7 +713,7 @@ class AntiDetectionVerifier:
         self.packer_detector = PackerDetector()
         self.results = []
 
-    def run_verification_suite(self) -> Dict[str, Any]:
+    def run_verification_suite(self) -> dict[str, Any]:
         """
         Run complete anti-detection verification suite.
 

@@ -24,7 +24,7 @@ except ImportError:
         def __init__(self, base_dir):
             self.base_dir = base_dir
 
-        def validate_detection(self, binary_path: str, software_name: str, protection_name: str) -> Dict[str, Any]:
+        def validate_detection(self, binary_path: str, software_name: str, protection_name: str) -> dict[str, Any]:
             """Fallback detection validation using basic binary analysis."""
             try:
                 import pefile
@@ -98,7 +98,7 @@ except ImportError:
 
             return entropy / 8.0  # Normalize to 0-1 range (max entropy is 8 bits)
 
-        def _detect_protection_patterns(self, data: bytes, protection_name: str) -> List[Dict[str, Any]]:
+        def _detect_protection_patterns(self, data: bytes, protection_name: str) -> list[dict[str, Any]]:
             """Detect protection-specific patterns in binary data."""
             protections = []
 
@@ -193,9 +193,9 @@ class VersionTestResult:
     version: str
     binary_path: str
     binary_hash: str
-    detection_result: Dict[str, Any]
+    detection_result: dict[str, Any]
     success: bool
-    error_message: Optional[str] = None
+    error_message: str | None = None
     timestamp: str = None
 
     def __post_init__(self):
@@ -208,10 +208,10 @@ class CrossVersionTestReport:
     """Comprehensive report of cross-version testing."""
     software_name: str
     protection_name: str
-    versions_tested: List[str]
-    results: List[VersionTestResult]
+    versions_tested: list[str]
+    results: list[VersionTestResult]
     success_rate: float
-    version_differences: Dict[str, Any]
+    version_differences: dict[str, Any]
     overall_success: bool
     timestamp: str = None
 
@@ -243,9 +243,9 @@ class CrossVersionTester:
         }
 
         # Track test results
-        self.test_results: List[VersionTestResult] = []
+        self.test_results: list[VersionTestResult] = []
 
-    def _find_versioned_binaries(self, software_name: str, protection_name: str) -> List[Dict[str, Any]]:
+    def _find_versioned_binaries(self, software_name: str, protection_name: str) -> list[dict[str, Any]]:
         """
         Find all versioned binaries for a specific software and protection.
         Scans the commercial binaries directory for versioned binaries.
@@ -269,7 +269,7 @@ class CrossVersionTester:
 
         return versioned_binaries
 
-    def _get_versioned_binary(self, software_name: str, protection_name: str, version: str) -> Dict[str, Any]:
+    def _get_versioned_binary(self, software_name: str, protection_name: str, version: str) -> dict[str, Any]:
         """
         Get a specific version of a binary for testing.
         Returns actual binary information from the commercial binaries repository.
@@ -582,7 +582,7 @@ class CrossVersionTester:
 
         return "\n".join(report_lines)
 
-    def generate_version_difference_report(self, software_name: str, protection_name: str) -> Optional[str]:
+    def generate_version_difference_report(self, software_name: str, protection_name: str) -> str | None:
         """
         Generate a human-readable version difference report for specific software/protection.
         """
@@ -815,7 +815,7 @@ class CrossVersionTester:
 
         return "\n".join(report_lines)
 
-    def generate_success_rate_verification_report(self, software_name: str, protection_name: str) -> Dict[str, Any]:
+    def generate_success_rate_verification_report(self, software_name: str, protection_name: str) -> dict[str, Any]:
         """
         Generate Phase 2.5.2.4 compliance report: Verify success rate is ≥ 90% across versions
         or document why not.
@@ -896,7 +896,7 @@ class CrossVersionTester:
 
             return error_summary
 
-    def save_report(self, report: CrossVersionTestReport, filename: Optional[str] = None) -> str:
+    def save_report(self, report: CrossVersionTestReport, filename: str | None = None) -> str:
         """
         Save a cross-version test report to a JSON file.
         """

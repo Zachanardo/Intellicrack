@@ -28,12 +28,9 @@ from ..core.protection_bypass.tpm_bypass import TPMProtectionBypass
 from ..core.protection_bypass.vm_bypass import VirtualizationDetectionBypass as VMDetectionBypass
 
 # Import protection detection functions
-from ..protection.protection_detector import (
-    detect_checksum_verification,
-    detect_commercial_protections,
-    detect_self_healing_code,
-)
+from ..protection.protection_detector import detect_checksum_verification, detect_commercial_protections, detect_self_healing_code
 from ..utils.system.process_utils import detect_hardware_dongles, detect_tpm_protection
+
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +86,9 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("Commercial protection scan complete")
-            logger.info(f"Commercial protection scan complete: {len(results.get('protections_found', []))} found")
+            logger.info(
+                f"Commercial protection scan complete: {len(results.get('protections_found', []))} found"
+            )
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during commercial protection scan: {e!s}"
@@ -201,7 +200,9 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("Checksum detection complete")
-            logger.info(f"Checksum detection complete: Detected={results['checksum_verification_detected']}")
+            logger.info(
+                f"Checksum detection complete: Detected={results['checksum_verification_detected']}"
+            )
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during checksum detection: {e!s}"
@@ -247,7 +248,9 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("Self-healing code detection complete")
-            logger.info(f"Self-healing code detection complete: Detected={results['self_healing_detected']}")
+            logger.info(
+                f"Self-healing code detection complete: Detected={results['self_healing_detected']}"
+            )
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during self-healing code detection: {e!s}"
@@ -271,14 +274,11 @@ class ProtectionDetectionHandlers:
             # Run the bypass
             results = tpm_bypass.bypass_tpm_checks()
 
-            # Format output
-            output = "=== TPM Bypass Results ===\n\n"
-
-            if results["success"]:
-                output += "OK TPM bypass successful!\n\n"
-            else:
-                output += "WARNING TPM bypass partially successful.\n\n"
-
+            output = "=== TPM Bypass Results ===\n\n" + (
+                "OK TPM bypass successful!\n\n"
+                if results["success"]
+                else "WARNING TPM bypass partially successful.\n\n"
+            )
             if results.get("methods_applied"):
                 output += "Methods Applied:\n"
                 for _method in results["methods_applied"]:
@@ -318,14 +318,11 @@ class ProtectionDetectionHandlers:
             # Run the bypass
             results = vm_bypass.bypass_vm_detection()
 
-            # Format output
-            output = "=== VM Detection Bypass Results ===\n\n"
-
-            if results["success"]:
-                output += "OK VM detection bypass successful!\n\n"
-            else:
-                output += "WARNING VM detection bypass partially successful.\n\n"
-
+            output = "=== VM Detection Bypass Results ===\n\n" + (
+                "OK VM detection bypass successful!\n\n"
+                if results["success"]
+                else "WARNING VM detection bypass partially successful.\n\n"
+            )
             if results.get("methods_applied"):
                 output += "Methods Applied:\n"
                 for _method in results["methods_applied"]:
@@ -361,14 +358,11 @@ class ProtectionDetectionHandlers:
             # Run the emulation (emulate all supported types by default)
             results = dongle_emulator.activate_dongle_emulation()
 
-            # Format output
-            output = "=== Hardware Dongle Emulation Results ===\n\n"
-
-            if results["success"]:
-                output += "OK Hardware dongle emulation activated!\n\n"
-            else:
-                output += "WARNING Hardware dongle emulation partially successful.\n\n"
-
+            output = "=== Hardware Dongle Emulation Results ===\n\n" + (
+                "OK Hardware dongle emulation activated!\n\n"
+                if results["success"]
+                else "WARNING Hardware dongle emulation partially successful.\n\n"
+            )
             if results.get("emulated_dongles"):
                 output += "Emulated Dongle Types:\n"
                 for _dongle in results["emulated_dongles"]:

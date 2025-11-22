@@ -356,7 +356,7 @@ class TestNetworkAnalysis(unittest.TestCase):
 
             if result.get('detected'):
                 self.assertIn('network_indicators', result)
-        except (OSError, socket.error):
+        except OSError:
             # Handle network errors gracefully
             result = self.detector._check_network()
             self.assertIsNotNone(result)

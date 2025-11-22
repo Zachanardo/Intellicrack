@@ -12,7 +12,7 @@ install:
     @echo "Installing dependencies with pixi..."
     pixi install
     @echo "Generating requirements.txt for Dependabot..."
-    pixi list --environment ci --json | python -c "import json, sys; data = json.load(sys.stdin); pypi_packages = [p for p in data if p.get('kind') == 'pypi']; [print(f\"{pkg['name']}=={pkg.get('version', '')}\") if pkg.get('version') else print(pkg['name']) for pkg in sorted(pypi_packages, key=lambda x: x['name'])]" > requirements.txt
+    pixi list --json | python -c "import json, sys; data = json.load(sys.stdin); pypi_packages = [p for p in data if p.get('kind') == 'pypi']; [print(f\"{pkg['name']}=={pkg.get('version', '')}\") if pkg.get('version') else print(pkg['name']) for pkg in sorted(pypi_packages, key=lambda x: x['name'])]" > requirements.txt
     @echo "requirements.txt generated ✓"
     @echo ""
     @echo "Installing Rustup (if needed)..."
@@ -186,9 +186,47 @@ lint-fix:
     pixi run ruff check --fix intellicrack/
     pixi run ruff format intellicrack/
 
+# Format code with ruff
+format-ruff:
+    pixi run ruff format intellicrack/
+
 # Detect dead code with vulture
 vulture:
     pixi run vulture intellicrack/
+
+# Upgrade Python syntax to newer versions
+pyupgrade:
+    Get-ChildItem -Path .\intellicrack\ -Recurse -Include "*.py" | ForEach-Object { pixi run pyupgrade --py312-plus $_.FullName }
+    Get-ChildItem -Path .\tests\ -Recurse -Include "*.py" | ForEach-Object { pixi run pyupgrade --py312-plus $_.FullName }
+
+# Apply AI-powered code suggestions
+sourcery:
+    pixi run sourcery review intellicrack
+    pixi run sourcery review tests
+
+# Check docstring validity with darglint
+darglint:
+    pixi run darglint intellicrack
+    pixi run darglint tests
+
+# Check code line statistics with pygount
+pygount:
+    pixi run pygount intellicrack --format=summary
+    pixi run pygount tests --format=summary
+
+# Check Python packaging best practices with pyroma
+pyroma:
+    pixi run pyroma .
+
+# Detect dead code
+dead:
+    pixi run dead --files="intellicrack/.*\.py"
+    pixi run dead --files="tests/.*\.py"
+
+# Run type checking with ty
+ty:
+    pixi run ty check intellicrack
+    pixi run ty check tests
 
 # Security linting with bandit
 bandit:

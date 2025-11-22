@@ -24,6 +24,7 @@ from collections.abc import Callable
 from datetime import datetime
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from typing import Any as State
 else:
@@ -118,7 +119,9 @@ class Plugin:
                 "timestamp": time.time(),
                 "state_address": state.address,
                 "fork_number": self.fork_count,
-                "parent_constraints": len(state.constraints) if hasattr(state, "constraints") else 0,
+                "parent_constraints": len(state.constraints)
+                if hasattr(state, "constraints")
+                else 0,
             },
         )
 
@@ -180,7 +183,9 @@ class Plugin:
         # Update total states analyzed
         self.total_states_analyzed = getattr(self, "total_states_analyzed", 0) + 1
 
-        logger.debug(f"State at 0x{state.address:x} terminated (total: {self.total_states_analyzed})")
+        logger.debug(
+            f"State at 0x{state.address:x} terminated (total: {self.total_states_analyzed})"
+        )
 
     def _get_memory_usage(self) -> float:
         """Get current memory usage in MB.
@@ -205,7 +210,9 @@ class State:
     tracking instruction pointer, memory state, and symbolic inputs.
     """
 
-    def __init__(self, address: int, analyzer: "BinaryAnalyzer", state_id: str | None = None) -> None:
+    def __init__(
+        self, address: int, analyzer: "BinaryAnalyzer", state_id: str | None = None
+    ) -> None:
         """Initialize a state.
 
         Args:
@@ -370,10 +377,6 @@ class BinaryAnalyzer:
         state_counter = 1
 
         while remaining_hooks and not self._is_timeout(start_time):
-            # Get the next hook to visit
-            if not remaining_hooks:
-                break
-
             address = remaining_hooks.pop()
 
             # Create a state for this hook
@@ -387,7 +390,7 @@ class BinaryAnalyzer:
             state.input_symbols["argv"] = [b"./program", f"arg_for_addr_{address:x}".encode()]
 
             # Perform state forking for path exploration based on branch conditions
-            if len(self._states) < 10 and len(remaining_hooks) > 0:
+            if len(self._states) < 10 and remaining_hooks:
                 for plugin in self.plugins:
                     if hasattr(plugin, "will_fork_state_callback"):
                         plugin.will_fork_state_callback(state)
@@ -397,7 +400,9 @@ class BinaryAnalyzer:
                 fork_state_id = f"state_{state_counter}"
                 state_counter += 1
                 forked_state = State(forked_address, self, fork_state_id)
-                forked_state.input_symbols["stdin"] = f"fork_input_for_addr_{forked_address:x}".encode()
+                forked_state.input_symbols["stdin"] = (
+                    f"fork_input_for_addr_{forked_address:x}".encode()
+                )
                 forked_state.input_symbols["argv"] = [
                     b"./program",
                     f"fork_arg_for_addr_{forked_address:x}".encode(),
@@ -415,14 +420,11 @@ class BinaryAnalyzer:
             if state.termination_reason == "running":
                 if address == 0x1000:  # Target address
                     state.set_termination_reason("reached_target")
-                    state.terminated = True
                 elif address in [0x2000, 0x3000]:  # Avoid addresses
                     state.set_termination_reason("avoided")
-                    state.terminated = True
                 else:
                     state.set_termination_reason("completed")
-                    state.terminated = True
-
+                state.terminated = True
             explored_states.append(state)
 
         # Mark any remaining states as completed

@@ -24,6 +24,7 @@ import threading
 import time
 from typing import Any
 
+
 """
 Network Analysis Plugin Template
 Specialized template for network traffic analysis
@@ -62,9 +63,7 @@ class NetworkAnalysisPlugin:
             and error messages if the analysis fails.
 
         """
-        results = []
-        results.append(f"Analyzing network capabilities of: {binary_path}")
-
+        results = [f"Analyzing network capabilities of: {binary_path}"]
         # Check for network-related strings
         network_indicators = [
             b"http://",
@@ -83,12 +82,11 @@ class NetworkAnalysisPlugin:
             with open(binary_path, "rb") as f:
                 data = f.read()
 
-                found_indicators = []
-                for indicator in network_indicators:
-                    if indicator in data:
-                        found_indicators.append(indicator.decode("utf-8", errors="ignore"))
-
-                if found_indicators:
+                if found_indicators := [
+                    indicator.decode("utf-8", errors="ignore")
+                    for indicator in network_indicators
+                    if indicator in data
+                ]:
                     results.append("Network indicators found:")
                     for indicator in found_indicators:
                         results.append(f"  - {indicator}")
@@ -146,12 +144,11 @@ class NetworkAnalysisPlugin:
             with open(binary_path, "rb") as f:
                 data = f.read()
 
-            found_apis = []
-            for api, description in socket_apis.items():
-                if api in data:
-                    found_apis.append(f"{api.decode('ascii')} - {description}")
-
-            if found_apis:
+            if found_apis := [
+                f"{api.decode('ascii')} - {description}"
+                for api, description in socket_apis.items()
+                if api in data
+            ]:
                 results.append(f"Found {len(found_apis)} socket API references:")
                 for api in found_apis:
                     results.append(f"   {api}")
@@ -207,7 +204,9 @@ class NetworkAnalysisPlugin:
 
         return result
 
-    def scan_ports(self, target_host: str, start_port: int = 1, end_port: int = 1000, timeout: float = 0.5) -> list[dict[str, Any]]:
+    def scan_ports(
+        self, target_host: str, start_port: int = 1, end_port: int = 1000, timeout: float = 0.5
+    ) -> list[dict[str, Any]]:
         """Scan ports on target host using sockets."""
         open_ports = []
 
@@ -305,8 +304,12 @@ class NetworkAnalysisPlugin:
                                     {
                                         "timestamp": time.time(),
                                         "type": "new_connection",
-                                        "local": f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else "N/A",
-                                        "remote": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "N/A",
+                                        "local": f"{conn.laddr.ip}:{conn.laddr.port}"
+                                        if conn.laddr
+                                        else "N/A",
+                                        "remote": f"{conn.raddr.ip}:{conn.raddr.port}"
+                                        if conn.raddr
+                                        else "N/A",
                                         "pid": conn.pid if hasattr(conn, "pid") else "N/A",
                                     },
                                 )
@@ -333,8 +336,10 @@ class NetworkAnalysisPlugin:
             result["connections"] = connection_log
             result["statistics"] = {
                 "total_events": len(connection_log),
-                "new_connections": sum(1 for c in connection_log if c["type"] == "new_connection"),
-                "closed_connections": sum(1 for c in connection_log if c["type"] == "closed_connection"),
+                "new_connections": sum(bool(c["type"] == "new_connection")
+                                   for c in connection_log),
+                "closed_connections": sum(bool(c["type"] == "closed_connection")
+                                      for c in connection_log),
             }
 
         # Start monitoring in a separate thread
@@ -387,7 +392,9 @@ class NetworkAnalysisPlugin:
 
             # Identify patterns
             if port_frequency:
-                most_used_ports = sorted(port_frequency.items(), key=lambda x: x[1], reverse=True)[:5]
+                most_used_ports = sorted(port_frequency.items(), key=lambda x: x[1], reverse=True)[
+                    :5
+                ]
                 result["patterns"].append(
                     {
                         "type": "port_usage",
@@ -397,7 +404,9 @@ class NetworkAnalysisPlugin:
                 )
 
             if ip_frequency:
-                most_connected_ips = sorted(ip_frequency.items(), key=lambda x: x[1], reverse=True)[:5]
+                most_connected_ips = sorted(ip_frequency.items(), key=lambda x: x[1], reverse=True)[
+                    :5
+                ]
                 result["patterns"].append(
                     {
                         "type": "ip_connections",
@@ -454,9 +463,9 @@ class NetworkAnalysisPlugin:
             ports, and network I/O statistics.
 
         """
-        results = []
-        results.append(f"Starting network monitoring{' for process: ' + str(target_process) if target_process else ''}...")
-
+        results = [
+            f"Starting network monitoring{' for process: ' + str(target_process) if target_process else ''}..."
+        ]
         try:
             import socket
 
@@ -501,7 +510,9 @@ class NetworkAnalysisPlugin:
                 results.append(f"Found {len(active_connections)} active network connections:")
                 for i, conn in enumerate(active_connections[:10]):  # Show max 10
                     host_info = f" [{conn['remote_host']}]" if conn["remote_host"] else ""
-                    results.append(f"  {i + 1}. {conn['local']} -> {conn['remote']}{host_info} (PID: {conn['pid']})")
+                    results.append(
+                        f"  {i + 1}. {conn['local']} -> {conn['remote']}{host_info} (PID: {conn['pid']})"
+                    )
                 if len(active_connections) > 10:
                     results.append(f"  ... and {len(active_connections) - 10} more connections")
             else:
@@ -526,15 +537,20 @@ class NetworkAnalysisPlugin:
                 if len(listening_ports) > 5:
                     results.append(f"  ... and {len(listening_ports) - 5} more listening ports")
 
-            # Network interface statistics
-            net_io = psutil.net_io_counters()
-            if net_io:
-                results.append("\nNetwork I/O Statistics:")
-                results.append(f"  Bytes sent: {net_io.bytes_sent:,}")
-                results.append(f"  Bytes received: {net_io.bytes_recv:,}")
-                results.append(f"  Packets sent: {net_io.packets_sent:,}")
-                results.append(f"  Packets received: {net_io.packets_recv:,}")
-
+            if net_io := psutil.net_io_counters():
+                results.extend(
+                    (
+                        "\nNetwork I/O Statistics:",
+                        f"  Bytes sent: {net_io.bytes_sent:,}",
+                    )
+                )
+                results.extend(
+                    (
+                        f"  Bytes received: {net_io.bytes_recv:,}",
+                        f"  Packets sent: {net_io.packets_sent:,}",
+                        f"  Packets received: {net_io.packets_recv:,}",
+                    )
+                )
         except ImportError:
             results.append("Error: psutil library not available for network monitoring")
             results.append("Install with: pip install psutil")

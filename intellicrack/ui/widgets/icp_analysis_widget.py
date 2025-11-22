@@ -34,6 +34,7 @@ from intellicrack.handlers.pyqt6_handler import (
 from ...protection.icp_backend import ICPDetection, ICPScanResult, ScanMode, get_icp_backend
 from ...utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 

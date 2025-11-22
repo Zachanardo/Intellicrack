@@ -34,6 +34,7 @@ from typing import Any
 
 from intellicrack.utils.logger import logger
 
+
 """
 Incremental Analysis Manager for avoiding reprocessing unchanged code.
 
@@ -211,7 +212,9 @@ class IncrementalAnalysisManager:
             # Initialize empty metadata
             self._init_empty_cache()
 
-        self.logger.info(f"Incremental analysis manager initialized with cache dir: {self.cache_dir}")
+        self.logger.info(
+            f"Incremental analysis manager initialized with cache dir: {self.cache_dir}"
+        )
 
     def _validate_cache_file(self, file_path: str) -> bool:
         """Validate cache file before loading.
@@ -284,9 +287,10 @@ class IncrementalAnalysisManager:
 
         try:
             # Create a backup of the existing index
-            backup_path = index_path + ".backup"
+            backup_path = f"{index_path}.backup"
             if os.path.exists(index_path):
                 from pathlib import Path
+
                 Path(index_path).rename(backup_path)
 
             with open(index_path, "w", encoding="utf-8") as f:
@@ -303,7 +307,7 @@ class IncrementalAnalysisManager:
             self.logger.error("Error saving cache index: %s", e)
 
             # Restore backup if available
-            backup_path = index_path + ".backup"
+            backup_path = f"{index_path}.backup"
             if os.path.exists(backup_path):
                 try:
                     Path(backup_path).rename(index_path)
@@ -326,10 +330,11 @@ class IncrementalAnalysisManager:
 
             # Check if cache files exist
             for analysis_type, cache_file in entry.items():
-                if analysis_type not in ["binary_path", "timestamp"] and isinstance(cache_file, str):
-                    if not os.path.exists(cache_file):
-                        invalid_hashes.append(binary_hash)
-                        break
+                if analysis_type not in ["binary_path", "timestamp"] and isinstance(
+                                    cache_file, str
+                                ) and not os.path.exists(cache_file):
+                    invalid_hashes.append(binary_hash)
+                    break
 
         # Remove invalid entries
         for binary_hash in invalid_hashes:
@@ -529,13 +534,14 @@ class IncrementalAnalysisManager:
 
         # Delete cache files
         for analysis_type, cache_file in cache_entry.items():
-            if analysis_type not in ["binary_path", "timestamp", "file_size"] and isinstance(cache_file, str):
-                if os.path.exists(cache_file):
-                    try:
-                        os.remove(cache_file)
-                        self.logger.debug("Removed cache file: %s", cache_file)
-                    except OSError as e:
-                        self.logger.error("Failed to remove cache file %s: %s", cache_file, e)
+            if analysis_type not in ["binary_path", "timestamp", "file_size"] and isinstance(
+                            cache_file, str
+                        ) and os.path.exists(cache_file):
+                try:
+                    os.remove(cache_file)
+                    self.logger.debug("Removed cache file: %s", cache_file)
+                except OSError as e:
+                    self.logger.error("Failed to remove cache file %s: %s", cache_file, e)
 
         # Remove from cache index
         del self.cache[binary_hash]
@@ -561,7 +567,9 @@ class IncrementalAnalysisManager:
 
         for cache_entry in self.cache.values():
             for analysis_type, cache_file in cache_entry.items():
-                if analysis_type not in ["binary_path", "timestamp", "file_size"] and isinstance(cache_file, str):
+                if analysis_type not in ["binary_path", "timestamp", "file_size"] and isinstance(
+                    cache_file, str
+                ):
                     analysis_types.add(analysis_type)
                     if os.path.exists(cache_file):
                         total_files += 1
@@ -596,8 +604,7 @@ class IncrementalAnalysisManager:
         old_hashes = []
 
         for binary_hash, cache_entry in self.cache.items():
-            timestamp_str = cache_entry.get("timestamp")
-            if timestamp_str:
+            if timestamp_str := cache_entry.get("timestamp"):
                 try:
                     timestamp = datetime.datetime.fromisoformat(timestamp_str)
                     if timestamp < cutoff_date:
@@ -607,18 +614,16 @@ class IncrementalAnalysisManager:
                     # Invalid timestamp, consider it old
                     old_hashes.append(binary_hash)
 
-        # Remove old entries
-        cleaned_count = 0
-        for binary_hash in old_hashes:
-            if self._remove_cache_entry(binary_hash):
-                cleaned_count += 1
-
+        cleaned_count = sum(bool(self._remove_cache_entry(binary_hash))
+                        for binary_hash in old_hashes)
         if cleaned_count > 0:
             self.logger.info("Cleaned up %s old cache entries", cleaned_count)
 
         return cleaned_count
 
-    def analyze_incremental(self, binary_path: str, analysis_types: list | None = None) -> dict[str, Any]:
+    def analyze_incremental(
+        self, binary_path: str, analysis_types: list | None = None
+    ) -> dict[str, Any]:
         """Perform incremental analysis on a binary file.
 
         Args:
@@ -680,11 +685,14 @@ class IncrementalAnalysisManager:
             end_time = time.time()
             results["performance_metrics"] = {
                 "total_time": end_time - start_time,
-                "cache_hits": sum(1 for result in results["analysis_results"].values() if result),
+                "cache_hits": sum(bool(result)
+                              for result in results["analysis_results"].values()),
                 "cache_stats": self.get_cache_stats(),
             }
 
-            self.logger.info("Incremental analysis completed in %.3f seconds", end_time - start_time)
+            self.logger.info(
+                "Incremental analysis completed in %.3f seconds", end_time - start_time
+            )
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Incremental analysis failed: {e}"
@@ -736,13 +744,13 @@ class IncrementalAnalysisManager:
             with open(binary_path, "rb") as f:
                 data = f.read(8192)  # Sample first 8KB
 
+            entropy = 0.0
             # Calculate entropy
             if data:
                 frequencies = [0] * 256
                 for byte in data:
                     frequencies[byte] += 1
 
-                entropy = 0.0
                 data_len = len(data)
                 for freq in frequencies:
                     if freq > 0:
@@ -750,9 +758,6 @@ class IncrementalAnalysisManager:
                         import math
 
                         entropy -= prob * math.log2(prob)
-            else:
-                entropy = 0.0
-
             return {
                 "entropy": entropy,
                 "sample_size": len(data),
@@ -772,7 +777,9 @@ class IncrementalAnalysisManager:
 
             # Extract printable strings (4+ characters)
             strings = re.findall(rb"[ -~]{4,}", data)
-            string_list = [s.decode("ascii", errors="ignore") for s in strings[:50]]  # Limit to 50 strings
+            string_list = [
+                s.decode("ascii", errors="ignore") for s in strings[:50]
+            ]  # Limit to 50 strings
 
             return {
                 "strings_count": len(string_list),
@@ -839,7 +846,9 @@ def run_analysis_manager(app: object) -> None:
     try:
         binary_size = os.path.getsize(app.binary_path)
         binary_name = os.path.basename(app.binary_path)
-        app.update_output.emit(f"[Incremental Analysis] Analyzing binary: {binary_name} ({binary_size / 1024:.1f} KB)")
+        app.update_output.emit(
+            f"[Incremental Analysis] Analyzing binary: {binary_name} ({binary_size / 1024:.1f} KB)"
+        )
     except OSError as e:
         logger.error("OS error in incremental_manager: %s", e)
         app.update_output.emit(f"[Incremental Analysis] Error accessing binary: {e}")
@@ -854,8 +863,6 @@ def run_analysis_manager(app: object) -> None:
         },
     )
 
-    # Set binary and track performance metrics
-    analysis_phases = []
     app.update_output.emit("[Incremental Analysis] Setting binary...")
 
     use_cache = False
@@ -877,9 +884,7 @@ def run_analysis_manager(app: object) -> None:
             # Get cached results
             app.update_output.emit("[Incremental Analysis] Loading cached results...")
 
-            # Example: Load basic analysis
-            basic_analysis = manager.get_cached_analysis("basic")
-            if basic_analysis:
+            if basic_analysis := manager.get_cached_analysis("basic"):
                 app.update_output.emit("[Incremental Analysis] Loaded basic analysis from cache")
 
                 # Apply cached results
@@ -890,7 +895,7 @@ def run_analysis_manager(app: object) -> None:
                     # Add to analyze results
                     app.analyze_results.append("\n=== INCREMENTAL ANALYSIS ===")
                     app.analyze_results.append("Loaded analysis results from cache")
-                    app.analyze_results.append("Binary hash: " + manager.current_binary_hash)
+                    app.analyze_results.append(f"Binary hash: {manager.current_binary_hash}")
 
                     # Update UI
                     for result in app.analyze_results:
@@ -909,19 +914,19 @@ def run_analysis_manager(app: object) -> None:
     end_time = time.time()
     elapsed_time = end_time - start_time
 
-    # Add performance data to analysis_phases
-    analysis_phases.append(
+    analysis_phases = [
         {
             "phase": "total",
             "start_time": start_time,
             "end_time": end_time,
             "elapsed_time": elapsed_time,
             "binary_size": binary_size,
-        },
-    )
-
+        }
+    ]
     # Report performance metrics
-    app.update_output.emit(f"[Incremental Analysis] Analysis completed in {elapsed_time:.2f} seconds")
+    app.update_output.emit(
+        f"[Incremental Analysis] Analysis completed in {elapsed_time:.2f} seconds"
+    )
 
     # Save performance metrics for future optimization
     if not hasattr(app, "performance_metrics"):

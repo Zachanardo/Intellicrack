@@ -23,6 +23,7 @@ import logging
 
 from intellicrack.utils.logger import logger
 
+
 try:
     from cryptography import x509
     from cryptography.hazmat.primitives import hashes, serialization
@@ -197,7 +198,7 @@ def verify_certificate_validity(cert: x509.Certificate) -> bool:
 
     """
     try:
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.UTC)
         return cert.not_valid_before <= now <= cert.not_valid_after
 
     except Exception as e:

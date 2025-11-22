@@ -27,6 +27,7 @@ import json
 import logging
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -170,7 +171,7 @@ class AnalysisExporter:
             return
 
         # Write headers based on first item structure
-        if isinstance(result, dict) and result:
+        if isinstance(result, dict):
             first_key = next(iter(result.keys()))
             first_value = result[first_key]
 
@@ -229,7 +230,9 @@ class AnalysisExporter:
         vulns = result.get("vulnerabilities", [])
         stats = result.get("statistics", {})
 
-        logger.debug("Exporting HTML report with %d vulnerabilities and stats: %s", len(vulns), stats)
+        logger.debug(
+            "Exporting HTML report with %d vulnerabilities and stats: %s", len(vulns), stats
+        )
 
         # Count by severity
         high_count = len([v for v in vulns if v.get("severity") == "high"])
@@ -314,7 +317,13 @@ class AnalysisExporter:
         diff_html = ""
         for diff in diffs:
             diff_type = diff.get("type", "unknown")
-            css_class = "added" if "added" in diff_type else "removed" if "removed" in diff_type else "modified"
+            css_class = (
+                "added"
+                if "added" in diff_type
+                else "removed"
+                if "removed" in diff_type
+                else "modified"
+            )
 
             diff_html += f"""
             <div class="difference {css_class}">
@@ -339,7 +348,7 @@ class AnalysisExporter:
         """Generate generic HTML report."""
         import time
 
-        html = f"""
+        return f"""
 <!DOCTYPE html>
 <html>
 <head>
@@ -361,7 +370,6 @@ class AnalysisExporter:
 </body>
 </html>
         """
-        return html
 
 
 # Export main class

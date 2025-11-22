@@ -18,8 +18,14 @@ nodejs = "*"
 git = "*"
 
 [pypi-dependencies]
-# Local editable install - pulls all Python dependencies from pyproject.toml
 intellicrack = { path = ".", editable = true }
+torch = "*"
+torchvision = "*"
+torchaudio = "*"
+
+[pypi-options]
+extra-index-urls = ["https://download.pytorch.org/whl/xpu"]
+index-strategy = "unsafe-best-match"
 
 [tasks]
 # Complete installation: installs dependencies + post-install setup

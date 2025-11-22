@@ -129,7 +129,7 @@ def validate_production_readiness_checkpoint2():
 
         # Direct validation by reading the source code
         try:
-            with open(get_project_root() / "intellicrack/core/analysis/radare2_vulnerability_engine.py", "r", encoding="utf-8") as f:
+            with open(get_project_root() / "intellicrack/core/analysis/radare2_vulnerability_engine.py", encoding="utf-8") as f:
                 source_code = f.read()
 
             # Check for placeholder patterns in BOF method
@@ -263,7 +263,7 @@ def validate_production_readiness_checkpoint2():
     else:
         # Direct source validation for format string method
         try:
-            with open(get_project_root() / "intellicrack/core/analysis/radare2_vulnerability_engine.py", "r", encoding="utf-8") as f:
+            with open(get_project_root() / "intellicrack/core/analysis/radare2_vulnerability_engine.py", encoding="utf-8") as f:
                 source_code = f.read()
 
             # Check format string method
@@ -313,7 +313,7 @@ def validate_production_readiness_checkpoint2():
 
     try:
         # Read the entire vulnerability engine file
-        with open(get_project_root() / "intellicrack/core/analysis/radare2_vulnerability_engine.py", "r", encoding="utf-8") as f:
+        with open(get_project_root() / "intellicrack/core/analysis/radare2_vulnerability_engine.py", encoding="utf-8") as f:
             full_source = f.read()
 
         # Define comprehensive forbidden patterns

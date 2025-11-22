@@ -22,12 +22,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from intellicrack.handlers.pyqt6_handler import (
-    QFileDialog,
-    QMainWindow,
-    QMessageBox,
-    pyqtSignal,
-)
+from intellicrack.handlers.pyqt6_handler import QFileDialog, QMainWindow, QMessageBox, pyqtSignal
 
 from ..ai.interactive_assistant import IntellicrackAIAssistant
 from ..analysis.analysis_result_orchestrator import AnalysisResultOrchestrator
@@ -41,6 +36,7 @@ from ..core.analysis.frida_gui_integration import integrate_frida_gui
 from ..core.analysis.multi_format_analyzer import MultiFormatBinaryAnalyzer
 from ..core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
 from ..utils.logger import get_logger, log_all_methods
+
 
 # Configure module logger
 logger = get_logger(__name__)
@@ -173,6 +169,7 @@ class IntellicrackMainWindow(QMainWindow):
         self._update_ui_for_disabled_components()
 
         self.logger.info("Main window initialization completed.")
+
     # ... (rest of the file with more specific logging)
     # ... I will add more logging to other methods as well.
     # ... For brevity, I will only show the changes to __init__.
@@ -197,8 +194,6 @@ class IntellicrackMainWindow(QMainWindow):
             normalized_path = os.path.normpath(file_path)
             self.binary_path = normalized_path
             self.update_status.emit(f"Ready to analyze: {os.path.basename(normalized_path)}")
-        else:
-            pass
 
     def _run_analysis(self) -> None:
         """Run binary analysis."""

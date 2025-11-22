@@ -845,18 +845,14 @@ const virtualizationBypass = {
 
                 onLeave: function (_retval) {
                     var config = this.parent.parent.config;
-                    if (config.vmDetection.hyperV.hideHyperVFeatures) {
-                        // PF_VIRT_FIRMWARE_ENABLED = 21
-                        // PF_SECOND_LEVEL_ADDRESS_TRANSLATION = 20
-                        if (this.feature === 20 || this.feature === 21) {
-                            retval.replace(0); // FALSE - feature not present
-                            send({
-                                type: 'bypass',
-                                target: 'vm_bypass',
-                                action: 'hyperv_feature_hidden',
-                                feature: this.feature,
-                            });
-                        }
+                    if (config.vmDetection.hyperV.hideHyperVFeatures && (this.feature === 20 || this.feature === 21)) {
+                          retval.replace(0); // FALSE - feature not present
+                          send({
+                              type: 'bypass',
+                              target: 'vm_bypass',
+                              action: 'hyperv_feature_hidden',
+                              feature: this.feature,
+                          });
                     }
                 },
             });
@@ -2492,7 +2488,7 @@ const virtualizationBypass = {
 
                                     if (this.spoofFeatures) {
                                         // Clear hypervisor present bit (bit 31 of ECX)
-                                        this.context.ecx = this.context.ecx & ~(1 << 31);
+                                        this.context.ecx &= ~(1 << 31);
                                     }
                                 },
                             });
@@ -3374,24 +3370,19 @@ const virtualizationBypass = {
                         var str = retval.readAnsiString();
 
                         // GL_VENDOR = 0x1F00
-                        if (this.stringType === 0x1f00 && str) {
-                            if (
-                                str.includes('VMware') ||
-                                str.includes('VirtualBox') ||
-                                str.includes('Microsoft') ||
-                                str.includes('llvmpipe')
-                            ) {
-                                // Replace with NVIDIA vendor string
-                                var spoofedVendor = Memory.allocAnsiString('NVIDIA Corporation');
-                                retval.replace(spoofedVendor);
-
-                                send({
-                                    type: 'bypass',
-                                    target: 'vm_bypass',
-                                    action: 'opengl_vendor_spoofed',
-                                    original: str,
-                                });
-                            }
+                        if (this.stringType === 0x1f00 && str && (str.includes('VMware') ||
+                                                        str.includes('VirtualBox') ||
+                                                        str.includes('Microsoft') ||
+                                                        str.includes('llvmpipe'))) {
+                              var spoofedVendor = Memory.allocAnsiString('NVIDIA Corporation');
+                              retval.replace(spoofedVendor);
+                        
+                              send({
+                                  type: 'bypass',
+                                  target: 'vm_bypass',
+                                  action: 'opengl_vendor_spoofed',
+                                  original: str,
+                              });
                         }
                     }
                 },

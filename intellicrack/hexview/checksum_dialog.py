@@ -24,6 +24,7 @@ from PyQt6.QtWidgets import (
 from ..utils.logger import get_logger
 from .checksums import ChecksumCalculator, calculate_checksum_chunked
 
+
 logger = get_logger(__name__)
 
 
@@ -132,11 +133,10 @@ class ChecksumDialog(QDialog):
         source_layout.addWidget(self.selection_radio)
 
         # Check if there's a selection
-        if self.hex_viewer and hasattr(self.hex_viewer, "selection_start"):
-            if self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1:
-                self.selection_radio.setEnabled(True)
-                selection_size = self.hex_viewer.selection_end - self.hex_viewer.selection_start
-                self.selection_radio.setText(f"Current selection ({selection_size} bytes)")
+        if self.hex_viewer and hasattr(self.hex_viewer, "selection_start") and (self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1):
+            self.selection_radio.setEnabled(True)
+            selection_size = self.hex_viewer.selection_end - self.hex_viewer.selection_start
+            self.selection_radio.setText(f"Current selection ({selection_size} bytes)")
 
         source_group.setLayout(source_layout)
         layout.addWidget(source_group)
@@ -241,11 +241,11 @@ class ChecksumDialog(QDialog):
             List of algorithm names
 
         """
-        selected = []
-        for algo, checkbox in self.algorithm_checkboxes.items():
-            if checkbox.isChecked():
-                selected.append(algo)
-        return selected
+        return [
+            algo
+            for algo, checkbox in self.algorithm_checkboxes.items()
+            if checkbox.isChecked()
+        ]
 
     def calculate_checksums(self) -> None:
         """Start checksum calculation."""
@@ -365,8 +365,7 @@ class ChecksumDialog(QDialog):
 
     def copy_results(self) -> None:
         """Copy results to clipboard."""
-        text = self.results_text.toPlainText()
-        if text:
+        if text := self.results_text.toPlainText():
             from PyQt6.QtWidgets import QApplication
 
             clipboard = QApplication.clipboard()

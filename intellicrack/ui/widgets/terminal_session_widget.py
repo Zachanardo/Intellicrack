@@ -26,16 +26,10 @@ import logging
 import uuid
 from typing import Any
 
-from intellicrack.handlers.pyqt6_handler import (
-    QHBoxLayout,
-    QPushButton,
-    QTabWidget,
-    QVBoxLayout,
-    QWidget,
-    pyqtSignal,
-)
+from intellicrack.handlers.pyqt6_handler import QHBoxLayout, QPushButton, QTabWidget, QVBoxLayout, QWidget, pyqtSignal
 
 from .embedded_terminal_widget import EmbeddedTerminalWidget
+
 
 logger = logging.getLogger(__name__)
 
@@ -134,7 +128,9 @@ class TerminalSessionWidget(QWidget):
         self.tab_widget.setCurrentIndex(index)
 
         terminal.process_started.connect(lambda pid: self._on_process_started(session_id, pid))
-        terminal.process_finished.connect(lambda pid, code: self._on_process_finished(session_id, pid, code))
+        terminal.process_finished.connect(
+            lambda pid, code: self._on_process_finished(session_id, pid, code)
+        )
 
         self._active_session_id = session_id
         self.session_created.emit(session_id)

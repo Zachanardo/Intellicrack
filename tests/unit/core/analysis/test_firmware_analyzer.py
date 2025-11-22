@@ -460,7 +460,7 @@ class TestFirmwareAnalyzer(unittest.TestCase):
         result = self.analyzer.analyze_firmware(str(self.router_fw_path))
 
         # Should perform multiple types of security scans
-        finding_types_found = set(f.finding_type for f in result.security_findings)
+        finding_types_found = {f.finding_type for f in result.security_findings}
 
         # Should detect hardcoded credentials
         self.assertIn(SecurityFindingType.HARDCODED_CREDENTIALS, finding_types_found)
@@ -546,7 +546,7 @@ class TestFirmwareAnalyzer(unittest.TestCase):
 
         # Report should contain comprehensive analysis data
         import json
-        with open(report_path, 'r') as f:
+        with open(report_path) as f:
             report_data = json.load(f)
 
         self.assertIn('firmware_info', report_data)
@@ -695,7 +695,7 @@ class TestFirmwareAnalyzerEdgeCases(unittest.TestCase):
         result = self.analyzer.analyze_firmware(str(comprehensive_path))
 
         # Should detect all security finding types
-        finding_types = set(f.finding_type for f in result.security_findings)
+        finding_types = {f.finding_type for f in result.security_findings}
 
         expected_types = {
             SecurityFindingType.HARDCODED_CREDENTIALS,

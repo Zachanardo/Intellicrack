@@ -22,6 +22,7 @@ import random as _random
 
 from intellicrack.utils.logger import logger
 
+
 """
 NumPy Import Handler with Production-Ready Fallbacks
 
@@ -37,8 +38,6 @@ try:
     # NumPy submodules
     from numpy import (
         abs as np_abs,
-    )
-    from numpy import (
         allclose,
         arange,
         argmax,
@@ -67,18 +66,22 @@ try:
         int64,
         linalg,
         linspace,
+        max as np_max,
         mean,
         median,
         meshgrid,
+        min as np_min,
         ndarray,
         ones,
         percentile,
         random,
         reshape,
+        round as np_round,
         sort,
         sqrt,
         stack,
         std,
+        sum as np_sum,
         transpose,
         uint8,
         uint16,
@@ -87,18 +90,6 @@ try:
         var,
         where,
         zeros,
-    )
-    from numpy import (
-        max as np_max,
-    )
-    from numpy import (
-        min as np_min,
-    )
-    from numpy import (
-        round as np_round,
-    )
-    from numpy import (
-        sum as np_sum,
     )
 
     HAS_NUMPY = True
@@ -120,7 +111,12 @@ except ImportError as e:
         and mathematical operations used in binary analysis and signal processing.
         """
 
-        def __init__(self, data: list | tuple | "FallbackArray" | float, dtype: type | None = None, shape: tuple[int, ...] | None = None) -> None:
+        def __init__(
+            self,
+            data: list | tuple | "FallbackArray" | float,
+            dtype: type | None = None,
+            shape: tuple[int, ...] | None = None,
+        ) -> None:
             """Initialize array with data, dtype, and shape.
 
             Args:
@@ -213,8 +209,7 @@ except ImportError as e:
             if total != self.size:
                 raise ValueError(f"Cannot reshape array of size {self.size} into shape {new_shape}")
 
-            result = FallbackArray(self.data.copy(), self.dtype, new_shape)
-            return result
+            return FallbackArray(self.data.copy(), self.dtype, new_shape)
 
         def flatten(self) -> "FallbackArray":
             """Flatten array to 1D.
@@ -237,9 +232,7 @@ except ImportError as e:
 
             result = self.data.copy()
             for dim in reversed(self._shape[1:]):
-                temp = []
-                for i in range(0, len(result), dim):
-                    temp.append(result[i : i + dim])
+                temp = [result[i : i + dim] for i in range(0, len(result), dim)]
                 result = temp
             return result[0] if len(result) == 1 else result
 
@@ -295,10 +288,7 @@ except ImportError as e:
             if isinstance(key, int):
                 self.data[key] = value
             elif isinstance(key, slice):
-                if isinstance(value, FallbackArray):
-                    self.data[key] = value.data
-                else:
-                    self.data[key] = value
+                self.data[key] = value.data if isinstance(value, FallbackArray) else value
 
         def __len__(self) -> int:
             """Get length of first dimension.
@@ -392,8 +382,6 @@ except ImportError as e:
                 Sum of all elements
 
             """
-            if axis is None:
-                return sum(self.data)
             return sum(self.data)
 
         def mean(self) -> float:
@@ -459,7 +447,9 @@ except ImportError as e:
             return self.data.index(max_val)
 
     # Fallback array creation functions
-    def array(data: list | tuple | "FallbackArray" | float, dtype: type | None = None) -> "FallbackArray":
+    def array(
+        data: list | tuple | "FallbackArray" | float, dtype: type | None = None
+    ) -> "FallbackArray":
         """Create array from data.
 
         Args:
@@ -521,7 +511,9 @@ except ImportError as e:
         """
         return zeros(shape, dtype)
 
-    def full(shape: int | tuple[int, ...], fill_value: float, dtype: type | None = None) -> "FallbackArray":
+    def full(
+        shape: int | tuple[int, ...], fill_value: float, dtype: type | None = None
+    ) -> "FallbackArray":
         """Create array filled with value.
 
         Args:
@@ -557,13 +549,13 @@ except ImportError as e:
         M = M or N
         result = []
         for i in range(N):
-            row = []
-            for j in range(M):
-                row.append(1 if i - j == -k else 0)
+            row = [1 if i - j == -k else 0 for j in range(M)]
             result.append(row)
         return FallbackArray(result, dtype, (N, M))
 
-    def arange(start: float, stop: float | None = None, step: float = 1, dtype: type | None = None) -> "FallbackArray":
+    def arange(
+        start: float, stop: float | None = None, step: float = 1, dtype: type | None = None
+    ) -> "FallbackArray":
         """Create array with range of values.
 
         Args:
@@ -619,7 +611,7 @@ except ImportError as e:
             List of FallbackArrays representing coordinate matrices
 
         """
-        if len(xi) == 0:
+        if not xi:
             return []
         if len(xi) == 1:
             return [FallbackArray(xi[0])]
@@ -634,7 +626,10 @@ except ImportError as e:
                 xx.append(i)
                 yy.append(j)
 
-        return [FallbackArray(xx, shape=(len(y.data), len(x.data))), FallbackArray(yy, shape=(len(y.data), len(x.data)))]
+        return [
+            FallbackArray(xx, shape=(len(y.data), len(x.data))),
+            FallbackArray(yy, shape=(len(y.data), len(x.data))),
+        ]
 
     # Math operations
     def sqrt(x: "FallbackArray" | float) -> "FallbackArray" | float:
@@ -756,11 +751,7 @@ except ImportError as e:
             FallbackArray with unique elements
 
         """
-        if isinstance(ar, FallbackArray):
-            data = ar.data
-        else:
-            data = ar
-
+        data = ar.data if isinstance(ar, FallbackArray) else ar
         seen = set()
         result = []
         for x in data:
@@ -794,16 +785,16 @@ except ImportError as e:
             FallbackArray with indices that would sort the input
 
         """
-        if isinstance(a, FallbackArray):
-            data = a.data
-        else:
-            data = a
-
+        data = a.data if isinstance(a, FallbackArray) else a
         indices = list(range(len(data)))
         indices.sort(key=lambda i: data[i])
         return FallbackArray(indices)
 
-    def where(condition: "FallbackArray" | list, x: "FallbackArray" | float | None = None, y: "FallbackArray" | float | None = None) -> "FallbackArray" | tuple:
+    def where(
+        condition: "FallbackArray" | list,
+        x: "FallbackArray" | float | None = None,
+        y: "FallbackArray" | float | None = None,
+    ) -> "FallbackArray" | tuple:
         """Return elements chosen from x or y depending on condition.
 
         Args:
@@ -822,17 +813,22 @@ except ImportError as e:
                 indices = [i for i, val in enumerate(condition) if val]
             return (FallbackArray(indices),)
 
-        result = []
         cond_data = condition.data if isinstance(condition, FallbackArray) else condition
         x_data = x.data if isinstance(x, FallbackArray) else [x] * len(cond_data)
         y_data = y.data if isinstance(y, FallbackArray) else [y] * len(cond_data)
 
-        for c, xv, yv in zip(cond_data, x_data, y_data, strict=False):
-            result.append(xv if c else yv)
-
+        result = [
+            xv if c else yv
+            for c, xv, yv in zip(cond_data, x_data, y_data, strict=False)
+        ]
         return FallbackArray(result)
 
-    def allclose(a: "FallbackArray" | list, b: "FallbackArray" | list, rtol: float = 1e-05, atol: float = 1e-08) -> bool:
+    def allclose(
+        a: "FallbackArray" | list,
+        b: "FallbackArray" | list,
+        rtol: float = 1e-05,
+        atol: float = 1e-08,
+    ) -> bool:
         """Check if arrays are element-wise equal within tolerance.
 
         Args:
@@ -851,10 +847,10 @@ except ImportError as e:
         if len(a_data) != len(b_data):
             return False
 
-        for av, bv in zip(a_data, b_data, strict=False):
-            if np_abs(av - bv) > atol + rtol * np_abs(bv):
-                return False
-        return True
+        return all(
+            np_abs(av - bv) <= atol + rtol * np_abs(bv)
+            for av, bv in zip(a_data, b_data, strict=False)
+        )
 
     def array_equal(a: "FallbackArray" | list, b: "FallbackArray" | list) -> bool:
         """Check if arrays are exactly equal.
@@ -897,11 +893,7 @@ except ImportError as e:
             FallbackArray with gradient values using forward, backward, or central differences
 
         """
-        if isinstance(f, FallbackArray):
-            data = f.data
-        else:
-            data = f
-
+        data = f.data if isinstance(f, FallbackArray) else f
         result = []
         for i in range(len(data)):
             if i == 0:
@@ -925,15 +917,9 @@ except ImportError as e:
             FallbackArray with differences
 
         """
-        if isinstance(a, FallbackArray):
-            data = a.data
-        else:
-            data = a
-
+        data = a.data if isinstance(a, FallbackArray) else a
         for _ in range(n):
-            result = []
-            for i in range(1, len(data)):
-                result.append(data[i] - data[i - 1])
+            result = [data[i] - data[i - 1] for i in range(1, len(data))]
             data = result
 
         return FallbackArray(data)
@@ -948,11 +934,7 @@ except ImportError as e:
             FallbackArray with cumulative sum
 
         """
-        if isinstance(a, FallbackArray):
-            data = a.data
-        else:
-            data = a
-
+        data = a.data if isinstance(a, FallbackArray) else a
         result = []
         total = 0
         for val in data:
@@ -961,7 +943,9 @@ except ImportError as e:
 
         return FallbackArray(result)
 
-    def histogram(a: "FallbackArray" | list, bins: int = 10) -> tuple["FallbackArray", "FallbackArray"]:
+    def histogram(
+        a: "FallbackArray" | list, bins: int = 10
+    ) -> tuple["FallbackArray", "FallbackArray"]:
         """Compute histogram.
 
         Args:
@@ -972,11 +956,7 @@ except ImportError as e:
             Tuple of (counts, bin_edges) as FallbackArrays
 
         """
-        if isinstance(a, FallbackArray):
-            data = a.data
-        else:
-            data = a
-
+        data = a.data if isinstance(a, FallbackArray) else a
         if not data:
             return FallbackArray([0] * bins), FallbackArray([0] * (bins + 1))
 
@@ -1007,11 +987,7 @@ except ImportError as e:
             Percentile value, or None if input is empty
 
         """
-        if isinstance(a, FallbackArray):
-            data = sorted(a.data)
-        else:
-            data = sorted(a)
-
+        data = sorted(a.data) if isinstance(a, FallbackArray) else sorted(a)
         if not data:
             return None
 
@@ -1113,18 +1089,16 @@ except ImportError as e:
             Transposed FallbackArray
 
         """
-        if isinstance(a, FallbackArray):
-            if a.ndim != 2:
-                return a
+        if not isinstance(a, FallbackArray):
+            return FallbackArray(a)
+        if a.ndim != 2:
+            return a
 
-            rows, cols = a.shape
-            result = []
-            for j in range(cols):
-                for i in range(rows):
-                    result.append(a.data[i * cols + j])
-
-            return FallbackArray(result, a.dtype, (cols, rows))
-        return FallbackArray(a)
+        rows, cols = a.shape
+        result = []
+        for j in range(cols):
+            result.extend(a.data[i * cols + j] for i in range(rows))
+        return FallbackArray(result, a.dtype, (cols, rows))
 
     # Statistical functions that operate on arrays
     def sum_func(a: "FallbackArray" | list, axis: int | None = None) -> int | float:
@@ -1138,9 +1112,7 @@ except ImportError as e:
             Sum of all elements
 
         """
-        if isinstance(a, FallbackArray):
-            return a.sum(axis)
-        return sum(a)
+        return a.sum(axis) if isinstance(a, FallbackArray) else sum(a)
 
     def mean(a: "FallbackArray" | list, axis: int | None = None) -> int | float:
         """Mean of array elements.
@@ -1352,11 +1324,7 @@ except ImportError as e:
                     Computed norm value
 
                 """
-                if isinstance(x, FallbackArray):
-                    data = x.data
-                else:
-                    data = x
-
+                data = x.data if isinstance(x, FallbackArray) else x
                 if ord is None or ord == 2:
                     return math.sqrt(sum(val**2 for val in data))
                 if ord == 1:
@@ -1387,7 +1355,12 @@ except ImportError as e:
                     if abs(det) < 1e-10:
                         raise ValueError("Matrix is singular")
 
-                    inv_data = [a.data[3] / det, -a.data[1] / det, -a.data[2] / det, a.data[0] / det]
+                    inv_data = [
+                        a.data[3] / det,
+                        -a.data[1] / det,
+                        -a.data[2] / det,
+                        a.data[0] / det,
+                    ]
                     return FallbackArray(inv_data, a.dtype, (2, 2))
 
                 raise ValueError("Input must be a 2x2 FallbackArray")
@@ -1409,11 +1382,7 @@ except ImportError as e:
                     FallbackArray with FFT result as complex numbers
 
                 """
-                if isinstance(a, FallbackArray):
-                    data = a.data
-                else:
-                    data = a
-
+                data = a.data if isinstance(a, FallbackArray) else a
                 N = len(data)
                 result = []
 
@@ -1439,11 +1408,7 @@ except ImportError as e:
                     FallbackArray with inverse FFT result
 
                 """
-                if isinstance(a, FallbackArray):
-                    data = a.data
-                else:
-                    data = a
-
+                data = a.data if isinstance(a, FallbackArray) else a
                 N = len(data)
                 result = []
 
@@ -1453,8 +1418,12 @@ except ImportError as e:
                     for k in range(N):
                         angle = 2 * math.pi * k * n / N
                         if isinstance(data[k], complex):
-                            sum_real += data[k].real * math.cos(angle) - data[k].imag * math.sin(angle)
-                            sum_imag += data[k].real * math.sin(angle) + data[k].imag * math.cos(angle)
+                            sum_real += data[k].real * math.cos(angle) - data[k].imag * math.sin(
+                                angle
+                            )
+                            sum_imag += data[k].real * math.sin(angle) + data[k].imag * math.cos(
+                                angle
+                            )
                         else:
                             sum_real += data[k] * math.cos(angle)
                             sum_imag += data[k] * math.sin(angle)
@@ -1511,7 +1480,9 @@ except ImportError as e:
                 return FallbackArray(data, float, shape)
 
             @staticmethod
-            def randint(low: int, high: int | None = None, size: int | tuple[int, ...] | None = None) -> "FallbackArray" | int:
+            def randint(
+                low: int, high: int | None = None, size: int | tuple[int, ...] | None = None
+            ) -> "FallbackArray" | int:
                 """Random integers.
 
                 Args:
@@ -1541,7 +1512,11 @@ except ImportError as e:
                 return FallbackArray(data, int, size)
 
             @staticmethod
-            def choice(a: "FallbackArray" | int | list, size: int | tuple[int, ...] | None = None, replace: bool = True) -> "FallbackArray" | int | float:
+            def choice(
+                a: "FallbackArray" | int | list,
+                size: int | tuple[int, ...] | None = None,
+                replace: bool = True,
+            ) -> "FallbackArray" | int | float:
                 """Random choice from array.
 
                 Args:
@@ -1577,9 +1552,11 @@ except ImportError as e:
 
                 if replace:
                     result = [_random.choice(data) for _ in range(total)]  # noqa: S311
+                elif total > len(data):
+                    raise ValueError(
+                        "Cannot sample more items than available without replacement"
+                    )
                 else:
-                    if total > len(data):
-                        raise ValueError("Cannot sample more items than available without replacement")
                     result = _random.sample(data, total)
 
                 return FallbackArray(result, None, shape)
@@ -1611,74 +1588,61 @@ except ImportError as e:
 
 # Export all NumPy objects and availability flag
 __all__ = [
-    # Availability flags
     "HAS_NUMPY",
     "NUMPY_VERSION",
-    # Main numpy references
-    "np",
-    "numpy",
-    # Array creation
-    "array",
-    "zeros",
-    "ones",
-    "empty",
-    "full",
-    "eye",
+    "abs",
+    "allclose",
     "arange",
-    "linspace",
-    "meshgrid",
-    # Data types
-    "ndarray",
+    "argmax",
+    "argmin",
+    "argsort",
+    "array",
+    "array_equal",
+    "asarray",
+    "ceil",
+    "concatenate",
+    "cross",
+    "cumsum",
+    "diff",
+    "dot",
     "dtype",
+    "empty",
+    "eye",
+    "fft",
     "float32",
     "float64",
+    "floor",
+    "full",
+    "gradient",
+    "histogram",
     "int32",
     "int64",
-    "uint8",
+    "linalg",
+    "linspace",
+    "max",
+    "mean",
+    "median",
+    "meshgrid",
+    "min",
+    "ndarray",
+    "np",
+    "numpy",
+    "ones",
+    "percentile",
+    "random",
+    "reshape",
+    "round",
+    "sort",
+    "sqrt",
+    "stack",
+    "std",
+    "sum",
+    "transpose",
     "uint16",
     "uint32",
-    # Array manipulation
-    "reshape",
-    "transpose",
-    "concatenate",
-    "stack",
-    # Mathematical operations
-    "sum",
-    "mean",
-    "std",
-    "var",
-    "min",
-    "max",
-    "argmin",
-    "argmax",
-    "dot",
-    "cross",
-    # Submodules
-    "linalg",
-    "fft",
-    "random",
-    # Mathematical functions
-    "sqrt",
-    "abs",
-    "round",
-    "floor",
-    "ceil",
-    # Logical operations
-    "where",
+    "uint8",
     "unique",
-    "sort",
-    "argsort",
-    # Comparison
-    "allclose",
-    "array_equal",
-    # Array conversion
-    "asarray",
-    # Calculus
-    "gradient",
-    "diff",
-    "cumsum",
-    # Statistics
-    "histogram",
-    "percentile",
-    "median",
+    "var",
+    "where",
+    "zeros",
 ]

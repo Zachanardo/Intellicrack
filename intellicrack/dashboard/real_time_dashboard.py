@@ -34,6 +34,7 @@ from typing import TYPE_CHECKING, Any
 
 from websockets.server import WebSocketServerProtocol
 
+
 try:
     import websockets
 
@@ -227,7 +228,9 @@ class RealTimeDashboard:
         """
         self.event_callbacks.append(callback)
 
-    def start_analysis(self, analysis_id: str, tool: str, target: str, options: dict[str, Any] | None = None) -> None:
+    def start_analysis(
+        self, analysis_id: str, tool: str, target: str, options: dict[str, Any] | None = None
+    ) -> None:
         """Start tracking an analysis.
 
         Args:
@@ -274,7 +277,9 @@ class RealTimeDashboard:
                 analysis = self.active_analyses[analysis_id]
                 analysis["status"] = "completed"
                 analysis["end_time"] = datetime.now()
-                analysis["duration"] = (analysis["end_time"] - analysis["start_time"]).total_seconds()
+                analysis["duration"] = (
+                    analysis["end_time"] - analysis["start_time"]
+                ).total_seconds()
 
                 # Store results
                 self.analysis_results[analysis_id] = results
@@ -466,18 +471,18 @@ class RealTimeDashboard:
 
         # Add vulnerability types
         if results.get("vulnerabilities"):
-            vuln_types = set()
-            for vuln in results["vulnerabilities"]:
-                if "type" in vuln:
-                    vuln_types.add(vuln["type"])
+            vuln_types = {
+                vuln["type"]
+                for vuln in results["vulnerabilities"]
+                if "type" in vuln
+            }
             summary["vulnerability_types"] = list(vuln_types)
 
         # Add protection types
         if results.get("protections"):
-            prot_types = set()
-            for prot in results["protections"]:
-                if "type" in prot:
-                    prot_types.add(prot["type"])
+            prot_types = {
+                prot["type"] for prot in results["protections"] if "type" in prot
+            }
             summary["protection_types"] = list(prot_types)
 
         return summary
@@ -573,7 +578,9 @@ class RealTimeDashboard:
             """Render dashboard view using render_template."""
             # Use render_template that was imported
             dashboard_state = self.get_dashboard_state()
-            return render_template("dashboard.html", title="Intellicrack Dashboard", dashboard_state=dashboard_state)
+            return render_template(
+                "dashboard.html", title="Intellicrack Dashboard", dashboard_state=dashboard_state
+            )
 
         @self.flask_app.route("/api/events")
         def get_events() -> object:
@@ -627,12 +634,17 @@ class RealTimeDashboard:
                 try:
                     # Create metrics snapshot
                     with self.metrics_lock:
-                        snapshot = {"timestamp": datetime.now().isoformat(), **self.metrics.to_dict()}
+                        snapshot = {
+                            "timestamp": datetime.now().isoformat(),
+                            **self.metrics.to_dict(),
+                        }
                         self.metrics_history.append(snapshot)
 
                     # Broadcast metrics update
                     if self.websocket_clients:
-                        asyncio.run_coroutine_threadsafe(self._broadcast_metrics(snapshot), self.websocket_loop)
+                        asyncio.run_coroutine_threadsafe(
+                            self._broadcast_metrics(snapshot), self.websocket_loop
+                        )
 
                 except Exception as e:
                     self.logger.error(f"Error in metrics updater: {e}")

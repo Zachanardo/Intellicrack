@@ -34,6 +34,7 @@ from typing import Any
 
 import msgpack
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -342,7 +343,9 @@ class ResultSerializer:
         # Validate protocol version (support versions 1-3)
         SUPPORTED_VERSIONS = [1, 2, 3]
         if version not in SUPPORTED_VERSIONS:
-            raise ValueError(f"Unsupported protocol version: {version}. Supported: {SUPPORTED_VERSIONS}")
+            raise ValueError(
+                f"Unsupported protocol version: {version}. Supported: {SUPPORTED_VERSIONS}"
+            )
 
         # Extract data with version-specific handling
         data_bytes = data[10 : 10 + data_length]
@@ -386,10 +389,7 @@ class ResultSerializer:
         # Create cipher
         cipher = AES.new(self.encryption_key, AES.MODE_CBC, iv)
 
-        # Decrypt
-        decrypted = unpad(cipher.decrypt(encrypted), AES.block_size)
-
-        return decrypted
+        return unpad(cipher.decrypt(encrypted), AES.block_size)
 
     def batch_serialize(self, results: list[BaseResult]) -> bytes:
         """Serialize multiple results efficiently."""
@@ -427,9 +427,7 @@ class CustomJSONEncoder(json.JSONEncoder):
             return obj.value
         if hasattr(obj, "to_dict"):
             return obj.to_dict()
-        if isinstance(obj, Path):
-            return str(obj)
-        return super().default(obj)
+        return str(obj) if isinstance(obj, Path) else super().default(obj)
 
 
 class ResultConverter:
@@ -447,11 +445,15 @@ class ResultConverter:
                 type=ResultType.FUNCTION,
                 source_tool="ghidra",
                 timestamp=datetime.now().timestamp(),
-                address=int(func["address"], 16) if isinstance(func["address"], str) else func["address"],
+                address=int(func["address"], 16)
+                if isinstance(func["address"], str)
+                else func["address"],
                 name=func["name"],
                 size=func.get("size", 0),
                 return_type=func.get("return_type"),
-                parameters=[{"name": p["name"], "type": p["type"]} for p in func.get("parameters", [])],
+                parameters=[
+                    {"name": p["name"], "type": p["type"]} for p in func.get("parameters", [])
+                ],
                 calling_convention=func.get("calling_convention"),
                 decompiled_code=func.get("decompiled"),
             )
@@ -464,7 +466,9 @@ class ResultConverter:
                 type=ResultType.STRING,
                 source_tool="ghidra",
                 timestamp=datetime.now().timestamp(),
-                address=int(string["address"], 16) if isinstance(string["address"], str) else string["address"],
+                address=int(string["address"], 16)
+                if isinstance(string["address"], str)
+                else string["address"],
                 value=string["value"],
                 length=len(string["value"]),
                 references=string.get("xrefs", []),
@@ -502,7 +506,11 @@ class ResultConverter:
                 type=ResultType.STRUCTURE,
                 source_tool="ida_pro",
                 timestamp=datetime.now().timestamp(),
-                metadata={"name": struct_name, "size": struct_data.get("size", 0), "members": struct_data.get("members", [])},
+                metadata={
+                    "name": struct_name,
+                    "size": struct_data.get("size", 0),
+                    "members": struct_data.get("members", []),
+                },
             )
             results.append(result)
 
@@ -524,7 +532,9 @@ class ResultConverter:
                 name=func["name"],
                 size=func.get("size", 0),
                 cyclomatic_complexity=func.get("cc", 0),
-                basic_blocks=[{"start": bb["addr"], "size": bb["size"]} for bb in func.get("bbs", [])],
+                basic_blocks=[
+                    {"start": bb["addr"], "size": bb["size"]} for bb in func.get("bbs", [])
+                ],
             )
             results.append(result)
 
@@ -598,8 +608,12 @@ class ResultConverter:
             result_type = result.type.value
             source_tool = result.source_tool
 
-            export_data["summary"]["by_type"][result_type] = export_data["summary"]["by_type"].get(result_type, 0) + 1
+            export_data["summary"]["by_type"][result_type] = (
+                export_data["summary"]["by_type"].get(result_type, 0) + 1
+            )
 
-            export_data["summary"]["by_tool"][source_tool] = export_data["summary"]["by_tool"].get(source_tool, 0) + 1
+            export_data["summary"]["by_tool"][source_tool] = (
+                export_data["summary"]["by_tool"].get(source_tool, 0) + 1
+            )
 
         return json.dumps(export_data, indent=2, cls=CustomJSONEncoder)

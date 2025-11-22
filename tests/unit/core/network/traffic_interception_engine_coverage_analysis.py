@@ -33,10 +33,10 @@ class CoverageAnalyzer:
         self.functions_found = {}
         self.test_methods = []
 
-    def analyze_source_file(self) -> Dict:
+    def analyze_source_file(self) -> dict:
         """Analyze the source file to identify testable components"""
         try:
-            with open(self.source_file, 'r', encoding='utf-8') as f:
+            with open(self.source_file, encoding='utf-8') as f:
                 source_content = f.read()
 
             tree = ast.parse(source_content)
@@ -76,10 +76,10 @@ class CoverageAnalyzer:
                     return True
         return False
 
-    def analyze_test_file(self) -> List[str]:
+    def analyze_test_file(self) -> list[str]:
         """Analyze the test file to identify test methods"""
         try:
-            with open(self.test_file, 'r', encoding='utf-8') as f:
+            with open(self.test_file, encoding='utf-8') as f:
                 test_content = f.read()
 
             tree = ast.parse(test_content)
@@ -94,7 +94,7 @@ class CoverageAnalyzer:
 
         return self.test_methods
 
-    def calculate_coverage(self) -> Dict:
+    def calculate_coverage(self) -> dict:
         """Calculate test coverage metrics"""
         source_analysis = self.analyze_source_file()
         test_methods = self.analyze_test_file()
@@ -123,7 +123,7 @@ class CoverageAnalyzer:
             'test_methods': test_methods
         }
 
-    def _map_tests_to_components(self, source_analysis: Dict, test_methods: List[str]) -> Set[str]:
+    def _map_tests_to_components(self, source_analysis: dict, test_methods: list[str]) -> set[str]:
         """Map test methods to source components based on naming patterns"""
         covered = set()
 

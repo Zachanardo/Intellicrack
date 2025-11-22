@@ -25,6 +25,7 @@ import logging
 import os
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 # Lazy import of config_manager to prevent circular imports
@@ -38,6 +39,7 @@ def _ensure_config_manager_imported() -> object:
         logger.debug("Lazily importing config_manager for the first time.")
         try:
             from .core.config_manager import get_config as imported_get_config
+
             _get_new_config = imported_get_config
             logger.debug("config_manager imported successfully.")
         except ImportError as e:
@@ -105,15 +107,20 @@ def find_tool(tool_name: str, required_executables: list[str] | None = None) -> 
         Path to the tool executable or None if not found
 
     Examples:
-        >>> find_tool('ghidra')
+        >>> find_tool("ghidra")
         '/opt/ghidra/ghidraRun'
 
-        >>> find_tool('radare2', ['r2', 'rabin2'])
+        >>> find_tool(
+        ...     "radare2",
+        ...     ["r2", "rabin2"],
+        ... )
         '/usr/bin/r2'
 
     """
     if required_executables:
-        logger.debug("Tool search for %s with required executables: %s", tool_name, required_executables)
+        logger.debug(
+            "Tool search for %s with required executables: %s", tool_name, required_executables
+        )
     else:
         logger.debug("Tool search for %s.", tool_name)
     try:
@@ -125,7 +132,12 @@ def find_tool(tool_name: str, required_executables: list[str] | None = None) -> 
             logger.debug(f"Modern tool discovery did not find '{tool_name}'.")
         return tool_path
     except (AttributeError, KeyError, ValueError) as e:
-        logger.warning("Modern tool discovery failed for %s: %s. Falling back to PATH search.", tool_name, e, exc_info=True)
+        logger.warning(
+            "Modern tool discovery failed for %s: %s. Falling back to PATH search.",
+            tool_name,
+            e,
+            exc_info=True,
+        )
         # Fallback to basic PATH search
         import shutil
 
@@ -182,10 +194,17 @@ def get_system_path(path_type: str) -> str | None:
             logger.debug(f"Modern config found path for '{path_type}': '{path}'.")
             return path
         else:
-            logger.debug(f"Modern config did not provide a specific path for '{path_type}'. Checking fallbacks.")
+            logger.debug(
+                f"Modern config did not provide a specific path for '{path_type}'. Checking fallbacks."
+            )
             raise ValueError("Path not found in modern config, attempting fallback.")
     except (AttributeError, KeyError, ValueError, TypeError) as e:
-        logger.warning("Modern system path lookup failed for %s: %s. Attempting fallback.", path_type, e, exc_info=True)
+        logger.warning(
+            "Modern system path lookup failed for %s: %s. Attempting fallback.",
+            path_type,
+            e,
+            exc_info=True,
+        )
         # Fallback to basic paths
         fallback_path = None
         if path_type == "desktop":
@@ -202,7 +221,9 @@ def get_system_path(path_type: str) -> str | None:
         if fallback_path:
             logger.debug(f"Fallback mechanism found path for '{path_type}': '{fallback_path}'.")
         else:
-            logger.warning(f"Fallback mechanism could not find path for '{path_type}'. Returning None.")
+            logger.warning(
+                f"Fallback mechanism could not find path for '{path_type}'. Returning None."
+            )
         return fallback_path
 
 
@@ -225,10 +246,12 @@ class ConfigManager:
 
     Examples:
         >>> config = ConfigManager()
-        >>> config.get('ghidra_path')
+        >>> config.get("ghidra_path")
         '/opt/ghidra/ghidraRun'
 
-        >>> config['log_dir'] = '/var/log/intellicrack'
+        >>> config["log_dir"] = (
+        ...     "/var/log/intellicrack"
+        ... )
         >>> config.save_config()
         True
 
@@ -397,10 +420,14 @@ class ConfigManager:
             return log_dir
         if key == "output_dir":
             output_dir = str(self._modern_config.get_output_dir())
-            logger.debug(f"Legacy key 'output_dir' mapped to modern output directory: '{output_dir}'.")
+            logger.debug(
+                f"Legacy key 'output_dir' mapped to modern output directory: '{output_dir}'."
+            )
             return output_dir
         if key == "temp_dir":
-            temp_dir = self._modern_config.get("directories.temp", str(self._modern_config.get_cache_dir()))
+            temp_dir = self._modern_config.get(
+                "directories.temp", str(self._modern_config.get_cache_dir())
+            )
             logger.debug(f"Legacy key 'temp_dir' mapped to modern temp directory: '{temp_dir}'.")
             return temp_dir
 
@@ -411,7 +438,9 @@ class ConfigManager:
             return result
 
         result = self.config.get(key, default)
-        logger.debug(f"Key '{key}' not found in modern config, falling back to legacy structure. Result: '{result}'.")
+        logger.debug(
+            f"Key '{key}' not found in modern config, falling back to legacy structure. Result: '{result}'."
+        )
         return result
 
     def set(self, key: str, value: object) -> None:
@@ -534,7 +563,7 @@ def load_config(config_path: str = None) -> dict[str, Any]:
 
     Examples:
         >>> config = load_config()
-        >>> print(config['ghidra_path'])
+        >>> print(config["ghidra_path"])
         '/opt/ghidra/ghidraRun'
 
     Note:
@@ -604,7 +633,9 @@ class _LazyConfig(dict):
             except (FileNotFoundError, PermissionError, ValueError, KeyError, ImportError) as e:
                 logger.warning("LazyConfig: Failed to load config, using empty dict: %s", e)
             except Exception as e:
-                logger.exception("LazyConfig: An unexpected error occurred during config loading: %s", e)
+                logger.exception(
+                    "LazyConfig: An unexpected error occurred during config loading: %s", e
+                )
             self._initialized = True
         else:
             logger.debug("LazyConfig: Configuration already loaded.")
@@ -652,8 +683,8 @@ DEFAULT_CONFIG = CONFIG
 # Export main components
 __all__ = [
     "CONFIG",
-    "DEFAULT_CONFIG",
     "ConfigManager",
+    "DEFAULT_CONFIG",
     "find_tool",
     "get_config",
     "get_system_path",

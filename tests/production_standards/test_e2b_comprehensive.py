@@ -39,7 +39,7 @@ class ComprehensiveE2BTester:
         self.capabilities_verified = {}
         self.is_windows = platform.system() == "Windows"
 
-    def run_all_tests(self) -> Dict[str, Any]:
+    def run_all_tests(self) -> dict[str, Any]:
         """Run all comprehensive tests"""
         print("Starting Comprehensive e2b Test Suite for Intellicrack")
         print("=" * 60)
@@ -686,7 +686,7 @@ class ComprehensiveE2BTester:
 
             self.results.append(test)
 
-    def generate_report(self) -> Dict[str, Any]:
+    def generate_report(self) -> dict[str, Any]:
         """Generate comprehensive test report"""
         print("\n" + "=" * 60)
         print("TEST RESULTS SUMMARY")

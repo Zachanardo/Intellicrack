@@ -11,6 +11,7 @@ from ctypes import wintypes
 from dataclasses import dataclass
 from pathlib import Path
 
+
 try:
     import pefile
 
@@ -97,7 +98,11 @@ class StarForceAnalyzer:
     }
 
     ANTI_DEBUG_PATTERNS = {
-        "kernel_debugger_check": [b"\x64\xa1\x1c\x00\x00\x00", b"\xa1\x34\x00\x00\x00", b"\x0f\x20\xc0\xa9\x00\x00\x01\x00"],
+        "kernel_debugger_check": [
+            b"\x64\xa1\x1c\x00\x00\x00",
+            b"\xa1\x34\x00\x00\x00",
+            b"\x0f\x20\xc0\xa9\x00\x00\x01\x00",
+        ],
         "timing_check": [
             b"\x0f\x31",
             b"\xf0\x0f\xc1",
@@ -270,24 +275,23 @@ class StarForceAnalyzer:
             if offset + 6 <= len(data):
                 potential_code = struct.unpack("<I", data[offset + 2 : offset + 6])[0]
 
-                if 0x80000000 <= potential_code <= 0x80FFFFFF:
-                    if potential_code not in self.KNOWN_IOCTLS:
-                        device_type = (potential_code >> 16) & 0xFFFF
-                        function = (potential_code >> 2) & 0xFFF
-                        method = potential_code & 0x3
-                        access = (potential_code >> 14) & 0x3
+                if 0x80000000 <= potential_code <= 0x80FFFFFF and potential_code not in self.KNOWN_IOCTLS:
+                    device_type = (potential_code >> 16) & 0xFFFF
+                    function = (potential_code >> 2) & 0xFFF
+                    method = potential_code & 0x3
+                    access = (potential_code >> 14) & 0x3
 
-                        ioctls.append(
-                            IOCTLCommand(
-                                code=potential_code,
-                                device_type=device_type,
-                                function=function,
-                                method=method,
-                                access=access,
-                                name=f"SF_IOCTL_CUSTOM_{function:03X}",
-                                purpose="Custom IOCTL (purpose unknown)",
-                            ),
-                        )
+                    ioctls.append(
+                        IOCTLCommand(
+                            code=potential_code,
+                            device_type=device_type,
+                            function=function,
+                            method=method,
+                            access=access,
+                            name=f"SF_IOCTL_CUSTOM_{function:03X}",
+                            purpose="Custom IOCTL (purpose unknown)",
+                        ),
+                    )
 
             offset += 1
 
@@ -316,7 +320,10 @@ class StarForceAnalyzer:
 
                         techniques.append(
                             AntiDebugTechnique(
-                                technique=technique_name, address=offset, description=description, bypass_method=bypass_method,
+                                technique=technique_name,
+                                address=offset,
+                                description=description,
+                                bypass_method=bypass_method,
                             ),
                         )
 
@@ -338,7 +345,10 @@ class StarForceAnalyzer:
                 "Uses RDTSC or lock operations to detect time-based anomalies",
                 "Hook RDTSC or normalize timing with hypervisor",
             ),
-            "int2d_detection": ("Detects INT 2D exception used by debuggers", "Hook INT 2D handler or patch checks"),
+            "int2d_detection": (
+                "Detects INT 2D exception used by debuggers",
+                "Hook INT 2D handler or patch checks",
+            ),
             "hardware_breakpoint": (
                 "Checks debug registers DR0-DR7 for hardware breakpoints",
                 "Clear debug registers or hook MOV DRx instructions",
@@ -465,7 +475,15 @@ class StarForceAnalyzer:
             with open(driver_path, "rb") as f:
                 data = f.read()
 
-            validation_keywords = [b"License", b"Serial", b"Activation", b"Registration", b"Validate", b"Check", b"Verify"]
+            validation_keywords = [
+                b"License",
+                b"Serial",
+                b"Activation",
+                b"Registration",
+                b"Validate",
+                b"Check",
+                b"Verify",
+            ]
 
             for keyword in validation_keywords:
                 offset = 0
@@ -476,7 +494,16 @@ class StarForceAnalyzer:
                     validation_functions.append((offset, keyword.decode("utf-8", errors="ignore")))
                     offset += len(keyword)
 
-            crypto_keywords = [b"RSA", b"AES", b"SHA", b"MD5", b"CRC32", b"Encrypt", b"Decrypt", b"Hash"]
+            crypto_keywords = [
+                b"RSA",
+                b"AES",
+                b"SHA",
+                b"MD5",
+                b"CRC32",
+                b"Encrypt",
+                b"Decrypt",
+                b"Hash",
+            ]
 
             for keyword in crypto_keywords:
                 offset = data.find(keyword)
@@ -488,7 +515,11 @@ class StarForceAnalyzer:
                 registry_checks.append((offset, "Registry key access"))
 
             if b"\\\\.\\CdRom" in data or b"\\\\.\\Scsi" in data:
-                offset = data.find(b"\\\\.\\CdRom") if b"\\\\.\\CdRom" in data else data.find(b"\\\\.\\Scsi")
+                offset = (
+                    data.find(b"\\\\.\\CdRom")
+                    if b"\\\\.\\CdRom" in data
+                    else data.find(b"\\\\.\\Scsi")
+                )
                 disc_checks.append((offset, "Disc device access"))
 
             if b"http" in data.lower() or b"https" in data.lower():
@@ -590,10 +621,11 @@ class StarForceAnalyzer:
             pe = pefile.PE(str(driver_path))
 
             if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
-                for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
-                    if exp.name:
-                        exports.append(exp.name.decode("utf-8", errors="ignore"))
-
+                exports.extend(
+                    exp.name.decode("utf-8", errors="ignore")
+                    for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols
+                    if exp.name
+                )
             pe.close()
 
         except Exception as e:
@@ -668,10 +700,11 @@ class StarForceAnalyzer:
             with open(driver_path, "rb") as f:
                 data = f.read()
 
-            for constant, algo_name in crypto_constants.items():
-                if constant in data:
-                    algorithms.append(algo_name)
-
+            algorithms.extend(
+                algo_name
+                for constant, algo_name in crypto_constants.items()
+                if constant in data
+            )
             sbox_pattern = bytes(range(256))
             if sbox_pattern[:64] in data:
                 algorithms.append("AES (S-box detected)")
@@ -681,7 +714,9 @@ class StarForceAnalyzer:
 
         return list(set(algorithms))
 
-    def probe_ioctl(self, device_name: str, ioctl_code: int, input_data: bytes = b"") -> bytes | None:
+    def probe_ioctl(
+        self, device_name: str, ioctl_code: int, input_data: bytes = b""
+    ) -> bytes | None:
         r"""Probe a StarForce device IOCTL command.
 
         Args:
@@ -701,7 +736,9 @@ class StarForceAnalyzer:
         OPEN_EXISTING = 3
 
         try:
-            handle = self._kernel32.CreateFileW(device_name, GENERIC_READ | GENERIC_WRITE, 0, None, OPEN_EXISTING, 0, None)
+            handle = self._kernel32.CreateFileW(
+                device_name, GENERIC_READ | GENERIC_WRITE, 0, None, OPEN_EXISTING, 0, None
+            )
 
             if handle in (-1, 0):
                 return None
@@ -713,11 +750,16 @@ class StarForceAnalyzer:
                 input_buffer = ctypes.create_string_buffer(input_data) if input_data else None
                 input_size = len(input_data) if input_data else 0
 
-                result = self._kernel32.DeviceIoControl(
-                    handle, ioctl_code, input_buffer, input_size, output_buffer, 4096, ctypes.byref(bytes_returned), None,
-                )
-
-                if result:
+                if result := self._kernel32.DeviceIoControl(
+                    handle,
+                    ioctl_code,
+                    input_buffer,
+                    input_size,
+                    output_buffer,
+                    4096,
+                    ctypes.byref(bytes_returned),
+                    None,
+                ):
                     return output_buffer.raw[: bytes_returned.value]
 
             finally:

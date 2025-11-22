@@ -262,7 +262,7 @@ class TestDistributedAnalysisManager(unittest.TestCase):
             self.assertTrue(success)
             self.assertTrue(os.path.exists(output_file))
 
-            with open(output_file, "r", encoding="utf-8") as f:
+            with open(output_file, encoding="utf-8") as f:
                 import json
                 data = json.load(f)
                 self.assertIn("cluster_status", data)

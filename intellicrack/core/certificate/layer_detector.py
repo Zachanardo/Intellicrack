@@ -71,6 +71,7 @@ import lief
 
 from intellicrack.core.certificate.api_signatures import get_all_signatures
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -158,24 +159,43 @@ class ValidationLayerDetector:
     """Detects multiple layers of certificate validation in a target."""
 
     OS_LEVEL_DLLS = {
-        "crypt32.dll", "sspicli.dll", "schannel.dll", "bcrypt.dll",
-        "ncrypt.dll", "cryptsp.dll", "rsaenh.dll",
+        "crypt32.dll",
+        "sspicli.dll",
+        "schannel.dll",
+        "bcrypt.dll",
+        "ncrypt.dll",
+        "cryptsp.dll",
+        "rsaenh.dll",
     }
 
     LIBRARY_LEVEL_LIBS = {
-        "libssl.so", "libssl.dylib", "libssl.so.1.1", "libssl.so.3",
-        "libnss3.so", "libnss3.dylib", "libnspr4.so",
-        "libboringssl.so", "libboringssl.dylib",
+        "libssl.so",
+        "libssl.dylib",
+        "libssl.so.1.1",
+        "libssl.so.3",
+        "libnss3.so",
+        "libnss3.dylib",
+        "libnspr4.so",
+        "libboringssl.so",
+        "libboringssl.dylib",
     }
 
     APPLICATION_LEVEL_INDICATORS = {
-        "certificate pin", "cert pin", "public key pin",
-        "SHA-256", "SHA-1", "X509_verify", "cert_verify",
+        "certificate pin",
+        "cert pin",
+        "public key pin",
+        "SHA-256",
+        "SHA-1",
+        "X509_verify",
+        "cert_verify",
     }
 
     SERVER_LEVEL_INDICATORS = {
-        "activation", "license_server", "validation_endpoint",
-        "auth_server", "verify_license",
+        "activation",
+        "license_server",
+        "validation_endpoint",
+        "auth_server",
+        "verify_license",
     }
 
     def __init__(self) -> None:
@@ -239,26 +259,25 @@ class ValidationLayerDetector:
         )
 
         imported_libs = set()
-        if hasattr(binary, 'imports'):
+        if hasattr(binary, "imports"):
             for imported_lib in binary.imports:
-                lib_name = imported_lib.name.lower() if hasattr(imported_lib, 'name') else ""
+                lib_name = imported_lib.name.lower() if hasattr(imported_lib, "name") else ""
                 imported_libs.add(lib_name)
 
-        os_dll_matches = imported_libs.intersection(
+        if os_dll_matches := imported_libs.intersection(
             {dll.lower() for dll in self.OS_LEVEL_DLLS},
-        )
-
-        if os_dll_matches:
+        ):
             layer_info.confidence = min(len(os_dll_matches) * 0.25, 1.0)
             for dll in os_dll_matches:
                 layer_info.add_evidence(f"Imports OS-level crypto library: {dll}")
 
         os_api_signatures = [
-            sig for sig in self._api_signatures
+            sig
+            for sig in self._api_signatures
             if sig.library.lower() in {dll.lower() for dll in self.OS_LEVEL_DLLS}
         ]
 
-        if os_api_signatures and hasattr(binary, 'imports'):
+        if os_api_signatures and hasattr(binary, "imports"):
             for sig in os_api_signatures[:5]:
                 layer_info.add_evidence(f"Uses OS-level API: {sig.name}")
 
@@ -272,27 +291,28 @@ class ValidationLayerDetector:
         )
 
         imported_libs = set()
-        if hasattr(binary, 'imports'):
+        if hasattr(binary, "imports"):
             for imported_lib in binary.imports:
-                lib_name = imported_lib.name.lower() if hasattr(imported_lib, 'name') else ""
+                lib_name = imported_lib.name.lower() if hasattr(imported_lib, "name") else ""
                 imported_libs.add(lib_name)
 
-        lib_matches = imported_libs.intersection(
+        if lib_matches := imported_libs.intersection(
             {lib.lower() for lib in self.LIBRARY_LEVEL_LIBS},
-        )
-
-        if lib_matches:
+        ):
             layer_info.confidence = min(len(lib_matches) * 0.3, 1.0)
             for lib in lib_matches:
                 layer_info.add_evidence(f"Imports TLS library: {lib}")
 
         lib_api_signatures = [
-            sig for sig in self._api_signatures
-            if any(lib_keyword in sig.library.lower()
-                   for lib_keyword in ["ssl", "tls", "nss", "boring"])
+            sig
+            for sig in self._api_signatures
+            if any(
+                lib_keyword in sig.library.lower()
+                for lib_keyword in ["ssl", "tls", "nss", "boring"]
+            )
         ]
 
-        if lib_api_signatures and hasattr(binary, 'imports'):
+        if lib_api_signatures and hasattr(binary, "imports"):
             for sig in lib_api_signatures[:5]:
                 layer_info.add_evidence(f"Uses TLS library API: {sig.name}")
 
@@ -311,16 +331,15 @@ class ValidationLayerDetector:
 
         try:
             strings_found = set()
-            if hasattr(binary, 'strings'):
+            if hasattr(binary, "strings"):
                 for string in binary.strings:
                     strings_found.add(string.lower())
 
-            indicator_matches = []
-            for indicator in self.APPLICATION_LEVEL_INDICATORS:
-                if any(indicator.lower() in s for s in strings_found):
-                    indicator_matches.append(indicator)
-
-            if indicator_matches:
+            if indicator_matches := [
+                indicator
+                for indicator in self.APPLICATION_LEVEL_INDICATORS
+                if any(indicator.lower() in s for s in strings_found)
+            ]:
                 layer_info.confidence = min(len(indicator_matches) * 0.2, 0.9)
                 for indicator in indicator_matches[:5]:
                     layer_info.add_evidence(
@@ -355,16 +374,15 @@ class ValidationLayerDetector:
 
         try:
             strings_found = set()
-            if hasattr(binary, 'strings'):
+            if hasattr(binary, "strings"):
                 for string in binary.strings:
                     strings_found.add(string.lower())
 
-            indicator_matches = []
-            for indicator in self.SERVER_LEVEL_INDICATORS:
-                if any(indicator.lower() in s for s in strings_found):
-                    indicator_matches.append(indicator)
-
-            if indicator_matches:
+            if indicator_matches := [
+                indicator
+                for indicator in self.SERVER_LEVEL_INDICATORS
+                if any(indicator.lower() in s for s in strings_found)
+            ]:
                 layer_info.confidence = min(len(indicator_matches) * 0.25, 0.9)
                 for indicator in indicator_matches[:3]:
                     layer_info.add_evidence(
@@ -383,12 +401,12 @@ class ValidationLayerDetector:
     def _contains_certificate_hashes(self, strings: set[str]) -> bool:
         """Check if strings contain certificate hashes (SHA-256 or SHA-1)."""
         for string in strings:
-            clean_string = ''.join(c for c in string if c.isalnum())
+            clean_string = "".join(c for c in string if c.isalnum())
 
-            if len(clean_string) == 64 and all(c in '0123456789abcdef' for c in clean_string):
+            if len(clean_string) == 64 and all(c in "0123456789abcdef" for c in clean_string):
                 return True
 
-            if len(clean_string) == 40 and all(c in '0123456789abcdef' for c in clean_string):
+            if len(clean_string) == 40 and all(c in "0123456789abcdef" for c in clean_string):
                 return True
 
         return False
@@ -396,35 +414,29 @@ class ValidationLayerDetector:
     def _contains_embedded_certificates(self, target_path: Path) -> bool:
         """Check if binary contains embedded certificate data."""
         try:
-            with open(target_path, 'rb') as f:
+            with open(target_path, "rb") as f:
                 content = f.read()
 
             cert_markers = [
-                b'-----BEGIN CERTIFICATE-----',
-                b'-----BEGIN RSA PRIVATE KEY-----',
-                b'-----BEGIN PUBLIC KEY-----',
-                b'MII',
+                b"-----BEGIN CERTIFICATE-----",
+                b"-----BEGIN RSA PRIVATE KEY-----",
+                b"-----BEGIN PUBLIC KEY-----",
+                b"MII",
             ]
 
-            for marker in cert_markers:
-                if marker in content:
-                    return True
-
-            return False
-
+            return any(marker in content for marker in cert_markers)
         except Exception as e:
             logger.warning(f"Error checking for embedded certificates: {e}")
             return False
 
     def _contains_http_endpoints(self, strings: set[str]) -> bool:
         """Check if strings contain HTTP/HTTPS endpoints."""
-        http_indicators = ['http://', 'https://', 'api.', '/api/', '/v1/', '/v2/']
+        http_indicators = ["http://", "https://", "api.", "/api/", "/v1/", "/v2/"]
 
-        for string in strings:
-            if any(indicator in string for indicator in http_indicators):
-                return True
-
-        return False
+        return any(
+            any(indicator in string for indicator in http_indicators)
+            for string in strings
+        )
 
     def _establish_dependencies(self, layers: dict[ValidationLayer, LayerInfo]) -> None:
         """Establish dependency relationships between detected layers."""
@@ -433,11 +445,10 @@ class ValidationLayerDetector:
                 ValidationLayer.LIBRARY_LEVEL,
             )
 
-        if ValidationLayer.APPLICATION_LEVEL in layers and ValidationLayer.OS_LEVEL in layers:
-            if ValidationLayer.LIBRARY_LEVEL not in layers:
-                layers[ValidationLayer.APPLICATION_LEVEL].add_dependency(
-                    ValidationLayer.OS_LEVEL,
-                )
+        if ValidationLayer.APPLICATION_LEVEL in layers and ValidationLayer.OS_LEVEL in layers and ValidationLayer.LIBRARY_LEVEL not in layers:
+            layers[ValidationLayer.APPLICATION_LEVEL].add_dependency(
+                ValidationLayer.OS_LEVEL,
+            )
 
         if ValidationLayer.LIBRARY_LEVEL in layers and ValidationLayer.OS_LEVEL in layers:
             layers[ValidationLayer.LIBRARY_LEVEL].add_dependency(

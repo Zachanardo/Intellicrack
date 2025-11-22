@@ -32,6 +32,7 @@ import yara
 
 from intellicrack.utils.logger import logger
 
+
 try:
     from PyQt6.QtCore import QObject, QThread, QTimer, pyqtSignal
     from PyQt6.QtWidgets import (
@@ -517,8 +518,7 @@ class DistributedWorkerThread(QThread):
         logger.info(f"Distributed worker {self.worker_id} started")
 
         while self.running:
-            task = self.get_next_task()
-            if task:
+            if task := self.get_next_task():
                 self.process_task(task)
             else:
                 # No tasks available, wait before checking again
@@ -599,17 +599,15 @@ class DistributedWorkerThread(QThread):
 
         """
         binary_path = task.parameters.get("binary_path")
-        if not binary_path or not os.path.exists(binary_path):
-            # Create test binary if path doesn't exist for testing
-            if binary_path and not os.path.exists(binary_path):
-                os.makedirs(os.path.dirname(binary_path) or ".", exist_ok=True)
-                # Create minimal PE header for testing
-                with open(binary_path, "wb") as f:
-                    f.write(b"MZ" + b"\x00" * 58 + b"\x40\x00\x00\x00")  # Minimal DOS header
-                    f.write(b"\x00" * 64)  # Padding
-                    f.write(b"PE\x00\x00")  # PE signature
-                    f.write(b"\x64\x86" + b"\x00" * 18)  # Minimal COFF header
-                    f.write(b"\x0b\x02" + b"\x00" * 238)  # Minimal optional header
+        if (not binary_path or not os.path.exists(binary_path)) and (binary_path and not os.path.exists(binary_path)):
+            os.makedirs(os.path.dirname(binary_path) or ".", exist_ok=True)
+            # Create minimal PE header for testing
+            with open(binary_path, "wb") as f:
+                f.write(b"MZ" + b"\x00" * 58 + b"\x40\x00\x00\x00")  # Minimal DOS header
+                f.write(b"\x00" * 64)  # Padding
+                f.write(b"PE\x00\x00")  # PE signature
+                f.write(b"\x64\x86" + b"\x00" * 18)  # Minimal COFF header
+                f.write(b"\x0b\x02" + b"\x00" * 238)  # Minimal optional header
 
         results = {
             "binary_path": binary_path,
@@ -652,7 +650,9 @@ class DistributedWorkerThread(QThread):
 
                 # Check for high entropy (possible packing/encryption)
                 if section_data["entropy"] > 7.0:
-                    results["license_indicators"].append(f"High entropy section {section_data['name']}: possible protection")
+                    results["license_indicators"].append(
+                        f"High entropy section {section_data['name']}: possible protection"
+                    )
 
         # Step 3: Extract and analyze strings
         self._update_progress(task, 40, "Extracting strings")
@@ -677,8 +677,13 @@ class DistributedWorkerThread(QThread):
                         func_name = imp.name.decode("utf-8")
                         results["imports"][-1]["functions"].append(func_name)
                         # Check for protection-related APIs
-                        if any(api in func_name.lower() for api in ["crypt", "protect", "verify", "check"]):
-                            results["license_indicators"].append(f"Protection API: {dll_name}!{func_name}")
+                        if any(
+                            api in func_name.lower()
+                            for api in ["crypt", "protect", "verify", "check"]
+                        ):
+                            results["license_indicators"].append(
+                                f"Protection API: {dll_name}!{func_name}"
+                            )
 
         # Step 5: Disassemble and identify functions
         self._update_progress(task, 70, "Identifying functions")
@@ -795,10 +800,22 @@ class DistributedWorkerThread(QThread):
             for i in md.disasm(code, 0x1000):
                 if i.mnemonic == "push" and "rbp" in i.op_str:
                     # Potential function start
-                    functions.append({"address": hex(i.address), "instruction": f"{i.mnemonic} {i.op_str}", "type": "prologue"})
+                    functions.append(
+                        {
+                            "address": hex(i.address),
+                            "instruction": f"{i.mnemonic} {i.op_str}",
+                            "type": "prologue",
+                        }
+                    )
                 elif i.mnemonic == "call":
                     # Function call
-                    functions.append({"address": hex(i.address), "instruction": f"{i.mnemonic} {i.op_str}", "type": "call"})
+                    functions.append(
+                        {
+                            "address": hex(i.address),
+                            "instruction": f"{i.mnemonic} {i.op_str}",
+                            "type": "call",
+                        }
+                    )
         except Exception as e:
             logger.warning(f"Function identification failed: {e}")
 
@@ -854,7 +871,9 @@ class DistributedWorkerThread(QThread):
             test_chars = string.ascii_letters + string.digits
             test_password = "".join(secrets.choice(test_chars) for _ in range(16))
             hash_value = hashlib.sha256(test_password.encode()).hexdigest()
-            logger.info(f"Generated test hash from random password for demonstration: {hash_value[:16]}...")
+            logger.info(
+                f"Generated test hash from random password for demonstration: {hash_value[:16]}..."
+            )
 
         results = {
             "hash": hash_value,
@@ -870,7 +889,12 @@ class DistributedWorkerThread(QThread):
         start_time = time.time()
 
         # Get hash function
-        hash_funcs = {"md5": hashlib.md5, "sha1": hashlib.sha1, "sha256": hashlib.sha256, "sha512": hashlib.sha512}
+        hash_funcs = {
+            "md5": hashlib.md5,
+            "sha1": hashlib.sha1,
+            "sha256": hashlib.sha256,
+            "sha512": hashlib.sha512,
+        }
         hash_func = hash_funcs.get(hash_type, hashlib.md5)
 
         # Generate wordlist if not provided
@@ -898,10 +922,12 @@ class DistributedWorkerThread(QThread):
 
             # Process batch in parallel
             with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-                futures = []
-                for password in batch:
-                    futures.append(executor.submit(self._check_password, password, hash_value, hash_func))
-
+                futures = [
+                    executor.submit(
+                        self._check_password, password, hash_value, hash_func
+                    )
+                    for password in batch
+                ]
                 for future in concurrent.futures.as_completed(futures):
                     password, matches = future.result()
                     results["attempts"] += 1
@@ -925,7 +951,9 @@ class DistributedWorkerThread(QThread):
                 results["candidates_tested"].extend(batch[:5])
 
         results["time_elapsed"] = time.time() - start_time
-        results["hash_rate"] = results["attempts"] / results["time_elapsed"] if results["time_elapsed"] > 0 else 0
+        results["hash_rate"] = (
+            results["attempts"] / results["time_elapsed"] if results["time_elapsed"] > 0 else 0
+        )
 
         return results
 
@@ -943,13 +971,16 @@ class DistributedWorkerThread(QThread):
 
         # Common patterns
         for base in bases:
-            passwords.append(base)
-            passwords.append(base + "123")
-            passwords.append(base + "1234")
-            passwords.append(base + "12345")
-            passwords.append(base.capitalize())
-            passwords.append(base.upper())
-
+            passwords.extend(
+                (
+                    base,
+                    base + "123",
+                    base + "1234",
+                    base + "12345",
+                    base.capitalize(),
+                    base.upper(),
+                )
+            )
             # Add year patterns
             for year in range(2020, 2026):
                 passwords.append(f"{base}{year}")
@@ -969,7 +1000,9 @@ class DistributedWorkerThread(QThread):
 
         return passwords
 
-    def _check_password(self, password: str, target_hash: str, hash_func: object) -> tuple[str, bool]:
+    def _check_password(
+        self, password: str, target_hash: str, hash_func: object
+    ) -> tuple[str, bool]:
         """Check if password matches target hash.
 
         Args:
@@ -997,12 +1030,10 @@ class DistributedWorkerThread(QThread):
         target = task.parameters.get("target")
         scan_type = task.parameters.get("scan_type", "license_protection")
 
-        if not target or not os.path.exists(target):
-            # Create test target if needed
-            if target:
-                os.makedirs(os.path.dirname(target) or ".", exist_ok=True)
-                with open(target, "wb") as f:
-                    f.write(b"MZ" + os.urandom(1024))  # Test binary
+        if (not target or not os.path.exists(target)) and target:
+            os.makedirs(os.path.dirname(target) or ".", exist_ok=True)
+            with open(target, "wb") as f:
+                f.write(b"MZ" + os.urandom(1024))  # Test binary
 
         results = {
             "target": target,
@@ -1073,34 +1104,52 @@ class DistributedWorkerThread(QThread):
                 b"SafeDisc": {"name": "SafeDisc", "type": "drm"},
             }
 
-            for signature, info in protection_signatures.items():
-                if signature in data:
-                    protections.append({"name": info["name"], "type": info["type"], "offset": data.find(signature), "confidence": "high"})
-
+            protections.extend(
+                {
+                    "name": info["name"],
+                    "type": info["type"],
+                    "offset": data.find(signature),
+                    "confidence": "high",
+                }
+                for signature, info in protection_signatures.items()
+                if signature in data
+            )
             # Check for anti-debugging techniques
-            anti_debug_apis = [b"IsDebuggerPresent", b"CheckRemoteDebuggerPresent", b"NtQueryInformationProcess"]
-            for api in anti_debug_apis:
-                if api in data:
-                    protections.append(
-                        {
-                            "name": f"Anti-Debug: {api.decode('utf-8', errors='ignore')}",
-                            "type": "anti-debug",
-                            "offset": data.find(api),
-                            "confidence": "medium",
-                        },
-                    )
-
+            anti_debug_apis = [
+                b"IsDebuggerPresent",
+                b"CheckRemoteDebuggerPresent",
+                b"NtQueryInformationProcess",
+            ]
+            protections.extend(
+                {
+                    "name": f"Anti-Debug: {api.decode('utf-8', errors='ignore')}",
+                    "type": "anti-debug",
+                    "offset": data.find(api),
+                    "confidence": "medium",
+                }
+                for api in anti_debug_apis
+                if api in data
+            )
             # Check for encryption/obfuscation
             entropy = self._calculate_entropy(data[:4096])
             if entropy > 7.5:
-                protections.append({"name": "High Entropy Code", "type": "obfuscation", "entropy": entropy, "confidence": "medium"})
+                protections.append(
+                    {
+                        "name": "High Entropy Code",
+                        "type": "obfuscation",
+                        "entropy": entropy,
+                        "confidence": "medium",
+                    }
+                )
 
         except Exception as e:
             logger.error(f"Protection scan failed: {e}")
 
         return protections
 
-    def _identify_weak_points(self, target: str, protections: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _identify_weak_points(
+        self, target: str, protections: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Identify weak points in protection.
 
         Args:
@@ -1114,27 +1163,47 @@ class DistributedWorkerThread(QThread):
         weak_points = []
 
         # Check for unprotected entry points
-        if not any(p["type"] == "packer" for p in protections):
+        if all(p["type"] != "packer" for p in protections):
             weak_points.append(
-                {"type": "unpacked_code", "description": "Binary is not packed, code is directly accessible", "severity": "high"},
+                {
+                    "type": "unpacked_code",
+                    "description": "Binary is not packed, code is directly accessible",
+                    "severity": "high",
+                },
             )
 
         # Check for weak encryption
         if any(p.get("entropy", 0) < 6 for p in protections):
             weak_points.append(
-                {"type": "weak_encryption", "description": "Low entropy suggests weak or no encryption", "severity": "medium"},
+                {
+                    "type": "weak_encryption",
+                    "description": "Low entropy suggests weak or no encryption",
+                    "severity": "medium",
+                },
             )
 
         # Check for missing anti-debug
-        if not any(p["type"] == "anti-debug" for p in protections):
-            weak_points.append({"type": "no_anti_debug", "description": "No anti-debugging protection detected", "severity": "medium"})
+        if all(p["type"] != "anti-debug" for p in protections):
+            weak_points.append(
+                {
+                    "type": "no_anti_debug",
+                    "description": "No anti-debugging protection detected",
+                    "severity": "medium",
+                }
+            )
 
         # Check for standard CRT initialization
         try:
             with open(target, "rb") as f:
                 data = f.read(4096)
             if b"__scrt_common_main" in data or b"mainCRTStartup" in data:
-                weak_points.append({"type": "standard_crt", "description": "Standard CRT initialization found", "severity": "low"})
+                weak_points.append(
+                    {
+                        "type": "standard_crt",
+                        "description": "Standard CRT initialization found",
+                        "severity": "low",
+                    }
+                )
         except Exception as e:
             logger.debug(f"Weak point detection failed: {e}")
 
@@ -1180,16 +1249,15 @@ class DistributedWorkerThread(QThread):
             rules = yara.compile(source=rules_source)
             matches = rules.match(target)
 
-            for match in matches:
-                vulnerabilities.append(
-                    {
-                        "rule": match.rule,
-                        "description": match.meta.get("description", "Unknown"),
-                        "matches": len(match.strings),
-                        "severity": "medium",
-                    },
-                )
-
+            vulnerabilities.extend(
+                {
+                    "rule": match.rule,
+                    "description": match.meta.get("description", "Unknown"),
+                    "matches": len(match.strings),
+                    "severity": "medium",
+                }
+                for match in matches
+            )
         except Exception as e:
             logger.warning(f"YARA scan failed: {e}")
             # Fallback pattern matching
@@ -1200,12 +1268,20 @@ class DistributedWorkerThread(QThread):
                 # Look for weak patterns
                 if b"strcmp" in data or b"strcmpi" in data:
                     vulnerabilities.append(
-                        {"pattern": "String comparison", "description": "Direct string comparison for license check", "severity": "high"},
+                        {
+                            "pattern": "String comparison",
+                            "description": "Direct string comparison for license check",
+                            "severity": "high",
+                        },
                     )
 
                 if b"trial" in data.lower() or b"expire" in data.lower():
                     vulnerabilities.append(
-                        {"pattern": "Trial/Expiration", "description": "Trial or expiration logic detected", "severity": "medium"},
+                        {
+                            "pattern": "Trial/Expiration",
+                            "description": "Trial or expiration logic detected",
+                            "severity": "medium",
+                        },
                     )
 
             except Exception as e2:
@@ -1213,7 +1289,9 @@ class DistributedWorkerThread(QThread):
 
         return vulnerabilities
 
-    def _analyze_bypass_techniques(self, protections: list[dict[str, Any]], weak_points: list[dict[str, Any]]) -> list[dict[str, str]]:
+    def _analyze_bypass_techniques(
+        self, protections: list[dict[str, Any]], weak_points: list[dict[str, Any]]
+    ) -> list[dict[str, str]]:
         """Determine applicable bypass techniques.
 
         Args:
@@ -1238,36 +1316,70 @@ class DistributedWorkerThread(QThread):
                 )
             elif protection["type"] == "anti-debug":
                 techniques.append(
-                    {"technique": "Anti-Debug Bypass", "description": f"Patch or hook {protection['name']}", "difficulty": "easy"},
+                    {
+                        "technique": "Anti-Debug Bypass",
+                        "description": f"Patch or hook {protection['name']}",
+                        "difficulty": "easy",
+                    },
                 )
             elif protection["type"] == "virtualizer":
                 techniques.append(
-                    {"technique": "Devirtualization", "description": f"Analyze {protection['name']} VM bytecode", "difficulty": "hard"},
+                    {
+                        "technique": "Devirtualization",
+                        "description": f"Analyze {protection['name']} VM bytecode",
+                        "difficulty": "hard",
+                    },
                 )
 
         # Based on weak points
         for weak_point in weak_points:
             if weak_point["type"] == "unpacked_code":
                 techniques.append(
-                    {"technique": "Direct Patching", "description": "Patch license checks directly in unpacked code", "difficulty": "easy"},
+                    {
+                        "technique": "Direct Patching",
+                        "description": "Patch license checks directly in unpacked code",
+                        "difficulty": "easy",
+                    },
                 )
             elif weak_point["type"] == "no_anti_debug":
                 techniques.append(
-                    {"technique": "Runtime Debugging", "description": "Use debugger to trace and modify execution", "difficulty": "easy"},
+                    {
+                        "technique": "Runtime Debugging",
+                        "description": "Use debugger to trace and modify execution",
+                        "difficulty": "easy",
+                    },
                 )
             elif weak_point["type"] == "weak_encryption":
-                techniques.append({"technique": "Cryptanalysis", "description": "Analyze weak encryption scheme", "difficulty": "medium"})
+                techniques.append(
+                    {
+                        "technique": "Cryptanalysis",
+                        "description": "Analyze weak encryption scheme",
+                        "difficulty": "medium",
+                    }
+                )
 
-        # General techniques
-        techniques.append({"technique": "API Hooking", "description": "Hook license validation APIs", "difficulty": "medium"})
-
-        techniques.append(
-            {"technique": "Memory Patching", "description": "Patch license checks in memory at runtime", "difficulty": "easy"},
+        techniques.extend(
+            (
+                {
+                    "technique": "API Hooking",
+                    "description": "Hook license validation APIs",
+                    "difficulty": "medium",
+                },
+                {
+                    "technique": "Memory Patching",
+                    "description": "Patch license checks in memory at runtime",
+                    "difficulty": "easy",
+                },
+            )
         )
-
         return techniques
 
-    def _assess_risk(self, protections: list[dict[str, Any]], vulnerabilities: list[dict[str, Any]], weak_points: list[dict[str, Any]]) -> dict[str, Any]:
+    def _assess_risk(
+        self,
+        protections: list[dict[str, Any]],
+        vulnerabilities: list[dict[str, Any]],
+        weak_points: list[dict[str, Any]],
+    ) -> dict[str, Any]:
         """Assess overall protection risk level.
 
         Args:
@@ -1337,14 +1449,22 @@ class DistributedWorkerThread(QThread):
         recommendations = []
 
         if risk_assessment["level"] in ["critical", "high"]:
-            recommendations.append("Implement strong packing/obfuscation")
-            recommendations.append("Add multiple layers of anti-debugging")
-            recommendations.append("Use hardware-based license verification")
-            recommendations.append("Implement code virtualization")
+            recommendations.extend(
+                (
+                    "Implement strong packing/obfuscation",
+                    "Add multiple layers of anti-debugging",
+                    "Use hardware-based license verification",
+                    "Implement code virtualization",
+                )
+            )
         elif risk_assessment["level"] == "medium":
-            recommendations.append("Enhance encryption algorithms")
-            recommendations.append("Add integrity checks")
-            recommendations.append("Implement anti-tampering measures")
+            recommendations.extend(
+                (
+                    "Enhance encryption algorithms",
+                    "Add integrity checks",
+                    "Implement anti-tampering measures",
+                )
+            )
         else:
             recommendations.append("Consider adding obfuscation")
             recommendations.append("Monitor for suspicious activity")
@@ -1382,10 +1502,14 @@ class DistributedWorkerThread(QThread):
         results["key_algorithms"] = self._identify_key_algorithms(target_file)
 
         self._update_progress(task, 60, "Determining license type")
-        results["license_type"] = self._determine_license_type(results["validation_methods"], results["key_algorithms"])
+        results["license_type"] = self._determine_license_type(
+            results["validation_methods"], results["key_algorithms"]
+        )
 
         self._update_progress(task, 80, "Developing bypass strategies")
-        results["bypass_strategies"] = self._develop_bypass_strategies(results["license_type"], results["validation_methods"])
+        results["bypass_strategies"] = self._develop_bypass_strategies(
+            results["license_type"], results["validation_methods"]
+        )
 
         self._update_progress(task, 100, "Analysis complete")
         results["confidence"] = self._calculate_confidence(results)
@@ -1419,9 +1543,15 @@ class DistributedWorkerThread(QThread):
                 data = b"test_data"
 
             for method_type, patterns in validation_patterns.items():
-                for pattern in patterns:
-                    if pattern.encode() in data.lower():
-                        methods.append({"type": method_type, "pattern": pattern, "confidence": "high" if len(pattern) > 5 else "medium"})
+                methods.extend(
+                    {
+                        "type": method_type,
+                        "pattern": pattern,
+                        "confidence": "high" if len(pattern) > 5 else "medium",
+                    }
+                    for pattern in patterns
+                    if pattern.encode() in data.lower()
+                )
         except Exception as e:
             logger.warning(f"Validation analysis failed: {e}")
 
@@ -1463,7 +1593,9 @@ class DistributedWorkerThread(QThread):
 
         return list(set(algorithms))
 
-    def _determine_license_type(self, validation_methods: list[dict[str, Any]], key_algorithms: list[str]) -> str:
+    def _determine_license_type(
+        self, validation_methods: list[dict[str, Any]], key_algorithms: list[str]
+    ) -> str:
         """Determine the type of license protection.
 
         Args:
@@ -1486,7 +1618,9 @@ class DistributedWorkerThread(QThread):
             return "key_based"
         return "simple_check"
 
-    def _develop_bypass_strategies(self, license_type: str, validation_methods: list[dict[str, Any]]) -> list[dict[str, str]]:
+    def _develop_bypass_strategies(
+        self, license_type: str, validation_methods: list[dict[str, Any]]
+    ) -> list[dict[str, str]]:
         """Develop strategies to bypass the license.
 
         Args:
@@ -1502,7 +1636,10 @@ class DistributedWorkerThread(QThread):
         strategy_map = {
             "cloud_based": [
                 {"method": "Server Emulation", "description": "Emulate license server responses"},
-                {"method": "Response Interception", "description": "Intercept and modify server responses"},
+                {
+                    "method": "Response Interception",
+                    "description": "Intercept and modify server responses",
+                },
             ],
             "hardware_locked": [
                 {"method": "Hardware Spoofing", "description": "Spoof hardware identifiers"},
@@ -1524,10 +1661,15 @@ class DistributedWorkerThread(QThread):
 
         strategies.extend(strategy_map.get(license_type, []))
 
-        # Add universal strategies
-        strategies.append({"method": "Memory Patching", "description": "Patch validation in memory"})
-        strategies.append({"method": "API Hooking", "description": "Hook validation APIs"})
-
+        strategies.extend(
+            (
+                {
+                    "method": "Memory Patching",
+                    "description": "Patch validation in memory",
+                },
+                {"method": "API Hooking", "description": "Hook validation APIs"},
+            )
+        )
         return strategies
 
     def _calculate_confidence(self, results: dict[str, Any]) -> float:
@@ -1564,7 +1706,13 @@ class DistributedWorkerThread(QThread):
         operation = task.parameters.get("operation", "analyze")
         target = task.parameters.get("target", "")
 
-        results = {"task_type": task.task_type, "operation": operation, "target": target, "processed_data": {}, "status": "processing"}
+        results = {
+            "task_type": task.task_type,
+            "operation": operation,
+            "target": target,
+            "processed_data": {},
+            "status": "processing",
+        }
 
         # Perform real operations based on task parameters
         if operation == "analyze":
@@ -1577,10 +1725,17 @@ class DistributedWorkerThread(QThread):
         elif operation == "process":
             # Process data
             data_size = task.parameters.get("data_size", 1000)
-            results["processed_data"] = {"bytes_processed": data_size, "chunks": data_size // 256, "status": "processed"}
+            results["processed_data"] = {
+                "bytes_processed": data_size,
+                "chunks": data_size // 256,
+                "status": "processed",
+            }
         else:
             # Default processing
-            results["processed_data"] = {"parameters_received": len(task.parameters), "processing_complete": True}
+            results["processed_data"] = {
+                "parameters_received": len(task.parameters),
+                "processing_complete": True,
+            }
 
         # Update progress
         task.progress = 100.0
@@ -1653,7 +1808,15 @@ class DistributedProcessingDialog(QDialog):
         add_layout.addWidget(QLabel("Task Type:"))
 
         self.task_type_combo = QComboBox()
-        self.task_type_combo.addItems(["binary_analysis", "password_cracking", "vulnerability_scan", "license_analysis", "generic_task"])
+        self.task_type_combo.addItems(
+            [
+                "binary_analysis",
+                "password_cracking",
+                "vulnerability_scan",
+                "license_analysis",
+                "generic_task",
+            ]
+        )
         add_layout.addWidget(self.task_type_combo)
 
         self.add_task_button = QPushButton("Add Task")
@@ -1741,13 +1904,27 @@ class DistributedProcessingDialog(QDialog):
             # Generate real test hash
             test_password = f"test{self.task_counter}"
             test_hash = hashlib.sha256(test_password.encode()).hexdigest()
-            parameters = {"hash": test_hash, "hash_type": "sha256", "wordlist": "./wordlists/common.txt", "max_attempts": 1000}
+            parameters = {
+                "hash": test_hash,
+                "hash_type": "sha256",
+                "wordlist": "./wordlists/common.txt",
+                "max_attempts": 1000,
+            }
         elif task_type == "vulnerability_scan":
-            parameters = {"target": f"./test_binaries/target_{self.task_counter}.exe", "scan_type": "license_protection"}
+            parameters = {
+                "target": f"./test_binaries/target_{self.task_counter}.exe",
+                "scan_type": "license_protection",
+            }
         elif task_type == "license_analysis":
-            parameters = {"target": f"./test_binaries/licensed_{self.task_counter}.exe", "depth": "standard"}
+            parameters = {
+                "target": f"./test_binaries/licensed_{self.task_counter}.exe",
+                "depth": "standard",
+            }
         else:
-            parameters = {"operation": "analyze", "target": f"./test_data/file_{self.task_counter}.dat"}
+            parameters = {
+                "operation": "analyze",
+                "target": f"./test_data/file_{self.task_counter}.dat",
+            }
 
         task = DistributedTask(task_id, task_type, parameters)
         self.tasks.append(task)
@@ -1805,7 +1982,9 @@ class DistributedProcessingDialog(QDialog):
             status = task.status.value
             status_counts[status] = status_counts.get(status, 0) + 1
 
-        status_summary = ", ".join([f"{status}: {count}" for status, count in status_counts.items()])
+        status_summary = ", ".join(
+            [f"{status}: {count}" for status, count in status_counts.items()]
+        )
         self.update_status_text(f"Status summary - {status_summary}")
 
     def update_status_text(self, message: str) -> None:
@@ -1896,10 +2075,10 @@ class DistributedProcessing:
             Task status information or None if not found
 
         """
-        for task in self.tasks:
-            if task.task_id == task_id:
-                return task.to_dict()
-        return None
+        return next(
+            (task.to_dict() for task in self.tasks if task.task_id == task_id),
+            None,
+        )
 
     def get_all_tasks(self) -> list[dict[str, Any]]:
         """Get status of all tasks.
@@ -1921,7 +2100,10 @@ class DistributedProcessing:
 
         """
         for task in self.tasks:
-            if task.task_id == task_id and task.status in [ProcessingStatus.QUEUED, ProcessingStatus.RUNNING]:
+            if task.task_id == task_id and task.status in [
+                ProcessingStatus.QUEUED,
+                ProcessingStatus.RUNNING,
+            ]:
                 task.status = ProcessingStatus.CANCELLED
                 logger.info(f"Cancelled task {task_id}")
                 return True

@@ -36,6 +36,7 @@ from typing import TypedDict
 
 from ...utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 _secrets_manager_module: object = None
@@ -51,6 +52,7 @@ def _get_secrets_manager() -> object:
     global _secrets_manager_module
     if _secrets_manager_module is None:
         from ...utils import secrets_manager as _imported_secrets_manager
+
         _secrets_manager_module = _imported_secrets_manager
     return _secrets_manager_module
 
@@ -552,7 +554,9 @@ class AuditLogger:
             ),
         )
 
-    def log_binary_analysis(self, file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]) -> None:
+    def log_binary_analysis(
+        self, file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]
+    ) -> None:
         """Log binary analysis results.
 
         Records binary analysis operations including detected protections,
@@ -582,7 +586,9 @@ class AuditLogger:
             ),
         )
 
-    def log_vm_operation(self, operation: str, vm_name: str, success: bool = True, error: str | None = None) -> None:
+    def log_vm_operation(
+        self, operation: str, vm_name: str, success: bool = True, error: str | None = None
+    ) -> None:
         """Log VM-related operations.
 
         Records virtual machine operations such as start, stop, and snapshot
@@ -618,7 +624,13 @@ class AuditLogger:
             ),
         )
 
-    def log_credential_access(self, credential_type: str, purpose: str, success: bool = True, severity: AuditSeverity = None) -> None:
+    def log_credential_access(
+        self,
+        credential_type: str,
+        purpose: str,
+        success: bool = True,
+        severity: AuditSeverity = None,
+    ) -> None:
         """Log credential access attempts.
 
         Args:
@@ -631,13 +643,18 @@ class AuditLogger:
         # Determine appropriate severity level based on context
         if severity is None:
             # Lower severity for routine system initialization operations
-            if any(init_term in purpose.lower() for init_term in ["initialization", "setup", "startup", "generation"]):
+            if any(
+                init_term in purpose.lower()
+                for init_term in ["initialization", "setup", "startup", "generation"]
+            ):
                 severity = AuditSeverity.LOW
             # Medium severity for operational credential access
             elif any(op_term in purpose.lower() for op_term in ["retrieval", "access", "usage"]):
                 severity = AuditSeverity.LOW  # Changed from MEDIUM to LOW for routine operations
             # High severity for suspicious or failure cases
-            elif not success or any(warn_term in purpose.lower() for warn_term in ["failed", "unauthorized", "invalid"]):
+            elif not success or any(
+                warn_term in purpose.lower() for warn_term in ["failed", "unauthorized", "invalid"]
+            ):
                 severity = AuditSeverity.HIGH
             else:
                 severity = AuditSeverity.MEDIUM
@@ -741,9 +758,9 @@ class AuditLogger:
                                 logger.error(f"Hash chain broken at line {line_num}")
                                 return False
 
-                        # Verify event hash
-                        stored_hash = event_data.get("details", {}).get("hash")
-                        if stored_hash:
+                        if stored_hash := event_data.get("details", {}).get(
+                            "hash"
+                        ):
                             # Remove hash from data to recalculate
                             details = event_data.get("details", {}).copy()
                             details.pop("hash", None)
@@ -858,7 +875,9 @@ class AuditLogger:
 
         return results
 
-    def generate_report(self, start_time: datetime, end_time: datetime, output_file: Path | None = None) -> str:
+    def generate_report(
+        self, start_time: datetime, end_time: datetime, output_file: Path | None = None
+    ) -> str:
         """Generate an audit report for a time period.
 
         Creates a formatted text report summarizing audit activities within
@@ -921,9 +940,7 @@ Events by User:
         for user, count in sorted(by_user.items(), key=lambda x: x[1], reverse=True):
             report += f"  {user}: {count}\n"
 
-        # Add critical events detail
-        critical_events = [e for e in events if e["severity"] == "critical"]
-        if critical_events:
+        if critical_events := [e for e in events if e["severity"] == "critical"]:
             report += f"""
 Critical Events ({len(critical_events)}):
 ----------------------------------------
@@ -1014,7 +1031,9 @@ class PerformanceMonitor:
                 if duration > 5.0:  # More than 5 seconds
                     logger.warning(f"Slow operation {operation}: {duration:.2f}s")
 
-    def increment_counter(self, metric: str, value: int = 1, tags: dict[str, Any] | None = None) -> None:
+    def increment_counter(
+        self, metric: str, value: int = 1, tags: dict[str, Any] | None = None
+    ) -> None:
         """Increment a counter metric.
 
         Updates a counter metric by a specified value, optionally tagged with
@@ -1082,7 +1101,9 @@ class PerformanceMonitor:
                         "p50": sorted_values[int(0.5 * length)],
                         "p90": sorted_values[int(0.9 * length)],
                         "p95": sorted_values[int(0.95 * length)],
-                        "p99": sorted_values[int(0.99 * length)] if length > 10 else sorted_values[-1],
+                        "p99": sorted_values[int(0.99 * length)]
+                        if length > 10
+                        else sorted_values[-1],
                     }
 
             summary["percentiles"] = percentiles
@@ -1616,7 +1637,9 @@ def log_exploit_attempt(target: str, exploit_type: str, **kwargs: object) -> Non
     get_audit_logger().log_exploit_attempt(target, exploit_type, **kwargs)
 
 
-def log_binary_analysis(file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]) -> None:
+def log_binary_analysis(
+    file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]
+) -> None:
     """Log binary analysis.
 
     Args:

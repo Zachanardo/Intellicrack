@@ -22,8 +22,6 @@ import sys
 
 from intellicrack.handlers.pyqt6_handler import (
     HAS_PYQT as HAS_QT,
-)
-from intellicrack.handlers.pyqt6_handler import (
     QDialog,
     QHBoxLayout,
     QLabel,
@@ -37,6 +35,7 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 from intellicrack.utils.logger import logger
+
 
 """Smart program selector dialog for choosing target applications."""
 
@@ -184,9 +183,7 @@ class SmartProgramSelectorDialog(QDialog):
         paths = []
 
         if sys.platform.startswith("win"):
-            # Windows paths
-            user_profile = os.environ.get("USERPROFILE", "")
-            if user_profile:
+            if user_profile := os.environ.get("USERPROFILE", ""):
                 paths.extend(
                     [
                         os.path.join(user_profile, "Desktop"),
@@ -208,9 +205,7 @@ class SmartProgramSelectorDialog(QDialog):
                 ],
             )
         elif sys.platform.startswith("linux"):
-            # Linux paths
-            home = os.environ.get("HOME", "")
-            if home:
+            if home := os.environ.get("HOME", ""):
                 paths.extend(
                     [
                         os.path.join(home, "Desktop"),
@@ -224,9 +219,7 @@ class SmartProgramSelectorDialog(QDialog):
                 ],
             )
         elif sys.platform.startswith("darwin"):
-            # macOS paths
-            home = os.environ.get("HOME", "")
-            if home:
+            if home := os.environ.get("HOME", ""):
                 paths.extend(
                     [
                         os.path.join(home, "Desktop"),
@@ -263,8 +256,7 @@ class SmartProgramSelectorDialog(QDialog):
 
     def analyze_selected_program(self) -> None:
         """Analyze the selected program."""
-        current_item = self.programs_list.currentItem()
-        if current_item:
+        if current_item := self.programs_list.currentItem():
             self.selected_program = current_item.data(32)
             self.accept()
 

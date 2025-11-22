@@ -51,7 +51,7 @@ class ProductionReadinessValidator:
             files_checked += 1
 
             try:
-                with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(full_path, encoding='utf-8', errors='ignore') as f:
                     content = f.read()
 
                 # Search for forbidden strings
@@ -113,7 +113,7 @@ class ProductionReadinessValidator:
             return False
 
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(file_path, encoding='utf-8', errors='ignore') as f:
                 content = f.read()
 
             # Check for required imports
@@ -220,7 +220,7 @@ class ProductionReadinessValidator:
                 continue
 
             try:
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(file_path, encoding='utf-8', errors='ignore') as f:
                     content = f.read()
 
                 # Check class exists
@@ -262,7 +262,7 @@ class ProductionReadinessValidator:
             return False
 
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(file_path, encoding='utf-8', errors='ignore') as f:
                 content = f.read()
 
             # Check for template return values

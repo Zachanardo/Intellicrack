@@ -317,8 +317,8 @@ class RealProcessManager:
         self.running_processes = {}
         self.process_counter = 0
 
-    def start_process(self, command: List[str], working_dir: str = None,
-                     timeout: int = 30) -> Tuple[int, subprocess.Popen]:
+    def start_process(self, command: list[str], working_dir: str = None,
+                     timeout: int = 30) -> tuple[int, subprocess.Popen]:
         """Start a real process and return PID."""
         try:
             process = subprocess.Popen(
@@ -343,7 +343,7 @@ class RealProcessManager:
         except Exception as e:
             raise RuntimeError(f"Failed to start process: {e}")
 
-    def get_process_output(self, process_id: int) -> Tuple[str, str, int]:
+    def get_process_output(self, process_id: int) -> tuple[str, str, int]:
         """Get process output and return code."""
         if process_id not in self.running_processes:
             raise ValueError(f"Process {process_id} not found")
@@ -391,7 +391,7 @@ class RealQEMUManager:
         self.running_vms = {}
         self.vm_counter = 0
 
-    def create_script_test_snapshot(self, binary_path: str, vm_config: Dict[str, Any]) -> str:
+    def create_script_test_snapshot(self, binary_path: str, vm_config: dict[str, Any]) -> str:
         """Create a real VM snapshot for script testing."""
         self.vm_counter += 1
         snapshot_id = f"test_snapshot_{self.vm_counter}"
@@ -408,7 +408,7 @@ class RealQEMUManager:
         return snapshot_id
 
     def test_script_in_vm(self, snapshot_id: str, script_content: str,
-                         script_type: str) -> Dict[str, Any]:
+                         script_type: str) -> dict[str, Any]:
         """Execute script in VM and return results."""
         if snapshot_id not in self.snapshots:
             raise ValueError(f"Snapshot {snapshot_id} not found")

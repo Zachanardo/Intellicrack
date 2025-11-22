@@ -25,6 +25,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
 except ImportError:
@@ -51,15 +52,7 @@ try:
     from reportlab.lib.pagesizes import A4, letter
     from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
     from reportlab.lib.units import inch
-    from reportlab.platypus import (
-        Image,
-        PageBreak,
-        Paragraph,
-        SimpleDocTemplate,
-        Spacer,
-        Table,
-        TableStyle,
-    )
+    from reportlab.platypus import Image, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
     # Verify reportlab page size formats are available for document layout
     assert isinstance(A4, tuple)
@@ -103,11 +96,15 @@ class ReportGenerator:
 
         # Initialize Jinja2 environment if available
         if HAS_JINJA2:
-            self.jinja_env = Environment(loader=FileSystemLoader(str(self.template_dir)), autoescape=True)
+            self.jinja_env = Environment(
+                loader=FileSystemLoader(str(self.template_dir)), autoescape=True
+            )
         else:
             self.jinja_env = None
 
-    def generate_report(self, analysis_data: dict[str, Any], format: str = "json", output_file: str | None = None) -> str:
+    def generate_report(
+        self, analysis_data: dict[str, Any], format: str = "json", output_file: str | None = None
+    ) -> str:
         """Generate report in specified format."""
         result = self._prepare_analysis_result(analysis_data)
 
@@ -175,7 +172,7 @@ class ReportGenerator:
 
     def _generate_html_without_template(self, result: AnalysisResult) -> str:
         """Generate HTML report without Jinja2."""
-        html = f"""<!DOCTYPE html>
+        return f"""<!DOCTYPE html>
 <html>
 <head>
     <title>Binary Analysis Report - {result.target_file}</title>
@@ -226,7 +223,6 @@ class ReportGenerator:
     </ul>
 </body>
 </html>"""
-        return html
 
     def _generate_pdf_report(self, result: AnalysisResult, output_path: Path) -> str:
         """Generate PDF format report."""
@@ -242,13 +238,19 @@ class ReportGenerator:
 
         # Title
         title_style = ParagraphStyle(
-            "CustomTitle", parent=styles["Heading1"], fontSize=24, textColor=colors.HexColor("#333333"), spaceAfter=30,
+            "CustomTitle",
+            parent=styles["Heading1"],
+            fontSize=24,
+            textColor=colors.HexColor("#333333"),
+            spaceAfter=30,
         )
-        story.append(Paragraph("Binary Analysis Report", title_style))
-        story.append(Spacer(1, 12))
-
-        # File Information
-        story.append(Paragraph("File Information", styles["Heading2"]))
+        story.extend(
+            (
+                Paragraph("Binary Analysis Report", title_style),
+                Spacer(1, 12),
+                Paragraph("File Information", styles["Heading2"]),
+            )
+        )
         file_data = [
             ["Target File:", result.target_file],
             ["File Hash:", result.file_hash],
@@ -271,9 +273,7 @@ class ReportGenerator:
                 ],
             ),
         )
-        story.append(file_table)
-        story.append(Spacer(1, 20))
-
+        story.extend((file_table, Spacer(1, 20)))
         # Vulnerabilities
         if result.vulnerabilities:
             story.append(Paragraph("Vulnerabilities Found", styles["Heading2"]))
@@ -283,7 +283,9 @@ class ReportGenerator:
                     [
                         v.get("type", "Unknown"),
                         v.get("severity", "Unknown"),
-                        v.get("description", "")[:50] + "..." if len(v.get("description", "")) > 50 else v.get("description", ""),
+                        v.get("description", "")[:50] + "..."
+                        if len(v.get("description", "")) > 50
+                        else v.get("description", ""),
                     ],
                 )
 
@@ -302,9 +304,7 @@ class ReportGenerator:
                     ],
                 ),
             )
-            story.append(vuln_table)
-            story.append(Spacer(1, 20))
-
+            story.extend((vuln_table, Spacer(1, 20)))
         # Protections
         if result.protections:
             story.append(Paragraph("Protection Mechanisms", styles["Heading2"]))
@@ -314,7 +314,9 @@ class ReportGenerator:
                     [
                         p.get("type", "Unknown"),
                         p.get("status", "Unknown"),
-                        p.get("details", "")[:50] + "..." if len(p.get("details", "")) > 50 else p.get("details", ""),
+                        p.get("details", "")[:50] + "..."
+                        if len(p.get("details", "")) > 50
+                        else p.get("details", ""),
                     ],
                 )
 
@@ -333,9 +335,7 @@ class ReportGenerator:
                     ],
                 ),
             )
-            story.append(prot_table)
-            story.append(Spacer(1, 20))
-
+            story.extend((prot_table, Spacer(1, 20)))
         # Recommendations
         if result.recommendations:
             story.append(Paragraph("Recommendations", styles["Heading2"]))
@@ -411,14 +411,23 @@ class ReportGenerator:
             writer.writerow(["Vulnerabilities"])
             writer.writerow(["Type", "Severity", "Description", "Location"])
             for v in result.vulnerabilities:
-                writer.writerow([v.get("type", "Unknown"), v.get("severity", "Unknown"), v.get("description", ""), v.get("location", "")])
+                writer.writerow(
+                    [
+                        v.get("type", "Unknown"),
+                        v.get("severity", "Unknown"),
+                        v.get("description", ""),
+                        v.get("location", ""),
+                    ]
+                )
             writer.writerow([])
 
             # Write protections
             writer.writerow(["Protection Mechanisms"])
             writer.writerow(["Type", "Status", "Details"])
             for p in result.protections:
-                writer.writerow([p.get("type", "Unknown"), p.get("status", "Unknown"), p.get("details", "")])
+                writer.writerow(
+                    [p.get("type", "Unknown"), p.get("status", "Unknown"), p.get("details", "")]
+                )
             writer.writerow([])
 
             # Write recommendations
@@ -447,9 +456,7 @@ class ReportGenerator:
 """
 
         for v in result.vulnerabilities:
-            md_content += (
-                f"| {v.get('type', 'Unknown')} | {v.get('severity', 'Unknown')} | {v.get('description', '')} | {v.get('location', '')} |\n"
-            )
+            md_content += f"| {v.get('type', 'Unknown')} | {v.get('severity', 'Unknown')} | {v.get('description', '')} | {v.get('location', '')} |\n"
 
         md_content += """
 ## Protection Mechanisms
@@ -532,7 +539,9 @@ RECOMMENDATIONS
 
         return str(output_path)
 
-    def generate_batch_report(self, analysis_results: list[dict[str, Any]], format: str = "json") -> str:
+    def generate_batch_report(
+        self, analysis_results: list[dict[str, Any]], format: str = "json"
+    ) -> str:
         """Generate report for multiple analysis results."""
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         batch_dir = self.output_dir / f"batch_{timestamp}"
@@ -541,7 +550,9 @@ RECOMMENDATIONS
         report_files = []
         for i, data in enumerate(analysis_results):
             output_file = f"report_{i + 1}.{format}"
-            report_path = self.generate_report(data, format=format, output_file=str(batch_dir / output_file))
+            report_path = self.generate_report(
+                data, format=format, output_file=str(batch_dir / output_file)
+            )
             report_files.append(report_path)
 
         # Create archive
@@ -587,9 +598,6 @@ class ComparisonReportGenerator:
 
         if format == "html":
             return self._generate_html_comparison(comparison_data, output_path)
-        if format == "json":
-            return self._generate_json_comparison(comparison_data, output_path)
-        # Fallback to JSON
         return self._generate_json_comparison(comparison_data, output_path)
 
     def _analyze_differences(self, results: list[dict[str, Any]]) -> dict[str, Any]:
@@ -607,7 +615,11 @@ class ComparisonReportGenerator:
         # Extract file information
         for r in results:
             comparison["files_compared"].append(
-                {"file": r.get("target_file", "Unknown"), "hash": r.get("file_hash", ""), "size": r.get("file_size", 0)},
+                {
+                    "file": r.get("target_file", "Unknown"),
+                    "hash": r.get("file_hash", ""),
+                    "size": r.get("file_size", 0),
+                },
             )
 
         # Find common and unique vulnerabilities
@@ -622,11 +634,10 @@ class ComparisonReportGenerator:
             comparison["common_vulnerabilities"] = list(common)
 
         # Calculate similarity score
-        if len(results) == 2 and all_vulns:
-            if all_vulns[0] or all_vulns[1]:
-                intersection = len(all_vulns[0] & all_vulns[1])
-                union = len(all_vulns[0] | all_vulns[1])
-                comparison["similarity_score"] = (intersection / union * 100) if union > 0 else 0
+        if len(results) == 2 and all_vulns and (all_vulns[0] or all_vulns[1]):
+            intersection = len(all_vulns[0] & all_vulns[1])
+            union = len(all_vulns[0] | all_vulns[1])
+            comparison["similarity_score"] = (intersection / union * 100) if union > 0 else 0
 
         return comparison
 
@@ -684,13 +695,17 @@ class ComparisonReportGenerator:
         return str(output_path)
 
 
-def generate_report(analysis_data: dict[str, Any], format: str = "html", output_dir: str = "reports") -> str:
+def generate_report(
+    analysis_data: dict[str, Any], format: str = "html", output_dir: str = "reports"
+) -> str:
     """Generate a report."""
     generator = ReportGenerator(output_dir)
     return generator.generate_report(analysis_data, format)
 
 
-def export_report(analysis_data: dict[str, Any], format: str = "html", output_path: str | None = None) -> str:
+def export_report(
+    analysis_data: dict[str, Any], format: str = "html", output_path: str | None = None
+) -> str:
     """Export analysis report to file."""
     output_dir = Path(output_path).parent if output_path else Path("reports")
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -700,7 +715,9 @@ def export_report(analysis_data: dict[str, Any], format: str = "html", output_pa
     return generator.generate_report(analysis_data, format, output_file)
 
 
-def generate_comparison_report(results: list[dict[str, Any]], format: str = "html", output_dir: str = "reports/comparisons") -> str:
+def generate_comparison_report(
+    results: list[dict[str, Any]], format: str = "html", output_dir: str = "reports/comparisons"
+) -> str:
     """Generate a comparison report."""
     generator = ComparisonReportGenerator(output_dir)
     return generator.generate_comparison(results, format)

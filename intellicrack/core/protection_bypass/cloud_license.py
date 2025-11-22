@@ -39,8 +39,10 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+
 try:
     import jwt
+
     JWT_AVAILABLE = True
 except ImportError:
     JWT_AVAILABLE = False
@@ -52,6 +54,7 @@ try:
     from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.primitives.asymmetric import rsa
     from cryptography.x509.oid import NameOID
+
     CRYPTOGRAPHY_AVAILABLE = True
 except ImportError:
     CRYPTOGRAPHY_AVAILABLE = False
@@ -67,6 +70,7 @@ try:
     from mitmproxy.addons import anticache
     from mitmproxy.options import Options
     from mitmproxy.tools.dump import DumpMaster
+
     MITMPROXY_AVAILABLE = True
 except ImportError:
     MITMPROXY_AVAILABLE = False
@@ -76,6 +80,7 @@ except ImportError:
     DumpMaster = None
 
 from intellicrack.utils.logger import get_logger
+
 
 logger = get_logger(__name__)
 
@@ -154,7 +159,9 @@ class TLSInterceptor:
             with open(ca_cert_file, "rb") as f:
                 self.ca_cert = x509.load_pem_x509_certificate(f.read(), self.backend)
             with open(ca_key_file, "rb") as f:
-                self.ca_key = serialization.load_pem_private_key(f.read(), password=None, backend=self.backend)
+                self.ca_key = serialization.load_pem_private_key(
+                    f.read(), password=None, backend=self.backend
+                )
         else:
             self.ca_key = rsa.generate_private_key(
                 public_exponent=65537,
@@ -162,13 +169,15 @@ class TLSInterceptor:
                 backend=self.backend,
             )
 
-            subject = issuer = x509.Name([
-                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
-                x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack Research"),
-                x509.NameAttribute(NameOID.COMMON_NAME, "Intellicrack CA"),
-            ])
+            subject = issuer = x509.Name(
+                [
+                    x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                    x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
+                    x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
+                    x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack Research"),
+                    x509.NameAttribute(NameOID.COMMON_NAME, "Intellicrack CA"),
+                ]
+            )
 
             self.ca_cert = (
                 x509.CertificateBuilder()
@@ -202,11 +211,13 @@ class TLSInterceptor:
             with open(ca_cert_file, "wb") as f:
                 f.write(self.ca_cert.public_bytes(serialization.Encoding.PEM))
             with open(ca_key_file, "wb") as f:
-                f.write(self.ca_key.private_bytes(
-                    encoding=serialization.Encoding.PEM,
-                    format=serialization.PrivateFormat.TraditionalOpenSSL,
-                    encryption_algorithm=serialization.NoEncryption(),
-                ))
+                f.write(
+                    self.ca_key.private_bytes(
+                        encoding=serialization.Encoding.PEM,
+                        format=serialization.PrivateFormat.TraditionalOpenSSL,
+                        encryption_algorithm=serialization.NoEncryption(),
+                    )
+                )
 
     def generate_certificate(self, hostname: str) -> tuple[x509.Certificate, rsa.RSAPrivateKey]:
         """Generate a signed TLS certificate for intercepting the target hostname.
@@ -224,13 +235,15 @@ class TLSInterceptor:
             backend=self.backend,
         )
 
-        subject = x509.Name([
-            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
-            x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, hostname),
-            x509.NameAttribute(NameOID.COMMON_NAME, hostname),
-        ])
+        subject = x509.Name(
+            [
+                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
+                x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, hostname),
+                x509.NameAttribute(NameOID.COMMON_NAME, hostname),
+            ]
+        )
 
         cert = (
             x509.CertificateBuilder()
@@ -241,10 +254,12 @@ class TLSInterceptor:
             .not_valid_before(datetime.utcnow())
             .not_valid_after(datetime.utcnow() + timedelta(days=365))
             .add_extension(
-                x509.SubjectAlternativeName([
-                    x509.DNSName(hostname),
-                    x509.DNSName(f"*.{hostname}"),
-                ]),
+                x509.SubjectAlternativeName(
+                    [
+                        x509.DNSName(hostname),
+                        x509.DNSName(f"*.{hostname}"),
+                    ]
+                ),
                 critical=False,
             )
             .add_extension(
@@ -266,10 +281,12 @@ class TLSInterceptor:
                 critical=True,
             )
             .add_extension(
-                x509.ExtendedKeyUsage([
-                    x509.oid.ExtendedKeyUsageOID.SERVER_AUTH,
-                    x509.oid.ExtendedKeyUsageOID.CLIENT_AUTH,
-                ]),
+                x509.ExtendedKeyUsage(
+                    [
+                        x509.oid.ExtendedKeyUsageOID.SERVER_AUTH,
+                        x509.oid.ExtendedKeyUsageOID.CLIENT_AUTH,
+                    ]
+                ),
                 critical=False,
             )
             .sign(self.ca_key, hashes.SHA256(), backend=self.backend)
@@ -398,7 +415,9 @@ class ResponseSynthesizer:
 
         """
         if not CRYPTOGRAPHY_AVAILABLE:
-            raise ImportError("cryptography library is required for response synthesis. Install with: pip install cryptography")
+            raise ImportError(
+                "cryptography library is required for response synthesis. Install with: pip install cryptography"
+            )
 
         self.backend = default_backend()
         self.rsa_keys = {}
@@ -465,7 +484,9 @@ class ResponseSynthesizer:
             )
         return self.rsa_keys[key_id]
 
-    def generate_jwt(self, payload: dict[str, Any], algorithm: str = "RS256", key_id: str = "default") -> str:
+    def generate_jwt(
+        self, payload: dict[str, Any], algorithm: str = "RS256", key_id: str = "default"
+    ) -> str:
         """Generate a signed JWT token for authentication/authorization.
 
         Args:
@@ -481,7 +502,9 @@ class ResponseSynthesizer:
 
         """
         if not JWT_AVAILABLE:
-            error_msg = "PyJWT library is required for JWT generation. Install with: pip install PyJWT"
+            error_msg = (
+                "PyJWT library is required for JWT generation. Install with: pip install PyJWT"
+            )
             logger.error(error_msg)
             raise ImportError(error_msg)
 
@@ -490,13 +513,10 @@ class ResponseSynthesizer:
         if "exp" not in payload:
             payload["exp"] = int(time.time()) + 3600
 
-        if algorithm.startswith("RS"):
+        if algorithm.startswith("RS") or not algorithm.startswith("HS"):
             key = self.get_rsa_key(key_id)
-        elif algorithm.startswith("HS"):
-            key = os.urandom(32)
         else:
-            key = self.get_rsa_key(key_id)
-
+            key = os.urandom(32)
         return jwt.encode(payload, key, algorithm=algorithm)
 
     def synthesize_oauth_response(self, provider: str, config: dict[str, Any]) -> dict[str, Any]:
@@ -663,7 +683,9 @@ class ResponseSynthesizer:
             "refresh_token": base64.b64encode(os.urandom(32)).decode(),
         }
 
-    def synthesize_rest_response(self, endpoint: str, method: str, request_data: dict) -> dict[str, Any]:
+    def synthesize_rest_response(
+        self, endpoint: str, method: str, request_data: dict
+    ) -> dict[str, Any]:
         """Synthesize REST API license validation response.
 
         Args:
@@ -677,7 +699,9 @@ class ResponseSynthesizer:
         """
         endpoint_patterns = {
             r"/api/license/validate": self.templates[ProtocolType.HTTP_REST]["license_validate"],
-            r"/api/subscription/status": self.templates[ProtocolType.HTTP_REST]["subscription_status"],
+            r"/api/subscription/status": self.templates[ProtocolType.HTTP_REST][
+                "subscription_status"
+            ],
             r"/api/entitlements": self.templates[ProtocolType.HTTP_REST]["entitlements"],
             r"/api/auth/token": {
                 "access_token": self.generate_jwt({}),
@@ -691,11 +715,14 @@ class ResponseSynthesizer:
             },
         }
 
-        for pattern, response in endpoint_patterns.items():
-            if re.search(pattern, endpoint):
-                return response.copy() if isinstance(response, dict) else response
-
-        return {"success": True, "status": "active", "valid": True}
+        return next(
+            (
+                response.copy() if isinstance(response, dict) else response
+                for pattern, response in endpoint_patterns.items()
+                if re.search(pattern, endpoint)
+            ),
+            {"success": True, "status": "active", "valid": True},
+        )
 
     def synthesize_soap_response(self, action: str, request_body: str) -> str:
         """Synthesize SOAP XML license validation response.
@@ -714,12 +741,14 @@ class ResponseSynthesizer:
             "GetLicenseStatus": "license_check",
         }
 
-        template_key = None
-        for pattern, key in soap_patterns.items():
-            if pattern in action or pattern in request_body:
-                template_key = key
-                break
-
+        template_key = next(
+            (
+                key
+                for pattern, key in soap_patterns.items()
+                if pattern in action or pattern in request_body
+            ),
+            None,
+        )
         if template_key and template_key in self.templates[ProtocolType.SOAP]:
             template = self.templates[ProtocolType.SOAP][template_key]
             expiry_date = (datetime.utcnow() + timedelta(days=365)).isoformat()
@@ -887,7 +916,12 @@ class ResponseSynthesizer:
 class MITMProxyAddon:
     """mitmproxy addon for intercepting and modifying license server traffic."""
 
-    def __init__(self, intercept_rules: dict[str, Any], state_machine: ProtocolStateMachine, synthesizer: ResponseSynthesizer) -> None:
+    def __init__(
+        self,
+        intercept_rules: dict[str, Any],
+        state_machine: ProtocolStateMachine,
+        synthesizer: ResponseSynthesizer,
+    ) -> None:
         """Initialize MITM proxy addon with interception rules.
 
         Args:
@@ -917,8 +951,7 @@ class MITMProxyAddon:
 
         logger.debug(f"Intercepted request: {method} {url}")
 
-        should_block = self._check_block_rules(url, method, headers)
-        if should_block:
+        if should_block := self._check_block_rules(url, method, headers):
             flow.response = http.Response.make(
                 403,
                 b"Blocked by Intellicrack",
@@ -928,12 +961,14 @@ class MITMProxyAddon:
 
         self._apply_request_modifications(flow)
 
-        self.intercepted_requests.append({
-            "url": url,
-            "method": method,
-            "timestamp": time.time(),
-            "headers": headers,
-        })
+        self.intercepted_requests.append(
+            {
+                "url": url,
+                "method": method,
+                "timestamp": time.time(),
+                "headers": headers,
+            }
+        )
 
     def response(self, flow: http.HTTPFlow) -> None:
         """Handle intercepted HTTP response.
@@ -944,8 +979,7 @@ class MITMProxyAddon:
         """
         url = flow.request.pretty_url
 
-        should_modify = self._check_modify_rules(url)
-        if should_modify:
+        if should_modify := self._check_modify_rules(url):
             self._synthesize_response(flow)
 
     def _check_block_rules(self, url: str, method: str, headers: dict) -> bool:
@@ -979,10 +1013,10 @@ class MITMProxyAddon:
 
         """
         modify_rules = self.intercept_rules.get("modify", [])
-        for rule in modify_rules:
-            if "url_pattern" in rule and re.search(rule["url_pattern"], url):
-                return True
-        return False
+        return any(
+            "url_pattern" in rule and re.search(rule["url_pattern"], url)
+            for rule in modify_rules
+        )
 
     def _apply_request_modifications(self, flow: http.HTTPFlow) -> None:
         """Apply modifications to intercepted request.
@@ -1060,8 +1094,13 @@ class CloudLicenseProtocolHandler:
         self.running = False
         self.intercept_rules = {}
 
-    def start_interception(self, target_host: str, target_port: int = 443,
-                          listen_port: int = 8080, protocol_type: ProtocolType = ProtocolType.HTTP_REST) -> dict[str, Any]:
+    def start_interception(
+        self,
+        target_host: str,
+        target_port: int = 443,
+        listen_port: int = 8080,
+        protocol_type: ProtocolType = ProtocolType.HTTP_REST,
+    ) -> dict[str, Any]:
         """Start MITM proxy for intercepting license traffic.
 
         Args:
@@ -1176,7 +1215,7 @@ class CloudLicenseProtocolHandler:
 
         feature_line = config.get("feature", "PRODUCT feature_v1")
 
-        license_response = {
+        return {
             "success": True,
             "feature": feature_line,
             "license_type": "perpetual",
@@ -1185,8 +1224,6 @@ class CloudLicenseProtocolHandler:
             "server": "localhost",
             "vendor_string": "INTELLICRACK_BYPASS",
         }
-
-        return license_response
 
     def handle_sentinel_cloud(self, config: dict[str, Any]) -> dict[str, Any]:
         """Handle Sentinel Cloud license protocol.
@@ -1223,8 +1260,9 @@ class CloudLicenseProtocolHandler:
             "license_id": self.synthesizer._generate_uuid(),
         }
 
-    def synthesize_license_response(self, protocol: ProtocolType, endpoint: str,
-                                   request_data: object) -> object:
+    def synthesize_license_response(
+        self, protocol: ProtocolType, endpoint: str, request_data: object
+    ) -> object:
         """Synthesize license validation response based on protocol type.
 
         Args:
@@ -1368,17 +1406,16 @@ class CloudLicenseBypass:
         access_token = self.synthesizer.generate_jwt(ims_payload)
 
         products = config.get("products", ["Photoshop", "Illustrator", "InDesign"])
-        entitlements = []
-
-        for product in products:
-            entitlements.append({
+        entitlements = [
+            {
                 "product_id": product,
                 "product_name": product,
                 "activated": True,
                 "license_type": "SUBSCRIPTION",
                 "expiry_date": int(time.time() + 365 * 86400),
-            })
-
+            }
+            for product in products
+        ]
         return {
             "success": True,
             "access_token": access_token,
@@ -1417,8 +1454,12 @@ class CloudLicenseBypass:
             "expires_in": 7776000,
         }
 
-    def start_cloud_interception(self, target_host: str, protocol: ProtocolType = ProtocolType.HTTP_REST,
-                                 listen_port: int = 8080) -> dict[str, Any]:
+    def start_cloud_interception(
+        self,
+        target_host: str,
+        protocol: ProtocolType = ProtocolType.HTTP_REST,
+        listen_port: int = 8080,
+    ) -> dict[str, Any]:
         """Start intercepting cloud license traffic.
 
         Args:

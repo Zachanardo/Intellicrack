@@ -41,6 +41,7 @@ from intellicrack.handlers.pyqt6_handler import (
 from ...ai.qemu_manager import QEMUManager
 from ...utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 
@@ -99,7 +100,7 @@ class VMTableModel(QAbstractTableModel):
             if column == 2:
                 binary_path = vm_info.get("binary_path", "N/A")
                 if binary_path != "N/A" and len(binary_path) > 50:
-                    return "..." + binary_path[-47:]  # Show last 47 chars with ...
+                    return f"...{binary_path[-47:]}"
                 return binary_path
             if column == 3:
                 created_at = vm_info.get("created_at", "N/A")
@@ -117,7 +118,9 @@ class VMTableModel(QAbstractTableModel):
 
         return QVariant()
 
-    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole) -> object:
+    def headerData(
+        self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole
+    ) -> object:
         """Return header data.
 
         Args:
@@ -129,9 +132,8 @@ class VMTableModel(QAbstractTableModel):
             The header text for the section, or QVariant() if invalid.
 
         """
-        if role == Qt.ItemDataRole.DisplayRole and orientation == Qt.Orientation.Horizontal:
-            if 0 <= section < len(self.headers):
-                return self.headers[section]
+        if role == Qt.ItemDataRole.DisplayRole and orientation == Qt.Orientation.Horizontal and 0 <= section < len(self.headers):
+            return self.headers[section]
         return QVariant()
 
     def update_data(self, new_data: list[dict]) -> None:
@@ -248,8 +250,7 @@ class VMManagerDialog(QDialog):
             return
 
         try:
-            success = self.qemu_manager.start_vm_instance(snapshot_id)
-            if success:
+            if success := self.qemu_manager.start_vm_instance(snapshot_id):
                 QMessageBox.information(self, "Success", f"VM {snapshot_id} started successfully.")
                 self._load_vm_data()  # Refresh to show updated status
             else:
@@ -266,8 +267,7 @@ class VMManagerDialog(QDialog):
             return
 
         try:
-            success = self.qemu_manager.stop_vm_instance(snapshot_id)
-            if success:
+            if success := self.qemu_manager.stop_vm_instance(snapshot_id):
                 QMessageBox.information(self, "Success", f"VM {snapshot_id} stopped successfully.")
                 self._load_vm_data()  # Refresh to show updated status
             else:
@@ -296,8 +296,7 @@ class VMManagerDialog(QDialog):
             return
 
         try:
-            success = self.qemu_manager.delete_vm_instance(snapshot_id)
-            if success:
+            if success := self.qemu_manager.delete_vm_instance(snapshot_id):
                 QMessageBox.information(self, "Success", f"VM {snapshot_id} deleted successfully.")
                 self._load_vm_data()  # Refresh to remove deleted VM
             else:

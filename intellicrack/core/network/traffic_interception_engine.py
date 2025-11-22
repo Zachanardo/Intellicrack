@@ -15,6 +15,7 @@ from intellicrack.utils.logger import logger
 
 from .base_network_analyzer import BaseNetworkAnalyzer
 
+
 """
 Traffic Interception Engine for Real License Server Communications
 
@@ -542,8 +543,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                         self.packet_queue.clear()
 
                 for packet in packets_to_analyze:
-                    analysis = self._analyze_packet(packet)
-                    if analysis:
+                    if analysis := self._analyze_packet(packet):
                         # Call analysis callbacks
                         for callback in self.analysis_callbacks:
                             try:
@@ -594,7 +594,8 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
 
                 # Look for license-related keywords
                 license_keywords = [b"license", b"activation", b"checkout", b"verify", b"serial"]
-                keyword_matches = sum(1 for keyword in license_keywords if keyword in data_lower)
+                keyword_matches = sum(bool(keyword in data_lower)
+                                  for keyword in license_keywords)
 
                 if keyword_matches > 0:
                     confidence += min(keyword_matches * 0.1, 0.3)
@@ -611,7 +612,8 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
 
             analysis_metadata = {
                 "keywords_found": patterns_matched,
-                "port_based_detection": packet.dest_port in self.license_ports or packet.source_port in self.license_ports,
+                "port_based_detection": packet.dest_port in self.license_ports
+                or packet.source_port in self.license_ports,
                 "data_size": len(packet.data),
                 "connection_flags": packet.flags,
             }
@@ -653,7 +655,9 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         try:
             proxy_key = f"{target_host}:{target_port}"
             self.proxy_mappings[proxy_key] = (self.bind_interface, target_port)
-            self.logger.info(f"Transparent proxy setup: {proxy_key} -> {self.bind_interface}:{target_port}")
+            self.logger.info(
+                f"Transparent proxy setup: {proxy_key} -> {self.bind_interface}:{target_port}"
+            )
             return True
         except Exception as e:
             self.logger.error(f"Failed to setup transparent proxy: {e}")
@@ -681,16 +685,15 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         current_time = time.time()
 
         with self.connection_lock:
-            for connection_key, info in self.active_connections.items():
-                connections.append(
-                    {
-                        "endpoint": connection_key,
-                        "duration": current_time - info["first_seen"],
-                        "last_activity": info["last_activity"],
-                        "packet_count": info["packet_count"],
-                    },
-                )
-
+            connections.extend(
+                {
+                    "endpoint": connection_key,
+                    "duration": current_time - info["first_seen"],
+                    "last_activity": info["last_activity"],
+                    "packet_count": info["packet_count"],
+                }
+                for connection_key, info in self.active_connections.items()
+            )
         return connections
 
 

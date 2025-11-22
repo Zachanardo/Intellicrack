@@ -24,6 +24,7 @@ import logging
 import sys
 from typing import Any, TypeVar
 
+
 logger = logging.getLogger(__name__)
 
 ContextStructure = TypeVar("ContextStructure", bound=ctypes.Structure)
@@ -47,9 +48,7 @@ class WindowsContext:
 
     def __init__(self) -> None:
         """Initialize Windows context manager."""
-        self.kernel32 = None
-        if STRUCTURES_AVAILABLE:
-            self.kernel32 = ctypes.windll.kernel32
+        self.kernel32 = ctypes.windll.kernel32 if STRUCTURES_AVAILABLE else None
 
     def create_context_structure(self) -> tuple[type[ctypes.Structure], int] | tuple[None, None]:
         """Create appropriate CONTEXT structure based on architecture."""
@@ -188,10 +187,7 @@ class WindowsContext:
     def get_entry_point(self, context: ctypes.Structure) -> int:
         """Get entry point from context."""
         try:
-            if ctypes.sizeof(ctypes.c_void_p) == 8:  # 64-bit
-                return context.Rip
-            # 32-bit
-            return context.Eip
+            return context.Rip if ctypes.sizeof(ctypes.c_void_p) == 8 else context.Eip
         except Exception as e:
             logger.error(f"Failed to get entry point: {e}")
             return 0

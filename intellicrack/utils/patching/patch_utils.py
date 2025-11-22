@@ -25,6 +25,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+
 # Module logger
 logger = logging.getLogger(__name__)
 
@@ -118,7 +119,9 @@ def parse_patch_instructions(text: str) -> list[dict[str, Any]]:
     return instructions
 
 
-def create_patch(original_data: bytes, modified_data: bytes, base_address: int = 0) -> list[dict[str, Any]]:
+def create_patch(
+    original_data: bytes, modified_data: bytes, base_address: int = 0
+) -> list[dict[str, Any]]:
     """Create patch instructions by comparing original and modified data.
 
     Args:
@@ -142,7 +145,10 @@ def create_patch(original_data: bytes, modified_data: bytes, base_address: int =
             start = i
             changed_bytes = bytearray()
 
-            while i < min(len(original_data), len(modified_data)) and original_data[i] != modified_data[i]:
+            while (
+                i < min(len(original_data), len(modified_data))
+                and original_data[i] != modified_data[i]
+            ):
                 changed_bytes.append(modified_data[i])
                 i += 1
 
@@ -160,7 +166,9 @@ def create_patch(original_data: bytes, modified_data: bytes, base_address: int =
     return patches
 
 
-def apply_patch(file_path: str | Path, patches: list[dict[str, Any]], create_backup: bool = True) -> tuple[bool, str | None]:
+def apply_patch(
+    file_path: str | Path, patches: list[dict[str, Any]], create_backup: bool = True
+) -> tuple[bool, str | None]:
     """Apply patches to a binary file.
 
     Args:
@@ -184,7 +192,9 @@ def apply_patch(file_path: str | Path, patches: list[dict[str, Any]], create_bac
 
     # Create backup if requested
     if create_backup:
-        backup_path = file_path.with_suffix(file_path.suffix + f".backup_{int(time.time())}")
+        backup_path = file_path.with_suffix(
+            f"{file_path.suffix}.backup_{int(time.time())}"
+        )
         try:
             shutil.copy2(file_path, backup_path)
             logger.info("Created backup: %s", backup_path)
@@ -193,7 +203,7 @@ def apply_patch(file_path: str | Path, patches: list[dict[str, Any]], create_bac
             return False, None
 
     # Create patched file
-    patched_path = file_path.with_stem(file_path.stem + "_patched")
+    patched_path = file_path.with_stem(f"{file_path.stem}_patched")
 
     try:
         # Copy original to patched path
@@ -363,10 +373,7 @@ def create_nop_patch(address: int, length: int, arch: str = "x86") -> dict[str, 
 
     nop = nop_bytes.get(arch.lower(), b"\x90")
 
-    # Calculate how many NOPs we need
-    nop_count = length // len(nop)
-    remainder = length % len(nop)
-
+    nop_count, remainder = divmod(length, len(nop))
     if remainder != 0:
         logger.warning(
             f"Length {length} not divisible by NOP size {len(nop)} for {arch}. Padding with {remainder} extra bytes.",

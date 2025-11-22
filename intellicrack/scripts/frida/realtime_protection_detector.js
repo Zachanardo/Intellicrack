@@ -1632,12 +1632,8 @@ const RealtimeProtectionDetector = {
     },
 
     checkTimingPatterns: function (timingData) {
-        if (timingData.type === 'sleep_call') {
-            // Detect sleep bombs (excessive sleep times)
-            if (timingData.duration > 30000) {
-                // More than 30 seconds
-                this.handleDetection('timing', 'sleep_bomb', timingData, 0.9);
-            }
+        if (timingData.type === 'sleep_call' && timingData.duration > 30000) {
+              this.handleDetection('timing', 'sleep_bomb', timingData, 0.9);
         }
     },
 
@@ -1699,16 +1695,13 @@ const RealtimeProtectionDetector = {
 
         // Check for suspicious frequency patterns
         for (var apiName in frequency) {
-            if (frequency[apiName] >= 5) {
-                // Called 5+ times in recent sequence
-                if (this.isSuspiciousHighFrequency(apiName)) {
-                    this.handleDetection(
-                        'timing',
-                        'high_frequency_calls',
-                        { api: apiName, count: frequency[apiName] },
-                        0.7
-                    );
-                }
+            if (frequency[apiName] >= 5 && this.isSuspiciousHighFrequency(apiName)) {
+                  this.handleDetection(
+                      'timing',
+                      'high_frequency_calls',
+                      { api: apiName, count: frequency[apiName] },
+                      0.7
+                  );
             }
         }
     },
@@ -2018,18 +2011,16 @@ const RealtimeProtectionDetector = {
 
     checkCorrelatedPatterns: function (categories) {
         // Anti-debug + timing patterns suggest sophisticated protection
-        if (categories.antiDebug && categories.timing) {
-            if (categories.antiDebug.length >= 2 && categories.timing.length >= 1) {
-                this.handleDetection(
-                    'correlation',
-                    'sophisticated_anti_debug',
-                    {
-                        antiDebugCount: categories.antiDebug.length,
-                        timingCount: categories.timing.length,
-                    },
-                    0.95
-                );
-            }
+        if (categories.antiDebug && categories.timing && (categories.antiDebug.length >= 2 && categories.timing.length >= 1)) {
+              this.handleDetection(
+                  'correlation',
+                  'sophisticated_anti_debug',
+                  {
+                      antiDebugCount: categories.antiDebug.length,
+                      timingCount: categories.timing.length,
+                  },
+                  0.95
+              );
         }
 
         // Licensing + network patterns suggest online license validation
@@ -4253,8 +4244,7 @@ const RealtimeProtectionDetector = {
 
                     onLeave: function (retval) {
                         if (retval.toInt32() !== 0) {
-                            const address = this.address;
-                            const size = this.size;
+                            const {address, size} = this;
 
                             // Check if this affects IAT regions
                             if (this.parent.parent.isIATRegion(address, size)) {
@@ -4289,25 +4279,20 @@ const RealtimeProtectionDetector = {
                     },
 
                     onLeave: function (retval) {
-                        if (
-                            retval.toInt32() !== 0 &&
-                            this.hProcess.equals(Process.getCurrentProcess().handle)
-                        ) {
-                            // Check if writing to IAT
-                            if (this.parent.parent.isIATRegion(this.baseAddress, this.size)) {
-                                const data = this.buffer.readByteArray(this.size);
-
-                                send({
-                                    type: 'detection',
-                                    target: 'realtime_protection_detector',
-                                    action: 'iat_write_detected',
-                                    address: this.baseAddress.toString(),
-                                    size: this.size,
-                                    data_hash: this.parent.parent.calculateDataHash(data),
-                                });
-
-                                this.parent.parent.recordIATModification(this.baseAddress, data);
-                            }
+                        if (retval.toInt32() !== 0 &&
+                                                    this.hProcess.equals(Process.getCurrentProcess().handle) && this.parent.parent.isIATRegion(this.baseAddress, this.size)) {
+                              const data = this.buffer.readByteArray(this.size);
+                        
+                              send({
+                                  type: 'detection',
+                                  target: 'realtime_protection_detector',
+                                  action: 'iat_write_detected',
+                                  address: this.baseAddress.toString(),
+                                  size: this.size,
+                                  data_hash: this.parent.parent.calculateDataHash(data),
+                              });
+                        
+                              this.parent.parent.recordIATModification(this.baseAddress, data);
                         }
                     },
                 });
@@ -5250,7 +5235,7 @@ const RealtimeProtectionDetector = {
 
         // Calculate entropy
         let entropy = 0;
-        const length = bytes.length;
+        const {length} = bytes;
 
         for (let i = 0; i < 256; i++) {
             if (frequency[i] > 0) {
@@ -5370,8 +5355,7 @@ const RealtimeProtectionDetector = {
 
     // Check for size mismatches (common in packed files)
     checkSizeMismatches: function (analysis) {
-        const virtualSize = analysis.virtualSize;
-        const rawSize = analysis.rawSize;
+        const {virtualSize, rawSize} = analysis;
 
         if (virtualSize === 0 || rawSize === 0) {
             analysis.suspiciousIndicators.push('zero_size_section');
@@ -7751,22 +7735,19 @@ const RealtimeProtectionDetector = {
         try {
             // Analyze thread start address for suspicious patterns
             const region = Process.findRangeByAddress(startAddress);
-            if (region) {
-                // Check if thread starts in dynamically allocated memory
-                if (region.protection.includes('w') && region.protection.includes('x')) {
-                    send({
-                        type: 'warning',
-                        target: 'behavioral_pattern_detector',
-                        action: 'thread_in_rwx_memory',
-                        startAddress: startAddress.toString(),
-                        region: {
-                            base: region.base.toString(),
-                            size: region.size,
-                            protection: region.protection,
-                        },
-                        timestamp: Date.now(),
-                    });
-                }
+            if (region && (region.protection.includes('w') && region.protection.includes('x'))) {
+                  send({
+                      type: 'warning',
+                      target: 'behavioral_pattern_detector',
+                      action: 'thread_in_rwx_memory',
+                      startAddress: startAddress.toString(),
+                      region: {
+                          base: region.base.toString(),
+                          size: region.size,
+                          protection: region.protection,
+                      },
+                      timestamp: Date.now(),
+                  });
             }
         } catch (error) {
             // Silent failure for thread creation analysis
@@ -8010,9 +7991,7 @@ const RealtimeProtectionDetector = {
     },
 
     getDetectedProtectionSequences: function () {
-        const detected = [];
-        // This would be populated during runtime analysis
-        return detected;
+        return [];
     },
 
     getAntiDebugPatterns: function () {
@@ -8684,7 +8663,7 @@ const RealtimeProtectionDetector = {
             const yearGroups = new Map();
 
             for (const [module, info] of timestampMap) {
-                const year = info.year;
+                const {year} = info;
                 if (!yearGroups.has(year)) {
                     yearGroups.set(year, []);
                 }
@@ -9639,7 +9618,7 @@ const RealtimeProtectionDetector = {
             emissionProbability: {},
             viterbi: function (observations) {
                 const T = observations.length;
-                const states = this.states;
+                const {states} = this;
                 const V = [];
                 const path = {};
 
@@ -10229,15 +10208,14 @@ const RealtimeProtectionDetector = {
 
         for (let i = 0; i < batchSize; i++) {
             const sample = nn.trainingData[i];
-            const input = sample.input;
-            const target = sample.target;
+            const {input, target} = sample;
 
             // Forward pass
             let activations = [input];
             for (let l = 0; l < nn.layers.length - 1; l++) {
                 const weights = nn.weights.get(`layer_${l}_${l + 1}`);
                 const biases = nn.biases.get(`layer_${l + 1}`);
-                const activation = nn.layers[l + 1].activation;
+                const {activation} = nn.layers[l + 1];
 
                 const z = this.matrixVectorMultiply(weights, activations[l]);
                 const a = this.addBias(z, biases);
@@ -10394,7 +10372,7 @@ const RealtimeProtectionDetector = {
     },
 
     analyzeAnomalyClusters: function () {
-        const centroids = this.mlEngine.clustering.centroids;
+        const {centroids} = this.mlEngine.clustering;
 
         for (const [clusterName, centroid] of centroids) {
             // Analyze cluster characteristics
@@ -10684,18 +10662,15 @@ const RealtimeProtectionDetector = {
                 onEnter: function (args) {
                     var startAddress = args[2];
 
-                    if (startAddress) {
-                        // Check if this could be an alternate entry point
-                        if (this.isLikelyEntryPoint(startAddress)) {
-                            this.entryPointAnalysis.alternateEntryPoints.push({
-                                address: startAddress.toString(),
-                                timestamp: Date.now(),
-                                type: 'CreateThread',
-                            });
-
-                            // Analyze the entry point for obfuscation
-                            this.analyzeEntryPointObfuscation(startAddress);
-                        }
+                    if (startAddress && this.isLikelyEntryPoint(startAddress)) {
+                          this.entryPointAnalysis.alternateEntryPoints.push({
+                              address: startAddress.toString(),
+                              timestamp: Date.now(),
+                              type: 'CreateThread',
+                          });
+                    
+                          // Analyze the entry point for obfuscation
+                          this.analyzeEntryPointObfuscation(startAddress);
                     }
                 }.bind(this),
             });

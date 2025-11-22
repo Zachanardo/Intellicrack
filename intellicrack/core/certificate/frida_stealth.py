@@ -111,6 +111,7 @@ import random
 import threading
 from pathlib import Path
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -207,6 +208,7 @@ class FridaStealth:
                 return False
 
             try:
+
                 class THREADENTRY32(ctypes.Structure):
                     _fields_ = [
                         ("dwSize", ctypes.c_ulong),
@@ -255,8 +257,10 @@ class FridaStealth:
                 try:
                     with open(comm_file) as f:
                         name = f.read().strip()
-                        if any(frida_name in name.lower()
-                               for frida_name in ['gmain', 'gdbus', 'gum-js', 'frida']):
+                        if any(
+                            frida_name in name.lower()
+                            for frida_name in ["gmain", "gdbus", "gum-js", "frida"]
+                        ):
                             return True
                 except OSError:
                     continue
@@ -280,7 +284,7 @@ class FridaStealth:
             for fd in os.listdir(fd_dir):
                 try:
                     link = Path(f"{fd_dir}/{fd}").readlink()
-                    if 'dbus' in str(link).lower():
+                    if "dbus" in str(link).lower():
                         return True
                 except OSError:
                     continue
@@ -312,7 +316,7 @@ class FridaStealth:
                         continue
 
                     local_address = parts[1]
-                    port_hex = local_address.split(':')[1]
+                    port_hex = local_address.split(":")[1]
                     port = int(port_hex, 16)
 
                     if port in frida_ports:
@@ -402,7 +406,10 @@ class FridaStealth:
                     module_count = cb_needed.value // ctypes.sizeof(ctypes.c_void_p)
 
                     frida_signatures = [
-                        b'frida', b'gum', b'frida-agent', b'frida-gadget',
+                        b"frida",
+                        b"gum",
+                        b"frida-agent",
+                        b"frida-gadget",
                     ]
 
                     for i in range(module_count):
@@ -414,8 +421,10 @@ class FridaStealth:
                             260,
                         ):
                             name_lower = module_name.value.lower()
-                            if any(sig.decode('latin1', errors='ignore').lower() in name_lower
-                                   for sig in frida_signatures):
+                            if any(
+                                sig.decode("latin1", errors="ignore").lower() in name_lower
+                                for sig in frida_signatures
+                            ):
                                 logger.debug(f"Found Frida module: {module_name.value}")
                                 return True
 
@@ -437,7 +446,7 @@ class FridaStealth:
 
             with open(maps_file) as f:
                 for line in f:
-                    if 'frida' in line.lower() or 'gum' in line.lower():
+                    if "frida" in line.lower() or "gum" in line.lower():
                         return True
 
             return False
@@ -464,16 +473,18 @@ class FridaStealth:
             try:
                 common_names = self._get_common_thread_names()
 
-                frida_thread_patterns = ['gmain', 'gdbus', 'gum-js', 'frida']
+                frida_thread_patterns = ["gmain", "gdbus", "gum-js", "frida"]
                 renamed_count = 0
 
                 if self.platform == "Linux":
                     renamed_count = self._randomize_threads_linux(
-                        frida_thread_patterns, common_names,
+                        frida_thread_patterns,
+                        common_names,
                     )
                 elif self.platform == "Windows":
                     renamed_count = self._randomize_threads_windows(
-                        frida_thread_patterns, common_names,
+                        frida_thread_patterns,
+                        common_names,
                     )
 
                 if renamed_count > 0:
@@ -543,11 +554,11 @@ class FridaStealth:
                         self._original_thread_names[int(tid)] = current_name
 
                         try:
-                            with open(comm_file, 'w') as f:
+                            with open(comm_file, "w") as f:
                                 f.write(new_name)
                             renamed_count += 1
                             logger.debug(f"Renamed thread {tid}: {current_name} -> {new_name}")
-                        except (OSError, PermissionError) as e:
+                        except OSError as e:
                             logger.debug(f"Failed to rename thread {tid}: {e}")
 
                 except OSError:
@@ -578,6 +589,7 @@ class FridaStealth:
                 return 0
 
             try:
+
                 class THREADENTRY32(ctypes.Structure):
                     _fields_ = [
                         ("dwSize", ctypes.c_ulong),
@@ -608,7 +620,7 @@ class FridaStealth:
                                 try:
                                     wide_name = ctypes.create_unicode_buffer(new_name)
 
-                                    if hasattr(kernel32, 'SetThreadDescription'):
+                                    if hasattr(kernel32, "SetThreadDescription"):
                                         result = kernel32.SetThreadDescription(
                                             h_thread,
                                             wide_name,
@@ -661,7 +673,7 @@ class FridaStealth:
                 for fd in os.listdir(fd_dir):
                     try:
                         link = Path(f"{fd_dir}/{fd}").readlink()
-                        if 'dbus' in str(link).lower():
+                        if "dbus" in str(link).lower():
                             try:
                                 os.close(int(fd))
                                 closed_count += 1
@@ -727,11 +739,11 @@ class FridaStealth:
                 return 0
 
             frida_signatures = [
-                b'frida',
-                b'gum',
-                b'GumJS',
-                b'frida-agent',
-                b'frida-gadget',
+                b"frida",
+                b"gum",
+                b"GumJS",
+                b"frida-agent",
+                b"frida-gadget",
             ]
 
             with open(maps_file) as f:
@@ -741,8 +753,10 @@ class FridaStealth:
                         continue
 
                     path = parts[5] if len(parts) > 5 else ""
-                    if any(sig.decode('latin1', errors='ignore').lower() in path.lower()
-                           for sig in frida_signatures):
+                    if any(
+                        sig.decode("latin1", errors="ignore").lower() in path.lower()
+                        for sig in frida_signatures
+                    ):
                         obfuscated_count += 1
 
             return obfuscated_count
@@ -775,11 +789,11 @@ class FridaStealth:
             module_count = cb_needed.value // ctypes.sizeof(ctypes.c_void_p)
 
             frida_signatures = [
-                b'frida',
-                b'gum',
-                b'GumJS',
-                b'frida-agent',
-                b'frida-gadget',
+                b"frida",
+                b"gum",
+                b"GumJS",
+                b"frida-agent",
+                b"frida-gadget",
             ]
 
             for i in range(module_count):
@@ -791,8 +805,10 @@ class FridaStealth:
                     260,
                 ):
                     name_lower = module_name.value.lower()
-                    if any(sig.decode('latin1', errors='ignore').lower() in name_lower
-                           for sig in frida_signatures):
+                    if any(
+                        sig.decode("latin1", errors="ignore").lower() in name_lower
+                        for sig in frida_signatures
+                    ):
                         obfuscated_count += 1
                         logger.debug(f"Detected Frida artifact: {module_name.value}")
 
@@ -881,10 +897,10 @@ class FridaStealth:
             ntdll = ctypes.windll.ntdll
 
             PROCESS_ALL_ACCESS = 0x1F0FFF
-            h_process = kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, pid)
-
-            if h_process:
+            if h_process := kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, pid):
                 try:
+
+
                     class ProcessBasicInfo(ctypes.Structure):
                         _fields_ = [
                             ("Reserved1", ctypes.c_void_p),
@@ -906,34 +922,31 @@ class FridaStealth:
                     )
 
                     if ret == 0:
-                        peb_address = pbi.PebBaseAddress
-
-                        if peb_address:
+                        if peb_address := pbi.PebBaseAddress:
                             being_debugged_offset = 2
 
                             buffer = ctypes.c_ubyte()
                             bytes_read = ctypes.c_size_t()
 
                             if kernel32.ReadProcessMemory(
-                                h_process,
-                                ctypes.c_void_p(peb_address + being_debugged_offset),
-                                ctypes.byref(buffer),
-                                1,
-                                ctypes.byref(bytes_read),
-                            ):
-                                if buffer.value != 0:
-                                    zero = ctypes.c_ubyte(0)
-                                    bytes_written = ctypes.c_size_t()
+                                                            h_process,
+                                                            ctypes.c_void_p(peb_address + being_debugged_offset),
+                                                            ctypes.byref(buffer),
+                                                            1,
+                                                            ctypes.byref(bytes_read),
+                                                        ) and buffer.value != 0:
+                                zero = ctypes.c_ubyte(0)
+                                bytes_written = ctypes.c_size_t()
 
-                                    if kernel32.WriteProcessMemory(
-                                        h_process,
-                                        ctypes.c_void_p(peb_address + being_debugged_offset),
-                                        ctypes.byref(zero),
-                                        1,
-                                        ctypes.byref(bytes_written),
-                                    ):
-                                        bypassed_count += 1
-                                        logger.debug("Bypassed PEB BeingDebugged flag")
+                                if kernel32.WriteProcessMemory(
+                                    h_process,
+                                    ctypes.c_void_p(peb_address + being_debugged_offset),
+                                    ctypes.byref(zero),
+                                    1,
+                                    ctypes.byref(bytes_written),
+                                ):
+                                    bypassed_count += 1
+                                    logger.debug("Bypassed PEB BeingDebugged flag")
 
                 finally:
                     kernel32.CloseHandle(h_process)
@@ -953,8 +966,8 @@ class FridaStealth:
             if os.path.exists(status_file):
                 with open(status_file) as f:
                     for line in f:
-                        if line.startswith('TracerPid:'):
-                            tracer_pid = int(line.split(':')[1].strip())
+                        if line.startswith("TracerPid:"):
+                            tracer_pid = int(line.split(":")[1].strip())
                             if tracer_pid != 0:
                                 logger.debug(f"Process is being traced by PID {tracer_pid}")
                                 bypassed_count += 1
@@ -982,16 +995,15 @@ class FridaStealth:
 
     def _calculate_stealth_level(self) -> str:
         """Calculate overall stealth level."""
-        active_count = sum(1 for active in self.active_techniques.values() if active)
+        active_count = sum(bool(active)
+                       for active in self.active_techniques.values())
         total_techniques = len(self.active_techniques)
 
         if active_count == 0:
             return "none"
         if active_count < total_techniques // 2:
             return "low"
-        if active_count < total_techniques:
-            return "medium"
-        return "high"
+        return "medium" if active_count < total_techniques else "high"
 
     def restore_original_state(self) -> bool:
         """Restore original thread names and state.
@@ -1012,7 +1024,7 @@ class FridaStealth:
                 for tid, original_name in self._original_thread_names.items():
                     comm_file = f"{task_dir}/{tid}/comm"
                     try:
-                        with open(comm_file, 'w') as f:
+                        with open(comm_file, "w") as f:
                             f.write(original_name)
                         logger.debug(f"Restored thread {tid} name to {original_name}")
                     except OSError as e:

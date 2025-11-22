@@ -3682,17 +3682,14 @@ const websocketInterceptor = {
                             this.isWebhookValidation = true;
                         },
                         onLeave: function (retval) {
-                            if (this.isWebhookValidation) {
-                                // Force successful validation
-                                if (funcName.includes('Verify') || funcName.includes('Check')) {
-                                    retval.replace(ptr(1)); // TRUE
-                                    send({
-                                        type: 'bypass',
-                                        target: 'websocket_interceptor',
-                                        action: 'webhook_signature_validation_bypassed',
-                                        function: funcName,
-                                    });
-                                }
+                            if (this.isWebhookValidation && (funcName.includes('Verify') || funcName.includes('Check'))) {
+                                  retval.replace(ptr(1)); // TRUE
+                                  send({
+                                      type: 'bypass',
+                                      target: 'websocket_interceptor',
+                                      action: 'webhook_signature_validation_bypassed',
+                                      function: funcName,
+                                  });
                             }
                         },
                     });

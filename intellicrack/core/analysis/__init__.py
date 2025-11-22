@@ -23,6 +23,7 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 
 from intellicrack.utils.logger import logger
 
+
 logger.debug("Core analysis module loaded")
 
 """
@@ -48,13 +49,9 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 from typing import Any  # noqa: E402
 
+
 try:
-    from .core_analysis import (
-        analyze_binary_internal,
-        calculate_entropy,
-        detect_packing,
-        enhanced_deep_license_analysis,
-    )
+    from .core_analysis import analyze_binary_internal, calculate_entropy, detect_packing, enhanced_deep_license_analysis
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     calculate_entropy = None
@@ -148,27 +145,35 @@ def __getattr__(name: str) -> object:
         try:
             if module_path == ".cfg_explorer":
                 from . import cfg_explorer
+
                 module = cfg_explorer
             elif module_path == ".incremental_manager":
                 from . import incremental_manager
+
                 module = incremental_manager
             elif module_path == ".similarity_searcher":
                 from . import similarity_searcher
+
                 module = similarity_searcher
             elif module_path == ".control_flow_deobfuscation":
                 from . import control_flow_deobfuscation
+
                 module = control_flow_deobfuscation
             elif module_path == ".stalker_manager":
                 from . import stalker_manager
+
                 module = stalker_manager
             elif module_path == ".starforce_analyzer":
                 from . import starforce_analyzer
+
                 module = starforce_analyzer
             elif module_path == ".securom_analyzer":
                 from . import securom_analyzer
+
                 module = securom_analyzer
             elif module_path == ".polymorphic_analyzer":
                 from . import polymorphic_analyzer
+
                 module = polymorphic_analyzer
             else:
                 msg = f"Unknown module path: {module_path}"

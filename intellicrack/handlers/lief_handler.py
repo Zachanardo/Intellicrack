@@ -23,6 +23,7 @@ from typing import IO, Any, Optional
 
 from intellicrack.utils.logger import log_all_methods, logger
 
+
 """
 LIEF Import Handler with Production-Ready Fallbacks
 
@@ -96,14 +97,20 @@ except ImportError as e:
         """Functional section implementation for binary sections."""
 
         def __init__(
-            self, name: str = "", offset: int = 0, size: int = 0, virtual_address: int = 0, virtual_size: int = 0, characteristics: int = 0,
+            self,
+            name: str = "",
+            offset: int = 0,
+            size: int = 0,
+            virtual_address: int = 0,
+            virtual_size: int = 0,
+            characteristics: int = 0,
         ) -> None:
             """Initialize section."""
             self.name = name
             self.offset = offset
             self.size = size
             self.virtual_address = virtual_address
-            self.virtual_size = virtual_size if virtual_size else size
+            self.virtual_size = virtual_size or size
             self.characteristics = characteristics
             self.content = b""
             self.entropy = 0.0
@@ -119,7 +126,9 @@ except ImportError as e:
     class FallbackSymbol:
         """Functional symbol implementation."""
 
-        def __init__(self, name: str = "", value: int = 0, size: int = 0, type: str = "", binding: str = "") -> None:
+        def __init__(
+            self, name: str = "", value: int = 0, size: int = 0, type: str = "", binding: str = ""
+        ) -> None:
             """Initialize symbol."""
             self.name = name
             self.value = value
@@ -192,7 +201,12 @@ except ImportError as e:
                         self._parse_pe(f)
                     elif magic == b"\x7fELF":
                         self._parse_elf(f)
-                    elif magic in (b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe"):
+                    elif magic in (
+                        b"\xfe\xed\xfa\xce",
+                        b"\xce\xfa\xed\xfe",
+                        b"\xfe\xed\xfa\xcf",
+                        b"\xcf\xfa\xed\xfe",
+                    ):
                         self._parse_macho(f)
                     else:
                         self.format = "UNKNOWN"
@@ -399,13 +413,21 @@ except ImportError as e:
                         if sh_name < len(string_table):
                             name_end = string_table.find(b"\x00", sh_name)
                             if name_end >= 0:
-                                name = string_table[sh_name:name_end].decode("ascii", errors="ignore")
+                                name = string_table[sh_name:name_end].decode(
+                                    "ascii", errors="ignore"
+                                )
                             else:
                                 name = string_table[sh_name:].decode("ascii", errors="ignore")
                         else:
                             name = f".section{i}"
 
-                        section = FallbackSection(name=name, offset=sh_offset, size=sh_size, virtual_address=sh_addr, virtual_size=sh_size)
+                        section = FallbackSection(
+                            name=name,
+                            offset=sh_offset,
+                            size=sh_size,
+                            virtual_address=sh_addr,
+                            virtual_size=sh_size,
+                        )
                         self.sections.append(section)
 
             except Exception as e:
@@ -475,7 +497,13 @@ except ImportError as e:
                         fileoff = struct.unpack(endian + "I", f.read(4))[0]
                         filesize = struct.unpack(endian + "I", f.read(4))[0]
 
-                        section = FallbackSection(name=segname, offset=fileoff, size=filesize, virtual_address=vmaddr, virtual_size=vmsize)
+                        section = FallbackSection(
+                            name=segname,
+                            offset=fileoff,
+                            size=filesize,
+                            virtual_address=vmaddr,
+                            virtual_size=vmsize,
+                        )
                         self.sections.append(section)
 
                     elif cmd == 0x19:  # LC_SEGMENT_64
@@ -485,7 +513,13 @@ except ImportError as e:
                         fileoff = struct.unpack(endian + "Q", f.read(8))[0]
                         filesize = struct.unpack(endian + "Q", f.read(8))[0]
 
-                        section = FallbackSection(name=segname, offset=fileoff, size=filesize, virtual_address=vmaddr, virtual_size=vmsize)
+                        section = FallbackSection(
+                            name=segname,
+                            offset=fileoff,
+                            size=filesize,
+                            virtual_address=vmaddr,
+                            virtual_size=vmsize,
+                        )
                         self.sections.append(section)
 
                     # Move to next command
@@ -548,7 +582,7 @@ except ImportError as e:
             self.dylibs = []
             self.rpaths = []
 
-    def parse(filepath: str) -> Optional[FallbackBinary]:
+    def parse(filepath: str) -> FallbackBinary | None:
         """Parse a binary file and return appropriate object."""
         if not os.path.exists(filepath):
             logger.error("File not found: %s", filepath)
@@ -562,7 +596,12 @@ except ImportError as e:
                     return FallbackPE(filepath)
                 if magic == b"\x7fELF":
                     return FallbackELF(filepath)
-                if magic in (b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe"):
+                if magic in (
+                    b"\xfe\xed\xfa\xce",
+                    b"\xce\xfa\xed\xfe",
+                    b"\xfe\xed\xfa\xcf",
+                    b"\xcf\xfa\xed\xfe",
+                ):
                     return FallbackMachO(filepath)
                 return FallbackBinary(filepath)
 
@@ -593,7 +632,12 @@ except ImportError as e:
         try:
             with open(filepath, "rb") as f:
                 magic = f.read(4)
-                return magic in (b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe")
+                return magic in (
+                    b"\xfe\xed\xfa\xce",
+                    b"\xce\xfa\xed\xfe",
+                    b"\xfe\xed\xfa\xcf",
+                    b"\xcf\xfa\xed\xfe",
+                )
         except Exception:
             return False
 
@@ -651,26 +695,21 @@ except ImportError as e:
 
 # Export all LIEF objects and availability flag
 __all__ = [
-    # Availability flags
+    "ARCHITECTURES",
+    "Binary",
+    "ELF",
+    "ENDIANNESS",
+    "Function",
     "HAS_LIEF",
     "LIEF_VERSION",
-    # Main module
-    "lief",
-    # Core classes
-    "Binary",
+    "MODES",
+    "MachO",
+    "PE",
     "Section",
     "Symbol",
-    "Function",
-    "PE",
-    "ELF",
-    "MachO",
-    # Constants
-    "ARCHITECTURES",
-    "ENDIANNESS",
-    "MODES",
-    # Functions
-    "parse",
-    "is_pe",
     "is_elf",
     "is_macho",
+    "is_pe",
+    "lief",
+    "parse",
 ]

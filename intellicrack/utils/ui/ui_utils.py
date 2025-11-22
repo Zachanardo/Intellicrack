@@ -23,6 +23,7 @@ from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
 
+
 # Module logger
 logger = logging.getLogger(__name__)
 
@@ -68,9 +69,7 @@ class ProgressTracker:
 
     def get_percentage(self) -> int:
         """Get current progress as percentage."""
-        if self.total == 0:
-            return 100
-        return int((self.current / self.total) * 100)
+        return 100 if self.total == 0 else int((self.current / self.total) * 100)
 
     def cancel(self) -> None:
         """Cancel the progress operation."""
@@ -82,7 +81,12 @@ class ProgressTracker:
         self.is_cancelled = False
 
 
-def show_message(message: str, msg_type: MessageType = MessageType.INFO, title: str | None = None, parent: object = None) -> None:
+def show_message(
+    message: str,
+    msg_type: MessageType = MessageType.INFO,
+    title: str | None = None,
+    parent: object = None,
+) -> None:
     """Display a message to the user.
 
     Args:
@@ -97,12 +101,12 @@ def show_message(message: str, msg_type: MessageType = MessageType.INFO, title: 
 
     # Log the message with context if parent is provided
     parent_context = ""
-    if parent and hasattr(parent, "objectName"):
-        parent_name = parent.objectName()
-        if parent_name:
-            parent_context = f" (from {parent_name})"
-    elif parent and hasattr(parent, "__class__"):
-        parent_context = f" (from {parent.__class__.__name__})"
+    if parent:
+        if hasattr(parent, "objectName"):
+            if parent_name := parent.objectName():
+                parent_context = f" (from {parent_name})"
+        elif hasattr(parent, "__class__"):
+            parent_context = f" (from {parent.__class__.__name__})"
 
     # Log the message
     if msg_type == MessageType.ERROR:
@@ -131,7 +135,9 @@ def show_message(message: str, msg_type: MessageType = MessageType.INFO, title: 
         )
 
 
-def get_user_input(prompt: str, default: str = "", title: str = "Input Required", parent: object = None) -> str | None:
+def get_user_input(
+    prompt: str, default: str = "", title: str = "Input Required", parent: object = None
+) -> str | None:
     """Get text input from the user.
 
     Args:
@@ -146,12 +152,12 @@ def get_user_input(prompt: str, default: str = "", title: str = "Input Required"
     """
     # Log the input request with parent context
     parent_context = ""
-    if parent and hasattr(parent, "objectName"):
-        parent_name = parent.objectName()
-        if parent_name:
-            parent_context = f" (from {parent_name})"
-    elif parent and hasattr(parent, "__class__"):
-        parent_context = f" (from {parent.__class__.__name__})"
+    if parent:
+        if hasattr(parent, "objectName"):
+            if parent_name := parent.objectName():
+                parent_context = f" (from {parent_name})"
+        elif hasattr(parent, "__class__"):
+            parent_context = f" (from {parent.__class__.__name__})"
 
     logger.info("User input requested: %s%s", title, parent_context)
 
@@ -169,7 +175,7 @@ def get_user_input(prompt: str, default: str = "", title: str = "Input Required"
             user_input = input(f"{title}{context_info} - {safe_prompt} [{safe_default}]: ").strip()
             # Sanitize user input - remove null bytes and newlines
             sanitized = user_input.replace("\0", "").replace("\n", "").replace("\r", "")
-            result = sanitized if sanitized else safe_default
+            result = sanitized or safe_default
         else:
             user_input = input(f"{title}{context_info} - {safe_prompt}: ").strip()
             # Sanitize user input - remove null bytes and newlines
@@ -191,7 +197,11 @@ def get_user_input(prompt: str, default: str = "", title: str = "Input Required"
         return None
 
 
-def update_progress(progress: int, message: str | None = None, callback: Callable[[int, str | None], None] | None = None) -> None:
+def update_progress(
+    progress: int,
+    message: str | None = None,
+    callback: Callable[[int, str | None], None] | None = None,
+) -> None:
     """Update progress display.
 
     Args:
@@ -228,7 +238,9 @@ def confirm_action(message: str, title: str = "Confirm Action", parent: object =
         # Sanitize title and message to prevent injection
         safe_title = title.replace("\n", " ").replace("\r", " ")
         safe_message = message.replace("\n", " ").replace("\r", " ")
-        response = input(f"{safe_title}: {safe_message} (y/n): ").strip().lower()  # Input validated below
+        response = (
+            input(f"{safe_title}: {safe_message} (y/n): ").strip().lower()
+        )  # Input validated below
         # Validate response - only accept specific values (y/yes)
         return response in ("y", "yes")
     except (KeyboardInterrupt, EOFError) as e:
@@ -287,17 +299,14 @@ def select_from_list(
                 except ValueError as e:
                     logger.error("Value error in ui_utils: %s", e)
                     continue
-            return selected if selected else None
+            return selected or None
         user_input = input("Enter number: ").strip()
         # Sanitize and validate input
         selection = user_input.replace("\0", "").replace("\n", "").replace("\r", "")
         if not selection.isdigit():
             return None
         idx = int(selection) - 1
-        if 0 <= idx < len(items):
-            return [items[idx]]
-        return None
-
+        return [items[idx]] if 0 <= idx < len(items) else None
     except (KeyboardInterrupt, EOFError, ValueError) as e:
         logger.error("Error in ui_utils: %s", e)
         return None
@@ -349,26 +358,23 @@ def format_table_data(headers: list[str], rows: list[list[object]], max_width: i
         scale = max_width / total_width
         col_widths = [int(w * scale) for w in col_widths]
 
-    # Format table
-    lines = []
-
-    # Header
-    header_parts = []
-    for i, header in enumerate(headers):
-        if i < len(col_widths):
-            header_parts.append(str(header).ljust(col_widths[i])[: col_widths[i]])
-    lines.append(" | ".join(header_parts))
-
+    header_parts = [
+        str(header).ljust(col_widths[i])[: col_widths[i]]
+        for i, header in enumerate(headers)
+        if i < len(col_widths)
+    ]
+    lines = [" | ".join(header_parts)]
     # Separator
     sep_parts = ["-" * w for w in col_widths[: len(headers)]]
     lines.append("-+-".join(sep_parts))
 
     # Rows
     for row in rows:
-        row_parts = []
-        for i, cell in enumerate(row):
-            if i < len(col_widths):
-                row_parts.append(str(cell).ljust(col_widths[i])[: col_widths[i]])
+        row_parts = [
+            str(cell).ljust(col_widths[i])[: col_widths[i]]
+            for i, cell in enumerate(row)
+            if i < len(col_widths)
+        ]
         lines.append(" | ".join(row_parts))
 
     return "\n".join(lines)

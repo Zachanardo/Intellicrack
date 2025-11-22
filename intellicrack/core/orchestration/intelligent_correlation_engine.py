@@ -43,6 +43,7 @@ from intellicrack.core.orchestration.result_serialization_protocol import (
     StringResult,
 )
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -224,19 +225,22 @@ class IntelligentCorrelationEngine:
             correlations = []
 
             # Address-based correlation
-            if hasattr(new_result, "address") and hasattr(existing_result, "address"):
-                if self._check_address_correlation(new_result, existing_result):
-                    correlations.append(self._create_address_correlation(new_result, existing_result))
+            if hasattr(new_result, "address") and hasattr(existing_result, "address") and self._check_address_correlation(new_result, existing_result):
+                correlations.append(
+                    self._create_address_correlation(new_result, existing_result)
+                )
 
             # Cross-reference correlation
-            if isinstance(new_result, FunctionResult) and isinstance(existing_result, FunctionResult):
-                if self._check_xref_correlation(new_result, existing_result):
-                    correlations.append(self._create_xref_correlation(new_result, existing_result))
+            if isinstance(new_result, FunctionResult) and isinstance(
+                            existing_result, FunctionResult
+                        ) and self._check_xref_correlation(new_result, existing_result):
+                correlations.append(self._create_xref_correlation(new_result, existing_result))
 
             # String reference correlation
-            if isinstance(new_result, StringResult):
-                if self._check_string_reference(new_result, existing_result):
-                    correlations.append(self._create_string_correlation(new_result, existing_result))
+            if isinstance(new_result, StringResult) and self._check_string_reference(new_result, existing_result):
+                correlations.append(
+                    self._create_string_correlation(new_result, existing_result)
+                )
 
             # Semantic correlation
             if self._check_semantic_correlation(new_result, existing_result):
@@ -245,7 +249,12 @@ class IntelligentCorrelationEngine:
             # Add correlations to graph
             for correlation in correlations:
                 self.correlations.append(correlation)
-                self.correlation_graph.add_edge(new_result.id, existing_result.id, weight=correlation.confidence, correlation=correlation)
+                self.correlation_graph.add_edge(
+                    new_result.id,
+                    existing_result.id,
+                    weight=correlation.confidence,
+                    correlation=correlation,
+                )
 
     def _check_address_correlation(self, result1: BaseResult, result2: BaseResult) -> bool:
         """Check if two results are correlated by address proximity."""
@@ -438,7 +447,12 @@ class IntelligentCorrelationEngine:
                 # Add edges to graph
                 for i in range(len(matching_results)):
                     for j in range(i + 1, len(matching_results)):
-                        self.correlation_graph.add_edge(matching_results[i], matching_results[j], weight=0.85, correlation=correlation)
+                        self.correlation_graph.add_edge(
+                            matching_results[i],
+                            matching_results[j],
+                            weight=0.85,
+                            correlation=correlation,
+                        )
 
     def _correlate_crypto_patterns(self) -> None:
         """Identify cryptographic patterns across results."""
@@ -483,7 +497,9 @@ class IntelligentCorrelationEngine:
 
             if len(matching_results) >= 2:
                 correlation = Correlation(
-                    id=hashlib.sha256(f"protection_{protection_name}_{time.time()}".encode()).hexdigest(),
+                    id=hashlib.sha256(
+                        f"protection_{protection_name}_{time.time()}".encode()
+                    ).hexdigest(),
                     type=CorrelationType.PROTECTION,
                     source_results=matching_results,
                     confidence=0.88,
@@ -538,22 +554,21 @@ class IntelligentCorrelationEngine:
 
     def _extract_feature_vector(self, result: BaseResult) -> np.ndarray | None:
         """Extract numerical feature vector from result."""
-        features = []
-
-        # Common features
-        features.append(result.confidence)
-        features.append(result.timestamp)
+        features = [result.confidence, result.timestamp]
 
         # Type-specific features
         if hasattr(result, "address"):
             features.append(float(getattr(result, "address", 0)))
 
         if isinstance(result, FunctionResult):
-            features.append(float(result.size))
-            features.append(float(result.cyclomatic_complexity))
-            features.append(float(len(result.xrefs_to)))
-            features.append(float(len(result.xrefs_from)))
-
+            features.extend(
+                (
+                    float(result.size),
+                    float(result.cyclomatic_complexity),
+                    float(len(result.xrefs_to)),
+                    float(len(result.xrefs_from)),
+                )
+            )
         elif isinstance(result, StringResult):
             features.append(float(result.length))
             features.append(float(result.entropy))
@@ -571,33 +586,37 @@ class IntelligentCorrelationEngine:
     def _analyze_correlation_graph(self) -> None:
         """Analyze the correlation graph for patterns."""
         # Find strongly connected components
-        if self.correlation_graph.number_of_nodes() > 0:
-            components = list(nx.connected_components(self.correlation_graph))
+        if self.correlation_graph.number_of_nodes() <= 0:
+            return
+        components = list(nx.connected_components(self.correlation_graph))
 
-            for component in components:
-                if len(component) >= self.min_cluster_size:
-                    # Create cluster from component
-                    cluster_results = [self.results[node] for node in component]
-                    cluster_correlations = []
+        for component in components:
+            if len(component) >= self.min_cluster_size:
+                # Create cluster from component
+                cluster_results = [self.results[node] for node in component]
+                cluster_correlations = []
 
-                    # Get correlations within component
-                    for node1 in component:
-                        for node2 in component:
-                            if self.correlation_graph.has_edge(node1, node2):
-                                edge_data = self.correlation_graph[node1][node2]
-                                if "correlation" in edge_data:
-                                    cluster_correlations.append(edge_data["correlation"])
+                # Get correlations within component
+                for node1 in component:
+                    for node2 in component:
+                        if self.correlation_graph.has_edge(node1, node2):
+                            edge_data = self.correlation_graph[node1][node2]
+                            if "correlation" in edge_data:
+                                cluster_correlations.append(edge_data["correlation"])
 
-                    cluster = CorrelationCluster(
-                        id=hashlib.sha256(f"graph_cluster_{time.time()}".encode()).hexdigest(),
-                        results=cluster_results,
-                        correlations=cluster_correlations,
-                        cluster_type="graph_component",
-                        confidence=0.85,
-                        summary={"size": len(component), "density": nx.density(self.correlation_graph.subgraph(component))},
-                    )
+                cluster = CorrelationCluster(
+                    id=hashlib.sha256(f"graph_cluster_{time.time()}".encode()).hexdigest(),
+                    results=cluster_results,
+                    correlations=cluster_correlations,
+                    cluster_type="graph_component",
+                    confidence=0.85,
+                    summary={
+                        "size": len(component),
+                        "density": nx.density(self.correlation_graph.subgraph(component)),
+                    },
+                )
 
-                    self.clusters.append(cluster)
+                self.clusters.append(cluster)
 
     def get_high_confidence_findings(self, min_confidence: float = 0.85) -> list[dict[str, Any]]:
         """Get findings with high correlation confidence."""
@@ -660,8 +679,11 @@ class IntelligentCorrelationEngine:
 
         # Pattern detection summary
         for pattern_type in ["license", "crypto", "protection"]:
-            pattern_correlations = [c for c in self.correlations if pattern_type in c.type.value.lower()]
-            if pattern_correlations:
+            if pattern_correlations := [
+                c
+                for c in self.correlations
+                if pattern_type in c.type.value.lower()
+            ]:
                 report["patterns_detected"][pattern_type] = len(pattern_correlations)
 
         return report
@@ -671,7 +693,13 @@ class IntelligentCorrelationEngine:
         export_data = {
             "report": self.generate_correlation_report(),
             "correlations": [
-                {"id": c.id, "type": c.type.value, "confidence": c.confidence, "description": c.description, "evidence": c.evidence}
+                {
+                    "id": c.id,
+                    "type": c.type.value,
+                    "confidence": c.confidence,
+                    "description": c.description,
+                    "evidence": c.evidence,
+                }
                 for c in self.correlations
             ],
             "clusters": [

@@ -504,7 +504,7 @@ class TestIncrementalAnalyzerIntegration:
             assert cache_path is not None
 
         # All cache paths should be unique
-        assert len(set(str(p) for p in cache_paths)) == len(cache_paths)
+        assert len({str(p) for p in cache_paths}) == len(cache_paths)
 
         # Step 2: Perform incremental analysis across family evolution
         analysis_chain = []

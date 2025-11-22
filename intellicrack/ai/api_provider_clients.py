@@ -16,6 +16,7 @@ import requests
 
 from intellicrack.utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 
@@ -269,7 +270,7 @@ class AnthropicProviderClient(BaseProviderClient):
 
         if self.api_key:
             try:
-                response = self._make_request(
+                if response := self._make_request(
                     "POST",
                     f"{self.base_url}/v1/messages",
                     json={
@@ -277,8 +278,7 @@ class AnthropicProviderClient(BaseProviderClient):
                         "max_tokens": 1,
                         "messages": [{"role": "user", "content": "test"}],
                     },
-                )
-                if response:
+                ):
                     logger.info("Anthropic API key validated successfully")
             except Exception as e:
                 logger.warning(f"Could not validate Anthropic API key: {e}")
@@ -440,8 +440,7 @@ class ProviderManager:
         all_models = {}
 
         for provider_name in self.providers:
-            models = self.fetch_models_from_provider(provider_name)
-            if models:
+            if models := self.fetch_models_from_provider(provider_name):
                 all_models[provider_name] = models
 
         return all_models

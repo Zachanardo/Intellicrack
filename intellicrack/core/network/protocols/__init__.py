@@ -24,6 +24,7 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 import logging
 from types import ModuleType
 
+
 logger = logging.getLogger(__name__)
 
 # Import protocol parsers
@@ -90,7 +91,6 @@ def get_supported_protocols() -> list[str]:
         list[str]: Protocol names supported by available parsers.
 
     """
-    protocols = []
     parser_protocol_map = {
         "autodesk_parser": "autodesk",
         "codemeter_parser": "codemeter",
@@ -98,12 +98,12 @@ def get_supported_protocols() -> list[str]:
         "hasp_parser": "hasp",
     }
 
-    for parser_name, protocol in parser_protocol_map.items():
-        if is_parser_available(parser_name):
-            protocols.append(protocol)
-
-    return protocols
+    return [
+        protocol
+        for parser_name, protocol in parser_protocol_map.items()
+        if is_parser_available(parser_name)
+    ]
 
 
 _parsers_list = [str(name) for name in _parsers]
-__all__ = ["get_available_parsers", "get_parser", "is_parser_available", "get_supported_protocols", *_parsers_list]
+__all__ = ["get_available_parsers", "get_parser", "get_supported_protocols", "is_parser_available"]

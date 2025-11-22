@@ -24,6 +24,7 @@ import mmap
 import os
 from collections import OrderedDict
 
+
 logger = logging.getLogger("Intellicrack.HexView")
 
 # Import large file handler for optimization
@@ -185,8 +186,9 @@ class ChunkManager:
             end_offset = min(offset + size, self.file_size)
             current_offset = offset
 
-            logger.debug(f"Reading from offset {offset} to {end_offset} ({end_offset - offset} bytes)")
-
+            logger.debug(
+                f"Reading from offset {current_offset} to {end_offset} ({end_offset - current_offset} bytes)"
+            )
             chunks_accessed = 0
             while current_offset < end_offset:
                 # Get appropriate chunk
@@ -208,12 +210,16 @@ class ChunkManager:
                         chunk.seek(local_offset)
                         chunk_data = chunk.read(local_size)
                         data.extend(chunk_data)
-                        logger.debug(f"Read {len(chunk_data)} bytes from chunk {chunk_index} using seek/read")
+                        logger.debug(
+                            f"Read {len(chunk_data)} bytes from chunk {chunk_index} using seek/read"
+                        )
                     else:
                         # If we got raw data instead of a memory map
                         chunk_data = chunk[local_offset : local_offset + local_size]
                         data.extend(chunk_data)
-                        logger.debug(f"Read {len(chunk_data)} bytes from chunk {chunk_index} using slice")
+                        logger.debug(
+                            f"Read {len(chunk_data)} bytes from chunk {chunk_index} using slice"
+                        )
 
                     # Move to next chunk
                     current_offset += local_size
@@ -223,7 +229,9 @@ class ChunkManager:
                     break
 
             result = bytes(data)
-            logger.debug(f"ChunkManager.read_data complete: Read {len(result)} bytes using {chunks_accessed} chunks")
+            logger.debug(
+                f"ChunkManager.read_data complete: Read {len(result)} bytes using {chunks_accessed} chunks"
+            )
 
             # Verify we have data
             if not result:
@@ -285,7 +293,7 @@ class VirtualFileAccess:
                 # Open in read+write mode for potential edits
                 self.write_file = open(file_path, "r+b")  # noqa: SIM115, pylint: disable=consider-using-with
 
-        except PermissionError:
+        except PermissionError as e:
             # Handle permission errors - create a temp copy
             logger.warning("Permission error accessing %s, using temporary copy", file_path)
             import random
@@ -300,7 +308,9 @@ class VirtualFileAccess:
 
             # Create a temporary file with a unique name
             temp_dir = tempfile.gettempdir()
-            self.temp_file_path = os.path.join(temp_dir, f"intellicrack_hex_{timestamp}_{random_suffix}_{basename}")
+            self.temp_file_path = os.path.join(
+                temp_dir, f"intellicrack_hex_{timestamp}_{random_suffix}_{basename}"
+            )
             logger.debug("Using temporary file path: %s", self.temp_file_path)
 
             try:
@@ -321,7 +331,7 @@ class VirtualFileAccess:
                 if not os.path.exists(self.temp_file_path):
                     error_msg = f"Temp file not created: {self.temp_file_path}"
                     logger.error(error_msg)
-                    raise FileNotFoundError(error_msg)
+                    raise FileNotFoundError(error_msg) from e
 
                 self.file_size = os.path.getsize(self.temp_file_path)
                 logger.debug("Temporary file size: %s bytes", self.file_size)
@@ -329,7 +339,7 @@ class VirtualFileAccess:
                 if self.file_size != len(file_data):
                     error_msg = f"Temp file size mismatch: {self.file_size} vs {len(file_data)}"
                     logger.error(error_msg)
-                    raise ValueError(error_msg)
+                    raise ValueError(error_msg) from e
 
                 # Initialize chunk manager with the temp file path
                 logger.debug("Initializing ChunkManager with temp file: %s", self.temp_file_path)
@@ -344,12 +354,14 @@ class VirtualFileAccess:
                     if not test_data:
                         error_msg = "Chunk manager returned empty data in test read"
                         logger.error(error_msg)
-                        raise ValueError(error_msg)
+                        raise ValueError(error_msg) from e
 
                 # Mark as read-only since we're using a temp copy
                 self.read_only = True
 
-                logger.info("Successfully created and verified temporary copy: %s", self.temp_file_path)
+                logger.info(
+                    "Successfully created and verified temporary copy: %s", self.temp_file_path
+                )
             except Exception as copy_error:
                 logger.error(f"Failed to create temporary copy: {copy_error}", exc_info=True)
 
@@ -373,7 +385,11 @@ class VirtualFileAccess:
         self.applied_edits = []
 
         # Initialize large file optimization if enabled and available
-        if self.use_large_file_optimization and LARGE_FILE_SUPPORT and self.file_size > 50 * 1024 * 1024:  # Use for files > 50MB
+        if (
+            self.use_large_file_optimization
+            and LARGE_FILE_SUPPORT
+            and self.file_size > 50 * 1024 * 1024
+        ):  # Use for files > 50MB
             try:
                 # Create memory configuration based on file size
                 config = MemoryConfig()
@@ -396,13 +412,17 @@ class VirtualFileAccess:
                     read_only=read_only,
                     config=config,
                 )
-                logger.info(f"Large file optimization enabled for {self.file_size / (1024 * 1024):.1f}MB file")
+                logger.info(
+                    f"Large file optimization enabled for {self.file_size / (1024 * 1024):.1f}MB file"
+                )
 
             except (OSError, ValueError, RuntimeError) as e:
                 logger.warning("Large file optimization failed, using fallback: %s", e)
                 self.large_file_handler = None
 
-        logger.info(f"VirtualFileAccess initialized for {file_path} (size: {self.file_size} bytes, read_only: {read_only})")
+        logger.info(
+            f"VirtualFileAccess initialized for {file_path} (size: {self.file_size} bytes, read_only: {read_only})"
+        )
 
     def __del__(self) -> None:
         """Clean up resources when the object is destroyed."""
@@ -417,13 +437,14 @@ class VirtualFileAccess:
                 self.write_file.close()
 
             # Remove temporary file if created
-            if hasattr(self, "using_temp_file") and self.using_temp_file and self.temp_file_path:
-                if os.path.exists(self.temp_file_path):
-                    try:
-                        os.remove(self.temp_file_path)
-                        logger.debug("Removed temporary file: %s", self.temp_file_path)
-                    except (OSError, ValueError, RuntimeError) as e:
-                        logger.warning("Failed to remove temporary file %s: %s", self.temp_file_path, e)
+            if hasattr(self, "using_temp_file") and self.using_temp_file and self.temp_file_path and os.path.exists(self.temp_file_path):
+                try:
+                    os.remove(self.temp_file_path)
+                    logger.debug("Removed temporary file: %s", self.temp_file_path)
+                except (OSError, ValueError, RuntimeError) as e:
+                    logger.warning(
+                        "Failed to remove temporary file %s: %s", self.temp_file_path, e
+                    )
 
             logger.debug("VirtualFileAccess resources for %s released", self.file_path)
         except (OSError, ValueError, RuntimeError) as e:
@@ -640,7 +661,9 @@ class VirtualFileAccess:
             return False
 
         if offset < 0 or offset > self.file_size:
-            logger.error("Insert offset %s is out of bounds (file size: %s)", offset, self.file_size)
+            logger.error(
+                "Insert offset %s is out of bounds (file size: %s)", offset, self.file_size
+            )
             return False
 
         if not data:
@@ -652,7 +675,9 @@ class VirtualFileAccess:
 
         try:
             # Create a temporary file in the same directory as the original file
-            temp_fd, temp_path = tempfile.mkstemp(dir=os.path.dirname(self.file_path), prefix="intellicrack_insert_")
+            temp_fd, temp_path = tempfile.mkstemp(
+                dir=os.path.dirname(self.file_path), prefix="intellicrack_insert_"
+            )
 
             with os.fdopen(temp_fd, "wb") as temp_file:
                 # Copy data up to insertion point
@@ -676,11 +701,11 @@ class VirtualFileAccess:
                     self.read_file.seek(offset)
                     chunk_size = 1024 * 1024  # 1MB chunks
                     while True:
-                        chunk = self.read_file.read(chunk_size)
-                        if not chunk:
-                            break
-                        temp_file.write(chunk)
+                        if chunk := self.read_file.read(chunk_size):
+                            temp_file.write(chunk)
 
+                        else:
+                            break
             # Close the original write file
             if self.write_file:
                 self.write_file.close()
@@ -699,7 +724,9 @@ class VirtualFileAccess:
             self.chunk_manager.file_size = self.file_size
             self.chunk_manager.file_obj = self.write_file
 
-            logger.info(f"Inserted {len(data)} bytes at offset {offset}, new file size: {self.file_size}")
+            logger.info(
+                f"Inserted {len(data)} bytes at offset {offset}, new file size: {self.file_size}"
+            )
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -729,7 +756,9 @@ class VirtualFileAccess:
             return False
 
         if offset < 0 or offset >= self.file_size:
-            logger.error("Delete offset %s is out of bounds (file size: %s)", offset, self.file_size)
+            logger.error(
+                "Delete offset %s is out of bounds (file size: %s)", offset, self.file_size
+            )
             return False
 
         if length <= 0:
@@ -746,7 +775,9 @@ class VirtualFileAccess:
 
         try:
             # Create a temporary file in the same directory as the original file
-            temp_fd, temp_path = tempfile.mkstemp(dir=os.path.dirname(self.file_path), prefix="intellicrack_delete_")
+            temp_fd, temp_path = tempfile.mkstemp(
+                dir=os.path.dirname(self.file_path), prefix="intellicrack_delete_"
+            )
 
             with os.fdopen(temp_fd, "wb") as temp_file:
                 # Copy data up to deletion point
@@ -768,11 +799,11 @@ class VirtualFileAccess:
                     self.read_file.seek(end_offset)
                     chunk_size = 1024 * 1024  # 1MB chunks
                     while True:
-                        chunk = self.read_file.read(chunk_size)
-                        if not chunk:
-                            break
-                        temp_file.write(chunk)
+                        if chunk := self.read_file.read(chunk_size):
+                            temp_file.write(chunk)
 
+                        else:
+                            break
             # Close the original write file
             if self.write_file:
                 self.write_file.close()
@@ -791,7 +822,9 @@ class VirtualFileAccess:
             self.chunk_manager.file_size = self.file_size
             self.chunk_manager.file_obj = self.write_file
 
-            logger.info("Deleted %s bytes at offset %s, new file size: %s", length, offset, self.file_size)
+            logger.info(
+                "Deleted %s bytes at offset %s, new file size: %s", length, offset, self.file_size
+            )
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -829,10 +862,9 @@ class VirtualFileAccess:
         """
         try:
             # Apply any pending edits first
-            if self.pending_edits:
-                if not self.apply_edits():
-                    logger.error("Failed to apply pending edits before save")
-                    return False
+            if self.pending_edits and not self.apply_edits():
+                logger.error("Failed to apply pending edits before save")
+                return False
 
             # Read entire file and write to new location
             with open(new_path, "wb") as new_file:
@@ -864,9 +896,7 @@ class VirtualFileAccess:
             Dictionary with performance stats or None if not available
 
         """
-        if self.large_file_handler:
-            return self.large_file_handler.get_stats()
-        return None
+        return self.large_file_handler.get_stats() if self.large_file_handler else None
 
     def optimize_for_sequential_access(self) -> None:
         """Optimize for sequential file access patterns."""

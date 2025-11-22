@@ -28,6 +28,7 @@ from intellicrack.handlers.pyqt6_handler import QMessageBox
 
 from ...utils.logger import get_logger
 
+
 T = TypeVar("T")
 
 
@@ -45,6 +46,7 @@ class ApplicationInterface(Protocol):
 
         """
         pass
+
 
 print("[DEBUG memory_patcher] Importing pyqt6_handler...")
 sys.stdout.flush()
@@ -415,7 +417,9 @@ def log_message(msg: str) -> str:
     return f"[{msg}]"
 
 
-def generate_launcher_script(app: ApplicationInterface, patching_strategy: str = "memory") -> str | None:
+def generate_launcher_script(
+    app: ApplicationInterface, patching_strategy: str = "memory"
+) -> str | None:
     """Generate a launcher script that uses Frida to patch the target program in memory.
 
     This function creates a Python script that launches the target application
@@ -618,7 +622,9 @@ if __name__ == "__main__":
     for _patch in app.potential_patches:
         patch_dict = {
             "address": _patch.get("address", 0),
-            "new_bytes": list(_patch.get("new_bytes", b"")) if isinstance(_patch.get("new_bytes"), bytes) else _patch.get("new_bytes", []),
+            "new_bytes": list(_patch.get("new_bytes", b""))
+            if isinstance(_patch.get("new_bytes"), bytes)
+            else _patch.get("new_bytes", []),
             "description": _patch.get("description", "Unknown patch"),
         }
         patches_formatted.append(patch_dict)
@@ -638,7 +644,9 @@ if __name__ == "__main__":
         if sys.platform != "win32":
             Path(launcher_path).chmod(0o700)  # Owner-only executable launcher
 
-        app.update_output.emit(log_message(f"[Launcher] Successfully created launcher script: {launcher_path}"))
+        app.update_output.emit(
+            log_message(f"[Launcher] Successfully created launcher script: {launcher_path}")
+        )
 
         # Show instructions
         msg = f"Launcher script created: {launcher_path}\\n\\n"
@@ -674,11 +682,7 @@ def setup_memory_patching(app: ApplicationInterface) -> None:
 
     app.update_output.emit(log_message("[Memory Patch] Analyzing protection mechanisms..."))
 
-    from ...protection.protection_detector import (
-        detect_checksum_verification,
-        detect_obfuscation,
-        detect_self_healing_code,
-    )
+    from ...protection.protection_detector import detect_checksum_verification, detect_obfuscation, detect_self_healing_code
 
     # Detect various protections
     protections = []
@@ -699,7 +703,9 @@ def setup_memory_patching(app: ApplicationInterface) -> None:
         app.update_output.emit(log_message("[Memory Patch] Detected: Code obfuscation"))
 
     if not protections:
-        app.update_output.emit(log_message("[Memory Patch] No special protections detected. Static patching may work."))
+        app.update_output.emit(
+            log_message("[Memory Patch] No special protections detected. Static patching may work.")
+        )
 
         response = QMessageBox.question(
             app,
@@ -710,10 +716,12 @@ def setup_memory_patching(app: ApplicationInterface) -> None:
             QMessageBox.Yes | QMessageBox.No,
         )
 
-        if response != QMessageBox.Yes:
-            return
     else:
-        app.update_output.emit(log_message(f"[Memory Patch] Found {len(protections)} protection(s): {', '.join(protections)}"))
+        app.update_output.emit(
+            log_message(
+                f"[Memory Patch] Found {len(protections)} protection(s): {', '.join(protections)}"
+            )
+        )
 
         msg = "The following protections were detected:\\n\\n"
         for _p in protections:
@@ -729,12 +737,13 @@ def setup_memory_patching(app: ApplicationInterface) -> None:
             QMessageBox.Yes | QMessageBox.No,
         )
 
-        if response != QMessageBox.Yes:
-            return
-
+    if response != QMessageBox.Yes:
+        return
     # Check if we have patches to apply
     if not hasattr(app, "potential_patches") or not app.potential_patches:
-        app.update_output.emit(log_message("[Memory Patch] No patches available. Run analysis first."))
+        app.update_output.emit(
+            log_message("[Memory Patch] No patches available. Run analysis first.")
+        )
         QMessageBox.warning(
             app,
             "No Patches",
@@ -745,13 +754,15 @@ def setup_memory_patching(app: ApplicationInterface) -> None:
     # Generate memory patching launcher
     app.update_output.emit(log_message("[Memory Patch] Generating memory patching launcher..."))
 
-    launcher_path = generate_launcher_script(app, patching_strategy="memory")
-
-    if launcher_path:
+    if launcher_path := generate_launcher_script(
+        app, patching_strategy="memory"
+    ):
         app.update_output.emit(log_message("[Memory Patch] Memory patching setup complete!"))
         app.update_output.emit(log_message(f"[Memory Patch] Launcher created: {launcher_path}"))
     else:
-        app.update_output.emit(log_message("[Memory Patch] Failed to create memory patching launcher."))
+        app.update_output.emit(
+            log_message("[Memory Patch] Failed to create memory patching launcher.")
+        )
 
 
 # Export functions
@@ -815,17 +826,16 @@ def _bypass_memory_protection_windows(address: int, size: int, protection: int =
         # Store old protection
         old_protection = wintypes.DWORD() if HAS_WINTYPES else ctypes.c_ulong()
 
-        # Change memory protection
-        success = VirtualProtect(
+        if success := VirtualProtect(
             ctypes.c_void_p(address),
             size,
             protection,
             ctypes.byref(old_protection),
-        )
-
-        if success:
+        ):
             logger.info(f"Successfully changed memory protection at {hex(address)}")
-            logger.info(f"Old protection: {hex(old_protection.value)}, New protection: {hex(protection)}")
+            logger.info(
+                f"Old protection: {hex(old_protection.value)}, New protection: {hex(protection)}"
+            )
             return True
         error = ctypes.get_last_error()
         logger.error(f"VirtualProtect failed with error code: {error}")
@@ -854,12 +864,12 @@ def _bypass_memory_protection_unix(address: int, size: int, protection: int = No
 
         # Unix memory protection constants
         PROT_NONE = 0x0
-        PROT_READ = 0x1
-        PROT_WRITE = 0x2
-        PROT_EXEC = 0x4
-
         # Default to RWX if not specified
         if protection is None:
+            PROT_READ = 0x1
+            PROT_WRITE = 0x2
+            PROT_EXEC = 0x4
+
             protection = PROT_READ | PROT_WRITE | PROT_EXEC
 
         # Validate protection value (must not be PROT_NONE for bypass operations)
@@ -1031,7 +1041,9 @@ def _patch_memory_unix(process_id: int, address: int, data: bytes) -> bool:
                     mem_file.write(data)
                     mem_file.flush()
 
-                logger.info(f"Successfully patched {len(data)} bytes at {hex(address)} via /proc/pid/mem")
+                logger.info(
+                    f"Successfully patched {len(data)} bytes at {hex(address)} via /proc/pid/mem"
+                )
                 return True
 
             except OSError as e:
@@ -1126,7 +1138,6 @@ def _handle_guard_pages_windows(address: int, size: int, process_handle: int = N
 
         kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
-        # MEMORY_BASIC_INFORMATION structure
         class MEMORY_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
             """Windows MEMORY_BASIC_INFORMATION structure for memory queries."""
 
@@ -1199,7 +1210,7 @@ def _handle_guard_pages_windows(address: int, size: int, process_handle: int = N
                         # Read first byte to trigger guard page exception and clear the protection
                         guard_trigger_byte = ctypes.c_byte()
                         ctypes.memmove(ctypes.byref(guard_trigger_byte), address, 1)
-                    except (OSError, ValueError, Exception) as e:
+                    except Exception as e:
                         logger.error("Error in memory_patcher: %s", e)
 
                 return True
@@ -1237,7 +1248,9 @@ def _handle_guard_pages_unix(address: int, size: int, process_handle: int = None
 
         # Calculate the full range that needs to be handled
         end_address = address + size
-        logger.debug(f"Handling guard pages for range {hex(address)}-{hex(end_address)} (size: {size} bytes)")
+        logger.debug(
+            f"Handling guard pages for range {hex(address)}-{hex(end_address)} (size: {size} bytes)"
+        )
 
         # On Unix, guard pages are typically implemented differently
         # We'll check /proc/self/maps for memory regions
@@ -1264,7 +1277,9 @@ def _handle_guard_pages_unix(address: int, size: int, process_handle: int = None
                             or (address <= start_addr < end_address)
                         ):
                             perms = parts[1]
-                            logger.info(f"Memory region {hex(start_addr)}-{hex(end_addr)} overlaps target range, permissions: {perms}")
+                            logger.info(
+                                f"Memory region {hex(start_addr)}-{hex(end_addr)} overlaps target range, permissions: {perms}"
+                            )
 
                             # Check if it's a guard page (no permissions)
                             if perms == "---p":
@@ -1282,7 +1297,9 @@ def _handle_guard_pages_unix(address: int, size: int, process_handle: int = None
                                 aligned_end = (end_address + page_size - 1) & ~(page_size - 1)
                                 aligned_size = aligned_end - aligned_addr
 
-                                logger.debug(f"Aligned region: {hex(aligned_addr)}-{hex(aligned_end)} (size: {aligned_size} bytes)")
+                                logger.debug(
+                                    f"Aligned region: {hex(aligned_addr)}-{hex(aligned_end)} (size: {aligned_size} bytes)"
+                                )
 
                                 # Set read/write permissions
                                 PROT_READ = 0x1
@@ -1295,7 +1312,9 @@ def _handle_guard_pages_unix(address: int, size: int, process_handle: int = None
                                 )
 
                                 if result == 0:
-                                    logger.info(f"Successfully removed guard page protection for {aligned_size} bytes")
+                                    logger.info(
+                                        f"Successfully removed guard page protection for {aligned_size} bytes"
+                                    )
                                     return True
                                 logger.error("Failed to change guard page permissions")
                                 return False
@@ -1338,7 +1357,6 @@ def detect_and_bypass_guard_pages(process_handle: int, address: int, size: int) 
 
             kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
-            # Check if memory is committed
             class MEMORY_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
                 """Memory basic information structure for allocation checking."""
 
@@ -1353,14 +1371,12 @@ def detect_and_bypass_guard_pages(process_handle: int, address: int, size: int) 
                 ]
 
             mbi = MEMORY_BASIC_INFORMATION()
-            result = kernel32.VirtualQueryEx(
+            if result := kernel32.VirtualQueryEx(
                 process_handle,
                 ctypes.c_void_p(address),
                 ctypes.byref(mbi),
                 ctypes.sizeof(mbi),
-            )
-
-            if result:
+            ):
                 MEM_COMMIT = 0x1000
                 if not (mbi.State & MEM_COMMIT):
                     logger.error("Memory not committed")

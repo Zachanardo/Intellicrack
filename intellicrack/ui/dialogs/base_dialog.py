@@ -37,6 +37,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
 )
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -493,7 +494,9 @@ class BaseDialog(QDialog):
         """
         self.cancel_button.setText(text)
 
-    def add_custom_button(self, text: str, callback: Callable[[], None], button_type: str = "default") -> QPushButton:
+    def add_custom_button(
+        self, text: str, callback: Callable[[], None], button_type: str = "default"
+    ) -> QPushButton:
         """Add a custom button to the button box.
 
         Args:

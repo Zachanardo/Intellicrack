@@ -52,7 +52,7 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
         if Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
-    def _generate_large_config(self, num_entries: int = 1000) -> Dict[str, Any]:
+    def _generate_large_config(self, num_entries: int = 1000) -> dict[str, Any]:
         """Generate a large configuration for testing."""
         config = {
             "version": "3.0",
@@ -319,7 +319,7 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
             times = []
             for _ in range(3):
                 start_time = time.time()
-                with open(config_path, 'r') as f:
+                with open(config_path) as f:
                     loaded = json.load(f)
                 load_time = time.time() - start_time
                 times.append(load_time)
@@ -451,7 +451,7 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
 
         # Simulate loading only core section
         start_time = time.time()
-        with open(self.config_path, 'r') as f:
+        with open(self.config_path) as f:
             # In production, would use streaming JSON parser
             full_data = json.load(f)
             core_data = full_data.get("core", {})
@@ -459,7 +459,7 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
 
         # Load everything
         start_time = time.time()
-        with open(self.config_path, 'r') as f:
+        with open(self.config_path) as f:
             full_data = json.load(f)
         full_load_time = time.time() - start_time
 
@@ -480,13 +480,13 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
 
         # Load without validation
         start_time = time.time()
-        with open(self.config_path, 'r') as f:
+        with open(self.config_path) as f:
             data = json.load(f)
         no_validation_time = time.time() - start_time
 
         # Load with validation (simulated)
         start_time = time.time()
-        with open(self.config_path, 'r') as f:
+        with open(self.config_path) as f:
             data = json.load(f)
             # Simulate validation
             self._validate_config_structure(data)
@@ -503,7 +503,7 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
         # Validation overhead should be reasonable
         self.assertLess(overhead_percent, 50, "Validation overhead exceeds 50%")
 
-    def _validate_config_structure(self, config: Dict[str, Any]) -> bool:
+    def _validate_config_structure(self, config: dict[str, Any]) -> bool:
         """Simulate config structure validation."""
         required_fields = ["version", "application"]
         for field in required_fields:

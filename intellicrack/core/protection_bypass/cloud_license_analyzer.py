@@ -30,6 +30,7 @@ from cryptography.x509.oid import NameOID
 from mitmproxy import options
 from mitmproxy.tools.dump import DumpMaster
 
+
 # Token type constants (not passwords)
 TOKEN_TYPE_COOKIE = "cookie"  # noqa: S105
 TOKEN_TYPE_JWT = "jwt"  # noqa: S105
@@ -103,7 +104,9 @@ class CloudLicenseAnalyzer:
             self._generate_ca_certificate(cert_file, key_file)
 
     def _generate_ca_certificate(self, cert_file: Path, key_file: Path) -> None:
-        key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
+        key = rsa.generate_private_key(
+            public_exponent=65537, key_size=2048, backend=default_backend()
+        )
 
         subject = issuer = x509.Name(
             [
@@ -157,7 +160,9 @@ class CloudLicenseAnalyzer:
 
     def _init_proxy(self) -> None:
         self.proxy_options = options.Options(
-            listen_port=self.proxy_port, ssl_insecure=True, confdir=str(Path(__file__).parent / "mitmproxy_config"),
+            listen_port=self.proxy_port,
+            ssl_insecure=True,
+            confdir=str(Path(__file__).parent / "mitmproxy_config"),
         )
 
         self.proxy_master = DumpMaster(self.proxy_options, with_termlog=False, with_dumper=False)
@@ -166,11 +171,15 @@ class CloudLicenseAnalyzer:
 
     def generate_host_certificate(self, hostname: str) -> tuple[bytes, bytes]:
         """Generate SSL certificate for intercepting HTTPS traffic to specific host."""
-        ca_key_obj = serialization.load_pem_private_key(self.ca_key, password=None, backend=default_backend())
+        ca_key_obj = serialization.load_pem_private_key(
+            self.ca_key, password=None, backend=default_backend()
+        )
 
         ca_cert_obj = x509.load_pem_x509_certificate(self.ca_cert, backend=default_backend())
 
-        key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
+        key = rsa.generate_private_key(
+            public_exponent=65537, key_size=2048, backend=default_backend()
+        )
 
         subject = x509.Name(
             [
@@ -392,7 +401,9 @@ class CloudLicenseAnalyzer:
             if payload["type"] == "hooks_installed":
                 logger.info("Proxy hooks successfully installed in target process")
 
-    def analyze_endpoint(self, request: mitmproxy.http.Request, response: mitmproxy.http.Response) -> CloudEndpoint:
+    def analyze_endpoint(
+        self, request: mitmproxy.http.Request, response: mitmproxy.http.Response
+    ) -> CloudEndpoint:
         """Analyze intercepted HTTP request/response to extract endpoint metadata."""
         url = request.pretty_url
         method = request.method
@@ -423,7 +434,12 @@ class CloudLicenseAnalyzer:
         auth_type = self._detect_authentication_type(request)
 
         endpoint = CloudEndpoint(
-            url=url, method=method, headers=headers, parameters=parameters, response_schema=response_schema, authentication_type=auth_type,
+            url=url,
+            method=method,
+            headers=headers,
+            parameters=parameters,
+            response_schema=response_schema,
+            authentication_type=auth_type,
         )
 
         endpoint_key = f"{method}:{urlparse(url).path}"
@@ -442,20 +458,15 @@ class CloudLicenseAnalyzer:
             content_type = response.headers.get("content-type", "")
 
             if "application/json" in content_type:
-                try:
+                with contextlib.suppress(ValueError, TypeError):
                     data = json.loads(response.content)
                     schema["body_schema"] = self._extract_json_schema(data)
                     schema["body_sample"] = data
-                except (ValueError, TypeError):
-                    pass
             elif "text/xml" in content_type or "application/xml" in content_type:
-                try:
+                with contextlib.suppress(ValueError, TypeError):
                     data = xmltodict.parse(response.content)
                     schema["body_schema"] = self._extract_json_schema(data)
                     schema["body_sample"] = data
-                except (ValueError, TypeError):
-                    pass
-
         return schema
 
     def _extract_json_schema(self, data: object, depth: int = 0) -> dict[str, object]:
@@ -463,9 +474,10 @@ class CloudLicenseAnalyzer:
             return {"type": "any"}
 
         if isinstance(data, dict):
-            properties = {}
-            for key, value in data.items():
-                properties[key] = self._extract_json_schema(value, depth + 1)
+            properties = {
+                key: self._extract_json_schema(value, depth + 1)
+                for key, value in data.items()
+            }
             return {"type": "object", "properties": properties}
         if isinstance(data, list):
             if data:
@@ -484,9 +496,7 @@ class CloudLicenseAnalyzer:
 
         if auth_header.startswith("bearer "):
             token = auth_header[7:]
-            if self._is_jwt_token(token):
-                return "jwt"
-            return "bearer_token"
+            return "jwt" if self._is_jwt_token(token) else "bearer_token"
         if auth_header.startswith("basic "):
             return "basic"
         if auth_header.startswith("digest "):
@@ -512,30 +522,27 @@ class CloudLicenseAnalyzer:
                 base64.urlsafe_b64decode(part + "=" * (4 - len(part) % 4))
 
             return True
-        except (OSError, PermissionError):
+        except OSError:
             return False
 
-    def extract_license_tokens(self, request: mitmproxy.http.Request, response: mitmproxy.http.Response) -> list[LicenseToken]:
+    def extract_license_tokens(
+        self, request: mitmproxy.http.Request, response: mitmproxy.http.Response
+    ) -> list[LicenseToken]:
         """Extract license tokens from intercepted HTTP traffic."""
         tokens = []
 
-        auth_header = request.headers.get("authorization", "")
-        if auth_header:
+        if auth_header := request.headers.get("authorization", ""):
             if auth_header.startswith("Bearer "):
                 token_value = auth_header[7:]
-                token = self._analyze_bearer_token(token_value)
-                if token:
+                if token := self._analyze_bearer_token(token_value):
                     tokens.append(token)
 
         if response.content:
             content_type = response.headers.get("content-type", "")
             if "application/json" in content_type:
-                try:
+                with contextlib.suppress(json.JSONDecodeError, ValueError):
                     data = json.loads(response.content)
                     tokens.extend(self._extract_tokens_from_json(data))
-                except (json.JSONDecodeError, ValueError):
-                    pass
-
         for cookie in response.cookies:
             if "token" in cookie.lower() or "session" in cookie.lower():
                 token = LicenseToken(
@@ -552,7 +559,7 @@ class CloudLicenseAnalyzer:
 
     def _analyze_bearer_token(self, token_value: str) -> LicenseToken | None:
         if self._is_jwt_token(token_value):
-            try:
+            with contextlib.suppress(ValueError, TypeError):
                 header = jwt.get_unverified_header(token_value)
                 payload = jwt.decode(token_value, options={"verify_signature": False})
 
@@ -570,12 +577,17 @@ class CloudLicenseAnalyzer:
                     scope=scope,
                     metadata={"header": header, "payload": payload},
                 )
-            except (ValueError, TypeError):
-                pass
+        return LicenseToken(
+            token_type=TOKEN_TYPE_BEARER,
+            value=token_value,
+            expires_at=None,
+            refresh_token=None,
+            scope=None,
+        )
 
-        return LicenseToken(token_type=TOKEN_TYPE_BEARER, value=token_value, expires_at=None, refresh_token=None, scope=None)
-
-    def _extract_tokens_from_json(self, data: object, tokens: list[LicenseToken] | None = None) -> list[LicenseToken]:
+    def _extract_tokens_from_json(
+        self, data: object, tokens: list[LicenseToken] | None = None
+    ) -> list[LicenseToken]:
         if tokens is None:
             tokens = []
 
@@ -606,7 +618,9 @@ class CloudLicenseAnalyzer:
 
                 scope = None
                 if "scope" in data:
-                    scope = data["scope"].split() if isinstance(data["scope"], str) else data["scope"]
+                    scope = (
+                        data["scope"].split() if isinstance(data["scope"], str) else data["scope"]
+                    )
 
                 token = LicenseToken(
                     token_type=data.get("token_type", "unknown"),
@@ -614,7 +628,11 @@ class CloudLicenseAnalyzer:
                     expires_at=expires_at,
                     refresh_token=refresh_value,
                     scope=scope,
-                    metadata={k: v for k, v in data.items() if k not in ["access_token", "token", "refresh_token"]},
+                    metadata={
+                        k: v
+                        for k, v in data.items()
+                        if k not in ["access_token", "token", "refresh_token"]
+                    },
                 )
                 tokens.append(token)
 
@@ -662,13 +680,15 @@ class CloudLicenseAnalyzer:
             payload["aud"] = audience
 
         if claims:
-            payload.update(claims)
+            payload |= claims
 
         secret = kwargs.get("secret", "intellicrack-secret-key")
         algorithm = kwargs.get("algorithm", "HS256")
 
         if algorithm.startswith("RS"):
-            key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
+            key = rsa.generate_private_key(
+                public_exponent=65537, key_size=2048, backend=default_backend()
+            )
             private_pem = key.private_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.PKCS8,
@@ -718,16 +738,16 @@ class CloudLicenseAnalyzer:
 
                     if response.status_code == 200:
                         data = response.json()
-                        new_tokens = self._extract_tokens_from_json(data)
-
-                        if new_tokens:
+                        if new_tokens := self._extract_tokens_from_json(data):
                             return new_tokens[0]
                 except (ValueError, TypeError):
                     continue
 
         return None
 
-    def _make_refresh_request(self, endpoint: CloudEndpoint, refresh_token: str) -> requests.Response:
+    def _make_refresh_request(
+        self, endpoint: CloudEndpoint, refresh_token: str
+    ) -> requests.Response:
         url = endpoint.url
         headers = endpoint.headers.copy()
 
@@ -794,7 +814,9 @@ class CloudLicenseAnalyzer:
         try:
             analysis_data = {
                 "timestamp": datetime.now().isoformat(),
-                "endpoints": {k: self._serialize_endpoint(v) for k, v in self.discovered_endpoints.items()},
+                "endpoints": {
+                    k: self._serialize_endpoint(v) for k, v in self.discovered_endpoints.items()
+                },
                 "tokens": {k: self._serialize_token(v) for k, v in self.license_tokens.items()},
                 "api_schemas": self.api_schemas,
                 "intercepted_requests": len(self.intercepted_requests),
@@ -802,16 +824,16 @@ class CloudLicenseAnalyzer:
 
             filepath = Path(filepath)
 
-            if filepath.suffix == ".json":
+            if filepath.suffix == ".json" or filepath.suffix not in [
+                ".yaml",
+                ".pkl",
+            ]:
                 filepath.write_text(json.dumps(analysis_data, indent=2))
             elif filepath.suffix == ".yaml":
                 filepath.write_text(yaml.dump(analysis_data))
-            elif filepath.suffix == ".pkl":
+            else:
                 with filepath.open("wb") as f:
                     pickle.dump(analysis_data, f)
-            else:
-                filepath.write_text(json.dumps(analysis_data, indent=2))
-
             return True
 
         except Exception as e:
@@ -833,8 +855,12 @@ class CloudLicenseAnalyzer:
     def _serialize_token(self, token: LicenseToken) -> dict[str, Any]:
         return {
             "token_type": token.token_type,
-            "value": token.value[:20] + "..." if len(token.value) > 20 else token.value,
-            "expires_at": token.expires_at.isoformat() if token.expires_at else None,
+            "value": (
+                f"{token.value[:20]}..." if len(token.value) > 20 else token.value
+            ),
+            "expires_at": (
+                token.expires_at.isoformat() if token.expires_at else None
+            ),
             "has_refresh": bool(token.refresh_token),
             "scope": token.scope,
             "metadata": token.metadata,
@@ -885,7 +911,9 @@ class CloudInterceptor:
         if self._should_modify_response(request, response):
             self._modify_response(flow)
 
-    def _should_modify_response(self, request: mitmproxy.http.Request, response: mitmproxy.http.Response) -> bool:
+    def _should_modify_response(
+        self, request: mitmproxy.http.Request, response: mitmproxy.http.Response
+    ) -> bool:
         url_path = urlparse(request.pretty_url).path.lower()
 
         license_paths = ["/license", "/verify", "/validate", "/check", "/activate"]
@@ -899,7 +927,7 @@ class CloudInterceptor:
             content_type = response.headers.get("content-type", "")
 
             if "application/json" in content_type:
-                try:
+                with contextlib.suppress(json.JSONEncodeError, TypeError):
                     data = json.loads(response.content)
 
                     if "valid" in data or "licensed" in data or "activated" in data:
@@ -909,18 +937,15 @@ class CloudInterceptor:
 
                     if "expires" in data or "expiry" in data:
                         future_date = (datetime.now() + timedelta(days=365)).isoformat()
-                        if "expires" in data:
-                            data["expires"] = future_date
-                        if "expiry" in data:
-                            data["expiry"] = future_date
+                    if "expires" in data:
+                        data["expires"] = future_date
+                    if "expiry" in data:
+                        data["expiry"] = future_date
 
                     if "features" in data:
                         data["features"] = ["all", "unlimited", "enterprise"]
 
                     response.content = json.dumps(data).encode("utf-8")
-
-                except (json.JSONEncodeError, TypeError):
-                    pass
 
 
 class CloudLicenseBypasser:
@@ -941,9 +966,7 @@ class CloudLicenseBypasser:
 
         for _endpoint_key, endpoint in self.analyzer.discovered_endpoints.items():
             if parsed.path in endpoint.url:
-                token = self._get_valid_token(endpoint)
-
-                if token:
+                if token := self._get_valid_token(endpoint):
                     return self._send_bypass_request(endpoint, token)
 
         return False
@@ -953,8 +976,7 @@ class CloudLicenseBypasser:
             if token.expires_at and token.expires_at > datetime.now():
                 return token
             if token.refresh_token:
-                new_token = self.analyzer.refresh_token(token)
-                if new_token:
+                if new_token := self.analyzer.refresh_token(token):
                     return new_token
 
         return self.analyzer.generate_token("jwt")
@@ -971,9 +993,16 @@ class CloudLicenseBypasser:
             if endpoint.method == "GET":
                 response = requests.get(endpoint.url, headers=headers, timeout=30)
             elif endpoint.method == "POST":
-                response = requests.post(endpoint.url, headers=headers, json=endpoint.parameters.get("body", {}), timeout=30)
+                response = requests.post(
+                    endpoint.url,
+                    headers=headers,
+                    json=endpoint.parameters.get("body", {}),
+                    timeout=30,
+                )
             else:
-                response = requests.request(endpoint.method, endpoint.url, headers=headers, timeout=30)
+                response = requests.request(
+                    endpoint.method, endpoint.url, headers=headers, timeout=30
+                )
 
             return response.status_code in [200, 201, 204]
 

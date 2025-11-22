@@ -24,6 +24,7 @@ from typing import Any
 
 from ...utils.system.windows_common import WindowsConstants, get_windows_kernel32, get_windows_ntdll
 
+
 """
 Base Patcher Module
 
@@ -71,7 +72,9 @@ class BaseWindowsPatcher(ABC):
         self.THREAD_SUSPEND_RESUME = 0x0002
 
     def handle_suspended_process_result(
-        self, result: dict[str, Any], logger_instance: Logger | None = None,
+        self,
+        result: dict[str, Any],
+        logger_instance: Logger | None = None,
     ) -> tuple[bool, Any, Any]:
         """Handle suspended process creation result with common pattern.
 
@@ -97,7 +100,9 @@ class BaseWindowsPatcher(ABC):
         return True, process_info, context
 
     def create_and_handle_suspended_process(
-        self, target_exe: str, logger_instance: Logger | None = None,
+        self,
+        target_exe: str,
+        logger_instance: Logger | None = None,
     ) -> tuple[bool, Any, Any]:
         """Create a suspended process and handle the result in one operation.
 

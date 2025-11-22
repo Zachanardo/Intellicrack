@@ -46,6 +46,7 @@ from .tabs.tools_tab import ToolsTab
 from .tabs.workspace_tab import WorkspaceTab
 from .theme_manager import get_theme_manager
 
+
 logger = logging.getLogger(__name__)
 
 

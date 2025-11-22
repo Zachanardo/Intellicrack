@@ -54,7 +54,7 @@ class ProtectionAnalyzerTool:
         self.ai_assistant = IntellicrackAIAssistant()
         self.ai_file_tools = get_ai_file_tools()
 
-    def analyze(self, binary_path: str, detailed: bool = True) -> Dict[str, Any]:
+    def analyze(self, binary_path: str, detailed: bool = True) -> dict[str, Any]:
         """Perform comprehensive protection analysis on a binary.
 
         Args:
@@ -149,12 +149,12 @@ class ProtectionAnalyzerTool:
                         if license_file_results.get("status") == "success" and license_file_results.get("files_found"):
                             analysis["license_files_found"] = license_file_results
 
-                            # Read up to 3 license files for analysis
-                            license_files_to_read = []
-                            for file_info in license_file_results["files_found"][:3]:
-                                license_files_to_read.append(file_info["path"])
-
-                            if license_files_to_read:
+                            if license_files_to_read := [
+                                file_info["path"]
+                                for file_info in license_file_results[
+                                    "files_found"
+                                ][:3]
+                            ]:
                                 read_results = self.ai_file_tools.read_multiple_files(
                                     license_files_to_read,
                                     f"Analyze license files for {os.path.basename(binary_path)}",
@@ -183,7 +183,7 @@ class ProtectionAnalyzerTool:
             logger.error(f"Error analyzing {binary_path}: {e}")
             return {"success": False, "error": str(e)}
 
-    def _get_file_info(self, binary_path: str) -> Dict[str, Any]:
+    def _get_file_info(self, binary_path: str) -> dict[str, Any]:
         """Get basic file information"""
         path = Path(binary_path)
         return {
@@ -203,7 +203,7 @@ class ProtectionAnalyzerTool:
             size /= 1024.0
         return f"{size:.2f} TB"
 
-    def _build_protection_analysis(self, die_result: ProtectionAnalysis) -> Dict[str, Any]:
+    def _build_protection_analysis(self, die_result: ProtectionAnalysis) -> dict[str, Any]:
         """Build the main protection analysis section"""
         # Group detections by type
         detections_by_type = {}
@@ -219,7 +219,7 @@ class ProtectionAnalyzerTool:
                 }
             )
 
-        analysis = {
+        return {
             "file_type": die_result.file_type,
             "architecture": die_result.architecture,
             "compiler": die_result.compiler,
@@ -229,12 +229,19 @@ class ProtectionAnalyzerTool:
             "detections": detections_by_type,
             "total_detections": len(die_result.detections),
             "total_licensing_schemes": len(
-                [d for d in die_result.detections if d.type in [ProtectionType.LICENSE, ProtectionType.DONGLE, ProtectionType.DRM]]
+                [
+                    d
+                    for d in die_result.detections
+                    if d.type
+                    in [
+                        ProtectionType.LICENSE,
+                        ProtectionType.DONGLE,
+                        ProtectionType.DRM,
+                    ]
+                ]
             ),
             "protection_summary": self._get_protection_summary(die_result),
         }
-
-        return analysis
 
     def _get_protection_summary(self, die_result: ProtectionAnalysis) -> str:
         """Get a summary of all protections detected"""
@@ -280,7 +287,7 @@ class ProtectionAnalyzerTool:
 
         return max_difficulty
 
-    def _get_technical_details(self, die_result: ProtectionAnalysis) -> Dict[str, Any]:
+    def _get_technical_details(self, die_result: ProtectionAnalysis) -> dict[str, Any]:
         """Extract technical details from DIE analysis"""
         details = {
             "binary_characteristics": {
@@ -305,7 +312,7 @@ class ProtectionAnalyzerTool:
 
         return details
 
-    def _get_protection_indicators_from_die(self, die_result: ProtectionAnalysis) -> List[str]:
+    def _get_protection_indicators_from_die(self, die_result: ProtectionAnalysis) -> list[str]:
         """Get specific indicators from DIE detections"""
         indicators = []
 
@@ -321,27 +328,42 @@ class ProtectionAnalyzerTool:
         for detection in die_result.detections:
             name_lower = detection.name.lower()
             if "hasp" in name_lower:
-                indicators.append("Hardware dongle communication detected")
-                indicators.append("HASP API imports found")
+                indicators.extend(
+                    (
+                        "Hardware dongle communication detected",
+                        "HASP API imports found",
+                    )
+                )
             elif "flexlm" in name_lower or "flexnet" in name_lower:
-                indicators.append("License file references detected")
-                indicators.append("Network license manager patterns")
+                indicators.extend(
+                    (
+                        "License file references detected",
+                        "Network license manager patterns",
+                    )
+                )
             elif "steam" in name_lower:
-                indicators.append("Steam API integration detected")
-                indicators.append("CEG wrapping patterns found")
+                indicators.extend(
+                    (
+                        "Steam API integration detected",
+                        "CEG wrapping patterns found",
+                    )
+                )
             elif "denuvo" in name_lower:
-                indicators.append("Heavy virtualization detected")
-                indicators.append("Multiple integrity check triggers")
+                indicators.extend(
+                    (
+                        "Heavy virtualization detected",
+                        "Multiple integrity check triggers",
+                    )
+                )
             elif "vmprotect" in name_lower:
-                indicators.append("Code virtualization detected")
-                indicators.append(".vmp sections present")
+                indicators.extend(("Code virtualization detected", ".vmp sections present"))
             elif "themida" in name_lower or "winlicense" in name_lower:
                 indicators.append("SecureEngine protection detected")
                 indicators.append("Advanced anti-debugging present")
 
         return list(set(indicators))  # Remove duplicates
 
-    def _get_bypass_guidance(self, die_result: ProtectionAnalysis) -> Dict[str, Any]:
+    def _get_bypass_guidance(self, die_result: ProtectionAnalysis) -> dict[str, Any]:
         """Provide bypass guidance based on DIE detections"""
         if not die_result.detections:
             return {
@@ -351,18 +373,20 @@ class ProtectionAnalyzerTool:
                 "difficulty_score": 0,
             }
 
-        # Find the most significant protection
-        main_protection = None
-        for detection in die_result.detections:
-            if detection.type in [
-                ProtectionType.PROTECTOR,
-                ProtectionType.LICENSE,
-                ProtectionType.DONGLE,
-                ProtectionType.DRM,
-            ]:
-                main_protection = detection
-                break
-
+        main_protection = next(
+            (
+                detection
+                for detection in die_result.detections
+                if detection.type
+                in [
+                    ProtectionType.PROTECTOR,
+                    ProtectionType.LICENSE,
+                    ProtectionType.DONGLE,
+                    ProtectionType.DRM,
+                ]
+            ),
+            None,
+        )
         if not main_protection:
             # Check for packers
             for detection in die_result.detections:
@@ -428,7 +452,7 @@ class ProtectionAnalyzerTool:
         else:
             return "Varies"
 
-    def _get_analysis_tips(self, detection: DetectionResult) -> List[str]:
+    def _get_analysis_tips(self, detection: DetectionResult) -> list[str]:
         """Get analysis tips for a specific detection"""
         tips = []
 
@@ -459,7 +483,7 @@ class ProtectionAnalyzerTool:
 
         return tips[:5]
 
-    def _get_tool_recommendations(self, die_result: ProtectionAnalysis) -> List[Dict[str, str]]:
+    def _get_tool_recommendations(self, die_result: ProtectionAnalysis) -> list[dict[str, str]]:
         """Recommend tools based on DIE detections"""
         tools = []
         seen = set()
@@ -509,7 +533,7 @@ class ProtectionAnalyzerTool:
 
         return all_tools[:8]  # Return top 8 tools
 
-    def _build_llm_context(self, die_result: ProtectionAnalysis) -> Dict[str, Any]:
+    def _build_llm_context(self, die_result: ProtectionAnalysis) -> dict[str, Any]:
         """Build context specifically formatted for LLM consumption"""
         # Get protection summary
         protection_summary = self._get_protection_summary(die_result)
@@ -545,19 +569,20 @@ class ProtectionAnalyzerTool:
                     det_info["primary_bypass"] = detection.bypass_recommendations[0]
                 context["detections"].append(det_info)
 
-            # Get main protection for guidance
-            main_protection = None
-            for detection in die_result.detections:
-                if detection.type in [
-                    ProtectionType.PROTECTOR,
-                    ProtectionType.LICENSE,
-                    ProtectionType.DONGLE,
-                    ProtectionType.DRM,
-                ]:
-                    main_protection = detection.name
-                    break
-
-            if main_protection:
+            if main_protection := next(
+                (
+                    detection.name
+                    for detection in die_result.detections
+                    if detection.type
+                    in [
+                        ProtectionType.PROTECTOR,
+                        ProtectionType.LICENSE,
+                        ProtectionType.DONGLE,
+                        ProtectionType.DRM,
+                    ]
+                ),
+                None,
+            ):
                 context["main_protection"] = main_protection
                 context["llm_guidance"] = self._get_llm_specific_guidance(main_protection)
             else:
@@ -616,7 +641,7 @@ class ProtectionAnalyzerTool:
 
         return False
 
-    def _analyze_license_patterns(self, binary_path: str, result: ProtectionAnalysis) -> Dict[str, Any]:
+    def _analyze_license_patterns(self, binary_path: str, result: ProtectionAnalysis) -> dict[str, Any]:
         """Analyze license patterns using AI assistant"""
         try:
             # Extract strings from binary if available
@@ -659,7 +684,7 @@ class ProtectionAnalyzerTool:
             logger.warning(f"License pattern analysis failed: {e}")
             return {"error": str(e)}
 
-    def _extract_strings_from_binary(self, binary_path: str) -> Dict[str, Any]:
+    def _extract_strings_from_binary(self, binary_path: str) -> dict[str, Any]:
         """Extract strings from binary with focus on license-related patterns"""
         try:
             # Try to use radare2 string analyzer if available
@@ -726,7 +751,7 @@ class ProtectionAnalyzerTool:
             logger.warning(f"String extraction failed: {e}")
             return {"license_related_strings": [], "total_strings": 0, "error": str(e)}
 
-    def _get_license_protection_context(self, result: ProtectionAnalysis) -> Dict[str, Any]:
+    def _get_license_protection_context(self, result: ProtectionAnalysis) -> dict[str, Any]:
         """Get additional context for license protection analysis"""
         context = {
             "has_network_apis": False,
@@ -760,7 +785,7 @@ class ProtectionAnalyzerTool:
 
         return context
 
-    def format_for_display(self, analysis: Dict[str, Any]) -> str:
+    def format_for_display(self, analysis: dict[str, Any]) -> str:
         """Format analysis results for human-readable display"""
         if not analysis.get("success"):
             return f"Analysis failed: {analysis.get('error', 'Unknown error')}"
@@ -768,11 +793,7 @@ class ProtectionAnalyzerTool:
         protection = analysis["protection_analysis"]
         file_info = analysis["file_info"]
 
-        output = []
-        output.append("=" * 60)
-        output.append("PROTECTION ANALYSIS REPORT")
-        output.append("=" * 60)
-
+        output = ["=" * 60, "PROTECTION ANALYSIS REPORT", "=" * 60]
         # File info
         output.append(f"\nFile: {file_info['name']}")
         output.append(f"Size: {file_info['size_human']}")
@@ -800,9 +821,7 @@ class ProtectionAnalyzerTool:
         else:
             output.append("\nNo protections detected")
 
-        # Bypass guidance
-        guidance = analysis.get("bypass_guidance", {})
-        if guidance:
+        if guidance := analysis.get("bypass_guidance", {}):
             output.append(f"\nBypass Approach: {guidance.get('approach', 'Unknown')}")
             output.append(f"Estimated Time: {guidance.get('estimated_time', 'Unknown')}")
             output.append(f"Difficulty Score: {guidance.get('difficulty_score', 0)}/10")
@@ -813,9 +832,7 @@ class ProtectionAnalyzerTool:
                 output.append(f"  Success Rate: {tech['success_rate']:.0%}")
                 output.append(f"  Time: {tech['time_estimate']}")
 
-        # Tools
-        tools = analysis.get("tool_recommendations", [])
-        if tools:
+        if tools := analysis.get("tool_recommendations", []):
             output.append("\nRecommended Tools:")
             for tool in tools:
                 output.append(f"  - {tool['name']}: {tool['purpose']}")

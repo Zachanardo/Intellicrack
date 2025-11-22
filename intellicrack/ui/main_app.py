@@ -44,9 +44,7 @@ from functools import partial
 
 from intellicrack.ai.model_manager_module import ModelManager
 from intellicrack.core.analysis.automated_patch_agent import run_automated_patch_agent
-from intellicrack.core.analysis.concolic_executor import (
-    run_concolic_execution,
-)
+from intellicrack.core.analysis.concolic_executor import run_concolic_execution
 from intellicrack.core.analysis.dynamic_instrumentation import run_dynamic_instrumentation
 from intellicrack.core.analysis.frida_analyzer import run_frida_analysis
 from intellicrack.core.analysis.ghidra_analyzer import run_advanced_ghidra_analysis
@@ -58,16 +56,10 @@ from intellicrack.core.analysis.taint_analyzer import TaintAnalysisEngine, run_t
 from intellicrack.core.app_context import get_app_context
 from intellicrack.core.config_manager import get_config
 from intellicrack.core.network.cloud_license_hooker import run_cloud_license_hooker
-from intellicrack.core.network.protocol_tool import (
-    launch_protocol_tool,
-    update_protocol_tool_description,
-)
+from intellicrack.core.network.protocol_tool import launch_protocol_tool, update_protocol_tool_description
 from intellicrack.core.patching.memory_patcher import setup_memory_patching
 from intellicrack.core.processing.gpu_accelerator import GPUAccelerator
-from intellicrack.core.processing.memory_loader import (
-    MemoryOptimizedBinaryLoader,
-    run_memory_optimized_analysis,
-)
+from intellicrack.core.processing.memory_loader import MemoryOptimizedBinaryLoader, run_memory_optimized_analysis
 from intellicrack.core.processing.parallel_processing_manager import ParallelProcessingManager
 from intellicrack.core.reporting.pdf_generator import PDFReportGenerator
 from intellicrack.core.reporting.report_generator import generate_report, view_report
@@ -112,6 +104,7 @@ from intellicrack.utils.log_message import log_message
 from intellicrack.utils.logger import log_all_methods
 from intellicrack.utils.protection_utils import inject_comprehensive_api_hooks
 from intellicrack.utils.resource_helper import get_resource_path
+
 
 CONFIG = get_config()
 
@@ -274,7 +267,9 @@ class IntellicrackApp(QMainWindow):
         """Initialize core application components and managers."""
         # Initialize logger first
         self.logger = logging.getLogger("IntellicrackLogger.Main")
-        self.logger.info("IntellicrackApp constructor called. Initializing main application window.")
+        self.logger.info(
+            "IntellicrackApp constructor called. Initializing main application window."
+        )
 
         # Initialize core components
         self.app_context = get_app_context()
@@ -282,7 +277,9 @@ class IntellicrackApp(QMainWindow):
         self.logger.info("Initialized AppContext and TaskManager for state management")
 
         # Initialize ModelManager
-        models_dir = CONFIG.get("model_repositories", {}).get("local", {}).get("models_directory", "models")
+        models_dir = (
+            CONFIG.get("model_repositories", {}).get("local", {}).get("models_directory", "models")
+        )
         if ModelManager is not None:
             self.model_manager = ModelManager(models_dir)
         else:
@@ -308,8 +305,12 @@ class IntellicrackApp(QMainWindow):
             self.logger.info("AI Coordination Layer initialized successfully")
 
             # Set up AI event subscriptions for UI integration
-            self.ai_orchestrator.event_bus.subscribe("task_complete", self._on_ai_task_complete, "main_ui")
-            self.ai_orchestrator.event_bus.subscribe("coordinated_analysis_complete", self._on_coordinated_analysis_complete, "main_ui")
+            self.ai_orchestrator.event_bus.subscribe(
+                "task_complete", self._on_ai_task_complete, "main_ui"
+            )
+            self.ai_orchestrator.event_bus.subscribe(
+                "coordinated_analysis_complete", self._on_coordinated_analysis_complete, "main_ui"
+            )
 
             # Initialize Exploitation Orchestrator for advanced AI-guided exploitation
 
@@ -364,7 +365,12 @@ class IntellicrackApp(QMainWindow):
         icon_paths = [
             get_resource_path("assets/icon.ico"),
             os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "icon.ico"),
-            os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "intellicrack", "assets", "icon.ico"),
+            os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                "intellicrack",
+                "assets",
+                "icon.ico",
+            ),
         ]
 
         icon_loaded = False
@@ -374,9 +380,7 @@ class IntellicrackApp(QMainWindow):
                     icon = QIcon(icon_path)
                     if not icon.isNull():
                         self.setWindowIcon(icon)
-                        # Set application icon for taskbar visibility
-                        app = QApplication.instance()
-                        if app:
+                        if app := QApplication.instance():
                             app.setWindowIcon(icon)
                         icon_loaded = True
                         break
@@ -395,12 +399,18 @@ class IntellicrackApp(QMainWindow):
         if self.selected_model_path is not None and os.path.exists(self.selected_model_path):
             if hasattr(self, "custom_model_path_label"):
                 self.custom_model_path_label.setText(os.path.basename(self.selected_model_path))
-            self.update_output.emit(log_message(f"[AI Model] Loaded saved model path from config: {self.selected_model_path}"))
+            self.update_output.emit(
+                log_message(
+                    f"[AI Model] Loaded saved model path from config: {self.selected_model_path}"
+                )
+            )
         else:
             self.selected_model_path = None
             if hasattr(self, "custom_model_path_label"):
                 self.custom_model_path_label.setText("None")
-            self.update_output.emit(log_message("[AI Model] No saved model path found or path is invalid."))
+            self.update_output.emit(
+                log_message("[AI Model] No saved model path found or path is invalid.")
+            )
 
         # Initialize application state variables
         self.chat_history = []
@@ -432,10 +442,16 @@ class IntellicrackApp(QMainWindow):
         self.run_cfg_explorer = partial(CfgExplorerInner().run_cfg_explorer_inner, self)
         self.run_concolic_execution = partial(run_concolic_execution, self)
         self.run_enhanced_protection_scan = partial(run_enhanced_protection_scan, self)
-        self.run_visual_network_traffic_analyzer = partial(TrafficAnalyzer().run_visual_network_traffic_analyzer, self)
+        self.run_visual_network_traffic_analyzer = partial(
+            TrafficAnalyzer().run_visual_network_traffic_analyzer, self
+        )
         self.run_multi_format_analysis = partial(run_multi_format_analysis, self)
-        self.run_distributed_processing = partial(DistributedProcessing().run_distributed_processing, self)
-        self.run_gpu_accelerated_analysis = partial(GpuAnalysis().run_gpu_accelerated_analysis, self)
+        self.run_distributed_processing = partial(
+            DistributedProcessing().run_distributed_processing, self
+        )
+        self.run_gpu_accelerated_analysis = partial(
+            GpuAnalysis().run_gpu_accelerated_analysis, self
+        )
         self.run_advanced_ghidra_analysis = partial(run_advanced_ghidra_analysis, self)
         self.run_symbolic_execution = partial(SymbolicExecution().run_symbolic_execution, self)
         self.run_incremental_analysis = partial(run_incremental_analysis, self)
@@ -453,7 +469,9 @@ class IntellicrackApp(QMainWindow):
         from . import exploitation_handlers
 
         self.cleanup_exploitation = partial(exploitation_handlers.cleanup_exploitation, self)
-        self.save_exploitation_output = partial(exploitation_handlers.save_exploitation_output, self)
+        self.save_exploitation_output = partial(
+            exploitation_handlers.save_exploitation_output, self
+        )
 
     def _bind_class_methods(self) -> None:
         """Bind standalone method definitions to the class."""
@@ -481,7 +499,9 @@ class IntellicrackApp(QMainWindow):
             logger.warning("Failed to initialize AIAgent: %s", e)
 
         try:
-            self.memory_optimized_loader = MemoryOptimizedBinaryLoader() if MemoryOptimizedBinaryLoader else None
+            self.memory_optimized_loader = (
+                MemoryOptimizedBinaryLoader() if MemoryOptimizedBinaryLoader else None
+            )
         except (OSError, ValueError, RuntimeError) as e:
             self.memory_optimized_loader = None
             logger.warning("Failed to initialize MemoryOptimizedBinaryLoader: %s", e)
@@ -515,7 +535,9 @@ class IntellicrackApp(QMainWindow):
             logger.warning("Failed to initialize ROPChainGenerator: %s", e)
 
         try:
-            self.parallel_processing_manager = ParallelProcessingManager() if ParallelProcessingManager else None
+            self.parallel_processing_manager = (
+                ParallelProcessingManager() if ParallelProcessingManager else None
+            )
         except (OSError, ValueError, RuntimeError) as e:
             self.parallel_processing_manager = None
             logger.warning("Failed to initialize ParallelProcessingManager: %s", e)
@@ -556,7 +578,7 @@ class IntellicrackApp(QMainWindow):
             from ..core.network.license_server_emulator import NetworkLicenseServerEmulator
 
             self.network_license_server = NetworkLicenseServerEmulator()
-        except (OSError, ValueError, RuntimeError, ImportError, ModuleNotFoundError) as e:
+        except (OSError, ValueError, RuntimeError, ImportError) as e:
             self.network_license_server = None
             logger.warning("Failed to initialize NetworkLicenseServerEmulator: %s", e)
 
@@ -573,7 +595,9 @@ class IntellicrackApp(QMainWindow):
             self.pdf_report_generator = PDFReportGenerator()
         else:
             self.pdf_report_generator = None
-            self.logger.warning("PDFReportGenerator not available - reporting features will be limited")
+            self.logger.warning(
+                "PDFReportGenerator not available - reporting features will be limited"
+            )
 
         # Create central widget and layout
         self.central_widget = QWidget()
@@ -648,8 +672,12 @@ class IntellicrackApp(QMainWindow):
         # Create new modular tabs with lazy loading
         self.dashboard_tab = DashboardTab(shared_context, self) if DashboardTab else QWidget()
         self.analysis_tab = AnalysisTab(shared_context, self) if AnalysisTab else QWidget()
-        self.exploitation_tab = ExploitationTab(shared_context, self) if ExploitationTab else QWidget()
-        self.ai_assistant_tab = AIAssistantTab(shared_context, self) if AIAssistantTab else QWidget()
+        self.exploitation_tab = (
+            ExploitationTab(shared_context, self) if ExploitationTab else QWidget()
+        )
+        self.ai_assistant_tab = (
+            AIAssistantTab(shared_context, self) if AIAssistantTab else QWidget()
+        )
         self.tools_tab = ToolsTab(shared_context, self) if ToolsTab else QWidget()
         self.terminal_tab = TerminalTab(shared_context, self) if TerminalTab else QWidget()
         self.settings_tab = SettingsTab(shared_context, self) if SettingsTab else QWidget()
@@ -670,14 +698,31 @@ class IntellicrackApp(QMainWindow):
         self.tabs.addTab(self.settings_tab, "Settings")
 
         # Set comprehensive tooltips for main tabs
-        self.tabs.setTabToolTip(0, "Overview of current project status, recent files, and system health monitoring")
-        self.tabs.setTabToolTip(1, "Manage projects, loaded binaries, and activity logs for your analysis sessions")
-        self.tabs.setTabToolTip(2, "Comprehensive binary analysis suite with static, dynamic, and AI-powered analysis tools")
-        self.tabs.setTabToolTip(3, "Advanced exploitation toolkit for vulnerability research and security testing")
-        self.tabs.setTabToolTip(4, "AI-powered assistant for code analysis, script generation, and intelligent guidance")
-        self.tabs.setTabToolTip(5, "Collection of specialized security research and binary manipulation tools")
-        self.tabs.setTabToolTip(6, "Interactive terminal for running scripts and commands with full I/O support")
-        self.tabs.setTabToolTip(7, "Configure application preferences, model settings, and advanced options")
+        self.tabs.setTabToolTip(
+            0, "Overview of current project status, recent files, and system health monitoring"
+        )
+        self.tabs.setTabToolTip(
+            1, "Manage projects, loaded binaries, and activity logs for your analysis sessions"
+        )
+        self.tabs.setTabToolTip(
+            2,
+            "Comprehensive binary analysis suite with static, dynamic, and AI-powered analysis tools",
+        )
+        self.tabs.setTabToolTip(
+            3, "Advanced exploitation toolkit for vulnerability research and security testing"
+        )
+        self.tabs.setTabToolTip(
+            4, "AI-powered assistant for code analysis, script generation, and intelligent guidance"
+        )
+        self.tabs.setTabToolTip(
+            5, "Collection of specialized security research and binary manipulation tools"
+        )
+        self.tabs.setTabToolTip(
+            6, "Interactive terminal for running scripts and commands with full I/O support"
+        )
+        self.tabs.setTabToolTip(
+            7, "Configure application preferences, model settings, and advanced options"
+        )
 
         # Initialize dashboard manager
         self.dashboard_manager = DashboardManager(self)
@@ -791,7 +836,9 @@ class IntellicrackApp(QMainWindow):
             status = event_data.get("status", "unknown")
             results = event_data.get("results", {})
 
-            self.logger.info(f"AI task completed - ID: {task_id}, Type: {task_type}, Status: {status}")
+            self.logger.info(
+                f"AI task completed - ID: {task_id}, Type: {task_type}, Status: {status}"
+            )
 
             # Update UI with task completion
             if hasattr(self, "update_output") and self.update_output:
@@ -819,7 +866,9 @@ class IntellicrackApp(QMainWindow):
             findings = event_data.get("findings", [])
             recommendations = event_data.get("recommendations", [])
 
-            self.logger.info(f"Coordinated analysis completed - ID: {analysis_id}, Type: {analysis_type}")
+            self.logger.info(
+                f"Coordinated analysis completed - ID: {analysis_id}, Type: {analysis_type}"
+            )
 
             # Update UI with analysis completion
             if hasattr(self, "update_output") and self.update_output:
@@ -1002,8 +1051,7 @@ class IntellicrackApp(QMainWindow):
 
             config = get_config()
             ui_config = config.get("ui", {})
-            geometry = ui_config.get("window_geometry")
-            if geometry:
+            if geometry := ui_config.get("window_geometry"):
                 self.setGeometry(*geometry)
         except Exception as e:
             self.logger.debug(f"Could not restore window state: {e}")
@@ -1048,7 +1096,9 @@ class IntellicrackApp(QMainWindow):
             self.logger.debug(f"Failed to load cache data: {e}")
             return None
 
-    def _check_file_modifications(self, plugin_dir: object, cached_filenames: dict) -> tuple[bool, dict]:
+    def _check_file_modifications(
+        self, plugin_dir: object, cached_filenames: dict
+    ) -> tuple[bool, dict]:
         """Check if files in directory have been modified compared to cache.
 
         Args:
@@ -1080,7 +1130,9 @@ class IntellicrackApp(QMainWindow):
 
         return True, remaining
 
-    def _validate_plugin_directory_cache(self, plugin_type: str, plugin_dir: object, cached_data: dict) -> bool:
+    def _validate_plugin_directory_cache(
+        self, plugin_type: str, plugin_dir: object, cached_data: dict
+    ) -> bool:
         """Validate cache for a specific plugin directory.
 
         Args:
@@ -1103,12 +1155,11 @@ class IntellicrackApp(QMainWindow):
         cached_filenames = {p["filename"]: p["modified"] for p in cached_plugins}
         is_valid, remaining = self._check_file_modifications(plugin_dir, cached_filenames)
 
-        if not is_valid:
-            return False
+        return len(remaining) == 0 if is_valid else False
 
-        return len(remaining) == 0
-
-    def _is_plugin_cache_valid(self, cache_file: object, plugin_directories: dict) -> tuple[bool, dict | None]:
+    def _is_plugin_cache_valid(
+        self, cache_file: object, plugin_directories: dict
+    ) -> tuple[bool, dict | None]:
         """Check if plugin cache exists and is still valid.
 
         Args:
@@ -1208,7 +1259,9 @@ class IntellicrackApp(QMainWindow):
                         reconstructed_path = plugin_dir / filename
 
                         if not is_path_safe(reconstructed_path, plugin_dir):
-                            self.logger.warning(f"Rejecting potentially malicious plugin path: {filename}")
+                            self.logger.warning(
+                                f"Rejecting potentially malicious plugin path: {filename}"
+                            )
                             continue
 
                         if not reconstructed_path.exists():
@@ -1218,7 +1271,9 @@ class IntellicrackApp(QMainWindow):
                         plugin_info_with_path["path"] = str(reconstructed_path)
                         plugins[plugin_type].append(plugin_info_with_path)
 
-                self.logger.info(f"Loaded {sum(len(p) for p in plugins.values())} plugins from cache")
+                self.logger.info(
+                    f"Loaded {sum(len(p) for p in plugins.values())} plugins from cache"
+                )
                 return plugins
             except (KeyError, OSError) as e:
                 self.logger.warning(f"Failed to load plugin cache, rescanning: {e}")
@@ -1269,8 +1324,10 @@ class IntellicrackApp(QMainWindow):
                                     }
                                     plugins[plugin_type].append(plugin_info)
 
-                                except (OSError, UnicodeDecodeError, PermissionError) as file_error:
-                                    self.logger.warning(f"Failed to validate plugin {entry.name}: {file_error}")
+                                except (OSError, UnicodeDecodeError) as file_error:
+                                    self.logger.warning(
+                                        f"Failed to validate plugin {entry.name}: {file_error}"
+                                    )
                                     plugins[plugin_type].append(
                                         {
                                             "name": entry.stem,
@@ -1282,7 +1339,7 @@ class IntellicrackApp(QMainWindow):
                                         },
                                     )
 
-                except (OSError, PermissionError) as dir_error:
+                except OSError as dir_error:
                     self.logger.error(f"Error accessing plugin directory {plugin_dir}: {dir_error}")
 
             try:
@@ -1301,7 +1358,9 @@ class IntellicrackApp(QMainWindow):
                 self.PLUGIN_TYPE_GHIDRA: [],
             }
 
-        self.logger.info(f"Loaded {sum(len(p) for p in plugins.values())} plugins across {len(plugins)} categories")
+        self.logger.info(
+            f"Loaded {sum(len(p) for p in plugins.values())} plugins across {len(plugins)} categories"
+        )
         return plugins
 
     def setup_project_dashboard_tab(self) -> None:
@@ -1402,7 +1461,9 @@ def launch() -> int:
         try:
             import ctypes
 
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("ZacharyFlint.Intellicrack.BinaryAnalysis.2.0")
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+                "ZacharyFlint.Intellicrack.BinaryAnalysis.2.0"
+            )
         except Exception as e:
             logger.debug(f"Could not set App User Model ID (expected on non-Windows): {e}")
 
@@ -1419,7 +1480,11 @@ def launch() -> int:
             # Set application icon for taskbar/dock with multiple fallback paths
             icon_paths = [
                 get_resource_path("assets/icon.ico"),
-                os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets", "icon.ico"),
+                os.path.join(
+                    os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                    "assets",
+                    "icon.ico",
+                ),
                 os.path.join(
                     os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
                     "intellicrack",

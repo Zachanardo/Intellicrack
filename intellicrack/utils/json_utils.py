@@ -15,6 +15,7 @@ from typing import TextIO
 
 from intellicrack.utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 
@@ -191,6 +192,9 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> object:
         logger.warning("Loading pickle file (security risk) from %s", filepath)
         with open(filepath, "rb") as f:
             # Use a custom Unpickler to restrict what can be unpickled
+
+
+
             class RestrictedUnpickler(pickle.Unpickler):
                 def find_class(self, module: str, name: str) -> type:
                     """Restrict unpickling to safe classes from whitelisted modules.
@@ -207,7 +211,11 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> object:
 
                     """
                     # Only allow safe classes from specific modules
-                    if module in ("builtins", "collections", "datetime") and name in (
+                    if module in {
+                        "builtins",
+                        "collections",
+                        "datetime",
+                    } and name in {
                         "dict",
                         "list",
                         "tuple",
@@ -224,12 +232,13 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> object:
                         "date",
                         "time",
                         "timedelta",
-                    ):
+                    }:
                         return getattr(__import__(module, level=0), name)
                     # For other cases, raise an exception
                     error_msg = f"Global '{module}.{name}' is forbidden"
                     logger.error(error_msg)
                     raise pickle.UnpicklingError(error_msg)
+
 
             unpickler = RestrictedUnpickler(f)
             return unpickler.load()
@@ -243,6 +252,9 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> object:
 
             with open(filepath, "rb") as f:
                 # Use a custom Unpickler to restrict what can be unpickled
+
+
+
                 class RestrictedUnpickler(pickle.Unpickler):
                     def find_class(self, module: str, name: str) -> type:
                         """Restrict unpickling to safe classes from whitelisted modules.
@@ -259,7 +271,11 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> object:
 
                         """
                         # Only allow safe classes from specific modules
-                        if module in ("builtins", "collections", "datetime") and name in (
+                        if module in {
+                            "builtins",
+                            "collections",
+                            "datetime",
+                        } and name in {
                             "dict",
                             "list",
                             "tuple",
@@ -276,12 +292,13 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> object:
                             "date",
                             "time",
                             "timedelta",
-                        ):
+                        }:
                             return getattr(__import__(module, level=0), name)
                         # For other cases, raise an exception
                         error_msg = f"Global '{module}.{name}' is forbidden"
                         logger.error(error_msg)
-                        raise pickle.UnpicklingError(error_msg)
+                        raise pickle.UnpicklingError(error_msg) from e
+
 
                 unpickler = RestrictedUnpickler(f)
                 return unpickler.load()
@@ -290,10 +307,10 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> object:
 __all__ = [
     "DateTimeEncoder",
     "datetime_decoder",
-    "dumps",
     "dump",
-    "loads",
+    "dumps",
     "load",
-    "safe_serialize",
+    "loads",
     "safe_deserialize",
+    "safe_serialize",
 ]

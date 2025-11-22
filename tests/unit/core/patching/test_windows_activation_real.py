@@ -278,7 +278,7 @@ class TestWindowsActivationProduction:
                 key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_READ)
                 winreg.CloseKey(key)
                 assert True  # Key exists
-            except WindowsError:
+            except OSError:
                 # Key might not exist on all systems
                 pass
 

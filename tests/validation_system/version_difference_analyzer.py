@@ -22,17 +22,17 @@ class VersionSignature:
     version: str
     binary_path: str
     binary_hash: str
-    patterns: List[str]
-    imports: List[str]
-    strings: List[str]
-    entry_points: List[str]
-    sections: List[str]
-    resources: List[str]
-    crypto_indicators: List[str]
-    obfuscation_markers: List[str]
-    anti_debug_methods: List[str]
-    license_validation_patterns: List[str]
-    network_communication: List[str]
+    patterns: list[str]
+    imports: list[str]
+    strings: list[str]
+    entry_points: list[str]
+    sections: list[str]
+    resources: list[str]
+    crypto_indicators: list[str]
+    obfuscation_markers: list[str]
+    anti_debug_methods: list[str]
+    license_validation_patterns: list[str]
+    network_communication: list[str]
     timestamp: str = None
 
     def __post_init__(self):
@@ -64,12 +64,12 @@ class VersionComparisonReport:
     """Comprehensive comparison report between protection versions."""
     software_name: str
     protection_name: str
-    compared_versions: List[str]
-    signatures: Dict[str, VersionSignature]
-    differences: List[VersionDifference]
-    evolution_summary: Dict[str, Any]
-    attack_surface_changes: Dict[str, List[str]]
-    bypass_implications: Dict[str, str]
+    compared_versions: list[str]
+    signatures: dict[str, VersionSignature]
+    differences: list[VersionDifference]
+    evolution_summary: dict[str, Any]
+    attack_surface_changes: dict[str, list[str]]
+    bypass_implications: dict[str, str]
     overall_assessment: str
     timestamp: str = None
 
@@ -262,7 +262,7 @@ class VersionDifferenceAnalyzer:
             network_communication=network_communication
         )
 
-    def _extract_strings(self, binary_data: bytes, min_length: int = 4) -> List[str]:
+    def _extract_strings(self, binary_data: bytes, min_length: int = 4) -> list[str]:
         """Extract printable ASCII strings from binary data."""
         strings = []
         current_string = ""
@@ -289,7 +289,7 @@ class VersionDifferenceAnalyzer:
 
         return list(set(filtered_strings))[:100]  # Remove duplicates and limit
 
-    def _detect_obfuscation(self, binary_data: bytes) -> List[str]:
+    def _detect_obfuscation(self, binary_data: bytes) -> list[str]:
         """Detect obfuscation markers in binary data."""
         obfuscation_markers = []
 
@@ -337,7 +337,7 @@ class VersionDifferenceAnalyzer:
 
         return entropy
 
-    def compare_versions(self, signatures: Dict[str, VersionSignature]) -> List[VersionDifference]:
+    def compare_versions(self, signatures: dict[str, VersionSignature]) -> list[VersionDifference]:
         """
         Compare version signatures and identify specific differences.
         """
@@ -503,8 +503,8 @@ class VersionDifferenceAnalyzer:
 
         return "low"
 
-    def generate_evolution_summary(self, signatures: Dict[str, VersionSignature],
-                                   differences: List[VersionDifference]) -> Dict[str, Any]:
+    def generate_evolution_summary(self, signatures: dict[str, VersionSignature],
+                                   differences: list[VersionDifference]) -> dict[str, Any]:
         """
         Generate high-level summary of protection evolution across versions.
         """
@@ -514,7 +514,7 @@ class VersionDifferenceAnalyzer:
             "total_versions_analyzed": len(versions),
             "version_range": f"{versions[0]} to {versions[-1]}",
             "total_differences_found": len(differences),
-            "categories_changed": list(set(diff.category for diff in differences)),
+            "categories_changed": list({diff.category for diff in differences}),
             "security_trend": "unknown",
             "complexity_trend": "unknown",
             "major_changes": []
@@ -566,7 +566,7 @@ class VersionDifferenceAnalyzer:
 
         return evolution_summary
 
-    def analyze_attack_surface_changes(self, differences: List[VersionDifference]) -> Dict[str, List[str]]:
+    def analyze_attack_surface_changes(self, differences: list[VersionDifference]) -> dict[str, list[str]]:
         """
         Analyze how the attack surface changes across versions.
         """
@@ -617,8 +617,8 @@ class VersionDifferenceAnalyzer:
 
         return attack_surface_changes
 
-    def generate_bypass_implications(self, differences: List[VersionDifference],
-                                     evolution_summary: Dict[str, Any]) -> Dict[str, str]:
+    def generate_bypass_implications(self, differences: list[VersionDifference],
+                                     evolution_summary: dict[str, Any]) -> dict[str, str]:
         """
         Generate implications for bypass development across versions.
         """
@@ -662,7 +662,7 @@ class VersionDifferenceAnalyzer:
         return bypass_implications
 
     def create_comparison_report(self, software_name: str, protection_name: str,
-                                 signatures: Dict[str, VersionSignature]) -> VersionComparisonReport:
+                                 signatures: dict[str, VersionSignature]) -> VersionComparisonReport:
         """
         Create comprehensive version comparison report.
         """
@@ -708,7 +708,7 @@ class VersionDifferenceAnalyzer:
             overall_assessment=overall_assessment
         )
 
-    def save_comparison_report(self, report: VersionComparisonReport, filename: Optional[str] = None) -> str:
+    def save_comparison_report(self, report: VersionComparisonReport, filename: str | None = None) -> str:
         """
         Save version comparison report to JSON file.
         """

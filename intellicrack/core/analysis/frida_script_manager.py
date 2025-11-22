@@ -29,6 +29,7 @@ from typing import Any
 
 import frida
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -126,7 +127,11 @@ class FridaScriptManager:
         """
         prefixes = ["WD", "ST", "HGST", "TOSHIBA", "SAMSUNG", "INTEL"]
         prefix = random.choice(prefixes)  # noqa: S311
-        serial_parts = [prefix, f"{random.randint(1000, 9999)}", "".join(random.choices("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k=8))]  # noqa: S311
+        serial_parts = [
+            prefix,
+            f"{random.randint(1000, 9999)}",
+            "".join(random.choices("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k=8)),
+        ]
         return "-".join(serial_parts)
 
     def _generate_motherboard_id(self) -> str:
@@ -166,7 +171,11 @@ class FridaScriptManager:
         ]
 
         brand, family, model = random.choice(cpu_families)  # noqa: S311
-        cpuid_hash = hashlib.sha256(f"{brand}{family}{model}{random.random()}".encode()).hexdigest()[:16].upper()  # noqa: S311
+        cpuid_hash = (
+            hashlib.sha256(f"{brand}{family}{model}{random.random()}".encode())
+            .hexdigest()[:16]
+            .upper()
+        )
 
         return f"{brand}-{family}-{model}-{cpuid_hash}"
 
@@ -179,7 +188,13 @@ class FridaScriptManager:
                 path=self.scripts_dir / "memory_dumper.js",
                 category=ScriptCategory.MEMORY_ANALYSIS,
                 description="Dumps process memory regions for analysis",
-                parameters={"dump_executable": True, "dump_heap": True, "dump_stack": False, "output_format": "binary", "compress": True},
+                parameters={
+                    "dump_executable": True,
+                    "dump_heap": True,
+                    "dump_stack": False,
+                    "output_format": "binary",
+                    "compress": True,
+                },
             ),
             "anti_debugger.js": FridaScriptConfig(
                 name="Anti-Debug Bypass",
@@ -225,21 +240,37 @@ class FridaScriptManager:
                 path=self.scripts_dir / "registry_monitor.js",
                 category=ScriptCategory.REGISTRY_MONITORING,
                 description="Monitors Windows registry operations",
-                parameters={"monitor_reads": True, "monitor_writes": True, "monitor_deletes": True, "filter_keys": [], "log_values": True},
+                parameters={
+                    "monitor_reads": True,
+                    "monitor_writes": True,
+                    "monitor_deletes": True,
+                    "filter_keys": [],
+                    "log_values": True,
+                },
             ),
             "telemetry_blocker.js": FridaScriptConfig(
                 name="Telemetry Blocker",
                 path=self.scripts_dir / "telemetry_blocker.js",
                 category=ScriptCategory.NETWORK_INTERCEPTION,
                 description="Blocks telemetry and analytics",
-                parameters={"block_domains": [], "block_ips": [], "block_user_agents": [], "generate_spoofed_responses": True},
+                parameters={
+                    "block_domains": [],
+                    "block_ips": [],
+                    "block_user_agents": [],
+                    "generate_spoofed_responses": True,
+                },
             ),
             "time_bomb_defuser.js": FridaScriptConfig(
                 name="Time Bomb Defuser",
                 path=self.scripts_dir / "time_bomb_defuser.js",
                 category=ScriptCategory.LICENSE_BYPASS,
                 description="Bypasses time-based protection",
-                parameters={"freeze_time": None, "accelerate_time": 1.0, "bypass_expiry_checks": True, "spoof_system_time": None},
+                parameters={
+                    "freeze_time": None,
+                    "accelerate_time": 1.0,
+                    "bypass_expiry_checks": True,
+                    "spoof_system_time": None,
+                },
             ),
             "behavioral_pattern_analyzer.js": FridaScriptConfig(
                 name="Behavioral Pattern Analyzer",
@@ -259,7 +290,13 @@ class FridaScriptManager:
                 path=self.scripts_dir / "universal_unpacker.js",
                 category=ScriptCategory.UNPACKING,
                 description="Unpacks protected executables",
-                parameters={"detect_packer": True, "dump_at_oep": True, "fix_imports": True, "rebuild_iat": True, "remove_overlays": False},
+                parameters={
+                    "detect_packer": True,
+                    "dump_at_oep": True,
+                    "fix_imports": True,
+                    "rebuild_iat": True,
+                    "remove_overlays": False,
+                },
             ),
             "keygen_generator.js": FridaScriptConfig(
                 name="Keygen Generator",
@@ -289,8 +326,7 @@ class FridaScriptManager:
         """Load custom scripts not in the predefined list."""
         for script_file in self.scripts_dir.glob("*.js"):
             if script_file.name not in self.scripts:
-                metadata = self._parse_script_metadata(script_file)
-                if metadata:
+                if metadata := self._parse_script_metadata(script_file):
                     config = FridaScriptConfig(
                         name=metadata.get("name", script_file.stem),
                         path=script_file,
@@ -309,12 +345,11 @@ class FridaScriptManager:
             # Look for metadata in comments
             import re
 
-            metadata_match = re.search(r"/\*\*\s*@metadata(.*?)@end\s*\*/", content, re.DOTALL)
-            if metadata_match:
+            if metadata_match := re.search(
+                r"/\*\*\s*@metadata(.*?)@end\s*\*/", content, re.DOTALL
+            ):
                 metadata_text = metadata_match.group(1)
-                # Parse JSON metadata
-                json_match = re.search(r"\{.*\}", metadata_text, re.DOTALL)
-                if json_match:
+                if json_match := re.search(r"\{.*\}", metadata_text, re.DOTALL):
                     return json.loads(json_match.group())
 
             return None
@@ -348,7 +383,9 @@ class FridaScriptManager:
             raise ValueError(f"Unknown script: {script_name}")
 
         config = self.scripts[script_name]
-        result = ScriptResult(script_name=script_name, success=False, start_time=time.time(), end_time=0)
+        result = ScriptResult(
+            script_name=script_name, success=False, start_time=time.time(), end_time=0
+        )
 
         try:
             # Load script content
@@ -447,7 +484,13 @@ class FridaScriptManager:
 
         return "\n".join(js_params)
 
-    def _handle_message(self, result: ScriptResult, message: dict[str, Any], data: bytes | None, callback: Callable | None) -> None:
+    def _handle_message(
+        self,
+        result: ScriptResult,
+        message: dict[str, Any],
+        data: bytes | None,
+        callback: Callable | None,
+    ) -> None:
         """Handle messages from Frida script.
 
         Args:
@@ -498,18 +541,16 @@ class FridaScriptManager:
 
     def get_script_categories(self) -> list[ScriptCategory]:
         """Get all available script categories."""
-        categories = set()
-        for config in self.scripts.values():
-            categories.add(config.category)
+        categories = {config.category for config in self.scripts.values()}
         return list(categories)
 
     def get_scripts_by_category(self, category: ScriptCategory) -> list[str]:
         """Get scripts in a specific category."""
-        scripts = []
-        for name, config in self.scripts.items():
-            if config.category == category:
-                scripts.append(name)
-        return scripts
+        return [
+            name
+            for name, config in self.scripts.items()
+            if config.category == category
+        ]
 
     def get_script_config(self, script_name: str) -> FridaScriptConfig | None:
         """Get configuration for a script."""
@@ -546,13 +587,22 @@ class FridaScriptManager:
                 dump_file.write_bytes(dump)
 
     def create_custom_script(
-        self, name: str, code: str, category: ScriptCategory, parameters: dict[str, Any] | None = None,
+        self,
+        name: str,
+        code: str,
+        category: ScriptCategory,
+        parameters: dict[str, Any] | None = None,
     ) -> FridaScriptConfig:
         """Create a custom Frida script."""
         script_path = self.scripts_dir / f"custom_{name}.js"
 
         # Add metadata header
-        metadata = {"name": name, "category": category.value, "parameters": parameters or {}, "description": f"Custom script: {name}"}
+        metadata = {
+            "name": name,
+            "category": category.value,
+            "parameters": parameters or {},
+            "description": f"Custom script: {name}",
+        }
 
         header = f"""/**
  * @metadata
@@ -569,7 +619,11 @@ class FridaScriptManager:
 
         # Create configuration
         config = FridaScriptConfig(
-            name=name, path=script_path, category=category, description=f"Custom script: {name}", parameters=parameters or {},
+            name=name,
+            path=script_path,
+            category=category,
+            description=f"Custom script: {name}",
+            parameters=parameters or {},
         )
 
         # Register script

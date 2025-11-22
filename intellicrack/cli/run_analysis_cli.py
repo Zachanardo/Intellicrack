@@ -35,7 +35,9 @@ def setup_cli_logging(verbose: bool = False) -> None:
 
     """
     level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(level=level, format="[%(levelname)s] %(name)s: %(message)s", stream=sys.stdout)
+    logging.basicConfig(
+        level=level, format="[%(levelname)s] %(name)s: %(message)s", stream=sys.stdout
+    )
 
 
 def validate_binary_path(path: str) -> Path:
@@ -180,8 +182,7 @@ def format_analysis_output(results: dict[str, Any], output_format: str) -> str:
     lines = ["=== INTELLICRACK DETAILED ANALYSIS ==="]
     for key, value in results.items():
         if isinstance(value, (dict, list)):
-            lines.append(f"{key.upper()}:")
-            lines.append(f"  {value!s}")
+            lines.extend((f"{key.upper()}:", f"  {value!s}"))
         else:
             lines.append(f"{key.upper()}: {value}")
     return "\n".join(lines)
@@ -209,9 +210,17 @@ Examples:
 
     parser.add_argument("binary", help="Path to binary file for analysis")
 
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging output")
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Enable verbose logging output"
+    )
 
-    parser.add_argument("-o", "--format", choices=["text", "json", "summary"], default="summary", help="Output format (default: summary)")
+    parser.add_argument(
+        "-o",
+        "--format",
+        choices=["text", "json", "summary"],
+        default="summary",
+        help="Output format (default: summary)",
+    )
 
     parser.add_argument("--output", metavar="FILE", help="Save results to file instead of stdout")
 

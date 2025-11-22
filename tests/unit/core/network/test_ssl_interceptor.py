@@ -39,7 +39,7 @@ class RealCryptographySimulator:
         self.private_keys = {}
         self.certificate_counter = 1
 
-    def generate_ca_certificate(self) -> Tuple[bytes, bytes]:
+    def generate_ca_certificate(self) -> tuple[bytes, bytes]:
         """Generate real CA certificate using cryptography library."""
         try:
             # Generate private key
@@ -50,11 +50,11 @@ class RealCryptographySimulator:
 
             # Generate certificate
             subject = issuer = x509.Name([
-                x509.NameAttribute(x509.NameOID.COUNTRY_NAME, u"US"),
-                x509.NameAttribute(x509.NameOID.STATE_OR_PROVINCE_NAME, u"CA"),
-                x509.NameAttribute(x509.NameOID.LOCALITY_NAME, u"San Francisco"),
-                x509.NameAttribute(x509.NameOID.ORGANIZATION_NAME, u"Intellicrack CA"),
-                x509.NameAttribute(x509.NameOID.COMMON_NAME, u"Intellicrack Root CA"),
+                x509.NameAttribute(x509.NameOID.COUNTRY_NAME, "US"),
+                x509.NameAttribute(x509.NameOID.STATE_OR_PROVINCE_NAME, "CA"),
+                x509.NameAttribute(x509.NameOID.LOCALITY_NAME, "San Francisco"),
+                x509.NameAttribute(x509.NameOID.ORGANIZATION_NAME, "Intellicrack CA"),
+                x509.NameAttribute(x509.NameOID.COMMON_NAME, "Intellicrack Root CA"),
             ])
 
             cert = x509.CertificateBuilder().subject_name(
@@ -146,14 +146,14 @@ class RealProcessSimulator:
         self.process_counter = 10000
         self.running_processes = set()
 
-    def simulate_process(self, command: List[str], **kwargs) -> Any:
+    def simulate_process(self, command: list[str], **kwargs) -> Any:
         """Simulate subprocess.Popen with realistic behavior."""
         process_id = self.process_counter
         self.process_counter += 1
 
         # Create realistic process mock
         class RealProcessMock:
-            def __init__(self, pid: int, command: List[str]):
+            def __init__(self, pid: int, command: list[str]):
                 self.pid = pid
                 self.command = command
                 self.terminated = False
@@ -189,7 +189,7 @@ class RealProcessSimulator:
 
         return process
 
-    def find_executable(self, name: str) -> Optional[str]:
+    def find_executable(self, name: str) -> str | None:
         """Simulate executable discovery."""
         # Common executable paths for testing
         common_paths = {
@@ -207,7 +207,7 @@ class RealProcessSimulator:
         # Remove from common paths for this simulation
         pass
 
-    def get_running_processes(self) -> List[int]:
+    def get_running_processes(self) -> list[int]:
         """Get list of running process IDs."""
         return list(self.running_processes)
 
@@ -228,7 +228,7 @@ class RealFileSystemSimulator:
         self.temp_files = {}
         self.temp_counter = 1000
 
-    def create_temp_file(self, suffix: str = "", prefix: str = "tmp") -> Tuple[int, str]:
+    def create_temp_file(self, suffix: str = "", prefix: str = "tmp") -> tuple[int, str]:
         """Simulate tempfile.mkstemp."""
         fd = self.temp_counter
         self.temp_counter += 1
@@ -305,17 +305,17 @@ class RealSSLInterceptorSimulator:
         self.response_templates = {}
         self.configuration_errors = {}
 
-    def simulate_interceptor_with_config(self, config: Dict[str, Any]):
+    def simulate_interceptor_with_config(self, config: dict[str, Any]):
         """Create simulated SSL interceptor with configuration."""
         class RealSSLInterceptorMock:
-            def __init__(self, config: Dict[str, Any], simulator):
+            def __init__(self, config: dict[str, Any], simulator):
                 self.config = config.copy()
                 self.simulator = simulator
                 self.proxy_process = None
                 self.traffic_log = []
                 self.response_templates = {}
 
-            def generate_ca_certificate(self) -> Tuple[bytes, bytes]:
+            def generate_ca_certificate(self) -> tuple[bytes, bytes]:
                 """Generate CA certificate using simulator."""
                 if not self.simulator.crypto_sim.available:
                     return None, None
@@ -358,7 +358,7 @@ class RealSSLInterceptorSimulator:
                 except Exception:
                     return False
 
-            def configure(self, new_config: Dict[str, Any]) -> bool:
+            def configure(self, new_config: dict[str, Any]) -> bool:
                 """Update configuration."""
                 # Validate configuration
                 if "listen_port" in new_config:
@@ -375,7 +375,7 @@ class RealSSLInterceptorSimulator:
                 self.config.update(new_config)
                 return True
 
-            def get_config(self) -> Dict[str, Any]:
+            def get_config(self) -> dict[str, Any]:
                 """Get safe configuration."""
                 safe_config = self.config.copy()
                 if "ca_key_path" in safe_config:
@@ -400,11 +400,11 @@ class RealSSLInterceptorSimulator:
                 if "target_hosts" in self.config and host in self.config["target_hosts"]:
                     self.config["target_hosts"].remove(host)
 
-            def get_target_hosts(self) -> List[str]:
+            def get_target_hosts(self) -> list[str]:
                 """Get target hosts."""
                 return self.config.get("target_hosts", [])
 
-            def get_traffic_log(self) -> List[Dict[str, Any]]:
+            def get_traffic_log(self) -> list[dict[str, Any]]:
                 """Get traffic log."""
                 return self.traffic_log.copy()
 
@@ -425,7 +425,7 @@ class RealSSLInterceptorSimulator:
             raise Exception("Test error")
         self.process_sim.simulate_process = error_simulate
 
-    def create_mitm_script_content(self, target_hosts: List[str]) -> str:
+    def create_mitm_script_content(self, target_hosts: list[str]) -> str:
         """Create realistic mitmproxy script content."""
         script_template = '''import json
 from mitmproxy import http

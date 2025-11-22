@@ -22,7 +22,7 @@ def fix_test_files():
     if aslr_test.exists():
         print(f"Fixing: {aslr_test.name}")
 
-        with open(aslr_test, 'r', encoding='utf-8') as f:
+        with open(aslr_test, encoding='utf-8') as f:
             content = f.read()
 
         # Fix the broken real_process_data fixture (lines 88-90)
@@ -59,7 +59,7 @@ def fix_test_files():
 
     # Check all test files for remaining mock references
     for test_file in test_dir.glob('test_*.py'):
-        with open(test_file, 'r', encoding='utf-8') as f:
+        with open(test_file, encoding='utf-8') as f:
             content = f.read()
 
         original = content
@@ -114,7 +114,7 @@ def validate_compliance():
     ]
 
     for test_file in test_dir.glob('test_*.py'):
-        with open(test_file, 'r', encoding='utf-8') as f:
+        with open(test_file, encoding='utf-8') as f:
             content = f.read()
 
         file_violations = []

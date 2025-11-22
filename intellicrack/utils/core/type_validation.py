@@ -22,14 +22,15 @@ and prevent runtime errors in critical functions.
 import os
 from typing import Any
 
+
 __all__: list[str] = [
+    "create_error_result",
+    "validate_bytes_data",
     "validate_file_path",
     "validate_integer_range",
-    "validate_bytes_data",
-    "validate_string_list",
     "validate_memory_address",
     "validate_process_id",
-    "create_error_result",
+    "validate_string_list",
 ]
 
 
@@ -259,7 +260,9 @@ def validate_process_id(pid: object, name: str = "pid") -> None:
         raise ValueError(error_msg)
 
 
-def create_error_result(error_msg: str, result_template: dict[str, Any] | None = None) -> dict[str, Any]:
+def create_error_result(
+    error_msg: str, result_template: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Create a standardized error result dictionary.
 
     Args:

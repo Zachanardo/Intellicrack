@@ -22,13 +22,7 @@ import ast
 import os
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import (
-    QColor,
-    QFont,
-    QKeySequence,
-    QSyntaxHighlighter,
-    QTextCursor,
-)
+from PyQt6.QtGui import QColor, QFont, QKeySequence, QSyntaxHighlighter, QTextCursor
 from PyQt6.QtWidgets import (
     QComboBox,
     QFileDialog,

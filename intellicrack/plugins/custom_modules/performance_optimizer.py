@@ -44,6 +44,7 @@ from intellicrack.handlers.sqlite3_handler import sqlite3
 from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, torch
 from intellicrack.utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 """
@@ -258,14 +259,14 @@ class CacheManager:
     def _calculate_score(self, key: str) -> float:
         """Calculate popularity score for cache item."""
         access_count = self.access_counts[key]
-        last_access_time = 0
-
-        # Find last access time
-        for i, item_key in enumerate(reversed(self.access_order)):
-            if item_key == key:
-                last_access_time = len(self.access_order) - i
-                break
-
+        last_access_time = next(
+            (
+                len(self.access_order) - i
+                for i, item_key in enumerate(reversed(self.access_order))
+                if item_key == key
+            ),
+            0,
+        )
         # Combine frequency and recency
         frequency_score = access_count
         recency_score = 1.0 / (last_access_time + 1)
@@ -321,7 +322,9 @@ class CacheManager:
             value_size = self._calculate_size(value)
 
             # Check if we need to evict items
-            while len(self.cache) >= self.max_size or self.memory_usage + value_size > self.max_memory:
+            while (
+                len(self.cache) >= self.max_size or self.memory_usage + value_size > self.max_memory
+            ):
                 if not self._evict_least_valuable():
                     return False
 
@@ -410,7 +413,9 @@ class ThreadPoolOptimizer:
 
         """
         start_time = time.time()
-        queue_depth = len(self.executor._threads) - len([t for t in self.executor._threads if not t._tstate_lock.acquire(False)])
+        queue_depth = len(self.executor._threads) - len(
+            [t for t in self.executor._threads if not t._tstate_lock.acquire(False)]
+        )
 
         with self.lock:
             self.queue_depths.append(queue_depth)
@@ -446,7 +451,9 @@ class ThreadPoolOptimizer:
         # Where L = average number in system, λ = arrival rate, W = average response time
         # Use queue depth to adjust for system utilization
         utilization_factor = min(avg_queue_depth / 10.0, 1.0)  # Scale based on queue depth
-        optimal_workers = int(arrival_rate * avg_response_time * (1.2 + utilization_factor))  # Dynamic buffer based on queue depth
+        optimal_workers = int(
+            arrival_rate * avg_response_time * (1.2 + utilization_factor)
+        )  # Dynamic buffer based on queue depth
 
         # Apply constraints
         optimal_workers = max(self.min_workers, min(self.max_workers, optimal_workers))
@@ -467,7 +474,9 @@ class ThreadPoolOptimizer:
             return {
                 "current_workers": self.executor._max_workers,
                 "avg_queue_depth": np.mean(list(self.queue_depths)) if self.queue_depths else 0,
-                "avg_response_time": np.mean(list(self.response_times)) if self.response_times else 0,
+                "avg_response_time": np.mean(list(self.response_times))
+                if self.response_times
+                else 0,
                 "min_workers": self.min_workers,
                 "max_workers": self.max_workers,
             }
@@ -578,10 +587,8 @@ class IOOptimizer:
                 return f.read()
 
         # Large files: use memory mapping
-        with open(file_path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
-            if chunk_size:
-                return mm[:chunk_size]
-            return mm[:]
+        with (open(file_path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm):
+            return mm[:chunk_size] if chunk_size else mm[:]
 
     def detect_compression(self, data: bytes) -> tuple[bool, str]:
         """Detect if data is compressed and return format."""
@@ -614,7 +621,7 @@ class IOOptimizer:
 
     def _calculate_entropy(self, data: bytes) -> float:
         """Calculate Shannon entropy of data."""
-        if len(data) == 0:
+        if not data:
             return 0
 
         # Count byte frequencies
@@ -640,7 +647,9 @@ class IOOptimizer:
 
         # Analyze access patterns
         recent_patterns = patterns[-10:]
-        avg_chunk_size = np.mean([p.get("chunk_size", 0) for p in recent_patterns if p.get("chunk_size")])
+        avg_chunk_size = np.mean(
+            [p.get("chunk_size", 0) for p in recent_patterns if p.get("chunk_size")]
+        )
 
         if avg_chunk_size > 0:
             # Set read-ahead to 2x average chunk size
@@ -701,8 +710,7 @@ class DatabaseOptimizer:
         """
         conn = self.get_connection()
         try:
-            cursor = conn.cursor()
-            yield cursor
+            yield conn.cursor()
             conn.commit()
         except Exception:
             conn.rollback()
@@ -780,7 +788,9 @@ class DatabaseOptimizer:
                 for query in table_queries:
                     # Simple WHERE clause extraction (basic implementation)
                     if "WHERE" in query.upper():
-                        where_part = query.upper().split("WHERE")[1].split("ORDER")[0].split("GROUP")[0]
+                        where_part = (
+                            query.upper().split("WHERE")[1].split("ORDER")[0].split("GROUP")[0]
+                        )
                         # Extract column names (simplified)
                         words = where_part.split()
                         for i, word in enumerate(words):
@@ -791,7 +801,9 @@ class DatabaseOptimizer:
                 for column in where_columns:
                     index_name = f"idx_{table}_{column}"
                     with suppress(sqlite3.Error):
-                        cursor.execute(f"CREATE INDEX IF NOT EXISTS {index_name} ON {table}({column})")
+                        cursor.execute(
+                            f"CREATE INDEX IF NOT EXISTS {index_name} ON {table}({column})"
+                        )
 
     def get_stats(self) -> dict[str, object]:
         """Get database performance statistics."""
@@ -809,7 +821,14 @@ class DatabaseOptimizer:
             "avg_execution_time": avg_execution_time,
             "cache_size": len(self.query_cache),
             "connection_pool_size": len(self.connection_pool),
-            "slow_queries": len([s for stats in self.query_stats.values() for s in stats if s["execution_time"] > 1.0]),
+            "slow_queries": len(
+                [
+                    s
+                    for stats in self.query_stats.values()
+                    for s in stats
+                    if s["execution_time"] > 1.0
+                ]
+            ),
         }
 
 
@@ -844,16 +863,14 @@ class PerformanceProfiler:
         snapshot = tracemalloc.take_snapshot()
         top_stats = snapshot.statistics("lineno")
 
-        memory_stats = []
-        for stat in top_stats[:10]:
-            memory_stats.append(
-                {
-                    "file": stat.traceback.format()[-1],
-                    "size_mb": stat.size / (1024 * 1024),
-                    "count": stat.count,
-                },
-            )
-
+        memory_stats = [
+            {
+                "file": stat.traceback.format()[-1],
+                "size_mb": stat.size / (1024 * 1024),
+                "count": stat.count,
+            }
+            for stat in top_stats[:10]
+        ]
         return {
             "memory_top_consumers": memory_stats,
             "metrics_summary": self._get_metrics_summary(),
@@ -891,7 +908,9 @@ class PerformanceProfiler:
                 gpu_stats = {}
                 if TORCH_AVAILABLE and torch.cuda.is_available():
                     for device_id in range(torch.cuda.device_count()):
-                        gpu_stats[f"gpu_{device_id}_memory"] = torch.cuda.memory_allocated(device_id)
+                        gpu_stats[f"gpu_{device_id}_memory"] = torch.cuda.memory_allocated(
+                            device_id
+                        )
 
                 timestamp = time.time()
 
@@ -1024,8 +1043,11 @@ class AdaptiveOptimizer:
         # Calculate average of best configurations
         new_config = {}
         for key in self.current_config:
-            values = [config["config"][key] for config in best_configs if key in config["config"]]
-            if values:
+            if values := [
+                config["config"][key]
+                for config in best_configs
+                if key in config["config"]
+            ]:
                 new_config[key] = int(np.mean(values))
 
         # Apply gradual learning
@@ -1046,22 +1068,20 @@ class AdaptiveOptimizer:
 
         # Analyze recent performance
         if avg_score < 0.7:  # Poor performance
-            recommendations.append(
-                {
-                    "type": "memory",
-                    "action": "increase_cache",
-                    "description": "Consider increasing cache size for better performance",
-                },
+            recommendations.extend(
+                (
+                    {
+                        "type": "memory",
+                        "action": "increase_cache",
+                        "description": "Consider increasing cache size for better performance",
+                    },
+                    {
+                        "type": "cpu",
+                        "action": "optimize_threads",
+                        "description": "Optimize thread pool configuration",
+                    },
+                )
             )
-
-            recommendations.append(
-                {
-                    "type": "cpu",
-                    "action": "optimize_threads",
-                    "description": "Optimize thread pool configuration",
-                },
-            )
-
         # Check for memory pressure
         recent_memory = np.mean([h["metrics"].get("memory_percent", 0) for h in recent_metrics])
         if recent_memory > 80:
@@ -1263,10 +1283,7 @@ class PerformanceOptimizer:
         thread_stats = self.thread_optimizer.get_stats()
         gpu_stats = self.gpu_optimizer.get_stats()
 
-        db_stats = {}
-        if self.db_optimizer:
-            db_stats = self.db_optimizer.get_stats()
-
+        db_stats = self.db_optimizer.get_stats() if self.db_optimizer else {}
         recent_optimizations = self.optimization_results[-10:]
 
         return {
@@ -1410,6 +1427,7 @@ def performance_monitor(component_name: str = "default") -> Callable:
             The wrapped function with performance tracking enabled.
 
         """
+
         @functools.wraps(func)
         def wrapper(*args: object, **kwargs: object) -> object:
             """Execute wrapped function with performance context.

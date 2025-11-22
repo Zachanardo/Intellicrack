@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 
+
 logger = logging.getLogger(__name__)
 logger.debug("Core module loaded")
 
@@ -64,7 +65,9 @@ def get_frida_manager() -> type | None:
         - Logs warning if import fails
 
     Example:
-        >>> FridaManager = get_frida_manager()
+        >>> FridaManager = (
+        ...     get_frida_manager()
+        ... )
         >>> if FridaManager:
         ...     manager = FridaManager()
 
@@ -98,7 +101,11 @@ def get_frida_presets() -> dict[str, str] | None:
     Example:
         >>> presets = get_frida_presets()
         >>> if presets:
-        ...     anti_debug_script = presets.get('anti_debug')
+        ...     anti_debug_script = (
+        ...         presets.get(
+        ...             "anti_debug"
+        ...         )
+        ...     )
 
     """
     global FRIDA_PRESETS
@@ -127,10 +134,14 @@ def get_frida_bypass_wizard() -> type | None:
         - Logs error if import fails
 
     Example:
-        >>> Wizard = get_frida_bypass_wizard()
+        >>> Wizard = (
+        ...     get_frida_bypass_wizard()
+        ... )
         >>> if Wizard:
         ...     wizard = Wizard()
-        ...     wizard.generate_bypass_script(protections)
+        ...     wizard.generate_bypass_script(
+        ...         protections
+        ...     )
 
     """
     global FridaBypassWizard
@@ -150,21 +161,46 @@ _lazy_modules = {}
 def __getattr__(name: str) -> object:
     """Lazy load module attributes to prevent circular imports."""
     module_names = [
-        'analysis', 'binary_analyzer', 'config_migration_handler', 'debugging_engine',
-        'exploitation', 'frida_bypass_wizard', 'frida_constants', 'frida_manager', 'frida_presets',
-        'gpu_acceleration', 'hardware_spoofer', 'license_snapshot',
-        'license_validation_bypass', 'network', 'network_capture', 'offline_activation_emulator',
-        'patching', 'process_manipulation', 'processing', 'protection_analyzer',
-        'protection_bypass', 'protocols', 'reporting', 'security_utils',
-        'serial_generator', 'shared', 'startup_checks', 'subscription_validation_bypass',
-        'task_manager', 'tool_discovery', 'trial_reset_engine', 'vulnerability_research',
+        "analysis",
+        "binary_analyzer",
+        "config_migration_handler",
+        "debugging_engine",
+        "exploitation",
+        "frida_bypass_wizard",
+        "frida_constants",
+        "frida_manager",
+        "frida_presets",
+        "gpu_acceleration",
+        "hardware_spoofer",
+        "license_snapshot",
+        "license_validation_bypass",
+        "network",
+        "network_capture",
+        "offline_activation_emulator",
+        "patching",
+        "process_manipulation",
+        "processing",
+        "protection_analyzer",
+        "protection_bypass",
+        "protocols",
+        "reporting",
+        "security_utils",
+        "serial_generator",
+        "shared",
+        "startup_checks",
+        "subscription_validation_bypass",
+        "task_manager",
+        "tool_discovery",
+        "trial_reset_engine",
+        "vulnerability_research",
     ]
 
     # Special handling for ProtectionAnalyzer class
-    if name == 'ProtectionAnalyzer':
+    if name == "ProtectionAnalyzer":
         if name not in _lazy_modules:
             try:
                 from .protection_analyzer import ProtectionAnalyzer as ProtectionAnalyzerAlias
+
                 _lazy_modules[name] = ProtectionAnalyzerAlias
                 global PROTECTION_ANALYZER_AVAILABLE
                 PROTECTION_ANALYZER_AVAILABLE = True
@@ -174,10 +210,11 @@ def __getattr__(name: str) -> object:
         return _lazy_modules[name]
 
     # Special handling for protocols submodule
-    if name == 'protocols':
+    if name == "protocols":
         if name not in _lazy_modules:
             try:
                 from .network import protocols as proto
+
                 _lazy_modules[name] = proto
             except ImportError as e:
                 logger.warning(f"protocols not available: {e}")
@@ -187,10 +224,10 @@ def __getattr__(name: str) -> object:
     if name in module_names:
         if name not in _lazy_modules:
             try:
-                _lazy_modules[name] = __import__(f'{__name__}.{name}', fromlist=[name])
+                _lazy_modules[name] = __import__(f"{__name__}.{name}", fromlist=[name])
 
                 # Set availability flags for exploitation modules
-                if name in ('exploitation', 'vulnerability_research'):
+                if name in {"exploitation", "vulnerability_research"}:
                     global EXPLOITATION_MODULES_AVAILABLE
                     EXPLOITATION_MODULES_AVAILABLE = True
 
@@ -206,8 +243,8 @@ __all__ = [
     "EXPLOITATION_MODULES_AVAILABLE",
     "FRIDA_MODULES_AVAILABLE",
     "PROTECTION_ANALYZER_AVAILABLE",
-    "SECURITY_ENFORCEMENT_AVAILABLE",
     "ProtectionAnalyzer",
+    "SECURITY_ENFORCEMENT_AVAILABLE",
     "analysis",
     "binary_analyzer",
     "config_migration_handler",

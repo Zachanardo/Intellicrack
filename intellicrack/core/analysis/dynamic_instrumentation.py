@@ -90,7 +90,9 @@ def run_instrumentation_thread(main_app: object, binary_path: str, script_source
         script.on("message", lambda message, data: on_message(main_app, message, data))
 
         script.load()
-        main_app.update_output.emit("[Dynamic Instrumentation] Frida script loaded. Resuming process...")
+        main_app.update_output.emit(
+            "[Dynamic Instrumentation] Frida script loaded. Resuming process..."
+        )
         device.resume(pid)
 
         # Allow time for the application to run and generate events.
@@ -102,7 +104,9 @@ def run_instrumentation_thread(main_app: object, binary_path: str, script_source
         main_app.update_output.emit("[Dynamic Instrumentation] Analysis finished.")
 
     except frida.ProcessNotFoundError:
-        main_app.update_output.emit("[Dynamic Instrumentation] Error: Process terminated prematurely.")
+        main_app.update_output.emit(
+            "[Dynamic Instrumentation] Error: Process terminated prematurely."
+        )
     except frida.TransportError as e:
         main_app.update_output.emit(f"[Dynamic Instrumentation] Frida transport error: {e}")
     except Exception as e:
@@ -165,6 +169,8 @@ def run_dynamic_instrumentation(main_app: object) -> None:
     """
 
     # Run the instrumentation in a background thread to keep the UI responsive
-    thread = Thread(target=run_instrumentation_thread, args=(main_app, binary_path, script_source), daemon=True)
+    thread = Thread(
+        target=run_instrumentation_thread, args=(main_app, binary_path, script_source), daemon=True
+    )
     thread.start()
     main_app.update_output.emit("[Dynamic Instrumentation] Task submitted to background thread.")

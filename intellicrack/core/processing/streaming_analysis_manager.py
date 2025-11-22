@@ -32,6 +32,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -206,7 +207,7 @@ class StreamingAnalysisManager:
                     overlap_after = f.read(overlap_size)
                     f.seek(next_pos)
 
-                context = ChunkContext(
+                yield ChunkContext(
                     offset=offset,
                     size=len(chunk),
                     chunk_number=chunk_number,
@@ -216,9 +217,6 @@ class StreamingAnalysisManager:
                     overlap_after=overlap_after,
                     file_path=file_path,
                 )
-
-                yield context
-
                 previous_tail = chunk
                 offset += len(chunk)
                 chunk_number += 1
@@ -295,14 +293,17 @@ class StreamingAnalysisManager:
 
                     progress.bytes_processed = context.offset + context.size
                     progress.chunks_processed = context.chunk_number + 1
-                    progress.overall_progress = (progress.bytes_processed / progress.total_bytes) * 100
+                    progress.overall_progress = (
+                        progress.bytes_processed / progress.total_bytes
+                    ) * 100
 
                     self._notify_progress(progress)
 
                     if (
                         checkpoint_path
                         and self.config.enable_checkpointing
-                        and progress.bytes_processed % self.config.checkpoint_interval < self.config.chunk_size
+                        and progress.bytes_processed % self.config.checkpoint_interval
+                        < self.config.chunk_size
                     ):
                         self._save_checkpoint(checkpoint_path, chunk_results, progress)
 
@@ -328,7 +329,7 @@ class StreamingAnalysisManager:
                     "streaming_mode": True,
                     "file_size": file_size,
                     "chunks_processed": total_chunks,
-                    "errors": progress.errors if progress.errors else None,
+                    "errors": progress.errors or None,
                 },
             )
 
@@ -444,7 +445,9 @@ class StreamingAnalysisManager:
                         hasher.update(chunk)
 
                     progress.bytes_processed += len(chunk)
-                    progress.overall_progress = (progress.bytes_processed / progress.total_bytes) * 100
+                    progress.overall_progress = (
+                        progress.bytes_processed / progress.total_bytes
+                    ) * 100
                     self._notify_progress(progress)
 
             return {algo: hasher.hexdigest() for algo, hasher in hashers.items()}
@@ -474,7 +477,7 @@ class StreamingAnalysisManager:
         """
         try:
             results = {pattern.hex(): [] for pattern in patterns}
-            overlap_size = max(len(p) for p in patterns) if patterns else 0
+            overlap_size = max((len(p) for p in patterns), default=0)
 
             for context in self.read_chunks(file_path, overlap_size=overlap_size):
                 search_data = context.overlap_before + context.data + context.overlap_after
@@ -500,7 +503,9 @@ class StreamingAnalysisManager:
                                 "offset": actual_offset,
                                 "context_before": search_data[context_start:pos].hex(),
                                 "match": pattern.hex(),
-                                "context_after": search_data[pos + len(pattern) : context_end].hex(),
+                                "context_after": search_data[
+                                    pos + len(pattern) : context_end
+                                ].hex(),
                             },
                         )
 
@@ -552,9 +557,11 @@ class StreamingAnalysisManager:
                         probability = count / size
                         entropy -= probability * math.log2(probability)
 
-                printable_count = sum(1 for byte in section_data if 32 <= byte <= 126)
+                printable_count = sum(bool(32 <= byte <= 126)
+                                  for byte in section_data)
                 null_count = byte_counts.get(0, 0)
-                high_entropy_count = sum(1 for byte in section_data if byte > 127)
+                high_entropy_count = sum(bool(byte > 127)
+                                     for byte in section_data)
 
                 return {
                     "offset": f"0x{offset:08x}",
@@ -565,7 +572,9 @@ class StreamingAnalysisManager:
                     "null_ratio": round(null_count / size, 4) if size > 0 else 0,
                     "high_entropy_ratio": round(high_entropy_count / size, 4) if size > 0 else 0,
                     "characteristics": self._classify_section(
-                        entropy, printable_count / size if size > 0 else 0, null_count / size if size > 0 else 0,
+                        entropy,
+                        printable_count / size if size > 0 else 0,
+                        null_count / size if size > 0 else 0,
                     ),
                 }
 
@@ -599,9 +608,7 @@ class StreamingAnalysisManager:
             return "Text/Strings"
         if printable_ratio < 0.1 and entropy > 5.0:
             return "Code/Binary Data"
-        if 4.0 <= entropy < 6.0:
-            return "Structured Binary"
-        return "Mixed Content"
+        return "Structured Binary" if 4.0 <= entropy < 6.0 else "Mixed Content"
 
     def should_use_streaming(self, file_path: Path) -> bool:
         """Determine if streaming mode should be used.

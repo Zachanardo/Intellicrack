@@ -28,10 +28,8 @@ from .ai_bridge import AIBinaryBridge, BinaryContextBuilder
 from .file_handler import VirtualFileAccess
 from .hex_dialog import HexViewerDialog
 from .hex_widget import HexViewerWidget
-from .integration import (
-    integrate_enhanced_hex_viewer,
-    register_hex_viewer_ai_tools,
-)
+from .integration import integrate_enhanced_hex_viewer, register_hex_viewer_ai_tools
+
 
 logger = logging.getLogger("Intellicrack.HexView")
 
@@ -77,11 +75,7 @@ def read_hex_region(file_path: str, offset: int, size: int) -> bytes | None:
     """
     try:
         file_handler = open_hex_file(file_path, True)
-        if not file_handler:
-            return None
-
-        data = file_handler.read(offset, size)
-        return data
+        return file_handler.read(offset, size) if file_handler else None
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error reading hex region: %s", e)
         return None
@@ -117,7 +111,9 @@ def write_hex_region(file_path: str, offset: int, data: bytes) -> bool:
 # Analysis operations
 
 
-def analyze_binary_data(data: bytes, query: str | None = None, model_manager: object | None = None) -> dict[str, Any]:
+def analyze_binary_data(
+    data: bytes, query: str | None = None, model_manager: object | None = None
+) -> dict[str, Any]:
     """Analyze binary data using AI assistance.
 
     Args:
@@ -131,14 +127,15 @@ def analyze_binary_data(data: bytes, query: str | None = None, model_manager: ob
     """
     try:
         ai_bridge = AIBinaryBridge(model_manager)
-        result = ai_bridge.analyze_binary_region(data, 0, len(data), query)
-        return result
+        return ai_bridge.analyze_binary_region(data, 0, len(data), query)
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error analyzing binary data: %s", e)
         return {"error": str(e)}
 
 
-def search_binary_pattern(data: bytes, pattern_desc: str, model_manager: object | None = None) -> list[dict[str, Any]]:
+def search_binary_pattern(
+    data: bytes, pattern_desc: str, model_manager: object | None = None
+) -> list[dict[str, Any]]:
     """Search for a pattern in binary data using AI assistance.
 
     Args:
@@ -152,14 +149,15 @@ def search_binary_pattern(data: bytes, pattern_desc: str, model_manager: object 
     """
     try:
         ai_bridge = AIBinaryBridge(model_manager)
-        results = ai_bridge.search_binary_semantic(data, pattern_desc)
-        return results
+        return ai_bridge.search_binary_semantic(data, pattern_desc)
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error searching binary pattern: %s", e)
         return []
 
 
-def suggest_binary_edits(data: bytes, edit_intent: str, model_manager: object | None = None) -> dict[str, Any]:
+def suggest_binary_edits(
+    data: bytes, edit_intent: str, model_manager: object | None = None
+) -> dict[str, Any]:
     """Suggest edits to binary data using AI assistance.
 
     Args:
@@ -173,8 +171,7 @@ def suggest_binary_edits(data: bytes, edit_intent: str, model_manager: object | 
     """
     try:
         ai_bridge = AIBinaryBridge(model_manager)
-        result = ai_bridge.suggest_edits(data, 0, len(data), edit_intent)
-        return result
+        return ai_bridge.suggest_edits(data, 0, len(data), edit_intent)
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error suggesting binary edits: %s", e)
         return {"error": str(e)}
@@ -196,7 +193,9 @@ def create_hex_viewer_widget(parent: object | None = None) -> HexViewerWidget:
     return HexViewerWidget(parent)
 
 
-def create_hex_viewer_dialog(parent: object | None = None, file_path: str | None = None, read_only: bool = True) -> HexViewerDialog:
+def create_hex_viewer_dialog(
+    parent: object | None = None, file_path: str | None = None, read_only: bool = True
+) -> HexViewerDialog:
     """Create a new hex viewer dialog.
 
     Args:
@@ -208,8 +207,7 @@ def create_hex_viewer_dialog(parent: object | None = None, file_path: str | None
         HexViewerDialog instance
 
     """
-    dialog = HexViewerDialog(parent, file_path, read_only)
-    return dialog
+    return HexViewerDialog(parent, file_path, read_only)
 
 
 def launch_hex_viewer(file_path: str, read_only: bool = True) -> QDialog:
@@ -346,7 +344,7 @@ def hex_string_to_bytes(hex_string: str) -> bytes:
             hex_part = hex_part.split(":", 1)[1]
 
         # Add to cleaned string
-        cleaned += hex_part.strip() + " "
+        cleaned += f"{hex_part.strip()} "
 
     # Convert to bytes
     hex_values = cleaned.split()
@@ -373,7 +371,7 @@ def create_binary_context(data: bytes) -> dict[str, Any]:
 
     """
     context_builder = BinaryContextBuilder()
-    context = context_builder.build_context(
+    return context_builder.build_context(
         data,
         0,
         len(data),
@@ -381,7 +379,6 @@ def create_binary_context(data: bytes) -> dict[str, Any]:
         include_strings=True,
         include_structure_hints=True,
     )
-    return context
 
 
 # Main entry point for running as a script

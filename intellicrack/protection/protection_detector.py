@@ -29,15 +29,9 @@ from typing import Any
 
 from ..utils.logger import get_logger
 from ..utils.system.driver_utils import get_driver_path
-from .intellicrack_protection_core import (
-    DetectionResult,
-    ProtectionAnalysis,
-    ProtectionType,
-)
-from .unified_protection_engine import (
-    UnifiedProtectionEngine,
-    UnifiedProtectionResult,
-)
+from .intellicrack_protection_core import DetectionResult, ProtectionAnalysis, ProtectionType
+from .unified_protection_engine import UnifiedProtectionEngine, UnifiedProtectionResult
+
 
 print("[DEBUG protection_detector] Module loading started")
 sys.stdout.flush()
@@ -146,7 +140,9 @@ class ProtectionDetector:
         """
         return self.engine.get_quick_summary(file_path)
 
-    def analyze_directory(self, directory: str, recursive: bool = True, deep_scan: bool = False) -> list[ProtectionAnalysis]:
+    def analyze_directory(
+        self, directory: str, recursive: bool = True, deep_scan: bool = False
+    ) -> list[ProtectionAnalysis]:
         """Analyze all executable files in a directory.
 
         Args:
@@ -158,7 +154,9 @@ class ProtectionDetector:
             List of ProtectionAnalysis results
 
         """
-        logger.info(f"Starting directory analysis: {directory}, recursive={recursive}, deep_scan={deep_scan}")
+        logger.info(
+            f"Starting directory analysis: {directory}, recursive={recursive}, deep_scan={deep_scan}"
+        )
         results = []
         extensions = [".exe", ".dll", ".sys", ".ocx", ".scr", ".com", ".so", ".dylib"]
 
@@ -199,7 +197,9 @@ class ProtectionDetector:
         result = self.engine.analyze(file_path)
         return result.bypass_strategies
 
-    def _convert_to_legacy_format(self, unified_result: UnifiedProtectionResult) -> ProtectionAnalysis:
+    def _convert_to_legacy_format(
+        self, unified_result: UnifiedProtectionResult
+    ) -> ProtectionAnalysis:
         """Convert unified result to legacy ProtectionAnalysis format.
 
         This ensures backward compatibility with existing code.
@@ -264,8 +264,7 @@ class ProtectionDetector:
 
     def get_summary(self, analysis: ProtectionAnalysis) -> str:
         """Get a human-readable summary of the analysis."""
-        lines = []
-        lines.append(f"File: {os.path.basename(analysis.file_path)}")
+        lines = [f"File: {os.path.basename(analysis.file_path)}"]
         lines.append(f"Type: {analysis.file_type} ({analysis.architecture})")
 
         if analysis.compiler:
@@ -336,11 +335,10 @@ class ProtectionDetector:
 
         if output_format == "csv":
             lines = ["File,Type,Architecture,Protection,Version,Category,Confidence"]
-            for det in analysis.detections:
-                lines.append(
-                    f"{analysis.file_path},{analysis.file_type},{analysis.architecture},"
-                    f"{det.name},{det.version or 'N/A'},{det.type.value},{det.confidence:.0f}",
-                )
+            lines.extend(
+                f"{analysis.file_path},{analysis.file_type},{analysis.architecture},{det.name},{det.version or 'N/A'},{det.type.value},{det.confidence:.0f}"
+                for det in analysis.detections
+            )
             return "\n".join(lines)
 
         error_msg = f"Unknown output format: {output_format}"
@@ -385,7 +383,9 @@ class ProtectionDetector:
             try:
                 from intellicrack.handlers.psutil_handler import psutil
 
-                running_processes = [p.info["name"].lower() for p in psutil.process_iter(["name"]) if p.info["name"]]
+                running_processes = [
+                    p.info["name"].lower() for p in psutil.process_iter(["name"]) if p.info["name"]
+                ]
                 for indicator in vm_indicators:
                     if any(indicator.lower() in proc for proc in running_processes):
                         results["indicators"].append(f"VM process detected: {indicator}")
@@ -428,7 +428,9 @@ class ProtectionDetector:
                             content = f.read().lower()
                             for indicator in vm_indicators:
                                 if indicator.lower() in content:
-                                    results["indicators"].append(f"VM indicator in {vm_file}: {indicator}")
+                                    results["indicators"].append(
+                                        f"VM indicator in {vm_file}: {indicator}"
+                                    )
                                     results["virtualization_detected"] = True
                     except Exception as e:
                         logger.error("Exception in virtualization detection: %s", e)
@@ -551,8 +553,7 @@ class ProtectionDetector:
             else:
                 data = ticket_data
 
-            ticket = analyzer.parse_ticket(data)
-            if ticket:
+            if ticket := analyzer.parse_ticket(data):
                 result = {
                     "type": "ticket",
                     "valid": ticket.is_valid,
@@ -564,18 +565,19 @@ class ProtectionDetector:
                 }
 
                 if ticket.payload:
-                    result.update(
-                        {
-                            "game_id": ticket.payload.game_id.hex(),
-                            "machine_id": ticket.payload.machine_id.combined_hash.hex()[:32],
-                            "license_type": ticket.payload.license_data.get("type"),
-                            "expiration": ticket.payload.license_data.get("expiration"),
-                        },
-                    )
+                    result |= {
+                        "game_id": ticket.payload.game_id.hex(),
+                        "machine_id": ticket.payload.machine_id.combined_hash.hex()[
+                            :32
+                        ],
+                        "license_type": ticket.payload.license_data.get("type"),
+                        "expiration": ticket.payload.license_data.get(
+                            "expiration"
+                        ),
+                    }
 
                 return result
-            token = analyzer.parse_token(data)
-            if token:
+            if token := analyzer.parse_token(data):
                 return {
                     "type": "token",
                     "game_id": token.game_id.hex(),
@@ -625,13 +627,11 @@ class ProtectionDetector:
 
             license_code = license_map.get(license_type.lower(), analyzer.LICENSE_PERPETUAL)
 
-            response = analyzer.generate_activation_response(
+            if response := analyzer.generate_activation_response(
                 request_data=request_data,
                 license_type=license_code,
                 duration_days=duration_days,
-            )
-
-            if response:
+            ):
                 return {
                     "success": True,
                     "response_id": response.response_id.hex(),
@@ -685,17 +685,23 @@ class ProtectionDetector:
 
             license_code = license_map.get(license_type.lower(), analyzer.LICENSE_PERPETUAL)
 
-            game_id_bytes = bytes.fromhex(game_id) if len(game_id) == 32 else (game_id.encode() + b"\x00" * 16)[:16]
-            machine_id_bytes = bytes.fromhex(machine_id) if len(machine_id) == 64 else hashlib.sha256(machine_id.encode()).digest()
+            game_id_bytes = (
+                bytes.fromhex(game_id)
+                if len(game_id) == 32
+                else (game_id.encode() + b"\x00" * 16)[:16]
+            )
+            machine_id_bytes = (
+                bytes.fromhex(machine_id)
+                if len(machine_id) == 64
+                else hashlib.sha256(machine_id.encode()).digest()
+            )
 
-            token = analyzer.forge_token(
+            if token := analyzer.forge_token(
                 game_id=game_id_bytes,
                 machine_id=machine_id_bytes,
                 license_type=license_code,
                 duration_days=duration_days,
-            )
-
-            if token:
+            ):
                 return {
                     "success": True,
                     "token": token.hex(),
@@ -790,16 +796,15 @@ class ProtectionDetector:
                         break
 
                     for signature, protection_name in signatures.items():
-                        if signature in chunk:
-                            if protection_name not in results["protections"]:
-                                results["protections"].append(protection_name)
-                                results["signatures_found"].append(
-                                    {
-                                        "protection": protection_name,
-                                        "signature": signature.hex(),
-                                        "offset": f.tell() - len(chunk) + chunk.index(signature),
-                                    },
-                                )
+                        if signature in chunk and protection_name not in results["protections"]:
+                            results["protections"].append(protection_name)
+                            results["signatures_found"].append(
+                                {
+                                    "protection": protection_name,
+                                    "signature": signature.hex(),
+                                    "offset": f.tell() - len(chunk) + chunk.index(signature),
+                                },
+                            )
 
         except Exception as e:
             logger.error(f"Error detecting commercial protections: {e}")
@@ -848,7 +853,9 @@ class ProtectionDetector:
                         try:
                             sig.decode("ascii")
                             # It's a text string
-                            results["indicators"].append(f"String reference: {sig.decode('utf-8', errors='ignore')}")
+                            results["indicators"].append(
+                                f"String reference: {sig.decode('utf-8', errors='ignore')}"
+                            )
                             if sig in [b"CRC32", b"MD5", b"SHA1", b"SHA256"]:
                                 results["checksum_types"].append(sig.decode("utf-8"))
                         except UnicodeDecodeError:
@@ -1048,7 +1055,9 @@ class ProtectionDetector:
                         # Check if pattern contains non-printable characters (binary pattern)
                         try:
                             pattern.decode("ascii")
-                            results["indicators"].append(f"String: {pattern.decode('utf-8', errors='ignore')}")
+                            results["indicators"].append(
+                                f"String: {pattern.decode('utf-8', errors='ignore')}"
+                            )
                         except UnicodeDecodeError:
                             results["indicators"].append(f"Assembly pattern: {pattern.hex()}")
 
@@ -1187,7 +1196,9 @@ class ProtectionDetector:
                 ],
             ),
         }
-        logger.info(f"Completed comprehensive protection detection: {results['summary']['protection_count']} protections found")
+        logger.info(
+            f"Completed comprehensive protection detection: {results['summary']['protection_count']} protections found"
+        )
         return results
 
 
@@ -1296,9 +1307,14 @@ def scan_for_bytecode_protectors(binary_path: str) -> dict[str, Any]:
     results = detect_commercial_protections(binary_path)
     # Filter for bytecode protectors
     bytecode_protectors = [
-        p for p in results.get("protections", []) if any(x in p for x in [".NET", "Java", "Python", "Dotfuscator", "ConfuserEx"])
+        p
+        for p in results.get("protections", [])
+        if any(x in p for x in [".NET", "Java", "Python", "Dotfuscator", "ConfuserEx"])
     ]
-    return {"bytecode_protectors": bytecode_protectors, "has_bytecode_protection": bool(bytecode_protectors)}
+    return {
+        "bytecode_protectors": bytecode_protectors,
+        "has_bytecode_protection": bool(bytecode_protectors),
+    }
 
 
 def generate_checksum(data: bytes, algorithm: str = "sha256") -> str:

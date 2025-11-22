@@ -31,6 +31,7 @@ from typing import Any
 
 from ...utils.logger import get_logger
 
+
 # Module logger
 logger = get_logger(__name__)
 
@@ -212,7 +213,9 @@ class R2ErrorHandler:
             duration = time.time() - start_time
             self._record_performance(operation_name, duration, success=True)
 
-    def handle_error(self, error: Exception, operation_name: str, context: dict[str, Any] = None) -> bool:
+    def handle_error(
+        self, error: Exception, operation_name: str, context: dict[str, Any] = None
+    ) -> bool:
         """Handle error as main entry point.
 
         Args:
@@ -258,7 +261,9 @@ class R2ErrorHandler:
                 self.logger.critical(f"Error in error handler: {recovery_error}")
                 return False
 
-    def _create_error_event(self, error: Exception, operation_name: str, context: dict[str, Any]) -> ErrorEvent:
+    def _create_error_event(
+        self, error: Exception, operation_name: str, context: dict[str, Any]
+    ) -> ErrorEvent:
         """Create error event from exception."""
         error_type = type(error).__name__
         severity = self._classify_error_severity(error, operation_name)
@@ -283,9 +288,8 @@ class R2ErrorHandler:
             return ErrorSeverity.CRITICAL
 
         # High severity for core functionality failures
-        if isinstance(error, (FileNotFoundError, PermissionError)):
-            if "radare2" in str(error).lower() or "r2" in operation_name:
-                return ErrorSeverity.HIGH
+        if isinstance(error, (FileNotFoundError, PermissionError)) and ("radare2" in str(error).lower() or "r2" in operation_name):
+            return ErrorSeverity.HIGH
 
         # Connection/pipe errors with r2
         if "r2pipe" in str(error) or "BrokenPipeError" in str(type(error)):
@@ -395,12 +399,14 @@ class R2ErrorHandler:
         # Record in session stats for intervention tracking
         if "interventions_required" not in self.session_stats:
             self.session_stats["interventions_required"] = []
-        self.session_stats["interventions_required"].append({
-            "timestamp": datetime.now(),
-            "operation": error_event.context.get("operation", "unknown"),
-            "error_type": error_event.error_type,
-            "message": intervention_message,
-        })
+        self.session_stats["interventions_required"].append(
+            {
+                "timestamp": datetime.now(),
+                "operation": error_event.context.get("operation", "unknown"),
+                "error_type": error_event.error_type,
+                "message": intervention_message,
+            }
+        )
 
         return False
 
@@ -480,9 +486,7 @@ class R2ErrorHandler:
     def _re_analyze_binary(self, error_event: ErrorEvent) -> bool:
         """Re-analyze binary with different parameters."""
         try:
-            r2_session = error_event.context.get("r2_session")
-
-            if r2_session:
+            if r2_session := error_event.context.get("r2_session"):
                 # Try lighter analysis first
                 r2_session.cmd("aa")
 
@@ -514,9 +518,7 @@ class R2ErrorHandler:
     def _cleanup_memory(self, error_event: ErrorEvent) -> bool:
         """Clean up radare2 memory and temporary files."""
         try:
-            r2_session = error_event.context.get("r2_session")
-
-            if r2_session:
+            if r2_session := error_event.context.get("r2_session"):
                 # Clear analysis cache
                 try:
                     r2_session.cmd("af-*")
@@ -625,7 +627,9 @@ class R2ErrorHandler:
 
         # Keep only last 100 measurements
         if len(self.performance_monitor["operation_times"][operation_name]) > 100:
-            self.performance_monitor["operation_times"][operation_name] = self.performance_monitor["operation_times"][operation_name][-100:]
+            self.performance_monitor["operation_times"][operation_name] = self.performance_monitor[
+                "operation_times"
+            ][operation_name][-100:]
 
         # Update failure rate
         if success:
@@ -702,26 +706,25 @@ class R2ErrorHandler:
 
     def _get_performance_metrics(self) -> dict[str, Any]:
         """Get performance metrics."""
-        metrics = {}
-        for operation, times in self.performance_monitor["operation_times"].items():
-            if times:
-                metrics[operation] = {
-                    "avg_duration": sum(times) / len(times),
-                    "max_duration": max(times),
-                    "min_duration": min(times),
-                    "total_calls": len(times),
-                }
-        return metrics
+        return {
+            operation: {
+                "avg_duration": sum(times) / len(times),
+                "max_duration": max(times),
+                "min_duration": min(times),
+                "total_calls": len(times),
+            }
+            for operation, times in self.performance_monitor[
+                "operation_times"
+            ].items()
+            if times
+        }
 
     def _get_recovery_rates(self) -> dict[str, float]:
         """Get recovery success rates."""
         rates = {}
         for action, stats in self.performance_monitor["recovery_success_rates"].items():
             total = stats["successes"] + stats["failures"]
-            if total > 0:
-                rates[action] = stats["successes"] / total
-            else:
-                rates[action] = 0.0
+            rates[action] = stats["successes"] / total if total > 0 else 0.0
         return rates
 
     def is_operation_degraded(self, operation_name: str) -> bool:

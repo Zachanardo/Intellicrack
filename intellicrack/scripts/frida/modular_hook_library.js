@@ -4264,12 +4264,9 @@ const modularHookLibrary = {
                 if (global.stalkerSessions) {
                     global.stalkerSessions.maxSessions = 5;
                 }
-            } else if (metrics.cpu > 80) {
-                // High CPU - reduce features
-                if (global.stalkerSessions) {
-                    global.stalkerSessions.maxSessions = 1;
-                }
-            }
+            } else if (metrics.cpu > 80 && global.stalkerSessions) {
+                         global.stalkerSessions.maxSessions = 1;
+                   }
         };
 
         // Start monitoring

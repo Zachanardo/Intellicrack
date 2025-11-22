@@ -49,19 +49,19 @@ class GamingViolation:
     violation_type: GamingViolationType
     description: str
     severity: str  # CRITICAL, HIGH, MEDIUM, LOW
-    evidence: Dict[str, Any]
+    evidence: dict[str, Any]
     timestamp: str
     confidence: float  # 0.0 to 1.0
 
 @dataclass
 class ValidationEnvironment:
     """Structure for environment state."""
-    running_processes: List[Dict[str, Any]]
-    network_connections: List[Dict[str, Any]]
-    loaded_modules: List[str]
-    registry_state: Dict[str, Any]
-    file_system_state: Dict[str, str]
-    hardware_info: Dict[str, Any]
+    running_processes: list[dict[str, Any]]
+    network_connections: list[dict[str, Any]]
+    loaded_modules: list[str]
+    registry_state: dict[str, Any]
+    file_system_state: dict[str, str]
+    hardware_info: dict[str, Any]
 
 class AntiGamingValidationSystem:
     """
@@ -93,12 +93,12 @@ class AntiGamingValidationSystem:
         # Cryptographic challenge state
         self.active_challenges = {}
 
-    def _load_config(self) -> Dict[str, Any]:
+    def _load_config(self) -> dict[str, Any]:
         """Load anti-gaming configuration."""
         try:
             config_file = self.config_path / "anti_gaming_config.json"
             if config_file.exists():
-                with open(config_file, 'r', encoding='utf-8') as f:
+                with open(config_file, encoding='utf-8') as f:
                     return json.load(f)
             else:
                 return {
@@ -115,12 +115,12 @@ class AntiGamingValidationSystem:
             self.logger.error(f"Failed to load config: {e}")
             raise
 
-    def _load_whitelist(self) -> Dict[str, Any]:
+    def _load_whitelist(self) -> dict[str, Any]:
         """Load network and process whitelists."""
         try:
             whitelist_file = self.whitelist_path / "anti_gaming_whitelist.json"
             if whitelist_file.exists():
-                with open(whitelist_file, 'r', encoding='utf-8') as f:
+                with open(whitelist_file, encoding='utf-8') as f:
                     return json.load(f)
             else:
                 return {
@@ -154,7 +154,7 @@ class AntiGamingValidationSystem:
             self.logger.error(f"Failed to establish baseline environment: {e}")
             raise
 
-    def validate_binary_integrity(self, binary_path: Path, expected_hash: str) -> Tuple[bool, Optional[GamingViolation]]:
+    def validate_binary_integrity(self, binary_path: Path, expected_hash: str) -> tuple[bool, GamingViolation | None]:
         """6.5.1: Validate binary hash to detect pre-cracked binaries."""
         try:
             current_hash = self._calculate_file_hash(binary_path)
@@ -181,7 +181,7 @@ class AntiGamingValidationSystem:
             self.logger.error(f"Binary integrity validation failed: {e}")
             return False, None
 
-    def detect_identical_outputs(self, test_results: List[Dict[str, Any]]) -> Tuple[bool, Optional[GamingViolation]]:
+    def detect_identical_outputs(self, test_results: list[dict[str, Any]]) -> tuple[bool, GamingViolation | None]:
         """6.5.2: Detect identical outputs across random inputs (gaming indicator)."""
         try:
             output_hashes = {}
@@ -222,7 +222,7 @@ class AntiGamingValidationSystem:
             self.logger.error(f"Identical outputs detection failed: {e}")
             return True, None
 
-    def detect_analysis_tools(self) -> Tuple[bool, List[GamingViolation]]:
+    def detect_analysis_tools(self) -> tuple[bool, list[GamingViolation]]:
         """6.5.3: Detect debuggers and analysis tools during testing."""
         try:
             violations = []
@@ -268,7 +268,7 @@ class AntiGamingValidationSystem:
             self.logger.error(f"Analysis tools detection failed: {e}")
             return True, []
 
-    def monitor_network_activity(self, duration_seconds: int = 60) -> Tuple[bool, List[GamingViolation]]:
+    def monitor_network_activity(self, duration_seconds: int = 60) -> tuple[bool, list[GamingViolation]]:
         """6.5.4: Monitor for unauthorized network activity."""
         try:
             violations = []
@@ -311,7 +311,7 @@ class AntiGamingValidationSystem:
             self.logger.error(f"Network monitoring failed: {e}")
             return True, []
 
-    def detect_process_injection(self) -> Tuple[bool, List[GamingViolation]]:
+    def detect_process_injection(self) -> tuple[bool, list[GamingViolation]]:
         """6.5.5: Detect process injection from unknown sources."""
         try:
             violations = []
@@ -365,7 +365,7 @@ class AntiGamingValidationSystem:
             self.logger.error(f"Process injection detection failed: {e}")
             return True, []
 
-    def generate_time_challenge(self, challenge_id: str, complexity: int = 1000000) -> Dict[str, Any]:
+    def generate_time_challenge(self, challenge_id: str, complexity: int = 1000000) -> dict[str, Any]:
         """Generate time-based challenge to prevent pre-computation."""
         try:
             import random
@@ -395,7 +395,7 @@ class AntiGamingValidationSystem:
             return {}
 
     def validate_time_challenge_response(self, challenge_id: str, response: int,
-                                       response_time_ms: float) -> Tuple[bool, Optional[GamingViolation]]:
+                                       response_time_ms: float) -> tuple[bool, GamingViolation | None]:
         """6.5.6: Validate time-based challenge response."""
         try:
             if challenge_id not in self.active_challenges:
@@ -451,7 +451,7 @@ class AntiGamingValidationSystem:
             return False, None
 
     def comprehensive_anti_gaming_scan(self, binary_path: Path, expected_hash: str,
-                                     test_results: List[Dict[str, Any]]) -> Tuple[AntiGamingResult, Dict[str, Any]]:
+                                     test_results: list[dict[str, Any]]) -> tuple[AntiGamingResult, dict[str, Any]]:
         """Perform comprehensive anti-gaming validation."""
         validation_report = {
             "timestamp": self._get_timestamp(),
@@ -531,7 +531,7 @@ class AntiGamingValidationSystem:
 
     # Helper methods
 
-    def _get_process_list(self) -> List[Dict[str, Any]]:
+    def _get_process_list(self) -> list[dict[str, Any]]:
         """Get list of running processes."""
         processes = []
         try:
@@ -544,7 +544,7 @@ class AntiGamingValidationSystem:
             self.logger.error(f"Failed to get process list: {e}")
         return processes
 
-    def _get_network_connections(self) -> List[Dict[str, Any]]:
+    def _get_network_connections(self) -> list[dict[str, Any]]:
         """Get active network connections."""
         connections = []
         try:
@@ -562,7 +562,7 @@ class AntiGamingValidationSystem:
             self.logger.error(f"Failed to get network connections: {e}")
         return connections
 
-    def _get_loaded_modules(self) -> List[str]:
+    def _get_loaded_modules(self) -> list[str]:
         """Get list of loaded system modules."""
         modules = []
         try:
@@ -577,15 +577,15 @@ class AntiGamingValidationSystem:
             self.logger.error(f"Failed to get loaded modules: {e}")
         return list(set(modules))
 
-    def _capture_registry_state(self) -> Dict[str, Any]:
+    def _capture_registry_state(self) -> dict[str, Any]:
         """Capture relevant registry state."""
         return {"placeholder": "registry_state"}  # Simplified
 
-    def _capture_file_system_state(self) -> Dict[str, str]:
+    def _capture_file_system_state(self) -> dict[str, str]:
         """Capture file system state checksums."""
         return {"placeholder": "filesystem_state"}  # Simplified
 
-    def _get_hardware_info(self) -> Dict[str, Any]:
+    def _get_hardware_info(self) -> dict[str, Any]:
         """Get hardware information."""
         try:
             return {
@@ -651,7 +651,7 @@ class AntiGamingValidationSystem:
 
         return False
 
-    def _is_suspicious_process(self, process: Dict[str, Any]) -> bool:
+    def _is_suspicious_process(self, process: dict[str, Any]) -> bool:
         """Check if process is suspicious."""
         process_name = process.get("name", "").lower()
         cmdline = process.get("cmdline", "")
@@ -667,7 +667,7 @@ class AntiGamingValidationSystem:
 
         return False
 
-    def _check_debugger_presence(self) -> Dict[str, Any]:
+    def _check_debugger_presence(self) -> dict[str, Any]:
         """Check for debugger presence using Windows API."""
         try:
             # Use Windows API to check for debugger
@@ -689,7 +689,7 @@ class AntiGamingValidationSystem:
         except Exception as e:
             return {"error": str(e), "debugger_present": False}
 
-    def _check_dll_injection(self) -> Dict[str, Any]:
+    def _check_dll_injection(self) -> dict[str, Any]:
         """Check for DLL injection."""
         try:
             # Get current process modules

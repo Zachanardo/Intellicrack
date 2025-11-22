@@ -921,10 +921,8 @@ var TimeBombDefuser = {
         // Fallback to pattern matching
         for (var i = 0; i < backtrace.length; i++) {
             var module = Process.findModuleByAddress(backtrace[i]);
-            if (module) {
-                if (this.isLicenseModule(module.name)) {
-                    return true;
-                }
+            if (module && this.isLicenseModule(module.name)) {
+                  return true;
             }
         }
 
@@ -1385,9 +1383,7 @@ var TimeBombDefuser = {
             }
 
             // Limit drift
-            if (progression > this.config.timeProgression.maxDrift) {
-                progression = this.config.timeProgression.maxDrift;
-            }
+            progression = Math.min(progression, this.config.timeProgression.maxDrift);
 
             return new Date(this.config.targetDate.getTime() + progression);
         }

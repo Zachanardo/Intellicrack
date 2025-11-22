@@ -28,6 +28,7 @@ from typing import Any
 
 from ...utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 
@@ -130,7 +131,9 @@ class R2JSONStandardizer:
             self.logger.error(f"Failed to standardize {analysis_type} result: {e}")
             return self._create_error_result(analysis_type, binary_path, str(e))
 
-    def _create_base_structure(self, analysis_type: str, binary_path: str, metadata: dict[str, Any] | None) -> dict[str, Any]:
+    def _create_base_structure(
+        self, analysis_type: str, binary_path: str, metadata: dict[str, Any] | None
+    ) -> dict[str, Any]:
         """Create base standardized structure."""
         return {
             # Schema and version information
@@ -191,8 +194,16 @@ class R2JSONStandardizer:
             },
             "summary_statistics": {
                 "total_functions_analyzed": len(raw_result.get("license_functions", [])),
-                "license_functions_found": len([f for f in raw_result.get("license_functions", []) if f.get("confidence", 0) > 0.5]),
-                "decompilation_success_rate": self._calculate_decompilation_success_rate(raw_result),
+                "license_functions_found": len(
+                    [
+                        f
+                        for f in raw_result.get("license_functions", [])
+                        if f.get("confidence", 0) > 0.5
+                    ]
+                ),
+                "decompilation_success_rate": self._calculate_decompilation_success_rate(
+                    raw_result
+                ),
                 "average_function_complexity": self._calculate_average_complexity(raw_result),
             },
             "ml_features": {
@@ -224,24 +235,39 @@ class R2JSONStandardizer:
 
         for category in vuln_categories:
             if category in raw_result:
-                for vuln in raw_result[category]:
-                    vulnerabilities.append(self._normalize_vulnerability(vuln, category))
-
+                vulnerabilities.extend(
+                    self._normalize_vulnerability(vuln, category)
+                    for vuln in raw_result[category]
+                )
         return {
             "analysis_results": {
                 "vulnerabilities": vulnerabilities,
                 "vulnerability_categories": self._categorize_vulnerabilities(vulnerabilities),
                 "cve_matches": self._normalize_cve_matches(raw_result.get("cve_matches", [])),
-                "exploit_generation": self._normalize_exploit_data(raw_result.get("exploit_generation", {})),
-                "severity_assessment": self._normalize_severity_assessment(raw_result.get("severity_assessment", {})),
+                "exploit_generation": self._normalize_exploit_data(
+                    raw_result.get("exploit_generation", {})
+                ),
+                "severity_assessment": self._normalize_severity_assessment(
+                    raw_result.get("severity_assessment", {})
+                ),
             },
             "summary_statistics": {
                 "total_vulnerabilities": len(vulnerabilities),
-                "critical_vulnerabilities": len([v for v in vulnerabilities if v.get("severity") == "critical"]),
-                "high_vulnerabilities": len([v for v in vulnerabilities if v.get("severity") == "high"]),
-                "medium_vulnerabilities": len([v for v in vulnerabilities if v.get("severity") == "medium"]),
-                "low_vulnerabilities": len([v for v in vulnerabilities if v.get("severity") == "low"]),
-                "exploitable_vulnerabilities": len([v for v in vulnerabilities if v.get("exploitable", False)]),
+                "critical_vulnerabilities": len(
+                    [v for v in vulnerabilities if v.get("severity") == "critical"]
+                ),
+                "high_vulnerabilities": len(
+                    [v for v in vulnerabilities if v.get("severity") == "high"]
+                ),
+                "medium_vulnerabilities": len(
+                    [v for v in vulnerabilities if v.get("severity") == "medium"]
+                ),
+                "low_vulnerabilities": len(
+                    [v for v in vulnerabilities if v.get("severity") == "low"]
+                ),
+                "exploitable_vulnerabilities": len(
+                    [v for v in vulnerabilities if v.get("exploitable", False)]
+                ),
                 "overall_risk_score": self._calculate_risk_score(vulnerabilities),
             },
             "ml_features": {
@@ -255,21 +281,35 @@ class R2JSONStandardizer:
         """Standardize string analysis results."""
         return {
             "analysis_results": {
-                "license_strings": self._normalize_string_list(raw_result.get("license_strings", [])),
+                "license_strings": self._normalize_string_list(
+                    raw_result.get("license_strings", [])
+                ),
                 "crypto_strings": self._normalize_string_list(raw_result.get("crypto_strings", [])),
-                "error_strings": self._normalize_string_list(raw_result.get("error_message_strings", [])),
+                "error_strings": self._normalize_string_list(
+                    raw_result.get("error_message_strings", [])
+                ),
                 "debug_strings": self._normalize_string_list(raw_result.get("debug_strings", [])),
-                "suspicious_patterns": self._normalize_pattern_list(raw_result.get("suspicious_patterns", [])),
-                "entropy_analysis": self._normalize_entropy_analysis(raw_result.get("string_entropy_analysis", {})),
-                "cross_references": self._normalize_cross_references(raw_result.get("cross_references", {})),
+                "suspicious_patterns": self._normalize_pattern_list(
+                    raw_result.get("suspicious_patterns", [])
+                ),
+                "entropy_analysis": self._normalize_entropy_analysis(
+                    raw_result.get("string_entropy_analysis", {})
+                ),
+                "cross_references": self._normalize_cross_references(
+                    raw_result.get("cross_references", {})
+                ),
             },
             "summary_statistics": {
                 "total_strings": raw_result.get("total_strings", 0),
                 "license_string_count": len(raw_result.get("license_strings", [])),
                 "crypto_string_count": len(raw_result.get("crypto_strings", [])),
-                "high_entropy_strings": len(raw_result.get("string_entropy_analysis", {}).get("high_entropy_strings", [])),
+                "high_entropy_strings": len(
+                    raw_result.get("string_entropy_analysis", {}).get("high_entropy_strings", [])
+                ),
                 "suspicious_pattern_count": len(raw_result.get("suspicious_patterns", [])),
-                "average_string_entropy": raw_result.get("string_entropy_analysis", {}).get("average_entropy", 0),
+                "average_string_entropy": raw_result.get("string_entropy_analysis", {}).get(
+                    "average_entropy", 0
+                ),
             },
             "ml_features": {
                 "string_distribution": self._extract_string_distribution_features(raw_result),
@@ -284,15 +324,25 @@ class R2JSONStandardizer:
             "analysis_results": {
                 "imports": self._normalize_import_list(raw_result.get("imports", [])),
                 "exports": self._normalize_export_list(raw_result.get("exports", [])),
-                "api_categories": self._normalize_api_categories(raw_result.get("api_categories", {})),
-                "suspicious_apis": self._normalize_suspicious_apis(raw_result.get("suspicious_apis", [])),
-                "anti_analysis_apis": self._normalize_anti_analysis_apis(raw_result.get("anti_analysis_apis", [])),
-                "library_dependencies": self._normalize_library_dependencies(raw_result.get("library_dependencies", [])),
+                "api_categories": self._normalize_api_categories(
+                    raw_result.get("api_categories", {})
+                ),
+                "suspicious_apis": self._normalize_suspicious_apis(
+                    raw_result.get("suspicious_apis", [])
+                ),
+                "anti_analysis_apis": self._normalize_anti_analysis_apis(
+                    raw_result.get("anti_analysis_apis", [])
+                ),
+                "library_dependencies": self._normalize_library_dependencies(
+                    raw_result.get("library_dependencies", [])
+                ),
             },
             "summary_statistics": {
                 "total_imports": len(raw_result.get("imports", [])),
                 "total_exports": len(raw_result.get("exports", [])),
-                "unique_libraries": len({imp.get("library", "") for imp in raw_result.get("imports", [])}),
+                "unique_libraries": len(
+                    {imp.get("library", "") for imp in raw_result.get("imports", [])}
+                ),
                 "suspicious_api_count": len(raw_result.get("suspicious_apis", [])),
                 "anti_analysis_count": len(raw_result.get("anti_analysis_apis", [])),
                 "api_diversity_score": self._calculate_api_diversity(raw_result),
@@ -300,7 +350,9 @@ class R2JSONStandardizer:
             "ml_features": {
                 "api_usage_vectors": self._extract_api_usage_vectors(raw_result),
                 "library_features": self._extract_library_features(raw_result),
-                "suspicious_behavior_features": self._extract_suspicious_behavior_features(raw_result),
+                "suspicious_behavior_features": self._extract_suspicious_behavior_features(
+                    raw_result
+                ),
             },
         }
 
@@ -309,12 +361,22 @@ class R2JSONStandardizer:
         return {
             "analysis_results": {
                 "functions_analyzed": raw_result.get("functions_analyzed", 0),
-                "complexity_metrics": self._normalize_complexity_metrics(raw_result.get("complexity_metrics", {})),
-                "license_patterns": self._normalize_cfg_patterns(raw_result.get("license_patterns", [])),
+                "complexity_metrics": self._normalize_complexity_metrics(
+                    raw_result.get("complexity_metrics", {})
+                ),
+                "license_patterns": self._normalize_cfg_patterns(
+                    raw_result.get("license_patterns", [])
+                ),
                 "graph_data": self._normalize_graph_data(raw_result.get("graph_data", {})),
-                "call_graph_analysis": self._normalize_call_graph(raw_result.get("call_graph_analysis", {})),
-                "vulnerability_patterns": self._normalize_vuln_patterns(raw_result.get("vulnerability_analysis", {})),
-                "similarity_analysis": self._normalize_similarity_analysis(raw_result.get("similarity_analysis", {})),
+                "call_graph_analysis": self._normalize_call_graph(
+                    raw_result.get("call_graph_analysis", {})
+                ),
+                "vulnerability_patterns": self._normalize_vuln_patterns(
+                    raw_result.get("vulnerability_analysis", {})
+                ),
+                "similarity_analysis": self._normalize_similarity_analysis(
+                    raw_result.get("similarity_analysis", {})
+                ),
             },
             "summary_statistics": {
                 "total_functions": raw_result.get("functions_analyzed", 0),
@@ -335,20 +397,42 @@ class R2JSONStandardizer:
         """Standardize AI analysis results."""
         return {
             "analysis_results": {
-                "license_detection": self._normalize_ai_license_detection(raw_result.get("ai_license_detection", {})),
-                "vulnerability_prediction": self._normalize_ai_vuln_prediction(raw_result.get("ai_vulnerability_prediction", {})),
-                "function_clustering": self._normalize_function_clustering(raw_result.get("function_clustering", {})),
-                "anomaly_detection": self._normalize_anomaly_detection(raw_result.get("anomaly_detection", {})),
-                "code_similarity": self._normalize_code_similarity(raw_result.get("code_similarity", {})),
-                "bypass_suggestions": self._normalize_bypass_suggestions(raw_result.get("automated_bypass_suggestions", {})),
+                "license_detection": self._normalize_ai_license_detection(
+                    raw_result.get("ai_license_detection", {})
+                ),
+                "vulnerability_prediction": self._normalize_ai_vuln_prediction(
+                    raw_result.get("ai_vulnerability_prediction", {})
+                ),
+                "function_clustering": self._normalize_function_clustering(
+                    raw_result.get("function_clustering", {})
+                ),
+                "anomaly_detection": self._normalize_anomaly_detection(
+                    raw_result.get("anomaly_detection", {})
+                ),
+                "code_similarity": self._normalize_code_similarity(
+                    raw_result.get("code_similarity", {})
+                ),
+                "bypass_suggestions": self._normalize_bypass_suggestions(
+                    raw_result.get("automated_bypass_suggestions", {})
+                ),
             },
             "summary_statistics": {
-                "license_confidence": raw_result.get("ai_license_detection", {}).get("confidence", 0),
-                "vulnerability_risk_score": raw_result.get("ai_vulnerability_prediction", {}).get("overall_risk_score", 0),
+                "license_confidence": raw_result.get("ai_license_detection", {}).get(
+                    "confidence", 0
+                ),
+                "vulnerability_risk_score": raw_result.get("ai_vulnerability_prediction", {}).get(
+                    "overall_risk_score", 0
+                ),
                 "anomaly_score": raw_result.get("anomaly_detection", {}).get("anomaly_score", 0),
-                "clustering_quality": raw_result.get("function_clustering", {}).get("clustering_quality", 0),
-                "similarity_score": raw_result.get("code_similarity", {}).get("average_internal_similarity", 0),
-                "bypass_success_probability": self._calculate_bypass_success_probability(raw_result),
+                "clustering_quality": raw_result.get("function_clustering", {}).get(
+                    "clustering_quality", 0
+                ),
+                "similarity_score": raw_result.get("code_similarity", {}).get(
+                    "average_internal_similarity", 0
+                ),
+                "bypass_success_probability": self._calculate_bypass_success_probability(
+                    raw_result
+                ),
             },
             "ml_features": {
                 "prediction_features": self._extract_ai_prediction_features(raw_result),
@@ -369,7 +453,9 @@ class R2JSONStandardizer:
             },
             "summary_statistics": {
                 "total_signatures": len(raw_result.get("signatures_found", [])),
-                "license_bypass_signature_count": len(raw_result.get("license_bypass_signatures", [])),
+                "license_bypass_signature_count": len(
+                    raw_result.get("license_bypass_signatures", [])
+                ),
                 "library_signature_count": len(raw_result.get("library_signatures", [])),
                 "confidence_score": raw_result.get("confidence_score", 0),
             },
@@ -393,7 +479,9 @@ class R2JSONStandardizer:
                 "total_expressions": len(raw_result.get("esil_expressions", [])),
                 "unique_operations": len(set(raw_result.get("unique_operations", []))),
                 "memory_access_count": len(raw_result.get("memory_accesses", [])),
-                "tainted_registers": len(raw_result.get("taint_analysis", {}).get("tainted_registers", [])),
+                "tainted_registers": len(
+                    raw_result.get("taint_analysis", {}).get("tainted_registers", [])
+                ),
             },
             "ml_features": {
                 "esil_patterns": raw_result.get("esil_patterns", []),
@@ -473,35 +561,50 @@ class R2JSONStandardizer:
         """Standardize comprehensive analysis results."""
         components = raw_result.get("components", {})
 
-        # Standardize each component
-        standardized_components = {}
-        for component_name, component_data in components.items():
-            if component_data and not component_data.get("error"):
-                standardized_components[component_name] = self.standardize_analysis_result(
-                    component_name,
-                    component_data,
-                    raw_result.get("binary_path", ""),
-                    {},
-                )
-
+        standardized_components = {
+            component_name: self.standardize_analysis_result(
+                component_name,
+                component_data,
+                raw_result.get("binary_path", ""),
+                {},
+            )
+            for component_name, component_data in components.items()
+            if component_data and not component_data.get("error")
+        }
         return {
             "analysis_results": {
                 "components": standardized_components,
-                "cross_component_analysis": self._perform_cross_component_analysis(standardized_components),
+                "cross_component_analysis": self._perform_cross_component_analysis(
+                    standardized_components
+                ),
                 "unified_findings": self._create_unified_findings(standardized_components),
                 "correlation_analysis": self._perform_correlation_analysis(standardized_components),
             },
             "summary_statistics": {
                 "components_analyzed": len(standardized_components),
-                "successful_components": len([c for c in standardized_components.values() if c.get("status", {}).get("success", False)]),
+                "successful_components": len(
+                    [
+                        c
+                        for c in standardized_components.values()
+                        if c.get("status", {}).get("success", False)
+                    ]
+                ),
                 "total_vulnerabilities": self._count_total_vulnerabilities(standardized_components),
-                "total_license_functions": self._count_total_license_functions(standardized_components),
+                "total_license_functions": self._count_total_license_functions(
+                    standardized_components
+                ),
                 "overall_risk_score": self._calculate_overall_risk_score(standardized_components),
-                "analysis_completeness": self._calculate_analysis_completeness(standardized_components),
+                "analysis_completeness": self._calculate_analysis_completeness(
+                    standardized_components
+                ),
             },
             "ml_features": {
-                "unified_feature_vector": self._create_unified_feature_vector(standardized_components),
-                "component_correlations": self._extract_component_correlations(standardized_components),
+                "unified_feature_vector": self._create_unified_feature_vector(
+                    standardized_components
+                ),
+                "component_correlations": self._extract_component_correlations(
+                    standardized_components
+                ),
                 "meta_features": self._extract_meta_features(standardized_components),
             },
         }
@@ -557,7 +660,9 @@ class R2JSONStandardizer:
 
         return True
 
-    def _create_error_result(self, analysis_type: str, binary_path: str, error: str) -> dict[str, Any]:
+    def _create_error_result(
+        self, analysis_type: str, binary_path: str, error: str
+    ) -> dict[str, Any]:
         """Create standardized error result."""
         return {
             "schema_version": self.SCHEMA_VERSION,
@@ -590,21 +695,19 @@ class R2JSONStandardizer:
 
     def _normalize_function_list(self, functions: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Normalize function list to standard format."""
-        normalized = []
-        for func in functions:
-            normalized.append(
-                {
-                    "name": func.get("name", "unknown"),
-                    "address": self._normalize_address(func.get("address", 0)),
-                    "size": func.get("size", 0),
-                    "complexity": func.get("complexity", 1),
-                    "confidence": func.get("confidence", 0.0),
-                    "type": func.get("type", "unknown"),
-                    "attributes": func.get("attributes", {}),
-                    "cross_references": func.get("cross_references", []),
-                },
-            )
-        return normalized
+        return [
+            {
+                "name": func.get("name", "unknown"),
+                "address": self._normalize_address(func.get("address", 0)),
+                "size": func.get("size", 0),
+                "complexity": func.get("complexity", 1),
+                "confidence": func.get("confidence", 0.0),
+                "type": func.get("type", "unknown"),
+                "attributes": func.get("attributes", {}),
+                "cross_references": func.get("cross_references", []),
+            }
+            for func in functions
+        ]
 
     def _normalize_vulnerability(self, vuln: dict[str, Any], category: str) -> dict[str, Any]:
         """Normalize vulnerability to standard format."""
@@ -642,8 +745,7 @@ class R2JSONStandardizer:
         try:
             import subprocess
 
-            radare2_path = shutil.which("radare2")
-            if radare2_path:
+            if radare2_path := shutil.which("radare2"):
                 result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     [radare2_path, "-v"],
                     check=False,
@@ -729,53 +831,52 @@ class R2JSONStandardizer:
 
     def _normalize_decompiled_code(self, decompiled_functions: dict[str, Any]) -> dict[str, Any]:
         """Normalize decompiled code structures."""
-        normalized = {}
-        for func_name, code_data in decompiled_functions.items():
-            normalized[func_name] = {
+        return {
+            func_name: {
                 "code": code_data.get("code", ""),
                 "language": code_data.get("language", "c"),
                 "quality_score": code_data.get("quality_score", 0.5),
                 "variables": code_data.get("variables", []),
                 "calls": code_data.get("calls", []),
             }
-        return normalized
+            for func_name, code_data in decompiled_functions.items()
+        }
 
     def _normalize_patterns(self, patterns: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Normalize pattern data."""
-        normalized = []
-        for pattern in patterns:
-            normalized.append(
-                {
-                    "id": pattern.get("id", str(uuid.uuid4())),
-                    "type": pattern.get("type", "unknown"),
-                    "pattern": pattern.get("pattern", ""),
-                    "confidence": pattern.get("confidence", 0.5),
-                    "matches": pattern.get("matches", []),
-                },
-            )
-        return normalized
+        return [
+            {
+                "id": pattern.get("id", str(uuid.uuid4())),
+                "type": pattern.get("type", "unknown"),
+                "pattern": pattern.get("pattern", ""),
+                "confidence": pattern.get("confidence", 0.5),
+                "matches": pattern.get("matches", []),
+            }
+            for pattern in patterns
+        ]
 
-    def _normalize_validation_routines(self, routines: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _normalize_validation_routines(
+        self, routines: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Normalize validation routine data."""
-        normalized = []
-        for routine in routines:
-            normalized.append(
-                {
-                    "name": routine.get("name", "unknown"),
-                    "type": routine.get("type", "license_check"),
-                    "address": self._normalize_address(routine.get("address", 0)),
-                    "complexity": routine.get("complexity", "medium"),
-                    "bypassed": routine.get("bypassed", False),
-                },
-            )
-        return normalized
+        return [
+            {
+                "name": routine.get("name", "unknown"),
+                "type": routine.get("type", "license_check"),
+                "address": self._normalize_address(routine.get("address", 0)),
+                "complexity": routine.get("complexity", "medium"),
+                "bypassed": routine.get("bypassed", False),
+            }
+            for routine in routines
+        ]
 
     def _calculate_decompilation_success_rate(self, raw_result: dict[str, Any]) -> float:
         """Calculate decompilation success rate."""
         total_functions = len(raw_result.get("license_functions", []))
         if total_functions == 0:
             return 0.0
-        successful = sum(1 for f in raw_result.get("license_functions", []) if f.get("decompiled", False))
+        successful = sum(bool(f.get("decompiled", False))
+                     for f in raw_result.get("license_functions", []))
         return successful / total_functions
 
     def _calculate_average_complexity(self, raw_result: dict[str, Any]) -> float:
@@ -794,7 +895,8 @@ class R2JSONStandardizer:
             "avg_function_size": sum(f.get("size", 0) for f in functions) / max(1, len(functions)),
             "max_function_size": max((f.get("size", 0) for f in functions), default=0),
             "function_types": list({f.get("type", "unknown") for f in functions}),
-            "call_depth_avg": sum(f.get("call_depth", 0) for f in functions) / max(1, len(functions)),
+            "call_depth_avg": sum(f.get("call_depth", 0) for f in functions)
+            / max(1, len(functions)),
         }
 
     def _extract_pattern_features(self, raw_result: dict[str, Any]) -> dict[str, Any]:
@@ -816,22 +918,41 @@ class R2JSONStandardizer:
             "nesting_level_avg": self._calculate_avg_nesting_level(functions),
         }
 
-    def _extract_vulnerability_vectors(self, vulnerabilities: list[dict[str, Any]]) -> dict[str, Any]:
+    def _extract_vulnerability_vectors(
+        self, vulnerabilities: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Extract vulnerability vectors for ML."""
         return {
             "vuln_count_by_severity": self._count_vulns_by_severity(vulnerabilities),
             "vuln_count_by_type": self._count_vulns_by_type(vulnerabilities),
             "exploitable_count": len([v for v in vulnerabilities if v.get("exploitable", False)]),
-            "avg_confidence": sum(v.get("confidence", 0) for v in vulnerabilities) / max(1, len(vulnerabilities)),
+            "avg_confidence": sum(v.get("confidence", 0) for v in vulnerabilities)
+            / max(1, len(vulnerabilities)),
         }
 
-    def _extract_exploitability_features(self, vulnerabilities: list[dict[str, Any]]) -> dict[str, Any]:
+    def _extract_exploitability_features(
+        self, vulnerabilities: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Extract exploitability features for ML."""
         return {
             "total_exploitable": len([v for v in vulnerabilities if v.get("exploitable", False)]),
-            "high_severity_exploitable": len([v for v in vulnerabilities if v.get("exploitable", False) and v.get("severity") == "high"]),
-            "remote_exploitable": len([v for v in vulnerabilities if v.get("exploitable", False) and "remote" in v.get("type", "")]),
-            "privilege_escalation_vulns": len([v for v in vulnerabilities if "privilege" in v.get("category", "").lower()]),
+            "high_severity_exploitable": len(
+                [
+                    v
+                    for v in vulnerabilities
+                    if v.get("exploitable", False) and v.get("severity") == "high"
+                ]
+            ),
+            "remote_exploitable": len(
+                [
+                    v
+                    for v in vulnerabilities
+                    if v.get("exploitable", False) and "remote" in v.get("type", "")
+                ]
+            ),
+            "privilege_escalation_vulns": len(
+                [v for v in vulnerabilities if "privilege" in v.get("category", "").lower()]
+            ),
         }
 
     def _extract_risk_features(self, raw_result: dict[str, Any]) -> dict[str, Any]:
@@ -848,9 +969,11 @@ class R2JSONStandardizer:
         strings = raw_result.get("strings", [])
         return {
             "total_strings": len(strings),
-            "avg_string_length": sum(len(s.get("value", "")) for s in strings) / max(1, len(strings)),
+            "avg_string_length": sum(len(s.get("value", "")) for s in strings)
+            / max(1, len(strings)),
             "string_types": self._categorize_strings(strings),
-            "unicode_ratio": len([s for s in strings if s.get("encoding") == "unicode"]) / max(1, len(strings)),
+            "unicode_ratio": len([s for s in strings if s.get("encoding") == "unicode"])
+            / max(1, len(strings)),
         }
 
     def _extract_string_entropy_features(self, raw_result: dict[str, Any]) -> dict[str, Any]:
@@ -869,10 +992,19 @@ class R2JSONStandardizer:
         strings = raw_result.get("strings", [])
         return {
             "url_patterns": len([s for s in strings if "http" in s.get("value", "").lower()]),
-            "file_path_patterns": len([s for s in strings if "\\" in s.get("value", "") or "/" in s.get("value", "")]),
+            "file_path_patterns": len(
+                [s for s in strings if "\\" in s.get("value", "") or "/" in s.get("value", "")]
+            ),
             "registry_patterns": len([s for s in strings if "HKEY_" in s.get("value", "")]),
             "crypto_patterns": len(
-                [s for s in strings if any(crypto in s.get("value", "").lower() for crypto in ["aes", "rsa", "md5", "sha"])],
+                [
+                    s
+                    for s in strings
+                    if any(
+                        crypto in s.get("value", "").lower()
+                        for crypto in ["aes", "rsa", "md5", "sha"]
+                    )
+                ],
             ),
         }
 
@@ -945,9 +1077,12 @@ class R2JSONStandardizer:
         predictions = raw_result.get("predictions", [])
         return {
             "prediction_count": len(predictions),
-            "avg_confidence": sum(p.get("confidence", 0) for p in predictions) / max(1, len(predictions)),
+            "avg_confidence": sum(p.get("confidence", 0) for p in predictions)
+            / max(1, len(predictions)),
             "prediction_types": list({p.get("type", "unknown") for p in predictions}),
-            "high_confidence_predictions": len([p for p in predictions if p.get("confidence", 0) > 0.8]),
+            "high_confidence_predictions": len(
+                [p for p in predictions if p.get("confidence", 0) > 0.8]
+            ),
         }
 
     def _extract_clustering_features(self, raw_result: dict[str, Any]) -> dict[str, Any]:
@@ -990,8 +1125,12 @@ class R2JSONStandardizer:
     def _extract_meta_features(self, components: dict[str, Any]) -> dict[str, Any]:
         """Extract meta features for ML."""
         return {
-            "analysis_completeness": len([c for c in components.values() if c.get("success", False)]) / max(1, len(components)),
-            "data_quality_score": sum(c.get("quality_score", 0.5) for c in components.values()) / max(1, len(components)),
+            "analysis_completeness": len(
+                [c for c in components.values() if c.get("success", False)]
+            )
+            / max(1, len(components)),
+            "data_quality_score": sum(c.get("quality_score", 0.5) for c in components.values())
+            / max(1, len(components)),
             "analysis_time_total": sum(c.get("duration", 0) for c in components.values()),
             "component_consistency": self._calculate_component_consistency(components),
         }
@@ -1011,7 +1150,9 @@ class R2JSONStandardizer:
             return 0.0
 
         severity_weights = {"critical": 4, "high": 3, "medium": 2, "low": 1}
-        total_weight = sum(severity_weights.get(v.get("severity", "low"), 1) for v in vulnerabilities)
+        total_weight = sum(
+            severity_weights.get(v.get("severity", "low"), 1) for v in vulnerabilities
+        )
         max_possible = len(vulnerabilities) * 4
 
         return min(1.0, total_weight / max_possible) if max_possible > 0 else 0.0
@@ -1141,22 +1282,26 @@ class R2JSONStandardizer:
     def _count_process_apis(self, imports: list[dict[str, Any]]) -> int:
         """Count process manipulation APIs."""
         process_keywords = ["createprocess", "terminateprocess", "openprocess", "thread"]
-        return sum(1 for imp in imports if any(keyword in imp.get("name", "").lower() for keyword in process_keywords))
+        return sum(bool(any(keyword in imp.get("name", "").lower() for keyword in process_keywords))
+               for imp in imports)
 
     def _count_file_apis(self, imports: list[dict[str, Any]]) -> int:
         """Count file operation APIs."""
         file_keywords = ["createfile", "readfile", "writefile", "deletefile", "copyfile"]
-        return sum(1 for imp in imports if any(keyword in imp.get("name", "").lower() for keyword in file_keywords))
+        return sum(bool(any(keyword in imp.get("name", "").lower() for keyword in file_keywords))
+               for imp in imports)
 
     def _count_network_apis(self, imports: list[dict[str, Any]]) -> int:
         """Count network operation APIs."""
         network_keywords = ["socket", "connect", "send", "recv", "internetopen", "urldownload"]
-        return sum(1 for imp in imports if any(keyword in imp.get("name", "").lower() for keyword in network_keywords))
+        return sum(bool(any(keyword in imp.get("name", "").lower() for keyword in network_keywords))
+               for imp in imports)
 
     def _count_registry_apis(self, imports: list[dict[str, Any]]) -> int:
         """Count registry operation APIs."""
         registry_keywords = ["regopen", "regclose", "regset", "regquery", "regdelete"]
-        return sum(1 for imp in imports if any(keyword in imp.get("name", "").lower() for keyword in registry_keywords))
+        return sum(bool(any(keyword in imp.get("name", "").lower() for keyword in registry_keywords))
+               for imp in imports)
 
     def _count_memory_apis(self, imports: list[dict[str, Any]]) -> int:
         """Count memory operation APIs."""
@@ -1167,7 +1312,8 @@ class R2JSONStandardizer:
             "malloc",
             "heap",
         ]
-        return sum(1 for imp in imports if any(keyword in imp.get("name", "").lower() for keyword in memory_keywords))
+        return sum(bool(any(keyword in imp.get("name", "").lower() for keyword in memory_keywords))
+               for imp in imports)
 
     def _create_histogram(self, values: list[float], bins: int = 10) -> list[int]:
         """Create histogram from values."""
@@ -1229,19 +1375,15 @@ class R2JSONStandardizer:
         numerator = n * sum_products - sum1 * sum2
         denominator = ((n * sum1_sq - sum1 * sum1) * (n * sum2_sq - sum2 * sum2)) ** 0.5
 
-        if denominator == 0:
-            return 0.0
-
-        return numerator / denominator
+        return 0.0 if denominator == 0 else numerator / denominator
 
     def _calculate_component_consistency(self, components: dict[str, Any]) -> float:
         """Calculate consistency between components."""
-        # Simplified consistency calculation based on success rates
-        success_rates = []
-        for component in components.values():
-            if isinstance(component, dict) and "success" in component:
-                success_rates.append(1.0 if component["success"] else 0.0)
-
+        success_rates = [
+            1.0 if component["success"] else 0.0
+            for component in components.values()
+            if isinstance(component, dict) and "success" in component
+        ]
         if not success_rates:
             return 0.0
 
@@ -1252,12 +1394,16 @@ class R2JSONStandardizer:
         # Convert variance to consistency score (inverse relationship)
         return max(0.0, 1.0 - variance)
 
-    def _calculate_nesting_depth(self, data: dict[str, Any] | list[Any] | object, current_depth: int = 0) -> int:
+    def _calculate_nesting_depth(
+        self, data: dict[str, Any] | list[Any] | object, current_depth: int = 0
+    ) -> int:
         """Calculate maximum nesting depth of data structure."""
         if isinstance(data, dict):
             if not data:
                 return current_depth
-            return max(self._calculate_nesting_depth(value, current_depth + 1) for value in data.values())
+            return max(
+                self._calculate_nesting_depth(value, current_depth + 1) for value in data.values()
+            )
         if isinstance(data, list):
             if not data:
                 return current_depth
@@ -1308,7 +1454,9 @@ class R2JSONStandardizer:
         extract_values(data)
         return values
 
-    def _categorize_vulnerabilities(self, vulnerabilities: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    def _categorize_vulnerabilities(
+        self, vulnerabilities: list[dict[str, Any]]
+    ) -> dict[str, list[dict[str, Any]]]:
         """Categorize vulnerabilities by type and severity."""
         categories = {
             "memory_corruption": [],
@@ -1324,7 +1472,10 @@ class R2JSONStandardizer:
 
         for vuln in vulnerabilities:
             vuln_type = vuln.get("type", "").lower()
-            if any(keyword in vuln_type for keyword in ["buffer", "overflow", "corruption", "heap", "stack"]):
+            if any(
+                keyword in vuln_type
+                for keyword in ["buffer", "overflow", "corruption", "heap", "stack"]
+            ):
                 categories["memory_corruption"].append(vuln)
             elif any(keyword in vuln_type for keyword in ["injection", "xss", "sql", "command"]):
                 categories["injection"].append(vuln)
@@ -1334,7 +1485,9 @@ class R2JSONStandardizer:
                 categories["information_disclosure"].append(vuln)
             elif any(keyword in vuln_type for keyword in ["dos", "denial", "crash"]):
                 categories["denial_of_service"].append(vuln)
-            elif any(keyword in vuln_type for keyword in ["crypto", "encryption", "hash", "cipher"]):
+            elif any(
+                keyword in vuln_type for keyword in ["crypto", "encryption", "hash", "cipher"]
+            ):
                 categories["cryptographic"].append(vuln)
             elif any(keyword in vuln_type for keyword in ["auth", "login", "password"]):
                 categories["authentication"].append(vuln)
@@ -1407,7 +1560,9 @@ class R2JSONStandardizer:
             normalized_string = {
                 "string": string_data.get("string", string_data.get("value", "")),
                 "address": string_data.get("address", string_data.get("addr", 0)),
-                "length": string_data.get("length", string_data.get("len", len(string_data.get("string", "")))),
+                "length": string_data.get(
+                    "length", string_data.get("len", len(string_data.get("string", "")))
+                ),
                 "encoding": string_data.get("encoding", "ascii"),
                 "type": string_data.get("type", "string"),
                 "section": string_data.get("section", ""),
@@ -1428,7 +1583,9 @@ class R2JSONStandardizer:
 
             normalized_pattern = {
                 "pattern": pattern_data.get("pattern", pattern_data.get("value", "")),
-                "pattern_type": pattern_data.get("pattern_type", pattern_data.get("type", "unknown")),
+                "pattern_type": pattern_data.get(
+                    "pattern_type", pattern_data.get("type", "unknown")
+                ),
                 "matches": pattern_data.get("matches", []),
                 "confidence": float(pattern_data.get("confidence", 1.0)),
                 "severity": pattern_data.get("severity", "low"),
@@ -1484,7 +1641,9 @@ class R2JSONStandardizer:
 
             normalized_import = {
                 "name": import_data.get("name", import_data.get("function", "")),
-                "library": import_data.get("library", import_data.get("dll", import_data.get("module", ""))),
+                "library": import_data.get(
+                    "library", import_data.get("dll", import_data.get("module", ""))
+                ),
                 "address": import_data.get("address", import_data.get("addr", 0)),
                 "ordinal": import_data.get("ordinal", 0),
                 "type": import_data.get("type", "function"),
@@ -1523,7 +1682,9 @@ class R2JSONStandardizer:
             normalized_exports.append(normalized_export)
         return normalized_exports
 
-    def _normalize_api_categories(self, api_categories: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
+    def _normalize_api_categories(
+        self, api_categories: dict[str, Any]
+    ) -> dict[str, list[dict[str, Any]]]:
         """Normalize API category data."""
         normalized_categories = {}
         for category, apis in api_categories.items():
@@ -1549,7 +1710,9 @@ class R2JSONStandardizer:
             normalized_categories[category] = normalized_apis
         return normalized_categories
 
-    def _normalize_suspicious_apis(self, suspicious_apis: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _normalize_suspicious_apis(
+        self, suspicious_apis: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Normalize suspicious API data."""
         normalized_apis = []
         for api_data in suspicious_apis:
@@ -1570,7 +1733,9 @@ class R2JSONStandardizer:
             normalized_apis.append(normalized_api)
         return normalized_apis
 
-    def _normalize_anti_analysis_apis(self, anti_analysis_apis: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _normalize_anti_analysis_apis(
+        self, anti_analysis_apis: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Normalize anti-analysis API data."""
         normalized_apis = []
         for api_data in anti_analysis_apis:
@@ -1591,7 +1756,9 @@ class R2JSONStandardizer:
             normalized_apis.append(normalized_api)
         return normalized_apis
 
-    def _normalize_library_dependencies(self, dependencies: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _normalize_library_dependencies(
+        self, dependencies: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Normalize library dependency data."""
         normalized_deps = []
         for dep_data in dependencies:
@@ -1626,8 +1793,7 @@ class R2JSONStandardizer:
 
         for imp in imports:
             if isinstance(imp, dict):
-                library = imp.get("library", imp.get("dll", ""))
-                if library:
+                if library := imp.get("library", imp.get("dll", "")):
                     unique_libraries.add(library)
 
                 # Basic API categorization
@@ -1817,7 +1983,9 @@ class R2JSONStandardizer:
             "vulnerability_categories": ai_vuln_data.get("vulnerability_categories", {}),
             "exploitability_assessment": ai_vuln_data.get("exploitability_assessment", {}),
             "recommended_mitigations": ai_vuln_data.get("recommended_mitigations", []),
-            "false_positive_probability": float(ai_vuln_data.get("false_positive_probability", 0.0)),
+            "false_positive_probability": float(
+                ai_vuln_data.get("false_positive_probability", 0.0)
+            ),
             "model_accuracy": float(ai_vuln_data.get("model_accuracy", 0.0)),
             "feature_importance": ai_vuln_data.get("feature_importance", {}),
             "prediction_rationale": ai_vuln_data.get("prediction_rationale", ""),
@@ -1858,7 +2026,9 @@ class R2JSONStandardizer:
         return {
             "internal_similarities": similarity_data.get("internal_similarities", []),
             "external_similarities": similarity_data.get("external_similarities", []),
-            "average_internal_similarity": float(similarity_data.get("average_internal_similarity", 0.0)),
+            "average_internal_similarity": float(
+                similarity_data.get("average_internal_similarity", 0.0)
+            ),
             "similarity_distribution": similarity_data.get("similarity_distribution", {}),
             "similar_function_pairs": similarity_data.get("similar_function_pairs", []),
             "duplicate_code_blocks": similarity_data.get("duplicate_code_blocks", []),
@@ -1907,7 +2077,9 @@ class R2JSONStandardizer:
 
         return weighted_sum / total_weight if total_weight > 0 else 0.0
 
-    def _perform_cross_component_analysis(self, components: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    def _perform_cross_component_analysis(
+        self, components: dict[str, dict[str, Any]]
+    ) -> dict[str, Any]:
         """Perform cross-component analysis."""
         return {
             "component_interactions": self._analyze_component_interactions(components),
@@ -1955,7 +2127,9 @@ class R2JSONStandardizer:
 
         return unified_findings
 
-    def _perform_correlation_analysis(self, components: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    def _perform_correlation_analysis(
+        self, components: dict[str, dict[str, Any]]
+    ) -> dict[str, Any]:
         """Perform correlation analysis between components."""
         return {
             "correlation_matrix": self._calculate_correlation_matrix(components),
@@ -2003,7 +2177,9 @@ class R2JSONStandardizer:
 
         # Calculate weighted average (higher scores get more weight)
         weights = [score + 1 for score in risk_scores]  # Add 1 to avoid zero weights
-        weighted_sum = sum(score * weight for score, weight in zip(risk_scores, weights, strict=False))
+        weighted_sum = sum(
+            score * weight for score, weight in zip(risk_scores, weights, strict=False)
+        )
         total_weight = sum(weights)
 
         return weighted_sum / total_weight if total_weight > 0 else 0.0
@@ -2036,13 +2212,16 @@ class R2JSONStandardizer:
                     for value in feature_group.values():
                         if isinstance(value, (int, float)):
                             unified_features.append(float(value))
-                        elif isinstance(value, list) and all(isinstance(x, (int, float)) for x in value):
+                        elif isinstance(value, list) and all(
+                            isinstance(x, (int, float)) for x in value
+                        ):
                             unified_features.extend([float(x) for x in value])
                 elif isinstance(feature_group, list):
-                    for item in feature_group:
-                        if isinstance(item, (int, float)):
-                            unified_features.append(float(item))
-
+                    unified_features.extend(
+                        float(item)
+                        for item in feature_group
+                        if isinstance(item, (int, float))
+                    )
         return unified_features
 
     def _normalize_generic_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:
@@ -2053,7 +2232,10 @@ class R2JSONStandardizer:
             if isinstance(value, dict):
                 normalized[key] = self._normalize_generic_data(value)
             elif isinstance(value, list):
-                normalized[key] = [self._normalize_generic_data(item) if isinstance(item, dict) else item for item in value]
+                normalized[key] = [
+                    self._normalize_generic_data(item) if isinstance(item, dict) else item
+                    for item in value
+                ]
             elif isinstance(value, (int, float)):
                 normalized[key] = float(value)
             elif isinstance(value, str):
@@ -2066,7 +2248,9 @@ class R2JSONStandardizer:
         return normalized
 
     # Helper methods for cross-component analysis
-    def _analyze_component_interactions(self, components: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    def _analyze_component_interactions(
+        self, components: dict[str, dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Analyze interactions between components."""
         interactions = []
 
@@ -2079,20 +2263,21 @@ class R2JSONStandardizer:
             for func in functions:
                 func_name = func.get("name", "").lower()
                 # Check if function names suggest interaction with imports
-                for imp_name in import_names:
-                    if imp_name and len(imp_name) > 3 and imp_name in func_name:
-                        interactions.append(
-                            {
-                                "type": "function_import_interaction",
-                                "function": func.get("name"),
-                                "import": imp_name,
-                                "confidence": 0.8,
-                            },
-                        )
-
+                interactions.extend(
+                    {
+                        "type": "function_import_interaction",
+                        "function": func.get("name"),
+                        "import": imp_name,
+                        "confidence": 0.8,
+                    }
+                    for imp_name in import_names
+                    if imp_name and len(imp_name) > 3 and imp_name in func_name
+                )
         return interactions
 
-    def _find_shared_indicators(self, components: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    def _find_shared_indicators(
+        self, components: dict[str, dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Find shared indicators across components."""
         shared_indicators = []
 
@@ -2120,7 +2305,9 @@ class R2JSONStandardizer:
 
         # Find strings that appear in multiple components
         for string_val in all_strings:
-            appearing_in = [comp for comp, strings in component_strings.items() if string_val in strings]
+            appearing_in = [
+                comp for comp, strings in component_strings.items() if string_val in strings
+            ]
             if len(appearing_in) > 1:
                 shared_indicators.append(
                     {
@@ -2141,19 +2328,17 @@ class R2JSONStandardizer:
             "warnings": [],
         }
 
-        # Check for consistent binary metadata across components
-        binary_info = {}
-        for comp_name, comp_data in components.items():
-            if isinstance(comp_data, dict) and "binary_info" in comp_data:
-                binary_info[comp_name] = comp_data["binary_info"]
-
+        binary_info = {
+            comp_name: comp_data["binary_info"]
+            for comp_name, comp_data in components.items()
+            if isinstance(comp_data, dict) and "binary_info" in comp_data
+        }
         # Verify architectural consistency
         if len(binary_info) > 1:
             architectures = set()
-            for _comp_name, info in binary_info.items():
+            for info in binary_info.values():
                 if isinstance(info, dict):
-                    arch = info.get("architecture", info.get("arch"))
-                    if arch:
+                    if arch := info.get("architecture", info.get("arch")):
                         architectures.add(arch)
 
             if len(architectures) > 1:
@@ -2168,7 +2353,9 @@ class R2JSONStandardizer:
 
         return consistency_report
 
-    def _find_complementary_findings(self, components: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    def _find_complementary_findings(
+        self, components: dict[str, dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Find complementary findings across components."""
         complementary = []
 
@@ -2180,7 +2367,10 @@ class R2JSONStandardizer:
             suspicious_imports = [
                 imp
                 for imp in imports
-                if any(keyword in imp.get("name", "").lower() for keyword in ["crypt", "license", "trial", "activation"])
+                if any(
+                    keyword in imp.get("name", "").lower()
+                    for keyword in ["crypt", "license", "trial", "activation"]
+                )
             ]
 
             for func in functions:
@@ -2208,10 +2398,11 @@ class R2JSONStandardizer:
         for comp_name, comp_data in components.items():
             if isinstance(comp_data, dict):
                 # Look for protection or security assessments
-                assessment = comp_data.get("protection_assessment", comp_data.get("security_assessment"))
+                assessment = comp_data.get(
+                    "protection_assessment", comp_data.get("security_assessment")
+                )
                 if assessment and isinstance(assessment, dict):
-                    risk_level = assessment.get("risk_level")
-                    if risk_level:
+                    if risk_level := assessment.get("risk_level"):
                         protection_assessments[comp_name] = risk_level
 
         # Identify conflicting risk levels
@@ -2229,7 +2420,9 @@ class R2JSONStandardizer:
 
         return conflicts
 
-    def _aggregate_confidence_scores(self, components: dict[str, dict[str, Any]]) -> dict[str, float]:
+    def _aggregate_confidence_scores(
+        self, components: dict[str, dict[str, Any]]
+    ) -> dict[str, float]:
         """Aggregate confidence scores across components."""
         aggregated_scores = {}
 
@@ -2259,7 +2452,7 @@ class R2JSONStandardizer:
             aggregated_scores["max"] = max(all_scores)
             aggregated_scores["min"] = min(all_scores)
 
-        aggregated_scores.update(component_scores)
+        aggregated_scores |= component_scores
         return aggregated_scores
 
     def _synthesize_recommendations(self, components: dict[str, dict[str, Any]]) -> list[str]:
@@ -2269,7 +2462,7 @@ class R2JSONStandardizer:
         # Collect all recommendations from components
         all_recommendations = set()
 
-        for _, comp_data in components.items():
+        for comp_data in components.values():
             if isinstance(comp_data, dict):
                 # Look for recommendations in various forms
                 recs = comp_data.get("recommendations", [])
@@ -2282,8 +2475,10 @@ class R2JSONStandardizer:
                             if isinstance(rec, str):
                                 all_recommendations.add(rec)
                             elif isinstance(rec, dict):
-                                rec_text = rec.get("recommendation", rec.get("suggestion", rec.get("text")))
-                                if rec_text:
+                                if rec_text := rec.get(
+                                    "recommendation",
+                                    rec.get("suggestion", rec.get("text")),
+                                ):
                                     all_recommendations.add(str(rec_text))
 
         # Prioritize unique recommendations
@@ -2291,11 +2486,15 @@ class R2JSONStandardizer:
 
         # Add synthesized recommendations based on cross-component analysis
         if len(components) > 1:
-            recommendations.append("Consider cross-component analysis for comprehensive protection bypass")
+            recommendations.append(
+                "Consider cross-component analysis for comprehensive protection bypass"
+            )
 
         return recommendations
 
-    def _calculate_correlation_matrix(self, components: dict[str, dict[str, Any]]) -> list[list[float]]:
+    def _calculate_correlation_matrix(
+        self, components: dict[str, dict[str, Any]]
+    ) -> list[list[float]]:
         """Calculate correlation matrix between components."""
         component_names = list(components.keys())
         n = len(component_names)
@@ -2326,8 +2525,16 @@ class R2JSONStandardizer:
                             data2 = comp2_data.get(data_type, [])
 
                             if isinstance(data1, list) and isinstance(data2, list):
-                                names1 = {item.get("name", str(item)) for item in data1 if isinstance(item, dict)}
-                                names2 = {item.get("name", str(item)) for item in data2 if isinstance(item, dict)}
+                                names1 = {
+                                    item.get("name", str(item))
+                                    for item in data1
+                                    if isinstance(item, dict)
+                                }
+                                names2 = {
+                                    item.get("name", str(item))
+                                    for item in data2
+                                    if isinstance(item, dict)
+                                }
 
                                 if names1 or names2:
                                     shared = len(names1.intersection(names2))
@@ -2344,7 +2551,9 @@ class R2JSONStandardizer:
 
         return correlation_matrix
 
-    def _find_significant_correlations(self, components: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    def _find_significant_correlations(
+        self, components: dict[str, dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Find significant correlations between components."""
         significant_correlations = []
 
@@ -2368,7 +2577,9 @@ class R2JSONStandardizer:
 
         return significant_correlations
 
-    def _identify_causal_relationships(self, components: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    def _identify_causal_relationships(
+        self, components: dict[str, dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Identify causal relationships between components."""
         causal_relationships = []
 
@@ -2431,17 +2642,10 @@ class R2JSONStandardizer:
 
         return dependency_graph
 
-    def _analyze_temporal_correlations(self, components: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    def _analyze_temporal_correlations(
+        self, components: dict[str, dict[str, Any]]
+    ) -> dict[str, Any]:
         """Analyze temporal correlations between components."""
-        temporal_analysis = {
-            "execution_order": [],
-            "time_dependencies": [],
-            "critical_path": [],
-        }
-
-        # Determine logical execution order
-        ordered_components = []
-
         # Functions typically execute first, followed by imports, then strings are analyzed
         component_priority = {
             "binary_info": 1,
@@ -2452,25 +2656,33 @@ class R2JSONStandardizer:
             "vulnerabilities": 6,
         }
 
-        for comp_name in sorted(components.keys(), key=lambda x: component_priority.get(x, 999)):
-            if comp_name in components:
-                ordered_components.append(
-                    {
-                        "component": comp_name,
-                        "priority": component_priority.get(comp_name, 999),
-                        "dependencies": [],
-                    },
-                )
-
-        temporal_analysis["execution_order"] = ordered_components
-
+        ordered_components = [
+            {
+                "component": comp_name,
+                "priority": component_priority.get(comp_name, 999),
+                "dependencies": [],
+            }
+            for comp_name in sorted(
+                components.keys(), key=lambda x: component_priority.get(x, 999)
+            )
+            if comp_name in components
+        ]
+        temporal_analysis = {
+            "time_dependencies": [],
+            "critical_path": [],
+            "execution_order": ordered_components,
+        }
         # Identify critical path (components that must execute in sequence)
         if len(ordered_components) > 1:
-            temporal_analysis["critical_path"] = [comp["component"] for comp in ordered_components[:3]]
+            temporal_analysis["critical_path"] = [
+                comp["component"] for comp in ordered_components[:3]
+            ]
 
         return temporal_analysis
 
-    def _calculate_statistical_measures(self, components: dict[str, dict[str, Any]]) -> dict[str, float]:
+    def _calculate_statistical_measures(
+        self, components: dict[str, dict[str, Any]]
+    ) -> dict[str, float]:
         """Calculate statistical measures for correlations."""
         # Initialize measures based on component analysis
         logger.debug(f"Calculating statistical measures for {len(components)} components")
@@ -2504,7 +2716,9 @@ class R2JSONStandardizer:
         measures["component_diversity"] = len(component_types)
         measures["data_density"] = total_entries / max(1, len(components))
 
-        logger.debug(f"Statistical measures: diversity={measures['component_diversity']}, density={measures['data_density']:.2f}")
+        logger.debug(
+            f"Statistical measures: diversity={measures['component_diversity']}, density={measures['data_density']:.2f}"
+        )
 
         if components:
             measures["data_density"] = total_entries / len(components)
@@ -2531,7 +2745,9 @@ def standardize_r2_result(
 
     """
     standardizer = R2JSONStandardizer()
-    return standardizer.standardize_analysis_result(analysis_type, raw_result, binary_path, metadata)
+    return standardizer.standardize_analysis_result(
+        analysis_type, raw_result, binary_path, metadata
+    )
 
 
 def batch_standardize_results(
@@ -2551,7 +2767,9 @@ def batch_standardize_results(
 
     for analysis_type, raw_result, binary_path in results:
         try:
-            standardized = standardizer.standardize_analysis_result(analysis_type, raw_result, binary_path)
+            standardized = standardizer.standardize_analysis_result(
+                analysis_type, raw_result, binary_path
+            )
             standardized_results.append(standardized)
         except Exception as e:
             logger.error(f"Failed to standardize {analysis_type} result: {e}")

@@ -915,7 +915,7 @@ class TestCleanSystemMigration(unittest.TestCase):
         self.assertTrue(self.env_path.exists(), "Env file should exist")
 
         # Verify config file contents
-        with open(self.config_path, 'r') as f:
+        with open(self.config_path) as f:
             saved_config = json.load(f)
 
         self.assertEqual(saved_config["version"], "3.0")

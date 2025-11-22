@@ -25,7 +25,10 @@ from typing import Any
 
 
 def find_all_pattern_occurrences(
-    binary_data: bytes, pattern: bytes, base_address: int = 0, max_results: int = None,
+    binary_data: bytes,
+    pattern: bytes,
+    base_address: int = 0,
+    max_results: int = None,
 ) -> list[dict[str, Any]]:
     """Find all occurrences of a single pattern in binary data.
 
@@ -66,7 +69,9 @@ def find_all_pattern_occurrences(
     return results
 
 
-def search_patterns_in_binary(binary_data: bytes, patterns: list[bytes], base_address: int = 0) -> list[dict[str, Any]]:
+def search_patterns_in_binary(
+    binary_data: bytes, patterns: list[bytes], base_address: int = 0
+) -> list[dict[str, Any]]:
     """Search for multiple patterns in binary data.
 
     Args:
@@ -120,7 +125,10 @@ def find_function_prologues(binary_data: bytes, base_address: int = 0) -> list[d
 
 
 def find_license_patterns(
-    binary_data: bytes, base_address: int = 0x400000, max_results: int = 20, context_size: int = 16,
+    binary_data: bytes,
+    base_address: int = 0x400000,
+    max_results: int = 20,
+    context_size: int = 16,
 ) -> list[dict[str, Any]]:
     """Find license and validation-related patterns in binary data.
 
@@ -159,19 +167,24 @@ def find_license_patterns(
     interesting_patterns = []
 
     for pattern in license_patterns:
-        pattern_results = find_all_pattern_occurrences(binary_data, pattern, base_address, max_results - len(interesting_patterns))
+        pattern_results = find_all_pattern_occurrences(
+            binary_data, pattern, base_address, max_results - len(interesting_patterns)
+        )
 
-        for result in pattern_results:
-            interesting_patterns.append(
-                {
-                    "type": "license_keyword",
-                    "pattern": pattern.decode("ascii", errors="ignore"),
-                    "address": hex(result["address"]),
-                    "offset": result["offset"],
-                    "context": binary_data[max(0, result["offset"] - context_size) : result["offset"] + len(pattern) + context_size].hex(),
-                },
-            )
-
+        interesting_patterns.extend(
+            {
+                "type": "license_keyword",
+                "pattern": pattern.decode("ascii", errors="ignore"),
+                "address": hex(result["address"]),
+                "offset": result["offset"],
+                "context": binary_data[
+                    max(0, result["offset"] - context_size) : result["offset"]
+                    + len(pattern)
+                    + context_size
+                ].hex(),
+            }
+            for result in pattern_results
+        )
         if len(interesting_patterns) >= max_results:
             break
 

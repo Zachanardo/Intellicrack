@@ -6,6 +6,7 @@ C2 infrastructure, and network-based analysis capabilities.
 
 from intellicrack.utils.logger import logger
 
+
 logger.debug("Network core module loaded")
 
 """
@@ -49,9 +50,7 @@ except ImportError as e:
     ProtocolFingerprinter = None
 
 try:
-    from intellicrack.plugins.custom_modules.license_server_emulator import (
-        LicenseServerEmulator as NetworkLicenseServerEmulator,
-    )
+    from intellicrack.plugins.custom_modules.license_server_emulator import LicenseServerEmulator as NetworkLicenseServerEmulator
 
     LicenseServerEmulator = NetworkLicenseServerEmulator
 except ImportError as e:

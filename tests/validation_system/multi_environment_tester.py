@@ -38,13 +38,13 @@ class TestEnvironment:
     environment_type: str  # bare_metal, vm, container, cloud
     platform_os: str  # windows, linux, macos
     architecture: str  # x86_64, arm64
-    requirements: Dict[str, Any]
-    validation_criteria: Dict[str, Any]
-    setup_commands: List[str] = field(default_factory=list)
-    teardown_commands: List[str] = field(default_factory=list)
+    requirements: dict[str, Any]
+    validation_criteria: dict[str, Any]
+    setup_commands: list[str] = field(default_factory=list)
+    teardown_commands: list[str] = field(default_factory=list)
     timeout_seconds: int = 300
     retry_count: int = 3
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -56,9 +56,9 @@ class TestResult:
     passed: bool
     execution_time: float
     output: str
-    error: Optional[str] = None
-    metrics: Dict[str, Any] = field(default_factory=dict)
-    artifacts: List[str] = field(default_factory=list)
+    error: str | None = None
+    metrics: dict[str, Any] = field(default_factory=dict)
+    artifacts: list[str] = field(default_factory=list)
     timestamp: float = field(default_factory=time.time)
 
 
@@ -68,7 +68,7 @@ class EnvironmentDetector:
     def __init__(self):
         self.wmi_client = wmi.WMI() if platform.system() == 'Windows' else None
 
-    def detect_container(self) -> Dict[str, Any]:
+    def detect_container(self) -> dict[str, Any]:
         """
         Detect if running in a container environment.
 
@@ -95,7 +95,7 @@ class EnvironmentDetector:
 
         # Check cgroup for container signatures
         try:
-            with open('/proc/1/cgroup', 'r') as f:
+            with open('/proc/1/cgroup') as f:
                 cgroup_content = f.read()
                 if 'docker' in cgroup_content:
                     container_indicators['is_container'] = True
@@ -116,7 +116,7 @@ class EnvironmentDetector:
 
         return container_indicators
 
-    def detect_cloud_provider(self) -> Dict[str, Any]:
+    def detect_cloud_provider(self) -> dict[str, Any]:
         """
         Detect cloud provider if running in cloud.
 
@@ -200,7 +200,7 @@ class EnvironmentDetector:
 
         return cloud_info
 
-    def detect_wsl(self) -> Dict[str, Any]:
+    def detect_wsl(self) -> dict[str, Any]:
         """
         Detect Windows Subsystem for Linux.
 
@@ -236,7 +236,7 @@ class EnvironmentDetector:
         # Get distro information
         if wsl_info['is_wsl']:
             try:
-                with open('/etc/os-release', 'r') as f:
+                with open('/etc/os-release') as f:
                     for line in f:
                         if line.startswith('PRETTY_NAME='):
                             wsl_info['distro'] = line.split('=')[1].strip().strip('"')
@@ -257,7 +257,7 @@ class TestExecutor:
         self.executor = ThreadPoolExecutor(max_workers=4)
 
     def execute_test(self, test_command: str, environment: TestEnvironment,
-                    timeout: Optional[int] = None) -> TestResult:
+                    timeout: int | None = None) -> TestResult:
         """
         Execute a test command in the specified environment.
 
@@ -328,7 +328,7 @@ class TestExecutor:
 
         return result
 
-    def validate_environment_compatibility(self, environment: TestEnvironment) -> Dict[str, Any]:
+    def validate_environment_compatibility(self, environment: TestEnvironment) -> dict[str, Any]:
         """
         Check if current system can run tests for the target environment.
 
@@ -417,7 +417,7 @@ class MultiEnvironmentTester:
         self.test_suite = self._load_test_suite()
         self.results = []
 
-    def _load_environment_matrix(self) -> List[TestEnvironment]:
+    def _load_environment_matrix(self) -> list[TestEnvironment]:
         """
         Load the environment testing matrix.
 
@@ -609,7 +609,7 @@ class MultiEnvironmentTester:
 
         return environments
 
-    def _load_test_suite(self) -> List[Dict[str, Any]]:
+    def _load_test_suite(self) -> list[dict[str, Any]]:
         """
         Load the test suite to run in each environment.
 
@@ -670,7 +670,7 @@ class MultiEnvironmentTester:
 
         return tests
 
-    def run_compatibility_check(self) -> Dict[str, Any]:
+    def run_compatibility_check(self) -> dict[str, Any]:
         """
         Check compatibility with all environments.
 
@@ -700,8 +700,8 @@ class MultiEnvironmentTester:
 
         return report
 
-    def run_test_suite(self, environment_filter: Optional[List[str]] = None,
-                      tag_filter: Optional[List[str]] = None) -> List[TestResult]:
+    def run_test_suite(self, environment_filter: list[str] | None = None,
+                      tag_filter: list[str] | None = None) -> list[TestResult]:
         """
         Run the test suite across selected environments.
 
@@ -763,7 +763,7 @@ class MultiEnvironmentTester:
         self.results = results
         return results
 
-    def generate_report(self, output_path: Optional[str] = None) -> Dict[str, Any]:
+    def generate_report(self, output_path: str | None = None) -> dict[str, Any]:
         """
         Generate comprehensive testing report.
 
@@ -778,7 +778,7 @@ class MultiEnvironmentTester:
             'total_tests': len(self.results),
             'passed': sum(1 for r in self.results if r.passed),
             'failed': sum(1 for r in self.results if not r.passed),
-            'environments_tested': list(set(r.environment_name for r in self.results)),
+            'environments_tested': list({r.environment_name for r in self.results}),
             'compatibility_check': self.run_compatibility_check(),
             'results_by_environment': {},
             'results_by_test': {},

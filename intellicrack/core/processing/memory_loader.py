@@ -10,6 +10,7 @@ from typing import Any
 
 from intellicrack.utils.logger import logger
 
+
 """
 Memory-Optimized Binary Loader
 
@@ -158,7 +159,9 @@ class MemoryOptimizedBinaryLoader:
             self.logger.error("Error reading chunk: %s", e)
             return None
 
-    def read_section(self, section_name: str, section_offset: int, section_size: int) -> bytes | None:
+    def read_section(
+        self, section_name: str, section_offset: int, section_size: int
+    ) -> bytes | None:
         """Read a section from the file with caching.
 
         Args:
@@ -175,9 +178,7 @@ class MemoryOptimizedBinaryLoader:
             self.logger.debug("Using cached section: %s", section_name)
             return self.section_cache[section_name]
 
-        # Read section
-        data = self.read_chunk(section_offset, section_size)
-        if data:
+        if data := self.read_chunk(section_offset, section_size):
             # Cache section if it's not too large
             if len(data) <= self.chunk_size:
                 self.section_cache[section_name] = data
@@ -205,8 +206,7 @@ class MemoryOptimizedBinaryLoader:
 
         offset = 0
         while offset < self.file_size:
-            chunk = self.read_chunk(offset, chunk_size)
-            if chunk:
+            if chunk := self.read_chunk(offset, chunk_size):
                 yield offset, chunk
                 offset += len(chunk)
             else:
@@ -306,12 +306,19 @@ class MemoryOptimizedBinaryLoader:
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> None:
         """Context manager exit."""
         if exc_type:
             self.logger.error(f"Memory loader exiting due to {exc_type.__name__}: {exc_val}")
             if exc_tb:
-                self.logger.debug(f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
+                self.logger.debug(
+                    f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}"
+                )
         self.close()
 
     def __del__(self) -> None:
@@ -320,7 +327,10 @@ class MemoryOptimizedBinaryLoader:
 
 
 def run_memory_optimized_analysis(
-    file_path: str, analysis_type: str = "full", chunk_size: int = 1024 * 1024, max_memory: int = 1024 * 1024 * 1024,
+    file_path: str,
+    analysis_type: str = "full",
+    chunk_size: int = 1024 * 1024,
+    max_memory: int = 1024 * 1024 * 1024,
 ) -> dict[str, Any]:
     """Run memory-optimized analysis on a binary file.
 
@@ -405,7 +415,7 @@ def run_memory_optimized_analysis(
             results["packed_probability"] = 0.10
 
         # Perform type-specific analysis
-        if analysis_type in ["full", "sections"]:
+        if analysis_type in {"full", "sections"}:
             # Analyze sections in chunks
             section_entropies = []
             suspicious_sections = []
@@ -463,7 +473,9 @@ def run_memory_optimized_analysis(
                 import statistics
 
                 results["entropy"]["mean"] = statistics.mean(entropy_samples)
-                results["entropy"]["stdev"] = statistics.stdev(entropy_samples) if len(entropy_samples) > 1 else 0
+                results["entropy"]["stdev"] = (
+                    statistics.stdev(entropy_samples) if len(entropy_samples) > 1 else 0
+                )
                 results["entropy"]["min"] = min(entropy_samples)
                 results["entropy"]["max"] = max(entropy_samples)
 
@@ -502,7 +514,9 @@ def run_memory_optimized_analysis(
     return results
 
 
-def create_memory_loader(chunk_size: int = 1024 * 1024, max_memory: int = 1024 * 1024 * 1024) -> MemoryOptimizedBinaryLoader:
+def create_memory_loader(
+    chunk_size: int = 1024 * 1024, max_memory: int = 1024 * 1024 * 1024
+) -> MemoryOptimizedBinaryLoader:
     """Create a MemoryOptimizedBinaryLoader.
 
     Args:

@@ -78,7 +78,13 @@ class ThemeManager:
             stored_theme = str(stored_theme).lower()
 
         # Handle common theme variations
-        theme_mapping = {"dark": "dark", "light": "light", "default": "dark", "black": "dark", "white": "light"}
+        theme_mapping = {
+            "dark": "dark",
+            "light": "light",
+            "default": "dark",
+            "black": "dark",
+            "white": "light",
+        }
 
         return theme_mapping.get(stored_theme, "dark")
 
@@ -99,7 +105,7 @@ class ThemeManager:
         """
         # Normalize theme name to lowercase for consistent handling
         if theme_name:
-            theme_name = str(theme_name).lower()
+            theme_name = theme_name.lower()
 
         # Handle common theme variations
         theme_mapping = {
@@ -126,9 +132,7 @@ class ThemeManager:
             # Get the stylesheet content
             stylesheet_content = self._get_theme_stylesheet()
 
-            # Apply to the QApplication instance
-            app = QApplication.instance()
-            if app:
+            if app := QApplication.instance():
                 app.setStyleSheet(stylesheet_content)
                 print(f"Applied {self.current_theme} theme successfully")
             else:
@@ -981,8 +985,7 @@ QPushButton#resetButton:pressed {
         theme loading fails or when no QApplication instance is available.
         """
         try:
-            app = QApplication.instance()
-            if app:
+            if app := QApplication.instance():
                 app.setStyleSheet(self._get_builtin_dark_stylesheet())
                 print("Applied built-in dark theme as fallback")
         except Exception as e:

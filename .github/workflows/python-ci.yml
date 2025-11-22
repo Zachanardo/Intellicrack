@@ -34,13 +34,13 @@ jobs:
         with:
           workspaces: intellicrack-launcher
 
-      - name: Install dependencies (CI environment without Intel XPU)
+      - name: Install dependencies
         run: |
-          pixi install --environment ci
+          pixi install
 
       - name: Generate requirements.txt for Dependabot
         run: |
-          pixi list --environment ci --json | python -c "import json, sys; data = json.load(sys.stdin); pypi_packages = [p for p in data if p.get('kind') == 'pypi']; [print(f\"{pkg['name']}=={pkg.get('version', '')}\") if pkg.get('version') else print(pkg['name']) for pkg in sorted(pypi_packages, key=lambda x: x['name'])]" > requirements.txt
+          pixi list --json | python -c "import json, sys; data = json.load(sys.stdin); pypi_packages = [p for p in data if p.get('kind') == 'pypi']; [print(f\"{pkg['name']}=={pkg.get('version', '')}\") if pkg.get('version') else print(pkg['name']) for pkg in sorted(pypi_packages, key=lambda x: x['name'])]" > requirements.txt
 
   rust-check:
     runs-on: windows-latest
@@ -68,12 +68,12 @@ jobs:
           workspaces: intellicrack-launcher
 
       - name: Install dependencies
-        run: pixi install --environment ci
+        run: pixi install
 
       - name: Rust - Check compilation
         run: |
           cd intellicrack-launcher
-          pixi run --environment ci cargo check --all-features --all-targets
+          pixi run cargo check --all-features --all-targets
 
   rust-format:
     runs-on: windows-latest
@@ -96,12 +96,12 @@ jobs:
           components: rustfmt, clippy
 
       - name: Install dependencies
-        run: pixi install --environment ci
+        run: pixi install
 
       - name: Rust - Format check
         run: |
           cd intellicrack-launcher
-          pixi run --environment ci cargo fmt -- --check
+          pixi run cargo fmt -- --check
 
   rust-clippy:
     runs-on: windows-latest
@@ -129,12 +129,12 @@ jobs:
           workspaces: intellicrack-launcher
 
       - name: Install dependencies
-        run: pixi install --environment ci
+        run: pixi install
 
       - name: Rust - Clippy linting
         run: |
           cd intellicrack-launcher
-          pixi run --environment ci cargo clippy --all-features --all-targets -- -D warnings
+          pixi run cargo clippy --all-features --all-targets -- -D warnings
 
   rust-test:
     runs-on: windows-latest
@@ -161,12 +161,12 @@ jobs:
           workspaces: intellicrack-launcher
 
       - name: Install dependencies
-        run: pixi install --environment ci
+        run: pixi install
 
       - name: Rust - Run tests
         run: |
           cd intellicrack-launcher
-          pixi run --environment ci cargo test --all-features --verbose
+          pixi run cargo test --all-features --verbose
 
   rust-build:
     runs-on: windows-latest
@@ -193,12 +193,12 @@ jobs:
           workspaces: intellicrack-launcher
 
       - name: Install dependencies
-        run: pixi install --environment ci
+        run: pixi install
 
       - name: Rust - Build release
         run: |
           cd intellicrack-launcher
-          pixi run --environment ci cargo build --release --all-features
+          pixi run cargo build --release --all-features
 
   python-lint:
     runs-on: windows-latest
@@ -215,12 +215,12 @@ jobs:
           pixi-version: latest
 
       - name: Install dependencies
-        run: pixi install --environment ci
+        run: pixi install
 
       - name: Lint with ruff
         run: |
-          pixi run --environment ci ruff check intellicrack/ tests/ --output-format=github
-          pixi run --environment ci ruff format --check intellicrack/ tests/
+          pixi run ruff check intellicrack/ tests/ --output-format=github
+          pixi run ruff format --check intellicrack/ tests/
 
   python-test:
     runs-on: windows-latest
@@ -237,11 +237,11 @@ jobs:
           pixi-version: latest
 
       - name: Install dependencies
-        run: pixi install --environment ci
+        run: pixi install
 
       - name: Test with pytest
         run: |
-          pixi run --environment ci pytest tests/ -v --cov=intellicrack --cov-report=xml --cov-report=html --junitxml=test-results.xml
+          pixi run pytest tests/ -v --cov=intellicrack --cov-report=xml --cov-report=html --junitxml=test-results.xml
         env:
           PYTHONDONTWRITEBYTECODE: 1
 

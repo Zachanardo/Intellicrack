@@ -46,12 +46,12 @@ class FileContext:
     path: Path
     content: str
     language: str
-    imports: Set[str]
+    imports: set[str]
     is_test: bool
     is_abstract_class: bool
-    nodes: Dict[str, List[Any]]
-    comments: List[str]
-    tree: Optional[ast.AST] = None
+    nodes: dict[str, list[Any]]
+    comments: list[str]
+    tree: ast.AST | None = None
 
 
 class Rule(ABC):
@@ -60,10 +60,10 @@ class Rule(ABC):
     id: str = ""
     confidence: float = 0.0
     tier: int = 1
-    languages: Set[str] = set()
+    languages: set[str] = set()
 
     @abstractmethod
-    def match(self, ctx: FileContext) -> List[Violation]:
+    def match(self, ctx: FileContext) -> list[Violation]:
         """Detect violations in the given file context."""
         pass
 
@@ -93,7 +93,7 @@ class PR001_TodoComment(Rule):
     tier = 1
     languages = {"python", "java", "javascript", "typescript"}
 
-    def match(self, ctx: FileContext) -> List[Violation]:
+    def match(self, ctx: FileContext) -> list[Violation]:
         violations = []
 
         # Skip if file is checking FOR violations (quality control)
@@ -144,7 +144,7 @@ class PR002_EmptyImplementation(Rule):
     tier = 1
     languages = {"python"}
 
-    def match(self, ctx: FileContext) -> List[Violation]:
+    def match(self, ctx: FileContext) -> list[Violation]:
         violations = []
 
         if not ctx.tree or ctx.is_test:
@@ -197,7 +197,7 @@ class PR003_MockAssignment(Rule):
     tier = 1
     languages = {"python"}
 
-    def match(self, ctx: FileContext) -> List[Violation]:
+    def match(self, ctx: FileContext) -> list[Violation]:
         violations = []
 
         if not ctx.tree or ctx.is_test:
@@ -255,7 +255,7 @@ class PR004_HardcodedSecret(Rule):
     tier = 1
     languages = {"python", "java", "javascript", "typescript"}
 
-    def match(self, ctx: FileContext) -> List[Violation]:
+    def match(self, ctx: FileContext) -> list[Violation]:
         violations = []
 
         if ctx.is_test:
@@ -317,7 +317,7 @@ class PR005_SimulationFlag(Rule):
     tier = 1
     languages = {"python", "java", "javascript", "typescript"}
 
-    def match(self, ctx: FileContext) -> List[Violation]:
+    def match(self, ctx: FileContext) -> list[Violation]:
         violations = []
 
         if ctx.is_test:
@@ -359,10 +359,10 @@ class FileAnalyzer:
             ".ts": "typescript"
         }
 
-    def analyze_file(self, file_path: Path) -> Optional[FileContext]:
+    def analyze_file(self, file_path: Path) -> FileContext | None:
         """Create FileContext with AST and metadata."""
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(file_path, encoding='utf-8', errors='ignore') as f:
                 content = f.read()
         except Exception:
             return None
@@ -391,7 +391,7 @@ class FileAnalyzer:
 
         return ctx
 
-    def _detect_language(self, file_path: Path) -> Optional[str]:
+    def _detect_language(self, file_path: Path) -> str | None:
         """Detect programming language from file extension."""
         return self.language_extensions.get(file_path.suffix.lower())
 
@@ -468,13 +468,13 @@ class FileAnalyzer:
 class ProductionReadinessAuditor:
     """Main auditor with plugin system and tiered confidence."""
 
-    def __init__(self, config_path: Optional[Path] = None):
+    def __init__(self, config_path: Path | None = None):
         self.config = self._load_config(config_path)
         self.file_analyzer = FileAnalyzer()
         self.rules = self._load_rules()
-        self.violations: List[Violation] = []
+        self.violations: list[Violation] = []
 
-    def _load_config(self, config_path: Optional[Path]) -> Dict:
+    def _load_config(self, config_path: Path | None) -> dict:
         """Load configuration with whitelist patterns."""
         default_config = {
             "allow_paths": [],
@@ -485,7 +485,7 @@ class ProductionReadinessAuditor:
 
         if config_path and config_path.exists():
             try:
-                with open(config_path, 'r') as f:
+                with open(config_path) as f:
                     user_config = yaml.safe_load(f)
 
                 # Combine directory_patterns and file_patterns into allow_paths
@@ -511,7 +511,7 @@ class ProductionReadinessAuditor:
 
         return default_config
 
-    def _load_rules(self) -> List[Rule]:
+    def _load_rules(self) -> list[Rule]:
         """Load all detection rules."""
         return [
             PR001_TodoComment(),
@@ -521,7 +521,7 @@ class ProductionReadinessAuditor:
             PR005_SimulationFlag()
         ]
 
-    def audit_directory(self, directory: Path) -> List[Violation]:
+    def audit_directory(self, directory: Path) -> list[Violation]:
         """Audit all supported files in directory."""
         self.violations = []
 
@@ -544,7 +544,7 @@ class ProductionReadinessAuditor:
 
         return self.violations
 
-    def _get_files_to_scan(self, directory: Path) -> List[Path]:
+    def _get_files_to_scan(self, directory: Path) -> list[Path]:
         """Get all supported files to scan."""
         extensions = {".py", ".java", ".js", ".ts"}
         files = []
@@ -604,7 +604,7 @@ class ProductionReadinessAuditor:
 
         # Summary
         summary = SubElement(root, "Summary")
-        files_with_violations = len(set(v.file_path for v in self.violations))
+        files_with_violations = len({v.file_path for v in self.violations})
 
         SubElement(summary, "TotalFiles").text = str(files_with_violations)
         SubElement(summary, "FilesWithViolations").text = str(files_with_violations)
@@ -669,7 +669,7 @@ def main():
 
     # Print summary
     if violations:
-        print(f"\nFound {len(violations)} violations across {len(set(v.file_path for v in violations))} files")
+        print(f"\nFound {len(violations)} violations across {len({v.file_path for v in violations})} files")
         severity_counts = {}
         for v in violations:
             severity_counts[v.severity] = severity_counts.get(v.severity, 0) + 1

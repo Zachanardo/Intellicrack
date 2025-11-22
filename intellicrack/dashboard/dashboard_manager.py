@@ -32,6 +32,7 @@ from typing import Any
 from .dashboard_widgets import DashboardWidget, WidgetData, WidgetType, create_widget
 from .real_time_dashboard import DashboardEvent, DashboardEventType, create_dashboard
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -166,7 +167,12 @@ class DashboardManager:
                 min=0,
                 max=100,
                 units="%",
-                thresholds=[{"min": 0, "max": 50}, {"min": 50, "max": 75}, {"min": 75, "max": 90}, {"min": 90, "max": 100}],
+                thresholds=[
+                    {"min": 0, "max": 50},
+                    {"min": 50, "max": 75},
+                    {"min": 75, "max": 90},
+                    {"min": 90, "max": 100},
+                ],
             ),
         )
 
@@ -179,7 +185,12 @@ class DashboardManager:
                 min=0,
                 max=2000,
                 units="MB",
-                thresholds=[{"min": 0, "max": 500}, {"min": 500, "max": 1000}, {"min": 1000, "max": 1500}, {"min": 1500, "max": 2000}],
+                thresholds=[
+                    {"min": 0, "max": 500},
+                    {"min": 500, "max": 1000},
+                    {"min": 1000, "max": 1500},
+                    {"min": 1500, "max": 2000},
+                ],
             ),
         )
 
@@ -187,22 +198,52 @@ class DashboardManager:
         self.add_widget(create_widget("timeline", WidgetType.TIMELINE, "Analysis Timeline"))
 
         # Vulnerabilities table
-        self.add_widget(create_widget("vulnerabilities_table", WidgetType.TABLE, "Vulnerabilities Found", sortable=True, filterable=True))
+        self.add_widget(
+            create_widget(
+                "vulnerabilities_table",
+                WidgetType.TABLE,
+                "Vulnerabilities Found",
+                sortable=True,
+                filterable=True,
+            )
+        )
 
         # Protections table
-        self.add_widget(create_widget("protections_table", WidgetType.TABLE, "Protections Detected", sortable=True, filterable=True))
+        self.add_widget(
+            create_widget(
+                "protections_table",
+                WidgetType.TABLE,
+                "Protections Detected",
+                sortable=True,
+                filterable=True,
+            )
+        )
 
         # Analysis progress
-        self.add_widget(create_widget("analysis_progress", WidgetType.PROGRESS, "Analysis Progress"))
+        self.add_widget(
+            create_widget("analysis_progress", WidgetType.PROGRESS, "Analysis Progress")
+        )
 
         # Function analysis chart
-        self.add_widget(create_widget("functions_chart", WidgetType.LINE_CHART, "Functions Analyzed", history_size=50))
+        self.add_widget(
+            create_widget(
+                "functions_chart", WidgetType.LINE_CHART, "Functions Analyzed", history_size=50
+            )
+        )
 
         # Network graph for call graph
-        self.add_widget(create_widget("call_graph", WidgetType.NETWORK_GRAPH, "Call Graph", directed=True, layout="force"))
+        self.add_widget(
+            create_widget(
+                "call_graph", WidgetType.NETWORK_GRAPH, "Call Graph", directed=True, layout="force"
+            )
+        )
 
         # Heatmap for code complexity
-        self.add_widget(create_widget("complexity_heatmap", WidgetType.HEATMAP, "Code Complexity", colorscale="viridis"))
+        self.add_widget(
+            create_widget(
+                "complexity_heatmap", WidgetType.HEATMAP, "Code Complexity", colorscale="viridis"
+            )
+        )
 
     def _initialize_default_sources(self) -> None:
         """Initialize default data sources."""
@@ -403,9 +444,16 @@ class DashboardManager:
         state = {
             "timestamp": datetime.now().isoformat(),
             "dashboard_state": self.dashboard.get_dashboard_state(),
-            "widgets": {widget_id: widget.render("json") for widget_id, widget in self.widgets.items()},
+            "widgets": {
+                widget_id: widget.render("json") for widget_id, widget in self.widgets.items()
+            },
             "layouts": {
-                layout_id: {"name": layout.name, "rows": layout.rows, "columns": layout.columns, "widgets": layout.widgets}
+                layout_id: {
+                    "name": layout.name,
+                    "rows": layout.rows,
+                    "columns": layout.columns,
+                    "widgets": layout.widgets,
+                }
                 for layout_id, layout in self.layouts.items()
             },
             "current_layout": self.current_layout.layout_id if self.current_layout else None,
@@ -435,8 +483,7 @@ class DashboardManager:
                     # Poll data source
                     if source.data_callback:
                         try:
-                            data = source.data_callback()
-                            if data:
+                            if data := source.data_callback():
                                 self._distribute_data(source_id, data)
                             source.last_poll = current_time
                         except Exception as e:
@@ -460,7 +507,9 @@ class DashboardManager:
         for widget_id in widget_ids:
             if widget_id in self.widgets:
                 widget = self.widgets[widget_id]
-                widget_data = WidgetData(timestamp=datetime.now(), values=data, metadata={"source": source_id})
+                widget_data = WidgetData(
+                    timestamp=datetime.now(), values=data, metadata={"source": source_id}
+                )
                 widget.update_data(widget_data)
 
     def _collect_performance_data(self) -> dict[str, Any]:
@@ -519,9 +568,7 @@ class DashboardManager:
             # Try to get metrics from tool
             if hasattr(handler, "get_metrics"):
                 return handler.get_metrics()
-            if hasattr(handler, "get_status"):
-                return handler.get_status()
-            return {}
+            return handler.get_status() if hasattr(handler, "get_status") else {}
         except Exception as e:
             self.logger.error(f"Error collecting data from {tool_name}: {e}")
             return {}
@@ -537,16 +584,31 @@ class DashboardManager:
         if "timeline" in self.widgets:
             widget_data = WidgetData(
                 timestamp=event.timestamp,
-                values={"events": [{"title": event.title, "description": event.description, "type": event.severity, "tool": event.tool}]},
+                values={
+                    "events": [
+                        {
+                            "title": event.title,
+                            "description": event.description,
+                            "type": event.severity,
+                            "tool": event.tool,
+                        }
+                    ]
+                },
             )
             self.widgets["timeline"].update_data(widget_data)
 
         # Update vulnerability table
-        if event.event_type == DashboardEventType.VULNERABILITY_FOUND and "vulnerabilities_table" in self.widgets:
+        if (
+            event.event_type == DashboardEventType.VULNERABILITY_FOUND
+            and "vulnerabilities_table" in self.widgets
+        ):
             self._update_vulnerability_table(event)
 
         # Update protection table
-        if event.event_type == DashboardEventType.PROTECTION_DETECTED and "protections_table" in self.widgets:
+        if (
+            event.event_type == DashboardEventType.PROTECTION_DETECTED
+            and "protections_table" in self.widgets
+        ):
             self._update_protection_table(event)
 
     def _update_vulnerability_table(self, event: DashboardEvent) -> None:
@@ -572,7 +634,9 @@ class DashboardManager:
             },
         )
 
-        widget_data = WidgetData(timestamp=event.timestamp, values={"rows": rows, "columns": columns})
+        widget_data = WidgetData(
+            timestamp=event.timestamp, values={"rows": rows, "columns": columns}
+        )
         widget.update_data(widget_data)
 
     def _update_protection_table(self, event: DashboardEvent) -> None:
@@ -598,7 +662,9 @@ class DashboardManager:
             },
         )
 
-        widget_data = WidgetData(timestamp=event.timestamp, values={"rows": rows, "columns": columns})
+        widget_data = WidgetData(
+            timestamp=event.timestamp, values={"rows": rows, "columns": columns}
+        )
         widget.update_data(widget_data)
 
     def _handle_dashboard_event(self, event: DashboardEvent) -> None:

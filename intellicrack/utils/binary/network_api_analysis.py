@@ -69,9 +69,11 @@ def process_network_api_results(detected_apis: dict[str, list[str]]) -> dict[str
         Dictionary with processed results including counts and security checks
 
     """
-    results = {}
-
-    results["network_apis"] = {cat: len(apis) for cat, apis in detected_apis.items() if apis}
+    results = {
+        "network_apis": {
+            cat: len(apis) for cat, apis in detected_apis.items() if apis
+        }
+    }
 
     has_ssl = bool(detected_apis.get("ssl", []))
     has_network = bool(detected_apis.get("basic", [])) or bool(detected_apis.get("http", []))
@@ -103,8 +105,10 @@ def get_scapy_layers(scapy_module: object) -> tuple[object, object] | None:
     except AttributeError as e:
         logger.error("Attribute error in network_api_analysis: %s", e)
         try:
-            from scapy.layers.inet import IP as IP_LAYER
-            from scapy.layers.inet import TCP as TCP_LAYER
+            from scapy.layers.inet import (
+                IP as IP_LAYER,
+                TCP as TCP_LAYER,
+            )
 
             return IP_LAYER, TCP_LAYER
         except ImportError as e:
@@ -159,7 +163,9 @@ def summarize_network_capabilities(detected_apis: dict[str, list[str]]) -> dict[
     summary = {cat: len(apis) for cat, apis in detected_apis.items() if apis}
 
     summary["has_ssl"] = bool(detected_apis.get("ssl", []))
-    summary["has_network"] = bool(detected_apis.get("basic", [])) or bool(detected_apis.get("http", []))
+    summary["has_network"] = bool(detected_apis.get("basic", [])) or bool(
+        detected_apis.get("http", [])
+    )
     summary["has_dns"] = bool(detected_apis.get("dns", []))
 
     return summary

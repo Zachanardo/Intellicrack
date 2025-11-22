@@ -39,8 +39,8 @@ class FunctionalTestResult:
     actual_hash: str
     test_passed: bool
     execution_time: float
-    process_monitoring_data: Dict[str, Any]
-    error_message: Optional[str] = None
+    process_monitoring_data: dict[str, Any]
+    error_message: str | None = None
     timestamp: str = None
 
     def __post_init__(self):
@@ -58,8 +58,8 @@ class FunctionalVerificationResult:
     tests_run: int
     tests_passed: int
     overall_success: bool
-    test_results: List[FunctionalTestResult]
-    error_message: Optional[str] = None
+    test_results: list[FunctionalTestResult]
+    error_message: str | None = None
     timestamp: str = None
 
     def __post_init__(self):
@@ -185,7 +185,7 @@ class FunctionalVerification:
         logger.info(f"Generated unique input file: {temp_file}")
         return str(temp_file)
 
-    def _monitor_process(self, process: subprocess.Popen, timeout: int = 120) -> Dict[str, Any]:
+    def _monitor_process(self, process: subprocess.Popen, timeout: int = 120) -> dict[str, Any]:
         """
         Monitor a process for the specified timeout period.
         """
@@ -258,7 +258,7 @@ class FunctionalVerification:
 
         return monitoring_data
 
-    def _test_adobe_psd_edit(self, binary_path: str, input_file: str) -> Dict[str, Any]:
+    def _test_adobe_psd_edit(self, binary_path: str, input_file: str) -> dict[str, Any]:
         """
         Test Adobe software by editing and saving a PSD file.
         """
@@ -336,7 +336,7 @@ try {{
 
         return result
 
-    def _test_autocad_dwg_create(self, binary_path: str, input_file: str) -> Dict[str, Any]:
+    def _test_autocad_dwg_create(self, binary_path: str, input_file: str) -> dict[str, Any]:
         """
         Test AutoCAD by creating and exporting a DWG file.
         """
@@ -443,7 +443,7 @@ try {{
 
         return result
 
-    def _test_matlab_computation(self, binary_path: str, input_file: str) -> Dict[str, Any]:
+    def _test_matlab_computation(self, binary_path: str, input_file: str) -> dict[str, Any]:
         """
         Test MATLAB by executing a computation and verifying output.
         """
@@ -567,7 +567,7 @@ Note: This may indicate MATLAB is not installed or COM interface is disabled
 
         return result
 
-    def _test_office_document_create(self, binary_path: str, input_file: str) -> Dict[str, Any]:
+    def _test_office_document_create(self, binary_path: str, input_file: str) -> dict[str, Any]:
         """
         Test Office software by creating a document and saving it.
         """
@@ -882,7 +882,7 @@ Note: This may indicate Office is not installed or COM interface is disabled
 
         return result
 
-    def verify_all_functionality(self) -> List[FunctionalVerificationResult]:
+    def verify_all_functionality(self) -> list[FunctionalVerificationResult]:
         """
         Run functional verification on all available binaries.
         """
@@ -945,7 +945,7 @@ Note: This may indicate Office is not installed or COM interface is disabled
         logger.info(f"Completed functional verification for {len(results)} binaries")
         return results
 
-    def generate_report(self, results: List[FunctionalVerificationResult]) -> str:
+    def generate_report(self, results: list[FunctionalVerificationResult]) -> str:
         """
         Generate a comprehensive report of functional verification results.
         """
@@ -998,7 +998,7 @@ Note: This may indicate Office is not installed or COM interface is disabled
 
         return "\n".join(report_lines)
 
-    def save_report(self, results: List[FunctionalVerificationResult], filename: Optional[str] = None) -> str:
+    def save_report(self, results: list[FunctionalVerificationResult], filename: str | None = None) -> str:
         """
         Save the functional verification report to a file.
         """

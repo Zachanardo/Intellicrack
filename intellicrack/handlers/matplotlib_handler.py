@@ -24,6 +24,7 @@ from typing import Any, Optional, Union
 
 from intellicrack.utils.logger import logger
 
+
 # Matplotlib availability detection and import handling
 try:
     import matplotlib as mpl
@@ -82,7 +83,9 @@ try:
             mpl.use(qt_backend_name, force=True)
             logger.info(f"Successfully configured matplotlib to use {qt_backend_name} backend")
         except Exception as e:
-            logger.warning(f"Failed to set matplotlib backend to {qt_backend_name}, falling back to Agg: {e}")
+            logger.warning(
+                f"Failed to set matplotlib backend to {qt_backend_name}, falling back to Agg: {e}"
+            )
             mpl.use("Agg", force=True)
             qt_backend_name = "Agg"
     else:
@@ -101,7 +104,9 @@ try:
 
     # If no Qt backend was loaded, log a warning only once
     if FigureCanvasQTAgg is None and qt_backend_error:
-        logger.warning(f"No Qt backend for matplotlib available, some GUI features may be limited. Last error: {qt_backend_error}")
+        logger.warning(
+            f"No Qt backend for matplotlib available, some GUI features may be limited. Last error: {qt_backend_error}"
+        )
         logger.debug(f"Full traceback for Qt backend import failure: {traceback.format_exc()}")
 
     # Try to import Tk backend but don't fail if Tk is not available
@@ -127,7 +132,7 @@ try:
 
                 """
                 self.figure: object = figure
-                self._size_policy: Optional[tuple[object, ...]] = None
+                self._size_policy: tuple[object, ...] | None = None
 
             def draw(self) -> None:
                 """Draw the Qt canvas using fallback rendering."""
@@ -186,12 +191,16 @@ except ImportError as e:
             self.edgecolor: str = edgecolor
             self.axes: list[Any] = []
             self._suptitle: str = ""
-            self._current_axes: Optional[Any] = None
+            self._current_axes: Any | None = None
             self._layout: str = "tight"
             self._canvas: Any = FallbackCanvas(self)
 
         def add_subplot(
-            self, nrows: int, ncols: int, index: int, **kwargs: object,
+            self,
+            nrows: int,
+            ncols: int,
+            index: int,
+            **kwargs: object,
         ) -> "FallbackAxes":
             """Add a subplot to the figure.
 
@@ -210,7 +219,9 @@ except ImportError as e:
             self._current_axes = ax
             return ax
 
-        def add_axes(self, rect: tuple[float, float, float, float], **kwargs: object) -> "FallbackAxes":
+        def add_axes(
+            self, rect: tuple[float, float, float, float], **kwargs: object
+        ) -> "FallbackAxes":
             """Add axes at the given position.
 
             Args:
@@ -237,7 +248,10 @@ except ImportError as e:
             self._suptitle = title
 
         def tight_layout(
-            self, pad: float = 1.08, h_pad: Optional[float] = None, w_pad: Optional[float] = None,
+            self,
+            pad: float = 1.08,
+            h_pad: float | None = None,
+            w_pad: float | None = None,
         ) -> None:
             """Adjust subplot parameters for tight layout.
 
@@ -251,12 +265,12 @@ except ImportError as e:
 
         def subplots_adjust(
             self,
-            left: Optional[float] = None,
-            bottom: Optional[float] = None,
-            right: Optional[float] = None,
-            top: Optional[float] = None,
-            wspace: Optional[float] = None,
-            hspace: Optional[float] = None,
+            left: float | None = None,
+            bottom: float | None = None,
+            right: float | None = None,
+            top: float | None = None,
+            wspace: float | None = None,
+            hspace: float | None = None,
         ) -> None:
             """Adjust subplot parameters.
 
@@ -288,7 +302,12 @@ except ImportError as e:
             logger.debug("Subplot parameters adjusted: %s", self._subplot_params)
 
         def savefig(
-            self, fname: Union[str, object], dpi: Optional[int] = None, format: Optional[str] = None, bbox_inches: Optional[str] = None, **kwargs: object,
+            self,
+            fname: str | object,
+            dpi: int | None = None,
+            format: str | None = None,
+            bbox_inches: str | None = None,
+            **kwargs: object,
         ) -> None:
             """Save the figure to a file.
 
@@ -337,7 +356,7 @@ except ImportError as e:
             svg += "</svg>"
             return svg
 
-        def _save_raster(self, fname: Union[str, object], format: str, dpi: int) -> None:
+        def _save_raster(self, fname: str | object, format: str, dpi: int) -> None:
             """Save as raster image using PIL or pure Python bitmap generation.
 
             Args:
@@ -349,7 +368,9 @@ except ImportError as e:
             try:
                 from PIL import Image, ImageDraw, ImageFont
 
-                _ = ImageFont.__name__  # Verify ImageFont is properly imported for future text rendering capabilities
+                _ = (
+                    ImageFont.__name__
+                )  # Verify ImageFont is properly imported for future text rendering capabilities
 
                 width = int(self.figsize[0] * dpi)
                 height = int(self.figsize[1] * dpi)
@@ -381,7 +402,9 @@ except ImportError as e:
                     import struct
                     import zlib
 
-                    def generate_png(width: int, height: int, pixels: dict[tuple[int, int], tuple[int, int, int]]) -> bytes:
+                    def generate_png(
+                                    width: int, height: int, pixels: dict[tuple[int, int], tuple[int, int, int]]
+                                ) -> bytes:
                         """Generate complete PNG file from raw pixel data.
 
                         Args:
@@ -423,10 +446,7 @@ except ImportError as e:
                             raw_data += b"\x00"
                             for x in range(width):
                                 # RGB pixel (white background with content)
-                                if pixels and (x, y) in pixels:
-                                    r, g, b = pixels[(x, y)]
-                                else:
-                                    r, g, b = 255, 255, 255  # White background
+                                r, g, b = pixels[(x, y)] if pixels and (x, y) in pixels else (255, 255, 255)
                                 raw_data += bytes([r, g, b])
 
                         compressed = zlib.compress(raw_data)
@@ -461,7 +481,10 @@ except ImportError as e:
                         f.write(png_bytes)
 
                 else:
-                    def generate_bmp(width: int, height: int, pixels: dict[tuple[int, int], tuple[int, int, int]]) -> bytes:
+
+                    def generate_bmp(
+                        width: int, height: int, pixels: dict[tuple[int, int], tuple[int, int, int]]
+                    ) -> bytes:
                         """Generate BMP file from pixel data.
 
                         Args:
@@ -548,7 +571,13 @@ except ImportError as e:
         """Functional axes implementation for plotting."""
 
         def __init__(
-            self, figure: object, nrows: int = 1, ncols: int = 1, index: int = 1, rect: Optional[tuple[float, float, float, float]] = None, **kwargs: object,
+            self,
+            figure: object,
+            nrows: int = 1,
+            ncols: int = 1,
+            index: int = 1,
+            rect: tuple[float, float, float, float] | None = None,
+            **kwargs: object,
         ) -> None:
             """Initialize axes.
 
@@ -565,7 +594,7 @@ except ImportError as e:
             self.nrows: int = nrows
             self.ncols: int = ncols
             self.index: int = index
-            self.rect: Optional[tuple[float, float, float, float]] = rect
+            self.rect: tuple[float, float, float, float] | None = rect
 
             self.lines: list[dict[str, object]] = []
             self.bars: list[dict[str, object]] = []
@@ -577,12 +606,14 @@ except ImportError as e:
             self.title: str = ""
             self.xlabel_text: str = ""
             self.ylabel_text: str = ""
-            self.xlim: Optional[tuple[float, float]] = None
-            self.ylim: Optional[tuple[float, float]] = None
+            self.xlim: tuple[float, float] | None = None
+            self.ylim: tuple[float, float] | None = None
             self.legend_items: list[tuple[str, str]] = []
             self.grid_enabled: bool = False
 
-        def plot(self, x: Optional[object] = None, y: Optional[object] = None, *args: object, **kwargs: object) -> None:
+        def plot(
+            self, x: object | None = None, y: object | None = None, *args: object, **kwargs: object
+        ) -> None:
             """Plot lines on the axes.
 
             Args:
@@ -622,7 +653,16 @@ except ImportError as e:
 
             self._update_limits(x, y)
 
-        def scatter(self, x: object, y: object, s: Optional[int] = None, c: Optional[str] = None, marker: str = "o", alpha: float = 1.0, **kwargs: object) -> None:
+        def scatter(
+            self,
+            x: object,
+            y: object,
+            s: int | None = None,
+            c: str | None = None,
+            marker: str = "o",
+            alpha: float = 1.0,
+            **kwargs: object,
+        ) -> None:
             """Create scatter plot on the axes.
 
             Args:
@@ -652,7 +692,16 @@ except ImportError as e:
 
             self._update_limits(x, y)
 
-        def bar(self, x: object, height: object, width: float = 0.8, bottom: Optional[float] = None, color: str = "blue", label: str = "", **kwargs: object) -> None:
+        def bar(
+            self,
+            x: object,
+            height: object,
+            width: float = 0.8,
+            bottom: float | None = None,
+            color: str = "blue",
+            label: str = "",
+            **kwargs: object,
+        ) -> None:
             """Create bar plot on the axes.
 
             Args:
@@ -670,14 +719,32 @@ except ImportError as e:
             if not hasattr(height, "__iter__"):
                 height = [height]
 
-            self.bars.append({"x": list(x), "height": list(height), "width": width, "bottom": bottom, "color": color, "label": label})
+            self.bars.append(
+                {
+                    "x": list(x),
+                    "height": list(height),
+                    "width": width,
+                    "bottom": bottom,
+                    "color": color,
+                    "label": label,
+                }
+            )
 
             if label:
                 self.legend_items.append((label, color))
 
             self._update_limits(x, height)
 
-        def hist(self, x: object, bins: int = 10, range: Optional[tuple[float, float]] = None, density: bool = False, color: str = "blue", label: str = "", **kwargs: object) -> None:
+        def hist(
+            self,
+            x: object,
+            bins: int = 10,
+            range: tuple[float, float] | None = None,
+            density: bool = False,
+            color: str = "blue",
+            label: str = "",
+            **kwargs: object,
+        ) -> None:
             """Create histogram on the axes.
 
             Args:
@@ -691,17 +758,19 @@ except ImportError as e:
 
             """
             # Calculate histogram
-            if range is None:
-                value_range = (min(x), max(x))
-            else:
-                value_range = range
-
-            bin_edges = [value_range[0] + i * (value_range[1] - value_range[0]) / bins for i in range(bins + 1)]
+            value_range = (min(x), max(x)) if range is None else range
+            bin_edges = [
+                value_range[0] + i * (value_range[1] - value_range[0]) / bins
+                for i in range(bins + 1)
+            ]
             counts = [0] * bins
 
             for val in x:
                 if value_range[0] <= val <= value_range[1]:
-                    bin_idx = min(int((val - value_range[0]) / (value_range[1] - value_range[0]) * bins), bins - 1)
+                    bin_idx = min(
+                        int((val - value_range[0]) / (value_range[1] - value_range[0]) * bins),
+                        bins - 1,
+                    )
                     counts[bin_idx] += 1
 
             if density:
@@ -715,7 +784,14 @@ except ImportError as e:
 
             self.bar(bin_centers, counts, width=bin_width, color=color, label=label)
 
-        def imshow(self, X: object, cmap: str = "viridis", aspect: str = "auto", interpolation: str = "nearest", **kwargs: object) -> None:
+        def imshow(
+            self,
+            X: object,
+            cmap: str = "viridis",
+            aspect: str = "auto",
+            interpolation: str = "nearest",
+            **kwargs: object,
+        ) -> None:
             """Display an image or matrix on the axes.
 
             Args:
@@ -726,9 +802,25 @@ except ImportError as e:
                 **kwargs: Additional keyword arguments including extent.
 
             """
-            self.images.append({"data": X, "cmap": cmap, "aspect": aspect, "interpolation": interpolation, "extent": kwargs.get("extent")})
+            self.images.append(
+                {
+                    "data": X,
+                    "cmap": cmap,
+                    "aspect": aspect,
+                    "interpolation": interpolation,
+                    "extent": kwargs.get("extent"),
+                }
+            )
 
-        def contour(self, X: object, Y: object, Z: object, levels: int = 10, colors: str = "black", **kwargs: object) -> None:
+        def contour(
+            self,
+            X: object,
+            Y: object,
+            Z: object,
+            levels: int = 10,
+            colors: str = "black",
+            **kwargs: object,
+        ) -> None:
             """Create contour plot on the axes.
 
             Args:
@@ -740,9 +832,21 @@ except ImportError as e:
                 **kwargs: Additional keyword arguments.
 
             """
-            self.patches.append({"type": "contour", "X": X, "Y": Y, "Z": Z, "levels": levels, "colors": colors})
+            self.patches.append(
+                {"type": "contour", "X": X, "Y": Y, "Z": Z, "levels": levels, "colors": colors}
+            )
 
-        def text(self, x: float, y: float, s: object, fontsize: int = 12, color: str = "black", ha: str = "left", va: str = "bottom", **kwargs: object) -> None:
+        def text(
+            self,
+            x: float,
+            y: float,
+            s: object,
+            fontsize: int = 12,
+            color: str = "black",
+            ha: str = "left",
+            va: str = "bottom",
+            **kwargs: object,
+        ) -> None:
             """Add text to the axes.
 
             Args:
@@ -756,9 +860,26 @@ except ImportError as e:
                 **kwargs: Additional keyword arguments.
 
             """
-            self.texts.append({"x": x, "y": y, "text": str(s), "fontsize": fontsize, "color": color, "ha": ha, "va": va})
+            self.texts.append(
+                {
+                    "x": x,
+                    "y": y,
+                    "text": str(s),
+                    "fontsize": fontsize,
+                    "color": color,
+                    "ha": ha,
+                    "va": va,
+                }
+            )
 
-        def annotate(self, text: str, xy: tuple[float, float], xytext: Optional[tuple[float, float]] = None, arrowprops: Optional[dict[str, object]] = None, **kwargs: object) -> None:
+        def annotate(
+            self,
+            text: str,
+            xy: tuple[float, float],
+            xytext: tuple[float, float] | None = None,
+            arrowprops: dict[str, object] | None = None,
+            **kwargs: object,
+        ) -> None:
             """Add annotation with optional arrow to the axes.
 
             Args:
@@ -769,7 +890,12 @@ except ImportError as e:
                 **kwargs: Additional keyword arguments.
 
             """
-            annotation: dict[str, object] = {"text": text, "xy": xy, "xytext": xytext or xy, "arrow": arrowprops is not None}
+            annotation: dict[str, object] = {
+                "text": text,
+                "xy": xy,
+                "xytext": xytext or xy,
+                "arrow": arrowprops is not None,
+            }
             self.texts.append(annotation)
 
         def set_title(self, title: str, fontsize: int = 14, **kwargs: object) -> None:
@@ -805,7 +931,7 @@ except ImportError as e:
             """
             self.ylabel_text = ylabel
 
-        def set_xlim(self, left: Optional[float] = None, right: Optional[float] = None) -> None:
+        def set_xlim(self, left: float | None = None, right: float | None = None) -> None:
             """Set x-axis limits.
 
             Args:
@@ -820,7 +946,7 @@ except ImportError as e:
             elif right is not None:
                 self.xlim = (self.xlim[0] if self.xlim else right - 1, right)
 
-        def set_ylim(self, bottom: Optional[float] = None, top: Optional[float] = None) -> None:
+        def set_ylim(self, bottom: float | None = None, top: float | None = None) -> None:
             """Set y-axis limits.
 
             Args:
@@ -835,7 +961,9 @@ except ImportError as e:
             elif top is not None:
                 self.ylim = (self.ylim[0] if self.ylim else top - 1, top)
 
-        def legend(self, labels: Optional[list[str]] = None, loc: str = "best", **kwargs: object) -> None:
+        def legend(
+            self, labels: list[str] | None = None, loc: str = "best", **kwargs: object
+        ) -> None:
             """Add legend to axes.
 
             Args:
@@ -847,7 +975,9 @@ except ImportError as e:
             if labels:
                 self.legend_items = [(label, "blue") for label in labels]
 
-        def grid(self, visible: bool = True, which: str = "major", axis: str = "both", **kwargs: object) -> None:
+        def grid(
+            self, visible: bool = True, which: str = "major", axis: str = "both", **kwargs: object
+        ) -> None:
             """Enable/disable grid on the axes.
 
             Args:
@@ -967,23 +1097,39 @@ except ImportError as e:
                 points = []
                 for i in range(len(line["x"])):
                     if self.xlim and self.ylim:
-                        x_norm = (line["x"][i] - self.xlim[0]) / (self.xlim[1] - self.xlim[0]) if self.xlim[1] != self.xlim[0] else 0.5
-                        y_norm = 1 - (line["y"][i] - self.ylim[0]) / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
+                        x_norm = (
+                            (line["x"][i] - self.xlim[0]) / (self.xlim[1] - self.xlim[0])
+                            if self.xlim[1] != self.xlim[0]
+                            else 0.5
+                        )
+                        y_norm = (
+                            1 - (line["y"][i] - self.ylim[0]) / (self.ylim[1] - self.ylim[0])
+                            if self.ylim[1] != self.ylim[0]
+                            else 0.5
+                        )
                         points.append(f"{x_norm * width},{y_norm * height}")
 
                 if points:
-                    svg += (
-                        f'<polyline points="{" ".join(points)}" fill="none" stroke="{line["color"]}" stroke-width="{line["linewidth"]}"/>\n'
-                    )
+                    svg += f'<polyline points="{" ".join(points)}" fill="none" stroke="{line["color"]}" stroke-width="{line["linewidth"]}"/>\n'
 
             # Draw bars
             for bar_group in self.bars:
-                for _i, (x, h) in enumerate(zip(bar_group["x"], bar_group["height"], strict=False)):
+                for x, h in zip(bar_group["x"], bar_group["height"], strict=False):
                     if self.xlim and self.ylim:
-                        x_norm = (x - self.xlim[0]) / (self.xlim[1] - self.xlim[0]) if self.xlim[1] != self.xlim[0] else 0.5
-                        h_norm = h / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
+                        x_norm = (
+                            (x - self.xlim[0]) / (self.xlim[1] - self.xlim[0])
+                            if self.xlim[1] != self.xlim[0]
+                            else 0.5
+                        )
+                        h_norm = (
+                            h / (self.ylim[1] - self.ylim[0])
+                            if self.ylim[1] != self.ylim[0]
+                            else 0.5
+                        )
 
-                        bar_x = x_norm * width - bar_group["width"] * width / (2 * (self.xlim[1] - self.xlim[0]))
+                        bar_x = x_norm * width - bar_group["width"] * width / (
+                            2 * (self.xlim[1] - self.xlim[0])
+                        )
                         bar_width = bar_group["width"] * width / (self.xlim[1] - self.xlim[0])
                         bar_height = h_norm * height
                         bar_y = height - bar_height
@@ -994,8 +1140,16 @@ except ImportError as e:
             for scatter in self.scatter_data:
                 for x, y in zip(scatter["x"], scatter["y"], strict=False):
                     if self.xlim and self.ylim:
-                        x_norm = (x - self.xlim[0]) / (self.xlim[1] - self.xlim[0]) if self.xlim[1] != self.xlim[0] else 0.5
-                        y_norm = 1 - (y - self.ylim[0]) / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
+                        x_norm = (
+                            (x - self.xlim[0]) / (self.xlim[1] - self.xlim[0])
+                            if self.xlim[1] != self.xlim[0]
+                            else 0.5
+                        )
+                        y_norm = (
+                            1 - (y - self.ylim[0]) / (self.ylim[1] - self.ylim[0])
+                            if self.ylim[1] != self.ylim[0]
+                            else 0.5
+                        )
 
                         svg += f'<circle cx="{x_norm * width}" cy="{y_norm * height}" r="3" fill="{scatter["c"]}" opacity="{scatter["alpha"]}"/>\n'
 
@@ -1045,13 +1199,23 @@ except ImportError as e:
                 points = []
                 for i in range(len(line["x"])):
                     if self.xlim and self.ylim:
-                        x_norm = (line["x"][i] - self.xlim[0]) / (self.xlim[1] - self.xlim[0]) if self.xlim[1] != self.xlim[0] else 0.5
-                        y_norm = 1 - (line["y"][i] - self.ylim[0]) / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
+                        x_norm = (
+                            (line["x"][i] - self.xlim[0]) / (self.xlim[1] - self.xlim[0])
+                            if self.xlim[1] != self.xlim[0]
+                            else 0.5
+                        )
+                        y_norm = (
+                            1 - (line["y"][i] - self.ylim[0]) / (self.ylim[1] - self.ylim[0])
+                            if self.ylim[1] != self.ylim[0]
+                            else 0.5
+                        )
                         points.append((x + x_norm * width, y + y_norm * height))
 
                 if len(points) > 1:
                     for i in range(len(points) - 1):
-                        draw.line([points[i], points[i + 1]], fill=line["color"], width=line["linewidth"])
+                        draw.line(
+                            [points[i], points[i + 1]], fill=line["color"], width=line["linewidth"]
+                        )
 
     class FallbackCanvas:
         """Functional canvas implementation for figure rendering."""
@@ -1117,7 +1281,7 @@ except ImportError as e:
     class FallbackFigureCanvasTkAgg:
         """Functional Tk figure canvas."""
 
-        def __init__(self, figure: object, master: Optional[object] = None) -> None:
+        def __init__(self, figure: object, master: object | None = None) -> None:
             """Initialize canvas with figure and master widget.
 
             Args:
@@ -1126,7 +1290,7 @@ except ImportError as e:
 
             """
             self.figure: object = figure
-            self.master: Optional[object] = master
+            self.master: object | None = master
 
         def draw(self) -> None:
             """Draw the figure on the canvas."""
@@ -1166,7 +1330,14 @@ except ImportError as e:
     class FallbackRectangle:
         """Rectangle patch implementation."""
 
-        def __init__(self, xy: tuple[float, float], width: float, height: float, angle: float = 0.0, **kwargs: object) -> None:
+        def __init__(
+            self,
+            xy: tuple[float, float],
+            width: float,
+            height: float,
+            angle: float = 0.0,
+            **kwargs: object,
+        ) -> None:
             """Initialize rectangle.
 
             Args:
@@ -1227,16 +1398,16 @@ except ImportError as e:
     class FallbackFuncFormatter:
         """Function formatter for axis ticks."""
 
-        def __init__(self, func: Callable[[float, Optional[int]], str]) -> None:
+        def __init__(self, func: Callable[[float, int | None], str]) -> None:
             """Initialize formatter with function.
 
             Args:
                 func: Formatting function that takes (value, position) and returns formatted string.
 
             """
-            self.func: Callable[[float, Optional[int]], str] = func
+            self.func: Callable[[float, int | None], str] = func
 
-        def __call__(self, x: float, pos: Optional[int] = None) -> str:
+        def __call__(self, x: float, pos: int | None = None) -> str:
             """Format value.
 
             Args:
@@ -1252,7 +1423,14 @@ except ImportError as e:
     class FallbackMaxNLocator:
         """Maximum number of ticks locator."""
 
-        def __init__(self, nbins: Optional[Union[int, str]] = None, steps: Optional[list[int]] = None, min_n_ticks: int = 2, prune: Optional[str] = None, **kwargs: object) -> None:
+        def __init__(
+            self,
+            nbins: int | str | None = None,
+            steps: list[int] | None = None,
+            min_n_ticks: int = 2,
+            prune: str | None = None,
+            **kwargs: object,
+        ) -> None:
             """Initialize locator.
 
             Args:
@@ -1263,16 +1441,21 @@ except ImportError as e:
                 **kwargs: Additional options like integer for integer-only ticks.
 
             """
-            self.nbins: Union[int, str] = nbins or "auto"
-            self.steps: Optional[list[int]] = steps
+            self.nbins: int | str = nbins or "auto"
+            self.steps: list[int] | None = steps
             self.min_n_ticks: int = min_n_ticks
-            self.prune: Optional[str] = prune
+            self.prune: str | None = prune
             self.integer: bool = kwargs.get("integer", False)
 
     class FallbackPdfPages:
         """Functional multi-page PDF writer for matplotlib figures."""
 
-        def __init__(self, filename: Union[str, object], keep_empty: bool = True, metadata: Optional[dict[str, object]] = None) -> None:
+        def __init__(
+            self,
+            filename: str | object,
+            keep_empty: bool = True,
+            metadata: dict[str, object] | None = None,
+        ) -> None:
             """Initialize PDF writer.
 
             Args:
@@ -1281,7 +1464,7 @@ except ImportError as e:
                 metadata: Optional metadata dictionary for the PDF.
 
             """
-            self.filename: Union[str, object] = filename
+            self.filename: str | object = filename
             self.keep_empty: bool = keep_empty
             self.metadata: dict[str, object] = metadata or {}
             self.pages: list[dict[str, object]] = []
@@ -1296,7 +1479,12 @@ except ImportError as e:
             """
             return self
 
-        def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None) -> None:
+        def __exit__(
+            self,
+            exc_type: type[BaseException] | None,
+            exc_val: BaseException | None,
+            exc_tb: types.TracebackType | None,
+        ) -> None:
             """Context manager exit.
 
             Args:
@@ -1307,7 +1495,7 @@ except ImportError as e:
             """
             self.close()
 
-        def savefig(self, figure: Optional[object] = None, **kwargs: object) -> None:
+        def savefig(self, figure: object | None = None, **kwargs: object) -> None:
             """Save current figure to PDF page.
 
             Args:
@@ -1328,7 +1516,12 @@ except ImportError as e:
             else:
                 pdf_stream = self._generate_basic_pdf_stream()
 
-            page_data: dict[str, object] = {"figure": figure, "timestamp": self._get_timestamp(), "kwargs": kwargs, "pdf_stream": pdf_stream}
+            page_data: dict[str, object] = {
+                "figure": figure,
+                "timestamp": self._get_timestamp(),
+                "kwargs": kwargs,
+                "pdf_stream": pdf_stream,
+            }
             self.pages.append(page_data)
 
         def close(self) -> None:
@@ -1399,10 +1592,7 @@ startxref
 
             """
             # Generate PDF content stream from figure
-            pdf_stream = []
-
-            # Begin graphics state
-            pdf_stream.append("q")
+            pdf_stream = ["q"]
 
             # Set up coordinate system (PDF uses bottom-left origin)
             if hasattr(figure, "figsize"):
@@ -1412,16 +1602,11 @@ startxref
 
             # Draw figure background
             if hasattr(figure, "facecolor"):
-                pdf_stream.append("1 1 1 rg")  # White background
-                pdf_stream.append(f"0 0 {width:.2f} {height:.2f} re f")
-
+                pdf_stream.extend(("1 1 1 rg", f"0 0 {width:.2f} {height:.2f} re f"))
             # Draw axes
             if hasattr(figure, "axes"):
                 for ax in figure.axes:
-                    # Draw axis frame
-                    pdf_stream.append("0 0 0 RG")  # Black color
-                    pdf_stream.append("1 w")  # Line width
-
+                    pdf_stream.extend(("0 0 0 RG", "1 w"))
                     # Get axis position (convert to PDF coordinates)
                     if hasattr(ax, "get_position"):
                         bbox = ax.get_position()
@@ -1465,12 +1650,13 @@ startxref
             # Create a simple page with timestamp
             import datetime
 
-            pdf_stream = []
-            pdf_stream.append("q")
-            pdf_stream.append("BT")  # Begin text
-            pdf_stream.append("/F1 12 Tf")  # Font and size
-            pdf_stream.append("72 720 Td")  # Position
-            pdf_stream.append(f"(Page generated at {datetime.datetime.now()}) Tj")
+            pdf_stream = [
+                "q",
+                "BT",
+                "/F1 12 Tf",
+                "72 720 Td",
+                f"(Page generated at {datetime.datetime.now()}) Tj",
+            ]
             pdf_stream.append("ET")  # End text
             pdf_stream.append("Q")
 
@@ -1482,10 +1668,16 @@ startxref
         def __init__(self) -> None:
             """Initialize pyplot interface."""
             self._figures: dict[int, object] = {}
-            self._current_figure: Optional[object] = None
+            self._current_figure: object | None = None
             self._figure_counter: int = 0
 
-        def figure(self, num: Optional[int] = None, figsize: tuple[float, float] = (8, 6), dpi: int = 100, **kwargs: object) -> object:
+        def figure(
+            self,
+            num: int | None = None,
+            figsize: tuple[float, float] = (8, 6),
+            dpi: int = 100,
+            **kwargs: object,
+        ) -> object:
             """Create or activate a figure.
 
             Args:
@@ -1544,7 +1736,15 @@ startxref
             fig = self.gcf()
             return fig.add_subplot(nrows, ncols, index)
 
-        def subplots(self, nrows: int = 1, ncols: int = 1, figsize: tuple[float, float] = (8, 6), **kwargs: object) -> Union[tuple[object, object], tuple[object, list[object]], tuple[object, list[list[object]]]]:
+        def subplots(
+            self,
+            nrows: int = 1,
+            ncols: int = 1,
+            figsize: tuple[float, float] = (8, 6),
+            **kwargs: object,
+        ) -> (
+            tuple[object, object] | tuple[object, list[object]] | tuple[object, list[list[object]]]
+        ):
             """Create figure and subplots.
 
             Args:
@@ -1559,10 +1759,10 @@ startxref
             """
             fig = self.figure(figsize=figsize)
 
-            if nrows == 1 and ncols == 1:
-                ax = fig.add_subplot(1, 1, 1)
-                return fig, ax
             if nrows == 1:
+                if ncols == 1:
+                    ax = fig.add_subplot(1, 1, 1)
+                    return fig, ax
                 axes = [fig.add_subplot(1, ncols, i + 1) for i in range(ncols)]
                 return fig, axes
             if ncols == 1:
@@ -1676,7 +1876,7 @@ startxref
             ax = self.gca()
             ax.set_ylabel(label, **kwargs)
 
-        def xlim(self, *args: object, **kwargs: object) -> Optional[tuple[float, float]]:
+        def xlim(self, *args: object, **kwargs: object) -> tuple[float, float] | None:
             """Set xlim of current axes.
 
             Args:
@@ -1692,7 +1892,7 @@ startxref
                 ax.set_xlim(*args, **kwargs)
             return ax.xlim
 
-        def ylim(self, *args: object, **kwargs: object) -> Optional[tuple[float, float]]:
+        def ylim(self, *args: object, **kwargs: object) -> tuple[float, float] | None:
             """Set ylim of current axes.
 
             Args:
@@ -1735,7 +1935,7 @@ startxref
             fig = self.gcf()
             fig.tight_layout()
 
-        def savefig(self, fname: Union[str, object], **kwargs: object) -> None:
+        def savefig(self, fname: str | object, **kwargs: object) -> None:
             """Save current figure.
 
             Args:
@@ -1751,9 +1951,11 @@ startxref
 
             In fallback mode, figures are saved but not displayed interactively.
             """
-            logger.info("Matplotlib show() called in fallback mode - figures saved but not displayed")
+            logger.info(
+                "Matplotlib show() called in fallback mode - figures saved but not displayed"
+            )
 
-        def close(self, fig: Optional[Union[int, str, object]] = None) -> None:
+        def close(self, fig: int | str | object | None = None) -> None:
             """Close figure.
 
             Args:
@@ -1847,25 +2049,19 @@ MATPLOTLIB_AVAILABLE = HAS_MATPLOTLIB
 
 # Export all matplotlib objects and availability flag
 __all__ = [
-    # Availability flags
-    "HAS_MATPLOTLIB",
-    "MATPLOTLIB_VERSION",
-    "MATPLOTLIB_AVAILABLE",
-    # Main modules
-    "mpl",
-    "plt",
-    # Core classes
-    "Figure",
     "Axes",
+    "Circle",
+    "Figure",
     "FigureCanvasQTAgg",
     "FigureCanvasTkAgg",
-    # Patches
-    "Rectangle",
-    "Circle",
-    "Polygon",
-    # Formatters and locators
     "FuncFormatter",
+    "HAS_MATPLOTLIB",
+    "MATPLOTLIB_AVAILABLE",
+    "MATPLOTLIB_VERSION",
     "MaxNLocator",
-    # PDF backends
     "PdfPages",
+    "Polygon",
+    "Rectangle",
+    "mpl",
+    "plt",
 ]

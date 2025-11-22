@@ -39,15 +39,15 @@ class ValidationResult:
     binary_path: str
     timestamp: str
     validation_id: str
-    intellicrack_detection: Dict[str, Any]
-    evidence_collection: Dict[str, Any]
-    cross_validation: Dict[str, Any]
+    intellicrack_detection: dict[str, Any]
+    evidence_collection: dict[str, Any]
+    cross_validation: dict[str, Any]
     consensus_score: float
     validation_passed: bool
     confidence_level: str
-    evidence_integrity: Dict[str, Any]
-    performance_metrics: Dict[str, Any]
-    detailed_report: Dict[str, Any]
+    evidence_integrity: dict[str, Any]
+    performance_metrics: dict[str, Any]
+    detailed_report: dict[str, Any]
 
 
 @dataclass
@@ -69,7 +69,7 @@ class DetectionValidator:
     Combines Intellicrack detection results with evidence collection and cross-validation.
     """
 
-    def __init__(self, config: Optional[ValidationConfig] = None, logger: Optional[logging.Logger] = None):
+    def __init__(self, config: ValidationConfig | None = None, logger: logging.Logger | None = None):
         """Initialize detection validator with comprehensive configuration."""
         self.config = config or ValidationConfig()
         self.logger = logger or get_logger(__name__)
@@ -80,7 +80,7 @@ class DetectionValidator:
         self.validation_utils = ValidationUtils()
 
         # Initialize validation components
-        self.evidence_collector: Optional[DetectionEvidenceCollector] = None  # Initialized per binary
+        self.evidence_collector: DetectionEvidenceCollector | None = None  # Initialized per binary
         # Setup scanner directory for cross-validation tools
         scanner_dir = self.config.evidence_storage_path / "protection_scanners"
         scanner_dir.mkdir(parents=True, exist_ok=True)
@@ -100,7 +100,7 @@ class DetectionValidator:
 
         self.logger.info("DetectionValidator initialized successfully")
 
-    async def validate_detection(self, binary_path: Path, expected_protections: Optional[Set[str]] = None) -> ValidationResult:
+    async def validate_detection(self, binary_path: Path, expected_protections: set[str] | None = None) -> ValidationResult:
         """
         Perform comprehensive validation of protection detection with undeniable evidence.
 
@@ -195,8 +195,8 @@ class DetectionValidator:
                 detailed_report={"error": str(e), "validation_failed": True}
             )
 
-    async def validate_batch(self, binary_paths: List[Path],
-                           expected_protections: Optional[Dict[str, Set[str]]] = None) -> List[ValidationResult]:
+    async def validate_batch(self, binary_paths: list[Path],
+                           expected_protections: dict[str, set[str]] | None = None) -> list[ValidationResult]:
         """
         Perform batch validation of multiple binaries with concurrent processing.
 
@@ -224,11 +224,11 @@ class DetectionValidator:
                 self.logger.info(f"Batch validation completed - {len(results)} results")
                 return results
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 self.logger.error(f"Batch validation timed out after {self.config.timeout_seconds * len(binary_paths)} seconds")
                 return []
 
-    async def _run_intellicrack_detection(self, binary_path: Path) -> Dict[str, Any]:
+    async def _run_intellicrack_detection(self, binary_path: Path) -> dict[str, Any]:
         """Run Intellicrack's protection detection and collect results."""
         self.logger.debug(f"Running Intellicrack detection for: {binary_path}")
 
@@ -263,7 +263,7 @@ class DetectionValidator:
                 'error': str(e)
             }
 
-    async def _collect_evidence(self, binary_path: Path, intellicrack_results: Dict[str, Any]) -> Dict[str, Any]:
+    async def _collect_evidence(self, binary_path: Path, intellicrack_results: dict[str, Any]) -> dict[str, Any]:
         """Collect undeniable evidence for detected protections."""
         self.logger.debug(f"Collecting evidence for: {binary_path}")
 
@@ -326,7 +326,7 @@ class DetectionValidator:
                 'error': str(e)
             }
 
-    async def _perform_cross_validation(self, binary_path: Path) -> Dict[str, Any]:
+    async def _perform_cross_validation(self, binary_path: Path) -> dict[str, Any]:
         """Perform cross-validation using multiple protection scanners."""
         self.logger.debug(f"Performing cross-validation for: {binary_path}")
 
@@ -363,9 +363,9 @@ class DetectionValidator:
                 'error': str(e)
             }
 
-    def _calculate_consensus(self, intellicrack_results: Dict[str, Any],
-                           evidence_results: Dict[str, Any],
-                           cross_validation_results: Dict[str, Any]) -> float:
+    def _calculate_consensus(self, intellicrack_results: dict[str, Any],
+                           evidence_results: dict[str, Any],
+                           cross_validation_results: dict[str, Any]) -> float:
         """Calculate overall consensus score from all validation sources."""
         try:
             scores = []
@@ -398,7 +398,7 @@ class DetectionValidator:
             self.logger.error(f"Consensus calculation failed: {str(e)}")
             return 0.0
 
-    async def _verify_evidence_integrity(self, evidence_results: Dict[str, Any]) -> Dict[str, Any]:
+    async def _verify_evidence_integrity(self, evidence_results: dict[str, Any]) -> dict[str, Any]:
         """Verify integrity and authenticity of collected evidence."""
         if not self.config.integrity_verification:
             return {'integrity_verified': True, 'verification_skipped': True}
@@ -449,9 +449,9 @@ class DetectionValidator:
             self.logger.error(f"Evidence integrity verification failed: {str(e)}")
             return {'integrity_verified': False, 'error': str(e)}
 
-    def _determine_validation_result(self, consensus_score: float, evidence_integrity: Dict[str, Any],
-                                   expected_protections: Optional[Set[str]],
-                                   intellicrack_results: Dict[str, Any]) -> bool:
+    def _determine_validation_result(self, consensus_score: float, evidence_integrity: dict[str, Any],
+                                   expected_protections: set[str] | None,
+                                   intellicrack_results: dict[str, Any]) -> bool:
         """Determine overall validation result based on all criteria."""
         try:
             # Check consensus threshold
@@ -467,7 +467,7 @@ class DetectionValidator:
 
             # Check against expected protections if provided
             if expected_protections:
-                detected = set(p.get('name', '') for p in intellicrack_results.get('detected_protections', []))
+                detected = {p.get('name', '') for p in intellicrack_results.get('detected_protections', [])}
                 if not expected_protections.issubset(detected):
                     missing = expected_protections - detected
                     self.logger.warning(f"Missing expected protections: {missing}")
@@ -479,7 +479,7 @@ class DetectionValidator:
             self.logger.error(f"Validation result determination failed: {str(e)}")
             return False
 
-    def _calculate_confidence_level(self, consensus_score: float, evidence_integrity: Dict[str, Any]) -> str:
+    def _calculate_confidence_level(self, consensus_score: float, evidence_integrity: dict[str, Any]) -> str:
         """Calculate human-readable confidence level."""
         try:
             evidence_score = evidence_integrity.get('integrity_score', 0.0)
@@ -499,7 +499,7 @@ class DetectionValidator:
         except Exception:
             return "UNKNOWN"
 
-    def _generate_performance_metrics(self, processing_time: float, intellicrack_results: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_performance_metrics(self, processing_time: float, intellicrack_results: dict[str, Any]) -> dict[str, Any]:
         """Generate detailed performance metrics for this validation."""
         return {
             'total_processing_time': processing_time,
@@ -511,9 +511,9 @@ class DetectionValidator:
             'performance_rating': 'FAST' if processing_time < 30 else 'NORMAL' if processing_time < 120 else 'SLOW'
         }
 
-    def _generate_detailed_report(self, binary_path: Path, intellicrack_results: Dict[str, Any],
-                                evidence_results: Dict[str, Any], cross_validation_results: Dict[str, Any],
-                                consensus_score: float) -> Dict[str, Any]:
+    def _generate_detailed_report(self, binary_path: Path, intellicrack_results: dict[str, Any],
+                                evidence_results: dict[str, Any], cross_validation_results: dict[str, Any],
+                                consensus_score: float) -> dict[str, Any]:
         """Generate comprehensive detailed validation report."""
         return {
             'binary_analysis': {
@@ -579,7 +579,7 @@ class DetectionValidator:
         file_hash = hashlib.md5(str(binary_path).encode()).hexdigest()[:8]  # noqa: S324
         return f"VAL_{timestamp}_{file_hash}"
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """Get current performance summary for monitoring."""
         return {
             'performance_metrics': self.performance_metrics.copy(),

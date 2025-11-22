@@ -13,14 +13,7 @@ from typing import Any
 
 import frida
 
-from intellicrack.core.monitoring.base_monitor import (
-    BaseMonitor,
-    EventSeverity,
-    EventSource,
-    EventType,
-    MonitorEvent,
-    ProcessInfo,
-)
+from intellicrack.core.monitoring.base_monitor import BaseMonitor, EventSeverity, EventSource, EventType, MonitorEvent, ProcessInfo
 
 
 class APIMonitor(BaseMonitor):
@@ -60,9 +53,7 @@ class APIMonitor(BaseMonitor):
             return True
 
         except Exception as e:
-            if not self._handle_error(e):
-                return False
-            return False
+            return False if self._handle_error(e) else False
 
     def _stop_monitoring(self) -> None:
         """Stop API monitoring."""
@@ -124,7 +115,10 @@ class APIMonitor(BaseMonitor):
         event_type = event_type_map.get(category, EventType.ACCESS)
 
         severity = EventSeverity.INFO
-        if any(keyword in str(args).lower() for keyword in ["license", "serial", "key", "activation", "trial"]):
+        if any(
+            keyword in str(args).lower()
+            for keyword in ["license", "serial", "key", "activation", "trial"]
+        ):
             severity = EventSeverity.CRITICAL
         elif category in ["registry_write", "file_write"]:
             severity = EventSeverity.WARNING

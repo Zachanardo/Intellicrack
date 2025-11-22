@@ -31,9 +31,9 @@ class VersionSupport:
     protection_name: str
     version: str
     compatibility_status: CompatibilityStatus
-    supported_features: List[str]
-    unsupported_features: List[str]
-    known_limitations: List[str]
+    supported_features: list[str]
+    unsupported_features: list[str]
+    known_limitations: list[str]
     bypass_success_rate: float
     last_tested: str = None
     notes: str = ""
@@ -50,9 +50,9 @@ class IncompatibilityReport:
     protection_name: str
     detected_version: str
     incompatibility_reason: str
-    missing_capabilities: List[str]
+    missing_capabilities: list[str]
     recommended_action: str
-    supported_versions: List[str]
+    supported_versions: list[str]
     severity: str  # 'critical', 'high', 'medium', 'low'
     timestamp: str = None
 
@@ -69,11 +69,11 @@ class CompatibilityTestResult:
     tested_version: str
     compatibility_status: CompatibilityStatus
     test_success: bool
-    features_tested: List[str]
-    features_passed: List[str]
-    features_failed: List[str]
-    error_messages: List[str]
-    incompatibility_report: Optional[IncompatibilityReport]
+    features_tested: list[str]
+    features_passed: list[str]
+    features_failed: list[str]
+    error_messages: list[str]
+    incompatibility_report: IncompatibilityReport | None
     timestamp: str = None
 
     def __post_init__(self):
@@ -94,15 +94,15 @@ class VersionCompatibilityVerifier:
         self.compatibility_db = self._load_compatibility_db()
 
         # Track test results
-        self.test_results: List[CompatibilityTestResult] = []
+        self.test_results: list[CompatibilityTestResult] = []
 
-    def _load_compatibility_db(self) -> Dict[str, Any]:
+    def _load_compatibility_db(self) -> dict[str, Any]:
         """
         Load or create the version compatibility database.
         """
         if self.compatibility_db_path.exists():
             try:
-                with open(self.compatibility_db_path, 'r') as f:
+                with open(self.compatibility_db_path) as f:
                     return json.load(f)
             except Exception as e:
                 logger.warning(f"Failed to load compatibility DB: {e}. Creating new one.")
@@ -263,7 +263,7 @@ class VersionCompatibilityVerifier:
         self._save_compatibility_db(default_db)
         return default_db
 
-    def _save_compatibility_db(self, db: Dict[str, Any]) -> None:
+    def _save_compatibility_db(self, db: dict[str, Any]) -> None:
         """Save compatibility database to file."""
         try:
             with open(self.compatibility_db_path, 'w') as f:
@@ -272,7 +272,7 @@ class VersionCompatibilityVerifier:
         except Exception as e:
             logger.error(f"Failed to save compatibility database: {e}")
 
-    def detect_version_from_binary(self, binary_path: str, protection_name: str) -> Optional[str]:
+    def detect_version_from_binary(self, binary_path: str, protection_name: str) -> str | None:
         """
         Enhanced version detection from binary analysis.
         """
@@ -335,7 +335,7 @@ class VersionCompatibilityVerifier:
             logger.error(f"Version detection failed for {binary_path}: {e}")
             return None
 
-    def _extract_version_from_data(self, data: bytes, protection_name: str) -> Optional[str]:
+    def _extract_version_from_data(self, data: bytes, protection_name: str) -> str | None:
         """Extract version information from resource data."""
         try:
             # Convert to string for pattern matching
@@ -348,7 +348,7 @@ class VersionCompatibilityVerifier:
 
         return self._pattern_match_version(data_str.encode(), protection_name)
 
-    def _pattern_match_version(self, data: bytes, protection_name: str) -> Optional[str]:
+    def _pattern_match_version(self, data: bytes, protection_name: str) -> str | None:
         """Pattern match version from binary data."""
         if protection_name not in self.compatibility_db["supported_protections"]:
             return None
@@ -375,7 +375,7 @@ class VersionCompatibilityVerifier:
         return None
 
     def check_version_compatibility(self, software_name: str, protection_name: str,
-                                    detected_version: str) -> Tuple[CompatibilityStatus, VersionSupport]:
+                                    detected_version: str) -> tuple[CompatibilityStatus, VersionSupport]:
         """
         Check if the detected version is officially supported.
         """
@@ -776,7 +776,7 @@ class VersionCompatibilityVerifier:
 
         return "\n".join(report_lines)
 
-    def save_compatibility_report(self, filename: Optional[str] = None) -> str:
+    def save_compatibility_report(self, filename: str | None = None) -> str:
         """Save compatibility report to file."""
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

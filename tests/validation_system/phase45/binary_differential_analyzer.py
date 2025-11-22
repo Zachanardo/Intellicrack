@@ -76,7 +76,7 @@ class DisassemblyEngine:
             self.disassembler = Cs(arch, mode)
             self.disassembler.detail = True
 
-    def disassemble_region(self, start_offset: int, size: int) -> List[Dict]:
+    def disassemble_region(self, start_offset: int, size: int) -> list[dict]:
         """Disassemble a specific region of the binary.
 
         Args:
@@ -194,7 +194,7 @@ class DisassemblyEngine:
         self.control_flow_graph = cfg
         return cfg
 
-    def _identify_basic_blocks(self, start_address: int) -> Dict[int, Dict]:
+    def _identify_basic_blocks(self, start_address: int) -> dict[int, dict]:
         """Identify basic blocks in disassembled code.
 
         Args:
@@ -246,7 +246,7 @@ class DisassemblyEngine:
 
         return blocks
 
-    def _extract_jump_target(self, insn: Dict) -> Optional[int]:
+    def _extract_jump_target(self, insn: dict) -> int | None:
         """Extract jump target address from instruction.
 
         Args:
@@ -272,7 +272,7 @@ class DisassemblyEngine:
         except (ValueError, TypeError):
             return None
 
-    def _extract_call_target(self, insn: Dict) -> Optional[int]:
+    def _extract_call_target(self, insn: dict) -> int | None:
         """Extract call target address from instruction.
 
         Args:
@@ -283,7 +283,7 @@ class DisassemblyEngine:
         """
         return self._extract_jump_target(insn)  # Similar logic for calls
 
-    def detect_protection_patterns(self) -> Dict[str, List[Dict]]:
+    def detect_protection_patterns(self) -> dict[str, list[dict]]:
         """Detect common protection patterns in disassembled code.
 
         Returns:
@@ -397,7 +397,7 @@ class DisassemblyEngine:
 class BinaryDifferentialAnalyzer:
     """Performs sophisticated differential analysis of binary modifications with deep disassembly."""
 
-    def __init__(self, target_binary_path: str, work_dir: Optional[str] = None):
+    def __init__(self, target_binary_path: str, work_dir: str | None = None):
         """Initialize binary differential analyzer.
 
         Args:
@@ -412,26 +412,26 @@ class BinaryDifferentialAnalyzer:
         self._setup_logging()
 
         # Binary snapshots
-        self.original_binary_data: Optional[bytes] = None
-        self.modified_binary_data: Optional[bytes] = None
-        self.original_hash: Optional[str] = None
-        self.modified_hash: Optional[str] = None
+        self.original_binary_data: bytes | None = None
+        self.modified_binary_data: bytes | None = None
+        self.original_hash: str | None = None
+        self.modified_hash: str | None = None
 
         # Memory snapshots
-        self.original_memory_data: Dict[int, bytes] = {}
-        self.modified_memory_data: Dict[int, bytes] = {}
+        self.original_memory_data: dict[int, bytes] = {}
+        self.modified_memory_data: dict[int, bytes] = {}
 
         # Analysis results
-        self.byte_differences: List[Dict] = []
-        self.memory_differences: List[Dict] = []
-        self.modification_analysis: Dict = {}
+        self.byte_differences: list[dict] = []
+        self.memory_differences: list[dict] = []
+        self.modification_analysis: dict = {}
 
         # Disassembly engines
-        self.original_disassembly: Optional[DisassemblyEngine] = None
-        self.modified_disassembly: Optional[DisassemblyEngine] = None
-        self.instruction_differences: List[Dict] = []
-        self.cfg_differences: Dict = {}
-        self.protection_analysis: Dict = {}
+        self.original_disassembly: DisassemblyEngine | None = None
+        self.modified_disassembly: DisassemblyEngine | None = None
+        self.instruction_differences: list[dict] = []
+        self.cfg_differences: dict = {}
+        self.protection_analysis: dict = {}
 
         # Validate target binary exists
         if not self.target_binary_path.exists():
@@ -640,7 +640,7 @@ class BinaryDifferentialAnalyzer:
             self.logger.error(f"Failed to read process memory: {e}")
             return b""
 
-    def generate_binary_diff(self) -> Dict:
+    def generate_binary_diff(self) -> dict:
         """Generate byte-level diff between original and modified binary.
 
         Returns:
@@ -814,7 +814,7 @@ class BinaryDifferentialAnalyzer:
         else:
             return "major_change"
 
-    def validate_modifications(self) -> Dict:
+    def validate_modifications(self) -> dict:
         """Validate that modifications are intentional and safe.
 
         Returns:
@@ -891,7 +891,7 @@ class BinaryDifferentialAnalyzer:
 
         return validation_results
 
-    def generate_comprehensive_report(self) -> Dict:
+    def generate_comprehensive_report(self) -> dict:
         """Generate comprehensive analysis report.
 
         Returns:

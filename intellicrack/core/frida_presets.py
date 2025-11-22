@@ -453,8 +453,12 @@ def get_preset_by_software(software_name: str) -> dict:
         - hooks: List of hooks to install
 
     Example:
-        >>> preset = get_preset_by_software("photoshop")
-        >>> print(preset['description'])
+        >>> preset = (
+        ...     get_preset_by_software(
+        ...         "photoshop"
+        ...     )
+        ... )
+        >>> print(preset["description"])
         'Comprehensive bypass for Adobe CC applications'
 
     Note:
@@ -472,9 +476,8 @@ def get_preset_by_software(software_name: str) -> dict:
             return preset_config
 
         # Check target field
-        if "target" in preset_config:
-            if software_lower in preset_config["target"].lower():
-                return preset_config
+        if "target" in preset_config and software_lower in preset_config["target"].lower():
+            return preset_config
 
     # Default to minimal bypass
     return FRIDA_PRESETS["Minimal Bypass"]
@@ -505,8 +508,10 @@ def get_wizard_config(mode: str = "balanced") -> dict:
         - priority: List of prioritized protection types
 
     Example:
-        >>> config = get_wizard_config("aggressive")
-        >>> print(config['max_scripts'])
+        >>> config = get_wizard_config(
+        ...     "aggressive"
+        ... )
+        >>> print(config["max_scripts"])
         30
 
     Note:
@@ -546,7 +551,9 @@ def get_scripts_for_protection(protection_type: str) -> list:
         protection type is not recognized.
 
     Example:
-        >>> scripts = get_scripts_for_protection("LICENSE")
+        >>> scripts = get_scripts_for_protection(
+        ...     "LICENSE"
+        ... )
         >>> print(scripts)
         ['cloud_licensing_bypass', 'registry_monitor']
 

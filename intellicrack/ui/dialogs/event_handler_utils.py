@@ -19,16 +19,8 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 from collections.abc import Callable
 
-from intellicrack.handlers.pyqt6_handler import (
-    QCloseEvent,
-    QDialog,
-    QMenu,
-    QMessageBox,
-    QPoint,
-    QThread,
-    QTimer,
-    QWidget,
-)
+from intellicrack.handlers.pyqt6_handler import QCloseEvent, QDialog, QMenu, QMessageBox, QPoint, QThread, QTimer, QWidget
+
 
 """
 Event Handler Utilities for Dialog Management
@@ -92,8 +84,7 @@ class DialogEventHandler:
 
         """
         for signal_name, handler in signal_connections.items():
-            signal = getattr(thread, signal_name, None)
-            if signal:
+            if signal := getattr(thread, signal_name, None):
                 signal.connect(handler)
 
     @staticmethod

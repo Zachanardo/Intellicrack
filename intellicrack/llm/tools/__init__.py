@@ -14,18 +14,18 @@ from .script_generation_tool import ScriptGenerationTool, create_script_tool
 from .yara_pattern_analysis_tool import YARAPatternAnalysisTool, create_yara_pattern_tool
 
 __all__ = [
-    "DIEAnalysisTool",
-    "create_die_tool",
     "BinaryAnalysisTool",
-    "create_binary_tool",
-    "ScriptGenerationTool",
-    "create_script_tool",
-    "YARAPatternAnalysisTool",
-    "create_yara_pattern_tool",
+    "DIEAnalysisTool",
     "FirmwareAnalysisTool",
-    "create_firmware_analysis_tool",
     "MemoryForensicsTool",
+    "ScriptGenerationTool",
+    "YARAPatternAnalysisTool",
+    "create_binary_tool",
+    "create_die_tool",
+    "create_firmware_analysis_tool",
     "create_memory_forensics_tool",
+    "create_script_tool",
+    "create_yara_pattern_tool",
     "get_all_tools",
     "register_tools_with_llm",
 ]

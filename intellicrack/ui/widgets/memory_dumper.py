@@ -137,7 +137,9 @@ class MemoryDumperWidget(QWidget):
         # Regions table
         self.regions_table = QTableWidget()
         self.regions_table.setColumnCount(5)
-        self.regions_table.setHorizontalHeaderLabels(["Address", "Size", "Protection", "Type", "Path"])
+        self.regions_table.setHorizontalHeaderLabels(
+            ["Address", "Size", "Protection", "Type", "Path"]
+        )
         self.regions_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         regions_layout.addWidget(self.regions_table)
 
@@ -244,7 +246,11 @@ class MemoryDumperWidget(QWidget):
                     return
 
                 result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                    [tasklist_path, "/fo", "csv"], check=False, capture_output=True, text=True, shell=False,
+                    [tasklist_path, "/fo", "csv"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    shell=False,
                 )
                 lines = result.stdout.strip().split("\n")[1:]  # Skip header
                 for line in lines:
@@ -277,7 +283,7 @@ class MemoryDumperWidget(QWidget):
                             with open(f"/proc/{pid_dir}/comm") as f:
                                 name = f.read().strip()
                             self.process_combo.addItem(f"{name} (PID: {pid_dir})", int(pid_dir))
-                        except (FileNotFoundError, ValueError, OSError) as e:
+                        except (ValueError, OSError) as e:
                             logger.debug(f"Failed to read process info for PID {pid_dir}: {e}")
             except Exception as e:
                 self.output_log.append(f"Failed to enumerate processes: {e}")
@@ -374,8 +380,12 @@ class MemoryDumperWidget(QWidget):
                         row = self.regions_table.rowCount()
                         self.regions_table.insertRow(row)
 
-                        self.regions_table.setItem(row, 0, QTableWidgetItem(f"0x{mbi.BaseAddress:016X}"))
-                        self.regions_table.setItem(row, 1, QTableWidgetItem(f"{mbi.RegionSize:,} bytes"))
+                        self.regions_table.setItem(
+                            row, 0, QTableWidgetItem(f"0x{mbi.BaseAddress:016X}")
+                        )
+                        self.regions_table.setItem(
+                            row, 1, QTableWidgetItem(f"{mbi.RegionSize:,} bytes")
+                        )
                         self.regions_table.setItem(row, 2, QTableWidgetItem(protection))
                         self.regions_table.setItem(row, 3, QTableWidgetItem(region_type))
                         self.regions_table.setItem(row, 4, QTableWidgetItem(""))
@@ -410,11 +420,17 @@ class MemoryDumperWidget(QWidget):
                             row = self.regions_table.rowCount()
                             self.regions_table.insertRow(row)
 
-                            self.regions_table.setItem(row, 0, QTableWidgetItem(f"0x{start_addr:016X}"))
+                            self.regions_table.setItem(
+                                row, 0, QTableWidgetItem(f"0x{start_addr:016X}")
+                            )
                             self.regions_table.setItem(row, 1, QTableWidgetItem(f"{size:,} bytes"))
                             self.regions_table.setItem(row, 2, QTableWidgetItem(perms))
-                            self.regions_table.setItem(row, 3, QTableWidgetItem(parts[3] if len(parts) > 3 else ""))
-                            self.regions_table.setItem(row, 4, QTableWidgetItem(parts[5] if len(parts) > 5 else ""))
+                            self.regions_table.setItem(
+                                row, 3, QTableWidgetItem(parts[3] if len(parts) > 3 else "")
+                            )
+                            self.regions_table.setItem(
+                                row, 4, QTableWidgetItem(parts[5] if len(parts) > 5 else "")
+                            )
 
             self.output_log.append(f"Found {self.regions_table.rowCount()} memory regions")
 
@@ -473,14 +489,17 @@ class MemoryDumperWidget(QWidget):
 
         """
         readable = protect & 0x66
-        writable = protect & 0x44
-        executable = protect & 0xF0
-
         if self.readable_check.isChecked() and not readable:
             return False
-        if self.writable_check.isChecked() and not writable:
-            return False
-        return not (self.executable_check.isChecked() and not executable)
+        else:
+            writable = protect & 0x44
+            executable = protect & 0xF0
+
+            return (
+                False
+                if self.writable_check.isChecked() and not writable
+                else bool(not self.executable_check.isChecked() or executable)
+            )
 
     def _should_include_region_linux(self, perms: str) -> bool:
         """Check if Linux region should be included based on filters.
@@ -502,10 +521,7 @@ class MemoryDumperWidget(QWidget):
 
     def dump_selected_regions(self) -> None:
         """Dump selected memory regions."""
-        selected_rows = set()
-        for item in self.regions_table.selectedItems():
-            selected_rows.add(item.row())
-
+        selected_rows = {item.row() for item in self.regions_table.selectedItems()}
         if not selected_rows:
             self.output_log.append("No regions selected")
             return
@@ -678,15 +694,13 @@ class MemoryDumpThread(QThread):
             buffer = ctypes.create_string_buffer(size)
             bytes_read = ctypes.c_size_t()
 
-            result = kernel32.ReadProcessMemory(
+            if result := kernel32.ReadProcessMemory(
                 h_process,
                 ctypes.c_void_p(addr),
                 buffer,
                 size,
                 ctypes.byref(bytes_read),
-            )
-
-            if result:
+            ):
                 # Save to file
                 filename = os.path.join(self.output_dir, f"dump_0x{addr:016X}.bin")
                 with open(filename, "wb") as f:

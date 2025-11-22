@@ -38,6 +38,7 @@ from intellicrack.handlers.pyqt6_handler import (
 
 from ...utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 
@@ -156,15 +157,21 @@ class AIAssistantWidget(QWidget):
         actions_layout.addWidget(explain_btn)
 
         optimize_btn = QPushButton("Optimize")
-        optimize_btn.clicked.connect(lambda: self.send_quick_message("Optimize this code for performance"))
+        optimize_btn.clicked.connect(
+            lambda: self.send_quick_message("Optimize this code for performance")
+        )
         actions_layout.addWidget(optimize_btn)
 
         vulnerabilities_btn = QPushButton("Find Vulns")
-        vulnerabilities_btn.clicked.connect(lambda: self.send_quick_message("Find vulnerabilities in this code"))
+        vulnerabilities_btn.clicked.connect(
+            lambda: self.send_quick_message("Find vulnerabilities in this code")
+        )
         actions_layout.addWidget(vulnerabilities_btn)
 
         exploit_btn = QPushButton("Exploit")
-        exploit_btn.clicked.connect(lambda: self.send_quick_message("How to exploit this vulnerability"))
+        exploit_btn.clicked.connect(
+            lambda: self.send_quick_message("How to exploit this vulnerability")
+        )
         actions_layout.addWidget(exploit_btn)
 
         bypass_btn = QPushButton("Bypass")
@@ -470,8 +477,7 @@ class AIAssistantWidget(QWidget):
 
     def send_message(self) -> None:
         """Send a message to the AI."""
-        message = self.message_input.text().strip()
-        if message:
+        if message := self.message_input.text().strip():
             self.add_message("User", message)
             self.message_input.clear()
 
@@ -527,7 +533,9 @@ class AIAssistantWidget(QWidget):
                 full_prompt = f"Context: {context}\n\nQuestion: {message}"
 
             # Generate response using the selected model
-            response = ai_manager.generate_response(prompt=full_prompt, model=model, temperature=temperature, max_tokens=1000)
+            response = ai_manager.generate_response(
+                prompt=full_prompt, model=model, temperature=temperature, max_tokens=1000
+            )
 
             if response and response.strip():
                 response = response.strip()
@@ -545,7 +553,9 @@ class AIAssistantWidget(QWidget):
         self.add_message("AI", response)
         self.message_sent.emit(message)
 
-    def _generate_fallback_response(self, message: str, model: str, temperature: float, context: str = "") -> str:
+    def _generate_fallback_response(
+        self, message: str, model: str, temperature: float, context: str = ""
+    ) -> str:
         """Generate intelligent fallback response when AI backend is unavailable."""
         message_lower = message.lower()
 
@@ -587,16 +597,7 @@ class AIAssistantWidget(QWidget):
             )
 
         # Generic intelligent response
-        return (
-            f"Analysis using {model} (temp={temperature}):\n"
-            f"Your question: '{message}'\n\n"
-            f"For comprehensive security research, consider:\n"
-            f" Static analysis of target binaries\n"
-            f" Dynamic runtime analysis\n"
-            f" Network traffic monitoring\n"
-            f" Vulnerability assessment\n\n"
-            f"{'Context considered: ' + context if context else 'No additional context provided'}"
-        )
+        return f"Analysis using {model} (temp={temperature}):\nYour question: '{message}'\n\nFor comprehensive security research, consider:\n Static analysis of target binaries\n Dynamic runtime analysis\n Network traffic monitoring\n Vulnerability assessment\n\n{f'Context considered: {context}' if context else 'No additional context provided'}"
 
     def clear_chat(self) -> None:
         """Clear the chat history."""
@@ -682,7 +683,9 @@ class AIAssistantWidget(QWidget):
         from PyQt6.QtWidgets import QFileDialog
 
         script_type = self.script_type_combo.currentText().lower().replace(" ", "_")
-        file_name, _ = QFileDialog.getSaveFileName(self, "Save Script", f"{script_type}.js", "All Files (*)")
+        file_name, _ = QFileDialog.getSaveFileName(
+            self, "Save Script", f"{script_type}.js", "All Files (*)"
+        )
 
         if file_name:
             try:
@@ -714,7 +717,9 @@ class AIAssistantWidget(QWidget):
                     script_file = temp_path / "test_script.js"
                     script_file.write_text(script_content, encoding="utf-8")
 
-                    result = subprocess.run(["frida", "--version"], capture_output=True, text=True, timeout=5)
+                    result = subprocess.run(
+                        ["frida", "--version"], capture_output=True, text=True, timeout=5
+                    )
 
                     if result.returncode == 0:
                         self.script_output.setPlainText(
@@ -733,7 +738,12 @@ class AIAssistantWidget(QWidget):
                     script_file = temp_path / "test_script.py"
                     script_file.write_text(script_content, encoding="utf-8")
 
-                    result = subprocess.run(["python", "-m", "py_compile", str(script_file)], capture_output=True, text=True, timeout=10)
+                    result = subprocess.run(
+                        ["python", "-m", "py_compile", str(script_file)],
+                        capture_output=True,
+                        text=True,
+                        timeout=10,
+                    )
 
                     if result.returncode == 0:
                         self.script_output.setPlainText(
@@ -742,14 +752,21 @@ class AIAssistantWidget(QWidget):
                         logger.info("Python script validation successful")
                     else:
                         error_msg = result.stderr or result.stdout
-                        self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\nFAIL Syntax error:\n{error_msg}")
+                        self.script_output.setPlainText(
+                            f"{script_content}\n\n{'=' * 50}\nFAIL Syntax error:\n{error_msg}"
+                        )
                         logger.error(f"Python validation failed: {error_msg}")
 
                 elif "Ghidra" in script_type:
                     script_file = temp_path / "test_script.py"
                     script_file.write_text(script_content, encoding="utf-8")
 
-                    result = subprocess.run(["python", "-m", "py_compile", str(script_file)], capture_output=True, text=True, timeout=10)
+                    result = subprocess.run(
+                        ["python", "-m", "py_compile", str(script_file)],
+                        capture_output=True,
+                        text=True,
+                        timeout=10,
+                    )
 
                     if result.returncode == 0:
                         self.script_output.setPlainText(
@@ -757,7 +774,9 @@ class AIAssistantWidget(QWidget):
                         )
                         logger.info("Ghidra script validation successful")
                     else:
-                        self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\n⚠ Syntax check failed")
+                        self.script_output.setPlainText(
+                            f"{script_content}\n\n{'=' * 50}\n⚠ Syntax check failed"
+                        )
 
                 elif "Radare2" in script_type or "r2" in script_type:
                     script_file = temp_path / "test_script.r2"
@@ -771,7 +790,9 @@ class AIAssistantWidget(QWidget):
                         )
                         logger.info("Radare2 script prepared")
                     else:
-                        self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\n⚠ Radare2 not found. Install from radare.org")
+                        self.script_output.setPlainText(
+                            f"{script_content}\n\n{'=' * 50}\n⚠ Radare2 not found. Install from radare.org"
+                        )
 
                 else:
                     self.script_output.setPlainText(
@@ -785,7 +806,9 @@ class AIAssistantWidget(QWidget):
             self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\nFAIL Test timed out")
             logger.error("Script test timed out")
         except Exception as e:
-            self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\nFAIL Test error: {e!s}")
+            self.script_output.setPlainText(
+                f"{script_content}\n\n{'=' * 50}\nFAIL Test error: {e!s}"
+            )
             logger.error(f"Script test failed: {e}")
 
     def load_current_file_for_analysis(self) -> None:
@@ -826,7 +849,9 @@ Format as clear, actionable analysis."""
 
             self.analysis_results.setText(f"Analyzing code with {model}...\n\nPlease wait...")
 
-            results = ai_manager.generate_response(prompt=prompt, model=model, temperature=0.3, max_tokens=1500)
+            results = ai_manager.generate_response(
+                prompt=prompt, model=model, temperature=0.3, max_tokens=1500
+            )
 
             if results and results.strip():
                 final_results = f"=== {analysis_type} Results ===\n\n{results.strip()}"
@@ -871,9 +896,13 @@ Requirements:
 
 Return ONLY the code, no explanations."""
 
-            self.keygen_output.setPlainText(f"Generating {algo_type} keygen in {language}...\n\nThis may take a moment...")
+            self.keygen_output.setPlainText(
+                f"Generating {algo_type} keygen in {language}...\n\nThis may take a moment..."
+            )
 
-            keygen_code = ai_manager.generate_response(prompt=prompt, model=model, temperature=0.3, max_tokens=2000)
+            keygen_code = ai_manager.generate_response(
+                prompt=prompt, model=model, temperature=0.3, max_tokens=2000
+            )
 
             if keygen_code and keygen_code.strip():
                 self.keygen_output.setPlainText(keygen_code.strip())
@@ -902,10 +931,18 @@ Return ONLY the code, no explanations."""
         from PyQt6.QtWidgets import QFileDialog
 
         language = self.keygen_lang_combo.currentText().lower()
-        extensions = {"python": ".py", "c++": ".cpp", "c": ".c", "javascript": ".js", "assembly": ".asm"}
+        extensions = {
+            "python": ".py",
+            "c++": ".cpp",
+            "c": ".c",
+            "javascript": ".js",
+            "assembly": ".asm",
+        }
         ext = extensions.get(language, ".txt")
 
-        file_name, _ = QFileDialog.getSaveFileName(self, "Save Keygen", f"keygen{ext}", "All Files (*)")
+        file_name, _ = QFileDialog.getSaveFileName(
+            self, "Save Keygen", f"keygen{ext}", "All Files (*)"
+        )
 
         if file_name:
             try:
@@ -937,7 +974,9 @@ Return ONLY the code, no explanations."""
                     keygen_file = temp_path / "keygen.py"
                     keygen_file.write_text(keygen_content, encoding="utf-8")
 
-                    result = subprocess.run(["pyinstaller", "--version"], capture_output=True, text=True, timeout=5)
+                    result = subprocess.run(
+                        ["pyinstaller", "--version"], capture_output=True, text=True, timeout=5
+                    )
 
                     if result.returncode != 0:
                         self.keygen_output.setPlainText(
@@ -966,7 +1005,9 @@ Return ONLY the code, no explanations."""
                         if exe_path.exists():
                             from PyQt6.QtWidgets import QFileDialog
 
-                            save_path, _ = QFileDialog.getSaveFileName(self, "Save Compiled Keygen", "keygen.exe", "Executable (*.exe)")
+                            save_path, _ = QFileDialog.getSaveFileName(
+                                self, "Save Compiled Keygen", "keygen.exe", "Executable (*.exe)"
+                            )
 
                             if save_path:
                                 import shutil
@@ -984,8 +1025,14 @@ Return ONLY the code, no explanations."""
                                 f"{keygen_content}\n\n{'=' * 50}\n⚠ Compilation succeeded but executable not found",
                             )
                     else:
-                        error_msg = compile_result.stderr[-500:] if compile_result.stderr else "Unknown error"
-                        self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\nFAIL Compilation failed:\n{error_msg}")
+                        error_msg = (
+                            compile_result.stderr[-500:]
+                            if compile_result.stderr
+                            else "Unknown error"
+                        )
+                        self.keygen_output.setPlainText(
+                            f"{keygen_content}\n\n{'=' * 50}\nFAIL Compilation failed:\n{error_msg}"
+                        )
                         logger.error(f"PyInstaller compilation failed: {error_msg}")
 
                 elif language in ["C", "C++"]:
@@ -994,7 +1041,9 @@ Return ONLY the code, no explanations."""
                     keygen_file = temp_path / f"keygen{extension}"
                     keygen_file.write_text(keygen_content, encoding="utf-8")
 
-                    result = subprocess.run([compiler, "--version"], capture_output=True, text=True, timeout=5)
+                    result = subprocess.run(
+                        [compiler, "--version"], capture_output=True, text=True, timeout=5
+                    )
 
                     if result.returncode != 0:
                         self.keygen_output.setPlainText(
@@ -1023,7 +1072,9 @@ Return ONLY the code, no explanations."""
                     if compile_result.returncode == 0 and output_exe.exists():
                         from PyQt6.QtWidgets import QFileDialog
 
-                        save_path, _ = QFileDialog.getSaveFileName(self, "Save Compiled Keygen", "keygen.exe", "Executable (*.exe)")
+                        save_path, _ = QFileDialog.getSaveFileName(
+                            self, "Save Compiled Keygen", "keygen.exe", "Executable (*.exe)"
+                        )
 
                         if save_path:
                             import shutil
@@ -1037,8 +1088,14 @@ Return ONLY the code, no explanations."""
                             )
                             logger.info(f"Keygen compiled successfully: {save_path}")
                     else:
-                        error_msg = compile_result.stderr[-500:] if compile_result.stderr else "Unknown error"
-                        self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\nFAIL Compilation failed:\n{error_msg}")
+                        error_msg = (
+                            compile_result.stderr[-500:]
+                            if compile_result.stderr
+                            else "Unknown error"
+                        )
+                        self.keygen_output.setPlainText(
+                            f"{keygen_content}\n\n{'=' * 50}\nFAIL Compilation failed:\n{error_msg}"
+                        )
                         logger.error(f"{compiler} compilation failed: {error_msg}")
 
                 elif language == "JavaScript":
@@ -1066,10 +1123,14 @@ Return ONLY the code, no explanations."""
                     )
 
         except subprocess.TimeoutExpired:
-            self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\nFAIL Compilation timed out")
+            self.keygen_output.setPlainText(
+                f"{keygen_content}\n\n{'=' * 50}\nFAIL Compilation timed out"
+            )
             logger.error("Keygen compilation timed out")
         except Exception as e:
-            self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\nFAIL Compilation error: {e!s}")
+            self.keygen_output.setPlainText(
+                f"{keygen_content}\n\n{'=' * 50}\nFAIL Compilation error: {e!s}"
+            )
             logger.error(f"Keygen compilation failed: {e}")
 
     def load_available_models(self, force_refresh: bool = False) -> None:
@@ -1097,7 +1158,9 @@ Return ONLY the code, no explanations."""
                     if models:
                         self.model_combo.insertSeparator(self.model_combo.count())
                         self.model_combo.addItem(f"── {provider_name} API Models ──")
-                        self.model_combo.model().item(self.model_combo.count() - 1).setEnabled(False)
+                        self.model_combo.model().item(self.model_combo.count() - 1).setEnabled(
+                            False
+                        )
 
                         for model in models:
                             display_name = f"🌐 {provider_name}: {model.name}"

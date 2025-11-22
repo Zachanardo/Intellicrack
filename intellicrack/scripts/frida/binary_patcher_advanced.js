@@ -674,10 +674,8 @@ const BinaryPatcherAdvanced = {
                 }
 
                 // Check patch signature (if signed)
-                if (proposal.patch.signature) {
-                    if (!this.verifySignature(proposal.patch)) {
-                        return false;
-                    }
+                if (proposal.patch.signature && !this.verifySignature(proposal.patch)) {
+                      return false;
                 }
 
                 return Math.random() > 0.2;
@@ -822,7 +820,7 @@ const BinaryPatcherAdvanced = {
                 let crc = 0xffffffff;
                 for (let i = 0; i < data.length; i++) {
                     const byte = typeof data === 'string' ? data.charCodeAt(i) : data[i];
-                    crc = crc ^ byte;
+                    crc ^= byte;
                     for (let j = 0; j < 8; j++) {
                         crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
                     }
@@ -881,137 +879,135 @@ const BinaryPatcherAdvanced = {
 
             connectToKubernetes: function () {
                 // Connect to Kubernetes API
-                const k8sApi = {
-                    endpoint:
-                        Process.env.KUBERNETES_SERVICE_HOST +
-                        ':' +
-                        Process.env.KUBERNETES_SERVICE_PORT,
-                    token: this.readServiceAccountToken(),
-                    namespace: this.readNamespace(),
-
-                    getPods: function () {
-                        // Get pod list
-                        return [];
-                    },
-
-                    patchPod: function (podName, patchData) {
-                        // Patch specific Kubernetes pod with real implementation
-                        console.log('[K8s] Preparing patch for pod: ' + podName);
-                        console.log(
-                            '[K8s] Patch data size: ' +
-                                (patchData ? patchData.length : 0) +
-                                ' bytes'
-                        );
-
-                        const patchPayload = {
-                            apiVersion: 'v1',
-                            kind: 'Pod',
-                            metadata: {
-                                name: podName,
-                                namespace: this.namespace || 'default',
-                            },
-                            spec: {
-                                containers: [
-                                    {
-                                        name: 'patch-container',
-                                        command: ['/bin/sh', '-c'],
-                                        args: [
-                                            'echo ' +
-                                                Buffer.from(patchData).toString('base64') +
-                                                ' | base64 -d > /tmp/patch && chmod +x /tmp/patch && /tmp/patch',
-                                        ],
-                                        securityContext: {
-                                            privileged: true,
-                                            capabilities: {
-                                                add: ['SYS_PTRACE', 'SYS_ADMIN'],
-                                            },
-                                        },
+                return {
+                                    endpoint:
+                                        Process.env.KUBERNETES_SERVICE_HOST +
+                                        ':' +
+                                        Process.env.KUBERNETES_SERVICE_PORT,
+                                    token: this.readServiceAccountToken(),
+                                    namespace: this.readNamespace(),
+                
+                                    getPods: function () {
+                                        // Get pod list
+                                        return [];
                                     },
-                                ],
-                            },
-                        };
-
-                        // Execute patch via kubectl exec equivalent
-                        const execCommand = [
-                            'kubectl',
-                            'exec',
-                            '-n',
-                            this.namespace || 'default',
-                            podName,
-                            '--',
-                            'sh',
-                            '-c',
-                            'pid=$(pgrep -f target_process); ' +
-                                'echo "' +
-                                Buffer.from(patchData).toString('hex') +
-                                '" | xxd -r -p > /proc/$pid/mem',
-                        ];
-
-                        send({
-                            type: 'k8s-patch',
-                            pod: podName,
-                            namespace: this.namespace,
-                            patchSize: patchData.length,
-                            command: execCommand.join(' '),
-                            payload: patchPayload,
-                        });
-
-                        // Store applied patch for rollback capability
-                        this.appliedPatches = this.appliedPatches || [];
-                        this.appliedPatches.push({
-                            pod: podName,
-                            payload: patchPayload,
-                            timestamp: Date.now(),
-                        });
-
-                        // Direct memory patching if we have pod access
-                        if (Process.env.KUBERNETES_SERVICE_HOST) {
-                            try {
-                                // Use container runtime to patch memory
-                                const targetPid = this.findProcessInPod(podName);
-                                if (targetPid) {
-                                    const memPath = '/proc/' + targetPid + '/mem';
-                                    const memFd = Module.findExportByName(null, 'open')(
-                                        Memory.allocUtf8String(memPath),
-                                        2 // O_RDWR
-                                    );
-                                    if (memFd > 0) {
-                                        Module.findExportByName(null, 'write')(
-                                            memFd,
-                                            patchData,
-                                            patchData.length
+                
+                                    patchPod: function (podName, patchData) {
+                                        // Patch specific Kubernetes pod with real implementation
+                                        console.log('[K8s] Preparing patch for pod: ' + podName);
+                                        console.log(
+                                            '[K8s] Patch data size: ' +
+                                                (patchData ? patchData.length : 0) +
+                                                ' bytes'
                                         );
-                                        Module.findExportByName(null, 'close')(memFd);
+                
+                                        const patchPayload = {
+                                            apiVersion: 'v1',
+                                            kind: 'Pod',
+                                            metadata: {
+                                                name: podName,
+                                                namespace: this.namespace || 'default',
+                                            },
+                                            spec: {
+                                                containers: [
+                                                    {
+                                                        name: 'patch-container',
+                                                        command: ['/bin/sh', '-c'],
+                                                        args: [
+                                                            'echo ' +
+                                                                Buffer.from(patchData).toString('base64') +
+                                                                ' | base64 -d > /tmp/patch && chmod +x /tmp/patch && /tmp/patch',
+                                                        ],
+                                                        securityContext: {
+                                                            privileged: true,
+                                                            capabilities: {
+                                                                add: ['SYS_PTRACE', 'SYS_ADMIN'],
+                                                            },
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        };
+                
+                                        // Execute patch via kubectl exec equivalent
+                                        const execCommand = [
+                                            'kubectl',
+                                            'exec',
+                                            '-n',
+                                            this.namespace || 'default',
+                                            podName,
+                                            '--',
+                                            'sh',
+                                            '-c',
+                                            'pid=$(pgrep -f target_process); ' +
+                                                'echo "' +
+                                                Buffer.from(patchData).toString('hex') +
+                                                '" | xxd -r -p > /proc/$pid/mem',
+                                        ];
+                
+                                        send({
+                                            type: 'k8s-patch',
+                                            pod: podName,
+                                            namespace: this.namespace,
+                                            patchSize: patchData.length,
+                                            command: execCommand.join(' '),
+                                            payload: patchPayload,
+                                        });
+                
+                                        // Store applied patch for rollback capability
+                                        this.appliedPatches = this.appliedPatches || [];
+                                        this.appliedPatches.push({
+                                            pod: podName,
+                                            payload: patchPayload,
+                                            timestamp: Date.now(),
+                                        });
+                
+                                        // Direct memory patching if we have pod access
+                                        if (Process.env.KUBERNETES_SERVICE_HOST) {
+                                            try {
+                                                // Use container runtime to patch memory
+                                                const targetPid = this.findProcessInPod(podName);
+                                                if (targetPid) {
+                                                    const memPath = '/proc/' + targetPid + '/mem';
+                                                    const memFd = Module.findExportByName(null, 'open')(
+                                                        Memory.allocUtf8String(memPath),
+                                                        2 // O_RDWR
+                                                    );
+                                                    if (memFd > 0) {
+                                                        Module.findExportByName(null, 'write')(
+                                                            memFd,
+                                                            patchData,
+                                                            patchData.length
+                                                        );
+                                                        Module.findExportByName(null, 'close')(memFd);
+                                                        return true;
+                                                    }
+                                                }
+                                            } catch {
+                                                // Fallback to RPC method
+                                            }
+                                        }
+                
                                         return true;
-                                    }
-                                }
-                            } catch {
-                                // Fallback to RPC method
-                            }
-                        }
-
-                        return true;
-                    },
-
-                    findProcessInPod: function (podName) {
-                        // Find target process PID in pod
-                        console.log('[K8s] Searching for process in pod: ' + podName);
-                        try {
-                            const procDir = Module.findExportByName(
-                                null,
-                                'opendir'
-                            )(Memory.allocUtf8String('/proc'));
-                            if (procDir) {
-                                // Scan /proc for matching process
-                                return Process.id; // Simplified - would scan for actual target
-                            }
-                        } catch {
-                            return null;
-                        }
-                    },
-                };
-
-                return k8sApi;
+                                    },
+                
+                                    findProcessInPod: function (podName) {
+                                        // Find target process PID in pod
+                                        console.log('[K8s] Searching for process in pod: ' + podName);
+                                        try {
+                                            const procDir = Module.findExportByName(
+                                                null,
+                                                'opendir'
+                                            )(Memory.allocUtf8String('/proc'));
+                                            if (procDir) {
+                                                // Scan /proc for matching process
+                                                return Process.id; // Simplified - would scan for actual target
+                                            }
+                                        } catch {
+                                            return null;
+                                        }
+                                    },
+                                };
             },
 
             readServiceAccountToken: function () {
@@ -1922,11 +1918,9 @@ const BinaryPatcherAdvanced = {
 
             testCompatibility: function (test) {
                 // Test compatibility with other software
-                const compatible = test.checkList.every((check) => {
-                    return this.checkCompatibility(check);
-                });
-
-                return compatible;
+                return test.checkList.every((check) => {
+                                    return this.checkCompatibility(check);
+                                });
             },
 
             checkCompatibility: function (check) {
@@ -2501,12 +2495,9 @@ const BinaryPatcherAdvanced = {
                 }
 
                 // Check patch size for feasibility
-                if (patchData.size) {
-                    if (patchData.size > 100000000) {
-                        // 100MB
-                        result.confidence -= 0.1;
-                        result.checks.push('Large patch size may cause issues');
-                    }
+                if (patchData.size && patchData.size > 100000000) {
+                      result.confidence -= 0.1;
+                      result.checks.push('Large patch size may cause issues');
                 }
 
                 // Ensure confidence stays within bounds

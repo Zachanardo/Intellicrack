@@ -171,7 +171,7 @@ class CPUMonitorWorker(QObject):
                     .decode()
                     .strip()
                 )
-        except (subprocess.SubprocessError, OSError, FileNotFoundError) as e:
+        except (subprocess.SubprocessError, OSError) as e:
             logger.debug(f"Failed to get CPU name: {e}")
 
         return "Unknown CPU"
@@ -290,8 +290,12 @@ class CPUStatusWidget(QWidget):
         self.processes_table = QTableWidget()
         self.processes_table.setColumnCount(4)
         self.processes_table.setHorizontalHeaderLabels(["PID", "Name", "CPU %", "Memory %"])
-        self.processes_table.setToolTip("Top CPU-consuming processes currently running on the system")
-        self.processes_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.processes_table.setToolTip(
+            "Top CPU-consuming processes currently running on the system"
+        )
+        self.processes_table.horizontalHeader().setSectionResizeMode(
+            1, QHeaderView.ResizeMode.Stretch
+        )
         self.processes_table.setMinimumHeight(150)
         self.processes_table.setMaximumHeight(250)
         processes_layout.addWidget(self.processes_table)
@@ -362,9 +366,7 @@ class CPUStatusWidget(QWidget):
         self.cores_label.setText(f"Cores: {data.get('cpu_count_physical', 0)}")
         self.threads_label.setText(f"Threads: {data.get('cpu_count_logical', 0)}")
 
-        # Update frequency
-        freq = data.get("cpu_freq")
-        if freq:
+        if freq := data.get("cpu_freq"):
             self.freq_label.setText(f"Frequency: {freq.current:.0f} MHz")
 
         # Update load average

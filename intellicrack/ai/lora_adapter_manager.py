@@ -25,9 +25,12 @@ from typing import TYPE_CHECKING, TypeVar
 
 from ..utils.logger import get_logger
 
+
 if TYPE_CHECKING:
-    from peft import PeftConfig as PeftConfigType
-    from peft import PeftModel as PeftModelType
+    from peft import (
+        PeftConfig as PeftConfigType,
+        PeftModel as PeftModelType,
+    )
 
 ModelType = TypeVar("ModelType")
 ConfigType = TypeVar("ConfigType")
@@ -46,15 +49,7 @@ except ImportError as e:
 
 # Try to import PEFT
 try:
-    from peft import (
-        AdaLoraConfig,
-        LoraConfig,
-        PeftConfig,
-        PeftModel,
-        TaskType,
-        get_peft_model,
-        prepare_model_for_kbit_training,
-    )
+    from peft import AdaLoraConfig, LoraConfig, PeftConfig, PeftModel, TaskType, get_peft_model, prepare_model_for_kbit_training
 
     HAS_PEFT = True
 except ImportError as e:
@@ -154,8 +149,8 @@ class LoRAAdapterManager:
             target_modules = self._get_default_target_modules(kwargs.get("model_type"))
 
         try:
-            if adapter_type == "adalora":
-                config = AdaLoraConfig(
+            return (
+                AdaLoraConfig(
                     r=r,
                     lora_alpha=lora_alpha,
                     target_modules=target_modules,
@@ -166,8 +161,8 @@ class LoRAAdapterManager:
                     target_r=kwargs.get("target_r", 8),
                     init_r=kwargs.get("init_r", 12),
                 )
-            else:
-                config = LoraConfig(
+                if adapter_type == "adalora"
+                else LoraConfig(
                     r=r,
                     lora_alpha=lora_alpha,
                     target_modules=target_modules,
@@ -178,9 +173,7 @@ class LoRAAdapterManager:
                     fan_in_fan_out=kwargs.get("fan_in_fan_out", False),
                     modules_to_save=kwargs.get("modules_to_save"),
                 )
-
-            return config
-
+            )
         except Exception as e:
             logger.error(f"Failed to create LoRA config: {e}")
             return None
@@ -409,9 +402,7 @@ class LoRAAdapterManager:
             List of adapter names
 
         """
-        if hasattr(model, "peft_config"):
-            return list(model.peft_config.keys())
-        return []
+        return list(model.peft_config.keys()) if hasattr(model, "peft_config") else []
 
     def set_adapter(self, model: ModelType, adapter_name: str) -> bool:
         """Set the active adapter in a multi-adapter model.
@@ -644,10 +635,7 @@ class LoRAAdapterManager:
             except Exception as e:
                 logger.debug(f"Could not load adapter config: {e}")
 
-        # Calculate total size
-        total_size = 0
-        for file in adapter_path.rglob("*.bin"):
-            total_size += file.stat().st_size
+        total_size = sum(file.stat().st_size for file in adapter_path.rglob("*.bin"))
         for file in adapter_path.rglob("*.safetensors"):
             total_size += file.stat().st_size
 
@@ -702,7 +690,9 @@ class LoRAAdapterManager:
             if hasattr(peft_config, "r"):
                 results["config_details"]["rank"] = peft_config.r
                 if peft_config.r > 64:
-                    results["warnings"].append(f"Very high LoRA rank ({peft_config.r}) may use excessive memory")
+                    results["warnings"].append(
+                        f"Very high LoRA rank ({peft_config.r}) may use excessive memory"
+                    )
 
             if hasattr(peft_config, "target_modules"):
                 results["config_details"]["target_modules"] = peft_config.target_modules

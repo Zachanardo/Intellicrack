@@ -48,12 +48,12 @@ class CICDPipeline:
             "timestamp": datetime.now().isoformat(),
         }
 
-    def _load_or_create_config(self) -> Dict[str, Any]:
+    def _load_or_create_config(self) -> dict[str, Any]:
         """Load or create pipeline configuration"""
         config_path = os.path.join(self.plugin_dir, ".intellicrack-ci.yml")
 
         if os.path.exists(config_path):
-            with open(config_path, "r") as f:
+            with open(config_path) as f:
                 return yaml.safe_load(f)
         else:
             # Create default config
@@ -84,7 +84,7 @@ class CICDPipeline:
 
             return default_config
 
-    def run_pipeline(self) -> Dict[str, Any]:
+    def run_pipeline(self) -> dict[str, Any]:
         """Run the complete CI/CD pipeline"""
         print(f" Starting CI/CD pipeline for {self.plugin_name}")
 
@@ -109,7 +109,7 @@ class CICDPipeline:
 
         return self.results
 
-    def run_validate_stage(self) -> Dict[str, Any]:
+    def run_validate_stage(self) -> dict[str, Any]:
         """Validation stage - check plugin structure"""
         result = {"success": True, "checks": {}, "errors": [], "warnings": []}
 
@@ -137,7 +137,7 @@ class CICDPipeline:
 
         return result
 
-    def run_test_stage(self) -> Dict[str, Any]:
+    def run_test_stage(self) -> dict[str, Any]:
         """Test stage - run unit tests"""
         result = {"success": True, "test_results": {}, "coverage": 0, "errors": []}
 
@@ -187,7 +187,7 @@ class CICDPipeline:
             # Parse coverage
             coverage_file = "coverage.json"
             if os.path.exists(coverage_file):
-                with open(coverage_file, "r") as f:
+                with open(coverage_file) as f:
                     coverage_data = json.load(f)
                     result["coverage"] = coverage_data.get("totals", {}).get("percent_covered", 0)
 
@@ -206,7 +206,7 @@ class CICDPipeline:
 
         return result
 
-    def run_quality_stage(self) -> Dict[str, Any]:
+    def run_quality_stage(self) -> dict[str, Any]:
         """Quality stage - run linters and code quality checks"""
         result = {"success": True, "linter_results": {}, "metrics": {}, "errors": []}
 
@@ -238,7 +238,7 @@ class CICDPipeline:
 
         return result
 
-    def run_security_stage(self) -> Dict[str, Any]:
+    def run_security_stage(self) -> dict[str, Any]:
         """Security stage - run security scanners"""
         result = {"success": True, "scanner_results": {}, "vulnerabilities": [], "errors": []}
 
@@ -267,7 +267,7 @@ class CICDPipeline:
 
         return result
 
-    def run_build_stage(self) -> Dict[str, Any]:
+    def run_build_stage(self) -> dict[str, Any]:
         """Build stage - optimize and package plugin"""
         result = {"success": True, "artifacts": [], "errors": []}
 
@@ -305,7 +305,7 @@ class CICDPipeline:
 
         return result
 
-    def run_deploy_stage(self) -> Dict[str, Any]:
+    def run_deploy_stage(self) -> dict[str, Any]:
         """Deploy stage - deploy plugin to target"""
         result = {"success": True, "deployed_to": [], "errors": []}
 
@@ -321,7 +321,7 @@ class CICDPipeline:
                 dest_path = os.path.join(plugin_install_dir, os.path.basename(self.plugin_path))
 
                 if os.path.exists(dest_path) and deploy_config["backup_previous"]:
-                    backup_path = dest_path + f".backup.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                    backup_path = f"{dest_path}.backup.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
                     shutil.move(dest_path, backup_path)
 
                 # Copy from build directory
@@ -340,33 +340,32 @@ class CICDPipeline:
 
         return result
 
-    def _check_syntax(self) -> Dict[str, Any]:
+    def _check_syntax(self) -> dict[str, Any]:
         """Check plugin syntax"""
-        if self.plugin_path.endswith(".py"):
-            try:
-                with open(self.plugin_path, "r") as f:
-                    compile(f.read(), self.plugin_path, "exec")
-                return {"valid": True, "errors": []}
-            except SyntaxError as e:
-                logger.error("SyntaxError in plugin_ci_cd: %s", e)
-                return {"valid": False, "errors": [f"Line {e.lineno}: {e.msg}"]}
-        else:
+        if not self.plugin_path.endswith(".py"):
             # For JavaScript, we'd need a JS parser
             return {"valid": True, "errors": []}
+        try:
+            with open(self.plugin_path) as f:
+                compile(f.read(), self.plugin_path, "exec")
+            return {"valid": True, "errors": []}
+        except SyntaxError as e:
+            logger.error("SyntaxError in plugin_ci_cd: %s", e)
+            return {"valid": False, "errors": [f"Line {e.lineno}: {e.msg}"]}
 
-    def _check_structure(self) -> Dict[str, Any]:
+    def _check_structure(self) -> dict[str, Any]:
         """Check plugin structure"""
         from ..utils.validation.import_validator import PluginStructureValidator
 
         return PluginStructureValidator.validate_structure_from_file(self.plugin_path)
 
-    def _check_imports(self) -> Dict[str, Any]:
+    def _check_imports(self) -> dict[str, Any]:
         """Check plugin imports"""
         from ..utils.validation.import_validator import ImportValidator
 
         return ImportValidator.validate_imports_from_file(self.plugin_path)
 
-    def _run_linter(self, linter: str) -> Dict[str, Any]:
+    def _run_linter(self, linter: str) -> dict[str, Any]:
         """Run a specific linter"""
         result = {"success": True, "issues": []}
 
@@ -401,12 +400,10 @@ class CICDPipeline:
         try:
             import radon.complexity as cc
 
-            with open(self.plugin_path, "r") as f:
+            with open(self.plugin_path) as f:
                 code = f.read()
 
-            results = cc.cc_visit(code, self.plugin_path)
-
-            if results:
+            if results := cc.cc_visit(code, self.plugin_path):
                 return max(item.complexity for item in results)
 
             return 0
@@ -420,13 +417,13 @@ class CICDPipeline:
         """Check maximum line length"""
         max_length = 0
 
-        with open(self.plugin_path, "r") as f:
+        with open(self.plugin_path) as f:
             for line in f:
                 max_length = max(max_length, len(line.rstrip()))
 
         return max_length
 
-    def _run_bandit(self) -> Dict[str, Any]:
+    def _run_bandit(self) -> dict[str, Any]:
         """Run Bandit security scanner"""
         result = {"issues": []}
 
@@ -452,7 +449,7 @@ class CICDPipeline:
 
         return result
 
-    def _check_dependencies(self) -> Dict[str, Any]:
+    def _check_dependencies(self) -> dict[str, Any]:
         """Check for vulnerable dependencies"""
         # This would integrate with a vulnerability database
         # For now, return empty
@@ -463,7 +460,7 @@ class CICDPipeline:
         if file_path.endswith(".py"):
             # For Python, we could use tools like python-minifier
             # For now, just remove comments and empty lines
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 lines = f.readlines()
 
             optimized = []
@@ -479,13 +476,12 @@ class CICDPipeline:
         """Get plugin version"""
         # Try to extract from plugin code
         try:
-            with open(self.plugin_path, "r") as f:
+            with open(self.plugin_path) as f:
                 content = f.read()
 
             import re
 
-            match = re.search(r'version\s*=\s*["\']([^"\']+)["\']', content)
-            if match:
+            if match := re.search(r'version\s*=\s*["\']([^"\']+)["\']', content):
                 return match.group(1)
         except Exception as e:
             logger.debug(f"Failed to extract plugin version: {e}")
@@ -507,7 +503,7 @@ class CICDPipeline:
         registry_path = os.path.join(os.path.dirname(plugin_path), "plugin_registry.json")
 
         if os.path.exists(registry_path):
-            with open(registry_path, "r") as f:
+            with open(registry_path) as f:
                 registry = json.load(f)
         else:
             registry = {"plugins": {}}
@@ -560,7 +556,7 @@ class GitHubActionsGenerator:
     @staticmethod
     def generate_workflow(plugin_name: str) -> str:
         """Generate GitHub Actions workflow YAML"""
-        workflow = f"""name: {plugin_name} CI/CD
+        return f"""name: {plugin_name} CI/CD
 
 on:
   push:
@@ -611,4 +607,3 @@ jobs:
         name: {plugin_name}-build
         path: plugins/{plugin_name}/build/
 """
-        return workflow

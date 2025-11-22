@@ -19,10 +19,12 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 from intellicrack.utils.logger import get_logger
 
+
 logger = get_logger(__name__)
 
 try:
     from .script_execution_manager import ScriptExecutionManager
+
     logger.debug("ScriptExecutionManager imported successfully")
 except ImportError as e:
     logger.error(f"Execution manager import failed: {e}")

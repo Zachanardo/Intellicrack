@@ -53,6 +53,7 @@ from jsonschema import ValidationError, validate
 from intellicrack.handlers.psutil_handler import psutil
 from intellicrack.utils.logger import log_all_methods
 
+
 """
 Intellicrack Core Engine
 
@@ -365,7 +366,9 @@ class LoggingManager:
             },
         )
 
-    def log_plugin_operation(self, plugin_name: str, operation: str, status: str, details: dict[str, Any] = None) -> None:
+    def log_plugin_operation(
+        self, plugin_name: str, operation: str, status: str, details: dict[str, Any] = None
+    ) -> None:
         """Log plugin operation."""
         logger = self.get_logger("plugins")
         logger.info(
@@ -752,7 +755,7 @@ class AbstractPlugin(ABC):
             )
             task = asyncio.create_task(self.event_bus.emit(event))
             # Store task reference to prevent garbage collection
-            if not hasattr(self, '_event_tasks'):
+            if not hasattr(self, "_event_tasks"):
                 self._event_tasks = set()
             self._event_tasks.add(task)
             # Remove task from set when it's done
@@ -762,7 +765,7 @@ class AbstractPlugin(ABC):
         """Log performance metric."""
         self.performance_metrics[metric_name] = {
             "value": value,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def get_status(self) -> dict[str, Any]:
@@ -894,7 +897,9 @@ class GhidraPlugin(AbstractPlugin):
 
             raise
 
-    async def _execute_ghidra_script(self, binary_path: str, operation: str, parameters: dict[str, Any]) -> dict[str, Any]:
+    async def _execute_ghidra_script(
+        self, binary_path: str, operation: str, parameters: dict[str, Any]
+    ) -> dict[str, Any]:
         """Execute Ghidra script in subprocess."""
         ghidra_path = self.config.get("ghidra_path")
         java_path = self.config.get("java_path", "java")
@@ -982,7 +987,9 @@ class GhidraPlugin(AbstractPlugin):
                 except Exception as term_error:
                     # Use traceback for detailed error logging
                     error_trace = traceback.format_exc()
-                    self.logger.exception(f"Process termination failed: {term_error}\n{error_trace}")
+                    self.logger.exception(
+                        f"Process termination failed: {term_error}\n{error_trace}"
+                    )
                     process.kill()
             raise Exception("Ghidra execution timed out") from timeout_error
         except Exception as e:
@@ -996,7 +1003,7 @@ class GhidraPlugin(AbstractPlugin):
         result = {
             "operation": operation,
             "raw_output": output,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         # Operation-specific parsing
@@ -1178,7 +1185,9 @@ class FridaPlugin(AbstractPlugin):
 
             raise
 
-    async def _attach_to_process(self, target: str | int, parameters: dict[str, Any]) -> dict[str, Any]:
+    async def _attach_to_process(
+        self, target: str | int, parameters: dict[str, Any]
+    ) -> dict[str, Any]:
         """Attach to target process."""
         try:
             from intellicrack.handlers.frida_handler import frida
@@ -1186,14 +1195,11 @@ class FridaPlugin(AbstractPlugin):
             # Get device
             device = frida.get_local_device()
 
-            # Attach to process
-            if isinstance(target, str):
-                self.frida_session = device.attach(target)
-            else:
-                self.frida_session = device.attach(target)
-
+            self.frida_session = device.attach(target)
             # Load script
-            script_code = await asyncio.to_thread(lambda: Path(self.script_path).read_text(encoding="utf-8"))
+            script_code = await asyncio.to_thread(
+                lambda: Path(self.script_path).read_text(encoding="utf-8")
+            )
 
             self.frida_script = self.frida_session.create_script(script_code)
             self.frida_script.on("message", self._on_message)
@@ -1466,8 +1472,6 @@ class PythonPlugin(AbstractPlugin):
         if not self.plugin_instance:
             return []
 
-        operations = []
-
         # Check for standard operations
         standard_ops = [
             "analyze",
@@ -1480,10 +1484,7 @@ class PythonPlugin(AbstractPlugin):
             "detect",
         ]
 
-        for op in standard_ops:
-            if hasattr(self.plugin_instance, op):
-                operations.append(op)
-
+        operations = [op for op in standard_ops if hasattr(self.plugin_instance, op)]
         # Check for get_operations method
         if hasattr(self.plugin_instance, "get_operations"):
             try:
@@ -1601,7 +1602,9 @@ class EventBus:
             self.subscribers[event_type] = []
 
         self.subscribers[event_type].append(handler)
-        self.stats["subscribers_count"] = sum(len(handlers) for handlers in self.subscribers.values())
+        self.stats["subscribers_count"] = sum(
+            len(handlers) for handlers in self.subscribers.values()
+        )
 
         if self.logger:
             self.logger.debug(f"New subscriber for event type: {event_type}")
@@ -1614,7 +1617,9 @@ class EventBus:
             if not self.subscribers[event_type]:
                 del self.subscribers[event_type]
 
-            self.stats["subscribers_count"] = sum(len(handlers) for handlers in self.subscribers.values())
+            self.stats["subscribers_count"] = sum(
+                len(handlers) for handlers in self.subscribers.values()
+            )
 
             if self.logger:
                 self.logger.debug(f"Unsubscribed from event type: {event_type}")
@@ -1624,7 +1629,7 @@ class EventBus:
         try:
             # Check TTL
             if event.ttl is not None:
-                age = (datetime.utcnow() - event.timestamp).total_seconds()
+                age = (datetime.now(UTC) - event.timestamp).total_seconds()
                 if age > event.ttl:
                     if self.logger:
                         self.logger.warning(f"Event {event.event_id} expired (TTL: {event.ttl}s)")
@@ -1719,11 +1724,10 @@ class EventBus:
 
                     # Log handler errors
                     for i, result in enumerate(results):
-                        if isinstance(result, Exception):
-                            if self.logger:
-                                self.logger.exception(
-                                    f"Handler {i} ({handler_types[i].__name__}) failed for event {event.event_type}: {result}",
-                                )
+                        if isinstance(result, Exception) and self.logger:
+                            self.logger.exception(
+                                f"Handler {i} ({handler_types[i].__name__}) failed for event {event.event_type}: {result}",
+                            )
                 except TimeoutError:
                     if self.logger:
                         self.logger.warning(f"Handler execution timed out after {handler_timeout}")
@@ -1939,7 +1943,9 @@ class PluginManager:
                 line = line.strip()
                 if line.startswith("//") or line.startswith("*"):
                     if "description:" in line.lower():
-                        metadata["description"] = line.split("description:")[-1].strip().strip("\"'")
+                        metadata["description"] = (
+                            line.split("description:")[-1].strip().strip("\"'")
+                        )
                     elif "author:" in line.lower():
                         metadata["author"] = line.split("author:")[-1].strip().strip("\"'")
                     elif "version:" in line.lower():
@@ -1947,8 +1953,12 @@ class PluginManager:
                 elif "name:" in line and ("=" in line or ":" in line):
                     # Try to extract from object property
                     if '"' in line or "'" in line:
-                        name_match = line.split("name:")[-1].strip().strip(",").strip("\"'")
-                        if name_match:
+                        if (
+                            name_match := line.split("name:")[-1]
+                            .strip()
+                            .strip(",")
+                            .strip("\"'")
+                        ):
                             metadata["name"] = name_match
 
             return PluginMetadata(
@@ -2075,7 +2085,9 @@ class PluginManager:
             self.logger.exception(f"Failed to load plugin {plugin_name}: {e}")
             return False
 
-    async def _create_plugin_instance(self, plugin_name: str, metadata: PluginMetadata) -> AbstractPlugin | None:
+    async def _create_plugin_instance(
+        self, plugin_name: str, metadata: PluginMetadata
+    ) -> AbstractPlugin | None:
         """Create plugin instance based on type."""
         try:
             # Find plugin file
@@ -2293,16 +2305,36 @@ class PluginManager:
 
     def get_plugin_stats(self) -> dict[str, Any]:
         """Get plugin statistics."""
-        active_plugins = [name for name, plugin in self.plugins.items() if plugin.status == PluginStatus.ACTIVE]
+        active_plugins = [
+            name for name, plugin in self.plugins.items() if plugin.status == PluginStatus.ACTIVE
+        ]
 
         return {
             **self.stats,
             "total_discovered": len(self.plugin_metadata),
             "active_plugins": active_plugins,
             "plugin_types": {
-                "ghidra": len([p for p in self.plugin_metadata.values() if p.component_type == ComponentType.GHIDRA_SCRIPT]),
-                "frida": len([p for p in self.plugin_metadata.values() if p.component_type == ComponentType.FRIDA_SCRIPT]),
-                "python": len([p for p in self.plugin_metadata.values() if p.component_type == ComponentType.CUSTOM_MODULE]),
+                "ghidra": len(
+                    [
+                        p
+                        for p in self.plugin_metadata.values()
+                        if p.component_type == ComponentType.GHIDRA_SCRIPT
+                    ]
+                ),
+                "frida": len(
+                    [
+                        p
+                        for p in self.plugin_metadata.values()
+                        if p.component_type == ComponentType.FRIDA_SCRIPT
+                    ]
+                ),
+                "python": len(
+                    [
+                        p
+                        for p in self.plugin_metadata.values()
+                        if p.component_type == ComponentType.CUSTOM_MODULE
+                    ]
+                ),
             },
         }
 
@@ -2311,7 +2343,9 @@ class PluginManager:
 class WorkflowEngine:
     """Configurable workflow execution engine."""
 
-    def __init__(self, plugin_manager: PluginManager, event_bus: EventBus, logger: logging.Logger) -> None:
+    def __init__(
+        self, plugin_manager: PluginManager, event_bus: EventBus, logger: logging.Logger
+    ) -> None:
         """Initialize workflow engine with plugin manager, event bus, and logger."""
         self.plugin_manager = plugin_manager
         self.event_bus = event_bus
@@ -2438,7 +2472,7 @@ class WorkflowEngine:
             "workflow": workflow,
             "parameters": parameters,
             "status": WorkflowStatus.PENDING,
-            "start_time": datetime.utcnow(),
+            "start_time": datetime.now(UTC),
             "end_time": None,
             "current_step": None,
             "completed_steps": [],
@@ -2452,7 +2486,7 @@ class WorkflowEngine:
         # Start execution
         task = asyncio.create_task(self._execute_workflow_async(execution_context))
         # Store task reference to prevent garbage collection
-        if not hasattr(self, '_execution_tasks'):
+        if not hasattr(self, "_execution_tasks"):
             self._execution_tasks = set()
         self._execution_tasks.add(task)
         # Remove task from set when it's done
@@ -2489,7 +2523,7 @@ class WorkflowEngine:
                 await self._execute_sequential_workflow(context)
 
             context["status"] = WorkflowStatus.COMPLETED
-            context["end_time"] = datetime.utcnow()
+            context["end_time"] = datetime.now(UTC)
             context["progress"] = 1.0
 
             self.logger.info(f"Workflow completed: {execution_id}")
@@ -2595,7 +2629,9 @@ class WorkflowEngine:
             # Find steps ready to execute
             ready_steps = []
             for step in workflow.steps:
-                if step.step_id not in executed_steps and all(dep in executed_steps for dep in step.dependencies):
+                if step.step_id not in executed_steps and all(
+                    dep in executed_steps for dep in step.dependencies
+                ):
                     # Check condition
                     if step.condition and not self._evaluate_condition(step.condition, context):
                         executed_steps.add(step.step_id)  # Mark as done (skipped)
@@ -2629,7 +2665,9 @@ class WorkflowEngine:
                         raise
 
         # Log completion of all tasks
-        self.logger.info(f"Parallel workflow execution completed. Total tasks executed: {len(tasks)}")
+        self.logger.info(
+            f"Parallel workflow execution completed. Total tasks executed: {len(tasks)}"
+        )
 
         # Clean up any remaining tasks
         for task in tasks:
@@ -2638,17 +2676,11 @@ class WorkflowEngine:
 
     def _build_dependency_graph(self, steps: list[WorkflowStep]) -> dict[str, list[str]]:
         """Build dependency graph for parallel execution."""
-        graph = {}
-        for step in steps:
-            graph[step.step_id] = step.dependencies.copy()
-        return graph
+        return {step.step_id: step.dependencies.copy() for step in steps}
 
     def _check_dependencies(self, step: WorkflowStep, context: dict[str, Any]) -> bool:
         """Check if step dependencies are satisfied."""
-        for dep in step.dependencies:
-            if dep not in context["completed_steps"]:
-                return False
-        return True
+        return all(dep in context["completed_steps"] for dep in step.dependencies)
 
     def _evaluate_condition(self, condition: str, context: dict[str, Any]) -> bool:
         """Evaluate step execution condition."""
@@ -2660,7 +2692,9 @@ class WorkflowEngine:
             }
 
             # Log evaluation context for debugging
-            self.logger.debug(f"Evaluating condition '{condition}' with context: {list(eval_context.keys())}")
+            self.logger.debug(
+                f"Evaluating condition '{condition}' with context: {list(eval_context.keys())}"
+            )
 
             # Simple condition evaluation (could be enhanced with proper parser)
             # For now, support basic property checks
@@ -2680,7 +2714,7 @@ class WorkflowEngine:
 
     async def _execute_step(self, step: WorkflowStep, context: dict[str, Any]) -> None:
         """Execute individual workflow step."""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         try:
             # Get plugin
@@ -2709,25 +2743,21 @@ class WorkflowEngine:
             error_msg = f"Step {step.step_id} timed out"
             context["errors"].append(error_msg)
 
-            # Retry logic
-            if step.retry_count < step.max_retries:
-                step.retry_count += 1
-                self.logger.exception(f"Retrying step {step.step_id} (attempt {step.retry_count})")
-                await self._execute_step(step, context)
-            else:
+            if step.retry_count >= step.max_retries:
                 raise Exception(error_msg) from timeout_error
 
+            step.retry_count += 1
+            self.logger.exception(f"Retrying step {step.step_id} (attempt {step.retry_count})")
+            await self._execute_step(step, context)
         except Exception as e:
             error_msg = f"Step {step.step_id} failed: {e}"
             context["errors"].append(error_msg)
 
-            # Retry logic
-            if step.retry_count < step.max_retries:
-                step.retry_count += 1
-                self.logger.exception(f"Retrying step {step.step_id} (attempt {step.retry_count})")
-                await self._execute_step(step, context)
-            else:
+            if step.retry_count >= step.max_retries:
                 raise Exception(error_msg) from e
+            step.retry_count += 1
+            self.logger.exception(f"Retrying step {step.step_id} (attempt {step.retry_count})")
+            await self._execute_step(step, context)
 
     def get_workflow_status(self, execution_id: str) -> dict[str, Any] | None:
         """Get workflow execution status."""
@@ -2742,13 +2772,14 @@ class WorkflowEngine:
                 "completed_steps": context["completed_steps"],
                 "errors": context["errors"],
                 "start_time": context["start_time"].isoformat(),
-                "duration": (datetime.utcnow() - context["start_time"]).total_seconds(),
+                "duration": (
+                    datetime.now(UTC) - context["start_time"]
+                ).total_seconds(),
             }
 
-        # Check history
-        for workflow_record in self.workflow_history:
-            if workflow_record["execution_id"] == execution_id:
-                return {
+        return next(
+            (
+                {
                     "execution_id": execution_id,
                     "workflow_id": workflow_record["workflow_id"],
                     "status": workflow_record["status"].value,
@@ -2756,18 +2787,28 @@ class WorkflowEngine:
                     "completed_steps": workflow_record["completed_steps"],
                     "errors": workflow_record["errors"],
                     "start_time": workflow_record["start_time"].isoformat(),
-                    "end_time": workflow_record["end_time"].isoformat() if workflow_record["end_time"] else None,
-                    "duration": ((workflow_record["end_time"] or datetime.utcnow()) - workflow_record["start_time"]).total_seconds(),
+                    "end_time": (
+                        workflow_record["end_time"].isoformat()
+                        if workflow_record["end_time"]
+                        else None
+                    ),
+                    "duration": (
+                        (workflow_record["end_time"] or datetime.utcnow())
+                        - workflow_record["start_time"]
+                    ).total_seconds(),
                 }
-
-        return None
+                for workflow_record in self.workflow_history
+                if workflow_record["execution_id"] == execution_id
+            ),
+            None,
+        )
 
     def cancel_workflow(self, execution_id: str) -> bool:
         """Cancel running workflow."""
         if execution_id in self.running_workflows:
             context = self.running_workflows[execution_id]
             context["status"] = WorkflowStatus.CANCELLED
-            context["end_time"] = datetime.utcnow()
+            context["end_time"] = datetime.now(UTC)
 
             self.logger.info(f"Workflow cancelled: {execution_id}")
             return True
@@ -2884,7 +2925,7 @@ class AnalysisCoordinator:
             "analysis_type": analysis_type,
             "template": template,
             "parameters": parameters or {},
-            "start_time": datetime.utcnow(),
+            "start_time": datetime.now(UTC),
             "status": "queued",
             "workflow_execution_id": None,
             "results": {},
@@ -3076,7 +3117,7 @@ class AnalysisCoordinator:
             if context.get("workflow_execution_id") == execution_id:
                 context["status"] = "completed"
                 context["results"] = results
-                context["end_time"] = datetime.utcnow()
+                context["end_time"] = datetime.now(UTC)
                 context["progress"] = 1.0
 
                 # Emit completion event
@@ -3087,7 +3128,9 @@ class AnalysisCoordinator:
                         data={
                             "analysis_id": analysis_id,
                             "results": results,
-                            "duration": (context["end_time"] - context["start_time"]).total_seconds(),
+                            "duration": (
+                                context["end_time"] - context["start_time"]
+                            ).total_seconds(),
                         },
                     ),
                 )
@@ -3105,7 +3148,7 @@ class AnalysisCoordinator:
             if context.get("workflow_execution_id") == execution_id:
                 context["status"] = "failed"
                 context["error"] = error
-                context["end_time"] = datetime.utcnow()
+                context["end_time"] = datetime.now(UTC)
 
                 # Emit failure event
                 await self.event_bus.emit(
@@ -3133,7 +3176,9 @@ class AnalysisCoordinator:
                 "status": context["status"],
                 "progress": context["progress"],
                 "start_time": context["start_time"].isoformat(),
-                "end_time": context.get("end_time", {}).isoformat() if context.get("end_time") else None,
+                "end_time": context.get("end_time", {}).isoformat()
+                if context.get("end_time")
+                else None,
                 "workflow_execution_id": context.get("workflow_execution_id"),
                 "results": context.get("results", {}),
                 "error": context.get("error"),
@@ -3316,7 +3361,7 @@ class ResourceManager:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(self.thread_pool, func, *args, **kwargs)
 
-    async def start_external_process(self, cmd: list[str], cwd: str = None, timeout: int = 300) -> subprocess.Popen:
+    async def start_external_process(self, cmd: list[str], cwd: str = None) -> subprocess.Popen:
         """Start external process with tracking."""
         try:
             process = await asyncio.create_subprocess_exec(
@@ -3344,28 +3389,29 @@ class ResourceManager:
 
     async def kill_process(self, pid: int, force: bool = False) -> None:
         """Kill tracked process."""
-        if pid in self.tracked_processes:
-            try:
-                process = self.tracked_processes[pid]
-                if force:
-                    process.kill()
-                else:
-                    process.terminate()
+        if pid not in self.tracked_processes:
+            return
+        try:
+            process = self.tracked_processes[pid]
+            if force:
+                process.kill()
+            else:
+                process.terminate()
 
-                # Wait for process to die
-                await asyncio.sleep(1)
+            # Wait for process to die
+            await asyncio.sleep(1)
 
-                if process.is_running():
-                    process.kill()
+            if process.is_running():
+                process.kill()
 
+            del self.tracked_processes[pid]
+            self.logger.info(f"Killed process: {pid}")
+
+        except psutil.NoSuchProcess:
+            if pid in self.tracked_processes:
                 del self.tracked_processes[pid]
-                self.logger.info(f"Killed process: {pid}")
-
-            except psutil.NoSuchProcess:
-                if pid in self.tracked_processes:
-                    del self.tracked_processes[pid]
-            except Exception as e:
-                self.logger.exception(f"Error killing process {pid}: {e}")
+        except Exception as e:
+            self.logger.exception(f"Error killing process {pid}: {e}")
 
     async def _cleanup_processes(self) -> None:
         """Cleanup all tracked processes."""
@@ -3448,7 +3494,7 @@ class IntellicrackcoreEngine:
             self.logger.warning("Engine already running")
             return
 
-        self.startup_time = datetime.utcnow()
+        self.startup_time = datetime.now(UTC)
 
         try:
             self.logger.info("Starting Intellicrack Core Engine...")
@@ -3563,12 +3609,10 @@ class IntellicrackcoreEngine:
         if not analysis_id:
             raise ValueError("analysis_id is required")
 
-        status = self.analysis_coordinator.get_analysis_status(analysis_id)
-
-        if not status:
+        if status := self.analysis_coordinator.get_analysis_status(analysis_id):
+            return status
+        else:
             raise ValueError(f"Analysis not found: {analysis_id}")
-
-        return status
 
     async def _handle_list_plugins(self, request: dict[str, Any]) -> dict[str, Any]:
         """Handle list plugins request."""
@@ -3607,12 +3651,10 @@ class IntellicrackcoreEngine:
         if not plugin_name:
             raise ValueError("plugin_name is required")
 
-        plugin = self.plugin_manager.get_plugin(plugin_name)
-
-        if not plugin:
+        if plugin := self.plugin_manager.get_plugin(plugin_name):
+            return plugin.get_status()
+        else:
             raise ValueError(f"Plugin not found: {plugin_name}")
-
-        return plugin.get_status()
 
     async def _handle_execute_workflow(self, request: dict[str, Any]) -> dict[str, Any]:
         """Handle execute workflow request."""
@@ -3637,19 +3679,23 @@ class IntellicrackcoreEngine:
         if not execution_id:
             raise ValueError("execution_id is required")
 
-        status = self.workflow_engine.get_workflow_status(execution_id)
-
-        if not status:
+        if status := self.workflow_engine.get_workflow_status(execution_id):
+            return status
+        else:
             raise ValueError(f"Workflow execution not found: {execution_id}")
-
-        return status
 
     async def _handle_get_system_status(self, request: dict[str, Any]) -> dict[str, Any]:
         """Handle get system status request."""
         return {
             "engine_status": "running" if self.running else "stopped",
-            "startup_time": self.startup_time.isoformat() if self.startup_time else None,
-            "uptime": (datetime.utcnow() - self.startup_time).total_seconds() if self.startup_time else 0,
+            "startup_time": (
+                self.startup_time.isoformat() if self.startup_time else None
+            ),
+            "uptime": (
+                (datetime.now(UTC) - self.startup_time).total_seconds()
+                if self.startup_time
+                else 0
+            ),
             "plugin_stats": self.plugin_manager.get_plugin_stats(),
             "resource_stats": self.resource_manager.get_resource_stats(),
             "event_stats": self.event_bus.get_stats(),
@@ -3672,7 +3718,7 @@ class IntellicrackcoreEngine:
             return {
                 "success": True,
                 "result": result,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
@@ -3706,7 +3752,9 @@ def main() -> None:
                 # Create a simple async loop that can be more responsive to stop signals
                 try:
                     while engine.running:
-                        await asyncio.wait([asyncio.sleep(0.1)], return_when=asyncio.FIRST_COMPLETED)
+                        await asyncio.wait(
+                            [asyncio.sleep(0.1)], return_when=asyncio.FIRST_COMPLETED
+                        )
                 except asyncio.CancelledError:
                     pass  # Allow clean cancellation
             else:
@@ -3714,7 +3762,9 @@ def main() -> None:
                 print("Intellicrack Core Engine running. Press Ctrl+C to stop.")
                 try:
                     while engine.running:
-                        await asyncio.wait([asyncio.sleep(0.1)], return_when=asyncio.FIRST_COMPLETED)
+                        await asyncio.wait(
+                            [asyncio.sleep(0.1)], return_when=asyncio.FIRST_COMPLETED
+                        )
                 except (KeyboardInterrupt, asyncio.CancelledError):
                     print("\nShutting down...")
 

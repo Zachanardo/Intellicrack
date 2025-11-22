@@ -84,17 +84,10 @@ CONFIDENCE SCORING:
 import logging
 from pathlib import Path
 
-from intellicrack.core.certificate.api_signatures import (
-    APISignature,
-    get_library_type,
-    get_signatures_by_library,
-)
+from intellicrack.core.certificate.api_signatures import APISignature, get_library_type, get_signatures_by_library
 from intellicrack.core.certificate.binary_scanner import BinaryScanner, ContextInfo
-from intellicrack.core.certificate.detection_report import (
-    BypassMethod,
-    DetectionReport,
-    ValidationFunction,
-)
+from intellicrack.core.certificate.detection_report import BypassMethod, DetectionReport, ValidationFunction
+
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +135,8 @@ class CertificateValidationDetector:
                 logger.info(f"Detected TLS libraries: {tls_libraries}")
 
                 validation_functions = self._find_validation_functions(
-                    scanner, tls_libraries,
+                    scanner,
+                    tls_libraries,
                 )
                 logger.info(f"Found {len(validation_functions)} validation functions")
 
@@ -150,7 +144,8 @@ class CertificateValidationDetector:
                 logger.info(f"After filtering: {len(filtered_functions)} functions")
 
                 recommended_method = self._recommend_bypass_method(
-                    filtered_functions, tls_libraries,
+                    filtered_functions,
+                    tls_libraries,
                 )
                 logger.debug(f"Recommended bypass method: {recommended_method.value}")
 
@@ -199,8 +194,7 @@ class CertificateValidationDetector:
                     context = scanner.analyze_call_context(address)
                     confidence = scanner.calculate_confidence(context)
 
-                    is_licensing = self._analyze_licensing_context(context)
-                    if is_licensing:
+                    if is_licensing := self._analyze_licensing_context(context):
                         confidence = min(confidence + 0.2, 1.0)
 
                     validation_func = ValidationFunction(
@@ -231,10 +225,7 @@ class CertificateValidationDetector:
             List of functions with confidence >= min_confidence
 
         """
-        return [
-            func for func in validation_functions
-            if func.confidence >= self.min_confidence
-        ]
+        return [func for func in validation_functions if func.confidence >= self.min_confidence]
 
     def _analyze_licensing_context(self, context: ContextInfo) -> bool:
         """Determine if an API call is in a licensing-related context.
@@ -247,8 +238,17 @@ class CertificateValidationDetector:
 
         """
         licensing_keywords = [
-            "license", "licensing", "activation", "activate", "register",
-            "registration", "serial", "key", "trial", "validate", "verification",
+            "license",
+            "licensing",
+            "activation",
+            "activate",
+            "register",
+            "registration",
+            "serial",
+            "key",
+            "trial",
+            "validate",
+            "verification",
         ]
 
         if context.function_name:
@@ -258,9 +258,8 @@ class CertificateValidationDetector:
 
         if context.surrounding_code:
             code_lower = context.surrounding_code.lower()
-            keyword_count = sum(
-                1 for kw in licensing_keywords if kw in code_lower
-            )
+            keyword_count = sum(bool(kw in code_lower)
+                            for kw in licensing_keywords)
             if keyword_count >= 2:
                 return True
 
@@ -288,14 +287,14 @@ class CertificateValidationDetector:
             if indicator in code_lower:
                 return "high"
 
-        for indicator in risk_indicators["medium"]:
-            if indicator in code_lower:
-                return "medium"
-
-        if len(context.cross_references) > 10:
-            return "medium"
-
-        return "low"
+        return next(
+            (
+                "medium"
+                for indicator in risk_indicators["medium"]
+                if indicator in code_lower
+            ),
+            "medium" if len(context.cross_references) > 10 else "low",
+        )
 
     def _recommend_bypass_method(
         self,
@@ -315,14 +314,10 @@ class CertificateValidationDetector:
         if not validation_functions:
             return BypassMethod.NONE
 
-        high_confidence_count = sum(
-            1 for func in validation_functions if func.confidence >= 0.7
-        )
+        high_confidence_count = sum(bool(func.confidence >= 0.7)
+                                for func in validation_functions)
 
-        library_types = {
-            get_library_type(lib) for lib in tls_libraries
-            if get_library_type(lib)
-        }
+        library_types = {get_library_type(lib) for lib in tls_libraries if get_library_type(lib)}
 
         if len(library_types) >= 3:
             return BypassMethod.HYBRID
@@ -330,9 +325,8 @@ class CertificateValidationDetector:
         if "openssl" in library_types or "nss" in library_types:
             return BypassMethod.FRIDA_HOOK
 
-        if high_confidence_count <= 3 and len(validation_functions) <= 5:
-            if all(func.confidence >= 0.8 for func in validation_functions):
-                return BypassMethod.BINARY_PATCH
+        if high_confidence_count <= 3 and len(validation_functions) <= 5 and all(func.confidence >= 0.8 for func in validation_functions):
+            return BypassMethod.BINARY_PATCH
 
         if "winhttp" in library_types or "schannel" in library_types:
             if high_confidence_count <= 2:
@@ -367,9 +361,8 @@ class CertificateValidationDetector:
         if len(validation_functions) > 5:
             return "medium"
 
-        high_confidence_count = sum(
-            1 for func in validation_functions if func.confidence >= 0.8
-        )
+        high_confidence_count = sum(bool(func.confidence >= 0.8)
+                                for func in validation_functions)
 
         if high_confidence_count >= len(validation_functions) * 0.8:
             return "low"

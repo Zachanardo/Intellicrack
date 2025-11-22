@@ -24,6 +24,7 @@ from typing import Any
 from .base import APIRepositoryBase, RateLimitConfig
 from .interface import ModelInfo
 
+
 """
 OpenRouter Repository Implementation
 
@@ -133,8 +134,7 @@ class OpenRouterRepository(APIRepositoryBase):
             # Extract model information from the response
             for model_data in data.get("data", []):
                 model_id = model_data.get("id")
-                model_info = self._create_model_info(model_id, model_data)
-                if model_info:
+                if model_info := self._create_model_info(model_id, model_data):
                     models.append(model_info)
 
             return models
@@ -166,14 +166,14 @@ class OpenRouterRepository(APIRepositoryBase):
             return None
 
         try:
-            # Find the specific model in the list
-            for model_data in data.get("data", []):
-                if model_data.get("id") == model_id:
-                    return self._create_model_info(model_id, model_data)
-
-            # Model not found
-            return None
-
+            return next(
+                (
+                    self._create_model_info(model_id, model_data)
+                    for model_data in data.get("data", [])
+                    if model_data.get("id") == model_id
+                ),
+                None,
+            )
         except (KeyError, TypeError) as e:
             logger.error(f"Error parsing OpenRouter model details for {model_id}: {e}")
             return None
@@ -206,8 +206,7 @@ class OpenRouterRepository(APIRepositoryBase):
             if model_data.get("features", {}).get("json_mode", False):
                 capabilities.append("json")
 
-            # Extract model information
-            model_info = ModelInfo(
+            return ModelInfo(
                 model_id=model_id,
                 name=model_data.get("name", model_id),
                 description=model_data.get("description", ""),
@@ -222,9 +221,6 @@ class OpenRouterRepository(APIRepositoryBase):
                 download_url=None,
                 local_path=None,
             )
-
-            return model_info
-
         except (KeyError, TypeError) as e:
             logger.error(f"Error creating ModelInfo for {model_id}: {e}")
             return None
@@ -236,5 +232,7 @@ class OpenRouterRepository(APIRepositoryBase):
             Always returns (False, "OpenRouter doesn't support model downloads")
 
         """
-        self.logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
+        self.logger.warning(
+            f"Download requested for {model_id} to {destination_path}, but not supported"
+        )
         return False, "OpenRouter doesn't support model downloads"

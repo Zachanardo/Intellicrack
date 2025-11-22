@@ -18,15 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-
-from intellicrack.handlers.pyqt6_handler import (
-    QFrame,
-    QLabel,
-    QProgressBar,
-    QPushButton,
-    QTextEdit,
-    QWidget,
-)
+from intellicrack.handlers.pyqt6_handler import QFrame, QLabel, QProgressBar, QPushButton, QTextEdit, QWidget
 
 
 class StyleManager:

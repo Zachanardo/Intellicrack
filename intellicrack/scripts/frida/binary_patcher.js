@@ -812,19 +812,17 @@ const BinaryPatcher = {
                     const is64bit = magic === 0xfeedfacf || magic === 0xcffaedfe;
                     const isLittleEndian = magic === 0xcefaedfe || magic === 0xcffaedfe;
 
-                    const header = {
-                        magic: magic,
-                        is64bit: is64bit,
-                        cputype: view.getInt32(4, isLittleEndian),
-                        cpusubtype: view.getInt32(8, isLittleEndian),
-                        filetype: view.getUint32(12, isLittleEndian),
-                        ncmds: view.getUint32(16, isLittleEndian),
-                        sizeofcmds: view.getUint32(20, isLittleEndian),
-                        flags: view.getUint32(24, isLittleEndian),
-                        reserved: is64bit ? view.getUint32(28, isLittleEndian) : undefined,
-                    };
-
-                    return header;
+                    return {
+                                            magic: magic,
+                                            is64bit: is64bit,
+                                            cputype: view.getInt32(4, isLittleEndian),
+                                            cpusubtype: view.getInt32(8, isLittleEndian),
+                                            filetype: view.getUint32(12, isLittleEndian),
+                                            ncmds: view.getUint32(16, isLittleEndian),
+                                            sizeofcmds: view.getUint32(20, isLittleEndian),
+                                            flags: view.getUint32(24, isLittleEndian),
+                                            reserved: is64bit ? view.getUint32(28, isLittleEndian) : undefined,
+                                        };
                 },
 
                 findCodeSignature: function (buffer) {
@@ -858,7 +856,7 @@ const BinaryPatcher = {
         this.signaturePreservation = {
             // Maintain PE Authenticode signatures
             preserveAuthenticode: function (buffer, patches) {
-                const pe = BinaryPatcher.formatHandlers.pe;
+                const {pe} = BinaryPatcher.formatHandlers;
                 const headers = pe.parseHeaders(buffer);
                 const view = new DataView(buffer);
 
@@ -877,14 +875,13 @@ const BinaryPatcher = {
                 };
 
                 const filteredPatches = patches.filter((patch) => {
-                    const offset = patch.offset;
+                    const {offset} = patch;
                     return offset < signedRange.start || offset >= signedRange.end;
                 });
 
                 // Apply filtered patches
                 filteredPatches.forEach((patch) => {
-                    const offset = patch.offset;
-                    const data = patch.data;
+                    const {offset, data} = patch;
 
                     for (let i = 0; i < data.length; i++) {
                         buffer[offset + i] = data[i];
@@ -994,7 +991,7 @@ const BinaryPatcher = {
             polymorphic: {
                 generateVariants: function (originalPatch) {
                     const variants = [];
-                    const arch = Process.arch;
+                    const {arch} = Process;
 
                     if (arch === 'x64' || arch === 'ia32') {
                         variants.push(...this.generateX86Variants(originalPatch));
@@ -1624,7 +1621,7 @@ const BinaryPatcher = {
             }
 
             // Apply patch based on architecture
-            const arch = Process.arch;
+            const {arch} = Process;
             let patchData;
 
             if (arch === 'x64' || arch === 'ia32') {

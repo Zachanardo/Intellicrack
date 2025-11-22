@@ -22,6 +22,7 @@ from collections import Counter, defaultdict
 from collections.abc import Callable
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -75,12 +76,7 @@ class AnalysisStatsGenerator:
             if total == 0:
                 return {}
 
-            distribution = {}
-            for key, count in counts.items():
-                distribution[key] = (count / total) * 100.0
-
-            return distribution
-
+            return {key: (count / total) * 100.0 for key, count in counts.items()}
         except Exception as e:
             logger.debug(f"Distribution calculation failed: {e}")
             return {}
@@ -133,7 +129,9 @@ class AnalysisStatsGenerator:
             }
 
     @staticmethod
-    def generate_correlation_matrix(items: list[dict[str, Any]], attributes: list[str]) -> dict[str, dict[str, float]]:
+    def generate_correlation_matrix(
+        items: list[dict[str, Any]], attributes: list[str]
+    ) -> dict[str, dict[str, float]]:
         """Generate correlation matrix between numeric attributes.
 
         Args:
@@ -184,17 +182,15 @@ class AnalysisStatsGenerator:
             mean1 = sum(values1) / len(values1)
             mean2 = sum(values2) / len(values2)
 
-            numerator = sum((x - mean1) * (y - mean2) for x, y in zip(values1, values2, strict=False))
+            numerator = sum(
+                (x - mean1) * (y - mean2) for x, y in zip(values1, values2, strict=False)
+            )
             sum_sq1 = sum((x - mean1) ** 2 for x in values1)
             sum_sq2 = sum((y - mean2) ** 2 for y in values2)
 
             denominator = (sum_sq1 * sum_sq2) ** 0.5
 
-            if denominator == 0:
-                return 0.0
-
-            return numerator / denominator
-
+            return 0.0 if denominator == 0 else numerator / denominator
         except Exception as e:
             logger.debug(f"Correlation calculation failed: {e}")
             return 0.0
@@ -232,9 +228,9 @@ class AnalysisStatsGenerator:
 
             time_series = {}
             for bucket_time, values in time_buckets.items():
-                numeric_values = [v for v in values if isinstance(v, (int, float))]
-
-                if numeric_values:
+                if numeric_values := [
+                    v for v in values if isinstance(v, (int, float))
+                ]:
                     time_series[bucket_time] = {
                         "count": len(numeric_values),
                         "min": min(numeric_values),
@@ -282,7 +278,9 @@ class AnalysisStatsGenerator:
             return default_return
 
     @staticmethod
-    def generate_summary_report(items: list[dict[str, Any]], title: str = "Analysis Summary") -> str:
+    def generate_summary_report(
+        items: list[dict[str, Any]], title: str = "Analysis Summary"
+    ) -> str:
         """Generate a text summary report.
 
         Args:
@@ -313,7 +311,8 @@ class AnalysisStatsGenerator:
 
             common_attributes = []
             for attr in all_attributes:
-                count = sum(1 for item in items if isinstance(item, dict) and attr in item)
+                count = sum(bool(isinstance(item, dict) and attr in item)
+                        for item in items)
                 if count >= len(items) * 0.5:
                     common_attributes.append(attr)
 
@@ -399,10 +398,9 @@ class AnalysisStatsGenerator:
                 sorted_values = sorted(values)
                 n = len(sorted_values)
 
-                q1_idx = n // 4
                 q3_idx = 3 * n // 4
 
-                q1 = sorted_values[q1_idx]
+                q1 = sorted_values[n // 4]
                 q3 = sorted_values[q3_idx]
                 iqr = q3 - q1
 
@@ -431,7 +429,9 @@ class AnalysisStatsGenerator:
             return []
 
     @staticmethod
-    def generate_percentiles(values: list[int | float], percentiles: list[int] = None) -> dict[int, float]:
+    def generate_percentiles(
+        values: list[int | float], percentiles: list[int] = None
+    ) -> dict[int, float]:
         """Calculate percentiles for a list of values.
 
         Args:
@@ -464,7 +464,10 @@ class AnalysisStatsGenerator:
                         upper_idx = min(lower_idx + 1, n - 1)
                         weight = index - lower_idx
 
-                        result[p] = sorted_values[lower_idx] * (1 - weight) + sorted_values[upper_idx] * weight
+                        result[p] = (
+                            sorted_values[lower_idx] * (1 - weight)
+                            + sorted_values[upper_idx] * weight
+                        )
 
             return result
 

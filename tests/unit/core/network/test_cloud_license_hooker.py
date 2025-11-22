@@ -150,7 +150,7 @@ class TestCloudLicenseResponseGenerator:
             assert len(intercepted) > 0
             assert 'adobe' in str(intercepted[-1]).lower()
 
-        except (socket.timeout, ConnectionRefusedError):
+        except (TimeoutError, ConnectionRefusedError):
             # Port might not be available, skip this specific test
             pytest.skip("HTTPS listener port not available")
         finally:

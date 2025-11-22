@@ -156,7 +156,7 @@ class PerformanceProfile:
         """Add performance metric."""
         self.metrics[name] = value
 
-    def track_performance(self, metrics: Dict[str, float]):
+    def track_performance(self, metrics: dict[str, float]):
         """Track multiple performance metrics."""
         self.metrics.update(metrics)
 
@@ -198,7 +198,7 @@ class R2PerformanceOptimizer:
         """Get performance profile with metrics."""
         return self.performance_profile
 
-    def optimize(self, binary_path: str, commands: List[str]) -> Dict[str, Any]:
+    def optimize(self, binary_path: str, commands: list[str]) -> dict[str, Any]:
         """Perform optimized binary analysis."""
         start_time = time.time()
 
@@ -264,7 +264,7 @@ def create_performance_optimizer(**kwargs) -> R2PerformanceOptimizer:
     return optimizer
 
 
-def optimize_for_large_binary(binary_path: str, binary_size_mb: int) -> Dict[str, Any]:
+def optimize_for_large_binary(binary_path: str, binary_size_mb: int) -> dict[str, Any]:
     """Optimize analysis for large binaries."""
     # Create optimizer with appropriate settings based on size
     if binary_size_mb > 100:

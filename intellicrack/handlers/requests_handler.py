@@ -29,6 +29,7 @@ from typing import Optional, Union
 
 from intellicrack.utils.logger import logger
 
+
 """
 Requests Import Handler with Production-Ready Fallbacks
 
@@ -42,9 +43,8 @@ try:
     import requests
     from requests import (
         ConnectionError as _RequestsConnectionError,
-    )
-    from requests import (
         HTTPError,
+        RequestException as RequestError,
         Response,
         Session,
         delete,
@@ -55,9 +55,6 @@ try:
         post,
         put,
     )
-    from requests import (
-        RequestException as RequestError,
-    )
     from requests.adapters import HTTPAdapter
     from requests.auth import HTTPBasicAuth, HTTPDigestAuth
     from requests.cookies import RequestsCookieJar
@@ -67,9 +64,9 @@ try:
         ProxyError,
         ReadTimeout,
         SSLError,
+        Timeout as _RequestsTimeout,
         TooManyRedirects,
     )
-    from requests.exceptions import Timeout as _RequestsTimeout
 
     # Create aliases for backward compatibility
     ConnectTimeoutError = ConnectTimeout
@@ -189,7 +186,9 @@ except ImportError as e:
             for i in range(0, len(self.content), chunk_size):
                 yield self.content[i : i + chunk_size]
 
-        def iter_lines(self, chunk_size: int = 512, decode_unicode: bool = True) -> Generator[str, None, None]:
+        def iter_lines(
+            self, chunk_size: int = 512, decode_unicode: bool = True
+        ) -> Generator[str, None, None]:
             """Iterate over response lines.
 
             Args:
@@ -211,7 +210,7 @@ except ImportError as e:
         for HTTP headers which are case-insensitive.
         """
 
-        def __init__(self, data: Optional[dict[object, object]] = None) -> None:
+        def __init__(self, data: dict[object, object] | None = None) -> None:
             """Initialize case-insensitive dictionary.
 
             Args:
@@ -271,7 +270,9 @@ except ImportError as e:
         Provides a dict-like interface for managing HTTP cookies.
         """
 
-        def set(self, name: str, value: str, domain: Optional[str] = None, path: Optional[str] = None) -> None:
+        def set(
+            self, name: str, value: str, domain: str | None = None, path: str | None = None
+        ) -> None:
             """Set cookie in jar.
 
             Args:
@@ -309,21 +310,21 @@ except ImportError as e:
             self.method = "GET"
             self.url = ""
             self.headers = CaseInsensitiveDict()
-            self.body: Optional[bytes] = None
+            self.body: bytes | None = None
             self.hooks: dict[str, object] = {}
 
         def prepare(
             self,
-            method: Optional[str] = None,
-            url: Optional[str] = None,
-            headers: Optional[dict[str, object]] = None,
-            files: Optional[object] = None,
-            data: Optional[Union[dict[str, object], bytes, str]] = None,
-            params: Optional[dict[str, object]] = None,
-            auth: Optional[object] = None,
-            cookies: Optional[dict[str, object]] = None,
-            hooks: Optional[dict[str, object]] = None,
-            json: Optional[object] = None,
+            method: str | None = None,
+            url: str | None = None,
+            headers: dict[str, object] | None = None,
+            files: object | None = None,
+            data: dict[str, object] | bytes | str | None = None,
+            params: dict[str, object] | None = None,
+            auth: object | None = None,
+            cookies: dict[str, object] | None = None,
+            hooks: dict[str, object] | None = None,
+            json: object | None = None,
         ) -> None:
             """Prepare the HTTP request.
 
@@ -375,10 +376,10 @@ except ImportError as e:
             """Initialize HTTP session."""
             self.headers: CaseInsensitiveDict = CaseInsensitiveDict()
             self.cookies: RequestsCookieJar = RequestsCookieJar()
-            self.auth: Optional[object] = None
+            self.auth: object | None = None
             self.proxies: dict[str, str] = {}
-            self.verify: Union[bool, str] = True
-            self.cert: Optional[str] = None
+            self.verify: bool | str = True
+            self.cert: str | None = None
             self.max_redirects: int = 30
             self.trust_env: bool = True
             self.adapters: dict[str, object] = {}
@@ -410,7 +411,9 @@ except ImportError as e:
             """
             return self.request("GET", url, **kwargs)
 
-        def post(self, url: str, data: Optional[object] = None, json: Optional[object] = None, **kwargs: object) -> Response:
+        def post(
+            self, url: str, data: object | None = None, json: object | None = None, **kwargs: object
+        ) -> Response:
             """Send POST request.
 
             Args:
@@ -425,7 +428,7 @@ except ImportError as e:
             """
             return self.request("POST", url, data=data, json=json, **kwargs)
 
-        def put(self, url: str, data: Optional[object] = None, **kwargs: object) -> Response:
+        def put(self, url: str, data: object | None = None, **kwargs: object) -> Response:
             """Send PUT request.
 
             Args:
@@ -439,7 +442,7 @@ except ImportError as e:
             """
             return self.request("PUT", url, data=data, **kwargs)
 
-        def patch(self, url: str, data: Optional[object] = None, **kwargs: object) -> Response:
+        def patch(self, url: str, data: object | None = None, **kwargs: object) -> Response:
             """Send PATCH request.
 
             Args:
@@ -555,7 +558,9 @@ except ImportError as e:
         Configures connection pool parameters for HTTP sessions.
         """
 
-        def __init__(self, pool_connections: int = 10, pool_maxsize: int = 10, max_retries: int = 0) -> None:
+        def __init__(
+            self, pool_connections: int = 10, pool_maxsize: int = 10, max_retries: int = 0
+        ) -> None:
             """Initialize HTTP adapter.
 
             Args:
@@ -574,7 +579,13 @@ except ImportError as e:
         Defines retry behavior for failed requests.
         """
 
-        def __init__(self, total: int = 10, read: Optional[int] = None, connect: Optional[int] = None, backoff_factor: float = 0) -> None:
+        def __init__(
+            self,
+            total: int = 10,
+            read: int | None = None,
+            connect: int | None = None,
+            backoff_factor: float = 0,
+        ) -> None:
             """Initialize retry configuration.
 
             Args:
@@ -638,12 +649,12 @@ except ImportError as e:
 
         # Handle cookies
         if session and session.cookies:
-            cookie_header = "; ".join(f"{k}={v}" for k, v in session.cookies.items())
-            if cookie_header:
+            if cookie_header := "; ".join(
+                f"{k}={v}" for k, v in session.cookies.items()
+            ):
                 req_headers["Cookie"] = cookie_header
         if cookies:
-            cookie_header = "; ".join(f"{k}={v}" for k, v in cookies.items())
-            if cookie_header:
+            if cookie_header := "; ".join(f"{k}={v}" for k, v in cookies.items()):
                 req_headers["Cookie"] = req_headers.get("Cookie", "") + "; " + cookie_header
 
         # Prepare data
@@ -717,7 +728,11 @@ except ImportError as e:
             resp.reason = e.reason
             resp.url = url
             resp.content = e.read() if hasattr(e, "read") else b""
-            resp.headers = CaseInsensitiveDict(dict(e.headers)) if hasattr(e, "headers") else CaseInsensitiveDict()
+            resp.headers = (
+                CaseInsensitiveDict(dict(e.headers))
+                if hasattr(e, "headers")
+                else CaseInsensitiveDict()
+            )
 
             try:
                 resp.text = resp.content.decode("utf-8")
@@ -759,7 +774,9 @@ except ImportError as e:
         """
         return request("GET", url, **kwargs)
 
-    def post(url: str, data: Optional[object] = None, json: Optional[object] = None, **kwargs: object) -> Response:
+    def post(
+        url: str, data: object | None = None, json: object | None = None, **kwargs: object
+    ) -> Response:
         """Send POST request.
 
         Args:
@@ -774,7 +791,7 @@ except ImportError as e:
         """
         return request("POST", url, data=data, json=json, **kwargs)
 
-    def put(url: str, data: Optional[object] = None, **kwargs: object) -> Response:
+    def put(url: str, data: object | None = None, **kwargs: object) -> Response:
         """Send PUT request.
 
         Args:
@@ -788,7 +805,7 @@ except ImportError as e:
         """
         return request("PUT", url, data=data, **kwargs)
 
-    def patch(url: str, data: Optional[object] = None, **kwargs: object) -> Response:
+    def patch(url: str, data: object | None = None, **kwargs: object) -> Response:
         """Send PATCH request.
 
         Args:
@@ -867,7 +884,9 @@ except ImportError as e:
         HTTPAdapter = HTTPAdapter
 
         # Auth
-        auth = type("auth", (), {"HTTPBasicAuth": HTTPBasicAuth, "HTTPDigestAuth": HTTPDigestAuth})()
+        auth = type(
+            "auth", (), {"HTTPBasicAuth": HTTPBasicAuth, "HTTPDigestAuth": HTTPDigestAuth}
+        )()
 
         # Exceptions
         RequestException = RequestError
@@ -908,7 +927,13 @@ except ImportError as e:
         packages = type(
             "packages",
             (),
-            {"urllib3": type("urllib3", (), {"util": type("util", (), {"retry": type("retry", (), {"Retry": Retry})()})()})()},
+            {
+                "urllib3": type(
+                    "urllib3",
+                    (),
+                    {"util": type("util", (), {"retry": type("retry", (), {"Retry": Retry})()})()},
+                )()
+            },
         )()
 
     requests = FallbackRequests()
@@ -916,41 +941,34 @@ except ImportError as e:
 
 # Export all requests objects and availability flag
 __all__ = [
-    # Availability flags
+    "CaseInsensitiveDict",
+    "ConnectTimeoutError",
+    "ConnectionError",
     "HAS_REQUESTS",
-    "REQUESTS_VERSION",
-    # Main module
-    "requests",
-    # Functions
-    "request",
-    "get",
-    "post",
-    "put",
-    "patch",
-    "delete",
-    "head",
-    "options",
-    # Classes
-    "Response",
-    "Session",
-    "PreparedRequest",
-    "RequestsCookieJar",
     "HTTPAdapter",
-    "Retry",
-    # Auth
     "HTTPBasicAuth",
     "HTTPDigestAuth",
-    # Exceptions
-    "RequestError",
-    "ConnectionError",
     "HTTPError",
+    "InvalidURLError",
+    "PreparedRequest",
+    "ProxyError",
+    "REQUESTS_VERSION",
+    "ReadTimeoutError",
+    "RequestError",
+    "RequestsCookieJar",
+    "Response",
+    "Retry",
+    "SSLError",
+    "Session",
     "TimeoutError",
     "TooManyRedirectsError",
-    "InvalidURLError",
-    "ConnectTimeoutError",
-    "ReadTimeoutError",
-    "SSLError",
-    "ProxyError",
-    # Structures
-    "CaseInsensitiveDict",
+    "delete",
+    "get",
+    "head",
+    "options",
+    "patch",
+    "post",
+    "put",
+    "request",
+    "requests",
 ]

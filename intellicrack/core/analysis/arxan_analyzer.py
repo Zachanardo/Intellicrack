@@ -26,6 +26,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+
 try:
     import capstone
 
@@ -50,9 +51,8 @@ except ImportError:
     PEFILE_AVAILABLE = False
     pefile = None
 
-from intellicrack.core.protection_detection.arxan_detector import (
-    ArxanDetector,
-)
+from intellicrack.core.protection_detection.arxan_detector import ArxanDetector
+
 
 logger = logging.getLogger(__name__)
 
@@ -276,7 +276,9 @@ class ArxanAnalyzer:
 
         return result
 
-    def _analyze_tamper_checks(self, binary_path: Path, binary_data: bytes) -> list[TamperCheckLocation]:
+    def _analyze_tamper_checks(
+        self, binary_path: Path, binary_data: bytes
+    ) -> list[TamperCheckLocation]:
         """Analyze anti-tampering mechanisms."""
         tamper_checks = []
 
@@ -314,7 +316,9 @@ class ArxanAnalyzer:
                         section_data = section.get_data()
                         section_va = section.VirtualAddress
 
-                        self._scan_section_for_tamper_checks(section_data, section_va, tamper_checks)
+                        self._scan_section_for_tamper_checks(
+                            section_data, section_va, tamper_checks
+                        )
 
                 pe.close()
 
@@ -323,7 +327,9 @@ class ArxanAnalyzer:
 
         return tamper_checks
 
-    def _scan_section_for_tamper_checks(self, section_data: bytes, section_va: int, tamper_checks: list[TamperCheckLocation]) -> None:
+    def _scan_section_for_tamper_checks(
+        self, section_data: bytes, section_va: int, tamper_checks: list[TamperCheckLocation]
+    ) -> None:
         """Scan executable section for tamper check patterns."""
         memory_read_patterns = [
             b"\x8b\x45",
@@ -336,17 +342,16 @@ class ArxanAnalyzer:
         for i in range(0, len(section_data) - 20, 4):
             chunk = section_data[i : i + 20]
 
-            if any(pattern in chunk for pattern in memory_read_patterns):
-                if b"\x33" in chunk or b"\x35" in chunk:
-                    tamper_check = TamperCheckLocation(
-                        address=section_va + i,
-                        size=20,
-                        check_type="inline_check",
-                        target_region=(section_va + i - 0x100, section_va + i + 0x100),
-                        algorithm="xor_checksum",
-                        bypass_complexity="medium",
-                    )
-                    tamper_checks.append(tamper_check)
+            if any(pattern in chunk for pattern in memory_read_patterns) and (b"\x33" in chunk or b"\x35" in chunk):
+                tamper_check = TamperCheckLocation(
+                    address=section_va + i,
+                    size=20,
+                    check_type="inline_check",
+                    target_region=(section_va + i - 0x100, section_va + i + 0x100),
+                    algorithm="xor_checksum",
+                    bypass_complexity="medium",
+                )
+                tamper_checks.append(tamper_check)
 
     def _analyze_control_flow(self, binary_path: Path, binary_data: bytes) -> ControlFlowAnalysis:
         """Analyze control flow obfuscation."""
@@ -400,9 +405,15 @@ class ArxanAnalyzer:
             self.logger.debug(f"Control flow analysis error: {e}")
 
         total_instructions = len(binary_data) // 4
-        obfuscated_instructions = len(analysis.opaque_predicates) + len(analysis.indirect_jumps) + len(analysis.junk_code_blocks) * 10
+        obfuscated_instructions = (
+            len(analysis.opaque_predicates)
+            + len(analysis.indirect_jumps)
+            + len(analysis.junk_code_blocks) * 10
+        )
 
-        analysis.obfuscation_density = min(obfuscated_instructions / max(total_instructions, 1), 1.0)
+        analysis.obfuscation_density = min(
+            obfuscated_instructions / max(total_instructions, 1), 1.0
+        )
 
         return analysis
 
@@ -499,7 +510,9 @@ class ArxanAnalyzer:
 
         return handler_addresses
 
-    def _analyze_license_validation(self, binary_path: Path, binary_data: bytes) -> list[LicenseValidationRoutine]:
+    def _analyze_license_validation(
+        self, binary_path: Path, binary_data: bytes
+    ) -> list[LicenseValidationRoutine]:
         """Analyze license validation routines."""
         license_routines = []
 
@@ -541,7 +554,9 @@ class ArxanAnalyzer:
 
         license_strings = self._find_license_strings(binary_data)
         for routine in license_routines:
-            nearby_strings = [s for addr, s in license_strings if abs(addr - routine.address) < 0x1000]
+            nearby_strings = [
+                s for addr, s in license_strings if abs(addr - routine.address) < 0x1000
+            ]
             routine.string_references = nearby_strings
 
         return license_routines
@@ -582,7 +597,9 @@ class ArxanAnalyzer:
 
         return found_strings
 
-    def _analyze_integrity_checks(self, binary_path: Path, binary_data: bytes) -> list[IntegrityCheckMechanism]:
+    def _analyze_integrity_checks(
+        self, binary_path: Path, binary_data: bytes
+    ) -> list[IntegrityCheckMechanism]:
         """Analyze integrity check mechanisms."""
         integrity_checks = []
 
@@ -618,7 +635,9 @@ class ArxanAnalyzer:
                     for entry in pe.DIRECTORY_ENTRY_IMPORT:
                         for imp in entry.imports:
                             if imp.name:
-                                func_name = imp.name.decode() if isinstance(imp.name, bytes) else imp.name
+                                func_name = (
+                                    imp.name.decode() if isinstance(imp.name, bytes) else imp.name
+                                )
 
                                 if func_name in ["CryptHashData", "CryptVerifySignature"]:
                                     check = IntegrityCheckMechanism(
@@ -654,7 +673,8 @@ class ArxanAnalyzer:
             end = min(pos + 256, len(binary_data))
 
             chunk = binary_data[start:end]
-            printable = sum(1 for b in chunk if 32 <= b < 127)
+            printable = sum(bool(32 <= b < 127)
+                        for b in chunk)
 
             if printable < len(chunk) * 0.1:
                 encrypted_regions.append((start, end - start))

@@ -30,6 +30,7 @@ import traceback
 from pathlib import Path
 from types import TracebackType
 
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -154,7 +155,9 @@ def secure_pickle_load(file_path: str) -> object:
     return RestrictedUnpickler(io.BytesIO(data)).load()
 
 
-def handle_exception(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType | None) -> None:
+def handle_exception(
+    exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType | None
+) -> None:
     """Global exception handler for unhandled exceptions.
 
     Args:
@@ -178,7 +181,9 @@ def handle_exception(exc_type: type[BaseException], exc_value: BaseException, ex
     _report_error(exc_type, exc_value, exc_traceback)
 
 
-def _display_exception_dialog(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType | None) -> None:
+def _display_exception_dialog(
+    exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType | None
+) -> None:
     """Display an exception dialog to the user.
 
     Args:
@@ -207,7 +212,9 @@ def _display_exception_dialog(exc_type: type[BaseException], exc_value: BaseExce
         logger.error("Failed to display exception dialog: %s", e)
 
 
-def _report_error(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType | None) -> None:
+def _report_error(
+    exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType | None
+) -> None:
     """Report error to log file and optionally to remote service.
 
     Args:
@@ -298,7 +305,9 @@ def save_config(config: dict[str, Any], config_path: str = "config.json") -> boo
         return False
 
 
-def setup_file_logging(log_file: str = "intellicrack.log", level: int = logging.INFO) -> logging.Logger:
+def setup_file_logging(
+    log_file: str = "intellicrack.log", level: int = logging.INFO
+) -> logging.Logger:
     """Set up file logging for the application.
 
     Args:
@@ -311,7 +320,7 @@ def setup_file_logging(log_file: str = "intellicrack.log", level: int = logging.
     """
     try:
         # Create logs directory if it doesn't exist
-        log_dir = os.path.dirname(log_file) if os.path.dirname(log_file) else "logs"
+        log_dir = os.path.dirname(log_file) or "logs"
         if log_dir and not os.path.exists(log_dir):
             os.makedirs(log_dir)
 

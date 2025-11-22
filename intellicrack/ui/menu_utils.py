@@ -25,6 +25,7 @@ Common functionality for menu operations to eliminate code duplication.
 
 from intellicrack.utils.logger import logger
 
+
 try:
     from intellicrack.handlers.pyqt6_handler import QMenu, QMenuBar
 except ImportError as e:
@@ -46,8 +47,7 @@ def find_or_create_menu(menu_bar: QMenuBar, menu_name: str) -> QMenu:
     # Search for existing menu
     for action in menu_bar.actions():
         if action.text() == menu_name:
-            menu = action.menu()
-            if menu:
+            if menu := action.menu():
                 return menu
 
     # Create new menu if not found

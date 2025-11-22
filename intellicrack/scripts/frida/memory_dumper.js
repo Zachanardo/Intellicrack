@@ -517,7 +517,7 @@ const AdvancedMemoryDumper = {
         try {
             console.log('[AdvancedMemoryDumper] Initializing cross-platform handlers');
 
-            const platform = Process.platform;
+            const {platform} = Process;
 
             this.platformHandlers = {
                 windows: {
@@ -967,7 +967,7 @@ const AdvancedMemoryDumper = {
             console.log('[AdvancedMemoryDumper] Extracting cross-platform memory');
 
             const platformData = new Map();
-            const platform = Process.platform;
+            const {platform} = Process;
 
             if (platform === 'windows') {
                 platformData.set('windows', this.extractWindowsSpecificMemory());
@@ -1622,22 +1622,20 @@ const AdvancedMemoryDumper = {
      */
     analyzeProtectionMechanisms: function () {
         try {
-            const protections = {
-                dep: this.isDEPEnabled(),
-                aslr: this.isASLREnabled(),
-                cfg: this.isCFGEnabled(),
-                cet: this.isCETEnabled(),
-                mpx: this.isMPXEnabled(),
-                smep: this.isSMEPEnabled(),
-                smap: this.isSMAPEnabled(),
-                kpti: this.isKPTIEnabled(),
-                antiDebug: this.detectAntiDebugTechniques(),
-                antiDump: this.detectAntiDumpTechniques(),
-                packing: this.detectPackingTechniques(),
-                obfuscation: this.detectObfuscationTechniques(),
-            };
-
-            return protections;
+            return {
+                            dep: this.isDEPEnabled(),
+                            aslr: this.isASLREnabled(),
+                            cfg: this.isCFGEnabled(),
+                            cet: this.isCETEnabled(),
+                            mpx: this.isMPXEnabled(),
+                            smep: this.isSMEPEnabled(),
+                            smap: this.isSMAPEnabled(),
+                            kpti: this.isKPTIEnabled(),
+                            antiDebug: this.detectAntiDebugTechniques(),
+                            antiDump: this.detectAntiDumpTechniques(),
+                            packing: this.detectPackingTechniques(),
+                            obfuscation: this.detectObfuscationTechniques(),
+                        };
         } catch (error) {
             console.error(
                 `[AdvancedMemoryDumper] Protection mechanism analysis failed: ${error.message}`
@@ -1995,13 +1993,12 @@ const AdvancedMemoryDumper = {
      */
     getJVMHeapInfo: function () {
         try {
-            const heapInfo = {
-                youngGeneration: this.extractYoungGeneration(),
-                oldGeneration: this.extractOldGeneration(),
-                metaspace: this.extractMetaspace(),
-                codeCache: this.extractCodeCache(),
-            };
-            return heapInfo;
+            return {
+                            youngGeneration: this.extractYoungGeneration(),
+                            oldGeneration: this.extractOldGeneration(),
+                            metaspace: this.extractMetaspace(),
+                            codeCache: this.extractCodeCache(),
+                        };
         } catch (error) {
             return { error: error.message };
         }
@@ -2012,9 +2009,7 @@ const AdvancedMemoryDumper = {
      */
     enumerateClassLoaders: function () {
         try {
-            const classLoaders = [];
-            // Implementation would scan JVM memory for ClassLoader structures
-            return classLoaders;
+            return [];
         } catch (error) {
             return [];
         }
@@ -2296,15 +2291,13 @@ const AdvancedMemoryDumper = {
      */
     enumerateV8HeapSpaces: function () {
         try {
-            const heapSpaces = {
-                newSpace: this.extractV8NewSpace(),
-                oldSpace: this.extractV8OldSpace(),
-                codeSpace: this.extractV8CodeSpace(),
-                mapSpace: this.extractV8MapSpace(),
-                largeObjectSpace: this.extractV8LargeObjectSpace(),
-            };
-
-            return heapSpaces;
+            return {
+                            newSpace: this.extractV8NewSpace(),
+                            oldSpace: this.extractV8OldSpace(),
+                            codeSpace: this.extractV8CodeSpace(),
+                            mapSpace: this.extractV8MapSpace(),
+                            largeObjectSpace: this.extractV8LargeObjectSpace(),
+                        };
         } catch (error) {
             return { error: error.message };
         }
@@ -3969,7 +3962,7 @@ const AdvancedMemoryDumper = {
                 const currentThread = Process.enumerateThreads()[0];
                 if (currentThread) {
                     // Get actual register values from thread context
-                    const context = currentThread.context;
+                    const {context} = currentThread;
 
                     if (Process.arch === 'x64') {
                         registers.general = {
@@ -6194,16 +6187,14 @@ const AdvancedMemoryDumper = {
 
             // Look for protection attribute changes
             for (const change of monitor.changeHistory.slice(-5)) {
-                if (change.protectionBefore && change.protectionAfter) {
-                    if (change.protectionBefore !== change.protectionAfter) {
-                        patterns.push({
-                            type: 'protection_change',
-                            from: change.protectionBefore,
-                            to: change.protectionAfter,
-                            timestamp: change.timestamp,
-                            address: change.address,
-                        });
-                    }
+                if (change.protectionBefore && change.protectionAfter && change.protectionBefore !== change.protectionAfter) {
+                      patterns.push({
+                          type: 'protection_change',
+                          from: change.protectionBefore,
+                          to: change.protectionAfter,
+                          timestamp: change.timestamp,
+                          address: change.address,
+                      });
                 }
             }
 
@@ -6519,7 +6510,7 @@ const AdvancedMemoryDumper = {
                         }
                     } else {
                         // For non-module regions, check if it's heap/stack/mapped
-                        const protection = region.protection;
+                        const {protection} = region;
 
                         // Stack regions are typically allocated at thread creation
                         if (protection === 'rw-' && region.size >= 0x100000) {
@@ -6543,19 +6534,16 @@ const AdvancedMemoryDumper = {
                             allocationTimestamp = Date.now() - ageEstimate;
                         }
                         // Memory-mapped files have file modification time
-                        else if (protection.includes('r') && region.file) {
-                            // Use file modification time as allocation time
-                            if (Process.platform === 'windows') {
-                                const kernel32 = Module.findExportByName(
-                                    'kernel32.dll',
-                                    'GetFileAttributesExW'
-                                );
-                                if (kernel32) {
-                                    // Would need to implement file time checking
-                                    allocationTimestamp = Date.now() - 60000; // Default to 1 minute ago
-                                }
-                            }
-                        }
+                        else if (protection.includes('r') && region.file && Process.platform === 'windows') {
+                                   const kernel32 = Module.findExportByName(
+                                       'kernel32.dll',
+                                       'GetFileAttributesExW'
+                                   );
+                                   if (kernel32) {
+                                       // Would need to implement file time checking
+                                       allocationTimestamp = Date.now() - 60000; // Default to 1 minute ago
+                                   }
+                             }
                     }
                 } catch (e) {
                     // If we can't determine real time, use current time
@@ -8915,7 +8903,7 @@ const AdvancedMemoryDumper = {
                         const compressed = compressionEngine.compress(originalData);
 
                         // Update stream with real compressed data
-                        const compressedSize = compressed.compressedSize;
+                        const {compressedSize} = compressed;
                         const compressionRatio = compressedSize / originalSize;
 
                         // Replace buffer with compressed data
@@ -9711,22 +9699,13 @@ const AdvancedMemoryDumper = {
                         }
 
                         return {
-                            algorithm: 'zstd',
-                            data: compressed.slice(0, compressedPos),
-                            metadata: {
-                                originalSize: input.length,
-                                compressedSize: compressedPos,
-                            },
-                        };
-
-                        return {
-                            algorithm: 'zstd',
-                            data: compressed.slice(0, compressedPos),
-                            metadata: {
-                                originalSize: input.length,
-                                compressedSize: compressedPos,
-                            },
-                        };
+                                                    algorithm: 'zstd',
+                                                    data: compressed.slice(0, compressedPos),
+                                                    metadata: {
+                                                        originalSize: input.length,
+                                                        compressedSize: compressedPos,
+                                                    },
+                                                };
                     } catch (error) {
                         return {
                             algorithm: 'zstd',
@@ -9832,7 +9811,7 @@ const AdvancedMemoryDumper = {
                                 compressed[compressedPos++] = 0xfd; // Long match marker
 
                                 // Encode length (variable length)
-                                let length = bestMatch.length;
+                                let {length} = bestMatch;
                                 while (length > 127) {
                                     compressed[compressedPos++] = (length & 0x7f) | 0x80;
                                     length >>= 7;
@@ -9840,7 +9819,7 @@ const AdvancedMemoryDumper = {
                                 compressed[compressedPos++] = length & 0x7f;
 
                                 // Encode distance (variable length)
-                                let distance = bestMatch.distance;
+                                let {distance} = bestMatch;
                                 while (distance > 127) {
                                     compressed[compressedPos++] = (distance & 0x7f) | 0x80;
                                     distance >>= 7;
@@ -10013,7 +9992,7 @@ const AdvancedMemoryDumper = {
                             return compressedData;
                         }
 
-                        const baseId = metadata.baseId;
+                        const {baseId} = metadata;
                         if (!this.bases.has(baseId)) {
                             throw new Error(
                                 `Base ${baseId} not found for differential decompression`
@@ -10516,15 +10495,13 @@ const AdvancedMemoryDumper = {
         try {
             const data = new Uint8Array(memoryData);
 
-            const statistics = {
-                entropy: this.calculateEntropy(data),
-                byteFrequency: this.calculateByteFrequency(data),
-                patterns: this.findStatisticalPatterns(data),
-                anomalies: this.detectStatisticalAnomalies(data),
-                correlation: this.calculateByteCorrelation(data),
-            };
-
-            return statistics;
+            return {
+                            entropy: this.calculateEntropy(data),
+                            byteFrequency: this.calculateByteFrequency(data),
+                            patterns: this.findStatisticalPatterns(data),
+                            anomalies: this.detectStatisticalAnomalies(data),
+                            correlation: this.calculateByteCorrelation(data),
+                        };
         } catch (error) {
             console.error(`[AdvancedMemoryDumper] Statistical analysis failed: ${error.message}`);
             return {};
@@ -10561,14 +10538,12 @@ const AdvancedMemoryDumper = {
         try {
             const data = new Uint8Array(memoryData);
 
-            const behavioral = {
-                accessPatterns: this.analyzeMemoryAccessPatterns(data),
-                allocationPatterns: this.analyzeAllocationPatterns(data),
-                usagePatterns: this.analyzeMemoryUsagePatterns(data),
-                temporalPatterns: this.analyzeTemporalPatterns(data),
-            };
-
-            return behavioral;
+            return {
+                            accessPatterns: this.analyzeMemoryAccessPatterns(data),
+                            allocationPatterns: this.analyzeAllocationPatterns(data),
+                            usagePatterns: this.analyzeMemoryUsagePatterns(data),
+                            temporalPatterns: this.analyzeTemporalPatterns(data),
+                        };
         } catch (error) {
             console.error(`[AdvancedMemoryDumper] Behavioral analysis failed: ${error.message}`);
             return {};
@@ -10709,14 +10684,12 @@ const AdvancedMemoryDumper = {
     // Track dynamic memory allocations
     trackDynamicAllocations: function (memoryData) {
         try {
-            const allocations = {
-                heapRegions: this.identifyHeapRegions(memoryData),
-                stackRegions: this.identifyStackRegions(memoryData),
-                allocationHeaders: this.findAllocationHeaders(memoryData),
-                freeBlocks: this.identifyFreeBlocks(memoryData),
-            };
-
-            return allocations;
+            return {
+                            heapRegions: this.identifyHeapRegions(memoryData),
+                            stackRegions: this.identifyStackRegions(memoryData),
+                            allocationHeaders: this.findAllocationHeaders(memoryData),
+                            freeBlocks: this.identifyFreeBlocks(memoryData),
+                        };
         } catch (error) {
             console.error(
                 `[AdvancedMemoryDumper] Dynamic allocation tracking failed: ${error.message}`
@@ -10733,14 +10706,12 @@ const AdvancedMemoryDumper = {
     // Analyze memory layout
     analyzeMemoryLayout: function (memoryData) {
         try {
-            const layout = {
-                segments: this.identifyMemorySegments(memoryData),
-                alignment: this.analyzeMemoryAlignment(memoryData),
-                gaps: this.identifyMemoryGaps(memoryData),
-                overlaps: this.detectMemoryOverlaps(memoryData),
-            };
-
-            return layout;
+            return {
+                            segments: this.identifyMemorySegments(memoryData),
+                            alignment: this.analyzeMemoryAlignment(memoryData),
+                            gaps: this.identifyMemoryGaps(memoryData),
+                            overlaps: this.detectMemoryOverlaps(memoryData),
+                        };
         } catch (error) {
             console.error(`[AdvancedMemoryDumper] Memory layout analysis failed: ${error.message}`);
             return { segments: [], alignment: {}, gaps: [], overlaps: [] };
@@ -10752,14 +10723,12 @@ const AdvancedMemoryDumper = {
         try {
             // In real implementation, this would query actual memory permissions
             // For now, we infer permissions from content analysis
-            const permissions = {
-                readableRegions: this.identifyReadableRegions(memoryData),
-                writableRegions: this.identifyWritableRegions(memoryData),
-                executableRegions: this.identifyExecutableRegions(memoryData),
-                protectedRegions: this.identifyProtectedRegions(memoryData),
-            };
-
-            return permissions;
+            return {
+                            readableRegions: this.identifyReadableRegions(memoryData),
+                            writableRegions: this.identifyWritableRegions(memoryData),
+                            executableRegions: this.identifyExecutableRegions(memoryData),
+                            protectedRegions: this.identifyProtectedRegions(memoryData),
+                        };
         } catch (error) {
             console.error(`[AdvancedMemoryDumper] Permission analysis failed: ${error.message}`);
             return {
@@ -10908,15 +10877,13 @@ const AdvancedMemoryDumper = {
     // Extract structured data from memory
     extractStructuredData: function (memoryData) {
         try {
-            const structuredData = {
-                peHeaders: this.extractPEHeaders(memoryData),
-                elfHeaders: this.extractELFHeaders(memoryData),
-                jsonData: this.extractJSONData(memoryData),
-                xmlData: this.extractXMLData(memoryData),
-                databases: this.extractDatabaseStructures(memoryData),
-            };
-
-            return structuredData;
+            return {
+                            peHeaders: this.extractPEHeaders(memoryData),
+                            elfHeaders: this.extractELFHeaders(memoryData),
+                            jsonData: this.extractJSONData(memoryData),
+                            xmlData: this.extractXMLData(memoryData),
+                            databases: this.extractDatabaseStructures(memoryData),
+                        };
         } catch (error) {
             console.error(
                 `[AdvancedMemoryDumper] Structured data extraction failed: ${error.message}`
@@ -11083,17 +11050,15 @@ const AdvancedMemoryDumper = {
                     // Linux x64/ARM64/RISC-V support
                     handleLinuxMemory: function (options = {}) {
                         try {
-                            const linuxHandler = {
-                                distribution: this.detectLinuxDistribution(),
-                                kernel: this.getKernelInfo(),
-                                procMemory: this.handleProcMemExtraction(),
-                                memoryMapping: this.analyzeLinuxMemoryMapping(),
-                                sharedMemory: this.extractLinuxSharedMemory(),
-                                containers: this.handleContainerMemory(),
-                                namespaces: this.analyzeNamespaceMemory(),
-                            };
-
-                            return linuxHandler;
+                            return {
+                                                            distribution: this.detectLinuxDistribution(),
+                                                            kernel: this.getKernelInfo(),
+                                                            procMemory: this.handleProcMemExtraction(),
+                                                            memoryMapping: this.analyzeLinuxMemoryMapping(),
+                                                            sharedMemory: this.extractLinuxSharedMemory(),
+                                                            containers: this.handleContainerMemory(),
+                                                            namespaces: this.analyzeNamespaceMemory(),
+                                                        };
                         } catch (error) {
                             console.error(
                                 `[AdvancedMemoryDumper] Linux memory handling failed: ${error.message}`
@@ -11104,14 +11069,12 @@ const AdvancedMemoryDumper = {
 
                     handleProcMemExtraction: function () {
                         try {
-                            const procExtraction = {
-                                mapsAnalysis: this.analyzeProcMaps(),
-                                memoryExtraction: this.extractFromProcMem(),
-                                statusInfo: this.parseProcStatus(),
-                                smapsAnalysis: this.analyzeProcSmaps(),
-                            };
-
-                            return procExtraction;
+                            return {
+                                                            mapsAnalysis: this.analyzeProcMaps(),
+                                                            memoryExtraction: this.extractFromProcMem(),
+                                                            statusInfo: this.parseProcStatus(),
+                                                            smapsAnalysis: this.analyzeProcSmaps(),
+                                                        };
                         } catch (error) {
                             console.error(
                                 `[AdvancedMemoryDumper] /proc/mem extraction failed: ${error.message}`
@@ -11122,14 +11085,12 @@ const AdvancedMemoryDumper = {
 
                     analyzeLinuxMemoryMapping: function () {
                         try {
-                            const mapping = {
-                                virtualMemory: this.analyzeLinuxVirtualMemory(),
-                                physicalMemory: this.analyzeLinuxPhysicalMemory(),
-                                memoryAreas: this.enumerateLinuxMemoryAreas(),
-                                hugepages: this.analyzeLinuxHugepages(),
-                            };
-
-                            return mapping;
+                            return {
+                                                            virtualMemory: this.analyzeLinuxVirtualMemory(),
+                                                            physicalMemory: this.analyzeLinuxPhysicalMemory(),
+                                                            memoryAreas: this.enumerateLinuxMemoryAreas(),
+                                                            hugepages: this.analyzeLinuxHugepages(),
+                                                        };
                         } catch (error) {
                             console.error(
                                 `[AdvancedMemoryDumper] Linux memory mapping analysis failed: ${error.message}`
@@ -11140,14 +11101,12 @@ const AdvancedMemoryDumper = {
 
                     extractLinuxSharedMemory: function () {
                         try {
-                            const sharedMemory = {
-                                systemV: this.extractSystemVSharedMemory(),
-                                posix: this.extractPosixSharedMemory(),
-                                tmpfs: this.extractTmpfsMemory(),
-                                memfd: this.extractMemfdMemory(),
-                            };
-
-                            return sharedMemory;
+                            return {
+                                                            systemV: this.extractSystemVSharedMemory(),
+                                                            posix: this.extractPosixSharedMemory(),
+                                                            tmpfs: this.extractTmpfsMemory(),
+                                                            memfd: this.extractMemfdMemory(),
+                                                        };
                         } catch (error) {
                             console.error(
                                 `[AdvancedMemoryDumper] Linux shared memory extraction failed: ${error.message}`
@@ -11162,17 +11121,15 @@ const AdvancedMemoryDumper = {
                     // macOS Intel/Apple Silicon support
                     handleMacOSMemory: function (options = {}) {
                         try {
-                            const macOSHandler = {
-                                version: this.detectMacOSVersion(),
-                                architecture: this.detectMacOSArchitecture(),
-                                machO: this.handleMachOMemoryLayouts(),
-                                sip: this.bypassSystemIntegrityProtection(),
-                                dylibs: this.extractDylibMemory(),
-                                universalBinary: this.handleUniversalBinaryMemory(),
-                                sandbox: this.analyzeSandboxMemory(),
-                            };
-
-                            return macOSHandler;
+                            return {
+                                                            version: this.detectMacOSVersion(),
+                                                            architecture: this.detectMacOSArchitecture(),
+                                                            machO: this.handleMachOMemoryLayouts(),
+                                                            sip: this.bypassSystemIntegrityProtection(),
+                                                            dylibs: this.extractDylibMemory(),
+                                                            universalBinary: this.handleUniversalBinaryMemory(),
+                                                            sandbox: this.analyzeSandboxMemory(),
+                                                        };
                         } catch (error) {
                             console.error(
                                 `[AdvancedMemoryDumper] macOS memory handling failed: ${error.message}`
@@ -11183,15 +11140,13 @@ const AdvancedMemoryDumper = {
 
                     handleMachOMemoryLayouts: function () {
                         try {
-                            const machO = {
-                                headers: this.extractMachOHeaders(),
-                                loadCommands: this.analyzeMachOLoadCommands(),
-                                segments: this.extractMachOSegments(),
-                                sections: this.extractMachOSections(),
-                                dyldInfo: this.extractDyldInfo(),
-                            };
-
-                            return machO;
+                            return {
+                                                            headers: this.extractMachOHeaders(),
+                                                            loadCommands: this.analyzeMachOLoadCommands(),
+                                                            segments: this.extractMachOSegments(),
+                                                            sections: this.extractMachOSections(),
+                                                            dyldInfo: this.extractDyldInfo(),
+                                                        };
                         } catch (error) {
                             console.error(
                                 `[AdvancedMemoryDumper] Mach-O memory layout handling failed: ${error.message}`
@@ -11202,14 +11157,12 @@ const AdvancedMemoryDumper = {
 
                     bypassSystemIntegrityProtection: function () {
                         try {
-                            const sipBypass = {
-                                sipStatus: this.checkSIPStatus(),
-                                bypassMethods: this.identifySIPBypassMethods(),
-                                memoryAccess: this.gainPrivilegedMemoryAccess(),
-                                kernelMemory: this.accessKernelMemory(),
-                            };
-
-                            return sipBypass;
+                            return {
+                                                            sipStatus: this.checkSIPStatus(),
+                                                            bypassMethods: this.identifySIPBypassMethods(),
+                                                            memoryAccess: this.gainPrivilegedMemoryAccess(),
+                                                            kernelMemory: this.accessKernelMemory(),
+                                                        };
                         } catch (error) {
                             console.error(
                                 `[AdvancedMemoryDumper] SIP bypass failed: ${error.message}`
@@ -11223,18 +11176,16 @@ const AdvancedMemoryDumper = {
                 containerVMSupport: {
                     handleContainerMemory: function (containerType = 'auto') {
                         try {
-                            const containerHandler = {
-                                type:
-                                    containerType === 'auto'
-                                        ? this.detectContainerType()
-                                        : containerType,
-                                runtime: this.detectContainerRuntime(),
-                                isolation: this.analyzeContainerIsolation(),
-                                memoryExtraction: this.extractContainerMemory(),
-                                hostMemoryAccess: this.accessHostMemoryFromContainer(),
-                            };
-
-                            return containerHandler;
+                            return {
+                                                            type:
+                                                                containerType === 'auto'
+                                                                    ? this.detectContainerType()
+                                                                    : containerType,
+                                                            runtime: this.detectContainerRuntime(),
+                                                            isolation: this.analyzeContainerIsolation(),
+                                                            memoryExtraction: this.extractContainerMemory(),
+                                                            hostMemoryAccess: this.accessHostMemoryFromContainer(),
+                                                        };
                         } catch (error) {
                             console.error(
                                 `[AdvancedMemoryDumper] Container memory handling failed: ${error.message}`
@@ -11245,15 +11196,13 @@ const AdvancedMemoryDumper = {
 
                     handleVMMemory: function (vmType = 'auto') {
                         try {
-                            const vmHandler = {
-                                type: vmType === 'auto' ? this.detectVMType() : vmType,
-                                hypervisor: this.detectHypervisor(),
-                                guestToHost: this.analyzeGuestToHostMapping(),
-                                memoryBalloon: this.handleMemoryBalloon(),
-                                hypercalls: this.analyzeHypercalls(),
-                            };
-
-                            return vmHandler;
+                            return {
+                                                            type: vmType === 'auto' ? this.detectVMType() : vmType,
+                                                            hypervisor: this.detectHypervisor(),
+                                                            guestToHost: this.analyzeGuestToHostMapping(),
+                                                            memoryBalloon: this.handleMemoryBalloon(),
+                                                            hypercalls: this.analyzeHypercalls(),
+                                                        };
                         } catch (error) {
                             console.error(
                                 `[AdvancedMemoryDumper] VM memory handling failed: ${error.message}`
@@ -11281,15 +11230,13 @@ const AdvancedMemoryDumper = {
                 numaSupport: {
                     handleNUMAMemory: function () {
                         try {
-                            const numaHandler = {
-                                topology: this.detectNUMATopology(),
-                                nodes: this.enumerateNUMANodes(),
-                                memoryPolicy: this.analyzeNUMAMemoryPolicy(),
-                                migration: this.handleNUMAMemoryMigration(),
-                                balancing: this.analyzeNUMABalancing(),
-                            };
-
-                            return numaHandler;
+                            return {
+                                                            topology: this.detectNUMATopology(),
+                                                            nodes: this.enumerateNUMANodes(),
+                                                            memoryPolicy: this.analyzeNUMAMemoryPolicy(),
+                                                            migration: this.handleNUMAMemoryMigration(),
+                                                            balancing: this.analyzeNUMABalancing(),
+                                                        };
                         } catch (error) {
                             console.error(
                                 `[AdvancedMemoryDumper] NUMA memory handling failed: ${error.message}`
@@ -11301,14 +11248,12 @@ const AdvancedMemoryDumper = {
                     detectNUMATopology: function () {
                         try {
                             // Detect NUMA topology through system introspection
-                            const topology = {
-                                nodeCount: this.getNUMANodeCount(),
-                                cpuToNode: this.mapCPUToNUMANode(),
-                                memoryToNode: this.mapMemoryToNUMANode(),
-                                distances: this.getNUMADistances(),
-                            };
-
-                            return topology;
+                            return {
+                                                            nodeCount: this.getNUMANodeCount(),
+                                                            cpuToNode: this.mapCPUToNUMANode(),
+                                                            memoryToNode: this.mapMemoryToNUMANode(),
+                                                            distances: this.getNUMADistances(),
+                                                        };
                         } catch (error) {
                             return {
                                 nodeCount: 1,
@@ -11324,14 +11269,12 @@ const AdvancedMemoryDumper = {
                 heterogeneousSupport: {
                     handleHeterogeneousMemory: function () {
                         try {
-                            const heteroHandler = {
-                                memoryTypes: this.identifyMemoryTypes(),
-                                tiering: this.analyzeMemoryTiering(),
-                                allocation: this.handleHeterogeneousAllocation(),
-                                migration: this.handleMemoryTypeMigration(),
-                            };
-
-                            return heteroHandler;
+                            return {
+                                                            memoryTypes: this.identifyMemoryTypes(),
+                                                            tiering: this.analyzeMemoryTiering(),
+                                                            allocation: this.handleHeterogeneousAllocation(),
+                                                            migration: this.handleMemoryTypeMigration(),
+                                                        };
                         } catch (error) {
                             console.error(
                                 `[AdvancedMemoryDumper] Heterogeneous memory handling failed: ${error.message}`
@@ -11342,15 +11285,13 @@ const AdvancedMemoryDumper = {
 
                     identifyMemoryTypes: function () {
                         try {
-                            const memoryTypes = {
-                                dram: this.identifyDRAMRegions(),
-                                pmem: this.identifyPersistentMemoryRegions(),
-                                hbm: this.identifyHighBandwidthMemory(),
-                                cxl: this.identifyCXLMemory(),
-                                gpu: this.identifyGPUMemory(),
-                            };
-
-                            return memoryTypes;
+                            return {
+                                                            dram: this.identifyDRAMRegions(),
+                                                            pmem: this.identifyPersistentMemoryRegions(),
+                                                            hbm: this.identifyHighBandwidthMemory(),
+                                                            cxl: this.identifyCXLMemory(),
+                                                            gpu: this.identifyGPUMemory(),
+                                                        };
                         } catch (error) {
                             return { dram: [], pmem: [], hbm: [], cxl: [], gpu: [] };
                         }
@@ -11361,15 +11302,13 @@ const AdvancedMemoryDumper = {
                 persistentMemorySupport: {
                     handlePersistentMemory: function () {
                         try {
-                            const pmemHandler = {
-                                devices: this.enumeratePersistentMemoryDevices(),
-                                namespaces: this.analyzePersistentMemoryNamespaces(),
-                                dax: this.handleDAXMemory(),
-                                pmemkv: this.extractPersistentMemoryKV(),
-                                integrity: this.checkPersistentMemoryIntegrity(),
-                            };
-
-                            return pmemHandler;
+                            return {
+                                                            devices: this.enumeratePersistentMemoryDevices(),
+                                                            namespaces: this.analyzePersistentMemoryNamespaces(),
+                                                            dax: this.handleDAXMemory(),
+                                                            pmemkv: this.extractPersistentMemoryKV(),
+                                                            integrity: this.checkPersistentMemoryIntegrity(),
+                                                        };
                         } catch (error) {
                             console.error(
                                 `[AdvancedMemoryDumper] Persistent memory handling failed: ${error.message}`
@@ -11400,15 +11339,13 @@ const AdvancedMemoryDumper = {
                 mmioSupport: {
                     handleMemoryMappedIO: function () {
                         try {
-                            const mmioHandler = {
-                                regions: this.identifyMMIORegions(),
-                                devices: this.enumerateMMIODevices(),
-                                bars: this.analyzePCIBARs(),
-                                registers: this.extractDeviceRegisters(),
-                                dma: this.analyzeDMARegions(),
-                            };
-
-                            return mmioHandler;
+                            return {
+                                                            regions: this.identifyMMIORegions(),
+                                                            devices: this.enumerateMMIODevices(),
+                                                            bars: this.analyzePCIBARs(),
+                                                            registers: this.extractDeviceRegisters(),
+                                                            dma: this.analyzeDMARegions(),
+                                                        };
                         } catch (error) {
                             console.error(
                                 `[AdvancedMemoryDumper] Memory-mapped I/O handling failed: ${error.message}`
@@ -11444,15 +11381,13 @@ const AdvancedMemoryDumper = {
                 rdmaSupport: {
                     handleRemoteMemoryAccess: function () {
                         try {
-                            const rdmaHandler = {
-                                devices: this.enumerateRDMADevices(),
-                                connections: this.analyzeRDMAConnections(),
-                                memory: this.extractRemoteMemory(),
-                                verbs: this.analyzeRDMAVerbs(),
-                                queuePairs: this.enumerateQueuePairs(),
-                            };
-
-                            return rdmaHandler;
+                            return {
+                                                            devices: this.enumerateRDMADevices(),
+                                                            connections: this.analyzeRDMAConnections(),
+                                                            memory: this.extractRemoteMemory(),
+                                                            verbs: this.analyzeRDMAVerbs(),
+                                                            queuePairs: this.enumerateQueuePairs(),
+                                                        };
                         } catch (error) {
                             console.error(
                                 `[AdvancedMemoryDumper] RDMA handling failed: ${error.message}`
@@ -12110,15 +12045,13 @@ const AdvancedMemoryDumper = {
                 // Security audit and compliance
                 createSecurityAuditCompliance: function () {
                     try {
-                        const security = {
-                            securityAudit: this.performComprehensiveSecurityAudit(),
-                            complianceCheck: this.checkRegulatoreyCompliance(),
-                            vulnerabilityScanning: this.createVulnerabilityScanning(),
-                            threatModeling: this.createThreatModel(),
-                            securityHardening: this.implementSecurityHardening(),
-                        };
-
-                        return security;
+                        return {
+                                                    securityAudit: this.performComprehensiveSecurityAudit(),
+                                                    complianceCheck: this.checkRegulatoreyCompliance(),
+                                                    vulnerabilityScanning: this.createVulnerabilityScanning(),
+                                                    threatModeling: this.createThreatModel(),
+                                                    securityHardening: this.implementSecurityHardening(),
+                                                };
                     } catch (error) {
                         console.error(
                             `[AdvancedMemoryDumper] Security audit and compliance creation failed: ${error.message}`
@@ -12843,7 +12776,7 @@ const AdvancedMemoryDumper = {
                                     }
                                 } catch (error) {
                                     // Fallback to architecture-based estimates
-                                    const arch = Process.arch;
+                                    const {arch} = Process;
                                     if (arch === 'x64' || arch === 'arm64') {
                                         latency = 0.001; // Modern 64-bit systems
                                         bandwidth = 50000 * 1024 * 1024 * 8; // 50GB/s
@@ -12910,14 +12843,12 @@ const AdvancedMemoryDumper = {
 
                 // Organize execution phases
                 organizeExecutionPhases: function (strategies) {
-                    const phases = {
-                        reconnaissance: strategies.filter((s) => s.type.includes('analysis')),
-                        preparation: strategies.filter((s) => s.type.includes('setup')),
-                        execution: strategies.filter((s) => s.type.includes('bypass')),
-                        exploitation: strategies.filter((s) => s.type.includes('extract')),
-                    };
-
-                    return phases;
+                    return {
+                                            reconnaissance: strategies.filter((s) => s.type.includes('analysis')),
+                                            preparation: strategies.filter((s) => s.type.includes('setup')),
+                                            execution: strategies.filter((s) => s.type.includes('bypass')),
+                                            exploitation: strategies.filter((s) => s.type.includes('extract')),
+                                        };
                 },
 
                 // Plan coordination between strategies
@@ -13462,14 +13393,12 @@ const AdvancedMemoryDumper = {
 
                 // Extract blockchain-protected memory
                 extractBlockchainProtectedMemory: function (blockchainSystem) {
-                    const extractedData = {
-                        blockchainData: this.extractBlockchainData(blockchainSystem),
-                        contractStorage: this.extractContractStorage(blockchainSystem),
-                        transactionPool: this.extractTransactionPool(blockchainSystem),
-                        validatorMemory: this.extractValidatorMemory(blockchainSystem),
-                    };
-
-                    return extractedData;
+                    return {
+                                            blockchainData: this.extractBlockchainData(blockchainSystem),
+                                            contractStorage: this.extractContractStorage(blockchainSystem),
+                                            transactionPool: this.extractTransactionPool(blockchainSystem),
+                                            validatorMemory: this.extractValidatorMemory(blockchainSystem),
+                                        };
                 },
 
                 // Extract blockchain data

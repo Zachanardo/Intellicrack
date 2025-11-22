@@ -52,7 +52,7 @@ class PluginCreationWizard(QWizard):
     #: Emitted when plugin is created (type: dict)
     plugin_created = pyqtSignal(dict)
 
-    def __init__(self, parent: Optional[QWidget] = None, plugin_type: str = "custom") -> None:
+    def __init__(self, parent: QWidget | None = None, plugin_type: str = "custom") -> None:
         """Initialize the PluginCreationWizard.
 
         Args:
@@ -106,7 +106,7 @@ class PluginCreationWizard(QWizard):
     def generate_code_from_template(
         self,
         info: dict[str, str],
-        template: Optional[dict[str, Any]],
+        template: dict[str, Any] | None,
         features: list[str],
     ) -> str:
         """Generate plugin code from template.
@@ -129,7 +129,7 @@ class PluginCreationWizard(QWizard):
     def generate_python_code(
         self,
         info: dict[str, str],
-        template: Optional[dict[str, Any]],
+        template: dict[str, Any] | None,
         features: list[str],
     ) -> str:
         """Generate Python plugin code.
@@ -144,7 +144,7 @@ class PluginCreationWizard(QWizard):
 
         """
         _ = template
-        code = f'''"""
+        return f'''"""
 {info["name"]}
 {info["description"]}
 
@@ -198,12 +198,11 @@ def get_plugin() -> Any:
     """Return plugin instance for the system"""
     return {info["name"].replace(" ", "")}Plugin()
 '''
-        return code
 
     def generate_frida_code(
         self,
         info: dict[str, str],
-        template: Optional[dict[str, Any]],
+        template: dict[str, Any] | None,
         features: list[str],
     ) -> str:
         """Generate Frida script code.
@@ -218,7 +217,7 @@ def get_plugin() -> Any:
 
         """
         _ = template
-        code = f"""/*
+        return f"""/*
  * {info["name"]}
  * {info["description"]}
  *
@@ -249,12 +248,11 @@ function hexdump(buffer, options) {{
     }});
 }}
 """
-        return code
 
     def generate_ghidra_code(
         self,
         info: dict[str, str],
-        template: Optional[dict[str, Any]],
+        template: dict[str, Any] | None,
         features: list[str],
     ) -> str:
         """Generate Ghidra script code.
@@ -269,7 +267,7 @@ function hexdump(buffer, options) {{
 
         """
         _ = template
-        code = f'''# {info["name"]}
+        return f'''# {info["name"]}
 # {info["description"]}
 #
 # @author {info["author"]}
@@ -297,7 +295,6 @@ class {info["name"].replace(" ", "")}(GhidraScript):
 
 {info["name"].replace(" ", "")}().run()
 '''
-        return code
 
     def _generate_feature_code(self, features: list[str]) -> str:
         """Generate code snippets for selected features.
@@ -420,13 +417,7 @@ class {info["name"].replace(" ", "")}(GhidraScript):
         info = plugin_data["info"]
         code = plugin_data["code"]
 
-        if self.plugin_type == "frida":
-            ext = ".js"
-        elif self.plugin_type == "ghidra":
-            ext = ".py"
-        else:
-            ext = ".py"
-
+        ext = ".js" if self.plugin_type == "frida" else ".py"
         filename = info["name"].lower().replace(" ", "_") + ext
 
         save_path, _ = QFileDialog.getSaveFileName(
@@ -631,7 +622,9 @@ class TemplateSelectionPage(QWizardPage):
             },
         ]
 
-    def on_template_selected(self, current: Optional[QListWidgetItem], previous: Optional[QListWidgetItem]) -> None:
+    def on_template_selected(
+        self, current: QListWidgetItem | None, previous: QListWidgetItem | None
+    ) -> None:
         """Handle template selection.
 
         Args:
@@ -644,15 +637,14 @@ class TemplateSelectionPage(QWizardPage):
             template = current.data(Qt.UserRole)
             self.description_label.setText(template["description"])
 
-    def get_selected_template(self) -> Optional[dict[str, Any]]:
+    def get_selected_template(self) -> dict[str, Any] | None:
         """Get the selected template.
 
         Returns:
             Selected template dictionary or None if no selection.
 
         """
-        current = self.template_list.currentItem()
-        if current:
+        if current := self.template_list.currentItem():
             return current.data(Qt.UserRole)
         return None
 
@@ -709,10 +701,11 @@ class PluginFeaturesPage(QWizardPage):
             List of selected feature identifiers.
 
         """
-        features: list[str] = []
-        for feature_id, checkbox in self.feature_checks.items():
-            if checkbox.isChecked():
-                features.append(feature_id)
+        features: list[str] = [
+            feature_id
+            for feature_id, checkbox in self.feature_checks.items()
+            if checkbox.isChecked()
+        ]
         return features
 
 
@@ -815,7 +808,9 @@ class SummaryPage(QWizardPage):
 
         self.setLayout(layout)
 
-    def update_summary(self, info: dict[str, str], template: Optional[dict[str, Any]], features: list[str], code: str) -> None:
+    def update_summary(
+        self, info: dict[str, str], template: dict[str, Any] | None, features: list[str], code: str
+    ) -> None:
         """Update the summary display.
 
         Args:
@@ -838,7 +833,7 @@ class SummaryPage(QWizardPage):
 <p><b>Template:</b> {template["name"] if template else "None"}</p>
 
 <p><b>Features:</b><br>
-{"<br>".join(" " + f for f in features) if features else "None selected"}</p>
+{"<br>".join(f" {f}" for f in features) if features else "None selected"}</p>
 
 <p><b>Code Preview:</b><br>
 <pre>{code[:500]}...</pre></p>

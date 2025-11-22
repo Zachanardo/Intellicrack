@@ -327,7 +327,7 @@ class TestROPBasedBypass:
         gadgets = rop_bypass.find_rop_gadgets(binary_context)
 
         # Check for different gadget types
-        gadget_types = set(g["type"] for g in gadgets)
+        gadget_types = {g["type"] for g in gadgets}
 
         # Should identify various gadget categories
         expected_types = {"stack_pivot", "register_pop", "memory_access", "syscall", "arithmetic", "control_flow"}

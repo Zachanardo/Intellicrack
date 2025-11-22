@@ -38,12 +38,12 @@ class MutationTestResult:
     mutated_binary: str
     original_hash: str
     mutated_hash: str
-    detection_before: Dict[str, Any]
-    detection_after: Dict[str, Any]
+    detection_before: dict[str, Any]
+    detection_after: dict[str, Any]
     adaptation_detected: bool
     bypass_persistence: bool
     success: bool
-    error_message: Optional[str] = None
+    error_message: str | None = None
     timestamp: str = None
 
     def __post_init__(self):
@@ -55,7 +55,7 @@ class MutationTestResult:
 class DynamicMutationReport:
     """Comprehensive report of dynamic mutation testing."""
     mutation_type: str
-    test_results: List[MutationTestResult]
+    test_results: list[MutationTestResult]
     adaptation_rate: float
     persistence_rate: float
     overall_success: bool
@@ -97,7 +97,7 @@ class DynamicMutationTester:
         }
 
         # Track test results
-        self.test_results: List[MutationTestResult] = []
+        self.test_results: list[MutationTestResult] = []
 
     def _create_changing_protection(self, binary_path: str, run_count: int) -> str:
         """
@@ -384,8 +384,8 @@ class DynamicMutationTester:
             self.test_results.append(result)
             return result
 
-    def test_mutation_sequence(self, base_binary: str, mutation_types: List[str],
-                              sequence_length: int = 5) -> List[MutationTestResult]:
+    def test_mutation_sequence(self, base_binary: str, mutation_types: list[str],
+                              sequence_length: int = 5) -> list[MutationTestResult]:
         """
         Test a sequence of mutations on a binary.
         """
@@ -453,7 +453,7 @@ class DynamicMutationTester:
 
         return "\n".join(report_lines)
 
-    def save_report(self, report_data: Dict[str, Any], filename: Optional[str] = None) -> str:
+    def save_report(self, report_data: dict[str, Any], filename: str | None = None) -> str:
         """
         Save a dynamic mutation test report to a JSON file.
         """

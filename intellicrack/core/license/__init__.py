@@ -16,6 +16,7 @@ from intellicrack.core.license.keygen import (
     ValidationRoutine,
 )
 
+
 __all__ = [
     "AlgorithmType",
     "ConstraintExtractor",

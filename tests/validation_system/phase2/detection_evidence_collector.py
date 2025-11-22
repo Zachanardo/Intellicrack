@@ -69,11 +69,11 @@ class DetectionEvidence:
 
     def __init__(self):
         """Initialize evidence container."""
-        self.memory_addresses: List[Dict[str, Any]] = []
-        self.disassembly_snippets: List[Dict[str, Any]] = []
-        self.import_table_entries: List[Dict[str, Any]] = []
-        self.protection_signatures: List[Dict[str, Any]] = []
-        self.algorithm_details: Dict[str, Any] = {}
+        self.memory_addresses: list[dict[str, Any]] = []
+        self.disassembly_snippets: list[dict[str, Any]] = []
+        self.import_table_entries: list[dict[str, Any]] = []
+        self.protection_signatures: list[dict[str, Any]] = []
+        self.algorithm_details: dict[str, Any] = {}
         self.timestamp = time.time()
         self.evidence_hash = ""
 
@@ -91,7 +91,7 @@ class DetectionEvidence:
         self.evidence_hash = hashlib.sha256(evidence_json.encode()).hexdigest()
         return self.evidence_hash
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert evidence to dictionary format."""
         return {
             'memory_addresses': self.memory_addresses,
@@ -111,7 +111,7 @@ class DetectionEvidenceCollector:
     to collect undeniable evidence of protection detection capabilities.
     """
 
-    def __init__(self, binary_path: Path, logger: Optional[logging.Logger] = None):
+    def __init__(self, binary_path: Path, logger: logging.Logger | None = None):
         """Initialize evidence collector.
 
         Args:
@@ -162,7 +162,7 @@ class DetectionEvidenceCollector:
             self.logger.error(f"Failed to initialize Intellicrack modules: {e}")
             raise
 
-    def collect_memory_addresses(self, protection_name: str) -> List[Dict[str, Any]]:
+    def collect_memory_addresses(self, protection_name: str) -> list[dict[str, Any]]:
         """Collect memory addresses where protection code is located.
 
         Args:
@@ -250,7 +250,7 @@ class DetectionEvidenceCollector:
         disasm_lower = disassembly.lower()
         return any(pattern in disasm_lower for pattern in patterns)
 
-    def _find_protection_patterns(self, r2, protection_name: str) -> List[Dict[str, Any]]:
+    def _find_protection_patterns(self, r2, protection_name: str) -> list[dict[str, Any]]:
         """Find addresses containing protection-specific byte patterns.
 
         Args:
@@ -309,7 +309,7 @@ class DetectionEvidenceCollector:
 
         return pattern_addresses
 
-    def capture_disassembly_snippets(self, addresses: List[str]) -> List[Dict[str, Any]]:
+    def capture_disassembly_snippets(self, addresses: list[str]) -> list[dict[str, Any]]:
         """Capture disassembly snippets at specified addresses.
 
         Args:
@@ -359,7 +359,7 @@ class DetectionEvidenceCollector:
             self.logger.error(f"Failed to capture disassembly: {e}")
             raise
 
-    def _analyze_disassembly(self, disassembly: str) -> Dict[str, Any]:
+    def _analyze_disassembly(self, disassembly: str) -> dict[str, Any]:
         """Analyze disassembly for protection-related patterns.
 
         Args:
@@ -413,7 +413,7 @@ class DetectionEvidenceCollector:
 
         return analysis
 
-    def extract_import_table_entries(self) -> List[Dict[str, Any]]:
+    def extract_import_table_entries(self) -> list[dict[str, Any]]:
         """Extract import table entries related to protection mechanisms.
 
         Returns:
@@ -480,7 +480,7 @@ class DetectionEvidenceCollector:
             self.logger.error(f"Failed to extract import table entries: {e}")
             raise
 
-    def generate_protection_signatures(self, protection_name: str) -> List[Dict[str, Any]]:
+    def generate_protection_signatures(self, protection_name: str) -> list[dict[str, Any]]:
         """Generate cryptographic hashes of protection signatures found.
 
         Args:
@@ -554,7 +554,7 @@ class DetectionEvidenceCollector:
             self.logger.error(f"Failed to generate protection signatures: {e}")
             raise
 
-    def _parse_hex_output(self, hex_output: str) -> Optional[bytes]:
+    def _parse_hex_output(self, hex_output: str) -> bytes | None:
         """Parse radare2 hex output into bytes.
 
         Args:
@@ -585,7 +585,7 @@ class DetectionEvidenceCollector:
 
         return None
 
-    def document_algorithm_details(self, protection_name: str) -> Dict[str, Any]:
+    def document_algorithm_details(self, protection_name: str) -> dict[str, Any]:
         """Document protection algorithm details (RSA key size, encryption type, etc.).
 
         Args:
@@ -632,7 +632,7 @@ class DetectionEvidenceCollector:
             self.logger.error(f"Failed to document algorithm details: {e}")
             raise
 
-    def _extract_crypto_strings(self) -> Dict[str, Any]:
+    def _extract_crypto_strings(self) -> dict[str, Any]:
         """Extract cryptography-related strings from binary."""
         crypto_data = {
             'rsa_indicators': [],
@@ -683,7 +683,7 @@ class DetectionEvidenceCollector:
 
         return crypto_data
 
-    def _analyze_crypto_imports(self) -> List[str]:
+    def _analyze_crypto_imports(self) -> list[str]:
         """Analyze imports for cryptographic libraries."""
         crypto_libs = []
 
@@ -711,7 +711,7 @@ class DetectionEvidenceCollector:
 
         return list(set(crypto_libs))  # Remove duplicates
 
-    def _detect_crypto_patterns(self) -> List[str]:
+    def _detect_crypto_patterns(self) -> list[str]:
         """Detect cryptographic operation patterns in code."""
         crypto_patterns = []
 
@@ -737,7 +737,7 @@ class DetectionEvidenceCollector:
 
         return list(set(crypto_patterns))
 
-    def _calculate_algorithm_confidence(self, details: Dict[str, Any]) -> float:
+    def _calculate_algorithm_confidence(self, details: dict[str, Any]) -> float:
         """Calculate confidence in algorithm analysis."""
         confidence = 0.0
 
@@ -823,7 +823,7 @@ class DetectionEvidenceCollector:
             Loaded evidence
         """
         try:
-            with open(input_path, 'r', encoding='utf-8') as f:
+            with open(input_path, encoding='utf-8') as f:
                 evidence_data = json.load(f)
 
             # Reconstruct evidence object

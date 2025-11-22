@@ -29,10 +29,10 @@ class FeatureTestResult:
     test_description: str
     test_passed: bool
     output_file: str
-    expected_properties: Dict[str, Any]
-    actual_properties: Dict[str, Any]
+    expected_properties: dict[str, Any]
+    actual_properties: dict[str, Any]
     verification_notes: str
-    error_message: Optional[str] = None
+    error_message: str | None = None
     timestamp: str = None
 
     def __post_init__(self):
@@ -43,13 +43,13 @@ class FeatureTestResult:
 @dataclass
 class TrialDetectionResult:
     """Result of trial/demo mode detection."""
-    registry_flags_detected: List[str]
-    ui_indicators_detected: List[str]
-    functionality_limitations: List[str]
+    registry_flags_detected: list[str]
+    ui_indicators_detected: list[str]
+    functionality_limitations: list[str]
     trial_mode_confirmed: bool
-    trial_expiration_date: Optional[str]
-    days_remaining: Optional[int]
-    error_messages: List[str]
+    trial_expiration_date: str | None
+    days_remaining: int | None
+    error_messages: list[str]
     timestamp: str = None
 
     def __post_init__(self):
@@ -68,12 +68,12 @@ class FullFunctionalityResult:
     test_end_time: str
     premium_features_tested: int
     premium_features_working: int
-    watermarks_detected: List[str]
-    feature_limitations: List[str]
+    watermarks_detected: list[str]
+    feature_limitations: list[str]
     trial_detection_result: TrialDetectionResult
-    feature_test_results: List[FeatureTestResult]
+    feature_test_results: list[FeatureTestResult]
     full_functionality_confirmed: bool
-    error_messages: List[str]
+    error_messages: list[str]
     timestamp: str = None
 
     def __post_init__(self):
@@ -207,7 +207,7 @@ class FullFunctionalityValidator:
 
         return str(file_path)
 
-    def _check_file_properties(self, file_path: str) -> Dict[str, Any]:
+    def _check_file_properties(self, file_path: str) -> dict[str, Any]:
         """Check file properties to verify premium features."""
         properties = {
             "exists": os.path.exists(file_path),
@@ -220,7 +220,7 @@ class FullFunctionalityValidator:
         try:
             # Check for watermarks in file content
             if os.path.exists(file_path):
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(file_path, encoding='utf-8', errors='ignore') as f:
                     content = f.read()
 
                     # Check for common watermark indicators
@@ -867,7 +867,7 @@ class FullFunctionalityValidator:
             error_messages=error_messages
         )
 
-    def _check_for_watermarks(self, output_files: List[str]) -> List[str]:
+    def _check_for_watermarks(self, output_files: list[str]) -> list[str]:
         """Check output files for watermarks."""
         watermarks = []
 
@@ -1006,7 +1006,7 @@ class FullFunctionalityValidator:
 
         return result
 
-    def validate_all_functionality(self) -> List[FullFunctionalityResult]:
+    def validate_all_functionality(self) -> list[FullFunctionalityResult]:
         """
         Validate full functionality for all available binaries.
         """
@@ -1083,7 +1083,7 @@ class FullFunctionalityValidator:
         logger.info(f"Completed full functionality validation for {len(results)} binaries")
         return results
 
-    def generate_report(self, results: List[FullFunctionalityResult]) -> str:
+    def generate_report(self, results: list[FullFunctionalityResult]) -> str:
         """
         Generate a comprehensive report of full functionality validation results.
         """
@@ -1155,7 +1155,7 @@ class FullFunctionalityValidator:
 
         return "\n".join(report_lines)
 
-    def save_report(self, results: List[FullFunctionalityResult], filename: Optional[str] = None) -> str:
+    def save_report(self, results: list[FullFunctionalityResult], filename: str | None = None) -> str:
         """
         Save the full functionality validation report to a file.
         """
