@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Sun, Nov 16, 2025 06:06:05 PM
+Generated: Sat, Nov 22, 2025 01:37:53 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -370,6 +370,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── __init__.cpython-312.pyc
 │   │   │   ├── __init__.cpython-314.pyc
 │   │   │   ├── analysis_orchestrator.cpython-314.pyc
+│   │   │   ├── angr_enhancements.cpython-312.pyc
 │   │   │   ├── angr_enhancements.cpython-314.pyc
 │   │   │   ├── arxan_analyzer.cpython-314.pyc
 │   │   │   ├── automated_patch_agent.cpython-314.pyc
@@ -452,6 +453,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── vulnerability_engine.cpython-314.pyc
 │   │   │   ├── yara_pattern_engine.cpython-314.pyc
 │   │   │   └── yara_scanner.cpython-314.pyc
+│   │   ├── .intellicrack_scan_cache.json
 │   │   ├── __init__.py
 │   │   ├── analysis_orchestrator.py
 │   │   ├── angr_enhancements.py
@@ -977,7 +979,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── capstone_handler.py
 │   ├── cryptography_handler.py
 │   ├── frida_handler.py
-│   ├── ipex_handler.py
 │   ├── keystone_handler.py
 │   ├── lief_handler.py
 │   ├── matplotlib_handler.py

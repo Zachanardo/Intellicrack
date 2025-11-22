@@ -1,1 +1,0 @@
-/usr/bin/bash: line 1: ./target/release/scanner.exe: No such file or directory
