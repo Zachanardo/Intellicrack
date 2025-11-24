@@ -104,7 +104,7 @@ docstring_parser==0.17.0
 docutils==0.21.2
 dparse==0.6.4
 dpcpp_cpp_rt==2025.2.1
-dpctl==0.20.2
+dpctl==0.21.0
 dpkt==1.9.8
 dulwich==0.24.10
 enum_compat==0.0.3
