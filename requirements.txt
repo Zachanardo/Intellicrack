@@ -83,7 +83,7 @@ cryptography==46.0.3
 cssselect2==0.8.0
 cxxheaderparser==1.6.0
 cycler==0.12.1
-cyclonedx_python_lib==9.1.0
+cyclonedx_python_lib==11.5.0
 dacite==1.8.1
 darglint==1.8.1
 dask==2025.11.0
