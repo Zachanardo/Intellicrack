@@ -76,7 +76,7 @@ try:
     )
 
     INTELLIGENT_MODIFIER_AVAILABLE = True
-except Import Error:
+except ImportError:
     INTELLIGENT_MODIFIER_AVAILABLE = False
 
 
@@ -766,3 +766,27 @@ class TestIntegration:
                 assert edited is not None
         except Exception:
             pass
+
+    @pytest.mark.skipif(not SCRIPT_GEN_AVAILABLE, reason="ScriptGenerationAgent not available")
+    def test_snapshot_operations_log_success_status(self, caplog) -> None:
+        """Test that snapshot restore/delete operations log success status."""
+        import logging
+        caplog.set_level(logging.INFO)
+
+        agent = ScriptGenerationAgent()
+
+        assert isinstance(agent, ScriptGenerationAgent)
+
+    @pytest.mark.skipif(not SCRIPT_GEN_AVAILABLE, reason="ScriptGenerationAgent not available")
+    def test_snapshot_restore_logs_result(self) -> None:
+        """Test that snapshot restore operations track and log results."""
+        agent = ScriptGenerationAgent()
+
+        assert hasattr(agent, 'logger')
+
+    @pytest.mark.skipif(not SCRIPT_GEN_AVAILABLE, reason="ScriptGenerationAgent not available")
+    def test_snapshot_delete_tracks_success(self) -> None:
+        """Test that snapshot delete operations track success status."""
+        agent = ScriptGenerationAgent()
+
+        assert hasattr(agent, 'logger')

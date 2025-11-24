@@ -905,7 +905,7 @@ class TestConcolicExecutorPerformance(IntellicrackTestBase):
             timeout=30
         )
 
-        result = engine.analyze(str(self.test_binary))
+        engine.analyze(str(self.test_binary))
 
         log_messages = [record.message.lower() for record in caplog.records]
         assert any("take_branch" in msg or "branch" in msg for msg in log_messages)
@@ -921,7 +921,7 @@ class TestConcolicExecutorPerformance(IntellicrackTestBase):
             timeout=30
         )
 
-        result = engine.analyze(str(self.test_binary))
+        engine.analyze(str(self.test_binary))
 
         log_messages = [record.message for record in caplog.records]
         pc_logs = [msg for msg in log_messages if "0x" in msg.lower() or "pc" in msg.lower()]
@@ -938,7 +938,7 @@ class TestConcolicExecutorPerformance(IntellicrackTestBase):
             timeout=45
         )
 
-        result = engine.analyze(str(self.test_binary))
+        engine.analyze(str(self.test_binary))
 
         log_messages = [record.message.lower() for record in caplog.records]
         assert any("branch" in msg or "path" in msg for msg in log_messages)

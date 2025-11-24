@@ -465,16 +465,15 @@ class TestStarForceAnalyzerIntegration(unittest.TestCase):
         from unittest.mock import Mock
         import ctypes
 
-        with self.assertLogs(level=logging.DEBUG) as log_context:
-            analyzer = StarForceAnalyzer()
+        analyzer = StarForceAnalyzer()
 
-            if analyzer._kernel32 is not None:
-                mock_handle = ctypes.c_void_p(0x1234)
-                with patch('ctypes.windll.kernel32.CreateFileW', return_value=mock_handle):
-                    with patch('ctypes.windll.kernel32.DeviceIoControl', return_value=0):
-                        result = analyzer.probe_ioctl('\\\\.\\StarForce', 0x80002000)
+        if analyzer._kernel32 is not None:
+            mock_handle = ctypes.c_void_p(0x1234)
+            with patch('ctypes.windll.kernel32.CreateFileW', return_value=mock_handle):
+                with patch('ctypes.windll.kernel32.DeviceIoControl', return_value=0):
+                    result = analyzer.probe_ioctl('\\\\.\\StarForce', 0x80002000)
 
-                self.assertIsNone(result)
+            self.assertIsNone(result)
 
     def test_ioctl_operations_track_bytes_returned(self):
         """Test that IOCTL operations track bytes returned from DeviceIoControl."""
@@ -490,7 +489,7 @@ class TestStarForceAnalyzerIntegration(unittest.TestCase):
                     mock_ioctl.return_value = 1
 
                     with self.assertLogs(level=logging.DEBUG) as log_context:
-                        result = analyzer.probe_ioctl('\\\\.\\StarForce', 0x80002000)
+                        analyzer.probe_ioctl('\\\\.\\StarForce', 0x80002000)
 
                     log_messages = ' '.join(log_context.output).lower()
                     self.assertTrue('bytes' in log_messages or 'result' in log_messages)

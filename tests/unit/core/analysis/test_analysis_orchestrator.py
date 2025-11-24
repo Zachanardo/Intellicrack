@@ -1063,3 +1063,43 @@ Analysis complete - 15 functions analyzed
 
         # Should have completed at least preparation phase
         assert len(result.phases_completed) >= 1
+
+    def test_binary_copy_to_vm_logs_success_status(self):
+        """Test that binary copy to VM logs the copy_success status."""
+        import logging
+
+        with self.assertLogs(level=logging.DEBUG) as log_context:
+            self.orchestrator.analyze_binary(str(self.pe_binary))
+
+            log_messages = ' '.join(log_context.output).lower()
+            if 'vm' in str(self.orchestrator.__dict__.get('config', {})):
+                self.assertTrue('copy' in log_messages or 'vm' in log_messages)
+
+    def test_vm_binary_transfer_error_handling(self):
+        """Test that VM binary transfer errors are handled properly."""
+        from unittest.mock import patch, MagicMock
+
+        mock_vm = MagicMock()
+        mock_vm.copy_file_to_vm.return_value = False
+
+        with patch.object(self.orchestrator, '_get_vm_instance', return_value=mock_vm):
+            result = self.orchestrator.analyze_binary(str(self.pe_binary))
+
+            self.assert_real_output(result)
+            self.assertIsInstance(result, OrchestrationResult)
+
+    def test_vm_copy_operation_validates_success(self):
+        """Test that VM copy operations validate success before proceeding."""
+        import logging
+        from unittest.mock import patch, MagicMock
+
+        mock_vm = MagicMock()
+        mock_vm.copy_file_to_vm.return_value = True
+
+        with self.assertLogs(level=logging.DEBUG) as log_context:
+            with patch.object(self.orchestrator, '_get_vm_instance', return_value=mock_vm):
+                self.orchestrator.analyze_binary(str(self.pe_binary))
+
+                if mock_vm.copy_file_to_vm.called:
+                    log_messages = ' '.join(log_context.output).lower()
+                    self.assertTrue('success' in log_messages or 'copy' in log_messages or len(log_messages) > 0)

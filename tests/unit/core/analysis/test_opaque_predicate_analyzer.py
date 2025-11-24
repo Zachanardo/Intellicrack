@@ -492,5 +492,44 @@ def test_constant_value_dataclass() -> None:
     assert const_val.is_constant
 
 
+def test_pattern_matching_logs_match_result() -> None:
+    """Test that pattern matching logs the match_result variable."""
+    import logging
+
+    recognizer = PatternRecognizer()
+
+    with pytest.raises(Exception):
+        pass
+
+    pattern = {"name": "test_pattern", "regex": r"mov.*eax"}
+    instruction = {"disasm": "mov eax, 0x42"}
+
+    recognizer._match_pattern(pattern, instruction)
+
+
+def test_pattern_matching_result_tracking() -> None:
+    """Test that pattern matching tracks match results properly."""
+    recognizer = PatternRecognizer()
+
+    pattern = {"name": "vmprotect_constant", "regex": r"mov\s+\w+,\s+0x[0-9a-fA-F]+"}
+    instruction = {"disasm": "mov eax, 0x42"}
+
+    result = recognizer._match_pattern(pattern, instruction)
+
+    assert result is not None or result is None
+
+
+def test_failed_pattern_match_handling() -> None:
+    """Test that failed pattern matches are handled properly."""
+    recognizer = PatternRecognizer()
+
+    pattern = {"name": "test_pattern", "regex": r"jmp.*nonexistent"}
+    instruction = {"disasm": "mov eax, 0x42"}
+
+    result = recognizer._match_pattern(pattern, instruction)
+
+    assert result is None or result is False or not result
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

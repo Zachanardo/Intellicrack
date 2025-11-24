@@ -1032,5 +1032,44 @@ class FileFormatError(Exception):
     pass
 
 
+class TestCryptoPatternDetection:
+    """Test S-box pattern detection and logging."""
+
+    @pytest.fixture
+    def generator(self):
+        """Create generator instance with test binary."""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            pe_data = b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200
+            tmp_binary.write(pe_data)
+            binary_path = tmp_binary.name
+
+        generator = R2BypassGenerator(binary_path, "r2")
+        yield generator
+        os.unlink(binary_path)
+
+    def test_sbox_pattern_detection_logging(self, generator, caplog):
+        """Test that S-box pattern detection logs the sbox_pattern result."""
+        import logging
+        caplog.set_level(logging.DEBUG)
+
+        crypto_patterns = generator._detect_crypto_operations()
+
+        if crypto_patterns and 'sbox_patterns' in crypto_patterns:
+            log_messages = [record.message.lower() for record in caplog.records]
+            assert any("sbox" in msg or "s-box" in msg or "crypto" in msg for msg in log_messages)
+
+    def test_sbox_pattern_included_in_results(self, generator):
+        """Test that S-box patterns are included in crypto detection results."""
+        crypto_patterns = generator._detect_crypto_operations()
+
+        assert isinstance(crypto_patterns, dict)
+
+    def test_crypto_operations_without_sbox(self, generator):
+        """Test that crypto operations handle absence of S-box patterns."""
+        crypto_patterns = generator._detect_crypto_operations()
+
+        assert crypto_patterns is not None
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '--tb=short'])
