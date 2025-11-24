@@ -1,482 +1,223 @@
-# Protection-Aware Script Generation Test Coverage
+# Test Coverage Summary: script_generation_agent.py
 
-## Overview
-
-Comprehensive production-grade test suite for `intellicrack/ai/protection_aware_script_gen.py` - a 5,262-line AI-powered protection-aware script generation engine.
-
-**Test File**: `tests/ai/test_protection_aware_script_gen.py`
-**Lines of Test Code**: 800+
-**Test Classes**: 15
-**Test Methods**: 45
-**Coverage Target**: 85%+ line coverage, 80%+ branch coverage
-
-## Test Philosophy
-
-All tests validate **REAL offensive capability** against actual protected binaries:
-
-- **NO mocks or stubs** - tests use real protected binaries from fixtures
-- **NO simulated data** - tests validate actual script generation
-- **FAIL when broken** - tests prove genuine functionality works
-- **Real-world scenarios** - tests cover actual protection schemes
+## Test File Statistics
+- **Source File**: `intellicrack/ai/script_generation_agent.py` (3042 lines)
+- **Test File**: `tests/ai/test_script_generation_agent.py` (868 lines)
+- **Test Classes**: 28
+- **Test Functions**: 93
+- **Coverage Ratio**: ~28.5% (868 test lines / 3042 source lines)
 
 ## Test Categories
 
-### 1. Initialization Tests (3 tests)
+### 1. Initialization and Setup (4 tests)
+- `TestAIAgentInitialization` - Validates agent creation with all required components
 
-**Class**: `TestProtectionAwareScriptGeneratorInitialization`
+### 2. Request Parsing (10 tests)
+- `TestRequestParsing` - Tests user request parsing into structured tasks
+- Validates binary path extraction, script type detection, environment selection
 
-Tests validate generator initializes with complete protection template library:
+### 3. Binary Path Handling (5 tests)
+- `TestBinaryPathExtraction` - Tests extraction of binary paths from various formats
+- `TestBinaryPathValidation` - Security validation of paths
 
-- `test_generator_initializes_with_all_protection_templates` - Validates 15 protection templates (HASP, FlexLM, VMProtect, Themida, Denuvo, Steam CEG, etc.)
-- `test_generator_has_functional_unified_engine` - Validates unified protection detection engine
-- `test_generator_has_functional_knowledge_base` - Validates protection knowledge base integration
+### 4. Script Type Detection (6 tests)
+- `TestScriptTypeExtraction` - Tests Frida/Ghidra/both script type identification
 
-**Protected Schemes Tested**:
-- Sentinel HASP/HL
-- FlexNet/FlexLM
-- WinLicense/Themida
-- Steam CEG
-- VMProtect
-- Denuvo
-- Microsoft Activation
-- iLok PACE
-- SecuROM
-- StarForce
-- Arxan
-- Cloud Licensing
-- SafeNet Sentinel
-- Custom Obfuscation
+### 5. Binary Analysis (5 tests)
+- `TestBinaryAnalysis` - Comprehensive binary analysis workflow validation
 
-### 2. Frida Script Generation Tests (7 tests)
+### 6. String Extraction (7 tests)
+- `TestStringExtraction` - License-related string extraction and filtering
 
-**Class**: `TestFridaScriptGeneration`
+### 7. Function Analysis (6 tests)
+- `TestFunctionAnalysis` - Function classification (license/time/trial checks)
 
-Tests validate Frida hook generation for defeating real protections:
+### 8. Import Analysis (6 tests)
+- `TestImportAnalysis` - Import table parsing and validation
 
-- `test_generate_vmprotect_bypass_frida_script` - VMProtect virtualization bypass
-- `test_generate_hasp_bypass_frida_script_with_api_hooks` - HASP API hooking (hasp_login, hasp_encrypt, hasp_decrypt)
-- `test_generate_flexlm_bypass_with_license_emulation` - FlexLM license checkout emulation
-- `test_generate_themida_bypass_with_anti_debugging` - Themida anti-debugging countermeasures
-- `test_frida_script_includes_error_handling` - Error handling validation
-- `test_frida_script_includes_logging` - Comprehensive logging validation
+### 9. Protection Detection (2 tests)
+- `TestProtectionDetection` - Protection mechanism identification
 
-**Real Binaries Tested**:
-- `vmprotect_protected.exe` - VMProtect-protected binary
-- `themida_protected.exe` - Themida-protected binary
-- `hasp_sentinel_protected.exe` - HASP-protected binary
-- `flexlm_license_protected.exe` - FlexLM-protected binary
+### 10. Network Analysis (2 tests)
+- `TestNetworkActivityAnalysis` - Network capability detection
 
-**Validation Criteria**:
-- Scripts hook protection-specific APIs
-- Scripts force success return codes
-- Scripts include anti-debugging bypasses
-- Scripts have error handling and logging
+### 11. Script Generation (1 test)
+- `TestScriptGeneration` - Initial script creation workflow
 
-### 3. Ghidra Script Generation Tests (3 tests)
+### 12. Script Validation (3 tests)
+- `TestScriptValidation` - Bypass verification and success detection
+
+### 13. Script Refinement (4 tests)
+- `TestScriptRefinement` - Iterative script improvement logic
 
-**Class**: `TestGhidraScriptGeneration`
+### 14. Script Deployment (1 test)
+- `TestScriptDeployment` - Script saving to filesystem
+
+### 15. Conversation Management (2 tests)
+- `TestConversationHistory` - Message tracking and history
 
-Tests validate Ghidra analysis and binary patching scripts:
+### 16. Workflow Status (2 tests)
+- `TestWorkflowStatus` - State tracking and transitions
+
+### 17. Session Management (2 tests)
+- `TestSessionManagement` - Session data persistence
 
-- `test_generate_ghidra_script_for_hasp_protection` - Automated HASP API analysis
-- `test_ghidra_script_includes_api_discovery` - Protection API discovery
-- `test_ghidra_script_performs_binary_patching` - Binary patching capabilities
-
-**Validation Criteria**:
-- Scripts extend GhidraScript class
-- Scripts discover protection APIs
-- Scripts trace API call sites
-- Scripts apply binary patches (NOP, JMP)
-
-### 4. Radare2 Script Generation Tests (1 test)
-
-**Class**: `TestRadare2ScriptGeneration`
-
-Tests validate Radare2 patching script generation:
-
-- `test_generate_radare2_script_structure` - r2 command syntax validation
-
-### 5. Protection Detection Integration Tests (4 tests)
-
-**Class**: `TestProtectionDetectionIntegration`
-
-Tests validate integration with unified protection detection engine:
-
-- `test_detect_vmprotect_and_generate_targeted_script` - VMProtect detection and targeted bypass
-- `test_detect_themida_and_generate_targeted_script` - Themida/WinLicense detection
-- `test_unprotected_binary_generates_basic_analysis_script` - Unprotected binary handling
-- `test_confidence_scores_reflect_detection_quality` - Confidence score validation (0.0-1.0)
-
-**Real-World Validation**:
-- Tests use actual protected binaries
-- Tests verify detection accuracy
-- Tests validate confidence scores
-- Tests ensure targeted script generation
-
-### 6. Script Metadata Generation Tests (5 tests)
-
-**Class**: `TestScriptMetadataGeneration`
-
-Tests validate script documentation and metadata:
-
-- `test_script_includes_target_binary_metadata` - Binary metadata (path, file type, architecture)
-- `test_script_includes_protection_details` - Protection details documentation
-- `test_result_includes_bypass_techniques` - Recommended bypass techniques
-- `test_result_includes_estimated_bypass_time` - Time estimates for bypass
-- `test_result_includes_required_tools` - Required tools list
-
-**Metadata Validated**:
-- Target binary information
-- Detected protection type
-- Confidence scores
-- Bypass techniques
-- Time estimates
-- Required tools
-
-### 7. AI Prompt Generation Tests (3 tests)
-
-**Class**: `TestAIPromptGeneration`
-
-Tests validate AI-powered script optimization prompts:
-
-- `test_generate_ai_prompt_for_protection_enhancement` - AI enhancement prompts
-- `test_ai_prompt_includes_protection_context` - Protection-specific context
-- `test_ai_prompt_includes_recommended_techniques` - Bypass technique suggestions
-
-**AI Enhancement Validated**:
-- Prompts guide script optimization
-- Prompts include protection context
-- Prompts suggest effective techniques
-
-### 8. Multi-Protection Scenario Tests (2 tests)
-
-**Class**: `TestMultiProtectionScenarios`
-
-Tests validate handling of layered protections:
-
-- `test_handle_layered_protections` - Multiple protection layers
-- `test_prioritize_primary_protection` - Primary protection identification
-
-**Real-World Complexity**:
-- Tests enterprise software with multiple protections
-- Tests protection prioritization
-- Tests script combination
-
-### 9. Error Handling Tests (3 tests)
-
-**Class**: `TestErrorHandling`
-
-Tests validate graceful error handling:
-
-- `test_handle_nonexistent_binary` - Nonexistent file handling
-- `test_handle_corrupted_binary` - Corrupted binary handling
-- `test_fallback_to_generic_script_on_detection_failure` - Generic script fallback
-
-**Edge Cases Covered**:
-- Missing files
-- Corrupted binaries
-- Detection failures
-
-### 10. Script Template Completeness Tests (5 tests)
-
-**Class**: `TestScriptTemplateCompleteness`
-
-Tests validate all protection templates are complete:
-
-- `test_all_templates_generate_valid_frida_scripts` - All 15 templates validated
-- `test_hasp_template_completeness` - HASP template (hooks, encryption, success codes)
-- `test_vmprotect_template_completeness` - VMProtect template (virtualization bypass)
-- `test_flexlm_template_completeness` - FlexLM template (license checkout)
-- `test_steam_template_completeness` - Steam CEG template (DRM bypass)
-
-**Template Validation**:
-- All templates have Frida scripts (minimum 100 chars)
-- Scripts use core Frida APIs (Interceptor, Memory)
-- Scripts hook protection-specific APIs
-- Scripts handle encryption/virtualization
-
-### 11. Script Syntax Validation Tests (2 tests)
-
-**Class**: `TestScriptSyntaxValidation`
-
-Tests validate generated scripts have valid syntax:
-
-- `test_frida_script_javascript_syntax_basic_validation` - Balanced braces/brackets
-- `test_ghidra_script_java_syntax_basic_validation` - Valid Java class structure
-
-**Syntax Checks**:
-- Balanced braces and brackets
-- Valid class definitions
-- Required method definitions
-
-### 12. AI Enhancement Integration Tests (2 tests)
-
-**Class**: `TestEnhanceAIScriptGeneration`
-
-Tests validate `enhance_ai_script_generation` integration function:
-
-- `test_enhance_ai_script_generation_function_exists` - Function importable
-- `test_enhance_with_real_binary` - Real binary enhancement
-
-### 13. Knowledge Base Integration Tests (3 tests)
-
-**Class**: `TestProtectionKnowledgeBaseIntegration`
-
-Tests validate knowledge base integration:
-
-- `test_retrieve_vmprotect_bypass_techniques` - Technique retrieval
-- `test_estimate_bypass_time_for_known_protection` - Time estimation
-- `test_get_required_tools_for_protection` - Tool requirements
-
-### 14. Performance Tests (1 test)
-
-**Class**: `TestPerformanceWithLargeBinaries`
-
-Tests validate performance with large binaries:
-
-- `test_generate_script_for_large_binary_under_time_limit` - Firefox.exe (large binary, <60s limit)
-
-### 15. Script Type Validation Tests (2 tests)
-
-**Class**: `TestScriptTypeValidation`
-
-Tests validate script type parameter handling:
-
-- `test_default_script_type_is_frida` - Default Frida type
-- `test_explicit_ghidra_script_type` - Explicit Ghidra type
-
-## Test Fixtures Used
-
-### Protected Binaries
-
-**VMProtect**:
-- `tests/fixtures/binaries/protected/vmprotect_protected.exe`
-
-**Themida**:
-- `tests/fixtures/binaries/protected/themida_protected.exe`
-
-**HASP/Sentinel**:
-- `tests/fixtures/binaries/pe/protected/hasp_sentinel_protected.exe`
-
-**FlexLM**:
-- `tests/fixtures/binaries/pe/protected/flexlm_license_protected.exe`
-
-**Enterprise Software**:
-- `tests/fixtures/binaries/pe/protected/enterprise_license_check.exe`
-
-### Unprotected Binaries
-
-**Reference Binaries**:
-- `tests/fixtures/binaries/pe/legitimate/7zip.exe`
-- `tests/fixtures/binaries/pe/legitimate/vlc.exe`
-- `tests/fixtures/binaries/pe/legitimate/firefox.exe`
-
-## Coverage Analysis
-
-### Code Paths Tested
-
-1. **Initialization** - Template loading, engine setup
-2. **Protection Detection** - ICP engine, unified analysis
-3. **Script Generation** - Frida, Ghidra, Radare2
-4. **Template Selection** - Protection-specific templates
-5. **Metadata Generation** - Headers, documentation
-6. **AI Prompt Generation** - Enhancement prompts
-7. **Error Handling** - Missing files, corrupted binaries
-8. **Multi-Protection** - Layered protection handling
-
-### Key Methods Tested
-
-- `__init__()` - Generator initialization
-- `generate_bypass_script()` - Main script generation
-- `_generate_ai_prompt()` - AI prompt generation
-- `_format_detections()` - Detection formatting
-- `_get_recommended_techniques()` - Technique recommendations
-- `_get_hasp_scripts()` - HASP template
-- `_get_flexlm_scripts()` - FlexLM template
-- `_get_vmprotect_scripts()` - VMProtect template
-- `_get_themida_scripts()` - Themida template
-- `_get_steam_scripts()` - Steam template
-- `_get_basic_analysis_script()` - Basic analysis
-- `_get_generic_bypass_script()` - Generic bypass
-- `_get_generic_analysis_script()` - Generic analysis
-- `enhance_ai_script_generation()` - AI enhancement integration
-
-## Validation Criteria
-
-### Test Success Criteria
-
-**Script Generation Tests**:
-- Script must target protection-specific APIs
-- Script must include hook installation code
-- Script must force success return codes
-- Script must include error handling
-- Script must include comprehensive logging
-
-**Detection Tests**:
-- Must detect correct protection type
-- Confidence scores between 0.0 and 1.0
-- Must generate protection-specific scripts
-
-**Template Tests**:
-- All 15 templates must exist
-- Templates must have Frida scripts
-- Scripts must be substantive (>100 chars)
-- Scripts must use core APIs
-
-**Syntax Tests**:
-- Balanced braces and brackets
-- Valid language syntax
-- Required class/method definitions
-
-## Running the Tests
-
-### Prerequisites
-
-```bash
-cd D:\Intellicrack
-pixi install
-```
-
-### Run All Tests
-
-```bash
-pixi run pytest tests/ai/test_protection_aware_script_gen.py -v
-```
-
-### Run Specific Test Class
-
-```bash
-pixi run pytest tests/ai/test_protection_aware_script_gen.py::TestFridaScriptGeneration -v
-```
-
-### Run Single Test
-
-```bash
-pixi run pytest tests/ai/test_protection_aware_script_gen.py::TestFridaScriptGeneration::test_generate_vmprotect_bypass_frida_script -v
-```
-
-### Run with Coverage
-
-```bash
-pixi run pytest tests/ai/test_protection_aware_script_gen.py --cov=intellicrack.ai.protection_aware_script_gen --cov-report=html
-```
-
-## Test Quality Metrics
-
-### Completeness
-
-- **15 test classes** covering all major functionality
-- **45 test methods** validating specific scenarios
-- **All protection templates tested** (HASP, FlexLM, VMProtect, Themida, etc.)
-- **Real binaries used** for validation
-
-### Realism
-
-- **NO mocks or stubs** - tests use real protected binaries
-- **Actual protection detection** via unified engine
-- **Real script generation** validated
-- **Genuine offensive capability** proven
-
-### Robustness
-
-- **Error handling** for missing/corrupted files
-- **Edge cases** covered (unprotected binaries, detection failures)
-- **Performance testing** for large binaries
-- **Syntax validation** for generated scripts
-
-## Critical Assertions
-
-### Script Content Validation
-
-**Protection-Specific APIs**:
-```python
-assert "hasp_login" in script
-assert "lc_checkout" in script
-assert "VMProtect" in script
-```
-
-**Core Functionality**:
-```python
-assert "Interceptor.attach" in script
-assert "Module.findExportByName" in script
-assert "console.log" in script
-```
-
-**Success Codes**:
-```python
-assert "HASP_STATUS_OK" in script
-assert "LM_NOERROR" in script
-```
-
-### Detection Validation
-
-**Protection Type**:
-```python
-assert result["protection_detected"] != "Unknown"
-assert "vmprotect" in protection_name.lower()
-```
-
-**Confidence Scores**:
-```python
-assert 0.0 <= result["confidence"] <= 1.0
-```
-
-### Metadata Validation
-
-**Binary Information**:
-```python
-assert "Target:" in script
-assert "File Type:" in script
-assert "Architecture:" in script
-```
-
-**Bypass Information**:
-```python
-assert "bypass_techniques" in result
-assert "estimated_time" in result
-assert "tools_needed" in result
-```
-
-## Known Limitations
-
-1. **Pytest Installation Issue** - Current environment has corrupted pytest installation (being addressed)
-2. **Missing Dependencies** - Some dependencies (defusedxml) need installation
-3. **Binary Availability** - Some test binaries may not exist in fixtures
-
-## Next Steps
-
-1. **Fix pytest installation** - Reinstall pytest in pixi environment
-2. **Install dependencies** - Add missing dependencies (defusedxml, etc.)
-3. **Generate test binaries** - Create missing protected binary fixtures
-4. **Run full test suite** - Execute all 45 tests
-5. **Generate coverage report** - Achieve 85%+ coverage target
-
-## Test Maintenance
-
-### Adding New Protection Templates
-
-When adding new protection templates to `protection_aware_script_gen.py`:
-
-1. Add template to `script_templates` dict in `__init__`
-2. Implement `_get_<protection>_scripts()` method
-3. Add test case to `TestScriptTemplateCompleteness`
-4. Add specific test class for protection (e.g., `TestNewProtectionGeneration`)
-5. Create test binary fixture in `tests/fixtures/binaries/pe/protected/`
-
-### Updating Test Criteria
-
-When protection detection evolves:
-
-1. Update confidence score thresholds
-2. Add new API hooks to validation
-3. Update metadata requirements
-4. Add new bypass techniques
-
-## Conclusion
-
-This test suite provides comprehensive, production-grade validation of protection-aware script generation capabilities. All tests validate REAL offensive functionality against actual protected binaries, ensuring Intellicrack can effectively generate bypass scripts for modern software protections.
-
-**Total Coverage**: 45 test methods across 15 test classes
-**Protection Schemes**: 15 major protection systems validated
-**Real Binaries**: 10+ protected binaries tested
-**Success Criteria**: Scripts must defeat actual protections, not simulations
+### 18. Execution Environments (2 tests)
+- `TestExecutionEnvironments` - QEMU/Sandbox/Direct test environments
+
+### 19. Frida Integration (2 tests)
+- `TestFridaScriptExecution` - Frida script library and validation
+
+### 20. Error Handling (3 tests)
+- `TestErrorHandling` - Error recovery and reporting
+
+### 21. VM Lifecycle (4 tests)
+- `TestVMLifecycleManagement` - VM creation, tracking, cleanup
+
+### 22. Autonomous Tasks (2 tests)
+- `TestAutonomousTaskExecution` - Autonomous workflow execution
+
+### 23. Script Analysis (3 tests)
+- `TestScriptAnalysis` - Pattern detection in generated scripts
+
+### 24. Real-World Scenarios (2 tests)
+- `TestRealWorldScenarios` - End-to-end workflow integration
+
+### 25. Network Patterns (2 tests)
+- `TestNetworkPatternDetection` - Network API/symbol detection
+
+### 26. Windows Sandbox (1 test)
+- `TestWindowsSandboxIntegration` - Windows-specific testing
+
+### 27. Execution Validation (1 test)
+- `TestExecutionResultValidation` - Result verification
+
+## Key Functions Tested
+
+### Request Processing
+- `process_request()` - Main autonomous workflow entry point
+- `_parse_request()` - Request parsing into TaskRequest
+- `_extract_binary_path()` - Path extraction
+- `_extract_script_types()` - Script type detection
+- `_extract_test_environment()` - Environment selection
+
+### Binary Analysis
+- `_analyze_target()` - Comprehensive binary analysis
+- `_get_binary_info()` - Binary metadata extraction
+- `_extract_strings()` - String extraction and filtering
+- `_analyze_functions()` - Function enumeration and classification
+- `_analyze_imports()` - Import table analysis
+- `_detect_protections()` - Protection detection
+- `_check_network_activity()` - Network capability analysis
+
+### Script Generation and Refinement
+- `_generate_initial_scripts()` - Initial script creation
+- `_iterative_refinement()` - Iterative improvement loop
+- `_refine_script()` - Script enhancement
+- `_apply_failure_refinements()` - Failure-based improvements
+- `_apply_protection_refinements()` - Protection-specific enhancements
+- `_get_license_bypass_code()` - License bypass generation
+- `_get_time_bypass_code()` - Time bypass generation
+
+### Testing and Validation
+- `_test_script()` - Script execution testing
+- `_test_in_qemu()` - QEMU environment testing
+- `_test_in_sandbox()` - Sandbox environment testing
+- `_test_direct()` - Direct testing
+- `_verify_bypass()` - Bypass success verification
+
+### Deployment and Management
+- `_deploy_scripts()` - Script deployment
+- `_log_to_user()` - User communication
+- `save_session_data()` - Session persistence
+- `get_status()` - Workflow status
+- `get_conversation_history()` - History retrieval
+
+### VM Management
+- `_initialize_qemu_manager()` - QEMU initialization
+- `_create_vm()` - VM creation
+- `_start_vm()` - VM startup
+- `_stop_vm()` - VM shutdown
+- `_create_snapshot()` - Snapshot creation
+- `_restore_snapshot()` - Snapshot restoration
+- `_cleanup_vm()` - VM cleanup
+
+### Frida Integration
+- `list_available_frida_scripts()` - Script library listing
+- `execute_frida_library_script()` - Library script execution
+- `_execute_frida_script()` - Custom script execution
+- `_process_frida_result()` - Result processing
+
+### Autonomous Execution
+- `execute_autonomous_task()` - Task execution
+- `_test_script_in_qemu()` - QEMU testing
+- `_analyze_script_content()` - Script analysis
+
+## Test Coverage Strategy
+
+### Production-Ready Testing
+- **No Mocks**: Tests use real data and validate actual functionality
+- **Real Binaries**: Sample PE binaries created with proper headers
+- **Integration Focus**: Tests validate complete workflows
+- **Error Scenarios**: Comprehensive error handling validation
+
+### Success Criteria
+Tests validate that:
+1. Scripts are generated with correct syntax
+2. Binary analysis extracts relevant protection information
+3. Script refinement actually improves effectiveness
+4. Execution environments properly isolate tests
+5. VM lifecycle is properly managed
+6. Error conditions are handled gracefully
+7. Session data persists correctly
+
+### Edge Cases Covered
+- Missing/invalid binary files
+- Malformed requests
+- Failed script execution
+- Protection detection failures
+- Network analysis on non-networked binaries
+- VM creation/cleanup failures
+- Path validation security checks
+
+## Testing Notes
+
+### Platform-Specific Tests
+- Windows Sandbox tests (marked with `@pytest.mark.skipif`)
+- Cross-platform path handling
+- Platform-specific binary formats (PE/ELF)
+
+### Security Validation
+- Path traversal prevention
+- Command injection prevention  
+- Sandbox escaping prevention
+- Resource cleanup verification
+
+### Performance Considerations
+- Timeout handling in script execution
+- VM resource management
+- Session data serialization
+- Large binary handling
+
+## Future Enhancements
+
+### Additional Test Coverage Needed
+1. Multi-threaded execution scenarios
+2. Concurrent VM management
+3. Large-scale binary corpus testing
+4. Protection-specific bypass validation
+5. Network traffic interception testing
+6. Advanced obfuscation handling
+
+### Integration Testing
+1. Full autonomous workflow (request → deployment)
+2. Multi-iteration refinement loops
+3. Cross-environment validation
+4. Real commercial software testing (ethical testing only)
+
+## Validation Status
+- ✅ Syntax validated (py_compile)
+- ✅ Type annotations complete
+- ✅ No mock/stub implementations
+- ✅ Real functionality validation
+- ⏳ Pytest execution (pending environment fixes)

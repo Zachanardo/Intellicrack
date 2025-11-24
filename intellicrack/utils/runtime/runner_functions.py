@@ -28,6 +28,7 @@ import threading
 import traceback
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from intellicrack.handlers.psutil_handler import PSUTIL_AVAILABLE
 

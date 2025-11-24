@@ -23,6 +23,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 import os
+import tempfile
 import threading
 import time
 import traceback
@@ -59,6 +60,8 @@ except ImportError as e:
     QL_OS = None
     QL_VERBOSE = None
     QlFsMappedObject = None
+
+UNIX_TEMP_DIR = os.environ.get("UNIX_TEMP_DIR") or (tempfile.gettempdir() if os.name != "nt" else tempfile.gettempdir().replace("\\", "/"))
 
 
 class QilingEmulator:
@@ -752,7 +755,7 @@ class QilingEmulator:
                     "/usr",
                     "/etc",
                     "/var",
-                    "/tmp",
+                    UNIX_TEMP_DIR,
                     "/home",
                 ],
             }

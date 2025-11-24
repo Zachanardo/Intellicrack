@@ -870,15 +870,13 @@ def _calculate_safe_prologue_size(instructions: list[Any]) -> int:
     """
     prologue_size = 0
     safe_prologue_mnemonics = ["push", "mov", "sub", "lea", "xor"]
-    safe_instructions_count = 0
 
-    for insn in instructions:
+    for safe_instructions_count, insn in enumerate(instructions, start=1):
         if insn.mnemonic not in safe_prologue_mnemonics:
             # Stop at any other instruction type
             break
 
         prologue_size += insn.size
-        safe_instructions_count += 1
         # Break after a very conservative number of instructions
         if safe_instructions_count >= 3:
             break

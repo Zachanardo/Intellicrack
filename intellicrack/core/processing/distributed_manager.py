@@ -24,7 +24,9 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import contextlib
+import hashlib
 import heapq
+import hmac
 import json
 import logging
 import os
@@ -189,6 +191,8 @@ class DistributedAnalysisManager:
         self.logger = logging.getLogger(__name__)
         self.config = config or {}
         self.enable_networking = enable_networking
+
+        self._hmac_key = os.environ.get("INTELLICRACK_CLUSTER_KEY", "intellicrack-distributed-default-key").encode()
 
         self.mode = mode
         if mode == "auto":
@@ -502,25 +506,38 @@ class DistributedAnalysisManager:
             self.logger.error(f"Worker communication error: {e}")
 
     def _send_message(self, sock: socket.socket, message: dict[str, Any]) -> None:
-        """Send a message over socket with length prefix."""
+        """Send a message over socket with length prefix and HMAC."""
         try:
             data = pickle.dumps(message)
-            length = struct.pack("!I", len(data))
-            sock.sendall(length + data)
+            msg_hmac = hmac.new(self._hmac_key, data, hashlib.sha256).digest()
+            payload = msg_hmac + data
+            length = struct.pack("!I", len(payload))
+            sock.sendall(length + payload)
         except (OSError, pickle.PickleError) as e:
             self.logger.error(f"Error sending message: {e}")
             raise
 
     def _receive_message(self, sock: socket.socket) -> dict[str, Any] | None:
-        """Receive a message from socket with length prefix."""
+        """Receive a message from socket with length prefix and HMAC verification."""
         try:
             length_data = self._recv_exactly(sock, 4)
             if not length_data:
                 return None
 
             length = struct.unpack("!I", length_data)[0]
-            data = self._recv_exactly(sock, length)
-            return pickle.loads(data) if data else None
+            payload = self._recv_exactly(sock, length)
+            if not payload or len(payload) < 32:
+                return None
+
+            received_hmac = payload[:32]
+            data = payload[32:]
+
+            expected_hmac = hmac.new(self._hmac_key, data, hashlib.sha256).digest()
+            if not hmac.compare_digest(received_hmac, expected_hmac):
+                self.logger.error("HMAC verification failed - potential data tampering detected")
+                return None
+
+            return pickle.loads(data) if data else None  # noqa: S301
         except (OSError, pickle.PickleError, struct.error) as e:
             self.logger.error(f"Error receiving message: {e}")
             return None

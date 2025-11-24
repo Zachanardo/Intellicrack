@@ -91,8 +91,8 @@ try:
                 if hasattr(mpl, "use"):
                     mpl.use("Agg", force=True)
                     qt_backend_name = "Agg"
-            except Exception:
-                pass
+            except Exception as fallback_error:
+                logger.error(f"Failed to set Agg backend as fallback: {fallback_error}")
     else:
         # No Qt backend available, use Agg
         try:

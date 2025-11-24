@@ -11,6 +11,7 @@ Copyright (C) 2025 Zachary Flint
 """
 
 import argparse
+import sys
 from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
@@ -150,7 +151,13 @@ def generate_report(tested: Set, untested: Set, coverage_map: Dict, detailed: bo
                 print(f"  ... and {len(files) - 10} more")
 
 
-def main():
+def main() -> int:
+    """Execute test coverage verification for Intellicrack project.
+
+    Returns:
+        Exit code: 0 if all files are tested, 1 if untested files exist.
+
+    """
     parser = argparse.ArgumentParser(description="Verify test coverage for Intellicrack")
     parser.add_argument("--detailed", action="store_true", help="Show detailed file lists")
     parser.add_argument("--update-manifest", action="store_true", help="Update FILE_MANIFEST.md with current status")
@@ -181,4 +188,4 @@ def main():
 
 
 if __name__ == "__main__":
-    exit(main())
+    sys.exit(main())

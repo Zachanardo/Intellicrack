@@ -53,7 +53,8 @@ class APIMonitor(BaseMonitor):
             return True
 
         except Exception as e:
-            return False if self._handle_error(e) else False
+            self._handle_error(e)
+            return False
 
     def _stop_monitoring(self) -> None:
         """Stop API monitoring."""

@@ -115,7 +115,7 @@ except ImportError as e:
 
         def __init__(
             self,
-            data: list | tuple | "FallbackArray" | float,
+            data: list | tuple | FallbackArray | float,
             dtype: type | None = None,
             shape: tuple[int, ...] | None = None,
         ) -> None:
@@ -188,7 +188,7 @@ except ImportError as e:
             """
             return len(self._shape)
 
-        def reshape(self, *new_shape: int) -> "FallbackArray":
+        def reshape(self, *new_shape: int) -> FallbackArray:
             """Reshape array to new dimensions.
 
             Args:
@@ -213,7 +213,7 @@ except ImportError as e:
 
             return FallbackArray(self.data.copy(), self.dtype, new_shape)
 
-        def flatten(self) -> "FallbackArray":
+        def flatten(self) -> FallbackArray:
             """Flatten array to 1D.
 
             Returns:
@@ -238,7 +238,7 @@ except ImportError as e:
                 result = temp
             return result[0] if len(result) == 1 else result
 
-        def copy(self) -> "FallbackArray":
+        def copy(self) -> FallbackArray:
             """Create a copy of the array.
 
             Returns:
@@ -247,7 +247,7 @@ except ImportError as e:
             """
             return FallbackArray(self.data.copy(), self.dtype, self._shape)
 
-        def astype(self, dtype: type) -> "FallbackArray":
+        def astype(self, dtype: type) -> FallbackArray:
             """Convert array to new data type.
 
             Args:
@@ -261,7 +261,7 @@ except ImportError as e:
             new_data = [converter(x) for x in self.data]
             return FallbackArray(new_data, dtype, self._shape)
 
-        def __getitem__(self, key: int | slice | list | tuple) -> "FallbackArray" | int | float:
+        def __getitem__(self, key: int | slice | list | tuple) -> FallbackArray | int | float:
             """Get item or slice.
 
             Args:
@@ -279,7 +279,7 @@ except ImportError as e:
                 return FallbackArray([self.data[i] for i in key], self.dtype)
             return self.data[key]
 
-        def __setitem__(self, key: int | slice, value: float | "FallbackArray" | list) -> None:
+        def __setitem__(self, key: int | slice, value: float | FallbackArray | list) -> None:
             """Set item or slice.
 
             Args:
@@ -310,7 +310,7 @@ except ImportError as e:
             """
             return f"FallbackArray({self.tolist()})"
 
-        def __add__(self, other: "FallbackArray" | float) -> "FallbackArray":
+        def __add__(self, other: FallbackArray | float) -> FallbackArray:
             """Element-wise addition.
 
             Args:
@@ -326,7 +326,7 @@ except ImportError as e:
                 result = [a + other for a in self.data]
             return FallbackArray(result, self.dtype, self._shape)
 
-        def __sub__(self, other: "FallbackArray" | float) -> "FallbackArray":
+        def __sub__(self, other: FallbackArray | float) -> FallbackArray:
             """Element-wise subtraction.
 
             Args:
@@ -342,7 +342,7 @@ except ImportError as e:
                 result = [a - other for a in self.data]
             return FallbackArray(result, self.dtype, self._shape)
 
-        def __mul__(self, other: "FallbackArray" | float) -> "FallbackArray":
+        def __mul__(self, other: FallbackArray | float) -> FallbackArray:
             """Element-wise multiplication.
 
             Args:
@@ -358,7 +358,7 @@ except ImportError as e:
                 result = [a * other for a in self.data]
             return FallbackArray(result, self.dtype, self._shape)
 
-        def __truediv__(self, other: "FallbackArray" | float) -> "FallbackArray":
+        def __truediv__(self, other: FallbackArray | float) -> FallbackArray:
             """Element-wise division.
 
             Args:
@@ -449,7 +449,7 @@ except ImportError as e:
             return self.data.index(max_val)
 
     # Fallback array creation functions
-    def array(data: list | tuple | "FallbackArray" | float, dtype: type | None = None) -> "FallbackArray":
+    def array(data: list | tuple | FallbackArray | float, dtype: type | None = None) -> FallbackArray:
         """Create array from data.
 
         Args:
@@ -462,7 +462,7 @@ except ImportError as e:
         """
         return FallbackArray(data, dtype)
 
-    def zeros(shape: int | tuple[int, ...], dtype: type = float) -> "FallbackArray":
+    def zeros(shape: int | tuple[int, ...], dtype: type = float) -> FallbackArray:
         """Create array of zeros.
 
         Args:
@@ -480,7 +480,7 @@ except ImportError as e:
             total *= dim
         return FallbackArray([0] * total, dtype, shape)
 
-    def ones(shape: int | tuple[int, ...], dtype: type = float) -> "FallbackArray":
+    def ones(shape: int | tuple[int, ...], dtype: type = float) -> FallbackArray:
         """Create array of ones.
 
         Args:
@@ -498,7 +498,7 @@ except ImportError as e:
             total *= dim
         return FallbackArray([1] * total, dtype, shape)
 
-    def empty(shape: int | tuple[int, ...], dtype: type = float) -> "FallbackArray":
+    def empty(shape: int | tuple[int, ...], dtype: type = float) -> FallbackArray:
         """Create uninitialized array (returns zeros for safety).
 
         Args:
@@ -511,7 +511,7 @@ except ImportError as e:
         """
         return zeros(shape, dtype)
 
-    def full(shape: int | tuple[int, ...], fill_value: float, dtype: type | None = None) -> "FallbackArray":
+    def full(shape: int | tuple[int, ...], fill_value: float, dtype: type | None = None) -> FallbackArray:
         """Create array filled with value.
 
         Args:
@@ -531,7 +531,7 @@ except ImportError as e:
         dtype = dtype or type(fill_value)
         return FallbackArray([fill_value] * total, dtype, shape)
 
-    def eye(N: int, M: int | None = None, k: int = 0, dtype: type = float) -> "FallbackArray":
+    def eye(N: int, M: int | None = None, k: int = 0, dtype: type = float) -> FallbackArray:
         """Create identity matrix.
 
         Args:
@@ -551,7 +551,7 @@ except ImportError as e:
             result.append(row)
         return FallbackArray(result, dtype, (N, M))
 
-    def arange(start: float, stop: float | None = None, step: float = 1, dtype: type | None = None) -> "FallbackArray":
+    def arange(start: float, stop: float | None = None, step: float = 1, dtype: type | None = None) -> FallbackArray:
         """Create array with range of values.
 
         Args:
@@ -576,7 +576,7 @@ except ImportError as e:
 
         return FallbackArray(result, dtype or type(start))
 
-    def linspace(start: float, stop: float, num: int = 50) -> "FallbackArray":
+    def linspace(start: float, stop: float, num: int = 50) -> FallbackArray:
         """Create linearly spaced array.
 
         Args:
@@ -597,7 +597,7 @@ except ImportError as e:
         result = [start + i * step for i in range(num)]
         return FallbackArray(result)
 
-    def meshgrid(*xi: list | tuple | "FallbackArray") -> list["FallbackArray"]:
+    def meshgrid(*xi: list | tuple | FallbackArray) -> list[FallbackArray]:
         """Create coordinate matrices from coordinate vectors.
 
         Args:
@@ -628,7 +628,7 @@ except ImportError as e:
         ]
 
     # Math operations
-    def sqrt(x: "FallbackArray" | float) -> "FallbackArray" | float:
+    def sqrt(x: FallbackArray | float) -> FallbackArray | float:
         """Square root.
 
         Args:
@@ -642,7 +642,7 @@ except ImportError as e:
             return FallbackArray([math.sqrt(val) for val in x.data], x.dtype, x.shape)
         return math.sqrt(x)
 
-    def absolute(x: "FallbackArray" | float) -> "FallbackArray" | int | float:
+    def absolute(x: FallbackArray | float) -> FallbackArray | int | float:
         """Absolute value.
 
         Args:
@@ -656,7 +656,7 @@ except ImportError as e:
             return FallbackArray([abs(val) for val in x.data], x.dtype, x.shape)
         return abs(x)
 
-    def round_func(x: "FallbackArray" | float, decimals: int = 0) -> "FallbackArray" | int | float:
+    def round_func(x: FallbackArray | float, decimals: int = 0) -> FallbackArray | int | float:
         """Round to decimals.
 
         Args:
@@ -672,7 +672,7 @@ except ImportError as e:
             return FallbackArray([round(val * factor) / factor for val in x.data], x.dtype, x.shape)
         return round(x, decimals)
 
-    def floor(x: "FallbackArray" | float) -> "FallbackArray" | int:
+    def floor(x: FallbackArray | float) -> FallbackArray | int:
         """Floor operation.
 
         Args:
@@ -686,7 +686,7 @@ except ImportError as e:
             return FallbackArray([math.floor(val) for val in x.data], x.dtype, x.shape)
         return math.floor(x)
 
-    def ceil(x: "FallbackArray" | float) -> "FallbackArray" | int:
+    def ceil(x: FallbackArray | float) -> FallbackArray | int:
         """Ceiling operation.
 
         Args:
@@ -701,7 +701,7 @@ except ImportError as e:
         return math.ceil(x)
 
     # Array operations
-    def concatenate(arrays: list["FallbackArray"] | list[list], axis: int = 0) -> "FallbackArray":
+    def concatenate(arrays: list[FallbackArray] | list[list], axis: int = 0) -> FallbackArray:
         """Concatenate arrays.
 
         Args:
@@ -724,7 +724,7 @@ except ImportError as e:
 
         return FallbackArray(result)
 
-    def stack(arrays: list["FallbackArray"] | list[list], axis: int = 0) -> "FallbackArray":
+    def stack(arrays: list[FallbackArray] | list[list], axis: int = 0) -> FallbackArray:
         """Stack arrays.
 
         Args:
@@ -737,7 +737,7 @@ except ImportError as e:
         """
         return concatenate(arrays, axis)
 
-    def unique(ar: "FallbackArray" | list) -> "FallbackArray":
+    def unique(ar: FallbackArray | list) -> FallbackArray:
         """Find unique elements.
 
         Args:
@@ -757,7 +757,7 @@ except ImportError as e:
 
         return FallbackArray(result)
 
-    def sort(a: "FallbackArray" | list) -> "FallbackArray" | list:
+    def sort(a: FallbackArray | list) -> FallbackArray | list:
         """Sort array.
 
         Args:
@@ -771,7 +771,7 @@ except ImportError as e:
             return FallbackArray(sorted(a.data), a.dtype, a.shape)
         return sorted(a)
 
-    def argsort(a: "FallbackArray" | list) -> "FallbackArray":
+    def argsort(a: FallbackArray | list) -> FallbackArray:
         """Get indices that would sort array.
 
         Args:
@@ -787,10 +787,10 @@ except ImportError as e:
         return FallbackArray(indices)
 
     def where(
-        condition: "FallbackArray" | list,
-        x: "FallbackArray" | float | None = None,
-        y: "FallbackArray" | float | None = None,
-    ) -> "FallbackArray" | tuple:
+        condition: FallbackArray | list,
+        x: FallbackArray | float | None = None,
+        y: FallbackArray | float | None = None,
+    ) -> FallbackArray | tuple:
         """Return elements chosen from x or y depending on condition.
 
         Args:
@@ -817,8 +817,8 @@ except ImportError as e:
         return FallbackArray(result)
 
     def allclose(
-        a: "FallbackArray" | list,
-        b: "FallbackArray" | list,
+        a: FallbackArray | list,
+        b: FallbackArray | list,
         rtol: float = 1e-05,
         atol: float = 1e-08,
     ) -> bool:
@@ -842,7 +842,7 @@ except ImportError as e:
 
         return all(np_abs(av - bv) <= atol + rtol * np_abs(bv) for av, bv in zip(a_data, b_data, strict=False))
 
-    def array_equal(a: "FallbackArray" | list, b: "FallbackArray" | list) -> bool:
+    def array_equal(a: FallbackArray | list, b: FallbackArray | list) -> bool:
         """Check if arrays are exactly equal.
 
         Args:
@@ -857,7 +857,7 @@ except ImportError as e:
         b_data = b.data if isinstance(b, FallbackArray) else b
         return a_data == b_data
 
-    def asarray(a: "FallbackArray" | list, dtype: type | None = None) -> "FallbackArray":
+    def asarray(a: FallbackArray | list, dtype: type | None = None) -> FallbackArray:
         """Convert to array.
 
         Args:
@@ -872,7 +872,7 @@ except ImportError as e:
             return a if dtype is None else a.astype(dtype)
         return FallbackArray(a, dtype)
 
-    def gradient(f: "FallbackArray" | list, *varargs: float) -> "FallbackArray":
+    def gradient(f: FallbackArray | list, *varargs: float) -> FallbackArray:
         """Calculate gradient using finite differences.
 
         Args:
@@ -896,7 +896,7 @@ except ImportError as e:
 
         return FallbackArray(result)
 
-    def diff(a: "FallbackArray" | list, n: int = 1) -> "FallbackArray":
+    def diff(a: FallbackArray | list, n: int = 1) -> FallbackArray:
         """Calculate n-th discrete difference.
 
         Args:
@@ -914,7 +914,7 @@ except ImportError as e:
 
         return FallbackArray(data)
 
-    def cumsum(a: "FallbackArray" | list) -> "FallbackArray":
+    def cumsum(a: FallbackArray | list) -> FallbackArray:
         """Cumulative sum.
 
         Args:
@@ -933,7 +933,7 @@ except ImportError as e:
 
         return FallbackArray(result)
 
-    def histogram(a: "FallbackArray" | list, bins: int = 10) -> tuple["FallbackArray", "FallbackArray"]:
+    def histogram(a: FallbackArray | list, bins: int = 10) -> tuple[FallbackArray, FallbackArray]:
         """Compute histogram.
 
         Args:
@@ -964,7 +964,7 @@ except ImportError as e:
 
         return FallbackArray(counts), FallbackArray(edges)
 
-    def percentile(a: "FallbackArray" | list, q: float) -> int | float | None:
+    def percentile(a: FallbackArray | list, q: float) -> int | float | None:
         """Calculate percentile.
 
         Args:
@@ -990,7 +990,7 @@ except ImportError as e:
         d1 = data[int(c)] * (k - f)
         return d0 + d1
 
-    def median(a: "FallbackArray" | list) -> int | float | None:
+    def median(a: FallbackArray | list) -> int | float | None:
         """Calculate median.
 
         Args:
@@ -1002,7 +1002,7 @@ except ImportError as e:
         """
         return percentile(a, 50)
 
-    def dot(a: "FallbackArray" | list, b: "FallbackArray" | list) -> int | float:
+    def dot(a: FallbackArray | list, b: FallbackArray | list) -> int | float:
         """Dot product of two arrays.
 
         Args:
@@ -1024,7 +1024,7 @@ except ImportError as e:
 
         return sum(av * bv for av, bv in zip(a_data, b_data, strict=False))
 
-    def cross(a: "FallbackArray" | list, b: "FallbackArray" | list) -> "FallbackArray":
+    def cross(a: FallbackArray | list, b: FallbackArray | list) -> FallbackArray:
         """Cross product of two 3D vectors.
 
         Args:
@@ -1052,7 +1052,7 @@ except ImportError as e:
         return FallbackArray(result)
 
     # Fallback implementations for numpy-specific operations
-    def reshape(a: "FallbackArray" | list, newshape: int | tuple[int, ...]) -> "FallbackArray":
+    def reshape(a: FallbackArray | list, newshape: int | tuple[int, ...]) -> FallbackArray:
         """Reshape array.
 
         Args:
@@ -1067,7 +1067,7 @@ except ImportError as e:
             return a.reshape(newshape)
         return FallbackArray(a).reshape(newshape)
 
-    def transpose(a: "FallbackArray" | list) -> "FallbackArray":
+    def transpose(a: FallbackArray | list) -> FallbackArray:
         """Transpose array (basic 2D implementation).
 
         Args:
@@ -1089,7 +1089,7 @@ except ImportError as e:
         return FallbackArray(result, a.dtype, (cols, rows))
 
     # Statistical functions that operate on arrays
-    def sum_func(a: "FallbackArray" | list, axis: int | None = None) -> int | float:
+    def sum_func(a: FallbackArray | list, axis: int | None = None) -> int | float:
         """Sum of array elements.
 
         Args:
@@ -1102,7 +1102,7 @@ except ImportError as e:
         """
         return a.sum(axis) if isinstance(a, FallbackArray) else sum(a)
 
-    def mean(a: "FallbackArray" | list, axis: int | None = None) -> int | float:
+    def mean(a: FallbackArray | list, axis: int | None = None) -> int | float:
         """Mean of array elements.
 
         Args:
@@ -1117,7 +1117,7 @@ except ImportError as e:
             return a.mean()
         return sum(a) / len(a) if a else 0
 
-    def std(a: "FallbackArray" | list, axis: int | None = None) -> float:
+    def std(a: FallbackArray | list, axis: int | None = None) -> float:
         """Calculate standard deviation.
 
         Args:
@@ -1134,7 +1134,7 @@ except ImportError as e:
         variance = sum((x - m) ** 2 for x in a) / len(a)
         return math.sqrt(variance)
 
-    def var(a: "FallbackArray" | list, axis: int | None = None) -> float:
+    def var(a: FallbackArray | list, axis: int | None = None) -> float:
         """Variance.
 
         Args:
@@ -1151,7 +1151,7 @@ except ImportError as e:
         m = mean(a)
         return sum((x - m) ** 2 for x in a) / len(a)
 
-    def min_func(a: "FallbackArray" | list, axis: int | None = None) -> int | float | None:
+    def min_func(a: FallbackArray | list, axis: int | None = None) -> int | float | None:
         """Minimum value.
 
         Args:
@@ -1166,7 +1166,7 @@ except ImportError as e:
             return a.min()
         return min(a) if a else None
 
-    def max_func(a: "FallbackArray" | list, axis: int | None = None) -> int | float | None:
+    def max_func(a: FallbackArray | list, axis: int | None = None) -> int | float | None:
         """Maximum value.
 
         Args:
@@ -1181,7 +1181,7 @@ except ImportError as e:
             return a.max()
         return max(a) if a else None
 
-    def argmin(a: "FallbackArray" | list, axis: int | None = None) -> int | None:
+    def argmin(a: FallbackArray | list, axis: int | None = None) -> int | None:
         """Index of minimum.
 
         Args:
@@ -1197,7 +1197,7 @@ except ImportError as e:
         min_val = min(a)
         return a.index(min_val)
 
-    def argmax(a: "FallbackArray" | list, axis: int | None = None) -> int | None:
+    def argmax(a: FallbackArray | list, axis: int | None = None) -> int | None:
         """Index of maximum.
 
         Args:
@@ -1301,7 +1301,7 @@ except ImportError as e:
             """
 
             @staticmethod
-            def norm(x: "FallbackArray" | list, ord: float | str | None = None) -> float:
+            def norm(x: FallbackArray | list, ord: float | str | None = None) -> float:
                 """Vector norm.
 
                 Args:
@@ -1322,7 +1322,7 @@ except ImportError as e:
                 return sum(abs(val) ** ord for val in data) ** (1 / ord)
 
             @staticmethod
-            def inv(a: "FallbackArray") -> "FallbackArray":
+            def inv(a: FallbackArray) -> FallbackArray:
                 """Matrix inverse (2x2 only for fallback).
 
                 Args:
@@ -1360,7 +1360,7 @@ except ImportError as e:
             """
 
             @staticmethod
-            def fft(a: "FallbackArray" | list) -> "FallbackArray":
+            def fft(a: FallbackArray | list) -> FallbackArray:
                 """Implement basic DFT.
 
                 Args:
@@ -1386,7 +1386,7 @@ except ImportError as e:
                 return FallbackArray(result)
 
             @staticmethod
-            def ifft(a: "FallbackArray" | list) -> "FallbackArray":
+            def ifft(a: FallbackArray | list) -> FallbackArray:
                 """Implement basic inverse DFT.
 
                 Args:
@@ -1422,7 +1422,7 @@ except ImportError as e:
             """
 
             @staticmethod
-            def rand(*shape: int) -> "FallbackArray" | float:
+            def rand(*shape: int) -> FallbackArray | float:
                 """Random values in [0, 1).
 
                 Args:
@@ -1443,7 +1443,7 @@ except ImportError as e:
                 return FallbackArray(data, float, shape)
 
             @staticmethod
-            def randn(*shape: int) -> "FallbackArray" | float:
+            def randn(*shape: int) -> FallbackArray | float:
                 """Random normal distribution.
 
                 Args:
@@ -1464,7 +1464,7 @@ except ImportError as e:
                 return FallbackArray(data, float, shape)
 
             @staticmethod
-            def randint(low: int, high: int | None = None, size: int | tuple[int, ...] | None = None) -> "FallbackArray" | int:
+            def randint(low: int, high: int | None = None, size: int | tuple[int, ...] | None = None) -> FallbackArray | int:
                 """Random integers.
 
                 Args:
@@ -1495,10 +1495,10 @@ except ImportError as e:
 
             @staticmethod
             def choice(
-                a: "FallbackArray" | int | list,
+                a: FallbackArray | int | list,
                 size: int | tuple[int, ...] | None = None,
                 replace: bool = True,
-            ) -> "FallbackArray" | int | float:
+            ) -> FallbackArray | int | float:
                 """Random choice from array.
 
                 Args:

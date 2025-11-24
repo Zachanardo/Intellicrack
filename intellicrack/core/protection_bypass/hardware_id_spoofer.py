@@ -1101,13 +1101,12 @@ objInstance.Put_
                 while True:
                     try:
                         subkey_name = winreg.EnumKey(key, i)
-                        with winreg.OpenKey(key, subkey_name, 0, winreg.KEY_WRITE) as subkey:
-                            with contextlib.suppress(OSError):
-                                driver_desc = winreg.QueryValueEx(subkey, "DriverDesc")[0]
-                                if adapter in driver_desc:
-                                    winreg.DeleteValue(subkey, "NetworkAddress")
-                                    self._restart_network_adapter(adapter)
-                                    return
+                        with winreg.OpenKey(key, subkey_name, 0, winreg.KEY_WRITE) as subkey, contextlib.suppress(OSError):
+                            driver_desc = winreg.QueryValueEx(subkey, "DriverDesc")[0]
+                            if adapter in driver_desc:
+                                winreg.DeleteValue(subkey, "NetworkAddress")
+                                self._restart_network_adapter(adapter)
+                                return
                         i += 1
                     except OSError:
                         break

@@ -2401,8 +2401,6 @@ class BinaryKeyExtractor:
         """Trigger a cryptographic operation in the target process."""
         with contextlib.suppress(OSError, ctypes.ArgumentError):
             if platform.system() == "Windows":
-                import ctypes
-
                 user32 = ctypes.windll.user32
                 WM_COMMAND = 273
 
