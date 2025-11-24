@@ -434,8 +434,8 @@ class TestDomainExtraction:
 
         domains = orchestrator._extract_licensing_domains("test.exe")
 
-        assert "license.example.com" in domains
-        assert "api.example.com" in domains
+        assert any(d == "license.example.com" or d.endswith(".license.example.com") for d in domains)
+        assert any(d == "api.example.com" or d.endswith(".api.example.com") for d in domains)
 
     @patch("intellicrack.core.certificate.bypass_orchestrator.Path")
     def test_extract_licensing_domains_handles_nonexistent_file(

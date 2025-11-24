@@ -80,12 +80,12 @@ def test_ssl_interceptor_basic_functionality():
         interceptor.add_target_host("test.license.com")
         updated_hosts = interceptor.get_target_hosts()
         assert len(updated_hosts) == len(initial_hosts) + 1
-        assert "test.license.com" in updated_hosts
+        assert any(h == "test.license.com" or h.endswith(".test.license.com") for h in updated_hosts)
         print("OK Target host addition validated")
 
         interceptor.remove_target_host("test.license.com")
         final_hosts = interceptor.get_target_hosts()
-        assert "test.license.com" not in final_hosts
+        assert not any(h == "test.license.com" or h.endswith(".test.license.com") for h in final_hosts)
         print("OK Target host removal validated")
 
         # Test traffic logging

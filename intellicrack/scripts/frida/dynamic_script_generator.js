@@ -5673,9 +5673,10 @@ const DynamicScriptGenerator = {
 
                 let hidden = code;
                 apiMap.forEach((alias, original) => {
+                    const escapedOriginal = original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                     hidden =
                         `var ${alias} = ${original};\n` +
-                        hidden.replace(new RegExp(original.replace(/\./g, '\\.'), 'g'), alias);
+                        hidden.replace(new RegExp(escapedOriginal, 'g'), alias);
                 });
 
                 return hidden;

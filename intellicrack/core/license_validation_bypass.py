@@ -100,7 +100,11 @@ class LicenseValidationBypass:
     def _build_ecc_patterns(self) -> list[re.Pattern]:
         """Build patterns for ECC key detection."""
         logger.debug("Building ECC key detection patterns.")
-        patterns = [re.compile(b"\x30[\x59-\x81][\x30]\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01")]
+        patterns = [
+            re.compile(b"\x30\x59\x30\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01"),
+            re.compile(b"\x30\x76\x30\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01"),
+            re.compile(b"\x30\x81\x9b\x30\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01"),
+        ]
 
         logger.debug("Added ASN.1 DER ECC public key pattern.")
 

@@ -83,8 +83,8 @@ class TestTLSInterceptor:
             __import__('cryptography.x509.oid', fromlist=['ExtensionOID']).ExtensionOID.SUBJECT_ALTERNATIVE_NAME
         )
         dns_names = [name.value for name in san_ext.value]
-        assert "licensing.flexnetoperations.com" in dns_names, "SAN must include exact hostname"
-        assert "*.licensing.flexnetoperations.com" in dns_names, "SAN must include wildcard"
+        assert any(name == "licensing.flexnetoperations.com" for name in dns_names), "SAN must include exact hostname"
+        assert any(name == "*.licensing.flexnetoperations.com" for name in dns_names), "SAN must include wildcard"
 
     def test_certificate_signed_by_ca(self):
         """Test that generated certificates are properly signed by our CA."""

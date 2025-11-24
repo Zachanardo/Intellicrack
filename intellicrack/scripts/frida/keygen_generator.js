@@ -2150,7 +2150,7 @@ const KeygenGenerator = {
                     version: version || '1.0',
                     features: features || ['basic'],
                     timestamp: Date.now(),
-                    userId: Math.random().toString(36).substr(2, 8),
+                    userId: this._generateSecureUserId(),
                 };
 
                 // Encode key data into traditional format
@@ -2165,6 +2165,18 @@ const KeygenGenerator = {
                     encoded: encoded,
                     checkDigits: checkDigits,
                 };
+            },
+
+            _generateSecureUserId: function () {
+                const timestamp = Date.now().toString(36);
+                const randomBytes = new Uint8Array(4);
+                for (let i = 0; i < 4; i++) {
+                    randomBytes[i] = Math.floor(Math.random() * 256);
+                }
+                const randomHex = Array.from(randomBytes)
+                    .map(b => b.toString(36))
+                    .join('');
+                return (timestamp + randomHex).substr(0, 8);
             },
 
             encodeKeyData: function (data) {

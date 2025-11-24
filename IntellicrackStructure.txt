@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Sun, Nov 23, 2025 08:32:56 PM
+Generated: Sun, Nov 23, 2025 09:16:37 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -1765,7 +1765,8 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── service_utils.py
 │   ├── severity_levels.py
 │   ├── subprocess_security.py
-│   └── torch_gil_safety.py
+│   ├── torch_gil_safety.py
+│   └── url_validation.py
 ├── .intellicrack_scan_cache.json
 ├── __init__.py
 ├── __main__.py

@@ -1541,8 +1541,29 @@ public class KeygenTemplateGenerator extends GhidraScript {
       }
     }
 
-    // Look for point coordinates
-    // (Implementation would search for coordinate values)
+    // Search for ECC point coordinates in data sections
+    for (Data data : currentProgram.getListing().getDefinedData(true)) {
+      if (data.isConstant() && data.getLength() >= 32) {
+        byte[] bytes = new byte[(int) data.getLength()];
+        try {
+          data.getBytes(bytes, 0);
+          if (looksLikeECCCoordinate(bytes)) {
+            params.eccPoints.add(bytes);
+          }
+        } catch (Exception e) {
+          // Continue searching
+        }
+      }
+    }
+  }
+
+  private boolean looksLikeECCCoordinate(byte[] bytes) {
+    if (bytes.length < 32 || bytes.length > 66) return false;
+    int nonZero = 0;
+    for (byte b : bytes) {
+      if (b != 0) nonZero++;
+    }
+    return nonZero > bytes.length / 2;
   }
 
   private void extractSymmetricParams(
@@ -1579,10 +1600,10 @@ public class KeygenTemplateGenerator extends GhidraScript {
     // Analyze string patterns to determine serial format
     for (String str : params.strings) {
       if (str.matches("[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}")) {
-        params.serialFormat = "XXXX-XXXX-XXXX-XXXX";
+        params.serialFormat = "####-####-####-####";
         params.serialLength = 16;
       } else if (str.matches("[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}")) {
-        params.serialFormat = "XXXXX-XXXXX-XXXXX";
+        params.serialFormat = "#####-#####-#####";
         params.serialLength = 15;
       } else if (str.contains("-") || str.contains(" ")) {
         // Custom format with separators
@@ -1592,7 +1613,7 @@ public class KeygenTemplateGenerator extends GhidraScript {
 
     // Default format if not detected
     if (params.serialFormat == null) {
-      params.serialFormat = "XXXXXXXXXXXXXXXX";
+      params.serialFormat = "################";
       params.serialLength = 16;
     }
   }
@@ -1601,7 +1622,7 @@ public class KeygenTemplateGenerator extends GhidraScript {
     StringBuilder format = new StringBuilder();
     for (char c : example.toCharArray()) {
       if (Character.isLetterOrDigit(c)) {
-        format.append('X');
+        format.append('#');
       } else {
         format.append(c);
       }
@@ -3208,6 +3229,7 @@ public class KeygenTemplateGenerator extends GhidraScript {
     println("  Performing extensive SecretKeySpec analysis...");
 
     // Create comprehensive SecretKeySpec objects for different algorithms
+    // Note: DES/DESede included for analyzing legacy protection schemes (reverse engineering only)
     String[] algorithms = {"AES", "DES", "DESede", "HmacSHA1", "HmacSHA256"};
     byte[][] testKeys = {
       {

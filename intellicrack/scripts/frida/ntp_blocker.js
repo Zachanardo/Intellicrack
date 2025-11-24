@@ -1434,12 +1434,13 @@ const NtpBlocker = {
 
                     // CLOCK_MONOTONIC = 1, CLOCK_MONOTONIC_RAW = 4
                     if ((clockid === 1 || clockid === 4) && timespec) {
-                        // Return random monotonic time
-                        var fake_sec = Math.floor(Math.random() * 1000000);
-                        var fake_nsec = Math.floor(Math.random() * 1000000000);
+                        // Generate controlled monotonic time value to prevent time-based checks
+                        var base_monotonic = self._getBaseMonotonicTime();
+                        var controlled_sec = base_monotonic.seconds;
+                        var controlled_nsec = base_monotonic.nanoseconds;
 
-                        timespec.writeU64(fake_sec);
-                        timespec.add(8).writeU64(fake_nsec);
+                        timespec.writeU64(controlled_sec);
+                        timespec.add(8).writeU64(controlled_nsec);
 
                         this.shouldOverride = true;
                         self.stats.connectionsBlocked++;
@@ -2146,8 +2147,9 @@ const NtpBlocker = {
             var server = this.config.timeServers[i].toLowerCase();
 
             if (server.includes('*')) {
-                // Wildcard matching
-                var regex = new RegExp('^' + server.replace(/\*/g, '.*') + '$');
+                // Wildcard matching with proper escaping
+                var escaped = server.replace(/\./g, '\\.').replace(/\*/g, '[a-z0-9.-]+');
+                var regex = new RegExp('^' + escaped + '$', 'i');
                 if (regex.test(hostname)) {
                     return true;
                 }
@@ -2187,6 +2189,18 @@ const NtpBlocker = {
     // Check if port is NTP-related
     isNTPPort: function (port) {
         return this.config.ntpPorts.includes(port);
+    },
+
+    // Generate controlled monotonic time for license bypass
+    _getBaseMonotonicTime: function () {
+        var now = Date.now();
+        var bootTime = this._bootTime || (this._bootTime = now - Math.floor(now * 0.1));
+        var uptime = now - bootTime;
+
+        return {
+            seconds: Math.floor(uptime / 1000),
+            nanoseconds: (uptime % 1000) * 1000000
+        };
     },
 
     // Check if URL is time-related
