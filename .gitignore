@@ -609,6 +609,7 @@ eslint.config.js
 pytest.ini
 *.lock
 !requirements.lock
+!pixi.lock
 config_cleanup_report.txt
 test_font_loading.py
 
