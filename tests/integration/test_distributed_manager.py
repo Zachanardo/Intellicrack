@@ -256,7 +256,8 @@ class TestDistributedAnalysisManager(unittest.TestCase):
 
         self.manager.get_task_result(task_id, timeout=10.0)
 
-        output_file = tempfile.mktemp(suffix=".json")
+        fd, output_file = tempfile.mkstemp(suffix=".json")
+        os.close(fd)
         try:
             success = self.manager.export_results(output_file)
             self.assertTrue(success)

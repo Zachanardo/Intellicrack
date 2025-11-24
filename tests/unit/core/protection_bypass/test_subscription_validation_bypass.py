@@ -282,7 +282,9 @@ class TestOAuthTokenGenerator:
         manipulator = JWTManipulator()
         _, payload, _ = manipulator.parse_jwt(token)
 
-        assert "cognito-idp.us-east-1.amazonaws.com" in payload["iss"]
+        from urllib.parse import urlparse
+        iss_hostname = urlparse(payload["iss"]).hostname or payload["iss"]
+        assert iss_hostname == "cognito-idp.us-east-1.amazonaws.com" or iss_hostname.endswith(".cognito-idp.us-east-1.amazonaws.com")
         assert payload["token_use"] == "access"
 
     def test_generate_access_token_okta(self):
@@ -293,7 +295,9 @@ class TestOAuthTokenGenerator:
         manipulator = JWTManipulator()
         _, payload, _ = manipulator.parse_jwt(token)
 
-        assert "okta.com" in payload["iss"]
+        from urllib.parse import urlparse
+        iss_hostname = urlparse(payload["iss"]).hostname or payload["iss"]
+        assert iss_hostname == "okta.com" or iss_hostname.endswith(".okta.com")
         assert payload["ver"] == 1
 
     def test_generate_access_token_auth0(self):
@@ -304,8 +308,10 @@ class TestOAuthTokenGenerator:
         manipulator = JWTManipulator()
         _, payload, _ = manipulator.parse_jwt(token)
 
-        assert "auth0.com" in payload["iss"]
-        assert "auth0|" in payload["sub"]
+        from urllib.parse import urlparse
+        iss_hostname = urlparse(payload["iss"]).hostname or payload["iss"]
+        assert iss_hostname == "auth0.com" or iss_hostname.endswith(".auth0.com")
+        assert payload["sub"].startswith("auth0|")
 
     def test_generate_refresh_token(self):
         generator = OAuthTokenGenerator()
@@ -326,7 +332,9 @@ class TestOAuthTokenGenerator:
         _, payload, _ = manipulator.parse_jwt(token)
 
         assert payload["email"] == "test@example.com"
-        assert "login.microsoftonline.com" in payload["iss"]
+        from urllib.parse import urlparse
+        iss_hostname = urlparse(payload["iss"]).hostname or payload["iss"]
+        assert iss_hostname == "login.microsoftonline.com" or iss_hostname.endswith(".login.microsoftonline.com")
 
     def test_generate_id_token_google(self):
         generator = OAuthTokenGenerator()

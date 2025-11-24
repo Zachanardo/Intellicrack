@@ -353,9 +353,9 @@ class SecretsManager:
         if use_keychain and HAS_KEYRING:
             try:
                 keyring.set_password(self.SERVICE_NAME, key, value)
-                logger.debug(f"Stored {key} in OS keychain")
-            except Exception as e:
-                logger.warning(f"Failed to store {key} in keychain: {e}")
+                logger.debug("Stored secret in OS keychain")
+            except Exception:
+                logger.warning("Failed to store secret in keychain")
 
         # Always save to encrypted file as backup
         self._save_secrets()

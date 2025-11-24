@@ -209,7 +209,7 @@ class OfflineActivationEmulator:
 
         logger.debug("Retrieving MAC Addresses...")
         mac_addresses = self._get_mac_addresses()
-        logger.debug(f"MAC Addresses: {mac_addresses}")
+        logger.debug(f"MAC Addresses retrieved: {len(mac_addresses)} found")
 
         logger.debug("Retrieving BIOS Serial...")
         bios_serial = self._get_bios_serial()

@@ -146,7 +146,7 @@ class SecureSubprocess:
         """
         # Convert to string if needed
         if not isinstance(arg, str):
-            arg = arg
+            arg = str(arg)
 
         # Check for shell metacharacters
         dangerous_chars = SHELL_METACHARACTERS.copy()

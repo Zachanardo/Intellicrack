@@ -491,8 +491,8 @@ class LocalGGUFServer:
                 return self._complete_response(prompt, max_tokens, temperature, top_p, stop)
 
             except Exception as e:
-                logger.error(f"Chat completion error: {e}")
-                return jsonify({"error": str(e)}), 500
+                logger.error(f"Chat completion error: {e}", exc_info=True)
+                return jsonify({"error": "Internal server error during chat completion"}), 500
 
         @self.app.route("/v1/completions", methods=["POST"])
         def completions() -> object:
@@ -523,8 +523,8 @@ class LocalGGUFServer:
                 return self._complete_response(prompt, max_tokens, temperature, top_p, stop)
 
             except Exception as e:
-                logger.error(f"Completion error: {e}")
-                return jsonify({"error": str(e)}), 500
+                logger.error(f"Completion error: {e}", exc_info=True)
+                return jsonify({"error": "Internal server error during completion"}), 500
 
         @self.app.route("/load_model", methods=["POST"])
         def load_model_endpoint() -> object:
@@ -558,8 +558,8 @@ class LocalGGUFServer:
                 return jsonify({"error": "Failed to load model"}), 500
 
             except Exception as e:
-                logger.error(f"Model loading error: {e}")
-                return jsonify({"error": str(e)}), 500
+                logger.error(f"Model loading error: {e}", exc_info=True)
+                return jsonify({"error": "Internal server error during model loading"}), 500
 
         @self.app.route("/unload_model", methods=["POST"])
         def unload_model_endpoint() -> object:
@@ -573,8 +573,8 @@ class LocalGGUFServer:
                 self.unload_model()
                 return jsonify({"status": "success", "message": "Model unloaded"})
             except Exception as e:
-                logger.error(f"Model unloading error: {e}")
-                return jsonify({"error": str(e)}), 500
+                logger.error(f"Model unloading error: {e}", exc_info=True)
+                return jsonify({"error": "Internal server error during model unloading"}), 500
 
     def _messages_to_prompt(self, messages: list[dict]) -> str:
         """Convert OpenAI-style messages to a prompt."""

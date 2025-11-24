@@ -222,7 +222,7 @@ def analyze_binary(binary_path: str, detailed: bool = True, enable_ai_integratio
 
     try:
         # Convert to string if needed
-        binary_path = binary_path
+        binary_path = str(binary_path)
     except (ValueError, TypeError, OverflowError) as e:
         logger.error("Error in binary_analysis: %s", e)
         return {"error": f"Invalid path value: {e!s}"}

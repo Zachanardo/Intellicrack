@@ -561,19 +561,18 @@ class OllamaBackend(LLMBackend):
                     logger.info("Ollama backend initialized with model: %s", self.config.model_name)
                     return True
                 logger.warning(
-                    "Ollama server responded with status %d at %s",
+                    "Ollama server responded with status %d",
                     response.status_code,
-                    self.base_url,
                 )
                 return False
             except requests.exceptions.ConnectionError:
-                logger.warning("Ollama server not running at %s - skipping initialization", self.base_url)
+                logger.warning("Ollama server not running - skipping initialization")
                 return False
             except requests.exceptions.Timeout:
-                logger.warning("Ollama server timeout at %s - skipping initialization", self.base_url)
+                logger.warning("Ollama server timeout - skipping initialization")
                 return False
-            except requests.exceptions.RequestException as e:
-                logger.warning("Ollama server connection failed at %s: %s", self.base_url, e)
+            except requests.exceptions.RequestException:
+                logger.warning("Ollama server connection failed - skipping initialization")
                 return False
 
         except (OSError, ValueError, RuntimeError) as e:

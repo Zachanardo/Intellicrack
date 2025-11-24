@@ -356,7 +356,8 @@ Connection: keep-alive\r
         # Must accurately parse all security-relevant headers
         assert parsed_headers['method'] == 'POST'
         assert parsed_headers['path'] == '/api/v2/user/authenticate'
-        assert 'vulnerable-app.com' in parsed_headers['host']
+        host_value = parsed_headers['host'].split(':')[0]
+        assert host_value == 'vulnerable-app.com' or host_value.endswith('.vulnerable-app.com')
         assert 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9' in parsed_headers['authorization']
         assert 'sessionid=abc123def456' in parsed_headers['cookie']
         assert parsed_headers['content_type'] == 'application/json; charset=UTF-8'

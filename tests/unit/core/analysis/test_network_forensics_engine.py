@@ -419,7 +419,12 @@ class TestNetworkForensicsEngine:
         # Must extract URLs from network traffic
         assert 'URL' in artifact_types
         urls = [a['value'] for a in artifact_types['URL']]
-        assert any('evil-site.malicious.com' in url for url in urls)
+        from urllib.parse import urlparse
+        assert any(
+            urlparse(url).hostname == 'evil-site.malicious.com' or
+            (urlparse(url).hostname is not None and urlparse(url).hostname.endswith('.evil-site.malicious.com'))
+            for url in urls
+        )
 
         # Must extract email addresses
         assert 'Email' in artifact_types

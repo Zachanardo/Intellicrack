@@ -366,7 +366,8 @@ class TestRealProtocolParsers:
         headers = request_result['headers']
         assert headers['Content-Type'] == 'application/json', "Must extract content type"
         assert 'Adobe-Activation-Client' in headers['User-Agent'], "Must extract user agent"
-        assert 'activation.adobe.com' in headers['Host'], "Must extract host"
+        host_value = headers['Host'].split(':')[0]
+        assert host_value == 'activation.adobe.com' or host_value.endswith('.activation.adobe.com'), "Must extract host"
 
         # Verify request body
         body_data = request_result['body_json']

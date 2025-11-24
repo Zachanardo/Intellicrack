@@ -122,6 +122,7 @@ class CertifiedGroundTruthProfile:
                 self.secret_key = f.read()
         else:
             self.secret_key = secrets.token_bytes(64)
+            key_file.parent.mkdir(parents=True, exist_ok=True)
             with open(key_file, 'wb') as f:
                 f.write(self.secret_key)
             os.chmod(key_file, 0o600)

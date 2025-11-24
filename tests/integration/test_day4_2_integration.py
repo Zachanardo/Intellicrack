@@ -235,7 +235,9 @@ def test_binary_file_patching():
     print("=" * 30)
 
     # Create a test binary file
-    test_binary = Path(tempfile.mktemp(suffix=".exe"))
+    fd, test_binary_path = tempfile.mkstemp(suffix=".exe")
+    os.close(fd)
+    test_binary = Path(test_binary_path)
     original_content = b"\xB8\x00\x00\x00\x00\xC3" + b"\x90" * 100  # mov eax, 0; ret + NOPs
 
     with open(test_binary, "wb") as f:

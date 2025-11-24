@@ -973,7 +973,6 @@ class PDFReportGenerator:
 
     def _xml_escape(self, text: str) -> str:
         """Escape XML special characters."""
-        text = text
         text = text.replace("&", "&amp;")
         text = text.replace("<", "&lt;")
         text = text.replace(">", "&gt;")

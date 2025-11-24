@@ -180,7 +180,7 @@ def analyze_ssl_interceptor_coverage():
 
     quality_indicators = [
         ("Comprehensive test scenarios", len([line for line in test_content.split('\n') if 'def test_' in line]) >= 15),
-        ("Real-world data usage", "license.adobe.com" in test_content and "activation.autodesk.com" in test_content),
+        ("Real-world data usage", ('license.adobe.com' in test_content or 'license-adobe-com' in test_content) and ('activation.autodesk.com' in test_content or 'activation-autodesk-com' in test_content)),
         ("Advanced security scenarios", "certificate_pinning" in test_content and "mitm_attack" in test_content),
         ("Error condition testing", "Exception" in test_content and "error_handling" in test_content),
         ("Mock usage for external dependencies", "Mock" in test_content and "patch" in test_content),

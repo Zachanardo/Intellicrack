@@ -14,10 +14,9 @@ import argparse
 import sys
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
 
 
-def find_all_source_files(root_dir: Path) -> Set[str]:
+def find_all_source_files(root_dir: Path) -> set[str]:
     """Find all Python source files in intellicrack/."""
     source_files = set()
 
@@ -34,7 +33,7 @@ def find_all_source_files(root_dir: Path) -> Set[str]:
     return source_files
 
 
-def find_all_test_files(test_dir: Path) -> Dict[str, List[str]]:
+def find_all_test_files(test_dir: Path) -> dict[str, list[str]]:
     """Find all test files and attempt to map to source files."""
     test_files = defaultdict(list)
 
@@ -53,7 +52,7 @@ def infer_source_from_test(test_filename: str) -> str:
     return test_filename
 
 
-def analyze_coverage(source_root: Path, test_root: Path) -> Tuple[Set, Set, Dict]:
+def analyze_coverage(source_root: Path, test_root: Path) -> tuple[set, set, dict]:
     """Analyze test coverage for all source files."""
     source_files = find_all_source_files(source_root)
     test_files = find_all_test_files(test_root)

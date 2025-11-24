@@ -324,7 +324,8 @@ class TestIntegration:
 
     def _create_test_pe(self):
         """Create a minimal test PE file"""
-        test_file = tempfile.mktemp(suffix='.exe')
+        fd, test_file = tempfile.mkstemp(suffix='.exe')
+        os.close(fd)
 
         dos_header = b'MZ' + b'\x00' * 58 + b'\x40\x00\x00\x00'
         pe_header = b'PE\x00\x00'

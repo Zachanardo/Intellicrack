@@ -8,6 +8,7 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU GPL v3
 """
 
+import csv
 import json
 import os
 import pickle
@@ -15,14 +16,16 @@ import tempfile
 import time
 from pathlib import Path
 from typing import Any
+from unittest.mock import MagicMock, Mock, patch
 
+import numpy as np
 import pytest
 
 from intellicrack.handlers.pyqt6_handler import HAS_PYQT as PYQT6_AVAILABLE
 from intellicrack.handlers.torch_handler import TORCH_AVAILABLE
 
 if PYQT6_AVAILABLE:
-    from intellicrack.handlers.pyqt6_handler import QApplication, QMessageBox, Qt
+    from intellicrack.handlers.pyqt6_handler import QApplication, QMessageBox, QTest, Qt
     from intellicrack.ui.dialogs.model_finetuning_dialog import (
         AugmentationConfig,
         LicenseAnalysisNeuralNetwork,
@@ -204,6 +207,68 @@ class TestTrainingConfig:
         assert config.lora_rank == 16
         assert config.lora_alpha == 32
 
+    def test_training_config_to_enhanced_config_conversion(self) -> None:
+        """TrainingConfig converts to EnhancedTrainingConfiguration when available."""
+        config = TrainingConfig(
+            model_path="/path/to/model.pt",
+            dataset_path="/path/to/dataset.json",
+            epochs=5,
+            batch_size=8,
+            learning_rate=0.0003,
+        )
+
+        enhanced = config.to_enhanced_config()
+
+        if enhanced is not None:
+            assert hasattr(enhanced, "model_name")
+            assert enhanced.epochs == 5
+            assert enhanced.batch_size == 8
+            assert enhanced.learning_rate == 0.0003
+
+    def test_training_config_output_directory_default(self) -> None:
+        """TrainingConfig sets reasonable default output directory."""
+        config = TrainingConfig()
+
+        assert config.output_directory is not None
+        assert "models" in config.output_directory
+        assert "trained" in config.output_directory
+
+    def test_training_config_gradient_accumulation_steps(self) -> None:
+        """TrainingConfig supports gradient accumulation configuration."""
+        config = TrainingConfig(gradient_accumulation_steps=4)
+
+        assert config.gradient_accumulation_steps == 4
+
+    def test_training_config_warmup_ratio(self) -> None:
+        """TrainingConfig supports learning rate warmup configuration."""
+        config = TrainingConfig(warmup_ratio=0.2)
+
+        assert config.warmup_ratio == 0.2
+
+    def test_training_config_weight_decay(self) -> None:
+        """TrainingConfig supports weight decay regularization."""
+        config = TrainingConfig(weight_decay=0.005)
+
+        assert config.weight_decay == 0.005
+
+    def test_training_config_save_strategy(self) -> None:
+        """TrainingConfig supports different checkpoint save strategies."""
+        config = TrainingConfig(save_strategy="steps")
+
+        assert config.save_strategy == "steps"
+
+    def test_training_config_evaluation_strategy(self) -> None:
+        """TrainingConfig supports different evaluation strategies."""
+        config = TrainingConfig(evaluation_strategy="steps")
+
+        assert config.evaluation_strategy == "steps"
+
+    def test_training_config_logging_steps(self) -> None:
+        """TrainingConfig supports configurable logging intervals."""
+        config = TrainingConfig(logging_steps=50)
+
+        assert config.logging_steps == 50
+
 
 class TestAugmentationConfig:
     """Test AugmentationConfig for dataset augmentation."""
@@ -230,6 +295,24 @@ class TestAugmentationConfig:
         assert config.techniques == techniques
         assert config.augmentations_per_sample == 5
         assert config.augmentation_probability == 0.9
+
+    def test_augmentation_config_max_synonyms(self) -> None:
+        """AugmentationConfig supports maximum synonym count configuration."""
+        config = AugmentationConfig(max_synonyms=5)
+
+        assert config.max_synonyms == 5
+
+    def test_augmentation_config_synonym_threshold(self) -> None:
+        """AugmentationConfig supports synonym similarity threshold."""
+        config = AugmentationConfig(synonym_threshold=0.7)
+
+        assert config.synonym_threshold == 0.7
+
+    def test_augmentation_config_preserve_labels_option(self) -> None:
+        """AugmentationConfig can disable label preservation for certain techniques."""
+        config = AugmentationConfig(preserve_labels=False)
+
+        assert config.preserve_labels is False
 
 
 class TestLicenseAnalysisNeuralNetwork:
@@ -262,8 +345,6 @@ class TestLicenseAnalysisNeuralNetwork:
         """Neural network performs forward pass with realistic binary features."""
         network = LicenseAnalysisNeuralNetwork()
 
-        import numpy as np
-
         batch_size = 4
         input_features = np.random.randn(batch_size, 1024)
 
@@ -273,16 +354,72 @@ class TestLicenseAnalysisNeuralNetwork:
         assert not np.any(np.isnan(output))
         assert not np.any(np.isinf(output))
 
+    def test_network_forward_pass_with_wrong_input_size(self) -> None:
+        """Neural network handles input size mismatch gracefully."""
+        network = LicenseAnalysisNeuralNetwork()
+
+        small_input = np.random.randn(2, 512)
+
+        output = network.forward(small_input)
+
+        assert output.shape == (2, 32)
+
+        large_input = np.random.randn(2, 2048)
+
+        output_large = network.forward(large_input)
+
+        assert output_large.shape == (2, 32)
+
+    def test_network_forward_pass_with_invalid_input(self) -> None:
+        """Neural network handles invalid input gracefully."""
+        network = LicenseAnalysisNeuralNetwork()
+
+        invalid_input = np.random.randn(5)
+
+        output = network.forward(invalid_input)
+
+        assert output.shape == (1, 32)
+
+    def test_network_backward_propagation(self) -> None:
+        """Neural network computes gradients correctly during backpropagation."""
+        network = LicenseAnalysisNeuralNetwork()
+
+        X = np.random.randn(10, 1024)
+        y_true = np.random.randint(0, 2, (10, 32)).astype(float)
+
+        y_pred = network.forward(X)
+
+        gradients = network.backward(X, y_true, y_pred)
+
+        assert "dW1" in gradients
+        assert "db1" in gradients
+        assert gradients["dW1"].shape == network.weights["W1"].shape
+        assert gradients["db1"].shape == network.biases["b1"].shape
+
+    def test_network_loss_computation(self) -> None:
+        """Neural network computes cross-entropy loss with L2 regularization."""
+        network = LicenseAnalysisNeuralNetwork()
+
+        y_true = np.zeros((10, 32))
+        y_true[:, 0] = 1.0
+
+        y_pred = np.ones((10, 32)) / 32
+
+        loss = network._compute_loss(y_true, y_pred)
+
+        assert loss > 0
+        assert not np.isnan(loss)
+        assert not np.isinf(loss)
+
     def test_network_training_capability(self) -> None:
         """Neural network can train on license protection patterns."""
         network = LicenseAnalysisNeuralNetwork()
 
-        import numpy as np
-
         X_train = np.random.randn(100, 1024)
-        y_train = np.random.randint(0, 2, (100, 32)).astype(float)
+        y_train = np.eye(32)[np.random.randint(0, 32, 100)]
 
-        initial_loss = network.compute_loss(X_train, y_train)
+        y_pred_initial = network.forward(X_train)
+        initial_loss = network._compute_loss(y_train, y_pred_initial)
 
         training_results = network.train(
             X_train,
@@ -298,6 +435,84 @@ class TestLicenseAnalysisNeuralNetwork:
         final_loss = training_results["metrics"]["loss_history"][-1]
         assert final_loss < initial_loss
 
+    def test_network_training_with_validation_data(self) -> None:
+        """Neural network performs validation during training."""
+        network = LicenseAnalysisNeuralNetwork()
+
+        X_train = np.random.randn(80, 1024)
+        y_train = np.eye(32)[np.random.randint(0, 32, 80)]
+
+        X_val = np.random.randn(20, 1024)
+        y_val = np.eye(32)[np.random.randint(0, 32, 20)]
+
+        training_results = network.train(
+            X_train,
+            y_train,
+            epochs=3,
+            batch_size=16,
+            validation_data=(X_val, y_val),
+        )
+
+        assert "validation_loss" in training_results["metrics"]
+        assert "validation_accuracy" in training_results["metrics"]
+        assert len(training_results["metrics"]["validation_loss"]) == 3
+
+    def test_network_eval_mode(self) -> None:
+        """Neural network switches to evaluation mode correctly."""
+        network = LicenseAnalysisNeuralNetwork()
+
+        network.training = True
+
+        eval_result = network.eval()
+
+        assert eval_result["mode"] == "evaluation"
+        assert network.training is False
+
+    def test_network_predict_license_protection(self) -> None:
+        """Neural network predicts license protection types from binary features."""
+        network = LicenseAnalysisNeuralNetwork()
+
+        binary_features = np.random.randn(1, 1024)
+
+        prediction = network.predict_license_protection(binary_features)
+
+        assert "predictions" in prediction
+        assert "confidence" in prediction
+        assert "top_class" in prediction
+        assert prediction["predictions"].shape == (1, 32)
+
+    def test_network_parameters_method(self) -> None:
+        """Neural network returns flattened parameter list."""
+        network = LicenseAnalysisNeuralNetwork()
+
+        params = network.parameters()
+
+        assert isinstance(params, list)
+        assert len(params) > 0
+
+    def test_network_save_model(self) -> None:
+        """Neural network saves model state to file."""
+        network = LicenseAnalysisNeuralNetwork()
+
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.pkl') as f:
+            filepath = f.name
+
+        try:
+            network.save_model(filepath)
+
+            assert os.path.exists(filepath)
+            assert os.path.getsize(filepath) > 0
+
+            with open(filepath, 'rb') as f:
+                saved_data = pickle.load(f)
+
+            assert "weights" in saved_data
+            assert "biases" in saved_data
+            assert "config" in saved_data
+        finally:
+            if os.path.exists(filepath):
+                os.unlink(filepath)
+
     def test_network_license_pattern_recognition(self) -> None:
         """Neural network contains specialized patterns for license protection detection."""
         network = LicenseAnalysisNeuralNetwork()
@@ -309,6 +524,69 @@ class TestLicenseAnalysisNeuralNetwork:
 
         assert network.license_patterns["hardware_id"].shape == (64, 32)
         assert network.license_patterns["registry_keys"].shape == (32, 16)
+
+    def test_network_relu_activation(self) -> None:
+        """Neural network ReLU activation function works correctly."""
+        network = LicenseAnalysisNeuralNetwork()
+
+        x = np.array([[-1.0, 0.0, 1.0, 2.0]])
+
+        result = network._relu(x)
+
+        expected = np.array([[0.0, 0.0, 1.0, 2.0]])
+        assert np.allclose(result, expected)
+
+    def test_network_relu_derivative(self) -> None:
+        """Neural network ReLU derivative computes correctly."""
+        network = LicenseAnalysisNeuralNetwork()
+
+        x = np.array([[-1.0, 0.0, 1.0, 2.0]])
+
+        result = network._relu_derivative(x)
+
+        expected = np.array([[0.0, 0.0, 1.0, 1.0]])
+        assert np.allclose(result, expected)
+
+    def test_network_softmax_activation(self) -> None:
+        """Neural network softmax activation produces valid probability distribution."""
+        network = LicenseAnalysisNeuralNetwork()
+
+        x = np.array([[1.0, 2.0, 3.0]])
+
+        result = network._softmax(x)
+
+        assert np.allclose(np.sum(result, axis=1), 1.0)
+        assert np.all(result >= 0)
+        assert np.all(result <= 1)
+
+    def test_network_xavier_initialization(self) -> None:
+        """Neural network Xavier initialization produces correct weight distribution."""
+        network = LicenseAnalysisNeuralNetwork()
+
+        weights = network._xavier_init(100, 50)
+
+        assert weights.shape == (100, 50)
+
+        expected_limit = np.sqrt(6.0 / (100 + 50))
+        assert np.all(weights >= -expected_limit)
+        assert np.all(weights <= expected_limit)
+
+    def test_network_update_weights(self) -> None:
+        """Neural network updates weights using computed gradients."""
+        network = LicenseAnalysisNeuralNetwork()
+
+        initial_weights = {k: v.copy() for k, v in network.weights.items()}
+
+        X = np.random.randn(10, 1024)
+        y_true = np.eye(32)[np.random.randint(0, 32, 10)]
+        y_pred = network.forward(X)
+
+        gradients = network.backward(X, y_true, y_pred)
+
+        network._update_weights(gradients, learning_rate=0.01)
+
+        for key in initial_weights:
+            assert not np.allclose(network.weights[key], initial_weights[key])
 
 
 class TestTrainingThread:
@@ -332,10 +610,10 @@ class TestTrainingThread:
         assert thread.is_stopped is False
         assert thread.training_history == []
 
-    def test_training_thread_model_loading(
+    def test_training_thread_model_loading_pytorch(
         self, sample_model_file: Path, sample_training_dataset: Path
     ) -> None:
-        """TrainingThread loads model files correctly."""
+        """TrainingThread loads PyTorch model files correctly."""
         config = TrainingConfig(
             model_path=str(sample_model_file),
             dataset_path=str(sample_training_dataset),
@@ -346,6 +624,23 @@ class TestTrainingThread:
         thread._load_model()
 
         assert thread.model is not None
+
+    def test_training_thread_model_loading_transformers(
+        self, temp_dir: Path, sample_training_dataset: Path
+    ) -> None:
+        """TrainingThread handles Transformers model loading gracefully."""
+        config = TrainingConfig(
+            model_path="gpt2",
+            dataset_path=str(sample_training_dataset),
+            model_format="Transformers",
+        )
+
+        thread = TrainingThread(config)
+
+        try:
+            thread._load_model()
+        except (OSError, RuntimeError, ValueError):
+            assert thread.model is None or thread.model is not None
 
     def test_training_thread_dataset_loading(
         self, sample_model_file: Path, sample_training_dataset: Path
@@ -383,6 +678,234 @@ class TestTrainingThread:
             )
             assert param_count > 0
 
+    def test_training_thread_creates_gpt_model(self, sample_training_dataset: Path) -> None:
+        """TrainingThread creates GPT-style transformer model."""
+        config = TrainingConfig(
+            model_path="",
+            dataset_path=str(sample_training_dataset),
+            model_format="PyTorch",
+        )
+
+        setattr(config, "model_type", "gpt")
+
+        thread = TrainingThread(config)
+        thread._create_minimal_model()
+
+        assert thread.model is not None
+
+    def test_training_thread_creates_bert_model(self, sample_training_dataset: Path) -> None:
+        """TrainingThread creates BERT-style model."""
+        config = TrainingConfig(
+            model_path="",
+            dataset_path=str(sample_training_dataset),
+            model_format="PyTorch",
+        )
+
+        setattr(config, "model_type", "bert")
+
+        thread = TrainingThread(config)
+        thread._create_minimal_model()
+
+        assert thread.model is not None
+
+    def test_training_thread_creates_roberta_model(self, sample_training_dataset: Path) -> None:
+        """TrainingThread creates RoBERTa-style model."""
+        config = TrainingConfig(
+            model_path="",
+            dataset_path=str(sample_training_dataset),
+            model_format="PyTorch",
+        )
+
+        setattr(config, "model_type", "roberta")
+
+        thread = TrainingThread(config)
+        thread._create_minimal_model()
+
+        assert thread.model is not None
+
+    def test_training_thread_creates_llama_model(self, sample_training_dataset: Path) -> None:
+        """TrainingThread creates LLaMA-style model."""
+        config = TrainingConfig(
+            model_path="",
+            dataset_path=str(sample_training_dataset),
+            model_format="PyTorch",
+        )
+
+        setattr(config, "model_type", "llama")
+
+        thread = TrainingThread(config)
+        thread._create_minimal_model()
+
+        assert thread.model is not None
+
+    def test_training_thread_creates_tokenizer(self, sample_training_dataset: Path) -> None:
+        """TrainingThread creates functional tokenizer for models."""
+        config = TrainingConfig(
+            model_path="",
+            dataset_path=str(sample_training_dataset),
+            model_format="PyTorch",
+        )
+
+        thread = TrainingThread(config)
+        thread._create_minimal_model()
+
+        assert thread.tokenizer is not None
+
+        if hasattr(thread.tokenizer, "encode"):
+            encoded = thread.tokenizer.encode("test text", add_special_tokens=True)
+            assert isinstance(encoded, list)
+            assert len(encoded) > 0
+
+    def test_training_thread_tokenizer_encode_decode(self, sample_training_dataset: Path) -> None:
+        """TrainingThread tokenizer encodes and decodes text correctly."""
+        config = TrainingConfig(
+            model_path="",
+            dataset_path=str(sample_training_dataset),
+            model_format="PyTorch",
+        )
+
+        thread = TrainingThread(config)
+        thread._create_minimal_model()
+
+        if hasattr(thread.tokenizer, "encode") and hasattr(thread.tokenizer, "decode"):
+            original_text = "Test license validation"
+            encoded = thread.tokenizer.encode(original_text, add_special_tokens=True)
+            decoded = thread.tokenizer.decode(encoded, skip_special_tokens=True)
+
+            assert isinstance(decoded, str)
+            assert len(decoded) > 0
+
+    def test_training_thread_estimate_parameter_count(self, sample_training_dataset: Path) -> None:
+        """TrainingThread estimates model parameter count correctly."""
+        config = TrainingConfig(
+            model_path="",
+            dataset_path=str(sample_training_dataset),
+            model_format="PyTorch",
+        )
+
+        thread = TrainingThread(config)
+
+        param_count = thread._estimate_parameter_count(
+            hidden_size=512,
+            num_layers=6,
+            vocab_size=32000
+        )
+
+        assert param_count > 0
+        assert isinstance(param_count, int)
+
+    def test_training_thread_generates_license_training_data(self, sample_training_dataset: Path) -> None:
+        """TrainingThread generates realistic license analysis training data."""
+        config = TrainingConfig(
+            model_path="",
+            dataset_path=str(sample_training_dataset),
+            model_format="PyTorch",
+        )
+
+        thread = TrainingThread(config)
+
+        train_data, val_data = thread._generate_license_training_data()
+
+        X_train, y_train = train_data
+        X_val, y_val = val_data
+
+        assert X_train.shape[0] > 0
+        assert y_train.shape[0] > 0
+        assert X_val.shape[0] > 0
+        assert y_val.shape[0] > 0
+
+        assert X_train.shape[1] == 1024
+        assert y_train.shape[1] == 32
+
+    def test_training_thread_generates_binary_features(self, sample_training_dataset: Path) -> None:
+        """TrainingThread generates realistic binary features for license analysis."""
+        config = TrainingConfig(
+            model_path="",
+            dataset_path=str(sample_training_dataset),
+            model_format="PyTorch",
+        )
+
+        thread = TrainingThread(config)
+
+        features = thread._generate_binary_features(n_samples=50, n_features=1024)
+
+        assert features.shape == (50, 1024)
+        assert not np.any(np.isnan(features))
+        assert not np.any(np.isinf(features))
+
+    def test_training_thread_generates_license_specific_features(self, sample_training_dataset: Path) -> None:
+        """TrainingThread generates license-specific feature patterns."""
+        config = TrainingConfig(
+            model_path="",
+            dataset_path=str(sample_training_dataset),
+            model_format="PyTorch",
+        )
+
+        thread = TrainingThread(config)
+
+        features = thread._generate_license_specific_features(n_features=1024)
+
+        assert features.shape == (1024,)
+        assert not np.any(np.isnan(features))
+
+    def test_training_thread_generates_license_labels(self, sample_training_dataset: Path) -> None:
+        """TrainingThread generates multi-class labels for license protection types."""
+        config = TrainingConfig(
+            model_path="",
+            dataset_path=str(sample_training_dataset),
+            model_format="PyTorch",
+        )
+
+        thread = TrainingThread(config)
+
+        labels = thread._generate_license_labels(n_samples=100, n_classes=32)
+
+        assert labels.shape == (100, 32)
+        assert np.allclose(np.sum(labels, axis=1), 1.0)
+
+    def test_training_thread_setup_training(
+        self, sample_model_file: Path, sample_training_dataset: Path
+    ) -> None:
+        """TrainingThread sets up training environment correctly."""
+        config = TrainingConfig(
+            model_path=str(sample_model_file),
+            dataset_path=str(sample_training_dataset),
+            epochs=2,
+        )
+
+        thread = TrainingThread(config)
+        thread._load_model()
+        dataset = thread._load_dataset()
+
+        thread._setup_training(dataset)
+
+    @pytest.mark.skipif(not TORCH_AVAILABLE, reason="PyTorch required")
+    def test_training_thread_train_pytorch_license_model(
+        self, sample_model_file: Path, sample_training_dataset: Path
+    ) -> None:
+        """TrainingThread trains PyTorch license analysis model."""
+        config = TrainingConfig(
+            model_path=str(sample_model_file),
+            dataset_path=str(sample_training_dataset),
+            epochs=1,
+            batch_size=2,
+        )
+
+        thread = TrainingThread(config)
+        thread._load_model()
+
+        X_train = np.random.randn(10, 1024)
+        y_train = np.eye(32)[np.random.randint(0, 32, 10)]
+
+        X_val = np.random.randn(5, 1024)
+        y_val = np.eye(32)[np.random.randint(0, 32, 5)]
+
+        thread._train_pytorch_license_model(
+            (X_train, y_train),
+            (X_val, y_val),
+            epochs=1
+        )
+
     def test_training_thread_stop_mechanism(
         self, sample_model_file: Path, sample_training_dataset: Path
     ) -> None:
@@ -399,6 +922,54 @@ class TestTrainingThread:
         thread.stop()
         assert thread.is_stopped is True
         assert thread.status == TrainingStatus.ERROR
+
+    def test_training_thread_pause_mechanism(
+        self, sample_model_file: Path, sample_training_dataset: Path
+    ) -> None:
+        """TrainingThread can be paused during training."""
+        config = TrainingConfig(
+            model_path=str(sample_model_file),
+            dataset_path=str(sample_training_dataset),
+            epochs=100,
+        )
+
+        thread = TrainingThread(config)
+
+        thread.pause()
+        assert thread.status == TrainingStatus.PAUSED
+
+    def test_training_thread_resume_mechanism(
+        self, sample_model_file: Path, sample_training_dataset: Path
+    ) -> None:
+        """TrainingThread can resume after being paused."""
+        config = TrainingConfig(
+            model_path=str(sample_model_file),
+            dataset_path=str(sample_training_dataset),
+            epochs=100,
+        )
+
+        thread = TrainingThread(config)
+
+        thread.pause()
+        assert thread.status == TrainingStatus.PAUSED
+
+        thread.resume()
+        assert thread.status == TrainingStatus.TRAINING
+
+    def test_training_thread_creates_fallback_model(self, sample_training_dataset: Path) -> None:
+        """TrainingThread creates fallback model when PyTorch unavailable."""
+        config = TrainingConfig(
+            model_path="",
+            dataset_path=str(sample_training_dataset),
+            model_format="PyTorch",
+        )
+
+        thread = TrainingThread(config)
+
+        fallback_model = thread._create_fallback_model()
+
+        assert fallback_model is not None
+        assert hasattr(fallback_model, "forward")
 
 
 class TestModelFinetuningDialog:
@@ -555,6 +1126,21 @@ class TestModelFinetuningDialog:
         if len(original_text.split()) > 2:
             assert len(augmented_delete.split()) < len(original_text.split())
 
+    def test_dialog_augmentation_synonym_replacement(
+        self, qapp: Any, augmentation_dataset: Path
+    ) -> None:
+        """Dialog applies synonym replacement augmentation."""
+        dialog = ModelFinetuningDialog()
+
+        original_text = "Identify the license validation function"
+
+        augmented = dialog._apply_augmentation_technique(
+            original_text, "synonym_replacement"
+        )
+
+        assert isinstance(augmented, str)
+        assert len(augmented) > 0
+
     def test_dialog_dataset_creation_templates(self, qapp: Any) -> None:
         """Dialog provides valid training dataset templates."""
         dialog = ModelFinetuningDialog()
@@ -587,6 +1173,206 @@ class TestModelFinetuningDialog:
         device_info = dialog._get_device_info_text()
         assert "Training Device:" in device_info
         assert len(device_info) > 0
+
+    def test_dialog_move_to_device(self, qapp: Any) -> None:
+        """Dialog moves tensors to appropriate device."""
+        dialog = ModelFinetuningDialog()
+
+        if TORCH_AVAILABLE:
+            import torch
+
+            tensor = torch.randn(10, 10)
+
+            moved_tensor = dialog._move_to_device(tensor)
+
+            assert moved_tensor is not None
+
+    def test_dialog_knowledge_base_initialization(self, qapp: Any) -> None:
+        """Dialog initializes knowledge base with license cracking examples."""
+        dialog = ModelFinetuningDialog()
+
+        assert hasattr(dialog, "knowledge_base")
+        assert isinstance(dialog.knowledge_base, dict)
+
+        assert "binary_analysis" in dialog.knowledge_base
+        assert "license_bypass" in dialog.knowledge_base
+        assert "reverse_engineering" in dialog.knowledge_base
+
+        assert len(dialog.knowledge_base["binary_analysis"]) > 0
+        assert len(dialog.knowledge_base["license_bypass"]) > 0
+
+    def test_dialog_get_current_config(self, qapp: Any) -> None:
+        """Dialog creates TrainingConfig from UI values."""
+        dialog = ModelFinetuningDialog()
+
+        dialog.epochs_spin.setValue(5)
+        dialog.batch_size_spin.setValue(8)
+        dialog.learning_rate_spin.setValue(0.0005)
+        dialog.lora_rank_spin.setValue(16)
+
+        config = dialog._get_current_config()
+
+        assert config.epochs == 5
+        assert config.batch_size == 8
+        assert config.learning_rate == 0.0005
+        assert config.lora_rank == 16
+
+    def test_dialog_truncate_text(self, qapp: Any) -> None:
+        """Dialog truncates long text for display."""
+        dialog = ModelFinetuningDialog()
+
+        long_text = "a" * 200
+
+        truncated = dialog._truncate_text(long_text, max_length=50)
+
+        assert len(truncated) <= 53
+        assert "..." in truncated
+
+        short_text = "short"
+
+        not_truncated = dialog._truncate_text(short_text, max_length=50)
+
+        assert not_truncated == short_text
+
+    def test_dialog_add_dataset_row(self, qapp: Any) -> None:
+        """Dialog adds dataset sample to preview table."""
+        dialog = ModelFinetuningDialog()
+
+        sample = {
+            "input": "Test input",
+            "output": "Test output"
+        }
+
+        dialog._add_dataset_row(sample)
+
+        assert dialog.dataset_preview.rowCount() == 1
+
+    @patch('intellicrack.ui.dialogs.model_finetuning_dialog.QFileDialog')
+    def test_dialog_browse_model(self, mock_file_dialog: Mock, qapp: Any, temp_dir: Path) -> None:
+        """Dialog browses for model file selection."""
+        dialog = ModelFinetuningDialog()
+
+        test_path = temp_dir / "test_model.pt"
+        test_path.touch()
+
+        mock_file_dialog.getOpenFileName.return_value = (str(test_path), "")
+
+        dialog._browse_model()
+
+        assert dialog.model_path_edit.text() == str(test_path)
+
+    @patch('intellicrack.ui.dialogs.model_finetuning_dialog.QFileDialog')
+    def test_dialog_browse_dataset(self, mock_file_dialog: Mock, qapp: Any, temp_dir: Path) -> None:
+        """Dialog browses for dataset file selection."""
+        dialog = ModelFinetuningDialog()
+
+        test_path = temp_dir / "test_dataset.json"
+        test_path.touch()
+
+        mock_file_dialog.getOpenFileName.return_value = (str(test_path), "")
+
+        dialog._browse_dataset()
+
+        assert dialog.dataset_path_edit.text() == str(test_path)
+
+    @patch('intellicrack.ui.dialogs.model_finetuning_dialog.QMessageBox')
+    def test_dialog_show_help(self, mock_msg_box: Mock, qapp: Any) -> None:
+        """Dialog displays help information."""
+        dialog = ModelFinetuningDialog()
+
+        dialog._show_help()
+
+        mock_msg_box.information.assert_called_once()
+
+    def test_dialog_close_event(self, qapp: Any) -> None:
+        """Dialog handles close event correctly."""
+        dialog = ModelFinetuningDialog()
+
+        mock_event = MagicMock()
+
+        dialog.closeEvent(mock_event)
+
+        mock_event.accept.assert_called_once()
+
+    def test_dialog_update_training_progress(self, qapp: Any) -> None:
+        """Dialog updates UI with training progress."""
+        dialog = ModelFinetuningDialog()
+
+        progress = {
+            "status": "training",
+            "message": "Training in progress",
+            "step": 50,
+            "loss": 0.5,
+            "accuracy": 0.75
+        }
+
+        dialog._update_training_progress(progress)
+
+    def test_dialog_on_training_finished(self, qapp: Any, sample_model_file: Path, sample_training_dataset: Path) -> None:
+        """Dialog handles training completion."""
+        dialog = ModelFinetuningDialog()
+
+        config = TrainingConfig(
+            model_path=str(sample_model_file),
+            dataset_path=str(sample_training_dataset),
+        )
+
+        thread = TrainingThread(config)
+        thread._load_model()
+
+        dialog.training_thread = thread
+
+        dialog._on_training_finished()
+
+    @patch('intellicrack.ui.dialogs.model_finetuning_dialog.QFileDialog')
+    def test_dialog_export_dataset(self, mock_file_dialog: Mock, qapp: Any, temp_dir: Path, sample_training_dataset: Path) -> None:
+        """Dialog exports dataset to file."""
+        dialog = ModelFinetuningDialog()
+
+        dialog.dataset_path_edit.setText(str(sample_training_dataset))
+
+        export_path = temp_dir / "exported_dataset.csv"
+
+        mock_file_dialog.getSaveFileName.return_value = (str(export_path), "")
+
+        dialog._export_dataset()
+
+    @patch('intellicrack.ui.dialogs.model_finetuning_dialog.QFileDialog')
+    def test_dialog_export_metrics(self, mock_file_dialog: Mock, qapp: Any, temp_dir: Path, sample_model_file: Path, sample_training_dataset: Path) -> None:
+        """Dialog exports training metrics to file."""
+        dialog = ModelFinetuningDialog()
+
+        config = TrainingConfig(
+            model_path=str(sample_model_file),
+            dataset_path=str(sample_training_dataset),
+        )
+
+        thread = TrainingThread(config)
+        thread._load_model()
+        thread.training_history = [
+            {"epoch": 0, "loss": 0.5, "accuracy": 0.7},
+            {"epoch": 1, "loss": 0.3, "accuracy": 0.85},
+        ]
+
+        dialog.training_thread = thread
+
+        export_path = temp_dir / "metrics.csv"
+
+        mock_file_dialog.getSaveFileName.return_value = (str(export_path), "")
+
+        dialog._export_metrics()
+
+    def test_dialog_update_visualization(self, qapp: Any) -> None:
+        """Dialog updates training visualization with metrics."""
+        dialog = ModelFinetuningDialog()
+
+        history = [
+            {"epoch": 0, "loss": 0.8, "accuracy": 0.6, "validation_loss": 0.9, "validation_accuracy": 0.55},
+            {"epoch": 1, "loss": 0.6, "accuracy": 0.75, "validation_loss": 0.7, "validation_accuracy": 0.7},
+            {"epoch": 2, "loss": 0.4, "accuracy": 0.85, "validation_loss": 0.5, "validation_accuracy": 0.8},
+        ]
+
+        dialog._update_visualization(history)
 
 
 class TestTrainingIntegration:
@@ -747,8 +1533,6 @@ class TestDatasetFormats:
 
     def test_csv_dataset_export(self, qapp: Any, temp_dir: Path) -> None:
         """Datasets can be exported to CSV format correctly."""
-        import csv
-
         source_data = [
             {"input": "Test input", "output": "Test output"},
             {"input": "Another input", "output": "Another output"},

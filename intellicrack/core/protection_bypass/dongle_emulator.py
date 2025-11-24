@@ -386,7 +386,7 @@ class CryptoEngine:
                 padded_data = data + b"\x00" * (16 - len(data) % 16)
                 return cipher.encrypt(padded_data)
             elif algorithm == "DES":
-                cipher = DES.new(key[:8], DES.MODE_ECB)  # noqa: S304 - Required for HASP dongle emulation
+                cipher = DES.new(key[:8], DES.MODE_ECB)
                 padded_data = data + b"\x00" * (8 - len(data) % 8)
                 return cipher.encrypt(padded_data)
             elif algorithm == "DES3":
@@ -411,7 +411,7 @@ class CryptoEngine:
                 decrypted = cipher.decrypt(data)
                 return decrypted.rstrip(b"\x00")
             elif algorithm == "DES":
-                cipher = DES.new(key[:8], DES.MODE_ECB)  # noqa: S304 - Required for HASP dongle emulation
+                cipher = DES.new(key[:8], DES.MODE_ECB)
                 decrypted = cipher.decrypt(data)
                 return decrypted.rstrip(b"\x00")
             elif algorithm == "DES3":

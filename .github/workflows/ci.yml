@@ -37,17 +37,19 @@ jobs:
       - name: Install dependencies
         run: |
           pixi install
+        timeout-minutes: 15
 
       - name: Generate requirements.txt for Dependabot
         shell: pwsh
         run: |
-          pixi list --json | ConvertFrom-Json | Where-Object { $_.kind -eq 'pypi' } | Sort-Object name | ForEach-Object {
+          pixi list --frozen --json | ConvertFrom-Json | Where-Object { $_.kind -eq 'pypi' } | Sort-Object name | ForEach-Object {
             if ($_.version) {
               "$($_.name)==$($_.version)"
             } else {
               $_.name
             }
           } | Out-File -FilePath requirements.txt -Encoding utf8
+        timeout-minutes: 5
 
   rust-check:
     runs-on: windows-latest
@@ -76,6 +78,7 @@ jobs:
 
       - name: Install dependencies
         run: pixi install
+        timeout-minutes: 15
 
       - name: Rust - Check compilation
         run: |
@@ -104,6 +107,7 @@ jobs:
 
       - name: Install dependencies
         run: pixi install
+        timeout-minutes: 15
 
       - name: Rust - Format check
         run: |
@@ -137,6 +141,7 @@ jobs:
 
       - name: Install dependencies
         run: pixi install
+        timeout-minutes: 15
 
       - name: Rust - Clippy linting
         run: |
@@ -169,6 +174,7 @@ jobs:
 
       - name: Install dependencies
         run: pixi install
+        timeout-minutes: 15
 
       - name: Rust - Run tests
         run: |
@@ -201,6 +207,7 @@ jobs:
 
       - name: Install dependencies
         run: pixi install
+        timeout-minutes: 15
 
       - name: Rust - Build release
         run: |
@@ -223,6 +230,7 @@ jobs:
 
       - name: Install dependencies
         run: pixi install
+        timeout-minutes: 15
 
       - name: Lint with ruff
         run: |
@@ -245,6 +253,7 @@ jobs:
 
       - name: Install dependencies
         run: pixi install
+        timeout-minutes: 15
 
       - name: Security scan with bandit
         run: |
@@ -274,6 +283,7 @@ jobs:
 
       - name: Install dependencies
         run: pixi install
+        timeout-minutes: 15
 
       - name: Type check with mypy
         run: |
@@ -295,6 +305,7 @@ jobs:
 
       - name: Install dependencies
         run: pixi install
+        timeout-minutes: 15
 
       - name: Verify No Mock Usage (Production-Ready Enforcement)
         run: |
@@ -316,6 +327,7 @@ jobs:
 
       - name: Install dependencies
         run: pixi install
+        timeout-minutes: 15
 
       - name: Test with pytest
         run: |

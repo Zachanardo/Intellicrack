@@ -411,9 +411,14 @@ else:
             """Fetch latest version information from repository."""
             try:
                 import requests
+                from urllib.parse import urlparse
 
                 # Try different API endpoints based on repository type
-                if "github.com" in repo_url:
+                parsed_url = urlparse(repo_url)
+                is_github = (parsed_url.hostname == "github.com" or
+                            (parsed_url.hostname is not None and parsed_url.hostname.endswith(".github.com")))
+
+                if is_github:
                     # GitHub API approach
                     if not repo_url.startswith("https://api.github.com"):
                         # Convert regular GitHub URL to API URL

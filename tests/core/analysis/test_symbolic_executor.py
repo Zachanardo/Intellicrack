@@ -1,16 +1,7 @@
-"""
-Production-grade tests for symbolic execution engine.
+"""Comprehensive production tests for symbolic execution engine.
 
-Tests validate REAL symbolic execution capabilities for license validation analysis:
-- Path exploration using angr symbolic execution
-- Constraint solving with Z3 SMT solver
-- License key discovery through symbolic analysis
-- State management during symbolic execution
-- Real binary analysis with actual constraint generation
-- Vulnerability detection through symbolic path analysis
-
-ALL TESTS USE REAL BINARIES AND REAL SYMBOLIC EXECUTION.
-NO MOCKS - Tests MUST fail when symbolic execution doesn't work.
+This module validates real symbolic execution capabilities for license cracking,
+vulnerability discovery, and constraint solving against actual binaries.
 """
 
 import os
@@ -23,26 +14,162 @@ import pytest
 
 from intellicrack.core.analysis.symbolic_executor import (
     SymbolicExecutionEngine,
+    SymbolicExecutor,
     TaintTracker,
 )
 
+try:
+    import angr
+    import claripy
 
-class TestSymbolicExecutionEngine:
+    ANGR_AVAILABLE = True
+except ImportError:
+    ANGR_AVAILABLE = False
+
+
+def create_pe_binary(content: bytes = b"") -> bytes:
+    """Create minimal valid PE binary for testing."""
+    dos_header = b"MZ" + b"\x00" * 58
+    pe_offset = struct.pack("<I", 0x80)
+    dos_header += pe_offset
+
+    pe_header = b"PE\x00\x00"
+    pe_header += b"\x4c\x01"
+    pe_header += struct.pack("<H", 1)
+    pe_header += b"\x00" * 12
+    pe_header += struct.pack("<H", 224)
+    pe_header += struct.pack("<H", 0x010B)
+    pe_header += b"\x00" * 204
+
+    padding = b"\x00" * (0x80 - len(dos_header))
+    text_section = b"\x90" * 0x1000
+
+    if content:
+        text_section = content + b"\x90" * (0x1000 - len(content))
+
+    return dos_header + padding + pe_header + text_section
+
+
+def create_elf_binary(content: bytes = b"") -> bytes:
+    """Create minimal valid ELF binary for testing."""
+    elf_header = b"\x7fELF"
+    elf_header += b"\x02"
+    elf_header += b"\x01"
+    elf_header += b"\x01"
+    elf_header += b"\x00" * 9
+    elf_header += struct.pack("<H", 2)
+    elf_header += struct.pack("<H", 0x3E)
+    elf_header += struct.pack("<I", 1)
+    elf_header += struct.pack("<Q", 0x400000)
+    elf_header += b"\x00" * (0x1000 - len(elf_header))
+
+    text_section = b"\x48\x31\xc0\xc3" + b"\x90" * 0xFFC
+
+    if content:
+        text_section = content + b"\x90" * (0x1000 - len(content))
+
+    return elf_header + text_section
+
+
+def create_binary_with_dangerous_functions() -> bytes:
+    """Create binary containing dangerous function references."""
+    binary = create_pe_binary()
+    dangerous_strings = b"strcpy\x00gets\x00sprintf\x00memcpy\x00"
+    binary += dangerous_strings
+    return binary
+
+
+def create_binary_with_format_strings() -> bytes:
+    """Create binary with format string patterns."""
+    binary = create_pe_binary()
+    format_strings = b"User: %s\x00Debug: %x %x %x\x00Format: %n\x00"
+    binary += format_strings
+    return binary
+
+
+def create_binary_with_arithmetic() -> bytes:
+    """Create binary with arithmetic operations for integer overflow testing."""
+    code = bytearray()
+    code.extend(b"\x01\xc0")
+    code.extend(b"\x29\xd8")
+    code.extend(b"\xf7\xe0")
+    code.extend(b"\xc3")
+
+    return create_pe_binary(code)
+
+
+def create_binary_with_heap_operations() -> bytes:
+    """Create binary with heap allocation patterns."""
+    binary = create_pe_binary()
+    heap_strings = b"malloc\x00free\x00calloc\x00realloc\x00new\x00delete\x00"
+    binary += heap_strings
+    return binary
+
+
+def create_binary_with_sql() -> bytes:
+    """Create binary with SQL injection patterns."""
+    binary = create_pe_binary()
+    sql_strings = b"SELECT * FROM users WHERE id=\x00INSERT INTO\x00' OR '1'='1\x00"
+    binary += sql_strings
+    return binary
+
+
+def create_binary_with_commands() -> bytes:
+    """Create binary with command execution patterns."""
+    binary = create_pe_binary()
+    cmd_strings = b"system\x00exec\x00popen\x00cmd.exe\x00/bin/sh\x00;ls\x00"
+    binary += cmd_strings
+    return binary
+
+
+class TestSymbolicExecutionEngineInitialization:
+    """Test SymbolicExecutionEngine initialization and configuration."""
+
+    def test_engine_initialization_with_valid_binary(self, tmp_path: Path) -> None:
+        """Engine initializes successfully with valid binary path."""
+        binary_path = tmp_path / "test.exe"
+        binary_path.write_bytes(create_pe_binary())
+
+        engine = SymbolicExecutionEngine(str(binary_path))
+
+        assert engine.binary_path == str(binary_path)
+        assert engine.max_paths == 100
+        assert engine.timeout == 300
+        assert engine.memory_limit == 4096 * 1024 * 1024
+        assert isinstance(engine.states, list)
+        assert isinstance(engine.completed_paths, list)
+        assert isinstance(engine.crashed_states, list)
+
+    def test_engine_initialization_with_custom_limits(self, tmp_path: Path) -> None:
+        """Engine accepts custom path, timeout, and memory limits."""
+        binary_path = tmp_path / "test.exe"
+        binary_path.write_bytes(create_pe_binary())
+
+        engine = SymbolicExecutionEngine(str(binary_path), max_paths=50, timeout=60, memory_limit=2048)
+
+        assert engine.max_paths == 50
+        assert engine.timeout == 60
+        assert engine.memory_limit == 2048 * 1024 * 1024
+
+    def test_engine_initialization_nonexistent_binary_raises_error(self, tmp_path: Path) -> None:
+        """Engine raises FileNotFoundError for nonexistent binary."""
+        binary_path = tmp_path / "nonexistent.exe"
+
+        with pytest.raises(FileNotFoundError, match="Binary file not found"):
+            SymbolicExecutionEngine(str(binary_path))
+
+    def test_engine_angr_availability_detection(self, tmp_path: Path) -> None:
+        """Engine correctly detects angr availability."""
+        binary_path = tmp_path / "test.exe"
+        binary_path.write_bytes(create_pe_binary())
+
+        engine = SymbolicExecutionEngine(str(binary_path))
+
+        assert engine.angr_available == ANGR_AVAILABLE
+
+
+class TestSymbolicExecutionEngineBasicTests:
     """Test SymbolicExecutionEngine with real angr symbolic execution."""
-
-    @pytest.fixture
-    def temp_binary(self, tmp_path: Path) -> Path:
-        """Create a simple test binary for symbolic execution."""
-        binary_path = tmp_path / "test_simple.exe"
-        binary_path.write_bytes(self._create_minimal_pe())
-        return binary_path
-
-    @pytest.fixture
-    def vulnerable_binary(self, tmp_path: Path) -> Path:
-        """Create a vulnerable test binary."""
-        binary_path = tmp_path / "test_vuln.exe"
-        binary_path.write_bytes(self._create_vulnerable_pe())
-        return binary_path
 
     def _create_minimal_pe(self) -> bytes:
         """Create minimal valid PE binary for testing."""

@@ -1843,6 +1843,7 @@ def get_plugin():
                         context = ssl.create_default_context()
                         context.check_hostname = False
                         context.verify_mode = ssl.CERT_NONE
+                        self.tool_output.append("WARNING: Certificate verification disabled for security testing")
                         with context.wrap_socket(sock, server_hostname=target) as ssock:
                             ssock.getpeercert()
                             self.tool_output.append(f"{port}/tcp   open  ssl/https  TLS/SSL enabled")
