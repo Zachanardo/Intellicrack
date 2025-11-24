@@ -92,9 +92,7 @@ fn main() {
                         );
                     }
                     CompilationResult::NotAttempted(reason) => {
-                        println!(
-                            "cargo:warning=Resource compilation not attempted: {reason}"
-                        );
+                        println!("cargo:warning=Resource compilation not attempted: {reason}");
                         println!(
                             "cargo:warning=Continuing without Windows manifest (non-critical)"
                         );

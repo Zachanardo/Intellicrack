@@ -80,7 +80,7 @@ jobs:
       - name: Rust - Check compilation
         run: |
           cd intellicrack-launcher
-          pixi run cargo check --all-features --all-targets
+          cargo check --all-features --all-targets
 
   rust-format:
     runs-on: windows-latest
@@ -108,7 +108,7 @@ jobs:
       - name: Rust - Format check
         run: |
           cd intellicrack-launcher
-          pixi run cargo fmt -- --check
+          cargo fmt -- --check
 
   rust-clippy:
     runs-on: windows-latest
@@ -141,7 +141,7 @@ jobs:
       - name: Rust - Clippy linting
         run: |
           cd intellicrack-launcher
-          pixi run cargo clippy --all-features --all-targets -- -D warnings
+          cargo clippy --all-features --all-targets -- -D warnings
 
   rust-test:
     runs-on: windows-latest
@@ -173,7 +173,7 @@ jobs:
       - name: Rust - Run tests
         run: |
           cd intellicrack-launcher
-          pixi run cargo test --all-features --verbose
+          cargo test --all-features --verbose
 
   rust-build:
     runs-on: windows-latest
@@ -205,7 +205,7 @@ jobs:
       - name: Rust - Build release
         run: |
           cd intellicrack-launcher
-          pixi run cargo build --release --all-features
+          cargo build --release --all-features
 
   python-lint:
     runs-on: windows-latest
