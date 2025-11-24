@@ -80,32 +80,13 @@ jobs:
         run: pixi install
         timeout-minutes: 15
 
-      - name: Diagnose Rust installation
+      - name: Force reinstall dependencies (clear cache issue)
         run: |
-          Write-Output "=== Checking pixi environment Rust installation ==="
-          Write-Output "Rust version from pixi list:"
-          pixi list | Select-String -Pattern "rust"
-          Write-Output "`n=== Checking if rustc.exe exists ==="
-          $rustcPath = "D:\Intellicrack\.pixi\envs\default\Library\bin\rustc.exe"
-          if (Test-Path $rustcPath) {
-            Write-Output "rustc.exe exists at: $rustcPath"
-            Write-Output "File size: $((Get-Item $rustcPath).Length) bytes"
-          } else {
-            Write-Output "ERROR: rustc.exe NOT found at: $rustcPath"
-            Write-Output "Listing all .exe files in Library\bin:"
-            Get-ChildItem "D:\Intellicrack\.pixi\envs\default\Library\bin\*.exe" | Select-Object Name
+          Write-Output "Removing pixi environment to force fresh install..."
+          if (Test-Path "D:\Intellicrack\.pixi\envs\default") {
+            Remove-Item -Recurse -Force "D:\Intellicrack\.pixi\envs\default"
           }
-          Write-Output "`n=== Checking if cargo.exe exists ==="
-          $cargoPath = "D:\Intellicrack\.pixi\envs\default\Library\bin\cargo.exe"
-          if (Test-Path $cargoPath) {
-            Write-Output "cargo.exe exists at: $cargoPath"
-          } else {
-            Write-Output "ERROR: cargo.exe NOT found at: $cargoPath"
-          }
-          Write-Output "`n=== Trying pixi run cargo --version ==="
-          pixi run cargo --version
-          Write-Output "`n=== Checking PATH in pixi environment ==="
-          pixi run pwsh -c '$env:PATH'
+          pixi install --locked
 
       - name: Rust - Check compilation
         run: |
