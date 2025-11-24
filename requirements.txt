@@ -269,7 +269,7 @@ numpy==2.2.6
 nvidia_ml_py==13.580.82
 oauthlib==3.3.1
 onemkl_sycl_blas==2025.2.0
-onemkl_sycl_dft==2025.2.0
+onemkl_sycl_dft==2025.3.0
 onemkl_sycl_lapack==2025.2.0
 onemkl_sycl_rng==2025.2.0
 onemkl_sycl_sparse==2025.2.0
