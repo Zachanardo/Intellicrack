@@ -576,21 +576,22 @@ ensure_newline_before_comments = true
 
 [tool.mypy]
 python_version = "3.12"
-warn_return_any = false
+warn_return_any = true
 warn_unused_configs = true
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
-check_untyped_defs = false
-disallow_untyped_decorators = false
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
 no_implicit_optional = true
-warn_redundant_casts = false
-warn_unused_ignores = false
+warn_redundant_casts = true
+warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 ignore_missing_imports = true
 follow_imports = "silent"
 show_error_codes = true
+strict = true
 exclude = [
   "^tools/",
   "^build/",
@@ -747,7 +748,7 @@ exclude = [
   "CLI Coding",
   "Screenshots",
 ]
-typeCheckingMode = "standard"
+typeCheckingMode = "strict"
 pythonVersion = "3.12"
 pythonPlatform = "Windows"
 useLibraryCodeForTypes = true

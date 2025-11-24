@@ -47,7 +47,7 @@ try:
     from intellicrack.handlers.frida_handler import HAS_FRIDA
 
     FRIDA_AVAILABLE = HAS_FRIDA
-except ImportError:
+except (ImportError, AttributeError):
     FRIDA_AVAILABLE = False
 
 try:

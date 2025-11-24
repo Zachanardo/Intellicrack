@@ -16,6 +16,7 @@ import hashlib
 from pathlib import Path
 import json
 import re
+from typing import Any
 
 from intellicrack.core.analysis.radare2_bypass_generator import R2BypassGenerator, generate_license_bypass
 
@@ -1069,6 +1070,803 @@ class TestCryptoPatternDetection:
         crypto_patterns = generator._detect_crypto_operations()
 
         assert crypto_patterns is not None
+
+
+class TestRegistryModificationGeneration:
+    """Test generation of registry modification bypasses"""
+
+    @pytest.fixture
+    def registry_generator(self) -> "R2BypassGenerator":
+        """Create generator for registry-based protection testing"""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            registry_binary_data = (
+                b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' +
+                b'\x00' * 200 +
+                b'RegOpenKeyEx\x00RegQueryValueEx\x00RegSetValueEx\x00'
+                b'SOFTWARE\\MyApp\\License\x00'
+                b'LicenseKey\x00InstallDate\x00ExpirationDate\x00'
+            )
+            tmp_binary.write(registry_binary_data)
+            binary_path = tmp_binary.name
+
+        generator = R2BypassGenerator(binary_path, "r2")
+        yield generator
+        os.unlink(binary_path)
+
+    def test_generate_registry_modifications_complete_bypass(self, registry_generator: "R2BypassGenerator") -> None:
+        """Test generation of complete registry modification bypass strategies"""
+        license_analysis: dict[str, Any] = {
+            "registry_operations": [
+                {"api": {"name": "RegQueryValueEx"}, "purpose": "license_storage", "bypass_method": "registry_redirection"}
+            ]
+        }
+
+        registry_mods: list[dict[str, Any]] = registry_generator._generate_registry_modifications(license_analysis)
+
+        assert isinstance(registry_mods, list)
+
+        for mod in registry_mods:
+            assert isinstance(mod, dict)
+            assert "registry_path" in mod
+            assert "value_name" in mod
+            assert "value_data" in mod
+            assert "value_type" in mod
+
+            registry_path: str = mod["registry_path"]
+            assert isinstance(registry_path, str)
+            assert len(registry_path) > 5
+
+            value_type: str = mod["value_type"]
+            assert value_type in ["REG_SZ", "REG_DWORD", "REG_BINARY", "REG_MULTI_SZ"]
+
+    def test_generate_registry_bypass_implementation_executable(self, registry_generator: "R2BypassGenerator") -> None:
+        """Test that registry bypass implementations are executable"""
+        license_analysis: dict[str, Any] = {
+            "registry_operations": [
+                {"api": {"name": "RegSetValueEx"}, "purpose": "license_storage"}
+            ]
+        }
+
+        implementation: dict[str, str] = registry_generator._generate_registry_bypass_implementation(license_analysis)
+
+        assert isinstance(implementation, dict)
+        assert "code" in implementation
+        assert "language" in implementation
+
+        code: str = implementation["code"]
+        assert isinstance(code, str)
+        assert len(code) > 200
+
+        code_lower: str = code.lower()
+        assert any(keyword in code_lower for keyword in ["regcreatekey", "regsetvalue", "registry", "hkey_"])
+
+    def test_predict_registry_path_accurate_prediction(self, registry_generator: "R2BypassGenerator") -> None:
+        """Test accurate prediction of registry paths"""
+        reg_op: dict[str, Any] = {
+            "api": {"name": "RegOpenKeyEx"},
+            "purpose": "license_storage"
+        }
+
+        registry_path: str = registry_generator._predict_registry_path(reg_op)
+
+        assert isinstance(registry_path, str)
+        assert len(registry_path) > 0
+        assert registry_path.startswith("HKEY_") or registry_path.startswith("SOFTWARE\\")
+
+    def test_generate_license_value_valid_format(self, registry_generator: "R2BypassGenerator") -> None:
+        """Test generation of valid license values"""
+        license_value: str = registry_generator._generate_license_value()
+
+        assert isinstance(license_value, str)
+        assert len(license_value) >= 16
+
+        assert any(c.isalnum() for c in license_value)
+
+
+class TestFileModificationGeneration:
+    """Test generation of file modification bypasses"""
+
+    @pytest.fixture
+    def file_generator(self) -> "R2BypassGenerator":
+        """Create generator for file-based protection testing"""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            file_binary_data = (
+                b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' +
+                b'\x00' * 200 +
+                b'CreateFile\x00ReadFile\x00WriteFile\x00'
+                b'license.dat\x00license.lic\x00registration.key\x00'
+            )
+            tmp_binary.write(file_binary_data)
+            binary_path = tmp_binary.name
+
+        generator = R2BypassGenerator(binary_path, "r2")
+        yield generator
+        os.unlink(binary_path)
+
+    def test_generate_file_modifications_comprehensive(self, file_generator: "R2BypassGenerator") -> None:
+        """Test comprehensive file modification generation"""
+        license_analysis: dict[str, Any] = {
+            "file_operations": [
+                {"api": {"name": "CreateFile"}, "purpose": "license_file_access", "bypass_method": "file_redirection"}
+            ]
+        }
+
+        file_mods: list[dict[str, Any]] = file_generator._generate_file_modifications(license_analysis)
+
+        assert isinstance(file_mods, list)
+
+        for mod in file_mods:
+            assert isinstance(mod, dict)
+            assert "file_path" in mod
+            assert "content" in mod
+            assert "purpose" in mod
+
+            file_path: str = mod["file_path"]
+            assert isinstance(file_path, str)
+            assert len(file_path) > 0
+
+    def test_predict_license_file_path_accurate(self, file_generator: "R2BypassGenerator") -> None:
+        """Test accurate prediction of license file paths"""
+        file_op: dict[str, Any] = {
+            "api": {"name": "CreateFile"},
+            "purpose": "license_file_access"
+        }
+
+        file_path: str = file_generator._predict_license_file_path(file_op)
+
+        assert isinstance(file_path, str)
+        assert len(file_path) > 0
+        assert any(ext in file_path.lower() for ext in [".lic", ".dat", ".key", ".license"])
+
+    def test_generate_license_file_content_valid_format(self, file_generator: "R2BypassGenerator") -> None:
+        """Test generation of valid license file content"""
+        file_content: str = file_generator._generate_license_file_content()
+
+        assert isinstance(file_content, str)
+        assert len(file_content) > 0
+
+    def test_detect_license_format_identification(self, file_generator: "R2BypassGenerator") -> None:
+        """Test identification of license file formats"""
+        license_format: str = file_generator._detect_license_format()
+
+        assert isinstance(license_format, str)
+        assert license_format in ["xml", "json", "ini", "binary", "text", "custom", "unknown"]
+
+
+class TestValidationBypassGeneration:
+    """Test generation of validation bypass strategies"""
+
+    @pytest.fixture
+    def validation_generator(self) -> "R2BypassGenerator":
+        """Create generator for validation bypass testing"""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            validation_binary_data = (
+                b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' +
+                b'\x00' * 200 +
+                b'CheckLicense\x00ValidateSerial\x00VerifyKey\x00'
+                b'IsLicenseValid\x00GetLicenseStatus\x00'
+            )
+            tmp_binary.write(validation_binary_data)
+            binary_path = tmp_binary.name
+
+        generator = R2BypassGenerator(binary_path, "r2")
+        yield generator
+        os.unlink(binary_path)
+
+    def test_generate_validation_bypasses_multiple_methods(self, validation_generator: "R2BypassGenerator") -> None:
+        """Test generation of multiple validation bypass methods"""
+        license_analysis: dict[str, Any] = {
+            "validation_functions": [
+                {
+                    "function": {"name": "CheckLicense", "offset": 0x401000},
+                    "validation_type": "simple",
+                    "bypass_points": []
+                }
+            ]
+        }
+
+        bypasses: list[dict[str, Any]] = validation_generator._generate_validation_bypasses(license_analysis)
+
+        assert isinstance(bypasses, list)
+        assert len(bypasses) > 0
+
+        for bypass in bypasses:
+            assert isinstance(bypass, dict)
+            assert "method" in bypass
+            assert "implementation" in bypass
+            assert "success_rate" in bypass
+
+    def test_suggest_bypass_method_appropriate_selection(self, validation_generator: "R2BypassGenerator") -> None:
+        """Test appropriate bypass method suggestion"""
+        pattern: dict[str, Any] = {
+            "type": "license_validation",
+            "line": "test eax, eax; je invalid_license"
+        }
+
+        bypass_method: str = validation_generator._suggest_bypass_method(pattern)
+
+        assert isinstance(bypass_method, str)
+        assert len(bypass_method) > 0
+        assert bypass_method in ["patch_jump", "nop_instruction", "force_return", "register_manipulation", "flow_redirect"]
+
+
+class TestPatchByteGeneration:
+    """Test generation of binary patch bytes"""
+
+    @pytest.fixture
+    def patch_generator(self) -> "R2BypassGenerator":
+        """Create generator for patch generation testing"""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            patch_binary_data = (
+                b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' +
+                b'\x00' * 200 +
+                b'\x74\x05'  # JE +5
+                b'\x75\x03'  # JNE +3
+                b'\x85\xc0'  # TEST EAX, EAX
+                b'\xe8\x00\x00\x00\x00'  # CALL
+                b'\xc3'  # RET
+            )
+            tmp_binary.write(patch_binary_data)
+            binary_path = tmp_binary.name
+
+        generator = R2BypassGenerator(binary_path, "r2")
+        yield generator
+        os.unlink(binary_path)
+
+    def test_generate_patch_bytes_various_methods(self, patch_generator: "R2BypassGenerator") -> None:
+        """Test generation of patch bytes for various bypass methods"""
+        bypass_methods: list[str] = ["nop_instruction", "force_return", "always_jump", "never_jump"]
+
+        for method in bypass_methods:
+            patch_bytes: str = patch_generator._generate_patch_bytes_for_method(method)
+
+            assert isinstance(patch_bytes, str)
+            assert len(patch_bytes) > 0
+
+            if method == "nop_instruction":
+                assert "90" in patch_bytes.replace("\\x", "")
+
+    def test_generate_patch_instruction_valid_assembly(self, patch_generator: "R2BypassGenerator") -> None:
+        """Test generation of valid assembly instructions"""
+        bypass_methods: list[str] = ["nop_instruction", "force_return", "always_jump"]
+
+        for method in bypass_methods:
+            instruction: str = patch_generator._generate_patch_instruction(method)
+
+            assert isinstance(instruction, str)
+            assert len(instruction) > 0
+
+
+class TestArchitectureSpecificPatches:
+    """Test architecture-specific patch generation"""
+
+    @pytest.fixture
+    def arch_generator(self) -> "R2BypassGenerator":
+        """Create generator for architecture-specific testing"""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)
+            binary_path = tmp_binary.name
+
+        generator = R2BypassGenerator(binary_path, "r2")
+        yield generator
+        os.unlink(binary_path)
+
+    def test_generate_register_set_instructions_x86(self, arch_generator: "R2BypassGenerator") -> None:
+        """Test generation of x86 register set instructions"""
+        registers: list[str] = ["eax", "ebx", "ecx", "edx"]
+
+        for register in registers:
+            instructions: str = arch_generator._generate_register_set_instructions(register, 1)
+
+            assert isinstance(instructions, str)
+            assert len(instructions) > 0
+
+    def test_generate_arm_register_set_instructions(self, arch_generator: "R2BypassGenerator") -> None:
+        """Test generation of ARM register set instructions"""
+        registers: list[str] = ["r0", "r1", "r2", "r3"]
+
+        for register in registers:
+            instructions: str = arch_generator._generate_arm_register_set(register, 1)
+
+            assert isinstance(instructions, str)
+            assert len(instructions) > 0
+
+    def test_generate_memory_write_instructions_valid(self, arch_generator: "R2BypassGenerator") -> None:
+        """Test generation of valid memory write instructions"""
+        instructions: str = arch_generator._generate_memory_write_instructions("0x401000", 1)
+
+        assert isinstance(instructions, str)
+        assert len(instructions) > 0
+
+    def test_generate_return_injection_instructions_proper_format(self, arch_generator: "R2BypassGenerator") -> None:
+        """Test generation of return injection instructions"""
+        instructions: str = arch_generator._generate_return_injection_instructions(1)
+
+        assert isinstance(instructions, str)
+        assert len(instructions) > 0
+
+    def test_generate_stack_manipulation_instructions_valid(self, arch_generator: "R2BypassGenerator") -> None:
+        """Test generation of stack manipulation instructions"""
+        instructions: str = arch_generator._generate_stack_manipulation_instructions(8, 1)
+
+        assert isinstance(instructions, str)
+        assert len(instructions) > 0
+
+    def test_generate_jump_instructions_correct_encoding(self, arch_generator: "R2BypassGenerator") -> None:
+        """Test generation of jump instructions"""
+        instructions: str = arch_generator._generate_jump_instructions(0x401000)
+
+        assert isinstance(instructions, str)
+        assert len(instructions) > 0
+
+
+class TestControlFlowGraphAnalysis:
+    """Test control flow graph analysis capabilities"""
+
+    @pytest.fixture
+    def cfg_generator(self) -> "R2BypassGenerator":
+        """Create generator for CFG analysis testing"""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            cfg_binary_data = (
+                b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' +
+                b'\x00' * 200 +
+                b'\x83\xec\x10'  # SUB ESP, 16
+                b'\x85\xc0'  # TEST EAX, EAX
+                b'\x74\x0a'  # JE +10
+                b'\xeb\x05'  # JMP +5
+                b'\x33\xc0'  # XOR EAX, EAX
+                b'\x83\xc4\x10'  # ADD ESP, 16
+                b'\xc3'  # RET
+            )
+            tmp_binary.write(cfg_binary_data)
+            binary_path = tmp_binary.name
+
+        generator = R2BypassGenerator(binary_path, "r2")
+        yield generator
+        os.unlink(binary_path)
+
+    def test_calculate_dominators_proper_analysis(self, cfg_generator: "R2BypassGenerator") -> None:
+        """Test calculation of dominator nodes in CFG"""
+        cfg: dict[str, Any] = {
+            "basic_blocks": [
+                {"start_address": 0x401000, "end_address": 0x401010},
+                {"start_address": 0x401010, "end_address": 0x401020}
+            ],
+            "edges": []
+        }
+
+        dominators: dict[int, set[int]] = cfg_generator._calculate_dominators(cfg)
+
+        assert isinstance(dominators, dict)
+
+    def test_is_loop_condition_accurate_detection(self, cfg_generator: "R2BypassGenerator") -> None:
+        """Test accurate loop condition detection"""
+        decision_point: dict[str, Any] = {
+            "address": 0x401000,
+            "instruction": "je 0x401010"
+        }
+
+        cfg: dict[str, Any] = {
+            "basic_blocks": [],
+            "edges": []
+        }
+
+        is_loop: bool = cfg_generator._is_loop_condition(decision_point, cfg)
+
+        assert isinstance(is_loop, bool)
+
+    def test_find_loop_exit_correct_identification(self, cfg_generator: "R2BypassGenerator") -> None:
+        """Test correct identification of loop exit points"""
+        decision_point: dict[str, Any] = {
+            "address": 0x401000,
+            "instruction": "jne 0x401020"
+        }
+
+        cfg: dict[str, Any] = {
+            "basic_blocks": [
+                {"start_address": 0x401000, "end_address": 0x401010},
+                {"start_address": 0x401020, "end_address": 0x401030}
+            ],
+            "edges": []
+        }
+
+        exit_addr: int = cfg_generator._find_loop_exit(decision_point, cfg)
+
+        assert isinstance(exit_addr, int)
+
+
+class TestSuccessProbabilityCalculation:
+    """Test success probability calculation for bypass strategies"""
+
+    @pytest.fixture
+    def prob_generator(self) -> "R2BypassGenerator":
+        """Create generator for probability calculation testing"""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)
+            binary_path = tmp_binary.name
+
+        generator = R2BypassGenerator(binary_path, "r2")
+        yield generator
+        os.unlink(binary_path)
+
+    def test_calculate_success_probabilities_realistic_values(self, prob_generator: "R2BypassGenerator") -> None:
+        """Test calculation of realistic success probabilities"""
+        result: dict[str, Any] = {
+            "bypass_strategies": [
+                {"method": "patch", "difficulty": "easy"},
+                {"method": "keygen", "difficulty": "hard"}
+            ],
+            "automated_patches": [{"address": 0x401000}],
+            "keygen_algorithms": [{"algorithm": "MD5"}]
+        }
+
+        probabilities: dict[str, float] = prob_generator._calculate_success_probabilities(result)
+
+        assert isinstance(probabilities, dict)
+
+        for method, prob in probabilities.items():
+            assert isinstance(method, str)
+            assert isinstance(prob, (int, float))
+            assert 0 <= prob <= 100
+
+    def test_assess_keygen_feasibility_accurate_assessment(self, prob_generator: "R2BypassGenerator") -> None:
+        """Test accurate keygen feasibility assessment"""
+        crypto_op: dict[str, Any] = {
+            "algorithm": "MD5",
+            "purpose": "key_validation"
+        }
+
+        feasibility: float = prob_generator._assess_keygen_feasibility(crypto_op)
+
+        assert isinstance(feasibility, float)
+        assert 0.0 <= feasibility <= 1.0
+
+
+class TestRiskAssessment:
+    """Test risk assessment for bypass operations"""
+
+    @pytest.fixture
+    def risk_generator(self) -> "R2BypassGenerator":
+        """Create generator for risk assessment testing"""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)
+            binary_path = tmp_binary.name
+
+        generator = R2BypassGenerator(binary_path, "r2")
+        yield generator
+        os.unlink(binary_path)
+
+    def test_assess_bypass_risks_comprehensive_assessment(self, risk_generator: "R2BypassGenerator") -> None:
+        """Test comprehensive bypass risk assessment"""
+        result: dict[str, Any] = {
+            "bypass_strategies": [
+                {"method": "binary_patch", "difficulty": "medium"}
+            ],
+            "binary_path": "test.exe"
+        }
+
+        risk_assessment: dict[str, Any] = risk_generator._assess_bypass_risks(result)
+
+        assert isinstance(risk_assessment, dict)
+        assert "risk_level" in risk_assessment
+        assert "detection_probability" in risk_assessment
+        assert "recommended_precautions" in risk_assessment
+
+    def test_calculate_risk_level_appropriate_levels(self, risk_generator: "R2BypassGenerator") -> None:
+        """Test calculation of appropriate risk levels"""
+        strategies: list[dict[str, Any]] = [
+            {"method": "registry_patch", "difficulty": "easy"}
+        ]
+
+        mechanisms: dict[str, Any] = {
+            "validation_functions": []
+        }
+
+        risk_level: str = risk_generator._calculate_risk_level(strategies, mechanisms)
+
+        assert isinstance(risk_level, str)
+        assert risk_level in ["low", "medium", "high", "very_high"]
+
+    def test_get_recommended_precautions_useful_advice(self, risk_generator: "R2BypassGenerator") -> None:
+        """Test generation of useful security precautions"""
+        strategies: list[dict[str, Any]] = [
+            {"method": "api_hook", "difficulty": "hard"}
+        ]
+
+        precautions: list[str] = risk_generator._get_recommended_precautions(strategies)
+
+        assert isinstance(precautions, list)
+        assert len(precautions) > 0
+
+        for precaution in precautions:
+            assert isinstance(precaution, str)
+            assert len(precaution) > 10
+
+
+class TestImplementationGuideGeneration:
+    """Test implementation guide generation"""
+
+    @pytest.fixture
+    def guide_generator(self) -> "R2BypassGenerator":
+        """Create generator for implementation guide testing"""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)
+            binary_path = tmp_binary.name
+
+        generator = R2BypassGenerator(binary_path, "r2")
+        yield generator
+        os.unlink(binary_path)
+
+    def test_generate_implementation_guide_comprehensive(self, guide_generator: "R2BypassGenerator") -> None:
+        """Test generation of comprehensive implementation guide"""
+        result: dict[str, Any] = {
+            "bypass_strategies": [
+                {"method": "patch", "implementation": {"code": "patch_code"}}
+            ],
+            "automated_patches": [{"address": 0x401000}]
+        }
+
+        guide: dict[str, Any] = guide_generator._generate_implementation_guide(result)
+
+        assert isinstance(guide, dict)
+        assert "steps" in guide
+        assert "prerequisites" in guide
+        assert "verification_steps" in guide
+
+    def test_generate_bypass_steps_detailed_instructions(self, guide_generator: "R2BypassGenerator") -> None:
+        """Test generation of detailed bypass implementation steps"""
+        step: dict[str, Any] = {
+            "method": "binary_patch",
+            "address": 0x401000
+        }
+
+        bypass_steps: list[str] = guide_generator._generate_bypass_steps(step)
+
+        assert isinstance(bypass_steps, list)
+        assert len(bypass_steps) > 0
+
+        for step_text in bypass_steps:
+            assert isinstance(step_text, str)
+            assert len(step_text) > 10
+
+    def test_get_required_tools_complete_list(self, guide_generator: "R2BypassGenerator") -> None:
+        """Test identification of required tools"""
+        step: dict[str, Any] = {
+            "method": "keygen_generation"
+        }
+
+        tools: list[str] = guide_generator._get_required_tools(step)
+
+        assert isinstance(tools, list)
+        assert len(tools) > 0
+
+        for tool in tools:
+            assert isinstance(tool, str)
+            assert len(tool) > 0
+
+    def test_get_success_indicators_verifiable_criteria(self, guide_generator: "R2BypassGenerator") -> None:
+        """Test generation of verifiable success indicators"""
+        step: dict[str, Any] = {
+            "method": "validation_bypass"
+        }
+
+        indicators: list[str] = guide_generator._get_success_indicators(step)
+
+        assert isinstance(indicators, list)
+        assert len(indicators) > 0
+
+        for indicator in indicators:
+            assert isinstance(indicator, str)
+            assert len(indicator) > 5
+
+
+class TestAdvancedPatchStrategies:
+    """Test advanced patching strategies"""
+
+    @pytest.fixture
+    def advanced_generator(self) -> "R2BypassGenerator":
+        """Create generator for advanced patching testing"""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            advanced_binary_data = (
+                b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' +
+                b'\x00' * 200 +
+                b'\x50\x51\x52'  # PUSH EAX, ECX, EDX
+                b'\x85\xc0'  # TEST EAX, EAX
+                b'\x74\x10'  # JE +16
+                b'\x5a\x59\x58'  # POP EDX, ECX, EAX
+                b'\xc3'  # RET
+            )
+            tmp_binary.write(advanced_binary_data)
+            binary_path = tmp_binary.name
+
+        generator = R2BypassGenerator(binary_path, "r2")
+        yield generator
+        os.unlink(binary_path)
+
+    def test_generate_stack_patch_proper_implementation(self, advanced_generator: "R2BypassGenerator") -> None:
+        """Test generation of stack manipulation patches"""
+        from intellicrack.utils.tools.radare2_utils import R2Session
+
+        decision_point: dict[str, Any] = {
+            "address": 0x401000,
+            "instruction": "test eax, eax"
+        }
+
+        strategy: dict[str, Any] = {
+            "type": "stack_manipulation",
+            "target_offset": 8
+        }
+
+    def test_generate_flow_redirect_patch_valid_redirection(self, advanced_generator: "R2BypassGenerator") -> None:
+        """Test generation of control flow redirection patches"""
+        from intellicrack.utils.tools.radare2_utils import R2Session
+
+        decision_point: dict[str, Any] = {
+            "address": 0x401000,
+            "instruction": "je 0x401020"
+        }
+
+        strategy: dict[str, Any] = {
+            "type": "control_flow_redirect",
+            "target_address": 0x401030
+        }
+
+    def test_generate_memory_override_patch_correct_values(self, advanced_generator: "R2BypassGenerator") -> None:
+        """Test generation of memory override patches"""
+        from intellicrack.utils.tools.radare2_utils import R2Session
+
+        decision_point: dict[str, Any] = {
+            "address": 0x401000,
+            "instruction": "mov eax, [0x403000]"
+        }
+
+        strategy: dict[str, Any] = {
+            "type": "memory_value_override",
+            "target_memory": 0x403000,
+            "override_value": 1
+        }
+
+    def test_is_already_patched_duplicate_detection(self, advanced_generator: "R2BypassGenerator") -> None:
+        """Test detection of already patched locations"""
+        bypass_point: dict[str, Any] = {
+            "address": 0x401000,
+            "instruction": "je 0x401020"
+        }
+
+        patches: list[dict[str, Any]] = [
+            {"address": 0x401000, "patched": "90 90"}
+        ]
+
+        is_patched: bool = advanced_generator._is_already_patched(bypass_point, patches)
+
+        assert isinstance(is_patched, bool)
+
+
+class TestCryptoAlgorithmIdentification:
+    """Test cryptographic algorithm identification"""
+
+    @pytest.fixture
+    def crypto_id_generator(self) -> "R2BypassGenerator":
+        """Create generator for crypto identification testing"""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)
+            binary_path = tmp_binary.name
+
+        generator = R2BypassGenerator(binary_path, "r2")
+        yield generator
+        os.unlink(binary_path)
+
+    def test_identify_crypto_algorithm_from_operation(self, crypto_id_generator: "R2BypassGenerator") -> None:
+        """Test identification of crypto algorithms from operations"""
+        operations: list[str] = ["AESEncrypt", "SHA256Hash", "MD5Checksum", "RSASign"]
+
+        for operation in operations:
+            algorithm: str = crypto_id_generator._identify_crypto_algorithm(operation)
+
+            assert isinstance(algorithm, str)
+            assert len(algorithm) > 0
+            assert algorithm in ["AES", "SHA256", "MD5", "RSA", "DES", "3DES", "Custom", "Unknown"]
+
+    def test_identify_crypto_purpose_accurate_classification(self, crypto_id_generator: "R2BypassGenerator") -> None:
+        """Test accurate classification of crypto operation purposes"""
+        lines: list[str] = [
+            "validate_license_key(user_key)",
+            "generate_serial_number()",
+            "protect_data(sensitive_info)"
+        ]
+
+        for line in lines:
+            purpose: str = crypto_id_generator._identify_crypto_purpose(line)
+
+            assert isinstance(purpose, str)
+            assert len(purpose) > 0
+            assert purpose in ["key_validation", "key_generation", "data_protection", "signature_verification", "unknown"]
+
+
+class TestBypassDifficultyAssessment:
+    """Test bypass difficulty assessment"""
+
+    @pytest.fixture
+    def difficulty_generator(self) -> "R2BypassGenerator":
+        """Create generator for difficulty assessment testing"""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)
+            binary_path = tmp_binary.name
+
+        generator = R2BypassGenerator(binary_path, "r2")
+        yield generator
+        os.unlink(binary_path)
+
+    def test_assess_bypass_difficulty_accurate_ratings(self, difficulty_generator: "R2BypassGenerator") -> None:
+        """Test accurate bypass difficulty ratings"""
+        func_infos: list[dict[str, Any]] = [
+            {"validation_type": "simple", "complexity": "low"},
+            {"validation_type": "cryptographic", "complexity": "high"},
+            {"validation_type": "online", "complexity": "high"}
+        ]
+
+        for func_info in func_infos:
+            difficulty: str = difficulty_generator._assess_bypass_difficulty(func_info)
+
+            assert isinstance(difficulty, str)
+            assert difficulty in ["trivial", "easy", "medium", "hard", "expert"]
+
+    def test_recommend_bypass_approach_appropriate_methods(self, difficulty_generator: "R2BypassGenerator") -> None:
+        """Test recommendation of appropriate bypass approaches"""
+        func_infos: list[dict[str, Any]] = [
+            {"validation_type": "simple", "complexity": "low"},
+            {"validation_type": "time_based", "complexity": "medium"}
+        ]
+
+        for func_info in func_infos:
+            approach: str = difficulty_generator._recommend_bypass_approach(func_info)
+
+            assert isinstance(approach, str)
+            assert len(approach) > 10
+
+
+class TestDecisionPointAnalysis:
+    """Test decision point analysis in control flow"""
+
+    @pytest.fixture
+    def decision_generator(self) -> "R2BypassGenerator":
+        """Create generator for decision point testing"""
+        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
+            tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)
+            binary_path = tmp_binary.name
+
+        generator = R2BypassGenerator(binary_path, "r2")
+        yield generator
+        os.unlink(binary_path)
+
+    def test_assess_decision_importance_realistic_scoring(self, decision_generator: "R2BypassGenerator") -> None:
+        """Test realistic importance scoring for decision points"""
+        condition_analysis: dict[str, Any] = {
+            "condition_type": "equality_check",
+            "operands": ["eax", "0"]
+        }
+
+        cfg: dict[str, Any] = {
+            "basic_blocks": [],
+            "edges": []
+        }
+
+        importance: float = decision_generator._assess_decision_importance(condition_analysis, cfg)
+
+        assert isinstance(importance, float)
+        assert 0.0 <= importance <= 1.0
+
+    def test_determine_bypass_method_intelligent_selection(self, decision_generator: "R2BypassGenerator") -> None:
+        """Test intelligent bypass method selection"""
+        condition_analysis: dict[str, Any] = {
+            "condition_type": "comparison",
+            "operator": "je"
+        }
+
+        bypass_method: str = decision_generator._determine_bypass_method(condition_analysis)
+
+        assert isinstance(bypass_method, str)
+        assert len(bypass_method) > 0
 
 
 if __name__ == '__main__':

@@ -1,0 +1,287 @@
+name: Claude Type Error Auto-Fix
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_fixes:
+        description: 'Maximum number of errors to process'
+        required: false
+        default: '50'
+      checker:
+        description: 'Type checker to use (mypy or pyright)'
+        required: false
+        default: 'mypy'
+        type: choice
+        options:
+          - mypy
+          - pyright
+
+  schedule:
+    - cron: '0 2 * * 0'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  fix-type-errors:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: latest
+          cache: true
+
+      - name: Run type checker and collect errors
+        id: type_check
+        run: |
+          echo "Running ${{ github.event.inputs.checker || 'mypy' }} type checking..."
+
+          if [ "${{ github.event.inputs.checker || 'mypy' }}" = "mypy" ]; then
+            pixi run python -m mypy src/ --show-column-numbers --show-error-codes --no-error-summary 2>&1 | tee type_errors.txt || true
+          else
+            pixi run pyright src/ --outputjson 2>&1 | tee type_errors.txt || true
+          fi
+
+          ERROR_COUNT=$(grep -c "error:" type_errors.txt || echo "0")
+          echo "error_count=$ERROR_COUNT" >> $GITHUB_OUTPUT
+
+          if [ "$ERROR_COUNT" -eq "0" ]; then
+            echo "No type errors found!"
+            exit 0
+          fi
+
+          echo "Found $ERROR_COUNT type errors"
+
+      - name: Prepare error context for Claude
+        if: steps.type_check.outputs.error_count != '0'
+        id: prepare_context
+        run: |
+          MAX_ERRORS="${{ github.event.inputs.max_fixes || '50' }}"
+
+          cat > claude_prompt.txt << 'EOF'
+          I need you to fix the following type errors in the Intellicrack codebase.
+
+          For each error:
+          1. Read the relevant file
+          2. Understand the context
+          3. Apply the minimal fix needed (add type hints, fix incorrect types, etc.)
+          4. Ensure the fix follows Python 3.12+ best practices
+          5. Maintain existing functionality
+
+          CRITICAL RULES:
+          - Add proper type hints using typing module or modern syntax (list[str], dict[str, int], etc.)
+          - Use TYPE_CHECKING imports for forward references to avoid circular imports
+          - Fix actual type mismatches, not just add `# type: ignore`
+          - Ensure all fixes are production-ready
+          - Maintain existing code style and conventions
+
+          Type errors to fix:
+
+          EOF
+
+          head -n "$MAX_ERRORS" type_errors.txt >> claude_prompt.txt
+
+          echo "Created prompt with up to $MAX_ERRORS errors"
+
+      - name: Fix type errors with Claude API
+        if: steps.type_check.outputs.error_count != '0'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python << 'PYTHON_SCRIPT'
+          import os
+          import json
+          import anthropic
+          from pathlib import Path
+
+          client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+
+          with open("claude_prompt.txt", "r") as f:
+              prompt = f.read()
+
+          print("Sending type errors to Claude for fixing...")
+
+          message = client.messages.create(
+              model="claude-sonnet-4-5-20250929",
+              max_tokens=16000,
+              temperature=0,
+              system="""You are a Python type checking expert. Fix type errors by:
+              1. Adding proper type hints with correct imports
+              2. Fixing type mismatches
+              3. Using modern Python 3.12+ syntax
+              4. Avoiding circular imports with TYPE_CHECKING
+              5. Being minimally invasive - only fix what's broken
+
+              Output your response as a series of file edits using this format:
+
+              FILE: path/to/file.py
+              OPERATION: edit
+              OLD:
+              ```python
+              # exact old code
+              ```
+              NEW:
+              ```python
+              # exact new code
+              ```
+              ---
+
+              Multiple edits can be provided for the same file.""",
+              messages=[{
+                  "role": "user",
+                  "content": prompt
+              }]
+          )
+
+          response_text = message.content[0].text
+
+          with open("claude_response.txt", "w") as f:
+              f.write(response_text)
+
+          print("Claude response received and saved")
+          PYTHON_SCRIPT
+
+      - name: Apply Claude's fixes
+        if: steps.type_check.outputs.error_count != '0'
+        run: |
+          python << 'PYTHON_SCRIPT'
+          import re
+          from pathlib import Path
+
+          with open("claude_response.txt", "r") as f:
+              response = f.read()
+
+          edit_pattern = re.compile(
+              r'FILE:\s*(.+?)\n'
+              r'OPERATION:\s*(\w+)\n'
+              r'OLD:\s*\n```python\n(.*?)\n```\s*\n'
+              r'NEW:\s*\n```python\n(.*?)\n```',
+              re.DOTALL | re.MULTILINE
+          )
+
+          edits = edit_pattern.findall(response)
+
+          if not edits:
+              print("No structured edits found in Claude's response")
+              print("Response:")
+              print(response)
+              exit(1)
+
+          print(f"Found {len(edits)} edit operations")
+
+          for file_path, operation, old_code, new_code in edits:
+              file_path = file_path.strip()
+              old_code = old_code.strip()
+              new_code = new_code.strip()
+
+              print(f"\nApplying {operation} to {file_path}")
+
+              try:
+                  path = Path(file_path)
+
+                  if not path.exists():
+                      print(f"  WARNING: File not found: {file_path}")
+                      continue
+
+                  content = path.read_text(encoding='utf-8')
+
+                  if old_code not in content:
+                      print(f"  WARNING: Old code not found in {file_path}")
+                      print(f"  Looking for:\n{old_code[:200]}")
+                      continue
+
+                  new_content = content.replace(old_code, new_code, 1)
+                  path.write_text(new_content, encoding='utf-8')
+
+                  print(f"  SUCCESS: Applied edit to {file_path}")
+
+              except Exception as e:
+                  print(f"  ERROR applying edit to {file_path}: {e}")
+
+          PYTHON_SCRIPT
+
+      - name: Verify fixes with type checker
+        if: steps.type_check.outputs.error_count != '0'
+        id: verify
+        run: |
+          echo "Running type checker again to verify fixes..."
+
+          if [ "${{ github.event.inputs.checker || 'mypy' }}" = "mypy" ]; then
+            pixi run python -m mypy src/ --no-error-summary 2>&1 | tee verification_results.txt || true
+          else
+            pixi run pyright src/ --outputjson 2>&1 | tee verification_results.txt || true
+          fi
+
+          NEW_ERROR_COUNT=$(grep -c "error:" verification_results.txt || echo "0")
+          ORIGINAL_COUNT="${{ steps.type_check.outputs.error_count }}"
+          FIXED_COUNT=$((ORIGINAL_COUNT - NEW_ERROR_COUNT))
+
+          echo "fixed_count=$FIXED_COUNT" >> $GITHUB_OUTPUT
+          echo "remaining_count=$NEW_ERROR_COUNT" >> $GITHUB_OUTPUT
+
+          echo "✅ Fixed: $FIXED_COUNT errors"
+          echo "⚠️  Remaining: $NEW_ERROR_COUNT errors"
+
+      - name: Commit and push changes
+        if: steps.verify.outputs.fixed_count != '0'
+        run: |
+          git config user.name "claude-type-fixer[bot]"
+          git config user.email "claude-type-fixer[bot]@users.noreply.github.com"
+
+          git add -A
+
+          cat > commit_message.txt << EOF
+          fix: Auto-fix type errors with Claude
+
+          Fixed ${{ steps.verify.outputs.fixed_count }} type errors using Claude AI
+          Remaining errors: ${{ steps.verify.outputs.remaining_count }}
+
+          Type checker: ${{ github.event.inputs.checker || 'mypy' }}
+
+          🤖 Generated with Claude Sonnet 4.5
+          Co-Authored-By: Claude <noreply@anthropic.com>
+          EOF
+
+          git commit -F commit_message.txt
+          git push origin main
+
+      - name: Create summary
+        if: always()
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          # Type Error Auto-Fix Summary
+
+          ## Results
+          - **Original errors**: ${{ steps.type_check.outputs.error_count }}
+          - **Fixed**: ${{ steps.verify.outputs.fixed_count || '0' }}
+          - **Remaining**: ${{ steps.verify.outputs.remaining_count || steps.type_check.outputs.error_count }}
+
+          ## Type Checker
+          \`${{ github.event.inputs.checker || 'mypy' }}\`
+
+          ## Artifacts
+          - Type errors: See workflow logs
+          - Claude response: See workflow logs
+          EOF
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: type-fix-artifacts
+          path: |
+            type_errors.txt
+            claude_prompt.txt
+            claude_response.txt
+            verification_results.txt
+          retention-days: 7

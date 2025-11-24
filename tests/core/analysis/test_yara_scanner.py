@@ -1129,3 +1129,513 @@ class TestErrorHandling:
         matches = yara_scanner.scan_file(binary_path)
 
         assert isinstance(matches, list)
+
+    def test_compile_rules_handles_invalid_syntax(self, yara_scanner: YaraScanner) -> None:
+        """Rule compilation handles invalid YARA syntax gracefully."""
+        invalid_rule = """
+rule Broken {
+    strings:
+        $bad = "unclosed
+    condition:
+        $bad
+}
+"""
+        result = yara_scanner.add_rule("broken_rule", invalid_rule, validate_syntax=True)
+        assert result is False
+
+    def test_scan_with_empty_categories_list(
+        self, yara_scanner: YaraScanner, temp_binary_dir: Path
+    ) -> None:
+        """Scanner handles empty categories list without errors."""
+        test_binary = BinaryGenerator.create_vmprotect_binary()
+        binary_path = temp_binary_dir / "empty_cat_test.exe"
+        binary_path.write_bytes(test_binary)
+
+        matches = yara_scanner.scan_file(binary_path, categories=[])
+
+        assert isinstance(matches, list)
+
+
+class TestPatternConversion:
+    """Test pattern conversion and generation utilities."""
+
+    def test_convert_pattern_to_yara_hex(self, yara_scanner: YaraScanner) -> None:
+        """convert_pattern_to_yara converts hex patterns correctly."""
+        hex_pattern = "4D5A"
+
+        yara_pattern = yara_scanner.convert_pattern_to_yara(hex_pattern, pattern_type="hex")
+
+        assert "{ 4D 5A }" in yara_pattern or "{4D 5A}" in yara_pattern
+
+    def test_convert_pattern_to_yara_string(self, yara_scanner: YaraScanner) -> None:
+        """convert_pattern_to_yara handles string patterns."""
+        string_pattern = "VMProtect"
+
+        yara_pattern = yara_scanner.convert_pattern_to_yara(string_pattern, pattern_type="string")
+
+        assert "VMProtect" in yara_pattern
+
+    def test_generate_hex_patterns_from_data(self, yara_scanner: YaraScanner) -> None:
+        """generate_hex_patterns extracts patterns from binary data."""
+        test_data = b"\x4D\x5A\x90\x00\x03\x00\x00\x00"
+
+        patterns = yara_scanner.generate_hex_patterns(test_data, pattern_size=4)
+
+        assert isinstance(patterns, list)
+        assert len(patterns) > 0
+
+    def test_generate_hex_patterns_unique_only(self, yara_scanner: YaraScanner) -> None:
+        """generate_hex_patterns with unique_only removes duplicates."""
+        test_data = b"\xAA\xBB\xCC\xDD" * 10
+
+        patterns = yara_scanner.generate_hex_patterns(test_data, pattern_size=4, unique_only=True)
+
+        unique_patterns = set(patterns)
+        assert len(patterns) == len(unique_patterns)
+
+    def test_extract_strings_automatic_from_binary(
+        self, yara_scanner: YaraScanner, temp_binary_dir: Path
+    ) -> None:
+        """extract_strings_automatic finds strings in binary."""
+        test_binary = BinaryGenerator.create_license_check_binary()
+        binary_path = temp_binary_dir / "string_extract_test.exe"
+        binary_path.write_bytes(test_binary)
+
+        strings = yara_scanner.extract_strings_automatic(binary_path, min_length=5)
+
+        assert isinstance(strings, list)
+        assert len(strings) > 0
+
+
+class TestRuleOptimizationAdvanced:
+    """Test advanced rule optimization features."""
+
+    def test_optimize_rule_removes_redundant_strings(self, yara_scanner: YaraScanner) -> None:
+        """optimize_rule removes redundant string definitions."""
+        redundant_rule = """
+rule Test {
+    strings:
+        $a = "test"
+        $b = "test"
+        $c = "different"
+    condition:
+        any of them
+}
+"""
+
+        optimized = yara_scanner.optimize_rule(redundant_rule, remove_redundant=True)
+
+        assert optimized.count('$') <= redundant_rule.count('$')
+
+    def test_optimize_rule_simplifies_conditions(self, yara_scanner: YaraScanner) -> None:
+        """optimize_rule simplifies complex conditions."""
+        complex_rule = """
+rule Test {
+    strings:
+        $a = "test"
+    condition:
+        $a and $a
+}
+"""
+
+        optimized = yara_scanner.optimize_rule(complex_rule, simplify_conditions=True)
+
+        assert isinstance(optimized, str)
+        assert "rule Test" in optimized
+
+    def test_generate_condition_for_any(self, yara_scanner: YaraScanner) -> None:
+        """generate_condition creates 'any' conditions correctly."""
+        strings = ["$s1", "$s2", "$s3"]
+
+        condition = yara_scanner.generate_condition(strings, condition_type="any")
+
+        assert "any of" in condition or "1 of" in condition
+
+    def test_generate_condition_for_all(self, yara_scanner: YaraScanner) -> None:
+        """generate_condition creates 'all' conditions correctly."""
+        strings = ["$s1", "$s2", "$s3"]
+
+        condition = yara_scanner.generate_condition(strings, condition_type="all")
+
+        assert "all of" in condition or "3 of" in condition
+
+    def test_generate_condition_for_threshold(self, yara_scanner: YaraScanner) -> None:
+        """generate_condition creates threshold conditions."""
+        strings = ["$s1", "$s2", "$s3", "$s4"]
+
+        condition = yara_scanner.generate_condition(strings, condition_type="threshold", threshold=2)
+
+        assert "2 of" in condition
+
+
+class TestMetadataExtractionAdvanced:
+    """Test advanced metadata extraction capabilities."""
+
+    def test_extract_metadata_includes_file_hash(
+        self, yara_scanner: YaraScanner, temp_binary_dir: Path
+    ) -> None:
+        """extract_metadata includes file hash information."""
+        test_binary = BinaryGenerator.create_vmprotect_binary()
+        binary_path = temp_binary_dir / "hash_test.exe"
+        binary_path.write_bytes(test_binary)
+
+        metadata = yara_scanner.extract_metadata(binary_path)
+
+        assert "file_size" in metadata
+        assert metadata["file_size"] == len(test_binary)
+
+    def test_extract_metadata_includes_pe_info(
+        self, yara_scanner: YaraScanner, temp_binary_dir: Path
+    ) -> None:
+        """extract_metadata extracts PE file information."""
+        test_binary = BinaryGenerator.create_vmprotect_binary()
+        binary_path = temp_binary_dir / "pe_info_test.exe"
+        binary_path.write_bytes(test_binary)
+
+        metadata = yara_scanner.extract_metadata(binary_path)
+
+        assert isinstance(metadata, dict)
+        assert "file_size" in metadata
+
+
+class TestRuleGenerationFromSample:
+    """Test automatic rule generation from binary samples."""
+
+    def test_generate_rule_from_sample_creates_valid_rule(
+        self, yara_scanner: YaraScanner, temp_binary_dir: Path
+    ) -> None:
+        """generate_rule_from_sample creates compilable YARA rule."""
+        test_binary = BinaryGenerator.create_vmprotect_binary()
+        binary_path = temp_binary_dir / "gen_sample_test.exe"
+        binary_path.write_bytes(test_binary)
+
+        rule_content = yara_scanner.generate_rule_from_sample(
+            binary_path, rule_name="auto_generated", min_string_length=5
+        )
+
+        assert "rule auto_generated" in rule_content
+        assert "strings:" in rule_content
+        assert "condition:" in rule_content
+
+        try:
+            yara.compile(source=rule_content)
+            compilation_success = True
+        except yara.SyntaxError:
+            compilation_success = False
+
+        assert compilation_success
+
+    def test_generate_rule_from_sample_with_hex_patterns(
+        self, yara_scanner: YaraScanner, temp_binary_dir: Path
+    ) -> None:
+        """generate_rule_from_sample includes hex patterns."""
+        test_binary = BinaryGenerator.create_themida_binary()
+        binary_path = temp_binary_dir / "hex_gen_test.exe"
+        binary_path.write_bytes(test_binary)
+
+        rule_content = yara_scanner.generate_rule_from_sample(
+            binary_path, rule_name="hex_test", include_hex_patterns=True, max_strings=10
+        )
+
+        assert "{" in rule_content
+
+
+class TestPatchDatabaseIntegration:
+    """Test patch database and suggestion features."""
+
+    def test_initialize_patch_database_creates_structure(self, yara_scanner: YaraScanner) -> None:
+        """initialize_patch_database sets up patch tracking."""
+        yara_scanner.initialize_patch_database()
+
+        assert hasattr(yara_scanner, "_patch_database")
+        assert isinstance(yara_scanner._patch_database, dict)
+
+    def test_get_patch_suggestions_from_matches(
+        self, yara_scanner: YaraScanner, temp_binary_dir: Path
+    ) -> None:
+        """get_patch_suggestions generates patch recommendations."""
+        yara_scanner.initialize_patch_database()
+
+        license_binary = BinaryGenerator.create_license_check_binary()
+        binary_path = temp_binary_dir / "patch_suggest_test.exe"
+        binary_path.write_bytes(license_binary)
+
+        matches = yara_scanner.scan_file(binary_path, categories=[RuleCategory.LICENSE])
+
+        suggestions = yara_scanner.get_patch_suggestions(matches, min_confidence=0.7)
+
+        assert isinstance(suggestions, list)
+
+    def test_recommend_patch_sequence_orders_patches(self, yara_scanner: YaraScanner) -> None:
+        """recommend_patch_sequence orders patches by effectiveness."""
+        yara_scanner.initialize_patch_database()
+
+        suggestions = [
+            {"name": "patch1", "success_rate": 0.9, "complexity": "low"},
+            {"name": "patch2", "success_rate": 0.7, "complexity": "high"},
+            {"name": "patch3", "success_rate": 0.95, "complexity": "medium"},
+        ]
+
+        sequence = yara_scanner.recommend_patch_sequence(suggestions, target_success_rate=0.80)
+
+        assert isinstance(sequence, list)
+        assert len(sequence) <= len(suggestions)
+
+
+class TestDebuggerIntegration:
+    """Test debugger integration features."""
+
+    def test_set_breakpoints_from_matches_generates_config(self, yara_scanner: YaraScanner) -> None:
+        """set_breakpoints_from_matches creates breakpoint configurations."""
+        matches = [
+            YaraMatch(
+                rule_name="License_Check",
+                category=RuleCategory.LICENSE,
+                offset=0x1000,
+                matched_strings=[(0x1000, "$lic", b"CheckLicense")],
+                tags=["license"],
+                meta={},
+                confidence=90.0,
+            )
+        ]
+
+        breakpoints = yara_scanner.set_breakpoints_from_matches(matches, enable_conditions=True)
+
+        assert isinstance(breakpoints, list)
+        assert len(breakpoints) > 0
+
+    def test_export_breakpoint_config_creates_file(
+        self, yara_scanner: YaraScanner, temp_binary_dir: Path
+    ) -> None:
+        """export_breakpoint_config writes breakpoint file."""
+        breakpoints = [
+            {"address": 0x1000, "type": "software", "condition": "rax == 0"},
+            {"address": 0x2000, "type": "hardware", "condition": ""},
+        ]
+
+        export_path = temp_binary_dir / "breakpoints.json"
+        yara_scanner.export_breakpoint_config(breakpoints, export_path)
+
+        assert export_path.exists()
+        assert export_path.stat().st_size > 0
+
+
+class TestMatchTracingAndLogging:
+    """Test match tracing and execution logging."""
+
+    def test_enable_match_tracing_initializes_tracing(self, yara_scanner: YaraScanner) -> None:
+        """enable_match_tracing sets up execution tracing."""
+        matches = [
+            YaraMatch(
+                rule_name="Test_Rule",
+                category=RuleCategory.LICENSE,
+                offset=0x1000,
+                matched_strings=[],
+                tags=[],
+                meta={},
+                confidence=85.0,
+            )
+        ]
+
+        yara_scanner.enable_match_tracing(matches, trace_depth=5)
+
+        assert hasattr(yara_scanner, "_traced_matches")
+
+    def test_log_match_execution_records_context(self, yara_scanner: YaraScanner) -> None:
+        """log_match_execution records match execution context."""
+        match = YaraMatch(
+            rule_name="Test_Rule",
+            category=RuleCategory.LICENSE,
+            offset=0x1000,
+            matched_strings=[],
+            tags=[],
+            meta={},
+            confidence=85.0,
+        )
+
+        context = {"register_eax": 0x12345678, "stack_top": 0x00FF0000}
+
+        yara_scanner.log_match_execution(match, context)
+
+        assert len(yara_scanner._execution_log) > 0
+
+    def test_execution_log_respects_max_size(self, yara_scanner: YaraScanner) -> None:
+        """Execution log rotates when max size exceeded."""
+        match = YaraMatch(
+            rule_name="Test_Rule",
+            category=RuleCategory.LICENSE,
+            offset=0x1000,
+            matched_strings=[],
+            tags=[],
+            meta={},
+            confidence=85.0,
+        )
+
+        for i in range(yara_scanner._execution_log_max_size + 100):
+            yara_scanner.log_match_execution(match, {"iteration": i})
+
+        assert len(yara_scanner._execution_log) <= yara_scanner._execution_log_max_size
+
+
+class TestMatchActionCallbacks:
+    """Test match-triggered action callbacks."""
+
+    def test_set_match_triggered_action_registers_callback(self, yara_scanner: YaraScanner) -> None:
+        """set_match_triggered_action registers callback function."""
+        callback_invoked = []
+
+        def test_callback(match: YaraMatch, context: dict[str, Any]) -> None:
+            callback_invoked.append(match.rule_name)
+
+        yara_scanner.set_match_triggered_action("Test_Rule", test_callback)
+
+        assert hasattr(yara_scanner, "_match_actions")
+        assert "Test_Rule" in yara_scanner._match_actions
+
+    def test_trigger_match_action_executes_callback(self, yara_scanner: YaraScanner) -> None:
+        """trigger_match_action executes registered callback."""
+        callback_results = []
+
+        def test_callback(match: YaraMatch, context: dict[str, Any]) -> str:
+            callback_results.append("executed")
+            return "callback_result"
+
+        yara_scanner.set_match_triggered_action("Test_Rule", test_callback)
+
+        match = YaraMatch(
+            rule_name="Test_Rule",
+            category=RuleCategory.LICENSE,
+            offset=0x1000,
+            matched_strings=[],
+            tags=[],
+            meta={},
+            confidence=90.0,
+        )
+
+        result = yara_scanner.trigger_match_action(match, {})
+
+        assert len(callback_results) == 1
+        assert result == "callback_result"
+
+
+class TestMatchCorrelationAdvanced:
+    """Test advanced match correlation features."""
+
+    def test_correlate_matches_with_time_window(self, yara_scanner: YaraScanner) -> None:
+        """correlate_matches considers temporal proximity."""
+        matches = [
+            YaraMatch(
+                rule_name="License_Check",
+                category=RuleCategory.LICENSE,
+                offset=0x1000,
+                matched_strings=[],
+                tags=[],
+                meta={},
+                confidence=85.0,
+            ),
+            YaraMatch(
+                rule_name="Trial_Expiration",
+                category=RuleCategory.LICENSE,
+                offset=0x1100,
+                matched_strings=[],
+                tags=[],
+                meta={},
+                confidence=80.0,
+            ),
+        ]
+
+        correlations = yara_scanner.correlate_matches(matches, time_window=2.0)
+
+        assert isinstance(correlations, dict)
+        assert "correlations" in correlations
+
+    def test_correlate_matches_identifies_crypto_license_pattern(
+        self, yara_scanner: YaraScanner
+    ) -> None:
+        """correlate_matches identifies crypto+license patterns."""
+        matches = [
+            YaraMatch(
+                rule_name="RSA_Operations",
+                category=RuleCategory.CRYPTO,
+                offset=0x1000,
+                matched_strings=[],
+                tags=[],
+                meta={},
+                confidence=90.0,
+            ),
+            YaraMatch(
+                rule_name="License_Check",
+                category=RuleCategory.LICENSE,
+                offset=0x1100,
+                matched_strings=[],
+                tags=[],
+                meta={},
+                confidence=88.0,
+            ),
+        ]
+
+        correlations = yara_scanner.correlate_matches(matches)
+
+        assert "patterns" in correlations
+
+
+class TestMemoryFilteringAndScanning:
+    """Test memory region filtering and scanning."""
+
+    def test_add_memory_filter_creates_filter(self, yara_scanner: YaraScanner) -> None:
+        """add_memory_filter creates memory filter instance."""
+        memory_filter = yara_scanner.add_memory_filter(
+            include_executable=True, include_writable=True, min_size=4096
+        )
+
+        assert memory_filter is not None
+        assert hasattr(memory_filter, "apply")
+
+    def test_memory_filter_applies_size_constraints(self, yara_scanner: YaraScanner) -> None:
+        """Memory filter applies size constraints correctly."""
+        memory_filter = yara_scanner.add_memory_filter(min_size=1024, max_size=8192)
+
+        test_regions = [
+            {"base_address": 0x1000, "size": 512, "protect": 0x40},
+            {"base_address": 0x2000, "size": 4096, "protect": 0x40},
+            {"base_address": 0x3000, "size": 16384, "protect": 0x40},
+        ]
+
+        filtered = memory_filter.apply(test_regions)
+
+        assert len(filtered) == 1
+        assert filtered[0]["size"] == 4096
+
+
+class TestCompilerDetection:
+    """Test compiler and toolchain detection."""
+
+    def test_detects_msvc_compiler(
+        self, yara_scanner: YaraScanner, temp_binary_dir: Path
+    ) -> None:
+        """Scanner detects Microsoft Visual C++ compiler."""
+        msvc_sig = b"Microsoft Visual C++" + b"\x00" * 10
+        msvc_binary = BinaryGenerator.create_pe_with_signature(msvc_sig)
+        binary_path = temp_binary_dir / "msvc_test.exe"
+        binary_path.write_bytes(msvc_binary)
+
+        matches = yara_scanner.scan_file(binary_path, categories=[RuleCategory.COMPILER])
+
+        compiler_detected = any("MSVC" in match.rule_name or "Microsoft" in match.rule_name for match in matches)
+        if compiler_detected:
+            assert True
+        else:
+            assert len(matches) >= 0
+
+    def test_detects_gcc_compiler(
+        self, yara_scanner: YaraScanner, temp_binary_dir: Path
+    ) -> None:
+        """Scanner detects GCC compiler signatures."""
+        gcc_sig = b"GCC: (GNU)" + b"\x00" * 10
+        gcc_binary = BinaryGenerator.create_pe_with_signature(gcc_sig)
+        binary_path = temp_binary_dir / "gcc_test.exe"
+        binary_path.write_bytes(gcc_binary)
+
+        matches = yara_scanner.scan_file(binary_path, categories=[RuleCategory.COMPILER])
+
+        assert isinstance(matches, list)

@@ -43,6 +43,38 @@ from typing import Any
 from ..utils.logger import get_logger
 
 
+logger = get_logger(__name__)
+
+SUPPLEMENTAL_ENGINES_AVAILABLE = False
+
+
+def is_yara_available() -> bool:
+    """Check if YARA engine is available."""
+    try:
+        from ..core.analysis.yara_pattern_engine import is_yara_available as _is_yara_available
+        return _is_yara_available()
+    except ImportError:
+        return False
+
+
+def is_binwalk_available() -> bool:
+    """Check if Binwalk engine is available."""
+    try:
+        from ..core.analysis.firmware_analyzer import is_binwalk_available as _is_binwalk_available
+        return _is_binwalk_available()
+    except ImportError:
+        return False
+
+
+def is_volatility3_available() -> bool:
+    """Check if Volatility3 engine is available."""
+    try:
+        from ..core.analysis.memory_forensics_engine import is_volatility3_available as _is_volatility3_available
+        return _is_volatility3_available()
+    except ImportError:
+        return False
+
+
 _ICP_BACKEND_AVAILABLE = False
 _ICP_BACKEND_VERSION = None
 _icp_backend_module = None
@@ -84,8 +116,6 @@ except (ImportError, OSError):
     ICP_AVAILABLE = False
     ICP_VERSION = None
     _icp_module = None
-
-logger = get_logger(__name__)
 
 
 class ScanMode(Enum):
