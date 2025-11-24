@@ -80,7 +80,7 @@ try:
     # Set the appropriate matplotlib backend
     if qt_backend_name:
         try:
-            if hasattr(mpl, 'use'):
+            if hasattr(mpl, "use"):
                 mpl.use(qt_backend_name, force=True)
                 logger.info(f"Successfully configured matplotlib to use {qt_backend_name} backend")
             else:
@@ -88,7 +88,7 @@ try:
         except Exception as e:
             logger.warning(f"Failed to set matplotlib backend to {qt_backend_name}, falling back to Agg: {e}")
             try:
-                if hasattr(mpl, 'use'):
+                if hasattr(mpl, "use"):
                     mpl.use("Agg", force=True)
                     qt_backend_name = "Agg"
             except Exception:
@@ -96,7 +96,7 @@ try:
     else:
         # No Qt backend available, use Agg
         try:
-            if hasattr(mpl, 'use'):
+            if hasattr(mpl, "use"):
                 mpl.use("Agg", force=True)
                 qt_backend_name = "Agg"
                 logger.debug("No Qt backend available, using Agg backend for matplotlib")

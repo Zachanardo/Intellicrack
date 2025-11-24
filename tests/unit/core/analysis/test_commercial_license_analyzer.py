@@ -480,6 +480,92 @@ class TestCommercialLicenseAnalyzer(IntellicrackTestBase):
         assert "detected_systems" in results
         assert "confidence" in results
 
+    def test_detection_logging_for_flexlm(self, caplog):
+        """Test that FlexLM detection status is properly logged."""
+        import logging
+        caplog.set_level(logging.DEBUG)
+
+        analyzer = CommercialLicenseAnalyzer(str(self.flexlm_binary))
+        results = analyzer.analyze()
+
+        # Verify FlexLM was detected and logged
+        assert "FlexLM" in results["detected_systems"]
+        log_messages = [record.message.lower() for record in caplog.records]
+        assert any("flexlm" in msg and "detected" in msg for msg in log_messages)
+
+    def test_detection_logging_for_hasp(self, caplog):
+        """Test that HASP detection status is properly logged."""
+        import logging
+        caplog.set_level(logging.DEBUG)
+
+        analyzer = CommercialLicenseAnalyzer(str(self.hasp_binary))
+        results = analyzer.analyze()
+
+        # Verify HASP was detected and logged
+        assert "HASP" in results["detected_systems"]
+        log_messages = [record.message.lower() for record in caplog.records]
+        assert any("hasp" in msg and "detected" in msg for msg in log_messages)
+
+    def test_detection_logging_for_codemeter(self, caplog):
+        """Test that CodeMeter detection status is properly logged."""
+        import logging
+        caplog.set_level(logging.DEBUG)
+
+        analyzer = CommercialLicenseAnalyzer(str(self.codemeter_binary))
+        results = analyzer.analyze()
+
+        # Verify CodeMeter was detected and logged
+        assert "CodeMeter" in results["detected_systems"]
+        log_messages = [record.message.lower() for record in caplog.records]
+        assert any("codemeter" in msg and "detected" in msg for msg in log_messages)
+
+    def test_multiple_protections_all_logged(self, caplog):
+        """Test that multiple protection systems are all logged."""
+        import logging
+        caplog.set_level(logging.DEBUG)
+
+        # Create binary with multiple protection indicators
+        multi_protected = self.test_fixtures_dir / "multi_protected.exe"
+        content = b"PE\x00\x00" + b"\x00" * 100
+        content += b"FLEXlm" + b"\x00" * 50
+        content += b"haspvlib" + b"\x00" * 50
+        content += b"CodeMeter" + b"\x00" * 100
+        multi_protected.write_bytes(content)
+
+        analyzer = CommercialLicenseAnalyzer(str(multi_protected))
+        results = analyzer.analyze()
+
+        # All detections should be logged
+        log_messages = [record.message.lower() for record in caplog.records]
+        assert any("flexlm" in msg and "detected" in msg for msg in log_messages)
+        assert any("hasp" in msg and "detected" in msg for msg in log_messages)
+        assert any("codemeter" in msg and "detected" in msg for msg in log_messages)
+
+        multi_protected.unlink()
+
+    def test_corrupted_binary_handled_gracefully(self):
+        """Test that corrupted binaries are handled without crashing."""
+        corrupted = self.test_fixtures_dir / "corrupted.exe"
+        corrupted.write_bytes(b"\xff\xfe\xfd" * 100)
+
+        analyzer = CommercialLicenseAnalyzer(str(corrupted))
+        results = analyzer.analyze()
+
+        # Should not crash, should return valid structure
+        assert "detected_systems" in results
+        assert isinstance(results["detected_systems"], list)
+
+        corrupted.unlink()
+
+    def test_no_false_positives_on_clean_binary(self):
+        """Test that clean binaries don't trigger false positive detections."""
+        analyzer = CommercialLicenseAnalyzer(str(self.clean_binary))
+        results = analyzer.analyze()
+
+        # Must not detect any protection systems
+        assert len(results["detected_systems"]) == 0, \
+            f"False positive detection on clean binary: {results['detected_systems']}"
+
     def teardown_method(self):
         """Clean up test fixtures after each test."""
         # Remove test files

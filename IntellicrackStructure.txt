@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Sat, Nov 22, 2025 01:40:58 PM
+Generated: Sun, Nov 23, 2025 05:58:04 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -9,70 +9,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 
 ----------------------------------------
 
-├── __pycache__/
-│   ├── __init__.cpython-314.pyc
-│   ├── __main__.cpython-314.pyc
-│   ├── config.cpython-314.pyc
-│   └── main.cpython-314.pyc
 ├── ai/
-│   ├── __pycache__/
-│   │   ├── __init__.cpython-314.pyc
-│   │   ├── ai_file_tools.cpython-314.pyc
-│   │   ├── ai_script_generator.cpython-314.pyc
-│   │   ├── api_provider_clients.cpython-314.pyc
-│   │   ├── background_loader.cpython-314.pyc
-│   │   ├── code_analysis_tools.cpython-314.pyc
-│   │   ├── coordination_layer.cpython-314.pyc
-│   │   ├── enhanced_training_interface.cpython-314.pyc
-│   │   ├── file_reading_helper.cpython-314.pyc
-│   │   ├── gpu_integration.cpython-314.pyc
-│   │   ├── headless_training_interface.cpython-314.pyc
-│   │   ├── integration_manager.cpython-314.pyc
-│   │   ├── intelligent_code_modifier.cpython-314.pyc
-│   │   ├── interactive_assistant.cpython-314.pyc
-│   │   ├── lazy_model_loader.cpython-314.pyc
-│   │   ├── learning_engine.cpython-314.pyc
-│   │   ├── learning_engine_simple.cpython-314.pyc
-│   │   ├── llm_backends.cpython-314.pyc
-│   │   ├── llm_config_as_code.cpython-314.pyc
-│   │   ├── llm_config_manager.cpython-314.pyc
-│   │   ├── llm_fallback_chains.cpython-314.pyc
-│   │   ├── llm_types.cpython-314.pyc
-│   │   ├── local_gguf_server.cpython-314.pyc
-│   │   ├── lora_adapter_manager.cpython-314.pyc
-│   │   ├── model_batch_tester.cpython-314.pyc
-│   │   ├── model_cache_manager.cpython-314.pyc
-│   │   ├── model_comparison.cpython-314.pyc
-│   │   ├── model_discovery_service.cpython-314.pyc
-│   │   ├── model_download_manager.cpython-314.pyc
-│   │   ├── model_format_converter.cpython-314.pyc
-│   │   ├── model_manager_module.cpython-314.pyc
-│   │   ├── model_performance_monitor.cpython-314.pyc
-│   │   ├── model_sharding.cpython-314.pyc
-│   │   ├── multi_agent_system.cpython-314.pyc
-│   │   ├── optimization_config.cpython-314.pyc
-│   │   ├── orchestrator.cpython-314.pyc
-│   │   ├── parsing_utils.cpython-314.pyc
-│   │   ├── pattern_library.cpython-314.pyc
-│   │   ├── performance_monitor.cpython-314.pyc
-│   │   ├── performance_monitor_simple.cpython-314.pyc
-│   │   ├── performance_optimization_layer.cpython-312.pyc
-│   │   ├── performance_optimization_layer.cpython-314.pyc
-│   │   ├── predictive_intelligence.cpython-314.pyc
-│   │   ├── protection_aware_script_gen.cpython-312.pyc
-│   │   ├── protection_aware_script_gen.cpython-314.pyc
-│   │   ├── qemu_manager.cpython-314.pyc
-│   │   ├── qemu_test_manager_enhanced.cpython-314.pyc
-│   │   ├── quantization_manager.cpython-314.pyc
-│   │   ├── realtime_adaptation_engine.cpython-314.pyc
-│   │   ├── response_parser.cpython-314.pyc
-│   │   ├── script_editor.cpython-314.pyc
-│   │   ├── script_generation_agent.cpython-314.pyc
-│   │   ├── script_generation_prompts.cpython-314.pyc
-│   │   ├── semantic_code_analyzer.cpython-314.pyc
-│   │   ├── visualization_analytics.cpython-314.pyc
-│   │   ├── vulnerability_research_integration.cpython-314.pyc
-│   │   └── vulnerability_research_integration_helper.cpython-314.pyc
 │   ├── __init__.py
 │   ├── ai_file_tools.py
 │   ├── ai_script_generator.py
@@ -127,8 +64,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── script_generation_agent.py
 │   ├── script_generation_prompts.py
 │   ├── semantic_code_analyzer.py
-│   ├── TODO.md
-│   ├── TODO.xml
 │   ├── visualization_analytics.py
 │   ├── vulnerability_research_integration.py
 │   └── vulnerability_research_integration_helper.py
@@ -316,7 +251,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── analysis_cli.py
 │   ├── ascii_charts.py
 │   ├── cli.py
-│   ├── cli.py.backup
 │   ├── config_manager.py
 │   ├── config_profiles.py
 │   ├── enhanced_runner.py
@@ -335,6 +269,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── __init__.cpython-314.pyc
 │   │   ├── adobe_injector_integration.cpython-314.pyc
 │   │   ├── ai_model_manager.cpython-314.pyc
+│   │   ├── app_context.cpython-312.pyc
 │   │   ├── app_context.cpython-314.pyc
 │   │   ├── binary_analyzer.cpython-314.pyc
 │   │   ├── config_manager.cpython-314.pyc
@@ -627,7 +562,8 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── automated_unpacker.py
 │   │   ├── bypass_engine.py
 │   │   ├── crypto_key_extractor.py
-│   │   └── keygen_generator.py
+│   │   ├── keygen_generator.py
+│   │   └── license_bypass_code_generator.py
 │   ├── integration/
 │   │   ├── __pycache__/
 │   │   │   ├── intelligent_correlation.cpython-314.pyc
@@ -1836,7 +1772,4 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 ├── Claude.md
 ├── config.py
 ├── main.py
-├── README.md
-├── test_scanner_minimal.py
-├── TODO.md
-└── TODO.xml
+└── README.md

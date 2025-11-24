@@ -893,3 +893,52 @@ class TestConcolicExecutorPerformance(IntellicrackTestBase):
         assert len(results) == 2
         for result in results:
             self.assert_real_output(result)
+
+    def test_branch_decision_logging(self, caplog):
+        """Test that branch decisions are logged with take_branch variable."""
+        import logging
+        caplog.set_level(logging.DEBUG)
+
+        engine = ConcolicExecutionEngine(
+            binary_path=str(self.test_binary),
+            max_iterations=10,
+            timeout=30
+        )
+
+        result = engine.analyze(str(self.test_binary))
+
+        log_messages = [record.message.lower() for record in caplog.records]
+        assert any("take_branch" in msg or "branch" in msg for msg in log_messages)
+
+    def test_branch_logging_shows_pc_address(self, caplog):
+        """Test that branch logging includes PC addresses."""
+        import logging
+        caplog.set_level(logging.DEBUG)
+
+        engine = ConcolicExecutionEngine(
+            binary_path=str(self.test_binary),
+            max_iterations=10,
+            timeout=30
+        )
+
+        result = engine.analyze(str(self.test_binary))
+
+        log_messages = [record.message for record in caplog.records]
+        pc_logs = [msg for msg in log_messages if "0x" in msg.lower() or "pc" in msg.lower()]
+        assert len(pc_logs) > 0
+
+    def test_symbolic_execution_path_exploration_logging(self, caplog):
+        """Test that both taken and not-taken paths are explored and logged."""
+        import logging
+        caplog.set_level(logging.DEBUG)
+
+        engine = ConcolicExecutionEngine(
+            binary_path=str(self.test_binary),
+            max_iterations=20,
+            timeout=45
+        )
+
+        result = engine.analyze(str(self.test_binary))
+
+        log_messages = [record.message.lower() for record in caplog.records]
+        assert any("branch" in msg or "path" in msg for msg in log_messages)

@@ -449,9 +449,7 @@ except ImportError as e:
             return self.data.index(max_val)
 
     # Fallback array creation functions
-    def array(
-        data: list | tuple | "FallbackArray" | float, dtype: type | None = None
-    ) -> "FallbackArray":
+    def array(data: list | tuple | "FallbackArray" | float, dtype: type | None = None) -> "FallbackArray":
         """Create array from data.
 
         Args:
@@ -513,9 +511,7 @@ except ImportError as e:
         """
         return zeros(shape, dtype)
 
-    def full(
-        shape: int | tuple[int, ...], fill_value: float, dtype: type | None = None
-    ) -> "FallbackArray":
+    def full(shape: int | tuple[int, ...], fill_value: float, dtype: type | None = None) -> "FallbackArray":
         """Create array filled with value.
 
         Args:
@@ -555,9 +551,7 @@ except ImportError as e:
             result.append(row)
         return FallbackArray(result, dtype, (N, M))
 
-    def arange(
-        start: float, stop: float | None = None, step: float = 1, dtype: type | None = None
-    ) -> "FallbackArray":
+    def arange(start: float, stop: float | None = None, step: float = 1, dtype: type | None = None) -> "FallbackArray":
         """Create array with range of values.
 
         Args:
@@ -819,10 +813,7 @@ except ImportError as e:
         x_data = x.data if isinstance(x, FallbackArray) else [x] * len(cond_data)
         y_data = y.data if isinstance(y, FallbackArray) else [y] * len(cond_data)
 
-        result = [
-            xv if c else yv
-            for c, xv, yv in zip(cond_data, x_data, y_data, strict=False)
-        ]
+        result = [xv if c else yv for c, xv, yv in zip(cond_data, x_data, y_data, strict=False)]
         return FallbackArray(result)
 
     def allclose(
@@ -849,10 +840,7 @@ except ImportError as e:
         if len(a_data) != len(b_data):
             return False
 
-        return all(
-            np_abs(av - bv) <= atol + rtol * np_abs(bv)
-            for av, bv in zip(a_data, b_data, strict=False)
-        )
+        return all(np_abs(av - bv) <= atol + rtol * np_abs(bv) for av, bv in zip(a_data, b_data, strict=False))
 
     def array_equal(a: "FallbackArray" | list, b: "FallbackArray" | list) -> bool:
         """Check if arrays are exactly equal.
@@ -945,9 +933,7 @@ except ImportError as e:
 
         return FallbackArray(result)
 
-    def histogram(
-        a: "FallbackArray" | list, bins: int = 10
-    ) -> tuple["FallbackArray", "FallbackArray"]:
+    def histogram(a: "FallbackArray" | list, bins: int = 10) -> tuple["FallbackArray", "FallbackArray"]:
         """Compute histogram.
 
         Args:
@@ -1420,12 +1406,8 @@ except ImportError as e:
                     for k in range(N):
                         angle = 2 * math.pi * k * n / N
                         if isinstance(data[k], complex):
-                            sum_real += data[k].real * math.cos(angle) - data[k].imag * math.sin(
-                                angle
-                            )
-                            sum_imag += data[k].real * math.sin(angle) + data[k].imag * math.cos(
-                                angle
-                            )
+                            sum_real += data[k].real * math.cos(angle) - data[k].imag * math.sin(angle)
+                            sum_imag += data[k].real * math.sin(angle) + data[k].imag * math.cos(angle)
                         else:
                             sum_real += data[k] * math.cos(angle)
                             sum_imag += data[k] * math.sin(angle)
@@ -1482,9 +1464,7 @@ except ImportError as e:
                 return FallbackArray(data, float, shape)
 
             @staticmethod
-            def randint(
-                low: int, high: int | None = None, size: int | tuple[int, ...] | None = None
-            ) -> "FallbackArray" | int:
+            def randint(low: int, high: int | None = None, size: int | tuple[int, ...] | None = None) -> "FallbackArray" | int:
                 """Random integers.
 
                 Args:
@@ -1555,9 +1535,7 @@ except ImportError as e:
                 if replace:
                     result = [_random.choice(data) for _ in range(total)]  # noqa: S311
                 elif total > len(data):
-                    raise ValueError(
-                        "Cannot sample more items than available without replacement"
-                    )
+                    raise ValueError("Cannot sample more items than available without replacement")
                 else:
                     result = _random.sample(data, total)
 

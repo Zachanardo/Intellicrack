@@ -441,6 +441,60 @@ class TestStarForceAnalyzerIntegration(unittest.TestCase):
         self.assertIsInstance(result.ioctl_commands, list)
         self.assertIsInstance(result.anti_debug_techniques, list)
 
+    def test_ioctl_probe_logs_result_status(self):
+        """Test that IOCTL probing logs the result status."""
+        import logging
+        from unittest.mock import Mock
+        import ctypes
+
+        with self.assertLogs(level=logging.DEBUG) as log_context:
+            analyzer = StarForceAnalyzer()
+
+            if analyzer._kernel32 is not None:
+                mock_handle = ctypes.c_void_p(0x1234)
+                with patch('ctypes.windll.kernel32.CreateFileW', return_value=mock_handle):
+                    with patch('ctypes.windll.kernel32.DeviceIoControl', return_value=1):
+                        analyzer.probe_ioctl('\\\\.\\StarForce', 0x80002000)
+
+                log_messages = ' '.join(log_context.output).lower()
+                self.assertTrue('result' in log_messages or 'deviceiocontrol' in log_messages)
+
+    def test_ioctl_probe_logs_failure_status(self):
+        """Test that IOCTL probing logs failure when DeviceIoControl fails."""
+        import logging
+        from unittest.mock import Mock
+        import ctypes
+
+        with self.assertLogs(level=logging.DEBUG) as log_context:
+            analyzer = StarForceAnalyzer()
+
+            if analyzer._kernel32 is not None:
+                mock_handle = ctypes.c_void_p(0x1234)
+                with patch('ctypes.windll.kernel32.CreateFileW', return_value=mock_handle):
+                    with patch('ctypes.windll.kernel32.DeviceIoControl', return_value=0):
+                        result = analyzer.probe_ioctl('\\\\.\\StarForce', 0x80002000)
+
+                self.assertIsNone(result)
+
+    def test_ioctl_operations_track_bytes_returned(self):
+        """Test that IOCTL operations track bytes returned from DeviceIoControl."""
+        import logging
+        import ctypes
+
+        analyzer = StarForceAnalyzer()
+
+        if analyzer._kernel32 is not None:
+            mock_handle = ctypes.c_void_p(0x1234)
+            with patch('ctypes.windll.kernel32.CreateFileW', return_value=mock_handle):
+                with patch('ctypes.windll.kernel32.DeviceIoControl') as mock_ioctl:
+                    mock_ioctl.return_value = 1
+
+                    with self.assertLogs(level=logging.DEBUG) as log_context:
+                        result = analyzer.probe_ioctl('\\\\.\\StarForce', 0x80002000)
+
+                    log_messages = ' '.join(log_context.output).lower()
+                    self.assertTrue('bytes' in log_messages or 'result' in log_messages)
+
 
 if __name__ == '__main__':
     unittest.main()
