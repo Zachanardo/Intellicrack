@@ -68,9 +68,7 @@ def _detect_and_fix_intel_arc() -> bool:
     """
     # Check if UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS is set (Intel Arc indicator)
     if os.environ.get("UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS") == "1":
-        logger.info(
-            "Intel Arc GPU environment detected - using CPU mode for PyTorch to prevent GIL issues"
-        )
+        logger.info("Intel Arc GPU environment detected - using CPU mode for PyTorch to prevent GIL issues")
         os.environ["CUDA_VISIBLE_DEVICES"] = ""  # Empty string = no CUDA devices
         return True
 
@@ -131,9 +129,7 @@ def _safe_torch_import(
 
 # Attempt safe PyTorch import - skip entirely if Intel Arc detected
 if _is_intel_arc:
-    logger.info(
-        "Intel Arc GPU detected - skipping PyTorch import to prevent GIL crashes, using fallbacks"
-    )
+    logger.info("Intel Arc GPU detected - skipping PyTorch import to prevent GIL crashes, using fallbacks")
     HAS_TORCH = False
     TORCH_AVAILABLE = False
     TORCH_VERSION = None
@@ -157,9 +153,7 @@ else:
             HAS_TORCH = True
             TORCH_AVAILABLE = True
             TORCH_VERSION = torch_temp.__version__
-            logger.info(
-                f"PyTorch {TORCH_VERSION} imported successfully with universal GPU compatibility"
-            )
+            logger.info(f"PyTorch {TORCH_VERSION} imported successfully with universal GPU compatibility")
         else:
             error_msg = "PyTorch import failed"
             logger.error(error_msg)

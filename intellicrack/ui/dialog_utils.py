@@ -61,8 +61,7 @@ def setup_binary_header(dialog: QWidget, layout: QHBoxLayout) -> None:
 
     # Set tooltip to guide users on expected file types
     dialog.binary_path_edit.setToolTip(
-        "Enter or browse for executable binary path\n"
-        "Supported formats: PE (*.exe, *.dll), ELF (*.so), Mach-O (*.dylib)",
+        "Enter or browse for executable binary path\nSupported formats: PE (*.exe, *.dll), ELF (*.so), Mach-O (*.dylib)",
     )
 
     # Configure text field appearance and behavior

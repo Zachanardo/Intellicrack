@@ -302,11 +302,7 @@ class ServiceHealthChecker:
 
         """
         health_data = self.config.get("service_health.last_check", {})
-        return [
-            service_name
-            for service_name, status in health_data.items()
-            if status.get("healthy", False)
-        ]
+        return [service_name for service_name, status in health_data.items() if status.get("healthy", False)]
 
     def get_unhealthy_services(self) -> list[str]:
         """Get list of services that failed health checks.
@@ -316,11 +312,7 @@ class ServiceHealthChecker:
 
         """
         health_data = self.config.get("service_health.last_check", {})
-        return [
-            service_name
-            for service_name, status in health_data.items()
-            if not status.get("healthy", False)
-        ]
+        return [service_name for service_name, status in health_data.items() if not status.get("healthy", False)]
 
     async def wait_for_service(self, service_name: str, check_interval: float = 2.0) -> bool:
         """Wait for a service to become available.
@@ -344,9 +336,7 @@ class ServiceHealthChecker:
 
                     await asyncio.sleep(check_interval)
         except TimeoutError:
-            logger.warning(
-                f"Service {service_name} did not become available within {default_timeout} seconds"
-            )
+            logger.warning(f"Service {service_name} did not become available within {default_timeout} seconds")
             return False
 
     def get_service_endpoint(self, service_name: str) -> str:

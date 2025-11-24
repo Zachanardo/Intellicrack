@@ -296,11 +296,7 @@ class NetworkForensicsEngine:
                         artifacts.append(
                             {
                                 "type": "Base64_Data",
-                                "value": (
-                                    f"{b64_str[:100]}..."
-                                    if len(b64_str) > 100
-                                    else b64_str
-                                ),
+                                "value": (f"{b64_str[:100]}..." if len(b64_str) > 100 else b64_str),
                                 "offset": data.find(b64),
                                 "length": len(b64),
                                 "full_length": len(b64_str),
@@ -366,9 +362,7 @@ class NetworkForensicsEngine:
                     unique_artifacts.append(artifact)
 
             # Log artifact extraction progress
-            self.logger.info(
-                f"Extracted {len(unique_artifacts)} unique artifacts from {len(traffic_data)} bytes of traffic data"
-            )
+            self.logger.info(f"Extracted {len(unique_artifacts)} unique artifacts from {len(traffic_data)} bytes of traffic data")
 
             return unique_artifacts
         except Exception as e:
@@ -392,11 +386,7 @@ class NetworkForensicsEngine:
                 return protocols
 
             # Analyze packet data for protocol signatures
-            data = (
-                packet_data.lower()
-                if isinstance(packet_data, bytes)
-                else packet_data.encode().lower()
-            )
+            data = packet_data.lower() if isinstance(packet_data, bytes) else packet_data.encode().lower()
 
             # HTTP/HTTPS detection
             http_patterns = [
@@ -447,8 +437,7 @@ class NetworkForensicsEngine:
                 b"to:",
             ]
 
-            smtp_count = sum(bool(pattern in data)
-                         for pattern in smtp_patterns)
+            smtp_count = sum(bool(pattern in data) for pattern in smtp_patterns)
             if smtp_count >= 2:  # Multiple SMTP indicators
                 protocols.append("SMTP")
 
@@ -503,9 +492,7 @@ class NetworkForensicsEngine:
             if protocols:
                 self.logger.info(f"Detected protocols in packet data: {', '.join(protocols)}")
             else:
-                self.logger.debug(
-                    f"No known protocols detected in {len(packet_data)} bytes of packet data"
-                )
+                self.logger.debug(f"No known protocols detected in {len(packet_data)} bytes of packet data")
 
             return list(set(protocols))  # Remove duplicates
 

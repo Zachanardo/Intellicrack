@@ -231,9 +231,7 @@ class BinaryFeatureExtractor:
             sections.extend(
                 (bytes(section.content), section.virtual_address)
                 for section in self.lief_binary.sections
-                if section.has_characteristic(
-                    lief.PE.SECTION_CHARACTERISTICS.MEM_EXECUTE
-                )
+                if section.has_characteristic(lief.PE.SECTION_CHARACTERISTICS.MEM_EXECUTE)
             )
         else:
             # Fallback: treat entire binary as executable
@@ -432,11 +430,7 @@ class BinaryFeatureExtractor:
             try:
                 if hasattr(self.pe, "DIRECTORY_ENTRY_IMPORT"):
                     for entry in self.pe.DIRECTORY_ENTRY_IMPORT:
-                        imports.extend(
-                            imp.name.decode("utf-8", errors="ignore")
-                            for imp in entry.imports
-                            if imp.name
-                        )
+                        imports.extend(imp.name.decode("utf-8", errors="ignore") for imp in entry.imports if imp.name)
             except Exception as e:
                 self.logger.debug(f"Import extraction error: {e}")
         elif self.lief_binary:
@@ -544,9 +538,7 @@ class BinaryFeatureExtractor:
 
         return features
 
-    def _extract_strings(
-        self, data: bytes, min_length: int = 4, encoding: str = "ascii"
-    ) -> list[str]:
+    def _extract_strings(self, data: bytes, min_length: int = 4, encoding: str = "ascii") -> list[str]:
         """Extract strings from binary data."""
         strings = []
 

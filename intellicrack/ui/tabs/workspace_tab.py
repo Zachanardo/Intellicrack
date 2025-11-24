@@ -58,9 +58,7 @@ class WorkspaceTab(QWidget):
     binary_loaded = pyqtSignal(str)
     analysis_saved = pyqtSignal(str)
 
-    def __init__(
-        self, shared_context: dict[str, object] | None = None, parent: QWidget | None = None
-    ) -> None:
+    def __init__(self, shared_context: dict[str, object] | None = None, parent: QWidget | None = None) -> None:
         """Initialize workspace tab with project management and activity logging.
 
         Args:
@@ -144,9 +142,7 @@ class WorkspaceTab(QWidget):
         project_layout.addWidget(QLabel("Current Project:"))
 
         self.current_project_label = QLabel("No project loaded")
-        self.current_project_label.setToolTip(
-            "Currently active project name. Projects organize your analysis work and related files"
-        )
+        self.current_project_label.setToolTip("Currently active project name. Projects organize your analysis work and related files")
         StyleManager.style_label(self.current_project_label, "current_project_label")
         project_layout.addWidget(self.current_project_label)
         project_layout.addStretch()
@@ -164,24 +160,18 @@ class WorkspaceTab(QWidget):
         actions_layout.addWidget(self.new_project_btn)
 
         self.open_project_btn = QPushButton("Open Project")
-        self.open_project_btn.setToolTip(
-            "Open an existing Intellicrack project (.icp) file to resume previous analysis work"
-        )
+        self.open_project_btn.setToolTip("Open an existing Intellicrack project (.icp) file to resume previous analysis work")
         self.open_project_btn.clicked.connect(self.open_project)
         actions_layout.addWidget(self.open_project_btn)
 
         self.save_project_btn = QPushButton("Save Project")
-        self.save_project_btn.setToolTip(
-            "Save current project state including loaded binaries, analysis results, and configuration"
-        )
+        self.save_project_btn.setToolTip("Save current project state including loaded binaries, analysis results, and configuration")
         self.save_project_btn.clicked.connect(self.save_project)
         self.save_project_btn.setEnabled(False)
         actions_layout.addWidget(self.save_project_btn)
 
         self.close_project_btn = QPushButton("Close Project")
-        self.close_project_btn.setToolTip(
-            "Close the current project and clear the workspace. Prompts to save unsaved changes"
-        )
+        self.close_project_btn.setToolTip("Close the current project and clear the workspace. Prompts to save unsaved changes")
         self.close_project_btn.clicked.connect(self.close_project)
         self.close_project_btn.setEnabled(False)
         actions_layout.addWidget(self.close_project_btn)
@@ -205,9 +195,7 @@ class WorkspaceTab(QWidget):
         binary_layout.addWidget(QLabel("Loaded Binary:"))
 
         self.current_binary_label = QLabel("No binary loaded")
-        self.current_binary_label.setToolTip(
-            "Currently loaded binary file for analysis. Supports PE, ELF, and other executable formats"
-        )
+        self.current_binary_label.setToolTip("Currently loaded binary file for analysis. Supports PE, ELF, and other executable formats")
         StyleManager.style_label(self.current_binary_label, "current_binary_label")
         binary_layout.addWidget(self.current_binary_label)
         binary_layout.addStretch()
@@ -237,9 +225,7 @@ class WorkspaceTab(QWidget):
         actions_layout = QHBoxLayout()
 
         self.load_binary_btn = QPushButton("Load Binary")
-        self.load_binary_btn.setToolTip(
-            "Select and load an executable file (EXE, DLL, SO, ELF) for reverse engineering analysis"
-        )
+        self.load_binary_btn.setToolTip("Select and load an executable file (EXE, DLL, SO, ELF) for reverse engineering analysis")
         self.load_binary_btn.clicked.connect(self.load_binary)
         actions_layout.addWidget(self.load_binary_btn)
 
@@ -252,9 +238,7 @@ class WorkspaceTab(QWidget):
         actions_layout.addWidget(self.analyze_binary_btn)
 
         self.export_analysis_btn = QPushButton("Export Analysis")
-        self.export_analysis_btn.setToolTip(
-            "Export analysis results to JSON, CSV, or text format for external processing or documentation"
-        )
+        self.export_analysis_btn.setToolTip("Export analysis results to JSON, CSV, or text format for external processing or documentation")
         self.export_analysis_btn.clicked.connect(self.export_analysis)
         self.export_analysis_btn.setEnabled(False)
         actions_layout.addWidget(self.export_analysis_btn)
@@ -287,25 +271,19 @@ class WorkspaceTab(QWidget):
         actions_layout = QHBoxLayout()
 
         self.add_file_btn = QPushButton("Add File")
-        self.add_file_btn.setToolTip(
-            "Import external files into the project directory for analysis or reference"
-        )
+        self.add_file_btn.setToolTip("Import external files into the project directory for analysis or reference")
         self.add_file_btn.clicked.connect(self.add_file_to_project)
         self.add_file_btn.setEnabled(False)
         actions_layout.addWidget(self.add_file_btn)
 
         self.remove_file_btn = QPushButton("Remove File")
-        self.remove_file_btn.setToolTip(
-            "Remove the selected file from the project. This action cannot be undone"
-        )
+        self.remove_file_btn.setToolTip("Remove the selected file from the project. This action cannot be undone")
         self.remove_file_btn.clicked.connect(self.remove_file_from_project)
         self.remove_file_btn.setEnabled(False)
         actions_layout.addWidget(self.remove_file_btn)
 
         self.refresh_files_btn = QPushButton("Refresh")
-        self.refresh_files_btn.setToolTip(
-            "Refresh the file tree to show any external changes to the project directory"
-        )
+        self.refresh_files_btn.setToolTip("Refresh the file tree to show any external changes to the project directory")
         self.refresh_files_btn.clicked.connect(self.refresh_project_files)
         self.refresh_files_btn.setEnabled(False)
         actions_layout.addWidget(self.refresh_files_btn)
@@ -331,16 +309,12 @@ class WorkspaceTab(QWidget):
 
         self.log_filter = QLineEdit()
         self.log_filter.setText("")
-        self.log_filter.setToolTip(
-            "Filter log entries by keyword. Matching entries will be highlighted in yellow"
-        )
+        self.log_filter.setToolTip("Filter log entries by keyword. Matching entries will be highlighted in yellow")
         self.log_filter.textChanged.connect(self.filter_activity_log)
         search_layout.addWidget(self.log_filter)
 
         self.clear_log_btn = QPushButton("Clear Log")
-        self.clear_log_btn.setToolTip(
-            "Clear all activity log entries. This action cannot be undone"
-        )
+        self.clear_log_btn.setToolTip("Clear all activity log entries. This action cannot be undone")
         self.clear_log_btn.clicked.connect(self.clear_activity_log)
         search_layout.addWidget(self.clear_log_btn)
 
@@ -349,9 +323,7 @@ class WorkspaceTab(QWidget):
         # Activity log text area
         self.activity_log_text = QTextEdit()
         self.activity_log_text.setReadOnly(True)
-        self.activity_log_text.setToolTip(
-            "Activity log showing all workspace operations, analysis results, and system messages"
-        )
+        self.activity_log_text.setToolTip("Activity log showing all workspace operations, analysis results, and system messages")
         self.activity_log_text.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
         layout.addWidget(self.activity_log_text)
 
@@ -425,9 +397,7 @@ class WorkspaceTab(QWidget):
 
     def create_new_project(self) -> None:
         """Create a new project."""
-        if project_dir := QFileDialog.getExistingDirectory(
-            self, "Select Project Directory", "", QFileDialog.Option.ShowDirsOnly
-        ):
+        if project_dir := QFileDialog.getExistingDirectory(self, "Select Project Directory", "", QFileDialog.Option.ShowDirsOnly):
             project_name = os.path.basename(project_dir)
             self.current_project_path = project_dir
 
@@ -455,9 +425,7 @@ class WorkspaceTab(QWidget):
 
     def open_project(self) -> None:
         """Open an existing project."""
-        project_file, _ = QFileDialog.getOpenFileName(
-            self, "Open Project", "", "Intellicrack Projects (*.icp);;All Files (*)"
-        )
+        project_file, _ = QFileDialog.getOpenFileName(self, "Open Project", "", "Intellicrack Projects (*.icp);;All Files (*)")
 
         if project_file:
             project_dir = os.path.dirname(project_file)
@@ -512,9 +480,7 @@ class WorkspaceTab(QWidget):
                 self,
                 "Close Project",
                 "Do you want to save the project before closing?",
-                QMessageBox.StandardButton.Yes
-                | QMessageBox.StandardButton.No
-                | QMessageBox.StandardButton.Cancel,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel,
             )
 
             if reply == QMessageBox.StandardButton.Cancel:
@@ -606,9 +572,7 @@ class WorkspaceTab(QWidget):
                     if self.app_context.load_binary(binary_file, metadata):
                         self.log_activity("Binary loaded into analysis system", "SUCCESS")
                     else:
-                        self.log_activity(
-                            "Binary loaded locally only (app context unavailable)", "WARNING"
-                        )
+                        self.log_activity("Binary loaded locally only (app context unavailable)", "WARNING")
                 except Exception as e:
                     self.log_activity(f"Failed to load binary into app context: {e}", "ERROR")
 
@@ -686,9 +650,7 @@ class WorkspaceTab(QWidget):
                             elif machine_type == 0x01C4:
                                 self.log_activity("Architecture: ARM", "INFO")
                             else:
-                                self.log_activity(
-                                    f"Architecture: Unknown (0x{machine_type:04x})", "INFO"
-                                )
+                                self.log_activity(f"Architecture: Unknown (0x{machine_type:04x})", "INFO")
 
                             # Basic protection detection
                             f.seek(pe_offset + 22)
@@ -703,9 +665,7 @@ class WorkspaceTab(QWidget):
                                 protections.append("CFG")
 
                             if protections:
-                                self.log_activity(
-                                    f"Protections: {', '.join(protections)}", "WARNING"
-                                )
+                                self.log_activity(f"Protections: {', '.join(protections)}", "WARNING")
                             else:
                                 self.log_activity("No standard protections detected", "INFO")
                         else:
@@ -799,10 +759,7 @@ class WorkspaceTab(QWidget):
             items = []
 
             if parent is None:
-                items.extend(
-                    self.file_tree.topLevelItem(i)
-                    for i in range(self.file_tree.topLevelItemCount())
-                )
+                items.extend(self.file_tree.topLevelItem(i) for i in range(self.file_tree.topLevelItemCount()))
             else:
                 for i in range(parent.childCount()):
                     items.append(parent.child(i))

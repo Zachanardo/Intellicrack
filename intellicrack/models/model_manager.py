@@ -56,9 +56,7 @@ except ImportError:
                 None for fallback implementation
 
             """
-            logger.debug(
-                f"Fallback repository creation called with {len(args)} args and {len(kwargs)} kwargs"
-            )
+            logger.debug(f"Fallback repository creation called with {len(args)} args and {len(kwargs)} kwargs")
             return None
 
     class DownloadProgressCallback:
@@ -85,9 +83,7 @@ except ImportError:
                 **kwargs: Variable keyword arguments
 
             """
-            logger.debug(
-                f"ModelInfo fallback initialized with {len(args)} args and {len(kwargs)} kwargs"
-            )
+            logger.debug(f"ModelInfo fallback initialized with {len(args)} args and {len(kwargs)} kwargs")
             self.name: str = "unknown"
             self.size: int = 0
 
@@ -162,9 +158,7 @@ class ModelManager:
         """
         self.config = config
         self.repositories: dict[str, ModelRepositoryInterface] = {}
-        self.download_dir = config.get(
-            "download_directory", os.path.join(os.path.dirname(__file__), "downloads")
-        )
+        self.download_dir = config.get("download_directory", os.path.join(os.path.dirname(__file__), "downloads"))
 
         # Create download directory
         os.makedirs(self.download_dir, exist_ok=True)
@@ -366,9 +360,7 @@ class ModelManager:
         # Call the completion handler
         progress_handler.on_complete(success, message)
 
-    def verify_model_integrity(
-        self, model_path: str, expected_checksum: str | None = None
-    ) -> tuple[bool, str]:
+    def verify_model_integrity(self, model_path: str, expected_checksum: str | None = None) -> tuple[bool, str]:
         """Verify the integrity of a model file.
 
         Args:
@@ -441,9 +433,7 @@ class ModelManager:
             return False
 
         # Special handling for local repository
-        if repository_name == "local" and isinstance(
-            self.repositories[repository_name], LocalFileRepository
-        ):
+        if repository_name == "local" and isinstance(self.repositories[repository_name], LocalFileRepository):
             return self.repositories[repository_name].remove_model(model_id)
 
         # For API repositories, we just remove the local copy if it exists
@@ -563,9 +553,7 @@ class ModelManager:
                     from torch import nn
 
                     class SimpleNN(nn.Module):
-                        def __init__(
-                            self, input_size: int, hidden_size: int, output_size: int
-                        ) -> None:
+                        def __init__(self, input_size: int, hidden_size: int, output_size: int) -> None:
                             super().__init__()
                             self.fc1 = nn.Linear(input_size, hidden_size)
                             self.relu = nn.ReLU()

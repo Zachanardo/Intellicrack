@@ -45,25 +45,19 @@ except ImportError:
 try:
     from ..utils.binary.pe_analysis_common import PEAnalyzer
 except ImportError:
-    logger.warning(
-        "Failed to import PEAnalyzer from ..utils.binary.pe_analysis_common, PE analysis will be disabled."
-    )
+    logger.warning("Failed to import PEAnalyzer from ..utils.binary.pe_analysis_common, PE analysis will be disabled.")
     PEAnalyzer = None
 
 try:
     from ..utils.binary.elf_analyzer import ELFAnalyzer
 except ImportError:
-    logger.warning(
-        "Failed to import ELFAnalyzer from ..utils.binary.elf_analyzer, ELF analysis will be disabled."
-    )
+    logger.warning("Failed to import ELFAnalyzer from ..utils.binary.elf_analyzer, ELF analysis will be disabled.")
     ELFAnalyzer = None
 
 try:
     from ..utils.system.os_detection import detect_file_type
 except ImportError:
-    logger.warning(
-        "Failed to import detect_file_type from ..utils.system.os_detection, using fallback."
-    )
+    logger.warning("Failed to import detect_file_type from ..utils.system.os_detection, using fallback.")
 
     def detect_file_type(file_path: str | Path) -> str:
         """Fallback file type detection.
@@ -85,9 +79,7 @@ except ImportError:
 try:
     from ..utils.protection_utils import calculate_entropy
 except ImportError:
-    logger.warning(
-        "Failed to import calculate_entropy from ..utils.protection_utils, using fallback."
-    )
+    logger.warning("Failed to import calculate_entropy from ..utils.protection_utils, using fallback.")
 
     def calculate_entropy(data: bytes) -> float:
         """Calculate entropy of binary data."""
@@ -129,15 +121,11 @@ class BinaryAnalyzer:
 
         # Initialize sub-analyzers
         self.logger.debug("Initializing sub-analyzers.")
-        self.multi_format_analyzer = (
-            MultiFormatBinaryAnalyzer() if MultiFormatBinaryAnalyzer else None
-        )
+        self.multi_format_analyzer = MultiFormatBinaryAnalyzer() if MultiFormatBinaryAnalyzer else None
         self.pe_analyzer = PEAnalyzer() if PEAnalyzer else None
         self.elf_analyzer = ELFAnalyzer() if ELFAnalyzer else None
         if not self.multi_format_analyzer:
-            self.logger.warning(
-                "MultiFormatBinaryAnalyzer not available. Analysis will be limited."
-            )
+            self.logger.warning("MultiFormatBinaryAnalyzer not available. Analysis will be limited.")
         if not self.pe_analyzer:
             self.logger.warning("PEAnalyzer not available. PE file analysis will be limited.")
         if not self.elf_analyzer:
@@ -164,13 +152,9 @@ class BinaryAnalyzer:
             "msi",
             "com",  # Other formats
         ]
-        self.logger.info(
-            f"BinaryAnalyzer initialized with {len(self.supported_formats)} supported formats."
-        )
+        self.logger.info(f"BinaryAnalyzer initialized with {len(self.supported_formats)} supported formats.")
 
-    def analyze(
-        self, file_path: str | Path, analysis_options: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    def analyze(self, file_path: str | Path, analysis_options: dict[str, Any] | None = None) -> dict[str, Any]:
         """Analyze a binary file comprehensively.
 
         Args:
@@ -230,9 +214,7 @@ class BinaryAnalyzer:
 
             self.logger.info("Step 2: Detecting file type.")
             self._detect_file_type(file_path, results)
-            self.logger.info(
-                f"Detected file type: {results['file_type'].get('description', 'Unknown')}"
-            )
+            self.logger.info(f"Detected file type: {results['file_type'].get('description', 'Unknown')}")
             self.logger.info("Step 2: Completed.")
 
             self.logger.info("Step 3: Calculating file hashes.")
@@ -256,18 +238,14 @@ class BinaryAnalyzer:
             if analysis_options is None or analysis_options.get("entropy_analysis", True):
                 self.logger.info("Step 6: Analyzing entropy.")
                 self._analyze_entropy(file_path, results)
-                self.logger.info(
-                    f"Overall file entropy: {results['entropy'].get('overall', 0.0):.4f}"
-                )
+                self.logger.info(f"Overall file entropy: {results['entropy'].get('overall', 0.0):.4f}")
                 self.logger.info("Step 6: Completed.")
 
             # Protection analysis
             if analysis_options is None or analysis_options.get("protection_analysis", True):
                 self.logger.info("Step 7: Analyzing for protections.")
                 self._analyze_protections(file_path, results)
-                self.logger.info(
-                    f"Found {len(results['protection_info'].get('detected', []))} protection(s)."
-                )
+                self.logger.info(f"Found {len(results['protection_info'].get('detected', []))} protection(s).")
                 self.logger.info("Step 7: Completed.")
 
             # Generate recommendations
@@ -298,9 +276,7 @@ class BinaryAnalyzer:
         stat = file_path.stat()
         return f"{file_path}_{stat.st_size}_{stat.st_mtime}"
 
-    def _analyze_basic_info(
-        self, file_path: Path, results: dict[str, Any], options: dict[str, Any] | None
-    ) -> None:
+    def _analyze_basic_info(self, file_path: Path, results: dict[str, Any], options: dict[str, Any] | None) -> None:
         """Analyze basic file information."""
         self.logger.debug(f"Extracting basic file metadata for {file_path}")
         try:
@@ -310,9 +286,7 @@ class BinaryAnalyzer:
             results["basic_info"] = {
                 "file_size": stat_info.st_size,
                 "creation_time": datetime.datetime.fromtimestamp(stat_info.st_ctime).isoformat(),
-                "modification_time": datetime.datetime.fromtimestamp(
-                    stat_info.st_mtime
-                ).isoformat(),
+                "modification_time": datetime.datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
                 "access_time": datetime.datetime.fromtimestamp(stat_info.st_atime).isoformat(),
                 "permissions": oct(stat_info.st_mode)[-3:],
                 "is_executable": os.access(file_path, os.X_OK),
@@ -375,9 +349,7 @@ class BinaryAnalyzer:
                 file_type_info["format"] = "Unknown"
                 file_type_info["description"] = "Unknown binary format"
 
-            self.logger.debug(
-                f"Detected format: {file_type_info['format']} ({file_type_info['description']})"
-            )
+            self.logger.debug(f"Detected format: {file_type_info['format']} ({file_type_info['description']})")
             results["file_type"] = file_type_info
 
         except Exception as e:
@@ -401,33 +373,25 @@ class BinaryAnalyzer:
                     for hasher in hash_algos.values():
                         hasher.update(chunk)
 
-            results["file_hashes"] = {
-                name: hasher.hexdigest() for name, hasher in hash_algos.items()
-            }
+            results["file_hashes"] = {name: hasher.hexdigest() for name, hasher in hash_algos.items()}
             self.logger.debug(f"Calculated hashes: {results['file_hashes']}")
 
         except Exception as e:
             self.logger.exception(f"Hash calculation failed for {file_path}: {e}")
             results["warnings"].append(f"Hash calculation failed: {e!s}")
 
-    def _analyze_format_specific(
-        self, file_path: Path, results: dict[str, Any], options: dict[str, Any] | None
-    ) -> None:
+    def _analyze_format_specific(self, file_path: Path, results: dict[str, Any], options: dict[str, Any] | None) -> None:
         """Perform format-specific analysis."""
         self.logger.debug(f"Performing format-specific analysis for {file_path}")
         try:
             if not self.multi_format_analyzer:
-                self.logger.warning(
-                    "Multi-format analyzer not available, skipping format-specific analysis."
-                )
+                self.logger.warning("Multi-format analyzer not available, skipping format-specific analysis.")
                 results["warnings"].append("Multi-format analyzer not available")
                 return
 
             # Use multi-format analyzer
             detected_format = results.get("file_type", {}).get("format", "Unknown")
-            self.logger.debug(
-                f"Calling multi-format analyzer for detected format: {detected_format}"
-            )
+            self.logger.debug(f"Calling multi-format analyzer for detected format: {detected_format}")
             format_results = self.multi_format_analyzer.analyze(file_path)
 
             if "error" not in format_results:
@@ -451,14 +415,10 @@ class BinaryAnalyzer:
                 results["warnings"].append(f"Format analysis failed: {format_results['error']}")
 
         except Exception as e:
-            self.logger.exception(
-                f"An unexpected error occurred during format-specific analysis for {file_path}: {e}"
-            )
+            self.logger.exception(f"An unexpected error occurred during format-specific analysis for {file_path}: {e}")
             results["warnings"].append(f"Format-specific analysis failed: {e!s}")
 
-    def _extract_strings(
-        self, file_path: Path, results: dict[str, Any], options: dict[str, Any] | None
-    ) -> None:
+    def _extract_strings(self, file_path: Path, results: dict[str, Any], options: dict[str, Any] | None) -> None:
         """Extract printable strings from the binary."""
         self.logger.debug(f"Extracting strings from {file_path}")
         try:
@@ -620,11 +580,7 @@ class BinaryAnalyzer:
         }
 
         return next(
-            (
-                category
-                for category, patterns in categories.items()
-                if pattern in patterns
-            ),
+            (category for category, patterns in categories.items() if pattern in patterns),
             "other",
         )
 
@@ -649,9 +605,7 @@ class BinaryAnalyzer:
                     "interpretation": self._interpret_entropy(overall_entropy),
                 },
             }
-            self.logger.debug(
-                f"Entropy interpretation: {entropy_info['analysis']['interpretation']}"
-            )
+            self.logger.debug(f"Entropy interpretation: {entropy_info['analysis']['interpretation']}")
 
             # Section-wise entropy analysis
             if results.get("sections"):
@@ -665,9 +619,7 @@ class BinaryAnalyzer:
                     }
                     entropy_info["sections"].append(section_entropy)
                 self.logger.info(f"Analyzed entropy for {len(results['sections'])} sections.")
-                self.logger.debug(
-                    f"Entropy analysis completed for {len(results['sections'])} sections."
-                )
+                self.logger.debug(f"Entropy analysis completed for {len(results['sections'])} sections.")
             else:
                 # Analyze file in chunks if no sections available
                 self.logger.debug("No sections found, analyzing entropy of file chunks.")
@@ -731,9 +683,7 @@ class BinaryAnalyzer:
             self._check_generic_protections(file_path, results, protections)
 
             results["protection_info"] = protections
-            self.logger.info(
-                f"Found {len(protections['detected'])} detected protections and {len(protections['indicators'])} indicators."
-            )
+            self.logger.info(f"Found {len(protections['detected'])} detected protections and {len(protections['indicators'])} indicators.")
             self.logger.debug(
                 f"Protection analysis completed. Detected: {protections['detected']}, Indicators: {protections['indicators']}"
             )
@@ -742,9 +692,7 @@ class BinaryAnalyzer:
             self.logger.exception(f"Protection analysis failed for {file_path}: {e}")
             results["warnings"].append(f"Protection analysis failed: {e!s}")
 
-    def _check_pe_protections(
-        self, file_path: Path, results: dict[str, Any], protections: dict[str, Any]
-    ) -> None:
+    def _check_pe_protections(self, file_path: Path, results: dict[str, Any], protections: dict[str, Any]) -> None:
         """Check PE-specific protections."""
         # Check for ASLR, DEP, etc.
         if "format_analysis" not in results:
@@ -760,9 +708,7 @@ class BinaryAnalyzer:
         sections = results.get("sections", [])
         for section in sections:
             if isinstance(section, dict) and "entropy" in section and section["entropy"] > 7.0:
-                protections["indicators"].append(
-                    f"High entropy section: {section.get('name', 'unknown')}"
-                )
+                protections["indicators"].append(f"High entropy section: {section.get('name', 'unknown')}")
 
         # Check imports for protection APIs
         imports = results.get("imports", [])
@@ -780,18 +726,14 @@ class BinaryAnalyzer:
                     if func in protection_apis:
                         protections["indicators"].append(f"Protection API: {func}")
 
-    def _check_elf_protections(
-        self, file_path: Path, results: dict[str, Any], protections: dict[str, Any]
-    ) -> None:
+    def _check_elf_protections(self, file_path: Path, results: dict[str, Any], protections: dict[str, Any]) -> None:
         """Check ELF-specific protections."""
         # Check for stack canaries, RELRO, etc.
         if "format_analysis" in results:
             # This would need more detailed ELF analysis
             protections["indicators"].append("ELF protection analysis requires deeper inspection")
 
-    def _check_generic_protections(
-        self, file_path: Path, results: dict[str, Any], protections: dict[str, Any]
-    ) -> None:
+    def _check_generic_protections(self, file_path: Path, results: dict[str, Any], protections: dict[str, Any]) -> None:
         """Check generic protection indicators."""
         # High entropy check
         entropy_info = results.get("entropy", {})
@@ -839,23 +781,17 @@ class BinaryAnalyzer:
         # Protection-based recommendations
         protection_info = results.get("protection_info", {})
         if protection_info.get("indicators"):
-            recommendations.append(
-                "File shows signs of protection - consider using unpacking tools"
-            )
+            recommendations.append("File shows signs of protection - consider using unpacking tools")
 
         # Entropy-based recommendations
         entropy = results.get("entropy", {}).get("overall", 0)
         if entropy > 7.5:
-            recommendations.append(
-                "High entropy suggests compression/encryption - may need specialized tools"
-            )
+            recommendations.append("High entropy suggests compression/encryption - may need specialized tools")
 
         # String-based recommendations
         strings_info = results.get("strings", {})
         if strings_info.get("interesting"):
-            recommendations.append(
-                "Interesting strings found - investigate for credentials or sensitive data"
-            )
+            recommendations.append("Interesting strings found - investigate for credentials or sensitive data")
 
         # Generic recommendations
         recommendations.extend(
@@ -939,6 +875,5 @@ class BinaryAnalyzer:
         """Get cache statistics."""
         return {
             "cached_files": len(self.analysis_cache),
-            "cache_memory_mb": sum(len(str(results)) for results in self.analysis_cache.values())
-            // (1024 * 1024),
+            "cache_memory_mb": sum(len(str(results)) for results in self.analysis_cache.values()) // (1024 * 1024),
         }

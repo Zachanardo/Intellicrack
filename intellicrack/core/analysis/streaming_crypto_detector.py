@@ -185,11 +185,7 @@ class StreamingCryptoDetector(StreamingAnalyzer):
                 {
                     "algorithm": algo,
                     "occurrences": count,
-                    "percentage": (
-                        round((count / len(all_detections)) * 100, 2)
-                        if all_detections
-                        else 0
-                    ),
+                    "percentage": (round((count / len(all_detections)) * 100, 2) if all_detections else 0),
                 }
                 for algo, count in sorted(
                     total_algorithm_counts.items(),
@@ -259,8 +255,7 @@ class StreamingCryptoDetector(StreamingAnalyzer):
             }
 
             logger.info(
-                f"Finalized analysis: {len(unique_algorithms)} unique algorithms, "
-                f"{len(licensing_relevant)} licensing-relevant routines",
+                f"Finalized analysis: {len(unique_algorithms)} unique algorithms, {len(licensing_relevant)} licensing-relevant routines",
             )
 
             return merged_results
@@ -335,18 +330,14 @@ class StreamingCryptoDetector(StreamingAnalyzer):
         algorithms = results.get("unique_algorithms", [])
         licensing = len(results.get("licensing_relevant_crypto", []))
 
-        summary = (
-            f"Detected {total} cryptographic routines across {len(algorithms)} algorithm types. "
-        )
+        summary = f"Detected {total} cryptographic routines across {len(algorithms)} algorithm types. "
 
         if licensing > 0:
             summary += f"{licensing} routines are relevant to licensing systems. "
 
         if dist := results.get("algorithm_distribution", []):
             top_algo = dist[0]
-            summary += (
-                f"Most common: {top_algo['algorithm']} ({top_algo['occurrences']} occurrences). "
-            )
+            summary += f"Most common: {top_algo['algorithm']} ({top_algo['occurrences']} occurrences). "
 
         return summary
 

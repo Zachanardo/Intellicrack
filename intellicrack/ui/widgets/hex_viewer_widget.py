@@ -222,9 +222,7 @@ class HexViewerWidget(QWidget):
         search_layout.addWidget(self.search_type)
 
         self.search_input = QLineEdit()
-        self.search_input.setToolTip(
-            "Enter search pattern in selected format (Hex, ASCII, or Unicode)"
-        )
+        self.search_input.setToolTip("Enter search pattern in selected format (Hex, ASCII, or Unicode)")
         self.search_input.returnPressed.connect(self.search_data)
         search_layout.addWidget(self.search_input)
 
@@ -504,9 +502,7 @@ class HexViewerWidget(QWidget):
 
         # Highlight bytes in the range
         self.bytes_per_line * 3
-        for line_idx in range(
-            start_line, min(end_line + 1, len(self.file_data) // self.bytes_per_line + 1)
-        ):
+        for line_idx in range(start_line, min(end_line + 1, len(self.file_data) // self.bytes_per_line + 1)):
             cursor.movePosition(QTextCursor.StartOfBlock)
 
             if line_idx == start_line:
@@ -521,9 +517,7 @@ class HexViewerWidget(QWidget):
             if line_idx == end_line:
                 bytes_to_highlight = (end - self.current_offset) % self.bytes_per_line + 1
             else:
-                bytes_to_highlight = self.bytes_per_line - (
-                    byte_in_line if line_idx == start_line else 0
-                )
+                bytes_to_highlight = self.bytes_per_line - (byte_in_line if line_idx == start_line else 0)
 
             for _ in range(bytes_to_highlight * 3):
                 cursor.movePosition(QTextCursor.Right, QTextCursor.KeepAnchor)
@@ -557,9 +551,7 @@ class HexViewerWidget(QWidget):
 
             if section := self.file_model.get_section_at_rva(rva):
                 self.structure_info_text.append(f"Section: {section.name}")
-                self.structure_info_text.append(
-                    f"Section Offset: 0x{rva - section.virtual_address:X}"
-                )
+                self.structure_info_text.append(f"Section Offset: 0x{rva - section.virtual_address:X}")
         else:
             QMessageBox.warning(self, "Invalid RVA", f"RVA 0x{rva:X} is not valid for this file")
 
@@ -847,9 +839,7 @@ class HexViewerWidget(QWidget):
         # Highlight in hex view if valid offset
         if offset is not None and size is not None:
             # Add temporary highlight for clicked structure
-            self.highlighted_regions = [
-                region for region in self.highlighted_regions if not hasattr(region, "_temporary")
-            ]
+            self.highlighted_regions = [region for region in self.highlighted_regions if not hasattr(region, "_temporary")]
 
             # Add new temporary highlight
             highlight_color = QColor(100, 200, 255, 80)  # Light blue
@@ -938,9 +928,7 @@ class HexViewerWidget(QWidget):
 
         # Extract wide strings action
         extract_wide_strings_action = QAction("Extract Wide Strings (Unicode)", self)
-        extract_wide_strings_action.triggered.connect(
-            lambda: self._extract_strings_from_selection(wide=True)
-        )
+        extract_wide_strings_action.triggered.connect(lambda: self._extract_strings_from_selection(wide=True))
         menu.addAction(extract_wide_strings_action)
 
         menu.addSeparator()
@@ -1118,14 +1106,9 @@ class HexViewerWidget(QWidget):
                             categories["Registry"].append(string)
                         else:
                             categories["Other"].append(string)
-                    elif any(
-                        word in string.lower()
-                        for word in ["license", "serial", "activation", "key"]
-                    ):
+                    elif any(word in string.lower() for word in ["license", "serial", "activation", "key"]):
                         categories["License"].append(string)
-                    elif any(
-                        word in string.lower() for word in ["error", "fail", "invalid", "exception"]
-                    ):
+                    elif any(word in string.lower() for word in ["error", "fail", "invalid", "exception"]):
                         categories["Error Messages"].append(string)
                     else:
                         categories["Other"].append(string)
@@ -1140,9 +1123,7 @@ class HexViewerWidget(QWidget):
                             results.append(f"... and {len(items) - 100} more")
 
                 results_text.setPlainText("\n".join(results))
-                stats_label.setText(
-                    f"Total: {len(strings)} strings | Displayed: {min(len(strings), 600)} strings"
-                )
+                stats_label.setText(f"Total: {len(strings)} strings | Displayed: {min(len(strings), 600)} strings")
 
             def export_strings() -> None:
                 """Export strings to file."""
@@ -1157,9 +1138,7 @@ class HexViewerWidget(QWidget):
                     try:
                         with open(file_path, "w", encoding="utf-8", errors="ignore") as f:
                             f.write(results_text.toPlainText())
-                        QMessageBox.information(
-                            dialog, "Export Complete", f"Strings exported to {file_path}"
-                        )
+                        QMessageBox.information(dialog, "Export Complete", f"Strings exported to {file_path}")
                     except Exception as e:
                         QMessageBox.critical(dialog, "Export Error", f"Failed to export: {e!s}")
 

@@ -233,9 +233,7 @@ class FridaBypassWizard:
         else:
             logger.warning(f"Unknown mode: {mode}, using balanced")
 
-    def set_callbacks(
-        self, progress_callback: Callable = None, status_callback: Callable = None
-    ) -> None:
+    def set_callbacks(self, progress_callback: Callable = None, status_callback: Callable = None) -> None:
         """Set callback functions for progress and status updates.
 
         Args:
@@ -372,17 +370,18 @@ class FridaBypassWizard:
 
             # Create temporary analysis script
             temp_script = Path("temp_analysis.js")
-            await asyncio.to_thread(
-                lambda: temp_script.write_text(analysis_script, encoding="utf-8")
-            )
+            await asyncio.to_thread(lambda: temp_script.write_text(analysis_script, encoding="utf-8"))
 
             if success := self.frida_manager.load_script(
                 self.session_id,
                 str(temp_script),
                 {"analysis_mode": True},
             ):
+                logger.info(f"Analysis script loaded successfully: {success}")
                 # Wait for analysis results
                 await asyncio.sleep(2)  # Give script time to analyze
+            else:
+                logger.warning("Failed to load analysis script")
 
             # Clean up
             temp_script.unlink()
@@ -820,11 +819,10 @@ class FridaBypassWizard:
                     script_name,
                     options,
                 ):
+                    logger.debug(f"Script load result: {success}")
                     success_count += 1
                     self.metrics["scripts_loaded"] += 1
-                    logger.info(
-                        f"Successfully loaded {script_name} for {strategy.protection_type.value}"
-                    )
+                    logger.info(f"Successfully loaded {script_name} for {strategy.protection_type.value}")
                 else:
                     logger.warning(f"Failed to load {script_name}")
 
@@ -868,8 +866,7 @@ class FridaBypassWizard:
                     verification_results[strategy.protection_type] = not still_detected
 
             # Update success metrics based on verification
-            verified_count = sum(bool(v)
-                             for v in verification_results.values())
+            verified_count = sum(bool(v) for v in verification_results.values())
             self._update_progress(
                 95,
                 f"Verified {verified_count}/{len(verification_results)} bypasses",
@@ -956,9 +953,7 @@ class FridaBypassWizard:
 
             # Run detection script
             temp_script = Path("anti_debug_check.js")
-            await asyncio.to_thread(
-                lambda: temp_script.write_text(detection_script, encoding="utf-8")
-            )
+            await asyncio.to_thread(lambda: temp_script.write_text(detection_script, encoding="utf-8"))
 
             result = await self._run_detection_script(temp_script)
             temp_script.unlink()
@@ -1031,9 +1026,7 @@ class FridaBypassWizard:
 
             # Run detection script
             temp_script = Path("anti_attach_check.js")
-            await asyncio.to_thread(
-                lambda: temp_script.write_text(detection_script, encoding="utf-8")
-            )
+            await asyncio.to_thread(lambda: temp_script.write_text(detection_script, encoding="utf-8"))
 
             result = await self._run_detection_script(temp_script)
             temp_script.unlink()
@@ -1129,9 +1122,7 @@ class FridaBypassWizard:
 
             # Run detection script
             temp_script = Path("ssl_pinning_check.js")
-            await asyncio.to_thread(
-                lambda: temp_script.write_text(detection_script, encoding="utf-8")
-            )
+            await asyncio.to_thread(lambda: temp_script.write_text(detection_script, encoding="utf-8"))
 
             result = await self._run_detection_script(temp_script)
             temp_script.unlink()
@@ -1184,9 +1175,7 @@ class FridaBypassWizard:
             if not success and retry_count < max_retries:
                 logger.info(f"Attempting adaptive retry for {prot_type.value}")
 
-                if alternative_strategy := self._get_alternative_strategy(
-                    prot_type
-                ):
+                if alternative_strategy := self._get_alternative_strategy(prot_type):
                     try:
                         # Apply alternative bypass
                         retry_success = await self._apply_strategy(alternative_strategy)
@@ -1197,14 +1186,10 @@ class FridaBypassWizard:
                             verify_success = await self._verify_bypass(prot_type)
 
                             if verify_success:
-                                logger.info(
-                                    f"Alternative strategy successful for {prot_type.value}"
-                                )
+                                logger.info(f"Alternative strategy successful for {prot_type.value}")
                                 self.metrics["retry_successes"] += 1
                             else:
-                                logger.warning(
-                                    f"Alternative strategy failed verification for {prot_type.value}"
-                                )
+                                logger.warning(f"Alternative strategy failed verification for {prot_type.value}")
                                 self.metrics["retry_failures"] += 1
                         else:
                             self.metrics["retry_failures"] += 1
@@ -1285,18 +1270,14 @@ class FridaBypassWizard:
             "detections": {
                 "total": self.metrics["protections_detected"],
                 "types": [p.value for p in self.detected_protections],
-                "evidence": {
-                    p.value: e for p, e in self.protection_evidence.items()
-                },
+                "evidence": {p.value: e for p, e in self.protection_evidence.items()},
             },
             "bypasses": {
                 "attempted": self.metrics["bypasses_attempted"],
                 "successful": self.metrics["bypasses_successful"],
                 "failed": len(self.failed_bypasses),
                 "success_rate": (
-                    self.metrics["bypasses_successful"]
-                    / self.metrics["bypasses_attempted"]
-                    * 100
+                    self.metrics["bypasses_successful"] / self.metrics["bypasses_attempted"] * 100
                     if self.metrics["bypasses_attempted"] > 0
                     else 0
                 ),

@@ -391,14 +391,8 @@ class IntellicrackProtectionWidget(QWidget):
 
             for detection in analysis.detections:
                 ver_str = f" v{detection.version}" if detection.version else ""
-                conf_str = (
-                    f" ({detection.confidence:.0f}% confidence)"
-                    if detection.confidence < 100
-                    else ""
-                )
-                summary_lines.append(
-                    f"   {detection.name}{ver_str} [{detection.type.value}]{conf_str}"
-                )
+                conf_str = f" ({detection.confidence:.0f}% confidence)" if detection.confidence < 100 else ""
+                summary_lines.append(f"   {detection.name}{ver_str} [{detection.type.value}]{conf_str}")
         else:
             summary_lines.append("No protections detected")
 
@@ -407,9 +401,7 @@ class IntellicrackProtectionWidget(QWidget):
             summary_lines.append("")
             summary_lines.append(f"License Files Found: {len(analysis.license_files)}")
             for file_info in analysis.license_files[:5]:  # Show up to 5
-                summary_lines.append(
-                    f"   {file_info['name']} ({file_info.get('size_str', 'Unknown size')})"
-                )
+                summary_lines.append(f"   {file_info['name']} ({file_info.get('size_str', 'Unknown size')})")
 
         self.summary_text.setText("\n".join(summary_lines))
 
@@ -441,9 +433,7 @@ class IntellicrackProtectionWidget(QWidget):
         # Metadata
         if analysis.metadata:
             details_lines.append("Metadata:")
-            details_lines.extend(
-                f"   {key}: {value}" for key, value in analysis.metadata.items()
-            )
+            details_lines.extend(f"   {key}: {value}" for key, value in analysis.metadata.items())
         self.tech_details_text.setText("\n".join(details_lines))
 
     def on_detection_selected(self) -> None:
@@ -626,9 +616,7 @@ class IntellicrackProtectionWidget(QWidget):
 
         except Exception as e:
             logger.error("Error in AI reasoning: %s", e)
-            QMessageBox.critical(
-                self, "AI Reasoning Error", f"Error performing AI reasoning:\n{e!s}"
-            )
+            QMessageBox.critical(self, "AI Reasoning Error", f"Error performing AI reasoning:\n{e!s}")
             self.ai_reasoning_btn.setEnabled(True)
             self.status_label.setText("AI reasoning failed")
 
@@ -725,9 +713,7 @@ class IntellicrackProtectionWidget(QWidget):
                     # Display results in a message box
                     message_lines = [f"Found {len(files_found)} potential license files:\n"]
                     for file_info in files_found[:10]:  # Show up to 10
-                        message_lines.append(
-                            f" {file_info['name']} ({file_info.get('size_str', 'Unknown size')})"
-                        )
+                        message_lines.append(f" {file_info['name']} ({file_info.get('size_str', 'Unknown size')})")
                         if file_info.get("match_type"):
                             message_lines.append(f"  Type: {file_info['match_type']}")
 
@@ -744,14 +730,10 @@ class IntellicrackProtectionWidget(QWidget):
                     # Refresh display
                     self.display_summary(self.current_analysis)
                 else:
-                    QMessageBox.information(
-                        self, "No License Files", f"No license files found in:\n{binary_dir}"
-                    )
+                    QMessageBox.information(self, "No License Files", f"No license files found in:\n{binary_dir}")
             else:
                 error_msg = license_file_results.get("error", "Unknown error")
-                QMessageBox.warning(
-                    self, "Search Failed", f"License file search failed:\n{error_msg}"
-                )
+                QMessageBox.warning(self, "Search Failed", f"License file search failed:\n{error_msg}")
 
             self.status_label.setText("License file search complete")
 
@@ -771,16 +753,12 @@ class IntellicrackProtectionWidget(QWidget):
         layout = QVBoxLayout(dialog)
 
         # Instructions
-        instructions = QLabel(
-            "Ask questions about binary protections, licensing schemes, or security analysis:"
-        )
+        instructions = QLabel("Ask questions about binary protections, licensing schemes, or security analysis:")
         layout.addWidget(instructions)
 
         # Question input
         question_input = QLineEdit()
-        question_input.setToolTip(
-            "Enter your question about protection mechanisms, bypassing techniques, or licensing systems"
-        )
+        question_input.setToolTip("Enter your question about protection mechanisms, bypassing techniques, or licensing systems")
         layout.addWidget(question_input)
 
         # Response area
@@ -812,9 +790,7 @@ class IntellicrackProtectionWidget(QWidget):
                     context_parts = []
                     context_parts.append("Current binary analysis context:")
                     for detection in self.current_analysis.detections:
-                        context_parts.append(
-                            f"- Detected: {detection.name} ({detection.type.value})"
-                        )
+                        context_parts.append(f"- Detected: {detection.name} ({detection.type.value})")
                     context = "\n".join(context_parts) + "\n\n"
                     full_question = context + question
                 else:
@@ -860,8 +836,6 @@ class IntellicrackProtectionWidget(QWidget):
                 response_text.append("<b>Suggested questions based on current analysis:</b>")
                 for suggestion in suggestions[:3]:  # Show up to 3 suggestions
                     response_text.append(f" {suggestion}")
-                response_text.append(
-                    "\n<i>Type your question above or click a suggestion to use it.</i>\n"
-                )
+                response_text.append("\n<i>Type your question above or click a suggestion to use it.</i>\n")
 
         dialog.exec()

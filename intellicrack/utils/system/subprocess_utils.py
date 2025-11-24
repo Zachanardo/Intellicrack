@@ -54,9 +54,7 @@ def run_in_terminal(
         if isinstance(cmd, str):
             cmd = cmd.split()
 
-        return terminal_mgr.execute_command(
-            command=cmd, capture_output=False, auto_switch=auto_switch, cwd=cwd
-        )
+        return terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=auto_switch, cwd=cwd)
     except Exception as e:
         logger.error("Error running command in terminal: %s", e)
         raise
@@ -159,9 +157,7 @@ def run_subprocess_check(
         raise
 
 
-def create_popen_with_encoding(
-    cmd: list[str], encoding: str = "utf-8", timeout: int | None = None
-) -> tuple[int, str, str]:
+def create_popen_with_encoding(cmd: list[str], encoding: str = "utf-8", timeout: int | None = None) -> tuple[int, str, str]:
     """Create Popen process with encoding and error handling.
 
     Common pattern for process creation with output capture and encoding.

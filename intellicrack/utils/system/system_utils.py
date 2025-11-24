@@ -389,9 +389,7 @@ def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
                 command = " ".join(command)
 
             # Use PowerShell to run with elevated privileges
-            ps_command = (
-                f'Start-Process -FilePath "cmd" -ArgumentList "/c {command}" -Verb RunAs -Wait'
-            )
+            ps_command = f'Start-Process -FilePath "cmd" -ArgumentList "/c {command}" -Verb RunAs -Wait'
             powershell_path = shutil.which("powershell")
             if not powershell_path:
                 logger.error("PowerShell not found in PATH")

@@ -161,9 +161,7 @@ class DebuggerBypass:
                 ]
 
             pbi = ProcessBasicInformation()
-            status = self.ntdll.NtQueryInformationProcess(
-                current_process, 0, ctypes.byref(pbi), ctypes.sizeof(pbi), None
-            )
+            status = self.ntdll.NtQueryInformationProcess(current_process, 0, ctypes.byref(pbi), ctypes.sizeof(pbi), None)
 
             if status != 0:
                 return False
@@ -224,9 +222,7 @@ class DebuggerBypass:
                 ]
 
             pbi = ProcessBasicInformation()
-            status = self.ntdll.NtQueryInformationProcess(
-                current_process, 0, ctypes.byref(pbi), ctypes.sizeof(pbi), None
-            )
+            status = self.ntdll.NtQueryInformationProcess(current_process, 0, ctypes.byref(pbi), ctypes.sizeof(pbi), None)
 
             if status != 0:
                 return False
@@ -318,9 +314,7 @@ class DebuggerBypass:
             if platform.system() != "Windows":
                 return False
 
-            original_func_addr = ctypes.cast(
-                self.ntdll.NtQueryInformationProcess, ctypes.c_void_p
-            ).value
+            original_func_addr = ctypes.cast(self.ntdll.NtQueryInformationProcess, ctypes.c_void_p).value
 
             if not original_func_addr:
                 return False
@@ -328,7 +322,12 @@ class DebuggerBypass:
             self.original_functions["NtQueryInformationProcess"] = original_func_addr
 
             if hook_code := self._generate_ntquery_hook():
-                self.logger.debug("NtQueryInformationProcess hook prepared")
+                self.logger.debug(f"NtQueryInformationProcess hook prepared ({len(hook_code)} bytes)")
+                self.hook_metadata["ntquery_hook"] = {
+                    "size": len(hook_code),
+                    "address": original_func_addr,
+                    "timestamp": __import__("time").time(),
+                }
                 return True
 
             return False
@@ -354,9 +353,7 @@ class DebuggerBypass:
                         *list(
                             struct.pack(
                                 "<Q",
-                                self.original_functions.get(
-                                    "NtQueryInformationProcess", 0
-                                ),
+                                self.original_functions.get("NtQueryInformationProcess", 0),
                             )
                         ),
                         0xFF,
@@ -381,9 +378,7 @@ class DebuggerBypass:
                         *list(
                             struct.pack(
                                 "<I",
-                                self.original_functions.get(
-                                    "NtQueryInformationProcess", 0
-                                ),
+                                self.original_functions.get("NtQueryInformationProcess", 0),
                             )
                         ),
                         0xFF,
@@ -490,14 +485,10 @@ class DebuggerBypass:
 
             self.timing_base = time.perf_counter()
 
-            if original_qpc := ctypes.cast(
-                self.kernel32.QueryPerformanceCounter, ctypes.c_void_p
-            ).value:
+            if original_qpc := ctypes.cast(self.kernel32.QueryPerformanceCounter, ctypes.c_void_p).value:
                 self.original_functions["QueryPerformanceCounter"] = original_qpc
 
-            if original_gtc := ctypes.cast(
-                self.kernel32.GetTickCount, ctypes.c_void_p
-            ).value:
+            if original_gtc := ctypes.cast(self.kernel32.GetTickCount, ctypes.c_void_p).value:
                 self.original_functions["GetTickCount"] = original_gtc
 
             self.logger.debug("Timing functions hooked")
@@ -523,9 +514,7 @@ class DebuggerBypass:
             if original_time := ctypes.cast(libc.time, ctypes.c_void_p).value:
                 self.original_functions["time"] = original_time
 
-            if original_gettimeofday := ctypes.cast(
-                libc.gettimeofday, ctypes.c_void_p
-            ).value:
+            if original_gettimeofday := ctypes.cast(libc.gettimeofday, ctypes.c_void_p).value:
                 self.original_functions["gettimeofday"] = original_gettimeofday
 
             self.logger.debug("Linux timing functions hooked")

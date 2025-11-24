@@ -112,9 +112,7 @@ class GPUAutoLoader:
                         self.gpu_info = {
                             "device_count": device_count,
                             "backend": "PyTorch XPU",
-                            "driver_version": torch.xpu.get_driver_version()
-                            if hasattr(torch.xpu, "get_driver_version")
-                            else "Unknown",
+                            "driver_version": torch.xpu.get_driver_version() if hasattr(torch.xpu, "get_driver_version") else "Unknown",
                         }
 
                         # Get info for first device
@@ -123,9 +121,7 @@ class GPUAutoLoader:
                                 self.gpu_info["device_name"] = torch.xpu.get_device_name(0)
                                 props = torch.xpu.get_device_properties(0)
                                 self.gpu_info["total_memory"] = (
-                                    f"{props.total_memory / (1024**3):.1f} GB"
-                                    if hasattr(props, "total_memory")
-                                    else "Unknown"
+                                    f"{props.total_memory / (1024**3):.1f} GB" if hasattr(props, "total_memory") else "Unknown"
                                 )
                             except Exception as e:
                                 logger.debug(f"Failed to get XPU device info: {e}")
@@ -212,9 +208,7 @@ class GPUAutoLoader:
                 self.gpu_info = {
                     "device_count": device_count,
                     "backend": "AMD ROCm",
-                    "hip_version": torch.version.hip
-                    if hasattr(torch.version, "hip")
-                    else "Unknown",
+                    "hip_version": torch.version.hip if hasattr(torch.version, "hip") else "Unknown",
                 }
 
                 # Get info for first device
@@ -222,9 +216,7 @@ class GPUAutoLoader:
                     self.gpu_info["device_name"] = torch.hip.get_device_name(0)
                     props = torch.hip.get_device_properties(0)
                     self.gpu_info["total_memory"] = (
-                        f"{props.total_memory / (1024**3):.1f} GB"
-                        if hasattr(props, "total_memory")
-                        else "Unknown"
+                        f"{props.total_memory / (1024**3):.1f} GB" if hasattr(props, "total_memory") else "Unknown"
                     )
 
                 return True
@@ -248,9 +240,7 @@ class GPUAutoLoader:
             self.gpu_available = True
             self.gpu_type = "directml"
             self._torch = torch
-            self._device = (
-                torch.device("cpu") if torch else None
-            )  # DirectML uses CPU device designation
+            self._device = torch.device("cpu") if torch else None  # DirectML uses CPU device designation
             self._device_string = "cpu"  # DirectML operations happen through CPU API
 
             self.gpu_info = {
@@ -513,9 +503,7 @@ def detect_gpu_frameworks() -> dict[str, object]:
                 device_count = torch_directml.device_count()
                 for i in range(device_count):
                     device_name = torch_directml.device_name(i)
-                    frameworks["gpu_devices"].append(
-                        {"type": "DirectML", "index": i, "name": device_name}
-                    )
+                    frameworks["gpu_devices"].append({"type": "DirectML", "index": i, "name": device_name})
             except Exception as e:
                 logger.debug(f"Failed to enumerate DirectML devices: {e}")
         except ImportError:
@@ -531,9 +519,7 @@ def detect_gpu_frameworks() -> dict[str, object]:
             frameworks["available_frameworks"].append("Intel XPU")
             # Get XPU device info
             for i in range(torch.xpu.device_count()):
-                frameworks["gpu_devices"].append(
-                    {"type": "Intel XPU", "index": i, "name": torch.xpu.get_device_name(i)}
-                )
+                frameworks["gpu_devices"].append({"type": "Intel XPU", "index": i, "name": torch.xpu.get_device_name(i)})
     except Exception as e:
         logger.debug(f"XPU device detection failed: {e}")
 
@@ -573,8 +559,6 @@ def detect_gpu_frameworks() -> dict[str, object]:
 
     # Add summary information
     frameworks["gpu_count"] = len(frameworks["gpu_devices"])
-    frameworks["primary_framework"] = (
-        frameworks["available_frameworks"][0] if frameworks["available_frameworks"] else None
-    )
+    frameworks["primary_framework"] = frameworks["available_frameworks"][0] if frameworks["available_frameworks"] else None
 
     return frameworks

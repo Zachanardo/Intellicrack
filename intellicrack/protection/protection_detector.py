@@ -140,9 +140,7 @@ class ProtectionDetector:
         """
         return self.engine.get_quick_summary(file_path)
 
-    def analyze_directory(
-        self, directory: str, recursive: bool = True, deep_scan: bool = False
-    ) -> list[ProtectionAnalysis]:
+    def analyze_directory(self, directory: str, recursive: bool = True, deep_scan: bool = False) -> list[ProtectionAnalysis]:
         """Analyze all executable files in a directory.
 
         Args:
@@ -154,9 +152,7 @@ class ProtectionDetector:
             List of ProtectionAnalysis results
 
         """
-        logger.info(
-            f"Starting directory analysis: {directory}, recursive={recursive}, deep_scan={deep_scan}"
-        )
+        logger.info(f"Starting directory analysis: {directory}, recursive={recursive}, deep_scan={deep_scan}")
         results = []
         extensions = [".exe", ".dll", ".sys", ".ocx", ".scr", ".com", ".so", ".dylib"]
 
@@ -197,9 +193,7 @@ class ProtectionDetector:
         result = self.engine.analyze(file_path)
         return result.bypass_strategies
 
-    def _convert_to_legacy_format(
-        self, unified_result: UnifiedProtectionResult
-    ) -> ProtectionAnalysis:
+    def _convert_to_legacy_format(self, unified_result: UnifiedProtectionResult) -> ProtectionAnalysis:
         """Convert unified result to legacy ProtectionAnalysis format.
 
         This ensures backward compatibility with existing code.
@@ -383,9 +377,7 @@ class ProtectionDetector:
             try:
                 from intellicrack.handlers.psutil_handler import psutil
 
-                running_processes = [
-                    p.info["name"].lower() for p in psutil.process_iter(["name"]) if p.info["name"]
-                ]
+                running_processes = [p.info["name"].lower() for p in psutil.process_iter(["name"]) if p.info["name"]]
                 for indicator in vm_indicators:
                     if any(indicator.lower() in proc for proc in running_processes):
                         results["indicators"].append(f"VM process detected: {indicator}")
@@ -428,9 +420,7 @@ class ProtectionDetector:
                             content = f.read().lower()
                             for indicator in vm_indicators:
                                 if indicator.lower() in content:
-                                    results["indicators"].append(
-                                        f"VM indicator in {vm_file}: {indicator}"
-                                    )
+                                    results["indicators"].append(f"VM indicator in {vm_file}: {indicator}")
                                     results["virtualization_detected"] = True
                     except Exception as e:
                         logger.error("Exception in virtualization detection: %s", e)
@@ -567,13 +557,9 @@ class ProtectionDetector:
                 if ticket.payload:
                     result |= {
                         "game_id": ticket.payload.game_id.hex(),
-                        "machine_id": ticket.payload.machine_id.combined_hash.hex()[
-                            :32
-                        ],
+                        "machine_id": ticket.payload.machine_id.combined_hash.hex()[:32],
                         "license_type": ticket.payload.license_data.get("type"),
-                        "expiration": ticket.payload.license_data.get(
-                            "expiration"
-                        ),
+                        "expiration": ticket.payload.license_data.get("expiration"),
                     }
 
                 return result
@@ -685,16 +671,8 @@ class ProtectionDetector:
 
             license_code = license_map.get(license_type.lower(), analyzer.LICENSE_PERPETUAL)
 
-            game_id_bytes = (
-                bytes.fromhex(game_id)
-                if len(game_id) == 32
-                else (game_id.encode() + b"\x00" * 16)[:16]
-            )
-            machine_id_bytes = (
-                bytes.fromhex(machine_id)
-                if len(machine_id) == 64
-                else hashlib.sha256(machine_id.encode()).digest()
-            )
+            game_id_bytes = bytes.fromhex(game_id) if len(game_id) == 32 else (game_id.encode() + b"\x00" * 16)[:16]
+            machine_id_bytes = bytes.fromhex(machine_id) if len(machine_id) == 64 else hashlib.sha256(machine_id.encode()).digest()
 
             if token := analyzer.forge_token(
                 game_id=game_id_bytes,
@@ -853,9 +831,7 @@ class ProtectionDetector:
                         try:
                             sig.decode("ascii")
                             # It's a text string
-                            results["indicators"].append(
-                                f"String reference: {sig.decode('utf-8', errors='ignore')}"
-                            )
+                            results["indicators"].append(f"String reference: {sig.decode('utf-8', errors='ignore')}")
                             if sig in [b"CRC32", b"MD5", b"SHA1", b"SHA256"]:
                                 results["checksum_types"].append(sig.decode("utf-8"))
                         except UnicodeDecodeError:
@@ -1055,9 +1031,7 @@ class ProtectionDetector:
                         # Check if pattern contains non-printable characters (binary pattern)
                         try:
                             pattern.decode("ascii")
-                            results["indicators"].append(
-                                f"String: {pattern.decode('utf-8', errors='ignore')}"
-                            )
+                            results["indicators"].append(f"String: {pattern.decode('utf-8', errors='ignore')}")
                         except UnicodeDecodeError:
                             results["indicators"].append(f"Assembly pattern: {pattern.hex()}")
 
@@ -1196,9 +1170,7 @@ class ProtectionDetector:
                 ],
             ),
         }
-        logger.info(
-            f"Completed comprehensive protection detection: {results['summary']['protection_count']} protections found"
-        )
+        logger.info(f"Completed comprehensive protection detection: {results['summary']['protection_count']} protections found")
         return results
 
 
@@ -1307,9 +1279,7 @@ def scan_for_bytecode_protectors(binary_path: str) -> dict[str, Any]:
     results = detect_commercial_protections(binary_path)
     # Filter for bytecode protectors
     bytecode_protectors = [
-        p
-        for p in results.get("protections", [])
-        if any(x in p for x in [".NET", "Java", "Python", "Dotfuscator", "ConfuserEx"])
+        p for p in results.get("protections", []) if any(x in p for x in [".NET", "Java", "Python", "Dotfuscator", "ConfuserEx"])
     ]
     return {
         "bytecode_protectors": bytecode_protectors,

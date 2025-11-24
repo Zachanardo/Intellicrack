@@ -297,9 +297,7 @@ class ChecksumRecalculator:
                                 "size": key_size,
                                 "key_hex": potential_key.hex(),
                                 "entropy": entropy,
-                                "confidence": self._calculate_key_confidence(
-                                    potential_key, entropy
-                                ),
+                                "confidence": self._calculate_key_confidence(potential_key, entropy),
                             }
                         )
 
@@ -357,8 +355,7 @@ class ChecksumRecalculator:
         if b"\x00" * 4 not in data and b"\xff" * 4 not in data:
             confidence += 0.2
 
-        printable_count = sum(bool(32 <= b <= 126)
-                          for b in data)
+        printable_count = sum(bool(32 <= b <= 126) for b in data)
         if printable_count < len(data) * 0.2:
             confidence += 0.1
 
@@ -1518,9 +1515,7 @@ class IntegrityBypassEngine:
                         pe = pefile.PE(binary_path)
                         actual_size = pe.OPTIONAL_HEADER.SizeOfImage
                         actual_header_checksum = pe.OPTIONAL_HEADER.CheckSum
-                        actual_image_checksum = self.checksum_calc.recalculate_pe_checksum(
-                            binary_path
-                        )
+                        actual_image_checksum = self.checksum_calc.recalculate_pe_checksum(binary_path)
                         pe.close()
 
                         script = script.replace("%EXPECTED_SIZE%", str(actual_size))
@@ -1532,13 +1527,7 @@ class IntegrityBypassEngine:
                             "start": check.address,
                             "end": check.address + check.size,
                             "original": (
-                                list(
-                                    binary_data[
-                                        check.address : check.address + check.size
-                                    ]
-                                )
-                                if check.address < len(binary_data)
-                                else []
+                                list(binary_data[check.address : check.address + check.size]) if check.address < len(binary_data) else []
                             ),
                         }
                         for check in checks
@@ -1593,11 +1582,7 @@ class BinaryPatcher:
     ) -> tuple[bool, ChecksumRecalculation | None]:
         """Patch binary to remove integrity checks and recalculate all checksums."""
         if output_path is None:
-            output_path = str(
-                Path(binary_path).with_suffix(
-                    f".patched{Path(binary_path).suffix}"
-                )
-            )
+            output_path = str(Path(binary_path).with_suffix(f".patched{Path(binary_path).suffix}"))
 
         try:
             with open(binary_path, "rb") as f:
@@ -1635,9 +1620,7 @@ class BinaryPatcher:
                             {
                                 "address": check.address,
                                 "size": len(patch_bytes),
-                                "original": bytes(
-                                    original_data[offset : offset + len(patch_bytes)]
-                                ),
+                                "original": bytes(original_data[offset : offset + len(patch_bytes)]),
                                 "patched": patch_bytes,
                                 "type": check.check_type.name,
                             }
@@ -1676,9 +1659,7 @@ class BinaryPatcher:
             (
                 section.PointerToRawData + (rva - section.VirtualAddress)
                 for section in pe.sections
-                if section.VirtualAddress
-                <= rva
-                < section.VirtualAddress + section.Misc_VirtualSize
+                if section.VirtualAddress <= rva < section.VirtualAddress + section.Misc_VirtualSize
             ),
             None,
         )
@@ -1710,11 +1691,7 @@ class IntegrityCheckDefeatSystem:
     ) -> bool:
         """Patch embedded checksums in binary with recalculated values."""
         if output_path is None:
-            output_path = str(
-                Path(binary_path).with_suffix(
-                    f".patched{Path(binary_path).suffix}"
-                )
-            )
+            output_path = str(Path(binary_path).with_suffix(f".patched{Path(binary_path).suffix}"))
 
         try:
             with open(binary_path, "rb") as f:
@@ -1722,12 +1699,8 @@ class IntegrityCheckDefeatSystem:
 
             for location in checksum_locations:
                 if location.offset + location.size <= len(binary_data):
-                    binary_data[location.offset : location.offset + location.size] = (
-                        location.calculated_value
-                    )
-                    logger.info(
-                        f"Patched {location.algorithm.name} at offset {hex(location.offset)}"
-                    )
+                    binary_data[location.offset : location.offset + location.size] = location.calculated_value
+                    logger.info(f"Patched {location.algorithm.name} at offset {hex(location.offset)}")
 
             with open(output_path, "wb") as f:
                 f.write(binary_data)
@@ -1853,9 +1826,7 @@ def main() -> None:
         locations = defeat_system.find_embedded_checksums(args.binary)
         print(f"\n=== Found {len(locations)} Embedded Checksums ===")
         for loc in locations:
-            print(
-                f"- {loc.algorithm.name} at offset {hex(loc.offset)} (size={loc.size}, confidence={loc.confidence:.1%})"
-            )
+            print(f"- {loc.algorithm.name} at offset {hex(loc.offset)} (size={loc.size}, confidence={loc.confidence:.1%})")
             print(f"  Current:    {loc.current_value.hex()}")
             print(f"  Calculated: {loc.calculated_value.hex()}")
         return
@@ -1914,9 +1885,7 @@ def main() -> None:
             if cs.get("hmac_keys"):
                 print("\n=== Extracted HMAC Keys ===")
                 for key in cs["hmac_keys"][:5]:
-                    print(
-                        f"- Key at offset {hex(key['offset'])}: {key['key_hex'][:32]}... (confidence={key['confidence']:.1%})"
-                    )
+                    print(f"- Key at offset {hex(key['offset'])}: {key['key_hex'][:32]}... (confidence={key['confidence']:.1%})")
 
 
 if __name__ == "__main__":

@@ -185,9 +185,7 @@ class YaraPatternEngine:
             self.compiled_rules = yara.compile(filepaths=rule_files)
             self._extract_rule_metadata()
 
-            logger.info(
-                f"Loaded {len(rule_files)} YARA rule namespaces with {self._count_total_rules()} rules"
-            )
+            logger.info(f"Loaded {len(rule_files)} YARA rule namespaces with {self._count_total_rules()} rules")
 
         except Exception as e:
             logger.error(f"Failed to load YARA rules: {e}")
@@ -698,16 +696,8 @@ rule Basic_PE_Detection
                     else:
                         # Try to access as attributes first, fall back to indexing
                         try:
-                            offset = (
-                                string_match.offset
-                                if hasattr(string_match, "offset")
-                                else string_match[0]
-                            )
-                            identifier = (
-                                string_match.identifier
-                                if hasattr(string_match, "identifier")
-                                else string_match[1]
-                            )
+                            offset = string_match.offset if hasattr(string_match, "offset") else string_match[0]
+                            identifier = string_match.identifier if hasattr(string_match, "identifier") else string_match[1]
                             # The matched data is typically at index 2
                             if hasattr(string_match, "__getitem__"):
                                 matched_data = string_match[2] if len(string_match) > 2 else b""
@@ -716,9 +706,7 @@ rule Basic_PE_Detection
                             length = len(matched_data) if matched_data else 0
                         except (AttributeError, IndexError, TypeError):
                             # Skip malformed matches
-                            logger.debug(
-                                f"Skipping malformed string match in file scan: {string_match}"
-                            )
+                            logger.debug(f"Skipping malformed string match in file scan: {string_match}")
                             continue
 
                     # Convert bytes to string if necessary
@@ -795,17 +783,11 @@ rule Basic_PE_Detection
         # Check rule name first
         rule_name = match.rule.lower()
 
-        if any(
-            keyword in rule_name
-            for keyword in ["protection", "protect", "vmprotect", "themida", "enigma"]
-        ):
+        if any(keyword in rule_name for keyword in ["protection", "protect", "vmprotect", "themida", "enigma"]):
             return PatternCategory.PROTECTION
         if any(keyword in rule_name for keyword in ["pack", "upx", "aspack", "pecompact"]):
             return PatternCategory.PACKER
-        if any(
-            keyword in rule_name
-            for keyword in ["license", "flexlm", "hasp", "dongle", "activation"]
-        ):
+        if any(keyword in rule_name for keyword in ["license", "flexlm", "hasp", "dongle", "activation"]):
             return PatternCategory.LICENSING
         if any(keyword in rule_name for keyword in ["debug", "antidebug", "anti_debug"]):
             return PatternCategory.ANTI_DEBUG
@@ -1007,9 +989,7 @@ rule Basic_PE_Detection
         return {
             "total_rules": self._count_total_rules(),
             "categories": categories,
-            "namespaces": list(
-                {meta.get("namespace", "unknown") for meta in self.rule_metadata.values()}
-            ),
+            "namespaces": list({meta.get("namespace", "unknown") for meta in self.rule_metadata.values()}),
             "namespace_distribution": namespace_dist,
             "yara_available": YARA_AVAILABLE,
         }

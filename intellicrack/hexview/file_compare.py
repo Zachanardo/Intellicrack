@@ -327,9 +327,7 @@ class BinaryComparer:
                 # Deletion from data1
                 self.differences.insert(
                     0,
-                    DifferenceBlock(
-                        offset1=0, offset2=0, length1=i, length2=0, diff_type=DifferenceType.DELETED
-                    ),
+                    DifferenceBlock(offset1=0, offset2=0, length1=i, length2=0, diff_type=DifferenceType.DELETED),
                 )
                 break
 
@@ -387,11 +385,7 @@ class BinaryComparer:
 
         for diff in self.differences[1:]:
             # Check if adjacent and same type
-            if (
-                current.end1 == diff.offset1
-                and current.end2 == diff.offset2
-                and current.diff_type == diff.diff_type
-            ):
+            if current.end1 == diff.offset1 and current.end2 == diff.offset2 and current.diff_type == diff.diff_type:
                 # Merge
                 current.length1 += diff.length1
                 current.length2 += diff.length2

@@ -48,9 +48,7 @@ def secure_hash(data: str | bytes, algorithm: str = "sha256") -> str:
         Hex digest of the hash
 
     """
-    logger.debug(
-        f"Generating secure hash for data (type: {type(data)}) using algorithm: {algorithm}"
-    )
+    logger.debug(f"Generating secure hash for data (type: {type(data)}) using algorithm: {algorithm}")
     if isinstance(data, str):
         data = data.encode("utf-8")
         logger.debug("Data converted to UTF-8 bytes.")
@@ -91,13 +89,9 @@ def secure_subprocess(
         SecurityError: If shell=True without whitelist
 
     """
-    logger.debug(
-        f"Executing secure_subprocess command: {command}, shell: {shell}, timeout: {timeout}"
-    )
+    logger.debug(f"Executing secure_subprocess command: {command}, shell: {shell}, timeout: {timeout}")
     if shell:
-        error_msg = (
-            "shell=True is not allowed for security reasons. Use a list of arguments instead."
-        )
+        error_msg = "shell=True is not allowed for security reasons. Use a list of arguments instead."
         logger.error(error_msg)
         raise SecurityError(error_msg)
 

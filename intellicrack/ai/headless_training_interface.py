@@ -24,6 +24,7 @@ import json
 import logging
 import math
 import os
+import random
 import threading
 import time
 from collections.abc import Callable
@@ -105,15 +106,15 @@ class HeadlessTrainingInterface:
     def start_training(
         self,
         config: dict[str, Any],
-        progress_callback: Callable | None = None,
-        status_callback: Callable | None = None,
+        progress_callback: Callable[[float], None] | None = None,
+        status_callback: Callable[[str], None] | None = None,
     ) -> None:
         """Start AI model training with given configuration.
 
         Args:
             config: Training configuration dictionary
-            progress_callback: Optional callback for progress updates
-            status_callback: Optional callback for status updates
+            progress_callback: Optional callback for progress updates (receives float percentage)
+            status_callback: Optional callback for status updates (receives str message)
 
         """
         if self.is_training:
@@ -128,9 +129,7 @@ class HeadlessTrainingInterface:
         self.callbacks["status"] = status_callback
 
         # Start training in separate thread
-        self.training_thread = threading.Thread(
-            target=self._training_worker, args=(config,), daemon=True
-        )
+        self.training_thread = threading.Thread(target=self._training_worker, args=(config,), daemon=True)
         self.training_thread.start()
 
         logger.info("Training started with %d epochs", self.total_epochs)
@@ -200,7 +199,7 @@ class HeadlessTrainingInterface:
         """
         return self.metrics.copy()
 
-    def set_training_parameters(self, **params: object) -> None:
+    def set_training_parameters(self, **params: Any) -> None:
         """Set training parameters dynamically.
 
         Args:
@@ -208,7 +207,7 @@ class HeadlessTrainingInterface:
 
         """
         for key, value in params.items():
-            if key == "epochs":
+            if key == "epochs" and isinstance(value, int):
                 self.total_epochs = value
             logger.debug("Set training parameter %s = %s", key, value)
 
@@ -218,9 +217,7 @@ class HeadlessTrainingInterface:
             start_time = time.time()
             logger.info("Training worker started")
 
-            learning_rate, batch_size, _, dataset_path, model_config = (
-                self._extract_training_parameters(config)
-            )
+            learning_rate, batch_size, _, dataset_path, model_config = self._extract_training_parameters(config)
             self._validate_dataset_path(dataset_path)
 
             for epoch in range(1, self.total_epochs + 1):
@@ -230,9 +227,7 @@ class HeadlessTrainingInterface:
                 self.current_epoch = epoch
                 self._wait_if_paused()
 
-                train_loss, train_acc, val_loss, val_acc = self._execute_training_epoch(
-                    epoch, dataset_path, model_config, config
-                )
+                train_loss, train_acc, val_loss, val_acc = self._execute_training_epoch(epoch, dataset_path, model_config, config)
                 self._update_metrics(
                     epoch,
                     train_loss,
@@ -254,15 +249,41 @@ class HeadlessTrainingInterface:
             self.is_training = False
             self.is_paused = False
 
-    def _extract_training_parameters(
-        self, config: dict[str, Any]
-    ) -> tuple[float, int, str, str, dict[str, Any]]:
+    def _extract_training_parameters(self, config: dict[str, Any]) -> tuple[float, int, str, str, dict[str, Any]]:
         learning_rate = config.get("learning_rate", 0.001)
         batch_size = config.get("batch_size", 32)
         model_type = config.get("model_type", "vulnerability_classifier")
         dataset_path = config.get("dataset_path", "")
         model_config = self._get_model_config(model_type, learning_rate, batch_size)
         return learning_rate, batch_size, model_type, dataset_path, model_config
+
+    def _get_model_config(self, model_type: str, learning_rate: float, batch_size: int) -> dict[str, Any]:
+        """Get model configuration based on model type.
+
+        Args:
+            model_type: Type of model architecture
+            learning_rate: Learning rate for training
+            batch_size: Batch size for training
+
+        Returns:
+            Model configuration dictionary
+
+        """
+        architecture_map = {
+            "vulnerability_classifier": "deep_cnn",
+            "pattern_detector": "transformer",
+            "behavior_analyzer": "lstm",
+            "anomaly_detector": "gru",
+            "signature_matcher": "resnet",
+        }
+
+        return {
+            "architecture": architecture_map.get(model_type, "deep_cnn"),
+            "optimizer": "adam",
+            "learning_rate": learning_rate,
+            "batch_size": batch_size,
+            "dropout_rate": 0.1,
+        }
 
     def _validate_dataset_path(self, dataset_path: str) -> None:
         if not dataset_path or not os.path.exists(dataset_path):
@@ -316,9 +337,7 @@ class HeadlessTrainingInterface:
             },
         )
 
-    def _invoke_callbacks(
-        self, epoch: int, train_loss: float, train_acc: float, val_loss: float, val_acc: float
-    ) -> None:
+    def _invoke_callbacks(self, epoch: int, train_loss: float, train_acc: float, val_loss: float, val_acc: float) -> None:
         if self.callbacks.get("progress"):
             progress = (epoch / self.total_epochs) * 100
             self.callbacks["progress"](progress)
@@ -393,9 +412,7 @@ class HeadlessTrainingInterface:
                 batch_data = train_data[start_idx:end_idx]
 
                 # Forward pass and loss computation
-                batch_loss, batch_correct, batch_total = self._process_training_batch(
-                    batch_data, model_config, learning_rate, epoch
-                )
+                batch_loss, batch_correct, batch_total = self._process_training_batch(batch_data, model_config, learning_rate, epoch)
 
                 train_losses.append(batch_loss)
                 train_correct += batch_correct
@@ -414,9 +431,7 @@ class HeadlessTrainingInterface:
                     batch_data = val_data[start_idx:end_idx]
 
                     # Validation forward pass (no gradient updates)
-                    batch_loss, batch_correct, batch_total = self._process_validation_batch(
-                        batch_data, model_config, epoch
-                    )
+                    batch_loss, batch_correct, batch_total = self._process_validation_batch(batch_data, model_config, epoch)
 
                     val_losses.append(batch_loss)
                     val_correct += batch_correct
@@ -441,9 +456,7 @@ class HeadlessTrainingInterface:
             # Adaptive error recovery using historical metrics
             return self._generate_recovery_metrics(epoch, model_config)
 
-    def _load_training_data(
-        self, dataset_path: str, validation_split: float = 0.2
-    ) -> tuple[list, list]:
+    def _load_training_data(self, dataset_path: str, validation_split: float = 0.2) -> tuple[list, list]:
         """Load training data from dataset path.
 
         Args:
@@ -509,9 +522,7 @@ class HeadlessTrainingInterface:
                     ((i * 17) % 13) * 0.077,  # Feature 3: pseudo-random
                     (i / num_samples),  # Feature 4: normalized position
                     ((i**2) % 50) * 0.02,  # Feature 5: quadratic pattern
-                    (1.0 / (i + 1))
-                    if i < num_samples // 2
-                    else (0.3 / (num_samples - i + 1)),  # Feature 6: inverse
+                    (1.0 / (i + 1)) if i < num_samples // 2 else (0.3 / (num_samples - i + 1)),  # Feature 6: inverse
                 ]
 
                 # Create label based on feature combinations for consistent learning
@@ -577,9 +588,7 @@ class HeadlessTrainingInterface:
             logger.error(f"Training batch processing failed: {e}")
             return 1.0, 0, len(batch_data)
 
-    def _process_validation_batch(
-        self, batch_data: list, model_config: dict[str, Any], epoch: int
-    ) -> tuple[float, int, int]:
+    def _process_validation_batch(self, batch_data: list, model_config: dict[str, Any], epoch: int) -> tuple[float, int, int]:
         """Process a validation batch (inference only, no gradient updates).
 
         Args:
@@ -621,9 +630,7 @@ class HeadlessTrainingInterface:
             logger.error(f"Validation batch processing failed: {e}")
             return 1.0, 0, len(batch_data)
 
-    def _generate_recovery_metrics(
-        self, epoch: int, model_config: dict[str, Any]
-    ) -> tuple[float, float, float, float]:
+    def _generate_recovery_metrics(self, epoch: int, model_config: dict[str, Any]) -> tuple[float, float, float, float]:
         """Generate recovery metrics using historical data and adaptive algorithms.
 
         Args:
@@ -646,22 +653,12 @@ class HeadlessTrainingInterface:
                 weights = [w / weight_sum for w in weights]
 
                 # Calculate weighted averages
-                avg_train_loss = sum(
-                    m["train_loss"] * w for m, w in zip(recent_metrics, weights, strict=False)
-                )
-                avg_train_acc = sum(
-                    m["train_acc"] * w for m, w in zip(recent_metrics, weights, strict=False)
-                )
-                avg_val_loss = sum(
-                    m["val_loss"] * w for m, w in zip(recent_metrics, weights, strict=False)
-                )
-                avg_val_acc = sum(
-                    m["val_acc"] * w for m, w in zip(recent_metrics, weights, strict=False)
-                )
+                avg_train_loss = sum(m["train_loss"] * w for m, w in zip(recent_metrics, weights, strict=False))
+                avg_train_acc = sum(m["train_acc"] * w for m, w in zip(recent_metrics, weights, strict=False))
+                avg_val_loss = sum(m["val_loss"] * w for m, w in zip(recent_metrics, weights, strict=False))
+                avg_val_acc = sum(m["val_acc"] * w for m, w in zip(recent_metrics, weights, strict=False))
 
                 # Apply slight perturbation to indicate error recovery
-                import random
-
                 # Note: Using random module for stochastic variance, not cryptographic purposes
                 perturbation = 1.0 + random.uniform(-0.05, 0.05)  # noqa: S311
 
@@ -717,8 +714,6 @@ class HeadlessTrainingInterface:
 
             # Estimate accuracy based on loss (inverse relationship)
             # Using sigmoid-like curve for accuracy progression
-            import math
-
             loss_normalized = train_loss / base_loss
             train_acc = 1.0 / (1.0 + math.exp(3.0 * (loss_normalized - 0.5)))
             # Note: Using random module for stochastic variance, not cryptographic purposes
@@ -742,17 +737,13 @@ class HeadlessTrainingInterface:
         except Exception as e:
             logger.debug(f"Recovery metrics generation error: {e}")
             # Ultimate fallback - return conservative estimates
-            import math
-
             train_loss = 2.0 * math.exp(-0.05 * epoch) + 0.1
             train_acc = 1.0 - train_loss / 3.0
             val_loss = train_loss * 1.1
             val_acc = train_acc * 0.95
             return train_loss, train_acc, val_loss, val_acc
 
-    def _forward_pass(
-        self, features: list, model_config: dict[str, Any], epoch: int, validation: bool = False
-    ) -> float:
+    def _forward_pass(self, features: list, model_config: dict[str, Any], epoch: int, validation: bool = False) -> float:
         """Perform forward pass through the neural network model.
 
         Args:
@@ -789,9 +780,7 @@ class HeadlessTrainingInterface:
             # Ensure correct input dimensions
             if len(normalized_features) < self._input_size:
                 # Pad with zeros if needed
-                normalized_features = np.pad(
-                    normalized_features, (0, self._input_size - len(normalized_features))
-                )
+                normalized_features = np.pad(normalized_features, (0, self._input_size - len(normalized_features)))
             elif len(normalized_features) > self._input_size:
                 # Truncate if too many features
                 normalized_features = normalized_features[: self._input_size]
@@ -800,12 +789,12 @@ class HeadlessTrainingInterface:
             z1 = np.dot(normalized_features, self._weights["W1"]) + self._weights["b1"]
             a1 = self._relu(z1)
 
+            # Initialize dropout parameters if needed
+            dropout_rate = model_config.get("dropout_rate", 0.1)
+            rng = np.random.default_rng(seed=42)
+
             # Apply dropout during training
             if not validation and model_config.get("dropout_rate", 0) > 0:
-                dropout_rate = model_config.get("dropout_rate", 0.1)
-                import numpy as np
-
-                rng = np.random.default_rng(seed=42)
                 dropout_mask = rng.binomial(1, 1 - dropout_rate, size=a1.shape) / (1 - dropout_rate)
                 a1 = a1 * dropout_mask
 
@@ -872,7 +861,9 @@ class HeadlessTrainingInterface:
         rng = np.random.default_rng(seed=42)
         self._weights = {
             "W1": rng.standard_normal((input_size, hidden1_size)) * np.sqrt(2.0 / input_size),
+            "b1": np.zeros((hidden1_size,)),
             "W2": rng.standard_normal((hidden1_size, hidden2_size)) * np.sqrt(2.0 / hidden1_size),
+            "b2": np.zeros((hidden2_size,)),
             "W3": rng.standard_normal((hidden2_size, output_size)) * np.sqrt(2.0 / hidden2_size),
             "b3": np.zeros((output_size,)),
         }
@@ -916,9 +907,7 @@ class HeadlessTrainingInterface:
             Path where model was saved
 
         """
-        output_dir = config.get(
-            "output_directory", os.path.join(os.path.dirname(__file__), "..", "models", "trained")
-        )
+        output_dir = config.get("output_directory", os.path.join(os.path.dirname(__file__), "..", "models", "trained"))
         os.makedirs(output_dir, exist_ok=True)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

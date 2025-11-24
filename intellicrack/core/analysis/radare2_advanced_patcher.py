@@ -103,9 +103,7 @@ class Radare2AdvancedPatcher:
             elif arch == "ppc":
                 self.architecture = Architecture.PPC
 
-            logger.info(
-                f"Opened {self.binary_path}: {self.architecture.value} {self.bits}-bit {self.endianness}"
-            )
+            logger.info(f"Opened {self.binary_path}: {self.architecture.value} {self.bits}-bit {self.endianness}")
             return True
 
         except Exception as e:
@@ -182,9 +180,7 @@ class Radare2AdvancedPatcher:
         logger.info(f"Modified jump table at {hex(table_address)}")
         return patch
 
-    def patch_function_prologue(
-        self, func_address: int, skip_bytes: int = 0, custom_prologue: bytes | None = None
-    ) -> PatchInfo:
+    def patch_function_prologue(self, func_address: int, skip_bytes: int = 0, custom_prologue: bytes | None = None) -> PatchInfo:
         """Patch function prologue."""
         if custom_prologue:
             prologue_bytes = custom_prologue
@@ -249,9 +245,7 @@ class Radare2AdvancedPatcher:
 
         return prologue
 
-    def patch_function_epilogue(
-        self, func_address: int, func_size: int, custom_epilogue: bytes | None = None
-    ) -> PatchInfo:
+    def patch_function_epilogue(self, func_address: int, func_size: int, custom_epilogue: bytes | None = None) -> PatchInfo:
         """Patch function epilogue."""
         # Find epilogue location
         epilogue_address = self._find_epilogue(func_address, func_size)
@@ -373,9 +367,7 @@ class Radare2AdvancedPatcher:
         if mnemonic.lower() in jump_inversions:
             # Calculate inverted opcode
             inverted_mnemonic = jump_inversions[mnemonic.lower()]
-            inverted_bytes = self._get_inverted_jump_bytes(
-                opcode_bytes, mnemonic, inverted_mnemonic
-            )
+            inverted_bytes = self._get_inverted_jump_bytes(opcode_bytes, mnemonic, inverted_mnemonic)
 
             patch = PatchInfo(
                 type=PatchType.CONDITIONAL_JUMP,
@@ -390,16 +382,12 @@ class Radare2AdvancedPatcher:
             self._write_bytes(address, inverted_bytes)
             self.patches.append(patch)
 
-            logger.info(
-                f"Inverted conditional jump at {hex(address)}: {mnemonic} -> {inverted_mnemonic}"
-            )
+            logger.info(f"Inverted conditional jump at {hex(address)}: {mnemonic} -> {inverted_mnemonic}")
             return patch
 
         raise ValueError(f"Cannot invert non-conditional jump: {mnemonic}")
 
-    def _get_inverted_jump_bytes(
-        self, original: bytes, original_mnemonic: str, inverted_mnemonic: str
-    ) -> bytes:
+    def _get_inverted_jump_bytes(self, original: bytes, original_mnemonic: str, inverted_mnemonic: str) -> bytes:
         """Get inverted jump instruction bytes."""
         # For x86/x64, conditional jumps differ by one bit in many cases
         if len(original) == 2 and original[0] == 0x0F:
@@ -502,9 +490,7 @@ class Radare2AdvancedPatcher:
                 # Apply patch
                 self._write_bytes(patch_address, mod_bytes)
 
-                patches_made.append(
-                    {"address": patch_address, "original": original_bytes, "patched": mod_bytes}
-                )
+                patches_made.append({"address": patch_address, "original": original_bytes, "patched": mod_bytes})
 
         if patches_made:
             patch = PatchInfo(
@@ -517,9 +503,7 @@ class Radare2AdvancedPatcher:
             )
 
             self.patches.append(patch)
-            logger.info(
-                f"Modified return value for function at {hex(func_address)} to {hex(return_value)}"
-            )
+            logger.info(f"Modified return value for function at {hex(func_address)} to {hex(return_value)}")
             return patch
 
         raise ValueError(f"No return instructions found in function at {hex(func_address)}")
@@ -535,9 +519,7 @@ class Radare2AdvancedPatcher:
             return struct.pack("<I", 0xD2800000 | (value << 5) | reg)
         # Multiple instructions needed for large values
         instructions = [struct.pack("<I", 0xD2800000 | ((value & 0xFFFF) << 5) | reg)]
-        instructions.append(
-            struct.pack("<I", 0xF2A00000 | (((value >> 16) & 0xFFFF) << 5) | reg)
-        )
+        instructions.append(struct.pack("<I", 0xF2A00000 | (((value >> 16) & 0xFFFF) << 5) | reg))
         return b"".join(instructions)
 
     def _encode_arm_mov_immediate(self, reg: int, value: int) -> bytes:
@@ -586,9 +568,7 @@ class Radare2AdvancedPatcher:
                 new_bytes = b"\xe8" + struct.pack("<i", offset)
                 # Pad with NOPs if needed
                 if len(new_bytes) < len(original_bytes):
-                    new_bytes += self._get_nop_instruction() * (
-                        len(original_bytes) - len(new_bytes)
-                    )
+                    new_bytes += self._get_nop_instruction() * (len(original_bytes) - len(new_bytes))
 
         elif self.architecture == Architecture.ARM64:
             # BL instruction
@@ -788,9 +768,7 @@ class Radare2AdvancedPatcher:
         logger.info(f"Redirected call at {hex(call_address)} to {hex(new_target)}")
         return patch
 
-    def create_function_hook(
-        self, func_address: int, hook_code: bytes, preserve_original: bool = True
-    ) -> PatchInfo:
+    def create_function_hook(self, func_address: int, hook_code: bytes, preserve_original: bool = True) -> PatchInfo:
         """Create inline function hook."""
         if preserve_original:
             # Create trampoline
@@ -803,9 +781,7 @@ class Radare2AdvancedPatcher:
                 jump_to_hook = b"\xe9" + struct.pack("<i", hook_offset)
 
                 # Add jump back to original
-                jump_back = b"\xe9" + struct.pack(
-                    "<i", trampoline - (func_address + len(hook_code) + 5)
-                )
+                jump_back = b"\xe9" + struct.pack("<i", trampoline - (func_address + len(hook_code) + 5))
             elif self.architecture == Architecture.ARM64:
                 # ARM64 hook with trampoline
                 # Calculate relative branch offset
@@ -826,9 +802,7 @@ class Radare2AdvancedPatcher:
 
                 # Jump back to trampoline
                 if abs(trampoline_offset // 4) < 0x2000000:
-                    jump_back = struct.pack(
-                        "<I", 0x14000000 | ((trampoline_offset // 4) & 0x3FFFFFF)
-                    )
+                    jump_back = struct.pack("<I", 0x14000000 | ((trampoline_offset // 4) & 0x3FFFFFF))
                 else:
                     jump_back = b"\x50\x00\x00\x58"  # ldr x16, [pc, #8]
                     jump_back += b"\x00\x02\x1f\xd6"  # br x16
@@ -851,9 +825,7 @@ class Radare2AdvancedPatcher:
 
                 # Jump back to trampoline
                 if abs(trampoline_offset // 4) < 0x1000000:
-                    jump_back = struct.pack(
-                        "<I", 0xEA000000 | ((trampoline_offset // 4) & 0xFFFFFF)
-                    )
+                    jump_back = struct.pack("<I", 0xEA000000 | ((trampoline_offset // 4) & 0xFFFFFF))
                 else:
                     jump_back = b"\x04\xf0\x1f\xe5"  # ldr pc, [pc, #-4]
                     jump_back += struct.pack("<I", trampoline)
@@ -938,9 +910,7 @@ class Radare2AdvancedPatcher:
                         jump_to_hook = b"\xe9" + struct.pack("<i", hook_offset)
                     else:
                         # Absolute jump via register
-                        jump_to_hook = b"\x48\xb8" + struct.pack(
-                            "<Q", func_address + len(hook_code)
-                        )  # movabs rax, addr
+                        jump_to_hook = b"\x48\xb8" + struct.pack("<Q", func_address + len(hook_code))  # movabs rax, addr
                         jump_to_hook += b"\xff\xe0"  # jmp rax
 
                     if abs(trampoline_offset) < 0x7FFFFFFF:
@@ -953,9 +923,7 @@ class Radare2AdvancedPatcher:
                     if abs(hook_offset) < 0x7FFFFFFF:
                         jump_to_hook = b"\xe9" + struct.pack("<i", hook_offset)
                     else:
-                        jump_to_hook = b"\xb8" + struct.pack(
-                            "<I", func_address + len(hook_code)
-                        )  # mov eax, addr
+                        jump_to_hook = b"\xb8" + struct.pack("<I", func_address + len(hook_code))  # mov eax, addr
                         jump_to_hook += b"\xff\xe0"  # jmp eax
 
                     if abs(trampoline_offset) < 0x7FFFFFFF:
@@ -1031,9 +999,7 @@ class Radare2AdvancedPatcher:
                         zero_count += 1
 
                         if zero_count >= size:
-                            logger.info(
-                                f"Found code cave at {hex(cave_start)} with {zero_count} bytes"
-                            )
+                            logger.info(f"Found code cave at {hex(cave_start)} with {zero_count} bytes")
                             return cave_start
                     else:
                         zero_count = 0
@@ -1213,10 +1179,7 @@ class Radare2AdvancedPatcher:
             "        patches = [",
         ]
 
-        script.extend(
-            f"            ({hex(patch.address)}, bytes.fromhex('{patch.patched_bytes.hex()}')),"
-            for patch in self.patches
-        )
+        script.extend(f"            ({hex(patch.address)}, bytes.fromhex('{patch.patched_bytes.hex()}'))," for patch in self.patches)
         script.extend(
             [
                 "        ]",
@@ -1278,9 +1241,7 @@ class Radare2AdvancedPatcher:
 
         for patch in self.patches:
             hex_str = ",".join([f"0x{b:02x}" for b in patch.patched_bytes])
-            script.append(
-                f"        {{{hex(patch.address)}, (unsigned char[]){{{hex_str}}}, {len(patch.patched_bytes)}}},"
-            )
+            script.append(f"        {{{hex(patch.address)}, (unsigned char[]){{{hex_str}}}, {len(patch.patched_bytes)}}},")
 
         script.extend(
             [
@@ -1329,9 +1290,7 @@ def main() -> None:
     parser.add_argument("-a", "--antidebug", action="store_true", help="Defeat anti-debugging")
     parser.add_argument("-s", "--save", metavar="FILE", help="Save patches to file")
     parser.add_argument("-l", "--load", metavar="FILE", help="Load patches from file")
-    parser.add_argument(
-        "-g", "--generate", metavar="TYPE", help="Generate patch script (python/radare2/c)"
-    )
+    parser.add_argument("-g", "--generate", metavar="TYPE", help="Generate patch script (python/radare2/c)")
 
     args = parser.parse_args()
 

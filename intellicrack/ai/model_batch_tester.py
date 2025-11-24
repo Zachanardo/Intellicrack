@@ -296,16 +296,9 @@ class ModelBatchTester:
                 validation_details["exact_match"] = passed_validation
 
             if test_case.expected_patterns:
-                pattern_matches = {
-                    pattern: pattern.lower() in output.lower()
-                    for pattern in test_case.expected_patterns
-                }
+                pattern_matches = {pattern: pattern.lower() in output.lower() for pattern in test_case.expected_patterns}
                 all_patterns_found = all(pattern_matches.values())
-                passed_validation = (
-                    all_patterns_found
-                    if passed_validation is None
-                    else (passed_validation and all_patterns_found)
-                )
+                passed_validation = all_patterns_found if passed_validation is None else (passed_validation and all_patterns_found)
                 validation_details["pattern_matches"] = pattern_matches
 
             return TestResult(
@@ -451,14 +444,10 @@ class ModelBatchTester:
         """Generate summary statistics from test results."""
         summary = {
             "total_tests": len(results),
-            "successful_tests": sum(bool(r.success)
-                                for r in results),
-            "failed_tests": sum(bool(not r.success)
-                            for r in results),
-            "validation_passed": sum(bool(r.passed_validation is True)
-                                 for r in results),
-            "validation_failed": sum(bool(r.passed_validation is False)
-                                 for r in results),
+            "successful_tests": sum(bool(r.success) for r in results),
+            "failed_tests": sum(bool(not r.success) for r in results),
+            "validation_passed": sum(bool(r.passed_validation is True) for r in results),
+            "validation_failed": sum(bool(r.passed_validation is False) for r in results),
             "models": {},
             "tests": {},
         }
@@ -469,20 +458,12 @@ class ModelBatchTester:
 
             summary["models"][model_id] = {
                 "total": len(model_results),
-                "success": sum(bool(r.success)
-                           for r in model_results),
-                "failed": sum(bool(not r.success)
-                          for r in model_results),
-                "validation_passed": sum(bool(r.passed_validation is True)
-                                     for r in model_results),
-                "avg_inference_time": sum(r.inference_time for r in model_results)
-                / len(model_results)
-                if model_results
-                else 0,
+                "success": sum(bool(r.success) for r in model_results),
+                "failed": sum(bool(not r.success) for r in model_results),
+                "validation_passed": sum(bool(r.passed_validation is True) for r in model_results),
+                "avg_inference_time": sum(r.inference_time for r in model_results) / len(model_results) if model_results else 0,
                 "avg_tokens_per_second": sum(
-                    r.tokens_generated / r.inference_time
-                    for r in model_results
-                    if r.success and r.inference_time > 0
+                    r.tokens_generated / r.inference_time for r in model_results if r.success and r.inference_time > 0
                 )
                 / len([r for r in model_results if r.success])
                 if any(r.success for r in model_results)
@@ -495,10 +476,8 @@ class ModelBatchTester:
 
             summary["tests"][test_case.test_id] = {
                 "total": len(test_results),
-                "success": sum(bool(r.success)
-                           for r in test_results),
-                "validation_passed": sum(bool(r.passed_validation is True)
-                                     for r in test_results),
+                "success": sum(bool(r.success) for r in test_results),
+                "validation_passed": sum(bool(r.passed_validation is True) for r in test_results),
                 "fastest_model": min(
                     (r for r in test_results if r.success),
                     key=lambda r: r.inference_time,
@@ -536,12 +515,8 @@ class ModelBatchTester:
         for model_id in model_ids:
             model_summary = report.summary["models"][model_id]
             comparison["models"][model_id] = {
-                "success_rate": model_summary["success"] / model_summary["total"]
-                if model_summary["total"] > 0
-                else 0,
-                "validation_rate": model_summary["validation_passed"] / model_summary["success"]
-                if model_summary["success"] > 0
-                else 0,
+                "success_rate": model_summary["success"] / model_summary["total"] if model_summary["total"] > 0 else 0,
+                "validation_rate": model_summary["validation_passed"] / model_summary["success"] if model_summary["success"] > 0 else 0,
                 "avg_inference_time": model_summary["avg_inference_time"],
                 "avg_tokens_per_second": model_summary["avg_tokens_per_second"],
             }
@@ -685,9 +660,7 @@ class ModelBatchTester:
 
         for model_id, stats in report.summary["models"].items():
             success_rate = (stats["success"] / stats["total"] * 100) if stats["total"] > 0 else 0
-            validation_rate = (
-                (stats["validation_passed"] / stats["success"] * 100) if stats["success"] > 0 else 0
-            )
+            validation_rate = (stats["validation_passed"] / stats["success"] * 100) if stats["success"] > 0 else 0
 
             html += f"""
         <tr>
@@ -717,18 +690,8 @@ class ModelBatchTester:
         for result in report.results:
             status_class = "success" if result.success else "failed"
             status_text = "Success" if result.success else "Failed"
-            validation_text = (
-                "OK"
-                if result.passed_validation
-                else "FAIL"
-                if result.passed_validation is False
-                else "-"
-            )
-            output_preview = (
-                f"{result.output[:100]}..."
-                if len(result.output) > 100
-                else result.output
-            )
+            validation_text = "OK" if result.passed_validation else "FAIL" if result.passed_validation is False else "-"
+            output_preview = f"{result.output[:100]}..." if len(result.output) > 100 else result.output
             output_preview = output_preview.replace("\n", " ")
 
             html += f"""

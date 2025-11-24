@@ -182,9 +182,7 @@ class SampleDatabase:
         metadata = self.index[file_hash]
         sample_dir = self.database_path / metadata.protection_type
 
-        return next(
-            (file for file in sample_dir.iterdir() if file.stem == file_hash), None
-        )
+        return next((file for file in sample_dir.iterdir() if file.stem == file_hash), None)
 
     def get_samples_by_protection(self, protection_type: str) -> list[tuple[Path, SampleMetadata]]:
         """Get all samples for a specific protection type.
@@ -462,9 +460,7 @@ class SampleDatabase:
                 with open(self.index_file, encoding="utf-8") as f:
                     data = json.load(f)
 
-                self.index = {
-                    file_hash: SampleMetadata(**metadata) for file_hash, metadata in data.items()
-                }
+                self.index = {file_hash: SampleMetadata(**metadata) for file_hash, metadata in data.items()}
 
                 self.logger.info("Loaded index with %d samples", len(self.index))
 

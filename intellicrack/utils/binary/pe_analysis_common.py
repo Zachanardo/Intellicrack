@@ -292,17 +292,11 @@ def extract_all_pe_icons(pe_path: str, output_dir: str) -> list[str]:
                                 try:
                                     data_rva = resource_lang.data.struct.OffsetToData
                                     size = resource_lang.data.struct.Size
-                                    icon_data = pe.get_memory_mapped_image()[
-                                        data_rva : data_rva + size
-                                    ]
+                                    icon_data = pe.get_memory_mapped_image()[data_rva : data_rva + size]
 
-                                    if icon_image := create_image_from_icon_data(
-                                        icon_data
-                                    ):
+                                    if icon_image := create_image_from_icon_data(icon_data):
                                         # Save icon
-                                        icon_path = os.path.join(
-                                            output_dir, f"{base_name}_icon_{icon_index}.png"
-                                        )
+                                        icon_path = os.path.join(output_dir, f"{base_name}_icon_{icon_index}.png")
                                         icon_image.save(icon_path, format="PNG")
                                         saved_icons.append(icon_path)
                                         icon_index += 1
@@ -362,10 +356,7 @@ def get_pe_icon_info(pe_path: str) -> dict[str, object]:
                                 icon_count += len(resource_id.directory.entries)
 
                                 # Get icon sizes
-                                icon_sizes.extend(
-                                    resource_lang.data.struct.Size
-                                    for resource_lang in resource_id.directory.entries
-                                )
+                                icon_sizes.extend(resource_lang.data.struct.Size for resource_lang in resource_id.directory.entries)
                     elif resource_type.id == RT_GROUP_ICON:
                         # Count icon groups
                         group_count += len(resource_type.directory.entries)
@@ -476,11 +467,7 @@ class PEAnalyzer:
             if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
                 exports.extend(
                     {
-                        "name": (
-                            exp.name.decode("utf-8", errors="ignore")
-                            if exp.name
-                            else None
-                        ),
+                        "name": (exp.name.decode("utf-8", errors="ignore") if exp.name else None),
                         "address": exp.address,
                         "ordinal": exp.ordinal,
                     }
@@ -554,9 +541,7 @@ class PEAnalyzer:
                         resources["resource_types"].append(
                             {
                                 "type_id": resource_type.id,
-                                "name": resource_type.name
-                                if hasattr(resource_type, "name")
-                                else None,
+                                "name": resource_type.name if hasattr(resource_type, "name") else None,
                             },
                         )
                         resources["total_resources"] += 1

@@ -63,9 +63,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
             logger.warning(f"Unsupported language: {self.language}, using default")
             self._setup_default_rules()
 
-    def _create_format(
-        self, color: str, bold: bool = False, italic: bool = False
-    ) -> QTextCharFormat:
+    def _create_format(self, color: str, bold: bool = False, italic: bool = False) -> QTextCharFormat:
         """Create a text format with specified properties.
 
         Args:
@@ -220,9 +218,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         number_format = self._create_format("#bd93f9")
         self.rules.append((re.compile(r"\b[+-]?[0-9]+[lL]?\b"), number_format))
         self.rules.append((re.compile(r"\b[+-]?0[xX][0-9A-Fa-f]+[lL]?\b"), number_format))
-        self.rules.append(
-            (re.compile(r"\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b"), number_format)
-        )
+        self.rules.append((re.compile(r"\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b"), number_format))
 
         # Strings
         string_format = self._create_format("#f1fa8c")
@@ -327,9 +323,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         number_format = self._create_format("#bd93f9")
         self.rules.append((re.compile(r"\b[+-]?[0-9]+[lL]?\b"), number_format))
         self.rules.append((re.compile(r"\b[+-]?0[xX][0-9A-Fa-f]+[lL]?\b"), number_format))
-        self.rules.append(
-            (re.compile(r"\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b"), number_format)
-        )
+        self.rules.append((re.compile(r"\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b"), number_format))
 
         # Strings
         string_format = self._create_format("#f1fa8c")
@@ -354,9 +348,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
 
         # Numbers
         number_format = self._create_format("#bd93f9")
-        self.rules.append(
-            (re.compile(r"\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b"), number_format)
-        )
+        self.rules.append((re.compile(r"\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b"), number_format))
 
         # Booleans and null
         keyword_format = self._create_format("#8be9fd")
@@ -529,9 +521,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         number_format = self._create_format("#bd93f9")
         self.rules.append((re.compile(r"\b[+-]?[0-9]+[lL]?\b"), number_format))
         self.rules.append((re.compile(r"\b[+-]?0[xX][0-9A-Fa-f]+[lL]?\b"), number_format))
-        self.rules.append(
-            (re.compile(r"\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b"), number_format)
-        )
+        self.rules.append((re.compile(r"\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b"), number_format))
 
         # Strings
         string_format = self._create_format("#f1fa8c")
@@ -671,9 +661,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         number_format = self._create_format("#bd93f9")
         self.rules.append((re.compile(r"\b[+-]?[0-9]+[lL]?\b"), number_format))
         self.rules.append((re.compile(r"\b[+-]?0[xX][0-9A-Fa-f]+[lL]?\b"), number_format))
-        self.rules.append(
-            (re.compile(r"\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b"), number_format)
-        )
+        self.rules.append((re.compile(r"\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b"), number_format))
 
         # Strings
         string_format = self._create_format("#f1fa8c")
@@ -765,15 +753,11 @@ def detect_language(code: str) -> str:
     code_lower = code.lower()
 
     # Python detection
-    if any(
-        keyword in code for keyword in ["def ", "import ", "from ", "class ", "self.", "__init__"]
-    ):
+    if any(keyword in code for keyword in ["def ", "import ", "from ", "class ", "self.", "__init__"]):
         return "python"
 
     # JavaScript detection
-    if any(
-        keyword in code for keyword in ["function ", "const ", "let ", "var ", "=>", "console."]
-    ):
+    if any(keyword in code for keyword in ["function ", "const ", "let ", "var ", "=>", "console."]):
         return "javascript"
 
     # JSON detection
@@ -791,10 +775,7 @@ def detect_language(code: str) -> str:
         return "assembly"
 
     # C/C++ detection
-    if any(
-        keyword in code
-        for keyword in ["#include", "int main", "void ", "printf", "cout", "namespace"]
-    ):
+    if any(keyword in code for keyword in ["#include", "int main", "void ", "printf", "cout", "namespace"]):
         return "c"
 
     # XML/HTML detection
@@ -802,9 +783,7 @@ def detect_language(code: str) -> str:
         return "xml"
 
     # Shell script detection
-    if code.startswith("#!/") or any(
-        keyword in code for keyword in ["echo ", "export ", "#!/bin/"]
-    ):
+    if code.startswith("#!/") or any(keyword in code for keyword in ["echo ", "export ", "#!/bin/"]):
         return "shell"
 
     # Default to Python

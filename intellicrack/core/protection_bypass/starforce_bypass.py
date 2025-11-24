@@ -234,14 +234,10 @@ class StarForceBypass:
 
             try:
                 for service_name in self.SERVICE_NAMES:
-                    if service_handle := self._advapi32.OpenServiceW(
-                        sc_manager, service_name, SERVICE_STOP
-                    ):
+                    if service_handle := self._advapi32.OpenServiceW(sc_manager, service_name, SERVICE_STOP):
                         try:
                             status = ServiceStatus()
-                            if self._advapi32.ControlService(
-                                service_handle, SERVICE_CONTROL_STOP, ctypes.byref(status)
-                            ):
+                            if self._advapi32.ControlService(service_handle, SERVICE_CONTROL_STOP, ctypes.byref(status)):
                                 stopped.append(service_name)
                         finally:
                             self._advapi32.CloseServiceHandle(service_handle)
@@ -270,9 +266,7 @@ class StarForceBypass:
 
             try:
                 for service_name in self.SERVICE_NAMES:
-                    if service_handle := self._advapi32.OpenServiceW(
-                        sc_manager, service_name, DELETE
-                    ):
+                    if service_handle := self._advapi32.OpenServiceW(sc_manager, service_name, DELETE):
                         try:
                             if self._advapi32.DeleteService(service_handle):
                                 deleted.append(service_name)
@@ -402,9 +396,7 @@ class StarForceBypass:
         PROCESS_VM_OPERATION = 0x0008
 
         try:
-            process_handle = self._kernel32.OpenProcess(
-                PROCESS_VM_WRITE | PROCESS_VM_OPERATION, False, process_id
-            )
+            process_handle = self._kernel32.OpenProcess(PROCESS_VM_WRITE | PROCESS_VM_OPERATION, False, process_id)
 
             if not process_handle:
                 return False
@@ -435,9 +427,7 @@ class StarForceBypass:
                     if status == 0:
                         being_debugged_offset = 2
                         peb_address = pbi.PebBaseAddress
-                        being_debugged_address = ctypes.c_void_p(
-                            ctypes.cast(peb_address, ctypes.c_size_t).value + being_debugged_offset
-                        )
+                        being_debugged_address = ctypes.c_void_p(ctypes.cast(peb_address, ctypes.c_size_t).value + being_debugged_offset)
 
                         zero_byte = ctypes.c_byte(0)
                         bytes_written = ctypes.c_size_t()
@@ -481,9 +471,7 @@ class StarForceBypass:
             ]
 
         try:
-            process_handle = self._kernel32.OpenProcess(
-                PROCESS_SET_CONTEXT | PROCESS_GET_CONTEXT, False, process_id
-            )
+            process_handle = self._kernel32.OpenProcess(PROCESS_SET_CONTEXT | PROCESS_GET_CONTEXT, False, process_id)
 
             if not process_handle:
                 return False
@@ -588,9 +576,7 @@ class StarForceBypass:
         """Configure virtual drive for disc emulation."""
         return True
 
-    def bypass_license_validation(
-        self, target_exe: Path, license_data: dict | None = None
-    ) -> BypassResult:
+    def bypass_license_validation(self, target_exe: Path, license_data: dict | None = None) -> BypassResult:
         """Bypass StarForce license validation.
 
         Args:
@@ -692,13 +678,9 @@ class StarForceBypass:
             license_section = pefile.SectionStructure(pe.__IMAGE_SECTION_HEADER_format__)
             license_section.Name = b".lic\x00\x00\x00\x00"
             license_section.Misc_VirtualSize = 0x1000
-            license_section.VirtualAddress = (
-                pe.sections[-1].VirtualAddress + pe.sections[-1].Misc_VirtualSize
-            )
+            license_section.VirtualAddress = pe.sections[-1].VirtualAddress + pe.sections[-1].Misc_VirtualSize
             license_section.SizeOfRawData = 0x1000
-            license_section.PointerToRawData = (
-                pe.sections[-1].PointerToRawData + pe.sections[-1].SizeOfRawData
-            )
+            license_section.PointerToRawData = pe.sections[-1].PointerToRawData + pe.sections[-1].SizeOfRawData
             license_section.Characteristics = 0x40000040
 
             import json
@@ -714,9 +696,7 @@ class StarForceBypass:
     def _create_registry_license(self) -> bool:
         """Create registry-based license entries."""
         try:
-            key = winreg.CreateKey(
-                winreg.HKEY_CURRENT_USER, r"SOFTWARE\Protection Technology\License"
-            )
+            key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"SOFTWARE\Protection Technology\License")
 
             winreg.SetValueEx(key, "Licensed", 0, winreg.REG_DWORD, 1)
             winreg.SetValueEx(key, "ActivationDate", 0, winreg.REG_SZ, "2024-01-01")
@@ -765,9 +745,7 @@ class StarForceBypass:
     def _spoof_disk_serial(self) -> bool:
         """Spoof disk volume serial number."""
         try:
-            key = winreg.CreateKey(
-                winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Services\Disk\Enum"
-            )
+            key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Services\Disk\Enum")
 
             winreg.SetValueEx(key, "0", 0, winreg.REG_SZ, "SPOOFED_DISK_ID_12345678")
             winreg.CloseKey(key)
@@ -793,9 +771,7 @@ class StarForceBypass:
                     if subkey_name.isdigit():
                         adapter_key = winreg.OpenKey(key, subkey_name, 0, winreg.KEY_WRITE)
                         try:
-                            winreg.SetValueEx(
-                                adapter_key, "NetworkAddress", 0, winreg.REG_SZ, "001122334455"
-                            )
+                            winreg.SetValueEx(adapter_key, "NetworkAddress", 0, winreg.REG_SZ, "001122334455")
                         finally:
                             winreg.CloseKey(adapter_key)
                     i += 1
@@ -811,9 +787,7 @@ class StarForceBypass:
     def _spoof_cpu_id(self) -> bool:
         """Spoof CPU identification."""
         try:
-            key = winreg.CreateKey(
-                winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0"
-            )
+            key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0")
 
             winreg.SetValueEx(key, "ProcessorNameString", 0, winreg.REG_SZ, "Spoofed CPU")
             winreg.SetValueEx(key, "Identifier", 0, winreg.REG_SZ, "x86 Family SPOOFED")

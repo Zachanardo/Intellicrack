@@ -107,14 +107,10 @@ class FileResolver:
         ".flatpak": FileTypeInfo(".flatpak", "Flatpak Package", "installer", True, "flatpak"),
         ".appimage": FileTypeInfo(".appimage", "AppImage Package", "installer", True, "appimage"),
         # macOS Executables and Packages
-        ".app": FileTypeInfo(
-            ".app", "macOS Application Bundle", "executable", True, "macho_bundle"
-        ),
+        ".app": FileTypeInfo(".app", "macOS Application Bundle", "executable", True, "macho_bundle"),
         ".dylib": FileTypeInfo(".dylib", "macOS Dynamic Library", "library", True, "macho"),
         ".bundle": FileTypeInfo(".bundle", "macOS Bundle", "library", True, "macho_bundle"),
-        ".framework": FileTypeInfo(
-            ".framework", "macOS Framework", "library", True, "macho_framework"
-        ),
+        ".framework": FileTypeInfo(".framework", "macOS Framework", "library", True, "macho_framework"),
         ".pkg": FileTypeInfo(".pkg", "macOS Installer Package", "installer", True, "pkg"),
         ".dmg": FileTypeInfo(".dmg", "macOS Disk Image", "installer", True, "dmg"),
         # Cross-platform formats
@@ -200,23 +196,17 @@ class FileResolver:
 
         if file_path.is_dir():
             if extension == ".app":
-                return self.FILE_TYPES.get(
-                    ".app", FileTypeInfo(extension, "Unknown Directory", "directory")
-                )
+                return self.FILE_TYPES.get(".app", FileTypeInfo(extension, "Unknown Directory", "directory"))
             else:
                 return (
                     self.FILE_TYPES.get(
                         ".framework",
-                        FileTypeInfo(
-                            extension, "Framework Directory", "directory"
-                        ),
+                        FileTypeInfo(extension, "Framework Directory", "directory"),
                     )
                     if extension == ".framework"
                     else FileTypeInfo(extension, "Directory", "directory", False)
                 )
-        return self.FILE_TYPES.get(
-            extension, FileTypeInfo(extension, "Unknown File Type", "unknown", False)
-        )
+        return self.FILE_TYPES.get(extension, FileTypeInfo(extension, "Unknown File Type", "unknown", False))
 
     def get_supported_file_filters(self) -> str:
         """Generate Qt file dialog filter string for all supported types."""

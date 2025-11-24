@@ -78,9 +78,7 @@ else:
                 _BasicValidator._validate_recursive(instance, schema, [])  # scanner-ignore
 
             @staticmethod
-            def _validate_recursive(
-                instance: object, schema: dict[str, object], path: list[str]
-            ) -> None:
+            def _validate_recursive(instance: object, schema: dict[str, object], path: list[str]) -> None:
                 """Recursively validate instance against schema."""
                 if "type" in schema:
                     expected_type = schema["type"]
@@ -105,16 +103,12 @@ else:
                 if "properties" in schema and isinstance(instance, dict):
                     for prop_name, prop_schema in schema["properties"].items():
                         if prop_name in instance:
-                            _BasicValidator._validate_recursive(
-                                instance[prop_name], prop_schema, [*path, prop_name]
-                            )
+                            _BasicValidator._validate_recursive(instance[prop_name], prop_schema, [*path, prop_name])
 
                     if "required" in schema:
                         for required_prop in schema["required"]:
                             if required_prop not in instance:
-                                raise _BasicValidator.ValidationError(
-                                    f"Missing required property: {required_prop}", path
-                                )
+                                raise _BasicValidator.ValidationError(f"Missing required property: {required_prop}", path)
 
                 if "items" in schema and isinstance(instance, list):
                     item_schema = schema["items"]
@@ -122,9 +116,7 @@ else:
                         _BasicValidator._validate_recursive(item, item_schema, [*path, str(i)])
 
                 if "enum" in schema and instance not in schema["enum"]:
-                    raise _BasicValidator.ValidationError(
-                        f"Value {instance} not in allowed values: {schema['enum']}", path
-                    )
+                    raise _BasicValidator.ValidationError(f"Value {instance} not in allowed values: {schema['enum']}", path)
 
                 if "minLength" in schema and isinstance(instance, str) and len(instance) < schema["minLength"]:
                     raise _BasicValidator.ValidationError(
@@ -139,22 +131,16 @@ else:
                     )
 
                 if "minimum" in schema and isinstance(instance, (int, float)) and instance < schema["minimum"]:
-                    raise _BasicValidator.ValidationError(
-                        f"Value {instance} less than minimum {schema['minimum']}", path
-                    )
+                    raise _BasicValidator.ValidationError(f"Value {instance} less than minimum {schema['minimum']}", path)
 
                 if "maximum" in schema and isinstance(instance, (int, float)) and instance > schema["maximum"]:
-                    raise _BasicValidator.ValidationError(
-                        f"Value {instance} greater than maximum {schema['maximum']}", path
-                    )
+                    raise _BasicValidator.ValidationError(f"Value {instance} greater than maximum {schema['maximum']}", path)
 
                 if "pattern" in schema and isinstance(instance, str):
                     import re
 
                     if not re.match(schema["pattern"], instance):
-                        raise _BasicValidator.ValidationError(
-                            f"String does not match pattern {schema['pattern']}", path
-                        )
+                        raise _BasicValidator.ValidationError(f"String does not match pattern {schema['pattern']}", path)
 
         jsonschema = _BasicValidator()
 
@@ -399,9 +385,7 @@ class ConfigAsCodeManager:
                         config = json.load(f)
                     else:
                         if not HAS_YAML:
-                            raise ConfigValidationError(
-                                "Could not determine file format and YAML not available"
-                            )
+                            raise ConfigValidationError("Could not determine file format and YAML not available")
                         config = yaml.safe_load(f)
 
             logger.info(f"Loaded configuration from: {file_path}")
@@ -748,9 +732,7 @@ class ConfigAsCodeManager:
         except Exception as e:
             logger.error(f"Failed to apply fallback chains: {e}")
 
-    def generate_config_files(
-        self, output_dir: str | None = None, environments: list[str] = None
-    ) -> list[Path]:
+    def generate_config_files(self, output_dir: str | None = None, environments: list[str] = None) -> list[Path]:
         """Generate configuration files for multiple environments.
 
         Args:
@@ -803,9 +785,7 @@ def get_config_as_code_manager() -> ConfigAsCodeManager:
     return _CONFIG_AS_CODE_MANAGER
 
 
-def load_config_file(
-    file_path: str | Path, apply_to_system: bool = True, validate: bool = True
-) -> dict[str, Any]:
+def load_config_file(file_path: str | Path, apply_to_system: bool = True, validate: bool = True) -> dict[str, Any]:
     """Load and optionally apply configuration.
 
     Args:

@@ -367,9 +367,7 @@ class CertificateCache:
                 "expired_entries": expired_count,
                 "valid_entries": total_entries - expired_count,
                 "max_entries": self.max_entries,
-                "utilization_percent": (total_entries / self.max_entries * 100)
-                if self.max_entries > 0
-                else 0,
+                "utilization_percent": (total_entries / self.max_entries * 100) if self.max_entries > 0 else 0,
             }
 
     def remove_expired(self) -> int:

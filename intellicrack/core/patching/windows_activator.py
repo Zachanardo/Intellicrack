@@ -74,9 +74,7 @@ class WindowsActivator:
 
     def __init__(self) -> None:
         """Initialize the Windows activator with script path and temporary directory setup."""
-        self.script_path = (
-            Path(__file__).parent.parent.parent / "ui" / "Windows_Patch" / "WindowsActivator.cmd"
-        )
+        self.script_path = Path(__file__).parent.parent.parent / "ui" / "Windows_Patch" / "WindowsActivator.cmd"
         self.temp_dir = Path(tempfile.gettempdir()) / "intellicrack_activation"
         self.logger = get_logger(__name__)
         self.last_validation_time = None
@@ -133,11 +131,7 @@ class WindowsActivator:
             for processor in c.Win32_Processor():
                 hardware_info.extend(
                     (
-                        (
-                            processor.ProcessorId.strip()
-                            if processor.ProcessorId
-                            else ""
-                        ),
+                        (processor.ProcessorId.strip() if processor.ProcessorId else ""),
                         str(processor.NumberOfCores),
                         processor.Name.strip() if processor.Name else "",
                     )
@@ -501,9 +495,8 @@ class WindowsActivator:
                         for item in os.listdir(base_path):
                             item_path = os.path.join(base_path, item)
                             if Path(item_path).is_dir() and any(
-                                                                os.path.exists(os.path.join(item_path, exe))
-                                                                for exe in ["WINWORD.EXE", "EXCEL.EXE", "POWERPNT.EXE"]
-                                                            ):
+                                os.path.exists(os.path.join(item_path, exe)) for exe in ["WINWORD.EXE", "EXCEL.EXE", "POWERPNT.EXE"]
+                            ):
                                 if "Office16" in item or "16.0" in item:
                                     detected_versions.append("2016")
                                 elif "Office15" in item or "15.0" in item:

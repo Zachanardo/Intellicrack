@@ -6,7 +6,8 @@
       "mcp__brave-search__brave_web_search",
       "Bash(cargo search:*)",
       "Bash(pixi run ruff check --select ANN,D:*)",
-      "Bash(pixi run mypy --strict:*)"
+      "Bash(pixi run mypy --strict:*)",
+      "Bash(pixi run ruff check:*)"
     ],
     "deny": [],
     "ask": []

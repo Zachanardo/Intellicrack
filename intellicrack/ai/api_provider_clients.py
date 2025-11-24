@@ -53,12 +53,13 @@ class BaseProviderClient(ABC):
     def fetch_models(self) -> list[ModelInfo]:
         """Fetch available models from the provider."""
 
-    def _make_request(self, method: str, url: str, **kwargs: object) -> dict[str, object] | None:
+    def _make_request(self, method: str, url: str, **kwargs: Any) -> dict[str, Any] | None:
         """Make HTTP request with error handling."""
         try:
             response = self.session.request(method, url, timeout=10, **kwargs)
             response.raise_for_status()
-            return response.json()
+            json_response: dict[str, Any] = response.json()
+            return json_response
         except requests.exceptions.Timeout:
             logger.error(f"Request to {url} timed out")
             return None
@@ -101,15 +102,16 @@ class OpenAIProviderClient(BaseProviderClient):
             logger.warning("Failed to fetch OpenAI models, using fallback list")
             return self._get_fallback_models()
 
-        models = []
-        for model_data in data["data"]:
-            model_id = model_data.get("id", "")
+        models: list[ModelInfo] = []
+        model_list: list[dict[str, Any]] = data["data"]
+        for model_data in model_list:
+            model_id: str = model_data.get("id", "")
 
             if not model_id or not self._is_chat_model(model_id):
                 continue
 
-            context_length = self._get_context_length(model_id)
-            capabilities = self._get_capabilities(model_id)
+            context_length = model_data.get("context_window", 4096)
+            capabilities = self._infer_capabilities(model_id)
 
             models.append(
                 ModelInfo(
@@ -133,29 +135,8 @@ class OpenAIProviderClient(BaseProviderClient):
         chat_indicators = ["gpt", "chatgpt", "turbo", "davinci", "o1", "o3"]
         return any(indicator in model_id.lower() for indicator in chat_indicators)
 
-    def _get_context_length(self, model_id: str) -> int:
-        """Get context length for a model."""
-        context_map = {
-            "gpt-4-turbo": 128000,
-            "gpt-4": 8192,
-            "gpt-4-32k": 32768,
-            "gpt-3.5-turbo": 16385,
-            "gpt-3.5-turbo-16k": 16385,
-            "o1": 200000,
-            "o1-mini": 128000,
-            "o3": 200000,
-            "o3-mini": 128000,
-        }
-
-        for key, length in context_map.items():
-            if key in model_id:
-                return length
-
-        logger.warning(f"Unknown model {model_id}, defaulting context length to 4096")
-        return 4096
-
-    def _get_capabilities(self, model_id: str) -> list[str]:
-        """Get capabilities for a model."""
+    def _infer_capabilities(self, model_id: str) -> list[str]:
+        """Infer model capabilities from model ID."""
         capabilities = ["text-generation", "chat"]
 
         if "turbo" in model_id or "gpt-4" in model_id:
@@ -167,13 +148,13 @@ class OpenAIProviderClient(BaseProviderClient):
         return capabilities
 
     def _get_fallback_models(self) -> list[ModelInfo]:
-        """Get fallback model list when API is unavailable."""
+        """Get minimal fallback model list when API is unavailable."""
         return [
             ModelInfo(
                 id="gpt-4o",
                 name="gpt-4o",
                 provider="OpenAI",
-                description="Most capable GPT-4 model with vision",
+                description="Most capable GPT-4 model",
                 context_length=128000,
                 capabilities=["text-generation", "chat", "function-calling", "vision"],
             ),
@@ -184,22 +165,6 @@ class OpenAIProviderClient(BaseProviderClient):
                 description="High performance GPT-4 model",
                 context_length=128000,
                 capabilities=["text-generation", "chat", "function-calling", "vision"],
-            ),
-            ModelInfo(
-                id="gpt-4",
-                name="gpt-4",
-                provider="OpenAI",
-                description="Standard GPT-4 model",
-                context_length=8192,
-                capabilities=["text-generation", "chat", "function-calling"],
-            ),
-            ModelInfo(
-                id="gpt-3.5-turbo",
-                name="gpt-3.5-turbo",
-                provider="OpenAI",
-                description="Fast and efficient model",
-                context_length=16385,
-                capabilities=["text-generation", "chat", "function-calling"],
             ),
         ]
 
@@ -220,17 +185,62 @@ class AnthropicProviderClient(BaseProviderClient):
             self.session.headers.update({"x-api-key": self.api_key})
 
     def fetch_models(self) -> list[ModelInfo]:
-        """Fetch available models from Anthropic.
+        """Fetch available models from Anthropic /v1/models API endpoint."""
+        if not self.api_key:
+            logger.warning("No API key provided for Anthropic")
+            return self._get_fallback_models()
 
-        Note: Anthropic doesn't have a public models endpoint, so we return
-        the known available models. This is production-ready and accurate.
-        """
-        models = [
+        logger.info("Fetching models from Anthropic")
+        url = f"{self.base_url}/v1/models"
+        data = self._make_request("GET", url)
+
+        if not data or "data" not in data:
+            logger.warning("Failed to fetch Anthropic models, using fallback list")
+            return self._get_fallback_models()
+
+        models: list[ModelInfo] = []
+        model_list: list[dict[str, Any]] = data["data"]
+
+        for model_data in model_list:
+            model_id: str = model_data.get("id", "")
+            display_name: str = model_data.get("display_name", model_id)
+
+            if not model_id:
+                continue
+
+            capabilities = ["text-generation", "chat"]
+
+            if "vision" in model_id or "opus" in model_id or "sonnet" in model_id or "haiku" in model_id:
+                capabilities.append("vision")
+
+            if "3-5" in model_id or "3.5" in model_id:
+                capabilities.append("tool-use")
+
+            models.append(
+                ModelInfo(
+                    id=model_id,
+                    name=display_name,
+                    provider="Anthropic",
+                    description=f"Claude model: {display_name}",
+                    context_length=200000,
+                    capabilities=capabilities,
+                ),
+            )
+
+        if not models:
+            return self._get_fallback_models()
+
+        models.sort(key=lambda x: x.id, reverse=True)
+        return models
+
+    def _get_fallback_models(self) -> list[ModelInfo]:
+        """Get minimal fallback model list when API is unavailable."""
+        return [
             ModelInfo(
                 id="claude-3-5-sonnet-20241022",
                 name="Claude 3.5 Sonnet",
                 provider="Anthropic",
-                description="Most intelligent Claude model for complex tasks",
+                description="Most intelligent Claude model",
                 context_length=200000,
                 capabilities=["text-generation", "chat", "vision", "tool-use"],
             ),
@@ -238,52 +248,11 @@ class AnthropicProviderClient(BaseProviderClient):
                 id="claude-3-5-haiku-20241022",
                 name="Claude 3.5 Haiku",
                 provider="Anthropic",
-                description="Fastest Claude model for quick responses",
+                description="Fastest Claude model",
                 context_length=200000,
                 capabilities=["text-generation", "chat", "vision", "tool-use"],
             ),
-            ModelInfo(
-                id="claude-3-opus-20240229",
-                name="Claude 3 Opus",
-                provider="Anthropic",
-                description="Most capable Claude 3 model",
-                context_length=200000,
-                capabilities=["text-generation", "chat", "vision"],
-            ),
-            ModelInfo(
-                id="claude-3-sonnet-20240229",
-                name="Claude 3 Sonnet",
-                provider="Anthropic",
-                description="Balanced Claude 3 model",
-                context_length=200000,
-                capabilities=["text-generation", "chat", "vision"],
-            ),
-            ModelInfo(
-                id="claude-3-haiku-20240307",
-                name="Claude 3 Haiku",
-                provider="Anthropic",
-                description="Fast Claude 3 model",
-                context_length=200000,
-                capabilities=["text-generation", "chat", "vision"],
-            ),
         ]
-
-        if self.api_key:
-            try:
-                if response := self._make_request(
-                    "POST",
-                    f"{self.base_url}/v1/messages",
-                    json={
-                        "model": "claude-3-5-sonnet-20241022",
-                        "max_tokens": 1,
-                        "messages": [{"role": "user", "content": "test"}],
-                    },
-                ):
-                    logger.info("Anthropic API key validated successfully")
-            except Exception as e:
-                logger.warning(f"Could not validate Anthropic API key: {e}")
-
-        return models
 
 
 class OllamaProviderClient(BaseProviderClient):
@@ -307,11 +276,12 @@ class OllamaProviderClient(BaseProviderClient):
             logger.warning("Failed to fetch Ollama models")
             return []
 
-        models = []
-        for model_data in data["models"]:
-            model_name = model_data.get("name", "")
-            size = model_data.get("size", 0)
-            size_gb = size / (1024**3) if size > 0 else 0
+        models: list[ModelInfo] = []
+        model_list: list[dict[str, Any]] = data["models"]
+        for model_data in model_list:
+            model_name: str = model_data.get("name", "")
+            size: int = model_data.get("size", 0)
+            size_gb: float = size / (1024**3) if size > 0 else 0.0
 
             models.append(
                 ModelInfo(
@@ -348,9 +318,10 @@ class LMStudioProviderClient(BaseProviderClient):
             logger.warning("Failed to fetch LM Studio models")
             return []
 
-        models = []
-        for model_data in data["data"]:
-            model_id = model_data.get("id", "")
+        models: list[ModelInfo] = []
+        model_list: list[dict[str, Any]] = data["data"]
+        for model_data in model_list:
+            model_id: str = model_data.get("id", "")
 
             models.append(
                 ModelInfo(
@@ -378,16 +349,16 @@ class LocalProviderClient(BaseProviderClient):
 
     def fetch_models(self) -> list[ModelInfo]:
         """Fetch available local models."""
-        models = []
+        models: list[ModelInfo] = []
 
         try:
             from intellicrack.ai.local_gguf_server import gguf_manager
 
-            local_models = gguf_manager.list_models()
+            local_models: dict[str, dict[str, Any]] = gguf_manager.list_models()
 
             for model_name, model_info in local_models.items():
-                size_mb = model_info.get("size_mb", 0)
-                quantization = model_info.get("quantization", "")
+                size_mb: int = model_info.get("size_mb", 0)
+                quantization: str = model_info.get("quantization", "")
 
                 models.append(
                     ModelInfo(
@@ -437,7 +408,7 @@ class ProviderManager:
 
     def fetch_all_models(self) -> dict[str, list[ModelInfo]]:
         """Fetch models from all registered providers."""
-        all_models = {}
+        all_models: dict[str, list[ModelInfo]] = {}
 
         for provider_name in self.providers:
             if models := self.fetch_models_from_provider(provider_name):

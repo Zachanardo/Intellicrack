@@ -100,9 +100,7 @@ class RegistryMonitor(BaseMonitor):
         for hive_key, hive_name in hives:
             for subkey in self._watch_keys:
                 try:
-                    if watcher := self._create_watcher(
-                        hive_key, hive_name, subkey
-                    ):
+                    if watcher := self._create_watcher(hive_key, hive_name, subkey):
                         watchers.append(watcher)
                 except Exception as e:
                     print(f"[RegistryMonitor] Failed to watch {hive_name}\\{subkey}: {e}")
@@ -143,9 +141,7 @@ class RegistryMonitor(BaseMonitor):
         """
         hkey = ctypes.wintypes.HKEY()
 
-        result = advapi32.RegOpenKeyExW(
-            hive_key, subkey, 0, KEY_NOTIFY | KEY_READ, ctypes.byref(hkey)
-        )
+        result = advapi32.RegOpenKeyExW(hive_key, subkey, 0, KEY_NOTIFY | KEY_READ, ctypes.byref(hkey))
 
         if result != ERROR_SUCCESS:
             return None
@@ -212,6 +208,4 @@ class RegistryMonitor(BaseMonitor):
 
             notify_filter = REG_NOTIFY_CHANGE_NAME | REG_NOTIFY_CHANGE_LAST_SET
 
-            advapi32.RegNotifyChangeKeyValue(
-                watcher["hkey"], True, notify_filter, watcher["event"], True
-            )
+            advapi32.RegNotifyChangeKeyValue(watcher["hkey"], True, notify_filter, watcher["event"], True)

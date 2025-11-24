@@ -225,22 +225,24 @@ class IntelligentCorrelationEngine:
             correlations = []
 
             # Address-based correlation
-            if hasattr(new_result, "address") and hasattr(existing_result, "address") and self._check_address_correlation(new_result, existing_result):
-                correlations.append(
-                    self._create_address_correlation(new_result, existing_result)
-                )
+            if (
+                hasattr(new_result, "address")
+                and hasattr(existing_result, "address")
+                and self._check_address_correlation(new_result, existing_result)
+            ):
+                correlations.append(self._create_address_correlation(new_result, existing_result))
 
             # Cross-reference correlation
-            if isinstance(new_result, FunctionResult) and isinstance(
-                            existing_result, FunctionResult
-                        ) and self._check_xref_correlation(new_result, existing_result):
+            if (
+                isinstance(new_result, FunctionResult)
+                and isinstance(existing_result, FunctionResult)
+                and self._check_xref_correlation(new_result, existing_result)
+            ):
                 correlations.append(self._create_xref_correlation(new_result, existing_result))
 
             # String reference correlation
             if isinstance(new_result, StringResult) and self._check_string_reference(new_result, existing_result):
-                correlations.append(
-                    self._create_string_correlation(new_result, existing_result)
-                )
+                correlations.append(self._create_string_correlation(new_result, existing_result))
 
             # Semantic correlation
             if self._check_semantic_correlation(new_result, existing_result):
@@ -497,9 +499,7 @@ class IntelligentCorrelationEngine:
 
             if len(matching_results) >= 2:
                 correlation = Correlation(
-                    id=hashlib.sha256(
-                        f"protection_{protection_name}_{time.time()}".encode()
-                    ).hexdigest(),
+                    id=hashlib.sha256(f"protection_{protection_name}_{time.time()}".encode()).hexdigest(),
                     type=CorrelationType.PROTECTION,
                     source_results=matching_results,
                     confidence=0.88,
@@ -679,11 +679,7 @@ class IntelligentCorrelationEngine:
 
         # Pattern detection summary
         for pattern_type in ["license", "crypto", "protection"]:
-            if pattern_correlations := [
-                c
-                for c in self.correlations
-                if pattern_type in c.type.value.lower()
-            ]:
+            if pattern_correlations := [c for c in self.correlations if pattern_type in c.type.value.lower()]:
                 report["patterns_detected"][pattern_type] = len(pattern_correlations)
 
         return report

@@ -272,9 +272,7 @@ class VMDetector(BaseDetector):
             # Calculate evasion score (how hard to evade detection)
             results["evasion_score"] = self._calculate_evasion_score(results["detections"])
 
-            self.logger.info(
-                f"VM detection complete: {results['is_vm']} (confidence: {results['confidence']:.2f})"
-            )
+            self.logger.info(f"VM detection complete: {results['is_vm']} (confidence: {results['confidence']:.2f})")
             return results
 
         except Exception as e:
@@ -361,9 +359,7 @@ class VMDetector(BaseDetector):
                     return None
 
                 result = (ctypes.c_uint32 * 4)()
-                func_type = ctypes.CFUNCTYPE(
-                    None, ctypes.c_uint32, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32)
-                )
+                func_type = ctypes.CFUNCTYPE(None, ctypes.c_uint32, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32))
                 func = func_type(exec_mem)
                 func(leaf, subleaf, result)
 
@@ -510,9 +506,7 @@ class VMDetector(BaseDetector):
                     cpuid_vendor = signatures.get("cpuid_vendor", "")
                     if cpuid_vendor and cpuid_vendor in vendor_string:
                         details["vm_type"] = vm_type
-                        self.logger.info(
-                            f"Detected {vm_type} via CPUID vendor string: {vendor_string}"
-                        )
+                        self.logger.info(f"Detected {vm_type} via CPUID vendor string: {vendor_string}")
                         return True, 0.98, details
 
                 if vendor_string and len(vendor_string) > 3:
@@ -552,9 +546,7 @@ class VMDetector(BaseDetector):
                 if avg_time > 500 or std_dev > 200:
                     details["anomaly_detected"] = True
                     confidence = min(0.75, (avg_time / 1000) * 0.5 + (std_dev / 500) * 0.25)
-                    self.logger.info(
-                        f"CPUID timing anomaly: avg={avg_time:.0f}ns, std={std_dev:.0f}ns"
-                    )
+                    self.logger.info(f"CPUID timing anomaly: avg={avg_time:.0f}ns, std={std_dev:.0f}ns")
                     return True, confidence, details
 
         except Exception as e:
@@ -657,9 +649,7 @@ class VMDetector(BaseDetector):
                 for process in sigs.get("processes", []):
                     if process.lower() in processes:
                         details["detected_processes"].append(process)
-                        details["vm_type"] = (
-                            vm_type  # Use vm_type to indicate which VM was detected
-                        )
+                        details["vm_type"] = vm_type  # Use vm_type to indicate which VM was detected
 
             if details["detected_processes"]:
                 return True, 0.7, details
@@ -857,8 +847,7 @@ class VMDetector(BaseDetector):
                     details["anomaly_detected"] = True
                     confidence = min(0.85, (avg_delta / 1000) * 0.4 + (std_dev / 500) * 0.3 + 0.15)
                     self.logger.info(
-                        f"RDTSC timing anomaly detected: avg={avg_delta:.0f} cycles, "
-                        f"std={std_dev:.0f}, min={min_delta}, max={max_delta}",
+                        f"RDTSC timing anomaly detected: avg={avg_delta:.0f} cycles, std={std_dev:.0f}, min={min_delta}, max={max_delta}",
                     )
                     return True, confidence, details
 
@@ -1179,18 +1168,14 @@ class VMDetector(BaseDetector):
                             details["total_ram_mb"] = total_ram
 
                             if total_ram in [512, 1024, 2048, 4096, 8192]:
-                                details["suspicious_values"].append(
-                                    f"ram={total_ram}MB (power of 2)"
-                                )
+                                details["suspicious_values"].append(f"ram={total_ram}MB (power of 2)")
 
                         if hasattr(cs, "NumberOfLogicalProcessors"):
                             cpu_cores = int(cs.NumberOfLogicalProcessors)
                             details["cpu_cores"] = cpu_cores
 
                             if cpu_cores in {1, 2, 4, 8}:
-                                details["suspicious_values"].append(
-                                    f"cores={cpu_cores} (power of 2)"
-                                )
+                                details["suspicious_values"].append(f"cores={cpu_cores} (power of 2)")
 
                     disk_count = len(list(c.Win32_DiskDrive()))
                     details["disk_count"] = disk_count
@@ -1274,9 +1259,7 @@ class VMDetector(BaseDetector):
 
             if details["vm_patterns_found"]:
                 confidence = min(0.85, len(details["vm_patterns_found"]) * 0.30 + 0.55)
-                self.logger.info(
-                    f"VM disk serial patterns detected: {details['vm_patterns_found']}"
-                )
+                self.logger.info(f"VM disk serial patterns detected: {details['vm_patterns_found']}")
                 return True, confidence, details
 
         except Exception as e:
@@ -1408,11 +1391,7 @@ class VMDetector(BaseDetector):
             if base_leaf := self._execute_cpuid(0x40000000):
                 eax, ebx, ecx, edx = base_leaf
                 max_leaf = eax
-                vendor = (
-                    struct.pack("<III", ebx, ecx, edx)
-                    .decode("ascii", errors="ignore")
-                    .rstrip("\x00")
-                )
+                vendor = struct.pack("<III", ebx, ecx, edx).decode("ascii", errors="ignore").rstrip("\x00")
 
                 details["hypervisor_info"]["base_leaf"] = {
                     "max_leaf": hex(max_leaf),
@@ -1437,12 +1416,7 @@ class VMDetector(BaseDetector):
                                 }
                             )
 
-                    if (
-                        "VMware" in vendor
-                        or "VBox" in vendor
-                        or "Microsoft Hv" in vendor
-                        or "KVM" in vendor
-                    ):
+                    if "VMware" in vendor or "VBox" in vendor or "Microsoft Hv" in vendor or "KVM" in vendor:
                         return True, 0.95, details
 
                     return True, 0.80, details
@@ -1464,9 +1438,7 @@ class VMDetector(BaseDetector):
                     brand_parts.append(struct.pack("<IIII", eax, ebx, ecx, edx))
 
             if brand_parts:
-                brand_string = (
-                    b"".join(brand_parts).decode("ascii", errors="ignore").strip("\x00").strip()
-                )
+                brand_string = b"".join(brand_parts).decode("ascii", errors="ignore").strip("\x00").strip()
                 details["brand_string"] = brand_string
 
                 vm_patterns = ["QEMU", "Virtual", "KVM", "Xen", "Bochs", "VMware", "VirtualBox"]
@@ -1573,9 +1545,7 @@ class VMDetector(BaseDetector):
                 VirtualFree(exec_mem, 0, 0x8000)
                 return False, 0.0, details
 
-            func_type = ctypes.CFUNCTYPE(
-                ctypes.c_uint64 if platform.machine().endswith("64") else ctypes.c_uint32
-            )
+            func_type = ctypes.CFUNCTYPE(ctypes.c_uint64 if platform.machine().endswith("64") else ctypes.c_uint32)
             func = func_type(exec_mem)
 
             samples = 2000
@@ -1602,9 +1572,7 @@ class VMDetector(BaseDetector):
 
                 if vmexit_count > (samples * 0.05):
                     confidence = min(0.92, (vmexit_count / samples) * 2.0 + 0.60)
-                    self.logger.info(
-                        f"VM exit patterns detected: {vmexit_count}/{samples} samples ({details['vmexit_percentage']:.1f}%)"
-                    )
+                    self.logger.info(f"VM exit patterns detected: {vmexit_count}/{samples} samples ({details['vmexit_percentage']:.1f}%)")
                     return True, confidence, details
 
         except Exception as e:
@@ -1652,15 +1620,11 @@ class VMDetector(BaseDetector):
                         details["paravirt_detected"] = True
                         details["working_instruction"] = instr_name
                         VirtualFree(exec_mem, 0, 0x8000)
-                        self.logger.info(
-                            f"Paravirtualization instruction {instr_name} executed successfully (VM detected)"
-                        )
+                        self.logger.info(f"Paravirtualization instruction {instr_name} executed successfully (VM detected)")
                         return True, 0.99, details
 
                     except Exception as exec_err:
-                        details["exceptions_caught"].append(
-                            f"{instr_name}: {type(exec_err).__name__}"
-                        )
+                        details["exceptions_caught"].append(f"{instr_name}: {type(exec_err).__name__}")
 
                     VirtualFree(exec_mem, 0, 0x8000)
 
@@ -1701,9 +1665,7 @@ class VMDetector(BaseDetector):
                             ]
                             for pattern in vm_patterns:
                                 if pattern in data_str:
-                                    details["vm_signatures_found"].append(
-                                        f"ACPI contains '{pattern}'"
-                                    )
+                                    details["vm_signatures_found"].append(f"ACPI contains '{pattern}'")
 
                 except ImportError:
                     pass
@@ -1724,9 +1686,7 @@ class VMDetector(BaseDetector):
                                 vm_patterns = ["vmware", "vbox", "qemu", "xen", "kvm", "bochs"]
                                 for pattern in vm_patterns:
                                     if pattern in data_str:
-                                        details["vm_signatures_found"].append(
-                                            f"{acpi_path} contains '{pattern}'"
-                                        )
+                                        details["vm_signatures_found"].append(f"{acpi_path} contains '{pattern}'")
                         except Exception as e:
                             self.logger.debug(f"Failed to read {acpi_path}: {e}")
 
@@ -1837,12 +1797,8 @@ class VMDetector(BaseDetector):
                 if result == 0:
                     break
 
-                base_address = int.from_bytes(
-                    mbi[:8] if sys.maxsize > 2**32 else mbi[:4], "little"
-                )
-                region_size = int.from_bytes(
-                    mbi[16:24] if sys.maxsize > 2**32 else mbi[12:16], "little"
-                )
+                base_address = int.from_bytes(mbi[:8] if sys.maxsize > 2**32 else mbi[:4], "little")
+                region_size = int.from_bytes(mbi[16:24] if sys.maxsize > 2**32 else mbi[12:16], "little")
                 protect = int.from_bytes(mbi[32:36], "little")
 
                 if protect in [0x04, 0x20, 0x40]:
@@ -1865,9 +1821,7 @@ class VMDetector(BaseDetector):
                                     sig_str = signature.decode("ascii", errors="ignore")
                                     if sig_str not in details["signatures_found"]:
                                         details["signatures_found"].append(sig_str)
-                                        self.logger.info(
-                                            f"Found hypervisor signature in memory: {sig_str}"
-                                        )
+                                        self.logger.info(f"Found hypervisor signature in memory: {sig_str}")
                     except Exception as e:
                         self.logger.debug(f"Memory region scan error: {e}")
 
@@ -1976,9 +1930,7 @@ class VMDetector(BaseDetector):
                 VirtualFree(exec_mem, 0, 0x8000)
                 return False, 0.0, details
 
-            func_type = ctypes.CFUNCTYPE(
-                ctypes.c_uint64 if platform.machine().endswith("64") else ctypes.c_uint32
-            )
+            func_type = ctypes.CFUNCTYPE(ctypes.c_uint64 if platform.machine().endswith("64") else ctypes.c_uint32)
             func = func_type(exec_mem)
 
             measurements = []
@@ -2075,14 +2027,10 @@ class VMDetector(BaseDetector):
                 actual_l2_ratio = l2_time / l1_time
                 actual_mem_ratio = mem_time / l1_time
 
-                if actual_l2_ratio < (expected_l2_ratio * 0.5) or actual_mem_ratio < (
-                    expected_mem_ratio * 0.5
-                ):
+                if actual_l2_ratio < (expected_l2_ratio * 0.5) or actual_mem_ratio < (expected_mem_ratio * 0.5):
                     details["anomaly_detected"] = True
                     confidence = 0.55
-                    self.logger.info(
-                        f"Cache timing anomaly: L2/L1={actual_l2_ratio:.2f}, Mem/L1={actual_mem_ratio:.2f}"
-                    )
+                    self.logger.info(f"Cache timing anomaly: L2/L1={actual_l2_ratio:.2f}, Mem/L1={actual_mem_ratio:.2f}")
                     return True, confidence, details
 
         except Exception as e:
@@ -2101,9 +2049,7 @@ class VMDetector(BaseDetector):
             if result := self._execute_cpuid(0):
                 _, ebx, ecx, edx = result
                 vendor_bytes = struct.pack("<III", ebx, edx, ecx)
-                fingerprint.cpu_vendor = vendor_bytes.decode("ascii", errors="ignore").rstrip(
-                    "\x00"
-                )
+                fingerprint.cpu_vendor = vendor_bytes.decode("ascii", errors="ignore").rstrip("\x00")
 
             brand_result = self._check_cpuid_brand_string()
             if brand_result[0]:
@@ -2190,18 +2136,14 @@ class VMDetector(BaseDetector):
 
                 if measurement.samples:
                     measurement.mean = sum(measurement.samples) / len(measurement.samples)
-                    measurement.variance = sum(
-                        (s - measurement.mean) ** 2 for s in measurement.samples
-                    ) / len(measurement.samples)
+                    measurement.variance = sum((s - measurement.mean) ** 2 for s in measurement.samples) / len(measurement.samples)
                     measurement.std_dev = measurement.variance**0.5
                     measurement.min_val = min(measurement.samples)
                     measurement.max_val = max(measurement.samples)
 
                     if measurement.std_dev > (measurement.mean * 0.5):
                         measurement.anomaly_detected = True
-                        measurement.confidence = min(
-                            0.75, (measurement.std_dev / measurement.mean) * 0.5
-                        )
+                        measurement.confidence = min(0.75, (measurement.std_dev / measurement.mean) * 0.5)
 
                 measurements[op_name] = measurement
 

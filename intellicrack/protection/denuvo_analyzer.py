@@ -372,8 +372,7 @@ class DenuvoAnalyzer:
             ]
 
             for signatures, major, name, base_confidence in version_checks:
-                match_count = sum(bool(sig in data)
-                              for sig in signatures)
+                match_count = sum(bool(sig in data) for sig in signatures)
                 if match_count > 0:
                     confidence = base_confidence * (match_count / len(signatures))
                     if confidence >= 0.60:

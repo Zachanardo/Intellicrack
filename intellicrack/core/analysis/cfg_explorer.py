@@ -161,9 +161,7 @@ except ImportError as e:
                 if attrs:
                     self._edge_attrs[(u, v)] = attrs
 
-            def nodes(
-                self, data: bool = False
-            ) -> list[object] | list[tuple[object, dict[str, object]]]:
+            def nodes(self, data: bool = False) -> list[object] | list[tuple[object, dict[str, object]]]:
                 """Return nodes with optional data.
 
                 Args:
@@ -177,9 +175,7 @@ except ImportError as e:
                     return [(n, self._node_attrs.get(n, {})) for n in self._nodes]
                 return list(self._nodes.keys())
 
-            def edges(
-                self, data: bool = False
-            ) -> list[tuple[object, object]] | list[tuple[object, object, dict[str, object]]]:
+            def edges(self, data: bool = False) -> list[tuple[object, object]] | list[tuple[object, object, dict[str, object]]]:
                 """Return edges with optional data.
 
                 Args:
@@ -226,8 +222,7 @@ except ImportError as e:
                     Number of edges pointing to this node
 
                 """
-                return sum(bool(node in neighbors)
-                       for neighbors in self._edges.values())
+                return sum(bool(node in neighbors) for neighbors in self._edges.values())
 
             def successors(self, node: object) -> list[object]:
                 """Return successors of node.
@@ -295,9 +290,7 @@ except ImportError as e:
 
             """
 
-            def _dfs_cycles(
-                node: object, path: list[object], visited: set[object], stack: list[object]
-            ) -> list[list[object]]:
+            def _dfs_cycles(node: object, path: list[object], visited: set[object], stack: list[object]) -> list[list[object]]:
                 """Perform depth-first search to find cycles.
 
                 Args:
@@ -523,9 +516,7 @@ except ImportError as e:
                             distances[neighbor] = distances[current] + 1
                             queue.append(neighbor)
 
-                if reachable := [
-                    d for d in distances.values() if d != float("inf") and d > 0
-                ]:
+                if reachable := [d for d in distances.values() if d != float("inf") and d > 0]:
                     centrality[node] = len(reachable) / sum(reachable)
                 else:
                     centrality[node] = 0.0
@@ -652,9 +643,7 @@ except ImportError as e:
                 **kwargs: Additional keyword arguments for drawing
 
             """
-            logger.info(
-                f"Drawing graph with {graph.number_of_nodes()} nodes and {graph.number_of_edges()} edges"
-            )
+            logger.info(f"Drawing graph with {graph.number_of_nodes()} nodes and {graph.number_of_edges()} edges")
 
         class Drawing:
             """Drawing submodule."""
@@ -682,9 +671,7 @@ except ImportError as e:
                         f.write("}\n")
 
                 @staticmethod
-                def graphviz_layout(
-                    graph: "_IntellicrackNetworkX.DiGraph", prog: str = "dot"
-                ) -> dict[object, tuple[float, float]]:
+                def graphviz_layout(graph: "_IntellicrackNetworkX.DiGraph", prog: str = "dot") -> dict[object, tuple[float, float]]:
                     """Graphviz layout (fallback to spring layout).
 
                     Args:
@@ -824,16 +811,12 @@ class CFGExplorer:
 
         if not self.binary_path:
             self.logger.error("No binary path specified")
-            self._show_error_dialog(
-                "No binary path specified", "Please specify a valid binary file path."
-            )
+            self._show_error_dialog("No binary path specified", "Please specify a valid binary file path.")
             return False
 
         if not NETWORKX_AVAILABLE:
             self.logger.error("NetworkX not available - please install networkx")
-            self._show_error_dialog(
-                "Missing Dependency", "NetworkX not available - please install networkx package."
-            )
+            self._show_error_dialog("Missing Dependency", "NetworkX not available - please install networkx package.")
             return False
 
         try:
@@ -858,17 +841,13 @@ class CFGExplorer:
 
                     try:
                         # Get advanced function graph with r2
-                        graph_data = r2._execute_command(
-                            f"agfj @ {hex(function_addr)}", expect_json=True
-                        )
+                        graph_data = r2._execute_command(f"agfj @ {hex(function_addr)}", expect_json=True)
 
                         if not graph_data or not isinstance(graph_data, list):
                             continue
 
                         # Create enhanced networkx graph
-                        function_graph = self._create_enhanced_function_graph(
-                            graph_data[0], r2, function_addr
-                        )
+                        function_graph = self._create_enhanced_function_graph(graph_data[0], r2, function_addr)
 
                         # Store enhanced function data
                         self.functions[function_name] = {
@@ -910,9 +889,7 @@ class CFGExplorer:
             self.logger.error(f"Error loading binary with advanced analysis: {e}")
             return False
 
-    def _create_enhanced_function_graph(
-        self, graph_data: dict[str, object], r2: object, function_addr: int
-    ) -> nx.DiGraph:
+    def _create_enhanced_function_graph(self, graph_data: dict[str, object], r2: object, function_addr: int) -> nx.DiGraph:
         """Create enhanced function graph with comprehensive node data."""
         function_graph = nx.DiGraph()
 
@@ -920,9 +897,7 @@ class CFGExplorer:
         if r2 and function_addr:
             try:
                 if func_info := r2.cmdj(f"afij @ {function_addr}"):
-                    function_graph.graph["function_name"] = func_info[0].get(
-                        "name", f"func_{function_addr:x}"
-                    )
+                    function_graph.graph["function_name"] = func_info[0].get("name", f"func_{function_addr:x}")
                     function_graph.graph["function_size"] = func_info[0].get("realsz", 0)
                     function_graph.graph["function_addr"] = function_addr
             except Exception as e:
@@ -945,14 +920,11 @@ class CFGExplorer:
             has_return = any("ret" in op.get("disasm", "") for op in block_ops)
 
             # Analyze for security-relevant instructions
-            crypto_ops = sum(bool(any(kw in op.get("disasm", "").lower() for kw in ["aes", "crypt", "hash", "rsa"]))
-                         for op in block_ops)
+            crypto_ops = sum(bool(any(kw in op.get("disasm", "").lower() for kw in ["aes", "crypt", "hash", "rsa"])) for op in block_ops)
 
-            license_ops = sum(bool(any(
-                                              kw in op.get("disasm", "").lower()
-                                              for kw in ["license", "valid", "check", "trial", "serial"]
-                                          ))
-                          for op in block_ops)
+            license_ops = sum(
+                bool(any(kw in op.get("disasm", "").lower() for kw in ["license", "valid", "check", "trial", "serial"])) for op in block_ops
+            )
 
             # Add enhanced node with comprehensive metadata
             function_graph.add_node(
@@ -973,26 +945,16 @@ class CFGExplorer:
             # Add control flow edges with enhanced metadata
             if block.get("jump"):
                 jump_target = block["jump"]
-                function_graph.add_edge(
-                    block_addr, jump_target, type="conditional_jump", condition="true"
-                )
+                function_graph.add_edge(block_addr, jump_target, type="conditional_jump", condition="true")
 
             if block.get("fail"):
                 fail_target = block["fail"]
-                function_graph.add_edge(
-                    block_addr, fail_target, type="conditional_jump", condition="false"
-                )
+                function_graph.add_edge(block_addr, fail_target, type="conditional_jump", condition="false")
 
             # Add sequential flow edges
             next_block = block.get("next")
-            if (
-                next_block
-                and not has_return
-                and (not block.get("jump") or block.get("fail"))
-            ):
-                function_graph.add_edge(
-                    block_addr, next_block, type="sequential", condition="fallthrough"
-                )
+            if next_block and not has_return and (not block.get("jump") or block.get("fail")):
+                function_graph.add_edge(block_addr, next_block, type="sequential", condition="fallthrough")
 
         return function_graph
 
@@ -1135,9 +1097,7 @@ class CFGExplorer:
                         self.function_similarities[f"{func1}:{func2}"] = similarity
 
                 except Exception as e:
-                    self.logger.debug(
-                        f"Failed to calculate similarity between {func1} and {func2}: {e}"
-                    )
+                    self.logger.debug(f"Failed to calculate similarity between {func1} and {func2}: {e}")
 
     def _calculate_graph_similarity(self, graph1: nx.DiGraph, graph2: nx.DiGraph) -> float:
         """Calculate similarity between two function graphs."""
@@ -1145,9 +1105,7 @@ class CFGExplorer:
             return 0.0
 
         # Simple structural similarity based on node/edge ratios
-        node_ratio = min(graph1.number_of_nodes(), graph2.number_of_nodes()) / max(
-            graph1.number_of_nodes(), graph2.number_of_nodes()
-        )
+        node_ratio = min(graph1.number_of_nodes(), graph2.number_of_nodes()) / max(graph1.number_of_nodes(), graph2.number_of_nodes())
 
         # Calculate edge ratio with safe division
         max_edges = max(graph1.number_of_edges(), graph2.number_of_edges())
@@ -1335,20 +1293,11 @@ class CFGExplorer:
             metrics = {
                 "total_functions": self.call_graph.number_of_nodes(),
                 "total_calls": self.call_graph.number_of_edges(),
-                "avg_calls_per_function": self.call_graph.number_of_edges()
-                / max(1, self.call_graph.number_of_nodes()),
-                "strongly_connected_components": len(
-                    list(nx.strongly_connected_components(self.call_graph))
-                ),
+                "avg_calls_per_function": self.call_graph.number_of_edges() / max(1, self.call_graph.number_of_nodes()),
+                "strongly_connected_components": len(list(nx.strongly_connected_components(self.call_graph))),
                 "function_ranks": dict(nx.pagerank(self.call_graph)),
-                "entry_points": [
-                    node for node in self.call_graph.nodes() if self.call_graph.in_degree(node) == 0
-                ],
-                "leaf_functions": [
-                    node
-                    for node in self.call_graph.nodes()
-                    if self.call_graph.out_degree(node) == 0
-                ],
+                "entry_points": [node for node in self.call_graph.nodes() if self.call_graph.in_degree(node) == 0],
+                "leaf_functions": [node for node in self.call_graph.nodes() if self.call_graph.out_degree(node) == 0],
                 "recursive_functions": self._find_recursive_functions(),
             }
 
@@ -1370,11 +1319,7 @@ class CFGExplorer:
             return recursive_funcs
 
         # Direct recursion
-        recursive_funcs.extend(
-            node
-            for node in self.call_graph.nodes()
-            if self.call_graph.has_edge(node, node)
-        )
+        recursive_funcs.extend(node for node in self.call_graph.nodes() if self.call_graph.has_edge(node, node))
         # Indirect recursion (cycles in call graph)
         try:
             cycles = list(nx.simple_cycles(self.call_graph))
@@ -1409,10 +1354,7 @@ class CFGExplorer:
                     disasm = op.get("disasm", "").lower()
 
                     # Buffer overflow patterns
-                    if any(
-                        unsafe_func in disasm
-                        for unsafe_func in ["strcpy", "strcat", "sprintf", "gets"]
-                    ):
+                    if any(unsafe_func in disasm for unsafe_func in ["strcpy", "strcat", "sprintf", "gets"]):
                         patterns["buffer_overflow_candidates"].append(
                             {
                                 "function": func_name,
@@ -1458,15 +1400,9 @@ class CFGExplorer:
         if license_cache := self.analysis_cache.get("license_analysis", {}):
             analysis |= {
                 "license_functions": license_cache.get("license_functions", []),
-                "validation_mechanisms": license_cache.get(
-                    "validation_mechanisms", []
-                ),
-                "bypass_opportunities": license_cache.get(
-                    "bypass_opportunities", []
-                ),
-                "analysis_confidence": license_cache.get(
-                    "analysis_confidence", 0.0
-                ),
+                "validation_mechanisms": license_cache.get("validation_mechanisms", []),
+                "bypass_opportunities": license_cache.get("bypass_opportunities", []),
+                "analysis_confidence": license_cache.get("analysis_confidence", 0.0),
             }
 
         # Enhance with CFG-specific analysis
@@ -1476,10 +1412,7 @@ class CFGExplorer:
             if not graph:
                 continue
 
-            license_score = sum(
-                node_data.get("license_operations", 0)
-                for _node, node_data in graph.nodes(data=True)
-            )
+            license_score = sum(node_data.get("license_operations", 0) for _node, node_data in graph.nodes(data=True))
             if license_score > 0:
                 license_related_functions.append(
                     {
@@ -1512,20 +1445,14 @@ class CFGExplorer:
 
             # Calculate various complexity metrics
             cyclomatic_complexity = self._calculate_cyclomatic_complexity(graph)
-            instruction_complexity = sum(
-                node_data.get("instruction_count", 0) for _, node_data in graph.nodes(data=True)
-            )
-            block_complexity = sum(
-                node_data.get("complexity_score", 0) for _, node_data in graph.nodes(data=True)
-            )
+            instruction_complexity = sum(node_data.get("instruction_count", 0) for _, node_data in graph.nodes(data=True))
+            block_complexity = sum(node_data.get("complexity_score", 0) for _, node_data in graph.nodes(data=True))
 
             func_complexity = {
                 "cyclomatic": cyclomatic_complexity,
                 "instruction_count": instruction_complexity,
                 "block_complexity": block_complexity,
-                "combined_score": (
-                    cyclomatic_complexity * 2 + instruction_complexity * 0.1 + block_complexity
-                ),
+                "combined_score": (cyclomatic_complexity * 2 + instruction_complexity * 0.1 + block_complexity),
             }
 
             complexity_data["function_complexities"][func_name] = func_complexity
@@ -1559,9 +1486,7 @@ class CFGExplorer:
                     "average_complexity": statistics.mean(complexities),
                     "max_complexity": max(complexities),
                     "min_complexity": min(complexities),
-                    "std_deviation": statistics.stdev(complexities)
-                    if len(complexities) > 1
-                    else 0.0,
+                    "std_deviation": statistics.stdev(complexities) if len(complexities) > 1 else 0.0,
                     "total_functions": len(complexities),
                 }
 
@@ -1612,10 +1537,7 @@ class CFGExplorer:
 
         # Find isolated functions
         for func_name in self.call_graph.nodes():
-            if (
-                self.call_graph.in_degree(func_name) == 0
-                and self.call_graph.out_degree(func_name) == 0
-            ):
+            if self.call_graph.in_degree(func_name) == 0 and self.call_graph.out_degree(func_name) == 0:
                 xref_analysis["isolated_functions"].append(func_name)
 
         # Find circular dependencies
@@ -1668,11 +1590,7 @@ class CFGExplorer:
                     )
 
                 # Check for comparison followed by conditional jump
-                if (
-                    ("cmp" in disasm or "test" in disasm)
-                    and _block.get("jump")
-                    and _block.get("fail")
-                ):
+                if ("cmp" in disasm or "test" in disasm) and _block.get("jump") and _block.get("fail"):
                     license_patterns.append(
                         {
                             "block_addr": _block["offset"],
@@ -1684,9 +1602,7 @@ class CFGExplorer:
 
         return license_patterns
 
-    def generate_interactive_html(
-        self, function_name: str, license_patterns: list[dict], output_file: str
-    ) -> bool:
+    def generate_interactive_html(self, function_name: str, license_patterns: list[dict], output_file: str) -> bool:
         """Generate an interactive HTML visualization of the CFG."""
         try:
             graph_data = self.get_graph_data(layout_type="spring")
@@ -2009,9 +1925,7 @@ class CFGExplorer:
                     if self.set_current_function(function_name):
                         if patterns := self.find_license_check_patterns():
                             all_license_patterns.extend(patterns)
-                            self.logger.debug(
-                                "Found %d patterns in function %s", len(patterns), function_name
-                            )
+                            self.logger.debug("Found %d patterns in function %s", len(patterns), function_name)
                 except Exception as e:
                     self.logger.debug("Error analyzing function %s: %s", function_name, e)
 
@@ -2063,9 +1977,7 @@ class CFGExplorer:
             # Get graph data for visualization
             try:
                 if function_list and len(function_list) > 0:
-                    if complex_functions := results.get(
-                        "comprehensive_metrics", {}
-                    ).get("high_complexity_functions", []):
+                    if complex_functions := results.get("comprehensive_metrics", {}).get("high_complexity_functions", []):
                         target_function = complex_functions[0]["function"]
                     else:
                         target_function = function_list[0]
@@ -2138,12 +2050,8 @@ class CFGExplorer:
         }
 
         # Count license-related functions
-        license_analysis = results.get("advanced_analysis", {}).get(
-            "license_validation_analysis", {}
-        )
-        summary["license_related_functions"] = len(
-            license_analysis.get("cfg_license_functions", [])
-        )
+        license_analysis = results.get("advanced_analysis", {}).get("license_validation_analysis", {})
+        summary["license_related_functions"] = len(license_analysis.get("cfg_license_functions", []))
 
         # Count vulnerable functions
         vuln_patterns = results.get("vulnerability_analysis", {})
@@ -2152,38 +2060,26 @@ class CFGExplorer:
 
         # Count high complexity functions
         complexity_analysis = results.get("comprehensive_metrics", {})
-        summary["high_complexity_functions"] = len(
-            complexity_analysis.get("high_complexity_functions", [])
-        )
+        summary["high_complexity_functions"] = len(complexity_analysis.get("high_complexity_functions", []))
 
         # Count similarity clusters
         similarity_analysis = results.get("similarity_analysis", {})
-        summary["similar_function_clusters"] = len(
-            similarity_analysis.get("similarity_clusters", [])
-        )
+        summary["similar_function_clusters"] = len(similarity_analysis.get("similarity_clusters", []))
 
         # Generate key findings
         findings = []
 
         if summary["license_related_functions"] > 0:
-            findings.append(
-                f"Identified {summary['license_related_functions']} license validation functions"
-            )
+            findings.append(f"Identified {summary['license_related_functions']} license validation functions")
 
         if summary["vulnerable_functions"] > 0:
-            findings.append(
-                f"Found {summary['vulnerable_functions']} potential vulnerability patterns"
-            )
+            findings.append(f"Found {summary['vulnerable_functions']} potential vulnerability patterns")
 
         if summary["high_complexity_functions"] > 0:
-            findings.append(
-                f"Detected {summary['high_complexity_functions']} high-complexity functions"
-            )
+            findings.append(f"Detected {summary['high_complexity_functions']} high-complexity functions")
 
         if summary["similar_function_clusters"] > 0:
-            findings.append(
-                f"Found {summary['similar_function_clusters']} clusters of similar functions"
-            )
+            findings.append(f"Found {summary['similar_function_clusters']} clusters of similar functions")
 
         if call_graph_metrics := results.get("call_graph_analysis", {}):
             avg_calls = call_graph_metrics.get("avg_calls_per_function", 0)
@@ -2315,9 +2211,7 @@ class CFGExplorer:
                                 "size": op.get("size", 0),
                                 "disasm": op.get("disasm", ""),
                                 "type": op.get("type", ""),
-                                "bytes": op.get("bytes", "").hex()
-                                if "bytes" in op and hasattr(op["bytes"], "hex")
-                                else "",
+                                "bytes": op.get("bytes", "").hex() if "bytes" in op and hasattr(op["bytes"], "hex") else "",
                             }
                             block_export["instructions"].append(instruction_export)
 
@@ -2411,14 +2305,10 @@ class CFGExplorer:
 
                 # Log export statistics
                 num_functions = len(export_data["functions"])
-                num_blocks = sum(
-                    len(func.get("blocks", [])) for func in export_data["functions"].values()
-                )
+                num_blocks = sum(len(func.get("blocks", [])) for func in export_data["functions"].values())
                 file_size_kb = os.path.getsize(output_path) / 1024
 
-                self.logger.info(
-                    f"Export statistics: {num_functions} functions, {num_blocks} blocks, {file_size_kb:.2f} KB"
-                )
+                self.logger.info(f"Export statistics: {num_functions} functions, {num_blocks} blocks, {file_size_kb:.2f} KB")
                 return True
             self.logger.error("Export file verification failed")
             return False
@@ -2489,9 +2379,7 @@ def run_deep_cfg_analysis(app: object) -> None:
         app.update_output.emit(log_message("[CFG Analysis] Disassembling code..."))
 
         instructions = list(md.disasm(code_data, code_addr))
-        app.update_output.emit(
-            log_message(f"[CFG Analysis] Disassembled {len(instructions)} instructions")
-        )
+        app.update_output.emit(log_message(f"[CFG Analysis] Disassembled {len(instructions)} instructions"))
 
         # Build CFG
         app.update_output.emit(log_message("[CFG Analysis] Building control flow graph..."))
@@ -2541,9 +2429,7 @@ def run_deep_cfg_analysis(app: object) -> None:
             if any(_keyword in instruction for _keyword in license_keywords):
                 license_nodes.append(node)
 
-        app.update_output.emit(
-            log_message(f"[CFG Analysis] Found {len(license_nodes)} license-related nodes")
-        )
+        app.update_output.emit(log_message(f"[CFG Analysis] Found {len(license_nodes)} license-related nodes"))
 
         # Create a subgraph with these nodes and their neighbors
         if license_nodes:
@@ -2568,9 +2454,7 @@ def run_deep_cfg_analysis(app: object) -> None:
                 nx.drawing.nx_pydot.write_dot(license_subgraph, "license_cfg.dot")
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in cfg_explorer: %s", e)
-                app.update_output.emit(
-                    log_message(f"[CFG Analysis] Could not write license DOT file: {e}")
-                )
+                app.update_output.emit(log_message(f"[CFG Analysis] Could not write license DOT file: {e}"))
 
             # Try to generate PDF or SVG if graphviz is available
             try:
@@ -2581,13 +2465,9 @@ def run_deep_cfg_analysis(app: object) -> None:
                             check=False,
                             shell=False,  # Explicitly secure - using list format prevents shell injection
                         )
-                        app.update_output.emit(
-                            log_message("[CFG Analysis] Generated license_cfg.svg")
-                        )
+                        app.update_output.emit(log_message("[CFG Analysis] Generated license_cfg.svg"))
                     else:
-                        app.update_output.emit(
-                            log_message("[CFG Analysis] GraphViz 'dot' command not found in PATH")
-                        )
+                        app.update_output.emit(log_message("[CFG Analysis] GraphViz 'dot' command not found in PATH"))
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in cfg_explorer: %s", e)
                 app.update_output.emit(log_message(f"[CFG Analysis] Could not generate SVG: {e}"))
@@ -2660,15 +2540,11 @@ def run_cfg_explorer(app: object) -> None:
 
         # Set current function
         if explorer.set_current_function(function_name):
-            app.update_output.emit(
-                log_message(f"[CFG Explorer] Analyzing function: {function_name}")
-            )
+            app.update_output.emit(log_message(f"[CFG Explorer] Analyzing function: {function_name}"))
 
             if license_patterns := explorer.find_license_check_patterns():
                 app.update_output.emit(
-                    log_message(
-                        f"[CFG Explorer] Found {len(license_patterns)} potential license check patterns in {function_name}"
-                    ),
+                    log_message(f"[CFG Explorer] Found {len(license_patterns)} potential license check patterns in {function_name}"),
                 )
 
                 # Display patterns
@@ -2680,17 +2556,11 @@ def run_cfg_explorer(app: object) -> None:
                     )
 
             else:
-                app.update_output.emit(
-                    log_message("[CFG Explorer] No license check patterns found")
-                )
+                app.update_output.emit(log_message("[CFG Explorer] No license check patterns found"))
         else:
-            app.update_output.emit(
-                log_message(f"[CFG Explorer] Failed to set function: {function_name}")
-            )
+            app.update_output.emit(log_message(f"[CFG Explorer] Failed to set function: {function_name}"))
     else:
-        app.update_output.emit(
-            log_message(f"[CFG Explorer] Failed to load binary: {app.binary_path}")
-        )
+        app.update_output.emit(log_message(f"[CFG Explorer] Failed to load binary: {app.binary_path}"))
 
 
 def log_message(message: str) -> str:

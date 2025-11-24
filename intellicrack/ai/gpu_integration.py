@@ -87,6 +87,19 @@ except ImportError:
         """
         return model
 
+    class _FallbackGPUAutoloader:
+        """Fallback GPU autoloader when real one is unavailable."""
+
+        def get_memory_info(self) -> dict[str, Any]:
+            """Get memory info (fallback returns empty dict)."""
+            return {}
+
+        def synchronize(self) -> None:
+            """Synchronize GPU operations (no-op for CPU)."""
+            pass
+
+    gpu_autoloader = _FallbackGPUAutoloader()
+
 
 class GPUIntegration:
     """GPU Integration for AI models using unified system."""
@@ -123,12 +136,8 @@ class GPUIntegration:
                     }
                 elif self.gpu_info["type"] == "amd_rocm" and hasattr(torch, "hip"):
                     info["runtime"] = {
-                        "hip_available": torch.hip.is_available()
-                        if hasattr(torch.hip, "is_available")
-                        else False,
-                        "device_count": torch.hip.device_count()
-                        if hasattr(torch.hip, "device_count")
-                        else 0,
+                        "hip_available": torch.hip.is_available() if hasattr(torch.hip, "is_available") else False,
+                        "device_count": torch.hip.device_count() if hasattr(torch.hip, "device_count") else 0,
                     }
             except Exception as e:
                 logger.debug(f"Failed to get runtime info: {e}")

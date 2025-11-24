@@ -115,9 +115,7 @@ class ScriptTester:
         """Initialize script tester with LLM interface for validation."""
         self.llm_interface = LLMScriptInterface()
 
-    def validate_script(
-        self, script_content: str, script_type: str
-    ) -> tuple[ValidationResult, dict[str, Any]]:
+    def validate_script(self, script_content: str, script_type: str) -> tuple[ValidationResult, dict[str, Any]]:
         """Validate script using LLM for comprehensive analysis."""
         results = {
             "syntax_check": True,
@@ -252,9 +250,7 @@ Provide only the JSON response, no explanations."""
             r"onEnter|onLeave",
         ]
 
-        has_frida_patterns = any(
-            re.search(pattern, script, re.IGNORECASE) for pattern in required_patterns
-        )
+        has_frida_patterns = any(re.search(pattern, script, re.IGNORECASE) for pattern in required_patterns)
 
         if not has_frida_patterns:
             return ValidationResult.LOGIC_ERROR
@@ -316,9 +312,7 @@ Provide only the JSON response, no explanations."""
         for severity, patterns in dangerous_patterns.items():
             for pattern in patterns:
                 if matches := re.findall(pattern, script, re.IGNORECASE):
-                    issues[f"{severity}_issues" if severity == "critical" else "warnings"].extend(
-                        matches
-                    )
+                    issues[f"{severity}_issues" if severity == "critical" else "warnings"].extend(matches)
 
         return issues
 
@@ -351,9 +345,7 @@ Provide only the JSON response, no explanations."""
             metrics["optimization_suggestions"].append("Consider reducing nested loops")
 
         if complexity_factors["memory_operations"] > 20:
-            metrics["optimization_suggestions"].append(
-                "High memory operation count - consider batching"
-            )
+            metrics["optimization_suggestions"].append("High memory operation count - consider batching")
 
         return metrics
 
@@ -475,9 +467,7 @@ class ScriptVersionManager:
             modification_prompt=data["modification_prompt"],
             changes_made=data["changes_made"],
             confidence_score=data["confidence_score"],
-            validation_result=ValidationResult(data["validation_result"])
-            if data.get("validation_result")
-            else None,
+            validation_result=ValidationResult(data["validation_result"]) if data.get("validation_result") else None,
             performance_metrics=data.get("performance_metrics", {}),
             rollback_info=data.get("rollback_info", {}),
         )
@@ -536,16 +526,12 @@ class AIScriptEditor:
             modified_content = self.llm_interface.generate_script(llm_prompt)
 
             # Validate modified script
-            validation_result, validation_details = self.tester.validate_script(
-                modified_content, script_type, test_binary
-            )
+            validation_result, validation_details = self.tester.validate_script(modified_content, script_type, test_binary)
 
             # Test execution if validation passes
             execution_results = {}
             if validation_result == ValidationResult.SUCCESS:
-                execution_results = self.tester.test_script_execution(
-                    modified_content, script_type, test_binary
-                )
+                execution_results = self.tester.test_script_execution(modified_content, script_type, test_binary)
 
             # Create edit record
             edit_record = ScriptEdit(
@@ -554,9 +540,7 @@ class AIScriptEditor:
                 edit_type=edit_type,
                 modification_prompt=modification_prompt,
                 changes_made=self._extract_changes(original_content, modified_content),
-                confidence_score=self._calculate_edit_confidence(
-                    original_content, modified_content, validation_result
-                ),
+                confidence_score=self._calculate_edit_confidence(original_content, modified_content, validation_result),
                 validation_result=validation_result,
                 performance_metrics=execution_results.get("performance", {}),
                 rollback_info={"original_content": original_content},
@@ -568,14 +552,10 @@ class AIScriptEditor:
             self.edit_history[script_path].append(edit_record)
 
             # Create new version
-            version = self.version_manager.create_version(
-                script_path, modified_content, self.edit_history[script_path]
-            )
+            version = self.version_manager.create_version(script_path, modified_content, self.edit_history[script_path])
 
             # Save modified script if validation passed
-            if validation_result == ValidationResult.SUCCESS and execution_results.get(
-                "success", False
-            ):
+            if validation_result == ValidationResult.SUCCESS and execution_results.get("success", False):
                 self._save_script(script_path, modified_content, edit_record)
 
                 return {
@@ -629,9 +609,7 @@ class AIScriptEditor:
             logger.info(f"Improvement iteration {iteration + 1}/{max_iterations}")
 
             # Test current script in QEMU first to get baseline
-            qemu_result = self.tester.test_script_execution(
-                current_content, script_type, test_binary, timeout=60
-            )
+            qemu_result = self.tester.test_script_execution(current_content, script_type, test_binary, timeout=60)
 
             results["qemu_feedback"].append(qemu_result)
 
@@ -652,14 +630,10 @@ class AIScriptEditor:
                 break
 
             # Create improvement prompt with QEMU feedback
-            improvement_prompt = self._create_improvement_prompt_with_feedback(
-                improvement_goals, qemu_result
-            )
+            improvement_prompt = self._create_improvement_prompt_with_feedback(improvement_goals, qemu_result)
 
             # Edit script based on QEMU feedback
-            edit_result = self.edit_script(
-                script_path, improvement_prompt, EditType.OPTIMIZATION, test_binary
-            )
+            edit_result = self.edit_script(script_path, improvement_prompt, EditType.OPTIMIZATION, test_binary)
 
             results["iterations"].append(
                 {
@@ -679,15 +653,11 @@ class AIScriptEditor:
                     f.write(current_content)
             else:
                 # If edit failed, log and continue with feedback
-                logger.warning(
-                    f"Iteration {iteration + 1} edit failed: {edit_result.get('error', 'Unknown error')}"
-                )
+                logger.warning(f"Iteration {iteration + 1} edit failed: {edit_result.get('error', 'Unknown error')}")
 
         # Final test to verify improvement
         if results["iterations"]:
-            final_qemu_result = self.tester.test_script_execution(
-                current_content, script_type, test_binary, timeout=60
-            )
+            final_qemu_result = self.tester.test_script_execution(current_content, script_type, test_binary, timeout=60)
             results["final_qemu_result"] = final_qemu_result
             results["final_success"] = final_qemu_result.get("success", False)
 
@@ -717,11 +687,7 @@ class AIScriptEditor:
             return {"success": False, "error": "No edit history found"}
 
         edit_to_rollback = next(
-            (
-                edit
-                for edit in self.edit_history[script_path]
-                if edit.edit_id == edit_id
-            ),
+            (edit for edit in self.edit_history[script_path] if edit.edit_id == edit_id),
             None,
         )
         if not edit_to_rollback:
@@ -751,9 +717,7 @@ class AIScriptEditor:
             "rollback_edit_id": rollback_edit.edit_id,
         }
 
-    def get_edit_suggestions(
-        self, script_path: str, binary_analysis: dict[str, Any] | None = None
-    ) -> list[dict[str, Any]]:
+    def get_edit_suggestions(self, script_path: str, binary_analysis: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         """Get AI-powered suggestions for script improvements."""
         script_content = self._load_script(script_path)
         if not script_content:
@@ -792,9 +756,7 @@ class AIScriptEditor:
 
         # Binary-specific suggestions
         if binary_analysis:
-            binary_suggestions = self._generate_binary_specific_suggestions(
-                script_content, script_type, binary_analysis
-            )
+            binary_suggestions = self._generate_binary_specific_suggestions(script_content, script_type, binary_analysis)
             suggestions.extend(binary_suggestions)
 
         return suggestions
@@ -826,9 +788,7 @@ class AIScriptEditor:
         except Exception as e:
             logger.error(f"Failed to save script: {e}")
 
-    def _build_edit_prompt(
-        self, original_content: str, edit_request: EditRequest, script_type: str
-    ) -> str:
+    def _build_edit_prompt(self, original_content: str, edit_request: EditRequest, script_type: str) -> str:
         """Build comprehensive prompt for script editing."""
         return f"""Modify the following {script_type} script based on the user's request.
 
@@ -879,9 +839,7 @@ Generate the complete modified script:"""
 
         return changes
 
-    def _calculate_edit_confidence(
-        self, original: str, modified: str, validation: ValidationResult
-    ) -> float:
+    def _calculate_edit_confidence(self, original: str, modified: str, validation: ValidationResult) -> float:
         """Calculate confidence score for the edit."""
         base_score = 0.5
 
@@ -904,9 +862,7 @@ Generate the complete modified script:"""
         """Generate unique edit ID."""
         return f"edit_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{os.urandom(4).hex()}"
 
-    def _analyze_qemu_results_for_goals(
-        self, qemu_result: dict[str, Any], goals: list[str]
-    ) -> bool:
+    def _analyze_qemu_results_for_goals(self, qemu_result: dict[str, Any], goals: list[str]) -> bool:
         """Analyze QEMU execution results to determine if improvement goals are met."""
         if not qemu_result.get("success"):
             return False
@@ -915,17 +871,13 @@ Generate the complete modified script:"""
         errors = qemu_result.get("errors", [])
         performance = qemu_result.get("performance", {})
 
-        goals_met = sum(
-            self._is_goal_met(goal.lower(), output, errors, performance) for goal in goals
-        )
+        goals_met = sum(self._is_goal_met(goal.lower(), output, errors, performance) for goal in goals)
 
         # Consider goals achieved if 80% or more are met
         achievement_ratio = goals_met / len(goals) if goals else 0.0
         return achievement_ratio >= 0.8
 
-    def _is_goal_met(
-        self, goal: str, output: str, errors: list[str], performance: dict[str, Any]
-    ) -> int:
+    def _is_goal_met(self, goal: str, output: str, errors: list[str], performance: dict[str, Any]) -> int:
         """Check if a specific goal is met based on QEMU results."""
         if "no errors" in goal or "error-free" in goal:
             return int(not errors)
@@ -941,9 +893,7 @@ Generate the complete modified script:"""
         # Generic success check
         return int(not errors)
 
-    def _create_improvement_prompt_with_feedback(
-        self, goals: list[str], qemu_result: dict[str, Any]
-    ) -> str:
+    def _create_improvement_prompt_with_feedback(self, goals: list[str], qemu_result: dict[str, Any]) -> str:
         """Create an improvement prompt that includes QEMU execution feedback."""
         prompt_parts = [
             f"Improve this script to achieve the following goals: {', '.join(goals)}",
@@ -976,9 +926,7 @@ Generate the complete modified script:"""
             prompt_parts.append("\nErrors encountered:")
             prompt_parts.extend(f"  - {error}" for error in errors[:5])
 
-    def _add_performance_metrics(
-        self, qemu_result: dict[str, Any], prompt_parts: list[str]
-    ) -> None:
+    def _add_performance_metrics(self, qemu_result: dict[str, Any], prompt_parts: list[str]) -> None:
         """Add performance metrics to the prompt."""
         if performance := qemu_result.get("performance", {}):
             runtime = performance.get("runtime_ms", 0)
@@ -987,9 +935,7 @@ Generate the complete modified script:"""
             prompt_parts.append(f"  - Runtime: {runtime}ms")
             prompt_parts.append(f"  - Exit code: {exit_code}")
 
-    def _add_specific_improvements(
-        self, qemu_result: dict[str, Any], goals: list[str], prompt_parts: list[str]
-    ) -> None:
+    def _add_specific_improvements(self, qemu_result: dict[str, Any], goals: list[str], prompt_parts: list[str]) -> None:
         """Add specific improvement suggestions to the prompt."""
         prompt_parts.append("\nSpecific improvements needed:")
 
@@ -1004,9 +950,7 @@ Generate the complete modified script:"""
             prompt_parts.append("- Optimize performance to reduce runtime")
 
         if performance.get("exit_code", 0) != 0:
-            prompt_parts.append(
-                f"- Fix issues causing non-zero exit code ({performance.get('exit_code')})"
-            )
+            prompt_parts.append(f"- Fix issues causing non-zero exit code ({performance.get('exit_code')})")
 
         self._add_goal_based_suggestions(goals, qemu_result.get("output", ""), prompt_parts)
 
@@ -1019,9 +963,7 @@ Generate the complete modified script:"""
         if any("permission" in str(e).lower() or "access" in str(e).lower() for e in errors):
             prompt_parts.append("- Fix permission/access issues")
 
-    def _add_goal_based_suggestions(
-        self, goals: list[str], output: str, prompt_parts: list[str]
-    ) -> None:
+    def _add_goal_based_suggestions(self, goals: list[str], output: str, prompt_parts: list[str]) -> None:
         """Add suggestions based on unmet goals."""
         output_lower = output.lower() if output else ""
         for goal in goals:
@@ -1098,9 +1040,7 @@ Generate the complete modified script:"""
 
         return recommendations
 
-    def _suggest_fixes(
-        self, validation_result: ValidationResult, validation_details: dict[str, Any]
-    ) -> list[str]:
+    def _suggest_fixes(self, validation_result: ValidationResult, validation_details: dict[str, Any]) -> list[str]:
         """Suggest fixes for validation issues."""
         fixes = []
 

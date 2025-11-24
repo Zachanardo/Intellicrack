@@ -223,9 +223,7 @@ class LocalGGUFServer:
             except ValueError as e:
                 self.logger.error("Value error in local_gguf_server: %s", e)
 
-        logger.debug(
-            f"Using {optimal} threads (CPU count: {cpu_count}, GPU: {bool(self.gpu_backend)})"
-        )
+        logger.debug(f"Using {optimal} threads (CPU count: {cpu_count}, GPU: {bool(self.gpu_backend)})")
         return optimal
 
     def can_run(self) -> bool:
@@ -274,9 +272,7 @@ class LocalGGUFServer:
             if self.gpu_backend and kwargs.get("auto_gpu", True):
                 # Try to offload all layers to GPU by default
                 auto_gpu_layers = kwargs.get("gpu_layers", -1)  # -1 means all layers
-                logger.info(
-                    f"Auto-detected Intel GPU, will attempt to offload {auto_gpu_layers} layers"
-                )
+                logger.info(f"Auto-detected Intel GPU, will attempt to offload {auto_gpu_layers} layers")
 
             # Default parameters for model loading
             default_params = {
@@ -598,9 +594,7 @@ class LocalGGUFServer:
         prompt_parts.append("Assistant:")
         return "\n\n".join(prompt_parts)
 
-    def _complete_response(
-        self, prompt: str, max_tokens: int, temperature: float, top_p: float, stop: list[str]
-    ) -> dict[str, Any]:
+    def _complete_response(self, prompt: str, max_tokens: int, temperature: float, top_p: float, stop: list[str]) -> dict[str, Any]:
         """Generate a complete response."""
         try:
             # Generate completion
@@ -644,9 +638,7 @@ class LocalGGUFServer:
             logger.error(f"Response generation error: {e}")
             raise
 
-    def _stream_response(
-        self, prompt: str, max_tokens: int, temperature: float, top_p: float, stop: list[str]
-    ) -> object:
+    def _stream_response(self, prompt: str, max_tokens: int, temperature: float, top_p: float, stop: list[str]) -> object:
         """Generate a streaming response.
 
         Args:
@@ -770,9 +762,7 @@ class GGUFModelManager:
                             Defaults to ~/.intellicrack/models if not provided.
 
         """
-        self.models_directory = (
-            Path(models_directory) if models_directory else Path.home() / ".intellicrack" / "models"
-        )
+        self.models_directory = Path(models_directory) if models_directory else Path.home() / ".intellicrack" / "models"
         self.models_directory.mkdir(parents=True, exist_ok=True)
 
         self.server = LocalGGUFServer()

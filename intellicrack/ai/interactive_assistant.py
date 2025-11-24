@@ -330,9 +330,7 @@ You are the autonomous expert - take complete ownership of binary analysis chall
 
         return description
 
-    def process_message(
-        self, message: str, context: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    def process_message(self, message: str, context: dict[str, Any] | None = None) -> dict[str, Any]:
         """Process a message from the user."""
         # Update context if provided
         if context:
@@ -470,9 +468,7 @@ You are the autonomous expert - take complete ownership of binary analysis chall
 
         # If no analysis results exist, automatically trigger comprehensive analysis
         if not self.context.get("analysis_results"):
-            self._log_action(
-                f"No prior analysis found for {binary_path}. Starting comprehensive analysis..."
-            )
+            self._log_action(f"No prior analysis found for {binary_path}. Starting comprehensive analysis...")
 
             # Perform comprehensive analysis
             analysis_types = ["protection", "license", "network", "code_flow", "strings", "imports"]
@@ -525,17 +521,11 @@ Would you like me to:
         summary = "Detected Protections:\n"
         for protection_type, details in protections.items():
             if isinstance(details, dict) and details.get("detected"):
-                summary += (
-                    f" {protection_type}: {details.get('confidence', 'Unknown')} confidence\n"
-                )
+                summary += f" {protection_type}: {details.get('confidence', 'Unknown')} confidence\n"
             elif details:  # Simple boolean or truthy value
                 summary += f" {protection_type}: Detected\n"
 
-        return (
-            summary
-            if summary != "Detected Protections:\n"
-            else "Standard binary with no advanced protections detected."
-        )
+        return summary if summary != "Detected Protections:\n" else "Standard binary with no advanced protections detected."
 
     def _handle_explanation_intent(self, intent: dict[str, Any]) -> str:
         """Handle explanation intent."""
@@ -833,9 +823,7 @@ What security aspect interests you?"""
             }
 
     # File System Tool Methods
-    def _search_license_files(
-        self, search_path: str, custom_patterns: list[str] = None
-    ) -> dict[str, Any]:
+    def _search_license_files(self, search_path: str, custom_patterns: list[str] = None) -> dict[str, Any]:
         """Search for license-related files with user approval."""
         try:
             result = self.file_tools.search_for_license_files(search_path, custom_patterns)
@@ -843,15 +831,11 @@ What security aspect interests you?"""
             # Log the operation for the user
             if result["status"] == "success":
                 files_found = len(result.get("files_found", []))
-                self._log_tool_usage(
-                    f"File search completed: {files_found} license-related files found"
-                )
+                self._log_tool_usage(f"File search completed: {files_found} license-related files found")
             elif result["status"] == "denied":
                 self._log_tool_usage("File search denied by user")
             else:
-                self._log_tool_usage(
-                    f"File search failed: {result.get('message', 'Unknown error')}"
-                )
+                self._log_tool_usage(f"File search failed: {result.get('message', 'Unknown error')}")
 
             return result
         except (OSError, ValueError, RuntimeError) as e:
@@ -890,18 +874,14 @@ What security aspect interests you?"""
                     f"Program directory analysis completed: {files_found} license files found, {files_analyzed} files analyzed",
                 )
             else:
-                self._log_tool_usage(
-                    f"Program directory analysis failed: {result.get('message', 'Unknown error')}"
-                )
+                self._log_tool_usage(f"Program directory analysis failed: {result.get('message', 'Unknown error')}")
 
             return result
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in program directory analysis: %s", e)
             return {"status": "error", "message": str(e)}
 
-    def analyze_binary_complex(
-        self, binary_path: str, ml_results: dict[str, Any] = None
-    ) -> dict[str, Any]:
+    def analyze_binary_complex(self, binary_path: str, ml_results: dict[str, Any] = None) -> dict[str, Any]:
         """Perform complex binary analysis using AI reasoning.
 
         Args:
@@ -1009,9 +989,7 @@ What security aspect interests you?"""
                     "Look for license validation functions",
                 ]
 
-            self._log_tool_usage(
-                f"License pattern analysis completed - found {len(found_patterns)} relevant patterns"
-            )
+            self._log_tool_usage(f"License pattern analysis completed - found {len(found_patterns)} relevant patterns")
             return analysis
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -1078,9 +1056,7 @@ What security aspect interests you?"""
                 "next_steps": [],
             }
 
-    def _external_analysis(
-        self, file_path: str, service: str = "virustotal", api_key: str | None = None
-    ) -> dict[str, Any]:
+    def _external_analysis(self, file_path: str, service: str = "virustotal", api_key: str | None = None) -> dict[str, Any]:
         """Submit file to external analysis service with real API integration."""
         try:
             import hashlib
@@ -1157,9 +1133,7 @@ What security aspect interests you?"""
                 # Upload file
                 with open(file_path, "rb") as f:
                     files = {"file": (os.path.basename(file_path), f)}
-                    upload_response = requests.post(
-                        upload_url, headers=headers, files=files, timeout=120
-                    )
+                    upload_response = requests.post(upload_url, headers=headers, files=files, timeout=120)
 
                 if upload_response.status_code in {200, 201}:
                     analysis_data = upload_response.json()
@@ -1198,9 +1172,7 @@ What security aspect interests you?"""
                         "environment_id": "120",  # Windows 10 64-bit
                         "no_share_third_party": "true",
                     }
-                    response = requests.post(
-                        url, headers=headers, files=files, data=data, timeout=120
-                    )
+                    response = requests.post(url, headers=headers, files=files, data=data, timeout=120)
 
                 if response.status_code == 201:
                     result_data = response.json()
@@ -1273,22 +1245,16 @@ What security aspect interests you?"""
                 if ".text" in section_names:
                     analysis_parts.append("Standard .text section found for executable code.")
                 if ".data" in section_names or ".rdata" in section_names:
-                    analysis_parts.append(
-                        "Data sections contain initialized variables and constants."
-                    )
+                    analysis_parts.append("Data sections contain initialized variables and constants.")
                 if ".rsrc" in section_names:
-                    analysis_parts.append(
-                        "Resource section present, may contain version info or embedded files."
-                    )
+                    analysis_parts.append("Resource section present, may contain version info or embedded files.")
 
                 # Analyze section entropy for packing detection
                 for section in sections:
                     entropy = section.get("entropy", 0)
                     if entropy > 7.5:
                         section_name = section.get("name", "unknown")
-                        analysis_parts.append(
-                            f"Section {section_name} has high entropy ({entropy:.2f}), possibly packed or encrypted."
-                        )
+                        analysis_parts.append(f"Section {section_name} has high entropy ({entropy:.2f}), possibly packed or encrypted.")
                         recommendations.append(
                             {
                                 "action": "analyze_packing",
@@ -1299,9 +1265,7 @@ What security aspect interests you?"""
 
             # Analyze imports
             if imports:
-                analysis_parts.append(
-                    f"Binary imports {len(imports)} functions from external libraries."
-                )
+                analysis_parts.append(f"Binary imports {len(imports)} functions from external libraries.")
 
                 # Categorize imports
                 security_apis = [
@@ -1320,9 +1284,7 @@ What security aspect interests you?"""
                 found_network = any(api in str(imports) for api in network_apis)
 
                 if found_security:
-                    analysis_parts.append(
-                        "Uses file system and registry APIs, indicating data access capabilities."
-                    )
+                    analysis_parts.append("Uses file system and registry APIs, indicating data access capabilities.")
                     recommendations.append(
                         {
                             "action": "monitor_file_access",
@@ -1331,9 +1293,7 @@ What security aspect interests you?"""
                     )
 
                 if found_crypto:
-                    analysis_parts.append(
-                        "Contains cryptographic API imports, suggesting encryption/decryption functionality."
-                    )
+                    analysis_parts.append("Contains cryptographic API imports, suggesting encryption/decryption functionality.")
                     recommendations.append(
                         {
                             "action": "analyze_crypto_usage",
@@ -1343,9 +1303,7 @@ What security aspect interests you?"""
                     confidence += 0.2
 
                 if found_network:
-                    analysis_parts.append(
-                        "Network APIs present, binary may communicate with remote servers."
-                    )
+                    analysis_parts.append("Network APIs present, binary may communicate with remote servers.")
                     recommendations.append(
                         {
                             "action": "monitor_network_traffic",
@@ -1368,17 +1326,8 @@ What security aspect interests you?"""
                     "expire",
                     "valid",
                 ]
-                if license_strings := [
-                    s
-                    for s in strings
-                    if any(
-                        pattern.lower() in str(s).lower()
-                        for pattern in license_patterns
-                    )
-                ]:
-                    analysis_parts.append(
-                        f"Found {len(license_strings)} potential license-related strings."
-                    )
+                if license_strings := [s for s in strings if any(pattern.lower() in str(s).lower() for pattern in license_patterns)]:
+                    analysis_parts.append(f"Found {len(license_strings)} potential license-related strings.")
                     recommendations.append(
                         {
                             "action": "analyze_license_strings",
@@ -1389,14 +1338,7 @@ What security aspect interests you?"""
 
                 # Look for error messages
                 error_patterns = ["error", "fail", "invalid", "corrupt", "missing"]
-                if error_strings := [
-                    s
-                    for s in strings
-                    if any(
-                        pattern.lower() in str(s).lower()
-                        for pattern in error_patterns
-                    )
-                ]:
+                if error_strings := [s for s in strings if any(pattern.lower() in str(s).lower() for pattern in error_patterns)]:
                     analysis_parts.append(f"Contains {len(error_strings)} error-related strings.")
 
             # Adjust confidence based on analysis depth
@@ -1407,9 +1349,7 @@ What security aspect interests you?"""
                 confidence = min(confidence + 0.2, 1.0)
             # Ensure minimum analysis quality
             if not analysis_parts:
-                analysis_parts.append(
-                    "Binary structure analysis completed with limited available data."
-                )
+                analysis_parts.append("Binary structure analysis completed with limited available data.")
                 confidence = 0.2
 
             # Add general recommendations if none were found

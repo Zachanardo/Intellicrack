@@ -133,7 +133,11 @@ class ChecksumDialog(QDialog):
         source_layout.addWidget(self.selection_radio)
 
         # Check if there's a selection
-        if self.hex_viewer and hasattr(self.hex_viewer, "selection_start") and (self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1):
+        if (
+            self.hex_viewer
+            and hasattr(self.hex_viewer, "selection_start")
+            and (self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1)
+        ):
             self.selection_radio.setEnabled(True)
             selection_size = self.hex_viewer.selection_end - self.hex_viewer.selection_start
             self.selection_radio.setText(f"Current selection ({selection_size} bytes)")
@@ -241,11 +245,7 @@ class ChecksumDialog(QDialog):
             List of algorithm names
 
         """
-        return [
-            algo
-            for algo, checkbox in self.algorithm_checkboxes.items()
-            if checkbox.isChecked()
-        ]
+        return [algo for algo, checkbox in self.algorithm_checkboxes.items() if checkbox.isChecked()]
 
     def calculate_checksums(self) -> None:
         """Start checksum calculation."""

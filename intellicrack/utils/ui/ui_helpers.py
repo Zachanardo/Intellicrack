@@ -74,9 +74,7 @@ def emit_log_message(app_instance: object, message: str) -> None:
             app_instance.update_output.emit(message)
 
 
-def show_file_dialog(
-    parent: object, title: str, file_filter: str = "HTML Files (*.html);;All Files (*)"
-) -> str:
+def show_file_dialog(parent: object, title: str, file_filter: str = "HTML Files (*.html);;All Files (*)") -> str:
     """Show file save dialog and return filename.
 
     Args:
@@ -127,9 +125,7 @@ def ask_yes_no_question(parent: object, title: str, question: str) -> bool:
         return False
 
 
-def generate_exploit_payload_common(
-    payload_type: str, target_path: str = "target_software"
-) -> dict[str, str | bool | list[str]]:
+def generate_exploit_payload_common(payload_type: str, target_path: str = "target_software") -> dict[str, str | bool | list[str]]:
     """Generate exploit payload of specified type.
 
     This is the common implementation extracted from duplicate code
@@ -208,9 +204,7 @@ def generate_exploit_payload_common(
         return {"error": str(e)}
 
 
-def generate_exploit_strategy_common(
-    binary_path: str, vulnerability_type: str = "buffer_overflow"
-) -> dict[str, str | object]:
+def generate_exploit_strategy_common(binary_path: str, vulnerability_type: str = "buffer_overflow") -> dict[str, str | object]:
     """Generate exploit strategy for given binary and vulnerability type.
 
     This is the common implementation extracted from duplicate code.

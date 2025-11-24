@@ -137,9 +137,7 @@ class MemoryDumperWidget(QWidget):
         # Regions table
         self.regions_table = QTableWidget()
         self.regions_table.setColumnCount(5)
-        self.regions_table.setHorizontalHeaderLabels(
-            ["Address", "Size", "Protection", "Type", "Path"]
-        )
+        self.regions_table.setHorizontalHeaderLabels(["Address", "Size", "Protection", "Type", "Path"])
         self.regions_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         regions_layout.addWidget(self.regions_table)
 
@@ -380,12 +378,8 @@ class MemoryDumperWidget(QWidget):
                         row = self.regions_table.rowCount()
                         self.regions_table.insertRow(row)
 
-                        self.regions_table.setItem(
-                            row, 0, QTableWidgetItem(f"0x{mbi.BaseAddress:016X}")
-                        )
-                        self.regions_table.setItem(
-                            row, 1, QTableWidgetItem(f"{mbi.RegionSize:,} bytes")
-                        )
+                        self.regions_table.setItem(row, 0, QTableWidgetItem(f"0x{mbi.BaseAddress:016X}"))
+                        self.regions_table.setItem(row, 1, QTableWidgetItem(f"{mbi.RegionSize:,} bytes"))
                         self.regions_table.setItem(row, 2, QTableWidgetItem(protection))
                         self.regions_table.setItem(row, 3, QTableWidgetItem(region_type))
                         self.regions_table.setItem(row, 4, QTableWidgetItem(""))
@@ -420,17 +414,11 @@ class MemoryDumperWidget(QWidget):
                             row = self.regions_table.rowCount()
                             self.regions_table.insertRow(row)
 
-                            self.regions_table.setItem(
-                                row, 0, QTableWidgetItem(f"0x{start_addr:016X}")
-                            )
+                            self.regions_table.setItem(row, 0, QTableWidgetItem(f"0x{start_addr:016X}"))
                             self.regions_table.setItem(row, 1, QTableWidgetItem(f"{size:,} bytes"))
                             self.regions_table.setItem(row, 2, QTableWidgetItem(perms))
-                            self.regions_table.setItem(
-                                row, 3, QTableWidgetItem(parts[3] if len(parts) > 3 else "")
-                            )
-                            self.regions_table.setItem(
-                                row, 4, QTableWidgetItem(parts[5] if len(parts) > 5 else "")
-                            )
+                            self.regions_table.setItem(row, 3, QTableWidgetItem(parts[3] if len(parts) > 3 else ""))
+                            self.regions_table.setItem(row, 4, QTableWidgetItem(parts[5] if len(parts) > 5 else ""))
 
             self.output_log.append(f"Found {self.regions_table.rowCount()} memory regions")
 
@@ -495,11 +483,7 @@ class MemoryDumperWidget(QWidget):
             writable = protect & 0x44
             executable = protect & 0xF0
 
-            return (
-                False
-                if self.writable_check.isChecked() and not writable
-                else bool(not self.executable_check.isChecked() or executable)
-            )
+            return False if self.writable_check.isChecked() and not writable else bool(not self.executable_check.isChecked() or executable)
 
     def _should_include_region_linux(self, perms: str) -> bool:
         """Check if Linux region should be included based on filters.
@@ -701,6 +685,7 @@ class MemoryDumpThread(QThread):
                 size,
                 ctypes.byref(bytes_read),
             ):
+                logger.debug(f"Read {bytes_read.value} bytes from 0x{addr:X} (result: {result})")
                 # Save to file
                 filename = os.path.join(self.output_dir, f"dump_0x{addr:016X}.bin")
                 with open(filename, "wb") as f:

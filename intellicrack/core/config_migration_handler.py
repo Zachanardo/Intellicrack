@@ -75,11 +75,7 @@ class MigrationValidator:
             "analysis_settings",
         ]
 
-        errors = [
-            f"Missing required section: {section}"
-            for section in required_sections
-            if section not in config
-        ]
+        errors = [f"Missing required section: {section}" for section in required_sections if section not in config]
         # Validate version format
         if "version" in config:
             version = config["version"]
@@ -287,9 +283,7 @@ class ConfigMigrationHandler:
                 # Return original data as last resort
                 return False, config_data
 
-    def handle_partial_migration(
-        self, config_data: dict[str, Any], migrations: dict[str, Callable]
-    ) -> dict[str, Any]:
+    def handle_partial_migration(self, config_data: dict[str, Any], migrations: dict[str, Callable]) -> dict[str, Any]:
         """Handle multiple migrations with partial success support.
 
         Args:
@@ -312,9 +306,7 @@ class ConfigMigrationHandler:
                 current_data = migrated_data
             else:
                 failed_migrations.append(name)
-                self.log_migration(
-                    f"Continuing with partial migration after {name} failed", level="warning"
-                )
+                self.log_migration(f"Continuing with partial migration after {name} failed", level="warning")
 
         if failed_migrations:
             self.migration_status = MigrationStatus.PARTIAL
@@ -381,9 +373,7 @@ class SafeMigrationWrapper:
     """Wrap to safely execute migration functions with timeout and resource limits."""
 
     @staticmethod
-    def migrate_with_timeout(
-        migration_func: Callable, config_data: dict[str, Any], timeout: int = 30
-    ) -> dict[str, Any]:
+    def migrate_with_timeout(migration_func: Callable, config_data: dict[str, Any], timeout: int = 30) -> dict[str, Any]:
         """Execute migration with timeout protection.
 
         Args:
@@ -445,8 +435,6 @@ class SafeMigrationWrapper:
         migrated_size = len(json.dumps(migrated))
 
         if migrated_size < original_size * 0.5:
-            logger.warning(
-                f"Configuration size reduced by more than 50% ({original_size} -> {migrated_size} bytes)"
-            )
+            logger.warning(f"Configuration size reduced by more than 50% ({original_size} -> {migrated_size} bytes)")
 
         return True

@@ -118,9 +118,7 @@ def find_tool(tool_name: str, required_executables: list[str] | None = None) -> 
 
     """
     if required_executables:
-        logger.debug(
-            "Tool search for %s with required executables: %s", tool_name, required_executables
-        )
+        logger.debug("Tool search for %s with required executables: %s", tool_name, required_executables)
     else:
         logger.debug("Tool search for %s.", tool_name)
     try:
@@ -194,9 +192,7 @@ def get_system_path(path_type: str) -> str | None:
             logger.debug(f"Modern config found path for '{path_type}': '{path}'.")
             return path
         else:
-            logger.debug(
-                f"Modern config did not provide a specific path for '{path_type}'. Checking fallbacks."
-            )
+            logger.debug(f"Modern config did not provide a specific path for '{path_type}'. Checking fallbacks.")
             raise ValueError("Path not found in modern config, attempting fallback.")
     except (AttributeError, KeyError, ValueError, TypeError) as e:
         logger.warning(
@@ -221,9 +217,7 @@ def get_system_path(path_type: str) -> str | None:
         if fallback_path:
             logger.debug(f"Fallback mechanism found path for '{path_type}': '{fallback_path}'.")
         else:
-            logger.warning(
-                f"Fallback mechanism could not find path for '{path_type}'. Returning None."
-            )
+            logger.warning(f"Fallback mechanism could not find path for '{path_type}'. Returning None.")
         return fallback_path
 
 
@@ -420,14 +414,10 @@ class ConfigManager:
             return log_dir
         if key == "output_dir":
             output_dir = str(self._modern_config.get_output_dir())
-            logger.debug(
-                f"Legacy key 'output_dir' mapped to modern output directory: '{output_dir}'."
-            )
+            logger.debug(f"Legacy key 'output_dir' mapped to modern output directory: '{output_dir}'.")
             return output_dir
         if key == "temp_dir":
-            temp_dir = self._modern_config.get(
-                "directories.temp", str(self._modern_config.get_cache_dir())
-            )
+            temp_dir = self._modern_config.get("directories.temp", str(self._modern_config.get_cache_dir()))
             logger.debug(f"Legacy key 'temp_dir' mapped to modern temp directory: '{temp_dir}'.")
             return temp_dir
 
@@ -438,9 +428,7 @@ class ConfigManager:
             return result
 
         result = self.config.get(key, default)
-        logger.debug(
-            f"Key '{key}' not found in modern config, falling back to legacy structure. Result: '{result}'."
-        )
+        logger.debug(f"Key '{key}' not found in modern config, falling back to legacy structure. Result: '{result}'.")
         return result
 
     def set(self, key: str, value: object) -> None:
@@ -633,9 +621,7 @@ class _LazyConfig(dict):
             except (FileNotFoundError, PermissionError, ValueError, KeyError, ImportError) as e:
                 logger.warning("LazyConfig: Failed to load config, using empty dict: %s", e)
             except Exception as e:
-                logger.exception(
-                    "LazyConfig: An unexpected error occurred during config loading: %s", e
-                )
+                logger.exception("LazyConfig: An unexpected error occurred during config loading: %s", e)
             self._initialized = True
         else:
             logger.debug("LazyConfig: Configuration already loaded.")

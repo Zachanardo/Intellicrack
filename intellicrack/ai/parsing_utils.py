@@ -61,9 +61,7 @@ class ResponseLineParser:
             if not line:
                 continue
 
-            if detected_section := ResponseLineParser._detect_section(
-                line, section_keywords
-            ):
+            if detected_section := ResponseLineParser._detect_section(line, section_keywords):
                 current_section = detected_section
                 continue
 
@@ -122,9 +120,7 @@ class ResponseLineParser:
         return categories
 
     @staticmethod
-    def extract_structured_content(
-        response: str, patterns: list[str], section_separators: list[str] | None = None
-    ) -> list[dict[str, str]]:
+    def extract_structured_content(response: str, patterns: list[str], section_separators: list[str] | None = None) -> list[dict[str, str]]:
         """Extract structured content using regex patterns.
 
         Args:
@@ -181,18 +177,12 @@ class ResponseLineParser:
         line_lower = line.lower()
 
         return next(
-            (
-                section
-                for section, keywords in section_keywords.items()
-                if any(keyword.lower() in line_lower for keyword in keywords)
-            ),
+            (section for section, keywords in section_keywords.items() if any(keyword.lower() in line_lower for keyword in keywords)),
             None,
         )
 
     @staticmethod
-    def clean_and_filter_lines(
-        lines: list[str], min_length: int = 3, filter_patterns: list[str] | None = None
-    ) -> list[str]:
+    def clean_and_filter_lines(lines: list[str], min_length: int = 3, filter_patterns: list[str] | None = None) -> list[str]:
         """Clean and filter lines based on criteria.
 
         Args:
@@ -215,10 +205,7 @@ class ResponseLineParser:
 
             # Apply filter patterns
             if filter_patterns:
-                skip_line = any(
-                    re.search(pattern, line, re.IGNORECASE)
-                    for pattern in filter_patterns
-                )
+                skip_line = any(re.search(pattern, line, re.IGNORECASE) for pattern in filter_patterns)
                 if skip_line:
                     continue
 

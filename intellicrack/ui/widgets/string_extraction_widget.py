@@ -170,9 +170,7 @@ class StringExtractionWidget(QWidget):
 
         # String table
         self.string_table = QTableWidget()
-        self.string_table.setToolTip(
-            "Table of extracted strings from the binary. Click headers to sort, right-click for context menu"
-        )
+        self.string_table.setToolTip("Table of extracted strings from the binary. Click headers to sort, right-click for context menu")
         self.string_table.setColumnCount(5)
         self.string_table.setHorizontalHeaderLabels(
             [
@@ -235,23 +233,17 @@ class StringExtractionWidget(QWidget):
         self.min_length_spin.setMinimum(3)
         self.min_length_spin.setMaximum(20)
         self.min_length_spin.setValue(4)
-        self.min_length_spin.setToolTip(
-            "Minimum number of consecutive characters to consider as a valid string"
-        )
+        self.min_length_spin.setToolTip("Minimum number of consecutive characters to consider as a valid string")
         options_layout.addWidget(QLabel("Min Length:"))
         options_layout.addWidget(self.min_length_spin)
 
         self.extract_ascii_cb = QCheckBox("ASCII")
-        self.extract_ascii_cb.setToolTip(
-            "Extract standard ASCII text strings (single-byte characters)"
-        )
+        self.extract_ascii_cb.setToolTip("Extract standard ASCII text strings (single-byte characters)")
         self.extract_ascii_cb.setChecked(True)
         options_layout.addWidget(self.extract_ascii_cb)
 
         self.extract_unicode_cb = QCheckBox("Unicode")
-        self.extract_unicode_cb.setToolTip(
-            "Extract Unicode/UTF-16 strings (wide character strings)"
-        )
+        self.extract_unicode_cb.setToolTip("Extract Unicode/UTF-16 strings (wide character strings)")
         self.extract_unicode_cb.setChecked(True)
         options_layout.addWidget(self.extract_unicode_cb)
 
@@ -289,9 +281,7 @@ class StringExtractionWidget(QWidget):
 
         # Search filter
         self.search_input = QLineEdit()
-        self.search_input.setToolTip(
-            "Enter search text to filter displayed strings (substring match)"
-        )
+        self.search_input.setToolTip("Enter search text to filter displayed strings (substring match)")
         self.search_input.textChanged.connect(self.apply_filters)
         layout.addWidget(QLabel("Filter:"))
         layout.addWidget(self.search_input)

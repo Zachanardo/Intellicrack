@@ -380,9 +380,7 @@ class ModelManagerDialog(BaseDialog):
 
         self.custom_url_input = QLineEdit()
         self.custom_url_input.setText("")
-        self.custom_url_input.setToolTip(
-            "Paste complete HTTPS URL to GGUF model file from Hugging Face, Ollama, or other repositories"
-        )
+        self.custom_url_input.setToolTip("Paste complete HTTPS URL to GGUF model file from Hugging Face, Ollama, or other repositories")
         url_layout.addWidget(self.custom_url_input)
 
         custom_download_btn = QPushButton("Download")
@@ -523,9 +521,7 @@ class ModelManagerDialog(BaseDialog):
             # Download button
             download_btn = QPushButton("Download")
             download_btn.clicked.connect(
-                lambda checked, url=model["url"], name=model["name"]: self.download_model(
-                    url, name
-                ),
+                lambda checked, url=model["url"], name=model["name"]: self.download_model(url, name),
             )
             self.recommended_table.setCellWidget(row, 3, download_btn)
 
@@ -592,9 +588,8 @@ Server URL: {gguf_manager.get_server_url()}"""
                 use_mmap=self.use_mmap_checkbox.isChecked(),
                 use_mlock=self.use_mlock_checkbox.isChecked(),
             ):
-                QMessageBox.information(
-                    self, "Success", f"Model '{model_name}' loaded successfully!"
-                )
+                logger.info(f"Model loaded successfully: {model_name} (result: {success})")
+                QMessageBox.information(self, "Success", f"Model '{model_name}' loaded successfully!")
                 self.refresh_models()
             else:
                 QMessageBox.warning(self, "Error", f"Failed to load model '{model_name}'")
@@ -647,9 +642,7 @@ Server URL: {gguf_manager.get_server_url()}"""
                         # Delete file
                         model_path.unlink()
 
-                        QMessageBox.information(
-                            self, "Success", f"Model '{model_name}' deleted successfully!"
-                        )
+                        QMessageBox.information(self, "Success", f"Model '{model_name}' deleted successfully!")
                         self.refresh_models()
                     else:
                         QMessageBox.warning(self, "Error", "Model not found in list.")
@@ -679,9 +672,7 @@ Server URL: {gguf_manager.get_server_url()}"""
 
                 shutil.copy2(source_path, dest_path)
 
-                QMessageBox.information(
-                    self, "Success", f"Model '{source_path.name}' added successfully!"
-                )
+                QMessageBox.information(self, "Success", f"Model '{source_path.name}' added successfully!")
                 self.refresh_models()
 
             except Exception as e:
@@ -691,9 +682,7 @@ Server URL: {gguf_manager.get_server_url()}"""
     def download_model(self, model_url: str, model_name: str) -> None:
         """Download a model."""
         if model_name in self.download_threads:
-            QMessageBox.information(
-                self, "Info", f"Model '{model_name}' is already being downloaded."
-            )
+            QMessageBox.information(self, "Info", f"Model '{model_name}' is already being downloaded.")
             return
 
         # Create progress bar
@@ -715,9 +704,7 @@ Server URL: {gguf_manager.get_server_url()}"""
         # Create download thread
         download_thread = ModelDownloadThread(model_url, model_name)
         download_thread.progress_updated.connect(
-            lambda name, progress: progress_bar.setValue(int(progress))
-            if name == model_name
-            else None,
+            lambda name, progress: progress_bar.setValue(int(progress)) if name == model_name else None,
         )
         download_thread.download_finished.connect(
             lambda name, success: self.on_download_finished(name, success, progress_widget),
@@ -753,17 +740,11 @@ Server URL: {gguf_manager.get_server_url()}"""
 
             # Check if URL is using HTTPS
             if parsed.scheme != "https":
-                QMessageBox.warning(
-                    self, "Security Warning", "Only HTTPS URLs are allowed for security reasons."
-                )
+                QMessageBox.warning(self, "Security Warning", "Only HTTPS URLs are allowed for security reasons.")
                 return
 
             domain_allowed = any(
-                parsed.hostname
-                and (
-                    parsed.hostname == allowed_domain
-                    or parsed.hostname.endswith(f".{allowed_domain}")
-                )
+                parsed.hostname and (parsed.hostname == allowed_domain or parsed.hostname.endswith(f".{allowed_domain}"))
                 for allowed_domain in allowed_domains
             )
             if not domain_allowed:
@@ -786,9 +767,7 @@ Server URL: {gguf_manager.get_server_url()}"""
         self.download_model(url, model_name)
         self.custom_url_input.clear()
 
-    def on_download_finished(
-        self, model_name: str, success: bool, progress_widget: QWidget
-    ) -> None:
+    def on_download_finished(self, model_name: str, success: bool, progress_widget: QWidget) -> None:
         """Handle download completion."""
         if model_name in self.download_threads:
             del self.download_threads[model_name]
@@ -813,9 +792,7 @@ Server URL: {gguf_manager.get_server_url()}"""
             if gguf_manager.start_server():
                 QMessageBox.information(self, "Success", "GGUF server started successfully!")
             else:
-                QMessageBox.warning(
-                    self, "Error", "Failed to start GGUF server. Check dependencies."
-                )
+                QMessageBox.warning(self, "Error", "Failed to start GGUF server. Check dependencies.")
         except Exception as e:
             logger.error("Exception in model_manager_dialog: %s", e)
             QMessageBox.critical(self, "Error", f"Error starting server: {e}")

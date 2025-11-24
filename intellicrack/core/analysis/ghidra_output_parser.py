@@ -46,9 +46,7 @@ class FunctionSignature:
     is_exported: bool = False
     is_imported: bool = False
     stack_frame_size: int = 0
-    local_variables: list[tuple[str, str, int]] = field(
-        default_factory=list
-    )  # (type, name, offset)
+    local_variables: list[tuple[str, str, int]] = field(default_factory=list)  # (type, name, offset)
 
 
 @dataclass
@@ -157,18 +155,13 @@ class GhidraOutputParser:
                         name=func_data["name"],
                         address=int(func_data["address"], 16),
                         return_type=func_data.get("returnType", "void"),
-                        parameters=[
-                            (p["type"], p["name"]) for p in func_data.get("parameters", [])
-                        ],
+                        parameters=[(p["type"], p["name"]) for p in func_data.get("parameters", [])],
                         calling_convention=func_data.get("callingConvention", "default"),
                         is_thunk=func_data.get("isThunk", False),
                         is_exported=func_data.get("isExported", False),
                         is_imported=func_data.get("isImported", False),
                         stack_frame_size=func_data.get("stackFrameSize", 0),
-                        local_variables=[
-                            (v["type"], v["name"], v["offset"])
-                            for v in func_data.get("localVariables", [])
-                        ],
+                        local_variables=[(v["type"], v["name"], v["offset"]) for v in func_data.get("localVariables", [])],
                     )
                     self.functions[function.address] = function
 
@@ -263,9 +256,7 @@ class GhidraOutputParser:
         try:
             with open(graph_path, encoding="utf-8") as f:
                 for line in f:
-                    if match := re.match(
-                        r"([^\s]+)\s+->\s+([^\s]+)", line.strip()
-                    ):
+                    if match := re.match(r"([^\s]+)\s+->\s+([^\s]+)", line.strip()):
                         caller = match[1]
                         callee = match[2]
 
@@ -459,9 +450,7 @@ class GhidraOutputParser:
 
     def get_function_by_name(self, name: str) -> FunctionSignature | None:
         """Get function by name."""
-        return next(
-            (func for func in self.functions.values() if func.name == name), None
-        )
+        return next((func for func in self.functions.values() if func.name == name), None)
 
     def get_function_by_address(self, address: int) -> FunctionSignature | None:
         """Get function by address."""
@@ -479,11 +468,7 @@ class GhidraOutputParser:
         """Get all functions called by a function."""
         targets = []
         if func := self.get_function_by_name(function_name):
-            targets.extend(
-                xref.to_function
-                for xref in self.get_xrefs_from(func.address)
-                if xref.ref_type == "CALL" and xref.to_function
-            )
+            targets.extend(xref.to_function for xref in self.get_xrefs_from(func.address) if xref.ref_type == "CALL" and xref.to_function)
         return targets
 
     def export_to_json(self, output_path: Path) -> None:
@@ -497,9 +482,7 @@ class GhidraOutputParser:
                     "parameters": [{"type": t, "name": n} for t, n in f.parameters],
                     "calling_convention": f.calling_convention,
                     "stack_frame_size": f.stack_frame_size,
-                    "local_variables": [
-                        {"type": t, "name": n, "offset": o} for t, n, o in f.local_variables
-                    ],
+                    "local_variables": [{"type": t, "name": n, "offset": o} for t, n, o in f.local_variables],
                 }
                 for f in self.functions.values()
             ],
@@ -507,9 +490,7 @@ class GhidraOutputParser:
                 {
                     "name": s.name,
                     "size": s.size,
-                    "fields": [
-                        {"type": t, "name": n, "offset": o, "size": sz} for t, n, o, sz in s.fields
-                    ],
+                    "fields": [{"type": t, "name": n, "offset": o, "size": sz} for t, n, o, sz in s.fields],
                 }
                 for s in self.structures.values()
             ],

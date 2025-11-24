@@ -207,9 +207,7 @@ class RadareESILEmulator:
             self.arch = info.get("bin", {}).get("arch", "x86")
             self.bits = info.get("bin", {}).get("bits", 64)
 
-            logger.info(
-                f"Initialized ESIL emulator for {self.arch}-{self.bits} binary: {self.binary_path}"
-            )
+            logger.info(f"Initialized ESIL emulator for {self.arch}-{self.bits} binary: {self.binary_path}")
 
         except Exception as e:
             logger.error(f"Failed to initialize ESIL session: {e}")
@@ -302,9 +300,7 @@ class RadareESILEmulator:
 
                     if addr and size:
                         self.session.execute(f"aeim {addr} {size} {name}")
-                        logger.debug(
-                            f"Mapped memory region: {name} at 0x{addr:x} (size: 0x{size:x})"
-                        )
+                        logger.debug(f"Mapped memory region: {name} at 0x{addr:x} (size: 0x{size:x})")
 
             self.session.execute("aeim 0x200000 0x100000 heap")
             logger.debug("Mapped heap region at 0x200000")
@@ -361,9 +357,7 @@ class RadareESILEmulator:
                 else:
                     self.session.execute(f"dr {register}={value}")
                     if register in self.registers:
-                        self.registers[register].value = (
-                            value if isinstance(value, int) else int(value)
-                        )
+                        self.registers[register].value = value if isinstance(value, int) else int(value)
                         self.registers[register].symbolic = False
 
                 logger.debug(f"Set register {register} = {value} (symbolic={symbolic})")
@@ -517,11 +511,7 @@ class RadareESILEmulator:
                 prev_registers = self._get_register_state()
                 prev_pc_info = self.session.execute("drj", expect_json=True)
                 prev_pc = next(
-                    (
-                        r["value"]
-                        for r in prev_pc_info
-                        if r.get("role") == "PC" or r.get("name") in ["rip", "eip", "pc"]
-                    ),
+                    (r["value"] for r in prev_pc_info if r.get("role") == "PC" or r.get("name") in ["rip", "eip", "pc"]),
                     0,
                 )
 
@@ -540,11 +530,7 @@ class RadareESILEmulator:
                 new_registers = self._get_register_state()
                 new_pc_info = self.session.execute("drj", expect_json=True)
                 new_pc = next(
-                    (
-                        r["value"]
-                        for r in new_pc_info
-                        if r.get("role") == "PC" or r.get("name") in ["rip", "eip", "pc"]
-                    ),
+                    (r["value"] for r in new_pc_info if r.get("role") == "PC" or r.get("name") in ["rip", "eip", "pc"]),
                     prev_pc,
                 )
 
@@ -617,9 +603,7 @@ class RadareESILEmulator:
             return "call"
         if "ret" in opcode_lower:
             return "ret"
-        if any(
-            j in opcode_lower for j in ["jmp", "je", "jne", "jz", "jnz", "jg", "jl", "ja", "jb"]
-        ):
+        if any(j in opcode_lower for j in ["jmp", "je", "jne", "jz", "jnz", "jg", "jl", "ja", "jb"]):
             return "jump"
         return "other"
 
@@ -1156,10 +1140,7 @@ class RadareESILEmulator:
             for step in trace:
                 inst = step.get("instruction", "")
 
-                if any(
-                    cond in inst.lower()
-                    for cond in ["je", "jne", "jz", "jnz", "jg", "jl", "ja", "jb"]
-                ):
+                if any(cond in inst.lower() for cond in ["je", "jne", "jz", "jnz", "jg", "jl", "ja", "jb"]):
                     esil = step.get("esil", "")
                     if "?{" in esil:
                         condition = esil.split("?{")[0]
@@ -1211,9 +1192,7 @@ class RadareESILEmulator:
                     }
                     for acc in self.memory_accesses
                 ],
-                "tainted_registers": [
-                    reg for reg, state in self.registers.items() if state.tainted
-                ],
+                "tainted_registers": [reg for reg, state in self.registers.items() if state.tainted],
                 "path_constraints": self.path_constraints,
                 "call_stack_max_depth": max(len(self.call_stack), 1),
             }

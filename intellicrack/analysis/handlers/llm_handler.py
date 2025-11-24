@@ -101,9 +101,7 @@ class LLMWorkerSignals(QObject):
 class LLMAnalysisWorker(QRunnable):
     """Worker thread for LLM analysis operations."""
 
-    def __init__(
-        self, operation: str, analysis_result: UnifiedProtectionResult, **kwargs: object
-    ) -> None:
+    def __init__(self, operation: str, analysis_result: UnifiedProtectionResult, **kwargs: object) -> None:
         """Initialize the LLM analysis worker.
 
         Args:

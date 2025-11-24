@@ -88,9 +88,7 @@ class AnalysisResultOrchestrator(QObject):
             self.handlers.append(handler)
             logger.info(f"Registered handler: {handler.__class__.__name__}")
         else:
-            logger.warning(
-                f"Handler {handler.__class__.__name__} missing on_analysis_complete slot"
-            )
+            logger.warning(f"Handler {handler.__class__.__name__} missing on_analysis_complete slot")
 
     def unregister_handler(self, handler: QObject) -> None:
         """Remove a handler from the registry.
@@ -151,11 +149,7 @@ class AnalysisResultOrchestrator(QObject):
                         "ICP processing complete",
                     )
                 # Fallback to general analysis method if ICP result can be converted
-                elif (
-                    hasattr(handler, "on_analysis_complete")
-                    and hasattr(self, "_current_result")
-                    and self._current_result
-                ):
+                elif hasattr(handler, "on_analysis_complete") and hasattr(self, "_current_result") and self._current_result:
                     handler.on_analysis_complete(self._current_result)
                     self.handler_status.emit(
                         handler.__class__.__name__,
@@ -233,9 +227,7 @@ class AnalysisResultOrchestrator(QObject):
         self._merge_protections_from_icp(icp_result, unified_result)
         self._merge_confidence_from_icp(icp_result, unified_result)
 
-        logger.info(
-            f"Merged ICPScanResult with UnifiedProtectionResult for {unified_result.file_path}"
-        )
+        logger.info(f"Merged ICPScanResult with UnifiedProtectionResult for {unified_result.file_path}")
         return unified_result
 
     def _create_or_get_unified_result(
@@ -254,9 +246,7 @@ class AnalysisResultOrchestrator(QObject):
         logger.error("UnifiedProtectionResult not available")
         return None
 
-    def _merge_protections_from_icp(
-        self, icp_result: "ICPScanResult", unified_result: "UnifiedProtectionResult"
-    ) -> None:
+    def _merge_protections_from_icp(self, icp_result: "ICPScanResult", unified_result: "UnifiedProtectionResult") -> None:
         """Merge protection data from ICP result into unified result."""
         if hasattr(icp_result, "protections") and hasattr(unified_result, "protections"):
             existing_types = {p.type for p in unified_result.protections if hasattr(p, "type")}
@@ -265,15 +255,11 @@ class AnalysisResultOrchestrator(QObject):
                     unified_result.protections.append(protection)
                     existing_types.add(protection.type)
 
-    def _merge_confidence_from_icp(
-        self, icp_result: "ICPScanResult", unified_result: "UnifiedProtectionResult"
-    ) -> None:
+    def _merge_confidence_from_icp(self, icp_result: "ICPScanResult", unified_result: "UnifiedProtectionResult") -> None:
         """Merge confidence score from ICP result into unified result."""
         if hasattr(icp_result, "overall_confidence") and hasattr(unified_result, "confidence"):
             if unified_result.confidence:
-                unified_result.confidence = (
-                    unified_result.confidence + icp_result.overall_confidence
-                ) / 2
+                unified_result.confidence = (unified_result.confidence + icp_result.overall_confidence) / 2
             else:
                 unified_result.confidence = icp_result.overall_confidence
 
@@ -310,9 +296,7 @@ class AnalysisResultOrchestrator(QObject):
                             f"Protection '{protection.type}' has low bypass difficulty - standard techniques should work",
                         )
                     elif protection.bypass_difficulty == "high":
-                        recommendations.append(
-                            f"Protection '{protection.type}' requires advanced bypass techniques"
-                        )
+                        recommendations.append(f"Protection '{protection.type}' requires advanced bypass techniques")
         return recommendations
 
     def _get_tool_recommendations(self, result: "ICPScanResult") -> list[str]:

@@ -472,9 +472,7 @@ def get_signatures_by_platform(platform: Platform) -> list[APISignature]:
         List of APISignature objects for the specified platform
 
     """
-    return [
-        sig for sig in ALL_SIGNATURES if platform in sig.platforms or Platform.ALL in sig.platforms
-    ]
+    return [sig for sig in ALL_SIGNATURES if platform in sig.platforms or Platform.ALL in sig.platforms]
 
 
 def get_library_type(library_name: str) -> str | None:

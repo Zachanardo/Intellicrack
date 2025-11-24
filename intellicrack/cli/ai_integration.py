@@ -249,14 +249,10 @@ class OpenAIAdapter(AIModelAdapter):
                 return self.interface.suggest_patches(parameters["binary_path"])
 
             if tool_name == "apply_patch":
-                return self.interface.apply_patch(
-                    parameters["binary_path"], parameters["patch_file"]
-                )
+                return self.interface.apply_patch(parameters["binary_path"], parameters["patch_file"])
 
             if tool_name == "execute_cli_command":
-                return self.interface.execute_command(
-                    parameters["args"], parameters["description"], parameters.get("reasoning", "")
-                )
+                return self.interface.execute_command(parameters["args"], parameters["description"], parameters.get("reasoning", ""))
 
             if tool_name == "generate_frida_script":
                 return self.interface.generate_frida_script(
@@ -330,9 +326,7 @@ class LangChainIntegration:
                     ),
                     Tool(
                         name="suggest_patches",
-                        func=lambda input_str: self._handle_suggest_patches(
-                            input_str
-                        ),
+                        func=lambda input_str: self._handle_suggest_patches(input_str),
                         description="Suggest patches for a binary. Input: 'path/to/binary'",
                     ),
                     Tool(

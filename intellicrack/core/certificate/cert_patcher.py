@@ -406,11 +406,7 @@ class CertificatePatcher:
                     return content[offset : offset + size]
             elif isinstance(self.binary, lief.ELF.Binary):
                 for segment in self.binary.segments:
-                    if (
-                        segment.virtual_address
-                        <= address
-                        < segment.virtual_address + segment.virtual_size
-                    ):
+                    if segment.virtual_address <= address < segment.virtual_address + segment.virtual_size:
                         offset = address - segment.virtual_address
                         content = bytes(segment.content)
                         return content[offset : offset + size]
@@ -474,11 +470,7 @@ class CertificatePatcher:
 
             elif isinstance(self.binary, lief.ELF.Binary):
                 for segment in self.binary.segments:
-                    if (
-                        segment.virtual_address
-                        <= address
-                        < segment.virtual_address + segment.virtual_size
-                    ):
+                    if segment.virtual_address <= address < segment.virtual_address + segment.virtual_size:
                         offset = address - segment.virtual_address
                         content = bytearray(segment.content)
 

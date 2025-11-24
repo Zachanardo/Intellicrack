@@ -79,9 +79,7 @@ class IntellicrackHexProtectionIntegration(QObject):
             if offset is not None:
                 # Try command-line offset support first
                 cmd.extend(["--offset", hex(offset)])
-                logger.info(
-                    f"Attempting to open {file_path} at offset {hex(offset)} in protection viewer"
-                )
+                logger.info(f"Attempting to open {file_path} at offset {hex(offset)} in protection viewer")
 
                 # Create offset sync file for advanced integration
                 try:
@@ -368,9 +366,7 @@ class IntellicrackHexProtectionIntegration(QObject):
         try:
             from .performance_monitor import PerformanceMonitor
 
-            _ = (
-                PerformanceMonitor.__name__
-            )  # Verify performance monitoring capabilities are available
+            _ = PerformanceMonitor.__name__  # Verify performance monitoring capabilities are available
             features["Performance Monitoring"] = True
         except ImportError:
             pass
@@ -419,11 +415,7 @@ class IntellicrackHexProtectionIntegration(QObject):
             pass
 
         # Check for hotkey access
-        if (
-            (self.hex_widget
-            and hasattr(self.hex_widget, "keyPressEvent"))
-            or not self.hex_widget
-        ):
+        if (self.hex_widget and hasattr(self.hex_widget, "keyPressEvent")) or not self.hex_widget:
             features["Hotkey Access"] = True
         # Check for section navigation
         if hasattr(widget_class, "goto_offset") or hasattr(widget_class, "jump_to_offset"):
@@ -465,9 +457,7 @@ class ProtectionIntegrationWidget(QWidget):
 
         self.open_in_protection_viewer_btn = QPushButton("Open in Protection Viewer")
         self.open_in_protection_viewer_btn.clicked.connect(self._open_in_protection_viewer)
-        self.open_in_protection_viewer_btn.setToolTip(
-            "Open current file in protection viewer (press H for hex viewer)"
-        )
+        self.open_in_protection_viewer_btn.setToolTip("Open current file in protection viewer (press H for hex viewer)")
         button_layout.addWidget(self.open_in_protection_viewer_btn)
 
         self.sync_sections_btn = QPushButton("Sync Sections")
@@ -505,9 +495,7 @@ class ProtectionIntegrationWidget(QWidget):
                     for name, offset in sections.items():
                         if hasattr(self.hex_widget, "add_bookmark"):
                             self.hex_widget.add_bookmark(offset, f"Section: {name}")
-                    self.info_label.setText(
-                        f"Synced {len(sections)} sections from protection viewer"
-                    )
+                    self.info_label.setText(f"Synced {len(sections)} sections from protection viewer")
                 else:
                     self.info_label.setText("No sections found")
             else:

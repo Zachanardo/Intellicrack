@@ -231,9 +231,7 @@ except ImportError as e:
                 col_name, direction = order_by
                 col_idx = self._get_column_index(col_name)
                 reverse = direction == "DESC"
-                result_rows.sort(
-                    key=lambda x: x[col_idx] if x[col_idx] is not None else "", reverse=reverse
-                )
+                result_rows.sort(key=lambda x: x[col_idx] if x[col_idx] is not None else "", reverse=reverse)
 
             # Apply LIMIT
             if limit:
@@ -431,9 +429,7 @@ except ImportError as e:
 
             del self.tables[name]
 
-        def execute_sql(
-            self, sql: str, params: list[Any] | None = None
-        ) -> list[tuple[Any, ...]] | None:
+        def execute_sql(self, sql: str, params: list[Any] | None = None) -> list[tuple[Any, ...]] | None:
             """Execute SQL statement.
 
             Args:
@@ -696,9 +692,7 @@ except ImportError as e:
                 OperationalError: If table does not exist.
 
             """
-            match = re.match(
-                r"UPDATE\s+(\w+)\s+SET\s+(.*?)(?:\s+WHERE\s+(.*?))?", sql, re.IGNORECASE | re.DOTALL
-            )
+            match = re.match(r"UPDATE\s+(\w+)\s+SET\s+(.*?)(?:\s+WHERE\s+(.*?))?", sql, re.IGNORECASE | re.DOTALL)
 
             if not match:
                 error_msg = f"Invalid UPDATE syntax: {sql}"
@@ -752,9 +746,7 @@ except ImportError as e:
                 OperationalError: If table does not exist.
 
             """
-            match = re.match(
-                r"DELETE\s+FROM\s+(\w+)(?:\s+WHERE\s+(.*?))?", sql, re.IGNORECASE | re.DOTALL
-            )
+            match = re.match(r"DELETE\s+FROM\s+(\w+)(?:\s+WHERE\s+(.*?))?", sql, re.IGNORECASE | re.DOTALL)
 
             if not match:
                 error_msg = f"Invalid DELETE syntax: {sql}"
@@ -892,9 +884,7 @@ except ImportError as e:
                     self.rowcount = -1
 
                 if sql.strip().upper().startswith("SELECT"):
-                    self.description = [
-                        ("column",) for _ in range(len(self._results[0]) if self._results else 0)
-                    ]
+                    self.description = [("column",) for _ in range(len(self._results[0]) if self._results else 0)]
 
                 return self
 

@@ -79,10 +79,7 @@ class LiveDataPipeline:
         self.logger = logger
 
         # Event queues by priority
-        self.event_queues = {
-            priority: queue.PriorityQueue(maxsize=self.config.get("queue_size", 10000))
-            for priority in DataPriority
-        }
+        self.event_queues = {priority: queue.PriorityQueue(maxsize=self.config.get("queue_size", 10000)) for priority in DataPriority}
 
         # Buffering configuration
         self.buffer_size = self.config.get("buffer_size", 100)
@@ -298,9 +295,7 @@ class LiveDataPipeline:
         current_time = time.time()
 
         # Clean old timestamps
-        while (
-            self.event_timestamps and current_time - self.event_timestamps[0] > self.throttle_window
-        ):
+        while self.event_timestamps and current_time - self.event_timestamps[0] > self.throttle_window:
             self.event_timestamps.popleft()
 
         # Check rate
@@ -349,9 +344,7 @@ class LiveDataPipeline:
         latency = time.time() - event.timestamp
         with self.metrics_lock:
             self.metrics["events_processed"] += 1
-            self.metrics["avg_latency"] = (
-                self.metrics["avg_latency"] * 0.9 + latency * 0.1
-            )  # Exponential moving average
+            self.metrics["avg_latency"] = self.metrics["avg_latency"] * 0.9 + latency * 0.1  # Exponential moving average
 
         # Check for alerts
         self._check_alerts(event, latency)
@@ -408,17 +401,11 @@ class LiveDataPipeline:
                     for event_type, events in event_types.items():
                         if events:
                             # Filter old events
-                            recent_events = [
-                                e
-                                for e in events
-                                if current_time - e.timestamp <= self.aggregation_window
-                            ]
+                            recent_events = [e for e in events if current_time - e.timestamp <= self.aggregation_window]
 
                             if recent_events:
                                 # Calculate aggregates
-                                aggregated = self._calculate_aggregates(
-                                    source, event_type, recent_events
-                                )
+                                aggregated = self._calculate_aggregates(source, event_type, recent_events)
 
                                 # Send aggregated data
                                 self._send_aggregated_data(aggregated)
@@ -426,9 +413,7 @@ class LiveDataPipeline:
                             # Keep only recent events
                             event_types[event_type] = recent_events
 
-    def _calculate_aggregates(
-        self, source: str, event_type: str, events: list[DataEvent]
-    ) -> dict[str, Any]:
+    def _calculate_aggregates(self, source: str, event_type: str, events: list[DataEvent]) -> dict[str, Any]:
         """Calculate aggregates for events.
 
         Args:
@@ -443,11 +428,7 @@ class LiveDataPipeline:
         # Extract numeric values from events
         numeric_values = []
         for event in events:
-            numeric_values.extend(
-                value
-                for _key, value in event.data.items()
-                if isinstance(value, (int, float))
-            )
+            numeric_values.extend(value for _key, value in event.data.items() if isinstance(value, (int, float)))
         aggregated = {
             "source": source,
             "event_type": event_type,
@@ -491,9 +472,7 @@ class LiveDataPipeline:
                 )
 
                 # Update queue sizes
-                self.metrics["queue_sizes"] = {
-                    priority.name: self.event_queues[priority].qsize() for priority in DataPriority
-                }
+                self.metrics["queue_sizes"] = {priority.name: self.event_queues[priority].qsize() for priority in DataPriority}
 
                 # Store metrics in database
                 self._store_metrics()
@@ -584,9 +563,7 @@ class LiveDataPipeline:
 
             for connection in self.websocket_connections:
                 try:
-                    asyncio.run_coroutine_threadsafe(
-                        connection.send(message_json), asyncio.get_event_loop()
-                    )
+                    asyncio.run_coroutine_threadsafe(connection.send(message_json), asyncio.get_event_loop())
                 except Exception as e:
                     self.logger.error(f"Error sending to WebSocket: {e}")
                     disconnected.add(connection)
@@ -751,9 +728,7 @@ class LiveDataPipeline:
             self.logger.error(f"Error getting historical events: {e}")
             return []
 
-    def get_metrics_history(
-        self, start_time: float, end_time: float, metric_name: str | None = None
-    ) -> list[dict[str, Any]]:
+    def get_metrics_history(self, start_time: float, end_time: float, metric_name: str | None = None) -> list[dict[str, Any]]:
         """Get metrics history from database.
 
         Args:

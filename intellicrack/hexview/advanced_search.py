@@ -141,9 +141,7 @@ class SearchHistory:
         }
 
         # Remove duplicate if exists
-        self.entries = [
-            e for e in self.entries if e["pattern"] != pattern or e["type"] != search_type.value
-        ]
+        self.entries = [e for e in self.entries if e["pattern"] != pattern or e["type"] != search_type.value]
 
         # Add to front
         self.entries.insert(0, entry)
@@ -154,9 +152,7 @@ class SearchHistory:
 
         self.save_history()
 
-    def get_recent_searches(
-        self, search_type: SearchType | None = None, limit: int = 10
-    ) -> list[str]:
+    def get_recent_searches(self, search_type: SearchType | None = None, limit: int = 10) -> list[str]:
         """Get recent search patterns."""
         filtered_entries = self.entries
         if search_type:
@@ -224,15 +220,11 @@ class SearchEngine:
             First search result or None if not found
 
         """
-        if compiled_pattern := self._compile_pattern(
-            pattern, search_type, case_sensitive
-        ):
+        if compiled_pattern := self._compile_pattern(pattern, search_type, case_sensitive):
             return (
                 self._search_forward(compiled_pattern, start_offset, whole_words)
                 if direction == "forward"
-                else self._search_backward(
-                    compiled_pattern, start_offset, whole_words
-                )
+                else self._search_backward(compiled_pattern, start_offset, whole_words)
             )
         else:
             return None
@@ -342,9 +334,7 @@ class SearchEngine:
                     if self.file_handler.insert(result.offset, replace_bytes):
                         replaced_ranges.append((result.offset, len(replace_bytes)))
                     else:
-                        if original_data := self.file_handler.read(
-                            result.offset, result.length
-                        ):
+                        if original_data := self.file_handler.read(result.offset, result.length):
                             self.file_handler.insert(result.offset, original_data)
                         error_msg = f"Failed to insert replacement at offset {result.offset:#x}"
                         logger.error(error_msg)
@@ -356,9 +346,7 @@ class SearchEngine:
 
         return list(reversed(replaced_ranges))
 
-    def _compile_pattern(
-        self, pattern: str | bytes, search_type: SearchType, case_sensitive: bool
-    ) -> bytes | re.Pattern | None:
+    def _compile_pattern(self, pattern: str | bytes, search_type: SearchType, case_sensitive: bool) -> bytes | re.Pattern | None:
         """Compile pattern based on search type."""
         try:
             if search_type == SearchType.HEX:
@@ -393,9 +381,7 @@ class SearchEngine:
 
         return None
 
-    def _search_forward(
-        self, compiled_pattern: bytes | re.Pattern, start_offset: int, whole_words: bool
-    ) -> SearchResult | None:
+    def _search_forward(self, compiled_pattern: bytes | re.Pattern, start_offset: int, whole_words: bool) -> SearchResult | None:
         """Search forward from ``start_offset``."""
         file_size = self.file_handler.get_file_size()
         offset = start_offset
@@ -421,9 +407,7 @@ class SearchEngine:
 
         return None
 
-    def _search_backward(
-        self, compiled_pattern: bytes | re.Pattern, start_offset: int, whole_words: bool
-    ) -> SearchResult | None:
+    def _search_backward(self, compiled_pattern: bytes | re.Pattern, start_offset: int, whole_words: bool) -> SearchResult | None:
         """Search backward from ``start_offset``."""
         offset = min(start_offset, self.file_handler.get_file_size())
         overlap_size = 100
@@ -471,9 +455,7 @@ class SearchEngine:
                     if pos == -1:
                         break
 
-                    if not whole_words or self._is_whole_word_match(
-                        chunk_data, pos, len(compiled_pattern)
-                    ):
+                    if not whole_words or self._is_whole_word_match(chunk_data, pos, len(compiled_pattern)):
                         # Get context around the match
                         context_start = max(0, pos - 16)
                         context_end = min(len(chunk_data), pos + len(compiled_pattern) + 16)
@@ -696,9 +678,7 @@ class SearchThread(QThread if PYQT6_AVAILABLE else object):
 class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
     """Advanced search dialog with comprehensive search options."""
 
-    def __init__(
-        self, parent: object | None = None, search_engine: SearchEngine | None = None
-    ) -> None:
+    def __init__(self, parent: object | None = None, search_engine: SearchEngine | None = None) -> None:
         """Initialize the advanced search dialog with parent widget and search engine."""
         if not PYQT6_AVAILABLE:
             return
@@ -1031,9 +1011,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
                 ):
                     self.search_status_label.setText(f"Found at offset 0x{result.offset:X}")
                     # Emit signal to parent to highlight result
-                    self.parent().hex_viewer.select_range(
-                        result.offset, result.offset + result.length
-                    )
+                    self.parent().hex_viewer.select_range(result.offset, result.offset + result.length)
                 else:
                     self.search_status_label.setText("Pattern not found")
 
@@ -1061,9 +1039,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
                 ):
                     self.search_status_label.setText(f"Found at offset 0x{result.offset:X}")
                     # Emit signal to parent to highlight result
-                    self.parent().hex_viewer.select_range(
-                        result.offset, result.offset + result.length
-                    )
+                    self.parent().hex_viewer.select_range(result.offset, result.offset + result.length)
                 else:
                     self.search_status_label.setText("Pattern not found")
 
@@ -1196,9 +1172,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
 class FindAllDialog(QDialog):
     """Dialog for displaying find all results."""
 
-    def __init__(
-        self, parent: object | None = None, results: list[SearchResult] | None = None
-    ) -> None:
+    def __init__(self, parent: object | None = None, results: list[SearchResult] | None = None) -> None:
         """Initialize find all dialog."""
         super().__init__(parent)
         self.results = results or []
@@ -1224,21 +1198,13 @@ class FindAllDialog(QDialog):
         self.results_table.setRowCount(len(self.results))
         for i, result in enumerate(self.results):
             self.results_table.setItem(i, 0, QTableWidgetItem(f"0x{result.offset:08X}"))
-            self.results_table.setItem(
-                i, 1, QTableWidgetItem(result.data.hex() if result.data else "")
-            )
-            ascii_text = (
-                "".join(chr(b) if 32 <= b < 127 else "." for b in result.data)
-                if result.data
-                else ""
-            )
+            self.results_table.setItem(i, 1, QTableWidgetItem(result.data.hex() if result.data else ""))
+            ascii_text = "".join(chr(b) if 32 <= b < 127 else "." for b in result.data) if result.data else ""
             self.results_table.setItem(i, 2, QTableWidgetItem(ascii_text))
             self.results_table.setItem(
                 i,
                 3,
-                QTableWidgetItem(
-                    f"{result.context_before!s} [MATCH] {result.context_after!s}"
-                ),
+                QTableWidgetItem(f"{result.context_before!s} [MATCH] {result.context_after!s}"),
             )
 
         layout.addWidget(self.results_table)

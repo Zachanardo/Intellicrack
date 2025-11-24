@@ -362,9 +362,7 @@ except ImportError as e:
             ciphertext = bytearray(16)
             for i in range(16):
                 key_byte = self.key[i % len(self.key)]
-                ciphertext[i] = (
-                    plaintext[i] ^ key_byte ^ self.S_BOX[(plaintext[i] + key_byte) % 256]
-                )
+                ciphertext[i] = plaintext[i] ^ key_byte ^ self.S_BOX[(plaintext[i] + key_byte) % 256]
             return bytes(ciphertext)
 
         def decrypt_block(self, ciphertext: bytes) -> bytes:
@@ -739,9 +737,7 @@ except ImportError as e:
             """
             return FallbackRSAPublicKey(self.n, self.e)
 
-        def private_bytes(
-            self, encoding: object, format: object, encryption_algorithm: object
-        ) -> bytes:
+        def private_bytes(self, encoding: object, format: object, encryption_algorithm: object) -> bytes:
             """Export private key."""
             # Simplified PEM format
             key_data = f"""-----BEGIN RSA PRIVATE KEY-----
@@ -789,9 +785,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             c_int = pow(m_int, self.e, self.n)
             return c_int.to_bytes((c_int.bit_length() + 7) // 8, "big")
 
-        def verify(
-            self, signature: bytes, message: bytes, padding_obj: object, algorithm: object
-        ) -> bool:
+        def verify(self, signature: bytes, message: bytes, padding_obj: object, algorithm: object) -> bool:
             """Verify signature."""
             # Simplified verification
             s_int = int.from_bytes(signature, "big")
@@ -819,9 +813,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
         def derive(self, key_material: bytes) -> bytes:
             """Derive key from material."""
             # Use Python's hashlib.pbkdf2_hmac
-            return hashlib.pbkdf2_hmac(
-                "sha256", key_material, self.salt, self.iterations, dklen=self.length
-            )
+            return hashlib.pbkdf2_hmac("sha256", key_material, self.salt, self.iterations, dklen=self.length)
 
         def verify(self, key_material: bytes, expected_key: bytes) -> None:
             """Verify key material produces expected key."""
@@ -959,9 +951,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
         return FallbackBackend()
 
     # X.509 certificate handling
-    def load_pem_x509_certificate(
-        data: bytes, backend: object | None = None
-    ) -> "FallbackX509Certificate":
+    def load_pem_x509_certificate(data: bytes, backend: object | None = None) -> "FallbackX509Certificate":
         """Load PEM certificate."""
         # Parse PEM format (simplified)
         lines = data.decode().split("\n")
@@ -980,9 +970,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
         cert_bytes = base64.b64decode(cert_data)
         return FallbackX509Certificate(cert_bytes)
 
-    def load_pem_private_key(
-        data: bytes | str, password: bytes | None = None, backend: object | None = None
-    ) -> "FallbackRSAPrivateKey":
+    def load_pem_private_key(data: bytes | str, password: bytes | None = None, backend: object | None = None) -> "FallbackRSAPrivateKey":
         """Load PEM private key."""
         # Parse PEM format (simplified)
         lines = data.decode() if isinstance(data, bytes) else data
@@ -1138,9 +1126,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
 
                 class Padding:
                     class OAEP:
-                        def __init__(
-                            self, mgf: object, algorithm: object, label: bytes | None = None
-                        ) -> None:
+                        def __init__(self, mgf: object, algorithm: object, label: bytes | None = None) -> None:
                             self.mgf = mgf
                             self.algorithm = algorithm
                             self.label = label

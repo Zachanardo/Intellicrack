@@ -80,9 +80,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 class TestScriptDialog(BaseDialog):
     """Comprehensive script testing dialog with validation and security analysis."""
 
-    def __init__(
-        self, parent: QWidget | None = None, script_content: str = "", script_type: str = ""
-    ) -> None:
+    def __init__(self, parent: QWidget | None = None, script_content: str = "", script_type: str = "") -> None:
         """Initialize the TestScriptDialog with script content and type.
 
         Args:
@@ -374,15 +372,9 @@ class TestScriptDialog(BaseDialog):
                 elif isinstance(node, ast.ClassDef):
                     validation_results["classes"].append(node.name)
 
-            validation_results["tests"].append(
-                f"OK Found {len(validation_results['imports'])} imports"
-            )
-            validation_results["tests"].append(
-                f"OK Found {len(validation_results['functions'])} functions"
-            )
-            validation_results["tests"].append(
-                f"OK Found {len(validation_results['classes'])} classes"
-            )
+            validation_results["tests"].append(f"OK Found {len(validation_results['imports'])} imports")
+            validation_results["tests"].append(f"OK Found {len(validation_results['functions'])} functions")
+            validation_results["tests"].append(f"OK Found {len(validation_results['classes'])} classes")
 
         except SyntaxError as e:
             validation_results["syntax_valid"] = False
@@ -451,9 +443,7 @@ class TestScriptDialog(BaseDialog):
         lines = self.script_content.split("\n")
         for line in lines:
             # Find PowerShell cmdlets
-            if "-" in line and any(
-                verb in line.lower() for verb in ["get-", "set-", "new-", "remove-"]
-            ):
+            if "-" in line and any(verb in line.lower() for verb in ["get-", "set-", "new-", "remove-"]):
                 cmdlet = line.strip().split()[0] if line.strip().split() else ""
                 if cmdlet and cmdlet not in validation_results["cmdlets"]:
                     validation_results["cmdlets"].append(cmdlet)
@@ -490,15 +480,11 @@ class TestScriptDialog(BaseDialog):
 
         # Check for comments
         comment_patterns = ["#", "//", "/*", "--", "REM "]
-        checks["contains_comments"] = any(
-            pattern in self.script_content for pattern in comment_patterns
-        )
+        checks["contains_comments"] = any(pattern in self.script_content for pattern in comment_patterns)
 
         # Check for strings
         string_patterns = ['"', "'"]
-        checks["contains_strings"] = any(
-            pattern in self.script_content for pattern in string_patterns
-        )
+        checks["contains_strings"] = any(pattern in self.script_content for pattern in string_patterns)
 
         # Check for suspicious patterns
         suspicious = ["eval(", "exec(", "system(", "shell(", "cmd.exe", "powershell.exe"]
@@ -530,16 +516,12 @@ class TestScriptDialog(BaseDialog):
 
         risk_score = 0
         for category, patterns in dangerous_patterns.items():
-            if found_patterns := [
-                p for p in patterns if p.lower() in self.script_content.lower()
-            ]:
+            if found_patterns := [p for p in patterns if p.lower() in self.script_content.lower()]:
                 security_results["vulnerabilities"].append(
                     {
                         "category": category,
                         "patterns": found_patterns,
-                        "severity": "high"
-                        if category in ["system_execution", "registry_access"]
-                        else "medium",
+                        "severity": "high" if category in ["system_execution", "registry_access"] else "medium",
                     },
                 )
                 risk_score += len(found_patterns) * (3 if category in ["system_execution"] else 1)
@@ -597,16 +579,11 @@ class TestScriptDialog(BaseDialog):
         bottleneck_patterns = {
             "nested_loops": [
                 "for " in line
-                and "for "
-                in self.script_content[
-                    self.script_content.find(line) + len(line) : self.script_content.find(line)
-                    + 200
-                ]
+                and "for " in self.script_content[self.script_content.find(line) + len(line) : self.script_content.find(line) + 200]
                 for line in self.script_content.split("\n")
                 if "for " in line
             ],
-            "large_data_operations": "read(" in self.script_content
-            or "readall()" in self.script_content,
+            "large_data_operations": "read(" in self.script_content or "readall()" in self.script_content,
             "inefficient_string_ops": "+=" in self.script_content and "str" in self.script_content,
             "recursive_calls": "def " in self.script_content
             and any(func_name in self.script_content for func_name in ["recursive", "recurse"]),
@@ -617,20 +594,13 @@ class TestScriptDialog(BaseDialog):
                 performance_results["bottlenecks"].append(bottleneck.replace("_", " ").title())
 
         # Suggest optimizations
-        if (
-            "import" in self.script_content
-            and len([line for line in self.script_content.split("\n") if "import" in line]) > 10
-        ):
-            performance_results["optimizations"].append(
-                "Consider lazy imports for better startup time"
-            )
+        if "import" in self.script_content and len([line for line in self.script_content.split("\n") if "import" in line]) > 10:
+            performance_results["optimizations"].append("Consider lazy imports for better startup time")
 
         if "print(" in self.script_content:
             print_count = self.script_content.count("print(")
             if print_count > 10:
-                performance_results["optimizations"].append(
-                    f"High number of print statements ({print_count}) - consider logging"
-                )
+                performance_results["optimizations"].append(f"High number of print statements ({print_count}) - consider logging")
 
         self.test_results["performance_analysis"] = performance_results
         self.update_performance_display()
@@ -692,19 +662,14 @@ class TestScriptDialog(BaseDialog):
                 score += 20
 
         # Check for error handling
-        if any(
-            pattern in self.script_content.lower()
-            for pattern in ["try", "catch", "except", "error"]
-        ):
+        if any(pattern in self.script_content.lower() for pattern in ["try", "catch", "except", "error"]):
             score += 10
             analysis["capabilities"].append("Error handling")
         else:
             analysis["missing_features"].append("Error handling")
 
         # Check for target validation
-        if any(
-            pattern in self.script_content.lower() for pattern in ["validate", "check", "verify"]
-        ):
+        if any(pattern in self.script_content.lower() for pattern in ["validate", "check", "verify"]):
             score += 10
             analysis["capabilities"].append("Target validation")
         else:
@@ -813,24 +778,16 @@ class TestScriptDialog(BaseDialog):
 
         # Generate recommendations
         if summary["overall_score"] >= 80:
-            summary["recommendations"].append(
-                "OK Script passes all major tests and is ready for use"
-            )
+            summary["recommendations"].append("OK Script passes all major tests and is ready for use")
         elif summary["overall_score"] >= 60:
-            summary["recommendations"].append(
-                "WARNING Script has minor issues that should be addressed"
-            )
+            summary["recommendations"].append("WARNING Script has minor issues that should be addressed")
         else:
-            summary["recommendations"].append(
-                "WARNING Script has significant issues requiring attention"
-            )
+            summary["recommendations"].append("WARNING Script has significant issues requiring attention")
 
         # Add specific recommendations based on test results
         security_results = self.test_results.get("security_analysis", {})
         if security_results.get("risk_level") == "high":
-            summary["recommendations"].append(
-                " High security risk - review and sanitize dangerous operations"
-            )
+            summary["recommendations"].append(" High security risk - review and sanitize dangerous operations")
 
         syntax_results = self.test_results.get("syntax_validation", {})
         if not syntax_results.get("syntax_valid", True):
@@ -1020,9 +977,7 @@ class TestScriptDialog(BaseDialog):
             score_icon = "🔴"
             rating = "NEEDS IMPROVEMENT"
 
-        lines.extend(
-            (f"Overall Score: {score_icon} {overall_score}/100 ({rating})", "")
-        )
+        lines.extend((f"Overall Score: {score_icon} {overall_score}/100 ({rating})", ""))
         if test_summary := results.get("test_results_summary", {}):
             lines.append("Test Results:")
             for test_name, test_result in test_summary.items():
@@ -1094,9 +1049,7 @@ class TestScriptDialog(BaseDialog):
                             f.write("-" * len(tab_name) + "\n")
                             f.write(content + "\n\n")
 
-                QMessageBox.information(
-                    self, "Export", f"Results exported to {os.path.basename(file_path)}"
-                )
+                QMessageBox.information(self, "Export", f"Results exported to {os.path.basename(file_path)}")
 
             except Exception as e:
                 logger.error(f"Export error: {e}")
@@ -1171,9 +1124,7 @@ class ScriptGeneratorWorker(QThread):
     script_generated = pyqtSignal(dict)
     error_occurred = pyqtSignal(str)
 
-    def __init__(
-        self, binary_path: str, script_type: str, **kwargs: str | int | bool | list[str]
-    ) -> None:
+    def __init__(self, binary_path: str, script_type: str, **kwargs: str | int | bool | list[str]) -> None:
         """Initialize the ScriptGeneratorWorker with default values.
 
         Args:
@@ -1215,9 +1166,7 @@ class ScriptGeneratorWorker(QThread):
             protection_info = {
                 "type": self.kwargs.get("protection_type", "license"),
                 "methods": self.kwargs.get("methods", ["patch"]),
-                "target_platform": "frida"
-                if self.kwargs.get("language") == "javascript"
-                else "python",
+                "target_platform": "frida" if self.kwargs.get("language") == "javascript" else "python",
             }
 
             # Generate script using AI
@@ -1236,9 +1185,7 @@ class ScriptGeneratorWorker(QThread):
             self.script_generated.emit(result)
 
         except Exception as e:
-            self.logger.warning(
-                f"AI script generation failed: {e}. Falling back to template-based generation."
-            )
+            self.logger.warning(f"AI script generation failed: {e}. Falling back to template-based generation.")
             # Fallback to template-based generation
             from ...utils.exploitation import generate_bypass_script
 
@@ -1760,9 +1707,7 @@ class ScriptGeneratorDialog(BaseDialog):
         self.script_display.setPlainText(script_content)
 
         # Display documentation
-        doc_content = result.get(
-            "documentation", result.get("description", "No documentation available")
-        )
+        doc_content = result.get("documentation", result.get("description", "No documentation available"))
         self.doc_display.setPlainText(doc_content)
 
         # Display template if available
@@ -1848,11 +1793,7 @@ class ScriptGeneratorDialog(BaseDialog):
             script_type = self.script_type_combo.currentText()
             # Check if bypass_language exists and use it, otherwise detect from content
             if hasattr(self, "bypass_language") and self.bypass_language.isVisible():
-                language = (
-                    "javascript"
-                    if "javascript" in self.bypass_language.currentText().lower()
-                    else "python"
-                )
+                language = "javascript" if "javascript" in self.bypass_language.currentText().lower() else "python"
             # Auto-detect language from script type and content
             elif "frida" in script_type.lower() or "javascript" in script_type.lower():
                 language = "javascript"
@@ -1917,9 +1858,7 @@ class ScriptGeneratorDialog(BaseDialog):
         lines.append(f"Language: {analysis_result.get('language', 'Unknown')}")
         lines.append(f"Lines of Code: {analysis_result.get('lines_of_code', 0)}")
         lines.append(f"Complexity: {analysis_result.get('complexity', 'Unknown')}")
-        lines.append(
-            f"AI Analysis: {'Enabled' if analysis_result.get('ai_enabled', False) else 'Disabled'}"
-        )
+        lines.append(f"AI Analysis: {'Enabled' if analysis_result.get('ai_enabled', False) else 'Disabled'}")
         lines.append("")
 
         if insights := analysis_result.get("insights", []):

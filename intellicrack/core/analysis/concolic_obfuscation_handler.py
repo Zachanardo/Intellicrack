@@ -83,8 +83,7 @@ class OpaquePredicateDetector:
                     "samples": total_count,
                 }
                 self.logger.info(
-                    f"Opaque predicate detected at 0x{address:x}: always TRUE "
-                    f"(confidence: {taken_ratio:.2%}, samples: {total_count})",
+                    f"Opaque predicate detected at 0x{address:x}: always TRUE (confidence: {taken_ratio:.2%}, samples: {total_count})",
                 )
                 return {
                     "opaque": True,
@@ -102,8 +101,7 @@ class OpaquePredicateDetector:
                     "samples": total_count,
                 }
                 self.logger.info(
-                    f"Opaque predicate detected at 0x{address:x}: always FALSE "
-                    f"(confidence: {1 - taken_ratio:.2%}, samples: {total_count})",
+                    f"Opaque predicate detected at 0x{address:x}: always FALSE (confidence: {1 - taken_ratio:.2%}, samples: {total_count})",
                 )
                 return {
                     "opaque": True,
@@ -137,10 +135,8 @@ class OpaquePredicateDetector:
             dict: Statistics about detected opaque predicates
 
         """
-        always_true = sum(bool(p["type"] == "always_true")
-                      for p in self.detected_predicates.values())
-        always_false = sum(bool(p["type"] == "always_false")
-                       for p in self.detected_predicates.values())
+        always_true = sum(bool(p["type"] == "always_true") for p in self.detected_predicates.values())
+        always_false = sum(bool(p["type"] == "always_false") for p in self.detected_predicates.values())
 
         return {
             "total_detected": len(self.detected_predicates),
@@ -234,8 +230,7 @@ class ControlFlowFlatteningHandler:
                 self.dispatcher_detected = True
                 self.dispatcher_address = address
                 self.logger.info(
-                    f"Control flow flattening dispatcher detected at 0x{address:x} "
-                    f"(score: {switch_pattern_score})",
+                    f"Control flow flattening dispatcher detected at 0x{address:x} (score: {switch_pattern_score})",
                 )
                 return {
                     "is_dispatcher": True,
@@ -265,9 +260,7 @@ class ControlFlowFlatteningHandler:
         return {
             "dispatcher": self.dispatcher_address,
             "states": len(self.state_transitions),
-            "transitions": {
-                state: list(targets) for state, targets in self.state_transitions.items()
-            },
+            "transitions": {state: list(targets) for state, targets in self.state_transitions.items()},
             "is_flattened": self.dispatcher_detected,
         }
 
@@ -327,26 +320,18 @@ class VirtualizationDetector:
             if insn.mnemonic in ["mov", "movzx", "movsx"] and "[" in insn.op_str:
                 vm_indicators["fetch"] += 1
 
-            if insn.mnemonic in ["shr", "shl", "and", "or", "xor"] and any(
-                reg in insn.op_str for reg in ["eax", "rax", "ebx", "rbx"]
-            ):
+            if insn.mnemonic in ["shr", "shl", "and", "or", "xor"] and any(reg in insn.op_str for reg in ["eax", "rax", "ebx", "rbx"]):
                 vm_indicators["decode"] += 1
 
             if insn.mnemonic == "call":
-                if "[" in insn.op_str or any(
-                    reg in insn.op_str for reg in ["rax", "eax", "rbx", "ebx"]
-                ):
+                if "[" in insn.op_str or any(reg in insn.op_str for reg in ["rax", "eax", "rbx", "ebx"]):
                     vm_indicators["dispatch"] += 2
 
             elif insn.mnemonic == "jmp":
-                if "[" in insn.op_str or any(
-                    reg in insn.op_str for reg in ["rax", "eax", "rbx", "ebx"]
-                ):
+                if "[" in insn.op_str or any(reg in insn.op_str for reg in ["rax", "eax", "rbx", "ebx"]):
                     vm_indicators["dispatch"] += 3
 
-            if insn.mnemonic in ["push", "pop", "mov"] and any(
-                reg in insn.op_str for reg in ["esp", "rsp", "ebp", "rbp"]
-            ):
+            if insn.mnemonic in ["push", "pop", "mov"] and any(reg in insn.op_str for reg in ["esp", "rsp", "ebp", "rbp"]):
                 vm_indicators["context_switch"] += 1
 
         total_score = sum(vm_indicators.values())
@@ -364,8 +349,7 @@ class VirtualizationDetector:
             )
 
             self.logger.info(
-                f"VM dispatch loop detected at 0x{loop_address:x} "
-                f"(score: {total_score}, indicators: {vm_indicators})",
+                f"VM dispatch loop detected at 0x{loop_address:x} (score: {total_score}, indicators: {vm_indicators})",
             )
 
             return {
@@ -499,9 +483,7 @@ class StringDeobfuscation:
             decrypted = bytes(b ^ key for b in encrypted_bytes)
         else:
             key_len = len(key)
-            decrypted = bytes(
-                encrypted_bytes[i] ^ key[i % key_len] for i in range(len(encrypted_bytes))
-            )
+            decrypted = bytes(encrypted_bytes[i] ^ key[i % key_len] for i in range(len(encrypted_bytes)))
 
         try:
             result = decrypted.decode("utf-8", errors="ignore").rstrip("\x00")
@@ -614,14 +596,10 @@ class ObfuscationAwareConcolicEngine:
         opaque_info = self.opaque_detector.is_opaque_predicate(address, condition)
 
         if opaque_info and opaque_info.get("type") == "always_true":
-            self.logger.debug(
-                f"Skipping false path at 0x{address:x} (opaque predicate: always true)"
-            )
+            self.logger.debug(f"Skipping false path at 0x{address:x} (opaque predicate: always true)")
             return False
         if opaque_info and opaque_info.get("type") == "always_false":
-            self.logger.debug(
-                f"Skipping true path at 0x{address:x} (opaque predicate: always false)"
-            )
+            self.logger.debug(f"Skipping true path at 0x{address:x} (opaque predicate: always false)")
             return False
 
         return True
@@ -780,11 +758,7 @@ class ObfuscationAwareConcolicEngine:
             list: Execution results
 
         """
-        return (
-            self.base_engine.explore()
-            if hasattr(self.base_engine, "explore")
-            else []
-        )
+        return self.base_engine.explore() if hasattr(self.base_engine, "explore") else []
 
     def analyze_obfuscation(self) -> dict:
         """Analyze detected obfuscation techniques.

@@ -20,7 +20,7 @@ from intellicrack.core.analysis.analysis_orchestrator import AnalysisOrchestrato
 from intellicrack.core.analysis.commercial_license_analyzer import CommercialLicenseAnalyzer
 from intellicrack.core.analysis.radare2_bypass_generator import R2BypassGenerator
 from intellicrack.core.analysis.radare2_vulnerability_engine import R2VulnerabilityEngine
-from intellicrack.core.exploitation.shellcode_generator import ShellcodeGenerator
+from intellicrack.core.exploitation.license_bypass_code_generator import LicenseBypassCodeGenerator
 from intellicrack.core.exploitation.cet_bypass import CETBypass
 from intellicrack.utils.logger import setup_logger
 
@@ -174,7 +174,7 @@ def test_complete_workflow():
         results["total_tests"] += 1
 
         try:
-            shellcode_gen = ShellcodeGenerator()
+            shellcode_gen = LicenseBypassCodeGenerator()
 
             # Use actual method signature
             shellcode = shellcode_gen.generate_shellcode(

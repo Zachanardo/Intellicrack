@@ -122,9 +122,7 @@ class ASCIIChartGenerator:
 
         return "\n".join(lines)
 
-    def generate_histogram(
-        self, values: list[int | float], bins: int = 10, title: str = "Histogram"
-    ) -> str:
+    def generate_histogram(self, values: list[int | float], bins: int = 10, title: str = "Histogram") -> str:
         """Generate histogram chart.
 
         Args:
@@ -229,10 +227,9 @@ class ASCIIChartGenerator:
                                 for step in range(1, steps):
                                     intermediate_x = start_x + (end_x - start_x) * step // steps
                                     intermediate_y = start_y + (end_y - start_y) * step // steps
-                                    if (
-                                                                            0 <= intermediate_x < chart_width
-                                                                            and 0 <= intermediate_y < chart_height
-                                                                        ) and chart[intermediate_y][intermediate_x] == " ":
+                                    if (0 <= intermediate_x < chart_width and 0 <= intermediate_y < chart_height) and chart[intermediate_y][
+                                        intermediate_x
+                                    ] == " ":
                                         chart[intermediate_y][intermediate_x] = "·"
 
         # Add chart to lines
@@ -355,9 +352,7 @@ class ASCIIChartGenerator:
 
         return "\n".join(lines)
 
-    def generate_scatter_plot(
-        self, points: list[tuple[float, float]], title: str = "Scatter Plot"
-    ) -> str:
+    def generate_scatter_plot(self, points: list[tuple[float, float]], title: str = "Scatter Plot") -> str:
         """Generate scatter plot.
 
         Args:
@@ -423,9 +418,7 @@ class ASCIIChartGenerator:
         charts = []
 
         category_counts = {
-            category.replace("_", " ").title(): (
-                len(data) if isinstance(data, (dict, list)) else 1
-            )
+            category.replace("_", " ").title(): (len(data) if isinstance(data, (dict, list)) else 1)
             for category, data in analysis_results.items()
         }
         if category_counts:
@@ -460,8 +453,7 @@ class ASCIIChartGenerator:
         # 3. Protection status
         prot_data = analysis_results.get("protections", {})
         if isinstance(prot_data, dict):
-            enabled_count = sum(bool(v)
-                            for v in prot_data.values())
+            enabled_count = sum(bool(v) for v in prot_data.values())
             disabled_count = len(prot_data) - enabled_count
 
             if enabled_count + disabled_count > 0:
@@ -477,9 +469,7 @@ class ASCIIChartGenerator:
         # 4. String analysis histogram
         strings_data = analysis_results.get("strings", [])
         if isinstance(strings_data, list) and strings_data:
-            if string_lengths := [
-                len(s) for s in strings_data if isinstance(s, str)
-            ]:
+            if string_lengths := [len(s) for s in strings_data if isinstance(s, str)]:
                 charts.append("\n" + "=" * 50 + "\n")
                 charts.append(
                     self.generate_histogram(
@@ -625,9 +615,7 @@ class ASCIIChartGenerator:
         )
 
 
-def create_analysis_charts(
-    analysis_results: dict[str, Any], chart_type: str = "summary", use_rich: bool = True
-) -> str:
+def create_analysis_charts(analysis_results: dict[str, Any], chart_type: str = "summary", use_rich: bool = True) -> str:
     """Create charts from analysis results.
 
     Args:

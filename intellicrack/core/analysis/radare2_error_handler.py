@@ -213,9 +213,7 @@ class R2ErrorHandler:
             duration = time.time() - start_time
             self._record_performance(operation_name, duration, success=True)
 
-    def handle_error(
-        self, error: Exception, operation_name: str, context: dict[str, Any] = None
-    ) -> bool:
+    def handle_error(self, error: Exception, operation_name: str, context: dict[str, Any] = None) -> bool:
         """Handle error as main entry point.
 
         Args:
@@ -261,9 +259,7 @@ class R2ErrorHandler:
                 self.logger.critical(f"Error in error handler: {recovery_error}")
                 return False
 
-    def _create_error_event(
-        self, error: Exception, operation_name: str, context: dict[str, Any]
-    ) -> ErrorEvent:
+    def _create_error_event(self, error: Exception, operation_name: str, context: dict[str, Any]) -> ErrorEvent:
         """Create error event from exception."""
         error_type = type(error).__name__
         severity = self._classify_error_severity(error, operation_name)
@@ -627,9 +623,7 @@ class R2ErrorHandler:
 
         # Keep only last 100 measurements
         if len(self.performance_monitor["operation_times"][operation_name]) > 100:
-            self.performance_monitor["operation_times"][operation_name] = self.performance_monitor[
-                "operation_times"
-            ][operation_name][-100:]
+            self.performance_monitor["operation_times"][operation_name] = self.performance_monitor["operation_times"][operation_name][-100:]
 
         # Update failure rate
         if success:
@@ -713,9 +707,7 @@ class R2ErrorHandler:
                 "min_duration": min(times),
                 "total_calls": len(times),
             }
-            for operation, times in self.performance_monitor[
-                "operation_times"
-            ].items()
+            for operation, times in self.performance_monitor["operation_times"].items()
             if times
         }
 

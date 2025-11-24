@@ -262,9 +262,7 @@ class ChecksumCalculator:
             logger.error(f"Error calculating {algorithm}: {e}")
             raise
 
-    def calculate_selection(
-        self, data: bytes, algorithms: list[str] | None = None
-    ) -> dict[str, str]:
+    def calculate_selection(self, data: bytes, algorithms: list[str] | None = None) -> dict[str, str]:
         """Calculate multiple checksums for data.
 
         Args:

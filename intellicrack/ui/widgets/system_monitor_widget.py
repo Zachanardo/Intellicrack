@@ -343,17 +343,13 @@ class SystemMonitorWidget(QWidget):
 
         # Update progress bars with validated data to match graphs
         cpu_display_value = float(metrics.cpu_percent) if metrics.cpu_percent is not None else 0.0
-        memory_display_value = (
-            float(metrics.memory_percent) if metrics.memory_percent is not None else 0.0
-        )
+        memory_display_value = float(metrics.memory_percent) if metrics.memory_percent is not None else 0.0
 
         self.cpu_bar.setValue(int(cpu_display_value))
         self.cpu_label.setText(f"{cpu_display_value:.1f}%")
 
         self.memory_bar.setValue(int(memory_display_value))
-        self.memory_label.setText(
-            f"{metrics.memory_used_gb:.1f}/{metrics.memory_total_gb:.1f} GB ({memory_display_value:.1f}%)"
-        )
+        self.memory_label.setText(f"{metrics.memory_used_gb:.1f}/{metrics.memory_total_gb:.1f} GB ({memory_display_value:.1f}%)")
 
         if GPU_AVAILABLE and hasattr(self, "gpu_bar") and metrics.gpu_percent is not None:
             gpu_display_value = float(metrics.gpu_percent)
@@ -404,9 +400,7 @@ class SystemMonitorWidget(QWidget):
         try:
             # Get top processes by CPU usage
             processes = []
-            for proc in psutil.process_iter(
-                ["pid", "name", "cpu_percent", "memory_percent", "status"]
-            ):
+            for proc in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent", "status"]):
                 try:
                     pinfo = proc.info
                     if pinfo["cpu_percent"] > 0 or pinfo["memory_percent"] > 0:
@@ -424,9 +418,7 @@ class SystemMonitorWidget(QWidget):
                 self.process_table.setItem(row, 0, QTableWidgetItem(str(proc["pid"])))
                 self.process_table.setItem(row, 1, QTableWidgetItem(proc["name"]))
                 self.process_table.setItem(row, 2, QTableWidgetItem(f"{proc['cpu_percent']:.1f}"))
-                self.process_table.setItem(
-                    row, 3, QTableWidgetItem(f"{proc['memory_percent']:.1f}")
-                )
+                self.process_table.setItem(row, 3, QTableWidgetItem(f"{proc['memory_percent']:.1f}"))
                 self.process_table.setItem(row, 4, QTableWidgetItem(proc["status"]))
 
                 # Highlight high usage
@@ -494,17 +486,11 @@ class SystemMonitorWidget(QWidget):
             "cpu_average": sum(cpu_values) / len(cpu_values) if cpu_values else 0,
             "cpu_max": max(cpu_values, default=0),
             "memory_current": memory_values[-1] if memory_values else 0,
-            "memory_average": (
-                sum(memory_values) / len(memory_values) if memory_values else 0
-            ),
+            "memory_average": (sum(memory_values) / len(memory_values) if memory_values else 0),
             "memory_max": max(memory_values) if memory_values else 0,
         }
 
-        if gpu_values := [
-            m.gpu_percent
-            for m in self.metrics_history
-            if m.gpu_percent is not None
-        ]:
+        if gpu_values := [m.gpu_percent for m in self.metrics_history if m.gpu_percent is not None]:
             if GPU_AVAILABLE:
                 summary |= {
                     "gpu_current": gpu_values[-1],

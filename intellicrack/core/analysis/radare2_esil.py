@@ -206,9 +206,7 @@ class ESILAnalysisEngine:
 
         return result
 
-    def _analyze_instruction_patterns(
-        self, trace_entry: dict[str, Any], result: dict[str, Any]
-    ) -> None:
+    def _analyze_instruction_patterns(self, trace_entry: dict[str, Any], result: dict[str, Any]) -> None:
         """Analyze individual instruction for interesting patterns."""
         instruction = trace_entry.get("instruction", "").lower()
         address = trace_entry.get("address", "")
@@ -226,9 +224,7 @@ class ESILAnalysisEngine:
             )
 
         # Detect conditional branches
-        if any(
-            branch in instruction for branch in ["je", "jne", "jz", "jnz", "jg", "jl", "jge", "jle"]
-        ):
+        if any(branch in instruction for branch in ["je", "jne", "jz", "jnz", "jg", "jl", "jge", "jle"]):
             result["branch_decisions"].append(
                 {
                     "step": trace_entry["step"],
@@ -251,7 +247,9 @@ class ESILAnalysisEngine:
 
         # Detect license check patterns
         license_indicators = ["cmp", "test", "xor"]
-        if any(indicator in instruction for indicator in license_indicators) and any(keyword in instruction for keyword in ["key", "serial", "license"]):
+        if any(indicator in instruction for indicator in license_indicators) and any(
+            keyword in instruction for keyword in ["key", "serial", "license"]
+        ):
             result["license_checks_detected"].append(
                 {
                     "step": trace_entry["step"],
@@ -321,9 +319,7 @@ class ESILAnalysisEngine:
         # Detect anti-analysis techniques
         self._detect_anti_analysis_techniques(result, trace)
 
-    def _analyze_execution_patterns(
-        self, result: dict[str, Any], trace: list[dict[str, Any]]
-    ) -> None:
+    def _analyze_execution_patterns(self, result: dict[str, Any], trace: list[dict[str, Any]]) -> None:
         """Analyze overall execution patterns."""
         if not trace:
             return
@@ -338,21 +334,16 @@ class ESILAnalysisEngine:
             if addr := entry.get("address", ""):
                 address_counts[addr] = address_counts.get(addr, 0) + 1
 
-        loops_detected = sum(bool(count > 1)
-                         for count in address_counts.values())
+        loops_detected = sum(bool(count > 1) for count in address_counts.values())
 
         result["execution_patterns"] = {
             "total_instructions_executed": total_instructions,
             "unique_addresses_visited": unique_addresses,
             "loops_detected": loops_detected,
-            "code_coverage_ratio": unique_addresses / total_instructions
-            if total_instructions > 0
-            else 0,
+            "code_coverage_ratio": unique_addresses / total_instructions if total_instructions > 0 else 0,
         }
 
-    def _detect_license_validation_patterns(
-        self, result: dict[str, Any], trace: list[dict[str, Any]]
-    ) -> None:
+    def _detect_license_validation_patterns(self, result: dict[str, Any], trace: list[dict[str, Any]]) -> None:
         """Detect license validation patterns in execution trace."""
         validation_patterns = []
 
@@ -375,8 +366,9 @@ class ESILAnalysisEngine:
 
             # Pattern 2: Multiple comparisons (complex validation)
             if "cmp" in instruction:
-                comparison_count = 1 + sum(bool("cmp" in trace[j].get("instruction", "").lower())
-                                       for j in range(i + 1, min(i + 10, len(trace))))
+                comparison_count = 1 + sum(
+                    bool("cmp" in trace[j].get("instruction", "").lower()) for j in range(i + 1, min(i + 10, len(trace)))
+                )
                 if comparison_count >= 3:
                     validation_patterns.append(
                         {
@@ -413,9 +405,7 @@ class ESILAnalysisEngine:
 
         result["api_call_sequences"] = call_sequences
 
-    def _detect_anti_analysis_techniques(
-        self, result: dict[str, Any], trace: list[dict[str, Any]]
-    ) -> None:
+    def _detect_anti_analysis_techniques(self, result: dict[str, Any], trace: list[dict[str, Any]]) -> None:
         """Detect anti-analysis and anti-debugging techniques."""
         anti_analysis_detected = []
 
@@ -423,9 +413,7 @@ class ESILAnalysisEngine:
             instruction = entry.get("instruction", "").lower()
 
             # Detect debugger checks
-            if any(
-                pattern in instruction for pattern in ["isdebuggerpresent", "checkremotedebugger"]
-            ):
+            if any(pattern in instruction for pattern in ["isdebuggerpresent", "checkremotedebugger"]):
                 anti_analysis_detected.append(
                     {
                         "type": "debugger_detection",
@@ -459,9 +447,7 @@ class ESILAnalysisEngine:
 
         result["anti_analysis_techniques"] = anti_analysis_detected
 
-    def emulate_multiple_functions(
-        self, function_addresses: list[int], max_steps_per_function: int = 50
-    ) -> dict[str, Any]:
+    def emulate_multiple_functions(self, function_addresses: list[int], max_steps_per_function: int = 50) -> dict[str, Any]:
         """Emulate multiple functions and provide comparative analysis.
 
         Args:
@@ -485,32 +471,20 @@ class ESILAnalysisEngine:
         }
 
         for i, address in enumerate(function_addresses):
-            self.logger.info(
-                f"Emulating function {i + 1}/{len(function_addresses)}: {hex(address)}"
-            )
+            self.logger.info(f"Emulating function {i + 1}/{len(function_addresses)}: {hex(address)}")
 
             func_result = self.emulate_function_execution(address, max_steps_per_function)
             results["function_results"][hex(address)] = func_result
 
             # Update summary statistics
             if "error" not in func_result:
-                results["emulation_summary"]["total_steps_executed"] += func_result.get(
-                    "steps_executed", 0
-                )
-                results["emulation_summary"]["total_api_calls"] += len(
-                    func_result.get("api_calls_detected", [])
-                )
-                results["emulation_summary"]["total_license_checks"] += len(
-                    func_result.get("license_checks_detected", [])
-                )
-                results["emulation_summary"]["total_vulnerabilities"] += len(
-                    func_result.get("vulnerabilities_detected", [])
-                )
+                results["emulation_summary"]["total_steps_executed"] += func_result.get("steps_executed", 0)
+                results["emulation_summary"]["total_api_calls"] += len(func_result.get("api_calls_detected", []))
+                results["emulation_summary"]["total_license_checks"] += len(func_result.get("license_checks_detected", []))
+                results["emulation_summary"]["total_vulnerabilities"] += len(func_result.get("vulnerabilities_detected", []))
 
         # Perform comparative analysis
-        results["comparative_analysis"] = self._perform_comparative_analysis(
-            results["function_results"]
-        )
+        results["comparative_analysis"] = self._perform_comparative_analysis(results["function_results"])
 
         return results
 
@@ -556,8 +530,7 @@ class ESILAnalysisEngine:
                         "address": addr,
                         "license_checks": license_checks,
                         "anti_analysis_techniques": len(result.get("anti_analysis_techniques", [])),
-                        "suspicion_score": license_checks * 2
-                        + len(result.get("anti_analysis_techniques", [])),
+                        "suspicion_score": license_checks * 2 + len(result.get("anti_analysis_techniques", [])),
                     },
                 )
 

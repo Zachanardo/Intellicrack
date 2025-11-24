@@ -69,9 +69,7 @@ def check_weasyprint_dependencies() -> list[str]:
     if sys.platform == "win32":
         try:
             gtk_paths = [
-                os.path.join(
-                    os.environ.get("PROGRAMFILES", r"C:\Program Files"), "GTK3-Runtime Win64", "bin"
-                ),
+                os.path.join(os.environ.get("PROGRAMFILES", r"C:\Program Files"), "GTK3-Runtime Win64", "bin"),
                 r"C:\GTK\bin",
                 os.environ.get("GTK_BASEPATH", "") + "\\bin",
             ]
@@ -231,9 +229,7 @@ def setup_required_environment() -> dict[str, Any]:
             numpy_version = getattr(numpy, "__version__", "unknown")
             sklearn_version = getattr(sklearn, "__version__", "unknown")
             env_status["ml_available"] = True
-            logger.info(
-                f"OK Machine learning features available (numpy {numpy_version}, sklearn {sklearn_version})"
-            )
+            logger.info(f"OK Machine learning features available (numpy {numpy_version}, sklearn {sklearn_version})")
         else:
             error_msg = "NumPy not available"
             logger.error(error_msg)

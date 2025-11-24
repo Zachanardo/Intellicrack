@@ -242,9 +242,7 @@ class EntropyGraphWidget(QWidget):
 
         self.summary_label.setText(summary)
 
-    def _update_pyqtgraph(
-        self, sections: list[str], entropies: list[float], colors: list[str]
-    ) -> None:
+    def _update_pyqtgraph(self, sections: list[str], entropies: list[float], colors: list[str]) -> None:
         """Update PyQtGraph visualization."""
         if not PYQTGRAPH_AVAILABLE:
             return
@@ -279,9 +277,7 @@ class EntropyGraphWidget(QWidget):
         # Adjust view
         self.plot_widget.setXRange(-0.5, len(sections) - 0.5)
 
-    def _update_matplotlib(
-        self, sections: list[str], entropies: list[float], colors: list[str]
-    ) -> None:
+    def _update_matplotlib(self, sections: list[str], entropies: list[float], colors: list[str]) -> None:
         """Update matplotlib visualization (fallback)."""
         self.ax.clear()
 
@@ -351,12 +347,9 @@ class EntropyGraphWidget(QWidget):
             "total_sections": len(self.entropy_data),
             "average_entropy": sum(entropies) / len(entropies),
             "max_entropy": max(entropies),
-            "packed_sections": sum(bool(info.packed)
-                               for info in self.entropy_data),
-            "encrypted_sections": sum(bool(info.encrypted)
-                                  for info in self.entropy_data),
-            "high_entropy_sections": sum(bool(e >= 7.0)
-                                     for e in entropies),
+            "packed_sections": sum(bool(info.packed) for info in self.entropy_data),
+            "encrypted_sections": sum(bool(info.encrypted) for info in self.entropy_data),
+            "high_entropy_sections": sum(bool(e >= 7.0) for e in entropies),
         }
 
     def export_graph(self, file_path: str) -> None:

@@ -307,9 +307,7 @@ class ResourceManager:
         self._lock = threading.RLock()
 
         # Cleanup thread (skip during testing)
-        if not (
-            os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")
-        ):
+        if not (os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")):
             self._cleanup_thread = threading.Thread(target=self._cleanup_loop, daemon=True)
             self._cleanup_thread.start()
             logger.info("Resource cleanup thread started")
@@ -389,10 +387,7 @@ class ResourceManager:
         with self._lock:
             # Check process limit
             resource_count = len(self._resources_by_type.get(resource.resource_type, set()))
-            if (
-                resource.resource_type == ResourceType.PROCESS
-                and resource_count >= self.max_processes
-            ):
+            if resource.resource_type == ResourceType.PROCESS and resource_count >= self.max_processes:
                 error_msg = f"Process limit reached: {self.max_processes}"
                 logger.error(error_msg)
                 raise RuntimeError(error_msg)
@@ -400,10 +395,7 @@ class ResourceManager:
                 error_msg = f"VM limit reached: {self.max_vms}"
                 logger.error(error_msg)
                 raise RuntimeError(error_msg)
-            if (
-                resource.resource_type == ResourceType.CONTAINER
-                and resource_count >= self.max_containers
-            ):
+            if resource.resource_type == ResourceType.CONTAINER and resource_count >= self.max_containers:
                 error_msg = f"Container limit reached: {self.max_containers}"
                 logger.error(error_msg)
                 raise RuntimeError(error_msg)
@@ -484,9 +476,7 @@ class ResourceManager:
             self.release_resource(resource.resource_id)
 
     @contextlib.contextmanager
-    def managed_vm(
-        self, vm_name: str, vm_process: subprocess.Popen | None = None
-    ) -> Generator[VMResource, None, None]:
+    def managed_vm(self, vm_name: str, vm_process: subprocess.Popen | None = None) -> Generator[VMResource, None, None]:
         """Context manager for managed VMs.
 
         Args:
@@ -531,9 +521,7 @@ class ResourceManager:
             except Exception as e:
                 logger.error(f"Failed to remove temp directory {temp_dir}: {e}")
 
-        resource = ManagedResource(
-            resource_id=temp_dir, resource_type=ResourceType.TEMP_DIR, cleanup_func=cleanup_temp
-        )
+        resource = ManagedResource(resource_id=temp_dir, resource_type=ResourceType.TEMP_DIR, cleanup_func=cleanup_temp)
 
         try:
             self.register_resource(resource)
@@ -691,9 +679,7 @@ class ResourceManager:
                 if resource and (current_time - resource.created_at) > max_age_seconds and self._cleanup_resource(resource_id):
                     cleaned_count += 1
 
-        logger.info(
-            f"Force cleaned {cleaned_count} expired resources (older than {max_age_seconds}s)"
-        )
+        logger.info(f"Force cleaned {cleaned_count} expired resources (older than {max_age_seconds}s)")
         return cleaned_count
 
     def set_resource_limits(self, **limits: int) -> None:
@@ -750,8 +736,7 @@ class ResourceManager:
         """
         owned_resources = self.get_resources_by_owner(owner)
 
-        cleaned_count = sum(bool(self._cleanup_resource(resource.resource_id))
-                        for resource in owned_resources)
+        cleaned_count = sum(bool(self._cleanup_resource(resource.resource_id)) for resource in owned_resources)
         logger.info(f"Cleaned {cleaned_count} resources owned by {owner}")
         return cleaned_count
 
@@ -764,10 +749,7 @@ class ResourceManager:
         """
         logger.warning("Performing emergency cleanup of all resources")
 
-        results = {
-            resource_type.value: self.force_cleanup_by_type(resource_type)
-            for resource_type in ResourceType
-        }
+        results = {resource_type.value: self.force_cleanup_by_type(resource_type) for resource_type in ResourceType}
         # Force garbage collection
         import gc
 
@@ -801,10 +783,7 @@ class ResourceManager:
                     f"VM count exceeds limit: {len(self._resources_by_type.get(ResourceType.VM, set()))} > {self.max_vms}",
                 )
 
-            if (
-                len(self._resources_by_type.get(ResourceType.CONTAINER, set()))
-                > self.max_containers
-            ):
+            if len(self._resources_by_type.get(ResourceType.CONTAINER, set())) > self.max_containers:
                 health["issues"].append(
                     f"Container count exceeds limit: {len(self._resources_by_type.get(ResourceType.CONTAINER, set()))} > {self.max_containers}",
                 )
@@ -814,14 +793,9 @@ class ResourceManager:
             if stuck_resources := [
                 resource.resource_id
                 for resource in self._resources.values()
-                if (
-                    resource.state == ResourceState.CLEANING
-                    and (current_time - resource.created_at.timestamp()) > 300
-                )
+                if (resource.state == ResourceState.CLEANING and (current_time - resource.created_at.timestamp()) > 300)
             ]:
-                health["warnings"].append(
-                    f"Found {len(stuck_resources)} stuck resources in cleanup state"
-                )
+                health["warnings"].append(f"Found {len(stuck_resources)} stuck resources in cleanup state")
 
             # Check memory usage
             memory_stats = self._get_memory_usage()
@@ -843,19 +817,13 @@ class ResourceManager:
         if HAS_TERMINAL_MANAGER:
             try:
                 terminal_manager = get_terminal_manager()
-                terminal_manager.log_terminal_message(
-                    f"Resource manager health: {health['status']}"
-                )
+                terminal_manager.log_terminal_message(f"Resource manager health: {health['status']}")
                 if health["issues"]:
                     for issue in health["issues"]:
-                        terminal_manager.log_terminal_message(
-                            f"Health issue: {issue}", level="error"
-                        )
+                        terminal_manager.log_terminal_message(f"Health issue: {issue}", level="error")
                 if health["warnings"]:
                     for warning in health["warnings"]:
-                        terminal_manager.log_terminal_message(
-                            f"Health warning: {warning}", level="warning"
-                        )
+                        terminal_manager.log_terminal_message(f"Health warning: {warning}", level="warning")
             except Exception as e:
                 logger.warning(f"Could not report to terminal manager: {e}")
 
@@ -923,9 +891,7 @@ class ResourceContext:
         metadata["owner"] = self.owner
         metadata["context_managed"] = True
 
-        resource_id = self.resource_manager.register_resource(
-            resource_type, resource_handle, cleanup_func, metadata
-        )
+        resource_id = self.resource_manager.register_resource(resource_type, resource_handle, cleanup_func, metadata)
         self.managed_resources.append(resource_id)
         return resource_id
 
@@ -937,9 +903,7 @@ class ResourceContext:
 
         """
         cleaned_count = 0
-        for resource_id in self.managed_resources[
-            :
-        ]:  # Copy list to avoid modification during iteration
+        for resource_id in self.managed_resources[:]:  # Copy list to avoid modification during iteration
             if self.resource_manager._cleanup_resource(resource_id):
                 cleaned_count += 1
                 self.managed_resources.remove(resource_id)
@@ -1098,9 +1062,7 @@ class FallbackHandler:
         """
         if tool_name in self.fallback_registry:
             try:
-                fallback_func: Callable[..., object | None] = cast(
-                    "Callable[..., object | None]", self.fallback_registry[tool_name]
-                )
+                fallback_func: Callable[..., object | None] = cast("Callable[..., object | None]", self.fallback_registry[tool_name])
                 return fallback_func(*args, **kwargs)
             except Exception as e:
                 logger.error(f"Fallback for {tool_name} failed: {e}")
@@ -1133,9 +1095,7 @@ class FallbackHandler:
             # Extract Unicode strings
             unicode_pattern = rb"(?:[\x20-\x7E]\x00){" + str(min_length).encode() + rb",}"
             unicode_strings = re.findall(unicode_pattern, data)
-            strings.extend(
-                [s.decode("utf-16le", errors="ignore").rstrip("\x00") for s in unicode_strings]
-            )
+            strings.extend([s.decode("utf-16le", errors="ignore").rstrip("\x00") for s in unicode_strings])
 
             return list(set(strings))  # Remove duplicates
 
@@ -1392,15 +1352,9 @@ class FallbackHandler:
 
             return [
                 {
-                    "protocol": (
-                        "TCP" if conn.type == socket.SOCK_STREAM else "UDP"
-                    ),
-                    "local_address": (
-                        f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else ""
-                    ),
-                    "remote_address": (
-                        f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else ""
-                    ),
+                    "protocol": ("TCP" if conn.type == socket.SOCK_STREAM else "UDP"),
+                    "local_address": (f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else ""),
+                    "remote_address": (f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else ""),
                     "status": conn.status,
                     "pid": conn.pid,
                 }
@@ -1549,9 +1503,7 @@ def execute_with_fallback(
         logger.warning(f"Primary command failed for {tool_name}: {e}")
 
         # Try fallback
-        fallback_result = fallback_handler.get_fallback(
-            tool_name, *(fallback_args or ()), **(fallback_kwargs or {})
-        )
+        fallback_result = fallback_handler.get_fallback(tool_name, *(fallback_args or ()), **(fallback_kwargs or {}))
 
         if fallback_result is not None:
             return {"status": "fallback", "output": fallback_result, "method": "fallback"}
@@ -1590,12 +1542,8 @@ def validate_external_dependencies() -> dict[str, Any]:
         # Add installation recommendations
         for tool_name, status in tool_status.items():
             if status != external_tools_manager.tools[tool_name].status.AVAILABLE:
-                if install_script := external_tools_manager.get_installation_script(
-                    tool_name
-                ):
-                    validation_result["recommendations"].append(
-                        f"Install {tool_name}: {install_script.strip()}"
-                    )
+                if install_script := external_tools_manager.get_installation_script(tool_name):
+                    validation_result["recommendations"].append(f"Install {tool_name}: {install_script.strip()}")
 
         return validation_result
 

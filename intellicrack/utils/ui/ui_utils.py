@@ -135,9 +135,7 @@ def show_message(
         )
 
 
-def get_user_input(
-    prompt: str, default: str = "", title: str = "Input Required", parent: object = None
-) -> str | None:
+def get_user_input(prompt: str, default: str = "", title: str = "Input Required", parent: object = None) -> str | None:
     """Get text input from the user.
 
     Args:
@@ -238,9 +236,7 @@ def confirm_action(message: str, title: str = "Confirm Action", parent: object =
         # Sanitize title and message to prevent injection
         safe_title = title.replace("\n", " ").replace("\r", " ")
         safe_message = message.replace("\n", " ").replace("\r", " ")
-        response = (
-            input(f"{safe_title}: {safe_message} (y/n): ").strip().lower()
-        )  # Input validated below
+        response = input(f"{safe_title}: {safe_message} (y/n): ").strip().lower()  # Input validated below
         # Validate response - only accept specific values (y/yes)
         return response in ("y", "yes")
     except (KeyboardInterrupt, EOFError) as e:
@@ -358,11 +354,7 @@ def format_table_data(headers: list[str], rows: list[list[object]], max_width: i
         scale = max_width / total_width
         col_widths = [int(w * scale) for w in col_widths]
 
-    header_parts = [
-        str(header).ljust(col_widths[i])[: col_widths[i]]
-        for i, header in enumerate(headers)
-        if i < len(col_widths)
-    ]
+    header_parts = [str(header).ljust(col_widths[i])[: col_widths[i]] for i, header in enumerate(headers) if i < len(col_widths)]
     lines = [" | ".join(header_parts)]
     # Separator
     sep_parts = ["-" * w for w in col_widths[: len(headers)]]
@@ -370,11 +362,7 @@ def format_table_data(headers: list[str], rows: list[list[object]], max_width: i
 
     # Rows
     for row in rows:
-        row_parts = [
-            str(cell).ljust(col_widths[i])[: col_widths[i]]
-            for i, cell in enumerate(row)
-            if i < len(col_widths)
-        ]
+        row_parts = [str(cell).ljust(col_widths[i])[: col_widths[i]] for i, cell in enumerate(row) if i < len(col_widths)]
         lines.append(" | ".join(row_parts))
 
     return "\n".join(lines)

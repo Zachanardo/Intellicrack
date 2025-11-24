@@ -155,9 +155,7 @@ def analyze_binary_internal(binary_path: str, flags: list[str] | None = None) ->
             )
         )
         if not pefile:
-            results.append(
-                "ERROR: pefile library not available - install with 'pip install pefile'"
-            )
+            results.append("ERROR: pefile library not available - install with 'pip install pefile'")
             return results
 
         pe = pefile.PE(binary_path)
@@ -208,9 +206,7 @@ def _analyze_pe_header(pe: object) -> list[str]:
             results.append(f"Time date stamp: {hex(timestamp)} ({get_pe_timestamp(timestamp)})")
         characteristics = getattr(pe.FILE_HEADER, "Characteristics", None)
         if characteristics is not None:
-            results.append(
-                f"Characteristics: 0x{characteristics:04X} ({get_characteristics(characteristics)})"
-            )
+            results.append(f"Characteristics: 0x{characteristics:04X} ({get_characteristics(characteristics)})")
     else:
         results.append("PE FILE_HEADER missing or invalid")
 
@@ -361,16 +357,10 @@ def _analyze_exports(pe: object, results: list[str]) -> None:
     """
     if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
         results.append("\nExports:")
-        results.extend(
-            f"  {exp.name.decode('utf-8', errors='ignore')}"
-            for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols
-            if exp.name
-        )
+        results.extend(f"  {exp.name.decode('utf-8', errors='ignore')}" for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols if exp.name)
 
 
-def _generate_analysis_summary(
-    results: list[str], suspicious_sections: list[str], license_related_imports: list[str]
-) -> None:
+def _generate_analysis_summary(results: list[str], suspicious_sections: list[str], license_related_imports: list[str]) -> None:
     """Generate analysis summary and add to results list.
 
     Appends a summary section showing counts of suspicious sections and
@@ -429,9 +419,7 @@ def enhanced_deep_license_analysis(binary_path: str) -> dict[str, Any]:
                         func_name = _imp.name.decode("utf-8", errors="ignore").lower()
 
                         # Network-related functions
-                        if any(
-                            _net in func_name for _net in ["inet", "socket", "winhttp", "urlmon"]
-                        ):
+                        if any(_net in func_name for _net in ["inet", "socket", "winhttp", "urlmon"]):
                             results["network_calls"].append(f"{dll_name}::{func_name}")
 
                         # Registry-related functions
@@ -439,10 +427,7 @@ def enhanced_deep_license_analysis(binary_path: str) -> dict[str, Any]:
                             results["registry_access"].append(f"{dll_name}::{func_name}")
 
                         # File operation functions
-                        if any(
-                            _file_op in func_name
-                            for _file_op in ["file", "read", "write", "create"]
-                        ):
+                        if any(_file_op in func_name for _file_op in ["file", "read", "write", "create"]):
                             results["file_operations"].append(f"{dll_name}::{func_name}")
 
                         # License validation patterns
@@ -497,9 +482,7 @@ def enhanced_deep_license_analysis(binary_path: str) -> dict[str, Any]:
                     entropy = calculate_entropy(section_data)
                     if entropy > 7.0:
                         section_name = _section.Name.decode("utf-8", errors="ignore").rstrip("\0")
-                        protection_indicators.append(
-                            f"High entropy section: {section_name} ({entropy:.2f})"
-                        )
+                        protection_indicators.append(f"High entropy section: {section_name} ({entropy:.2f})")
                 except (AttributeError, ValueError) as e:
                     logger.error("Error in core_analysis: %s", e)
 
@@ -562,9 +545,7 @@ def detect_packing(binary_path: str) -> dict[str, Any]:
 
                     if entropy > 7.0:
                         high_entropy_sections += 1
-                        results["indicators"].append(
-                            f"High entropy section: {section_name} ({entropy:.2f})"
-                        )
+                        results["indicators"].append(f"High entropy section: {section_name} ({entropy:.2f})")
 
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.warning("Could not analyze section entropy: %s", e)

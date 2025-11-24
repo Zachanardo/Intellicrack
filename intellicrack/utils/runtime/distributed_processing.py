@@ -125,10 +125,7 @@ def process_binary_chunks(
         # Process chunks in parallel
         with ProcessPoolExecutor(max_workers=num_workers) as executor:
             # Submit all chunk processing tasks
-            future_to_chunk = {
-                executor.submit(process_chunk, binary_path, chunk, processor_func): chunk
-                for chunk in chunks
-            }
+            future_to_chunk = {executor.submit(process_chunk, binary_path, chunk, processor_func): chunk for chunk in chunks}
 
             # Collect results as they complete
             for future in as_completed(future_to_chunk):
@@ -159,10 +156,8 @@ def process_binary_chunks(
             # Calculate memory usage delta
             if "initial_gpu_memory" in results:
                 results["gpu_memory_delta"] = {
-                    "allocated_delta_mb": final_gpu_memory["allocated_mb"]
-                    - results["initial_gpu_memory"]["allocated_mb"],
-                    "reserved_delta_mb": final_gpu_memory["reserved_mb"]
-                    - results["initial_gpu_memory"]["reserved_mb"],
+                    "allocated_delta_mb": final_gpu_memory["allocated_mb"] - results["initial_gpu_memory"]["allocated_mb"],
+                    "reserved_delta_mb": final_gpu_memory["reserved_mb"] - results["initial_gpu_memory"]["reserved_mb"],
                 }
 
         # Aggregate results
@@ -179,9 +174,7 @@ def process_binary_chunks(
     return results
 
 
-def process_chunk(
-    binary_path: str, chunk_info: dict[str, object], processor_func: Callable
-) -> dict[str, object]:
+def process_chunk(binary_path: str, chunk_info: dict[str, object], processor_func: Callable) -> dict[str, object]:
     """Process a single chunk of a binary file.
 
     Args:
@@ -216,9 +209,7 @@ def process_chunk(
         }
 
 
-def process_distributed_results(
-    results: list[dict[str, object]], aggregation_func: Callable | None = None
-) -> dict[str, object]:
+def process_distributed_results(results: list[dict[str, object]], aggregation_func: Callable | None = None) -> dict[str, object]:
     """Process and aggregate results from distributed processing.
 
     Args:
@@ -353,9 +344,7 @@ def run_distributed_analysis(
     return results
 
 
-def run_distributed_entropy_analysis(
-    binary_path: str, config: dict[str, object] | None = None
-) -> dict[str, object]:
+def run_distributed_entropy_analysis(binary_path: str, config: dict[str, object] | None = None) -> dict[str, object]:
     """Run distributed entropy analysis on a binary.
 
     Args:
@@ -399,19 +388,14 @@ def run_distributed_entropy_analysis(
 
     # Calculate overall statistics
     if results.get("aggregated"):
-        entropies = [
-            r["result"]["entropy"]
-            for r in results["chunk_results"]
-            if r.get("success") and "entropy" in r.get("result", {})
-        ]
+        entropies = [r["result"]["entropy"] for r in results["chunk_results"] if r.get("success") and "entropy" in r.get("result", {})]
 
         if entropies:
             results["statistics"] = {
                 "average_entropy": sum(entropies) / len(entropies),
                 "max_entropy": max(entropies),
                 "min_entropy": min(entropies),
-                "high_entropy_chunks": sum(bool(e > 7.0)
-                                       for e in entropies),
+                "high_entropy_chunks": sum(bool(e > 7.0) for e in entropies),
             }
 
             # Check for potential packing/encryption
@@ -614,9 +598,7 @@ def extract_binary_features(binary_path: str) -> dict[str, object]:
     return features
 
 
-def run_gpu_accelerator(
-    task_type: str, data: object, config: dict[str, object] | None = None
-) -> dict[str, object]:
+def run_gpu_accelerator(task_type: str, data: object, config: dict[str, object] | None = None) -> dict[str, object]:
     """Run GPU-accelerated processing for supported tasks.
 
     Args:
@@ -663,9 +645,7 @@ def run_gpu_accelerator(
     return results
 
 
-def run_incremental_analysis(
-    binary_path: str, cache_dir: str | None = None, force_full: bool = False
-) -> dict[str, object]:
+def run_incremental_analysis(binary_path: str, cache_dir: str | None = None, force_full: bool = False) -> dict[str, object]:
     """Run incremental analysis using cached results when possible.
 
     Args:
@@ -797,9 +777,7 @@ def run_memory_optimized_analysis(binary_path: str, max_memory_mb: int = 1024) -
     return results
 
 
-def run_pdf_report_generator(
-    analysis_results: dict[str, object], output_path: str | None = None
-) -> dict[str, object]:
+def run_pdf_report_generator(analysis_results: dict[str, object], output_path: str | None = None) -> dict[str, object]:
     """Generate a PDF report from analysis results.
 
     Args:
@@ -867,8 +845,7 @@ def _default_chunk_processor(data: bytes, chunk_info: dict[str, object]) -> dict
     return {
         "size": len(data),
         "offset": chunk_info["offset"],
-        "non_zero_bytes": sum(bool(b != 0)
-                          for b in data),
+        "non_zero_bytes": sum(bool(b != 0) for b in data),
     }
 
 
@@ -913,9 +890,7 @@ def _aggregate_chunk_results(chunk_results: list[dict[str, object]]) -> dict[str
         return {"error": "No successful chunk processing"}
 
 
-def _distributed_string_extraction(
-    binary_path: str, config: dict[str, object]
-) -> dict[str, object]:
+def _distributed_string_extraction(binary_path: str, config: dict[str, object]) -> dict[str, object]:
     """Extract strings from binary using distributed processing.
 
     Args:
@@ -1658,15 +1633,11 @@ def run_joblib_parallel_analysis(
 
         # Run analyses in parallel
         with Parallel(n_jobs=n_jobs, backend=backend) as parallel:
-            analysis_results = parallel(
-                delayed(run_analysis)(func, binary_data, func.__name__) for func in analysis_funcs
-            )
+            analysis_results = parallel(delayed(run_analysis)(func, binary_data, func.__name__) for func in analysis_funcs)
 
         results["analyses"] = analysis_results
-        results["successful_analyses"] = sum(bool(r["success"])
-                                         for r in analysis_results)
-        results["failed_analyses"] = sum(bool(not r["success"])
-                                     for r in analysis_results)
+        results["successful_analyses"] = sum(bool(r["success"]) for r in analysis_results)
+        results["failed_analyses"] = sum(bool(not r["success"]) for r in analysis_results)
 
         # Aggregate results by type
         aggregated = {}
@@ -1688,9 +1659,7 @@ def run_joblib_parallel_analysis(
 
 
 # Joblib memory-mapped file processing
-def run_joblib_mmap_analysis(
-    binary_path: str, window_size: int = 4096, step_size: int = 1024, n_jobs: int = -1
-) -> dict[str, object]:
+def run_joblib_mmap_analysis(binary_path: str, window_size: int = 4096, step_size: int = 1024, n_jobs: int = -1) -> dict[str, object]:
     """Run memory-mapped parallel analysis using joblib for efficient large file processing.
 
     Args:
@@ -1757,11 +1726,7 @@ def run_joblib_mmap_analysis(
                     "entropy": entropy,
                     "is_packed": is_packed,
                     "string_count": len(ascii_strings),
-                    "notable_strings": [
-                        s
-                        for s in ascii_strings
-                        if any(k in s.lower() for k in ["license", "trial", "expire"])
-                    ],
+                    "notable_strings": [s for s in ascii_strings if any(k in s.lower() for k in ["license", "trial", "expire"])],
                 }
 
         # Generate window offsets
@@ -1769,9 +1734,7 @@ def run_joblib_mmap_analysis(
 
         # Run parallel analysis
         with Parallel(n_jobs=n_jobs, backend="threading") as parallel:
-            window_results = parallel(
-                delayed(analyze_window)(offset, window_size, binary_path) for offset in offsets
-            )
+            window_results = parallel(delayed(analyze_window)(offset, window_size, binary_path) for offset in offsets)
 
         results["window_results"] = window_results
         results["num_windows"] = len(window_results)

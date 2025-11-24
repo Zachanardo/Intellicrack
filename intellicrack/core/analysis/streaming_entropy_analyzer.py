@@ -134,11 +134,9 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
             chunk_entropy = self._calculate_entropy(byte_counts, len(chunk_data))
 
             unique_bytes = len(byte_counts)
-            printable_count = sum(bool(32 <= byte <= 126)
-                              for byte in chunk_data)
+            printable_count = sum(bool(32 <= byte <= 126) for byte in chunk_data)
             null_count = byte_counts.get(0, 0)
-            high_entropy_count = sum(bool(byte > 127)
-                                 for byte in chunk_data)
+            high_entropy_count = sum(bool(byte > 127) for byte in chunk_data)
 
             printable_ratio = printable_count / len(chunk_data) if chunk_data else 0
             null_ratio = null_count / len(chunk_data) if chunk_data else 0
@@ -174,8 +172,7 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
                     )
 
             logger.debug(
-                f"Chunk {context.chunk_number}/{context.total_chunks}: "
-                f"Entropy={chunk_entropy:.4f}, {len(windows)} windows analyzed",
+                f"Chunk {context.chunk_number}/{context.total_chunks}: Entropy={chunk_entropy:.4f}, {len(windows)} windows analyzed",
             )
 
             return {
@@ -239,17 +236,11 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
                 total_null += chunk_size * chunk_result.get("null_ratio", 0.0)
                 total_high_entropy += chunk_size * chunk_result.get("high_entropy_ratio", 0.0)
 
-            global_entropy = self._calculate_entropy(
-                dict(self.global_byte_counts), self.total_bytes
-            )
+            global_entropy = self._calculate_entropy(dict(self.global_byte_counts), self.total_bytes)
 
-            overall_printable_ratio = (
-                total_printable / total_bytes_counted if total_bytes_counted > 0 else 0
-            )
+            overall_printable_ratio = total_printable / total_bytes_counted if total_bytes_counted > 0 else 0
             overall_null_ratio = total_null / total_bytes_counted if total_bytes_counted > 0 else 0
-            overall_high_entropy_ratio = (
-                total_high_entropy / total_bytes_counted if total_bytes_counted > 0 else 0
-            )
+            overall_high_entropy_ratio = total_high_entropy / total_bytes_counted if total_bytes_counted > 0 else 0
 
             entropy_distribution = self._calculate_entropy_distribution(chunk_entropies)
 
@@ -257,9 +248,7 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
                 "global_entropy": round(global_entropy, 4),
                 "total_bytes": self.total_bytes,
                 "unique_bytes": len(self.global_byte_counts),
-                "average_chunk_entropy": round(np.mean(chunk_entropies), 4)
-                if chunk_entropies
-                else 0.0,
+                "average_chunk_entropy": round(np.mean(chunk_entropies), 4) if chunk_entropies else 0.0,
                 "min_chunk_entropy": round(min(chunk_entropies), 4) if chunk_entropies else 0.0,
                 "max_chunk_entropy": round(max(chunk_entropies), 4) if chunk_entropies else 0.0,
                 "std_dev_entropy": round(np.std(chunk_entropies), 4) if chunk_entropies else 0.0,
@@ -307,16 +296,12 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
 
             protection_indicators = []
             if is_encrypted:
-                protection_indicators.append(
-                    "High entropy suggests strong encryption or compression"
-                )
+                protection_indicators.append("High entropy suggests strong encryption or compression")
             if is_packed:
                 protection_indicators.append("Elevated entropy indicates possible packing")
 
             if len(high_entropy_regions) > 10:
-                protection_indicators.append(
-                    f"Multiple high-entropy regions ({len(high_entropy_regions)}) detected"
-                )
+                protection_indicators.append(f"Multiple high-entropy regions ({len(high_entropy_regions)}) detected")
 
             byte_usage_efficiency = len(self.global_byte_counts) / 256.0
 

@@ -26,7 +26,7 @@ import os
 import queue
 import threading
 import time
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from .llm_types import LoadingProgress, LoadingState, ProgressCallback
 
@@ -42,9 +42,7 @@ class ConsoleProgressCallback(ProgressCallback):
 
     def on_progress(self, progress: LoadingProgress) -> None:
         """Print progress to console."""
-        print(
-            f"[{progress.model_id}] {progress.state.value}: {progress.progress:.1%} - {progress.message}"
-        )
+        print(f"[{progress.model_id}] {progress.state.value}: {progress.progress:.1%} - {progress.message}")
 
     def on_completed(self, model_id: str, success: bool, error: str | None = None) -> None:
         """Print completion status."""
@@ -61,8 +59,8 @@ class QueuedProgressCallback(ProgressCallback):
         Sets up queues for progress updates and completion notifications
         for thread-safe communication with GUI components.
         """
-        self.progress_queue = queue.Queue()
-        self.completion_queue = queue.Queue()
+        self.progress_queue: queue.Queue[LoadingProgress] = queue.Queue()
+        self.completion_queue: queue.Queue[tuple[str, bool, str | None]] = queue.Queue()
         self.logger = logging.getLogger(f"{__name__}.QueuedProgressCallback")
 
     def on_progress(self, progress: LoadingProgress) -> None:
@@ -84,9 +82,9 @@ class QueuedProgressCallback(ProgressCallback):
             logger.debug(f"Retrieved {len(updates)} progress updates from queue")
         return updates
 
-    def get_completion_updates(self) -> list[tuple]:
+    def get_completion_updates(self) -> list[tuple[str, bool, str | None]]:
         """Get all pending completion updates."""
-        updates = []
+        updates: list[tuple[str, bool, str | None]] = []
         try:
             while True:
                 updates.append(self.completion_queue.get_nowait())
@@ -130,9 +128,7 @@ class LoadingTask:
         self.error: str | None = None
         self.cancelled = False
 
-    def update_progress(
-        self, progress: float, message: str, state: LoadingState | None = None
-    ) -> None:
+    def update_progress(self, progress: float, message: str, state: LoadingState | None = None) -> None:
         """Update task progress."""
         if state:
             self.state = state
@@ -155,9 +151,7 @@ class LoadingTask:
             )
             self.callback.on_progress(progress_info)
 
-    def mark_completed(
-        self, success: bool, result: Optional["LLMBackend"] = None, error: str | None = None
-    ) -> None:
+    def mark_completed(self, success: bool, result: Optional["LLMBackend"] = None, error: str | None = None) -> None:
         """Mark task as completed."""
         self.end_time = time.time()
         self.result = result
@@ -198,18 +192,14 @@ class BackgroundModelLoader:
         self.active_tasks: dict[str, LoadingTask] = {}
         self.completed_tasks: dict[str, LoadingTask] = {}
         self.worker_threads: list[threading.Thread] = []
-        self.task_queue = queue.PriorityQueue()
+        self.task_queue: queue.PriorityQueue[tuple[int, float, LoadingTask]] = queue.PriorityQueue()
         self.shutdown_event = threading.Event()
         self.lock = threading.RLock()
 
         # Start worker threads (skip during testing)
-        if not (
-            os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")
-        ):
+        if not (os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")):
             for i in range(max_concurrent_loads):
-                thread = threading.Thread(
-                    target=self._worker_thread, name=f"ModelLoader-{i}", daemon=True
-                )
+                thread = threading.Thread(target=self._worker_thread, name=f"ModelLoader-{i}", daemon=True)
                 thread.start()
                 self.worker_threads.append(thread)
             logger.info(f"Background model loader started with {max_concurrent_loads} workers")
@@ -284,7 +274,7 @@ class BackgroundModelLoader:
     def get_loading_statistics(self) -> dict[str, Any]:
         """Get loading statistics."""
         with self.lock:
-            stats = {
+            stats: dict[str, Any] = {
                 "pending": len(self.pending_tasks),
                 "active": len(self.active_tasks),
                 "completed": len(self.completed_tasks),
@@ -293,9 +283,8 @@ class BackgroundModelLoader:
             }
 
             if completed_tasks := list(self.completed_tasks.values()):
-                successful = sum(bool(task.state == LoadingState.COMPLETED)
-                             for task in completed_tasks)
-                stats["success_rate"] = successful / len(completed_tasks)
+                successful = sum(bool(task.state == LoadingState.COMPLETED) for task in completed_tasks)
+                stats["success_rate"] = float(successful) / float(len(completed_tasks))
             else:
                 stats["success_rate"] = 0.0
 
@@ -429,9 +418,7 @@ class IntegratedBackgroundLoader:
         if callback in self.progress_callbacks:
             self.progress_callbacks.remove(callback)
 
-    def load_model_in_background(
-        self, model_id: str, backend_class: type, config: "LLMConfig", priority: int = 0
-    ) -> LoadingTask:
+    def load_model_in_background(self, model_id: str, backend_class: type, config: "LLMConfig", priority: int = 0) -> LoadingTask:
         """Load a model in the background with integrated callbacks."""
 
         # Create a callback that notifies all registered callbacks

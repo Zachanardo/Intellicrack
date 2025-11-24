@@ -165,9 +165,7 @@ class ProgressManager:
             # Store task ID for progress tracking
             self.task_ids[analysis_type] = task_id
 
-    def update_progress(
-        self, task_name: str, current: int, total: int, speed: float | None = None
-    ) -> None:
+    def update_progress(self, task_name: str, current: int, total: int, speed: float | None = None) -> None:
         """Update progress for a specific task."""
         with self._lock:
             if task_name in self.tasks:
@@ -360,11 +358,7 @@ def _demo_static_analysis(pm: ProgressManager, binary_path: str) -> None:
                 hashlib.sha256(data).hexdigest()
 
         elif step_name == "Extracting strings":
-            cmd = (
-                ["strings", binary_path]
-                if sys.platform != "win32"
-                else ["findstr", "/r", "[a-zA-Z]", binary_path]
-            )
+            cmd = ["strings", binary_path] if sys.platform != "win32" else ["findstr", "/r", "[a-zA-Z]", binary_path]
             try:
                 result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     cmd,

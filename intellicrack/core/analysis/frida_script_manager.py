@@ -171,11 +171,7 @@ class FridaScriptManager:
         ]
 
         brand, family, model = random.choice(cpu_families)  # noqa: S311
-        cpuid_hash = (
-            hashlib.sha256(f"{brand}{family}{model}{random.random()}".encode())
-            .hexdigest()[:16]
-            .upper()
-        )
+        cpuid_hash = hashlib.sha256(f"{brand}{family}{model}{random.random()}".encode()).hexdigest()[:16].upper()
 
         return f"{brand}-{family}-{model}-{cpuid_hash}"
 
@@ -345,9 +341,7 @@ class FridaScriptManager:
             # Look for metadata in comments
             import re
 
-            if metadata_match := re.search(
-                r"/\*\*\s*@metadata(.*?)@end\s*\*/", content, re.DOTALL
-            ):
+            if metadata_match := re.search(r"/\*\*\s*@metadata(.*?)@end\s*\*/", content, re.DOTALL):
                 metadata_text = metadata_match.group(1)
                 if json_match := re.search(r"\{.*\}", metadata_text, re.DOTALL):
                     return json.loads(json_match.group())
@@ -383,9 +377,7 @@ class FridaScriptManager:
             raise ValueError(f"Unknown script: {script_name}")
 
         config = self.scripts[script_name]
-        result = ScriptResult(
-            script_name=script_name, success=False, start_time=time.time(), end_time=0
-        )
+        result = ScriptResult(script_name=script_name, success=False, start_time=time.time(), end_time=0)
 
         try:
             # Load script content
@@ -546,11 +538,7 @@ class FridaScriptManager:
 
     def get_scripts_by_category(self, category: ScriptCategory) -> list[str]:
         """Get scripts in a specific category."""
-        return [
-            name
-            for name, config in self.scripts.items()
-            if config.category == category
-        ]
+        return [name for name, config in self.scripts.items() if config.category == category]
 
     def get_script_config(self, script_name: str) -> FridaScriptConfig | None:
         """Get configuration for a script."""

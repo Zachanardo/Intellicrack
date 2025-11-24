@@ -165,11 +165,7 @@ class LMStudioRepository(APIRepositoryBase):
 
         try:
             return next(
-                (
-                    self._create_model_info(model_id, model_data)
-                    for model_data in data.get("data", [])
-                    if model_data.get("id") == model_id
-                ),
+                (self._create_model_info(model_id, model_data) for model_data in data.get("data", []) if model_data.get("id") == model_id),
                 None,
             )
         except (KeyError, TypeError) as e:
@@ -197,9 +193,7 @@ class LMStudioRepository(APIRepositoryBase):
                 provider="lmstudio",
                 parameters=None,  # Not typically provided
                 context_length=model_data.get("context_length"),
-                capabilities=[
-                    "text-generation"
-                ],  # LMStudio typically serves text models
+                capabilities=["text-generation"],  # LMStudio typically serves text models
                 version=model_data.get("version", "1.0"),
                 checksum=None,
                 download_url=None,
@@ -216,7 +210,5 @@ class LMStudioRepository(APIRepositoryBase):
             Always returns (False, "LMStudio doesn't support model downloads through API")
 
         """
-        logger.warning(
-            f"Download requested for {model_id} to {destination_path}, but not supported"
-        )
+        logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
         return False, "LMStudio doesn't support model downloads through API"

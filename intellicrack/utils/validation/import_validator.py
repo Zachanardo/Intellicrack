@@ -83,11 +83,7 @@ class ImportValidator:
             success, warnings = ImportValidator.validate_imports_from_code(code)
 
             # Extract just the missing module names from warnings
-            missing.extend(
-                warning.replace("Module not found: ", "")
-                for warning in warnings
-                if warning.startswith("Module not found: ")
-            )
+            missing.extend(warning.replace("Module not found: ", "") for warning in warnings if warning.startswith("Module not found: "))
             return {"missing": missing, "success": success}
 
         except Exception as e:

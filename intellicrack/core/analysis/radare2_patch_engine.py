@@ -146,9 +146,7 @@ class Radare2PatchEngine:
             self.bits = info["bin"]["bits"]
             self.endian = info["bin"]["endian"]
 
-            logger.info(
-                f"Initialized patch engine for {self.architecture} {self.bits}-bit {self.endian}"
-            )
+            logger.info(f"Initialized patch engine for {self.architecture} {self.bits}-bit {self.endian}")
 
         except Exception as e:
             logger.error(f"Failed to initialize Radare2: {e}")
@@ -264,11 +262,7 @@ class Radare2PatchEngine:
                 page_remainder = target & 0xFFF
 
                 # ADRP X16, target_page
-                adrp = (
-                    0x90000010
-                    | ((page_offset & 0x3) << 29)
-                    | ((page_offset >> 2) & 0x7FFFF) << 5
-                )
+                adrp = 0x90000010 | ((page_offset & 0x3) << 29) | ((page_offset >> 2) & 0x7FFFF) << 5
                 # ADD X16, X16, page_remainder
                 add = 0x91000210 | ((page_remainder & 0xFFF) << 10)
                 # BR X16
@@ -348,9 +342,7 @@ class Radare2PatchEngine:
         # This is architecture-specific but provides a fallback
         if self.bits == 64:
             # 64-bit generic jump
-            return struct.pack(
-                "<BQ", 0xFF, target
-            )  # Simplified - would need arch-specific encoding
+            return struct.pack("<BQ", 0xFF, target)  # Simplified - would need arch-specific encoding
         # 32-bit generic jump
         return struct.pack("<BI", 0xFF, target)  # Simplified - would need arch-specific encoding
 
@@ -367,9 +359,7 @@ class Radare2PatchEngine:
         """
         return self.modify_jump(address, new_function, "call")
 
-    def patch_return_value(
-        self, function_address: int, return_value: int, value_size: int = 4
-    ) -> list[PatchInstruction]:
+    def patch_return_value(self, function_address: int, return_value: int, value_size: int = 4) -> list[PatchInstruction]:
         """Patch a function to return a specific value.
 
         Args:
@@ -419,9 +409,7 @@ class Radare2PatchEngine:
             # NOP remaining bytes if function is longer
             function_size = self._get_function_size(function_address)
             if function_size > len(patch_bytes):
-                nop_patch = self.create_nop_sled(
-                    function_address + len(patch_bytes), function_size - len(patch_bytes)
-                )
+                nop_patch = self.create_nop_sled(function_address + len(patch_bytes), function_size - len(patch_bytes))
                 patches.append(nop_patch)
 
         elif self.architecture == "arm":
@@ -431,11 +419,7 @@ class Radare2PatchEngine:
                 movw = 0xE3000000 | ((return_value & 0xF000) << 4) | (return_value & 0xFFF)
                 # MOVT R0, upper16 (if needed)
                 if return_value > 0xFFFF:
-                    movt = (
-                        0xE3400000
-                        | (((return_value >> 16) & 0xF000) << 4)
-                        | ((return_value >> 16) & 0xFFF)
-                    )
+                    movt = 0xE3400000 | (((return_value >> 16) & 0xF000) << 4) | ((return_value >> 16) & 0xFFF)
                     patch_bytes = struct.pack("<II", movw, movt)
                 else:
                     patch_bytes = struct.pack("<I", movw)
@@ -662,9 +646,7 @@ class Radare2PatchEngine:
             description=f"Replace function prologue at 0x{address:x}",
         )
 
-    def patch_function_epilogue(
-        self, function_address: int, new_epilogue: bytes
-    ) -> PatchInstruction:
+    def patch_function_epilogue(self, function_address: int, new_epilogue: bytes) -> PatchInstruction:
         """Replace function epilogue with custom code.
 
         Args:
@@ -690,9 +672,7 @@ class Radare2PatchEngine:
             description=f"Replace function epilogue at 0x{epilogue_address:x}",
         )
 
-    def create_jump_table_patch(
-        self, table_address: int, entries: list[int]
-    ) -> list[PatchInstruction]:
+    def create_jump_table_patch(self, table_address: int, entries: list[int]) -> list[PatchInstruction]:
         """Modify a jump table with new entries.
 
         Args:

@@ -155,9 +155,7 @@ class IncrementalLearner:
             self.logger.error("Failed to add sample %s: %s", binary_path, e)
             return False
 
-    def retrain_incremental(
-        self, use_all_history: bool = False, n_estimators: int = 200
-    ) -> dict[str, Any]:
+    def retrain_incremental(self, use_all_history: bool = False, n_estimators: int = 200) -> dict[str, Any]:
         """Retrain model with buffered samples.
 
         Args:
@@ -198,9 +196,7 @@ class IncrementalLearner:
         if use_all_history:
             self.logger.info("Performing full retraining with historical data")
 
-        results = self.classifier.train(
-            X=X_new, y=y_new, n_estimators=n_estimators, cross_validate=True
-        )
+        results = self.classifier.train(X=X_new, y=y_new, n_estimators=n_estimators, cross_validate=True)
 
         session.new_accuracy = results.get("test_accuracy", 0.0)
         session.retrain_triggered = True
@@ -258,9 +254,7 @@ class IncrementalLearner:
 
         return quality
 
-    def get_uncertain_predictions(
-        self, min_uncertainty: float = 0.3, max_count: int = 20
-    ) -> list[tuple[Path, dict[str, Any]]]:
+    def get_uncertain_predictions(self, min_uncertainty: float = 0.3, max_count: int = 20) -> list[tuple[Path, dict[str, Any]]]:
         """Identify samples where model is uncertain for active learning.
 
         Args:

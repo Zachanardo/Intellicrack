@@ -277,6 +277,7 @@ class MultiLayerBypass:
             bypassed = []
             for func in os_level_functions[:5]:
                 if template := select_template(func.api_name, "x64"):
+                    logger.debug(f"Using template for {func.api_name}: {template.name}")
                     try:
                         patch_result = self._patcher.patch_certificate_validation(
                             detection_report,
@@ -351,6 +352,7 @@ class MultiLayerBypass:
 
                 for func in library_functions[:3]:
                     if template := select_template(func.api_name, "x64"):
+                        logger.debug(f"Applying binary patch template for {func.api_name}: {template.name}")
                         try:
                             patch_result = self._patcher.patch_certificate_validation(
                                 detection_report,
@@ -404,9 +406,7 @@ class MultiLayerBypass:
                 logger.info("Attempting binary patch for application-level validation")
                 detection_report = self._detector.detect_certificate_validation(target)
 
-                app_functions = [
-                    func for func in detection_report.validation_functions if func.confidence > 0.6
-                ]
+                app_functions = [func for func in detection_report.validation_functions if func.confidence > 0.6]
 
                 for func in app_functions[:5]:
                     try:
@@ -459,8 +459,7 @@ class MultiLayerBypass:
                 logger.warning(f"Server-level Frida bypass failed: {e}")
 
             logger.info(
-                "Server-level bypass may require MITM proxy - "
-                "consider using bypass_orchestrator with MITM_PROXY method",
+                "Server-level bypass may require MITM proxy - consider using bypass_orchestrator with MITM_PROXY method",
             )
 
             return StageResult(
@@ -533,11 +532,7 @@ class MultiLayerBypass:
         try:
             if hasattr(self._frida_hooks, "_script") and self._frida_hooks._script:
                 status = self._frida_hooks.get_bypass_status()
-                return (
-                    status.get("openssl_bypassed", False)
-                    or status.get("nss_bypassed", False)
-                    or status.get("boringssl_bypassed", False)
-                )
+                return status.get("openssl_bypassed", False) or status.get("nss_bypassed", False) or status.get("boringssl_bypassed", False)
             return True
         except Exception as e:
             logger.warning(f"Library-level verification failed: {e}")

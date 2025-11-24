@@ -118,9 +118,7 @@ class ReportGeneratorWorkerSignals(QObject):
 class ReportGeneratorWorker(QRunnable):
     """Worker thread for report generation."""
 
-    def __init__(
-        self, result: UnifiedProtectionResult, format_type: str, output_path: str, options: dict
-    ) -> None:
+    def __init__(self, result: UnifiedProtectionResult, format_type: str, output_path: str, options: dict) -> None:
         """Initialize the report generator worker.
 
         Args:

@@ -408,18 +408,14 @@ except ImportError as e:
                     if len(ph_data) < 32:
                         break
 
-                    (p_type, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_flags, p_align) = (
-                        struct.unpack(f"{endian}IIIIIIII", ph_data)
-                    )
+                    (p_type, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_flags, p_align) = struct.unpack(f"{endian}IIIIIIII", ph_data)
                 else:
                     # 64-bit program header
                     ph_data = self.stream.read(56)
                     if len(ph_data) < 56:
                         break
 
-                    (p_type, p_flags, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_align) = (
-                        struct.unpack(f"{endian}IIQQQQQQ", ph_data)
-                    )
+                    (p_type, p_flags, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_align) = struct.unpack(f"{endian}IIQQQQQQ", ph_data)
 
                 ph = Container(
                     p_type=p_type,
@@ -592,9 +588,7 @@ except ImportError as e:
                 Section object with the specified name, or None if not found.
 
             """
-            return next(
-                (section for section in self._sections if section.name == name), None
-            )
+            return next((section for section in self._sections if section.name == name), None)
 
         def get_segment(self, n: int) -> FallbackSegment | None:
             """Get segment by index.
@@ -798,9 +792,7 @@ except ImportError as e:
         elffile: FallbackELFFile
         _symbols: list[FallbackSymbol]
 
-        def __init__(
-            self, header: Container, name: str, stream: BinaryIO, elffile: FallbackELFFile
-        ) -> None:
+        def __init__(self, header: Container, name: str, stream: BinaryIO, elffile: FallbackELFFile) -> None:
             """Initialize symbol table."""
             super().__init__(header, name, stream)
             self.elffile = elffile
@@ -852,9 +844,7 @@ except ImportError as e:
                 if strtab and isinstance(strtab, FallbackStringTableSection):
                     name = strtab.get_string(st_name)
 
-                symbol = FallbackSymbol(
-                    st_name, st_value, st_size, st_info, st_other, st_shndx, name
-                )
+                symbol = FallbackSymbol(st_name, st_value, st_size, st_info, st_other, st_shndx, name)
                 self._symbols.append(symbol)
                 offset += entry_size
 
@@ -922,9 +912,7 @@ except ImportError as e:
         elffile: FallbackELFFile
         _relocations: list[FallbackRelocation]
 
-        def __init__(
-            self, header: Container, name: str, stream: BinaryIO, elffile: FallbackELFFile
-        ) -> None:
+        def __init__(self, header: Container, name: str, stream: BinaryIO, elffile: FallbackELFFile) -> None:
             """Initialize relocation section."""
             super().__init__(header, name, stream)
             self.elffile = elffile
@@ -957,13 +945,9 @@ except ImportError as e:
             offset = 0
             while offset + entry_size <= len(data):
                 if is_rela:
-                    r_offset, r_info, r_addend = struct.unpack(
-                        entry_format, data[offset : offset + entry_size]
-                    )
+                    r_offset, r_info, r_addend = struct.unpack(entry_format, data[offset : offset + entry_size])
                 else:
-                    r_offset, r_info = struct.unpack(
-                        entry_format, data[offset : offset + entry_size]
-                    )
+                    r_offset, r_info = struct.unpack(entry_format, data[offset : offset + entry_size])
                     r_addend = 0
 
                 reloc = FallbackRelocation(r_offset, r_info, r_addend)
@@ -1024,9 +1008,7 @@ except ImportError as e:
         elffile: FallbackELFFile
         _dynamics: list[FallbackDynamic]
 
-        def __init__(
-            self, header: Container, name: str, stream: BinaryIO, elffile: FallbackELFFile
-        ) -> None:
+        def __init__(self, header: Container, name: str, stream: BinaryIO, elffile: FallbackELFFile) -> None:
             """Initialize dynamic section."""
             super().__init__(header, name, stream)
             self.elffile = elffile

@@ -235,11 +235,7 @@ class PEStructureModel(QAbstractItemModel):
             # Extract CN from subject
             subject_parts = signing_cert.subject.split(",")
             if cn_part := next(
-                (
-                    part.strip()
-                    for part in subject_parts
-                    if part.strip().startswith("CN=")
-                ),
+                (part.strip() for part in subject_parts if part.strip().startswith("CN=")),
                 None,
             ):
                 cert_info = f"{cert_info} - {cn_part[3:]}"  # Remove 'CN=' prefix
@@ -287,11 +283,7 @@ class PEStructureModel(QAbstractItemModel):
             if cert.subject:
                 subject_parts = cert.subject.split(",")
                 if cn_part := next(
-                    (
-                        part.strip()
-                        for part in subject_parts
-                        if part.strip().startswith("CN=")
-                    ),
+                    (part.strip() for part in subject_parts if part.strip().startswith("CN=")),
                     None,
                 ):
                     cert_name = f"{cert_name} - {cn_part[3:]}"
@@ -312,9 +304,7 @@ class PEStructureModel(QAbstractItemModel):
             self._add_certificate_details(signing_cert, certificates_root)
 
         # Trust status
-        trust_item = PEStructureItem(
-            f"Trust Status: {certificates.trust_status}", certificates_root
-        )
+        trust_item = PEStructureItem(f"Trust Status: {certificates.trust_status}", certificates_root)
         certificates_root.append_child(trust_item)
 
         # Additional certificates in chain

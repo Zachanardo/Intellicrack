@@ -271,11 +271,7 @@ class ValidationLayerDetector:
             for dll in os_dll_matches:
                 layer_info.add_evidence(f"Imports OS-level crypto library: {dll}")
 
-        os_api_signatures = [
-            sig
-            for sig in self._api_signatures
-            if sig.library.lower() in {dll.lower() for dll in self.OS_LEVEL_DLLS}
-        ]
+        os_api_signatures = [sig for sig in self._api_signatures if sig.library.lower() in {dll.lower() for dll in self.OS_LEVEL_DLLS}]
 
         if os_api_signatures and hasattr(binary, "imports"):
             for sig in os_api_signatures[:5]:
@@ -306,10 +302,7 @@ class ValidationLayerDetector:
         lib_api_signatures = [
             sig
             for sig in self._api_signatures
-            if any(
-                lib_keyword in sig.library.lower()
-                for lib_keyword in ["ssl", "tls", "nss", "boring"]
-            )
+            if any(lib_keyword in sig.library.lower() for lib_keyword in ["ssl", "tls", "nss", "boring"])
         ]
 
         if lib_api_signatures and hasattr(binary, "imports"):
@@ -336,9 +329,7 @@ class ValidationLayerDetector:
                     strings_found.add(string.lower())
 
             if indicator_matches := [
-                indicator
-                for indicator in self.APPLICATION_LEVEL_INDICATORS
-                if any(indicator.lower() in s for s in strings_found)
+                indicator for indicator in self.APPLICATION_LEVEL_INDICATORS if any(indicator.lower() in s for s in strings_found)
             ]:
                 layer_info.confidence = min(len(indicator_matches) * 0.2, 0.9)
                 for indicator in indicator_matches[:5]:
@@ -379,9 +370,7 @@ class ValidationLayerDetector:
                     strings_found.add(string.lower())
 
             if indicator_matches := [
-                indicator
-                for indicator in self.SERVER_LEVEL_INDICATORS
-                if any(indicator.lower() in s for s in strings_found)
+                indicator for indicator in self.SERVER_LEVEL_INDICATORS if any(indicator.lower() in s for s in strings_found)
             ]:
                 layer_info.confidence = min(len(indicator_matches) * 0.25, 0.9)
                 for indicator in indicator_matches[:3]:
@@ -433,10 +422,7 @@ class ValidationLayerDetector:
         """Check if strings contain HTTP/HTTPS endpoints."""
         http_indicators = ["http://", "https://", "api.", "/api/", "/v1/", "/v2/"]
 
-        return any(
-            any(indicator in string for indicator in http_indicators)
-            for string in strings
-        )
+        return any(any(indicator in string for indicator in http_indicators) for string in strings)
 
     def _establish_dependencies(self, layers: dict[ValidationLayer, LayerInfo]) -> None:
         """Establish dependency relationships between detected layers."""
@@ -445,7 +431,11 @@ class ValidationLayerDetector:
                 ValidationLayer.LIBRARY_LEVEL,
             )
 
-        if ValidationLayer.APPLICATION_LEVEL in layers and ValidationLayer.OS_LEVEL in layers and ValidationLayer.LIBRARY_LEVEL not in layers:
+        if (
+            ValidationLayer.APPLICATION_LEVEL in layers
+            and ValidationLayer.OS_LEVEL in layers
+            and ValidationLayer.LIBRARY_LEVEL not in layers
+        ):
             layers[ValidationLayer.APPLICATION_LEVEL].add_dependency(
                 ValidationLayer.OS_LEVEL,
             )

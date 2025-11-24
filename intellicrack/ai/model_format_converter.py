@@ -464,9 +464,7 @@ class ModelFormatConverter:
                     for key, tensor in state_dict.items():
                         if hasattr(tensor, "shape"):  # It's a tensor
                             optimized_tensor = gpu_autoloader(tensor)
-                            optimized_dict[key] = (
-                                optimized_tensor if optimized_tensor is not None else tensor
-                            )
+                            optimized_dict[key] = optimized_tensor if optimized_tensor is not None else tensor
                         else:
                             optimized_dict[key] = tensor
                     state_dict = optimized_dict
@@ -821,9 +819,7 @@ class ModelFormatConverter:
 
         return info
 
-    def load_model_for_conversion(
-        self, model_path: str | Path, model_type: str = "auto"
-    ) -> object | None:
+    def load_model_for_conversion(self, model_path: str | Path, model_type: str = "auto") -> object | None:
         """Load a model using appropriate AutoModel class based on type.
 
         Args:
@@ -905,9 +901,7 @@ class ModelFormatConverter:
                 "vocab_size": getattr(config, "vocab_size", None),
                 "max_position_embeddings": getattr(config, "max_position_embeddings", None),
                 "num_parameters": sum(p.numel() for p in model.parameters()),
-                "requires_grad_params": sum(
-                    p.numel() for p in model.parameters() if p.requires_grad
-                ),
+                "requires_grad_params": sum(p.numel() for p in model.parameters() if p.requires_grad),
                 "model_class": model.__class__.__name__,
                 "supports_gradient_checkpointing": hasattr(model, "gradient_checkpointing_enable"),
                 "is_quantized": hasattr(model, "quantization_config"),
@@ -951,9 +945,7 @@ class ModelFormatConverter:
         if model is None:
             return None
 
-        output_path = kwargs.get(
-            "output_path", Path(source_path).parent / f"{Path(source_path).stem}_{target_format}"
-        )
+        output_path = kwargs.get("output_path", Path(source_path).parent / f"{Path(source_path).stem}_{target_format}")
 
         try:
             if target_format == "onnx" and HAS_ONNX and HAS_TORCH:
@@ -982,9 +974,7 @@ class ModelFormatConverter:
                     opset_version=kwargs.get("opset_version", 14),
                     input_names=kwargs.get("input_names", ["input"]),
                     output_names=kwargs.get("output_names", ["output"]),
-                    dynamic_axes=kwargs.get(
-                        "dynamic_axes", {"input": {0: "batch_size"}, "output": {0: "batch_size"}}
-                    ),
+                    dynamic_axes=kwargs.get("dynamic_axes", {"input": {0: "batch_size"}, "output": {0: "batch_size"}}),
                 )
 
                 logger.info(f"Successfully converted model to {target_format} using AutoModel")

@@ -96,9 +96,7 @@ class ConcolicExecutionEngine:
         """Legacy property for backward compatibility."""
         return self.symbolic_engine is not None
 
-    def explore_paths(
-        self, target_address: int | None = None, avoid_addresses: list[int] | None = None
-    ) -> dict[str, Any]:
+    def explore_paths(self, target_address: int | None = None, avoid_addresses: list[int] | None = None) -> dict[str, Any]:
         """Explore paths using the available symbolic execution engine."""
         if not self.symbolic_engine:
             return {"error": "No symbolic execution engine available. Install angr (recommended)."}
@@ -110,9 +108,7 @@ class ConcolicExecutionEngine:
 
         return {"error": "Unknown symbolic execution engine"}
 
-    def _explore_paths_angr(
-        self, target_address: int | None, avoid_addresses: list[int] | None
-    ) -> dict[str, Any]:
+    def _explore_paths_angr(self, target_address: int | None, avoid_addresses: list[int] | None) -> dict[str, Any]:
         """Explore paths using angr."""
         try:
             self.logger.info("Starting angr symbolic execution on %s", self.binary_path)
@@ -168,9 +164,7 @@ class ConcolicExecutionEngine:
             self.logger.error(f"Angr execution failed: {e}")
             return {"error": str(e), "engine": "angr"}
 
-    def _explore_paths_simconcolic(
-        self, target_address: int | None, avoid_addresses: list[int] | None
-    ) -> dict[str, Any]:
+    def _explore_paths_simconcolic(self, target_address: int | None, avoid_addresses: list[int] | None) -> dict[str, Any]:
         """Fallback simconcolic implementation."""
         if not SIMCONCOLIC_AVAILABLE:
             return {
@@ -251,10 +245,7 @@ class ConcolicExecutionEngine:
 
             for func in cfg.functions.values():
                 # Look for functions that might be license checks
-                if any(
-                    pattern in func.name.lower()
-                    for pattern in ["license", "register", "validate", "check"]
-                ):
+                if any(pattern in func.name.lower() for pattern in ["license", "register", "validate", "check"]):
                     license_addrs.append(func.addr)
 
             if not license_addrs:

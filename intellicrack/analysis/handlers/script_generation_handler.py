@@ -179,9 +179,7 @@ class ScriptGenerationWorker(QRunnable):
                     if enhanced_result.get("enhanced_script"):
                         result["script"] = enhanced_result["enhanced_script"]
                         result["ai_enhanced"] = True
-                        result["optimization_applied"] = enhanced_result.get(
-                            "optimization_applied", []
-                        )
+                        result["optimization_applied"] = enhanced_result.get("optimization_applied", [])
                         self.signals.progress.emit("AI enhancement complete")
 
                 except ImportError:
@@ -460,9 +458,7 @@ class ScriptGenerationHandler(QObject):
         self.current_result = result
         logger.info(f"Script generation handler received analysis for: {result.file_path}")
 
-    def generate_script(
-        self, script_type: str = "frida", parent_widget: QWidget | None = None
-    ) -> None:
+    def generate_script(self, script_type: str = "frida", parent_widget: QWidget | None = None) -> None:
         """Generate a bypass script of the specified type.
 
         Args:

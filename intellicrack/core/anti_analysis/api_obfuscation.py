@@ -209,9 +209,7 @@ class APIObfuscator:
                 return None
 
             if num_names > num_functions:
-                self.logger.warning(
-                    f"DLL {dll_name} has more names ({num_names}) than functions ({num_functions}) - possible corruption"
-                )
+                self.logger.warning(f"DLL {dll_name} has more names ({num_names}) than functions ({num_functions}) - possible corruption")
                 return None
 
             # Check for suspiciously large export tables (possible anti-analysis)
@@ -222,9 +220,7 @@ class APIObfuscator:
 
             # Validate that we have named exports to search through
             if num_names == 0:
-                self.logger.info(
-                    f"DLL {dll_name} has {num_functions} functions but no named exports (ordinal-only)"
-                )
+                self.logger.info(f"DLL {dll_name} has {num_functions} functions but no named exports (ordinal-only)")
                 return None
 
             names_array = h_module + names_rva
@@ -669,9 +665,7 @@ if (p{api_name}) {{
                     key = f"{hash_type}_{hash_value}"
                     self.api_hash_db[key] = (dll_name, api_name)
 
-            self.logger.info(
-                f"Loaded {len(common_apis)} API entries with {len(self.api_hash_db)} hash mappings"
-            )
+            self.logger.info(f"Loaded {len(common_apis)} API entries with {len(self.api_hash_db)} hash mappings")
 
         except Exception as e:
             self.logger.error(f"Failed to load API databases: {e}")
@@ -710,9 +704,7 @@ if (p{api_name}) {{
                     # Try to decrypt
                     if addr in self.encrypted_strings_db:
                         decrypted = self.encrypted_strings_db[addr]
-                        encrypted_patterns.append(
-                            {"offset": i, "encrypted": hex(addr), "decrypted": decrypted}
-                        )
+                        encrypted_patterns.append({"offset": i, "encrypted": hex(addr), "decrypted": decrypted})
 
             return bytes(resolved_code), {
                 "method": "string_encryption",
@@ -748,9 +740,7 @@ if (p{api_name}) {{
                     api_addr = int.from_bytes(code[i + 2 : i + 6], "little")
                     if api_addr in self.api_hash_db:
                         api_name = self.api_hash_db[api_addr]
-                        dynamic_imports.append(
-                            {"offset": i, "api": api_name, "method": "GetProcAddress"}
-                        )
+                        dynamic_imports.append({"offset": i, "api": api_name, "method": "GetProcAddress"})
 
             return bytes(resolved_code), {
                 "method": "dynamic_loading",
@@ -929,9 +919,7 @@ if (p{api_name}) {{
 
                     # Update call to point to trampoline
                     new_call_offset = trampoline_offset - (i + 5)
-                    modified_code[i + 1 : i + 5] = new_call_offset.to_bytes(
-                        4, "little", signed=True
-                    )
+                    modified_code[i + 1 : i + 5] = new_call_offset.to_bytes(4, "little", signed=True)
 
                     trampolines.append(
                         {
@@ -1096,9 +1084,7 @@ if (p{api_name}) {{
 
                     # Insert decryption stub before encrypted section
                     # The stub will decrypt the code at runtime before execution
-                    modified_code = (
-                        bytearray(modified_code[:i]) + decrypt_stub + bytearray(modified_code[i:])
-                    )
+                    modified_code = bytearray(modified_code[:i]) + decrypt_stub + bytearray(modified_code[i:])
 
                     encrypted_sections.append(
                         {
@@ -1227,9 +1213,7 @@ if (p{api_name}) {{
                     lib_name_addr = int.from_bytes(code[i + 1 : i + 5], "little")
 
                     # Check if followed by LoadLibrary call
-                    if (
-                        i + 5 < len(code) - 5 and code[i + 5 : i + 7] == b"\xff\x15"
-                    ):  # CALL DWORD PTR
+                    if i + 5 < len(code) - 5 and code[i + 5 : i + 7] == b"\xff\x15":  # CALL DWORD PTR
                         call_target = int.from_bytes(code[i + 7 : i + 11], "little")
 
                         # Check if this calls LoadLibrary
@@ -1253,9 +1237,7 @@ if (p{api_name}) {{
                     call_target = i + 5 + call_offset
 
                     # Check if target looks like delay load helper
-                    if 0 <= call_target < len(code) - 8 and (
-                                                code[call_target : call_target + 3] == b"\x55\x8b\xec"
-                                            ):
+                    if 0 <= call_target < len(code) - 8 and (code[call_target : call_target + 3] == b"\x55\x8b\xec"):
                         delayed_imports.append(
                             {
                                 "offset": i,

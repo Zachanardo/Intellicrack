@@ -155,9 +155,7 @@ def secure_pickle_load(file_path: str) -> object:
     return RestrictedUnpickler(io.BytesIO(data)).load()
 
 
-def handle_exception(
-    exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType | None
-) -> None:
+def handle_exception(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType | None) -> None:
     """Global exception handler for unhandled exceptions.
 
     Args:
@@ -181,9 +179,7 @@ def handle_exception(
     _report_error(exc_type, exc_value, exc_traceback)
 
 
-def _display_exception_dialog(
-    exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType | None
-) -> None:
+def _display_exception_dialog(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType | None) -> None:
     """Display an exception dialog to the user.
 
     Args:
@@ -212,9 +208,7 @@ def _display_exception_dialog(
         logger.error("Failed to display exception dialog: %s", e)
 
 
-def _report_error(
-    exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType | None
-) -> None:
+def _report_error(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType | None) -> None:
     """Report error to log file and optionally to remote service.
 
     Args:
@@ -305,9 +299,7 @@ def save_config(config: dict[str, Any], config_path: str = "config.json") -> boo
         return False
 
 
-def setup_file_logging(
-    log_file: str = "intellicrack.log", level: int = logging.INFO
-) -> logging.Logger:
+def setup_file_logging(log_file: str = "intellicrack.log", level: int = logging.INFO) -> logging.Logger:
     """Set up file logging for the application.
 
     Args:

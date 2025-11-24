@@ -201,9 +201,7 @@ OPENSSL_DISABLE_VERIFY_X86 = PatchTemplate(
     description="Patch SSL_CTX_set_verify to set mode=SSL_VERIFY_NONE (x86)",
     target_api="SSL_CTX_set_verify",
     architecture=Architecture.X86,
-    patch_bytes=bytes(
-        [0x8B, 0x44, 0x24, 0x04, 0xC7, 0x44, 0x24, 0x08, 0x00, 0x00, 0x00, 0x00, 0xC3]
-    ),
+    patch_bytes=bytes([0x8B, 0x44, 0x24, 0x04, 0xC7, 0x44, 0x24, 0x08, 0x00, 0x00, 0x00, 0x00, 0xC3]),
 )
 
 OPENSSL_DISABLE_VERIFY_X64 = PatchTemplate(
@@ -235,9 +233,7 @@ SCHANNEL_SKIP_VALIDATION_X64 = PatchTemplate(
     description="Patch InitializeSecurityContext to skip cert checks (x64)",
     target_api="InitializeSecurityContext",
     architecture=Architecture.X64,
-    patch_bytes=bytes(
-        [0x81, 0x21, 0x00, 0x00, 0x10, 0x00, 0x48, 0xC7, 0xC0, 0x00, 0x00, 0x00, 0x00, 0xC3]
-    ),
+    patch_bytes=bytes([0x81, 0x21, 0x00, 0x00, 0x10, 0x00, 0x48, 0xC7, 0xC0, 0x00, 0x00, 0x00, 0x00, 0xC3]),
 )
 
 SCHANNEL_FORCE_TRUST_X64 = PatchTemplate(
@@ -245,9 +241,7 @@ SCHANNEL_FORCE_TRUST_X64 = PatchTemplate(
     description="Patch certificate policy to always trust (x64)",
     target_api="QueryContextAttributes",
     architecture=Architecture.X64,
-    patch_bytes=bytes(
-        [0x48, 0x83, 0xFA, 0x53, 0x75, 0x08, 0x48, 0xC7, 0xC0, 0x00, 0x00, 0x00, 0x00, 0xC3]
-    ),
+    patch_bytes=bytes([0x48, 0x83, 0xFA, 0x53, 0x75, 0x08, 0x48, 0xC7, 0xC0, 0x00, 0x00, 0x00, 0x00, 0xC3]),
 )
 
 CRYPTOAPI_BYPASS_CHAIN_POLICY_X86 = PatchTemplate(
@@ -361,12 +355,7 @@ def select_template(api_name: str, arch: Architecture) -> PatchTemplate | None:
 
     """
     return next(
-        (
-            template
-            for template in ALL_TEMPLATES
-            if template.target_api == api_name
-            and template.architecture == arch
-        ),
+        (template for template in ALL_TEMPLATES if template.target_api == api_name and template.architecture == arch),
         None,
     )
 

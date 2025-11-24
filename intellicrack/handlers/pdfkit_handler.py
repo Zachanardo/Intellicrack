@@ -109,9 +109,7 @@ except ImportError as e:
             self._add_object({"Type": "/Pages", "Kids": [], "Count": 0})
 
             # Create font object
-            font_obj = self._add_object(
-                {"Type": "/Font", "Subtype": "/Type1", "BaseFont": "/Helvetica"}
-            )
+            font_obj = self._add_object({"Type": "/Font", "Subtype": "/Type1", "BaseFont": "/Helvetica"})
 
             # Process HTML content
             if content.startswith("<"):
@@ -550,9 +548,7 @@ except ImportError as e:
             # Read file content
             with open(input, encoding="utf-8") as f:
                 content = f.read()
-            return from_string(
-                content, output_path, options, toc, cover, configuration, cover_first
-            )
+            return from_string(content, output_path, options, toc, cover, configuration, cover_first)
         except Exception as e:
             logger.error("Failed to read file %s: %s", input, e)
             return from_string(
@@ -685,9 +681,7 @@ except ImportError as e:
             """
             self.current_page.append({"type": "line", "x1": x1, "y1": y1, "x2": x2, "y2": y2})
 
-        def rect(
-            self, x: int, y: int, width: int, height: int, stroke: int = 1, fill: int = 0
-        ) -> None:
+        def rect(self, x: int, y: int, width: int, height: int, stroke: int = 1, fill: int = 0) -> None:
             """Draw rectangle.
 
             Adds a rectangle to the current page.
@@ -726,9 +720,7 @@ except ImportError as e:
                 fill: Whether to fill the circle (1 for yes, 0 for no).
 
             """
-            self.current_page.append(
-                {"type": "circle", "x": x, "y": y, "radius": radius, "stroke": stroke, "fill": fill}
-            )
+            self.current_page.append({"type": "circle", "x": x, "y": y, "radius": radius, "stroke": stroke, "fill": fill})
 
         def showPage(self) -> None:
             """Start new page.
@@ -759,9 +751,7 @@ except ImportError as e:
             # Convert pages to text content
             all_content: list[str] = []
             for page in self.pages:
-                page_text: list[str] = [
-                    item["text"] for item in page if item["type"] == "text"
-                ]
+                page_text: list[str] = [item["text"] for item in page if item["type"] == "text"]
                 all_content.append("\n".join(page_text))
 
             if not self.filename:
@@ -883,9 +873,7 @@ except ImportError as e:
         from story elements (paragraphs, tables, images, etc.).
         """
 
-        def __init__(
-            self, filename: str, pagesize: tuple[int, int] = (612, 792), **kwargs: str
-        ) -> None:
+        def __init__(self, filename: str, pagesize: tuple[int, int] = (612, 792), **kwargs: str) -> None:
             """Initialize template.
 
             Sets up a document template with filename and page dimensions.
@@ -1003,9 +991,7 @@ except ImportError as e:
         Represents an image embedded in a PDF document.
         """
 
-        def __init__(
-            self, filename: str, width: int | None = None, height: int | None = None
-        ) -> None:
+        def __init__(self, filename: str, width: int | None = None, height: int | None = None) -> None:
             """Initialize image.
 
             Creates an image element with optional dimensions.

@@ -311,9 +311,7 @@ def log_critical(message: str, **kwargs: Unpack[LogMessageKwargs]) -> None:
     log_message(message, level=MessageLevel.CRITICAL, **kwargs)
 
 
-def log_analysis(
-    message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]
-) -> None:
+def log_analysis(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]) -> None:
     """Log an analysis-related message with optional context.
 
     Args:
@@ -325,9 +323,7 @@ def log_analysis(
     log_message(message, level=level, category=MessageCategory.ANALYSIS, **kwargs)
 
 
-def log_ui(
-    message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]
-) -> None:
+def log_ui(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]) -> None:
     """Log a UI-related message with optional context.
 
     Args:
@@ -355,9 +351,7 @@ def log_security(
     log_message(message, level=level, category=MessageCategory.SECURITY, **kwargs)
 
 
-def log_performance(
-    message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]
-) -> None:
+def log_performance(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]) -> None:
     """Log a performance-related message with optional context.
 
     Args:
@@ -369,9 +363,7 @@ def log_performance(
     log_message(message, level=level, category=MessageCategory.PERFORMANCE, **kwargs)
 
 
-def log_binary_processing(
-    message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]
-) -> None:
+def log_binary_processing(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs: Unpack[LogMessageKwargs]) -> None:
     """Log a binary processing message with optional context.
 
     Args:

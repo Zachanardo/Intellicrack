@@ -198,9 +198,7 @@ class RemotePluginExecutor:
 
             # Add HMAC signature for authentication
             request_json = json.dumps(request, sort_keys=True)
-            signature = hmac.new(
-                self.shared_secret, request_json.encode("utf-8"), hashlib.sha256
-            ).hexdigest()
+            signature = hmac.new(self.shared_secret, request_json.encode("utf-8"), hashlib.sha256).hexdigest()
             request["signature"] = signature
 
             # Connect to remote server
@@ -234,9 +232,7 @@ class RemotePluginExecutor:
                 serialization_type = response_data.get("serialization", "json")
 
                 try:
-                    return self._deserialize_safe(
-                        encoded_results, expected_type=serialization_type
-                    )
+                    return self._deserialize_safe(encoded_results, expected_type=serialization_type)
                 except Exception as e:
                     logger.exception("Failed to deserialize results: %s", e)
                     return [f"Deserialization error: {e}"]
@@ -303,9 +299,7 @@ class RemotePluginExecutor:
 
                     secret = get_secret("INTELLICRACK_REMOTE_SECRET", None)
                     if not secret:
-                        logger.exception(
-                            "No remote execution secret configured - rejecting request"
-                        )
+                        logger.exception("No remote execution secret configured - rejecting request")
                         response = {"status": "error", "error": "Server not configured"}
                         client_socket.sendall(json.dumps(response).encode("utf-8") + b"\n")
                         return
@@ -313,9 +307,7 @@ class RemotePluginExecutor:
 
                     # Verify signature
                     request_json = json.dumps(request, sort_keys=True)
-                    expected_sig = hmac.new(
-                        shared_secret, request_json.encode("utf-8"), hashlib.sha256
-                    ).hexdigest()
+                    expected_sig = hmac.new(shared_secret, request_json.encode("utf-8"), hashlib.sha256).hexdigest()
 
                     if not hmac.compare_digest(signature, expected_sig):
                         logger.exception("Invalid HMAC signature in request")
@@ -331,12 +323,8 @@ class RemotePluginExecutor:
                 # Deserialize arguments based on type
                 executor = RemotePluginExecutor()
                 try:
-                    args = executor._deserialize_safe(
-                        request.get("args", ""), expected_type=serialization_type
-                    )
-                    kwargs = executor._deserialize_safe(
-                        request.get("kwargs", ""), expected_type=serialization_type
-                    )
+                    args = executor._deserialize_safe(request.get("args", ""), expected_type=serialization_type)
+                    kwargs = executor._deserialize_safe(request.get("kwargs", ""), expected_type=serialization_type)
                 except Exception as e:
                     logger.exception("Failed to deserialize arguments: %s", e)
                     response = {"status": "error", "error": f"Deserialization failed: {e}"}
@@ -533,9 +521,7 @@ def _run_plugin_in_sandbox(
         return [f"Plugin execution error: {e}"]
 
 
-def create_remote_executor(
-    host: str | None = None, port: int | None = None
-) -> RemotePluginExecutor:
+def create_remote_executor(host: str | None = None, port: int | None = None) -> RemotePluginExecutor:
     """Create a RemotePluginExecutor.
 
     Args:

@@ -176,9 +176,7 @@ class DynamicSignatureExtractor:
         conn.commit()
         conn.close()
 
-    def extract_signatures(
-        self, binary_path: str, known_protection: str | None = None
-    ) -> list[DynamicSignature]:
+    def extract_signatures(self, binary_path: str, known_protection: str | None = None) -> list[DynamicSignature]:
         """Extract protection signatures dynamically from a binary."""
         signatures = []
 
@@ -205,9 +203,7 @@ class DynamicSignatureExtractor:
 
             # Update pattern tracker
             for sig in signatures:
-                self.pattern_tracker.track_pattern(
-                    sig.pattern_bytes.hex(), sig.category.value, {"confidence": sig.confidence}
-                )
+                self.pattern_tracker.track_pattern(sig.pattern_bytes.hex(), sig.category.value, {"confidence": sig.confidence})
 
         except Exception as e:
             logger.error(f"Failed to extract signatures: {e}")
@@ -234,9 +230,7 @@ class DynamicSignatureExtractor:
                 mask = self._generate_entropy_mask(pattern)
 
                 sig = DynamicSignature(
-                    category=ProtectionCategory.PACKER
-                    if entropy > 7.8
-                    else ProtectionCategory.ENCRYPTION,
+                    category=ProtectionCategory.PACKER if entropy > 7.8 else ProtectionCategory.ENCRYPTION,
                     confidence=min(1.0, entropy / 8.0),
                     pattern_bytes=pattern,
                     mask=mask,
@@ -325,9 +319,7 @@ class DynamicSignatureExtractor:
 
             # Create signature from import patterns
             if suspicious_apis:
-                if import_pattern := self._generate_import_pattern(
-                    pe, suspicious_apis
-                ):
+                if import_pattern := self._generate_import_pattern(pe, suspicious_apis):
                     sig = DynamicSignature(
                         category=self._categorize_imports(suspicious_apis),
                         confidence=min(1.0, len(suspicious_apis) * 0.1),
@@ -356,9 +348,7 @@ class DynamicSignatureExtractor:
             return signatures
 
         # Scan for code patterns using binary pattern detector
-        matches = self.binary_detector.scan_binary(
-            data, ["protection", "anti_debug", "obfuscation"]
-        )
+        matches = self.binary_detector.scan_binary(data, ["protection", "anti_debug", "obfuscation"])
 
         for match in matches:
             # Convert binary pattern match to dynamic signature
@@ -409,9 +399,7 @@ class DynamicSignatureExtractor:
                 # Create mask allowing string variation
                 mask = bytearray(len(pattern))
                 mask[: offset - pattern_start] = b"\xff" * (offset - pattern_start)
-                mask[offset - pattern_start + len(str_bytes) :] = b"\xff" * (
-                    pattern_end - offset - len(str_bytes)
-                )
+                mask[offset - pattern_start + len(str_bytes) :] = b"\xff" * (pattern_end - offset - len(str_bytes))
 
                 sig = DynamicSignature(
                     category=category,
@@ -489,17 +477,13 @@ class DynamicSignatureExtractor:
 
         return signatures
 
-    def _evolve_signatures(
-        self, signatures: list[DynamicSignature], data: bytes
-    ) -> list[DynamicSignature]:
+    def _evolve_signatures(self, signatures: list[DynamicSignature], data: bytes) -> list[DynamicSignature]:
         """Use pattern evolution to generate improved signatures."""
         evolved = []
 
         for sig in signatures:
             # Track pattern for evolution
-            pattern_id = self.pattern_tracker.track_pattern(
-                sig.pattern_bytes.hex(), sig.category.value, {"confidence": sig.confidence}
-            )
+            pattern_id = self.pattern_tracker.track_pattern(sig.pattern_bytes.hex(), sig.category.value, {"confidence": sig.confidence})
 
             # Get mutations
             mutations = self.pattern_tracker.get_pattern_mutations(pattern_id)
@@ -652,9 +636,7 @@ class DynamicSignatureExtractor:
         }
         return mapping.get(category, ProtectionCategory.CUSTOM)
 
-    def _extract_strings(
-        self, data: bytes, encoding: str = "ascii", min_length: int = 4
-    ) -> list[str]:
+    def _extract_strings(self, data: bytes, encoding: str = "ascii", min_length: int = 4) -> list[str]:
         """Extract readable strings from binary data."""
         strings = []
 
@@ -687,9 +669,7 @@ class DynamicSignatureExtractor:
 
         return strings
 
-    def _analyze_protection_strings(
-        self, strings: list[str]
-    ) -> list[tuple[str, ProtectionCategory, float]]:
+    def _analyze_protection_strings(self, strings: list[str]) -> list[tuple[str, ProtectionCategory, float]]:
         """Analyze strings for protection indicators."""
         indicators = []
 
@@ -726,9 +706,7 @@ class DynamicSignatureExtractor:
 
         return indicators
 
-    def _analyze_control_flow(
-        self, data: bytes
-    ) -> list[tuple[bytes, ProtectionCategory, float, str]]:
+    def _analyze_control_flow(self, data: bytes) -> list[tuple[bytes, ProtectionCategory, float, str]]:
         """Analyze control flow for protection patterns."""
         patterns = []
 
@@ -825,15 +803,11 @@ class DynamicSignatureExtractor:
                             target_addr = target_op.imm
 
                             # Avoid infinite recursion
-                            if target_addr not in visited_addresses and 0 <= target_addr < len(
-                                data
-                            ):
+                            if target_addr not in visited_addresses and 0 <= target_addr < len(data):
                                 visited_addresses.add(target_addr)
 
                                 # Recursively analyze call target
-                                target_depths = self._analyze_call_target(
-                                    data, target_addr, current_depth, visited_addresses
-                                )
+                                target_depths = self._analyze_call_target(data, target_addr, current_depth, visited_addresses)
                                 depths.extend(target_depths)
 
                 elif insn.mnemonic == "ret" and call_stack:
@@ -841,9 +815,7 @@ class DynamicSignatureExtractor:
                     call_stack.pop()
 
                 # Track indirect calls through registers
-                elif (
-                    insn.mnemonic == "call" and insn.op_str.startswith("e")
-                ) or insn.op_str.startswith("r"):
+                elif (insn.mnemonic == "call" and insn.op_str.startswith("e")) or insn.op_str.startswith("r"):
                     depths.append(len(call_stack) + 1)
 
             except Exception as e:
@@ -854,9 +826,7 @@ class DynamicSignatureExtractor:
         # Return unique depth levels found
         return sorted(set(depths)) if depths else []
 
-    def _analyze_call_target(
-        self, data: bytes, target_addr: int, current_depth: int, visited: set[int]
-    ) -> list[int]:
+    def _analyze_call_target(self, data: bytes, target_addr: int, current_depth: int, visited: set[int]) -> list[int]:
         """Recursively analyze call targets to find maximum call depth."""
         depths = []
 
@@ -902,18 +872,14 @@ class DynamicSignatureExtractor:
 
     def _extract_pattern_from_chain(self, data: bytes, chain: list[int]) -> bytes:
         """Extract pattern from jump chain."""
-        return data[chain[0]:min(chain[-1] + 16, len(data))] if chain else b""
+        return data[chain[0] : min(chain[-1] + 16, len(data))] if chain else b""
 
-    def _analyze_api_sequences(
-        self, data: bytes
-    ) -> list[tuple[bytes, ProtectionCategory, float, str]]:
+    def _analyze_api_sequences(self, data: bytes) -> list[tuple[bytes, ProtectionCategory, float, str]]:
         """Analyze API call sequences."""
         # Simplified - would need full IAT analysis
         return []
 
-    def _analyze_timing_patterns(
-        self, data: bytes
-    ) -> list[tuple[bytes, ProtectionCategory, float, str]]:
+    def _analyze_timing_patterns(self, data: bytes) -> list[tuple[bytes, ProtectionCategory, float, str]]:
         """Analyze timing check patterns."""
         patterns = []
 
@@ -984,20 +950,14 @@ class DynamicSignatureExtractor:
             analysis = analyzer.analyze_polymorphic_code(data, base_address=0, max_instructions=500)
 
             if analysis.engine_type.value != "unknown":
-                if semantic_sig := analysis.invariant_features.get(
-                    "semantic_sequence", ()
-                ):
+                if semantic_sig := analysis.invariant_features.get("semantic_sequence", ()):
                     sig_bytes = str(semantic_sig).encode()[:64]
                     confidence = 0.85 if analysis.mutation_complexity > 0.5 else 0.70
-                    patterns.append(
-                        (sig_bytes, confidence, f"Polymorphic engine: {analysis.engine_type.value}")
-                    )
+                    patterns.append((sig_bytes, confidence, f"Polymorphic engine: {analysis.engine_type.value}"))
 
             if analysis.decryption_routine:
                 decryption_block = analysis.decryption_routine
-                routine_bytes = data[decryption_block.start_address : decryption_block.end_address][
-                    :64
-                ]
+                routine_bytes = data[decryption_block.start_address : decryption_block.end_address][:64]
                 patterns.append((routine_bytes, 0.90, "Polymorphic decryption routine"))
 
             for mutation_type in analysis.mutation_types:
@@ -1046,14 +1006,10 @@ class DynamicSignatureExtractor:
                 MutationType.SEMANTIC_NOP,
             }
 
-            detected_metamorphic = [
-                m for m in analysis.mutation_types if m in metamorphic_mutations
-            ]
+            detected_metamorphic = [m for m in analysis.mutation_types if m in metamorphic_mutations]
 
             if len(detected_metamorphic) >= 2:
-                if semantic_sig := analyzer.extract_semantic_signature(
-                    data, base_address=0
-                ):
+                if semantic_sig := analyzer.extract_semantic_signature(data, base_address=0):
                     sig_bytes = semantic_sig.encode()[:64]
                     confidence = min(0.95, 0.70 + (len(detected_metamorphic) * 0.08))
                     patterns.append(
@@ -1083,8 +1039,7 @@ class DynamicSignatureExtractor:
         if len(data) < 64:
             return 32
 
-        rex_prefix_count = sum(bool(0x40 <= b <= 0x4F)
-                           for b in data[:64])
+        rex_prefix_count = sum(bool(0x40 <= b <= 0x4F) for b in data[:64])
         if rex_prefix_count > 2:
             return 64
 
@@ -1329,11 +1284,7 @@ class EnhancedProtectionScanner:
 
             # Categorize and score signatures
             for sig in dynamic_sigs:
-                category_key = (
-                    f"{sig.category.value}s"
-                    if sig.category.value != "custom"
-                    else "custom"
-                )
+                category_key = f"{sig.category.value}s" if sig.category.value != "custom" else "custom"
 
                 if category_key in results:
                     results[category_key].append(
@@ -1349,9 +1300,7 @@ class EnhancedProtectionScanner:
                 if sig.category.value not in results["confidence_scores"]:
                     results["confidence_scores"][sig.category.value] = 0.0
 
-                results["confidence_scores"][sig.category.value] = max(
-                    results["confidence_scores"][sig.category.value], sig.confidence
-                )
+                results["confidence_scores"][sig.category.value] = max(results["confidence_scores"][sig.category.value], sig.confidence)
 
             # Use binary pattern detector for additional detection
             with open(binary_path, "rb") as f:
@@ -1458,9 +1407,7 @@ def run_scan_thread(main_app: object, binary_path: str) -> None:
     """Enhanced scanning logic with dynamic signature extraction."""
     try:
         if hasattr(main_app, "update_output"):
-            main_app.update_output.emit(
-                "[Protection Scanner] Starting enhanced scan with dynamic signatures..."
-            )
+            main_app.update_output.emit("[Protection Scanner] Starting enhanced scan with dynamic signatures...")
         elif hasattr(main_app, "update_scan_status"):
             main_app.update_scan_status("Starting enhanced scan with dynamic signatures...")
 
@@ -1511,11 +1458,7 @@ def run_enhanced_protection_scan(main_app: object) -> None:
             main_app.update_output.emit("[Protection Scanner] Error: No binary loaded.")
         return
 
-    binary_path = (
-        main_app.current_binary
-        if hasattr(main_app, "current_binary")
-        else main_app.loaded_binary_path
-    )
+    binary_path = main_app.current_binary if hasattr(main_app, "current_binary") else main_app.loaded_binary_path
 
     thread = Thread(target=run_scan_thread, args=(main_app, binary_path), daemon=True)
     thread.start()

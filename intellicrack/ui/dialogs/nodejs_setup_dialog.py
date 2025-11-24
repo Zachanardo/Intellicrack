@@ -83,9 +83,7 @@ class NodeJSInstallWorker(QThread):
 
                 parsed_url = urlparse(node_url)
                 if parsed_url.scheme not in ("http", "https"):
-                    error_msg = (
-                        f"Invalid URL scheme: {parsed_url.scheme}. Only http/https are allowed."
-                    )
+                    error_msg = f"Invalid URL scheme: {parsed_url.scheme}. Only http/https are allowed."
                     logger.error(error_msg)
                     raise ValueError(error_msg)
 
@@ -107,9 +105,7 @@ class NodeJSInstallWorker(QThread):
                 self.progress_value.emit(75)
 
                 # Sanitize temp_installer to prevent command injection
-                temp_installer_clean = (
-                    str(temp_installer).replace(";", "").replace("|", "").replace("&", "")
-                )
+                temp_installer_clean = str(temp_installer).replace(";", "").replace("|", "").replace("&", "")
                 result = subprocess.run(
                     ["msiexec", "/i", temp_installer_clean, "/quiet", "/norestart"],
                     capture_output=True,
@@ -147,9 +143,7 @@ class NodeJSSetupDialog(BaseDialog):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize Node.js setup dialog."""
-        super().__init__(
-            parent=parent, title="Node.js Setup Required", width=600, height=500, resizable=False
-        )
+        super().__init__(parent=parent, title="Node.js Setup Required", width=600, height=500, resizable=False)
         self.install_worker = None
         self.setup_content(self.content_layout)
 
@@ -253,9 +247,7 @@ class NodeJSSetupDialog(BaseDialog):
 
     def browse_nodejs_path(self) -> None:
         """Browse for Node.js installation directory."""
-        if directory := QFileDialog.getExistingDirectory(
-            self, "Select Node.js Installation Directory", "C:\\Program Files"
-        ):
+        if directory := QFileDialog.getExistingDirectory(self, "Select Node.js Installation Directory", "C:\\Program Files"):
             self.path_input.setText(directory)
 
     def validate_input(self) -> bool:
@@ -297,9 +289,7 @@ class NodeJSSetupDialog(BaseDialog):
         if nodejs_found:
             QMessageBox.information(self, "Success", "Node.js found at the specified path!")
             return True
-        self.show_error(
-            "Node.js not found at the specified path.\nPlease check the path and try again."
-        )
+        self.show_error("Node.js not found at the specified path.\nPlease check the path and try again.")
         return False
 
     def start_installation(self) -> None:
@@ -321,9 +311,7 @@ class NodeJSSetupDialog(BaseDialog):
         # Start installation in worker thread with real progress tracking
         self.install_worker = NodeJSInstallWorker()
         self.install_worker.progress.connect(self.on_install_progress)
-        self.install_worker.progress_value.connect(
-            self.progress_bar.setValue
-        )  # Connect real progress values
+        self.install_worker.progress_value.connect(self.progress_bar.setValue)  # Connect real progress values
         self.install_worker.finished.connect(self.on_install_finished)
         self.install_worker.start()
 
@@ -346,6 +334,4 @@ class NodeJSSetupDialog(BaseDialog):
             self.show_success(message)
             self.accept()
         else:
-            self.show_error(
-                f"{message}\n\nPlease try manual installation or specify a custom path."
-            )
+            self.show_error(f"{message}\n\nPlease try manual installation or specify a custom path.")

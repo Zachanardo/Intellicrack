@@ -1,0 +1,4 @@
+Section,Type,Summary
+type,str,analysis
+findings,list,['test']
+summary,dict,"{'total_sections': 2, 'sections': ['type', 'findings'], 'data_types': {'type': 'str', 'findings': 'l..."

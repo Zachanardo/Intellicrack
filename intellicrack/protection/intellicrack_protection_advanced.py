@@ -509,9 +509,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
 
                     det_result = DetectionResult(
                         name=name,
-                        type=ProtectionType.PROTECTOR
-                        if det_type == "protector"
-                        else ProtectionType.PACKER,
+                        type=ProtectionType.PROTECTOR if det_type == "protector" else ProtectionType.PACKER,
                         confidence=80.0,  # Default confidence for text parsing
                         details={"raw": line},
                     )
@@ -570,17 +568,13 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         try:
             # Use protection engine's string extraction
             cmd = [self.engine_path, "-s", file_path]
-            result = subprocess.run(
-                cmd, check=False, capture_output=True, text=True, timeout=30, shell=False
-            )  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=30, shell=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
 
             if result.returncode == 0:
                 for line in result.stdout.split("\n"):
                     if line and len(line) < max_length:
                         # Check if string is suspicious
-                        is_suspicious = any(
-                            pattern.lower() in line.lower() for pattern in suspicious_patterns
-                        )
+                        is_suspicious = any(pattern.lower() in line.lower() for pattern in suspicious_patterns)
 
                         if is_suspicious:
                             string_info = StringInfo(
@@ -616,18 +610,10 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             import_list = []
             if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                    dll_name = (
-                        entry.dll.decode("utf-8").lower()
-                        if isinstance(entry.dll, bytes)
-                        else entry.dll.lower()
-                    )
+                    dll_name = entry.dll.decode("utf-8").lower() if isinstance(entry.dll, bytes) else entry.dll.lower()
                     for imp in entry.imports:
                         if imp.name:
-                            func_name = (
-                                imp.name.decode("utf-8")
-                                if isinstance(imp.name, bytes)
-                                else imp.name
-                            )
+                            func_name = imp.name.decode("utf-8") if isinstance(imp.name, bytes) else imp.name
                             import_list.append(f"{dll_name}.{func_name}")
 
             # Create sorted imphash
@@ -654,7 +640,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             # Try manual fallback
             return self._calculate_import_hash_manual(file_path)
 
-    def _calculate_import_hash_manual(self, file_path: str) -> ImportHash | None:    # noqa: C901
+    def _calculate_import_hash_manual(self, file_path: str) -> ImportHash | None:
         """Manual PE import hash calculation without pefile library."""
         try:
             with open(file_path, "rb") as f:
@@ -671,15 +657,11 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
 
             # Parse PE header to find import directory
             pe_header_offset = pe_offset
-            size_of_optional_header = int.from_bytes(
-                data[pe_offset + 20 : pe_offset + 22], "little"
-            )
+            size_of_optional_header = int.from_bytes(data[pe_offset + 20 : pe_offset + 22], "little")
             optional_header_offset = pe_offset + 24
 
             # Determine if PE32 or PE32+
-            magic = int.from_bytes(
-                data[optional_header_offset : optional_header_offset + 2], "little"
-            )
+            magic = int.from_bytes(data[optional_header_offset : optional_header_offset + 2], "little")
             is_pe32plus = magic == 0x20B
 
             # Get import directory RVA
@@ -692,18 +674,14 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                 return None
 
             import_rva = int.from_bytes(data[import_dir_offset : import_dir_offset + 4], "little")
-            import_size = int.from_bytes(
-                data[import_dir_offset + 4 : import_dir_offset + 8], "little"
-            )
+            import_size = int.from_bytes(data[import_dir_offset + 4 : import_dir_offset + 8], "little")
 
             # Build import string for hashing
             import_strings = []
             if import_rva > 0 and import_size > 0:
                 # Parse PE sections to find correct file offset for import RVA
                 section_header_offset = pe_header_offset + 24 + size_of_optional_header
-                num_sections = int.from_bytes(
-                    data[pe_header_offset + 6 : pe_header_offset + 8], "little"
-                )
+                num_sections = int.from_bytes(data[pe_header_offset + 6 : pe_header_offset + 8], "little")
 
                 import_file_offset = 0
                 for i in range(num_sections):
@@ -711,18 +689,10 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                     if section_offset + 40 > len(data):
                         break
 
-                    virtual_size = int.from_bytes(
-                        data[section_offset + 8 : section_offset + 12], "little"
-                    )
-                    virtual_addr = int.from_bytes(
-                        data[section_offset + 12 : section_offset + 16], "little"
-                    )
-                    raw_size = int.from_bytes(
-                        data[section_offset + 16 : section_offset + 20], "little"
-                    )
-                    raw_addr = int.from_bytes(
-                        data[section_offset + 20 : section_offset + 24], "little"
-                    )
+                    virtual_size = int.from_bytes(data[section_offset + 8 : section_offset + 12], "little")
+                    virtual_addr = int.from_bytes(data[section_offset + 12 : section_offset + 16], "little")
+                    raw_size = int.from_bytes(data[section_offset + 16 : section_offset + 20], "little")
+                    raw_addr = int.from_bytes(data[section_offset + 20 : section_offset + 24], "little")
 
                     # Check if import RVA falls within this section
                     if virtual_addr <= import_rva < virtual_addr + virtual_size:
@@ -742,21 +712,11 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                     # Process each import descriptor (20 bytes each)
                     while descriptor_offset + 20 <= len(data):
                         # Import descriptor structure
-                        original_first_thunk = int.from_bytes(
-                            data[descriptor_offset : descriptor_offset + 4], "little"
-                        )
-                        time_date_stamp = int.from_bytes(
-                            data[descriptor_offset + 4 : descriptor_offset + 8], "little"
-                        )
-                        forwarder_chain = int.from_bytes(
-                            data[descriptor_offset + 8 : descriptor_offset + 12], "little"
-                        )
-                        name_rva = int.from_bytes(
-                            data[descriptor_offset + 12 : descriptor_offset + 16], "little"
-                        )
-                        first_thunk = int.from_bytes(
-                            data[descriptor_offset + 16 : descriptor_offset + 20], "little"
-                        )
+                        original_first_thunk = int.from_bytes(data[descriptor_offset : descriptor_offset + 4], "little")
+                        time_date_stamp = int.from_bytes(data[descriptor_offset + 4 : descriptor_offset + 8], "little")
+                        forwarder_chain = int.from_bytes(data[descriptor_offset + 8 : descriptor_offset + 12], "little")
+                        name_rva = int.from_bytes(data[descriptor_offset + 12 : descriptor_offset + 16], "little")
+                        first_thunk = int.from_bytes(data[descriptor_offset + 16 : descriptor_offset + 20], "little")
 
                         # Check for end of import descriptors
                         if name_rva == 0:
@@ -788,15 +748,9 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                             if section_offset + 40 > len(data):
                                 break
 
-                            virtual_addr = int.from_bytes(
-                                data[section_offset + 12 : section_offset + 16], "little"
-                            )
-                            virtual_size = int.from_bytes(
-                                data[section_offset + 8 : section_offset + 12], "little"
-                            )
-                            raw_addr = int.from_bytes(
-                                data[section_offset + 20 : section_offset + 24], "little"
-                            )
+                            virtual_addr = int.from_bytes(data[section_offset + 12 : section_offset + 16], "little")
+                            virtual_size = int.from_bytes(data[section_offset + 8 : section_offset + 12], "little")
+                            raw_addr = int.from_bytes(data[section_offset + 20 : section_offset + 24], "little")
 
                             if virtual_addr <= name_rva < virtual_addr + virtual_size:
                                 name_file_offset = raw_addr + (name_rva - virtual_addr)
@@ -814,9 +768,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                                 dll_name += bytes([byte])
 
                             if dll_name:
-                                import_strings.append(
-                                    dll_name.decode("ascii", errors="ignore").lower()
-                                )
+                                import_strings.append(dll_name.decode("ascii", errors="ignore").lower())
 
                         descriptor_offset += 20
 
@@ -1074,9 +1026,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
 
         return results
 
-    def create_custom_signature(
-        self, name: str, pattern: bytes, offset: int = 0, description: str = ""
-    ) -> bool:
+    def create_custom_signature(self, name: str, pattern: bytes, offset: int = 0, description: str = "") -> bool:
         """Create custom signature for protection analysis.
 
         Args:
@@ -1176,14 +1126,10 @@ function detect(bShowType, bShowVersion, bShowOptions)
 
         # Add entropy-based detection
         if analysis.entropy_info:
-            if high_entropy_sections := [
-                e for e in analysis.entropy_info if e.entropy > 7.0
-            ]:
+            if high_entropy_sections := [e for e in analysis.entropy_info if e.entropy > 7.0]:
                 strings_section.append("        // High entropy sections detected")
                 for section in high_entropy_sections[:3]:  # Limit to 3
-                    strings_section.append(
-                        f"        // Section {section.section_name}: entropy={section.entropy:.2f}"
-                    )
+                    strings_section.append(f"        // Section {section.section_name}: entropy={section.entropy:.2f}")
 
         # Add import hash if available
         if analysis.import_hash:
@@ -1278,20 +1224,14 @@ rule {rule_name}_Specific {{
         # Add generic patterns if no specific match
         if not patterns:
             if detection.type == ProtectionType.PACKER:
-                patterns.append(
-                    "$generic_packer = { [4-8] E8 ?? ?? ?? ?? [4-8] }  // Generic packer pattern"
-                )
+                patterns.append("$generic_packer = { [4-8] E8 ?? ?? ?? ?? [4-8] }  // Generic packer pattern")
             elif detection.type == ProtectionType.PROTECTOR:
                 patterns.append("$anti_debug = { 64 A1 30 00 00 00 }  // Check PEB for debugging")
                 patterns.append("$is_debugger = { FF 15 ?? ?? ?? ?? 85 C0 }  // IsDebuggerPresent")
             elif detection.type == ProtectionType.OBFUSCATOR:
-                patterns.append(
-                    "$obfuscated = { [10-20] ( E9 | E8 | EB ) ?? ?? ?? ?? }  // Jump obfuscation"
-                )
+                patterns.append("$obfuscated = { [10-20] ( E9 | E8 | EB ) ?? ?? ?? ?? }  // Jump obfuscation")
             elif detection.type == ProtectionType.CRYPTOR:
-                patterns.append(
-                    "$xor_loop = { 80 34 ?? ?? 40 3D ?? ?? ?? ?? }  // XOR decryption loop"
-                )
+                patterns.append("$xor_loop = { 80 34 ?? ?? 40 3D ?? ?? ?? ?? }  // XOR decryption loop")
 
         return patterns
 
@@ -1374,8 +1314,7 @@ rule Heuristic_Protection_Detection {
             "compilers": True,
             "certificates": "PE" in basic_analysis.file_type,
             "resources": "PE" in basic_analysis.file_type,
-            "imports": "PE" in basic_analysis.file_type
-            or "ELF" in basic_analysis.file_type,
+            "imports": "PE" in basic_analysis.file_type or "ELF" in basic_analysis.file_type,
             "entropy": True,
             "strings": True,
             "overlay": "PE" in basic_analysis.file_type,
@@ -1385,9 +1324,7 @@ rule Heuristic_Protection_Detection {
 
 
 # Convenience function for advanced analysis
-def advanced_analyze(
-    file_path: str, scan_mode: ScanMode = ScanMode.DEEP, enable_heuristic: bool = True
-) -> AdvancedProtectionAnalysis:
+def advanced_analyze(file_path: str, scan_mode: ScanMode = ScanMode.DEEP, enable_heuristic: bool = True) -> AdvancedProtectionAnalysis:
     """Quick advanced analysis function."""
     analyzer = IntellicrackAdvancedProtection()
     return analyzer.detect_protections_advanced(

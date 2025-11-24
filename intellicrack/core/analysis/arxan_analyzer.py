@@ -276,9 +276,7 @@ class ArxanAnalyzer:
 
         return result
 
-    def _analyze_tamper_checks(
-        self, binary_path: Path, binary_data: bytes
-    ) -> list[TamperCheckLocation]:
+    def _analyze_tamper_checks(self, binary_path: Path, binary_data: bytes) -> list[TamperCheckLocation]:
         """Analyze anti-tampering mechanisms."""
         tamper_checks = []
 
@@ -316,9 +314,7 @@ class ArxanAnalyzer:
                         section_data = section.get_data()
                         section_va = section.VirtualAddress
 
-                        self._scan_section_for_tamper_checks(
-                            section_data, section_va, tamper_checks
-                        )
+                        self._scan_section_for_tamper_checks(section_data, section_va, tamper_checks)
 
                 pe.close()
 
@@ -327,9 +323,7 @@ class ArxanAnalyzer:
 
         return tamper_checks
 
-    def _scan_section_for_tamper_checks(
-        self, section_data: bytes, section_va: int, tamper_checks: list[TamperCheckLocation]
-    ) -> None:
+    def _scan_section_for_tamper_checks(self, section_data: bytes, section_va: int, tamper_checks: list[TamperCheckLocation]) -> None:
         """Scan executable section for tamper check patterns."""
         memory_read_patterns = [
             b"\x8b\x45",
@@ -405,15 +399,9 @@ class ArxanAnalyzer:
             self.logger.debug(f"Control flow analysis error: {e}")
 
         total_instructions = len(binary_data) // 4
-        obfuscated_instructions = (
-            len(analysis.opaque_predicates)
-            + len(analysis.indirect_jumps)
-            + len(analysis.junk_code_blocks) * 10
-        )
+        obfuscated_instructions = len(analysis.opaque_predicates) + len(analysis.indirect_jumps) + len(analysis.junk_code_blocks) * 10
 
-        analysis.obfuscation_density = min(
-            obfuscated_instructions / max(total_instructions, 1), 1.0
-        )
+        analysis.obfuscation_density = min(obfuscated_instructions / max(total_instructions, 1), 1.0)
 
         return analysis
 
@@ -510,9 +498,7 @@ class ArxanAnalyzer:
 
         return handler_addresses
 
-    def _analyze_license_validation(
-        self, binary_path: Path, binary_data: bytes
-    ) -> list[LicenseValidationRoutine]:
+    def _analyze_license_validation(self, binary_path: Path, binary_data: bytes) -> list[LicenseValidationRoutine]:
         """Analyze license validation routines."""
         license_routines = []
 
@@ -554,9 +540,7 @@ class ArxanAnalyzer:
 
         license_strings = self._find_license_strings(binary_data)
         for routine in license_routines:
-            nearby_strings = [
-                s for addr, s in license_strings if abs(addr - routine.address) < 0x1000
-            ]
+            nearby_strings = [s for addr, s in license_strings if abs(addr - routine.address) < 0x1000]
             routine.string_references = nearby_strings
 
         return license_routines
@@ -597,9 +581,7 @@ class ArxanAnalyzer:
 
         return found_strings
 
-    def _analyze_integrity_checks(
-        self, binary_path: Path, binary_data: bytes
-    ) -> list[IntegrityCheckMechanism]:
+    def _analyze_integrity_checks(self, binary_path: Path, binary_data: bytes) -> list[IntegrityCheckMechanism]:
         """Analyze integrity check mechanisms."""
         integrity_checks = []
 
@@ -635,9 +617,7 @@ class ArxanAnalyzer:
                     for entry in pe.DIRECTORY_ENTRY_IMPORT:
                         for imp in entry.imports:
                             if imp.name:
-                                func_name = (
-                                    imp.name.decode() if isinstance(imp.name, bytes) else imp.name
-                                )
+                                func_name = imp.name.decode() if isinstance(imp.name, bytes) else imp.name
 
                                 if func_name in ["CryptHashData", "CryptVerifySignature"]:
                                     check = IntegrityCheckMechanism(
@@ -673,8 +653,7 @@ class ArxanAnalyzer:
             end = min(pos + 256, len(binary_data))
 
             chunk = binary_data[start:end]
-            printable = sum(bool(32 <= b < 127)
-                        for b in chunk)
+            printable = sum(bool(32 <= b < 127) for b in chunk)
 
             if printable < len(chunk) * 0.1:
                 encrypted_regions.append((start, end - start))

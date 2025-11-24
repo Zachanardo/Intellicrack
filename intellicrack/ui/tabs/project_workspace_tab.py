@@ -263,13 +263,9 @@ class DashboardTab(BaseTab):
                             self.load_binary(binary_path)
                             self.log_activity(f"Project loaded successfully: {project_file}")
                         else:
-                            QMessageBox.warning(
-                                self, "Open Project", f"Binary file not found: {binary_path}"
-                            )
+                            QMessageBox.warning(self, "Open Project", f"Binary file not found: {binary_path}")
                     else:
-                        QMessageBox.warning(
-                            self, "Open Project", "Invalid project file: missing binary_path"
-                        )
+                        QMessageBox.warning(self, "Open Project", "Invalid project file: missing binary_path")
             except (OSError, json.JSONDecodeError) as e:
                 QMessageBox.critical(self, "Open Project", f"Failed to load project: {e!s}")
 
@@ -384,9 +380,7 @@ class DashboardTab(BaseTab):
     def export_results(self) -> None:
         """Export results in various formats."""
         if not self.current_binary_path:
-            QMessageBox.information(
-                self, "Export Results", "No binary loaded to export results for."
-            )
+            QMessageBox.information(self, "Export Results", "No binary loaded to export results for.")
             return
 
         self.log_activity("Exporting results...")

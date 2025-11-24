@@ -260,9 +260,7 @@ def validate_process_id(pid: object, name: str = "pid") -> None:
         raise ValueError(error_msg)
 
 
-def create_error_result(
-    error_msg: str, result_template: dict[str, Any] | None = None
-) -> dict[str, Any]:
+def create_error_result(error_msg: str, result_template: dict[str, Any] | None = None) -> dict[str, Any]:
     """Create a standardized error result dictionary.
 
     Args:

@@ -119,12 +119,7 @@ class ValidationFunction:
 
     def __str__(self) -> str:
         """Human-readable string representation."""
-        return (
-            f"ValidationFunction(api={self.api_name}, "
-            f"addr=0x{self.address:x}, "
-            f"lib={self.library}, "
-            f"confidence={self.confidence:.2f})"
-        )
+        return f"ValidationFunction(api={self.api_name}, addr=0x{self.address:x}, lib={self.library}, confidence={self.confidence:.2f})"
 
 
 @dataclass
@@ -233,9 +228,7 @@ class DetectionReport:
             DetectionReport instance
 
         """
-        validation_functions = [
-            ValidationFunction(**func_data) for func_data in data.get("validation_functions", [])
-        ]
+        validation_functions = [ValidationFunction(**func_data) for func_data in data.get("validation_functions", [])]
 
         method_str = data.get("recommended_method", "none")
         try:

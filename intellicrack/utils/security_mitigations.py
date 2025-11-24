@@ -100,9 +100,7 @@ def scan_for_malicious_test_files() -> list[Path]:
 
                     if any(pattern in content for pattern in suspicious_patterns):
                         suspicious_files.append(test_file)
-                        logger.warning(
-                            f"Found suspicious test.py at {test_file} - potential future package vulnerability exploit"
-                        )
+                        logger.warning(f"Found suspicious test.py at {test_file} - potential future package vulnerability exploit")
         except OSError as e:
             logger.debug(f"Could not scan {base_path}: {e}")
 

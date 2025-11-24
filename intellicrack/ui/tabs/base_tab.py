@@ -31,9 +31,7 @@ class BaseTab(QWidget):
     Provides common functionality including loading states, shared context, and consistent styling.
     """
 
-    def __init__(
-        self, shared_context: dict[str, Any] | None = None, parent: QWidget | None = None
-    ) -> None:
+    def __init__(self, shared_context: dict[str, Any] | None = None, parent: QWidget | None = None) -> None:
         """Initialize base tab with shared application context and parent widget.
 
         Args:

@@ -182,9 +182,7 @@ class EmulatorRequiredDecorator:
                 feature_name = func.__name__.replace("_", " ").title()
                 if show_emulator_warning(self, "QEMU", feature_name):
                     if not manager.ensure_qemu_running(self.binary_path):
-                        QMessageBox.critical(
-                            self, "QEMU Error", "Failed to start QEMU. Check the logs for details."
-                        )
+                        QMessageBox.critical(self, "QEMU Error", "Failed to start QEMU. Check the logs for details.")
                         return None
                 else:
                     return None

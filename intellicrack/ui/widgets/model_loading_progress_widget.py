@@ -286,6 +286,7 @@ Active Workers: {stats.get("active_workers", 0)}
             config=test_config,
             priority=5,
         ):
+            logger.debug(f"Test loading task created: {task}")
             logger.info(f"Submitted test loading task: {model_id}")
         else:
             logger.error("Failed to submit test loading task")

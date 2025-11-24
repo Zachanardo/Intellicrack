@@ -63,9 +63,7 @@ class HexViewerDialog(QDialog):
     for navigation, searching, and display options.
     """
 
-    def __init__(
-        self, parent: QWidget | None = None, file_path: str | None = None, read_only: bool = True
-    ) -> None:
+    def __init__(self, parent: QWidget | None = None, file_path: str | None = None, read_only: bool = True) -> None:
         """Initialize the hex viewer dialog.
 
         Args:
@@ -399,18 +397,18 @@ class HexViewerDialog(QDialog):
         new_viewer = HexViewerWidget(self)
 
         # Copy file from active viewer if one is loaded
-        if self.active_viewer and hasattr(self.active_viewer, "file_handler") and (self.active_viewer.file_handler and hasattr(
-                        self.active_viewer.file_handler, "file_path"
-                    )):
+        if (
+            self.active_viewer
+            and hasattr(self.active_viewer, "file_handler")
+            and (self.active_viewer.file_handler and hasattr(self.active_viewer.file_handler, "file_path"))
+        ):
             file_path = self.active_viewer.file_handler.file_path
             read_only = self.active_viewer.file_handler.read_only
             new_viewer.load_file(file_path, read_only)
 
             # Sync position
             if self.sync_scrolling_action.isChecked():
-                new_viewer.vertical_scroll_bar.setValue(
-                    self.active_viewer.vertical_scroll_bar.value()
-                )
+                new_viewer.vertical_scroll_bar.setValue(self.active_viewer.vertical_scroll_bar.value())
 
         # Set up synchronization if enabled
         if self.sync_scrolling_action.isChecked():
@@ -428,10 +426,7 @@ class HexViewerDialog(QDialog):
             self.viewer_splitter.setOrientation(orientation)
             self.viewer_splitter.addWidget(new_viewer)
         else:
-            widgets = [
-                self.viewer_splitter.widget(i)
-                for i in range(self.viewer_splitter.count())
-            ]
+            widgets = [self.viewer_splitter.widget(i) for i in range(self.viewer_splitter.count())]
             # Clear the splitter
             for widget in widgets:
                 widget.setParent(None)
@@ -620,9 +615,7 @@ class HexViewerDialog(QDialog):
 
         """
         try:
-            logger.info(
-                "HexDialog.load_file: Attempting to load %s, read_only=%s", file_path, read_only
-            )
+            logger.info("HexDialog.load_file: Attempting to load %s, read_only=%s", file_path, read_only)
 
             # Check if file exists and is accessible
             if not os.path.exists(file_path):
@@ -655,9 +648,7 @@ class HexViewerDialog(QDialog):
                 self.setWindowTitle(f"Enhanced Hex Viewer - {filename} ({mode_str})")
 
                 # Update Edit mode button text
-                self.edit_mode_action.setText(
-                    "Enable Editing" if read_only else "Switch to Read-Only"
-                )
+                self.edit_mode_action.setText("Enable Editing" if read_only else "Switch to Read-Only")
 
                 # Update status bar
                 self.update_status_bar(0, 0)
@@ -713,7 +704,7 @@ class HexViewerDialog(QDialog):
             return
 
         if result := self.hex_viewer.apply_edits():
-            self.status_bar.showMessage("Changes saved successfully")
+            self.status_bar.showMessage(f"Changes saved successfully (result: {result})")
 
             # Clear modification highlights
             self.hex_viewer.highlighter.clear_highlights(HighlightType.MODIFICATION)
@@ -740,7 +731,7 @@ class HexViewerDialog(QDialog):
         if success := self.load_file(file_path, read_only=new_mode):
             # Update UI to reflect mode change
             mode_str = "Read-Only" if new_mode else "Editable"
-            self.status_bar.showMessage(f"Switched to {mode_str} mode")
+            self.status_bar.showMessage(f"Switched to {mode_str} mode (success: {success})")
             self.edit_mode_action.setText("Enable Editing" if new_mode else "Switch to Read-Only")
 
             # Update window title
@@ -876,9 +867,7 @@ class HexViewerDialog(QDialog):
         # Start comparison
         worker.start()
 
-    def show_visual_comparison(
-        self, file1: str, file2: str, differences: list, settings: dict
-    ) -> None:
+    def show_visual_comparison(self, file1: str, file2: str, differences: list, settings: dict) -> None:
         """Show visual side-by-side comparison.
 
         Args:
@@ -988,12 +977,9 @@ class HexViewerDialog(QDialog):
             self.statusBar().showMessage("Files are identical")
         else:
             # Count difference types
-            modified = sum(bool("modified" in str(d.diff_type).lower())
-                       for d in differences)
-            inserted = sum(bool("inserted" in str(d.diff_type).lower())
-                       for d in differences)
-            deleted = sum(bool("deleted" in str(d.diff_type).lower())
-                      for d in differences)
+            modified = sum(bool("modified" in str(d.diff_type).lower()) for d in differences)
+            inserted = sum(bool("inserted" in str(d.diff_type).lower()) for d in differences)
+            deleted = sum(bool("deleted" in str(d.diff_type).lower()) for d in differences)
 
             # Build message
             msg = f"Found {len(differences)} difference blocks: "
@@ -1034,9 +1020,7 @@ class HexViewerDialog(QDialog):
 
             for diff in differences:
                 diff_type = str(diff.diff_type).split(".")[-1]
-                color = {"MODIFIED": "orange", "INSERTED": "green", "DELETED": "red"}.get(
-                    diff_type, "black"
-                )
+                color = {"MODIFIED": "orange", "INSERTED": "green", "DELETED": "red"}.get(diff_type, "black")
 
                 html += f"<tr style='color: {color};'>"
                 html += f"<td>{diff_type}</td>"
@@ -1230,9 +1214,7 @@ class HexViewerDialog(QDialog):
                             else:
                                 # Log the issue but don't crash
                                 value_str = f" | Value: <insufficient data: {len(data)}/4 bytes>"
-                                logger.debug(
-                                    f"Can't show 32-bit value - got {len(data)} bytes, need 4"
-                                )
+                                logger.debug(f"Can't show 32-bit value - got {len(data)} bytes, need 4")
                         except (OSError, ValueError, RuntimeError) as e:
                             value_str = " | Value: <error>"
                             logger.error("Error unpacking 32-bit value: %s", e)
@@ -1249,9 +1231,7 @@ class HexViewerDialog(QDialog):
                             else:
                                 # Log the issue but don't crash
                                 value_str = f" | Value: <insufficient data: {len(data)}/8 bytes>"
-                                logger.debug(
-                                    f"Can't show 64-bit value - got {len(data)} bytes, need 8"
-                                )
+                                logger.debug(f"Can't show 64-bit value - got {len(data)} bytes, need 8")
                         except (OSError, ValueError, RuntimeError) as e:
                             value_str = " | Value: <error>"
                             logger.error("Error unpacking 64-bit value: %s", e)
@@ -1357,9 +1337,7 @@ class HexViewerDialog(QDialog):
 
         """
         highlight_id = item.data(Qt.UserRole)
-        if highlight := self.hex_viewer.highlighter.get_highlight_by_id(
-            highlight_id
-        ):
+        if highlight := self.hex_viewer.highlighter.get_highlight_by_id(highlight_id):
             self.hex_viewer.select_range(highlight.start, highlight.end)
 
     def remove_bookmark(self, item: QListWidgetItem) -> None:
@@ -1386,9 +1364,7 @@ class HexViewerDialog(QDialog):
 
         """
         highlight_id = item.data(Qt.UserRole)
-        if highlight := self.hex_viewer.highlighter.get_highlight_by_id(
-            highlight_id
-        ):
+        if highlight := self.hex_viewer.highlighter.get_highlight_by_id(highlight_id):
             self.hex_viewer.select_range(highlight.start, highlight.end)
 
     def clear_search_results(self) -> None:

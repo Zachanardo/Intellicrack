@@ -55,9 +55,7 @@ class MonitoringSession:
         self.process_path = process_path
         self.config = config or MonitoringConfig()
 
-        self.process_info = ProcessInfo(
-            pid=pid, name=self._get_process_name(process_path), path=process_path
-        )
+        self.process_info = ProcessInfo(pid=pid, name=self._get_process_name(process_path), path=process_path)
 
         self.aggregator = EventAggregator()
         self.monitors: dict[str, object] = {}

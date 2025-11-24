@@ -780,11 +780,7 @@ def get_ghidra_project_info(project_dir: str, project_name: str) -> dict[str, An
             info["size"] = os.path.getsize(project_path)
             info["modified"] = Path(project_path).stat().st_mtime
 
-            project_files = [
-                file
-                for file in os.listdir(project_dir)
-                if file.startswith(project_name)
-            ]
+            project_files = [file for file in os.listdir(project_dir) if file.startswith(project_name)]
             info["files"] = project_files
 
     except Exception as e:

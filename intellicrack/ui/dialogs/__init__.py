@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-
 import logging
 
 
@@ -121,9 +120,7 @@ if "GuidedWorkflowWizard" in locals():
     __all__.append("GuidedWorkflowWizard")
 
 if "ModelFinetuningDialog" in locals():
-    __all__.extend(
-        ["AugmentationConfig", "ModelFinetuningDialog", "TrainingConfig", "TrainingThread"]
-    )
+    __all__.extend(["AugmentationConfig", "ModelFinetuningDialog", "TrainingConfig", "TrainingThread"])
 
 if "PluginManagerDialog" in locals():
     __all__.append("PluginManagerDialog")
@@ -165,9 +162,7 @@ if "DebuggerDialog" in locals():
     __all__.append("DebuggerDialog")
 
 if "ProgramSelectorDialog" in locals():
-    __all__.extend(
-        ["ProgramSelectorDialog", "show_program_selector", "show_smart_program_selector"]
-    )
+    __all__.extend(["ProgramSelectorDialog", "show_program_selector", "show_smart_program_selector"])
 
 # Package metadata
 __version__ = "0.1.0"

@@ -116,9 +116,7 @@ class IntellicrackShell(cmd.Cmd):
             if results and results.get("vulnerabilities"):
                 print(f"\nFound {len(results['vulnerabilities'])} vulnerabilities:")
                 for vuln in results["vulnerabilities"]:
-                    print(
-                        f"  - {vuln.get('type', 'Unknown')}: {vuln.get('description', 'No description')}"
-                    )
+                    print(f"  - {vuln.get('type', 'Unknown')}: {vuln.get('description', 'No description')}")
                     print(f"    Severity: {vuln.get('severity', 'Unknown')}")
             else:
                 print("No vulnerabilities found.")
@@ -175,9 +173,7 @@ class IntellicrackShell(cmd.Cmd):
 
             # Ensure analysis results exist before attempting export
             if not self.analysis_results:
-                print(
-                    "Error: No analysis results available. Run 'analyze' on a loaded binary first."
-                )
+                print("Error: No analysis results available. Run 'analyze' on a loaded binary first.")
                 return
 
             binary_path = str(self.current_file)

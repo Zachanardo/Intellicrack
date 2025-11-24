@@ -102,12 +102,8 @@ logger = logging.getLogger("IntellicrackLogger.CLI")
 
 
 @click.group()
-@click.option(
-    "--verbose", "-v", is_flag=True, help="Enable verbose output", envvar="INTELLICRACK_VERBOSE"
-)
-@click.option(
-    "--quiet", "-q", is_flag=True, help="Suppress non-essential output", envvar="INTELLICRACK_QUIET"
-)
+@click.option("--verbose", "-v", is_flag=True, help="Enable verbose output", envvar="INTELLICRACK_VERBOSE")
+@click.option("--quiet", "-q", is_flag=True, help="Suppress non-essential output", envvar="INTELLICRACK_QUIET")
 def cli(verbose: bool, quiet: bool) -> None:
     """Intellicrack - Advanced Binary Analysis and Exploitation Framework."""
     # Configure logging
@@ -156,32 +152,24 @@ def scan(binary_path: str, vulns: bool, output: str | None, verbose: bool) -> No
                 if critical:
                     click.echo(f"\n🔴 Critical: {len(critical)}")
                     for vuln in critical[:3]:
-                        click.echo(
-                            f"  - {vuln.get('type', 'Unknown')}: {vuln.get('description', '')}"
-                        )
+                        click.echo(f"  - {vuln.get('type', 'Unknown')}: {vuln.get('description', '')}")
 
                 if high:
                     click.echo(f"\n🟠 High: {len(high)}")
                     for vuln in high[:3]:
-                        click.echo(
-                            f"  - {vuln.get('type', 'Unknown')}: {vuln.get('description', '')}"
-                        )
+                        click.echo(f"  - {vuln.get('type', 'Unknown')}: {vuln.get('description', '')}")
 
                 if medium:
                     click.echo(f"\n🟡 Medium: {len(medium)}")
                     if verbose:
                         for vuln in medium[:3]:
-                            click.echo(
-                                f"  - {vuln.get('type', 'Unknown')}: {vuln.get('description', '')}"
-                            )
+                            click.echo(f"  - {vuln.get('type', 'Unknown')}: {vuln.get('description', '')}")
 
                 if low:
                     click.echo(f"\n🟢 Low: {len(low)}")
                     if verbose:
                         for vuln in low[:3]:
-                            click.echo(
-                                f"  - {vuln.get('type', 'Unknown')}: {vuln.get('description', '')}"
-                            )
+                            click.echo(f"  - {vuln.get('type', 'Unknown')}: {vuln.get('description', '')}")
             else:
                 click.echo(f"Scan failed: {result.get('error', 'Unknown error')}")
         else:
@@ -223,9 +211,7 @@ def scan(binary_path: str, vulns: bool, output: str | None, verbose: bool) -> No
 )
 @click.option("--output", "-o", help="Save strings to file")
 @click.option("--filter", "-f", help="Filter strings by pattern")
-def strings(
-    binary_path: str, min_length: int, encoding: str, output: str | None, filter_pattern: str | None
-) -> None:
+def strings(binary_path: str, min_length: int, encoding: str, output: str | None, filter_pattern: str | None) -> None:
     """Extract strings from binary file."""
     try:
         click.echo(f"Extracting strings from: {binary_path}")
@@ -234,9 +220,7 @@ def strings(
 
         cli_analyzer = AnalysisCLI()
 
-        if strings_result := cli_analyzer._extract_strings(
-            binary_path, min_length=min_length, encoding=encoding
-        ):
+        if strings_result := cli_analyzer._extract_strings(binary_path, min_length=min_length, encoding=encoding):
             extracted_strings = strings_result.get("strings", [])
 
             # Apply filter if provided
@@ -347,9 +331,7 @@ def generate(
         # Add output format
         options["output_format"] = output_format
 
-        click.echo(
-            f"Generating {payload_type} payload for {architecture} (format: {output_format})..."
-        )
+        click.echo(f"Generating {payload_type} payload for {architecture} (format: {output_format})...")
 
         # Generate payload
         result = engine.generate_payload(
@@ -448,9 +430,7 @@ def list_templates(category: str | None) -> None:
 )
 @click.option("--param", "-p", multiple=True, help="Template parameters (key=value)")
 @click.option("--output", "-o", help="Output file path")
-def from_template(
-    category: str, template_name: str, architecture: str, param: tuple, output: str | None
-) -> None:
+def from_template(category: str, template_name: str, architecture: str, param: tuple, output: str | None) -> None:
     """Generate payload from template."""
     try:
         engine = PayloadEngine()
@@ -534,17 +514,13 @@ def from_template(
     "--type",
     "-t",
     "exploit_type",
-    type=click.Choice(
-        ["auto", "buffer_overflow", "format_string", "heap_overflow", "use_after_free"]
-    ),
+    type=click.Choice(["auto", "buffer_overflow", "format_string", "heap_overflow", "use_after_free"]),
     default="auto",
     help="Exploit type",
 )
 @click.option("--payload", "-p", "payload_data", help="Custom payload or payload file")
 @click.option("--output", "-o", help="Output exploit to file")
-def exploit_target(
-    target: str, exploit_type: str, payload_data: str | None, output: str | None
-) -> None:
+def exploit_target(target: str, exploit_type: str, payload_data: str | None, output: str | None) -> None:
     """Exploit a target binary or service."""
     try:
         click.echo(f"Exploiting target: {target}")
@@ -648,9 +624,7 @@ def _handle_distributed_processing(binary_path: str) -> None:
         click.echo("Distributed processing module not available")
 
 
-def _handle_symbolic_execution(
-    binary_path: str, symbolic_execution: bool, concolic_execution: bool
-) -> None:
+def _handle_symbolic_execution(binary_path: str, symbolic_execution: bool, concolic_execution: bool) -> None:
     """Handle symbolic/concolic execution if enabled."""
     execution_type = "symbolic" if symbolic_execution else "concolic"
     click.echo(f"Using {execution_type} execution")
@@ -665,16 +639,12 @@ def _handle_symbolic_execution(
         click.echo(f"{execution_type.capitalize()} execution engine not available")
 
 
-def _perform_analysis(
-    mode: str, binary_path: str, output: str | None, verbose: bool, no_ai: bool, deep: bool
-) -> dict:
+def _perform_analysis(mode: str, binary_path: str, output: str | None, verbose: bool, no_ai: bool, deep: bool) -> dict:
     """Perform the main analysis based on mode."""
     if mode == "comprehensive":
         from intellicrack.utils.runtime.runner_functions import run_comprehensive_analysis
 
-        return run_comprehensive_analysis(
-            binary_path, output_dir=output, verbose=verbose, enable_ai=not no_ai
-        )
+        return run_comprehensive_analysis(binary_path, output_dir=output, verbose=verbose, enable_ai=not no_ai)
     if mode == "vulnerability":
         from intellicrack.core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
 
@@ -725,16 +695,12 @@ def _display_ai_integration_results(result: dict) -> None:
         if suggestions.get("frida_scripts"):
             click.echo("  Frida Scripts:")
             for script in suggestions["frida_scripts"]:
-                click.echo(
-                    f"    - {script['description']} (confidence: {script['confidence']:.0%})"
-                )
+                click.echo(f"    - {script['description']} (confidence: {script['confidence']:.0%})")
 
         if suggestions.get("ghidra_scripts"):
             click.echo("  Ghidra Scripts:")
             for script in suggestions["ghidra_scripts"]:
-                click.echo(
-                    f"    - {script['description']} (confidence: {script['confidence']:.0%})"
-                )
+                click.echo(f"    - {script['description']} (confidence: {script['confidence']:.0%})")
 
         if ai_data.get("recommended_actions"):
             click.echo("\n  Recommended AI Actions:")
@@ -743,13 +709,9 @@ def _display_ai_integration_results(result: dict) -> None:
 
         auto_confidence = suggestions.get("auto_generate_confidence", 0)
         if auto_confidence > 0.8:
-            click.echo(
-                f"\n   High confidence ({auto_confidence:.0%}) - Autonomous script generation triggered!"
-            )
+            click.echo(f"\n   High confidence ({auto_confidence:.0%}) - Autonomous script generation triggered!")
         elif auto_confidence > 0.5:
-            click.echo(
-                f"\n  [FAST] Moderate confidence ({auto_confidence:.0%}) - Consider manual script generation"
-            )
+            click.echo(f"\n  [FAST] Moderate confidence ({auto_confidence:.0%}) - Consider manual script generation")
 
         if ai_data.get("autonomous_generation", {}).get("started"):
             click.echo("  🔄 Autonomous script generation started in background")
@@ -795,9 +757,7 @@ def analyze(
     progress_manager = ProgressManager()
 
     try:
-        analysis_types = _get_analysis_types(
-            mode, gpu_accelerate, distributed, symbolic_execution, concolic_execution
-        )
+        analysis_types = _get_analysis_types(mode, gpu_accelerate, distributed, symbolic_execution, concolic_execution)
         progress_manager.start_analysis(binary_path, analysis_types)
 
         def progress_callback(step: str, progress: float, message: str = "") -> None:
@@ -913,16 +873,12 @@ def basic_analyze(binary_path: str, deep: bool, output: str | None, no_ai: bool)
             if suggestions.get("frida_scripts"):
                 click.echo("  Frida Scripts:")
                 for script in suggestions["frida_scripts"]:
-                    click.echo(
-                        f"    - {script['description']} (confidence: {script['confidence']:.0%})"
-                    )
+                    click.echo(f"    - {script['description']} (confidence: {script['confidence']:.0%})")
 
             if suggestions.get("ghidra_scripts"):
                 click.echo("  Ghidra Scripts:")
                 for script in suggestions["ghidra_scripts"]:
-                    click.echo(
-                        f"    - {script['description']} (confidence: {script['confidence']:.0%})"
-                    )
+                    click.echo(f"    - {script['description']} (confidence: {script['confidence']:.0%})")
 
             # Display recommended actions
             if ai_data.get("recommended_actions"):
@@ -933,20 +889,14 @@ def basic_analyze(binary_path: str, deep: bool, output: str | None, no_ai: bool)
             # Display auto-generation status
             auto_confidence = suggestions.get("auto_generate_confidence", 0)
             if auto_confidence > 0.8:
-                click.echo(
-                    f"\n   High confidence ({auto_confidence:.0%}) - Autonomous script generation triggered!"
-                )
+                click.echo(f"\n   High confidence ({auto_confidence:.0%}) - Autonomous script generation triggered!")
             elif auto_confidence > 0.5:
-                click.echo(
-                    f"\n  [FAST] Moderate confidence ({auto_confidence:.0%}) - Consider manual script generation"
-                )
+                click.echo(f"\n  [FAST] Moderate confidence ({auto_confidence:.0%}) - Consider manual script generation")
 
             # Display autonomous generation status
             if ai_data.get("autonomous_generation", {}).get("started"):
                 click.echo("  🔄 Autonomous script generation started in background")
-                click.echo(
-                    f"  📋 Targets: {', '.join(ai_data['autonomous_generation']['targets'])}"
-                )
+                click.echo(f"  📋 Targets: {', '.join(ai_data['autonomous_generation']['targets'])}")
 
         elif "ai_integration" in result and not result["ai_integration"].get("enabled"):
             ai_error = result["ai_integration"].get("error", "Unknown error")
@@ -1112,9 +1062,7 @@ def advanced_generate(
     try:
         # This functionality has been removed as it was part of out-of-scope exploitation code.
         click.echo("Advanced payload generation has been removed from this version.")
-        click.echo(
-            "Intellicrack now focuses on binary analysis and security research capabilities."
-        )
+        click.echo("Intellicrack now focuses on binary analysis and security research capabilities.")
         return
 
     except (
@@ -1159,9 +1107,7 @@ def research() -> None:
 @click.option("--output", "-o", help="Output directory for results")
 @click.option("--timeout", type=int, default=3600, help="Analysis timeout (seconds)")
 @click.option("--use-ai", is_flag=True, help="Use AI-guided analysis")
-def run(
-    target_path: str, campaign_type: str, output: str | None, timeout: int, use_ai: bool
-) -> None:
+def run(target_path: str, campaign_type: str, output: str | None, timeout: int, use_ai: bool) -> None:
     """Run vulnerability research analysis."""
     try:
         if not os.path.exists(target_path):
@@ -1178,16 +1124,10 @@ def run(
             import signal
 
             try:
-                if (
-                    platform.system() != "Windows"
-                    and hasattr(signal, "SIGALRM")
-                    and hasattr(signal, "alarm")
-                ):
+                if platform.system() != "Windows" and hasattr(signal, "SIGALRM") and hasattr(signal, "alarm"):
 
                     def timeout_handler(signum: int, frame: types.FrameType | None) -> NoReturn:
-                        logger.warning(
-                            "AI analysis timeout handler: signal %s, frame %s", signum, frame
-                        )
+                        logger.warning("AI analysis timeout handler: signal %s, frame %s", signum, frame)
                         raise TimeoutError(f"Analysis timed out after {timeout} seconds")
 
                     signal.signal(signal.SIGALRM, timeout_handler)
@@ -1263,9 +1203,7 @@ def run(
                     click.echo(f"\nExploitation Strategies ({len(strategies)}):")
                     for strategy in strategies[:3]:
                         vuln = strategy["vulnerability"]
-                        click.echo(
-                            f"   {vuln['type']} ({vuln['severity']}) - {strategy['approach']}"
-                        )
+                        click.echo(f"   {vuln['type']} ({vuln['severity']}) - {strategy['approach']}")
                         click.echo(f"    Confidence: {strategy['confidence']:.2f}")
 
         else:
@@ -1281,11 +1219,7 @@ def run(
             import signal
 
             try:
-                if (
-                    platform.system() != "Windows"
-                    and hasattr(signal, "SIGALRM")
-                    and hasattr(signal, "alarm")
-                ):
+                if platform.system() != "Windows" and hasattr(signal, "SIGALRM") and hasattr(signal, "alarm"):
 
                     def timeout_handler(signum: int, frame: types.FrameType | None) -> NoReturn:
                         logger.warning(
@@ -1316,12 +1250,8 @@ def run(
                 click.echo(f"OK Analysis completed - {len(protections)} protections found")
 
                 # Categorize protections
-                licensing_protections = [
-                    p for p in protections if "licensing" in p.get("type", "").lower()
-                ]
-                obfuscation_protections = [
-                    p for p in protections if "obfuscation" in p.get("type", "").lower()
-                ]
+                licensing_protections = [p for p in protections if "licensing" in p.get("type", "").lower()]
+                obfuscation_protections = [p for p in protections if "obfuscation" in p.get("type", "").lower()]
 
                 click.echo(f"  Licensing Protections: {len(licensing_protections)}")
                 click.echo(f"  Obfuscation Protections: {len(obfuscation_protections)}")
@@ -1373,9 +1303,7 @@ def post_exploit() -> None:
     help="Target platform",
 )
 @click.option("--output", "-o", help="Save detailed results to file")
-def auto_exploit(
-    target_path: str, lhost: str, lport: int, target_platform: str, output: str | None
-) -> None:
+def auto_exploit(target_path: str, lhost: str, lport: int, target_platform: str, output: str | None) -> None:
     """Run full automated exploitation workflow."""
     try:
         if not os.path.exists(target_path):
@@ -1384,9 +1312,7 @@ def auto_exploit(
 
         ai_researcher = LicensingProtectionAnalyzer()
 
-        click.echo(
-            f"Starting automated licensing protection analysis of {os.path.basename(target_path)}..."
-        )
+        click.echo(f"Starting automated licensing protection analysis of {os.path.basename(target_path)}...")
         click.echo(f"Target platform: {target_platform}")
         click.echo(f"Analysis configuration: {lhost}:{lport}")
         click.echo("=" * 50)
@@ -1507,17 +1433,11 @@ def ai_generate(
         click.echo(f" Focus: {focus}")
 
         if script_type == "both":
-            script_request = (
-                f"Create both Frida and Ghidra scripts to bypass protections in {binary_path}"
-            )
+            script_request = f"Create both Frida and Ghidra scripts to bypass protections in {binary_path}"
         elif script_type == "frida":
-            script_request = (
-                f"Create a {complexity} Frida script to bypass protections in {binary_path}"
-            )
+            script_request = f"Create a {complexity} Frida script to bypass protections in {binary_path}"
         else:
-            script_request = (
-                f"Create a {complexity} Ghidra script to bypass protections in {binary_path}"
-            )
+            script_request = f"Create a {complexity} Ghidra script to bypass protections in {binary_path}"
 
         if focus != "auto":
             protection_map = {
@@ -1561,9 +1481,7 @@ def ai_generate(
                 script_name = f"ai_generated_{binary_name}_{script.metadata.script_type.value}_{int(time.time())}"
                 success_prob = script.metadata.success_probability
 
-                click.echo(
-                    f"\n📄 Script {i + 1}: {script.metadata.script_type.value} ({script_name})"
-                )
+                click.echo(f"\n📄 Script {i + 1}: {script.metadata.script_type.value} ({script_name})")
                 click.echo(f"   Success Probability: {success_prob:.0%}")
                 click.echo(f"   Size: {len(script.content)} characters")
 
@@ -1638,9 +1556,7 @@ def ai_generate(
 )
 @click.option("--timeout", default=60, help="Test timeout in seconds")
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
-def test(
-    script_path: str, binary: str | None, environment: str, timeout: int, verbose: bool
-) -> None:
+def test(script_path: str, binary: str | None, environment: str, timeout: int, verbose: bool) -> None:
     """Test AI-generated scripts in safe environments."""
     try:
         if not os.path.exists(script_path):
@@ -1682,13 +1598,9 @@ def test(
                 # Run test
                 click.echo(" Executing script in QEMU...")
                 if script_type == "frida":
-                    result = test_manager.test_frida_script(
-                        snapshot_id, script_content, binary or "unknown"
-                    )
+                    result = test_manager.test_frida_script(snapshot_id, script_content, binary or "unknown")
                 else:
-                    result = test_manager.test_ghidra_script(
-                        snapshot_id, script_content, binary or "unknown"
-                    )
+                    result = test_manager.test_ghidra_script(snapshot_id, script_content, binary or "unknown")
 
                 # Show results
                 if result.success:
@@ -1731,9 +1643,7 @@ def test(
 @ai.command("analyze")
 @click.argument("binary_path")
 @click.option("--output", "-o", help="Save analysis report to file")
-@click.option(
-    "--format", type=click.Choice(["text", "json", "html"]), default="text", help="Output format"
-)
+@click.option("--format", type=click.Choice(["text", "json", "html"]), default="text", help="Output format")
 @click.option("--deep", is_flag=True, help="Enable deep AI analysis")
 def ai_analyze(binary_path: str, output: str | None, output_format: str, deep: bool) -> None:
     """Analyze binary for protection mechanisms using AI."""
@@ -1780,9 +1690,7 @@ def ai_analyze(binary_path: str, output: str | None, output_format: str, deep: b
                         bar.update(100 - last_progress)
                         break
                     if task_status.get("status") == "failed":
-                        click.echo(
-                            "\nERROR Analysis failed: " + task_status.get("error", "Unknown error")
-                        )
+                        click.echo("\nERROR Analysis failed: " + task_status.get("error", "Unknown error"))
                         return
 
                 # Brief sleep to avoid excessive CPU usage during polling
@@ -1942,9 +1850,7 @@ def autonomous(
                         from intellicrack.ai.ai_script_generator import AIScriptGenerator
 
                         generator = AIScriptGenerator()
-                        saved_path = generator.save_script(
-                            script, "intellicrack/intellicrack/scripts/autonomous"
-                        )
+                        saved_path = generator.save_script(script, "intellicrack/intellicrack/scripts/autonomous")
                         click.echo(f"      Saved: {saved_path}")
                     except (
                         OSError,
@@ -2076,9 +1982,7 @@ def reset(confirm: bool) -> None:
     try:
         from intellicrack.ai.script_generation_agent import AIAgent
 
-        if not confirm and not click.confirm(
-                        "WARNING️  Reset AI agent? This will clear all conversation history."
-                    ):
+        if not confirm and not click.confirm("WARNING️  Reset AI agent? This will clear all conversation history."):
             click.echo("ERROR Reset cancelled")
             return
 
@@ -2239,11 +2143,7 @@ def frida_list(category: str | None, verbose: bool) -> None:
         # Filter by category if specified
         scripts_to_show = manager.scripts
         if category:
-            scripts_to_show = {
-                name: config
-                for name, config in manager.scripts.items()
-                if config.category.value == category
-            }
+            scripts_to_show = {name: config for name, config in manager.scripts.items() if config.category.value == category}
 
             if not scripts_to_show:
                 click.echo(f"No scripts found in category: {category}")
@@ -2338,9 +2238,7 @@ def frida_info(script_name: str) -> None:
     type=click.Path(),
     help="Save results to file",
 )
-def frida_run(
-    script_name: str, binary_path: str, mode: str, params: str | None, output: str | None
-) -> None:
+def frida_run(script_name: str, binary_path: str, mode: str, params: str | None, output: str | None) -> None:
     """Execute a Frida script from the library against a target binary."""
     try:
         import json
@@ -2431,9 +2329,7 @@ def frida_run(
 @click.argument("target")
 @click.option("--report", "-r", help="Export detection report to file (JSON format)")
 @click.option("--verbose", "-v", is_flag=True, help="Display detailed detection information")
-@click.option(
-    "--min-confidence", "-c", type=float, default=0.3, help="Minimum confidence threshold (0.0-1.0)"
-)
+@click.option("--min-confidence", "-c", type=float, default=0.3, help="Minimum confidence threshold (0.0-1.0)")
 def cert_detect(target: str, report: str | None, verbose: bool, min_confidence: float) -> None:
     """Detect certificate validation in binary or process.
 
@@ -2474,9 +2370,7 @@ def cert_detect(target: str, report: str | None, verbose: bool, min_confidence: 
             click.echo("📍 Detected validation functions:")
 
             for func in detection_report.validation_functions:
-                confidence_icon = (
-                    "🟢" if func.confidence > 0.7 else "🟡" if func.confidence > 0.4 else "🔴"
-                )
+                confidence_icon = "🟢" if func.confidence > 0.7 else "🟡" if func.confidence > 0.4 else "🔴"
                 click.echo(f"  {confidence_icon} {func.api_name} at 0x{func.address:x}")
                 click.echo(f"     Library: {func.library}")
                 click.echo(f"     Confidence: {func.confidence:.2f}")
@@ -2571,9 +2465,7 @@ def cert_bypass(target: str, method: str, verify: bool, report: str | None, forc
             click.echo()
             click.echo(" Results:")
             click.echo(f"  Method used: {result.method_used.value}")
-            click.echo(
-                f"  Detected libraries: {', '.join(result.detection_report.detected_libraries)}"
-            )
+            click.echo(f"  Detected libraries: {', '.join(result.detection_report.detected_libraries)}")
             click.echo(f"  Functions bypassed: {len(result.detection_report.validation_functions)}")
 
             if result.patch_result:

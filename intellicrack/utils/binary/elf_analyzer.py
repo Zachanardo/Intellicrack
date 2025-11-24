@@ -316,9 +316,7 @@ class ELFAnalyzer:
                 if sym_offset + entsize > len(self.data):
                     break
 
-                symbol_data = struct.unpack(
-                    symbol_fmt, self.data[sym_offset : sym_offset + entsize]
-                )
+                symbol_data = struct.unpack(symbol_fmt, self.data[sym_offset : sym_offset + entsize])
 
                 if self.is_64bit:
                     symbol = {

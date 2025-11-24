@@ -230,9 +230,7 @@ class AnalysisExporter:
         vulns = result.get("vulnerabilities", [])
         stats = result.get("statistics", {})
 
-        logger.debug(
-            "Exporting HTML report with %d vulnerabilities and stats: %s", len(vulns), stats
-        )
+        logger.debug("Exporting HTML report with %d vulnerabilities and stats: %s", len(vulns), stats)
 
         # Count by severity
         high_count = len([v for v in vulns if v.get("severity") == "high"])
@@ -317,13 +315,7 @@ class AnalysisExporter:
         diff_html = ""
         for diff in diffs:
             diff_type = diff.get("type", "unknown")
-            css_class = (
-                "added"
-                if "added" in diff_type
-                else "removed"
-                if "removed" in diff_type
-                else "modified"
-            )
+            css_class = "added" if "added" in diff_type else "removed" if "removed" in diff_type else "modified"
 
             diff_html += f"""
             <div class="difference {css_class}">

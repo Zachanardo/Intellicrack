@@ -57,7 +57,7 @@ def test_isolated_payload_generation():
 
         # Test BOF payload generation (simplified)
         def test_generate_bof_payload():
-            shellcode_generator = MockShellcodeGenerator()
+            shellcode_generator = MockLicenseBypassCodeGenerator()
 
             # Test data
             vuln = {"function": {"name": "test_func"}, "offset": 128}
@@ -104,7 +104,7 @@ def test_isolated_payload_generation():
 
         # Test format string payload generation
         def test_generate_format_string_payload():
-            shellcode_generator = MockShellcodeGenerator()
+            shellcode_generator = MockLicenseBypassCodeGenerator()
 
             vuln = {"function": {"name": "printf_vuln"}, "offset": 64}
 

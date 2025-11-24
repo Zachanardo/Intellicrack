@@ -190,9 +190,11 @@ lint-fix:
 format-ruff:
     pixi run ruff format intellicrack/
 
-# Detect dead code with vulture
+# Detect dead code with vulture and output sorted findings
 vulture:
-    pixi run vulture intellicrack/
+    @echo "Running Vulture dead code detector..."
+    pixi run vulture intellicrack/ tests/ 2>&1 | Out-String | ForEach-Object { $_ -split "`n" | Where-Object { $_ -match '^\S+\.py:\d+:' } } | Group-Object { ($_ -split ':')[0] } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath "vulture_findings.txt" -Encoding utf8
+    @echo "Vulture findings written to vulture_findings.txt (sorted by file, descending)"
 
 # Upgrade Python syntax to newer versions
 pyupgrade:
@@ -204,10 +206,11 @@ sourcery:
     pixi run sourcery review intellicrack
     pixi run sourcery review tests
 
-# Check docstring validity with darglint
+# Check docstring validity with darglint and output sorted findings
 darglint:
-    pixi run darglint intellicrack
-    pixi run darglint tests
+    @echo "Running Darglint docstring checker..."
+    pixi run darglint intellicrack tests 2>&1 | Out-String | ForEach-Object { $_ -split "`n" | Where-Object { $_ -match '^\S+\.py:\d+:' } } | Group-Object { ($_ -split ':')[0] } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath "darglint_findings.txt" -Encoding utf8
+    @echo "Darglint findings written to darglint_findings.txt (sorted by file, descending)"
 
 # Check code line statistics with pygount
 pygount:
@@ -218,19 +221,35 @@ pygount:
 pyroma:
     pixi run pyroma .
 
-# Detect dead code
+# Detect dead code and output sorted findings
 dead:
-    pixi run dead --files="intellicrack/.*\.py"
-    pixi run dead --files="tests/.*\.py"
+    @echo "Running dead code detector..."
+    pixi run dead --files="intellicrack/.*\.py" --files="tests/.*\.py" 2>&1 | Out-String | ForEach-Object { $_ -split "`n" | Where-Object { $_ -match '^\S+\.py:\d+:' } } | Group-Object { ($_ -split ':')[0] } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath "dead_findings.txt" -Encoding utf8
+    @echo "Dead code findings written to dead_findings.txt (sorted by file, descending)"
 
-# Run type checking with ty
+# Run type checking with ty and output sorted findings
 ty:
-    pixi run ty check intellicrack
-    pixi run ty check tests
+    @echo "Running Ty type checker..."
+    pixi run ty check intellicrack tests 2>&1 | Out-String | ForEach-Object { $_ -split "`n" | Where-Object { $_ -match '^\S+\.py:\d+:\d+:' } } | Group-Object { ($_ -split ':')[0] } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath "ty_findings.txt" -Encoding utf8
+    @echo "Ty findings written to ty_findings.txt (sorted by file, descending)"
 
-# Security linting with bandit
+# Run type checking with pyright and output sorted findings
+pyright:
+    @echo "Running Pyright type checker..."
+    pixi run pyright intellicrack tests 2>&1 | Out-String | ForEach-Object { $_ -split "`n" | Where-Object { $_ -match '^\s*[a-zA-Z]:\\.*\.py:\d+:\d+' } } | Group-Object { ($_ -split ':')[0].Trim() } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath "pyright_findings.txt" -Encoding utf8
+    @echo "Pyright findings written to pyright_findings.txt (sorted by file, descending)"
+
+# Run type checking with mypy and output sorted findings
+mypy:
+    @echo "Running Mypy type checker..."
+    pixi run mypy intellicrack tests 2>&1 | Out-String | ForEach-Object { $_ -split "`n" | Where-Object { $_ -match '^\S+\.py:\d+:' } } | Group-Object { ($_ -split ':')[0] } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath "mypy_findings.txt" -Encoding utf8
+    @echo "Mypy findings written to mypy_findings.txt (sorted by file, descending)"
+
+# Security linting with bandit and output sorted findings
 bandit:
-    pixi run bandit -r intellicrack/ -c pyproject.toml -f xml
+    @echo "Running Bandit security linter..."
+    pixi run bandit -r intellicrack/ tests/ -c pyproject.toml 2>&1 | Out-String | ForEach-Object { $_ -split "`n" | Where-Object { $_ -match '^\S+\.py:\d+:' } } | Group-Object { ($_ -split ':')[0] } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath "bandit_findings.txt" -Encoding utf8
+    @echo "Bandit findings written to bandit_findings.txt (sorted by file, descending)"
 
 # Lint JavaScript files with ESLint
 lint-js:

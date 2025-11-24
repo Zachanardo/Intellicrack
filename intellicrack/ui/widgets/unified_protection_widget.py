@@ -286,9 +286,7 @@ class UnifiedProtectionWidget(QWidget):
 
         # Native ICP Features button
         self.icp_features_btn = QPushButton("ICP Analysis...")
-        self.icp_features_btn.setToolTip(
-            "Access advanced ICP Engine features directly in the interface"
-        )
+        self.icp_features_btn.setToolTip("Access advanced ICP Engine features directly in the interface")
         self.icp_features_btn.clicked.connect(self.show_icp_features_dialog)
         self.icp_features_btn.setEnabled(False)  # Disabled until file is loaded
         title_layout.addWidget(self.icp_features_btn)
@@ -472,29 +470,16 @@ class UnifiedProtectionWidget(QWidget):
             from intellicrack.handlers.pyqt6_handler import QApplication
 
             main_window = next(
-                (
-                    widget
-                    for widget in QApplication.allWidgets()
-                    if hasattr(widget, "ai_coordinator") and widget.ai_coordinator
-                ),
+                (widget for widget in QApplication.allWidgets() if hasattr(widget, "ai_coordinator") and widget.ai_coordinator),
                 None,
             )
             if main_window and hasattr(main_window.ai_coordinator, "suggest_strategy"):
                 analysis_type = "complex_patterns" if deep_scan else "quick_check"
-                suggested_strategy = main_window.ai_coordinator.suggest_strategy(
-                    file_path, analysis_type
-                )
-                logger.info(
-                    f"AI coordinator suggests strategy: {suggested_strategy} for {analysis_type}"
-                )
+                suggested_strategy = main_window.ai_coordinator.suggest_strategy(file_path, analysis_type)
+                logger.info(f"AI coordinator suggests strategy: {suggested_strategy} for {analysis_type}")
 
                 # Update status to show strategy
-                strategy_text = (
-                    str(suggested_strategy)
-                    .replace("AnalysisStrategy.", "")
-                    .replace("_", " ")
-                    .title()
-                )
+                strategy_text = str(suggested_strategy).replace("AnalysisStrategy.", "").replace("_", " ").title()
                 self.status_label.setText(f"Using {strategy_text} strategy for analysis")
             else:
                 self.status_label.setText("Starting analysis...")
@@ -708,9 +693,7 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
                 child.widget().deleteLater()
 
         if not result.bypass_strategies:
-            no_strategies = QLabel(
-                "No specific bypass strategies available for detected protections."
-            )
+            no_strategies = QLabel("No specific bypass strategies available for detected protections.")
             no_strategies.setStyleSheet("color: #666; padding: 20px;")
             self.strategies_layout.addWidget(no_strategies)
             return
@@ -953,9 +936,7 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
         guide += "## Notes\n\n"
         guide += "This guide is generated based on automated analysis. "
         guide += "Actual bypass methods may vary depending on specific implementation details. "
-        guide += (
-            "Always ensure you have proper authorization before attempting to bypass protections.\n"
-        )
+        guide += "Always ensure you have proper authorization before attempting to bypass protections.\n"
 
         return guide
 
@@ -1105,9 +1086,7 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
                 sig_content += "No packers detected\n"
 
             sig_content += f"\nPacked: {'Yes' if analysis_data.get('is_packed', False) else 'No'}\n"
-            sig_content += (
-                f"Encrypted: {'Yes' if analysis_data.get('is_encrypted', False) else 'No'}\n"
-            )
+            sig_content += f"Encrypted: {'Yes' if analysis_data.get('is_encrypted', False) else 'No'}\n"
 
             sig_text.setPlainText(sig_content)
 

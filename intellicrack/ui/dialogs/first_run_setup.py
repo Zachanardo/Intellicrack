@@ -180,11 +180,7 @@ class FirstRunSetupDialog(QDialog):
 
     def start_setup(self) -> None:
         """Start the setup process."""
-        tasks = [
-            task_id
-            for task_id, checkbox in self.component_checks.items()
-            if checkbox.isChecked()
-        ]
+        tasks = [task_id for task_id, checkbox in self.component_checks.items() if checkbox.isChecked()]
         if not tasks:
             self.accept()
             return

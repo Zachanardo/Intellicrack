@@ -274,9 +274,7 @@ class FlexLMProtocolParser:
                 additional_data=additional_data,
             )
 
-            self.logger.info(
-                f"Parsed FlexLM {self.FLEXLM_COMMANDS.get(command, 'UNKNOWN')} request for feature '{feature}'"
-            )
+            self.logger.info(f"Parsed FlexLM {self.FLEXLM_COMMANDS.get(command, 'UNKNOWN')} request for feature '{feature}'")
             return request
 
         except Exception as e:
@@ -364,9 +362,7 @@ class FlexLMProtocolParser:
 
         # Check if feature exists
         if feature not in self.server_features:
-            if matches := [
-                f for f in self.server_features if feature in f or f in feature
-            ]:
+            if matches := [f for f in self.server_features if feature in f or f in feature]:
                 feature = matches[0]
             else:
                 return FlexLMResponse(
@@ -689,9 +685,7 @@ class FlexLMProtocolParser:
 
         """
         if signature is None:
-            signature = (
-                hashlib.sha256(f"{name}:{version}:{vendor}".encode()).hexdigest()[:40].upper()
-            )
+            signature = hashlib.sha256(f"{name}:{version}:{vendor}".encode()).hexdigest()[:40].upper()
 
         self.server_features[name.upper()] = {
             "version": version,
@@ -817,10 +811,7 @@ class FlexLMTrafficCapture:
             hourly_distribution[hour] = hourly_distribution.get(hour, 0) + 1
 
         top_commands = sorted(
-            [
-                (self.parser.FLEXLM_COMMANDS.get(cmd, f"UNKNOWN_{cmd:02X}"), count)
-                for cmd, count in command_counts.items()
-            ],
+            [(self.parser.FLEXLM_COMMANDS.get(cmd, f"UNKNOWN_{cmd:02X}"), count) for cmd, count in command_counts.items()],
             key=lambda x: x[1],
             reverse=True,
         )[:10]
@@ -835,8 +826,7 @@ class FlexLMTrafficCapture:
             "top_commands": top_commands,
             "top_features": top_features,
             "hourly_distribution": hourly_distribution,
-            "capture_duration": max(ts for ts, _, _ in self.captured_requests)
-            - min(ts for ts, _, _ in self.captured_requests)
+            "capture_duration": max(ts for ts, _, _ in self.captured_requests) - min(ts for ts, _, _ in self.captured_requests)
             if len(self.captured_requests) > 1
             else 0,
         }
@@ -961,9 +951,7 @@ class FlexLMLicenseGenerator:
             count = feature.get("count", 1)
             signature = feature.get("signature", self._generate_signature(name, version))
 
-            license_line = (
-                f'FEATURE {name} {vendor} {version} {expiry} {count} HOSTID=ANY SIGN="{signature}"'
-            )
+            license_line = f'FEATURE {name} {vendor} {version} {expiry} {count} HOSTID=ANY SIGN="{signature}"'
             lines.append(license_line)
 
         return "\n".join(lines)

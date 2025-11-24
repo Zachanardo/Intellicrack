@@ -111,9 +111,7 @@ def write_hex_region(file_path: str, offset: int, data: bytes) -> bool:
 # Analysis operations
 
 
-def analyze_binary_data(
-    data: bytes, query: str | None = None, model_manager: object | None = None
-) -> dict[str, Any]:
+def analyze_binary_data(data: bytes, query: str | None = None, model_manager: object | None = None) -> dict[str, Any]:
     """Analyze binary data using AI assistance.
 
     Args:
@@ -133,9 +131,7 @@ def analyze_binary_data(
         return {"error": str(e)}
 
 
-def search_binary_pattern(
-    data: bytes, pattern_desc: str, model_manager: object | None = None
-) -> list[dict[str, Any]]:
+def search_binary_pattern(data: bytes, pattern_desc: str, model_manager: object | None = None) -> list[dict[str, Any]]:
     """Search for a pattern in binary data using AI assistance.
 
     Args:
@@ -155,9 +151,7 @@ def search_binary_pattern(
         return []
 
 
-def suggest_binary_edits(
-    data: bytes, edit_intent: str, model_manager: object | None = None
-) -> dict[str, Any]:
+def suggest_binary_edits(data: bytes, edit_intent: str, model_manager: object | None = None) -> dict[str, Any]:
     """Suggest edits to binary data using AI assistance.
 
     Args:
@@ -193,9 +187,7 @@ def create_hex_viewer_widget(parent: object | None = None) -> HexViewerWidget:
     return HexViewerWidget(parent)
 
 
-def create_hex_viewer_dialog(
-    parent: object | None = None, file_path: str | None = None, read_only: bool = True
-) -> HexViewerDialog:
+def create_hex_viewer_dialog(parent: object | None = None, file_path: str | None = None, read_only: bool = True) -> HexViewerDialog:
     """Create a new hex viewer dialog.
 
     Args:

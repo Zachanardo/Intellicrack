@@ -266,21 +266,15 @@ class LicenseAnalyzer:
                 logger.debug(f"Failed to find PID for target: '{target}'")
                 return False
 
-            self.process_handle = kernel32.OpenProcess(
-                ProcessAccess.PROCESS_ALL_ACCESS, False, self.pid
-            )
+            self.process_handle = kernel32.OpenProcess(ProcessAccess.PROCESS_ALL_ACCESS, False, self.pid)
 
             if not self.process_handle:
                 logger.error(f"Failed to attach to process {self.pid}")
-                logger.debug(
-                    f"OpenProcess failed for PID {self.pid}. Error: {ctypes.get_last_error()}"
-                )
+                logger.debug(f"OpenProcess failed for PID {self.pid}. Error: {ctypes.get_last_error()}")
                 return False
 
             logger.info(f"Attached to process {self.pid} for license analysis")
-            logger.debug(
-                f"Successfully attached to PID {self.pid}. Process handle: {self.process_handle}"
-            )
+            logger.debug(f"Successfully attached to PID {self.pid}. Process handle: {self.process_handle}")
             return True
 
         except Exception as e:
@@ -304,12 +298,8 @@ class LicenseAnalyzer:
         for region in regions:
             # Only scan executable regions (likely code)
             if region["protection"] & 0x10:  # PAGE_EXECUTE
-                logger.debug(
-                    f"Scanning executable region at 0x{region['base_address']:X} (size: 0x{region['size']:X})"
-                )
-                if memory := self.read_memory(
-                    region["base_address"], min(region["size"], 0x10000)
-                ):
+                logger.debug(f"Scanning executable region at 0x{region['base_address']:X} (size: 0x{region['size']:X})")
+                if memory := self.read_memory(region["base_address"], min(region["size"], 0x10000)):
                     # Look for license-related strings
                     for license_string in self.COMMON_LICENSE_STRINGS:
                         offset = 0
@@ -323,9 +313,7 @@ class LicenseAnalyzer:
                                 f"Found license string '{license_string.decode(errors='ignore')}' at 0x{check_addr:X}. Analyzing context."
                             )
 
-                            if context := self._analyze_license_check_context(
-                                check_addr
-                            ):
+                            if context := self._analyze_license_check_context(check_addr):
                                 license_checks.append(
                                     {
                                         "address": check_addr,
@@ -334,9 +322,7 @@ class LicenseAnalyzer:
                                         "jump_addresses": context["jumps"],
                                     },
                                 )
-                                logger.debug(
-                                    f"Context analysis for 0x{check_addr:X} successful. Type: {context['type']}"
-                                )
+                                logger.debug(f"Context analysis for 0x{check_addr:X} successful. Type: {context['type']}")
 
                             offset = index + 1
                 else:
@@ -352,9 +338,7 @@ class LicenseAnalyzer:
         # Read surrounding bytes
         before = self.read_memory(max(address - 100, 0), 100)
         after = self.read_memory(address, 100)
-        logger.debug(
-            f"Read {len(before) if before else 0} bytes before and {len(after) if after else 0} bytes after 0x{address:X}."
-        )
+        logger.debug(f"Read {len(before) if before else 0} bytes before and {len(after) if after else 0} bytes after 0x{address:X}.")
 
         if not before or not after:
             logger.debug("Insufficient memory read for context analysis.")
@@ -376,9 +360,7 @@ class LicenseAnalyzer:
             if opcode in after[:20]:
                 index = after.find(opcode)
                 jump_addr = address + index
-                context["jumps"].append(
-                    {"address": jump_addr, "type": jump_type, "opcode": opcode.hex()}
-                )
+                context["jumps"].append({"address": jump_addr, "type": jump_type, "opcode": opcode.hex()})
                 context["type"] = "conditional_check"
                 logger.debug(f"Detected conditional jump '{jump_type}' at 0x{jump_addr:X}.")
 
@@ -388,9 +370,7 @@ class LicenseAnalyzer:
             logger.debug("Detected function call instruction.")
 
         if context["jumps"] or context["type"] != "unknown":
-            logger.debug(
-                f"Context analysis for 0x{address:X} complete. Type: {context['type']}, Jumps: {len(context['jumps'])}"
-            )
+            logger.debug(f"Context analysis for 0x{address:X} complete. Type: {context['type']}, Jumps: {len(context['jumps'])}")
             return context
         logger.debug(f"No significant context found around 0x{address:X}.")
         return None
@@ -402,9 +382,7 @@ class LicenseAnalyzer:
             return False
 
         success = False
-        logger.debug(
-            f"Attempting to patch license check at 0x{address:X} with patch type: '{patch_type}'"
-        )
+        logger.debug(f"Attempting to patch license check at 0x{address:X} with patch type: '{patch_type}'")
 
         if patch_type == "nop":
             # NOP out the check (0x90)
@@ -445,15 +423,11 @@ class LicenseAnalyzer:
             success = self.write_memory(address, b"\xb8\x01\x00\x00\x00\xc3")  # MOV EAX, 1; RET
 
         if success:
-            self.patched_locations.append(
-                {"address": address, "type": patch_type, "timestamp": str(datetime.now())}
-            )
+            self.patched_locations.append({"address": address, "type": patch_type, "timestamp": str(datetime.now())})
             logger.info(f"Patched license check at 0x{address:X} with {patch_type}")
             logger.debug(f"Patch operation successful at 0x{address:X}.")
         else:
-            logger.warning(
-                f"Patch operation failed at 0x{address:X} with patch type: '{patch_type}'."
-            )
+            logger.warning(f"Patch operation failed at 0x{address:X} with patch type: '{patch_type}'.")
 
         return success
 
@@ -474,7 +448,7 @@ class LicenseAnalyzer:
             size,
             ctypes.byref(bytes_read),
         ):
-            logger.debug(f"Successfully read {bytes_read.value} bytes from 0x{address:X}.")
+            logger.debug(f"Successfully read {bytes_read.value} bytes from 0x{address:X} (result: {success}).")
             return bytes(buffer)
         logger.debug(f"Failed to read memory from 0x{address:X}. Error: {ctypes.get_last_error()}")
         return None
@@ -488,9 +462,7 @@ class LicenseAnalyzer:
 
         # Change memory protection to writable
         old_protect = ctypes.wintypes.DWORD()
-        logger.debug(
-            f"Changing memory protection at 0x{address:X} to PAGE_EXECUTE_READWRITE (0x40)."
-        )
+        logger.debug(f"Changing memory protection at 0x{address:X} to PAGE_EXECUTE_READWRITE (0x40).")
         kernel32.VirtualProtectEx(
             self.process_handle,
             ctypes.c_void_p(address),
@@ -522,9 +494,7 @@ class LicenseAnalyzer:
         if success:
             logger.debug(f"Successfully wrote {bytes_written.value} bytes to 0x{address:X}.")
         else:
-            logger.debug(
-                f"Failed to write memory to 0x{address:X}. Error: {ctypes.get_last_error()}"
-            )
+            logger.debug(f"Failed to write memory to 0x{address:X}. Error: {ctypes.get_last_error()}")
         return bool(success)
 
     def _get_memory_regions(self) -> list[dict[str, Any]]:
@@ -551,14 +521,10 @@ class LicenseAnalyzer:
         mbi = MEMORY_BASIC_INFORMATION()
 
         while address < 0x7FFFFFFFFFFFFFFF:
-            result = kernel32.VirtualQueryEx(
-                self.process_handle, ctypes.c_void_p(address), ctypes.byref(mbi), ctypes.sizeof(mbi)
-            )
+            result = kernel32.VirtualQueryEx(self.process_handle, ctypes.c_void_p(address), ctypes.byref(mbi), ctypes.sizeof(mbi))
 
             if not result:
-                logger.debug(
-                    f"VirtualQueryEx failed at address 0x{address:X}. Error: {ctypes.get_last_error()}"
-                )
+                logger.debug(f"VirtualQueryEx failed at address 0x{address:X}. Error: {ctypes.get_last_error()}")
                 break
 
             if mbi.State == 0x1000:  # MEM_COMMIT
@@ -569,9 +535,7 @@ class LicenseAnalyzer:
                         "protection": mbi.Protect,
                     }
                 )
-                logger.debug(
-                    f"Found committed region: Base=0x{mbi.BaseAddress:X}, Size=0x{mbi.RegionSize:X}, Protect=0x{mbi.Protect:X}"
-                )
+                logger.debug(f"Found committed region: Base=0x{mbi.BaseAddress:X}, Size=0x{mbi.RegionSize:X}, Protect=0x{mbi.Protect:X}")
 
             address = mbi.BaseAddress + mbi.RegionSize
             if address == mbi.BaseAddress:  # Prevent infinite loop if RegionSize is 0
@@ -659,26 +623,16 @@ class LicenseAnalyzer:
 
         matches = []
         regions = self._get_memory_regions()
-        logger.debug(
-            f"Scanning for pattern '{pattern.hex()}' (mask: {mask.hex() if mask else 'None'}) in {len(regions)} memory regions."
-        )
+        logger.debug(f"Scanning for pattern '{pattern.hex()}' (mask: {mask.hex() if mask else 'None'}) in {len(regions)} memory regions.")
 
         for region in regions:
             if region["protection"] & 0x10:  # PAGE_EXECUTE
-                logger.debug(
-                    f"Scanning executable region 0x{region['base_address']:X} for pattern."
-                )
-                if memory := self.read_memory(
-                    region["base_address"], min(region["size"], 0x100000)
-                ):
+                logger.debug(f"Scanning executable region 0x{region['base_address']:X} for pattern.")
+                if memory := self.read_memory(region["base_address"], min(region["size"], 0x100000)):
                     if mask:
-                        region_matches = self._masked_pattern_scan(
-                            memory, pattern, mask, region["base_address"]
-                        )
+                        region_matches = self._masked_pattern_scan(memory, pattern, mask, region["base_address"])
                         matches.extend(region_matches)
-                        logger.debug(
-                            f"Found {len(region_matches)} masked matches in region 0x{region['base_address']:X}."
-                        )
+                        logger.debug(f"Found {len(region_matches)} masked matches in region 0x{region['base_address']:X}.")
                     else:
                         offset = 0
                         while True:
@@ -693,9 +647,7 @@ class LicenseAnalyzer:
         logger.debug(f"Finished pattern scan. Total matches found: {len(matches)}")
         return matches
 
-    def _masked_pattern_scan(
-        self, memory: bytes, pattern: bytes, mask: bytes, base_addr: int
-    ) -> list[int]:
+    def _masked_pattern_scan(self, memory: bytes, pattern: bytes, mask: bytes, base_addr: int) -> list[int]:
         """Scan with wildcard mask support."""
         matches = []
         pattern_len = len(pattern)
@@ -704,19 +656,14 @@ class LicenseAnalyzer:
         )
 
         for i in range(len(memory) - pattern_len + 1):
-            match = not any(
-                mask[j] != ord("?") and memory[i + j] != pattern[j]
-                for j in range(pattern_len)
-            )
+            match = not any(mask[j] != ord("?") and memory[i + j] != pattern[j] for j in range(pattern_len))
             if match:
                 matches.append(base_addr + i)
                 logger.debug(f"Masked pattern match found at 0x{base_addr + i:X}.")
         logger.debug(f"Masked pattern scan completed. Found {len(matches)} matches.")
         return matches
 
-    def scan_patterns_concurrent(
-        self, patterns: list[dict[str, Any]], max_workers: int = 4
-    ) -> dict[str, list[int]]:
+    def scan_patterns_concurrent(self, patterns: list[dict[str, Any]], max_workers: int = 4) -> dict[str, list[int]]:
         """Scan for multiple patterns concurrently using thread pool.
 
         Args:
@@ -739,9 +686,7 @@ class LicenseAnalyzer:
 
         # Filter for executable regions
         exec_regions = [r for r in regions if r["protection"] & 0x10]  # PAGE_EXECUTE
-        logger.debug(
-            f"Starting concurrent scan for {len(patterns)} patterns across {len(exec_regions)} executable regions."
-        )
+        logger.debug(f"Starting concurrent scan for {len(patterns)} patterns across {len(exec_regions)} executable regions.")
 
         if not exec_regions:
             logger.debug("No executable regions found for concurrent scan.")
@@ -753,9 +698,7 @@ class LicenseAnalyzer:
         def scan_region_for_patterns(region: dict[str, Any]) -> dict[str, list[int]]:
             """Worker function to scan a single region for all patterns."""
             local_results = {pattern["name"]: [] for pattern in patterns}
-            logger.debug(
-                f"Worker scanning region 0x{region['base_address']:X} (size: 0x{region['size']:X})."
-            )
+            logger.debug(f"Worker scanning region 0x{region['base_address']:X} (size: 0x{region['size']:X}).")
             try:
                 # Read memory region once
                 memory = self.read_memory(region["base_address"], min(region["size"], 0x100000))
@@ -770,9 +713,7 @@ class LicenseAnalyzer:
                     pattern_name = pattern["name"]
 
                     if pattern_mask:
-                        matches = self._masked_pattern_scan(
-                            memory, pattern_bytes, pattern_mask, region["base_address"]
-                        )
+                        matches = self._masked_pattern_scan(memory, pattern_bytes, pattern_mask, region["base_address"])
                     else:
                         # Direct pattern search
                         offset = 0
@@ -785,9 +726,7 @@ class LicenseAnalyzer:
                             offset = index + 1
 
                     local_results[pattern_name].extend(matches)
-                    logger.debug(
-                        f"Pattern '{pattern_name}' found {len(matches)} matches in region 0x{region['base_address']:X}."
-                    )
+                    logger.debug(f"Pattern '{pattern_name}' found {len(matches)} matches in region 0x{region['base_address']:X}.")
 
             except Exception as e:
                 logger.error(f"Error scanning region 0x{region['base_address']:X}: {e}")
@@ -798,9 +737,7 @@ class LicenseAnalyzer:
         # Use ThreadPoolExecutor for concurrent scanning
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all region scan tasks
-            future_to_region = {
-                executor.submit(scan_region_for_patterns, region): region for region in exec_regions
-            }
+            future_to_region = {executor.submit(scan_region_for_patterns, region): region for region in exec_regions}
 
             # Collect results as they complete
             for future in concurrent.futures.as_completed(future_to_region):
@@ -829,9 +766,7 @@ class LicenseAnalyzer:
         for _pattern_name, pattern_results in results.items():
             pattern_results.sort()
 
-        logger.info(
-            f"Concurrent scan complete: {sum(len(v) for v in results.values())} total matches"
-        )
+        logger.info(f"Concurrent scan complete: {sum(len(v) for v in results.values())} total matches")
         logger.debug(f"Final concurrent scan results: {results}")
         return results
 
@@ -840,17 +775,12 @@ class LicenseAnalyzer:
         import capstone
 
         is_64bit = ctypes.sizeof(ctypes.c_voidp) == 8
-        md = capstone.Cs(
-            capstone.CS_ARCH_X86,
-            capstone.CS_MODE_64 if is_64bit else capstone.CS_MODE_32
-        )
+        md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64 if is_64bit else capstone.CS_MODE_32)
         md.detail = True
         logger.debug(f"Capstone initialized for {'x64' if is_64bit else 'x86'} architecture.")
         return md
 
-    def _scan_references_to(
-        self, address: int, start_addr: int, end_addr: int, md: Any
-    ) -> list[dict[str, Any]]:
+    def _scan_references_to(self, address: int, start_addr: int, end_addr: int, md: Any) -> list[dict[str, Any]]:
         """Scan memory regions for references TO target address."""
         import struct
 
@@ -858,10 +788,7 @@ class LicenseAnalyzer:
 
         references = []
         regions = self._get_memory_regions()
-        regions_in_range = [
-            r for r in regions
-            if r["base_address"] <= end_addr and r["base_address"] + r["size"] >= start_addr
-        ]
+        regions_in_range = [r for r in regions if r["base_address"] <= end_addr and r["base_address"] + r["size"] >= start_addr]
         is_64bit = ctypes.sizeof(ctypes.c_voidp) == 8
 
         for region in regions_in_range:
@@ -876,20 +803,14 @@ class LicenseAnalyzer:
                 if not memory:
                     continue
 
-                references.extend(self._disassemble_for_references(
-                    memory, region_start, address, md
-                ))
-                references.extend(self._scan_data_pointers(
-                    memory, region_start, address, is_64bit
-                ))
+                references.extend(self._disassemble_for_references(memory, region_start, address, md))
+                references.extend(self._scan_data_pointers(memory, region_start, address, is_64bit))
             except Exception as e:
                 logger.error(f"Error analyzing region 0x{region['base_address']:X}: {e}")
 
         return references
 
-    def _disassemble_for_references(
-        self, memory: bytes, region_start: int, target_address: int, md: Any
-    ) -> list[dict[str, Any]]:
+    def _disassemble_for_references(self, memory: bytes, region_start: int, target_address: int, md: Any) -> list[dict[str, Any]]:
         """Disassemble memory and find instruction references to target address."""
         import capstone
 
@@ -927,24 +848,26 @@ class LicenseAnalyzer:
 
         for op in insn.operands:
             if op.type == capstone.x86.X86_OP_MEM and op.mem.disp == target_address:
-                references.append({
-                    "from_address": insn.address,
-                    "instruction": insn.mnemonic,
-                    "bytes": insn.bytes.hex(),
-                    "type": "memory_reference",
-                })
+                references.append(
+                    {
+                        "from_address": insn.address,
+                        "instruction": insn.mnemonic,
+                        "bytes": insn.bytes.hex(),
+                        "type": "memory_reference",
+                    }
+                )
             elif op.type == capstone.x86.X86_OP_IMM and op.value.imm == target_address:
-                references.append({
-                    "from_address": insn.address,
-                    "instruction": insn.mnemonic,
-                    "bytes": insn.bytes.hex(),
-                    "type": "immediate_reference",
-                })
+                references.append(
+                    {
+                        "from_address": insn.address,
+                        "instruction": insn.mnemonic,
+                        "bytes": insn.bytes.hex(),
+                        "type": "immediate_reference",
+                    }
+                )
         return references
 
-    def _scan_data_pointers(
-        self, memory: bytes, region_start: int, target_address: int, is_64bit: bool
-    ) -> list[dict[str, Any]]:
+    def _scan_data_pointers(self, memory: bytes, region_start: int, target_address: int, is_64bit: bool) -> list[dict[str, Any]]:
         """Scan memory for raw pointer references to target address."""
         import struct
 
@@ -953,19 +876,19 @@ class LicenseAnalyzer:
         ptr_format = "<Q" if is_64bit else "<I"
 
         for offset in range(0, len(memory) - ptr_size + 1, ptr_size):
-            ptr_value = struct.unpack(ptr_format, memory[offset:offset + ptr_size])[0]
+            ptr_value = struct.unpack(ptr_format, memory[offset : offset + ptr_size])[0]
             if ptr_value == target_address:
-                references.append({
-                    "from_address": region_start + offset,
-                    "instruction": "DATA_PTR",
-                    "bytes": memory[offset:offset + ptr_size].hex(),
-                    "type": "data_pointer",
-                })
+                references.append(
+                    {
+                        "from_address": region_start + offset,
+                        "instruction": "DATA_PTR",
+                        "bytes": memory[offset : offset + ptr_size].hex(),
+                        "type": "data_pointer",
+                    }
+                )
         return references
 
-    def _scan_references_from(
-        self, address: int, scan_range: int, md: Any
-    ) -> list[dict[str, Any]]:
+    def _scan_references_from(self, address: int, scan_range: int, md: Any) -> list[dict[str, Any]]:
         """Scan for references FROM the target address."""
         import capstone
 
@@ -1006,26 +929,28 @@ class LicenseAnalyzer:
         references = []
         for op in insn.operands:
             if op.type == capstone.x86.X86_OP_MEM and op.mem.disp != 0:
-                references.append({
-                    "to_address": op.mem.disp,
-                    "instruction": insn.mnemonic,
-                    "offset": insn.address - base_address,
-                    "type": "memory_access",
-                })
+                references.append(
+                    {
+                        "to_address": op.mem.disp,
+                        "instruction": insn.mnemonic,
+                        "offset": insn.address - base_address,
+                        "type": "memory_access",
+                    }
+                )
             elif op.type == capstone.x86.X86_OP_IMM:
                 imm_val = op.value.imm
                 if (0x400000 <= imm_val <= 0x7FFFFFFF) or (0x10000000000 <= imm_val <= 0x7FFFFFFFFFFF):
-                    references.append({
-                        "to_address": imm_val,
-                        "instruction": insn.mnemonic,
-                        "offset": insn.address - base_address,
-                        "type": "immediate",
-                    })
+                    references.append(
+                        {
+                            "to_address": imm_val,
+                            "instruction": insn.mnemonic,
+                            "offset": insn.address - base_address,
+                            "type": "immediate",
+                        }
+                    )
         return references
 
-    def analyze_cross_references(
-        self, address: int, scan_range: int = 0x10000
-    ) -> dict[str, list[dict[str, Any]]]:
+    def analyze_cross_references(self, address: int, scan_range: int = 0x10000) -> dict[str, list[dict[str, Any]]]:
         """Analyze cross-references to/from a given address.
 
         Args:
@@ -1036,9 +961,7 @@ class LicenseAnalyzer:
             Dictionary with 'references_to' and 'references_from' lists
 
         """
-        logger.debug(
-            f"Analyzing cross-references for address 0x{address:X} with scan range 0x{scan_range:X}."
-        )
+        logger.debug(f"Analyzing cross-references for address 0x{address:X} with scan range 0x{scan_range:X}.")
         if not self.process_handle:
             logger.debug("No process attached. Cannot analyze cross-references.")
             return {"references_to": [], "references_from": []}
@@ -1056,14 +979,11 @@ class LicenseAnalyzer:
         references_from = self._scan_references_from(address, scan_range, md)
 
         logger.info(
-            f"Cross-reference analysis: {len(references_to)} refs to, "
-            f"{len(references_from)} refs from 0x{address:X}",
+            f"Cross-reference analysis: {len(references_to)} refs to, {len(references_from)} refs from 0x{address:X}",
         )
         return {"references_to": references_to, "references_from": references_from}
 
-    def generate_signature_from_sample(
-        self, sample_addresses: list[int], context_size: int = 32
-    ) -> dict[str, Any]:
+    def generate_signature_from_sample(self, sample_addresses: list[int], context_size: int = 32) -> dict[str, Any]:
         """Generate signature pattern from sample addresses.
 
         Args:
@@ -1076,9 +996,7 @@ class LicenseAnalyzer:
         """
         import collections
 
-        logger.debug(
-            f"Generating signature from {len(sample_addresses)} sample addresses with context size {context_size}."
-        )
+        logger.debug(f"Generating signature from {len(sample_addresses)} sample addresses with context size {context_size}.")
         if not self.process_handle or not sample_addresses:
             logger.debug("Insufficient data for signature generation.")
             return {"pattern": b"", "mask": b"", "confidence": 0.0, "common_bytes": []}
@@ -1123,12 +1041,8 @@ class LicenseAnalyzer:
                 confidence_scores.append(0.0)
 
         # Calculate overall signature confidence
-        overall_confidence = (
-            sum(confidence_scores) / len(confidence_scores) if confidence_scores else 0.0
-        )
-        logger.debug(
-            f"Initial pattern generated with overall confidence: {overall_confidence:.2%}."
-        )
+        overall_confidence = sum(confidence_scores) / len(confidence_scores) if confidence_scores else 0.0
+        logger.debug(f"Initial pattern generated with overall confidence: {overall_confidence:.2%}.")
 
         # Find longest common subsequences for better signature
         common_sequences = self._find_common_sequences(samples)
@@ -1161,9 +1075,7 @@ class LicenseAnalyzer:
 
     def _find_common_sequences(self, samples: list[bytes], min_length: int = 4) -> list[bytes]:
         """Find common byte sequences across samples."""
-        logger.debug(
-            f"Finding common sequences across {len(samples)} samples (min_length: {min_length})."
-        )
+        logger.debug(f"Finding common sequences across {len(samples)} samples (min_length: {min_length}).")
         if len(samples) < 2:
             logger.debug("Less than 2 samples, no common sequences to find.")
             return []
@@ -1178,9 +1090,8 @@ class LicenseAnalyzer:
 
                 # Check if this subsequence appears in all other samples
                 if all(subsequence in sample for sample in samples[1:]) and all(
-                                        subsequence not in existing
-                                        for existing in common_sequences
-                                    ):
+                    subsequence not in existing for existing in common_sequences
+                ):
                     common_sequences.append(subsequence)
                     logger.debug(f"Found common subsequence: {subsequence.hex()}")
 
@@ -1191,9 +1102,7 @@ class LicenseAnalyzer:
         )
         return common_sequences[:10]  # Return top 10 sequences
 
-    def _refine_signature(
-        self, pattern: bytearray, mask: bytearray, common_sequences: list[bytes]
-    ) -> tuple[bytearray, bytearray]:
+    def _refine_signature(self, pattern: bytearray, mask: bytearray, common_sequences: list[bytes]) -> tuple[bytearray, bytearray]:
         """Refine signature using common sequences."""
         logger.debug("Refining signature using common sequences.")
         refined_pattern = bytearray(pattern)
@@ -1203,20 +1112,13 @@ class LicenseAnalyzer:
         for sequence in common_sequences:
             # Find sequence in pattern
             for i in range(len(pattern) - len(sequence) + 1):
-                if all(
-                    pattern[i + j] == sequence[j] or mask[i + j] == 0x00
-                    for j in range(len(sequence))
-                ):
+                if all(pattern[i + j] == sequence[j] or mask[i + j] == 0x00 for j in range(len(sequence))):
                     # Update pattern and mask for this sequence
                     for j in range(len(sequence)):
                         refined_pattern[i + j] = sequence[j]
                         refined_mask[i + j] = 0xFF
-                    logger.debug(
-                        f"Marked common sequence '{sequence.hex()}' as fixed in signature."
-                    )
-        logger.debug(
-            f"Signature refinement complete. Refined pattern: {refined_pattern.hex()}, Refined mask: {refined_mask.hex()}"
-        )
+                    logger.debug(f"Marked common sequence '{sequence.hex()}' as fixed in signature.")
+        logger.debug(f"Signature refinement complete. Refined pattern: {refined_pattern.hex()}, Refined mask: {refined_mask.hex()}")
         return refined_pattern, refined_mask
 
     def _generate_yara_hex(self, pattern: bytearray, mask: bytearray) -> str:
@@ -1259,9 +1161,7 @@ class LicenseAnalyzer:
 
         """
         signatures = {}
-        logger.debug(
-            f"Automatically generating signatures for target functions: {target_functions}"
-        )
+        logger.debug(f"Automatically generating signatures for target functions: {target_functions}")
 
         # Common licensing function patterns to search for
         license_patterns = {
@@ -1288,9 +1188,7 @@ class LicenseAnalyzer:
             # Search for function patterns
             found_addresses = []
             if func_name in license_patterns:
-                logger.debug(
-                    f"Searching for specific patterns for {func_name}: {[p.hex() for p in license_patterns[func_name]]}"
-                )
+                logger.debug(f"Searching for specific patterns for {func_name}: {[p.hex() for p in license_patterns[func_name]]}")
 
                 for pattern in license_patterns[func_name]:
                     matches = self.scan_pattern(pattern)
@@ -1299,21 +1197,15 @@ class LicenseAnalyzer:
 
                 if found_addresses:
                     # Generate signature from found samples
-                    signature = self.generate_signature_from_sample(
-                        found_addresses, context_size=48
-                    )
+                    signature = self.generate_signature_from_sample(found_addresses, context_size=48)
 
                     if signature["confidence"] > 0.5:
                         signatures[func_name] = signature
-                        logger.info(
-                            f"Generated signature for {func_name}: confidence {signature['confidence']:.2%}"
-                        )
+                        logger.info(f"Generated signature for {func_name}: confidence {signature['confidence']:.2%}")
                         logger.debug(f"Signature for {func_name} generated: {signature}")
             else:
                 # Try generic function prologue search
-                logger.debug(
-                    f"No specific patterns for {func_name}. Trying generic function prologue search."
-                )
+                logger.debug(f"No specific patterns for {func_name}. Trying generic function prologue search.")
                 generic_patterns = [
                     b"\x55\x8b\xec",  # x86: push ebp; mov ebp, esp
                     b"\x55\x48\x89\xe5",  # x64: push rbp; mov rbp, rsp
@@ -1324,18 +1216,12 @@ class LicenseAnalyzer:
                 for pattern in generic_patterns:
                     if matches := self.scan_pattern(pattern):
                         found_addresses.extend(matches[:3])
-                logger.debug(
-                    f"Found {len(found_addresses)} addresses using generic patterns for {func_name}."
-                )
+                logger.debug(f"Found {len(found_addresses)} addresses using generic patterns for {func_name}.")
 
                 if found_addresses:
-                    signature = self.generate_signature_from_sample(
-                        found_addresses, context_size=64
-                    )
+                    signature = self.generate_signature_from_sample(found_addresses, context_size=64)
                     signatures[func_name] = signature
-                    logger.debug(
-                        f"Signature for {func_name} generated using generic patterns: {signature}"
-                    )
+                    logger.debug(f"Signature for {func_name} generated using generic patterns: {signature}")
         logger.debug(f"Auto-signature generation complete. Total signatures: {len(signatures)}")
         return signatures
 
@@ -1452,11 +1338,7 @@ class LicenseAnalyzer:
         with self._cache_lock:
             # Remove expired entries
             current_time = time.time()
-            expired_keys = [
-                key
-                for key, timestamp in self._cache_timestamps.items()
-                if current_time - timestamp >= self._cache_ttl
-            ]
+            expired_keys = [key for key, timestamp in self._cache_timestamps.items() if current_time - timestamp >= self._cache_ttl]
 
             for key in expired_keys:
                 del self._pattern_cache[key]
@@ -1472,9 +1354,7 @@ class LicenseAnalyzer:
             elif stats["hit_rate"] > 0.8 and stats["evictions"] < 5:
                 self._cache_max_size = max(50, self._cache_max_size - 10)
                 logger.info(f"Decreased cache size to {self._cache_max_size}")
-                logger.debug(
-                    f"Cache size decreased to {self._cache_max_size} due to high hit rate and low evictions."
-                )
+                logger.debug(f"Cache size decreased to {self._cache_max_size} due to high hit rate and low evictions.")
             logger.debug("Cache optimization complete.")
 
     def batch_scan_with_cache(self, patterns: list[dict[str, Any]]) -> dict[str, list[int]]:
@@ -1520,9 +1400,7 @@ class LicenseAnalyzer:
                         self._cache_stats["misses"] += 1
                         logger.debug(f"Scanned pattern '{pattern_name}' and added to cache.")
 
-        logger.info(
-            f"Batch scan complete: {len(cached_patterns)} cached, {len(uncached_patterns)} scanned"
-        )
+        logger.info(f"Batch scan complete: {len(cached_patterns)} cached, {len(uncached_patterns)} scanned")
         logger.debug(f"Final batch scan results: {results}")
         return results
 
@@ -1592,7 +1470,7 @@ class LicenseAnalyzer:
                 ctypes.sizeof(Peb),
                 ctypes.byref(bytes_read),
             ):
-                logger.debug(f"Successfully read PEB from 0x{peb_addr:X}.")
+                logger.debug(f"Successfully read PEB from 0x{peb_addr:X} ({bytes_read.value} bytes, result: {success}).")
                 return peb
             logger.error(f"Failed to read PEB: {ctypes.GetLastError()}")
             logger.debug(f"Failed to read PEB. Error: {ctypes.GetLastError()}.")
@@ -1631,9 +1509,7 @@ class LicenseAnalyzer:
                 being_debugged_offset = 0x02  # Offset of BeingDebugged in PEB
                 zero_byte = ctypes.c_ubyte(0)
                 bytes_written = ctypes.c_size_t()
-                logger.debug(
-                    f"Attempting to clear PEB.BeingDebugged flag at offset 0x{being_debugged_offset:X}."
-                )
+                logger.debug(f"Attempting to clear PEB.BeingDebugged flag at offset 0x{being_debugged_offset:X}.")
                 if success := self.kernel32.WriteProcessMemory(
                     self.process_handle,
                     ctypes.c_void_p(peb_addr + being_debugged_offset),
@@ -1645,18 +1521,14 @@ class LicenseAnalyzer:
                     logger.info("Cleared PEB.BeingDebugged flag")
                     logger.debug("PEB.BeingDebugged flag cleared successfully.")
                 else:
-                    logger.debug(
-                        f"Failed to clear PEB.BeingDebugged flag. Error: {ctypes.get_last_error()}"
-                    )
+                    logger.debug(f"Failed to clear PEB.BeingDebugged flag. Error: {ctypes.get_last_error()}")
 
             # Clear NtGlobalFlag
             if clear_nt_global_flag:
                 # NtGlobalFlag offset varies by architecture
                 is_64bit = ctypes.sizeof(ctypes.c_voidp) == 8
                 nt_global_flag_offset = 0xBC if is_64bit else 0x68
-                logger.debug(
-                    f"Attempting to clear PEB.NtGlobalFlag at offset 0x{nt_global_flag_offset:X} (64-bit: {is_64bit})."
-                )
+                logger.debug(f"Attempting to clear PEB.NtGlobalFlag at offset 0x{nt_global_flag_offset:X} (64-bit: {is_64bit}).")
                 zero_dword = ctypes.c_ulong(0)
                 bytes_written = ctypes.c_size_t()
 
@@ -1671,9 +1543,7 @@ class LicenseAnalyzer:
                     logger.info("Cleared PEB.NtGlobalFlag")
                     logger.debug("PEB.NtGlobalFlag cleared successfully.")
                 else:
-                    logger.debug(
-                        f"Failed to clear PEB.NtGlobalFlag. Error: {ctypes.get_last_error()}"
-                    )
+                    logger.debug(f"Failed to clear PEB.NtGlobalFlag. Error: {ctypes.get_last_error()}")
 
             # Clear heap flags
             if clear_heap_flags:
@@ -1685,9 +1555,7 @@ class LicenseAnalyzer:
                     # Clear Flags field
                     flags_value = ctypes.c_ulong(2)  # HEAP_GROWABLE
                     bytes_written = ctypes.c_size_t()
-                    logger.debug(
-                        f"Clearing heap Flags field at 0x{int(peb.ProcessHeap) + heap_flags_offset:X}."
-                    )
+                    logger.debug(f"Clearing heap Flags field at 0x{int(peb.ProcessHeap) + heap_flags_offset:X}.")
                     if success := self.kernel32.WriteProcessMemory(
                         self.process_handle,
                         ctypes.c_void_p(int(peb.ProcessHeap) + heap_flags_offset),
@@ -1695,13 +1563,12 @@ class LicenseAnalyzer:
                         ctypes.sizeof(flags_value),
                         ctypes.byref(bytes_written),
                     ):
+                        logger.debug(f"Heap flags cleared successfully (result: {success}, {bytes_written.value} bytes written)")
                         # Clear ForceFlags field
                         zero_dword = ctypes.c_ulong(0)
                         heap_force_flags_offset = heap_flags_offset + 4
 
-                        logger.debug(
-                            f"Clearing heap ForceFlags field at 0x{int(peb.ProcessHeap) + heap_force_flags_offset:X}."
-                        )
+                        logger.debug(f"Clearing heap ForceFlags field at 0x{int(peb.ProcessHeap) + heap_force_flags_offset:X}.")
                         self.kernel32.WriteProcessMemory(
                             self.process_handle,
                             ctypes.c_void_p(int(peb.ProcessHeap) + heap_force_flags_offset),
@@ -1714,9 +1581,7 @@ class LicenseAnalyzer:
                         logger.info("Cleared heap debugging flags")
                         logger.debug("Heap debugging flags cleared successfully.")
                     else:
-                        logger.debug(
-                            f"Failed to clear heap Flags field. Error: {ctypes.get_last_error()}"
-                        )
+                        logger.debug(f"Failed to clear heap Flags field. Error: {ctypes.get_last_error()}")
                 else:
                     logger.debug("PEB or ProcessHeap not available for heap flag manipulation.")
 
@@ -1825,9 +1690,7 @@ class LicenseAnalyzer:
             logger.debug(f"Exception during setting debug flags: {e}", exc_info=True)
 
         if techniques_applied:
-            logger.info(
-                f"Applied {len(techniques_applied)} anti-debug bypass techniques: {', '.join(techniques_applied)}"
-            )
+            logger.info(f"Applied {len(techniques_applied)} anti-debug bypass techniques: {', '.join(techniques_applied)}")
             logger.debug("Anti-debug bypass techniques applied successfully.")
             return True
         logger.warning("Failed to apply any anti-debug bypass techniques")
@@ -1863,9 +1726,7 @@ class LicenseAnalyzer:
                 heap_flags_offset = 0x70 if ctypes.sizeof(ctypes.c_voidp) == 8 else 0x40
                 heap_flags = ctypes.c_ulong()
                 bytes_read = ctypes.c_size_t()
-                logger.debug(
-                    f"Checking heap flags at 0x{int(peb.ProcessHeap) + heap_flags_offset:X}."
-                )
+                logger.debug(f"Checking heap flags at 0x{int(peb.ProcessHeap) + heap_flags_offset:X}.")
                 self.kernel32.ReadProcessMemory(
                     self.process_handle,
                     ctypes.c_void_p(int(peb.ProcessHeap) + heap_flags_offset),
@@ -1904,9 +1765,7 @@ class LicenseAnalyzer:
         if not peb or not peb.ProcessParameters:
             logger.debug("Failed to read PEB or ProcessParameters. Cannot modify PEB image path.")
             return False
-        logger.debug(
-            f"Current ImagePathName buffer address: 0x{peb.ProcessParameters.contents.ImagePathName.Buffer:X}"
-        )
+        logger.debug(f"Current ImagePathName buffer address: 0x{peb.ProcessParameters.contents.ImagePathName.Buffer:X}")
 
         try:
             # Read process parameters
@@ -1941,9 +1800,7 @@ class LicenseAnalyzer:
             )
 
             if not new_path_addr:
-                logger.debug(
-                    f"Failed to allocate memory for new image path. Error: {ctypes.get_last_error()}"
-                )
+                logger.debug(f"Failed to allocate memory for new image path. Error: {ctypes.get_last_error()}")
                 return False
             logger.debug(f"Allocated memory for new image path at 0x{new_path_addr:X}.")
 
@@ -1972,13 +1829,9 @@ class LicenseAnalyzer:
                     logger.info(f"Modified PEB image path to: {new_path}")
                     logger.debug("PEB image path modified successfully.")
                     return True
-                logger.debug(
-                    f"Failed to write updated ProcessParameters back. Error: {ctypes.get_last_error()}"
-                )
+                logger.debug(f"Failed to write updated ProcessParameters back. Error: {ctypes.get_last_error()}")
             else:
-                logger.debug(
-                    f"Failed to write new image path to allocated memory. Error: {ctypes.get_last_error()}"
-                )
+                logger.debug(f"Failed to write new image path to allocated memory. Error: {ctypes.get_last_error()}")
 
         except Exception as e:
             logger.error(f"Failed to modify PEB image path: {e}")
@@ -2050,15 +1903,11 @@ class LicenseAnalyzer:
                     )
 
                 # Move to next region
-                current_address = (
-                    ctypes.cast(mbi.BaseAddress, ctypes.c_ulong).value + mbi.RegionSize
-                )
+                current_address = ctypes.cast(mbi.BaseAddress, ctypes.c_ulong).value + mbi.RegionSize
             else:
                 # Move forward on error
                 current_address += 0x1000
-                logger.debug(
-                    f"NtQueryVirtualMemory failed at 0x{current_address:X}. Moving to next page. Error: {ctypes.get_last_error()}"
-                )
+                logger.debug(f"NtQueryVirtualMemory failed at 0x{current_address:X}. Moving to next page. Error: {ctypes.get_last_error()}")
 
             # Safety check to prevent infinite loop
             if current_address <= 0:
@@ -2121,9 +1970,7 @@ class LicenseAnalyzer:
             # 1. Executable memory without image backing
             if entry["is_executable"] and entry["type"] != "IMAGE":
                 suspicious_indicators.append("executable_non_image")
-                logger.debug(
-                    f"Suspicious: Executable non-image region at 0x{entry['base_address']:X}."
-                )
+                logger.debug(f"Suspicious: Executable non-image region at 0x{entry['base_address']:X}.")
 
             # 2. RWX permissions (Read-Write-Execute)
             if "EXECUTE_READWRITE" in entry["protection"]:
@@ -2138,25 +1985,18 @@ class LicenseAnalyzer:
             # 4. Check for gaps (potential hidden regions)
             if i > 0:
                 prev_entry = vad_entries[i - 1]
-                prev_end = (
-                    ctypes.cast(prev_entry["base_address"], ctypes.c_ulong).value
-                    + prev_entry["region_size"]
-                )
+                prev_end = ctypes.cast(prev_entry["base_address"], ctypes.c_ulong).value + prev_entry["region_size"]
                 current_start = ctypes.cast(entry["base_address"], ctypes.c_ulong).value
 
                 gap_size = current_start - prev_end
                 if gap_size > 0x10000:  # Significant gap (> 64KB)
                     suspicious_indicators.append(f"large_gap_{gap_size:X}")
-                    logger.debug(
-                        f"Suspicious: Large gap (0x{gap_size:X}) before region at 0x{entry['base_address']:X}."
-                    )
+                    logger.debug(f"Suspicious: Large gap (0x{gap_size:X}) before region at 0x{entry['base_address']:X}.")
 
             # 5. Unusual allocation protection vs current protection
             if entry["allocation_protect"] != entry["protection"]:
                 suspicious_indicators.append("protection_changed")
-                logger.debug(
-                    f"Suspicious: Protection changed for region at 0x{entry['base_address']:X}."
-                )
+                logger.debug(f"Suspicious: Protection changed for region at 0x{entry['base_address']:X}.")
 
             if suspicious_indicators:
                 hidden_regions.append(
@@ -2166,17 +2006,13 @@ class LicenseAnalyzer:
                         "suspicion_level": len(suspicious_indicators),
                     },
                 )
-                logger.debug(
-                    f"Identified suspicious region at 0x{entry['base_address']:X} with indicators: {suspicious_indicators}."
-                )
+                logger.debug(f"Identified suspicious region at 0x{entry['base_address']:X} with indicators: {suspicious_indicators}.")
 
         # Sort by suspicion level
         hidden_regions.sort(key=lambda x: x["suspicion_level"], reverse=True)
 
         logger.info(f"Found {len(hidden_regions)} potentially hidden memory regions")
-        logger.debug(
-            f"Finished searching for hidden memory regions. Total found: {len(hidden_regions)}."
-        )
+        logger.debug(f"Finished searching for hidden memory regions. Total found: {len(hidden_regions)}.")
         return hidden_regions
 
     def enumerate_executable_regions(self) -> list[dict[str, Any]]:
@@ -2196,17 +2032,11 @@ class LicenseAnalyzer:
 
                     # Try to get module name
                     try:
-                        if module_name := self._get_module_name_at_address(
-                            ctypes.cast(
-                                entry["base_address"], ctypes.c_ulong
-                            ).value
-                        ):
+                        if module_name := self._get_module_name_at_address(ctypes.cast(entry["base_address"], ctypes.c_ulong).value):
                             region_info["module_name"] = module_name
                             region_info["confidence"] = 1.0
                     except (KeyError, TypeError) as e:
-                        logger.debug(
-                            f"Failed to get module name for region at {entry['base_address']}: {e}"
-                        )
+                        logger.debug(f"Failed to get module name for region at {entry['base_address']}: {e}")
 
                 elif "EXECUTE_READWRITE" in entry["protection"]:
                     region_info["identified_as"] = "jit_code"
@@ -2246,9 +2076,7 @@ class LicenseAnalyzer:
             current = vad_entries[i]
             next_region = vad_entries[i + 1]
 
-            current_end = (
-                ctypes.cast(current["base_address"], ctypes.c_ulong).value + current["region_size"]
-            )
+            current_end = ctypes.cast(current["base_address"], ctypes.c_ulong).value + current["region_size"]
             next_start = ctypes.cast(next_region["base_address"], ctypes.c_ulong).value
 
             gap_size = next_start - current_end
@@ -2278,10 +2106,7 @@ class LicenseAnalyzer:
         # Sort gaps by size
         gaps.sort(key=lambda x: x["size"], reverse=True)
 
-        logger.info(
-            f"Found {len(gaps)} memory gaps, {sum(bool(g['suitable_for_injection'])
-                                              for g in gaps)} suitable for injection"
-        )
+        logger.info(f"Found {len(gaps)} memory gaps, {sum(bool(g['suitable_for_injection']) for g in gaps)} suitable for injection")
         return gaps
 
     def detect_vad_manipulation(self) -> dict[str, Any]:
@@ -2311,9 +2136,7 @@ class LicenseAnalyzer:
                 detection_results["vad_hiding_detected"] = True
 
         # 2. Check for manual memory allocations with suspicious permissions
-        private_exec_regions = [
-            e for e in vad_entries if e["type"] == "PRIVATE" and e["is_executable"]
-        ]
+        private_exec_regions = [e for e in vad_entries if e["type"] == "PRIVATE" and e["is_executable"]]
 
         for region in private_exec_regions:
             # Check if region starts with common shellcode patterns
@@ -2347,9 +2170,7 @@ class LicenseAnalyzer:
         # 3. Check for VAD unlink signs
         if len(vad_entries) < 10 and self.pid:
             # Suspiciously few VAD entries for an active process
-            detection_results["anomalies"].append(
-                {"type": "low_vad_count", "count": len(vad_entries), "expected_minimum": 10}
-            )
+            detection_results["anomalies"].append({"type": "low_vad_count", "count": len(vad_entries), "expected_minimum": 10})
 
         # Calculate confidence score
         confidence = 0.0
@@ -2362,9 +2183,7 @@ class LicenseAnalyzer:
 
         detection_results["confidence"] = confidence
 
-        logger.info(
-            f"VAD manipulation detection: {confidence:.1%} confidence, {len(detection_results['anomalies'])} anomalies found"
-        )
+        logger.info(f"VAD manipulation detection: {confidence:.1%} confidence, {len(detection_results['anomalies'])} anomalies found")
 
         return detection_results
 
@@ -2384,6 +2203,7 @@ class LicenseAnalyzer:
                 ctypes.byref(mbi),
                 size,
             ):
+                logger.debug(f"VirtualQueryEx at 0x{current_address:X} returned {result} bytes")
                 if mbi.State == 0x1000:  # MEM_COMMIT
                     regions.append(
                         {
@@ -2394,9 +2214,7 @@ class LicenseAnalyzer:
                         },
                     )
 
-                current_address = (
-                    ctypes.cast(mbi.BaseAddress, ctypes.c_ulong).value + mbi.RegionSize
-                )
+                current_address = ctypes.cast(mbi.BaseAddress, ctypes.c_ulong).value + mbi.RegionSize
             else:
                 break
 
@@ -2455,9 +2273,7 @@ class LicenseAnalyzer:
 
                 # Get number of sections
                 num_sections = struct.unpack("<H", pe_header[e_lfanew + 6 : e_lfanew + 8])[0]
-                optional_header_size = struct.unpack(
-                    "<H", pe_header[e_lfanew + 20 : e_lfanew + 22]
-                )[0]
+                optional_header_size = struct.unpack("<H", pe_header[e_lfanew + 20 : e_lfanew + 22])[0]
 
                 # Section headers start after optional header
                 section_header_offset = e_lfanew + 24 + optional_header_size
@@ -2485,12 +2301,9 @@ class LicenseAnalyzer:
                             # Check if section is executable
                             is_executable = bool(characteristics & 0x20000000)
 
-                            if slack_data := self.read_memory(
-                                slack_start, min(slack_size, 32)
-                            ):
+                            if slack_data := self.read_memory(slack_start, min(slack_size, 32)):
                                 # Count null/padding bytes
-                                null_count = sum(bool(b in [0x00, 0xCC, 0x90])
-                                             for b in slack_data)
+                                null_count = sum(bool(b in [0x00, 0xCC, 0x90]) for b in slack_data)
                                 padding_ratio = null_count / len(slack_data)
 
                                 if padding_ratio > 0.8:  # 80% padding
@@ -2522,10 +2335,7 @@ class LicenseAnalyzer:
                 score = 5
 
                 # Higher score if between executable regions
-                if (
-                    "EXECUTE" in gap["before_region"]["protection"]
-                    or "EXECUTE" in gap["after_region"]["protection"]
-                ):
+                if "EXECUTE" in gap["before_region"]["protection"] or "EXECUTE" in gap["after_region"]["protection"]:
                     score += 3
 
                 # Higher score if moderate size
@@ -2712,8 +2522,7 @@ class LicenseAnalyzer:
             validation["is_accessible"] = True
 
             # Check if cave is empty/padding
-            non_padding = sum(bool(b not in [0x00, 0x90, 0xCC])
-                          for b in validation_data)
+            non_padding = sum(bool(b not in [0x00, 0x90, 0xCC]) for b in validation_data)
             if non_padding > len(validation_data) * 0.2:  # More than 20% non-padding
                 validation["issues"].append("Cave contains non-padding data")
             else:
@@ -2727,6 +2536,7 @@ class LicenseAnalyzer:
                 ctypes.byref(mbi),
                 ctypes.sizeof(mbi),
             ):
+                logger.debug(f"Memory query for cave validation returned {result} bytes")
                 if mbi.Protect & 0xF0:  # Executable
                     validation["score"] += 5
                 if mbi.Protect & 0xCC:  # Writable
@@ -2749,9 +2559,7 @@ class LicenseAnalyzer:
 
         return validation
 
-    def select_optimal_cave(
-        self, caves: list[dict[str, Any]], required_size: int
-    ) -> dict[str, Any] | None:
+    def select_optimal_cave(self, caves: list[dict[str, Any]], required_size: int) -> dict[str, Any] | None:
         """Select the most suitable code cave for injection."""
         suitable_caves = []
 
@@ -2767,9 +2575,7 @@ class LicenseAnalyzer:
                     if cave["size"] < required_size * 2:
                         cave_score += 2
 
-                    suitable_caves.append(
-                        {**cave, "final_score": cave_score, "validation": validation}
-                    )
+                    suitable_caves.append({**cave, "final_score": cave_score, "validation": validation})
 
         if not suitable_caves:
             return None
@@ -2976,11 +2782,7 @@ class LicenseAnalyzer:
             remaining = length - len(semantic_sled)
 
             # Filter patterns that fit
-            fitting_patterns = [
-                (pattern, size, desc)
-                for pattern, size, desc in semantic_patterns
-                if size <= remaining
-            ]
+            fitting_patterns = [(pattern, size, desc) for pattern, size, desc in semantic_patterns if size <= remaining]
 
             if not fitting_patterns:
                 # Fill with simple NOPs
@@ -3180,9 +2982,7 @@ class LicenseAnalyzer:
         patch = b"\xb8" + days_bytes + b"\xc3"
         return self.patch_bytes(address, patch)
 
-    def manipulate_registry(
-        self, key_path: str, value_name: str, new_value: str | int | bytes
-    ) -> bool:
+    def manipulate_registry(self, key_path: str, value_name: str, new_value: str | int | bytes) -> bool:
         """Manipulate registry entries for license keys."""
         try:
             import winreg
@@ -3356,10 +3156,7 @@ class LicenseAnalyzer:
 
         try:
             process = psutil.Process(target_pid)
-            modules.extend(
-                {"base": dll.addr, "size": dll.size, "path": dll.path}
-                for dll in process.memory_maps()
-            )
+            modules.extend({"base": dll.addr, "size": dll.size, "path": dll.path} for dll in process.memory_maps())
         except Exception as e:
             logger.error(f"Module enumeration failed: {e}")
 
@@ -3400,9 +3197,7 @@ class LicenseAnalyzer:
         MEM_COMMIT = 0x1000
         MEM_RESERVE = 0x2000
 
-        address = kernel32.VirtualAllocEx(
-            self.process_handle, None, size, MEM_RESERVE | MEM_COMMIT, protection
-        )
+        address = kernel32.VirtualAllocEx(self.process_handle, None, size, MEM_RESERVE | MEM_COMMIT, protection)
 
         if address:
             logger.info(f"Allocated {size} bytes at 0x{address:X}")
@@ -3436,9 +3231,7 @@ class LicenseAnalyzer:
         )
 
         if success:
-            logger.info(
-                f"Changed protection at 0x{address:X} from 0x{old_protect.value:X} to 0x{protection:X}"
-            )
+            logger.info(f"Changed protection at 0x{address:X} from 0x{old_protect.value:X} to 0x{protection:X}")
         else:
             logger.error(f"Failed to change protection: {ctypes.get_last_error()}")
 
@@ -3475,6 +3268,7 @@ class LicenseAnalyzer:
             ctypes.byref(mbi),
             ctypes.sizeof(mbi),
         ):
+            logger.debug(f"Memory region query at 0x{address:X} returned {result} bytes")
             return {
                 "base_address": mbi.BaseAddress,
                 "allocation_base": mbi.AllocationBase,

@@ -69,9 +69,7 @@ def find_all_pattern_occurrences(
     return results
 
 
-def search_patterns_in_binary(
-    binary_data: bytes, patterns: list[bytes], base_address: int = 0
-) -> list[dict[str, Any]]:
+def search_patterns_in_binary(binary_data: bytes, patterns: list[bytes], base_address: int = 0) -> list[dict[str, Any]]:
     """Search for multiple patterns in binary data.
 
     Args:
@@ -167,9 +165,7 @@ def find_license_patterns(
     interesting_patterns = []
 
     for pattern in license_patterns:
-        pattern_results = find_all_pattern_occurrences(
-            binary_data, pattern, base_address, max_results - len(interesting_patterns)
-        )
+        pattern_results = find_all_pattern_occurrences(binary_data, pattern, base_address, max_results - len(interesting_patterns))
 
         interesting_patterns.extend(
             {
@@ -177,11 +173,7 @@ def find_license_patterns(
                 "pattern": pattern.decode("ascii", errors="ignore"),
                 "address": hex(result["address"]),
                 "offset": result["offset"],
-                "context": binary_data[
-                    max(0, result["offset"] - context_size) : result["offset"]
-                    + len(pattern)
-                    + context_size
-                ].hex(),
+                "context": binary_data[max(0, result["offset"] - context_size) : result["offset"] + len(pattern) + context_size].hex(),
             }
             for result in pattern_results
         )

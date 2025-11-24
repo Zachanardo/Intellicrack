@@ -502,20 +502,20 @@ class TPMEmulator:
         display_name = "TPM Emulation Driver"
 
         h_service = advapi32.CreateServiceW(
-                    h_scm,
-                    service_name,
-                    display_name,
-                    SERVICE_ALL_ACCESS,
-                    SERVICE_KERNEL_DRIVER,
-                    SERVICE_DEMAND_START,
-                    1,  # SERVICE_ERROR_NORMAL
-                    str(driver_path),
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                ) or advapi32.OpenServiceW(h_scm, service_name, SERVICE_ALL_ACCESS)
+            h_scm,
+            service_name,
+            display_name,
+            SERVICE_ALL_ACCESS,
+            SERVICE_KERNEL_DRIVER,
+            SERVICE_DEMAND_START,
+            1,  # SERVICE_ERROR_NORMAL
+            str(driver_path),
+            None,
+            None,
+            None,
+            None,
+            None,
+        ) or advapi32.OpenServiceW(h_scm, service_name, SERVICE_ALL_ACCESS)
 
         if h_service:
             advapi32.StartServiceW(h_service, 0, None)
@@ -542,15 +542,11 @@ class TPMEmulator:
         # Reset PCRs if clear startup
         if startup_type == 0:  # TPM_SU_CLEAR
             for alg in self.pcr_banks:
-                self.pcr_banks[alg] = [
-                    b"\x00" * (20 if alg == TPM_ALG.SHA1 else 32) for _ in range(24)
-                ]
+                self.pcr_banks[alg] = [b"\x00" * (20 if alg == TPM_ALG.SHA1 else 32) for _ in range(24)]
 
         return TPM_RC.SUCCESS
 
-    def create_primary_key(
-        self, hierarchy: int, auth: bytes, key_template: dict[str, Any]
-    ) -> tuple[TPM_RC, TPMKey | None]:
+    def create_primary_key(self, hierarchy: int, auth: bytes, key_template: dict[str, Any]) -> tuple[TPM_RC, TPMKey | None]:
         """Create primary key in hierarchy."""
         if hierarchy not in self.hierarchy_auth:
             return TPM_RC.HIERARCHY, None
@@ -567,9 +563,7 @@ class TPMEmulator:
             from cryptography.hazmat.backends import default_backend
             from cryptography.hazmat.primitives.asymmetric import rsa
 
-            private_key = rsa.generate_private_key(
-                public_exponent=65537, key_size=key_size, backend=default_backend()
-            )
+            private_key = rsa.generate_private_key(public_exponent=65537, key_size=key_size, backend=default_backend())
 
             public_key = private_key.public_key()
 
@@ -636,9 +630,7 @@ class TPMEmulator:
         from cryptography.hazmat.primitives.asymmetric import padding
 
         # Deserialize private key
-        private_key = serialization.load_der_private_key(
-            key.private_key, password=None, backend=default_backend()
-        )
+        private_key = serialization.load_der_private_key(key.private_key, password=None, backend=default_backend())
 
         if key.algorithm == TPM_ALG.RSA:
             signature = private_key.sign(
@@ -700,9 +692,7 @@ class TPMEmulator:
 
         return TPM_RC.SUCCESS, secrets.token_bytes(num_bytes)
 
-    def seal(
-        self, data: bytes, pcr_selection: list[int], auth: bytes
-    ) -> tuple[TPM_RC, bytes | None]:
+    def seal(self, data: bytes, pcr_selection: list[int], auth: bytes) -> tuple[TPM_RC, bytes | None]:
         """Seal data to PCR state."""
         # Create sealed blob structure
         sealed_blob = {
@@ -731,10 +721,7 @@ class TPMEmulator:
             json.dumps(
                 {
                     "data": base64.b64encode(data).decode("ascii"),
-                    "pcrs": {
-                        str(k): base64.b64encode(v).decode("ascii")
-                        for k, v in sealed_blob["pcr_values"].items()
-                    },
+                    "pcrs": {str(k): base64.b64encode(v).decode("ascii") for k, v in sealed_blob["pcr_values"].items()},
                     "auth": base64.b64encode(sealed_blob["auth"]).decode("ascii"),
                 },
             ).encode(),
@@ -895,9 +882,7 @@ class SGXEmulator:
         except (InvalidToken, ValueError):
             return None, SGX_ERROR.MAC_MISMATCH
 
-    def get_quote(
-        self, enclave_id: int, report: SGXReport, quote_type: int = 0
-    ) -> tuple[bytes | None, SGX_ERROR]:
+    def get_quote(self, enclave_id: int, report: SGXReport, quote_type: int = 0) -> tuple[bytes | None, SGX_ERROR]:
         """Generate quote for remote attestation."""
         if enclave_id not in self.enclaves:
             return None, SGX_ERROR.INVALID_ENCLAVE_ID
@@ -941,9 +926,7 @@ class SGXEmulator:
 
     def _sign_quote(self, quote_data: bytes) -> bytes:
         """Sign quote for attestation."""
-        return hmac.new(
-            b"IntellicrackAttestationKey", quote_data, hashlib.sha256
-        ).digest()
+        return hmac.new(b"IntellicrackAttestationKey", quote_data, hashlib.sha256).digest()
 
 
 class SecureEnclaveBypass:
@@ -1347,14 +1330,10 @@ class SecureEnclaveBypass:
 
         if not enclave_data:
             # Use SGX emulator with realistic values
-            enclave_id, error = self.sgx_emulator.create_enclave(
-                Path(__file__).parent / "enclave.signed.dll", debug=False
-            )
+            enclave_id, error = self.sgx_emulator.create_enclave(Path(__file__).parent / "enclave.signed.dll", debug=False)
 
             if error == SGX_ERROR.SUCCESS:
-                report, error = self.sgx_emulator.get_report(
-                    enclave_id, report_data=hashlib.sha256(challenge).digest() + b"\x00" * 32
-                )
+                report, error = self.sgx_emulator.get_report(enclave_id, report_data=hashlib.sha256(challenge).digest() + b"\x00" * 32)
 
             if error == SGX_ERROR.SUCCESS:
                 quote_data, error = self.sgx_emulator.get_quote(enclave_id, report)
@@ -1412,9 +1391,7 @@ class SecureEnclaveBypass:
 
             # Find suitable quote and update challenge
             for quote_data in cached_quotes:
-                if modified_quote := self._update_quote_challenge(
-                    quote_data, challenge
-                ):
+                if modified_quote := self._update_quote_challenge(quote_data, challenge):
                     return base64.b64encode(modified_quote).decode("ascii")
 
         # Generate using TPM emulator as fallback
@@ -1525,17 +1502,13 @@ class SecureEnclaveBypass:
             from cryptography.hazmat.primitives import serialization
 
             with open(key_file, "rb") as f:
-                return serialization.load_pem_private_key(
-                    f.read(), password=None, backend=default_backend()
-                )
+                return serialization.load_pem_private_key(f.read(), password=None, backend=default_backend())
 
         # Generate new attestation key
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives.asymmetric import rsa
 
-        key = rsa.generate_private_key(
-            public_exponent=65537, key_size=2048, backend=default_backend()
-        )
+        key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 
         # Save for future use
         key_file.parent.mkdir(parents=True, exist_ok=True)
@@ -1558,9 +1531,7 @@ class SecureEnclaveBypass:
             from cryptography.hazmat.primitives import serialization
 
             with open(key_file, "rb") as f:
-                return serialization.load_pem_private_key(
-                    f.read(), password=None, backend=default_backend()
-                )
+                return serialization.load_pem_private_key(f.read(), password=None, backend=default_backend())
 
         # Generate new ECDSA key
         from cryptography.hazmat.backends import default_backend
@@ -1763,9 +1734,7 @@ class SecureEnclaveBypass:
         from cryptography.x509.oid import NameOID
 
         # Generate TPM EK key pair
-        key = rsa.generate_private_key(
-            public_exponent=65537, key_size=2048, backend=default_backend()
-        )
+        key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 
         # Build certificate with TPM-specific attributes
         subject = x509.Name(
@@ -1780,9 +1749,7 @@ class SecureEnclaveBypass:
         issuer = x509.Name(
             [
                 x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-                x509.NameAttribute(
-                    NameOID.ORGANIZATION_NAME, f"{platform_info['manufacturer']} Root CA"
-                ),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, f"{platform_info['manufacturer']} Root CA"),
                 x509.NameAttribute(NameOID.COMMON_NAME, "Platform CA"),
             ],
         )
@@ -1882,9 +1849,7 @@ class SecureEnclaveBypass:
         }
 
         for oid, value in sgx_extensions.items():
-            cert_builder = cert_builder.add_extension(
-                x509.UnrecognizedExtension(x509.ObjectIdentifier(oid), value), critical=False
-            )
+            cert_builder = cert_builder.add_extension(x509.UnrecognizedExtension(x509.ObjectIdentifier(oid), value), critical=False)
 
         cert = cert_builder.sign(key, hashes.SHA256(), default_backend())
 
@@ -1915,9 +1880,7 @@ class SecureEnclaveBypass:
             try:
                 if tpm_instances := wmi_conn.Win32_Tpm():
                     tpm = tpm_instances[0]
-                    manifest["tpm_version"] = (
-                        tpm.SpecVersion.split(",")[0] if hasattr(tpm, "SpecVersion") else "2.0"
-                    )
+                    manifest["tpm_version"] = tpm.SpecVersion.split(",")[0] if hasattr(tpm, "SpecVersion") else "2.0"
                 else:
                     manifest["tpm_version"] = None
             except (KeyError, TypeError):
@@ -1936,16 +1899,13 @@ class SecureEnclaveBypass:
 
             # Get processor info
             for proc in wmi_conn.Win32_Processor():
-                manifest["microcode_version"] = (
-                    proc.ProcessorId[-2:] if hasattr(proc, "ProcessorId") else "FF"
-                )
+                manifest["microcode_version"] = proc.ProcessorId[-2:] if hasattr(proc, "ProcessorId") else "FF"
                 break
 
             # Platform configuration
             manifest["platform_configuration"] = {
                 "cpu_model": cpu_info.get("brand_raw", "Unknown"),
-                "memory_encryption": "sme" in cpu_info.get("flags", [])
-                or "sev" in cpu_info.get("flags", []),
+                "memory_encryption": "sme" in cpu_info.get("flags", []) or "sev" in cpu_info.get("flags", []),
                 "iommu_enabled": self._check_iommu(),
                 "hypervisor": self._detect_hypervisor(),
             }
@@ -1989,9 +1949,7 @@ class SecureEnclaveBypass:
     def _check_secure_boot(self) -> bool:
         """Check if Secure Boot is enabled."""
         try:
-            result = subprocess.run(
-                ["bcdedit", "/enum", "{current}"], capture_output=True, text=True
-            )
+            result = subprocess.run(["bcdedit", "/enum", "{current}"], capture_output=True, text=True)
             return "secureboot" in result.stdout.lower()
         except (subprocess.CalledProcessError, FileNotFoundError):
             return False
@@ -1999,9 +1957,7 @@ class SecureEnclaveBypass:
     def _check_iommu(self) -> bool:
         """Check if IOMMU is enabled."""
         try:
-            result = subprocess.run(
-                ["bcdedit", "/enum", "{current}"], capture_output=True, text=True
-            )
+            result = subprocess.run(["bcdedit", "/enum", "{current}"], capture_output=True, text=True)
             return "hypervisorlaunchtype" in result.stdout.lower()
         except (subprocess.CalledProcessError, FileNotFoundError):
             return False

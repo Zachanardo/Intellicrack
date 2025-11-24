@@ -78,9 +78,7 @@ class MLAnalysisIntegration:
         self.sample_database: SampleDatabase | None = None
         if enable_sample_database:
             self.sample_database = SampleDatabase()
-            self.logger.info(
-                "Sample database initialized at %s", self.sample_database.database_path
-            )
+            self.logger.info("Sample database initialized at %s", self.sample_database.database_path)
 
     def classify_binary(
         self,
@@ -118,15 +116,10 @@ class MLAnalysisIntegration:
             }
 
             if include_alternatives:
-                classification["alternatives"] = [
-                    {"protection": prot, "confidence": conf}
-                    for prot, conf in result.top_predictions
-                ]
+                classification["alternatives"] = [{"protection": prot, "confidence": conf} for prot, conf in result.top_predictions]
 
             if confidence_level == "low":
-                classification["warning"] = (
-                    "Low confidence prediction - manual verification recommended"
-                )
+                classification["warning"] = "Low confidence prediction - manual verification recommended"
 
             return classification
 
@@ -308,9 +301,7 @@ class MLAnalysisIntegration:
             stats["model_info"] = {
                 "version": self.classifier.MODEL_VERSION,
                 "n_features": len(self.classifier.feature_extractor.feature_names),
-                "classes": self.classifier.label_encoder.classes_.tolist()
-                if self.classifier.label_encoder
-                else [],
+                "classes": self.classifier.label_encoder.classes_.tolist() if self.classifier.label_encoder else [],
             }
 
         if self.incremental_learner:

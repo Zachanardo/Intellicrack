@@ -236,24 +236,18 @@ class AILearningEngine:
         return {
             "total_records": total_records,
             "success_rate": success_rate,
-            "avg_confidence": (
-                0.85 if total_records > 0 else 0.0
-            ),  # Default 85% confidence
+            "avg_confidence": (0.85 if total_records > 0 else 0.0),  # Default 85% confidence
             "learning_stats": self.learning_stats.copy(),
             "pattern_insights": {
                 "total_patterns": self.learning_stats.get("patterns_evolved", 0),
-                "active_patterns": max(
-                    0, self.learning_stats.get("patterns_evolved", 0) - 5
-                ),
+                "active_patterns": max(0, self.learning_stats.get("patterns_evolved", 0) - 5),
                 "pattern_effectiveness": 0.78,  # Default 78% effectiveness
                 "recent_discoveries": [],
             },
             "failure_insights": {
                 "total_failures": self.learning_stats.get("failures_analyzed", 0),
                 "critical_failures": 0,
-                "resolved_failures": max(
-                    0, self.learning_stats.get("failures_analyzed", 0) - 2
-                ),
+                "resolved_failures": max(0, self.learning_stats.get("failures_analyzed", 0) - 2),
                 "mitigation_success_rate": 0.65,  # Default 65% mitigation success
             },
             "performance_metrics": {

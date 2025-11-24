@@ -261,13 +261,9 @@ class DependencyFeedback:
 
         # Criticality
         if info["critical"]:
-            message_parts.append(
-                "   WARNING️  This is a CRITICAL dependency for core functionality."
-            )
+            message_parts.append("   WARNING️  This is a CRITICAL dependency for core functionality.")
         else:
-            message_parts.append(
-                "   i  This is an optional dependency - reduced functionality available."
-            )
+            message_parts.append("   i  This is an optional dependency - reduced functionality available.")
 
         return "\n".join(message_parts)
 
@@ -396,18 +392,12 @@ class DependencyFeedback:
 
         suggestion_lines = [
             f" ALTERNATIVES FOR {info['name'].upper()}:",
-            f"Since {info['name']} is not available"
-            + (f" for {task_context}" if task_context else "")
-            + ", try:",
+            f"Since {info['name']} is not available" + (f" for {task_context}" if task_context else "") + ", try:",
         ]
 
         suggestion_lines.extend(f"   {alt}" for alt in alternatives)
-        if category_alts := self.get_category_alternatives(
-            info.get("category", "")
-        ):
-            if additional_alts := [
-                alt for alt in category_alts if alt not in alternatives
-            ]:
+        if category_alts := self.get_category_alternatives(info.get("category", "")):
+            if additional_alts := [alt for alt in category_alts if alt not in alternatives]:
                 suggestion_lines.append("  Additional options in this category:")
                 suggestion_lines.extend(f"    ◦ {alt}" for alt in additional_alts[:3])
         return "\n".join(suggestion_lines)

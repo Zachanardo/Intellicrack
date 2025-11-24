@@ -211,9 +211,7 @@ class WindowsServiceManager:
                         return None
 
                     bytes_needed = wintypes.DWORD()
-                    self._advapi32.QueryServiceConfigW(
-                        service_handle, None, 0, ctypes.byref(bytes_needed)
-                    )
+                    self._advapi32.QueryServiceConfigW(service_handle, None, 0, ctypes.byref(bytes_needed))
 
                     buffer = ctypes.create_string_buffer(bytes_needed.value)
                     config = ctypes.cast(buffer, ctypes.POINTER(QueryServiceConfig)).contents
@@ -284,9 +282,7 @@ class WindowsServiceManager:
                 return False
 
             try:
-                service_handle = self._advapi32.OpenServiceW(
-                    sc_manager, service_name, self.SERVICE_START
-                )
+                service_handle = self._advapi32.OpenServiceW(sc_manager, service_name, self.SERVICE_START)
 
                 if not service_handle:
                     return False
@@ -334,18 +330,14 @@ class WindowsServiceManager:
                 return False
 
             try:
-                service_handle = self._advapi32.OpenServiceW(
-                    sc_manager, service_name, self.SERVICE_STOP
-                )
+                service_handle = self._advapi32.OpenServiceW(sc_manager, service_name, self.SERVICE_STOP)
 
                 if not service_handle:
                     return False
 
                 try:
                     status = ServiceStatus()
-                    result = self._advapi32.ControlService(
-                        service_handle, self.SERVICE_CONTROL_STOP, ctypes.byref(status)
-                    )
+                    result = self._advapi32.ControlService(service_handle, self.SERVICE_CONTROL_STOP, ctypes.byref(status))
                     return bool(result)
 
                 finally:
@@ -378,18 +370,14 @@ class WindowsServiceManager:
                 return False
 
             try:
-                service_handle = self._advapi32.OpenServiceW(
-                    sc_manager, service_name, self.SERVICE_PAUSE_CONTINUE
-                )
+                service_handle = self._advapi32.OpenServiceW(sc_manager, service_name, self.SERVICE_PAUSE_CONTINUE)
 
                 if not service_handle:
                     return False
 
                 try:
                     status = ServiceStatus()
-                    result = self._advapi32.ControlService(
-                        service_handle, self.SERVICE_CONTROL_PAUSE, ctypes.byref(status)
-                    )
+                    result = self._advapi32.ControlService(service_handle, self.SERVICE_CONTROL_PAUSE, ctypes.byref(status))
                     return bool(result)
 
                 finally:
@@ -422,18 +410,14 @@ class WindowsServiceManager:
                 return False
 
             try:
-                service_handle = self._advapi32.OpenServiceW(
-                    sc_manager, service_name, self.SERVICE_PAUSE_CONTINUE
-                )
+                service_handle = self._advapi32.OpenServiceW(sc_manager, service_name, self.SERVICE_PAUSE_CONTINUE)
 
                 if not service_handle:
                     return False
 
                 try:
                     status = ServiceStatus()
-                    result = self._advapi32.ControlService(
-                        service_handle, self.SERVICE_CONTROL_CONTINUE, ctypes.byref(status)
-                    )
+                    result = self._advapi32.ControlService(service_handle, self.SERVICE_CONTROL_CONTINUE, ctypes.byref(status))
                     return bool(result)
 
                 finally:
@@ -506,9 +490,7 @@ class WindowsServiceManager:
                 return None
 
             try:
-                service_handle = self._advapi32.OpenServiceW(
-                    sc_manager, service_name, self.SERVICE_QUERY_STATUS
-                )
+                service_handle = self._advapi32.OpenServiceW(sc_manager, service_name, self.SERVICE_QUERY_STATUS)
 
                 if not service_handle:
                     return None
@@ -542,9 +524,7 @@ class WindowsServiceManager:
         state = self.get_service_state(service_name)
         return state == ServiceState.RUNNING if state else False
 
-    def wait_for_state(
-        self, service_name: str, target_state: ServiceState, timeout_ms: int = 30000
-    ) -> bool:
+    def wait_for_state(self, service_name: str, target_state: ServiceState, timeout_ms: int = 30000) -> bool:
         """Wait for service to reach target state.
 
         Args:

@@ -176,14 +176,17 @@ class CommercialLicenseAnalyzer:
             return results
 
         if flexlm_detected := self._detect_flexlm():
+            logger.debug(f"FlexLM detected: {flexlm_detected}")
             results["detected_systems"].append("FlexLM")
             results["bypass_strategies"]["flexlm"] = self._generate_flexlm_bypass()
 
         if hasp_detected := self._detect_hasp():
+            logger.debug(f"HASP detected: {hasp_detected}")
             results["detected_systems"].append("HASP")
             results["bypass_strategies"]["hasp"] = self._generate_hasp_bypass()
 
         if codemeter_detected := self._detect_codemeter():
+            logger.debug(f"CodeMeter detected: {codemeter_detected}")
             results["detected_systems"].append("CodeMeter")
             results["bypass_strategies"]["codemeter"] = self._generate_codemeter_bypass()
 
@@ -363,9 +366,7 @@ class CommercialLicenseAnalyzer:
 
         # Use protocol fingerprinter to detect license servers
         if self.binary_path:
-            fingerprint = self.protocol_fingerprinter.fingerprint_packet(
-                b"", {"binary_path": self.binary_path}
-            )
+            fingerprint = self.protocol_fingerprinter.fingerprint_packet(b"", {"binary_path": self.binary_path})
 
             if fingerprint and fingerprint.get("protocol_type") in [
                 "FlexLM",
@@ -489,9 +490,7 @@ class CommercialLicenseAnalyzer:
                         hook = {
                             "api": api_name,
                             "offset": hex(offset),
-                            "replacement": b"\x31\xc0\xc3"
-                            if "64" not in str(self._detect_architecture())
-                            else b"\x48\x31\xc0\xc3",
+                            "replacement": b"\x31\xc0\xc3" if "64" not in str(self._detect_architecture()) else b"\x48\x31\xc0\xc3",
                             "description": f"Dynamic hook for {api_name}",
                         }
 
@@ -538,9 +537,7 @@ class CommercialLicenseAnalyzer:
 
         # Generate dynamic emulation script
         bypass["emulation_script"] = self._generate_flexlm_script()
-        bypass["frida_script"] = self._generate_dynamic_flexlm_frida_script(
-            bypass["hooks"], bypass["patches"]
-        )
+        bypass["frida_script"] = self._generate_dynamic_flexlm_frida_script(bypass["hooks"], bypass["patches"])
 
         return bypass
 
@@ -554,11 +551,7 @@ class CommercialLicenseAnalyzer:
         }
 
         return next(
-            (
-                version
-                for pattern, version in version_patterns.items()
-                if pattern in binary_data
-            ),
+            (version for pattern, version in version_patterns.items() if pattern in binary_data),
             "unknown",
         )
 
@@ -626,9 +619,7 @@ class CommercialLicenseAnalyzer:
         if hasattr(self, "_binary_data") and self._binary_data and self._binary_data[:2] == b"MZ":
             pe_offset = struct.unpack("<I", self._binary_data[0x3C:0x40])[0]
             if pe_offset < len(self._binary_data) - 6:
-                machine = struct.unpack("<H", self._binary_data[pe_offset + 4 : pe_offset + 6])[
-                    0
-                ]
+                machine = struct.unpack("<H", self._binary_data[pe_offset + 4 : pe_offset + 6])[0]
                 if machine == 0x8664:  # AMD64
                     return "x64"
         return "x86"
@@ -654,10 +645,7 @@ class CommercialLicenseAnalyzer:
         """Extract FlexLM features from binary."""
         # Look for FEATURE lines
         feature_pattern = rb"FEATURE\s+(\w+)\s+\w+\s+[\d.]+\s+"
-        return [
-            match.group(1).decode("latin-1", errors="ignore")
-            for match in re.finditer(feature_pattern, binary_data)
-        ]
+        return [match.group(1).decode("latin-1", errors="ignore") for match in re.finditer(feature_pattern, binary_data)]
 
     def _generate_dynamic_flexlm_frida_script(self, hooks: list, patches: list) -> str:
         """Generate Frida script for dynamic hooking."""
@@ -781,9 +769,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
                         hook = {
                             "api": api_name,
                             "offset": hex(offset),
-                            "replacement": self._generate_hasp_login_hook(
-                                vendor_code, hasp_version
-                            ),
+                            "replacement": self._generate_hasp_login_hook(vendor_code, hasp_version),
                             "description": f"Dynamic login hook for vendor {vendor_code:08x}",
                         }
                     elif api_name == "hasp_encrypt":
@@ -869,9 +855,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
 
         # Generate emulation scripts
         bypass["emulation_script"] = self._generate_hasp_script()
-        bypass["frida_script"] = self._generate_dynamic_hasp_frida_script(
-            bypass["hooks"], bypass["patches"]
-        )
+        bypass["frida_script"] = self._generate_dynamic_hasp_frida_script(bypass["hooks"], bypass["patches"])
         bypass["api_hooks"] = bypass["hooks"]  # Alias for compatibility
 
         return bypass
@@ -887,11 +871,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         }
 
         return next(
-            (
-                version
-                for pattern, version in version_patterns.items()
-                if pattern in binary_data
-            ),
+            (version for pattern, version in version_patterns.items() if pattern in binary_data),
             "HASP HL",
         )
 
@@ -1140,10 +1120,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
 
     def _generate_dynamic_hasp_frida_script(self, hooks: list, patches: list) -> str:
         """Generate Frida script for dynamic HASP hooking."""
-        script = (
-            "// Dynamic HASP bypass script\n"
-             "// Generated based on binary analysis\n\n"
-        )
+        script = "// Dynamic HASP bypass script\n// Generated based on binary analysis\n\n"
         # Add module loading
         script += """
 var hasp_module = Process.getModuleByName(Process.platform === 'windows' ? 'hasp_windows.dll' : 'libhasp.so');
@@ -1381,9 +1358,7 @@ console.log('[HASP] Patched at {patch["offset"]}');
 
         # Generate emulation scripts
         bypass["emulation_script"] = self._generate_codemeter_script()
-        bypass["frida_script"] = self._generate_dynamic_cm_frida_script(
-            bypass["hooks"], bypass["patches"], bypass["virtual_container"]
-        )
+        bypass["frida_script"] = self._generate_dynamic_cm_frida_script(bypass["hooks"], bypass["patches"], bypass["virtual_container"])
 
         return bypass
 

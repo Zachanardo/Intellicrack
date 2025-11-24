@@ -93,9 +93,7 @@ class EnvFileManager:
                     if not line or line.startswith("#"):
                         continue
 
-                    if match := re.match(
-                        r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$", line
-                    ):
+                    if match := re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$", line):
                         key, value = match.groups()
 
                         # Remove surrounding quotes if present
@@ -132,9 +130,7 @@ class EnvFileManager:
                     for line in f:
                         line = line.rstrip("\n")
 
-                        if match := re.match(
-                            r"^([A-Za-z_][A-Za-z0-9_]*)\s*=", line
-                        ):
+                        if match := re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=", line):
                             key = match[1]
                             existing_keys.add(key)
 
@@ -323,11 +319,7 @@ class EnvFileManager:
 
         """
         env_vars = self.read_env()
-        return {
-            key: value
-            for key, value in env_vars.items()
-            if key.endswith(("_API_KEY", "_API_TOKEN", "_KEY", "_TOKEN"))
-        }
+        return {key: value for key, value in env_vars.items() if key.endswith(("_API_KEY", "_API_TOKEN", "_KEY", "_TOKEN"))}
 
     def set_api_key(self, service: str, api_key: str) -> None:
         """Set an API key for a specific service.
@@ -390,5 +382,6 @@ class EnvFileManager:
     def auto_load(self) -> None:
         """Automatically load .env file if configured to do so in central config."""
         if auto_load := self.central_config.get("environment.auto_load_env", True):
+            logger.debug(f"Auto-load enabled: {auto_load}")
             self.load_into_environment(override=False)
             logger.info("Auto-loaded environment variables from .env file")

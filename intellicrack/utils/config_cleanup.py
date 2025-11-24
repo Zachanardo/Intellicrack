@@ -57,7 +57,9 @@ class UnusedConfigCodeDetector(ast.NodeVisitor):
                 self.qsettings_usage.append(node.lineno)
         elif isinstance(node.func, ast.Attribute):
             # Check for .setValue, .value, .sync calls
-            if node.func.attr in ["setValue", "value", "sync"] and (hasattr(node.func.value, "id") and "settings" in str(node.func.value.id).lower()):
+            if node.func.attr in ["setValue", "value", "sync"] and (
+                hasattr(node.func.value, "id") and "settings" in str(node.func.value.id).lower()
+            ):
                 self.legacy_config_patterns.append((node.func.attr, node.lineno))
 
         self.generic_visit(node)
@@ -85,10 +87,7 @@ class UnusedConfigCodeDetector(ast.NodeVisitor):
         if node.body and isinstance(node.body[0], ast.Expr) and isinstance(node.body[0].value, ast.Constant):
             docstring = node.body[0].value.value
             if isinstance(docstring, str):
-                return any(
-                    word in docstring.lower()
-                    for word in ["deprecated", "unused", "legacy", "old", "migration only"]
-                )
+                return any(word in docstring.lower() for word in ["deprecated", "unused", "legacy", "old", "migration only"])
         return False
 
 
@@ -163,10 +162,7 @@ def generate_cleanup_report(results: dict) -> str:
     report = ["=" * 60, "CONFIGURATION CODE CLEANUP REPORT", "=" * 60, ""]
     total_files = len(results)
     total_issues = sum(
-        len(info["unused_imports"])
-        + len(info["unused_methods"])
-        + len(info["qsettings_usage"])
-        + len(info["legacy_patterns"])
+        len(info["unused_imports"]) + len(info["unused_methods"]) + len(info["qsettings_usage"]) + len(info["legacy_patterns"])
         for info in results.values()
     )
 

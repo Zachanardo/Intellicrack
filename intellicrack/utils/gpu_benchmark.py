@@ -198,8 +198,7 @@ def _benchmark_cupy_framework(framework_results: dict, test_data: dict[int, byte
             # Pattern search
             start_time = time.time()
             pattern_gpu = cp.asarray(np.frombuffer(pattern, dtype=np.uint8))
-            sum(bool(cp.all(data_gpu[i : i + len(pattern_gpu)] == pattern_gpu))
-                      for i in range(0, len(data_gpu) - len(pattern_gpu), 1000))
+            sum(bool(cp.all(data_gpu[i : i + len(pattern_gpu)] == pattern_gpu)) for i in range(0, len(data_gpu) - len(pattern_gpu), 1000))
             cp.cuda.Stream.null.synchronize()
 
             search_time = time.time() - start_time - transfer_time
@@ -259,9 +258,7 @@ def _benchmark_numba_framework(framework_results: dict, test_data: dict[int, byt
             numba_cuda.synchronize()
             search_time = time.time() - search_start
             framework_results["pattern_search"][f"{size_mb}MB"] = search_time
-            framework_results["results_found"] = (
-                framework_results.get("results_found", 0) + result_count
-            )
+            framework_results["results_found"] = framework_results.get("results_found", 0) + result_count
 
     except Exception as e:
         logger.error(f"Numba benchmark failed: {e}")

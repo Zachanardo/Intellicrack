@@ -372,9 +372,7 @@ class PatternMatcher:
             )
         return matches
 
-    def _match_pattern(
-        self, instructions: list[tuple[int, str, str]], pattern: list[tuple[str, str]]
-    ) -> bool:
+    def _match_pattern(self, instructions: list[tuple[int, str, str]], pattern: list[tuple[str, str]]) -> bool:
         """Check if instructions match pattern."""
         for i, (p_mnem, p_ops) in enumerate(pattern):
             if i >= len(instructions):
@@ -394,10 +392,7 @@ class PatternMatcher:
 
             if p_ops:
                 if "|" in p_ops:
-                    found = any(
-                        possible_op.lower() in ops.lower()
-                        for possible_op in p_ops.split("|")
-                    )
+                    found = any(possible_op.lower() in ops.lower() for possible_op in p_ops.split("|"))
                     if not found:
                         return False
                 elif p_ops.lower() not in ops.lower():
@@ -495,9 +490,7 @@ class DataFlowAnalyzer:
             if parts := operands.split(","):
                 dest = parts[0].strip().lower()
                 for reg in self._get_all_registers():
-                    if reg in dest and all(
-                        ptr not in dest for ptr in ["ptr", "[", "]"]
-                    ):
+                    if reg in dest and all(ptr not in dest for ptr in ["ptr", "[", "]"]):
                         defined.add(reg)
 
         if mnemonic == "pop":
@@ -562,9 +555,7 @@ class DataFlowAnalyzer:
             "dh",
         ]
 
-    def _compute_reaching_definitions(
-        self, definitions: dict[str, set[int]]
-    ) -> dict[int, set[tuple[str, int]]]:
+    def _compute_reaching_definitions(self, definitions: dict[str, set[int]]) -> dict[int, set[tuple[str, int]]]:
         """Compute reaching definitions for each instruction."""
         reaching = defaultdict(set)
 
@@ -614,9 +605,7 @@ class DataFlowAnalyzer:
 
         return reaching
 
-    def _compute_live_variables(
-        self, uses: dict[str, set[int]], definitions: dict[str, set[int]]
-    ) -> dict[int, set[str]]:
+    def _compute_live_variables(self, uses: dict[str, set[int]], definitions: dict[str, set[int]]) -> dict[int, set[str]]:
         """Compute live variables at each program point."""
         live = defaultdict(set)
 
@@ -662,9 +651,7 @@ class DataFlowAnalyzer:
 
         return live
 
-    def _perform_taint_analysis(
-        self, instructions: list[tuple[int, str, str]]
-    ) -> dict[int, set[str]]:
+    def _perform_taint_analysis(self, instructions: list[tuple[int, str, str]]) -> dict[int, set[str]]:
         """Track tainted data from license-related sources."""
         tainted = defaultdict(set)
 
@@ -701,11 +688,7 @@ class DataFlowAnalyzer:
                 old_taint = tainted[addr].copy()
 
                 for reg in used_regs:
-                    if any(
-                        reg in tainted[prev_addr]
-                        for prev_addr, _, _ in instructions
-                        if prev_addr < addr
-                    ):
+                    if any(reg in tainted[prev_addr] for prev_addr, _, _ in instructions if prev_addr < addr):
                         tainted[addr].update(defined_regs)
 
                 if tainted[addr] != old_taint:
@@ -821,9 +804,7 @@ class ControlFlowAnalyzer:
             pass
         return None
 
-    def _construct_basic_blocks(
-        self, instructions: list[tuple[int, str, str]], leaders: set[int]
-    ) -> dict[int, BasicBlock]:
+    def _construct_basic_blocks(self, instructions: list[tuple[int, str, str]], leaders: set[int]) -> dict[int, BasicBlock]:
         """Construct basic blocks from instructions and leaders."""
         blocks = {}
         current_block_insns = []
@@ -1059,11 +1040,7 @@ class ControlFlowAnalyzer:
                 _, curr_mnem, _ = current_insn
                 _, next_mnem, _ = next_insn
 
-                if (
-                                    curr_mnem in ["test", "cmp"]
-                                    and next_mnem.startswith("j")
-                                    and next_mnem not in ["jmp"]
-                                ) and len(block.successors) == 2:
+                if (curr_mnem in ["test", "cmp"] and next_mnem.startswith("j") and next_mnem not in ["jmp"]) and len(block.successors) == 2:
                     validation_branches.append((addr, block.successors[0], block.successors[1]))
 
         return validation_branches
@@ -1083,9 +1060,7 @@ class SideEffectAnalyzer:
         self.cfg_analyzer = cfg_analyzer
         self.data_flow_analyzer = data_flow_analyzer
 
-    def analyze_side_effects(
-        self, patch_point: PatchPoint, context_instructions: list[tuple[int, str, str]]
-    ) -> dict:
+    def analyze_side_effects(self, patch_point: PatchPoint, context_instructions: list[tuple[int, str, str]]) -> dict:
         """Analyze comprehensive side effects of patching at this point."""
         side_effects = {
             "breaks_functionality": False,
@@ -1134,10 +1109,7 @@ class SideEffectAnalyzer:
             if mnem in stack_ops and insn_addr == patch_point.address:
                 return True
 
-        return (
-            "esp" in patch_point.registers_modified
-            or "rsp" in patch_point.registers_modified
-        )
+        return "esp" in patch_point.registers_modified or "rsp" in patch_point.registers_modified
 
     def _corrupts_data_dependencies(self, patch_point: PatchPoint) -> bool:
         """Check if patching would corrupt data dependencies."""
@@ -1153,18 +1125,13 @@ class SideEffectAnalyzer:
         if patch_point.patch_type == "jump_redirect" and len(patch_point.alternative_points) == 0:
             return True
 
-        return (
-            patch_point.block.block_type == "conditional_branch"
-            and len(patch_point.block.successors) != 2
-        )
+        return patch_point.block.block_type == "conditional_branch" and len(patch_point.block.successors) != 2
 
 
 class RiskAssessmentEngine:
     """Advanced risk assessment for patch points."""
 
-    def __init__(
-        self, cfg_analyzer: object, data_flow_analyzer: object, side_effect_analyzer: object
-    ) -> None:
+    def __init__(self, cfg_analyzer: object, data_flow_analyzer: object, side_effect_analyzer: object) -> None:
         """Initialize risk assessment engine.
 
         Args:
@@ -1247,11 +1214,7 @@ class RiskAssessmentEngine:
         if patch_point.safety_score < 0.5:
             risk += 0.6
 
-        if (
-            not patch_point.can_use_nop
-            and not patch_point.can_use_jump
-            and not patch_point.can_modify_return
-        ):
+        if not patch_point.can_use_nop and not patch_point.can_use_jump and not patch_point.can_modify_return:
             risk += 0.8
 
         return min(risk, 1.0)
@@ -1274,9 +1237,7 @@ class PatchPointSelector:
         self.side_effect_analyzer = None
         self.risk_assessor = None
 
-    def select_optimal_patch_points(
-        self, license_check: LicenseCheck, instructions: list[tuple[int, str, str]]
-    ) -> list[PatchPoint]:
+    def select_optimal_patch_points(self, license_check: LicenseCheck, instructions: list[tuple[int, str, str]]) -> list[PatchPoint]:
         """Select optimal patch points for a license check with safety analysis."""
         patch_points = []
 
@@ -1290,9 +1251,7 @@ class PatchPointSelector:
         license_check.data_flow_context = data_flow
 
         self.side_effect_analyzer = SideEffectAnalyzer(self.cfg_analyzer, self.data_flow_analyzer)
-        self.risk_assessor = RiskAssessmentEngine(
-            self.cfg_analyzer, self.data_flow_analyzer, self.side_effect_analyzer
-        )
+        self.risk_assessor = RiskAssessmentEngine(self.cfg_analyzer, self.data_flow_analyzer, self.side_effect_analyzer)
 
         nop_points = self._analyze_nop_points(check_block, check_addr, data_flow)
         patch_points.extend(nop_points)
@@ -1303,9 +1262,7 @@ class PatchPointSelector:
         return_points = self._analyze_return_modification_points(check_block, check_addr, data_flow)
         patch_points.extend(return_points)
 
-        if post_dom := self.cfg_analyzer.find_common_post_dominator(
-            [check_block.start_addr]
-        ):
+        if post_dom := self.cfg_analyzer.find_common_post_dominator([check_block.start_addr]):
             convergence_points = self._analyze_convergence_points(post_dom, data_flow)
             patch_points.extend(convergence_points)
 
@@ -1325,17 +1282,11 @@ class PatchPointSelector:
     def _find_containing_block(self, address: int) -> BasicBlock | None:
         """Find the basic block containing the given address."""
         return next(
-            (
-                block
-                for block in self.cfg_analyzer.basic_blocks.values()
-                if block.start_addr <= address <= block.end_addr
-            ),
+            (block for block in self.cfg_analyzer.basic_blocks.values() if block.start_addr <= address <= block.end_addr),
             None,
         )
 
-    def _analyze_nop_points(
-        self, block: BasicBlock, check_addr: int, data_flow: DataFlowInfo
-    ) -> list[PatchPoint]:
+    def _analyze_nop_points(self, block: BasicBlock, check_addr: int, data_flow: DataFlowInfo) -> list[PatchPoint]:
         """Analyze NOP-safe patch points."""
         nop_points = []
 
@@ -1374,9 +1325,7 @@ class PatchPointSelector:
 
         return nop_points
 
-    def _analyze_jump_redirection_points(
-        self, block: BasicBlock, check_addr: int, data_flow: DataFlowInfo
-    ) -> list[PatchPoint]:
+    def _analyze_jump_redirection_points(self, block: BasicBlock, check_addr: int, data_flow: DataFlowInfo) -> list[PatchPoint]:
         """Analyze jump redirection patch points."""
         jump_points = []
 
@@ -1410,9 +1359,7 @@ class PatchPointSelector:
 
         return jump_points
 
-    def _analyze_return_modification_points(
-        self, block: BasicBlock, check_addr: int, data_flow: DataFlowInfo
-    ) -> list[PatchPoint]:
+    def _analyze_return_modification_points(self, block: BasicBlock, check_addr: int, data_flow: DataFlowInfo) -> list[PatchPoint]:
         """Analyze return value modification patch points."""
         return_points = []
 
@@ -1454,9 +1401,7 @@ class PatchPointSelector:
 
         return return_points
 
-    def _analyze_convergence_points(
-        self, post_dom_addr: int, data_flow: DataFlowInfo
-    ) -> list[PatchPoint]:
+    def _analyze_convergence_points(self, post_dom_addr: int, data_flow: DataFlowInfo) -> list[PatchPoint]:
         """Analyze convergence points (post-dominators)."""
         convergence_points = []
 
@@ -1771,10 +1716,7 @@ class LicenseCheckRemover:
         section_data = section.get_data()
         section_va = self.pe.OPTIONAL_HEADER.ImageBase + section.VirtualAddress
 
-        instructions = [
-            (insn.address, insn.mnemonic, insn.op_str)
-            for insn in self.disassembler.disasm(section_data, section_va)
-        ]
+        instructions = [(insn.address, insn.mnemonic, insn.op_str) for insn in self.disassembler.disasm(section_data, section_va)]
         if not instructions:
             return
 
@@ -1791,9 +1733,7 @@ class LicenseCheckRemover:
             start_idx = match["start"]
             length = match["length"]
 
-            if matched_instructions := instructions[
-                start_idx : start_idx + length
-            ]:
+            if matched_instructions := instructions[start_idx : start_idx + length]:
                 start_addr = matched_instructions[0][0]
                 end_addr = matched_instructions[-1][0] + 10
 
@@ -1816,13 +1756,9 @@ class LicenseCheckRemover:
 
                 if cfg_blocks and self.patch_selector:
                     try:
-                        patch_points = self.patch_selector.select_optimal_patch_points(
-                            check, instructions
-                        )
+                        patch_points = self.patch_selector.select_optimal_patch_points(check, instructions)
                         check.patch_points = patch_points
-                        logger.info(
-                            f"Found {len(patch_points)} optimal patch points for check at 0x{start_addr:08X}"
-                        )
+                        logger.info(f"Found {len(patch_points)} optimal patch points for check at 0x{start_addr:08X}")
 
                         if patch_points:
                             best_point = patch_points[0]
@@ -1836,9 +1772,7 @@ class LicenseCheckRemover:
                             }
                             check.validated_safe = best_point.risk_assessment in ["low", "medium"]
                     except Exception as e:
-                        logger.warning(
-                            f"Patch point selection failed for check at 0x{start_addr:08X}: {e}"
-                        )
+                        logger.warning(f"Patch point selection failed for check at 0x{start_addr:08X}: {e}")
 
                 self.detected_checks.append(check)
 
@@ -1864,9 +1798,7 @@ class LicenseCheckRemover:
             for entry in self.pe.DIRECTORY_ENTRY_IMPORT:
                 for imp in entry.imports:
                     if imp.name:
-                        func_name = (
-                            imp.name.decode("utf-8") if isinstance(imp.name, bytes) else imp.name
-                        )
+                        func_name = imp.name.decode("utf-8") if isinstance(imp.name, bytes) else imp.name
 
                         for api_name, check_type in license_apis.items():
                             if api_name.lower() in func_name.lower():
@@ -1981,9 +1913,7 @@ class LicenseCheckRemover:
                     self.detected_checks.append(check)
                     pos = offset + 1
 
-    def _generate_patch(
-        self, check_type: CheckType, instructions: list[tuple[int, str, str]], size: int
-    ) -> bytes:
+    def _generate_patch(self, check_type: CheckType, instructions: list[tuple[int, str, str]], size: int) -> bytes:
         """Generate sophisticated patch bytes for modern license checks."""
         is_x64 = self.pe.FILE_HEADER.Machine == 0x8664
 
@@ -2003,9 +1933,7 @@ class LicenseCheckRemover:
             return self._generate_integrity_check_patch(is_x64, size)
         return self._generate_default_patch(is_x64, size)
 
-    def _generate_serial_validation_patch(
-        self, is_x64: bool, instructions: list[tuple[int, str, str]], size: int
-    ) -> bytes:
+    def _generate_serial_validation_patch(self, is_x64: bool, instructions: list[tuple[int, str, str]], size: int) -> bytes:
         """Generate patch for serial validation checks."""
         if self.is_dotnet:
             return b"\x17\x2a" + b"\x00" * (size - 2)
@@ -2065,9 +1993,7 @@ class LicenseCheckRemover:
             return b"\x8d\x05\x00\x10\x00\x00" + b"\x90" * (size - 6)
         return b"\x90" * size
 
-    def _generate_online_validation_patch(
-        self, is_x64: bool, instructions: list[tuple[int, str, str]], size: int
-    ) -> bytes:
+    def _generate_online_validation_patch(self, is_x64: bool, instructions: list[tuple[int, str, str]], size: int) -> bytes:
         """Generate patch for online validation checks."""
         if any("async" in str(insn[2]).lower() for insn in instructions):
             return self._generate_async_online_patch(is_x64, size)
@@ -2095,9 +2021,7 @@ class LicenseCheckRemover:
             return response_code + b"\x90" * (size - len(response_code))
         return b"\xb8\xc8\x00\x00\x00" + b"\x90" * (size - 5)
 
-    def _generate_signature_check_patch(
-        self, is_x64: bool, instructions: list[tuple[int, str, str]], size: int
-    ) -> bytes:
+    def _generate_signature_check_patch(self, is_x64: bool, instructions: list[tuple[int, str, str]], size: int) -> bytes:
         """Generate patch for signature checks."""
         if any("ecdsa" in str(insn[2]).lower() for insn in instructions):
             if is_x64:
@@ -2195,9 +2119,7 @@ class LicenseCheckRemover:
             (
                 section.PointerToRawData + (rva - section.VirtualAddress)
                 for section in self.pe.sections
-                if section.VirtualAddress
-                <= rva
-                < section.VirtualAddress + section.Misc_VirtualSize
+                if section.VirtualAddress <= rva < section.VirtualAddress + section.Misc_VirtualSize
             ),
             None,
         )
@@ -2240,9 +2162,7 @@ class LicenseCheckRemover:
             logger.error(f"Patch verification failed: {e}")
             return False
 
-    def apply_intelligent_patches(
-        self, checks: list[LicenseCheck] | None = None, use_best_point: bool = True
-    ) -> bool:
+    def apply_intelligent_patches(self, checks: list[LicenseCheck] | None = None, use_best_point: bool = True) -> bool:
         """Apply intelligent patches using optimal patch points."""
         if not checks:
             checks = self.detected_checks
@@ -2265,17 +2185,13 @@ class LicenseCheckRemover:
 
             for check in checks:
                 if not check.patch_points:
-                    logger.warning(
-                        f"No patch points available for check at 0x{check.address:08X}, using default patching"
-                    )
+                    logger.warning(f"No patch points available for check at 0x{check.address:08X}, using default patching")
                     rva = check.address - self.pe.OPTIONAL_HEADER.ImageBase
                     if offset := self._rva_to_offset(rva):
                         patch_size = len(check.patched_bytes)
                         data[offset : offset + patch_size] = check.patched_bytes
                         patched_count += 1
-                        logger.info(
-                            f"Patched {check.check_type.value} at 0x{check.address:08X} (default method)"
-                        )
+                        logger.info(f"Patched {check.check_type.value} at 0x{check.address:08X} (default method)")
                     continue
 
                 best_point = check.patch_points[0] if use_best_point else check.patch_points[-1]
@@ -2354,6 +2270,7 @@ class LicenseCheckRemover:
 
         if cfg_available := self.cfg_analyzer and self.cfg_analyzer.basic_blocks:
             report.append(f"Control Flow Blocks: {len(self.cfg_analyzer.basic_blocks)}")
+            report.append(f"CFG Analysis: {'Available' if cfg_available else 'Not Available'}")
 
         report.append("")
 
@@ -2389,9 +2306,7 @@ class LicenseCheckRemover:
                         report.append(f"    Side Effects: {', '.join(best_point.side_effects)}")
 
                     if best_point.data_dependencies:
-                        report.append(
-                            f"    Data Dependencies: {', '.join(best_point.data_dependencies)}"
-                        )
+                        report.append(f"    Data Dependencies: {', '.join(best_point.data_dependencies)}")
 
                     if len(check.patch_points) > 1:
                         report.append(f"    Alternatives: {len(check.patch_points) - 1}")
@@ -2405,9 +2320,7 @@ def main() -> None:
     """Command-line interface for license check remover."""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Remove license checks from binaries with intelligent patch point selection"
-    )
+    parser = argparse.ArgumentParser(description="Remove license checks from binaries with intelligent patch point selection")
     parser.add_argument("binary", help="Path to binary file")
     parser.add_argument("-a", "--analyze", action="store_true", help="Only analyze, don't patch")
     parser.add_argument("-p", "--patch", action="store_true", help="Apply patches to remove checks")
@@ -2419,9 +2332,7 @@ def main() -> None:
     )
     parser.add_argument("--legacy", action="store_true", help="Use legacy patching method")
     parser.add_argument("-r", "--report", action="store_true", help="Generate detailed report")
-    parser.add_argument(
-        "-c", "--confidence", type=float, default=0.7, help="Minimum confidence threshold (0.0-1.0)"
-    )
+    parser.add_argument("-c", "--confidence", type=float, default=0.7, help="Minimum confidence threshold (0.0-1.0)")
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
     args = parser.parse_args()

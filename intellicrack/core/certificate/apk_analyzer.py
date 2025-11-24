@@ -257,9 +257,7 @@ class APKAnalyzer:
             if debug_overrides_elem is not None:
                 config.debug_overrides = self._parse_base_config(debug_overrides_elem)
 
-            logger.info(
-                f"Parsed network security config: {len(config.domain_configs)} domain configs"
-            )
+            logger.info(f"Parsed network security config: {len(config.domain_configs)} domain configs")
             return config
 
         except ET.ParseError as e:
@@ -268,11 +266,7 @@ class APKAnalyzer:
 
     def _parse_domain_config(self, elem: ET.Element) -> DomainConfig | None:
         """Parse domain-config XML element."""
-        domains = [
-            domain_elem.text.strip()
-            for domain_elem in elem.findall("domain")
-            if domain_elem.text
-        ]
+        domains = [domain_elem.text.strip() for domain_elem in elem.findall("domain") if domain_elem.text]
         if not domains:
             return None
 
@@ -311,11 +305,7 @@ class APKAnalyzer:
                 digest = pin_elem.get("digest", "SHA-256")
                 if pin_elem.text:
                     pin_hash = pin_elem.text.strip()
-                    pins.append(
-                        PinConfig(
-                            digest_algorithm=digest, hash_value=pin_hash, source="base_config"
-                        )
-                    )
+                    pins.append(PinConfig(digest_algorithm=digest, hash_value=pin_hash, source="base_config"))
 
         if pins:
             return DomainConfig(domains=["*"], pins=pins, include_subdomains=True)
@@ -371,15 +361,11 @@ class APKAnalyzer:
                         ),
                     )
 
-                const_string_pattern = re.compile(
-                    r'const-string\s+v\d+,\s+"sha256/([A-Za-z0-9+/=]+)"'
-                )
+                const_string_pattern = re.compile(r'const-string\s+v\d+,\s+"sha256/([A-Za-z0-9+/=]+)"')
                 pin_matches = const_string_pattern.findall(content)
 
                 if pin_matches and "CertificatePinner" in content:
-                    domain_pattern = re.compile(
-                        r'const-string\s+v\d+,\s+"([a-z0-9\-\.]+\.[a-z]{2,})"'
-                    )
+                    domain_pattern = re.compile(r'const-string\s+v\d+,\s+"([a-z0-9\-\.]+\.[a-z]{2,})"')
                     if domain_matches := domain_pattern.findall(content):
                         for pin_hash in pin_matches:
                             pinning_infos.append(
@@ -540,9 +526,7 @@ class APKAnalyzer:
             re.MULTILINE,
         )
 
-        base64_pattern = re.compile(
-            r'const-string\s+v\d+,\s+"([A-Za-z0-9+/=]{500,})"', re.MULTILINE
-        )
+        base64_pattern = re.compile(r'const-string\s+v\d+,\s+"([A-Za-z0-9+/=]{500,})"', re.MULTILINE)
 
         smali_files = list(self.decompiled_path.rglob("*.smali"))
 

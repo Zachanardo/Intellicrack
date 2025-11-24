@@ -98,11 +98,7 @@ def get_supported_protocols() -> list[str]:
         "hasp_parser": "hasp",
     }
 
-    return [
-        protocol
-        for parser_name, protocol in parser_protocol_map.items()
-        if is_parser_available(parser_name)
-    ]
+    return [protocol for parser_name, protocol in parser_protocol_map.items() if is_parser_available(parser_name)]
 
 
 _parsers_list = [str(name) for name in _parsers]

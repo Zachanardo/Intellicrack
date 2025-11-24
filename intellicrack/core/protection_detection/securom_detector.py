@@ -337,15 +337,9 @@ class SecuROMDetector:
             "yara_matches": yara_matches,
             "driver_paths": self._get_driver_paths(drivers),
             "service_status": self._get_service_status(services),
-            "disc_auth_present": self._detect_disc_authentication(target_path)
-            if target_path.exists()
-            else False,
-            "online_activation_present": self._detect_online_activation(target_path)
-            if target_path.exists()
-            else False,
-            "encryption_detected": self._detect_encryption(target_path)
-            if target_path.exists()
-            else False,
+            "disc_auth_present": self._detect_disc_authentication(target_path) if target_path.exists() else False,
+            "online_activation_present": self._detect_online_activation(target_path) if target_path.exists() else False,
+            "encryption_detected": self._detect_encryption(target_path) if target_path.exists() else False,
         }
 
         return SecuROMDetection(
@@ -662,9 +656,7 @@ class SecuROMDetector:
                         for st in entry.StringTable:
                             for _key, value in st.entries.items():
                                 if b"SecuROM" in value or b"Sony DADC" in value:
-                                    if version_result := self._parse_version_string(
-                                        value.decode("utf-8", errors="ignore")
-                                    ):
+                                    if version_result := self._parse_version_string(value.decode("utf-8", errors="ignore")):
                                         pe.close()
                                         return version_result
 
@@ -711,11 +703,7 @@ class SecuROMDetector:
             minor = int(match.group(2))
             build = int(match.group(3)) if match.group(3) else 0
 
-            variant = (
-                "PA"
-                if "activation" in version_str.lower() or "pa" in version_str.lower()
-                else "Standard"
-            )
+            variant = "PA" if "activation" in version_str.lower() or "pa" in version_str.lower() else "Standard"
 
             return SecuROMVersion(major, minor, build, variant)
 
@@ -915,12 +903,8 @@ class SecuROMDetector:
                                 wintypes.HANDLE,
                                 ctypes.POINTER(SERVICE_STATUS),
                             ]
-                            if self._advapi32.QueryServiceStatus(
-                                service_handle, ctypes.byref(status)
-                            ):
-                                status_info[service_name] = states.get(
-                                    status.dwCurrentState, "UNKNOWN"
-                                )
+                            if self._advapi32.QueryServiceStatus(service_handle, ctypes.byref(status)):
+                                status_info[service_name] = states.get(status.dwCurrentState, "UNKNOWN")
 
                         self._advapi32.CloseServiceHandle(service_handle)
             finally:
@@ -993,8 +977,7 @@ class SecuROMDetector:
                 b"InternetOpenUrl",
             ]
 
-            return sum(bool(indicator in data)
-                   for indicator in activation_indicators) >= 2
+            return sum(bool(indicator in data) for indicator in activation_indicators) >= 2
 
         except Exception:
             return False

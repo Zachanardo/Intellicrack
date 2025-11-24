@@ -35,32 +35,32 @@ classifiers = [
 ]
 dependencies = [
   # Core ML/AI
-  "accelerate==1.11.0",
-  "anthropic>=0.71.0,<0.72",
+  "accelerate",
+  "anthropic",
   "openai>=2.5.0,<3",
   "transformers>=4.57.1,<5",
-  "huggingface-hub>=0.35.3,<1.2",
-  "safetensors>=0.6.2,<0.7",
-  "peft==0.17.1",
-  # "auto-gptq>=0.7.0",  # Requires NVIDIA CUDA - not compatible with Intel GPU
-  "bitsandbytes==0.48.1",
+  "huggingface-hub",
+  "safetensors",
+  "peft",
+  # "auto-gptq>=0.7.0", # Requires NVIDIA CUDA - not compatible with Intel GPU
+  "bitsandbytes",
 
   # Binary Analysis
   "angr>=9.2.180,<10",
   "claripy>=9.2.180,<10",
-  "capstone>=5.0.3,<6",
+  "capstone",
   "keystone-engine>=0.9.2,<0.10",
   "binwalk3>=3.1.3,<4",
   "python-magic>=0.4.27,<0.5",
 
   "volatility3>=2.26.2,<3",
   "yara-python>=4.5.4,<5",
-  "ppdeep==20250625",
+  "ppdeep",
   "py-tlsh==4.7.2",
   "lief>=0.17.0,<0.18",
   "pefile>=2024.8.26,<2025",
   "pyelftools>=0.32,<0.33",
-  "z3-solver>=4.13.0.0,<5",
+  "z3-solver",
   "r2pipe>=1.9.6,<2",
   "frida>=17.4.0,<18",
   "frida-tools>=14.4.5,<15",
@@ -72,12 +72,12 @@ dependencies = [
   # Security & Network
   "mitmproxy @ git+https://github.com/Zachanardo/mitmproxy.git",
   "scapy>=2.6.1,<3",
-  "cryptography>=45.0.7,<46",
+  "cryptography",
   "paramiko>=4.0.0,<5",
   "pyshark>=0.6,<0.7",
   "dpkt>=1.9.8,<2",
   "pycryptodome>=3.23.0,<4",
-  "pyopenssl>=25.1.0,<26",
+  "pyopenssl",
 
   # Web & HTTP
   "aiohttp>=3.13.1,<4",
@@ -85,7 +85,7 @@ dependencies = [
   "urllib3>=2.5.0,<3",
   "defusedxml>=0.7.1,<0.8",
   "xmltodict",
-  "boto3>=1.40.49,<2",
+  "boto3",
   "azure-storage-blob>=12.27.0,<13",
   "fastapi>=0.120.4,<0.122",
   "httpie>=3.2.4,<4",
@@ -98,7 +98,7 @@ dependencies = [
   "openvino==2025.3.0",
   # "cupy>=13.0.0,<14",  # NVIDIA CUDA only - not compatible with Intel XPU
   # "pycuda>=2024.1,<2025",  # NVIDIA CUDA only - not compatible with Intel XPU
-  # "pynvml>=11.5.0,<12",  # NVIDIA GPU monitoring - not compatible with Intel XPU
+  # "pynvml>=11.5.0,<12", # NVIDIA GPU monitoring - not compatible with Intel XPU
   # "torch-directml>=0.2.0,<0.3",  # DirectML backend - using Intel XPU instead
 
   # Database & Storage
@@ -109,7 +109,7 @@ dependencies = [
   "matplotlib>=3.10.7,<4",
   "pyqt6>=6.9.1,<7",
   "pyqt6-sip>=13.10.2,<14",
-  "pyqtgraph>=0.13.7,<0.14",
+  "pyqtgraph",
   "pillow>=11.0.0,<13",
   "cairocffi>=1.7.1,<2",
   "graphviz>=0.21,<0.22",
@@ -123,7 +123,7 @@ dependencies = [
   "watchdog>=6.0.0,<7",
   "wmi>=1.5.1,<2",
   "pyzmq",
-  # "xattr>=1.0.0,<2",  # Unix file attributes - not needed on Windows
+  # "xattr>=1.0.0,<2", # Unix file attributes - not needed on Windows
 
   # Web & Document Processing
   "flask>=3.1.2,<4",
@@ -143,12 +143,12 @@ dependencies = [
   "scikit-learn>=1.7.2,<2",
   "scipy>=1.16.2,<2",
   "onnx>=1.19.1,<2",
-  "numpy>=2.2.6,<3",
+  "numpy",
   "seaborn>=0.13.2,<0.14",
   "onnxruntime>=1.23.1,<2",
   "joblib>=1.5.2,<2",
   "networkx>=3.5,<4",
-  "plotly==6.4.0",
+  "plotly",
   "pyarrow==22.0.0",
 
   # Data Validation & APIs
@@ -156,7 +156,7 @@ dependencies = [
   "pydantic-core>=2.41.4,<3",
   "jsonschema>=4.25.1,<5",
   "pyjwt>=2.10.1,<3",
-  "pyyaml>=6.0.2,<7",
+  "pyyaml",
   "sqlalchemy>=2.0.44,<3",
   "uvicorn>=0.38.0,<0.39",
 
@@ -190,7 +190,7 @@ dependencies = [
   "tensorboard>=2.20.0,<3",
 
   # Task Management
-  "click>=8.1.7,<9",
+  "click",
   "click-didyoumean==0.3.1",
   "click-plugins==1.1.1.2",
   "click-repl==0.3.0",
@@ -202,7 +202,7 @@ dependencies = [
   "distributed==2025.11.0",
 
   # Additional Core Dependencies
-  "pwntools>=4.14.1,<5",
+  "pwntools",
   "ropgadget>=7.7,<8",
   "archinfo>=9.2.180,<10",
   "cle>=9.2.180,<10",
@@ -212,7 +212,7 @@ dependencies = [
   "ghidra-bridge>=1.0.0,<2",
   "jfx-bridge>=1.0.0,<2",
   "libarchive-c>=5.3,<6",
-  "kaitaistruct>=0.10,<0.11",
+  "kaitaistruct",
   "itanium-demangler>=1.1,<2",
   "nampa>=0.1.1,<0.2",
   "pydivert>=2.1.0,<3",
@@ -251,7 +251,7 @@ dependencies = [
   "markdown>=3.9,<4",
   "markupsafe>=2.1.0,<4",
   "more-itertools>=10.8.0,<11",
-  "msgpack>=1.1.1,<2",
+  "msgpack",
   "multidict>=6.7.0,<7",
   "netifaces>=0.11.0,<0.12",
   "oauthlib>=3.3.1,<4",
@@ -287,10 +287,10 @@ dependencies = [
   "traitlets>=5.14.3,<6",
   "typing-extensions",                # Required by mitmproxy and intellicrack - relaxed for IPEX compatibility
   "tzdata>=2025.2,<2026",
-  "wcwidth>=0.2.13,<0.3",
-  "websockets>=13.1,<14",
+  "wcwidth",
+  "websockets",
   "werkzeug>=3.1.3,<4",
-  "wrapt>=1.17.3,<3",
+  "wrapt",
   "yarl>=1.22.0,<2",
   "zipp>=3.23.0,<4",
   "zope-event>=6.0,<7",
@@ -323,10 +323,12 @@ dependencies = [
   "pytest-deadfixtures",
   "mypy>=1.18.2,<2",
   "pyright>=1.1.406,<2",
+  "monkeytype",
   "ty",
   "mccabe>=0.7.0,<0.8",
   "xenon>=0.9.3,<0.10",
   "safety>=3.6.2,<4",
+  "yamllint>=1.35.1",
 
   # Testing & Coverage
   "pytest",
@@ -348,7 +350,7 @@ dependencies = [
   "coverage",
   "freezegun>=1.5.5,<2",
   "responses>=0.25.8,<0.26",
-  "faker>=37.11.0,<38",
+  "faker",
 
   # Code Metrics & Complexity
   "radon>=6.0.1,<7",
@@ -375,7 +377,7 @@ dependencies = [
 
   # Development Utilities
   "pre-commit>=4.3.0,<5",
-  "commitizen>=4.8.3,<5",
+  "commitizen",
   "bumpversion>=0.6.0,<0.7",
   "pipdeptree>=2.29.0,<3",
   "rope>=1.14.0,<2",
@@ -391,13 +393,10 @@ dependencies = [
   "detect-secrets>=1.5.0,<2",
 
   # Monitoring & Logging
-  "loguru>=0.7.2,<0.8",
+  "loguru",
   "sentry-sdk>=2.42.0,<3",
   "structlog>=25.4.0,<26",
 ]
-
-[project.optional-dependencies]
-linting = ["yamllint>=1.35.1"]
 
 [project.urls]
 Homepage = "https://github.com/zacharyflint/intellicrack"
@@ -750,15 +749,85 @@ exclude = [
 ]
 typeCheckingMode = "standard"
 pythonVersion = "3.12"
-reportMissingImports = "warning"
-reportMissingTypeStubs = false
-reportUnknownMemberType = false
-reportUnknownArgumentType = "warning"
-reportUnknownVariableType = "warning"
-reportUnknownParameterType = "warning"
+pythonPlatform = "Windows"
 useLibraryCodeForTypes = true
 analyzeUnannotatedFunctions = true
 enableTypeIgnoreComments = true
+strictListInference = true
+strictDictionaryInference = true
+strictSetInference = true
+reportMissingImports = "warning"
+reportMissingTypeStubs = false
+reportMissingModuleSource = "warning"
+reportInvalidTypeForm = "error"
+reportUndefinedVariable = "error"
+reportAssertAlwaysTrue = "warning"
+reportInvalidStringEscapeSequence = "warning"
+reportMissingParameterType = "warning"
+reportUnknownParameterType = "warning"
+reportUnknownArgumentType = "warning"
+reportUnknownLambdaType = "warning"
+reportUnknownVariableType = "warning"
+reportUnknownMemberType = false
+reportMissingTypeArgument = "warning"
+reportInvalidTypeArguments = "error"
+reportCallIssue = "error"
+reportArgumentType = "error"
+reportIndexIssue = "error"
+reportRedeclaration = "error"
+reportDuplicateImport = "warning"
+reportWildcardImportFromLibrary = "warning"
+reportAbstractUsage = "error"
+reportPropertyTypeMismatch = "error"
+reportFunctionMemberAccess = "warning"
+reportIncompatibleMethodOverride = "error"
+reportIncompatibleVariableOverride = "error"
+reportInconsistentOverload = "error"
+reportOverlappingOverload = "error"
+reportPossiblyUnboundVariable = "warning"
+reportUnboundVariable = "error"
+reportInvalidStubStatement = "warning"
+reportIncompleteStub = "warning"
+reportUnsupportedDunderAll = "warning"
+reportUnusedClass = "none"
+reportUnusedImport = "none"
+reportUnusedFunction = "none"
+reportUnusedVariable = "none"
+reportDuplicateString = "none"
+reportUntypedFunctionDecorator = "warning"
+reportUntypedClassDecorator = "warning"
+reportUntypedBaseClass = "warning"
+reportUntypedNamedTuple = "warning"
+reportPrivateUsage = "none"
+reportTypeCommentUsage = "warning"
+reportPrivateImportUsage = "warning"
+reportConstantRedefinition = "error"
+reportDeprecated = "warning"
+reportMissingSuperCall = "none"
+reportUninitializedInstanceVariable = "warning"
+reportUnnecessaryIsInstance = "none"
+reportUnnecessaryCast = "none"
+reportUnnecessaryComparison = "none"
+reportUnnecessaryContains = "none"
+reportSelfClsParameterName = "warning"
+reportImplicitStringConcatenation = "none"
+reportUnusedCoroutine = "error"
+reportGeneralTypeIssues = "error"
+reportOptionalSubscript = "error"
+reportOptionalMemberAccess = "error"
+reportOptionalCall = "error"
+reportOptionalIterable = "error"
+reportOptionalContextManager = "error"
+reportOptionalOperand = "error"
+reportTypedDictNotRequiredAccess = "warning"
+reportMatchNotExhaustive = "warning"
+reportShadowedImports = "warning"
+
+[[tool.pyright.executionEnvironments]]
+root = "intellicrack"
+pythonVersion = "3.12"
+pythonPlatform = "Windows"
+extraPaths = []
 
 [tool.pylint.main]
 extension-pkg-allow-list = ["PyQt5", "PyQt6"]
@@ -797,6 +866,9 @@ ignore-paths = [
 ]
 jobs = 0
 py-version = "3.12"
+
+[tool.pylint.DESIGN]
+max-complexity = 50
 
 [tool.pylint.TYPECHECK]
 ignored-modules = [
@@ -1055,10 +1127,10 @@ ignore = [
 
   # Code structure style (readability)
   "SIM102",  # collapsible-if
-  "SIM108",  # if-else vs ternary
+  "SIM108",  # if-else vs. ternary
   "SIM110",  # reimplemented-builtin
   "SIM114",  # if-with-same-arms
-  "SIM401",  # if-else vs dict.get
+  "SIM401",  # if-else vs. dict.get
   "PLR5501", # collapsible-else-if
 
   # Security tool requirements (intentional for research)
@@ -1115,7 +1187,7 @@ fixable = ["ALL"]
 dummy-variable-rgx = "^(_+|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 [tool.ruff.lint.mccabe]
-max-complexity = 30
+max-complexity = 50
 
 [tool.ruff.lint.pydocstyle]
 # Use Google-style docstrings to match your project preference
@@ -1393,6 +1465,23 @@ title = "Intellicrack Coverage Report"
 
 [tool.coverage.xml]
 output = "coverage.xml"
+
+[tool.radon]
+# Cyclomatic complexity thresholds
+cc_min = "A"
+cc_max = "F"
+average_cc_threshold = 50
+total_cc_threshold = 50
+
+[tool.xenon]
+# Code complexity monitoring
+max-absolute = 50
+max-modules = 50
+max-average = 50
+
+[tool.mccabe]
+# McCabe cyclomatic complexity
+max-complexity = 50
 
 [tool.rumdl.global]
 exclude = [

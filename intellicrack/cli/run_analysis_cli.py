@@ -35,9 +35,7 @@ def setup_cli_logging(verbose: bool = False) -> None:
 
     """
     level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(
-        level=level, format="[%(levelname)s] %(name)s: %(message)s", stream=sys.stdout
-    )
+    logging.basicConfig(level=level, format="[%(levelname)s] %(name)s: %(message)s", stream=sys.stdout)
 
 
 def validate_binary_path(path: str) -> Path:
@@ -210,9 +208,7 @@ Examples:
 
     parser.add_argument("binary", help="Path to binary file for analysis")
 
-    parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Enable verbose logging output"
-    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging output")
 
     parser.add_argument(
         "-o",

@@ -632,9 +632,7 @@ class CICDDialog(PluginDialogBase):
 
         # Clear console
         self.console_output.clear()
-        self.console_output.append(
-            f" Starting CI/CD pipeline for {os.path.basename(self.plugin_path)}\n"
-        )
+        self.console_output.append(f" Starting CI/CD pipeline for {os.path.basename(self.plugin_path)}\n")
 
         # Reset stage widgets
         for stage_widget in self.stage_widgets.values():
@@ -704,8 +702,7 @@ class CICDDialog(PluginDialogBase):
                 widget.setObjectName("pipelineStageError")
 
         # Update progress
-        completed = sum(bool(w.status_label.text() in ["OK", "ERROR"])
-                    for w in self.stage_widgets.values())
+        completed = sum(bool(w.status_label.text() in ["OK", "ERROR"]) for w in self.stage_widgets.values())
         self.progress_bar.setValue(completed)
 
         # Log errors

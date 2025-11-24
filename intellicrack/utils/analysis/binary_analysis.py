@@ -127,9 +127,7 @@ except ImportError as e:
     HAS_CAPSTONE = False
 
 
-def analyze_binary_optimized(
-    binary_path: str, detailed: bool = True, use_performance_optimizer: bool = True
-) -> dict[str, Any]:
+def analyze_binary_optimized(binary_path: str, detailed: bool = True, use_performance_optimizer: bool = True) -> dict[str, Any]:
     """Optimized binary analysis with performance management for large files.
 
     Args:
@@ -204,9 +202,7 @@ def _analyze_with_performance_optimizer(binary_path: str, detailed: bool) -> dic
         return analyze_binary(binary_path, detailed)
 
 
-def analyze_binary(
-    binary_path: str, detailed: bool = True, enable_ai_integration: bool = True
-) -> dict[str, Any]:
+def analyze_binary(binary_path: str, detailed: bool = True, enable_ai_integration: bool = True) -> dict[str, Any]:
     """Run binary analysis orchestrator.
 
     Identifies the binary format and performs appropriate analysis.
@@ -258,9 +254,7 @@ def analyze_binary(
     return results
 
 
-def _integrate_ai_script_generation(
-    analysis_results: dict[str, Any], binary_path: str
-) -> dict[str, Any]:
+def _integrate_ai_script_generation(analysis_results: dict[str, Any], binary_path: str) -> dict[str, Any]:
     """Integrate AI script generation workflow with binary analysis results.
 
     Args:
@@ -309,9 +303,7 @@ def _integrate_ai_script_generation(
     return analysis_results
 
 
-def _generate_ai_script_suggestions(
-    analysis_results: dict[str, Any], binary_path: str
-) -> dict[str, Any]:
+def _generate_ai_script_suggestions(analysis_results: dict[str, Any], binary_path: str) -> dict[str, Any]:
     """Generate AI script suggestions based on analysis results."""
     logger.debug(f"Generating AI script suggestions for binary: {binary_path}")
     suggestions = {
@@ -332,9 +324,7 @@ def _generate_ai_script_suggestions(
                     "complexity": "advanced",
                 },
             )
-            suggestions["auto_generate_confidence"] = max(
-                suggestions["auto_generate_confidence"], 0.85
-            )
+            suggestions["auto_generate_confidence"] = max(suggestions["auto_generate_confidence"], 0.85)
             suggestions["priority_targets"].append("license_validation")
 
         # Analyze for anti-debugging features
@@ -347,9 +337,7 @@ def _generate_ai_script_suggestions(
                     "complexity": "moderate",
                 },
             )
-            suggestions["auto_generate_confidence"] = max(
-                suggestions["auto_generate_confidence"], 0.75
-            )
+            suggestions["auto_generate_confidence"] = max(suggestions["auto_generate_confidence"], 0.75)
             suggestions["priority_targets"].append("anti_debugging")
 
         # Analyze for network validation
@@ -363,9 +351,7 @@ def _generate_ai_script_suggestions(
                     "complexity": "advanced",
                 },
             )
-            suggestions["auto_generate_confidence"] = max(
-                suggestions["auto_generate_confidence"], 0.65
-            )
+            suggestions["auto_generate_confidence"] = max(suggestions["auto_generate_confidence"], 0.65)
             suggestions["priority_targets"].append("network_validation")
 
         # Analyze for cryptographic functions
@@ -392,9 +378,7 @@ def _generate_ai_script_suggestions(
                     "complexity": "moderate",
                 },
             )
-            suggestions["auto_generate_confidence"] = max(
-                suggestions["auto_generate_confidence"], 0.8
-            )
+            suggestions["auto_generate_confidence"] = max(suggestions["auto_generate_confidence"], 0.8)
             suggestions["priority_targets"].append("trial_restrictions")
 
     except Exception as e:
@@ -465,10 +449,7 @@ def _identify_auto_generation_candidates(analysis_results: dict[str, Any]) -> li
                     "description": f"Automatic {api} bypass hook",
                 }
                 for api in protection_apis
-                if any(
-                    api.lower() in str(imp).lower()
-                    for imp in analysis_results["imports"]
-                )
+                if any(api.lower() in str(imp).lower() for imp in analysis_results["imports"])
             )
         # Entropy-based candidates (packed/encrypted sections)
         if analysis_results.get("entropy") and analysis_results["entropy"] > 7.5:
@@ -488,9 +469,7 @@ def _identify_auto_generation_candidates(analysis_results: dict[str, Any]) -> li
     return candidates
 
 
-def _trigger_autonomous_script_generation(
-    orchestrator: OrchestratorLike, analysis_results: dict[str, Any], binary_path: str
-) -> None:
+def _trigger_autonomous_script_generation(orchestrator: OrchestratorLike, analysis_results: dict[str, Any], binary_path: str) -> None:
     """Trigger autonomous script generation for high-confidence scenarios.
 
     Args:
@@ -520,9 +499,7 @@ def _trigger_autonomous_script_generation(
             # Process request in background (non-blocking)
             import threading
 
-            thread = threading.Thread(
-                target=agent.process_request, args=(autonomous_request,), daemon=True
-            )
+            thread = threading.Thread(target=agent.process_request, args=(autonomous_request,), daemon=True)
             thread.start()
 
             # Update analysis results to indicate autonomous generation started
@@ -643,9 +620,7 @@ def analyze_pe(binary_path: str, detailed: bool = True) -> dict[str, Any]:
 
             # Check for high entropy (possible packing)
             if section_info["entropy"] > 7.0:
-                info["suspicious_indicators"].append(
-                    f"High entropy section '{section_name}': {section_info['entropy']:.2f}"
-                )
+                info["suspicious_indicators"].append(f"High entropy section '{section_name}': {section_info['entropy']:.2f}")
 
         # Import information
         if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
@@ -667,9 +642,7 @@ def analyze_pe(binary_path: str, detailed: bool = True) -> dict[str, Any]:
         if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
             for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
                 export_info = {
-                    "name": exp.name.decode("utf-8", errors="ignore")
-                    if exp.name
-                    else f"Ordinal_{exp.ordinal}",
+                    "name": exp.name.decode("utf-8", errors="ignore") if exp.name else f"Ordinal_{exp.ordinal}",
                     "address": hex(pe.OPTIONAL_HEADER.ImageBase + exp.address),
                     "ordinal": exp.ordinal,
                 }
@@ -686,9 +659,7 @@ def analyze_pe(binary_path: str, detailed: bool = True) -> dict[str, Any]:
 
         image_size = getattr(pe.OPTIONAL_HEADER, "SizeOfImage", 0)
         if image_size > 100 * 1024 * 1024:  # > 100MB
-            info["suspicious_indicators"].append(
-                f"Large image size: {image_size / (1024 * 1024):.2f} MB"
-            )
+            info["suspicious_indicators"].append(f"Large image size: {image_size / (1024 * 1024):.2f} MB")
 
         return info
 
@@ -734,13 +705,9 @@ def analyze_elf_with_lief(binary_path: str, detailed: bool) -> dict[str, Any]:
 
         info = {
             "format": "ELF",
-            "machine": binary.header.machine_type.name
-            if hasattr(binary.header.machine_type, "name")
-            else str(binary.header.machine_type),
+            "machine": binary.header.machine_type.name if hasattr(binary.header.machine_type, "name") else str(binary.header.machine_type),
             "class": "64-bit" if str(binary.header.identity_class) == "CLASS.ELF64" else "32-bit",
-            "type": binary.header.file_type.name
-            if hasattr(binary.header.file_type, "name")
-            else str(binary.header.file_type),
+            "type": binary.header.file_type.name if hasattr(binary.header.file_type, "name") else str(binary.header.file_type),
             "entry_point": hex(binary.entrypoint),
             "sections": [],
             "symbols": [],
@@ -767,9 +734,7 @@ def analyze_elf_with_lief(binary_path: str, detailed: bool) -> dict[str, Any]:
         # Dynamic symbols
         for symbol in binary.dynamic_symbols:
             if symbol.name:
-                info["symbols"].append(
-                    {"name": symbol.name, "value": hex(symbol.value), "type": str(symbol.type)}
-                )
+                info["symbols"].append({"name": symbol.name, "value": hex(symbol.value), "type": str(symbol.type)})
 
         # Required libraries
         for lib in binary.libraries:
@@ -855,12 +820,8 @@ def analyze_macho_with_lief(binary_path: str, detailed: bool) -> dict[str, Any]:
         # Header information
         header_info = {
             "magic": hex(binary.header.magic),
-            "cpu_type": binary.header.cpu_type.name
-            if hasattr(binary.header.cpu_type, "name")
-            else str(binary.header.cpu_type),
-            "file_type": binary.header.file_type.name
-            if hasattr(binary.header.file_type, "name")
-            else str(binary.header.file_type),
+            "cpu_type": binary.header.cpu_type.name if hasattr(binary.header.cpu_type, "name") else str(binary.header.cpu_type),
+            "file_type": binary.header.file_type.name if hasattr(binary.header.file_type, "name") else str(binary.header.file_type),
         }
         info["headers"].append(header_info)
 
@@ -995,9 +956,7 @@ def analyze_patterns(binary_path: str, patterns: list[bytes] | None = None) -> d
         return {"error": str(e)}
 
 
-def analyze_traffic(
-    pcap_file: str | None = None, interface: str | None = None, duration: int = 60
-) -> dict[str, Any]:
+def analyze_traffic(pcap_file: str | None = None, interface: str | None = None, duration: int = 60) -> dict[str, Any]:
     """Analyze network traffic for license-related communications.
 
     Args:
@@ -1228,9 +1187,7 @@ def _is_suspicious_connection(src_ip: str, dst_ip: str, port: int) -> bool:
         return True
 
     # Check for suspicious source IPs (e.g., localhost connecting externally)
-    return src_ip in {"127.0.0.1", "::1"} and not dst_ip.startswith(
-        ("127.", "::1", "localhost")
-    )
+    return src_ip in {"127.0.0.1", "::1"} and not dst_ip.startswith(("127.", "::1", "localhost"))
 
 
 def _get_suspicious_reason(ip: str, port: int) -> str:
@@ -1312,9 +1269,7 @@ def analyze_pe_resources(pe: PEFile) -> list[dict[str, Any]]:
         for entry in directory.entries:
             if hasattr(entry, "data"):
                 resource_info = {
-                    "type": entry.name
-                    if hasattr(entry, "name") and entry.name
-                    else f"Type_{entry.id}",
+                    "type": entry.name if hasattr(entry, "name") and entry.name else f"Type_{entry.id}",
                     "size": entry.data.struct.Size,
                     "language": entry.data.lang,
                     "sublanguage": entry.data.sublang,
@@ -1349,12 +1304,8 @@ def extract_binary_info(binary_path: str) -> dict[str, Any]:
 
         with open(binary_path, "rb") as f:
             data = f.read()
-            info["md5"] = hashlib.sha256(
-                data
-            ).hexdigest()  # Using sha256 instead of md5 for security
-            info["sha1"] = hashlib.sha256(
-                data
-            ).hexdigest()  # Using sha256 instead of sha1 for security
+            info["md5"] = hashlib.sha256(data).hexdigest()  # Using sha256 instead of md5 for security
+            info["sha1"] = hashlib.sha256(data).hexdigest()  # Using sha256 instead of sha1 for security
             info["sha256"] = hashlib.sha256(data).hexdigest()
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error calculating hashes: %s", e)
@@ -1394,11 +1345,7 @@ def extract_binary_features(binary_path: str) -> dict[str, Any]:
             pe = pefile.PE(binary_path)
             features["num_sections"] = len(pe.sections)
 
-            if entropies := [
-                section.get_entropy()
-                for section in pe.sections
-                if hasattr(section, "get_entropy")
-            ]:
+            if entropies := [section.get_entropy() for section in pe.sections if hasattr(section, "get_entropy")]:
                 features["entropy"] = sum(entropies) / len(entropies)
                 features["is_packed"] = features["entropy"] > 7.0
 
@@ -1420,9 +1367,7 @@ def extract_binary_features(binary_path: str) -> dict[str, Any]:
     return features
 
 
-def extract_patterns_from_binary(
-    binary_path: str, pattern_size: int = 16, min_frequency: int = 2
-) -> list[tuple[bytes, int]]:
+def extract_patterns_from_binary(binary_path: str, pattern_size: int = 16, min_frequency: int = 2) -> list[tuple[bytes, int]]:
     """Extract frequently occurring byte patterns from binary.
 
     Args:
@@ -1451,9 +1396,7 @@ def extract_patterns_from_binary(
             patterns[pattern] = patterns.get(pattern, 0) + 1
 
         # Filter by frequency
-        frequent_patterns = [
-            (pattern, count) for pattern, count in patterns.items() if count >= min_frequency
-        ]
+        frequent_patterns = [(pattern, count) for pattern, count in patterns.items() if count >= min_frequency]
 
         # Sort by frequency
         frequent_patterns.sort(key=lambda x: x[1], reverse=True)
@@ -1504,9 +1447,7 @@ def scan_binary(binary_path: str, signatures: dict[str, bytes] | None = None) ->
         for name, signature in signatures.items():
             if signature in data:
                 offset = data.find(signature)
-                results["detected"].append(
-                    {"name": name, "offset": hex(offset), "signature": signature.hex()}
-                )
+                results["detected"].append({"name": name, "offset": hex(offset), "signature": signature.hex()})
 
         results["scan_time"] = time.time() - start_time
 
@@ -1518,9 +1459,7 @@ def scan_binary(binary_path: str, signatures: dict[str, bytes] | None = None) ->
 
 
 # Optimized analysis functions for performance optimizer
-def _optimized_basic_analysis(
-    data: bytes, chunk_info: dict[str, Any] | None = None
-) -> dict[str, Any]:
+def _optimized_basic_analysis(data: bytes, chunk_info: dict[str, Any] | None = None) -> dict[str, Any]:
     """Optimized basic binary analysis for chunks.
 
     Args:
@@ -1547,9 +1486,7 @@ def _optimized_basic_analysis(
             if len(set(data[:1024])) < 20:
                 results["findings"].append("Low entropy section detected (possible padding)")
             elif len(set(data[:1024])) > 200:
-                results["findings"].append(
-                    "High entropy section detected (possible packing/encryption)"
-                )
+                results["findings"].append("High entropy section detected (possible packing/encryption)")
 
         return results
     except (OSError, ValueError, RuntimeError) as e:
@@ -1557,9 +1494,7 @@ def _optimized_basic_analysis(
         return {"status": "failed", "error": str(e)}
 
 
-def _optimized_string_analysis(
-    data: bytes, chunk_info: dict[str, Any] | None = None
-) -> dict[str, Any]:
+def _optimized_string_analysis(data: bytes, chunk_info: dict[str, Any] | None = None) -> dict[str, Any]:
     """Optimized string analysis for chunks.
 
     Args:
@@ -1606,9 +1541,7 @@ def _optimized_string_analysis(
 
             # Add notable findings
             if len(results["license_strings"]) > 0:
-                results["findings"].append(
-                    f"Found {len(results['license_strings'])} license-related strings"
-                )
+                results["findings"].append(f"Found {len(results['license_strings'])} license-related strings")
 
             if results["strings_found"] > 1000:
                 results["findings"].append(f"High string count: {results['strings_found']}")
@@ -1619,9 +1552,7 @@ def _optimized_string_analysis(
         return {"status": "failed", "error": str(e)}
 
 
-def _optimized_entropy_analysis(
-    data: bytes, chunk_info: dict[str, Any] | None = None
-) -> dict[str, Any]:
+def _optimized_entropy_analysis(data: bytes, chunk_info: dict[str, Any] | None = None) -> dict[str, Any]:
     """Optimized entropy analysis for chunks.
 
     Args:
@@ -1667,9 +1598,7 @@ def _optimized_entropy_analysis(
         return {"status": "failed", "error": str(e)}
 
 
-def _optimized_section_analysis(
-    data: bytes, chunk_info: dict[str, Any] | None = None
-) -> dict[str, Any]:
+def _optimized_section_analysis(data: bytes, chunk_info: dict[str, Any] | None = None) -> dict[str, Any]:
     """Optimized section analysis for chunks.
 
     Args:
@@ -1712,9 +1641,7 @@ def _optimized_section_analysis(
         return {"status": "failed", "error": str(e)}
 
 
-def _optimized_import_analysis(
-    data: bytes, chunk_info: dict[str, Any] | None = None
-) -> dict[str, Any]:
+def _optimized_import_analysis(data: bytes, chunk_info: dict[str, Any] | None = None) -> dict[str, Any]:
     """Optimized import analysis for chunks.
 
     Args:
@@ -1754,9 +1681,7 @@ def _optimized_import_analysis(
                     results["suspicious_imports"].append(func.decode())
 
             if len(results["suspicious_imports"]) > 0:
-                results["findings"].append(
-                    f"Found {len(results['suspicious_imports'])} potentially suspicious imports"
-                )
+                results["findings"].append(f"Found {len(results['suspicious_imports'])} potentially suspicious imports")
 
         return results
     except (OSError, ValueError, RuntimeError) as e:
@@ -1764,9 +1689,7 @@ def _optimized_import_analysis(
         return {"status": "failed", "error": str(e)}
 
 
-def _optimized_pattern_analysis(
-    data: bytes, chunk_info: dict[str, Any] | None = None
-) -> dict[str, Any]:
+def _optimized_pattern_analysis(data: bytes, chunk_info: dict[str, Any] | None = None) -> dict[str, Any]:
     """Optimized pattern analysis for chunks.
 
     Args:
@@ -1898,8 +1821,7 @@ def _get_basic_disassembly_info(binary_path: str) -> list[str]:
         if "sections" in info:
             lines.append("# Sections:")
             lines.extend(
-                f"#   {section.get('name', 'Unknown')}: {section.get('virtual_address', 'N/A')}"
-                for section in info["sections"][:5]
+                f"#   {section.get('name', 'Unknown')}: {section.get('virtual_address', 'N/A')}" for section in info["sections"][:5]
             )
         if "entry_point" in info:
             lines.append(f"# Entry Point: 0x{info['entry_point']:08x}")
@@ -1962,20 +1884,14 @@ def disassemble_with_objdump(
             cmd.extend(extra_args)
         cmd.append(binary_path)
 
-        result = secure_run(
-            cmd, capture_output=True, text=True, timeout=timeout, check=False, shell=False
-        )
+        result = secure_run(cmd, capture_output=True, text=True, timeout=timeout, check=False, shell=False)
 
         if result.returncode == 0:
             if parse_func:
                 instructions = parse_func(result.stdout)
             else:
                 # Simple default parsing - just return lines
-                instructions = [
-                    line
-                    for line in result.stdout.splitlines()
-                    if line.strip() and not line.startswith(" ")
-                ]
+                instructions = [line for line in result.stdout.splitlines() if line.strip() and not line.startswith(" ")]
 
             logger.info("Disassembled %d instructions using objdump", len(instructions))
             return instructions

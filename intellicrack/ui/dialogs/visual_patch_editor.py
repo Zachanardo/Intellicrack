@@ -88,9 +88,7 @@ class VisualPatchEditorDialog(QDialog):
     with real-time disassembly view and byte preview capabilities.
     """
 
-    def __init__(
-        self, binary_path: str, patches: list[dict[str, Any]], parent: QWidget | None = None
-    ) -> None:
+    def __init__(self, binary_path: str, patches: list[dict[str, Any]], parent: QWidget | None = None) -> None:
         """Initialize the Visual Patch Editor dialog.
 
         Args:
@@ -165,16 +163,12 @@ class VisualPatchEditorDialog(QDialog):
 
         self.address_edit = QLineEdit()
         self.address_edit.setText("0x401000")
-        self.address_edit.setToolTip(
-            "Enter memory address in hexadecimal format (e.g., 0x401000 or 401000 in decimal)"
-        )
+        self.address_edit.setToolTip("Enter memory address in hexadecimal format (e.g., 0x401000 or 401000 in decimal)")
         form_layout.addRow("Address:", self.address_edit)
 
         self.bytes_edit = QLineEdit()
         self.bytes_edit.setText("9090")
-        self.bytes_edit.setToolTip(
-            "Enter replacement bytes as hexadecimal without spaces (e.g., 9090909090 for NOP instructions)"
-        )
+        self.bytes_edit.setToolTip("Enter replacement bytes as hexadecimal without spaces (e.g., 9090909090 for NOP instructions)")
         form_layout.addRow("New Bytes:", self.bytes_edit)
 
         self.description_edit = QTextEdit()
@@ -263,9 +257,7 @@ class VisualPatchEditorDialog(QDialog):
         if self.patches:
             self.patch_list.setCurrentRow(0)
 
-    def patch_selected(
-        self, current: QListWidgetItem | None, previous: QListWidgetItem | None
-    ) -> None:
+    def patch_selected(self, current: QListWidgetItem | None, previous: QListWidgetItem | None) -> None:
         """Handle patch selection in the list.
 
         Args:
@@ -334,9 +326,7 @@ class VisualPatchEditorDialog(QDialog):
                 address = int(address_text)
         except ValueError as e:
             logger.error("Value error in visual_patch_editor: %s", e)
-            QMessageBox.warning(
-                self, "Invalid Address", "Please enter a valid hexadecimal address."
-            )
+            QMessageBox.warning(self, "Invalid Address", "Please enter a valid hexadecimal address.")
             return
 
         # Validate bytes
@@ -389,11 +379,7 @@ class VisualPatchEditorDialog(QDialog):
                 (
                     _s
                     for _s in pe.sections
-                    if (
-                        _s.VirtualAddress
-                        <= address - pe.OPTIONAL_HEADER.ImageBase
-                        < _s.VirtualAddress + _s.Misc_VirtualSize
-                    )
+                    if (_s.VirtualAddress <= address - pe.OPTIONAL_HEADER.ImageBase < _s.VirtualAddress + _s.Misc_VirtualSize)
                 ),
                 None,
             )
@@ -402,12 +388,7 @@ class VisualPatchEditorDialog(QDialog):
                 return
 
             # Calculate file offset
-            offset = (
-                address
-                - pe.OPTIONAL_HEADER.ImageBase
-                - section.VirtualAddress
-                + section.PointerToRawData
-            )
+            offset = address - pe.OPTIONAL_HEADER.ImageBase - section.VirtualAddress + section.PointerToRawData
 
             # Read bytes from file
             with open(self.binary_path, "rb") as f:
@@ -448,11 +429,7 @@ class VisualPatchEditorDialog(QDialog):
                 (
                     _s
                     for _s in pe.sections
-                    if (
-                        _s.VirtualAddress
-                        <= address - pe.OPTIONAL_HEADER.ImageBase
-                        < _s.VirtualAddress + _s.Misc_VirtualSize
-                    )
+                    if (_s.VirtualAddress <= address - pe.OPTIONAL_HEADER.ImageBase < _s.VirtualAddress + _s.Misc_VirtualSize)
                 ),
                 None,
             )
@@ -462,12 +439,7 @@ class VisualPatchEditorDialog(QDialog):
                 return
 
             # Calculate file offset
-            offset = (
-                address
-                - pe.OPTIONAL_HEADER.ImageBase
-                - section.VirtualAddress
-                + section.PointerToRawData
-            )
+            offset = address - pe.OPTIONAL_HEADER.ImageBase - section.VirtualAddress + section.PointerToRawData
 
             # Read original bytes
             with open(self.binary_path, "rb") as f:
@@ -584,9 +556,7 @@ class VisualPatchEditorDialog(QDialog):
             elif not new_bytes:
                 validation_results.append(f"Patch {i + 1}: No bytes to patch")
             else:
-                validation_results.append(
-                    f"Patch {i + 1}: Valid (0x{address:X}, {len(new_bytes)} bytes)"
-                )
+                validation_results.append(f"Patch {i + 1}: Valid (0x{address:X}, {len(new_bytes)} bytes)")
 
         # Show results
         self.show_test_results(validation_results)
@@ -634,9 +604,7 @@ class VisualPatchEditorDialog(QDialog):
         return self.patches != self.original_patches
 
 
-def create_visual_patch_editor(
-    binary_path: str, patches: list[dict[str, Any]], parent: QWidget | None = None
-) -> VisualPatchEditorDialog:
+def create_visual_patch_editor(binary_path: str, patches: list[dict[str, Any]], parent: QWidget | None = None) -> VisualPatchEditorDialog:
     """Create a VisualPatchEditorDialog.
 
     Args:

@@ -122,9 +122,7 @@ class ProfileManager:
     def _migrate_if_needed(self) -> None:
         """One-time migration from old profile files to central config."""
         # Check if migration is needed
-        if not self.profile_dir.exists() or self.central_config.get(
-            "cli_configuration.profiles_migrated", False
-        ):
+        if not self.profile_dir.exists() or self.central_config.get("cli_configuration.profiles_migrated", False):
             return
         try:
             logger.info(f"Migrating CLI profiles from {self.profile_dir} to central config")
@@ -173,11 +171,7 @@ class ProfileManager:
         for profile_name, profile_data in profiles_data.items():
             try:
                 # Skip migration marker
-                if (
-                    profile_name == "default"
-                    and isinstance(profile_data, dict)
-                    and "output_format" in profile_data
-                ):
+                if profile_name == "default" and isinstance(profile_data, dict) and "output_format" in profile_data:
                     # This is the default profile structure, not a user profile
                     continue
 
@@ -249,17 +243,9 @@ class ProfileManager:
         for profile in self.profiles.values():
             table.add_row(
                 profile.name,
-                (
-                    f"{profile.description[:30]}..."
-                    if len(profile.description) > 30
-                    else profile.description
-                ),
+                (f"{profile.description[:30]}..." if len(profile.description) > 30 else profile.description),
                 profile.created_at.strftime("%Y-%m-%d"),
-                (
-                    profile.last_used.strftime("%Y-%m-%d")
-                    if profile.last_used
-                    else "Never"
-                ),
+                (profile.last_used.strftime("%Y-%m-%d") if profile.last_used else "Never"),
                 f"{len(profile.analysis_options)} options",
             )
 
@@ -310,9 +296,7 @@ class ProfileManager:
 
         # Advanced settings
         if Confirm.ask("\nConfigure advanced settings?", default=False):
-            profile.settings["timeout"] = int(
-                Prompt.ask("Analysis timeout (seconds)", default="300")
-            )
+            profile.settings["timeout"] = int(Prompt.ask("Analysis timeout (seconds)", default="300"))
             profile.settings["max_memory"] = int(Prompt.ask("Max memory (MB)", default="2048"))
             profile.settings["threads"] = int(Prompt.ask("Number of threads", default="4"))
 
@@ -487,9 +471,7 @@ def main() -> None:
                 console.print("[yellow]No profiles available.[/yellow]")
                 continue
 
-            profile_name = Prompt.ask(
-                "Profile name to delete", choices=list(manager.profiles.keys())
-            )
+            profile_name = Prompt.ask("Profile name to delete", choices=list(manager.profiles.keys()))
             if Confirm.ask(f"Delete profile '{profile_name}'?", default=False):
                 if manager.delete_profile(profile_name):
                     console.print(f"[green]Profile '{profile_name}' deleted.[/green]")

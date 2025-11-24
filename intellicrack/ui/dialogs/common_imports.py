@@ -100,9 +100,7 @@ try:
             pixmap = pixmap.scaled(size[0], size[1], Qt.KeepAspectRatio, Qt.SmoothTransformation)
         return pixmap
 
-    def get_user_input(
-        parent: QWidget, title: str, label: str, default: str = "", password: bool = False
-    ) -> tuple[str, bool]:
+    def get_user_input(parent: QWidget, title: str, label: str, default: str = "", password: bool = False) -> tuple[str, bool]:
         """Get user input using QInputDialog.
 
         Args:
@@ -117,18 +115,12 @@ try:
 
         """
         if password:
-            text, ok = QInputDialog.getText(
-                parent, title, label, QLineEdit.EchoMode.Password, default
-            )
+            text, ok = QInputDialog.getText(parent, title, label, QLineEdit.EchoMode.Password, default)
         else:
-            text, ok = QInputDialog.getText(
-                parent, title, label, QLineEdit.EchoMode.Normal, default
-            )
+            text, ok = QInputDialog.getText(parent, title, label, QLineEdit.EchoMode.Normal, default)
         return text, ok
 
-    def create_horizontal_slider(
-        min_val: int = 0, max_val: int = 100, value: int = 50, tick_interval: int = 10
-    ) -> QSlider:
+    def create_horizontal_slider(min_val: int = 0, max_val: int = 100, value: int = 50, tick_interval: int = 10) -> QSlider:
         """Create a configured horizontal slider.
 
         Args:
@@ -236,9 +228,7 @@ except ImportError as e:
         """
         return
 
-    def get_user_input(
-        parent: object, title: str, label: str, default: str = "", password: bool = False
-    ) -> tuple[str, bool]:
+    def get_user_input(parent: object, title: str, label: str, default: str = "", password: bool = False) -> tuple[str, bool]:
         """Get user input fallback when PyQt6 is unavailable.
 
         Args:
@@ -254,9 +244,7 @@ except ImportError as e:
         """
         return default, True
 
-    def create_horizontal_slider(
-        min_val: int = 0, max_val: int = 100, value: int = 50, tick_interval: int = 10
-    ) -> "FallbackSlider":
+    def create_horizontal_slider(min_val: int = 0, max_val: int = 100, value: int = 50, tick_interval: int = 10) -> "FallbackSlider":
         """Create slider fallback when PyQt6 is unavailable.
 
         Args:

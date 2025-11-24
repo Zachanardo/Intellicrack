@@ -124,19 +124,14 @@ except ImportError as e:
                 # Build command based on platform
                 if sys.platform == "win32" and (wmic_path := shutil.which("wmic")):
                     cmd = [wmic_path, "process", "get", "ProcessId,Name,ExecutablePath"]
-                elif (
-                    (sys.platform == "win32"
-                    and not (wmic_path := shutil.which("wmic")))
-                    or (sys.platform != "win32"
-                    and not (ps_path := shutil.which("ps")))
+                elif (sys.platform == "win32" and not (wmic_path := shutil.which("wmic"))) or (
+                    sys.platform != "win32" and not (ps_path := shutil.which("ps"))
                 ):
                     cmd = None
                 else:
                     cmd = [ps_path, "aux"]
                 if not cmd:
-                    logger.error(
-                        "Process enumeration command not found for platform: %s", sys.platform
-                    )
+                    logger.error("Process enumeration command not found for platform: %s", sys.platform)
                     return processes
 
                 # Execute command (with or without terminal)
@@ -146,12 +141,8 @@ except ImportError as e:
 
                         logger.info("Enumerating processes in terminal: %s", cmd)
                         terminal_mgr = get_terminal_manager()
-                        terminal_mgr.execute_command(
-                            command=cmd, capture_output=False, auto_switch=True, cwd=None
-                        )
-                        logger.info(
-                            "Process enumeration launched in terminal (results displayed interactively)"
-                        )
+                        terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=True, cwd=None)
+                        logger.info("Process enumeration launched in terminal (results displayed interactively)")
                         return processes
                     except ImportError:
                         logger.warning("Terminal manager not available, falling back to subprocess")
@@ -273,9 +264,7 @@ except ImportError as e:
 
                         logger.info("Spawning process in terminal: %s", cmd)
                         terminal_mgr = get_terminal_manager()
-                        session_id = terminal_mgr.execute_command(
-                            command=cmd, capture_output=False, auto_switch=True, cwd=cwd
-                        )
+                        session_id = terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=True, cwd=cwd)
 
                         # Give terminal process time to start
                         time.sleep(0.5)
@@ -285,9 +274,7 @@ except ImportError as e:
                         name = program if isinstance(program, str) else program[0]
                         FallbackProcess(pid, name, None)
 
-                        logger.info(
-                            "Process spawned in terminal (PID: %d, Session: %s)", pid, session_id
-                        )
+                        logger.info("Process spawned in terminal (PID: %d, Session: %s)", pid, session_id)
                         return pid
                     except ImportError:
                         logger.warning("Terminal manager not available, falling back to subprocess")
@@ -372,17 +359,11 @@ except ImportError as e:
 
             """
             return next(
-                (
-                    process
-                    for process in self.enumerate_processes()
-                    if process.name == name or name in process.name
-                ),
+                (process for process in self.enumerate_processes() if process.name == name or name in process.name),
                 None,
             )
 
-        def inject_library_file(
-            self, pid: int, path: str, entrypoint: str, data: dict[str, Any] | bytes | None
-        ) -> bool:
+        def inject_library_file(self, pid: int, path: str, entrypoint: str, data: dict[str, Any] | bytes | None) -> bool:
             """Inject library into process (fallback returns success).
 
             Fallback implementation that logs library injection attempts
@@ -401,9 +382,7 @@ except ImportError as e:
             logger.info("Library injection fallback for PID %d: %s", pid, path)
             return True
 
-        def inject_library_blob(
-            self, pid: int, blob: bytes, entrypoint: str, data: dict[str, Any] | bytes | None
-        ) -> bool:
+        def inject_library_blob(self, pid: int, blob: bytes, entrypoint: str, data: dict[str, Any] | bytes | None) -> bool:
             """Inject library blob into process (fallback returns success).
 
             Fallback implementation for binary blob injection that logs
@@ -472,9 +451,7 @@ except ImportError as e:
         targeting.
         """
 
-        def __init__(
-            self, pid: int, name: str, subprocess_obj: subprocess.Popen[bytes] | None = None
-        ) -> None:
+        def __init__(self, pid: int, name: str, subprocess_obj: subprocess.Popen[bytes] | None = None) -> None:
             """Initialize process object.
 
             Args:
@@ -503,11 +480,7 @@ except ImportError as e:
             params: dict[str, str] = {
                 "arch": "x64" if sys.maxsize > 2**32 else "x86",
                 "platform": sys.platform,
-                "os": "windows"
-                if sys.platform == "win32"
-                else "linux"
-                if sys.platform.startswith("linux")
-                else "darwin",
+                "os": "windows" if sys.platform == "win32" else "linux" if sys.platform.startswith("linux") else "darwin",
             }
             return params
 
@@ -543,9 +516,7 @@ except ImportError as e:
             self._on_detached_handlers: list[Callable[[str, Any], None]] = []
             self._detached = False
 
-        def create_script(
-            self, source: str, name: str | None = None, runtime: str = "v8"
-        ) -> "FallbackScript":
+        def create_script(self, source: str, name: str | None = None, runtime: str = "v8") -> "FallbackScript":
             """Create a script object.
 
             Creates a FallbackScript object for script injection and message
@@ -564,9 +535,7 @@ except ImportError as e:
             self._scripts.append(script)
             return script
 
-        def compile_script(
-            self, source: str, name: str | None = None, runtime: str = "v8"
-        ) -> "FallbackScript":
+        def compile_script(self, source: str, name: str | None = None, runtime: str = "v8") -> "FallbackScript":
             """Compile a script (returns compiled script object).
 
             Validates JavaScript syntax and compiles the script for
@@ -709,9 +678,7 @@ except ImportError as e:
 
             self._parse_script()
 
-            self._send_internal_message(
-                {"type": "send", "payload": {"type": "ready", "script": self.name}}
-            )
+            self._send_internal_message({"type": "send", "payload": {"type": "ready", "script": self.name}})
 
         def unload(self) -> None:
             """Unload the script.
@@ -738,9 +705,7 @@ except ImportError as e:
                     msg = self._pending_messages.pop(0)
                     handler(msg, None)
 
-        def post(
-            self, message: dict[str, Any] | str | int, data: bytes | dict[str, Any] | None = None
-        ) -> None:
+        def post(self, message: dict[str, Any] | str | int, data: bytes | dict[str, Any] | None = None) -> None:
             """Post message to script.
 
             Sends a message to the loaded script and processes its response,
@@ -819,9 +784,7 @@ except ImportError as e:
 
             return rpc_method
 
-        def _process_message(
-            self, message: dict[str, Any] | str | int, data: bytes | dict[str, Any] | None
-        ) -> dict[str, Any] | None:
+        def _process_message(self, message: dict[str, Any] | str | int, data: bytes | dict[str, Any] | None) -> dict[str, Any] | None:
             """Process incoming message from host.
 
             Handles different message types like ping and evaluate requests,
@@ -843,9 +806,7 @@ except ImportError as e:
                     return {"type": "send", "payload": {"type": "pong"}}
                 if msg_type == "evaluate":
                     code = message.get("code", "")
-                    logger.debug(
-                        "Processing evaluation request in fallback mode for: %s", code[:100]
-                    )
+                    logger.debug("Processing evaluation request in fallback mode for: %s", code[:100])
                     return {
                         "type": "send",
                         "payload": {"type": "result", "value": f"Evaluated: {code[:50]}..."},
@@ -1058,9 +1019,7 @@ except ImportError as e:
         supporting RPC calls and data transfer for dynamic analysis.
         """
 
-        def __init__(
-            self, message_type: str, payload: dict[str, Any], data: bytes | None = None
-        ) -> None:
+        def __init__(self, message_type: str, payload: dict[str, Any], data: bytes | None = None) -> None:
             """Initialize script message.
 
             Args:

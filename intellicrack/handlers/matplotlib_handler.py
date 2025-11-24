@@ -80,19 +80,32 @@ try:
     # Set the appropriate matplotlib backend
     if qt_backend_name:
         try:
-            mpl.use(qt_backend_name, force=True)
-            logger.info(f"Successfully configured matplotlib to use {qt_backend_name} backend")
+            if hasattr(mpl, 'use'):
+                mpl.use(qt_backend_name, force=True)
+                logger.info(f"Successfully configured matplotlib to use {qt_backend_name} backend")
+            else:
+                logger.warning("matplotlib.use() not available, skipping backend configuration")
         except Exception as e:
-            logger.warning(
-                f"Failed to set matplotlib backend to {qt_backend_name}, falling back to Agg: {e}"
-            )
-            mpl.use("Agg", force=True)
-            qt_backend_name = "Agg"
+            logger.warning(f"Failed to set matplotlib backend to {qt_backend_name}, falling back to Agg: {e}")
+            try:
+                if hasattr(mpl, 'use'):
+                    mpl.use("Agg", force=True)
+                    qt_backend_name = "Agg"
+            except Exception:
+                pass
     else:
         # No Qt backend available, use Agg
-        mpl.use("Agg", force=True)
-        qt_backend_name = "Agg"
-        logger.debug("No Qt backend available, using Agg backend for matplotlib")
+        try:
+            if hasattr(mpl, 'use'):
+                mpl.use("Agg", force=True)
+                qt_backend_name = "Agg"
+                logger.debug("No Qt backend available, using Agg backend for matplotlib")
+            else:
+                logger.debug("matplotlib.use() not available, using default backend")
+                qt_backend_name = "default"
+        except Exception:
+            logger.debug("Failed to set matplotlib backend, using default")
+            qt_backend_name = "default"
 
     # Import matplotlib components after backend is set
     import matplotlib.pyplot as plt
@@ -104,9 +117,7 @@ try:
 
     # If no Qt backend was loaded, log a warning only once
     if FigureCanvasQTAgg is None and qt_backend_error:
-        logger.warning(
-            f"No Qt backend for matplotlib available, some GUI features may be limited. Last error: {qt_backend_error}"
-        )
+        logger.warning(f"No Qt backend for matplotlib available, some GUI features may be limited. Last error: {qt_backend_error}")
         logger.debug(f"Full traceback for Qt backend import failure: {traceback.format_exc()}")
 
     # Try to import Tk backend but don't fail if Tk is not available
@@ -219,9 +230,7 @@ except ImportError as e:
             self._current_axes = ax
             return ax
 
-        def add_axes(
-            self, rect: tuple[float, float, float, float], **kwargs: object
-        ) -> "FallbackAxes":
+        def add_axes(self, rect: tuple[float, float, float, float], **kwargs: object) -> "FallbackAxes":
             """Add axes at the given position.
 
             Args:
@@ -368,9 +377,7 @@ except ImportError as e:
             try:
                 from PIL import Image, ImageDraw, ImageFont
 
-                _ = (
-                    ImageFont.__name__
-                )  # Verify ImageFont is properly imported for future text rendering capabilities
+                _ = ImageFont.__name__  # Verify ImageFont is properly imported for future text rendering capabilities
 
                 width = int(self.figsize[0] * dpi)
                 height = int(self.figsize[1] * dpi)
@@ -402,9 +409,7 @@ except ImportError as e:
                     import struct
                     import zlib
 
-                    def generate_png(
-                                    width: int, height: int, pixels: dict[tuple[int, int], tuple[int, int, int]]
-                                ) -> bytes:
+                    def generate_png(width: int, height: int, pixels: dict[tuple[int, int], tuple[int, int, int]]) -> bytes:
                         """Generate complete PNG file from raw pixel data.
 
                         Args:
@@ -482,9 +487,7 @@ except ImportError as e:
 
                 else:
 
-                    def generate_bmp(
-                        width: int, height: int, pixels: dict[tuple[int, int], tuple[int, int, int]]
-                    ) -> bytes:
+                    def generate_bmp(width: int, height: int, pixels: dict[tuple[int, int], tuple[int, int, int]]) -> bytes:
                         """Generate BMP file from pixel data.
 
                         Args:
@@ -611,9 +614,7 @@ except ImportError as e:
             self.legend_items: list[tuple[str, str]] = []
             self.grid_enabled: bool = False
 
-        def plot(
-            self, x: object | None = None, y: object | None = None, *args: object, **kwargs: object
-        ) -> None:
+        def plot(self, x: object | None = None, y: object | None = None, *args: object, **kwargs: object) -> None:
             """Plot lines on the axes.
 
             Args:
@@ -759,10 +760,7 @@ except ImportError as e:
             """
             # Calculate histogram
             value_range = (min(x), max(x)) if range is None else range
-            bin_edges = [
-                value_range[0] + i * (value_range[1] - value_range[0]) / bins
-                for i in range(bins + 1)
-            ]
+            bin_edges = [value_range[0] + i * (value_range[1] - value_range[0]) / bins for i in range(bins + 1)]
             counts = [0] * bins
 
             for val in x:
@@ -832,9 +830,7 @@ except ImportError as e:
                 **kwargs: Additional keyword arguments.
 
             """
-            self.patches.append(
-                {"type": "contour", "X": X, "Y": Y, "Z": Z, "levels": levels, "colors": colors}
-            )
+            self.patches.append({"type": "contour", "X": X, "Y": Y, "Z": Z, "levels": levels, "colors": colors})
 
         def text(
             self,
@@ -961,9 +957,7 @@ except ImportError as e:
             elif top is not None:
                 self.ylim = (self.ylim[0] if self.ylim else top - 1, top)
 
-        def legend(
-            self, labels: list[str] | None = None, loc: str = "best", **kwargs: object
-        ) -> None:
+        def legend(self, labels: list[str] | None = None, loc: str = "best", **kwargs: object) -> None:
             """Add legend to axes.
 
             Args:
@@ -975,9 +969,7 @@ except ImportError as e:
             if labels:
                 self.legend_items = [(label, "blue") for label in labels]
 
-        def grid(
-            self, visible: bool = True, which: str = "major", axis: str = "both", **kwargs: object
-        ) -> None:
+        def grid(self, visible: bool = True, which: str = "major", axis: str = "both", **kwargs: object) -> None:
             """Enable/disable grid on the axes.
 
             Args:
@@ -1097,39 +1089,23 @@ except ImportError as e:
                 points = []
                 for i in range(len(line["x"])):
                     if self.xlim and self.ylim:
-                        x_norm = (
-                            (line["x"][i] - self.xlim[0]) / (self.xlim[1] - self.xlim[0])
-                            if self.xlim[1] != self.xlim[0]
-                            else 0.5
-                        )
-                        y_norm = (
-                            1 - (line["y"][i] - self.ylim[0]) / (self.ylim[1] - self.ylim[0])
-                            if self.ylim[1] != self.ylim[0]
-                            else 0.5
-                        )
+                        x_norm = (line["x"][i] - self.xlim[0]) / (self.xlim[1] - self.xlim[0]) if self.xlim[1] != self.xlim[0] else 0.5
+                        y_norm = 1 - (line["y"][i] - self.ylim[0]) / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
                         points.append(f"{x_norm * width},{y_norm * height}")
 
                 if points:
-                    svg += f'<polyline points="{" ".join(points)}" fill="none" stroke="{line["color"]}" stroke-width="{line["linewidth"]}"/>\n'
+                    svg += (
+                        f'<polyline points="{" ".join(points)}" fill="none" stroke="{line["color"]}" stroke-width="{line["linewidth"]}"/>\n'
+                    )
 
             # Draw bars
             for bar_group in self.bars:
                 for x, h in zip(bar_group["x"], bar_group["height"], strict=False):
                     if self.xlim and self.ylim:
-                        x_norm = (
-                            (x - self.xlim[0]) / (self.xlim[1] - self.xlim[0])
-                            if self.xlim[1] != self.xlim[0]
-                            else 0.5
-                        )
-                        h_norm = (
-                            h / (self.ylim[1] - self.ylim[0])
-                            if self.ylim[1] != self.ylim[0]
-                            else 0.5
-                        )
+                        x_norm = (x - self.xlim[0]) / (self.xlim[1] - self.xlim[0]) if self.xlim[1] != self.xlim[0] else 0.5
+                        h_norm = h / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
 
-                        bar_x = x_norm * width - bar_group["width"] * width / (
-                            2 * (self.xlim[1] - self.xlim[0])
-                        )
+                        bar_x = x_norm * width - bar_group["width"] * width / (2 * (self.xlim[1] - self.xlim[0]))
                         bar_width = bar_group["width"] * width / (self.xlim[1] - self.xlim[0])
                         bar_height = h_norm * height
                         bar_y = height - bar_height
@@ -1140,16 +1116,8 @@ except ImportError as e:
             for scatter in self.scatter_data:
                 for x, y in zip(scatter["x"], scatter["y"], strict=False):
                     if self.xlim and self.ylim:
-                        x_norm = (
-                            (x - self.xlim[0]) / (self.xlim[1] - self.xlim[0])
-                            if self.xlim[1] != self.xlim[0]
-                            else 0.5
-                        )
-                        y_norm = (
-                            1 - (y - self.ylim[0]) / (self.ylim[1] - self.ylim[0])
-                            if self.ylim[1] != self.ylim[0]
-                            else 0.5
-                        )
+                        x_norm = (x - self.xlim[0]) / (self.xlim[1] - self.xlim[0]) if self.xlim[1] != self.xlim[0] else 0.5
+                        y_norm = 1 - (y - self.ylim[0]) / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
 
                         svg += f'<circle cx="{x_norm * width}" cy="{y_norm * height}" r="3" fill="{scatter["c"]}" opacity="{scatter["alpha"]}"/>\n'
 
@@ -1199,23 +1167,13 @@ except ImportError as e:
                 points = []
                 for i in range(len(line["x"])):
                     if self.xlim and self.ylim:
-                        x_norm = (
-                            (line["x"][i] - self.xlim[0]) / (self.xlim[1] - self.xlim[0])
-                            if self.xlim[1] != self.xlim[0]
-                            else 0.5
-                        )
-                        y_norm = (
-                            1 - (line["y"][i] - self.ylim[0]) / (self.ylim[1] - self.ylim[0])
-                            if self.ylim[1] != self.ylim[0]
-                            else 0.5
-                        )
+                        x_norm = (line["x"][i] - self.xlim[0]) / (self.xlim[1] - self.xlim[0]) if self.xlim[1] != self.xlim[0] else 0.5
+                        y_norm = 1 - (line["y"][i] - self.ylim[0]) / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
                         points.append((x + x_norm * width, y + y_norm * height))
 
                 if len(points) > 1:
                     for i in range(len(points) - 1):
-                        draw.line(
-                            [points[i], points[i + 1]], fill=line["color"], width=line["linewidth"]
-                        )
+                        draw.line([points[i], points[i + 1]], fill=line["color"], width=line["linewidth"])
 
     class FallbackCanvas:
         """Functional canvas implementation for figure rendering."""
@@ -1742,9 +1700,7 @@ startxref
             ncols: int = 1,
             figsize: tuple[float, float] = (8, 6),
             **kwargs: object,
-        ) -> (
-            tuple[object, object] | tuple[object, list[object]] | tuple[object, list[list[object]]]
-        ):
+        ) -> tuple[object, object] | tuple[object, list[object]] | tuple[object, list[list[object]]]:
             """Create figure and subplots.
 
             Args:
@@ -1951,9 +1907,7 @@ startxref
 
             In fallback mode, figures are saved but not displayed interactively.
             """
-            logger.info(
-                "Matplotlib show() called in fallback mode - figures saved but not displayed"
-            )
+            logger.info("Matplotlib show() called in fallback mode - figures saved but not displayed")
 
         def close(self, fig: int | str | object | None = None) -> None:
             """Close figure.
@@ -2040,6 +1994,11 @@ startxref
         __version__: str = "0.0.0-fallback"
 
         pyplot: "FallbackMatplotlib.Pyplot" = Pyplot
+
+        @staticmethod
+        def use(backend: str, **kwargs: object) -> None:
+            """Set the matplotlib backend (fallback does nothing)."""
+            pass
 
     mpl = FallbackMatplotlib()
 

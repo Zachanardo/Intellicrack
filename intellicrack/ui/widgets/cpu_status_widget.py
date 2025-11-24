@@ -166,11 +166,7 @@ class CPUMonitorWorker(QObject):
             elif platform.system() == "Darwin":
                 import subprocess
 
-                return (
-                    subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"])
-                    .decode()
-                    .strip()
-                )
+                return subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"]).decode().strip()
         except (subprocess.SubprocessError, OSError) as e:
             logger.debug(f"Failed to get CPU name: {e}")
 
@@ -290,12 +286,8 @@ class CPUStatusWidget(QWidget):
         self.processes_table = QTableWidget()
         self.processes_table.setColumnCount(4)
         self.processes_table.setHorizontalHeaderLabels(["PID", "Name", "CPU %", "Memory %"])
-        self.processes_table.setToolTip(
-            "Top CPU-consuming processes currently running on the system"
-        )
-        self.processes_table.horizontalHeader().setSectionResizeMode(
-            1, QHeaderView.ResizeMode.Stretch
-        )
+        self.processes_table.setToolTip("Top CPU-consuming processes currently running on the system")
+        self.processes_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         self.processes_table.setMinimumHeight(150)
         self.processes_table.setMaximumHeight(250)
         processes_layout.addWidget(self.processes_table)

@@ -462,11 +462,7 @@ class R2LicenseAnalyzer:
             return False
 
         # Look for multiple return paths
-        return_blocks = [
-            b
-            for b in blocks
-            if b.get("ninstr", 0) > 0 and any("ret" in str(b.get("disasm", "")) for b in blocks)
-        ]
+        return_blocks = [b for b in blocks if b.get("ninstr", 0) > 0 and any("ret" in str(b.get("disasm", "")) for b in blocks)]
 
         # License functions often have multiple returns (success/failure)
         return len(return_blocks) >= 2
@@ -489,9 +485,7 @@ class R2LicenseAnalyzer:
         # Update license functions with crypto info
         for lic_func in self.license_functions:
             for _crypto_type, locations in self.crypto_locations.items():
-                if any(
-                    lic_func.address <= loc <= lic_func.address + lic_func.size for loc in locations
-                ):
+                if any(lic_func.address <= loc <= lic_func.address + lic_func.size for loc in locations):
                     lic_func.type = LicenseType.CRYPTO_SIGNATURE
                     lic_func.protection_level = ProtectionLevel.ADVANCED
                     lic_func.confidence = min(1.0, lic_func.confidence * 1.3)
@@ -568,9 +562,7 @@ class R2LicenseAnalyzer:
             string_match = any(s.lower() in string_text for s in required_strings)
 
             if string_match or (required_apis and required_apis.issubset(api_set)):
-                if existing := next(
-                    (f for f in self.license_functions if f.address == addr), None
-                ):
+                if existing := next((f for f in self.license_functions if f.address == addr), None):
                     existing.type = license_type
                     existing.confidence = min(1.0, existing.confidence * 1.2)
                 else:
@@ -886,9 +878,7 @@ class R2LicenseAnalyzer:
 
         return None, None
 
-    def _find_patch_location_fallback(
-        self, lic_func: LicenseFunction, func_bytes: list
-    ) -> tuple[int | None, bytes | None]:
+    def _find_patch_location_fallback(self, lic_func: LicenseFunction, func_bytes: list) -> tuple[int | None, bytes | None]:
         """Fallback instruction detection without capstone using opcode patterns."""
         if self.arch == "x86":
             # x86/x64 conditional jump opcodes

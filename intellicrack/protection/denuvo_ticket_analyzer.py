@@ -254,9 +254,7 @@ class DenuvoTicketAnalyzer:
             machine_id = token_data[offset : offset + 32]
             offset += 32
 
-            activation_time, expiration_time, license_type, features = struct.unpack(
-                "<QQII", token_data[offset : offset + 24]
-            )
+            activation_time, expiration_time, license_type, features = struct.unpack("<QQII", token_data[offset : offset + 24])
             offset += 24
 
             signature = token_data[offset:]
@@ -497,9 +495,7 @@ class DenuvoTicketAnalyzer:
                 return None
 
             new_ticket = self._rebuild_ticket(ticket.header, new_encrypted)
-            logger.info(
-                f"Spoofed machine ID: {original_id.hex()[:16]} -> {target_machine_id.hex()[:16]}"
-            )
+            logger.info(f"Spoofed machine ID: {original_id.hex()[:16]} -> {target_machine_id.hex()[:16]}")
             return new_ticket
 
         except Exception as e:
@@ -543,9 +539,7 @@ class DenuvoTicketAnalyzer:
                             continue
 
                         if self._is_activation_traffic(tcp.data):
-                            if session := self._parse_activation_session(
-                                tcp.data, timestamp
-                            ):
+                            if session := self._parse_activation_session(tcp.data, timestamp):
                                 sessions.append(session)
 
                     except Exception as e:
@@ -747,16 +741,16 @@ class DenuvoTicketAnalyzer:
 
             token_data = data[offset : offset + 128]
             token = self.parse_token(token_data) or ActivationToken(
-                                token_id=os.urandom(16),
-                                game_id=game_id,
-                                ticket_hash=b"\x00" * 32,
-                                machine_id=combined_hash,
-                                activation_time=int(time.time()),
-                                expiration_time=int(time.time()) + (365 * 86400),
-                                license_type=self.LICENSE_FULL,
-                                features_enabled=0xFFFFFFFF,
-                                signature=b"\x00" * 256,
-                            )
+                token_id=os.urandom(16),
+                game_id=game_id,
+                ticket_hash=b"\x00" * 32,
+                machine_id=combined_hash,
+                activation_time=int(time.time()),
+                expiration_time=int(time.time()) + (365 * 86400),
+                license_type=self.LICENSE_FULL,
+                features_enabled=0xFFFFFFFF,
+                signature=b"\x00" * 256,
+            )
             offset += 128
 
             license_type = struct.unpack("<I", data[offset : offset + 4])[0]
@@ -1059,35 +1053,21 @@ class DenuvoTicketAnalyzer:
             {
                 "type": "hmac",
                 "key": hashlib.sha256(b"denuvo_master_key_v7").digest(),
-                "aes_key": hashlib.sha256(
-                    b"denuvo_aes_key_v7_extended_master"
-                ).digest(),
-                "iv": hashlib.md5(
-                    b"denuvo_iv_v7"
-                ).digest(),
-                "nonce": hashlib.md5(b"denuvo_nonce_v7").digest()[
-                    :12
-                ],
+                "aes_key": hashlib.sha256(b"denuvo_aes_key_v7_extended_master").digest(),
+                "iv": hashlib.md5(b"denuvo_iv_v7").digest(),
+                "nonce": hashlib.md5(b"denuvo_nonce_v7").digest()[:12],
             },
             {
                 "type": "hmac",
                 "key": hashlib.sha256(b"denuvo_master_key_v6").digest(),
-                "aes_key": hashlib.sha256(
-                    b"denuvo_aes_key_v6_extended_master"
-                ).digest(),
-                "iv": hashlib.md5(
-                    b"denuvo_iv_v6"
-                ).digest(),
-                "nonce": hashlib.md5(b"denuvo_nonce_v6").digest()[
-                    :12
-                ],
+                "aes_key": hashlib.sha256(b"denuvo_aes_key_v6_extended_master").digest(),
+                "iv": hashlib.md5(b"denuvo_iv_v6").digest(),
+                "nonce": hashlib.md5(b"denuvo_nonce_v6").digest()[:12],
             },
             {
                 "type": "hmac",
                 "key": hashlib.sha256(b"denuvo_fallback_key").digest(),
-                "aes_key": hashlib.sha256(
-                    b"denuvo_aes_fallback_extended"
-                ).digest(),
+                "aes_key": hashlib.sha256(b"denuvo_aes_fallback_extended").digest(),
                 "iv": b"\x00" * 16,
                 "nonce": b"\x00" * 12,
             },

@@ -168,11 +168,7 @@ class AnthropicRepository(APIRepositoryBase):
 
         try:
             return next(
-                (
-                    self._create_model_info(model_id, model_data)
-                    for model_data in data.get("data", [])
-                    if model_data.get("id") == model_id
-                ),
+                (self._create_model_info(model_id, model_data) for model_data in data.get("data", []) if model_data.get("id") == model_id),
                 None,
             )
         except (KeyError, TypeError) as e:
@@ -226,7 +222,5 @@ class AnthropicRepository(APIRepositoryBase):
             Always returns (False, "Anthropic doesn't support model downloads")
 
         """
-        logger.warning(
-            f"Download requested for {model_id} to {destination_path}, but not supported"
-        )
+        logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
         return False, "Anthropic doesn't support model downloads"

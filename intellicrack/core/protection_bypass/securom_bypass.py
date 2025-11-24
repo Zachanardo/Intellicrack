@@ -183,12 +183,7 @@ class SecuROMBypass:
         deleted_files = self._remove_application_files()
         files_deleted.extend(deleted_files)
 
-        success = (
-            len(drivers_removed) > 0
-            or len(services_stopped) > 0
-            or len(registry_cleaned) > 0
-            or activation_bypassed
-        )
+        success = len(drivers_removed) > 0 or len(services_stopped) > 0 or len(registry_cleaned) > 0 or activation_bypassed
 
         return SecuROMRemovalResult(
             drivers_removed=drivers_removed,
@@ -229,14 +224,10 @@ class SecuROMBypass:
 
             try:
                 for service_name in self.SERVICE_NAMES:
-                    if service_handle := self._advapi32.OpenServiceW(
-                        sc_manager, service_name, SERVICE_STOP
-                    ):
+                    if service_handle := self._advapi32.OpenServiceW(sc_manager, service_name, SERVICE_STOP):
                         try:
                             status = ServiceStatus()
-                            if self._advapi32.ControlService(
-                                service_handle, SERVICE_CONTROL_STOP, ctypes.byref(status)
-                            ):
+                            if self._advapi32.ControlService(service_handle, SERVICE_CONTROL_STOP, ctypes.byref(status)):
                                 stopped.append(service_name)
                         finally:
                             self._advapi32.CloseServiceHandle(service_handle)
@@ -265,9 +256,7 @@ class SecuROMBypass:
 
             try:
                 for service_name in self.SERVICE_NAMES:
-                    if service_handle := self._advapi32.OpenServiceW(
-                        sc_manager, service_name, DELETE
-                    ):
+                    if service_handle := self._advapi32.OpenServiceW(sc_manager, service_name, DELETE):
                         try:
                             if self._advapi32.DeleteService(service_handle):
                                 deleted.append(service_name)
@@ -467,10 +456,7 @@ class SecuROMBypass:
                     for section in pe.sections:
                         if section.Characteristics & 0x20000000:
                             f.seek(section.PointerToRawData)
-                            section_data = data[
-                                section.VirtualAddress : section.VirtualAddress
-                                + section.SizeOfRawData
-                            ]
+                            section_data = data[section.VirtualAddress : section.VirtualAddress + section.SizeOfRawData]
                             f.write(bytes(section_data))
 
             pe.close()
@@ -622,9 +608,7 @@ class SecuROMBypass:
             success = False
             details = "Failed to remove triggers"
 
-        return BypassResult(
-            success=success, technique="Trigger Removal", details=details, errors=errors
-        )
+        return BypassResult(success=success, technique="Trigger Removal", details=details, errors=errors)
 
     def _nop_trigger_function(self, data: bytearray, offset: int) -> bool:
         """NOP out trigger function by finding its prologue and replacing with RET."""
@@ -890,9 +874,7 @@ class SecuROMBypass:
         except OSError:
             return False
 
-    def block_phone_home(
-        self, target_exe: Path, server_urls: list[str] | None = None
-    ) -> BypassResult:
+    def block_phone_home(self, target_exe: Path, server_urls: list[str] | None = None) -> BypassResult:
         """Block phone-home mechanisms.
 
         Args:
@@ -975,9 +957,7 @@ class SecuROMBypass:
             with open(hosts_path, "a") as f:
                 f.write("\n# SecuROM Activation Server Blocking\n")
                 for server in all_servers:
-                    clean_server = (
-                        server.replace("https://", "").replace("http://", "").split("/")[0]
-                    )
+                    clean_server = server.replace("https://", "").replace("http://", "").split("/")[0]
                     f.write(f"127.0.0.1 {clean_server}\n")
 
             return True

@@ -153,9 +153,7 @@ class ScriptInfoWidget(QWidget):
         self.category_label.setText(f"Category: {script.category}")
         self.version_label.setText(f"Version: {script.version}")
         self.type_label.setText(f"Type: {script.type.upper()}")
-        self.modified_label.setText(
-            f"Last Modified: {script.last_modified.strftime('%Y-%m-%d %H:%M')}"
-        )
+        self.modified_label.setText(f"Last Modified: {script.last_modified.strftime('%Y-%m-%d %H:%M')}")
 
         # Format size
         size_kb = script.size / 1024

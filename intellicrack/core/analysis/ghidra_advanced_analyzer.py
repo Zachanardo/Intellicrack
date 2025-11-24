@@ -162,9 +162,7 @@ class GhidraAdvancedAnalyzer:
                         int(inst_parts[2].replace("0x", ""), 16)
 
             elif "[" in inst_line and ("bp" in inst_line.lower() or "sp" in inst_line.lower()):
-                if var_match := re.search(
-                    r"\[(r|e)?([bs]p)([+-])0x([0-9a-f]+)\]", inst_line.lower()
-                ):
+                if var_match := re.search(r"\[(r|e)?([bs]p)([+-])0x([0-9a-f]+)\]", inst_line.lower()):
                     offset = int(var_match[4], 16)
                     if var_match[3] == "-":
                         offset = -offset
@@ -208,11 +206,7 @@ class GhidraAdvancedAnalyzer:
         # Size indicators
         if "qword" in inst_lower:
             base_type = "uint64_t"
-        elif (
-            "dword" in inst_lower
-            or ("word" not in inst_lower
-            and "byte" not in inst_lower)
-        ):
+        elif "dword" in inst_lower or ("word" not in inst_lower and "byte" not in inst_lower):
             base_type = "uint32_t"
         elif "word" in inst_lower:
             base_type = "uint16_t"
@@ -254,9 +248,7 @@ class GhidraAdvancedAnalyzer:
         base_type = type_str.replace("*", "").strip()
         return type_sizes.get(base_type, 4)
 
-    def _propagate_types(
-        self, variables: dict[int, RecoveredVariable], function: GhidraFunction
-    ) -> None:
+    def _propagate_types(self, variables: dict[int, RecoveredVariable], function: GhidraFunction) -> None:
         """Propagate types through data flow analysis."""
         # Analyze function parameters from calling convention
         if function.calling_convention not in [
@@ -266,9 +258,7 @@ class GhidraAdvancedAnalyzer:
         ]:
             return
         # x86/x64 calling conventions
-        param_regs = (
-            ["rcx", "rdx", "r8", "r9"] if "64" in function.signature else ["ecx", "edx"]
-        )
+        param_regs = ["rcx", "rdx", "r8", "r9"] if "64" in function.signature else ["ecx", "edx"]
 
         len(function.parameters)
         for i, (param_type, param_name) in enumerate(function.parameters):
@@ -359,9 +349,7 @@ class GhidraAdvancedAnalyzer:
         instructions = function.assembly_code.split("\n")
 
         for inst_line in instructions:
-            if access_match := re.search(
-                r"(\w+)\s+.*\[(r\w+)\+0x([0-9a-f]+)\]", inst_line.lower()
-            ):
+            if access_match := re.search(r"(\w+)\s+.*\[(r\w+)\+0x([0-9a-f]+)\]", inst_line.lower()):
                 mnemonic = access_match[1]
                 base_reg = access_match[2]
                 offset = int(access_match[3], 16)
@@ -460,11 +448,7 @@ class GhidraAdvancedAnalyzer:
             (
                 bool(section.Characteristics & 0x20000000)
                 for section in self.pe.sections
-                if (
-                    section.VirtualAddress
-                    <= address
-                    < section.VirtualAddress + section.Misc_VirtualSize
-                )
+                if (section.VirtualAddress <= address < section.VirtualAddress + section.Misc_VirtualSize)
             ),
             False,
         )
@@ -482,9 +466,7 @@ class GhidraAdvancedAnalyzer:
         for inst_line in instructions:
             # Look for vtable assignment patterns
             if "lea" in inst_line.lower():
-                if vtable_match := re.search(
-                    r"lea\s+\w+,\s*\[0x([0-9a-f]+)\]", inst_line.lower()
-                ):
+                if vtable_match := re.search(r"lea\s+\w+,\s*\[0x([0-9a-f]+)\]", inst_line.lower()):
                     current_vtable = int(vtable_match[1], 16)
 
             elif "mov" in inst_line.lower() and current_vtable:
@@ -502,11 +484,7 @@ class GhidraAdvancedAnalyzer:
         if self.pe:
             # Find the section containing the vtable
             for section in self.pe.sections:
-                if (
-                    section.VirtualAddress
-                    <= vtable_addr
-                    < section.VirtualAddress + section.Misc_VirtualSize
-                ):
+                if section.VirtualAddress <= vtable_addr < section.VirtualAddress + section.Misc_VirtualSize:
                     offset = vtable_addr - section.VirtualAddress
                     data = section.get_data()[offset:]
                     ptr_size = 8 if self.md and self.md.mode == CS_MODE_64 else 4
@@ -573,9 +551,7 @@ class GhidraAdvancedAnalyzer:
         # This would need proper RTTI parsing
         return f"rtti_class_{hash(rtti_data) & 0xFFFFFF:06x}"
 
-    def extract_exception_handlers(
-        self, analysis_result: GhidraAnalysisResult
-    ) -> list[ExceptionHandlerInfo]:
+    def extract_exception_handlers(self, analysis_result: GhidraAnalysisResult) -> list[ExceptionHandlerInfo]:
         """Extract exception handler information."""
         handlers = []
 
@@ -728,9 +704,7 @@ class GhidraAdvancedAnalyzer:
         return custom_types
 
 
-def apply_advanced_analysis(
-    analysis_result: GhidraAnalysisResult, binary_path: str
-) -> GhidraAnalysisResult:
+def apply_advanced_analysis(analysis_result: GhidraAnalysisResult, binary_path: str) -> GhidraAnalysisResult:
     """Apply advanced analysis features to existing Ghidra results."""
     analyzer = GhidraAdvancedAnalyzer(binary_path)
 

@@ -891,9 +891,7 @@ class FridaProtectionBypasser:
             frida.get_local_device().enumerate_processes()[0]
 
             # Read first 4KB of main module for signatures
-            module_base = self.session.get_module_by_name(
-                self.process_name or "main"
-            ).base_address
+            module_base = self.session.get_module_by_name(self.process_name or "main").base_address
 
             header_data = self.session.read_bytes(module_base, 4096)
 
@@ -1532,9 +1530,7 @@ def main() -> None:
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-n", "--name", help="Process name to attach to")
     group.add_argument("-p", "--pid", type=int, help="Process ID to attach to")
-    parser.add_argument(
-        "-a", "--apply", action="store_true", help="Apply all bypasses automatically"
-    )
+    parser.add_argument("-a", "--apply", action="store_true", help="Apply all bypasses automatically")
     parser.add_argument("-r", "--report", help="Save report to file")
 
     args = parser.parse_args()

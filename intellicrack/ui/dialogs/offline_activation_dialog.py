@@ -40,9 +40,7 @@ class ActivationWorker(QThread):
     result = pyqtSignal(dict)
     error = pyqtSignal(str)
 
-    def __init__(
-        self, emulator: OfflineActivationEmulator, operation: str, params: dict[str, Any]
-    ) -> None:
+    def __init__(self, emulator: OfflineActivationEmulator, operation: str, params: dict[str, Any]) -> None:
         """Initialize the OfflineActivationWorker with emulator and operation parameters.
 
         Args:
@@ -74,9 +72,7 @@ class ActivationWorker(QThread):
 
             elif self.operation == "generate_installation_id":
                 self.progress.emit("Generating installation ID...")
-                install_id = self.emulator.generate_installation_id(
-                    self.params["product_id"], self.params["hardware_id"]
-                )
+                install_id = self.emulator.generate_installation_id(self.params["product_id"], self.params["hardware_id"])
                 self.result.emit({"operation": "installation_id", "data": install_id})
 
             elif self.operation == "generate_request_code":
@@ -95,16 +91,12 @@ class ActivationWorker(QThread):
                     timestamp=datetime.now(),
                     additional_data=self.params.get("additional_data", {}),
                 )
-                response = self.emulator.generate_activation_response(
-                    request, product_key=self.params.get("product_key")
-                )
+                response = self.emulator.generate_activation_response(request, product_key=self.params.get("product_key"))
                 self.result.emit({"operation": "activation_response", "data": response})
 
             elif self.operation == "validate_license":
                 self.progress.emit("Validating license file...")
-                result = self.emulator.validate_license_file(
-                    self.params["file_path"], self.params.get("hardware_id")
-                )
+                result = self.emulator.validate_license_file(self.params["file_path"], self.params.get("hardware_id"))
                 self.result.emit({"operation": "validation", "data": result})
 
             elif self.operation == "export_license":
@@ -223,9 +215,7 @@ class OfflineActivationDialog(QDialog):
         algo_layout = QHBoxLayout()
         algo_layout.addWidget(QLabel("Algorithm:"))
         self.hwid_algorithm = QComboBox()
-        self.hwid_algorithm.addItems(
-            ["standard", "microsoft", "adobe", "autodesk", "vmware", "custom_md5", "custom_sha256"]
-        )
+        self.hwid_algorithm.addItems(["standard", "microsoft", "adobe", "autodesk", "vmware", "custom_md5", "custom_sha256"])
         algo_layout.addWidget(self.hwid_algorithm)
 
         self.btn_generate_hwid = QPushButton("Generate Hardware ID")
@@ -263,9 +253,7 @@ class OfflineActivationDialog(QDialog):
         pid_layout.addWidget(QLabel("Product ID:"))
         self.product_id_input = QLineEdit()
         self.product_id_input.setText("")
-        self.product_id_input.setToolTip(
-            "Enter product identifier (OFFICE-2021-PRO, ADOBE-CC-2023, etc.)"
-        )
+        self.product_id_input.setToolTip("Enter product identifier (OFFICE-2021-PRO, ADOBE-CC-2023, etc.)")
         pid_layout.addWidget(self.product_id_input)
         product_layout.addLayout(pid_layout)
 
@@ -433,9 +421,7 @@ class OfflineActivationDialog(QDialog):
         schemes_layout = QVBoxLayout()
 
         self.schemes_table = QTableWidget(0, 4)
-        self.schemes_table.setHorizontalHeaderLabels(
-            ["Product", "Type", "Algorithm", "Hardware Locked"]
-        )
+        self.schemes_table.setHorizontalHeaderLabels(["Product", "Type", "Algorithm", "Hardware Locked"])
         self.schemes_table.horizontalHeader().setStretchLastSection(True)
         self.schemes_table.setAlternatingRowColors(True)
 
@@ -446,9 +432,7 @@ class OfflineActivationDialog(QDialog):
             self.schemes_table.setItem(row, 0, QTableWidgetItem(name))
             self.schemes_table.setItem(row, 1, QTableWidgetItem(scheme["type"].value))
             self.schemes_table.setItem(row, 2, QTableWidgetItem(scheme["algorithm"]))
-            self.schemes_table.setItem(
-                row, 3, QTableWidgetItem("Yes" if scheme.get("hardware_locked") else "No")
-            )
+            self.schemes_table.setItem(row, 3, QTableWidgetItem("Yes" if scheme.get("hardware_locked") else "No"))
 
         schemes_layout.addWidget(self.schemes_table)
         schemes_group.setLayout(schemes_layout)
@@ -523,9 +507,7 @@ class OfflineActivationDialog(QDialog):
 
         # Profiles table
         self.profiles_table = QTableWidget(0, 5)
-        self.profiles_table.setHorizontalHeaderLabels(
-            ["Name", "Product ID", "Hardware ID", "Created", "Notes"]
-        )
+        self.profiles_table.setHorizontalHeaderLabels(["Name", "Product ID", "Hardware ID", "Created", "Notes"])
         self.profiles_table.horizontalHeader().setStretchLastSection(True)
         self.profiles_table.setAlternatingRowColors(True)
         self.profiles_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -669,9 +651,7 @@ class OfflineActivationDialog(QDialog):
         product_version = self.product_version_input.text().strip()
 
         if not all([product_id, product_version, self.current_hardware_id]):
-            QMessageBox.warning(
-                self, "Warning", "Please ensure product ID, version, and hardware ID are set"
-            )
+            QMessageBox.warning(self, "Warning", "Please ensure product ID, version, and hardware ID are set")
             return
 
         features = [f.strip() for f in self.features_input.text().split(",") if f.strip()]
@@ -691,9 +671,7 @@ class OfflineActivationDialog(QDialog):
         }
 
         if self.enable_expiry.isChecked():
-            params["additional_data"]["expiry_date"] = self.expiry_date.date().toString(
-                "yyyy-MM-dd"
-            )
+            params["additional_data"]["expiry_date"] = self.expiry_date.date().toString("yyyy-MM-dd")
 
         self.log("Generating activation response...")
         self.worker = ActivationWorker(self.emulator, "generate_activation", params)
@@ -751,9 +729,7 @@ class OfflineActivationDialog(QDialog):
 
     def validate_license_file(self) -> None:
         """Validate an existing license file."""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select License File", "", "License Files (*.xml *.json *.lic);;All Files (*.*)"
-        )
+        file_path, _ = QFileDialog.getOpenFileName(self, "Select License File", "", "License Files (*.xml *.json *.lic);;All Files (*.*)")
 
         if file_path:
             self.worker = ActivationWorker(
@@ -768,9 +744,7 @@ class OfflineActivationDialog(QDialog):
 
     def import_hardware_profile(self) -> None:
         """Import hardware profile from file."""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Import Hardware Profile", "", "JSON Files (*.json);;All Files (*.*)"
-        )
+        file_path, _ = QFileDialog.getOpenFileName(self, "Import Hardware Profile", "", "JSON Files (*.json);;All Files (*.*)")
 
         if file_path:
             try:
@@ -790,9 +764,7 @@ class OfflineActivationDialog(QDialog):
         if not self.current_profile:
             return
 
-        file_path, _ = QFileDialog.getSaveFileName(
-            self, "Export Hardware Profile", "", "JSON Files (*.json);;All Files (*.*)"
-        )
+        file_path, _ = QFileDialog.getSaveFileName(self, "Export Hardware Profile", "", "JSON Files (*.json);;All Files (*.*)")
 
         if file_path:
             try:
@@ -837,9 +809,7 @@ class OfflineActivationDialog(QDialog):
         self.schemes_table.setItem(row, 0, QTableWidgetItem(name))
         self.schemes_table.setItem(row, 1, QTableWidgetItem(self.activation_type.currentText()))
         self.schemes_table.setItem(row, 2, QTableWidgetItem("custom"))
-        self.schemes_table.setItem(
-            row, 3, QTableWidgetItem("Yes" if self.hardware_lock.isChecked() else "No")
-        )
+        self.schemes_table.setItem(row, 3, QTableWidgetItem("Yes" if self.hardware_lock.isChecked() else "No"))
 
         self.log(f"Custom scheme '{name}' saved")
         self.scheme_name_input.clear()
@@ -1035,11 +1005,7 @@ class OfflineActivationDialog(QDialog):
             self.profiles_table.setItem(
                 row,
                 2,
-                QTableWidgetItem(
-                    profile.get("hardware_id", "")[:20] + "..."
-                    if profile.get("hardware_id")
-                    else ""
-                ),
+                QTableWidgetItem(profile.get("hardware_id", "")[:20] + "..." if profile.get("hardware_id") else ""),
             )
             self.profiles_table.setItem(row, 3, QTableWidgetItem(profile.get("created", "")[:10]))
             self.profiles_table.setItem(row, 4, QTableWidgetItem(profile.get("notes", "")))
@@ -1140,9 +1106,7 @@ Details:
         elif operation == "export":
             if data.get("success"):
                 self.log(f"License file exported to {data.get('path')}")
-                QMessageBox.information(
-                    self, "Success", f"License file exported successfully to:\n{data.get('path')}"
-                )
+                QMessageBox.information(self, "Success", f"License file exported successfully to:\n{data.get('path')}")
 
     def handle_worker_error(self, error: str) -> None:
         """Handle worker thread errors."""

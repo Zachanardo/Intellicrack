@@ -132,43 +132,23 @@ class GPUMonitorWorker(QObject):
                                 name = parts[1]
 
                                 temp_str = parts[2]
-                                temp = (
-                                    float(temp_str)
-                                    if temp_str not in ["[N/A]", "[Not Supported]", ""]
-                                    else 0.0
-                                )
+                                temp = float(temp_str) if temp_str not in ["[N/A]", "[Not Supported]", ""] else 0.0
                                 temp = min(max(temp, 0.0), 150.0)
 
                                 util_str = parts[3]
-                                utilization = (
-                                    float(util_str)
-                                    if util_str not in ["[N/A]", "[Not Supported]", ""]
-                                    else 0.0
-                                )
+                                utilization = float(util_str) if util_str not in ["[N/A]", "[Not Supported]", ""] else 0.0
                                 utilization = min(max(utilization, 0.0), 100.0)
 
                                 mem_used_str = parts[4]
-                                memory_used = (
-                                    float(mem_used_str)
-                                    if mem_used_str not in ["[N/A]", "[Not Supported]", ""]
-                                    else 0.0
-                                )
+                                memory_used = float(mem_used_str) if mem_used_str not in ["[N/A]", "[Not Supported]", ""] else 0.0
                                 memory_used = max(memory_used, 0.0)
 
                                 mem_total_str = parts[5]
-                                memory_total = (
-                                    float(mem_total_str)
-                                    if mem_total_str not in ["[N/A]", "[Not Supported]", ""]
-                                    else 1.0
-                                )
+                                memory_total = float(mem_total_str) if mem_total_str not in ["[N/A]", "[Not Supported]", ""] else 1.0
                                 memory_total = max(memory_total, 1.0)
 
                                 power_str = parts[6]
-                                power = (
-                                    float(power_str)
-                                    if power_str not in ["[N/A]", "[Not Supported]", ""]
-                                    else 0.0
-                                )
+                                power = float(power_str) if power_str not in ["[N/A]", "[Not Supported]", ""] else 0.0
                                 power = min(max(power, 0.0), 1000.0)
 
                                 gpus.append(
@@ -202,9 +182,7 @@ class GPUMonitorWorker(QObject):
                 if "Intel" in gpu.Name and any(x in gpu.Name for x in ["Arc", "Xe", "Iris", "UHD"]):
                     utilization = 0.0
                     try:
-                        if (
-                            gpu_counters := c.Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine()
-                        ):
+                        if gpu_counters := c.Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine():
                             total_util = 0.0
                             engine_count = 0
 
@@ -232,9 +210,7 @@ class GPUMonitorWorker(QObject):
                     memory_total_mb = total_memory_gb * 1024
 
                     try:
-                        if gpu_memory := (
-                            c.Win32_PerfFormattedData_GPUPerformanceCounters_GPUProcessMemory()
-                        ):
+                        if gpu_memory := (c.Win32_PerfFormattedData_GPUPerformanceCounters_GPUProcessMemory()):
                             total_dedicated = 0
                             for mem in gpu_memory:
                                 if hasattr(mem, "DedicatedUsage"):
@@ -303,9 +279,7 @@ class GPUMonitorWorker(QObject):
                 if "AMD" in gpu.Name or "Radeon" in gpu.Name or "ATI" in gpu.Name:
                     utilization = 0.0
                     try:
-                        if (
-                            gpu_counters := c.Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine()
-                        ):
+                        if gpu_counters := c.Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine():
                             total_util = 0.0
                             engine_count = 0
 
@@ -332,9 +306,7 @@ class GPUMonitorWorker(QObject):
                     memory_total_mb = total_memory_gb * 1024
 
                     try:
-                        if gpu_memory := (
-                            c.Win32_PerfFormattedData_GPUPerformanceCounters_GPUProcessMemory()
-                        ):
+                        if gpu_memory := (c.Win32_PerfFormattedData_GPUPerformanceCounters_GPUProcessMemory()):
                             total_dedicated = 0
                             for mem in gpu_memory:
                                 if hasattr(mem, "DedicatedUsage"):
@@ -503,9 +475,7 @@ class GPUStatusWidget(QWidget):
 
         self.caps_text = QTextEdit()
         self.caps_text.setReadOnly(True)
-        self.caps_text.setToolTip(
-            "GPU compute capabilities, supported features, and hardware specifications"
-        )
+        self.caps_text.setToolTip("GPU compute capabilities, supported features, and hardware specifications")
         self.caps_text.setMinimumHeight(120)
         self.caps_text.setMaximumHeight(200)
         self.caps_text.setPlainText("Detecting GPU capabilities...")
@@ -684,9 +654,7 @@ class GPUStatusWidget(QWidget):
 
         self.caps_text.setPlainText("No GPU detected")
 
-    def _set_bar_color(
-        self, bar: QProgressBar, value: float, warning: float, critical: float
-    ) -> None:
+    def _set_bar_color(self, bar: QProgressBar, value: float, warning: float, critical: float) -> None:
         """Set progress bar color based on value thresholds."""
         if value >= critical:
             bar.setStyleSheet("QProgressBar::chunk { background-color: #dc3545; }")

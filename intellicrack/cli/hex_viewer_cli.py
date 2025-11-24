@@ -248,13 +248,11 @@ class TerminalHexViewer:
         modified_str = "*" if self.modified else ""
 
         status = f" {mode_str}({edit_type}) | Offset: 0x{self.cursor_offset:08X} | "
-        status += (
-            f"Size: {self.file_size} bytes | File: {os.path.basename(self.filepath)}{modified_str}"
-        )
+        status += f"Size: {self.file_size} bytes | File: {os.path.basename(self.filepath)}{modified_str}"
 
         # Truncate if too long
         if len(status) > self.screen_width:
-            status = f"{status[:self.screen_width - 3]}..."
+            status = f"{status[: self.screen_width - 3]}..."
 
         # Pad to full width
         status = status.ljust(self.screen_width)
@@ -499,11 +497,7 @@ class TerminalHexViewer:
         # Get input from user
         try:
             input_subwin.clear()
-            if (
-                pattern_input := input_subwin.getstr(0, 0, input_width - 6)
-                .decode("utf-8")
-                .strip()
-            ):
+            if pattern_input := input_subwin.getstr(0, 0, input_width - 6).decode("utf-8").strip():
                 # Determine if it's hex or text
                 if all(c in "0123456789ABCDEFabcdef " for c in pattern_input):
                     # Hex pattern - remove spaces
@@ -640,11 +634,7 @@ class TerminalHexViewer:
         # Get input from user
         try:
             input_subwin.clear()
-            if (
-                offset_input := input_subwin.getstr(0, 0, input_width - 6)
-                .decode("utf-8")
-                .strip()
-            ):
+            if offset_input := input_subwin.getstr(0, 0, input_width - 6).decode("utf-8").strip():
                 # Parse offset (support hex with 0x prefix and decimal)
                 try:
                     if offset_input.lower().startswith("0x"):

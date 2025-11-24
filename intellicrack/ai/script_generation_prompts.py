@@ -325,9 +325,7 @@ Return validation results in structured JSON format.""",
 
         return prompt_data
 
-    def build_context_data(
-        self, binary_analysis: dict[str, Any], protection_types: list[str] | None = None
-    ) -> dict[str, str]:
+    def build_context_data(self, binary_analysis: dict[str, Any], protection_types: list[str] | None = None) -> dict[str, str]:
         """Build context data for prompt formatting.
 
         Constructs a comprehensive context dictionary from binary analysis data and
@@ -350,49 +348,33 @@ Return validation results in structured JSON format.""",
 
         """
         return {
-            "binary_name": binary_analysis.get("binary_info", {}).get(
-                "name", "unknown"
-            ),
-            "architecture": binary_analysis.get("binary_info", {}).get(
-                "arch", "x64"
-            ),
-            "platform": binary_analysis.get("binary_info", {}).get(
-                "platform", "windows"
-            ),
+            "binary_name": binary_analysis.get("binary_info", {}).get("name", "unknown"),
+            "architecture": binary_analysis.get("binary_info", {}).get("arch", "x64"),
+            "platform": binary_analysis.get("binary_info", {}).get("platform", "windows"),
             "file_type": binary_analysis.get("binary_info", {}).get("type", "PE"),
             "entry_point": "0x401000",  # Default
             "protection_types": ", ".join(protection_types or ["license_check"]),
-            "key_functions": ", ".join(
-                [f["name"] for f in binary_analysis.get("functions", [])[:10]]
-            ),
+            "key_functions": ", ".join([f["name"] for f in binary_analysis.get("functions", [])[:10]]),
             "imports": ", ".join(binary_analysis.get("imports", [])[:15]),
             "license_strings": ", ".join(
                 [
                     s
                     for s in binary_analysis.get("strings", [])
-                    if any(
-                        keyword in s.lower()
-                        for keyword in ["license", "trial", "demo", "expire"]
-                    )
+                    if any(keyword in s.lower() for keyword in ["license", "trial", "demo", "expire"])
                 ],
             ),
             "analysis_summary": self._summarize_analysis(binary_analysis),
-            "functionality_requirements": self._build_functionality_requirements(
-                protection_types or []
-            ),
+            "functionality_requirements": self._build_functionality_requirements(protection_types or []),
             # Example addresses
             "key_addresses": "0x401000, 0x401200, 0x401400",
             "protection_functions": ", ".join(
                 [
                     f["name"]
                     for f in binary_analysis.get("functions", [])
-                    if "license" in f.get("name", "").lower()
-                    or "check" in f.get("name", "").lower()
+                    if "license" in f.get("name", "").lower() or "check" in f.get("name", "").lower()
                 ],
             ),
-            "patching_objectives": self._build_patching_objectives(
-                protection_types or []
-            ),
+            "patching_objectives": self._build_patching_objectives(protection_types or []),
         }
 
     def _summarize_analysis(self, analysis: dict[str, Any]) -> str:

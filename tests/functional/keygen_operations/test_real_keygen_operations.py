@@ -17,7 +17,7 @@ import pytest
 from intellicrack.ai.ai_script_generator import AIScriptGenerator
 from intellicrack.core.analysis.binary_analyzer import BinaryAnalyzer
 from intellicrack.core.app_context import AppContext
-from intellicrack.core.exploitation.shellcode_generator import ShellcodeGenerator
+from intellicrack.core.exploitation.license_bypass_code_generator import LicenseBypassCodeGenerator
 from intellicrack.plugins.radare2_modules.radare2_keygen_assistant import Radare2KeygenAssistant
 
 
@@ -552,7 +552,7 @@ class TestRealKeygenOperations:
 
     def test_real_keygen_pattern_obfuscation(self, protected_binary_with_serial_check, app_context):
         """Test REAL keygen pattern obfuscation techniques."""
-        shellcode_gen = ShellcodeGenerator()
+        shellcode_gen = LicenseBypassCodeGenerator()
         keygen_assistant = Radare2KeygenAssistant()
 
         # Original keygen algorithm
@@ -702,7 +702,7 @@ def generate_key(name):
     def test_real_keygen_anti_debugging_integration(self, app_context):
         """Test REAL keygen with anti-debugging protection."""
         keygen_assistant = Radare2KeygenAssistant()
-        shellcode_gen = ShellcodeGenerator()
+        shellcode_gen = LicenseBypassCodeGenerator()
 
         # Generate protected keygen
         protected_config = {

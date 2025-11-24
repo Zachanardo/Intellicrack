@@ -594,8 +594,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
 
                 # Look for license-related keywords
                 license_keywords = [b"license", b"activation", b"checkout", b"verify", b"serial"]
-                keyword_matches = sum(bool(keyword in data_lower)
-                                  for keyword in license_keywords)
+                keyword_matches = sum(bool(keyword in data_lower) for keyword in license_keywords)
 
                 if keyword_matches > 0:
                     confidence += min(keyword_matches * 0.1, 0.3)
@@ -612,8 +611,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
 
             analysis_metadata = {
                 "keywords_found": patterns_matched,
-                "port_based_detection": packet.dest_port in self.license_ports
-                or packet.source_port in self.license_ports,
+                "port_based_detection": packet.dest_port in self.license_ports or packet.source_port in self.license_ports,
                 "data_size": len(packet.data),
                 "connection_flags": packet.flags,
             }
@@ -655,9 +653,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         try:
             proxy_key = f"{target_host}:{target_port}"
             self.proxy_mappings[proxy_key] = (self.bind_interface, target_port)
-            self.logger.info(
-                f"Transparent proxy setup: {proxy_key} -> {self.bind_interface}:{target_port}"
-            )
+            self.logger.info(f"Transparent proxy setup: {proxy_key} -> {self.bind_interface}:{target_port}")
             return True
         except Exception as e:
             self.logger.error(f"Failed to setup transparent proxy: {e}")

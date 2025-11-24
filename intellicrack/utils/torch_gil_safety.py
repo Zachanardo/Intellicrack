@@ -127,9 +127,7 @@ def configure_pybind11_environment() -> None:
     os.environ.setdefault("NDEBUG", "1")
 
     # Additional pybind11 safety flags
-    os.environ.setdefault(
-        "PYBIND11_DISABLE_GIL_CHECKS", "1"
-    )  # Not standard but some builds check this
+    os.environ.setdefault("PYBIND11_DISABLE_GIL_CHECKS", "1")  # Not standard but some builds check this
 
     # Ensure single-threaded execution for critical libraries
     os.environ.setdefault("PYTORCH_DISABLE_CUDNN_BATCH_NORM", "1")
@@ -166,11 +164,9 @@ def initialize_gil_safety() -> None:
     main_thread = threading.main_thread()
 
     if current_thread is not main_thread:
-        if launcher_env := os.environ.get(
-            "RUST_LAUNCHER_MODE"
-        ) or os.environ.get("PYTHON_SUBPROCESS_MODE"):
+        if launcher_env := os.environ.get("RUST_LAUNCHER_MODE") or os.environ.get("PYTHON_SUBPROCESS_MODE"):
             # In launcher mode, log at debug level instead of warning
-            logger.debug("GIL safety initialized from non-main thread in launcher environment")
+            logger.debug(f"GIL safety initialized from non-main thread in launcher environment: {launcher_env}")
         else:
             import warnings
 

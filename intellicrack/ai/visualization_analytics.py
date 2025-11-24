@@ -345,9 +345,7 @@ class DataCollector:
             error_count = 0
 
             for _record_id, record in self.learning_records.items():
-                record_time = datetime.fromisoformat(
-                    record.get("timestamp", current_time.isoformat())
-                )
+                record_time = datetime.fromisoformat(record.get("timestamp", current_time.isoformat()))
 
                 if record_time >= lookback_time:
                     total_operations += 1
@@ -360,8 +358,7 @@ class DataCollector:
             recent_errors = [
                 error
                 for error in self.error_history
-                if datetime.fromisoformat(error.get("timestamp", current_time.isoformat()))
-                >= lookback_time
+                if datetime.fromisoformat(error.get("timestamp", current_time.isoformat())) >= lookback_time
             ]
             error_count += len(recent_errors)
 
@@ -434,9 +431,7 @@ class DataCollector:
             # Analyze learning records for agent activity
             for record_id, record in self.learning_records.items():
                 try:
-                    record_time = datetime.fromisoformat(
-                        record.get("timestamp", current_time.isoformat())
-                    )
+                    record_time = datetime.fromisoformat(record.get("timestamp", current_time.isoformat()))
 
                     if record_time >= recent_threshold:
                         # Extract agent information from record
@@ -491,9 +486,7 @@ class DataCollector:
                     recent_hour = current_time - timedelta(hours=1)
                     for _record_id, record in self.learning_records.items():
                         try:
-                            record_time = datetime.fromisoformat(
-                                record.get("timestamp", current_time.isoformat())
-                            )
+                            record_time = datetime.fromisoformat(record.get("timestamp", current_time.isoformat()))
                             if record_time >= recent_hour:
                                 total_tasks += 1
                         except Exception as e:
@@ -586,11 +579,7 @@ class DataCollector:
 
         # Filter by time range (in seconds)
         cutoff_time = datetime.now() - timedelta(seconds=time_range)
-        return [
-            point
-            for point in self.data_store[metric_type.value]
-            if point.timestamp >= cutoff_time
-        ]
+        return [point for point in self.data_store[metric_type.value] if point.timestamp >= cutoff_time]
 
     def stop_collection(self) -> None:
         """Stop data collection."""
@@ -655,9 +644,7 @@ class ChartGenerator:
         }
 
     @profile_ai_operation("chart_generation")
-    def generate_chart(
-        self, template_name: str, custom_options: dict[str, Any] = None
-    ) -> ChartData:
+    def generate_chart(self, template_name: str, custom_options: dict[str, Any] = None) -> ChartData:
         """Generate chart from template."""
         if template_name not in self.chart_templates:
             raise ValueError(f"Unknown chart template: {template_name}")
@@ -826,9 +813,7 @@ class DashboardManager:
             layout=template["layout"],
         )
 
-    def create_custom_dashboard(
-        self, name: str, description: str, chart_configs: list[dict[str, Any]]
-    ) -> Dashboard:
+    def create_custom_dashboard(self, name: str, description: str, chart_configs: list[dict[str, Any]]) -> Dashboard:
         """Create custom dashboard."""
         charts = []
 
@@ -1176,9 +1161,7 @@ class VisualizationAnalytics:
         """Refresh dashboard data."""
         return self.dashboard_manager.refresh_dashboard(dashboard_id)
 
-    def create_custom_dashboard(
-        self, name: str, description: str, chart_configs: list[dict[str, Any]]
-    ) -> Dashboard:
+    def create_custom_dashboard(self, name: str, description: str, chart_configs: list[dict[str, Any]]) -> Dashboard:
         """Create custom dashboard."""
         return self.dashboard_manager.create_custom_dashboard(name, description, chart_configs)
 
@@ -1191,9 +1174,7 @@ class VisualizationAnalytics:
         return {
             "data_collector_active": self.data_collector.collection_enabled,
             "total_dashboards": len(self.dashboard_manager.dashboards),
-            "data_points_collected": sum(
-                len(queue) for queue in self.data_collector.data_store.values()
-            ),
+            "data_points_collected": sum(len(queue) for queue in self.data_collector.data_store.values()),
             "last_collection": datetime.now().isoformat(),
         }
 

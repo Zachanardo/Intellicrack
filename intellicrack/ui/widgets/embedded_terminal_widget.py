@@ -113,9 +113,7 @@ class ANSIParser:
 
         for match in self.ANSI_ESCAPE_PATTERN.finditer(text):
             if match.start() > last_pos:
-                segments.append(
-                    (text[last_pos : match.start()], QTextCharFormat(self.current_format))
-                )
+                segments.append((text[last_pos : match.start()], QTextCharFormat(self.current_format)))
 
             codes = match.group(1).split(";") if match.group(1) else ["0"]
             self._apply_codes(codes)
@@ -286,9 +284,7 @@ class EmbeddedTerminalWidget(QWidget):
             }
         """)
 
-        self.terminal_display.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
-        )
+        self.terminal_display.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.terminal_display.setMinimumSize(600, 400)
 
         self.terminal_display.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -366,9 +362,7 @@ class EmbeddedTerminalWidget(QWidget):
             except Exception as e:
                 logger.error(f"Error exporting terminal log: {e}")
 
-    def start_process(
-        self, command: str | list[str], cwd: str | None = None, env: dict[str, str] | None = None
-    ) -> int | None:
+    def start_process(self, command: str | list[str], cwd: str | None = None, env: dict[str, str] | None = None) -> int | None:
         """Start a new process in the terminal with PTY.
 
         Args:
@@ -640,10 +634,7 @@ class EmbeddedTerminalWidget(QWidget):
         cursor = self.terminal_display.textCursor()
         current_pos = cursor.position()
 
-        if (
-            current_pos < self._input_start_position
-            or current_pos >= self.terminal_display.textCursor().position()
-        ):
+        if current_pos < self._input_start_position or current_pos >= self.terminal_display.textCursor().position():
             return
 
         cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor, 1)

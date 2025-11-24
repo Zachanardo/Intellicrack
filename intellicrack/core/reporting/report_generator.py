@@ -62,9 +62,7 @@ class ReportGenerator:
         self.templates_dir = self._get_templates_directory()
 
         if JINJA_AVAILABLE and self.templates_dir.exists():
-            self.jinja_env = Environment(
-                loader=FileSystemLoader(str(self.templates_dir)), autoescape=True
-            )
+            self.jinja_env = Environment(loader=FileSystemLoader(str(self.templates_dir)), autoescape=True)
         else:
             self.jinja_env = None
 
@@ -167,9 +165,7 @@ class ReportGenerator:
             html_parts.append("<ul>")
             for protection in data["protections"]:
                 status = "OK" if protection.get("bypassed") else "FAIL"
-                html_parts.append(
-                    f"<li>{status} {protection.get('name', 'Unknown')}: {protection.get('description', '')}</li>"
-                )
+                html_parts.append(f"<li>{status} {protection.get('name', 'Unknown')}: {protection.get('description', '')}</li>")
             html_parts.append("</ul>")
             html_parts.append("</section>")
 
@@ -178,9 +174,7 @@ class ReportGenerator:
             html_parts.append("<section class='vulnerabilities'>")
             html_parts.append("<h2>Vulnerabilities Found</h2>")
             html_parts.append("<table>")
-            html_parts.append(
-                "<tr><th>Severity</th><th>Type</th><th>Description</th><th>Location</th></tr>"
-            )
+            html_parts.append("<tr><th>Severity</th><th>Type</th><th>Description</th><th>Location</th></tr>")
             for vuln in data["vulnerabilities"]:
                 severity_class = vuln.get("severity", "unknown").lower()
                 html_parts.append(f"<tr class='severity-{severity_class}'>")
@@ -199,13 +193,9 @@ class ReportGenerator:
             for exploit in data["exploitation"]:
                 html_parts.append("<div class='exploit-result'>")
                 html_parts.append(f"<h3>{exploit.get('technique', 'Unknown Technique')}</h3>")
-                html_parts.append(
-                    f"<p><strong>Status:</strong> {exploit.get('status', 'Unknown')}</p>"
-                )
+                html_parts.append(f"<p><strong>Status:</strong> {exploit.get('status', 'Unknown')}</p>")
                 if exploit.get("payload"):
-                    html_parts.append(
-                        f"<p><strong>Payload:</strong> <code>{exploit['payload'][:100]}...</code></p>"
-                    )
+                    html_parts.append(f"<p><strong>Payload:</strong> <code>{exploit['payload'][:100]}...</code></p>")
                 if exploit.get("output"):
                     html_parts.append(f"<pre class='output'>{exploit['output']}</pre>")
                 html_parts.append("</div>")
@@ -448,7 +438,13 @@ class ReportGenerator:
 
         """
         # Use tempfile to create secure temporary file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=f".{format}", prefix="intellicrack_temp_", delete=False, encoding="utf-8" if format in {"html", "json", "txt"} else None) as temp_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            suffix=f".{format}",
+            prefix="intellicrack_temp_",
+            delete=False,
+            encoding="utf-8" if format in {"html", "json", "txt"} else None,
+        ) as temp_file:
             temp_file.write(content)
             temp_path = temp_file.name
 
@@ -506,9 +502,7 @@ class ReportGenerator:
         return None
 
 
-def generate_report(
-    app_instance: object, format: str = "html", save: bool = True, filename: str | None = None
-) -> str | None:
+def generate_report(app_instance: object, format: str = "html", save: bool = True, filename: str | None = None) -> str | None:
     """Generate an analysis report in the specified format.
 
     Args:
@@ -531,9 +525,7 @@ def generate_report(
         if hasattr(app_instance, "analyze_results"):
             results = app_instance.analyze_results
             if isinstance(results, list):
-                data["summary"] = (
-                    "\n".join(results[:5]) if results else "No analysis results available"
-                )
+                data["summary"] = "\n".join(results[:5]) if results else "No analysis results available"
                 data["full_results"] = results
             elif isinstance(results, dict):
                 data |= results
@@ -542,9 +534,7 @@ def generate_report(
         if hasattr(app_instance, "binary_path") and app_instance.binary_path:
             data["binary_info"] = {
                 "Path": app_instance.binary_path,
-                "Size": os.path.getsize(app_instance.binary_path)
-                if os.path.exists(app_instance.binary_path)
-                else "Unknown",
+                "Size": os.path.getsize(app_instance.binary_path) if os.path.exists(app_instance.binary_path) else "Unknown",
             }
 
         # Get protection analysis
@@ -662,26 +652,20 @@ def view_report(app_instance: object, filepath: str | None = None) -> bool:
             if os.name == "nt":  # Windows
                 secure_run(["cmd", "/c", "start", "", filepath], shell=False)
             elif os.name == "posix":  # macOS and Linux
-                secure_run(
-                    ["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False
-                )
+                secure_run(["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False)
         elif file_ext in [".json", ".txt"]:
             # Open with system text editor
             if os.name == "nt":  # Windows
                 secure_run(["cmd", "/c", "start", "", filepath], shell=False)
             else:
-                secure_run(
-                    ["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False
-                )
+                secure_run(["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False)
         else:
             logger.warning(f"Unknown report format: {file_ext}")
             # Try to open with system default
             if os.name == "nt":
                 secure_run(["cmd", "/c", "start", "", filepath], shell=False)
             else:
-                secure_run(
-                    ["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False
-                )
+                secure_run(["open" if sys.platform == "darwin" else "xdg-open", filepath], shell=False)
 
         logger.info(f"Opened report: {filepath}")
 

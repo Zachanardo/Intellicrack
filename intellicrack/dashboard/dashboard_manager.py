@@ -220,30 +220,16 @@ class DashboardManager:
         )
 
         # Analysis progress
-        self.add_widget(
-            create_widget("analysis_progress", WidgetType.PROGRESS, "Analysis Progress")
-        )
+        self.add_widget(create_widget("analysis_progress", WidgetType.PROGRESS, "Analysis Progress"))
 
         # Function analysis chart
-        self.add_widget(
-            create_widget(
-                "functions_chart", WidgetType.LINE_CHART, "Functions Analyzed", history_size=50
-            )
-        )
+        self.add_widget(create_widget("functions_chart", WidgetType.LINE_CHART, "Functions Analyzed", history_size=50))
 
         # Network graph for call graph
-        self.add_widget(
-            create_widget(
-                "call_graph", WidgetType.NETWORK_GRAPH, "Call Graph", directed=True, layout="force"
-            )
-        )
+        self.add_widget(create_widget("call_graph", WidgetType.NETWORK_GRAPH, "Call Graph", directed=True, layout="force"))
 
         # Heatmap for code complexity
-        self.add_widget(
-            create_widget(
-                "complexity_heatmap", WidgetType.HEATMAP, "Code Complexity", colorscale="viridis"
-            )
-        )
+        self.add_widget(create_widget("complexity_heatmap", WidgetType.HEATMAP, "Code Complexity", colorscale="viridis"))
 
     def _initialize_default_sources(self) -> None:
         """Initialize default data sources."""
@@ -444,9 +430,7 @@ class DashboardManager:
         state = {
             "timestamp": datetime.now().isoformat(),
             "dashboard_state": self.dashboard.get_dashboard_state(),
-            "widgets": {
-                widget_id: widget.render("json") for widget_id, widget in self.widgets.items()
-            },
+            "widgets": {widget_id: widget.render("json") for widget_id, widget in self.widgets.items()},
             "layouts": {
                 layout_id: {
                     "name": layout.name,
@@ -507,9 +491,7 @@ class DashboardManager:
         for widget_id in widget_ids:
             if widget_id in self.widgets:
                 widget = self.widgets[widget_id]
-                widget_data = WidgetData(
-                    timestamp=datetime.now(), values=data, metadata={"source": source_id}
-                )
+                widget_data = WidgetData(timestamp=datetime.now(), values=data, metadata={"source": source_id})
                 widget.update_data(widget_data)
 
     def _collect_performance_data(self) -> dict[str, Any]:
@@ -598,17 +580,11 @@ class DashboardManager:
             self.widgets["timeline"].update_data(widget_data)
 
         # Update vulnerability table
-        if (
-            event.event_type == DashboardEventType.VULNERABILITY_FOUND
-            and "vulnerabilities_table" in self.widgets
-        ):
+        if event.event_type == DashboardEventType.VULNERABILITY_FOUND and "vulnerabilities_table" in self.widgets:
             self._update_vulnerability_table(event)
 
         # Update protection table
-        if (
-            event.event_type == DashboardEventType.PROTECTION_DETECTED
-            and "protections_table" in self.widgets
-        ):
+        if event.event_type == DashboardEventType.PROTECTION_DETECTED and "protections_table" in self.widgets:
             self._update_protection_table(event)
 
     def _update_vulnerability_table(self, event: DashboardEvent) -> None:
@@ -634,9 +610,7 @@ class DashboardManager:
             },
         )
 
-        widget_data = WidgetData(
-            timestamp=event.timestamp, values={"rows": rows, "columns": columns}
-        )
+        widget_data = WidgetData(timestamp=event.timestamp, values={"rows": rows, "columns": columns})
         widget.update_data(widget_data)
 
     def _update_protection_table(self, event: DashboardEvent) -> None:
@@ -662,9 +636,7 @@ class DashboardManager:
             },
         )
 
-        widget_data = WidgetData(
-            timestamp=event.timestamp, values={"rows": rows, "columns": columns}
-        )
+        widget_data = WidgetData(timestamp=event.timestamp, values={"rows": rows, "columns": columns})
         widget.update_data(widget_data)
 
     def _handle_dashboard_event(self, event: DashboardEvent) -> None:

@@ -148,9 +148,7 @@ class ValidationAnalyzer:
         self.md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
         self.md.detail = True
 
-    def analyze(
-        self, binary_code: bytes, entry_point: int = 0, arch: str = "x64"
-    ) -> ValidationAnalysis:
+    def analyze(self, binary_code: bytes, entry_point: int = 0, arch: str = "x64") -> ValidationAnalysis:
         """Analyze binary validation routine and extract algorithm details.
 
         Args:
@@ -178,15 +176,11 @@ class ValidationAnalyzer:
 
         patch_points = self._find_patch_points(instructions)
 
-        algorithm_type, confidence = self._determine_algorithm(
-            crypto_primitives, api_calls, constraints
-        )
+        algorithm_type, confidence = self._determine_algorithm(crypto_primitives, api_calls, constraints)
 
         embedded_constants = self._extract_embedded_constants(binary_code, instructions)
 
-        recommendations = self._generate_recommendations(
-            algorithm_type, crypto_primitives, patch_points
-        )
+        recommendations = self._generate_recommendations(algorithm_type, crypto_primitives, patch_points)
 
         return ValidationAnalysis(
             algorithm_type=algorithm_type,
@@ -199,9 +193,7 @@ class ValidationAnalyzer:
             recommendations=recommendations,
         )
 
-    def _disassemble_routine(
-        self, code: bytes, start: int, max_instructions: int = 500
-    ) -> list[Any]:
+    def _disassemble_routine(self, code: bytes, start: int, max_instructions: int = 500) -> list[Any]:
         """Disassemble validation routine code.
 
         Args:
@@ -226,9 +218,7 @@ class ValidationAnalyzer:
 
         return instructions
 
-    def _detect_crypto_constants(
-        self, instructions: list[Any], binary_code: bytes
-    ) -> list[CryptoPrimitive]:
+    def _detect_crypto_constants(self, instructions: list[Any], binary_code: bytes) -> list[CryptoPrimitive]:
         """Detect cryptographic constants in disassembled code.
 
         Args:
@@ -298,11 +288,10 @@ class ValidationAnalyzer:
                                 ),
                             )
 
-        xor_chain_count = sum(bool(all(
-                                          instructions[j].mnemonic == "xor"
-                                          for j in range(i, min(i + 3, len(instructions)))
-                                      ))
-                          for i in range(len(instructions) - 3))
+        xor_chain_count = sum(
+            bool(all(instructions[j].mnemonic == "xor" for j in range(i, min(i + 3, len(instructions)))))
+            for i in range(len(instructions) - 3)
+        )
         if xor_chain_count > 5:
             primitives.append(
                 CryptoPrimitive(
@@ -469,13 +458,8 @@ class ValidationAnalyzer:
             elif instr.mnemonic in {"mov", "movabs"}:
                 if len(instr.operands) >= 2 and instr.operands[0].type == capstone.x86.X86_OP_REG:
                     reg_name = instr.reg_name(instr.operands[0].reg)
-                    if reg_name in {"eax", "rax", "al"} and (
-                                                idx + 1 < len(instructions)
-                                                and instructions[idx + 1].mnemonic == "ret"
-                                            ):
-                        success_patch = (
-                            b"\xb8\x01\x00\x00\x00" if instr.size >= 5 else b"\xb0\x01"
-                        )
+                    if reg_name in {"eax", "rax", "al"} and (idx + 1 < len(instructions) and instructions[idx + 1].mnemonic == "ret"):
+                        success_patch = b"\xb8\x01\x00\x00\x00" if instr.size >= 5 else b"\xb0\x01"
 
                         patch_points.append(
                             PatchLocation(
@@ -541,29 +525,19 @@ class ValidationAnalyzer:
                 )
         for api_call in api_calls:
             if "MD5" in api_call:
-                algorithm_votes[AlgorithmType.MD5] = max(
-                    algorithm_votes.get(AlgorithmType.MD5, 0.0), 0.8
-                )
+                algorithm_votes[AlgorithmType.MD5] = max(algorithm_votes.get(AlgorithmType.MD5, 0.0), 0.8)
             elif "SHA1" in api_call:
-                algorithm_votes[AlgorithmType.SHA1] = max(
-                    algorithm_votes.get(AlgorithmType.SHA1, 0.0), 0.8
-                )
+                algorithm_votes[AlgorithmType.SHA1] = max(algorithm_votes.get(AlgorithmType.SHA1, 0.0), 0.8)
             elif "SHA256" in api_call:
-                algorithm_votes[AlgorithmType.SHA256] = max(
-                    algorithm_votes.get(AlgorithmType.SHA256, 0.0), 0.8
-                )
+                algorithm_votes[AlgorithmType.SHA256] = max(algorithm_votes.get(AlgorithmType.SHA256, 0.0), 0.8)
             elif "Crypt" in api_call and "Signature" in api_call:
-                algorithm_votes[AlgorithmType.RSA] = max(
-                    algorithm_votes.get(AlgorithmType.RSA, 0.0), 0.85
-                )
+                algorithm_votes[AlgorithmType.RSA] = max(algorithm_votes.get(AlgorithmType.RSA, 0.0), 0.85)
 
         if algorithm_votes:
             return max(algorithm_votes.items(), key=lambda x: x[1])
         return (AlgorithmType.UNKNOWN, 0.3)
 
-    def _extract_embedded_constants(
-        self, binary_code: bytes, instructions: list[Any]
-    ) -> dict[str, bytes]:
+    def _extract_embedded_constants(self, binary_code: bytes, instructions: list[Any]) -> dict[str, bytes]:
         """Extract embedded constants from binary code.
 
         Args:
@@ -625,13 +599,9 @@ class ValidationAnalyzer:
                 )
             )
         elif algorithm_type == AlgorithmType.SHA1:
-            recommendations.append(
-                "SHA1 hash detected - analyze input preparation for keygen creation"
-            )
+            recommendations.append("SHA1 hash detected - analyze input preparation for keygen creation")
         elif algorithm_type == AlgorithmType.SHA256:
-            recommendations.append(
-                "SHA256 hash detected - strong algorithm, focus on input analysis or patching"
-            )
+            recommendations.append("SHA256 hash detected - strong algorithm, focus on input analysis or patching")
         elif algorithm_type == AlgorithmType.CRC32:
             recommendations.extend(
                 (
@@ -663,15 +633,11 @@ class ValidationAnalyzer:
         if crypto_primitives:
             hash_primitives = [p for p in crypto_primitives if p.crypto_type == CryptoType.HASH]
             if len(hash_primitives) > 1:
-                recommendations.append(
-                    "Multiple hash algorithms detected - composite validation scheme"
-                )
+                recommendations.append("Multiple hash algorithms detected - composite validation scheme")
 
         if not patch_points and algorithm_type == AlgorithmType.UNKNOWN:
             recommendations.append("Limited information - recommend dynamic analysis with debugger")
-            recommendations.append(
-                "Set breakpoints on string comparison functions (strcmp, memcmp)"
-            )
+            recommendations.append("Set breakpoints on string comparison functions (strcmp, memcmp)")
 
         return recommendations
 
@@ -710,9 +676,7 @@ class ConstraintExtractor:
 
         return self.algorithms
 
-    def _group_constraints_by_algorithm(
-        self, constraints: list[KeyConstraint]
-    ) -> dict[str, list[KeyConstraint]]:
+    def _group_constraints_by_algorithm(self, constraints: list[KeyConstraint]) -> dict[str, list[KeyConstraint]]:
         groups = {}
 
         for constraint in constraints:
@@ -727,9 +691,7 @@ class ConstraintExtractor:
 
         return groups
 
-    def _build_algorithm(
-        self, algo_type: str, constraints: list[KeyConstraint]
-    ) -> ExtractedAlgorithm | None:
+    def _build_algorithm(self, algo_type: str, constraints: list[KeyConstraint]) -> ExtractedAlgorithm | None:
         if algo_type == "crc":
             return self._build_crc_algorithm(constraints)
         if algo_type in {"md5", "sha1", "sha256"}:
@@ -746,6 +708,7 @@ class ConstraintExtractor:
         for constraint in constraints:
             if "CRC32" in str(constraint.value):
                 polynomial = 0xEDB88320 if "reversed" in str(constraint.value) else 0x04C11DB7
+
         def crc32_validate(key: str) -> int:
             return zlib.crc32(key.encode()) & 0xFFFFFFFF
 
@@ -758,9 +721,7 @@ class ConstraintExtractor:
             confidence=0.85,
         )
 
-    def _build_hash_algorithm(
-        self, algo_type: str, constraints: list[KeyConstraint]
-    ) -> ExtractedAlgorithm:
+    def _build_hash_algorithm(self, algo_type: str, constraints: list[KeyConstraint]) -> ExtractedAlgorithm:
         hash_functions = {
             "md5": hashlib.md5,
             "sha1": hashlib.sha1,
@@ -781,9 +742,7 @@ class ConstraintExtractor:
             confidence=0.9,
         )
 
-    def _build_multiplicative_algorithm(
-        self, constraints: list[KeyConstraint]
-    ) -> ExtractedAlgorithm:
+    def _build_multiplicative_algorithm(self, constraints: list[KeyConstraint]) -> ExtractedAlgorithm:
         def multiplicative_validate(key: str) -> int:
             result = 0
             multiplier = 31
@@ -987,11 +946,7 @@ class KeySynthesizer:
         self.solver.reset()
 
         key_length = next(
-            (
-                constraint.value
-                for constraint in constraints
-                if constraint.constraint_type == "length"
-            ),
+            (constraint.value for constraint in constraints if constraint.constraint_type == "length"),
             16,
         )
         key_vars = [z3.BitVec(f"k{i}", 8) for i in range(key_length)]

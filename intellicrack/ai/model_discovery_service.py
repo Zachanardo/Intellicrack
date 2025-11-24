@@ -8,7 +8,11 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
+import json
+import threading
 import time
+from datetime import UTC, datetime, timezone
+from pathlib import Path
 from typing import Any
 
 from intellicrack.utils.logger import get_logger
@@ -31,11 +35,18 @@ logger = get_logger(__name__)
 class ModelDiscoveryService:
     """Service for discovering models from API providers with caching."""
 
-    def __init__(self, cache_ttl_seconds: int = 300) -> None:
+    def __init__(
+        self,
+        cache_ttl_seconds: int = 300,
+        cache_file: Path | None = None,
+        auto_update_interval_hours: int = 6,
+    ) -> None:
         """Initialize the model discovery service.
 
         Args:
-            cache_ttl_seconds: Time-to-live for cached models (default 5 minutes)
+            cache_ttl_seconds: Time-to-live for in-memory cache (default 5 minutes)
+            cache_file: Path to disk cache file (default: config/model_cache.json)
+            auto_update_interval_hours: Hours between automatic background updates (default 6)
 
         """
         self.cache_ttl = cache_ttl_seconds
@@ -43,6 +54,16 @@ class ModelDiscoveryService:
         self._cache_timestamp = 0
         self._provider_manager = get_provider_manager()
         self._config_manager = get_llm_config_manager()
+
+        if cache_file is None:
+            cache_file = Path("config/model_cache.json")
+        self._cache_file = cache_file
+        self._auto_update_interval = auto_update_interval_hours * 3600
+        self._update_thread: threading.Thread | None = None
+        self._stop_event = threading.Event()
+        self._cache_lock = threading.RLock()
+
+        self._load_cache_from_disk()
 
     def discover_all_models(self, force_refresh: bool = False) -> dict[str, list[ModelInfo]]:
         """Discover models from all configured providers.
@@ -66,17 +87,22 @@ class ModelDiscoveryService:
 
         all_models = self._provider_manager.fetch_all_models()
 
+        new_models = self._detect_new_models(all_models)
+        for provider, model_ids in new_models.items():
+            for model_id in model_ids:
+                logger.info(f"🆕 New model discovered: {model_id} ({provider})")
+
         self._cached_models = all_models
         self._cache_timestamp = current_time
+
+        self._save_cache_to_disk(all_models)
 
         total_models = sum(len(models) for models in all_models.values())
         logger.info(f"Discovered {total_models} models from {len(all_models)} providers")
 
         return all_models.copy()
 
-    def discover_provider_models(
-        self, provider_name: str, force_refresh: bool = False
-    ) -> list[ModelInfo]:
+    def discover_provider_models(self, provider_name: str, force_refresh: bool = False) -> list[ModelInfo]:
         """Discover models from a specific provider.
 
         Args:
@@ -111,9 +137,7 @@ class ModelDiscoveryService:
         flat_list.sort(key=lambda x: x[0])
         return flat_list
 
-    def get_configured_and_discovered_models(
-        self, force_refresh: bool = False
-    ) -> dict[str, dict[str, Any]]:
+    def get_configured_and_discovered_models(self, force_refresh: bool = False) -> dict[str, dict[str, Any]]:
         """Get both configured models and API-discovered models.
 
         Returns:
@@ -149,9 +173,7 @@ class ModelDiscoveryService:
         self._provider_manager.providers.clear()
 
         if "openai" in api_keys:
-            openai_client = OpenAIProviderClient(
-                api_key=api_keys["openai"]["api_key"], base_url=api_keys["openai"].get("api_base")
-            )
+            openai_client = OpenAIProviderClient(api_key=api_keys["openai"]["api_key"], base_url=api_keys["openai"].get("api_base"))
             self._provider_manager.register_provider("OpenAI", openai_client)
             logger.info("Registered OpenAI provider for model discovery")
 
@@ -163,15 +185,11 @@ class ModelDiscoveryService:
             self._provider_manager.register_provider("Anthropic", anthropic_client)
             logger.info("Registered Anthropic provider for model discovery")
 
-        ollama_client = OllamaProviderClient(
-            base_url=api_keys.get("ollama", {}).get("api_base", "http://localhost:11434")
-        )
+        ollama_client = OllamaProviderClient(base_url=api_keys.get("ollama", {}).get("api_base", "http://localhost:11434"))
         self._provider_manager.register_provider("Ollama", ollama_client)
         logger.debug("Registered Ollama provider for model discovery")
 
-        lmstudio_client = LMStudioProviderClient(
-            base_url=api_keys.get("lmstudio", {}).get("api_base", "http://localhost:1234/v1")
-        )
+        lmstudio_client = LMStudioProviderClient(base_url=api_keys.get("lmstudio", {}).get("api_base", "http://localhost:1234/v1"))
         self._provider_manager.register_provider("LM Studio", lmstudio_client)
         logger.debug("Registered LM Studio provider for model discovery")
 
@@ -179,9 +197,7 @@ class ModelDiscoveryService:
         self._provider_manager.register_provider("Local GGUF", local_client)
         logger.debug("Registered Local GGUF provider for model discovery")
 
-    def _extract_api_keys(
-        self, configured_models: dict[str, dict[str, Any]]
-    ) -> dict[str, dict[str, Any]]:
+    def _extract_api_keys(self, configured_models: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
         """Extract API keys and base URLs from configured models.
 
         Args:
@@ -221,6 +237,170 @@ class ModelDiscoveryService:
         self._cached_models.clear()
         self._cache_timestamp = 0
         logger.info("Model discovery cache cleared")
+
+    def start_background_updater(self) -> None:
+        """Start background thread for automatic model cache updates."""
+        if self._update_thread and self._update_thread.is_alive():
+            logger.warning("Background updater already running")
+            return
+
+        self._stop_event.clear()
+        self._update_thread = threading.Thread(
+            target=self._background_update_loop,
+            name="ModelDiscoveryUpdater",
+            daemon=True,
+        )
+        self._update_thread.start()
+        logger.info(f"Started background model discovery updater (interval: {self._auto_update_interval / 3600:.1f}h)")
+
+    def stop_background_updater(self) -> None:
+        """Stop background update thread gracefully."""
+        if not self._update_thread or not self._update_thread.is_alive():
+            return
+
+        logger.info("Stopping background model discovery updater")
+        self._stop_event.set()
+        self._update_thread.join(timeout=5.0)
+        self._update_thread = None
+
+    def _background_update_loop(self) -> None:
+        """Background thread loop for automatic cache updates."""
+        while not self._stop_event.is_set():
+            try:
+                if self._stop_event.wait(timeout=self._auto_update_interval):
+                    break
+
+                logger.info("Background model discovery update triggered")
+                self.discover_all_models(force_refresh=True)
+
+            except Exception as e:
+                logger.error(f"Error in background update loop: {e}")
+                if self._stop_event.wait(timeout=300):
+                    break
+
+    def _load_cache_from_disk(self) -> None:
+        """Load cached models from disk file."""
+        with self._cache_lock:
+            if not self._cache_file.exists():
+                logger.debug(f"Disk cache file not found: {self._cache_file}")
+                return
+
+            try:
+                with open(self._cache_file, encoding="utf-8") as f:
+                    data = json.load(f)
+
+                version = data.get("version", "1.0")
+                last_updated = data.get("last_updated", "")
+                providers_data = data.get("providers", {})
+
+                cached_models: dict[str, list[ModelInfo]] = {}
+
+                for provider_name, models_list in providers_data.items():
+                    models = []
+                    for model_dict in models_list:
+                        model = ModelInfo(
+                            id=model_dict.get("id", ""),
+                            name=model_dict.get("name", ""),
+                            provider=model_dict.get("provider", provider_name),
+                            description=model_dict.get("description", ""),
+                            context_length=model_dict.get("context_length", 4096),
+                            capabilities=model_dict.get("capabilities"),
+                            pricing=model_dict.get("pricing"),
+                        )
+                        models.append(model)
+                    cached_models[provider_name] = models
+
+                self._cached_models = cached_models
+                self._cache_timestamp = time.time()
+
+                total_models = sum(len(models) for models in cached_models.values())
+                logger.info(f"Loaded {total_models} models from disk cache (version: {version}, last updated: {last_updated})")
+
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse disk cache file: {e}")
+            except Exception as e:
+                logger.error(f"Error loading disk cache: {e}")
+
+    def _save_cache_to_disk(self, models_by_provider: dict[str, list[ModelInfo]]) -> bool:
+        """Save discovered models to disk cache file.
+
+        Args:
+            models_by_provider: Dictionary mapping provider names to model lists
+
+        Returns:
+            True if save successful, False otherwise
+
+        """
+        with self._cache_lock:
+            try:
+                self._cache_file.parent.mkdir(parents=True, exist_ok=True)
+
+                now = datetime.now(UTC).isoformat()
+
+                providers_data: dict[str, list[dict[str, Any]]] = {}
+
+                for provider_name, models in models_by_provider.items():
+                    models_list = []
+                    for model in models:
+                        model_dict = {
+                            "id": model.id,
+                            "name": model.name,
+                            "provider": model.provider,
+                            "description": model.description,
+                            "context_length": model.context_length,
+                            "capabilities": model.capabilities,
+                            "pricing": model.pricing,
+                        }
+                        models_list.append(model_dict)
+                    providers_data[provider_name] = models_list
+
+                cache_data = {
+                    "version": "1.0",
+                    "last_updated": now,
+                    "cache_ttl_seconds": self.cache_ttl,
+                    "auto_update_interval_hours": self._auto_update_interval / 3600,
+                    "providers": providers_data,
+                }
+
+                with open(self._cache_file, "w", encoding="utf-8") as f:
+                    json.dump(cache_data, f, indent=2, ensure_ascii=False)
+
+                total_models = sum(len(models) for models in models_by_provider.values())
+                logger.info(f"Saved {total_models} models to disk cache: {self._cache_file}")
+                return True
+
+            except Exception as e:
+                logger.error(f"Failed to save disk cache: {e}")
+                return False
+
+    def _detect_new_models(self, new_models: dict[str, list[ModelInfo]]) -> dict[str, list[str]]:
+        """Detect models that weren't in previous cache.
+
+        Args:
+            new_models: Newly fetched models by provider
+
+        Returns:
+            Dictionary mapping provider names to lists of new model IDs
+
+        """
+        with self._cache_lock:
+            if not self._cached_models:
+                return {}
+
+            new_model_ids: dict[str, list[str]] = {}
+
+            for provider_name, models in new_models.items():
+                if provider_name not in self._cached_models:
+                    new_model_ids[provider_name] = [m.id for m in models]
+                    continue
+
+                cached_ids = {m.id for m in self._cached_models[provider_name]}
+                provider_new_ids = [m.id for m in models if m.id not in cached_ids]
+
+                if provider_new_ids:
+                    new_model_ids[provider_name] = provider_new_ids
+
+            return new_model_ids
 
 
 _DISCOVERY_SERVICE: ModelDiscoveryService | None = None

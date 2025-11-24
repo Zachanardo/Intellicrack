@@ -243,6 +243,10 @@ except ImportError as e:
     import time
     import weakref
 
+    def log_all_methods(cls):
+        """Decorator that logs all method calls for debugging."""
+        return cls
+
     @log_all_methods
     class FallbackWidget:
         """Production-ready widget implementation for headless/server environments."""
@@ -376,9 +380,7 @@ except ImportError as e:
                 dict: Dictionary with x, y, width, height keys, or empty dict if destroyed.
 
             """
-            return (
-                {"x": 0, "y": 0, "width": 0, "height": 0} if self._destroyed else self._geometry.copy()
-            )
+            return {"x": 0, "y": 0, "width": 0, "height": 0} if self._destroyed else self._geometry.copy()
 
         def addWidget(self, widget: object, *args: object) -> bool:
             """Add a widget to this widget.
@@ -1504,9 +1506,7 @@ except ImportError as e:
                     logger.debug(f"All callbacks disconnected from signal {self._name}")
                 elif callback in self._callbacks:
                     self._callbacks.remove(callback)
-                    logger.debug(
-                        f"Callback {callback.__name__} disconnected from signal {self._name}"
-                    )
+                    logger.debug(f"Callback {callback.__name__} disconnected from signal {self._name}")
 
             def emit(self, *args: object) -> None:
                 """Emit this signal to all connected callbacks.

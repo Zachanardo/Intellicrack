@@ -127,9 +127,7 @@ class DistributedProcessingConfigDialog(BaseDialog):
         # Convenience methods
         self.convenience_check = QCheckBox("Use convenience methods")
         self.convenience_check.setChecked(True)
-        self.convenience_check.setToolTip(
-            "Use built-in convenience methods instead of task queue for common operations"
-        )
+        self.convenience_check.setToolTip("Use built-in convenience methods instead of task queue for common operations")
         processing_layout.addRow("", self.convenience_check)
 
         processing_group.setLayout(processing_layout)
@@ -355,9 +353,7 @@ class DistributedProcessingConfigDialog(BaseDialog):
         )
 
 
-def create_distributed_config_dialog(
-    binary_path: str, parent: QWidget | None = None
-) -> DistributedProcessingConfigDialog:
+def create_distributed_config_dialog(binary_path: str, parent: QWidget | None = None) -> DistributedProcessingConfigDialog:
     """Create a DistributedProcessingConfigDialog.
 
     Factory function for instantiating a distributed processing configuration dialog

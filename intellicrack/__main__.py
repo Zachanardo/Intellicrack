@@ -55,13 +55,9 @@ try:
     security_enforcement.initialize_security()
     security_status = security_enforcement.get_security_status()
     if security_status.get("initialized"):
-        logger.info(
-            f"Security enforcement initialized: {security_status.get('patches_applied', {})}"
-        )
+        logger.info(f"Security enforcement initialized: {security_status.get('patches_applied', {})}")
 except ImportError:
-    logger.warning(
-        "Security enforcement module not available - running without enhanced protections"
-    )
+    logger.warning("Security enforcement module not available - running without enhanced protections")
 
 # Set Qt to offscreen mode for WSL/headless environments if no display
 # This prevents Qt initialization errors when running without a GUI environment

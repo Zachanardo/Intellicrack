@@ -774,15 +774,9 @@ class CryptographicRoutineDetector:
     ]
 
     ECC_FIELD_PRIMES = {
-        "secp256k1": bytes.fromhex(
-            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F"
-        ),
-        "secp256r1": bytes.fromhex(
-            "FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF"
-        ),
-        "secp384r1": bytes.fromhex(
-            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFF0000000000000000FFFFFFFF"
-        ),
+        "secp256k1": bytes.fromhex("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F"),
+        "secp256r1": bytes.fromhex("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF"),
+        "secp384r1": bytes.fromhex("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFF0000000000000000FFFFFFFF"),
     }
 
     CHACHA20_CONSTANT = b"expand 32-byte k"
@@ -951,9 +945,7 @@ class CryptographicRoutineDetector:
                 )
                 self._find_crypto_references(data, i, detection)
                 self.detections.append(detection)
-                logger.debug(
-                    f"AES forward S-box detected at 0x{base_addr + i:08x} (confidence: {fwd_confidence:.2%})"
-                )
+                logger.debug(f"AES forward S-box detected at 0x{base_addr + i:08x} (confidence: {fwd_confidence:.2%})")
 
             inv_confidence = self._calculate_sbox_confidence(data[i : i + 256], self.AES_INV_SBOX)
             if inv_confidence > 0.85:
@@ -973,9 +965,7 @@ class CryptographicRoutineDetector:
                 )
                 self._find_crypto_references(data, i, detection)
                 self.detections.append(detection)
-                logger.debug(
-                    f"AES inverse S-box detected at 0x{base_addr + i:08x} (confidence: {inv_confidence:.2%})"
-                )
+                logger.debug(f"AES inverse S-box detected at 0x{base_addr + i:08x} (confidence: {inv_confidence:.2%})")
 
     def _detect_des_sboxes(self, data: bytes, base_addr: int) -> None:
         """Detect DES S-boxes with support for various packing formats."""
@@ -995,9 +985,7 @@ class CryptographicRoutineDetector:
                 confidence = sbox_matches / 8.0
                 variant = "DES" if sbox_matches == 8 else f"DES (partial, {sbox_matches}/8 S-boxes)"
                 detection = CryptoDetection(
-                    algorithm=CryptoAlgorithm.DES
-                    if sbox_matches == 8
-                    else CryptoAlgorithm.TRIPLE_DES,
+                    algorithm=CryptoAlgorithm.DES if sbox_matches == 8 else CryptoAlgorithm.TRIPLE_DES,
                     offset=base_addr + i,
                     size=512,
                     confidence=confidence,
@@ -1009,9 +997,7 @@ class CryptographicRoutineDetector:
                     },
                 )
                 self.detections.append(detection)
-                logger.debug(
-                    f"DES S-boxes detected at 0x{base_addr + i:08x} ({sbox_matches}/8 S-boxes)"
-                )
+                logger.debug(f"DES S-boxes detected at 0x{base_addr + i:08x} ({sbox_matches}/8 S-boxes)")
 
     def _detect_blowfish_constants(self, data: bytes, base_addr: int) -> None:
         """Detect Blowfish Pi-based subkey initialization."""
@@ -1090,9 +1076,7 @@ class CryptographicRoutineDetector:
                 },
             )
             self.detections.append(detection)
-            logger.debug(
-                f"SHA-256 constants detected ({sha256_k_count}/{len(self.SHA256_K)} found, {endianness} endian)"
-            )
+            logger.debug(f"SHA-256 constants detected ({sha256_k_count}/{len(self.SHA256_K)} found, {endianness} endian)")
 
         sha1_h_count_be = 0
         sha1_h_count_le = 0
@@ -1123,9 +1107,7 @@ class CryptographicRoutineDetector:
                 },
             )
             self.detections.append(detection)
-            logger.debug(
-                f"SHA-1 constants detected ({sha1_h_count}/{len(self.SHA1_H)} found, {endianness} endian)"
-            )
+            logger.debug(f"SHA-1 constants detected ({sha1_h_count}/{len(self.SHA1_H)} found, {endianness} endian)")
 
         md5_t_count = 0
         for i in range(len(self.MD5_T)):
@@ -1324,9 +1306,7 @@ class CryptographicRoutineDetector:
                     },
                 )
                 self.detections.append(detection)
-                logger.debug(
-                    f"Custom crypto table detected at 0x{base_addr + i:08x} (entropy: {entropy:.2f})"
-                )
+                logger.debug(f"Custom crypto table detected at 0x{base_addr + i:08x} (entropy: {entropy:.2f})")
 
         self._detect_xor_crypto(data, base_addr)
         self._detect_lfsr_cipher(data, base_addr)
@@ -1611,9 +1591,7 @@ class CryptographicRoutineDetector:
 
         for detection in detections:
             if curve_detections:
-                detection.details["curves_present"] = [
-                    d.details.get("curve") for d in curve_detections
-                ]
+                detection.details["curves_present"] = [d.details.get("curve") for d in curve_detections]
 
     def _fingerprint_hash(self, detections: list[CryptoDetection]) -> None:
         """Fingerprint hash algorithm implementation details."""
@@ -1633,9 +1611,7 @@ class CryptographicRoutineDetector:
                 r2.cmd(f"s {detection.offset}")
 
                 if xrefs := r2.cmdj("axtj"):
-                    detection.code_refs.extend(
-                        [ref.get("from", 0) for ref in xrefs if isinstance(ref, dict)]
-                    )
+                    detection.code_refs.extend([ref.get("from", 0) for ref in xrefs if isinstance(ref, dict)])
 
                 func_info = r2.cmdj("afij")
                 if func_info and isinstance(func_info, list) and len(func_info) > 0:
@@ -1649,8 +1625,7 @@ class CryptographicRoutineDetector:
 
     def _check_sbox_pattern(self, data: bytes, reference: bytes) -> bool:
         """Check if data matches an S-box pattern."""
-        matches = sum(bool(data[i] == reference[i])
-                  for i in range(min(len(data), len(reference))))
+        matches = sum(bool(data[i] == reference[i]) for i in range(min(len(data), len(reference))))
         return matches >= len(reference) * 0.85
 
     def _calculate_sbox_confidence(self, data: bytes, reference: bytes) -> float:
@@ -1658,8 +1633,7 @@ class CryptographicRoutineDetector:
         if len(data) != len(reference):
             return 0.0
 
-        exact_matches = sum(bool(data[i] == reference[i])
-                        for i in range(len(reference)))
+        exact_matches = sum(bool(data[i] == reference[i]) for i in range(len(reference)))
         base_confidence = exact_matches / len(reference)
 
         hamming_distances = [bin(data[i] ^ reference[i]).count("1") for i in range(len(reference))]
@@ -1680,8 +1654,7 @@ class CryptographicRoutineDetector:
         """Fuzzy matching for byte patterns with length tolerance."""
         if len(data) != len(pattern):
             return False
-        matches = sum(bool(data[i] == pattern[i])
-                  for i in range(len(data)))
+        matches = sum(bool(data[i] == pattern[i]) for i in range(len(data)))
         return (matches / len(pattern)) >= threshold
 
     def _detect_blowfish_sbox_pattern(self, data: bytes) -> bool:
@@ -1703,8 +1676,7 @@ class CryptographicRoutineDetector:
         window = data[offset : offset + search_range]
 
         swap_indicators = [b"\x86", b"\x87", b"\x91", b"\x92"]
-        swap_count = sum(bool(indicator in window)
-                     for indicator in swap_indicators)
+        swap_count = sum(bool(indicator in window) for indicator in swap_indicators)
 
         return swap_count >= 2
 
@@ -1752,8 +1724,7 @@ class CryptographicRoutineDetector:
             b"\x4c\x0f\xaf",
         ]
 
-        pattern_count = sum(bool(pattern in data)
-                        for pattern in montgomery_patterns)
+        pattern_count = sum(bool(pattern in data) for pattern in montgomery_patterns)
         return pattern_count >= 2
 
     def _detect_chacha20_quarter_round(self, data: bytes, offset: int) -> bool:
@@ -1824,9 +1795,7 @@ class CryptographicRoutineDetector:
 
         return False
 
-    def _find_crypto_references(
-        self, data: bytes, table_offset: int, detection: CryptoDetection
-    ) -> None:
+    def _find_crypto_references(self, data: bytes, table_offset: int, detection: CryptoDetection) -> None:
         """Find code and data references to crypto tables."""
         offset_le = struct.pack("<I", table_offset)
         offset_be = struct.pack(">I", table_offset)
@@ -1994,9 +1963,7 @@ def main() -> None:
     print(f"Using radare2: {use_radare2}")
     print()
 
-    detections = detector.detect_all(
-        data, use_radare2=use_radare2, binary_path=binary_path if use_radare2 else None
-    )
+    detections = detector.detect_all(data, use_radare2=use_radare2, binary_path=binary_path if use_radare2 else None)
 
     print(f"Found {len(detections)} cryptographic implementations:\n")
     for detection in detections:

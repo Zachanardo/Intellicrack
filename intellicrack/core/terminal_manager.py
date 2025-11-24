@@ -275,16 +275,12 @@ class TerminalManager:
 
             try:
                 # Validate that command and cwd contain only safe values to prevent command injection
-                if not isinstance(command, list) or not all(
-                    isinstance(arg, str) for arg in command
-                ):
+                if not isinstance(command, list) or not all(isinstance(arg, str) for arg in command):
                     error_msg = f"Unsafe command: {command}"
                     logger.error(error_msg)
                     raise ValueError(error_msg)
                 cwd_clean = str(cwd).replace(";", "").replace("|", "").replace("&", "")
-                result = subprocess.run(
-                    command, capture_output=True, text=True, cwd=cwd_clean, timeout=300, shell=False
-                )
+                result = subprocess.run(command, capture_output=True, text=True, cwd=cwd_clean, timeout=300, shell=False)
 
                 return (result.returncode, result.stdout, result.stderr)
 

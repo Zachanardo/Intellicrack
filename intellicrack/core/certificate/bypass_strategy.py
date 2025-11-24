@@ -124,8 +124,7 @@ class BypassStrategySelector:
         risk_level = detection_report.risk_level
 
         logger.info(
-            f"Selecting strategy: {num_functions} functions, "
-            f"{num_libraries} libraries, {risk_level} risk, {target_state} state",
+            f"Selecting strategy: {num_functions} functions, {num_libraries} libraries, {risk_level} risk, {target_state} state",
         )
 
         if target_state == "static":
@@ -169,8 +168,7 @@ class BypassStrategySelector:
             return BypassMethod.HYBRID
 
         if num_functions <= 3 and risk_level == "low":
-            high_confidence = sum(bool(func.confidence >= 0.8)
-                              for func in detection_report.validation_functions)
+            high_confidence = sum(bool(func.confidence >= 0.8) for func in detection_report.validation_functions)
             if high_confidence == num_functions:
                 logger.info("Simple validation with high confidence, using binary patch")
                 return BypassMethod.BINARY_PATCH
@@ -223,8 +221,7 @@ class BypassStrategySelector:
         if hasattr(detection_report, "is_packed"):
             return detection_report.is_packed
 
-        low_confidence_count = sum(bool(func.confidence < 0.5)
-                               for func in detection_report.validation_functions)
+        low_confidence_count = sum(bool(func.confidence < 0.5) for func in detection_report.validation_functions)
 
         return low_confidence_count > len(detection_report.validation_functions) * 0.5
 
@@ -253,10 +250,7 @@ class BypassStrategySelector:
             func_lower = func.api_name.lower()
             context_lower = func.context.lower() if func.context else ""
 
-            if any(
-                indicator in func_lower or indicator in context_lower
-                for indicator in network_indicators
-            ):
+            if any(indicator in func_lower or indicator in context_lower for indicator in network_indicators):
                 return True
 
         return False

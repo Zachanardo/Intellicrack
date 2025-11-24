@@ -73,9 +73,7 @@ class AdvancedAnalysisThread(QThread):
     #: message, percentage (type: str, int)
     analysis_progress = pyqtSignal(str, int)
 
-    def __init__(
-        self, file_path: str, scan_mode: ScanMode, enable_heuristic: bool, extract_strings: bool
-    ) -> None:
+    def __init__(self, file_path: str, scan_mode: ScanMode, enable_heuristic: bool, extract_strings: bool) -> None:
         """Initialize advanced analysis thread with file path, scan configuration, and analysis options."""
         super().__init__()
         self.file_path = file_path
@@ -239,9 +237,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         self.file_path_edit = QLineEdit()
         self.file_path_edit.setText("")
         self.file_path_edit.setReadOnly(True)
-        self.file_path_edit.setToolTip(
-            "Path to binary executable (EXE, DLL, SO, APK, etc.) for protection analysis"
-        )
+        self.file_path_edit.setToolTip("Path to binary executable (EXE, DLL, SO, APK, etc.) for protection analysis")
         controls_layout.addWidget(self.file_path_edit)
 
         self.browse_btn = QPushButton("Browse")
@@ -679,16 +675,14 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         ent_item = QTreeWidgetItem(self.results_tree)
         ent_item.setText(0, "Entropy Analysis")
         ent_item.setText(1, str(len(analysis.entropy_info)))
-        packed_count = sum(bool(e.packed)
-                       for e in analysis.entropy_info)
+        packed_count = sum(bool(e.packed) for e in analysis.entropy_info)
         ent_item.setText(2, f"{packed_count} packed" if packed_count > 0 else "Normal")
 
         # Certificates
         cert_item = QTreeWidgetItem(self.results_tree)
         cert_item.setText(0, "Certificates")
         cert_item.setText(1, str(len(analysis.certificates)))
-        valid_certs = sum(bool(c.is_valid)
-                      for c in analysis.certificates)
+        valid_certs = sum(bool(c.is_valid) for c in analysis.certificates)
         cert_item.setText(2, f"{valid_certs} valid" if analysis.certificates else "None")
 
         # Resources
@@ -875,11 +869,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
 
         for i, string in enumerate(analysis.suspicious_strings):
             # Truncate long strings
-            display_value = (
-                f"{string.value[:100]}..."
-                if len(string.value) > 100
-                else string.value
-            )
+            display_value = f"{string.value[:100]}..." if len(string.value) > 100 else string.value
             self.strings_table.setItem(i, 0, QTableWidgetItem(display_value))
             self.strings_table.setItem(i, 1, QTableWidgetItem(f"0x{string.offset:08X}"))
             self.strings_table.setItem(i, 2, QTableWidgetItem(string.encoding))
@@ -896,9 +886,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         if not analysis.heuristic_detections:
             heuristics_text += "No heuristic detections found.\n"
         else:
-            heuristics_text += (
-                f"Found {len(analysis.heuristic_detections)} heuristic detections:\n\n"
-            )
+            heuristics_text += f"Found {len(analysis.heuristic_detections)} heuristic detections:\n\n"
 
             for i, detection in enumerate(analysis.heuristic_detections, 1):
                 heuristics_text += f"{i}. {detection.name}\n"
@@ -939,9 +927,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             return
 
         # Get detection
-        all_detections = (
-            self.current_analysis.detections + self.current_analysis.heuristic_detections
-        )
+        all_detections = self.current_analysis.detections + self.current_analysis.heuristic_detections
         if current_row < len(all_detections):
             detection = all_detections[current_row]
 

@@ -98,9 +98,7 @@ logger = setup_logger(__name__)
 # === Protocol and Network Helpers ===
 
 
-def _add_protocol_fingerprinter_results(
-    results: dict[str, Any], fingerprints: dict[str, Any]
-) -> None:
+def _add_protocol_fingerprinter_results(results: dict[str, Any], fingerprints: dict[str, Any]) -> None:
     """Add protocol fingerprinter results to analysis results.
 
     Args:
@@ -251,10 +249,7 @@ def _handle_check_license(request_data: dict[str, Any]) -> dict[str, Any]:
             "Trial license expires soon",
             "Upgrade to full license for continued access",
         ]
-    elif (
-        datetime.strptime(expiry_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
-        - datetime.now(timezone.utc)
-    ).days < 30:
+    elif (datetime.strptime(expiry_date, "%Y-%m-%d").replace(tzinfo=timezone.utc) - datetime.now(timezone.utc)).days < 30:
         response["notices"] = ["License expires within 30 days", "Please renew your license"]
 
     return response
@@ -662,9 +657,7 @@ def _handle_get_license(license_id: str) -> dict[str, Any]:
         import winreg
 
         try:
-            with winreg.OpenKey(
-                winreg.HKEY_CURRENT_USER, r"Software\Intellicrack\Licenses", 0, winreg.KEY_READ
-            ) as key:
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Intellicrack\Licenses", 0, winreg.KEY_READ) as key:
                 last_checkin_str = winreg.QueryValueEx(key, f"last_check_{license_id}")[0]
                 last_checkin = datetime.fromisoformat(last_checkin_str)
         except (OSError, KeyError):
@@ -675,9 +668,7 @@ def _handle_get_license(license_id: str) -> dict[str, Any]:
         if config_path.exists():
             with open(config_path) as f:
                 activity = json.load(f)
-                last_checkin_str = activity.get(
-                    f"last_check_{license_id}", datetime.now().isoformat()
-                )
+                last_checkin_str = activity.get(f"last_check_{license_id}", datetime.now().isoformat())
                 last_checkin = datetime.fromisoformat(last_checkin_str)
         else:
             last_checkin = datetime.now()
@@ -703,12 +694,8 @@ def _handle_get_license(license_id: str) -> dict[str, Any]:
         "support_level": support_level,
         "billing_cycle": billing_cycle,
         "cost_per_month": cost_per_month,
-        "seat_utilization": f"{(current_users / max_users * 100):.1f}%"
-        if max_users > 0
-        else "0.0%",
-        "compliance_status": "compliant"
-        if status == "active" and current_users <= max_users
-        else "non_compliant",
+        "seat_utilization": f"{(current_users / max_users * 100):.1f}%" if max_users > 0 else "0.0%",
+        "compliance_status": "compliant" if status == "active" and current_users <= max_users else "non_compliant",
         "license_server": f"license-server-{int(license_hash[22:24], 16) % 10 + 1}.{os.environ.get('BASE_DOMAIN', 'internal')}",
         "contact_email": f"{user_id}@{organization.lower().replace(' ', '')}.com",
         "notes": f"License {license_id} - {status.title()} {license_type} license",
@@ -850,15 +837,11 @@ def _handle_license_query(query: dict[str, Any]) -> list[dict[str, Any]]:
             continue
 
         # Generate license ID with realistic format
-        license_hash = hashlib.sha256(f"{template['product']}_{user_id}_{i}".encode()).hexdigest()[
-            :8
-        ]
+        license_hash = hashlib.sha256(f"{template['product']}_{user_id}_{i}".encode()).hexdigest()[:8]
         license_id = f"LIC-{license_hash.upper()}-{i + 1:04d}"
 
         # Calculate usage statistics
-        current_users = min(
-            template["max_users"], max(1, (hash(f"usage_{i}") % template["max_users"]) + 1)
-        )
+        current_users = min(template["max_users"], max(1, (hash(f"usage_{i}") % template["max_users"]) + 1))
 
         license_data = {
             "id": license_id,
@@ -874,18 +857,12 @@ def _handle_license_query(query: dict[str, Any]) -> list[dict[str, Any]]:
             "features": template["features"],
             "organization": f"{user_type.title()} Organization {(i % 10) + 1}",
             "license_server": f"license-{(i % 5) + 1}.{os.environ.get('BASE_DOMAIN', 'internal')}",
-            "last_checkin": (datetime.now() - timedelta(hours=hash(f"checkin_{i}") % 48)).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            ),
+            "last_checkin": (datetime.now() - timedelta(hours=hash(f"checkin_{i}") % 48)).strftime("%Y-%m-%d %H:%M:%S"),
             "version": f"{((i % 5) + 1)}.{(i % 10)}.{(i % 20)}",
             "platform": ["Windows", "macOS", "Linux"][i % 3],
             "maintenance_expires": (expiry_date + timedelta(days=90)).strftime("%Y-%m-%d"),
-            "seat_utilization": f"{(current_users / template['max_users'] * 100):.1f}%"
-            if template["max_users"] > 0
-            else "0.0%",
-            "compliance_status": "compliant"
-            if license_status == "active" and current_users <= template["max_users"]
-            else "non_compliant",
+            "seat_utilization": f"{(current_users / template['max_users'] * 100):.1f}%" if template["max_users"] > 0 else "0.0%",
+            "compliance_status": "compliant" if license_status == "active" and current_users <= template["max_users"] else "non_compliant",
             "billing_cycle": "monthly" if template["type"] == "subscription" else "one_time",
             "cost_center": f"CC-{(i % 20) + 1:03d}",
             "contact_email": f"{user_id}@{os.environ.get('EMAIL_DOMAIN', 'internal.local')}",
@@ -929,9 +906,7 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
     if current_license.get("status") == "active":
         last_checkin_str = current_license.get("last_checkin", "")
         try:
-            last_checkin = datetime.strptime(last_checkin_str, "%Y-%m-%d %H:%M:%S").replace(
-                tzinfo=timezone.utc
-            )
+            last_checkin = datetime.strptime(last_checkin_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
             session_duration = release_datetime - last_checkin
             session_hours = session_duration.total_seconds() / 3600
         except (ValueError, TypeError) as e:
@@ -961,22 +936,17 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
         release_reason = "normal_user_logout"
 
     # Calculate billing information for the session
-    cost_per_hour = current_license.get("cost_per_month", 99.99) / (
-        30 * 24
-    )  # Approximate hourly cost
+    cost_per_hour = current_license.get("cost_per_month", 99.99) / (30 * 24)  # Approximate hourly cost
     session_cost = round(session_hours * cost_per_hour, 4)
 
     # Generate compliance and audit information
     compliance_check = {
         "license_valid": current_license.get("status") == "active",
-        "within_user_limit": current_license.get("current_users", 0)
-        <= current_license.get("max_users", 1),
-        "features_authorized": all(
-            feature in current_license.get("features", []) for feature in features_used
-        ),
-        "maintenance_current": datetime.strptime(
-            current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d"
-        ).replace(tzinfo=timezone.utc)
+        "within_user_limit": current_license.get("current_users", 0) <= current_license.get("max_users", 1),
+        "features_authorized": all(feature in current_license.get("features", []) for feature in features_used),
+        "maintenance_current": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d").replace(
+            tzinfo=timezone.utc
+        )
         > release_datetime,
     }
 
@@ -984,9 +954,7 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
 
     # Generate next available license slot information
     max_users = current_license.get("max_users", 1)
-    current_users = max(
-        0, current_license.get("current_users", 1) - 1
-    )  # Decrease by 1 after release
+    current_users = max(0, current_license.get("current_users", 1) - 1)  # Decrease by 1 after release
 
     return {
         "id": license_id,
@@ -1008,9 +976,7 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
             "seats_available": max_users - current_users,
             "seats_total": max_users,
             "seats_used": current_users,
-            "utilization_percentage": round((current_users / max_users * 100), 1)
-            if max_users > 0
-            else 0,
+            "utilization_percentage": round((current_users / max_users * 100), 1) if max_users > 0 else 0,
         },
         "user_information": {
             "user_id": current_license.get("user_id", "unknown"),
@@ -1029,13 +995,11 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
         "next_actions": {
             "license_available_for_reuse": True,
             "requires_compliance_review": compliance_status != "compliant",
-            "maintenance_due": datetime.strptime(
-                current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d"
-            ).replace(tzinfo=timezone.utc)
-            < release_datetime,
-            "renewal_recommended": datetime.fromtimestamp(
-                current_license.get("expires", 0), tz=timezone.utc
+            "maintenance_due": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d").replace(
+                tzinfo=timezone.utc
             )
+            < release_datetime,
+            "renewal_recommended": datetime.fromtimestamp(current_license.get("expires", 0), tz=timezone.utc)
             < release_datetime + timedelta(days=30),
         },
         "confirmation": {
@@ -1182,9 +1146,7 @@ def _handle_read_memory(address: int, size: int) -> bytes:
             remote_iov.iov_base = address
             remote_iov.iov_len = size
 
-            result = process_vm_readv(
-                pid, ctypes.byref(local_iov), 1, ctypes.byref(remote_iov), 1, 0
-            )
+            result = process_vm_readv(pid, ctypes.byref(local_iov), 1, ctypes.byref(remote_iov), 1, 0)
 
             if result > 0:
                 return bytes(local_buf[:result])
@@ -1320,9 +1282,7 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
             remote_iov.iov_base = address
             remote_iov.iov_len = len(data)
 
-            result = process_vm_writev(
-                pid, ctypes.byref(local_iov), 1, ctypes.byref(remote_iov), 1, 0
-            )
+            result = process_vm_writev(pid, ctypes.byref(local_iov), 1, ctypes.byref(remote_iov), 1, 0)
 
             return result == len(data)
         except (ValueError, TypeError, AttributeError):
@@ -1334,9 +1294,7 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
 # === Analysis and Comparison Helpers ===
 
 
-def _analyze_snapshot_differences(
-    snapshot1: dict[str, Any], snapshot2: dict[str, Any]
-) -> dict[str, Any]:
+def _analyze_snapshot_differences(snapshot1: dict[str, Any], snapshot2: dict[str, Any]) -> dict[str, Any]:
     """Analyze differences between two snapshots.
 
     Args:
@@ -1384,8 +1342,7 @@ def _compare_filesystem_state(state1: dict[str, Any], state2: dict[str, Any]) ->
         "modified_files": [
             f
             for f in state1.get("files", [])
-            if f in state2.get("files", [])
-            and state1.get("hashes", {}).get(f) != state2.get("hashes", {}).get(f)
+            if f in state2.get("files", []) and state1.get("hashes", {}).get(f) != state2.get("hashes", {}).get(f)
         ],
     }
 
@@ -1420,12 +1377,8 @@ def _compare_mmap_state(state1: dict[str, Any], state2: dict[str, Any]) -> dict[
 
     """
     return {
-        "new_mappings": [
-            m for m in state2.get("mappings", []) if m not in state1.get("mappings", [])
-        ],
-        "removed_mappings": [
-            m for m in state1.get("mappings", []) if m not in state2.get("mappings", [])
-        ],
+        "new_mappings": [m for m in state2.get("mappings", []) if m not in state1.get("mappings", [])],
+        "removed_mappings": [m for m in state1.get("mappings", []) if m not in state2.get("mappings", [])],
     }
 
 
@@ -1808,11 +1761,7 @@ def _match_pattern(data: bytes, pattern: bytes) -> list[int]:
     """
     pattern_len = len(pattern)
 
-    return [
-        i
-        for i in range(len(data) - pattern_len + 1)
-        if data[i : i + pattern_len] == pattern
-    ]
+    return [i for i in range(len(data) - pattern_len + 1) if data[i : i + pattern_len] == pattern]
 
 
 def _preview_dataset(dataset: list[dict[str, Any]], limit: int = 10) -> list[dict[str, Any]]:
@@ -1894,17 +1843,13 @@ def _calculate_hash_opencl(data: bytes, algorithm: str = "sha256") -> str | None
             # Use first available GPU device, fallback to CPU
             device = None
             for platform in platforms:
-                if devices := platform.get_devices(
-                    device_type=cl.device_type.GPU
-                ):
+                if devices := platform.get_devices(device_type=cl.device_type.GPU):
                     device = devices[0]
                     break
 
             if not device:
                 for platform in platforms:
-                    if devices := platform.get_devices(
-                        device_type=cl.device_type.CPU
-                    ):
+                    if devices := platform.get_devices(device_type=cl.device_type.CPU):
                         device = devices[0]
                         break
 
@@ -2196,9 +2141,7 @@ def _gpu_entropy_calculation(data: bytes) -> float:
         count_func = mod.get_function("count_bytes")
         block_size = 256
         grid_size = (len(data) + block_size - 1) // block_size
-        count_func(
-            data_gpu, np.int32(len(data)), counts_gpu, block=(block_size, 1, 1), grid=(grid_size, 1)
-        )
+        count_func(data_gpu, np.int32(len(data)), counts_gpu, block=(block_size, 1, 1), grid=(grid_size, 1))
 
         # Calculate entropy
         entropy_val = np.array([0.0], dtype=np.float32)
@@ -2302,11 +2245,7 @@ def _pytorch_pattern_matching(data: bytes, pattern: bytes) -> list[int]:
         data_tensor = torch.tensor(list(data), dtype=torch.uint8)
         pattern_tensor = torch.tensor(list(pattern), dtype=torch.uint8)
 
-        return [
-            i
-            for i in range(len(data) - len(pattern) + 1)
-            if torch.equal(data_tensor[i : i + len(pattern)], pattern_tensor)
-        ]
+        return [i for i in range(len(data) - len(pattern) + 1) if torch.equal(data_tensor[i : i + len(pattern)], pattern_tensor)]
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("PyTorch pattern matching failed: %s", e)
         return _match_pattern(data, pattern)
@@ -2437,9 +2376,7 @@ def _tf_convolution_search(data_array: "np.ndarray", pattern_array: "np.ndarray"
         # Reshape data for TensorFlow convolution
         # TensorFlow expects [batch, height, width, channels] format
         data_tensor = tf.expand_dims(tf.expand_dims(tf.cast(data_array, tf.float32), 0), -1)
-        pattern_tensor = tf.expand_dims(
-            tf.expand_dims(tf.cast(pattern_array[::-1], tf.float32), -1), -1
-        )
+        pattern_tensor = tf.expand_dims(tf.expand_dims(tf.cast(pattern_array[::-1], tf.float32), -1), -1)
 
         # Perform 1D convolution
         convolution_result = tf.nn.conv1d(
@@ -2512,11 +2449,7 @@ def _sliding_window_search(data_array: "np.ndarray", pattern_array: "np.ndarray"
         pattern_len = len(pattern_array)
         data_len = len(data_array)
 
-        return [
-            i
-            for i in range(data_len - pattern_len + 1)
-            if np.array_equal(data_array[i : i + pattern_len], pattern_array)
-        ]
+        return [i for i in range(data_len - pattern_len + 1) if np.array_equal(data_array[i : i + pattern_len], pattern_array)]
     except Exception as e:
         logger.debug("Sliding window search error: %s", e)
         return []
@@ -2531,11 +2464,7 @@ def _match_pattern(data: bytes, pattern: bytes) -> list[int]:
         return matches
 
     # Simple byte-by-byte search
-    matches.extend(
-        i
-        for i in range(len(data) - pattern_len + 1)
-        if data[i : i + pattern_len] == pattern
-    )
+    matches.extend(i for i in range(len(data) - pattern_len + 1) if data[i : i + pattern_len] == pattern)
     return matches
 
 
@@ -2561,6 +2490,7 @@ def _validate_gpu_memory(required_mb: int) -> bool:
     if HAS_TENSORFLOW:
         try:
             if gpus := tf.config.list_physical_devices("GPU"):
+                logger.debug(f"Found {len(gpus)} TensorFlow GPUs available")
                 return True  # Assume sufficient memory if GPU available
         except (RuntimeError, AttributeError) as e:
             logger.error("Error in internal_helpers: %s", e)
@@ -2606,11 +2536,7 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
             tensors = {}
 
             # Try to detect and parse model format
-            if (
-                model_path.endswith(".bin")
-                or model_path.endswith(".pt")
-                or model_path.endswith(".pth")
-            ):
+            if model_path.endswith(".bin") or model_path.endswith(".pt") or model_path.endswith(".pth"):
                 # PyTorch format
                 try:
                     import torch
@@ -3064,7 +2990,7 @@ def _generate_bias_data(dims: list[int], data_type: str, total_elements: int) ->
         if total_elements % 4 == 0:
             # LSTM forget gate initialization
             forget_start = total_elements // 4
-            bias_array[forget_start:total_elements // 2] = np.float16(1.0)
+            bias_array[forget_start : total_elements // 2] = np.float16(1.0)
         elif total_elements % 3 == 0:
             # GRU reset gate initialization
             reset_start = total_elements // 3
@@ -3263,18 +3189,14 @@ def _generate_generic_tensor_data(dims: list[int], data_type: str, total_element
         limit = np.sqrt(6.0 / (fan_in + fan_out))
 
         # Generate with slightly reduced variance for float16 stability
-        tensor_data = np.random.uniform(-limit * 0.8, limit * 0.8, total_elements).astype(
-            np.float16
-        )
+        tensor_data = np.random.uniform(-limit * 0.8, limit * 0.8, total_elements).astype(np.float16)
 
         # Apply smoothing for larger tensors
         if total_elements > 100:
             kernel_size = min(3, total_elements // 30)
             if kernel_size > 1:
                 kernel = np.ones(kernel_size) / kernel_size
-                tensor_data = np.convolve(
-                    tensor_data.astype(np.float32), kernel, mode="same"
-                ).astype(np.float16)
+                tensor_data = np.convolve(tensor_data.astype(np.float32), kernel, mode="same").astype(np.float16)
                 # Rescale
                 std = np.std(tensor_data)
                 if std > 0:
@@ -3582,9 +3504,7 @@ def _run_ghidra_thread(ghidra_path: str, script: str, binary: str) -> threading.
     return thread
 
 
-def _run_report_generation_thread(
-    report_func: Callable, report_data: dict[str, Any]
-) -> threading.Thread:
+def _run_report_generation_thread(report_func: Callable, report_data: dict[str, Any]) -> threading.Thread:
     """Run report generation in a thread.
 
     Args:

@@ -44,6 +44,8 @@ pip-delete-this-directory.txt
 
 # Unit test / coverage reports
 htmlcov/
+coverage_html_report/
+htmlcov_mitigation/
 .tox/
 .nox/
 .coverage
@@ -62,7 +64,6 @@ cover/
 *.pot
 
 # Django/Flask stuff
-*.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
@@ -79,7 +80,6 @@ docs/_templates/
 
 # PyBuilder
 .pybuilder/
-target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -111,15 +111,6 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -145,9 +136,27 @@ dmypy.json
 cython_debug/
 
 # ==============================================================================
+# ENVIRONMENT ACTIVATION
+# ==============================================================================
+# Direnv
+.direnv/
+.envrc.local
+
+# Activation helpers
+activate_intellicrack.bat
+activate.sh
+activate.ps1
+
+# ==============================================================================
+# UV PACKAGE MANAGER
+# ==============================================================================
+# UV cache
+.uv/
+uv-cache/
+
+# ==============================================================================
 # VIRTUAL ENVIRONMENTS (ALL VARIATIONS)
 # ==============================================================================
-venv/
 venv*/
 .venv/
 .venv*/
@@ -179,7 +188,6 @@ security.ini
 
 # Runtime data directories
 intellicrack/data/data/
-logs/
 intellicrack/data/data/plugin_cache/
 intellicrack/data/data/visualizations/
 intellicrack/data/data/reports/
@@ -192,7 +200,6 @@ plugin_cache/
 # Generated files
 *.patched
 *.backup
-*.orig
 *.generated.py
 *.generated.js
 
@@ -370,7 +377,6 @@ ehthumbs_vista.db
 *.stackdump
 [Dd]esktop.ini
 $RECYCLE.BIN/
-nul
 
 # Linux
 *~
@@ -435,7 +441,6 @@ ida/
 # ==============================================================================
 # Documentation build
 docs/build/
-docs/_build/
 docs/api/
 docs/verification/
 docs/CLAUDE.md
@@ -461,7 +466,7 @@ Pipfile
 uv.lock
 
 # Requirements (using structure in requirements/ directory)
-requirements.txt
+!requirements.txt
 requirements/base.txt
 requirements/core.txt
 requirements/dev.txt
@@ -566,60 +571,6 @@ docker-compose.override.yml
 *_scan_results*.json
 
 # ==============================================================================
-# NEW ADDITIONS - RUST AND DEVELOPMENT FILES
-# ==============================================================================
-# Rust target directory and build artifacts
-intellicrack-launcher/target/
-target/
-
-# Java tools
-*.jar
-checkstyle.jar
-
-# Large memory dumps and validation files
-*.dump
-*.mem
-tests/validation_system/forensic_evidence/
-tests/validation_system/certified_ground_truth/
-tests/validation_system/reports/
-tests/validation_system/tests/
-
-# AI configuration files
-gemini_cli_config.json
-GEMINI.md
-QWEN.md
-
-# Project upgrade documentation (temporary)
-intellicrack_16_point_upgrade.md
-
-# Large phase documentation (keep essential ones)
-docs/phase_documentation/
-
-# Additional helper files
-privilege_escalation_helpers.py
-
-# Secret keys and authentication
-.secret_key
-*.secret# ==============================================================================
-# ENVIRONMENT ACTIVATION
-# ==============================================================================
-# Direnv
-.direnv/
-.envrc.local
-
-# Activation helpers
-activate_intellicrack.bat
-activate.sh
-activate.ps1
-
-# ==============================================================================
-# UV PACKAGE MANAGER
-# ==============================================================================
-# UV cache
-.uv/
-uv-cache/
-
-# ==============================================================================
 # ROOT DIRECTORY FILES AND TEMPORARY FILES
 # ==============================================================================
 # Temporary analysis files from mock/stub scanning
@@ -656,7 +607,6 @@ pyrightconfig.json
 .markdownlint.json
 eslint.config.js
 pytest.ini
-nul
 *.lock
 !requirements.lock
 config_cleanup_report.txt
@@ -692,10 +642,47 @@ intellicrack/assets/qemu_images/*.vhdx
 !.pixi/config.toml
 
 # ==============================================================================
-# REMOVED TEMPLATE DIRECTORIES - DO NOT RECREATE  
+# REMOVED TEMPLATE DIRECTORIES - DO NOT RECREATE
 # ==============================================================================
 # These directories were removed as part of template cleanup
 # Templates were constraining AI functionality - removed in favor of dynamic generation
 intellicrack/ai/templates/
 intellicrack/utils/templates/
 mcp.json
+
+# ==============================================================================
+# NEW ADDITIONS - RUST AND DEVELOPMENT FILES
+# ==============================================================================
+# Rust target directory and build artifacts
+intellicrack-launcher/target/
+target/
+
+# Java tools
+*.jar
+checkstyle.jar
+
+# Large memory dumps and validation files
+*.dump
+*.mem
+tests/validation_system/forensic_evidence/
+tests/validation_system/certified_ground_truth/
+tests/validation_system/reports/
+tests/validation_system/tests/
+
+# AI configuration files
+gemini_cli_config.json
+GEMINI.md
+QWEN.md
+
+# Project upgrade documentation (temporary)
+intellicrack_16_point_upgrade.md
+
+# Large phase documentation (keep essential ones)
+docs/phase_documentation/
+
+# Additional helper files
+privilege_escalation_helpers.py
+
+# Secret keys and authentication
+.secret_key
+*.secret

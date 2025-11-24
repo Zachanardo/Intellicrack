@@ -356,16 +356,10 @@ class IntellicrackProtectionCore:
         if (
             "pe64" in filetype_lower
             or "64" in filetype_lower
-            or ("pe32" not in filetype_lower
-            and "32" not in filetype_lower
-            and "elf64" in filetype_lower)
+            or ("pe32" not in filetype_lower and "32" not in filetype_lower and "elf64" in filetype_lower)
         ):
             analysis.architecture = "x64"
-        elif (
-            "pe32" in filetype_lower
-            or "32" in filetype_lower
-            or "elf32" in filetype_lower
-        ):
+        elif "pe32" in filetype_lower or "32" in filetype_lower or "elf32" in filetype_lower:
             analysis.architecture = "x86"
         # Process all detections
         for detection in icp_result.all_detections:
@@ -384,9 +378,7 @@ class IntellicrackProtectionCore:
 
             # Set compiler info
             if det_type == ProtectionType.COMPILER and not analysis.compiler:
-                analysis.compiler = (
-                    f"{detection.name} {detection.version}" if detection.version else detection.name
-                )
+                analysis.compiler = f"{detection.name} {detection.version}" if detection.version else detection.name
 
             # Set analysis flags
             if det_type == ProtectionType.PACKER:
@@ -421,9 +413,7 @@ class IntellicrackProtectionCore:
 
     def _parse_json_output(self, file_path: str, engine_data: dict) -> ProtectionAnalysis:
         """Parse legacy JSON output into structured results (kept for compatibility)."""
-        analysis = ProtectionAnalysis(
-            file_path=file_path, file_type="Unknown", architecture="Unknown"
-        )
+        analysis = ProtectionAnalysis(file_path=file_path, file_type="Unknown", architecture="Unknown")
 
         if detects := engine_data.get("detects", []):
             # Take the first detection (usually the main file)
@@ -434,13 +424,7 @@ class IntellicrackProtectionCore:
             analysis.file_type = filetype
 
             # Extract architecture from file type
-            if (
-                "PE64" in filetype
-                or "64" in filetype
-                or ("PE32" not in filetype
-                and "32" not in filetype
-                and "ELF64" in filetype)
-            ):
+            if "PE64" in filetype or "64" in filetype or ("PE32" not in filetype and "32" not in filetype and "ELF64" in filetype):
                 analysis.architecture = "x64"
             elif "PE32" in filetype or "32" in filetype or "ELF32" in filetype:
                 analysis.architecture = "x86"

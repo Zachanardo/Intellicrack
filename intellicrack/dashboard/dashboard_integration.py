@@ -123,16 +123,10 @@ class DashboardIntegration:
         )
 
         # Tool status grid
-        self.dashboard_manager.add_widget(
-            create_widget(
-                "tool_status", WidgetType.TABLE, "Tool Status", sortable=True, filterable=False
-            )
-        )
+        self.dashboard_manager.add_widget(create_widget("tool_status", WidgetType.TABLE, "Tool Status", sortable=True, filterable=False))
 
         # Bypass strategies chart
-        self.dashboard_manager.add_widget(
-            create_widget("bypass_strategies", WidgetType.BAR_CHART, "Bypass Strategies by Type")
-        )
+        self.dashboard_manager.add_widget(create_widget("bypass_strategies", WidgetType.BAR_CHART, "Bypass Strategies by Type"))
 
         # Cross-tool correlation matrix
         self.dashboard_manager.add_widget(
@@ -146,9 +140,7 @@ class DashboardIntegration:
 
         # Live memory usage
         self.dashboard_manager.add_widget(
-            create_widget(
-                "memory_timeline", WidgetType.LINE_CHART, "Memory Usage Timeline", history_size=100
-            ),
+            create_widget("memory_timeline", WidgetType.LINE_CHART, "Memory Usage Timeline", history_size=100),
         )
 
         # Analysis speed gauge
@@ -273,9 +265,7 @@ class DashboardIntegration:
 
         self.logger.info("Integrated cross-tool orchestrator with dashboard")
 
-    def start_analysis_monitoring(
-        self, analysis_id: str, tool: str, target: str, options: dict[str, object] | None = None
-    ) -> None:
+    def start_analysis_monitoring(self, analysis_id: str, tool: str, target: str, options: dict[str, object] | None = None) -> None:
         """Start monitoring an analysis.
 
         Begins tracking a binary analysis session including tool execution,
@@ -323,9 +313,7 @@ class DashboardIntegration:
             if analysis_id in self.active_analyses:
                 analysis = self.active_analyses[analysis_id]
                 analysis["end_time"] = datetime.now()
-                analysis["duration"] = (
-                    analysis["end_time"] - analysis["start_time"]
-                ).total_seconds()
+                analysis["duration"] = (analysis["end_time"] - analysis["start_time"]).total_seconds()
                 analysis["results"] = results
 
         # Notify dashboard
@@ -719,15 +707,11 @@ class DashboardIntegration:
             },
             {
                 "Property": "Modified",
-                "Value": datetime.fromtimestamp(path.stat().st_mtime).isoformat()
-                if path.exists()
-                else "N/A",
+                "Value": datetime.fromtimestamp(path.stat().st_mtime).isoformat() if path.exists() else "N/A",
             },
         ]
 
-        widget_data = WidgetData(
-            timestamp=datetime.now(), values={"rows": rows, "columns": ["Property", "Value"]}
-        )
+        widget_data = WidgetData(timestamp=datetime.now(), values={"rows": rows, "columns": ["Property", "Value"]})
 
         if "binary_overview" in self.dashboard_manager.widgets:
             self.dashboard_manager.widgets["binary_overview"].update_data(widget_data)
@@ -840,9 +824,7 @@ class DashboardIntegration:
             matrix = data.get("correlation_matrix", [])
             tools = data.get("tools", ["ghidra", "frida", "radare2"])
 
-            widget_data = WidgetData(
-                timestamp=datetime.now(), values={"matrix": matrix}, labels=tools, categories=tools
-            )
+            widget_data = WidgetData(timestamp=datetime.now(), values={"matrix": matrix}, labels=tools, categories=tools)
             self.dashboard_manager.widgets["correlation_matrix"].update_data(widget_data)
 
     def _update_finding_widgets(self, finding_type: str, data: dict[str, object]) -> None:

@@ -53,7 +53,7 @@ def test_payload_methods_directly():
         def __init__(self):
             self.binary_path = "test.exe"
             self.radare2_path = None
-            self.shellcode_generator = MockShellcodeGenerator()
+            self.shellcode_generator = MockLicenseBypassCodeGenerator()
             self.logger = logging.getLogger("test")
 
         def _detect_architecture(self):

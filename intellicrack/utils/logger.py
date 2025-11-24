@@ -81,10 +81,7 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
         func_name = func.__qualname__
 
         # Skip logging for certain problematic functions
-        if any(
-            _skip in func_name
-            for _skip in ["__str__", "__repr__", "as_posix", "getline", "getlines"]
-        ):
+        if any(_skip in func_name for _skip in ["__str__", "__repr__", "as_posix", "getline", "getlines"]):
             return func(*args, **kwargs)
 
         try:
@@ -105,10 +102,7 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
                     logger.error("Error in logger: %s", e)
                     return "<repr_failed>"
 
-            arg_strs = [
-                f"{name}={safe_repr(value)}"
-                for name, value in zip(arg_names, arg_values, strict=False)
-            ]
+            arg_strs = [f"{name}={safe_repr(value)}" for name, value in zip(arg_names, arg_values, strict=False)]
             if kwargs:
                 arg_strs += [f"{k}={safe_repr(v)}" for k, v in kwargs.items()]
 
@@ -139,10 +133,7 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
             func_name = func.__qualname__
 
             # Skip logging for certain problematic functions
-            if any(
-                _skip in func_name
-                for _skip in ["__str__", "__repr__", "as_posix", "getline", "getlines"]
-            ):
+            if any(_skip in func_name for _skip in ["__str__", "__repr__", "as_posix", "getline", "getlines"]):
                 return await func(*args, **kwargs)
 
             try:
@@ -162,10 +153,7 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
                         logger.error("Error in logger: %s", e)
                         return "<repr_failed>"
 
-                arg_strs = [
-                    f"{name}={safe_repr(value)}"
-                    for name, value in zip(arg_names, arg_values, strict=False)
-                ]
+                arg_strs = [f"{name}={safe_repr(value)}" for name, value in zip(arg_names, arg_values, strict=False)]
                 if kwargs:
                     arg_strs += [f"{k}={safe_repr(v)}" for k, v in kwargs.items()]
 

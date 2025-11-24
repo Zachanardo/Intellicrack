@@ -515,11 +515,7 @@ class StarForceAnalyzer:
                 registry_checks.append((offset, "Registry key access"))
 
             if b"\\\\.\\CdRom" in data or b"\\\\.\\Scsi" in data:
-                offset = (
-                    data.find(b"\\\\.\\CdRom")
-                    if b"\\\\.\\CdRom" in data
-                    else data.find(b"\\\\.\\Scsi")
-                )
+                offset = data.find(b"\\\\.\\CdRom") if b"\\\\.\\CdRom" in data else data.find(b"\\\\.\\Scsi")
                 disc_checks.append((offset, "Disc device access"))
 
             if b"http" in data.lower() or b"https" in data.lower():
@@ -621,11 +617,7 @@ class StarForceAnalyzer:
             pe = pefile.PE(str(driver_path))
 
             if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
-                exports.extend(
-                    exp.name.decode("utf-8", errors="ignore")
-                    for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols
-                    if exp.name
-                )
+                exports.extend(exp.name.decode("utf-8", errors="ignore") for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols if exp.name)
             pe.close()
 
         except Exception as e:
@@ -700,11 +692,7 @@ class StarForceAnalyzer:
             with open(driver_path, "rb") as f:
                 data = f.read()
 
-            algorithms.extend(
-                algo_name
-                for constant, algo_name in crypto_constants.items()
-                if constant in data
-            )
+            algorithms.extend(algo_name for constant, algo_name in crypto_constants.items() if constant in data)
             sbox_pattern = bytes(range(256))
             if sbox_pattern[:64] in data:
                 algorithms.append("AES (S-box detected)")
@@ -714,9 +702,7 @@ class StarForceAnalyzer:
 
         return list(set(algorithms))
 
-    def probe_ioctl(
-        self, device_name: str, ioctl_code: int, input_data: bytes = b""
-    ) -> bytes | None:
+    def probe_ioctl(self, device_name: str, ioctl_code: int, input_data: bytes = b"") -> bytes | None:
         r"""Probe a StarForce device IOCTL command.
 
         Args:
@@ -736,9 +722,7 @@ class StarForceAnalyzer:
         OPEN_EXISTING = 3
 
         try:
-            handle = self._kernel32.CreateFileW(
-                device_name, GENERIC_READ | GENERIC_WRITE, 0, None, OPEN_EXISTING, 0, None
-            )
+            handle = self._kernel32.CreateFileW(device_name, GENERIC_READ | GENERIC_WRITE, 0, None, OPEN_EXISTING, 0, None)
 
             if handle in (-1, 0):
                 return None
@@ -760,7 +744,9 @@ class StarForceAnalyzer:
                     ctypes.byref(bytes_returned),
                     None,
                 ):
+                    self.logger.debug(f"DeviceIoControl succeeded: result={result}, bytes={bytes_returned.value}")
                     return output_buffer.raw[: bytes_returned.value]
+                self.logger.debug(f"DeviceIoControl failed: result={result}")
 
             finally:
                 self._kernel32.CloseHandle(handle)

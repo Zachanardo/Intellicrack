@@ -348,10 +348,7 @@ class QilingEmulator:
         )
 
         # Check for suspicious patterns
-        if any(
-            keyword in str(params).lower()
-            for keyword in ["license", "serial", "key", "trial", "activation", "registration"]
-        ):
+        if any(keyword in str(params).lower() for keyword in ["license", "serial", "key", "trial", "activation", "registration"]):
             self.license_checks.append(
                 {
                     "api": api_name,
@@ -364,9 +361,7 @@ class QilingEmulator:
         # Log potential license check
         self.logger.info(f"Potential license API: {api_name} at {hex(address)}")
 
-    def hook_memory_access(
-        self, ql: Qiling, access: int, address: int, size: int, value: int
-    ) -> None:
+    def hook_memory_access(self, ql: Qiling, access: int, address: int, size: int, value: int) -> None:
         """Monitor memory access with detailed analysis."""
         access_type = "READ" if access == 1 else "WRITE"
 
@@ -928,10 +923,7 @@ class QilingEmulator:
                     format_info["imports"].append(
                         {
                             "dll": dll_name,
-                            "functions": [
-                                imp.name.decode("utf-8") if imp.name else f"Ordinal_{imp.ordinal}"
-                                for imp in entry.imports
-                            ],
+                            "functions": [imp.name.decode("utf-8") if imp.name else f"Ordinal_{imp.ordinal}" for imp in entry.imports],
                         },
                     )
 

@@ -388,9 +388,7 @@ class EnhancedAnalysisDashboard(QWidget):
     def _generate_report(self) -> None:
         """Generate report based on template."""
         template = self.report_template_combo.currentText()
-        self.report_editor.setText(
-            f"# {template}\n\nReport generated at {self._get_ui_timestamp()}\n\nNo analysis data available yet."
-        )
+        self.report_editor.setText(f"# {template}\n\nReport generated at {self._get_ui_timestamp()}\n\nNo analysis data available yet.")
         self.add_activity(f"Generated {template} report")
 
     def _save_report(self) -> None:

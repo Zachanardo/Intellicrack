@@ -22,7 +22,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-
 import logging
 from dataclasses import dataclass
 from typing import Any, Protocol
@@ -374,12 +373,7 @@ class ConstantPropagationEngine:
                         state.pop(dest, None)
                 else:
                     src_reg = self._extract_register(src)
-                    if (
-                        src_reg
-                        and src_reg in state
-                        and state[src_reg].is_constant
-                        and state[src_reg].value is not None
-                    ):
+                    if src_reg and src_reg in state and state[src_reg].is_constant and state[src_reg].value is not None:
                         if mnemonic == "add":
                             new_val = state[dest].value + state[src_reg].value
                         elif mnemonic == "sub":
@@ -626,11 +620,7 @@ class ConstantPropagationEngine:
         merged = {}
 
         for reg, reg_value in state1.items():
-            if reg in state2 and (
-                                reg_value.is_constant
-                                and state2[reg].is_constant
-                                and reg_value.value == state2[reg].value
-                            ):
+            if reg in state2 and (reg_value.is_constant and state2[reg].is_constant and reg_value.value == state2[reg].value):
                 merged[reg] = reg_value
 
         return merged
@@ -719,11 +709,7 @@ class SymbolicExecutionEngine:
             self.solver.reset()
 
             symbolic_vars = {
-                reg: (
-                    z3.BitVecVal(const_val.value, 64)
-                    if const_val.is_constant and const_val.value is not None
-                    else z3.BitVec(reg, 64)
-                )
+                reg: (z3.BitVecVal(const_val.value, 64) if const_val.is_constant and const_val.value is not None else z3.BitVec(reg, 64))
                 for reg, const_val in register_state.items()
             }
             condition_expr = self._build_symbolic_expression(basic_block, symbolic_vars)
@@ -753,9 +739,7 @@ class SymbolicExecutionEngine:
             self.logger.debug(f"Symbolic execution failed: {e}")
             return None, None
 
-    def _build_symbolic_expression(
-        self, basic_block: BasicBlockProtocol, symbolic_vars: dict[str, Any]
-    ) -> Z3Expr:
+    def _build_symbolic_expression(self, basic_block: BasicBlockProtocol, symbolic_vars: dict[str, Any]) -> Z3Expr:
         """Build Z3 expression from assembly instructions.
 
         Args:
@@ -925,9 +909,7 @@ class SymbolicExecutionEngine:
         elif operand.isdigit():
             return z3.BitVecVal(int(operand), 64)
         else:
-            return next(
-                (var for reg, var in symbolic_vars.items() if reg in operand), None
-            )
+            return next((var for reg, var in symbolic_vars.items() if reg in operand), None)
 
 
 class PatternRecognizer:
@@ -1016,6 +998,7 @@ class PatternRecognizer:
         """
         for pattern in self.patterns:
             if match_result := pattern["match_func"](basic_block):
+                logger.debug(f"Pattern matched: {pattern['name']}, match_result={match_result}")
                 return pattern["name"], pattern["always_value"]
 
         return None, None
@@ -1204,9 +1187,7 @@ class OpaquePredicateAnalyzer:
             if final_value is not None:
                 dead_branch = self._identify_dead_branch(basic_block, cfg, final_value)
 
-                instruction_str = "; ".join(
-                    inst.get("disasm", "") for inst in basic_block.instructions[-2:]
-                )
+                instruction_str = "; ".join(inst.get("disasm", "") for inst in basic_block.instructions[-2:])
 
                 opaque_predicates.append(
                     PredicateAnalysis(
@@ -1317,9 +1298,7 @@ class OpaquePredicateAnalyzer:
 
         return None
 
-    def _identify_dead_branch(
-        self, basic_block: BasicBlockProtocol, cfg: nx.DiGraph, always_value: bool
-    ) -> int | None:
+    def _identify_dead_branch(self, basic_block: BasicBlockProtocol, cfg: nx.DiGraph, always_value: bool) -> int | None:
         """Identify which branch is dead based on predicate value.
 
         Args:

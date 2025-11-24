@@ -217,9 +217,7 @@ class R2PerformanceOptimizer:
             "memory_available": psutil.virtual_memory().available,
             "memory_percent": psutil.virtual_memory().percent,
             "cpu_percent": psutil.cpu_percent(interval=1),
-            "disk_usage": psutil.disk_usage("/").percent
-            if os.name != "nt"
-            else psutil.disk_usage("C:\\").percent,
+            "disk_usage": psutil.disk_usage("/").percent if os.name != "nt" else psutil.disk_usage("C:\\").percent,
         }
 
     def optimize_for_binary(self, binary_path: str) -> dict[str, Any]:
@@ -297,9 +295,7 @@ class R2PerformanceOptimizer:
                     if info := r2.cmdj("ij"):
                         characteristics["file_type"] = info.get("core", {}).get("type", "unknown")
                         characteristics["architecture"] = info.get("bin", {}).get("arch", "unknown")
-                        characteristics["is_stripped"] = not info.get("bin", {}).get(
-                            "stripped", True
-                        )
+                        characteristics["is_stripped"] = not info.get("bin", {}).get("stripped", True)
 
                         if sections := r2.cmdj("iSj"):
                             characteristics["section_count"] = len(sections)
@@ -308,9 +304,7 @@ class R2PerformanceOptimizer:
                             characteristics["import_count"] = len(imports)
 
                     # Estimate complexity
-                    characteristics["complexity_estimate"] = self._estimate_complexity(
-                        characteristics
-                    )
+                    characteristics["complexity_estimate"] = self._estimate_complexity(characteristics)
 
                 except Exception as e:
                     self.logger.warning(f"Failed to get detailed binary info: {e}")
@@ -441,9 +435,7 @@ class R2PerformanceOptimizer:
 
         return config
 
-    def _apply_strategy_optimizations(
-        self, config: dict[str, Any], binary_info: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _apply_strategy_optimizations(self, config: dict[str, Any], binary_info: dict[str, Any]) -> dict[str, Any]:
         """Apply strategy-specific optimizations.
 
         Args:
@@ -534,9 +526,7 @@ class R2PerformanceOptimizer:
 
         return config
 
-    def _apply_large_file_optimizations(
-        self, config: dict[str, Any], binary_info: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _apply_large_file_optimizations(self, config: dict[str, Any], binary_info: dict[str, Any]) -> dict[str, Any]:
         """Apply optimizations specifically for large files.
 
         Args:
@@ -734,9 +724,7 @@ class R2PerformanceOptimizer:
         stats["total_file_size"] += file_size
         stats["avg_file_size"] = stats["total_file_size"] / stats["usage_count"]
 
-        self.logger.debug(
-            f"Profile {profile_name} used {stats['usage_count']} times, avg file size: {stats['avg_file_size']:.2f} bytes"
-        )
+        self.logger.debug(f"Profile {profile_name} used {stats['usage_count']} times, avg file size: {stats['avg_file_size']:.2f} bytes")
 
     def get_performance_report(self) -> dict[str, Any]:
         """Generate comprehensive performance report.
@@ -750,39 +738,25 @@ class R2PerformanceOptimizer:
             "strategy": self.strategy.value,
             "metrics": {
                 "memory_usage": {
-                    "current": (
-                        self.performance_metrics["memory_usage"][-1]
-                        if self.performance_metrics["memory_usage"]
-                        else 0
-                    ),
+                    "current": (self.performance_metrics["memory_usage"][-1] if self.performance_metrics["memory_usage"] else 0),
                     "average": (
-                        sum(self.performance_metrics["memory_usage"])
-                        / len(self.performance_metrics["memory_usage"])
+                        sum(self.performance_metrics["memory_usage"]) / len(self.performance_metrics["memory_usage"])
                         if self.performance_metrics["memory_usage"]
                         else 0
                     ),
                     "peak": self.performance_metrics["resource_peaks"]["memory"],
                 },
                 "cpu_usage": {
-                    "current": (
-                        self.performance_metrics["cpu_usage"][-1]
-                        if self.performance_metrics["cpu_usage"]
-                        else 0
-                    ),
+                    "current": (self.performance_metrics["cpu_usage"][-1] if self.performance_metrics["cpu_usage"] else 0),
                     "average": (
-                        sum(self.performance_metrics["cpu_usage"])
-                        / len(self.performance_metrics["cpu_usage"])
+                        sum(self.performance_metrics["cpu_usage"]) / len(self.performance_metrics["cpu_usage"])
                         if self.performance_metrics["cpu_usage"]
                         else 0
                     ),
                     "peak": self.performance_metrics["resource_peaks"]["cpu"],
                 },
-                "analysis_times": self.performance_metrics[
-                    "analysis_times"
-                ].copy(),
-                "optimization_effectiveness": self.performance_metrics[
-                    "optimization_effectiveness"
-                ].copy(),
+                "analysis_times": self.performance_metrics["analysis_times"].copy(),
+                "optimization_effectiveness": self.performance_metrics["optimization_effectiveness"].copy(),
             },
             "recommendations": self._generate_recommendations(),
         }
@@ -818,9 +792,7 @@ class R2PerformanceOptimizer:
 
         return recommendations
 
-    def benchmark_analysis_types(
-        self, binary_path: str, analysis_types: list[str]
-    ) -> dict[str, dict[str, float]]:
+    def benchmark_analysis_types(self, binary_path: str, analysis_types: list[str]) -> dict[str, dict[str, float]]:
         """Benchmark different analysis types for performance comparison.
 
         Args:

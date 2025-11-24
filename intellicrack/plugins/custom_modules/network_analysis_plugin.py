@@ -83,9 +83,7 @@ class NetworkAnalysisPlugin:
                 data = f.read()
 
                 if found_indicators := [
-                    indicator.decode("utf-8", errors="ignore")
-                    for indicator in network_indicators
-                    if indicator in data
+                    indicator.decode("utf-8", errors="ignore") for indicator in network_indicators if indicator in data
                 ]:
                     results.append("Network indicators found:")
                     for indicator in found_indicators:
@@ -144,11 +142,7 @@ class NetworkAnalysisPlugin:
             with open(binary_path, "rb") as f:
                 data = f.read()
 
-            if found_apis := [
-                f"{api.decode('ascii')} - {description}"
-                for api, description in socket_apis.items()
-                if api in data
-            ]:
+            if found_apis := [f"{api.decode('ascii')} - {description}" for api, description in socket_apis.items() if api in data]:
                 results.append(f"Found {len(found_apis)} socket API references:")
                 for api in found_apis:
                     results.append(f"   {api}")
@@ -204,9 +198,7 @@ class NetworkAnalysisPlugin:
 
         return result
 
-    def scan_ports(
-        self, target_host: str, start_port: int = 1, end_port: int = 1000, timeout: float = 0.5
-    ) -> list[dict[str, Any]]:
+    def scan_ports(self, target_host: str, start_port: int = 1, end_port: int = 1000, timeout: float = 0.5) -> list[dict[str, Any]]:
         """Scan ports on target host using sockets."""
         open_ports = []
 
@@ -304,12 +296,8 @@ class NetworkAnalysisPlugin:
                                     {
                                         "timestamp": time.time(),
                                         "type": "new_connection",
-                                        "local": f"{conn.laddr.ip}:{conn.laddr.port}"
-                                        if conn.laddr
-                                        else "N/A",
-                                        "remote": f"{conn.raddr.ip}:{conn.raddr.port}"
-                                        if conn.raddr
-                                        else "N/A",
+                                        "local": f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else "N/A",
+                                        "remote": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "N/A",
                                         "pid": conn.pid if hasattr(conn, "pid") else "N/A",
                                     },
                                 )
@@ -336,10 +324,8 @@ class NetworkAnalysisPlugin:
             result["connections"] = connection_log
             result["statistics"] = {
                 "total_events": len(connection_log),
-                "new_connections": sum(bool(c["type"] == "new_connection")
-                                   for c in connection_log),
-                "closed_connections": sum(bool(c["type"] == "closed_connection")
-                                      for c in connection_log),
+                "new_connections": sum(bool(c["type"] == "new_connection") for c in connection_log),
+                "closed_connections": sum(bool(c["type"] == "closed_connection") for c in connection_log),
             }
 
         # Start monitoring in a separate thread
@@ -392,9 +378,7 @@ class NetworkAnalysisPlugin:
 
             # Identify patterns
             if port_frequency:
-                most_used_ports = sorted(port_frequency.items(), key=lambda x: x[1], reverse=True)[
-                    :5
-                ]
+                most_used_ports = sorted(port_frequency.items(), key=lambda x: x[1], reverse=True)[:5]
                 result["patterns"].append(
                     {
                         "type": "port_usage",
@@ -404,9 +388,7 @@ class NetworkAnalysisPlugin:
                 )
 
             if ip_frequency:
-                most_connected_ips = sorted(ip_frequency.items(), key=lambda x: x[1], reverse=True)[
-                    :5
-                ]
+                most_connected_ips = sorted(ip_frequency.items(), key=lambda x: x[1], reverse=True)[:5]
                 result["patterns"].append(
                     {
                         "type": "ip_connections",
@@ -463,9 +445,7 @@ class NetworkAnalysisPlugin:
             ports, and network I/O statistics.
 
         """
-        results = [
-            f"Starting network monitoring{' for process: ' + str(target_process) if target_process else ''}..."
-        ]
+        results = [f"Starting network monitoring{' for process: ' + str(target_process) if target_process else ''}..."]
         try:
             import socket
 
@@ -510,9 +490,7 @@ class NetworkAnalysisPlugin:
                 results.append(f"Found {len(active_connections)} active network connections:")
                 for i, conn in enumerate(active_connections[:10]):  # Show max 10
                     host_info = f" [{conn['remote_host']}]" if conn["remote_host"] else ""
-                    results.append(
-                        f"  {i + 1}. {conn['local']} -> {conn['remote']}{host_info} (PID: {conn['pid']})"
-                    )
+                    results.append(f"  {i + 1}. {conn['local']} -> {conn['remote']}{host_info} (PID: {conn['pid']})")
                 if len(active_connections) > 10:
                     results.append(f"  ... and {len(active_connections) - 10} more connections")
             else:

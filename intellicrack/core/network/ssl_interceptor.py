@@ -124,16 +124,12 @@ class SSLTLSInterceptor:
         """
         try:
             # Generate CA certificate if needed
-            if not os.path.exists(self.config["ca_cert_path"]) or not os.path.exists(
-                self.config["ca_key_path"]
-            ):
+            if not os.path.exists(self.config["ca_cert_path"]) or not os.path.exists(self.config["ca_key_path"]):
                 self.logger.info("Generating CA certificate...")
                 cert_pem, key_pem = self.generate_ca_certificate()
                 if cert_pem and key_pem:
                     # Create directory if it doesn't exist
-                    os.makedirs(
-                        os.path.dirname(os.path.abspath(self.config["ca_cert_path"])), exist_ok=True
-                    )
+                    os.makedirs(os.path.dirname(os.path.abspath(self.config["ca_cert_path"])), exist_ok=True)
 
                     # Save certificate and key
                     with open(self.config["ca_cert_path"], "wb") as f:
@@ -425,9 +421,7 @@ def response(flow: http.HTTPFlow) -> None:
             # Validate certificate paths if changed
             if "ca_cert_path" in config or "ca_key_path" in config:
                 if not os.path.exists(self.config["ca_cert_path"]):
-                    self.logger.warning(
-                        f"CA certificate not found at {self.config['ca_cert_path']}"
-                    )
+                    self.logger.warning(f"CA certificate not found at {self.config['ca_cert_path']}")
                     # Generate new certificate if needed
                     self.logger.info("Generating new CA certificate")
                     cert, key = self.generate_ca_certificate()
@@ -490,9 +484,7 @@ def response(flow: http.HTTPFlow) -> None:
 
         # Redact sensitive information
         if "ca_key_path" in safe_config:
-            safe_config["ca_key_path"] = (
-                "<redacted>" if os.path.exists(self.config["ca_key_path"]) else "not found"
-            )
+            safe_config["ca_key_path"] = "<redacted>" if os.path.exists(self.config["ca_key_path"]) else "not found"
 
         # Add runtime status
         safe_config["status"] = {

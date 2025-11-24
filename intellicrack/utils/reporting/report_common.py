@@ -69,11 +69,7 @@ def generate_analysis_report(
     if not filename.endswith(".html"):
         filename += ".html"
 
-    return (
-        generator_func(filename, results_data)
-        if generator_func
-        else _generate_default_report(filename, report_type, results_data)
-    )
+    return generator_func(filename, results_data) if generator_func else _generate_default_report(filename, report_type, results_data)
 
 
 def _generate_default_report(filename: str, report_type: str, results_data: object) -> str | None:
@@ -164,6 +160,7 @@ def handle_pyqt6_report_generation(app: object, report_type: str, generator: obj
         "Generate Report",
         f"Do you want to generate a report of the {report_type} results?",
     ):
+        logger.info(f"User requested report generation: {generate_report}")
         if filename := show_file_dialog(app, "Save Report"):
             if not filename.endswith(".html"):
                 filename += ".html"

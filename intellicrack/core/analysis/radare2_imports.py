@@ -163,15 +163,9 @@ class R2ImportExportAnalyzer:
                     }
 
                     # Add additional analysis
-                    normalized_import["api_type"] = self._classify_api_type(
-                        normalized_import["name"]
-                    )
-                    normalized_import["risk_level"] = self._assess_api_risk(
-                        normalized_import["name"]
-                    )
-                    normalized_import["description"] = self._get_api_description(
-                        normalized_import["name"]
-                    )
+                    normalized_import["api_type"] = self._classify_api_type(normalized_import["name"])
+                    normalized_import["risk_level"] = self._assess_api_risk(normalized_import["name"])
+                    normalized_import["description"] = self._get_api_description(normalized_import["name"])
 
                     imports.append(normalized_import)
 
@@ -207,12 +201,8 @@ class R2ImportExportAnalyzer:
                     }
 
                     # Add additional analysis
-                    normalized_export["function_purpose"] = self._analyze_export_purpose(
-                        normalized_export["name"]
-                    )
-                    normalized_export["api_category"] = self._classify_api_type(
-                        normalized_export["name"]
-                    )
+                    normalized_export["function_purpose"] = self._analyze_export_purpose(normalized_export["name"])
+                    normalized_export["api_category"] = self._classify_api_type(normalized_export["name"])
 
                     exports.append(normalized_export)
 
@@ -240,12 +230,8 @@ class R2ImportExportAnalyzer:
 
                     # Analyze library characteristics
                     dependency["library_type"] = self._classify_library_type(dependency["name"])
-                    dependency["security_impact"] = self._assess_library_security_impact(
-                        dependency["name"]
-                    )
-                    dependency["common_apis"] = self._get_common_apis_for_library(
-                        dependency["name"]
-                    )
+                    dependency["security_impact"] = self._assess_library_security_impact(dependency["name"])
+                    dependency["common_apis"] = self._get_common_apis_for_library(dependency["name"])
 
                     dependencies.append(dependency)
 
@@ -333,85 +319,51 @@ class R2ImportExportAnalyzer:
             api_name = imp.get("name", "").lower()
 
             # System Information
-            if any(
-                pattern in api_name
-                for pattern in ["getsysteminfo", "getversion", "getenvironmentvar"]
-            ):
+            if any(pattern in api_name for pattern in ["getsysteminfo", "getversion", "getenvironmentvar"]):
                 categories["system_info"].append(imp)
 
             # File Operations
-            elif any(
-                pattern in api_name
-                for pattern in ["createfile", "readfile", "writefile", "deletefile", "findfile"]
-            ):
+            elif any(pattern in api_name for pattern in ["createfile", "readfile", "writefile", "deletefile", "findfile"]):
                 categories["file_operations"].append(imp)
 
             # Registry Operations
-            elif any(
-                pattern in api_name
-                for pattern in ["regopen", "regquery", "regset", "regdelete", "regenum"]
-            ):
+            elif any(pattern in api_name for pattern in ["regopen", "regquery", "regset", "regdelete", "regenum"]):
                 categories["registry_operations"].append(imp)
 
             # Network Operations
-            elif any(
-                pattern in api_name
-                for pattern in ["socket", "connect", "send", "recv", "wsastartup", "internetopen"]
-            ):
+            elif any(pattern in api_name for pattern in ["socket", "connect", "send", "recv", "wsastartup", "internetopen"]):
                 categories["network_operations"].append(imp)
 
             # Process Management
-            elif any(
-                pattern in api_name
-                for pattern in ["createprocess", "openprocess", "terminateprocess", "getmodule"]
-            ):
+            elif any(pattern in api_name for pattern in ["createprocess", "openprocess", "terminateprocess", "getmodule"]):
                 categories["process_management"].append(imp)
 
             # Memory Management
-            elif any(
-                pattern in api_name
-                for pattern in ["virtualloc", "heapalloc", "malloc", "free", "memcpy"]
-            ):
+            elif any(pattern in api_name for pattern in ["virtualloc", "heapalloc", "malloc", "free", "memcpy"]):
                 categories["memory_management"].append(imp)
 
             # Cryptography
-            elif any(
-                pattern in api_name
-                for pattern in ["crypt", "hash", "encrypt", "decrypt", "generatekey"]
-            ):
+            elif any(pattern in api_name for pattern in ["crypt", "hash", "encrypt", "decrypt", "generatekey"]):
                 categories["cryptography"].append(imp)
 
             # User Interface
-            elif any(
-                pattern in api_name
-                for pattern in ["messagebox", "createwindow", "showwindow", "getdc"]
-            ):
+            elif any(pattern in api_name for pattern in ["messagebox", "createwindow", "showwindow", "getdc"]):
                 categories["user_interface"].append(imp)
 
             # Debugging
-            elif any(
-                pattern in api_name
-                for pattern in ["isdebuggerpresent", "outputdebugstring", "debugbreak"]
-            ):
+            elif any(pattern in api_name for pattern in ["isdebuggerpresent", "outputdebugstring", "debugbreak"]):
                 categories["debugging"].append(imp)
 
             # Security
-            elif any(
-                pattern in api_name for pattern in ["adjusttoken", "lookupprivilege", "impersonate"]
-            ):
+            elif any(pattern in api_name for pattern in ["adjusttoken", "lookupprivilege", "impersonate"]):
                 categories["security"].append(imp)
 
             # Time/Date
-            elif any(
-                pattern in api_name
-                for pattern in ["getsystemtime", "getlocaltime", "filetimetosystemtime"]
-            ):
+            elif any(pattern in api_name for pattern in ["getsystemtime", "getlocaltime", "filetimetosystemtime"]):
                 categories["time_date"].append(imp)
 
             # Error Handling
-            elif any(
-                pattern in api_name for pattern in ["getlasterror", "seterrormode", "formatmessage"]
-            ):
+            elif any(pattern in api_name for pattern in ["getlasterror", "seterrormode", "formatmessage"]):
                 categories["error_handling"].append(imp)
 
         return categories
@@ -654,9 +606,7 @@ class R2ImportExportAnalyzer:
                     {
                         "api": imp,
                         "process_operation": self._identify_process_operation(api_name),
-                        "security_implications": self._assess_process_security_implications(
-                            api_name
-                        ),
+                        "security_implications": self._assess_process_security_implications(api_name),
                     },
                 )
 
@@ -744,11 +694,7 @@ class R2ImportExportAnalyzer:
             return "high"
         medium_risk_apis = ["createprocess", "regsetvalue", "cryptencrypt", "internetopen"]
 
-        return (
-            "medium"
-            if any(api in name_lower for api in medium_risk_apis)
-            else "low"
-        )
+        return "medium" if any(api in name_lower for api in medium_risk_apis) else "low"
 
     def _get_api_description(self, api_name: str) -> str:
         """Get a description of what the API does."""
@@ -896,11 +842,7 @@ class R2ImportExportAnalyzer:
             return "cryptography"
         network_libs = ["ws2_32", "wininet", "winhttp"]
 
-        return (
-            "network"
-            if any(lib in name_lower for lib in network_libs)
-            else "application"
-        )
+        return "network" if any(lib in name_lower for lib in network_libs) else "application"
 
     def _assess_library_security_impact(self, lib_name: str) -> str:
         """Assess the security impact of a library."""
@@ -909,11 +851,7 @@ class R2ImportExportAnalyzer:
             return "high"
         medium_impact_libs = ["kernel32", "user32", "ws2_32"]
 
-        return (
-            "medium"
-            if any(lib in lib_name.lower() for lib in medium_impact_libs)
-            else "low"
-        )
+        return "medium" if any(lib in lib_name.lower() for lib in medium_impact_libs) else "low"
 
     def _get_common_apis_for_library(self, lib_name: str) -> list[str]:
         """Get common APIs for a library."""
@@ -1132,10 +1070,10 @@ class R2ImportExportAnalyzer:
                 access_types = ["Read", "Write", "Execute"]
 
         # Check for directory operations
-        if any(
-                    pattern in name_lower
-                    for pattern in ["createdirectory", "removedirectory", "findfirstfile"]
-                ) and "Directory" not in access_types:
+        if (
+            any(pattern in name_lower for pattern in ["createdirectory", "removedirectory", "findfirstfile"])
+            and "Directory" not in access_types
+        ):
             access_types.append("Directory")
 
         # Default if no specific pattern matches
@@ -1444,23 +1382,15 @@ class R2ImportExportAnalyzer:
 
         # Add security concerns
         if suspicious_count > 0:
-            assessment["security_concerns"].append(
-                f"Contains {suspicious_count} suspicious API calls"
-            )
+            assessment["security_concerns"].append(f"Contains {suspicious_count} suspicious API calls")
         if anti_analysis_count > 0:
-            assessment["security_concerns"].append(
-                f"Contains {anti_analysis_count} anti-analysis techniques"
-            )
+            assessment["security_concerns"].append(f"Contains {anti_analysis_count} anti-analysis techniques")
         if crypto_count > 0:
-            assessment["security_concerns"].append(
-                f"Uses {crypto_count} cryptographic APIs - potential license protection"
-            )
+            assessment["security_concerns"].append(f"Uses {crypto_count} cryptographic APIs - potential license protection")
 
         return assessment
 
-    def _get_api_cross_references(
-        self, r2: R2Session, imports: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    def _get_api_cross_references(self, r2: R2Session, imports: list[dict[str, Any]]) -> dict[str, Any]:
         """Get cross-references for important APIs."""
         xrefs = {}
 
@@ -1468,16 +1398,13 @@ class R2ImportExportAnalyzer:
         important_apis = [
             imp
             for imp in imports
-            if self._classify_api_type(imp.get("name", "")) in ["cryptography"]
-            or "license" in imp.get("name", "").lower()
+            if self._classify_api_type(imp.get("name", "")) in ["cryptography"] or "license" in imp.get("name", "").lower()
         ]
 
         for api in important_apis[:10]:  # Limit for performance
             api_name = api.get("name", "")
             try:
-                if xref_data := r2._execute_command(
-                    f"axt sym.imp.{api_name}", expect_json=False
-                ):
+                if xref_data := r2._execute_command(f"axt sym.imp.{api_name}", expect_json=False):
                     xrefs[api_name] = xref_data.strip().split("\n")
             except R2Exception as e:
                 self.logger.error("R2Exception in radare2_imports: %s", e)
@@ -1486,9 +1413,7 @@ class R2ImportExportAnalyzer:
         return xrefs
 
 
-def analyze_binary_imports_exports(
-    binary_path: str, radare2_path: str | None = None
-) -> dict[str, Any]:
+def analyze_binary_imports_exports(binary_path: str, radare2_path: str | None = None) -> dict[str, Any]:
     """Perform comprehensive import/export analysis on a binary.
 
     Args:

@@ -65,9 +65,7 @@ class ComprehensiveR2Integration:
 
         """
         try:
-            self.logger.info(
-                f"Starting comprehensive radare2 integration with {type(main_app).__name__}"
-            )
+            self.logger.info(f"Starting comprehensive radare2 integration with {type(main_app).__name__}")
 
             # Detect application type and use appropriate integration method
             integration_method = self._detect_integration_method(main_app)

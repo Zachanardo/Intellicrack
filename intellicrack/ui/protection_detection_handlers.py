@@ -86,9 +86,7 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("Commercial protection scan complete")
-            logger.info(
-                f"Commercial protection scan complete: {len(results.get('protections_found', []))} found"
-            )
+            logger.info(f"Commercial protection scan complete: {len(results.get('protections_found', []))} found")
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during commercial protection scan: {e!s}"
@@ -200,9 +198,7 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("Checksum detection complete")
-            logger.info(
-                f"Checksum detection complete: Detected={results['checksum_verification_detected']}"
-            )
+            logger.info(f"Checksum detection complete: Detected={results['checksum_verification_detected']}")
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during checksum detection: {e!s}"
@@ -248,9 +244,7 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("Self-healing code detection complete")
-            logger.info(
-                f"Self-healing code detection complete: Detected={results['self_healing_detected']}"
-            )
+            logger.info(f"Self-healing code detection complete: Detected={results['self_healing_detected']}")
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during self-healing code detection: {e!s}"
@@ -275,9 +269,7 @@ class ProtectionDetectionHandlers:
             results = tpm_bypass.bypass_tpm_checks()
 
             output = "=== TPM Bypass Results ===\n\n" + (
-                "OK TPM bypass successful!\n\n"
-                if results["success"]
-                else "WARNING TPM bypass partially successful.\n\n"
+                "OK TPM bypass successful!\n\n" if results["success"] else "WARNING TPM bypass partially successful.\n\n"
             )
             if results.get("methods_applied"):
                 output += "Methods Applied:\n"
@@ -319,9 +311,7 @@ class ProtectionDetectionHandlers:
             results = vm_bypass.bypass_vm_detection()
 
             output = "=== VM Detection Bypass Results ===\n\n" + (
-                "OK VM detection bypass successful!\n\n"
-                if results["success"]
-                else "WARNING VM detection bypass partially successful.\n\n"
+                "OK VM detection bypass successful!\n\n" if results["success"] else "WARNING VM detection bypass partially successful.\n\n"
             )
             if results.get("methods_applied"):
                 output += "Methods Applied:\n"

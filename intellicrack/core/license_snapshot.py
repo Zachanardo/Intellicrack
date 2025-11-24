@@ -218,9 +218,7 @@ class LicenseSnapshot:
                         registry_data[hive_name][key_path] = key_data
                 except Exception as e:
                     # Log the exception with details for debugging
-                    logger.warning(
-                        "Error capturing registry data for %s\\%s: %s", hive_name, key_path, e
-                    )
+                    logger.warning("Error capturing registry data for %s\\%s: %s", hive_name, key_path, e)
                     continue
 
         if license_keys := self._find_license_registry_keys():
@@ -228,9 +226,7 @@ class LicenseSnapshot:
 
         return registry_data
 
-    def _read_registry_key_recursive(
-        self, hive: int, path: str, max_depth: int = 2
-    ) -> dict[str, Any]:
+    def _read_registry_key_recursive(self, hive: int, path: str, max_depth: int = 2) -> dict[str, Any]:
         """Recursively read registry key and its values."""
         if max_depth <= 0:
             return {}
@@ -262,13 +258,8 @@ class LicenseSnapshot:
                 while True:
                     try:
                         subkey_name = winreg.EnumKey(key, i)
-                        if any(
-                            lic in subkey_name.lower()
-                            for lic in ["license", "serial", "activation", "trial"]
-                        ):
-                            if subkey_data := self._read_registry_key_recursive(
-                                hive, f"{path}\\{subkey_name}", max_depth - 1
-                            ):
+                        if any(lic in subkey_name.lower() for lic in ["license", "serial", "activation", "trial"]):
+                            if subkey_data := self._read_registry_key_recursive(hive, f"{path}\\{subkey_name}", max_depth - 1):
                                 result["subkeys"][subkey_name] = subkey_data
                         i += 1
                     except OSError:
@@ -295,16 +286,12 @@ class LicenseSnapshot:
 
                         # Check vendor subkeys for license data
                         try:
-                            with winreg.OpenKey(
-                                                        winreg.HKEY_LOCAL_MACHINE, vendor_path
-                                                    ) as vendor_key:
+                            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, vendor_path) as vendor_key:
                                 j = 0
                                 while j < 20:  # Limit iterations
                                     try:
                                         product_name = winreg.EnumKey(vendor_key, j)
-                                        if any(
-                                            term in product_name.lower() for term in search_terms
-                                        ):
+                                        if any(term in product_name.lower() for term in search_terms):
                                             product_path = f"{vendor_path}\\{product_name}"
                                             if product_data := self._read_registry_key_recursive(
                                                 winreg.HKEY_LOCAL_MACHINE,
@@ -349,19 +336,11 @@ class LicenseSnapshot:
                                     }
 
                                     # Categorize file
-                                    if any(
-                                        ext in str(file_path).lower()
-                                        for ext in [".lic", ".license", ".key"]
-                                    ):
+                                    if any(ext in str(file_path).lower() for ext in [".lic", ".license", ".key"]):
                                         file_data["license_files"].append(file_info)
-                                    elif any(
-                                        ext in str(file_path).lower()
-                                        for ext in [".ini", ".cfg", ".conf", ".xml"]
-                                    ):
+                                    elif any(ext in str(file_path).lower() for ext in [".ini", ".cfg", ".conf", ".xml"]):
                                         file_data["config_files"].append(file_info)
-                                    elif any(
-                                        ext in str(file_path).lower() for ext in [".db", ".dat"]
-                                    ):
+                                    elif any(ext in str(file_path).lower() for ext in [".db", ".dat"]):
                                         file_data["database_files"].append(file_info)
 
                                 except Exception as e:
@@ -403,10 +382,7 @@ class LicenseSnapshot:
                 display_name = service[1]
 
                 # Check if service might be license-related
-                if any(
-                    keyword in service_name.lower() or keyword in display_name.lower()
-                    for keyword in license_keywords
-                ):
+                if any(keyword in service_name.lower() or keyword in display_name.lower() for keyword in license_keywords):
                     service_info = {
                         "name": service_name,
                         "display_name": display_name,
@@ -415,12 +391,8 @@ class LicenseSnapshot:
 
                     # Get more details
                     try:
-                        hscm = win32service.OpenSCManager(
-                            None, None, win32service.SC_MANAGER_ALL_ACCESS
-                        )
-                        hs = win32service.OpenService(
-                            hscm, service_name, win32service.SERVICE_ALL_ACCESS
-                        )
+                        hscm = win32service.OpenSCManager(None, None, win32service.SC_MANAGER_ALL_ACCESS)
+                        hs = win32service.OpenService(hscm, service_name, win32service.SERVICE_ALL_ACCESS)
                         service_config = win32service.QueryServiceConfig(hs)
                         service_info["binary_path"] = service_config[3]
                         service_info["start_type"] = service_config[1]
@@ -448,18 +420,14 @@ class LicenseSnapshot:
                         network_data["connections"].append(
                             {
                                 "local": f"{conn.laddr.ip}:{conn.laddr.port}",
-                                "remote": f"{conn.raddr.ip}:{conn.raddr.port}"
-                                if conn.raddr
-                                else "N/A",
+                                "remote": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "N/A",
                                 "pid": conn.pid,
                                 "status": conn.status,
                             },
                         )
 
                 elif conn.status == "LISTEN":
-                    network_data["listening_ports"].append(
-                        {"address": f"{conn.laddr.ip}:{conn.laddr.port}", "pid": conn.pid}
-                    )
+                    network_data["listening_ports"].append({"address": f"{conn.laddr.ip}:{conn.laddr.port}", "pid": conn.pid})
 
         except Exception as e:
             logger.debug(f"Network connection enumeration failed: {e}")
@@ -481,9 +449,7 @@ class LicenseSnapshot:
                         while cert:
                             cert_info = {
                                 "store": store_name,
-                                "subject": win32api.CertGetNameString(
-                                    cert, win32api.CERT_NAME_SIMPLE_DISPLAY_TYPE, 0
-                                ),
+                                "subject": win32api.CertGetNameString(cert, win32api.CERT_NAME_SIMPLE_DISPLAY_TYPE, 0),
                                 "issuer": win32api.CertGetNameString(
                                     cert,
                                     win32api.CERT_NAME_SIMPLE_DISPLAY_TYPE,
@@ -517,11 +483,7 @@ class LicenseSnapshot:
         """Capture environment variables that might contain license info."""
         license_vars = ["LICENSE", "SERIAL", "KEY", "ACTIVATION", "FLEXLM", "HASP", "SENTINEL"]
 
-        return {
-            key: value
-            for key, value in os.environ.items()
-            if any(var in key.upper() for var in license_vars)
-        }
+        return {key: value for key, value in os.environ.items() if any(var in key.upper() for var in license_vars)}
 
     def _capture_loaded_dlls(self) -> dict[str, list[str]]:
         """Capture loaded DLLs for each process."""
@@ -538,10 +500,7 @@ class LicenseSnapshot:
                     if dll.path and dll.path.endswith(".dll"):
                         dll_name = os.path.basename(dll.path).lower()
                         # Check for license-related DLLs
-                        if any(
-                            lic in dll_name
-                            for lic in ["license", "hasp", "sentinel", "flexlm", "activation"]
-                        ):
+                        if any(lic in dll_name for lic in ["license", "hasp", "sentinel", "flexlm", "activation"]):
                             modules.append(dll.path)
 
                 if modules:
@@ -599,9 +558,7 @@ class LicenseSnapshot:
         try:
             import subprocess
 
-            result = subprocess.run(
-                ["driverquery", "/v", "/fo", "csv"], capture_output=True, text=True, timeout=5
-            )
+            result = subprocess.run(["driverquery", "/v", "/fo", "csv"], capture_output=True, text=True, timeout=5)
 
             if result.returncode == 0:
                 import csv
@@ -615,8 +572,7 @@ class LicenseSnapshot:
 
                     # Check for protection/license drivers
                     if any(
-                        prot in driver_name or prot in module_name
-                        for prot in ["hasp", "sentinel", "hardlock", "wibu", "safenet", "thales"]
+                        prot in driver_name or prot in module_name for prot in ["hasp", "sentinel", "hardlock", "wibu", "safenet", "thales"]
                     ):
                         drivers.append(
                             {
@@ -655,10 +611,7 @@ class LicenseSnapshot:
                     task_name = row.get("TaskName", "").lower()
 
                     # Check for license-related tasks
-                    if any(
-                        lic in task_name
-                        for lic in ["license", "activation", "update", "check", "verify"]
-                    ):
+                    if any(lic in task_name for lic in ["license", "activation", "update", "check", "verify"]):
                         tasks.append(
                             {
                                 "name": row.get("TaskName", ""),

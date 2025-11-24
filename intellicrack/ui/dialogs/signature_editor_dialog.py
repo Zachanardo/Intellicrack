@@ -917,11 +917,7 @@ ep:
 
         # Check for hex pattern format
         hex_patterns = re.findall(r'hex\s*=\s*"([^"]*)"', content)
-        errors.extend(
-            f"Invalid hex pattern: {pattern}"
-            for pattern in hex_patterns
-            if not re.match(r"^[0-9A-Fa-f\s?*]*$", pattern)
-        )
+        errors.extend(f"Invalid hex pattern: {pattern}" for pattern in hex_patterns if not re.match(r"^[0-9A-Fa-f\s?*]*$", pattern))
         if errors:
             QMessageBox.warning(self, "Validation Errors", "\n".join(errors))
         else:
@@ -960,9 +956,7 @@ ep:
         if isinstance(parent_widget, QTabWidget):
             parent_widget.setCurrentIndex(2)  # Template tab
 
-    def load_template_category(
-        self, current_item: QListWidgetItem | None, previous_item: QListWidgetItem | None
-    ) -> None:
+    def load_template_category(self, current_item: QListWidgetItem | None, previous_item: QListWidgetItem | None) -> None:
         """Load templates for selected category."""
         if not current_item:
             return
@@ -979,9 +973,7 @@ ep:
                 self._category_selections = {}
             if selected_template:
                 self._category_selections[previous_category] = selected_template
-                logger.debug(
-                    f"Saved template selection '{selected_template}' for category '{previous_category}'"
-                )
+                logger.debug(f"Saved template selection '{selected_template}' for category '{previous_category}'")
 
         category = current_item.text()
         self.template_list.clear()
@@ -998,9 +990,7 @@ ep:
                 if self.template_list.item(i).text() == previous_selection:
                     self.template_list.setCurrentRow(i)
                     self._update_template_preview()
-                    logger.debug(
-                        f"Restored template selection '{previous_selection}' for category '{category}'"
-                    )
+                    logger.debug(f"Restored template selection '{previous_selection}' for category '{category}'")
                     return
 
         # Load first template preview if no previous selection
@@ -1014,10 +1004,7 @@ ep:
             from ...data.signature_templates import SignatureTemplates
 
             templates_data = SignatureTemplates.get_templates_for_category(category)
-            return {
-                template_name: template_info["template"]
-                for template_name, template_info in templates_data.items()
-            }
+            return {template_name: template_info["template"] for template_name, template_info in templates_data.items()}
         except ImportError:
             logger.warning("Signature templates module not available, using built-in templates")
             return self._get_builtin_templates(category)
@@ -1110,10 +1097,7 @@ ep:
             QMessageBox.warning(self, "Test Error", "No signature content to test")
             return
 
-        test_files = [
-            self.test_files_list.item(i).text()
-            for i in range(self.test_files_list.count())
-        ]
+        test_files = [self.test_files_list.item(i).text() for i in range(self.test_files_list.count())]
         if not test_files:
             QMessageBox.warning(self, "Test Error", "No test files selected")
             return
@@ -1150,9 +1134,7 @@ ep:
         self._on_tests_finished()
 
     @pyqtSlot(str, bool, str, float)
-    def _on_test_completed(
-        self, file_path: str, success: bool, result: str, execution_time: float
-    ) -> None:
+    def _on_test_completed(self, file_path: str, success: bool, result: str, execution_time: float) -> None:
         """Handle individual test completion."""
         row = self.test_results_model.rowCount()
         self.test_results_model.insertRow(row)

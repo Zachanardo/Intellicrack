@@ -1,0 +1,34 @@
+{
+  "report_metadata": {
+    "version": "1.0",
+    "generated_by": "Intellicrack",
+    "generation_timestamp": 1763945569.46562,
+    "report_type": "analysis",
+    "validation_status": "validated"
+  },
+  "content": {
+    "type": "analysis",
+    "findings": [
+      "test"
+    ],
+    "summary": {
+      "total_sections": 2,
+      "sections": [
+        "type",
+        "findings"
+      ],
+      "data_types": {
+        "type": "str",
+        "findings": "list"
+      },
+      "has_errors": false,
+      "has_results": true
+    }
+  },
+  "system_info": {
+    "platform": "Windows",
+    "architecture": "AMD64",
+    "python_version": "3.12.12",
+    "hostname": "Zach-PC"
+  }
+}

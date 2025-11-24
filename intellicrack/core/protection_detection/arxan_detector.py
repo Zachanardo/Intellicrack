@@ -235,19 +235,13 @@ class ArxanDetector:
             version = self._detect_version(binary_data, metadata)
             heuristic_score = self._heuristic_analysis(binary_data, features, metadata)
 
-            total_score = (
-                signature_score * 0.35
-                + section_score * 0.25
-                + import_score * 0.20
-                + heuristic_score * 0.20
-            )
+            total_score = signature_score * 0.35 + section_score * 0.25 + import_score * 0.20 + heuristic_score * 0.20
 
             is_protected = total_score >= 0.50
             confidence = min(total_score, 1.0)
 
             self.logger.info(
-                f"Arxan detection complete: protected={is_protected}, "
-                f"confidence={confidence:.2%}, version={version.value}",
+                f"Arxan detection complete: protected={is_protected}, confidence={confidence:.2%}, version={version.value}",
             )
 
             return ArxanDetectionResult(
@@ -329,9 +323,7 @@ class ArxanDetector:
                     for entry in pe.DIRECTORY_ENTRY_IMPORT:
                         for imp in entry.imports:
                             if imp.name:
-                                func_name = (
-                                    imp.name.decode() if isinstance(imp.name, bytes) else imp.name
-                                )
+                                func_name = imp.name.decode() if isinstance(imp.name, bytes) else imp.name
 
                                 if func_name in self.ARXAN_API_PATTERNS:
                                     if func_name not in import_hints:
@@ -395,15 +387,13 @@ class ArxanDetector:
         score = 0.0
         feature_count = 0
 
-        anti_debug_count = sum(bool(pattern in binary_data)
-                           for pattern in self.ANTI_DEBUG_PATTERNS)
+        anti_debug_count = sum(bool(pattern in binary_data) for pattern in self.ANTI_DEBUG_PATTERNS)
         if anti_debug_count >= 2:
             features.anti_debugging = True
             score += 0.15
             feature_count += 1
 
-        integrity_count = sum(bool(pattern in binary_data)
-                          for pattern in self.INTEGRITY_CHECK_PATTERNS)
+        integrity_count = sum(bool(pattern in binary_data) for pattern in self.INTEGRITY_CHECK_PATTERNS)
         if integrity_count >= 2:
             features.integrity_checks = True
             features.anti_tampering = True
@@ -484,10 +474,7 @@ class ArxanDetector:
             if binary_data.count(pattern) > 10:
                 return True
 
-        printable_ratio = sum(bool(32 <= b < 127)
-                          for b in binary_data[:10000]) / min(
-            len(binary_data), 10000
-        )
+        printable_ratio = sum(bool(32 <= b < 127) for b in binary_data[:10000]) / min(len(binary_data), 10000)
 
         return printable_ratio < 0.05
 
@@ -527,8 +514,7 @@ class ArxanDetector:
             b"runtime_check",
         ]
 
-        rasp_count = sum(bool(s in binary_data.lower())
-                     for s in rasp_strings)
+        rasp_count = sum(bool(s in binary_data.lower()) for s in rasp_strings)
 
         if rasp_count >= 3:
             return True
@@ -539,10 +525,7 @@ class ArxanDetector:
             b"\xff\x15....\x85\xc0\x74",
         ]
 
-        return any(
-            binary_data.count(pattern) > 5
-            for pattern in exception_handler_patterns
-        )
+        return any(binary_data.count(pattern) > 5 for pattern in exception_handler_patterns)
 
     def _check_license_validation(self, binary_data: bytes) -> bool:
         """Check for license validation routines."""
@@ -559,8 +542,7 @@ class ArxanDetector:
             b"trial",
         ]
 
-        license_count = sum(bool(s in binary_data.lower())
-                        for s in license_strings)
+        license_count = sum(bool(s in binary_data.lower()) for s in license_strings)
 
         if license_count >= 4:
             return True

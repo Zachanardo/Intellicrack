@@ -1363,9 +1363,7 @@ except ImportError as e:
         """Color chooser dialog."""
 
         @staticmethod
-        def askcolor(
-            color: str | None = None, title: str = "", **kwargs: object
-        ) -> tuple[tuple[int, int, int], str]:
+        def askcolor(color: str | None = None, title: str = "", **kwargs: object) -> tuple[tuple[int, int, int], str]:
             """Ask for color.
 
             Args:
@@ -1379,9 +1377,7 @@ except ImportError as e:
             """
             default_rgb = (128, 128, 128)
             default_hex = "#808080"
-            logger.info(
-                "COLOR Dialog '%s': Would return %s ('%s')", title, default_rgb, default_hex
-            )
+            logger.info("COLOR Dialog '%s': Would return %s ('%s')", title, default_rgb, default_hex)
             return (default_rgb, default_hex)
 
     # Font handling
@@ -1596,9 +1592,7 @@ except ImportError as e:
                 self.next_item_id = 1
                 logger.debug("Treeview created: %s", self.widget_id)
 
-            def insert(
-                self, parent: str, index: int | str, iid: str | None = None, **kwargs: object
-            ) -> str:
+            def insert(self, parent: str, index: int | str, iid: str | None = None, **kwargs: object) -> str:
                 """Insert item.
 
                 Args:
@@ -1665,9 +1659,7 @@ except ImportError as e:
                     **kwargs: Heading options.
 
                 """
-                logger.debug(
-                    "Treeview %s: Heading for column %s configured", self.widget_id, column
-                )
+                logger.debug("Treeview %s: Heading for column %s configured", self.widget_id, column)
 
             def column(self, column: str, **kwargs: object) -> None:
                 """Configure column.

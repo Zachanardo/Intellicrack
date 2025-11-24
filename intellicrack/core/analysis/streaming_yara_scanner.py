@@ -171,10 +171,7 @@ class StreamingYaraScanner(StreamingAnalyzer):
                     for instance in string_match.instances:
                         actual_offset = effective_offset + instance.offset
 
-                        if (
-                            actual_offset < context.offset
-                            or actual_offset >= context.offset + context.size
-                        ):
+                        if actual_offset < context.offset or actual_offset >= context.offset + context.size:
                             continue
 
                         if actual_offset in self.match_offsets:
@@ -268,8 +265,7 @@ class StreamingYaraScanner(StreamingAnalyzer):
                 merged["errors"] = errors
 
             logger.info(
-                f"Merged {len(results)} chunk results: "
-                f"{len(all_matches)} total matches for {len(rules_matched)} unique rules",
+                f"Merged {len(results)} chunk results: {len(all_matches)} total matches for {len(rules_matched)} unique rules",
             )
 
             return merged
@@ -328,9 +324,7 @@ class StreamingYaraScanner(StreamingAnalyzer):
             }
 
             logger.info(
-                f"Finalized YARA analysis: "
-                f"{len(license_matches)} licensing matches, "
-                f"{len(protection_matches)} protection matches",
+                f"Finalized YARA analysis: {len(license_matches)} licensing matches, {len(protection_matches)} protection matches",
             )
 
             return merged_results
@@ -340,9 +334,7 @@ class StreamingYaraScanner(StreamingAnalyzer):
             merged_results["finalization_error"] = str(e)
             return merged_results
 
-    def _generate_summary(
-        self, results: dict[str, Any], license_matches: list[dict[str, Any]]
-    ) -> str:
+    def _generate_summary(self, results: dict[str, Any], license_matches: list[dict[str, Any]]) -> str:
         """Generate human-readable summary of YARA scan results.
 
         Composes narrative describing detected patterns including licensing,

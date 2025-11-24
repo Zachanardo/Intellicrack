@@ -125,9 +125,7 @@ def get_threat_from_score(score: float) -> ThreatLevel:
     return ThreatLevel.UNLIKELY if score >= 1.0 else ThreatLevel.NONE
 
 
-def calculate_risk_score(
-    severity: SeverityLevel, threat: ThreatLevel, confidence: ConfidenceLevel
-) -> float:
+def calculate_risk_score(severity: SeverityLevel, threat: ThreatLevel, confidence: ConfidenceLevel) -> float:
     """Calculate overall risk score from severity, threat, and confidence."""
     severity_score = SEVERITY_SCORES.get(severity, 1.0)
     threat_score = THREAT_SCORES.get(threat, 0.0)
@@ -170,9 +168,7 @@ def format_severity_report(findings: list[dict]) -> str:
     for severity in severity_order:
         if severity in severity_groups:
             count = len(severity_groups[severity])
-            report_lines.extend(
-                (f"\n{severity.value.upper()}: {count} finding(s)", "-" * 30)
-            )
+            report_lines.extend((f"\n{severity.value.upper()}: {count} finding(s)", "-" * 30))
             for i, finding in enumerate(severity_groups[severity][:5], 1):
                 title = finding.get("title", "Unknown finding")
                 description = finding.get("description", "No description")

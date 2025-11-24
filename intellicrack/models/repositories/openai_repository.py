@@ -133,9 +133,7 @@ class OpenAIRepository(APIRepositoryBase):
                 model_id = model_data.get("id")
 
                 # For most API usage we'll only care about chat and embedding models
-                if not (
-                    model_id.startswith("gpt-") or "embedding" in model_id or model_id == "dall-e-3"
-                ):
+                if not (model_id.startswith("gpt-") or "embedding" in model_id or model_id == "dall-e-3"):
                     continue
 
                 if model_info := self._get_model_details(model_id):
@@ -216,7 +214,5 @@ class OpenAIRepository(APIRepositoryBase):
             Always returns (False, "OpenAI doesn't support model downloads")
 
         """
-        logger.warning(
-            f"Download requested for {model_id} to {destination_path}, but not supported"
-        )
+        logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
         return False, "OpenAI doesn't support model downloads for this model"

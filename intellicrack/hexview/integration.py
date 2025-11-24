@@ -52,9 +52,7 @@ except ImportError as e:
     import re
     from collections import Counter
 
-    def wrapper_ai_binary_analyze(
-        app_instance: object, parameters: dict[str, Any]
-    ) -> dict[str, Any]:
+    def wrapper_ai_binary_analyze(app_instance: object, parameters: dict[str, Any]) -> dict[str, Any]:
         """Perform static binary analysis when AI bridge is not available.
 
         Analyzes binary data using entropy calculation, string extraction,
@@ -90,9 +88,7 @@ except ImportError as e:
             logger.error("Error in fallback binary analyze: %s", e)
             return {"error": f"Analysis failed: {e!s}"}
 
-    def wrapper_ai_binary_pattern_search(
-        app_instance: object, parameters: dict[str, Any]
-    ) -> dict[str, Any]:
+    def wrapper_ai_binary_pattern_search(app_instance: object, parameters: dict[str, Any]) -> dict[str, Any]:
         """Search for patterns in binary data when AI bridge is not available.
 
         Performs pattern matching using regex, byte sequences, and common
@@ -127,10 +123,7 @@ except ImportError as e:
                     idx = pos + 1
 
             elif pattern_type == "regex":
-                matches.extend(
-                    {"offset": match.start(), "length": len(match.group())}
-                    for match in re.finditer(pattern.encode(), data)
-                )
+                matches.extend({"offset": match.start(), "length": len(match.group())} for match in re.finditer(pattern.encode(), data))
             elif pattern_type == "string":
                 search_bytes = pattern.encode("utf-8")
                 idx = 0
@@ -181,9 +174,7 @@ except ImportError as e:
             logger.error("Error in fallback pattern search: %s", e)
             return {"error": f"Pattern search failed: {e!s}"}
 
-    def wrapper_ai_binary_edit_suggest(
-        app_instance: object, parameters: dict[str, Any]
-    ) -> dict[str, Any]:
+    def wrapper_ai_binary_edit_suggest(app_instance: object, parameters: dict[str, Any]) -> dict[str, Any]:
         """Suggest binary edits for license bypass when AI bridge is not available.
 
         Analyzes binary code to suggest patches for common license validation
@@ -365,10 +356,7 @@ except ImportError as e:
         counter = Counter(data)
         total = len(data)
         return {
-            "most_common": [
-                {"byte": f"{b:#04x}", "count": c, "percentage": (c / total) * 100}
-                for b, c in counter.most_common(5)
-            ],
+            "most_common": [{"byte": f"{b:#04x}", "count": c, "percentage": (c / total) * 100} for b, c in counter.most_common(5)],
             "unique_bytes": len(counter),
             "diversity_ratio": len(counter) / 256.0,
         }
@@ -380,9 +368,7 @@ logger = logging.getLogger("Intellicrack.HexView")
 TOOL_REGISTRY = {}
 
 
-def show_enhanced_hex_viewer(
-    app_instance: object, file_path: str | None = None, read_only: bool = True
-) -> QDialog | None:
+def show_enhanced_hex_viewer(app_instance: object, file_path: str | None = None, read_only: bool = True) -> QDialog | None:
     """Show the enhanced hex viewer/editor dialog.
 
     This function creates and shows the enhanced hex viewer dialog, optionally
@@ -534,19 +520,13 @@ def add_hex_viewer_menu(app_instance: object, menu_name: str | None = None) -> N
         return
 
     menu = next(
-            (
-                action.menu()
-                for action in app_instance.menuBar().actions()
-                if action.text() == menu_name
-            ),
-            None,
-        ) or app_instance.menuBar().addMenu(menu_name)
+        (action.menu() for action in app_instance.menuBar().actions() if action.text() == menu_name),
+        None,
+    ) or app_instance.menuBar().addMenu(menu_name)
 
     # Add view action (read-only)
     enhanced_hex_action = QAction("Hex Viewer (View)", app_instance)
-    enhanced_hex_action.triggered.connect(
-        lambda: show_enhanced_hex_viewer(app_instance, None, True)
-    )
+    enhanced_hex_action.triggered.connect(lambda: show_enhanced_hex_viewer(app_instance, None, True))
     enhanced_hex_action.setStatusTip("Open binary in read-only hex viewer")
     menu.addAction(enhanced_hex_action)
 

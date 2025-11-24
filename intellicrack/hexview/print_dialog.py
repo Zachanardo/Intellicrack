@@ -87,7 +87,11 @@ class PrintOptionsDialog(QDialog):
         self.selection_check.toggled.connect(self.on_range_changed)
 
         # Check if there's a selection
-        if self.hex_viewer and hasattr(self.hex_viewer, "selection_start") and (self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1):
+        if (
+            self.hex_viewer
+            and hasattr(self.hex_viewer, "selection_start")
+            and (self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1)
+        ):
             self.selection_check.setEnabled(True)
             selection_size = self.hex_viewer.selection_end - self.hex_viewer.selection_start
             self.selection_check.setText(f"Selection only ({selection_size} bytes)")
@@ -226,9 +230,7 @@ class PrintOptionsDialog(QDialog):
 
         button_layout.addStretch()
 
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         button_box.accepted.connect(self.print_document)
         button_box.rejected.connect(self.reject)
         button_layout.addWidget(button_box)
@@ -349,9 +351,7 @@ class PrintOptionsDialog(QDialog):
         # Add ASCII if enabled
         if self.show_ascii_check.isChecked():
             line += "  "
-            ascii_str = "".join(
-                chr(byte) if 32 <= byte < 127 else "." for byte in data_chunk
-            )
+            ascii_str = "".join(chr(byte) if 32 <= byte < 127 else "." for byte in data_chunk)
             # Pad ASCII if needed
             if len(data_chunk) < bytes_per_row:
                 ascii_str += " " * (bytes_per_row - len(data_chunk))
@@ -422,9 +422,7 @@ class PrintOptionsDialog(QDialog):
 
                 data_end = min(data_start + bytes_per_row, page_end)
                 if data_chunk := data[data_start:data_end]:
-                    line = self.format_hex_line(
-                        start_offset + data_start, data_chunk, bytes_per_row
-                    )
+                    line = self.format_hex_line(start_offset + data_start, data_chunk, bytes_per_row)
                     painter.drawText(content_rect.left(), y_pos, line)
                     y_pos += line_height
 
@@ -466,9 +464,7 @@ class PrintOptionsDialog(QDialog):
         text = text.replace("%filename%", filename)
         text = text.replace("%page%", str(page_num))
         text = text.replace("%total%", str(total_pages))
-        return text.replace(
-            "%date%", datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-        )
+        return text.replace("%date%", datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
 
     def calculate_total_pages(self, data: bytes) -> int:
         """Calculate total number of pages.

@@ -186,9 +186,7 @@ except ImportError as e:
             for i in range(0, len(self.content), chunk_size):
                 yield self.content[i : i + chunk_size]
 
-        def iter_lines(
-            self, chunk_size: int = 512, decode_unicode: bool = True
-        ) -> Generator[str, None, None]:
+        def iter_lines(self, chunk_size: int = 512, decode_unicode: bool = True) -> Generator[str, None, None]:
             """Iterate over response lines.
 
             Args:
@@ -270,9 +268,7 @@ except ImportError as e:
         Provides a dict-like interface for managing HTTP cookies.
         """
 
-        def set(
-            self, name: str, value: str, domain: str | None = None, path: str | None = None
-        ) -> None:
+        def set(self, name: str, value: str, domain: str | None = None, path: str | None = None) -> None:
             """Set cookie in jar.
 
             Args:
@@ -411,9 +407,7 @@ except ImportError as e:
             """
             return self.request("GET", url, **kwargs)
 
-        def post(
-            self, url: str, data: object | None = None, json: object | None = None, **kwargs: object
-        ) -> Response:
+        def post(self, url: str, data: object | None = None, json: object | None = None, **kwargs: object) -> Response:
             """Send POST request.
 
             Args:
@@ -558,9 +552,7 @@ except ImportError as e:
         Configures connection pool parameters for HTTP sessions.
         """
 
-        def __init__(
-            self, pool_connections: int = 10, pool_maxsize: int = 10, max_retries: int = 0
-        ) -> None:
+        def __init__(self, pool_connections: int = 10, pool_maxsize: int = 10, max_retries: int = 0) -> None:
             """Initialize HTTP adapter.
 
             Args:
@@ -649,9 +641,7 @@ except ImportError as e:
 
         # Handle cookies
         if session and session.cookies:
-            if cookie_header := "; ".join(
-                f"{k}={v}" for k, v in session.cookies.items()
-            ):
+            if cookie_header := "; ".join(f"{k}={v}" for k, v in session.cookies.items()):
                 req_headers["Cookie"] = cookie_header
         if cookies:
             if cookie_header := "; ".join(f"{k}={v}" for k, v in cookies.items()):
@@ -728,11 +718,7 @@ except ImportError as e:
             resp.reason = e.reason
             resp.url = url
             resp.content = e.read() if hasattr(e, "read") else b""
-            resp.headers = (
-                CaseInsensitiveDict(dict(e.headers))
-                if hasattr(e, "headers")
-                else CaseInsensitiveDict()
-            )
+            resp.headers = CaseInsensitiveDict(dict(e.headers)) if hasattr(e, "headers") else CaseInsensitiveDict()
 
             try:
                 resp.text = resp.content.decode("utf-8")
@@ -774,9 +760,7 @@ except ImportError as e:
         """
         return request("GET", url, **kwargs)
 
-    def post(
-        url: str, data: object | None = None, json: object | None = None, **kwargs: object
-    ) -> Response:
+    def post(url: str, data: object | None = None, json: object | None = None, **kwargs: object) -> Response:
         """Send POST request.
 
         Args:
@@ -884,9 +868,7 @@ except ImportError as e:
         HTTPAdapter = HTTPAdapter
 
         # Auth
-        auth = type(
-            "auth", (), {"HTTPBasicAuth": HTTPBasicAuth, "HTTPDigestAuth": HTTPDigestAuth}
-        )()
+        auth = type("auth", (), {"HTTPBasicAuth": HTTPBasicAuth, "HTTPDigestAuth": HTTPDigestAuth})()
 
         # Exceptions
         RequestException = RequestError

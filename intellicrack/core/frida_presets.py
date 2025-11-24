@@ -118,7 +118,7 @@ FRIDA_PRESETS = {
         ],
         "protections": ["DRM", "INTEGRITY", "ANTI_DEBUG"],
         "options": {
-            "patch_steam_stub": True,
+            "patch_steam_loader": True,
             "bypass_ceg": True,
             "hook_steam_api": True,
         },
@@ -275,8 +275,8 @@ FRIDA_PRESETS = {
         ],
     },
     "Educational Software": {
-        "description": "Bypass for educational and training software",
-        "target": "E-learning platforms, simulators",
+        "description": "Bypass for educational and instructional software",
+        "target": "E-learning platforms, instructional applications",
         "scripts": [
             "cloud_licensing_bypass",
             "time_bomb_defuser",
@@ -581,11 +581,289 @@ def get_scripts_for_protection(protection_type: str) -> list:
     return script_map.get(protection_type, [])
 
 
+class FridaPresets:
+    """Frida presets manager for license cracking operations.
+
+    Provides access to preset configurations for common protected software,
+    wizard configurations for automated bypasses, and quick templates for
+    specific protection scenarios. All presets are focused on defeating
+    software licensing mechanisms including registration, activation, trial
+    limitations, and copy protection schemes.
+    """
+
+    @staticmethod
+    def get_all_presets() -> dict:
+        """Get all available Frida presets.
+
+        Returns:
+            Dictionary mapping preset names to their configurations containing:
+            - description: Preset description
+            - target: Target applications
+            - scripts: List of script names to load
+            - protections: List of protection types
+            - options: Configuration options dictionary
+            - hooks: List of hook specifications
+
+        Example:
+            >>> presets = FridaPresets.get_all_presets()
+            >>> office_preset = presets[
+            ...     "Microsoft Office 365"
+            ... ]
+            >>> print(
+            ...     office_preset[
+            ...         "description"
+            ...     ]
+            ... )
+            'Bypass for Microsoft Office licensing and activation'
+        """
+        return FRIDA_PRESETS.copy()
+
+    @staticmethod
+    def get_preset(name: str) -> dict | None:
+        """Get specific preset by exact name.
+
+        Args:
+            name: Exact preset name (case-sensitive)
+
+        Returns:
+            Preset configuration dictionary or None if not found
+
+        Example:
+            >>> preset = (
+            ...     FridaPresets.get_preset(
+            ...         "Autodesk Products"
+            ...     )
+            ... )
+            >>> if preset:
+            ...     print(preset["target"])
+            'Autodesk software suite'
+        """
+        return FRIDA_PRESETS.get(name)
+
+    @staticmethod
+    def get_preset_by_software(software_name: str) -> dict:
+        """Get preset configuration by software name (fuzzy matching).
+
+        Searches through FRIDA_PRESETS dictionary to find a matching
+        configuration based on the software name. Uses case-insensitive
+        fuzzy matching against both preset names and target fields.
+
+        Args:
+            software_name: Name of the software to find preset for
+                          (e.g., "Adobe", "Photoshop", "Office")
+
+        Returns:
+            Dictionary containing preset configuration with:
+            - description: Preset description
+            - target: Target applications
+            - scripts: List of script names to load
+            - protections: List of protection types
+            - options: Configuration options
+            - hooks: List of hooks to install
+
+        Example:
+            >>> preset = FridaPresets.get_preset_by_software(
+            ...     "photoshop"
+            ... )
+            >>> print(preset["description"])
+            'Comprehensive bypass for Adobe CC applications'
+
+        Note:
+            Falls back to "Minimal Bypass" preset if no match found.
+        """
+        return get_preset_by_software(software_name)
+
+    @staticmethod
+    def get_wizard_configs() -> dict:
+        """Get all wizard configurations.
+
+        Returns:
+            Dictionary of wizard mode configurations with keys:
+            - safe: Minimal risk approach
+            - balanced: Balanced effectiveness/safety
+            - aggressive: Maximum bypass capability
+            - stealth: Minimize detection
+            - analysis: Information gathering only
+
+        Example:
+            >>> configs = FridaPresets.get_wizard_configs()
+            >>> print(
+            ...     configs["aggressive"][
+            ...         "name"
+            ...     ]
+            ... )
+            'Aggressive Mode'
+        """
+        return WIZARD_CONFIGS.copy()
+
+    @staticmethod
+    def get_wizard_config(mode: str = "balanced") -> dict:
+        """Get wizard configuration by mode.
+
+        Retrieves predefined wizard configuration based on the selected
+        operating mode. Each mode has different aggressiveness levels
+        and feature settings.
+
+        Args:
+            mode: Wizard mode name. Options:
+                  - "safe": Minimal risk, basic bypasses
+                  - "balanced": Good mix of effectiveness and safety (default)
+                  - "aggressive": Maximum bypass attempts
+                  - "stealth": Focus on avoiding detection
+                  - "analysis": Information gathering only
+
+        Returns:
+            Dictionary containing wizard configuration with:
+            - name: Mode name
+            - description: Mode description
+            - detection_first: Whether to detect before bypassing
+            - max_scripts: Maximum scripts to load
+            - priority: List of prioritized protection types
+            - exclude: List of excluded protection types
+            - options: Additional configuration options
+
+        Example:
+            >>> config = FridaPresets.get_wizard_config(
+            ...     "aggressive"
+            ... )
+            >>> print(config["max_scripts"])
+            10
+
+        Note:
+            Falls back to "balanced" mode if mode not found.
+        """
+        return get_wizard_config(mode)
+
+    @staticmethod
+    def get_quick_templates() -> dict:
+        """Get all quick templates for specific scenarios.
+
+        Returns:
+            Dictionary of quick templates for common operations:
+            - trial_reset: Trial period reset
+            - hardware_spoof: Hardware ID spoofing
+            - cloud_bypass: Cloud licensing bypass
+            - anti_debug_bypass: Anti-debugging bypass
+            - drm_bypass: DRM protection bypass
+
+        Example:
+            >>> templates = FridaPresets.get_quick_templates()
+            >>> trial_reset = templates[
+            ...     "trial_reset"
+            ... ]
+            >>> print(trial_reset["scripts"])
+            ['time_bomb_defuser', 'registry_monitor']
+        """
+        return QUICK_TEMPLATES.copy()
+
+    @staticmethod
+    def get_quick_template(template_name: str) -> dict | None:
+        """Get specific quick template by name.
+
+        Args:
+            template_name: Template name (e.g., "trial_reset", "cloud_bypass")
+
+        Returns:
+            Template configuration or None if not found
+
+        Example:
+            >>> template = FridaPresets.get_quick_template(
+            ...     "trial_reset"
+            ... )
+            >>> print(
+            ...     template["options"][
+            ...         "reset_trial"
+            ...     ]
+            ... )
+            True
+        """
+        return QUICK_TEMPLATES.get(template_name)
+
+    @staticmethod
+    def get_scripts_for_protection(protection_type: str) -> list:
+        """Get recommended scripts for a specific protection type.
+
+        Returns a list of script names that are effective against
+        the specified protection mechanism. These scripts can be
+        loaded to bypass the protection.
+
+        Args:
+            protection_type: Type of protection to bypass. Options:
+                            - "LICENSE": License verification
+                            - "CLOUD": Cloud-based checks
+                            - "TIME": Time-based protections
+                            - "HARDWARE": Hardware binding
+                            - "ANTI_DEBUG": Anti-debugging
+                            - "ANTI_VM": VM/sandbox detection
+                            - "INTEGRITY": Code integrity checks
+                            - "KERNEL": Kernel-mode protections
+                            - "MEMORY": Memory protections
+                            - "DRM": Digital rights management
+
+        Returns:
+            List of script names (strings) to load for bypassing
+            the specified protection. Returns empty list if
+            protection type is not recognized.
+
+        Example:
+            >>> scripts = FridaPresets.get_scripts_for_protection(
+            ...     "LICENSE"
+            ... )
+            >>> print(scripts)
+            ['cloud_licensing_bypass', 'registry_monitor']
+
+        Note:
+            Script names correspond to files in the intellicrack/scripts/frida
+            directory or built-in script templates.
+        """
+        return get_scripts_for_protection(protection_type)
+
+    @staticmethod
+    def list_preset_names() -> list[str]:
+        """Get list of all available preset names.
+
+        Returns:
+            List of preset names that can be used with get_preset()
+
+        Example:
+            >>> names = FridaPresets.list_preset_names()
+            >>> print(names[0])
+            'Microsoft Office 365'
+        """
+        return list(FRIDA_PRESETS.keys())
+
+    @staticmethod
+    def list_protection_types() -> list[str]:
+        """Get list of all supported protection types.
+
+        Returns:
+            List of protection type identifiers
+
+        Example:
+            >>> types = FridaPresets.list_protection_types()
+            >>> print(types)
+            ['LICENSE', 'CLOUD', 'TIME', 'ANTI_DEBUG', ...]
+        """
+        return [
+            "LICENSE",
+            "CLOUD",
+            "TIME",
+            "HARDWARE",
+            "ANTI_DEBUG",
+            "ANTI_VM",
+            "INTEGRITY",
+            "KERNEL",
+            "MEMORY",
+            "DRM",
+        ]
+
+
 # Export configuration
 __all__ = [
     "FRIDA_PRESETS",
     "QUICK_TEMPLATES",
     "WIZARD_CONFIGS",
+    "FridaPresets",
     "get_preset_by_software",
     "get_scripts_for_protection",
     "get_wizard_config",

@@ -105,9 +105,7 @@ class FuzzyMatcher:
             return 1.0
 
         # Levenshtein distance
-        lev_similarity = 1 - (
-            Levenshtein.distance(clean_name1, clean_name2) / max(len(clean_name1), len(clean_name2))
-        )
+        lev_similarity = 1 - (Levenshtein.distance(clean_name1, clean_name2) / max(len(clean_name1), len(clean_name2)))
         scores = [lev_similarity]
         # Jaro-Winkler similarity
         jw_similarity = Levenshtein.jaro_winkler(clean_name1, clean_name2)
@@ -170,8 +168,7 @@ class FuzzyMatcher:
         union = set(tokens1) | set(tokens2)
         jaccard = len(common) / len(union)
 
-        order_score = sum(bool(t1 == t2)
-                      for t1, t2 in zip(tokens1, tokens2, strict=False))
+        order_score = sum(bool(t1 == t2) for t1, t2 in zip(tokens1, tokens2, strict=False))
         order_bonus = order_score / max(len(tokens1), len(tokens2))
 
         return jaccard * 0.7 + order_bonus * 0.3
@@ -212,23 +209,17 @@ class FuzzyMatcher:
         # Compare class names
         class_score = 0
         if components1.get("class") and components2.get("class"):
-            class_score = self._calculate_token_similarity(
-                [components1["class"]], [components2["class"]]
-            )
+            class_score = self._calculate_token_similarity([components1["class"]], [components2["class"]])
 
         # Compare method names
         method_score = 0
         if components1.get("method") and components2.get("method"):
-            method_score = self._calculate_token_similarity(
-                [components1["method"]], [components2["method"]]
-            )
+            method_score = self._calculate_token_similarity([components1["method"]], [components2["method"]])
 
         # Compare parameters
         param_score = 0
         if components1.get("params") and components2.get("params"):
-            param_score = self._compare_parameter_lists(
-                components1["params"], components2["params"]
-            )
+            param_score = self._compare_parameter_lists(components1["params"], components2["params"])
 
         return class_score * 0.4 + method_score * 0.4 + param_score * 0.2
 
@@ -257,8 +248,7 @@ class FuzzyMatcher:
         if not params1 or not params2:
             return 0.0
 
-        matches = sum(bool(self._compare_types(p1, p2) > 0.5)
-                  for p1, p2 in zip(params1, params2, strict=False))
+        matches = sum(bool(self._compare_types(p1, p2) > 0.5) for p1, p2 in zip(params1, params2, strict=False))
         return matches / max(len(params1), len(params2))
 
     def _compare_types(self, type1: str, type2: str) -> float:
@@ -372,8 +362,7 @@ class AddressTranslator:
                         # Potential match
                         offset = addresses2[j] - addresses1[i]
 
-                        matches = sum(bool((addr1 + offset) in addresses2)
-                                  for addr1 in addresses1[:20])
+                        matches = sum(bool((addr1 + offset) in addresses2) for addr1 in addresses1[:20])
                         confidence = matches / min(20, len(addresses1))
 
                         if confidence > 0.5:
@@ -406,9 +395,7 @@ class ConfidenceScorer:
         """Calculate confidence score for correlation."""
         # Name similarity
         fuzzy = FuzzyMatcher()
-        scores = {
-            "name_similarity": fuzzy.match_function_names(item1.name, item2.name)
-        }
+        scores = {"name_similarity": fuzzy.match_function_names(item1.name, item2.name)}
         # Address proximity (if from same tool or mapped)
         if item1.tool == item2.tool:
             distance = abs(item1.address - item2.address)
@@ -453,8 +440,7 @@ class ConfidenceScorer:
         if not common_keys:
             return 0.0
 
-        matches = sum(bool(self._values_match(attrs1[key], attrs2[key]))
-                  for key in common_keys)
+        matches = sum(bool(self._values_match(attrs1[key], attrs2[key])) for key in common_keys)
         return matches / len(common_keys)
 
     def _values_match(self, val1: object, val2: object) -> bool:
@@ -515,11 +501,7 @@ class ConfidenceScorer:
             pattern_parts.append("large")
 
         # Add attribute signatures
-        pattern_parts.extend(
-            f"{key}:{value}"
-            for key, value in sorted(item.attributes.items())
-            if isinstance(value, (int, str))
-        )
+        pattern_parts.extend(f"{key}:{value}" for key, value in sorted(item.attributes.items()) if isinstance(value, (int, str)))
         return "_".join(pattern_parts)
 
     def _pattern_similarity(self, pattern1: str, pattern2: str) -> float:
@@ -599,11 +581,7 @@ class AnomalyDetector:
         lower_bound = q1 - (self.threshold_multiplier * iqr)
         upper_bound = q3 + (self.threshold_multiplier * iqr)
 
-        return [
-            i
-            for i, value in enumerate(values)
-            if value < lower_bound or value > upper_bound
-        ]
+        return [i for i, value in enumerate(values) if value < lower_bound or value > upper_bound]
 
 
 class PatternClusterer:
@@ -615,9 +593,7 @@ class PatternClusterer:
         self.kmeans = None
         self.scaler = StandardScaler()
 
-    def cluster_patterns(
-        self, items: list[CorrelationItem], method: str = "dbscan"
-    ) -> dict[int, list[CorrelationItem]]:
+    def cluster_patterns(self, items: list[CorrelationItem], method: str = "dbscan") -> dict[int, list[CorrelationItem]]:
         """Cluster correlation items by patterns."""
         if len(items) < 2:
             return {0: items}
@@ -774,9 +750,7 @@ class MachineLearningCorrelator:
         # Store training data
         self.training_data = list(zip(X, y, strict=False))
 
-        logger.info(
-            f"Trained model with {len(positive_pairs)} positive and {len(negative_pairs)} negative pairs"
-        )
+        logger.info(f"Trained model with {len(positive_pairs)} positive and {len(negative_pairs)} negative pairs")
 
     def predict(self, item1: CorrelationItem, item2: CorrelationItem) -> tuple[bool, float]:
         """Predict if items are correlated."""
@@ -878,9 +852,7 @@ class IntelligentCorrelator:
         self.ml_correlator = MachineLearningCorrelator()
         self.correlation_cache: dict[str, CorrelationResult] = {}
 
-    def correlate(
-        self, items: list[CorrelationItem], method: str = "hybrid"
-    ) -> list[CorrelationResult]:
+    def correlate(self, items: list[CorrelationItem], method: str = "hybrid") -> list[CorrelationResult]:
         """Correlate items using specified method."""
         if method == "fuzzy":
             return self._correlate_fuzzy(items)
@@ -1053,18 +1025,14 @@ class IntelligentCorrelator:
         """Detect anomalous correlations."""
         return self.anomaly_detector.detect_anomalies(correlations)
 
-    def translate_addresses(
-        self, items: list[CorrelationItem], target_tool: str
-    ) -> list[CorrelationItem]:
+    def translate_addresses(self, items: list[CorrelationItem], target_tool: str) -> list[CorrelationItem]:
         """Translate addresses to target tool's address space."""
         translated = []
 
         for item in items:
             if item.tool == target_tool:
                 translated.append(item)
-            elif new_addr := self.address_translator.translate(
-                item.address, item.tool, target_tool
-            ):
+            elif new_addr := self.address_translator.translate(item.address, item.tool, target_tool):
                 translated_item = CorrelationItem(
                     tool=target_tool,
                     data_type=item.data_type,

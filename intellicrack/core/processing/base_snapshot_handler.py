@@ -90,9 +90,7 @@ class BaseSnapshotHandler(ABC):
             return {"error": f"Comparison failed: {e!s}"}
 
     @abstractmethod
-    def _perform_platform_specific_comparison(
-        self, s1: dict[str, Any], s2: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _perform_platform_specific_comparison(self, s1: dict[str, Any], s2: dict[str, Any]) -> dict[str, Any]:
         """Perform platform-specific snapshot comparison logic.
 
         Args:

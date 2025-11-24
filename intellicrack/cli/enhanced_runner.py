@@ -241,9 +241,7 @@ class EnhancedCLIRunner:
                         with open(binary_path, "rb") as f:
                             data = f.read(8192)  # Read 8KB sample
                             if len(set(data)) > 200:  # High entropy indicator
-                                self.logger.debug(
-                                    "Detected high entropy - potentially packed/encrypted"
-                                )
+                                self.logger.debug("Detected high entropy - potentially packed/encrypted")
                     except Exception as e:
                         self.logger.debug(f"Error analyzing entropy patterns: {e}")
 
@@ -297,9 +295,7 @@ class EnhancedCLIRunner:
                 try:
                     connections = psutil.net_connections()
                     active_connections = [c for c in connections if c.status == "ESTABLISHED"]
-                    results["network"] = [
-                        f"Connection to {c.raddr}" for c in active_connections[:3]
-                    ]
+                    results["network"] = [f"Connection to {c.raddr}" for c in active_connections[:3]]
                 except Exception:
                     results["network"] = ["network_monitoring_unavailable"]
 
@@ -516,11 +512,7 @@ class EnhancedCLIRunner:
             return "[green]No protections detected[/green]"
 
         lines = ["[yellow]Detected protections:[/yellow]"]
-        lines.extend(
-            f"   {protection}: {details}"
-            for protection, details in protections.items()
-            if details
-        )
+        lines.extend(f"   {protection}: {details}" for protection, details in protections.items() if details)
         return "\n".join(lines)
 
     def _format_generic_results(self, result: dict) -> str:
@@ -568,9 +560,7 @@ def main() -> None:
         "Network Analysis",
     ]
 
-    operations = [
-        op for op in available_ops if Confirm.ask(f"  Run {op}?", default=True)
-    ]
+    operations = [op for op in available_ops if Confirm.ask(f"  Run {op}?", default=True)]
     if not operations:
         console.print("[yellow]No operations selected. Exiting.[/yellow]")
         return

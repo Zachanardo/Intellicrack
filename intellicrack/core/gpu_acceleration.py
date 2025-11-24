@@ -52,9 +52,7 @@ if INTEL_GPU_PREFERRED or not CUDA_DISABLED:
         try:
             if hasattr(torch, "xpu") and torch.xpu.is_available():
                 XPU_AVAILABLE = True
-                logger.info(
-                    f"PyTorch XPU initialized successfully - {torch.xpu.device_count()} XPU device(s) found"
-                )
+                logger.info(f"PyTorch XPU initialized successfully - {torch.xpu.device_count()} XPU device(s) found")
                 logger.info(f"PyTorch version: {torch.__version__}")
                 for i in range(torch.xpu.device_count()):
                     logger.info(f"XPU Device {i}: {torch.xpu.get_device_name(i)}")
@@ -152,9 +150,7 @@ class GPUAccelerator:
             device_count = torch.xpu.device_count()
             if device_count > 0:
                 device_name = torch.xpu.get_device_name(0)
-                memory_info = (
-                    torch.xpu.memory_stats(0) if hasattr(torch.xpu, "memory_stats") else {}
-                )
+                memory_info = torch.xpu.memory_stats(0) if hasattr(torch.xpu, "memory_stats") else {}
                 info = {
                     "name": device_name,
                     "device_type": "Intel XPU",
@@ -252,9 +248,7 @@ class GPUAccelerator:
 
                 # Create tensors on XPU device
                 data_tensor = torch.from_numpy(data_np).to(device=XPU_DEVICE, dtype=torch.uint8)
-                pattern_tensor = torch.from_numpy(pattern_np).to(
-                    device=XPU_DEVICE, dtype=torch.uint8
-                )
+                pattern_tensor = torch.from_numpy(pattern_np).to(device=XPU_DEVICE, dtype=torch.uint8)
 
             # Efficient pattern matching using sliding window approach
             data_len = data_tensor.size(0)

@@ -193,21 +193,15 @@ class VMProtectDetector:
                 detection.detected = True
                 detection.confidence = max(detection.confidence, 0.7)
 
-            if dispatcher := self._find_dispatcher(
-                binary_data, detection.architecture
-            ):
+            if dispatcher := self._find_dispatcher(binary_data, detection.architecture):
                 detection.dispatcher_offset = dispatcher
                 detection.confidence = max(detection.confidence, 0.85)
 
-            if handler_table := self._find_handler_table(
-                binary_data, detection.architecture
-            ):
+            if handler_table := self._find_handler_table(binary_data, detection.architecture):
                 detection.handler_table_offset = handler_table
                 detection.confidence = max(detection.confidence, 0.90)
 
-            virtualized_regions = self._identify_virtualized_regions(
-                binary_data, handlers, detection.architecture
-            )
+            virtualized_regions = self._identify_virtualized_regions(binary_data, handlers, detection.architecture)
             detection.virtualized_regions = virtualized_regions
 
             if virtualized_regions:
@@ -217,19 +211,13 @@ class VMProtectDetector:
             detection.technical_details["mutation_score"] = mutation_score
 
             if mutation_score > 0.5:
-                detection.mode = (
-                    VMProtectMode.MUTATION if mutation_score > 0.8 else VMProtectMode.HYBRID
-                )
+                detection.mode = VMProtectMode.MUTATION if mutation_score > 0.8 else VMProtectMode.HYBRID
 
-            detection.protection_level = self._determine_protection_level(
-                handlers, virtualized_regions, mutation_score
-            )
+            detection.protection_level = self._determine_protection_level(handlers, virtualized_regions, mutation_score)
 
             detection.version = self._detect_version(binary_data, section_analysis)
 
-            cf_analysis = self._analyze_control_flow(
-                binary_data, virtualized_regions, detection.architecture
-            )
+            cf_analysis = self._analyze_control_flow(binary_data, virtualized_regions, detection.architecture)
             detection.technical_details["control_flow"] = cf_analysis
 
             detection.bypass_recommendations = self._generate_bypass_recommendations(detection)
@@ -282,9 +270,7 @@ class VMProtectDetector:
                 section_name = section.Name.decode("utf-8", errors="ignore").rstrip("\x00")
                 entropy = section.get_entropy()
 
-                if any(
-                    vmp_str in section_name.lower() for vmp_str in [".vmp", "vmp0", "vmp1", "vmp2"]
-                ):
+                if any(vmp_str in section_name.lower() for vmp_str in [".vmp", "vmp0", "vmp1", "vmp2"]):
                     analysis["vmp_sections"].append(
                         {
                             "name": section_name,
@@ -297,9 +283,7 @@ class VMProtectDetector:
                     )
 
                 if entropy > 7.3:
-                    analysis["high_entropy_sections"].append(
-                        {"name": section_name, "entropy": entropy}
-                    )
+                    analysis["high_entropy_sections"].append({"name": section_name, "entropy": entropy})
 
                 if section.Characteristics & 0xE0000000 == 0xE0000000:
                     analysis["suspicious_characteristics"].append(
@@ -321,11 +305,7 @@ class VMProtectDetector:
         """Detect VMProtect VM handlers using signature matching."""
         handlers = []
 
-        signatures = (
-            self.VMP_HANDLER_SIGNATURES_X64
-            if architecture == "x64"
-            else self.VMP_HANDLER_SIGNATURES_X86
-        )
+        signatures = self.VMP_HANDLER_SIGNATURES_X64 if architecture == "x64" else self.VMP_HANDLER_SIGNATURES_X86
 
         for pattern, handler_type, base_confidence in signatures:
             offset = 0
@@ -336,9 +316,7 @@ class VMProtectDetector:
 
                 handler_size = self._estimate_handler_size(data, offset, architecture)
 
-                complexity = self._calculate_handler_complexity(
-                    data, offset, handler_size, architecture
-                )
+                complexity = self._calculate_handler_complexity(data, offset, handler_size, architecture)
 
                 confidence = base_confidence * (0.8 + min(0.2, complexity / 100))
 
@@ -375,9 +353,7 @@ class VMProtectDetector:
             for insn in cs.disasm(data[offset : offset + max_size], offset):
                 size = insn.address - offset + insn.size
 
-                if insn.mnemonic in ["ret", "jmp"] and (insn.mnemonic == "ret" or (
-                                        insn.mnemonic == "jmp" and insn.op_str.startswith("[")
-                                    )):
+                if insn.mnemonic in ["ret", "jmp"] and (insn.mnemonic == "ret" or (insn.mnemonic == "jmp" and insn.op_str.startswith("["))):
                     break
 
                 if size > max_size - 16:
@@ -388,9 +364,7 @@ class VMProtectDetector:
 
         return max(size, 16)
 
-    def _calculate_handler_complexity(
-        self, data: bytes, offset: int, size: int, architecture: str
-    ) -> int:
+    def _calculate_handler_complexity(self, data: bytes, offset: int, size: int, architecture: str) -> int:
         """Calculate handler complexity score."""
         if not CAPSTONE_AVAILABLE:
             return 10
@@ -427,9 +401,7 @@ class VMProtectDetector:
 
         return complexity
 
-    def _extract_opcodes(
-        self, data: bytes, offset: int, size: int, architecture: str
-    ) -> list[tuple[int, str]]:
+    def _extract_opcodes(self, data: bytes, offset: int, size: int, architecture: str) -> list[tuple[int, str]]:
         """Extract opcodes from handler."""
         opcodes = []
 
@@ -539,19 +511,13 @@ class VMProtectDetector:
         for offset in range(0, len(section_data) - min_table_size * ptr_size, ptr_size):
             consecutive_pointers = 0
 
-            for i in range(
-                offset, min(offset + max_table_size * ptr_size, len(section_data)), ptr_size
-            ):
+            for i in range(offset, min(offset + max_table_size * ptr_size, len(section_data)), ptr_size):
                 if ptr_size == 4:
                     ptr_val = struct.unpack("<I", section_data[i : i + 4])[0]
                 else:
                     ptr_val = struct.unpack("<Q", section_data[i : i + 8])[0]
 
-                if (
-                    0x1000 < ptr_val < 0x7FFFFFFF
-                    if ptr_size == 4
-                    else 0x1000 < ptr_val < 0x7FFFFFFFFFFF
-                ):
+                if 0x1000 < ptr_val < 0x7FFFFFFF if ptr_size == 4 else 0x1000 < ptr_val < 0x7FFFFFFFFFFF:
                     consecutive_pointers += 1
                 else:
                     break
@@ -561,9 +527,7 @@ class VMProtectDetector:
 
         return None
 
-    def _identify_virtualized_regions(
-        self, data: bytes, handlers: list[VMHandler], architecture: str
-    ) -> list[VirtualizedRegion]:
+    def _identify_virtualized_regions(self, data: bytes, handlers: list[VMHandler], architecture: str) -> list[VirtualizedRegion]:
         """Identify regions of virtualized code."""
         regions = []
 
@@ -578,19 +542,11 @@ class VMProtectDetector:
             region_handlers = {
                 handler.handler_type
                 for handler in handlers
-                if (
-                    entry_handler.offset
-                    < handler.offset
-                    < (exit_offset or entry_handler.offset + 10000)
-                )
+                if (entry_handler.offset < handler.offset < (exit_offset or entry_handler.offset + 10000))
             }
-            cf_complexity = self._calculate_region_complexity(
-                data, entry_handler.offset, exit_offset, architecture
-            )
+            cf_complexity = self._calculate_region_complexity(data, entry_handler.offset, exit_offset, architecture)
 
-            mutation_detected = self._check_region_mutation(
-                data, entry_handler.offset, exit_offset or entry_handler.offset + 1000
-            )
+            mutation_detected = self._check_region_mutation(data, entry_handler.offset, exit_offset or entry_handler.offset + 1000)
 
             region = VirtualizedRegion(
                 start_offset=entry_handler.offset,
@@ -639,9 +595,7 @@ class VMProtectDetector:
 
         return None
 
-    def _calculate_region_complexity(
-        self, data: bytes, start: int, end: int | None, architecture: str
-    ) -> float:
+    def _calculate_region_complexity(self, data: bytes, start: int, end: int | None, architecture: str) -> float:
         """Calculate control flow complexity of a region."""
         if not CAPSTONE_AVAILABLE or not end:
             return 1.0
@@ -717,13 +671,8 @@ class VMProtectDetector:
                 for insn in cs.disasm(data[i : i + 100], i):
                     total_instructions += 1
 
-                    if (
-                        insn.mnemonic in ["nop", "xchg"]
-                        and "eax" in insn.op_str
-                        and "eax" in insn.op_str
-                    ) or (
-                        insn.mnemonic == "mov"
-                        and insn.op_str.split(",")[0].strip() == insn.op_str.split(",")[1].strip()
+                    if (insn.mnemonic in ["nop", "xchg"] and "eax" in insn.op_str and "eax" in insn.op_str) or (
+                        insn.mnemonic == "mov" and insn.op_str.split(",")[0].strip() == insn.op_str.split(",")[1].strip()
                     ):
                         junk_instructions += 1
 
@@ -748,9 +697,7 @@ class VMProtectDetector:
         handler_complexity = sum(h.complexity for h in handlers) / len(handlers)
         region_count = len(regions)
 
-        avg_region_complexity = (
-            sum(r.control_flow_complexity for r in regions) / len(regions) if regions else 0
-        )
+        avg_region_complexity = sum(r.control_flow_complexity for r in regions) / len(regions) if regions else 0
 
         if mutation_score > 0.7 or handler_complexity > 80 or avg_region_complexity > 5.0:
             return VMProtectLevel.ULTRA
@@ -790,9 +737,7 @@ class VMProtectDetector:
 
         return "Unknown (likely 2.x or 3.x)"
 
-    def _analyze_control_flow(
-        self, data: bytes, regions: list[VirtualizedRegion], architecture: str
-    ) -> dict[str, any]:
+    def _analyze_control_flow(self, data: bytes, regions: list[VirtualizedRegion], architecture: str) -> dict[str, any]:
         """Analyze control flow within virtualized regions."""
         analysis = {
             "total_regions": len(regions),
@@ -816,9 +761,7 @@ class VMProtectDetector:
 
         for region in regions:
             try:
-                for insn in cs.disasm(
-                    data[region.start_offset : region.end_offset], region.start_offset
-                ):
+                for insn in cs.disasm(data[region.start_offset : region.end_offset], region.start_offset):
                     if insn.mnemonic in ["jmp", "call"] and "[" in insn.op_str:
                         analysis["indirect_branches"] += 1
 
@@ -826,20 +769,14 @@ class VMProtectDetector:
                         analysis["vm_transitions"] += 1
 
             except Exception as e:
-                logger.debug(
-                    f"Failed to analyze control flow in region at 0x{region.start_offset:08x}: {e}"
-                )
+                logger.debug(f"Failed to analyze control flow in region at 0x{region.start_offset:08x}: {e}")
                 continue
 
         return analysis
 
     def _scan_strings(self, data: bytes) -> list[str]:
         """Scan for VMProtect-related strings."""
-        return [
-            indicator
-            for indicator in self.VMP_STRING_INDICATORS
-            if indicator.encode("utf-8", errors="ignore") in data.lower()
-        ]
+        return [indicator for indicator in self.VMP_STRING_INDICATORS if indicator.encode("utf-8", errors="ignore") in data.lower()]
 
     def _generate_bypass_recommendations(self, detection: VMProtectDetection) -> list[str]:
         """Generate bypass recommendations based on detection results."""
@@ -866,17 +803,13 @@ class VMProtectDetector:
             )
             recommendations.extend(("Expected time: 1-3 weeks", "Success rate: 65-75%"))
         elif detection.protection_level == VMProtectLevel.LITE:
-            recommendations.append(
-                "Lite protection - Basic handler analysis and code flow reconstruction"
-            )
+            recommendations.append("Lite protection - Basic handler analysis and code flow reconstruction")
             recommendations.append("Recommended tools: IDA Pro, Ghidra with custom scripts")
             recommendations.append("Expected time: 3-7 days")
             recommendations.append("Success rate: 75-85%")
 
         if detection.mode == VMProtectMode.MUTATION:
-            recommendations.append(
-                "Mutation mode detected - Focus on pattern normalization before analysis"
-            )
+            recommendations.append("Mutation mode detected - Focus on pattern normalization before analysis")
 
         if detection.dispatcher_offset:
             recommendations.append(
@@ -884,9 +817,7 @@ class VMProtectDetector:
             )
 
         if detection.handler_table_offset:
-            recommendations.append(
-                f"Handler table at 0x{detection.handler_table_offset:08x} - Extract for handler mapping"
-            )
+            recommendations.append(f"Handler table at 0x{detection.handler_table_offset:08x} - Extract for handler mapping")
 
         if len(detection.virtualized_regions) > 0:
             recommendations.append(

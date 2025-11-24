@@ -280,9 +280,7 @@ startThreadTrace(Process.getCurrentThreadId());
                     thread_id=thread_id,
                     timestamp=payload["timestamp"],
                     instructions=payload["instructions"],
-                    basic_blocks=[
-                        (b["start"], b["end"]) for b in payload["basicBlocks"] if b["end"]
-                    ],
+                    basic_blocks=[(b["start"], b["end"]) for b in payload["basicBlocks"] if b["end"]],
                     call_graph=payload["callGraph"],
                     coverage=payload["coverage"],
                 )
@@ -577,11 +575,7 @@ send({ type: 'heap_tracking_ready' });
 
         """
         leaks = self.script.exports.find_leaks()
-        return [
-            self.allocations.get(leak["address"])
-            for leak in leaks
-            if leak["address"] in self.allocations
-        ]
+        return [self.allocations.get(leak["address"]) for leak in leaks if leak["address"] in self.allocations]
 
 
 class FridaThreadMonitor:

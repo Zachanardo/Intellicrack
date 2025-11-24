@@ -242,9 +242,7 @@ class GpuAnalysis:
                 gpu_available = results.get("gpu_available", False)
 
                 app.update_output.emit(f"[GPU] Analysis completed using {framework}")
-                app.update_output.emit(
-                    f"[GPU] GPU acceleration: {'enabled' if gpu_available else 'disabled'}"
-                )
+                app.update_output.emit(f"[GPU] GPU acceleration: {'enabled' if gpu_available else 'disabled'}")
 
                 # Display analysis results
                 analyses = results.get("analyses", {})
@@ -254,9 +252,7 @@ class GpuAnalysis:
                     pattern_results = analyses["pattern_search"]
                     total_patterns = len(pattern_results)
                     total_matches = sum(r.get("match_count", 0) for r in pattern_results)
-                    app.update_output.emit(
-                        f"[GPU] Pattern search: {total_matches} matches across {total_patterns} patterns"
-                    )
+                    app.update_output.emit(f"[GPU] Pattern search: {total_matches} matches across {total_patterns} patterns")
 
                 # Entropy analysis results
                 if "entropy" in analyses:
@@ -268,9 +264,7 @@ class GpuAnalysis:
                 if "high_entropy_sections" in analyses:
                     if high_entropy := analyses["high_entropy_sections"]:
                         count = len(high_entropy)
-                        app.update_output.emit(
-                            f"[GPU] Found {count} high-entropy sections (potentially encrypted/packed)"
-                        )
+                        app.update_output.emit(f"[GPU] Found {count} high-entropy sections (potentially encrypted/packed)")
 
                 if device_info := results.get("device_info"):
                     device_name = device_info.get("name", "Unknown")

@@ -318,11 +318,7 @@ class BinaryScanner:
 
         if isinstance(self.binary, lief.PE.Binary):
             for imp in self.binary.imports:
-                addresses.extend(
-                    entry.iat_address
-                    for entry in imp.entries
-                    if entry.name and api_name in entry.name
-                )
+                addresses.extend(entry.iat_address for entry in imp.entries if entry.name and api_name in entry.name)
         return addresses
 
     def analyze_call_context(self, address: int) -> ContextInfo:

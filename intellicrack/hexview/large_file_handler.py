@@ -183,10 +183,7 @@ class FileCache:
         with self.lock:
             current_time = time.time()
             old_regions = [
-                offset
-                for offset, region in self.regions.items()
-                if current_time - region.last_accessed > max_age
-                and region.ref_count == 0
+                offset for offset, region in self.regions.items() if current_time - region.last_accessed > max_age and region.ref_count == 0
             ]
             removed_count = 0
             for offset in old_regions:
@@ -248,9 +245,7 @@ class MemoryMonitor:
                     # Get current memory usage
                     process = psutil.Process()
                     memory_info = process.memory_info()
-                    _ = memory_info.rss / (
-                        1024 * 1024
-                    )  # Memory in MB not used in current implementation
+                    _ = memory_info.rss / (1024 * 1024)  # Memory in MB not used in current implementation
 
                     # Get system memory
                     system_memory = psutil.virtual_memory()
@@ -332,9 +327,7 @@ class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
                             if self.region_loaded:
                                 self.region_loaded.emit(region)
 
-                            logger.debug(
-                                f"Background loaded: offset=0x{offset:X}, size={len(data)}"
-                            )
+                            logger.debug(f"Background loaded: offset=0x{offset:X}, size={len(data)}")
 
                     except (OSError, ValueError, RuntimeError) as e:
                         logger.error("Background load error: %s", e)
@@ -357,9 +350,7 @@ class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
 class LargeFileHandler:
     """Enhanced file handler optimized for large files."""
 
-    def __init__(
-        self, file_path: str, read_only: bool = True, config: MemoryConfig | None = None
-    ) -> None:
+    def __init__(self, file_path: str, read_only: bool = True, config: MemoryConfig | None = None) -> None:
         """Initialize the LargeFileHandler with file path, read-only mode, and configuration."""
         from intellicrack.core.config_manager import get_config
 
@@ -373,13 +364,10 @@ class LargeFileHandler:
         if config is None:
             self.config = MemoryConfig(
                 max_memory_mb=app_config.get("hex_viewer.performance.max_memory_mb", 500),
-                chunk_size_mb=app_config.get("hex_viewer.performance.chunk_size_kb", 64) // 1024
-                or 1,  # Convert KB to MB
+                chunk_size_mb=app_config.get("hex_viewer.performance.chunk_size_kb", 64) // 1024 or 1,  # Convert KB to MB
                 cache_size_mb=app_config.get("hex_viewer.performance.cache_size_mb", 100),
                 memory_threshold=0.8,  # Not in config, keeping default
-                enable_compression=app_config.get(
-                    "hex_viewer.performance.compress_undo_data", True
-                ),
+                enable_compression=app_config.get("hex_viewer.performance.compress_undo_data", True),
                 prefetch_chunks=app_config.get("hex_viewer.performance.prefetch_chunks", 3),
             )
         else:
@@ -599,11 +587,7 @@ class LargeFileHandler:
 
     def _prefetch_chunks(self, next_offset: int) -> None:
         """Prefetch chunks for better performance."""
-        if (
-            self.config.prefetch_chunks > 0
-            and self.background_loader
-            and self.loading_strategy == LoadingStrategy.PROGRESSIVE
-        ):
+        if self.config.prefetch_chunks > 0 and self.background_loader and self.loading_strategy == LoadingStrategy.PROGRESSIVE:
             chunk_size = self.config.chunk_size_mb * 1024 * 1024
 
             for i in range(self.config.prefetch_chunks):
@@ -671,8 +655,7 @@ class LargeFileHandler:
             "cache_stats": cache_stats,
             "access_patterns": len(self.access_patterns),
             "sequential_ratio": sequential_ratio,
-            "background_loader_active": self.background_loader is not None
-            and self.background_loader.isAlive()
+            "background_loader_active": self.background_loader is not None and self.background_loader.isAlive()
             if hasattr(self.background_loader, "isAlive")
             else False,
         }

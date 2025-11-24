@@ -334,9 +334,7 @@ class ModelCache:
 
         """
         self.logger = logging.getLogger(f"{__name__}.ModelCache")
-        self.cache_dir = cache_dir or os.path.join(
-            os.path.expanduser("~"), ".intellicrack", "model_cache"
-        )
+        self.cache_dir = cache_dir or os.path.join(os.path.expanduser("~"), ".intellicrack", "model_cache")
         self.max_cache_size = max_cache_size
         self.cache = {}
         self.access_times = {}
@@ -614,9 +612,7 @@ class ModelManager:
             class VulnerabilityDetector(nn.Module):
                 """Neural network for detecting vulnerabilities in binary code patterns."""
 
-                def __init__(
-                    self, input_size: int = 1024, hidden_size: int = 512, num_classes: int = 10
-                ) -> None:
+                def __init__(self, input_size: int = 1024, hidden_size: int = 512, num_classes: int = 10) -> None:
                     super().__init__()
                     self.fc1 = nn.Linear(input_size, hidden_size)
                     self.relu1 = nn.ReLU()
@@ -650,9 +646,7 @@ class ModelManager:
                     x = self.softmax(self.fc4(x))
                     return x
 
-                def detect_vulnerabilities(
-                    self, binary_features: object
-                ) -> list[dict[str, object]]:
+                def detect_vulnerabilities(self, binary_features: object) -> list[dict[str, object]]:
                     """Detect vulnerabilities from binary feature vectors."""
                     with torch.no_grad():
                         predictions = self.forward(binary_features)
@@ -707,8 +701,6 @@ class ModelManager:
         if HAS_TORCH:
             import torch
             from torch import nn
-
-
 
             class ProtectionClassifier(nn.Module):
                 """Classifies protection mechanisms in binaries."""
@@ -765,7 +757,6 @@ class ModelManager:
                             if predictions[0][i] > 0.5
                         ]
 
-
             model = ProtectionClassifier()
             model.eval()
             return model
@@ -797,19 +788,13 @@ class ModelManager:
         if HAS_TORCH:
             from torch import nn
 
-
-
             class ScriptGeneratorModel(nn.Module):
                 """LSTM-based model for generating exploitation scripts."""
 
-                def __init__(
-                    self, vocab_size: int = 10000, embedding_dim: int = 256, hidden_dim: int = 512
-                ) -> None:
+                def __init__(self, vocab_size: int = 10000, embedding_dim: int = 256, hidden_dim: int = 512) -> None:
                     super().__init__()
                     self.embedding = nn.Embedding(vocab_size, embedding_dim)
-                    self.lstm = nn.LSTM(
-                        embedding_dim, hidden_dim, num_layers=2, batch_first=True, dropout=0.2
-                    )
+                    self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=2, batch_first=True, dropout=0.2)
                     self.fc = nn.Linear(hidden_dim, vocab_size)
 
                     # Common script patterns
@@ -832,17 +817,13 @@ Memory.protect(patch_addr, {size}, 'rwx');
 Memory.writeByteArray(patch_addr, {bytes});""",
                     }
 
-                def forward(
-                    self, x: object, hidden: object | None = None
-                ) -> tuple[object, object | None]:
+                def forward(self, x: object, hidden: object | None = None) -> tuple[object, object | None]:
                     embed = self.embedding(x)
                     output, hidden = self.lstm(embed, hidden)
                     output = self.fc(output)
                     return output, hidden
 
-                def generate_script_snippet(
-                                self, protection_type: str, target_info: dict[str, object]
-                            ) -> str:
+                def generate_script_snippet(self, protection_type: str, target_info: dict[str, object]) -> str:
                     """Generate script snippet for specific protection type."""
                     if protection_type == "license_check":
                         return self.script_templates["frida_hook"].format(
@@ -858,7 +839,6 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                         )
                     return f"// Custom script needed for: {protection_type}"
 
-
             model = ScriptGeneratorModel()
             model.eval()
             return model
@@ -871,9 +851,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                     "trial": "Memory.writeU32(ptr({addr}), 0xFFFFFFFF); // Extend trial",
                 }
 
-            def generate_script_snippet(
-                self, protection_type: str, target_info: dict[str, object]
-            ) -> str:
+            def generate_script_snippet(self, protection_type: str, target_info: dict[str, object]) -> str:
                 return self.templates.get(protection_type, "// Manual analysis required")
 
         return TemplateScriptGenerator()
@@ -883,8 +861,6 @@ Memory.writeByteArray(patch_addr, {bytes});""",
         if HAS_TORCH:
             import torch
             from torch import nn
-
-
 
             class BinaryAnalyzerModel(nn.Module):
                 """Comprehensive binary analysis using CNN + attention."""
@@ -948,16 +924,13 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                         arch, compiler, packer = self.forward(binary_tensor)
 
                         return {
-                            "architecture": self.architectures[
-                                arch.argmax().item()
-                            ],
+                            "architecture": self.architectures[arch.argmax().item()],
                             "arch_confidence": arch.max().item(),
                             "compiler": self.compilers[compiler.argmax().item()],
                             "compiler_confidence": compiler.max().item(),
                             "packer": self.packers[packer.argmax().item()],
                             "packer_confidence": packer.max().item(),
                         }
-
 
             model = BinaryAnalyzerModel()
             model.eval()
@@ -1030,9 +1003,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                     from torch import nn
 
                     # Create a simple neural network as fallback
-                    model = nn.Sequential(
-                        nn.Linear(100, 50), nn.ReLU(), nn.Linear(50, 10), nn.Softmax(dim=1)
-                    )
+                    model = nn.Sequential(nn.Linear(100, 50), nn.ReLU(), nn.Linear(50, 10), nn.Softmax(dim=1))
                     logger.info(f"Created default PyTorch model for {model_id}")
                     return model
             elif model_type == "sklearn":
@@ -1080,9 +1051,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                     model.eval()
                     # Apply dynamic quantization for CPU inference
                     if not next(model.parameters()).is_cuda:
-                        quantized = torch.quantization.quantize_dynamic(
-                            model, {torch.nn.Linear}, dtype=torch.qint8
-                        )
+                        quantized = torch.quantization.quantize_dynamic(model, {torch.nn.Linear}, dtype=torch.qint8)
                         logger.info(f"Applied quantization to {model_id}")
                         return quantized
             except Exception as e:
@@ -1181,8 +1150,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                 b"strtrns",
                 b"getwd",
             ]
-            unsafe_func_count = sum(bool(func in binary)
-                                for func in buffer_overflow_indicators)
+            unsafe_func_count = sum(bool(func in binary) for func in buffer_overflow_indicators)
             if unsafe_func_count > 0:
                 confidence = min(0.95, 0.3 + (unsafe_func_count * 0.15))
                 vulnerabilities.append(
@@ -1196,8 +1164,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
 
             # Format string detection - look for format string functions without proper validation
             format_string_indicators = [b"printf", b"fprintf", b"sprintf", b"snprintf", b"vprintf"]
-            format_funcs = sum(bool(func in binary)
-                           for func in format_string_indicators)
+            format_funcs = sum(bool(func in binary) for func in format_string_indicators)
             if format_funcs > 0 and b"%s" in binary and b"%n" in binary:
                 confidence = min(0.85, 0.4 + (format_funcs * 0.1))
                 vulnerabilities.append(
@@ -1213,8 +1180,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
             if b"malloc" in binary or b"calloc" in binary or b"realloc" in binary:
                 # Check for multiplication operations near memory allocation
                 alloc_patterns = [b"imul", b"mul", b"shl"]  # x86 assembly patterns
-                overflow_risk = sum(bool(pattern in binary)
-                                for pattern in alloc_patterns)
+                overflow_risk = sum(bool(pattern in binary) for pattern in alloc_patterns)
                 if overflow_risk > 0:
                     confidence = min(0.7, 0.3 + (overflow_risk * 0.1))
                     vulnerabilities.append(
@@ -1308,10 +1274,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
             "obfuscation": ["packing", "encryption", "code_virtualization"],
         }
 
-        categorized = {
-            category: [p for p in protections if p["type"] in types]
-            for category, types in protection_categories.items()
-        }
+        categorized = {category: [p for p in protections if p["type"] in types] for category, types in protection_categories.items()}
         return {
             "protections": protections,
             "categorized": categorized,
@@ -1320,9 +1283,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
             "bypass_strategies": self._generate_bypass_strategies(protections),
         }
 
-    def _predict_script_generation(
-        self, model: object, input_data: dict[str, object]
-    ) -> dict[str, object]:
+    def _predict_script_generation(self, model: object, input_data: dict[str, object]) -> dict[str, object]:
         """Generate script predictions and templates."""
         protection_type = input_data.get("protection_type", "unknown")
         target_info = input_data.get("target_info", {})
@@ -1412,9 +1373,7 @@ Interceptor.attach(IsDebuggerPresent, {
 
         # String features
         strings = self._extract_strings(binary_data[:10000])
-        features.extend(
-            (len(strings), np.mean([len(s) for s in strings]) if strings else 0)
-        )
+        features.extend((len(strings), np.mean([len(s) for s in strings]) if strings else 0))
         # Pad or truncate to expected size
         expected_size = 1024
         if len(features) < expected_size:
@@ -1576,17 +1535,13 @@ Interceptor.attach(IsDebuggerPresent, {
                     {
                         "name": ".text",
                         "size": 0x1000,
-                        "entropy": self._calculate_entropy(
-                            binary_data[0x1000:0x2000]
-                        ),
+                        "entropy": self._calculate_entropy(binary_data[0x1000:0x2000]),
                         "executable": True,
                     },
                     {
                         "name": ".data",
                         "size": 0x500,
-                        "entropy": self._calculate_entropy(
-                            binary_data[0x2000:0x2500]
-                        ),
+                        "entropy": self._calculate_entropy(binary_data[0x2000:0x2500]),
                         "executable": False,
                     },
                 )
@@ -1900,15 +1855,11 @@ Interceptor.attach(IsDebuggerPresent, {
                         else:
                             # Single column data without labels - cannot train supervised model
                             logger.error("Training data has only features without labels")
-                            logger.info(
-                                "For supervised learning, provide data with labels in the last column"
-                            )
+                            logger.info("For supervised learning, provide data with labels in the last column")
                             return False
                     elif isinstance(training_data, (list, tuple)):
                         # Cannot perform supervised learning without labels
-                        logger.error(
-                            "Training data provided without labels - cannot train supervised model"
-                        )
+                        logger.error("Training data provided without labels - cannot train supervised model")
                         logger.info("Consider using unsupervised learning or provide labeled data")
                         return False
                     else:
@@ -1924,9 +1875,7 @@ Interceptor.attach(IsDebuggerPresent, {
                         stratify=y if len(np.unique(y)) > 1 else None,
                     )
 
-                    logger.info(
-                        f"Split data: {len(X_train)} training samples, {len(X_val)} validation samples"
-                    )
+                    logger.info(f"Split data: {len(X_train)} training samples, {len(X_val)} validation samples")
 
                     # Create and train model
                     model = RandomForestClassifier(n_estimators=10, random_state=42)
@@ -2197,9 +2146,7 @@ Interceptor.attach(IsDebuggerPresent, {
                     # Get final validation accuracy
                     val_loss, val_acc = model.evaluate(X_val, y_val, verbose=0)
 
-                    logger.info(
-                        f"TensorFlow training completed - Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}"
-                    )
+                    logger.info(f"TensorFlow training completed - Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
 
                     # Store trained model
                     model_id = f"trained_tensorflow_model_{len(self.cache.cache)}"
@@ -2459,9 +2406,7 @@ class AsyncModelManager:
         self.model_manager = model_manager
         self.thread_pool = {}
 
-    def load_model_async(
-        self, model_id: str, callback: Callable[..., None] | None = None
-    ) -> threading.Thread | None:
+    def load_model_async(self, model_id: str, callback: Callable[..., None] | None = None) -> threading.Thread | None:
         """Load a model asynchronously."""
         # Skip thread creation during testing
         if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
@@ -2491,9 +2436,7 @@ class AsyncModelManager:
         thread.start()
         return thread
 
-    def predict_async(
-        self, model_id: str, input_data: object, callback: Callable[..., None] | None = None
-    ) -> threading.Thread | None:
+    def predict_async(self, model_id: str, input_data: object, callback: Callable[..., None] | None = None) -> threading.Thread | None:
         """Make predictions asynchronously."""
         # Skip thread creation during testing
         if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
@@ -2853,9 +2796,7 @@ class ModelFineTuner:
         return self.training_history.get(model_id)
 
 
-def import_custom_model(
-    model_path: str, model_type: str = None, model_id: str = None
-) -> dict[str, Any]:
+def import_custom_model(model_path: str, model_type: str = None, model_id: str = None) -> dict[str, Any]:
     """Import a custom AI model into the system.
 
     Args:

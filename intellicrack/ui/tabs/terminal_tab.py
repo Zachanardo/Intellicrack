@@ -81,9 +81,7 @@ class TerminalTab(BaseTab):
             layout.addLayout(toolbar, stretch=0)
 
             self.terminal_widget = TerminalSessionWidget(self)
-            self.terminal_widget.setSizePolicy(
-                QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
-            )
+            self.terminal_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
             self.terminal_widget.setMinimumSize(640, 500)
             layout.addWidget(self.terminal_widget, stretch=1)
 

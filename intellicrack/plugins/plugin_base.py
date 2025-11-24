@@ -139,9 +139,7 @@ class BasePlugin(ABC):
     Provides standard initialization, validation, and utility methods.
     """
 
-    def __init__(
-        self, metadata: PluginMetadata, default_config: dict[str, Any] | None = None
-    ) -> None:
+    def __init__(self, metadata: PluginMetadata, default_config: dict[str, Any] | None = None) -> None:
         """Initialize base plugin.
 
         Args:

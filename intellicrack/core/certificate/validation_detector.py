@@ -195,6 +195,7 @@ class CertificateValidationDetector:
                     confidence = scanner.calculate_confidence(context)
 
                     if is_licensing := self._analyze_licensing_context(context):
+                        logger.debug(f"Licensing context detected at 0x{address:X} (confidence boost: {is_licensing})")
                         confidence = min(confidence + 0.2, 1.0)
 
                     validation_func = ValidationFunction(
@@ -258,8 +259,7 @@ class CertificateValidationDetector:
 
         if context.surrounding_code:
             code_lower = context.surrounding_code.lower()
-            keyword_count = sum(bool(kw in code_lower)
-                            for kw in licensing_keywords)
+            keyword_count = sum(bool(kw in code_lower) for kw in licensing_keywords)
             if keyword_count >= 2:
                 return True
 
@@ -288,11 +288,7 @@ class CertificateValidationDetector:
                 return "high"
 
         return next(
-            (
-                "medium"
-                for indicator in risk_indicators["medium"]
-                if indicator in code_lower
-            ),
+            ("medium" for indicator in risk_indicators["medium"] if indicator in code_lower),
             "medium" if len(context.cross_references) > 10 else "low",
         )
 
@@ -314,8 +310,7 @@ class CertificateValidationDetector:
         if not validation_functions:
             return BypassMethod.NONE
 
-        high_confidence_count = sum(bool(func.confidence >= 0.7)
-                                for func in validation_functions)
+        high_confidence_count = sum(bool(func.confidence >= 0.7) for func in validation_functions)
 
         library_types = {get_library_type(lib) for lib in tls_libraries if get_library_type(lib)}
 
@@ -361,8 +356,7 @@ class CertificateValidationDetector:
         if len(validation_functions) > 5:
             return "medium"
 
-        high_confidence_count = sum(bool(func.confidence >= 0.8)
-                                for func in validation_functions)
+        high_confidence_count = sum(bool(func.confidence >= 0.8) for func in validation_functions)
 
         if high_confidence_count >= len(validation_functions) * 0.8:
             return "low"

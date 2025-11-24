@@ -102,15 +102,9 @@ class TrialResetWorker(QThread):
                     "trial_type": trial_info.trial_type.value,
                     "trial_days": trial_info.trial_days,
                     "usage_count": trial_info.usage_count,
-                    "install_date": trial_info.install_date.isoformat()
-                    if trial_info.install_date
-                    else None,
-                    "first_run_date": trial_info.first_run_date.isoformat()
-                    if trial_info.first_run_date
-                    else None,
-                    "last_run_date": trial_info.last_run_date.isoformat()
-                    if trial_info.last_run_date
-                    else None,
+                    "install_date": trial_info.install_date.isoformat() if trial_info.install_date else None,
+                    "first_run_date": trial_info.first_run_date.isoformat() if trial_info.first_run_date else None,
+                    "last_run_date": trial_info.last_run_date.isoformat() if trial_info.last_run_date else None,
                     "trial_expired": trial_info.trial_expired,
                     "registry_keys": trial_info.registry_keys,
                     "files": trial_info.files,
@@ -511,9 +505,7 @@ class TrialResetDialog(QDialog):
 
         # History table
         self.history_table = QTableWidget(0, 5)
-        self.history_table.setHorizontalHeaderLabels(
-            ["Product", "Type", "Status", "Days Left", "Scanned"]
-        )
+        self.history_table.setHorizontalHeaderLabels(["Product", "Type", "Status", "Days Left", "Scanned"])
         self.history_table.horizontalHeader().setStretchLastSection(True)
         self.history_table.setAlternatingRowColors(True)
         self.history_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -565,9 +557,7 @@ class TrialResetDialog(QDialog):
     def execute_reset(self) -> None:
         """Execute trial reset."""
         if not self.current_trial_info:
-            QMessageBox.warning(
-                self, "Warning", "No trial information available. Please scan first."
-            )
+            QMessageBox.warning(self, "Warning", "No trial information available. Please scan first.")
             return
 
         # Get selected strategy
@@ -597,9 +587,7 @@ class TrialResetDialog(QDialog):
         self.progress_bar.setVisible(True)
         self.progress_bar.setValue(0)
 
-        self.worker = TrialResetWorker(
-            self.engine, "reset", {"trial_info": self.current_trial_info, "strategy": strategy}
-        )
+        self.worker = TrialResetWorker(self.engine, "reset", {"trial_info": self.current_trial_info, "strategy": strategy})
         self.worker.progress.connect(self.log)
         self.worker.result.connect(self.handle_worker_result)
         self.worker.error.connect(self.handle_worker_error)
@@ -632,9 +620,7 @@ class TrialResetDialog(QDialog):
 
     def restore_from_backup(self) -> None:
         """Restore trial data from backup."""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Trial Backup", "", "JSON Files (*.json);;All Files (*.*)"
-        )
+        file_path, _ = QFileDialog.getOpenFileName(self, "Select Trial Backup", "", "JSON Files (*.json);;All Files (*.*)")
 
         if file_path:
             try:
@@ -658,9 +644,7 @@ class TrialResetDialog(QDialog):
             QMessageBox.warning(self, "Warning", "Please enter a product name to monitor")
             return
 
-        self.monitor_worker = TrialResetWorker(
-            self.engine, "monitor", {"product_name": product_name}
-        )
+        self.monitor_worker = TrialResetWorker(self.engine, "monitor", {"product_name": product_name})
         self.monitor_worker.result.connect(self.update_monitor_display)
         self.monitor_worker.error.connect(self.handle_worker_error)
         self.monitor_worker.start()
@@ -893,9 +877,7 @@ class TrialResetDialog(QDialog):
                         f.write(f"Days Left: {self.current_trial_info.trial_days}\n")
                         f.write(f"Usage Count: {self.current_trial_info.usage_count}\n")
                         f.write(f"Expired: {self.current_trial_info.trial_expired}\n")
-                        f.write(
-                            f"\nRegistry Keys ({len(self.current_trial_info.registry_keys)}):\n"
-                        )
+                        f.write(f"\nRegistry Keys ({len(self.current_trial_info.registry_keys)}):\n")
                         f.writelines(f"  {key}\n" for key in self.current_trial_info.registry_keys)
                         f.write(f"\nFiles ({len(self.current_trial_info.files)}):\n")
                         f.writelines(f"  {file}\n" for file in self.current_trial_info.files)
@@ -967,23 +949,15 @@ class TrialResetDialog(QDialog):
         # Dates
         dates = QTreeWidgetItem(self.trial_info_tree, ["Dates", ""])
         if trial_info.install_date:
-            QTreeWidgetItem(
-                dates, ["Install Date", trial_info.install_date.strftime("%Y-%m-%d %H:%M")]
-            )
+            QTreeWidgetItem(dates, ["Install Date", trial_info.install_date.strftime("%Y-%m-%d %H:%M")])
         if trial_info.first_run_date:
-            QTreeWidgetItem(
-                dates, ["First Run", trial_info.first_run_date.strftime("%Y-%m-%d %H:%M")]
-            )
+            QTreeWidgetItem(dates, ["First Run", trial_info.first_run_date.strftime("%Y-%m-%d %H:%M")])
         if trial_info.last_run_date:
-            QTreeWidgetItem(
-                dates, ["Last Run", trial_info.last_run_date.strftime("%Y-%m-%d %H:%M")]
-            )
+            QTreeWidgetItem(dates, ["Last Run", trial_info.last_run_date.strftime("%Y-%m-%d %H:%M")])
 
         # Registry keys
         if trial_info.registry_keys:
-            registry = QTreeWidgetItem(
-                self.trial_info_tree, [f"Registry Keys ({len(trial_info.registry_keys)})", ""]
-            )
+            registry = QTreeWidgetItem(self.trial_info_tree, [f"Registry Keys ({len(trial_info.registry_keys)})", ""])
             for key in trial_info.registry_keys:
                 QTreeWidgetItem(registry, ["", key])
 
@@ -995,9 +969,7 @@ class TrialResetDialog(QDialog):
 
         # Processes
         if trial_info.processes:
-            processes = QTreeWidgetItem(
-                self.trial_info_tree, [f"Processes ({len(trial_info.processes)})", ""]
-            )
+            processes = QTreeWidgetItem(self.trial_info_tree, [f"Processes ({len(trial_info.processes)})", ""])
             for process in trial_info.processes:
                 QTreeWidgetItem(processes, ["", process])
 
@@ -1035,13 +1007,9 @@ class TrialResetDialog(QDialog):
             self.history_table.insertRow(row)
             self.history_table.setItem(row, 0, QTableWidgetItem(trial_info.product_name))
             self.history_table.setItem(row, 1, QTableWidgetItem(trial_info.trial_type.value))
-            self.history_table.setItem(
-                row, 2, QTableWidgetItem("Expired" if trial_info.trial_expired else "Active")
-            )
+            self.history_table.setItem(row, 2, QTableWidgetItem("Expired" if trial_info.trial_expired else "Active"))
             self.history_table.setItem(row, 3, QTableWidgetItem(str(trial_info.trial_days)))
-            self.history_table.setItem(
-                row, 4, QTableWidgetItem(datetime.now().strftime("%Y-%m-%d %H:%M"))
-            )
+            self.history_table.setItem(row, 4, QTableWidgetItem(datetime.now().strftime("%Y-%m-%d %H:%M")))
 
             self.log(f"Scan complete: {trial_info.product_name}")
             self.progress_bar.setVisible(False)

@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-
 import hashlib
 import importlib
 import json
@@ -223,9 +222,7 @@ def update_visualization(data: object, viz_type: str = "plot") -> None:
 # === Analysis Functions ===
 
 
-def monitor_memory(
-    process_name: str | None = None, threshold_mb: float = 1000.0
-) -> dict[str, object]:
+def monitor_memory(process_name: str | None = None, threshold_mb: float = 1000.0) -> dict[str, object]:
     """Monitor memory usage of a process or the system.
 
     Args:
@@ -272,9 +269,7 @@ def monitor_memory(
 # === Core Utility Functions ===
 
 
-def accelerate_hash_calculation(
-    data: bytes, algorithm: str = "sha256", use_gpu: bool = False
-) -> str:
+def accelerate_hash_calculation(data: bytes, algorithm: str = "sha256", use_gpu: bool = False) -> str:
     """Calculate hash with optional GPU acceleration.
 
     Args:
@@ -505,9 +500,7 @@ def get_captured_requests(limit: int = 100) -> list[dict[str, object]]:
         for request in captured_requests:
             _enhance_request_metadata(request)
 
-        logger.info(
-            "Retrieved %d captured network requests from %d sources", len(captured_requests), 4
-        )
+        logger.info("Retrieved %d captured network requests from %d sources", len(captured_requests), 4)
 
         return captured_requests
 
@@ -550,15 +543,11 @@ def _get_protocol_handler_requests(limit: int) -> list[dict[str, object]]:
                         handler = module.get_instance()
                         if hasattr(handler, "get_captured_requests"):
                             # Retrieve actual captured requests from handler
-                            captured = handler.get_captured_requests(
-                                limit=limit // len(protocol_modules)
-                            )
+                            captured = handler.get_captured_requests(limit=limit // len(protocol_modules))
                             request_list.extend(captured)
                     elif hasattr(module, "GLOBAL_REQUEST_HISTORY"):
                         # Some handlers use global history
-                        request_list.extend(
-                            module.GLOBAL_REQUEST_HISTORY[: limit // len(protocol_modules)]
-                        )
+                        request_list.extend(module.GLOBAL_REQUEST_HISTORY[: limit // len(protocol_modules)])
                 except ImportError:
                     # Handler not installed, skip
                     pass
@@ -700,9 +689,7 @@ def _get_cached_capture_requests(limit: int) -> list[dict[str, object]]:
 
         data_dir = get_data_dir()
         cache_locations = [
-            os.path.join(
-                os.path.expanduser("~"), ".intellicrack", "cache", "network_captures.json"
-            ),
+            os.path.join(os.path.expanduser("~"), ".intellicrack", "cache", "network_captures.json"),
             str(data_dir / "captures" / "network_log.json"),
             os.path.join(tempfile.gettempdir(), "intellicrack_network.json"),
         ]
@@ -761,9 +748,7 @@ def _get_system_network_requests(limit: int) -> list[dict[str, object]]:
                         "timestamp": time.time() - (i * 10),
                         "source": "System_Monitor",
                         "type": "active_connection",
-                        "protocol": (
-                            "TCP" if conn.type == socket.SOCK_STREAM else "UDP"
-                        ),
+                        "protocol": ("TCP" if conn.type == socket.SOCK_STREAM else "UDP"),
                         "src_ip": conn.laddr.ip if conn.laddr else "unknown",
                         "src_port": conn.laddr.port if conn.laddr else 0,
                         "dst_ip": conn.raddr.ip if conn.raddr else "unknown",
@@ -792,9 +777,7 @@ def _get_system_network_requests(limit: int) -> list[dict[str, object]]:
                                         "timestamp": time.time() - 5,
                                         "source": "Process_Monitor",
                                         "type": "process_connection",
-                                        "protocol": "TCP"
-                                        if conn.type == socket.SOCK_STREAM
-                                        else "UDP",
+                                        "protocol": "TCP" if conn.type == socket.SOCK_STREAM else "UDP",
                                         "src_ip": conn.laddr.ip if conn.laddr else "unknown",
                                         "dst_ip": conn.raddr.ip if conn.raddr else "unknown",
                                         "dst_port": conn.raddr.port if conn.raddr else 0,
@@ -937,9 +920,7 @@ def _analyze_protocol(protocol: str, request: dict[str, object]) -> dict[str, ob
         analysis["encrypted"] = protocol == "https"
         # Check for common license-related endpoints
         request_data = request.get("request_data", "")
-        if any(
-            term in request_data.lower() for term in ["license", "auth", "activate", "validate"]
-        ):
+        if any(term in request_data.lower() for term in ["license", "auth", "activate", "validate"]):
             analysis["license_related"] = True
     elif protocol == "tcp":
         analysis["connection_oriented"] = True
@@ -975,9 +956,7 @@ def _assess_request_security(request: dict[str, object]) -> list[str]:
     request_data = request.get("request_data", "").lower()
     response_data = request.get("response_data", "").lower()
 
-    if any(
-        term in request_data + response_data for term in ["license", "key", "activate", "validate"]
-    ):
+    if any(term in request_data + response_data for term in ["license", "key", "activate", "validate"]):
         flags.append("license_related")
 
     # Check for suspicious patterns
@@ -1354,9 +1333,7 @@ def submit_report(report_data: dict[str, object], endpoint: str | None = None) -
             # Local storage submission
             submission_result = _submit_to_local_storage(validated_report, report_id)
 
-        if additional_results := _handle_additional_delivery_methods(
-            validated_report, report_id
-        ):
+        if additional_results := _handle_additional_delivery_methods(validated_report, report_id):
             submission_result["additional_deliveries"] = additional_results
 
         # 5. Create audit trail and logging
@@ -1486,9 +1463,7 @@ def _create_submission_metadata(report_id: str, endpoint: str | None) -> dict[st
     }
 
 
-def _submit_to_remote_endpoint(
-    report_data: dict[str, object], endpoint: str, report_id: str
-) -> dict[str, object]:
+def _submit_to_remote_endpoint(report_data: dict[str, object], endpoint: str, report_id: str) -> dict[str, object]:
     """Submit report to remote endpoint with comprehensive handling."""
     try:
         # Parse endpoint URL
@@ -1529,9 +1504,7 @@ def _submit_to_remote_endpoint(
                         "status": "submitted",
                         "endpoint": endpoint,
                         "response_code": response.status_code,
-                        "response_message": response.text[:200]
-                        if response.text
-                        else "Report submitted",
+                        "response_message": response.text[:200] if response.text else "Report submitted",
                         "tracking_id": report_id,
                         "delivery_method": "http_post",
                     }
@@ -1590,9 +1563,7 @@ def _submit_to_local_storage(report_data: dict[str, object], report_id: str) -> 
         try:
             with open(json_path, "w", encoding="utf-8") as f:
                 json.dump(report_data, f, indent=2, ensure_ascii=False)
-            formats_saved.append(
-                {"format": "json", "path": json_path, "size": os.path.getsize(json_path)}
-            )
+            formats_saved.append({"format": "json", "path": json_path, "size": os.path.getsize(json_path)})
         except (OSError, ValueError) as e:
             logger.error("Failed to save JSON report: %s", e)
 
@@ -1601,9 +1572,7 @@ def _submit_to_local_storage(report_data: dict[str, object], report_id: str) -> 
         try:
             with open(txt_path, "w", encoding="utf-8") as f:
                 f.write(_format_report_as_text(report_data))
-            formats_saved.append(
-                {"format": "text", "path": txt_path, "size": os.path.getsize(txt_path)}
-            )
+            formats_saved.append({"format": "text", "path": txt_path, "size": os.path.getsize(txt_path)})
         except (OSError, ValueError) as e:
             logger.error("Failed to save text report: %s", e)
 
@@ -1611,9 +1580,7 @@ def _submit_to_local_storage(report_data: dict[str, object], report_id: str) -> 
         csv_path = os.path.join(reports_dir, f"{report_id}.csv")
         try:
             if _save_report_as_csv(report_data, csv_path):
-                formats_saved.append(
-                    {"format": "csv", "path": csv_path, "size": os.path.getsize(csv_path)}
-                )
+                formats_saved.append({"format": "csv", "path": csv_path, "size": os.path.getsize(csv_path)})
         except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
             logger.debug("Could not save CSV format: %s", e)
 
@@ -1651,9 +1618,7 @@ def _submit_to_local_storage(report_data: dict[str, object], report_id: str) -> 
         return {"status": "error", "error": str(e)}
 
 
-def _handle_additional_delivery_methods(
-    report_data: dict[str, object], report_id: str
-) -> list[dict[str, object]]:
+def _handle_additional_delivery_methods(report_data: dict[str, object], report_id: str) -> list[dict[str, object]]:
     """Handle additional delivery methods like email, cloud storage, etc."""
     additional_deliveries = []
 
@@ -1673,9 +1638,7 @@ def _handle_additional_delivery_methods(
     return additional_deliveries
 
 
-def _attempt_email_delivery(
-    report_data: dict[str, object], report_id: str
-) -> dict[str, object] | None:
+def _attempt_email_delivery(report_data: dict[str, object], report_id: str) -> dict[str, object] | None:
     """Attempt to deliver report via email."""
     # Check for email configuration
     email_config = os.environ.get("INTELLICRACK_EMAIL_CONFIG")
@@ -1742,9 +1705,7 @@ def _attempt_email_delivery(
         return None
 
 
-def _attempt_cloud_storage(
-    report_data: dict[str, object], report_id: str
-) -> dict[str, object] | None:
+def _attempt_cloud_storage(report_data: dict[str, object], report_id: str) -> dict[str, object] | None:
     """Attempt to store report in cloud storage."""
     # Check for cloud storage configuration
     cloud_config = os.environ.get("INTELLICRACK_CLOUD_CONFIG")
@@ -1876,9 +1837,7 @@ def _attempt_cloud_storage(
         }
 
 
-def _attempt_database_storage(
-    report_data: dict[str, object], report_id: str
-) -> dict[str, object] | None:
+def _attempt_database_storage(report_data: dict[str, object], report_id: str) -> dict[str, object] | None:
     """Attempt to store report in database."""
     # Check for database configuration
     db_config = os.environ.get("INTELLICRACK_DB_CONFIG")
@@ -2225,9 +2184,7 @@ def _save_report_as_csv(report_data: dict[str, object], csv_path: str) -> bool:
         return False
 
 
-def _create_report_archive(
-    report_id: str, formats_saved: list[dict[str, object]], archive_path: str
-) -> bool:
+def _create_report_archive(report_id: str, formats_saved: list[dict[str, object]], archive_path: str) -> bool:
     """Create compressed archive of all report formats."""
     _ = report_id
     try:
@@ -2248,9 +2205,7 @@ def _create_report_archive(
         return False
 
 
-def _create_submission_audit_trail(
-    submission_result: dict[str, object], metadata: dict[str, object]
-) -> None:
+def _create_submission_audit_trail(submission_result: dict[str, object], metadata: dict[str, object]) -> None:
     """Create audit trail for report submission."""
     try:
         audit_entry = {
@@ -2362,9 +2317,7 @@ def create_dataset(data: list[dict[str, object]], format: str = "json") -> dict[
     return dataset
 
 
-def augment_dataset(
-    dataset: list[dict[str, object]], augmentation_config: dict[str, object]
-) -> list[dict[str, object]]:
+def augment_dataset(dataset: list[dict[str, object]], augmentation_config: dict[str, object]) -> list[dict[str, object]]:
     """Augment a dataset with various techniques.
 
     Args:
@@ -2425,9 +2378,7 @@ def load_dataset_preview(dataset_path: str, limit: int = 10) -> list[dict[str, o
         return []
 
 
-def create_full_feature_model(
-    features: list[str], model_type: str = "ensemble"
-) -> dict[str, object]:
+def create_full_feature_model(features: list[str], model_type: str = "ensemble") -> dict[str, object]:
     """Create a model configuration with all features.
 
     Args:
@@ -2452,9 +2403,7 @@ def create_full_feature_model(
     }
 
 
-def predict_vulnerabilities(
-    binary_features: dict[str, object], model: object | None = None
-) -> dict[str, object]:
+def predict_vulnerabilities(binary_features: dict[str, object], model: object | None = None) -> dict[str, object]:
     """Predict vulnerabilities in a binary.
 
     Args:
@@ -2492,9 +2441,7 @@ def predict_vulnerabilities(
 # === Misc Functions ===
 
 
-def add_code_snippet(
-    snippets: list[dict[str, object]], title: str, code: str, language: str = "python"
-) -> None:
+def add_code_snippet(snippets: list[dict[str, object]], title: str, code: str, language: str = "python") -> None:
     """Add a code snippet to a collection.
 
     Args:
@@ -2594,9 +2541,7 @@ def do_GET(request_handler: object) -> None:
     request_handler.wfile.write(b"Intellicrack Server Running")
 
 
-def display_patch_validation_results(
-    results: dict[str, object], display_mode: str = "console"
-) -> None:
+def display_patch_validation_results(results: dict[str, object], display_mode: str = "console") -> None:
     """Display patch testing and validation results in various formats.
 
     Args:
@@ -2707,9 +2652,7 @@ def display_patch_validation_results(
             if results.get("summary"):
                 print(f"\nSummary: {results['summary']}")
 
-        logger.info(
-            f"Displayed patch testing results: {patches_validated}/{patches_total} validated"
-        )
+        logger.info(f"Displayed patch testing results: {patches_validated}/{patches_total} validated")
 
     except Exception as e:
         logger.error(f"Error displaying results: {e}")

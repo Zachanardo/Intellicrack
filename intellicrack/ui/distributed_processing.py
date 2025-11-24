@@ -650,9 +650,7 @@ class DistributedWorkerThread(QThread):
 
                 # Check for high entropy (possible packing/encryption)
                 if section_data["entropy"] > 7.0:
-                    results["license_indicators"].append(
-                        f"High entropy section {section_data['name']}: possible protection"
-                    )
+                    results["license_indicators"].append(f"High entropy section {section_data['name']}: possible protection")
 
         # Step 3: Extract and analyze strings
         self._update_progress(task, 40, "Extracting strings")
@@ -677,13 +675,8 @@ class DistributedWorkerThread(QThread):
                         func_name = imp.name.decode("utf-8")
                         results["imports"][-1]["functions"].append(func_name)
                         # Check for protection-related APIs
-                        if any(
-                            api in func_name.lower()
-                            for api in ["crypt", "protect", "verify", "check"]
-                        ):
-                            results["license_indicators"].append(
-                                f"Protection API: {dll_name}!{func_name}"
-                            )
+                        if any(api in func_name.lower() for api in ["crypt", "protect", "verify", "check"]):
+                            results["license_indicators"].append(f"Protection API: {dll_name}!{func_name}")
 
         # Step 5: Disassemble and identify functions
         self._update_progress(task, 70, "Identifying functions")
@@ -871,9 +864,7 @@ class DistributedWorkerThread(QThread):
             test_chars = string.ascii_letters + string.digits
             test_password = "".join(secrets.choice(test_chars) for _ in range(16))
             hash_value = hashlib.sha256(test_password.encode()).hexdigest()
-            logger.info(
-                f"Generated test hash from random password for demonstration: {hash_value[:16]}..."
-            )
+            logger.info(f"Generated test hash from random password for demonstration: {hash_value[:16]}...")
 
         results = {
             "hash": hash_value,
@@ -922,12 +913,7 @@ class DistributedWorkerThread(QThread):
 
             # Process batch in parallel
             with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-                futures = [
-                    executor.submit(
-                        self._check_password, password, hash_value, hash_func
-                    )
-                    for password in batch
-                ]
+                futures = [executor.submit(self._check_password, password, hash_value, hash_func) for password in batch]
                 for future in concurrent.futures.as_completed(futures):
                     password, matches = future.result()
                     results["attempts"] += 1
@@ -951,9 +937,7 @@ class DistributedWorkerThread(QThread):
                 results["candidates_tested"].extend(batch[:5])
 
         results["time_elapsed"] = time.time() - start_time
-        results["hash_rate"] = (
-            results["attempts"] / results["time_elapsed"] if results["time_elapsed"] > 0 else 0
-        )
+        results["hash_rate"] = results["attempts"] / results["time_elapsed"] if results["time_elapsed"] > 0 else 0
 
         return results
 
@@ -1000,9 +984,7 @@ class DistributedWorkerThread(QThread):
 
         return passwords
 
-    def _check_password(
-        self, password: str, target_hash: str, hash_func: object
-    ) -> tuple[str, bool]:
+    def _check_password(self, password: str, target_hash: str, hash_func: object) -> tuple[str, bool]:
         """Check if password matches target hash.
 
         Args:
@@ -1147,9 +1129,7 @@ class DistributedWorkerThread(QThread):
 
         return protections
 
-    def _identify_weak_points(
-        self, target: str, protections: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    def _identify_weak_points(self, target: str, protections: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Identify weak points in protection.
 
         Args:
@@ -1289,9 +1269,7 @@ class DistributedWorkerThread(QThread):
 
         return vulnerabilities
 
-    def _analyze_bypass_techniques(
-        self, protections: list[dict[str, Any]], weak_points: list[dict[str, Any]]
-    ) -> list[dict[str, str]]:
+    def _analyze_bypass_techniques(self, protections: list[dict[str, Any]], weak_points: list[dict[str, Any]]) -> list[dict[str, str]]:
         """Determine applicable bypass techniques.
 
         Args:
@@ -1502,14 +1480,10 @@ class DistributedWorkerThread(QThread):
         results["key_algorithms"] = self._identify_key_algorithms(target_file)
 
         self._update_progress(task, 60, "Determining license type")
-        results["license_type"] = self._determine_license_type(
-            results["validation_methods"], results["key_algorithms"]
-        )
+        results["license_type"] = self._determine_license_type(results["validation_methods"], results["key_algorithms"])
 
         self._update_progress(task, 80, "Developing bypass strategies")
-        results["bypass_strategies"] = self._develop_bypass_strategies(
-            results["license_type"], results["validation_methods"]
-        )
+        results["bypass_strategies"] = self._develop_bypass_strategies(results["license_type"], results["validation_methods"])
 
         self._update_progress(task, 100, "Analysis complete")
         results["confidence"] = self._calculate_confidence(results)
@@ -1593,9 +1567,7 @@ class DistributedWorkerThread(QThread):
 
         return list(set(algorithms))
 
-    def _determine_license_type(
-        self, validation_methods: list[dict[str, Any]], key_algorithms: list[str]
-    ) -> str:
+    def _determine_license_type(self, validation_methods: list[dict[str, Any]], key_algorithms: list[str]) -> str:
         """Determine the type of license protection.
 
         Args:
@@ -1618,9 +1590,7 @@ class DistributedWorkerThread(QThread):
             return "key_based"
         return "simple_check"
 
-    def _develop_bypass_strategies(
-        self, license_type: str, validation_methods: list[dict[str, Any]]
-    ) -> list[dict[str, str]]:
+    def _develop_bypass_strategies(self, license_type: str, validation_methods: list[dict[str, Any]]) -> list[dict[str, str]]:
         """Develop strategies to bypass the license.
 
         Args:
@@ -1982,9 +1952,7 @@ class DistributedProcessingDialog(QDialog):
             status = task.status.value
             status_counts[status] = status_counts.get(status, 0) + 1
 
-        status_summary = ", ".join(
-            [f"{status}: {count}" for status, count in status_counts.items()]
-        )
+        status_summary = ", ".join([f"{status}: {count}" for status, count in status_counts.items()])
         self.update_status_text(f"Status summary - {status_summary}")
 
     def update_status_text(self, message: str) -> None:

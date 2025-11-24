@@ -285,9 +285,7 @@ class FridaScriptParameterWidget(QDialog):
         preset_dir = Path.home() / ".intellicrack" / "frida_presets"
         preset_dir.mkdir(parents=True, exist_ok=True)
 
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Load Preset", str(preset_dir), "JSON Files (*.json)"
-        )
+        file_path, _ = QFileDialog.getOpenFileName(self, "Load Preset", str(preset_dir), "JSON Files (*.json)")
 
         if file_path:
             with open(file_path) as f:
@@ -443,9 +441,7 @@ class ScriptOutputTab(QWidget):
         cursor.insertText(formatted + "\n", text_format)
 
         # Auto-scroll to bottom
-        self.output_text.verticalScrollBar().setValue(
-            self.output_text.verticalScrollBar().maximum()
-        )
+        self.output_text.verticalScrollBar().setValue(self.output_text.verticalScrollBar().maximum())
 
         # Update data tree if message contains data
         if isinstance(message, dict) and "data" in message:
@@ -528,9 +524,7 @@ class ScriptOutputTab(QWidget):
 
     def export_output(self) -> None:
         """Export output to file."""
-        file_path, _ = QFileDialog.getSaveFileName(
-            self, "Export Output", f"{self.script_name}_output.json", "JSON Files (*.json)"
-        )
+        file_path, _ = QFileDialog.getSaveFileName(self, "Export Output", f"{self.script_name}_output.json", "JSON Files (*.json)")
 
         if file_path:
             export_data = {
@@ -596,9 +590,7 @@ class FridaScriptDebuggerWidget(QWidget):
         # Breakpoints
         self.breakpoints_widget = QTableWidget()
         self.breakpoints_widget.setColumnCount(4)
-        self.breakpoints_widget.setHorizontalHeaderLabels(
-            ["Line", "Function", "Condition", "Hit Count"]
-        )
+        self.breakpoints_widget.setHorizontalHeaderLabels(["Line", "Function", "Condition", "Hit Count"])
         debug_tabs.addTab(self.breakpoints_widget, "Breakpoints")
 
         # Watch expressions
@@ -1108,9 +1100,7 @@ send({ type: 'ready', payload: 'Memory scanner initialized' });
             QMessageBox.warning(self, "Error", "Please enter a script name")
             return
 
-        file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save Script", f"{name}.js", "JavaScript Files (*.js)"
-        )
+        file_path, _ = QFileDialog.getSaveFileName(self, "Save Script", f"{name}.js", "JavaScript Files (*.js)")
 
         if file_path:
             # Add metadata header
@@ -1185,9 +1175,7 @@ def show_parameter_dialog(main_app: object) -> None:
         return
 
     # Select script
-    script_name, ok = QInputDialog.getItem(
-        main_app, "Select Script", "Choose a script to configure:", script_names, 0, False
-    )
+    script_name, ok = QInputDialog.getItem(main_app, "Select Script", "Choose a script to configure:", script_names, 0, False)
 
     if ok and script_name:
         config = manager.get_script_config(script_name)

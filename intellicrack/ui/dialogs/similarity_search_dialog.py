@@ -124,9 +124,7 @@ class BinarySimilaritySearchDialog(QDialog):
 
         # Header with binary info
         header_layout = QHBoxLayout()
-        header_layout.addWidget(
-            QLabel(f"<b>Target Binary:</b> {os.path.basename(self.binary_path)}")
-        )
+        header_layout.addWidget(QLabel(f"<b>Target Binary:</b> {os.path.basename(self.binary_path)}"))
         header_layout.addStretch()
 
         # Database info
@@ -284,9 +282,7 @@ class BinarySimilaritySearchDialog(QDialog):
             def run(self) -> None:
                 """Execute binary similarity search in a separate thread."""
                 try:
-                    results = self.search_engine.search_similar_binaries(
-                        self.binary_path, self.threshold
-                    )
+                    results = self.search_engine.search_similar_binaries(self.binary_path, self.threshold)
                     self.result_signal.emit(results)
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.exception("Binary similarity search failed: %s", e)
@@ -364,9 +360,7 @@ class BinarySimilaritySearchDialog(QDialog):
         pattern_to_apply = None
         if len(patterns) > 1:
             pattern_items = [f"Pattern {_i + 1}" for _i in range(len(patterns))]
-            pattern_index, ok = QInputDialog.getItem(
-                self, "Select Pattern", "Choose a pattern to apply:", pattern_items, 0, False
-            )
+            pattern_index, ok = QInputDialog.getItem(self, "Select Pattern", "Choose a pattern to apply:", pattern_items, 0, False)
 
             if ok and pattern_index:
                 index = pattern_items.index(pattern_index)
@@ -434,9 +428,8 @@ class BinarySimilaritySearchDialog(QDialog):
         patterns = [patterns_text.strip()] if patterns_text.strip() else []
         # Add to database
         try:
-            if success := self.search_engine.add_binary(
-                self.binary_path, patterns
-            ):
+            if success := self.search_engine.add_binary(self.binary_path, patterns):
+                logger.info(f"Binary added to search index successfully (result: {success})")
                 QMessageBox.information(
                     self,
                     "Success",
@@ -488,9 +481,7 @@ class BinarySimilaritySearchDialog(QDialog):
         return self.similar_binaries.copy()
 
 
-def create_similarity_search_dialog(
-    binary_path: str, parent: QWidget | None = None
-) -> BinarySimilaritySearchDialog:
+def create_similarity_search_dialog(binary_path: str, parent: QWidget | None = None) -> BinarySimilaritySearchDialog:
     """Create a BinarySimilaritySearchDialog.
 
     Args:

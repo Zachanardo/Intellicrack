@@ -30,7 +30,7 @@ from intellicrack.core.analysis.commercial_license_analyzer import CommercialLic
 from intellicrack.core.analysis.radare2_bypass_generator import R2BypassGenerator
 from intellicrack.core.analysis.radare2_vulnerability_engine import R2VulnerabilityEngine
 from intellicrack.core.analysis.radare2_ai_integration import R2AIEngine
-from intellicrack.core.exploitation.shellcode_generator import ShellcodeGenerator
+from intellicrack.core.exploitation.license_bypass_code_generator import LicenseBypassCodeGenerator
 from intellicrack.core.exploitation.payload_engine import PayloadEngine
 from intellicrack.core.exploitation.cet_bypass import CETBypass
 from intellicrack.core.protection_bypass.dongle_emulator import HardwareDongleEmulator
@@ -576,7 +576,7 @@ class EndToEndWorkflowTest(unittest.TestCase):
         binary_path = self._create_test_binary("FlexLM")
 
         # Test shellcode generation
-        shellcode_gen = ShellcodeGenerator()
+        shellcode_gen = LicenseBypassCodeGenerator()
         shellcode = shellcode_gen.generate("windows", "x86", "reverse_shell", {"host": "127.0.0.1", "port": 4444})
 
         self.assertIsNotNone(shellcode)

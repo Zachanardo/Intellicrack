@@ -129,9 +129,7 @@ class AnalysisStatsGenerator:
             }
 
     @staticmethod
-    def generate_correlation_matrix(
-        items: list[dict[str, Any]], attributes: list[str]
-    ) -> dict[str, dict[str, float]]:
+    def generate_correlation_matrix(items: list[dict[str, Any]], attributes: list[str]) -> dict[str, dict[str, float]]:
         """Generate correlation matrix between numeric attributes.
 
         Args:
@@ -182,9 +180,7 @@ class AnalysisStatsGenerator:
             mean1 = sum(values1) / len(values1)
             mean2 = sum(values2) / len(values2)
 
-            numerator = sum(
-                (x - mean1) * (y - mean2) for x, y in zip(values1, values2, strict=False)
-            )
+            numerator = sum((x - mean1) * (y - mean2) for x, y in zip(values1, values2, strict=False))
             sum_sq1 = sum((x - mean1) ** 2 for x in values1)
             sum_sq2 = sum((y - mean2) ** 2 for y in values2)
 
@@ -228,9 +224,7 @@ class AnalysisStatsGenerator:
 
             time_series = {}
             for bucket_time, values in time_buckets.items():
-                if numeric_values := [
-                    v for v in values if isinstance(v, (int, float))
-                ]:
+                if numeric_values := [v for v in values if isinstance(v, (int, float))]:
                     time_series[bucket_time] = {
                         "count": len(numeric_values),
                         "min": min(numeric_values),
@@ -278,9 +272,7 @@ class AnalysisStatsGenerator:
             return default_return
 
     @staticmethod
-    def generate_summary_report(
-        items: list[dict[str, Any]], title: str = "Analysis Summary"
-    ) -> str:
+    def generate_summary_report(items: list[dict[str, Any]], title: str = "Analysis Summary") -> str:
         """Generate a text summary report.
 
         Args:
@@ -311,8 +303,7 @@ class AnalysisStatsGenerator:
 
             common_attributes = []
             for attr in all_attributes:
-                count = sum(bool(isinstance(item, dict) and attr in item)
-                        for item in items)
+                count = sum(bool(isinstance(item, dict) and attr in item) for item in items)
                 if count >= len(items) * 0.5:
                     common_attributes.append(attr)
 
@@ -429,9 +420,7 @@ class AnalysisStatsGenerator:
             return []
 
     @staticmethod
-    def generate_percentiles(
-        values: list[int | float], percentiles: list[int] = None
-    ) -> dict[int, float]:
+    def generate_percentiles(values: list[int | float], percentiles: list[int] = None) -> dict[int, float]:
         """Calculate percentiles for a list of values.
 
         Args:
@@ -464,10 +453,7 @@ class AnalysisStatsGenerator:
                         upper_idx = min(lower_idx + 1, n - 1)
                         weight = index - lower_idx
 
-                        result[p] = (
-                            sorted_values[lower_idx] * (1 - weight)
-                            + sorted_values[upper_idx] * weight
-                        )
+                        result[p] = sorted_values[lower_idx] * (1 - weight) + sorted_values[upper_idx] * weight
 
             return result
 

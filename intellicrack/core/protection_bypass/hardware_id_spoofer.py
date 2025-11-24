@@ -348,20 +348,20 @@ class HardwareIDSpoofer:
             display_name = "Hardware ID Spoofing Driver"
 
             h_service = self.advapi32.CreateServiceW(
-                            h_scm,
-                            service_name,
-                            display_name,
-                            SERVICE_ALL_ACCESS,
-                            SERVICE_KERNEL_DRIVER,
-                            SERVICE_DEMAND_START,
-                            SERVICE_ERROR_NORMAL,
-                            str(self.driver_path),
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
-                        ) or self.advapi32.OpenServiceW(h_scm, service_name, SERVICE_ALL_ACCESS)
+                h_scm,
+                service_name,
+                display_name,
+                SERVICE_ALL_ACCESS,
+                SERVICE_KERNEL_DRIVER,
+                SERVICE_DEMAND_START,
+                SERVICE_ERROR_NORMAL,
+                str(self.driver_path),
+                None,
+                None,
+                None,
+                None,
+                None,
+            ) or self.advapi32.OpenServiceW(h_scm, service_name, SERVICE_ALL_ACCESS)
 
             if h_service:
                 self.advapi32.StartServiceW(h_service, 0, None)
@@ -369,9 +369,7 @@ class HardwareIDSpoofer:
 
             self.advapi32.CloseServiceHandle(h_scm)
 
-            self.driver_handle = self.kernel32.CreateFileW(
-                r"\\.\HWIDSpoof", 0xC0000000, 0, None, 3, 0, None
-            )
+            self.driver_handle = self.kernel32.CreateFileW(r"\\.\HWIDSpoof", 0xC0000000, 0, None, 3, 0, None)
 
         except Exception as e:
             logger.warning(f"Kernel driver loading failed, using usermode spoofing: {e}")
@@ -453,18 +451,14 @@ class HardwareIDSpoofer:
                 code_buffer = ctypes.create_string_buffer(CPUID_CODE)
                 func_ptr = ctypes.cast(
                     code_buffer,
-                    ctypes.CFUNCTYPE(
-                        None, ctypes.c_uint32, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32)
-                    ),
+                    ctypes.CFUNCTYPE(None, ctypes.c_uint32, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32)),
                 )
 
                 result = (ctypes.c_uint32 * 4)()
 
                 func_ptr(0, 0, result)
                 cpu_info["max_cpuid"] = hex(result[0])
-                cpu_info["vendor"] = struct.pack("III", result[1], result[3], result[2]).decode(
-                    "ascii"
-                )
+                cpu_info["vendor"] = struct.pack("III", result[1], result[3], result[2]).decode("ascii")
 
                 func_ptr(1, 0, result)
                 cpu_info["signature"] = hex(result[0])
@@ -533,6 +527,7 @@ class HardwareIDSpoofer:
                 file_sys_name,
                 261,
             ):
+                logger.debug(f"GetVolumeInformationW for {drive} returned {result}")
                 return {
                     "drive": drive,
                     "volume_name": volume_name.value,
@@ -556,11 +551,7 @@ class HardwareIDSpoofer:
                     macs.append(mac_info)
         with contextlib.suppress(AttributeError, TypeError):
             for interface, addrs in psutil.net_if_addrs().items():
-                macs.extend(
-                    {"name": interface, "mac": addr.address}
-                    for addr in addrs
-                    if addr.family == psutil.AF_LINK
-                )
+                macs.extend({"name": interface, "mac": addr.address} for addr in addrs if addr.family == psutil.AF_LINK)
         return macs
 
     def _get_bios_info(self) -> dict[str, str]:
@@ -593,9 +584,7 @@ class HardwareIDSpoofer:
 
     def _get_machine_guid(self) -> str:
         try:
-            with winreg.OpenKey(
-                winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography"
-            ) as key:
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography") as key:
                 return winreg.QueryValueEx(key, "MachineGuid")[0]
         except OSError:
             return ""
@@ -639,9 +628,7 @@ class HardwareIDSpoofer:
         try:
             if self.driver_handle:
                 IOCTL_SPOOF_CPUID = 0x222000
-                input_buffer = struct.pack(
-                    "12s16s", vendor.encode()[:12], processor_id.encode()[:16]
-                )
+                input_buffer = struct.pack("12s16s", vendor.encode()[:12], processor_id.encode()[:16])
                 output_buffer = ctypes.create_string_buffer(4)
                 bytes_returned = ctypes.wintypes.DWORD()
 
@@ -655,6 +642,7 @@ class HardwareIDSpoofer:
                     ctypes.byref(bytes_returned),
                     None,
                 ):
+                    logger.debug(f"CPUID spoof IOCTL returned {result}, {bytes_returned.value} bytes")
                     self.spoofed_values["cpu_vendor"] = vendor
                     self.spoofed_values["cpu_id"] = processor_id
                     return True
@@ -680,9 +668,7 @@ class HardwareIDSpoofer:
         try:
             detours_dll = ctypes.windll.LoadLibrary("detours.dll")
 
-            original_cpuid = ctypes.WINFUNCTYPE(
-                None, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32)
-            )
+            original_cpuid = ctypes.WINFUNCTYPE(None, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32))
 
             def hooked_cpuid(eax_in: int, regs: ctypes.Array[ctypes.c_uint32]) -> None:
                 if eax_in == 0:
@@ -698,9 +684,7 @@ class HardwareIDSpoofer:
                 else:
                     original_cpuid(eax_in, regs)
 
-            hook_func = ctypes.WINFUNCTYPE(None, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32))(
-                hooked_cpuid
-            )
+            hook_func = ctypes.WINFUNCTYPE(None, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32))(hooked_cpuid)
 
             detours_dll.DetourTransactionBegin()
             detours_dll.DetourUpdateThread(self.kernel32.GetCurrentThread())
@@ -728,9 +712,7 @@ class HardwareIDSpoofer:
                     return False
 
             adapter_key = None
-            base_key = (
-                r"SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002bE10318}"
-            )
+            base_key = r"SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002bE10318}"
 
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, base_key) as key:
                 i = 0
@@ -747,9 +729,7 @@ class HardwareIDSpoofer:
                         break
 
             if adapter_key:
-                with winreg.OpenKey(
-                    winreg.HKEY_LOCAL_MACHINE, adapter_key, 0, winreg.KEY_WRITE
-                ) as key:
+                with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, adapter_key, 0, winreg.KEY_WRITE) as key:
                     mac_no_colons = new_mac.replace(":", "").replace("-", "")
                     winreg.SetValueEx(key, "NetworkAddress", 0, winreg.REG_SZ, mac_no_colons)
 
@@ -770,13 +750,7 @@ class HardwareIDSpoofer:
     def _restart_network_adapter(self, adapter_name: str) -> None:
         try:
             # Sanitize adapter_name to prevent command injection
-            adapter_name_clean = (
-                adapter_name.replace('"', "")
-                .replace("'", "")
-                .replace(";", "")
-                .replace("|", "")
-                .replace("&", "")
-            )
+            adapter_name_clean = adapter_name.replace('"', "").replace("'", "").replace(";", "").replace("|", "").replace("&", "")
             subprocess.run(
                 ["netsh", "interface", "set", "interface", adapter_name_clean, "disable"],
                 capture_output=True,
@@ -832,9 +806,7 @@ class HardwareIDSpoofer:
                 if drive is None:
                     drive = "C:\\"
 
-                input_buffer = struct.pack(
-                    "260s16s", drive.encode("utf-16-le"), new_serial.encode()[:16]
-                )
+                input_buffer = struct.pack("260s16s", drive.encode("utf-16-le"), new_serial.encode()[:16])
                 output_buffer = ctypes.create_string_buffer(4)
                 bytes_returned = ctypes.wintypes.DWORD()
 
@@ -848,6 +820,7 @@ class HardwareIDSpoofer:
                     ctypes.byref(bytes_returned),
                     None,
                 ):
+                    logger.debug(f"Disk spoof IOCTL returned {result}, {bytes_returned.value} bytes")
                     self.spoofed_values[f"disk_{drive}"] = new_serial
                     return True
 
@@ -875,9 +848,7 @@ exit"""
 
             try:
                 # Sanitize script_path to prevent command injection
-                script_path_clean = (
-                    str(script_path).replace(";", "").replace("|", "").replace("&", "")
-                )
+                script_path_clean = str(script_path).replace(";", "").replace("|", "").replace("&", "")
                 subprocess.run(
                     ["diskpart", "/s", script_path_clean],
                     capture_output=True,
@@ -894,9 +865,7 @@ exit"""
             logger.warning(f"Usermode disk spoofing failed: {e}")
             return False
 
-    def spoof_motherboard_serial(
-        self, manufacturer: str = None, product: str = None, serial: str = None
-    ) -> bool:
+    def spoof_motherboard_serial(self, manufacturer: str = None, product: str = None, serial: str = None) -> bool:
         """Spoof motherboard manufacturer, product, and serial via SMBIOS manipulation."""
         if manufacturer is None:
             manufacturer = random.choice(["ASUS", "MSI", "Gigabyte", "ASRock", "EVGA"])  # noqa: S311
@@ -930,6 +899,7 @@ exit"""
                     ctypes.byref(bytes_returned),
                     None,
                 ):
+                    logger.debug(f"SMBIOS spoof IOCTL returned {result}, {bytes_returned.value} bytes")
                     self.spoofed_values["motherboard_manufacturer"] = manufacturer
                     self.spoofed_values["motherboard_product"] = product
                     self.spoofed_values["motherboard_serial"] = serial
@@ -972,9 +942,7 @@ objInstance.Put_
 
             try:
                 # Sanitize script_path to prevent command injection
-                script_path_clean = (
-                    str(script_path).replace(";", "").replace("|", "").replace("&", "")
-                )
+                script_path_clean = str(script_path).replace(";", "").replace("|", "").replace("&", "")
                 subprocess.run(
                     ["cscript", "//NoLogo", script_path_clean],
                     capture_output=True,
@@ -1019,11 +987,7 @@ objInstance.Put_
         if profile is None:
             profile = self.generate_random_profile()
 
-        results = {
-            "cpu": self.spoof_cpu_id(
-                profile.get("cpu_vendor"), profile.get("cpu_id")
-            )
-        }
+        results = {"cpu": self.spoof_cpu_id(profile.get("cpu_vendor"), profile.get("cpu_id"))}
         for mac_entry in profile.get("mac_addresses", []):
             adapter = mac_entry.get("adapter")
             mac = mac_entry.get("mac")
@@ -1059,16 +1023,12 @@ objInstance.Put_
 
         adapters = self._get_mac_addresses()
         for adapter in adapters[:2]:
-            profile["mac_addresses"].append(
-                {"adapter": adapter["name"], "mac": self._generate_random_mac()}
-            )
+            profile["mac_addresses"].append({"adapter": adapter["name"], "mac": self._generate_random_mac()})
 
         disks = self._get_disk_serials()
         for disk in disks[:2]:
             drive = disk.get("drive", "C:\\")
-            profile["disk_serials"].append(
-                {"drive": drive, "serial": self._generate_random_disk_serial()}
-            )
+            profile["disk_serials"].append({"drive": drive, "serial": self._generate_random_disk_serial()})
 
         return profile
 
@@ -1134,9 +1094,7 @@ objInstance.Put_
 
     def _restore_mac_address(self, adapter: str, original_mac: str) -> None:
         with contextlib.suppress(AttributeError, TypeError):
-            base_key = (
-                r"SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002bE10318}"
-            )
+            base_key = r"SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002bE10318}"
 
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, base_key) as key:
                 i = 0

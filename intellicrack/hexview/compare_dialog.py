@@ -169,9 +169,7 @@ class CompareDialog(QDialog):
         options_layout.addWidget(mode_byte)
 
         mode_structural = QRadioButton("Structural (Block-level changes)")
-        mode_structural.toggled.connect(
-            lambda checked: self.set_mode("structural") if checked else None
-        )
+        mode_structural.toggled.connect(lambda checked: self.set_mode("structural") if checked else None)
         self.mode_group.addButton(mode_structural)
         options_layout.addWidget(mode_structural)
 
@@ -209,9 +207,7 @@ class CompareDialog(QDialog):
         layout.addWidget(self.stats_label)
 
         # Button box
-        self.button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
+        self.button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         self.button_box.accepted.connect(self.accept)
         self.button_box.rejected.connect(self.reject)
         layout.addWidget(self.button_box)
@@ -227,9 +223,7 @@ class CompareDialog(QDialog):
             file_num: 1 or 2 for first or second file
 
         """
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, f"Select File {file_num}", "", "All Files (*.*)"
-        )
+        file_path, _ = QFileDialog.getOpenFileName(self, f"Select File {file_num}", "", "All Files (*.*)")
 
         if file_path:
             if file_num == 1:
@@ -367,12 +361,9 @@ class CompareDialog(QDialog):
             self.stats_label.setText("Files are identical")
             self.stats_label.setStyleSheet("color: green; font-weight: bold;")
         else:
-            modified = sum(bool(str(d.diff_type) == "DifferenceType.MODIFIED")
-                       for d in differences)
-            inserted = sum(bool(str(d.diff_type) == "DifferenceType.INSERTED")
-                       for d in differences)
-            deleted = sum(bool(str(d.diff_type) == "DifferenceType.DELETED")
-                      for d in differences)
+            modified = sum(bool(str(d.diff_type) == "DifferenceType.MODIFIED") for d in differences)
+            inserted = sum(bool(str(d.diff_type) == "DifferenceType.INSERTED") for d in differences)
+            deleted = sum(bool(str(d.diff_type) == "DifferenceType.DELETED") for d in differences)
 
             stats_text = f"Found {len(differences)} difference blocks: "
             parts = []

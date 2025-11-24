@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-from collections.abc import Callable
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
@@ -40,11 +40,24 @@ class LoadingState(Enum):
 class LoadingProgress:
     """Progress information for model loading."""
 
+    model_id: str
+    model_name: str
     state: LoadingState
-    progress: float  # 0.0 to 1.0
+    progress: float
     message: str
     details: dict[str, Any] | None = None
+    timestamp: float | None = None
 
 
-# Type alias for progress callbacks
-ProgressCallback = Callable[[LoadingProgress], None]
+class ProgressCallback(ABC):
+    """Abstract base class for progress callbacks during model loading."""
+
+    @abstractmethod
+    def on_progress(self, progress: LoadingProgress) -> None:
+        """Called when loading progress is updated."""
+        pass
+
+    @abstractmethod
+    def on_completed(self, model_id: str, success: bool, error: str | None = None) -> None:
+        """Called when loading is completed."""
+        pass

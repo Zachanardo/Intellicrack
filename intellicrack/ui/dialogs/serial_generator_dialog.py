@@ -9,6 +9,7 @@ from typing import Any
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
+    QApplication,
     QCheckBox,
     QComboBox,
     QDialog,
@@ -16,6 +17,7 @@ from PyQt6.QtWidgets import (
     QFileDialog,
     QGroupBox,
     QHBoxLayout,
+    QInputDialog,
     QLabel,
     QLineEdit,
     QListWidget,
@@ -41,9 +43,7 @@ class SerialGeneratorWorker(QThread):
     result = pyqtSignal(dict)
     error = pyqtSignal(str)
 
-    def __init__(
-        self, generator: SerialNumberGenerator, operation: str, params: dict[str, Any]
-    ) -> None:
+    def __init__(self, generator: SerialNumberGenerator, operation: str, params: dict[str, Any]) -> None:
         """Initialize the SerialGeneratorWorker with a generator, operation, and parameters."""
         super().__init__()
         self.generator = generator
@@ -102,9 +102,7 @@ class SerialGeneratorWorker(QThread):
 
                     # Check checksum if specified
                     if constraints.checksum_algorithm:
-                        if checksum_func := self.generator.checksum_functions.get(
-                            constraints.checksum_algorithm
-                        ):
+                        if checksum_func := self.generator.checksum_functions.get(constraints.checksum_algorithm):
                             checksum_valid = self.generator._verify_checksum(serial, checksum_func)
                             is_valid = is_valid and checksum_valid
                             validation_details["checksum_check"] = checksum_valid
@@ -515,9 +513,7 @@ class SerialGeneratorDialog(QDialog):
         method_layout = QHBoxLayout()
         method_layout.addWidget(QLabel("Validation Method:"))
         self.validation_method = QComboBox()
-        self.validation_method.addItems(
-            ["Auto-detect", "Luhn", "Verhoeff", "Damm", "CRC32", "Mod97", "Custom Pattern"]
-        )
+        self.validation_method.addItems(["Auto-detect", "Luhn", "Verhoeff", "Damm", "CRC32", "Mod97", "Custom Pattern"])
         method_layout.addWidget(self.validation_method)
 
         self.btn_validate = QPushButton("Validate")
@@ -712,9 +708,7 @@ class SerialGeneratorDialog(QDialog):
         try:
             constraints = self.build_constraints()
 
-            self.worker = SerialGeneratorWorker(
-                self.generator, "generate_single", {"constraints": constraints}
-            )
+            self.worker = SerialGeneratorWorker(self.generator, "generate_single", {"constraints": constraints})
             self.worker.progress.connect(self.log)
             self.worker.result.connect(self.handle_worker_result)
             self.worker.error.connect(self.handle_worker_error)
@@ -791,9 +785,7 @@ class SerialGeneratorDialog(QDialog):
             checksum_algorithm=self.analyzed_pattern.get("checksum", {}).get("algorithm"),
         )
 
-        self.worker = SerialGeneratorWorker(
-            self.generator, "generate_batch", {"constraints": constraints, "count": 10}
-        )
+        self.worker = SerialGeneratorWorker(self.generator, "generate_batch", {"constraints": constraints, "count": 10})
         self.worker.progress.connect(self.log)
         self.worker.result.connect(self.handle_worker_result)
         self.worker.error.connect(self.handle_worker_error)
@@ -843,9 +835,7 @@ class SerialGeneratorDialog(QDialog):
                 checksum_algorithm=method.lower() if method != "Custom Pattern" else None,
             )
 
-        self.worker = SerialGeneratorWorker(
-            self.generator, "validate", {"serial": serial, "constraints": constraints}
-        )
+        self.worker = SerialGeneratorWorker(self.generator, "validate", {"serial": serial, "constraints": constraints})
         self.worker.progress.connect(self.log)
         self.worker.result.connect(self.handle_worker_result)
         self.worker.error.connect(self.handle_worker_error)
@@ -911,9 +901,7 @@ class SerialGeneratorDialog(QDialog):
 
     def load_sample_serials(self) -> None:
         """Load sample serials from file."""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Load Sample Serials", "", "Text Files (*.txt);;All Files (*.*)"
-        )
+        file_path, _ = QFileDialog.getOpenFileName(self, "Load Sample Serials", "", "Text Files (*.txt);;All Files (*.*)")
 
         if file_path:
             try:
@@ -926,9 +914,7 @@ class SerialGeneratorDialog(QDialog):
 
     def load_validation_batch(self) -> None:
         """Load serials for batch validation."""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Load Serials for Validation", "", "Text Files (*.txt);;All Files (*.*)"
-        )
+        file_path, _ = QFileDialog.getOpenFileName(self, "Load Serials for Validation", "", "Text Files (*.txt);;All Files (*.*)")
 
         if file_path:
             try:
@@ -992,9 +978,7 @@ class SerialGeneratorDialog(QDialog):
             }
             for row in range(self.patterns_table.rowCount())
         ]
-        file_path, _ = QFileDialog.getSaveFileName(
-            self, "Export Patterns", "serial_patterns.json", "JSON Files (*.json);;All Files (*.*)"
-        )
+        file_path, _ = QFileDialog.getSaveFileName(self, "Export Patterns", "serial_patterns.json", "JSON Files (*.json);;All Files (*.*)")
 
         if file_path:
             try:
@@ -1006,9 +990,7 @@ class SerialGeneratorDialog(QDialog):
 
     def import_patterns(self) -> None:
         """Import patterns from file."""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Import Patterns", "", "JSON Files (*.json);;All Files (*.*)"
-        )
+        file_path, _ = QFileDialog.getOpenFileName(self, "Import Patterns", "", "JSON Files (*.json);;All Files (*.*)")
 
         if file_path:
             try:
@@ -1033,8 +1015,6 @@ class SerialGeneratorDialog(QDialog):
 
     def save_preset(self) -> None:
         """Save current settings as preset."""
-        from PyQt6.QtWidgets import QInputDialog
-
         name, ok = QInputDialog.getText(self, "Save Preset", "Preset Name:")
         if ok and name:
             preset = {

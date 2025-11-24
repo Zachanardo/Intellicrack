@@ -220,11 +220,7 @@ class ProjectManager:
             shutil.unpack_archive(archive_path, temp_dir)
 
             project_json = next(
-                (
-                    Path(root) / "project.json"
-                    for root, _dirs, files in os.walk(temp_dir)
-                    if "project.json" in files
-                ),
+                (Path(root) / "project.json" for root, _dirs, files in os.walk(temp_dir) if "project.json" in files),
                 None,
             )
             if not project_json:

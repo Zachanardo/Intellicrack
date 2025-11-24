@@ -27,9 +27,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def create_hex_dump(
-    data: bytes | bytearray, bytes_per_line: int = 16, start_offset: int = 0
-) -> str:
+def create_hex_dump(data: bytes | bytearray, bytes_per_line: int = 16, start_offset: int = 0) -> str:
     """Create a formatted hex dump of binary data.
 
     Args:

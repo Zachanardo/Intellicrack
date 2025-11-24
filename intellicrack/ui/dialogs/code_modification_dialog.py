@@ -534,14 +534,8 @@ class CodeModificationDialog(QDialog):
             return
 
         # Create request
-        requirements = [
-            req.strip() for req in self.requirements_edit.toPlainText().split("\n") if req.strip()
-        ]
-        constraints = [
-            constraint.strip()
-            for constraint in self.constraints_edit.toPlainText().split("\n")
-            if constraint.strip()
-        ]
+        requirements = [req.strip() for req in self.requirements_edit.toPlainText().split("\n") if req.strip()]
+        constraints = [constraint.strip() for constraint in self.constraints_edit.toPlainText().split("\n") if constraint.strip()]
 
         request = self.modifier.create_modification_request(
             description=description,
@@ -583,9 +577,7 @@ class CodeModificationDialog(QDialog):
         self.progress_bar.setVisible(False)
 
         self.status_label.setText("Analysis failed")
-        QMessageBox.critical(
-            self, "Analysis Error", f"Failed to analyze modifications:\n{error_message}"
-        )
+        QMessageBox.critical(self, "Analysis Error", f"Failed to analyze modifications:\n{error_message}")
 
     def populate_changes_tree(self) -> None:
         """Populate the changes tree with current changes."""
@@ -767,9 +759,7 @@ class CodeModificationDialog(QDialog):
                 item.setText(1, Path(record["file_path"]).name)
                 item.setText(
                     2,
-                    record["description"][:50] + "..."
-                    if len(record["description"]) > 50
-                    else record["description"],
+                    record["description"][:50] + "..." if len(record["description"]) > 50 else record["description"],
                 )
                 item.setText(3, record["type"])
                 item.setText(4, record["status"])

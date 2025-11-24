@@ -105,9 +105,7 @@ class LicenseFileHandler(FileSystemEventHandler):
             event: File system event.
 
         """
-        if not event.is_directory and (
-            self._is_license_file(event.src_path) or self._is_license_file(event.dest_path)
-        ):
+        if not event.is_directory and (self._is_license_file(event.src_path) or self._is_license_file(event.dest_path)):
             self.callback(EventType.MODIFY, f"{event.src_path} -> {event.dest_path}", "file_moved")
 
 

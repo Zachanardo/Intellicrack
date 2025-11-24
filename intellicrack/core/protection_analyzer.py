@@ -204,9 +204,7 @@ class ProtectionAnalyzer:
             self.logger.info("Step 7: Completed.")
 
             self.logger.info("Step 8: Calculating risk score.")
-            risk_score = self._calculate_risk_score(
-                detected_protections, entropy_analysis, anti_analysis
-            )
+            risk_score = self._calculate_risk_score(detected_protections, entropy_analysis, anti_analysis)
             self.logger.info(f"Calculated risk score: {risk_score}")
             self.logger.info("Step 8: Completed.")
 
@@ -224,9 +222,7 @@ class ProtectionAnalyzer:
             }
 
         except Exception as e:
-            self.logger.exception(
-                f"An unexpected error occurred during protection analysis for {file_path}: {e}"
-            )
+            self.logger.exception(f"An unexpected error occurred during protection analysis for {file_path}: {e}")
             return {"error": str(e)}
 
     def _get_file_info(self, file_path: Path, file_data: bytes) -> dict[str, Any]:
@@ -357,9 +353,7 @@ class ProtectionAnalyzer:
                         dll_name = entry.dll.decode() if isinstance(entry.dll, bytes) else entry.dll
                         for imp in entry.imports:
                             if imp.name:
-                                func_name = (
-                                    imp.name.decode() if isinstance(imp.name, bytes) else imp.name
-                                )
+                                func_name = imp.name.decode() if isinstance(imp.name, bytes) else imp.name
                                 imports.append(f"{dll_name}!{func_name}")
                                 if any(api in func_name for api in suspicious_apis):
                                     suspicious_imports.append(f"{dll_name}!{func_name}")
@@ -382,11 +376,7 @@ class ProtectionAnalyzer:
             "RDTSC timing": b"\x0f\x31",
         }
 
-        techniques = [
-            technique
-            for technique, signature in anti_debug_signatures.items()
-            if signature in file_data
-        ]
+        techniques = [technique for technique, signature in anti_debug_signatures.items() if signature in file_data]
         return {
             "anti_debug_detected": len(techniques) > 0,
             "techniques": techniques,
@@ -425,9 +415,7 @@ class ProtectionAnalyzer:
             recommendations.append("Anti-debugging techniques detected - use stealth debugging")
 
         if not recommendations:
-            recommendations.append(
-                "No significant protections detected - proceed with standard analysis"
-            )
+            recommendations.append("No significant protections detected - proceed with standard analysis")
 
         return recommendations
 
@@ -441,9 +429,7 @@ class ProtectionAnalyzer:
         risk_score = 0
 
         risk_score += len(detected_protections) * 15
-        risk_score += min(
-            len([p for p in detected_protections if p.get("severity") == "high"]) * 10, 30
-        )
+        risk_score += min(len([p for p in detected_protections if p.get("severity") == "high"]) * 10, 30)
 
         entropy = entropy_analysis.get("overall_entropy", 0)
         if entropy > self.entropy_threshold_high:

@@ -115,9 +115,7 @@ class GhidraOutputParser:
             processor = root.find(".//PROCESSOR")
             architecture = processor.get("NAME", "unknown") if processor is not None else "unknown"
             compiler_elem = root.find(".//COMPILER")
-            compiler = (
-                compiler_elem.get("NAME", "unknown") if compiler_elem is not None else "unknown"
-            )
+            compiler = compiler_elem.get("NAME", "unknown") if compiler_elem is not None else "unknown"
 
             # Parse functions
             functions = {}
@@ -239,14 +237,8 @@ class GhidraOutputParser:
         assembly_code = asm_elem.text if asm_elem is not None else ""
 
         # Parse cross-references
-        xrefs_to = [
-            int(xr.get("FROM_ADDRESS", "0"), 16)
-            for xr in func_elem.findall('.//XREF[@TYPE="CALL"]')
-        ]
-        xrefs_from = [
-            int(xr.get("TO_ADDRESS", "0"), 16)
-            for xr in func_elem.findall('.//XREF[@DIRECTION="FROM"]')
-        ]
+        xrefs_to = [int(xr.get("FROM_ADDRESS", "0"), 16) for xr in func_elem.findall('.//XREF[@TYPE="CALL"]')]
+        xrefs_from = [int(xr.get("TO_ADDRESS", "0"), 16) for xr in func_elem.findall('.//XREF[@DIRECTION="FROM"]')]
 
         # Parse comments
         comments = {}
@@ -334,10 +326,7 @@ class GhidraOutputParser:
             strings = [(int(s["address"], 16), s["value"]) for s in data.get("strings", [])]
 
             # Parse imports
-            imports = [
-                (i["library"], i["function"], int(i["address"], 16))
-                for i in data.get("imports", [])
-            ]
+            imports = [(i["library"], i["function"], int(i["address"], 16)) for i in data.get("imports", [])]
 
             # Parse exports
             exports = [(e["name"], int(e["address"], 16)) for e in data.get("exports", [])]
@@ -383,9 +372,7 @@ class GhidraOutputParser:
             signature=func_data.get("signature", ""),
             return_type=func_data.get("returnType", "void"),
             parameters=[(p["type"], p["name"]) for p in func_data.get("parameters", [])],
-            local_variables=[
-                (v["type"], v["name"], v["offset"]) for v in func_data.get("localVars", [])
-            ],
+            local_variables=[(v["type"], v["name"], v["offset"]) for v in func_data.get("localVars", [])],
             decompiled_code=func_data.get("decompiledCode", ""),
             assembly_code=func_data.get("assembly", ""),
             xrefs_to=[int(x, 16) for x in func_data.get("xrefsTo", [])],
@@ -583,9 +570,7 @@ def _run_ghidra_thread(main_app: object, command: list[str], temp_dir: str) -> N
             parser = GhidraOutputParser()
             analysis_result = None
 
-            if output_files := list(Path(temp_dir).glob("*.xml")) + list(
-                Path(temp_dir).glob("*.json")
-            ):
+            if output_files := list(Path(temp_dir).glob("*.xml")) + list(Path(temp_dir).glob("*.json")):
                 # Parse structured output files
                 for output_file in output_files:
                     try:
@@ -594,19 +579,13 @@ def _run_ghidra_thread(main_app: object, command: list[str], temp_dir: str) -> N
 
                         if output_file.suffix == ".xml":
                             analysis_result = parser.parse_xml_output(content)
-                            main_app.update_output.emit(
-                                f"[Ghidra] Parsed XML output: {len(analysis_result.functions)} functions found"
-                            )
+                            main_app.update_output.emit(f"[Ghidra] Parsed XML output: {len(analysis_result.functions)} functions found")
                         elif output_file.suffix == ".json":
                             analysis_result = parser.parse_json_output(content)
-                            main_app.update_output.emit(
-                                f"[Ghidra] Parsed JSON output: {len(analysis_result.functions)} functions found"
-                            )
+                            main_app.update_output.emit(f"[Ghidra] Parsed JSON output: {len(analysis_result.functions)} functions found")
                         break
                     except Exception as e:
-                        main_app.update_output.emit(
-                            f"[Ghidra] Warning: Failed to parse {output_file.name}: {e}"
-                        )
+                        main_app.update_output.emit(f"[Ghidra] Warning: Failed to parse {output_file.name}: {e}")
 
             # Fallback to parsing stdout if no structured files found
             if not analysis_result and stdout:
@@ -614,21 +593,15 @@ def _run_ghidra_thread(main_app: object, command: list[str], temp_dir: str) -> N
                     # Try JSON first
                     if stdout.strip().startswith("{"):
                         analysis_result = parser.parse_json_output(stdout)
-                        main_app.update_output.emit(
-                            f"[Ghidra] Parsed JSON from stdout: {len(analysis_result.functions)} functions"
-                        )
+                        main_app.update_output.emit(f"[Ghidra] Parsed JSON from stdout: {len(analysis_result.functions)} functions")
                     # Try XML
                     elif stdout.strip().startswith("<?xml") or stdout.strip().startswith("<"):
                         analysis_result = parser.parse_xml_output(stdout)
-                        main_app.update_output.emit(
-                            f"[Ghidra] Parsed XML from stdout: {len(analysis_result.functions)} functions"
-                        )
+                        main_app.update_output.emit(f"[Ghidra] Parsed XML from stdout: {len(analysis_result.functions)} functions")
                     # Fallback to text parsing
                     else:
                         analysis_result = parser.parse_text_output(stdout)
-                        main_app.update_output.emit(
-                            f"[Ghidra] Parsed text output: {len(analysis_result.functions)} functions"
-                        )
+                        main_app.update_output.emit(f"[Ghidra] Parsed text output: {len(analysis_result.functions)} functions")
                 except Exception as e:
                     main_app.update_output.emit(f"[Ghidra] Warning: Failed to parse stdout: {e}")
 
@@ -648,39 +621,27 @@ def _run_ghidra_thread(main_app: object, command: list[str], temp_dir: str) -> N
                 main_app.update_output.emit(f"  - Imports: {len(analysis_result.imports)}")
                 main_app.update_output.emit(f"  - Exports: {len(analysis_result.exports)}")
 
-                if licensing_functions := _identify_licensing_functions(
-                    analysis_result
-                ):
-                    main_app.update_output.emit(
-                        f"[Ghidra] Found {len(licensing_functions)} potential licensing functions"
-                    )
+                if licensing_functions := _identify_licensing_functions(analysis_result):
+                    main_app.update_output.emit(f"[Ghidra] Found {len(licensing_functions)} potential licensing functions")
                     for func_addr, func in licensing_functions:
                         main_app.update_output.emit(f"  - {func.name} at 0x{func_addr:08x}")
         else:
-            main_app.update_output.emit(
-                f"[Ghidra] Analysis failed with return code {process.returncode}."
-            )
+            main_app.update_output.emit(f"[Ghidra] Analysis failed with return code {process.returncode}.")
             if stdout:
                 main_app.update_output.emit(f"[Ghidra STDOUT]:\n{stdout}")
             if stderr:
                 main_app.update_output.emit(f"[Ghidra STDERR]:\n{stderr}")
 
     except FileNotFoundError:
-        main_app.update_output.emit(
-            "[Ghidra] Error: Command not found. Ensure Ghidra is in your system's PATH."
-        )
+        main_app.update_output.emit("[Ghidra] Error: Command not found. Ensure Ghidra is in your system's PATH.")
     except Exception as e:
         main_app.update_output.emit(f"[Ghidra] An unexpected error occurred: {e}")
     finally:
         try:
             shutil.rmtree(temp_dir)
-            main_app.update_output.emit(
-                f"[Ghidra] Cleaned up temporary project directory: {temp_dir}"
-            )
+            main_app.update_output.emit(f"[Ghidra] Cleaned up temporary project directory: {temp_dir}")
         except Exception as e:
-            main_app.update_output.emit(
-                f"[Ghidra] Warning: Failed to clean up temporary directory {temp_dir}: {e}"
-            )
+            main_app.update_output.emit(f"[Ghidra] Warning: Failed to clean up temporary directory {temp_dir}: {e}")
 
         if hasattr(main_app, "analysis_completed"):
             main_app.analysis_completed.emit("Ghidra Analysis")
@@ -732,9 +693,7 @@ class GhidraScriptManager:
     def __init__(self, ghidra_install_dir: str) -> None:
         """Initialize the GhidraAnalyzer with the Ghidra installation directory."""
         self.ghidra_install_dir = Path(ghidra_install_dir)
-        self.scripts_dir = (
-            self.ghidra_install_dir / "Ghidra" / "Features" / "Base" / "ghidra_scripts"
-        )
+        self.scripts_dir = self.ghidra_install_dir / "Ghidra" / "Features" / "Base" / "ghidra_scripts"
         self.user_scripts_dir = Path.home() / "ghidra_scripts"
         self.custom_scripts = self._load_custom_scripts()
 
@@ -841,18 +800,14 @@ class GhidraScriptManager:
                 if isinstance(param_value, bool):
                     script_args.extend(["-scriptarg", f"{param_name}={str(param_value).lower()}"])
                 elif isinstance(param_value, list):
-                    script_args.extend(
-                        ["-scriptarg", f"{param_name}={','.join(map(str, param_value))}"]
-                    )
+                    script_args.extend(["-scriptarg", f"{param_name}={','.join(map(str, param_value))}"])
                 else:
                     script_args.extend(["-scriptarg", f"{param_name}={param_value}"])
 
         return script_args
 
 
-def run_advanced_ghidra_analysis(
-    main_app: object, analysis_type: str = "comprehensive", scripts: list[str] | None = None
-) -> None:
+def run_advanced_ghidra_analysis(main_app: object, analysis_type: str = "comprehensive", scripts: list[str] | None = None) -> None:
     """Launch a Ghidra headless analysis session with intelligent script selection."""
     if not main_app.current_binary:
         main_app.update_output.emit("[Ghidra] Error: No binary loaded.")
@@ -863,18 +818,14 @@ def run_advanced_ghidra_analysis(
     ghidra_install_dir = config.get_tool_path("ghidra")
 
     if not ghidra_install_dir or not Path(ghidra_install_dir).is_dir():
-        main_app.update_output.emit(
-            f"[Ghidra] Error: Ghidra installation directory not configured or invalid: {ghidra_install_dir}"
-        )
+        main_app.update_output.emit(f"[Ghidra] Error: Ghidra installation directory not configured or invalid: {ghidra_install_dir}")
         return
 
     headless_script_name = "analyzeHeadless.bat" if os.name == "nt" else "analyzeHeadless"
     headless_path = os.path.join(ghidra_install_dir, "support", headless_script_name)
 
     if not os.path.exists(headless_path):
-        main_app.update_output.emit(
-            f"[Ghidra] Error: Headless analyzer not found at {headless_path}"
-        )
+        main_app.update_output.emit(f"[Ghidra] Error: Headless analyzer not found at {headless_path}")
         return
 
     temp_dir = tempfile.mkdtemp(prefix="intellicrack_ghidra_")
@@ -896,13 +847,9 @@ def run_advanced_ghidra_analysis(
         # Auto-select based on analysis type
         selected_scripts = script_manager.get_script_for_analysis(analysis_type)
 
-    main_app.update_output.emit(
-        f"[Ghidra] Selected {len(selected_scripts)} scripts for {analysis_type} analysis"
-    )
+    main_app.update_output.emit(f"[Ghidra] Selected {len(selected_scripts)} scripts for {analysis_type} analysis")
     for script in selected_scripts:
-        main_app.update_output.emit(
-            f"  - {script['name']}: {script.get('description', 'No description')}"
-        )
+        main_app.update_output.emit(f"  - {script['name']}: {script.get('description', 'No description')}")
 
     # Build command with script chaining
     command = [
@@ -943,9 +890,7 @@ def run_advanced_ghidra_analysis(
 
     thread = Thread(target=_run_ghidra_thread, args=(main_app, command, temp_dir), daemon=True)
     thread.start()
-    main_app.update_output.emit(
-        "[Ghidra] Headless analysis task submitted with production script chain."
-    )
+    main_app.update_output.emit("[Ghidra] Headless analysis task submitted with production script chain.")
 
 
 def _identify_licensing_functions(result: GhidraAnalysisResult) -> list[tuple[int, GhidraFunction]]:
@@ -1020,9 +965,7 @@ def _identify_licensing_functions(result: GhidraAnalysisResult) -> list[tuple[in
     return licensing_functions
 
 
-def export_ghidra_results(
-    result: GhidraAnalysisResult, output_path: str, format: str = "json"
-) -> Path:
+def export_ghidra_results(result: GhidraAnalysisResult, output_path: str, format: str = "json") -> Path:
     """Export Ghidra analysis results in various formats."""
     output_path = Path(output_path)
 
@@ -1048,10 +991,7 @@ def export_ghidra_results(
                 for addr, func in result.functions.items()
             ],
             "strings": [{"address": hex(addr), "value": val} for addr, val in result.strings],
-            "imports": [
-                {"library": lib, "function": func, "address": hex(addr)}
-                for lib, func, addr in result.imports
-            ],
+            "imports": [{"library": lib, "function": func, "address": hex(addr)} for lib, func, addr in result.imports],
             "exports": [{"name": name, "address": hex(addr)} for name, addr in result.exports],
         }
 

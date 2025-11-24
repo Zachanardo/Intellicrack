@@ -286,9 +286,7 @@ class QEMUController:
         try:
             if platform.system() == "Linux":
                 # Sanitize inputs to prevent command injection
-                disk_image_path = (
-                    str(self.config.disk_image).replace(";", "").replace("|", "").replace("&", "")
-                )
+                disk_image_path = str(self.config.disk_image).replace(";", "").replace("|", "").replace("&", "")
                 mount_path = mount_dir.replace(";", "").replace("|", "").replace("&", "")
                 subprocess.run(
                     ["sudo", "mount", "-o", "loop,offset=1048576", disk_image_path, mount_path],
@@ -418,19 +416,11 @@ class APIHookingFramework:
             )
         )
 
-        self.add_hook(
-            HookPoint(
-                module="ws2_32.dll", function="connect", on_enter=self._hook_connect, priority=100
-            )
-        )
+        self.add_hook(HookPoint(module="ws2_32.dll", function="connect", on_enter=self._hook_connect, priority=100))
 
-        self.add_hook(
-            HookPoint(module="ws2_32.dll", function="send", on_enter=self._hook_send, priority=90)
-        )
+        self.add_hook(HookPoint(module="ws2_32.dll", function="send", on_enter=self._hook_send, priority=90))
 
-        self.add_hook(
-            HookPoint(module="ws2_32.dll", function="recv", on_enter=self._hook_recv, priority=90)
-        )
+        self.add_hook(HookPoint(module="ws2_32.dll", function="recv", on_enter=self._hook_recv, priority=90))
 
         self.add_hook(
             HookPoint(
@@ -452,23 +442,13 @@ class APIHookingFramework:
 
     def _setup_linux_hooks(self) -> None:
         """Set up Linux syscall hooks."""
-        self.add_hook(
-            HookPoint(module="libc.so.6", function="open", on_enter=self._hook_open, priority=100)
-        )
+        self.add_hook(HookPoint(module="libc.so.6", function="open", on_enter=self._hook_open, priority=100))
 
-        self.add_hook(
-            HookPoint(module="libc.so.6", function="read", on_enter=self._hook_read, priority=90)
-        )
+        self.add_hook(HookPoint(module="libc.so.6", function="read", on_enter=self._hook_read, priority=90))
 
-        self.add_hook(
-            HookPoint(module="libc.so.6", function="write", on_enter=self._hook_write, priority=90)
-        )
+        self.add_hook(HookPoint(module="libc.so.6", function="write", on_enter=self._hook_write, priority=90))
 
-        self.add_hook(
-            HookPoint(
-                module="libc.so.6", function="socket", on_enter=self._hook_socket, priority=100
-            )
-        )
+        self.add_hook(HookPoint(module="libc.so.6", function="socket", on_enter=self._hook_socket, priority=100))
 
         self.add_hook(
             HookPoint(
@@ -946,10 +926,7 @@ class APIHookingFramework:
             elif family == 10:
                 if sockaddr_bytes := self._read_bytes(address, 28):
                     port = struct.unpack(">H", sockaddr_bytes[2:4])[0]
-                    ip = ":".join(
-                        f"{sockaddr_bytes[i]:02x}{sockaddr_bytes[i + 1]:02x}"
-                        for i in range(8, 24, 2)
-                    )
+                    ip = ":".join(f"{sockaddr_bytes[i]:02x}{sockaddr_bytes[i + 1]:02x}" for i in range(8, 24, 2))
                     return {"family": "AF_INET6", "address": ip, "port": port}
 
             return {"family": family}
@@ -1001,9 +978,7 @@ class AntiAnalysisDetector:
                     checks.append("IsDebuggerPresent")
 
                 remote_debugger = ctypes.c_bool()
-                kernel32.CheckRemoteDebuggerPresent(
-                    kernel32.GetCurrentProcess(), ctypes.byref(remote_debugger)
-                )
+                kernel32.CheckRemoteDebuggerPresent(kernel32.GetCurrentProcess(), ctypes.byref(remote_debugger))
                 if remote_debugger.value:
                     checks.append("CheckRemoteDebuggerPresent")
 
@@ -1015,9 +990,7 @@ class AntiAnalysisDetector:
                     ]
 
                 peb = PEB()
-                if process_handle := kernel32.OpenProcess(
-                    0x0400 | 0x0010, False, process_id
-                ):
+                if process_handle := kernel32.OpenProcess(0x0400 | 0x0010, False, process_id):
                     process_basic_info = ctypes.c_void_p()
                     return_length = ctypes.c_ulong()
 
@@ -1053,9 +1026,7 @@ class AntiAnalysisDetector:
                     with open(status_file) as f:
                         status = f.read()
                         if "TracerPid:" in status:
-                            tracer_line = next(
-                                line for line in status.split("\n") if "TracerPid:" in line
-                            )
+                            tracer_line = next(line for line in status.split("\n") if "TracerPid:" in line)
                             tracer_pid = int(tracer_line.split(":")[1].strip())
                             if tracer_pid != 0:
                                 checks.append(f"TracerPid: {tracer_pid}")
@@ -1069,9 +1040,7 @@ class AntiAnalysisDetector:
                 logger.error(f"Linux debugger detection failed: {e}")
 
         if checks:
-            self.detections.append(
-                {"type": "debugger_presence", "methods": checks, "severity": "high"}
-            )
+            self.detections.append({"type": "debugger_presence", "methods": checks, "severity": "high"})
 
     def _detect_vm_artifacts(self, process_id: int) -> None:
         """Detect virtual machine artifacts."""
@@ -1095,8 +1064,7 @@ class AntiAnalysisDetector:
             vm_indicators.extend(
                 f"VM process: {p.info['name']}"
                 for p in psutil.process_iter(["name"])
-                if p.info["name"]
-                and any(vm in p.info["name"].lower() for vm in vm_processes)
+                if p.info["name"] and any(vm in p.info["name"].lower() for vm in vm_processes)
             )
             vm_files = [
                 r"C:\Windows\System32\drivers\vmci.sys",
@@ -1107,11 +1075,7 @@ class AntiAnalysisDetector:
                 "/sys/class/dmi/id/product_name",
             ]
 
-            vm_indicators.extend(
-                f"VM file: {file_path}"
-                for file_path in vm_files
-                if os.path.exists(file_path)
-            )
+            vm_indicators.extend(f"VM file: {file_path}" for file_path in vm_files if os.path.exists(file_path))
             if platform.system() == "Linux" and os.path.exists("/sys/class/dmi/id/product_name"):
                 with open("/sys/class/dmi/id/product_name") as f:
                     product = f.read().strip()
@@ -1122,9 +1086,7 @@ class AntiAnalysisDetector:
             logger.error(f"VM detection failed: {e}")
 
         if vm_indicators:
-            self.detections.append(
-                {"type": "vm_artifacts", "indicators": vm_indicators, "severity": "medium"}
-            )
+            self.detections.append({"type": "vm_artifacts", "indicators": vm_indicators, "severity": "medium"})
 
     def _detect_timing_attacks(self, process_id: int) -> None:
         """Detect timing-based anti-debugging."""
@@ -1179,9 +1141,7 @@ class AntiAnalysisDetector:
             logger.error(f"Timing detection failed: {e}")
 
         if timing_checks:
-            self.detections.append(
-                {"type": "timing_attacks", "checks": timing_checks, "severity": "medium"}
-            )
+            self.detections.append({"type": "timing_attacks", "checks": timing_checks, "severity": "medium"})
 
     def _detect_process_hollowing(self, process_id: int) -> None:
         """Detect process hollowing indicators."""
@@ -1194,13 +1154,9 @@ class AntiAnalysisDetector:
             executable_regions = [m for m in memory_maps if "x" in getattr(m, "perms", "")]
 
             if len(executable_regions) > 10:
-                hollowing_indicators.append(
-                    f"Excessive executable regions: {len(executable_regions)}"
-                )
+                hollowing_indicators.append(f"Excessive executable regions: {len(executable_regions)}")
 
-            if unmapped_exec := [
-                m for m in executable_regions if not getattr(m, "path", None)
-            ]:
+            if unmapped_exec := [m for m in executable_regions if not getattr(m, "path", None)]:
                 hollowing_indicators.append(f"Unmapped executable regions: {len(unmapped_exec)}")
 
             memory_info = proc.memory_info()
@@ -1226,9 +1182,7 @@ class AntiAnalysisDetector:
         if platform.system() == "Windows":
             try:
                 kernel32 = ctypes.windll.kernel32
-                if process_handle := kernel32.OpenProcess(
-                    0x0010, False, process_id
-                ):
+                if process_handle := kernel32.OpenProcess(0x0010, False, process_id):
                     common_apis = [
                         ("ntdll.dll", "NtQueryInformationProcess"),
                         ("kernel32.dll", "IsDebuggerPresent"),
@@ -1240,19 +1194,17 @@ class AntiAnalysisDetector:
                     for dll_name, func_name in common_apis:
                         try:
                             if dll_handle := kernel32.LoadLibraryW(dll_name):
-                                if func_addr := kernel32.GetProcAddress(
-                                    dll_handle, func_name.encode()
-                                ):
+                                if func_addr := kernel32.GetProcAddress(dll_handle, func_name.encode()):
                                     first_bytes = (ctypes.c_byte * 5)()
                                     bytes_read = ctypes.c_size_t()
 
                                     if kernel32.ReadProcessMemory(
-                                                                            process_handle,
-                                                                            ctypes.c_void_p(func_addr),
-                                                                            first_bytes,
-                                                                            5,
-                                                                            ctypes.byref(bytes_read),
-                                                                        ) and first_bytes[0] in [0xE9, 0xE8]:
+                                        process_handle,
+                                        ctypes.c_void_p(func_addr),
+                                        first_bytes,
+                                        5,
+                                        ctypes.byref(bytes_read),
+                                    ) and first_bytes[0] in [0xE9, 0xE8]:
                                         hooked_apis.append(f"{dll_name}!{func_name}")
 
                                 kernel32.FreeLibrary(dll_handle)
@@ -1265,9 +1217,7 @@ class AntiAnalysisDetector:
                 logger.error(f"API hook detection failed: {e}")
 
         if hooked_apis:
-            self.detections.append(
-                {"type": "api_hooks", "hooked_functions": hooked_apis, "severity": "high"}
-            )
+            self.detections.append({"type": "api_hooks", "hooked_functions": hooked_apis, "severity": "high"})
 
     def _detect_sandbox_artifacts(self, process_id: int) -> None:
         """Detect sandbox environment indicators."""
@@ -1285,11 +1235,7 @@ class AntiAnalysisDetector:
                 os.path.join(temp_dir, ".wine-"),
             ]
 
-            sandbox_indicators.extend(
-                f"Sandbox file: {file_path}"
-                for file_path in sandbox_files
-                if os.path.exists(file_path)
-            )
+            sandbox_indicators.extend(f"Sandbox file: {file_path}" for file_path in sandbox_files if os.path.exists(file_path))
             sandbox_processes = ["python", "analyzer", "agent", "monitor"]
             for p in psutil.process_iter(["name", "cmdline"]):
                 if p.info["name"] and any(s in p.info["name"].lower() for s in sandbox_processes):
@@ -1332,33 +1278,20 @@ class AntiAnalysisDetector:
 
             memory_maps = proc.memory_maps() if hasattr(proc, "memory_maps") else []
 
-            if nx_regions := [
-                m
-                for m in memory_maps
-                if "x" not in getattr(m, "perms", "")
-                and "w" in getattr(m, "perms", "")
-            ]:
+            if nx_regions := [m for m in memory_maps if "x" not in getattr(m, "perms", "") and "w" in getattr(m, "perms", "")]:
                 protections.append(f"NX/DEP regions: {len(nx_regions)}")
 
-            if guard_pages := [
-                m
-                for m in memory_maps
-                if getattr(m, "rss", 0) == 0 and getattr(m, "size", 0) > 0
-            ]:
+            if guard_pages := [m for m in memory_maps if getattr(m, "rss", 0) == 0 and getattr(m, "size", 0) > 0]:
                 protections.append(f"Guard pages: {len(guard_pages)}")
 
             if platform.system() == "Windows":
                 try:
                     kernel32 = ctypes.windll.kernel32
-                    if process_handle := kernel32.OpenProcess(
-                        0x0400, False, process_id
-                    ):
+                    if process_handle := kernel32.OpenProcess(0x0400, False, process_id):
                         dep_flags = ctypes.c_ulong()
                         permanent = ctypes.c_bool()
 
-                        result = kernel32.GetProcessDEPPolicy(
-                            process_handle, ctypes.byref(dep_flags), ctypes.byref(permanent)
-                        )
+                        result = kernel32.GetProcessDEPPolicy(process_handle, ctypes.byref(dep_flags), ctypes.byref(permanent))
 
                         if result and dep_flags.value:
                             protections.append(f"DEP enabled: {hex(dep_flags.value)}")
@@ -1372,9 +1305,7 @@ class AntiAnalysisDetector:
             logger.error(f"Memory protection detection failed: {e}")
 
         if protections:
-            self.detections.append(
-                {"type": "memory_protections", "mechanisms": protections, "severity": "low"}
-            )
+            self.detections.append({"type": "memory_protections", "mechanisms": protections, "severity": "low"})
 
     def _detect_code_obfuscation(self, process_id: int) -> None:
         """Detect code obfuscation techniques."""
@@ -1396,13 +1327,9 @@ class AntiAnalysisDetector:
                         if b"UPX" in header or b"ASPack" in header or b"Themida" in header:
                             obfuscation_indicators.append("Known packer signatures")
 
-                        pe_header_offset = (
-                            struct.unpack("<I", header[0x3C:0x40])[0] if len(header) > 0x40 else 0
-                        )
+                        pe_header_offset = struct.unpack("<I", header[0x3C:0x40])[0] if len(header) > 0x40 else 0
                         if pe_header_offset > 0x1000:
-                            obfuscation_indicators.append(
-                                f"Unusual PE header offset: {pe_header_offset:#x}"
-                            )
+                            obfuscation_indicators.append(f"Unusual PE header offset: {pe_header_offset:#x}")
             except Exception as e:
                 logger.debug(f"PE header analysis failed: {e}")
 
@@ -1414,17 +1341,11 @@ class AntiAnalysisDetector:
                     try:
                         if platform.system() == "Windows":
                             kernel32 = ctypes.windll.kernel32
-                            if process_handle := kernel32.OpenProcess(
-                                0x0010, False, process_id
-                            ):
+                            if process_handle := kernel32.OpenProcess(0x0010, False, process_id):
                                 buffer = (ctypes.c_byte * 1024)()
                                 bytes_read = ctypes.c_size_t()
 
-                                base_addr = (
-                                    int(region.addr.split("-")[0], 16)
-                                    if isinstance(region.addr, str)
-                                    else region.addr
-                                )
+                                base_addr = int(region.addr.split("-")[0], 16) if isinstance(region.addr, str) else region.addr
 
                                 if kernel32.ReadProcessMemory(
                                     process_handle,
@@ -1435,9 +1356,7 @@ class AntiAnalysisDetector:
                                 ):
                                     entropy = self._calculate_entropy(bytes(buffer))
                                     if entropy > 7.0:
-                                        obfuscation_indicators.append(
-                                            f"High entropy region: {region.addr} ({entropy:.2f})"
-                                        )
+                                        obfuscation_indicators.append(f"High entropy region: {region.addr} ({entropy:.2f})")
 
                                 kernel32.CloseHandle(process_handle)
                     except Exception as e:
@@ -1524,18 +1443,10 @@ class BehavioralAnalyzer:
 
             results["behavioral_patterns"] = self._analyze_behavioral_patterns()
 
-            results["network_activity"] = [
-                e.to_dict() for e in self.events if e.event_type.startswith("network_")
-            ]
-            results["file_operations"] = [
-                e.to_dict() for e in self.events if e.event_type.startswith("file_")
-            ]
-            results["registry_activity"] = [
-                e.to_dict() for e in self.events if e.event_type.startswith("registry_")
-            ]
-            results["process_activity"] = [
-                e.to_dict() for e in self.events if e.event_type.startswith("process_")
-            ]
+            results["network_activity"] = [e.to_dict() for e in self.events if e.event_type.startswith("network_")]
+            results["file_operations"] = [e.to_dict() for e in self.events if e.event_type.startswith("file_")]
+            results["registry_activity"] = [e.to_dict() for e in self.events if e.event_type.startswith("registry_")]
+            results["process_activity"] = [e.to_dict() for e in self.events if e.event_type.startswith("process_")]
 
             results["end_time"] = time.time()
             results["duration"] = results["end_time"] - results["start_time"]
@@ -1598,9 +1509,7 @@ class BehavioralAnalyzer:
             binary_path_str = str(self.binary_path)
             if not Path(binary_path_str).is_absolute() or ".." in binary_path_str:
                 raise ValueError(f"Unsafe binary path: {binary_path_str}")
-            process = subprocess.Popen(
-                [binary_path_str], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False
-            )
+            process = subprocess.Popen([binary_path_str], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
 
             native_results["process_started"] = True
             native_results["pid"] = process.pid
@@ -1648,9 +1557,7 @@ class BehavioralAnalyzer:
             binary_path_str = str(self.binary_path)
             if not Path(binary_path_str).is_absolute() or ".." in binary_path_str:
                 raise ValueError(f"Unsafe binary path: {binary_path_str}")
-            process = subprocess.Popen(
-                [binary_path_str], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False
-            )
+            process = subprocess.Popen([binary_path_str], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
 
             {"pid": process.pid, "tid": threading.get_ident()}
 
@@ -1668,9 +1575,7 @@ class BehavioralAnalyzer:
             for event in self.api_hooks.events:
                 monitoring_results["unique_apis_called"].add(event.event_type)
 
-            monitoring_results["unique_apis_called"] = list(
-                monitoring_results["unique_apis_called"]
-            )
+            monitoring_results["unique_apis_called"] = list(monitoring_results["unique_apis_called"])
 
         except Exception as e:
             logger.error(f"API monitoring failed: {e}")
@@ -1754,15 +1659,11 @@ class BehavioralAnalyzer:
             summary["key_findings"].append("License validation mechanisms identified")
 
         if results.get("behavioral_patterns", {}).get("persistence_mechanisms"):
-            summary["suspicious_activities"] += len(
-                results["behavioral_patterns"]["persistence_mechanisms"]
-            )
+            summary["suspicious_activities"] += len(results["behavioral_patterns"]["persistence_mechanisms"])
             summary["key_findings"].append("Persistence mechanisms detected")
 
         if results.get("behavioral_patterns", {}).get("data_exfiltration"):
-            summary["suspicious_activities"] += len(
-                results["behavioral_patterns"]["data_exfiltration"]
-            )
+            summary["suspicious_activities"] += len(results["behavioral_patterns"]["data_exfiltration"])
             summary["key_findings"].append("Potential data exfiltration detected")
 
         if summary["suspicious_activities"] > 10:

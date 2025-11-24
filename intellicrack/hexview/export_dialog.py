@@ -92,7 +92,11 @@ class ExportDialog(QDialog):
         source_layout.addWidget(self.selection_radio)
 
         # Check if there's a selection
-        if self.hex_viewer and hasattr(self.hex_viewer, "selection_start") and (self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1):
+        if (
+            self.hex_viewer
+            and hasattr(self.hex_viewer, "selection_start")
+            and (self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1)
+        ):
             self.selection_radio.setEnabled(True)
             selection_size = self.hex_viewer.selection_end - self.hex_viewer.selection_start
             self.selection_radio.setText(f"Current selection ({selection_size} bytes)")
@@ -168,9 +172,7 @@ class ExportDialog(QDialog):
         layout.addWidget(file_group)
 
         # Dialog buttons
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         button_box.accepted.connect(self.export_data)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
@@ -278,9 +280,7 @@ class ExportDialog(QDialog):
             with open(file_path, mode) as f:
                 f.write(output)
 
-            QMessageBox.information(
-                self, "Export Complete", f"Data exported successfully to:\n{file_path}"
-            )
+            QMessageBox.information(self, "Export Complete", f"Data exported successfully to:\n{file_path}")
             self.accept()
 
         except Exception as e:
@@ -519,9 +519,7 @@ class ExportDialog(QDialog):
         header = b"HDR"
         header_checksum = len(header) + 3 + sum(header)
         header_checksum = (~header_checksum) & 0xFF
-        lines = [
-            f"S0{len(header) + 3:02X}0000{header.hex().upper()}{header_checksum:02X}"
-        ]
+        lines = [f"S0{len(header) + 3:02X}0000{header.hex().upper()}{header_checksum:02X}"]
         # Data records (S1 for 16-bit addressing)
         for i in range(0, len(data), record_size):
             chunk = data[i : i + record_size]

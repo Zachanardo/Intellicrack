@@ -510,9 +510,7 @@ class ReportManagerDialog(BaseDialog):
 
         self.report_name_edit = QLineEdit()
         self.report_type_combo = QComboBox()
-        self.report_type_combo.addItems(
-            ["Vulnerability Analysis", "License Analysis", "Performance Analysis", "Custom"]
-        )
+        self.report_type_combo.addItems(["Vulnerability Analysis", "License Analysis", "Performance Analysis", "Custom"])
 
         self.binary_path_edit = QLineEdit()
         self.browse_binary_btn = QPushButton("Browse...")
@@ -761,9 +759,7 @@ class ReportManagerDialog(BaseDialog):
                 try:
                     # Convert string date to date object if needed
                     if isinstance(report_date, str):
-                        report_date_obj = (
-                            datetime.strptime(report_date, "%Y-%m-%d").replace(tzinfo=UTC).date()
-                        )
+                        report_date_obj = datetime.strptime(report_date, "%Y-%m-%d").replace(tzinfo=UTC).date()
                     else:
                         report_date_obj = report_date
 
@@ -823,9 +819,7 @@ class ReportManagerDialog(BaseDialog):
     def edit_report(self) -> None:
         """Edit the selected report."""
         if HAS_PYQT:
-            QMessageBox.information(
-                self, "Edit Report", "Report editing functionality would be implemented here"
-            )
+            QMessageBox.information(self, "Edit Report", "Report editing functionality would be implemented here")
 
     def duplicate_report(self) -> None:
         """Duplicate the selected report."""
@@ -988,9 +982,7 @@ class ReportManagerDialog(BaseDialog):
     def preview_report(self) -> None:
         """Preview the report before generation."""
         if HAS_PYQT:
-            QMessageBox.information(
-                self, "Preview", "Report preview functionality would be implemented here"
-            )
+            QMessageBox.information(self, "Preview", "Report preview functionality would be implemented here")
 
     def export_report(self) -> None:
         """Export the selected report."""
@@ -1066,16 +1058,12 @@ class ReportManagerDialog(BaseDialog):
     def edit_template(self) -> None:
         """Edit the selected template."""
         if HAS_PYQT:
-            QMessageBox.information(
-                self, "Edit Template", "Template editing functionality would be implemented here"
-            )
+            QMessageBox.information(self, "Edit Template", "Template editing functionality would be implemented here")
 
     def create_template(self) -> None:
         """Create a new report template."""
         if HAS_PYQT:
-            QMessageBox.information(
-                self, "Create Template", "Template creation functionality would be implemented here"
-            )
+            QMessageBox.information(self, "Create Template", "Template creation functionality would be implemented here")
 
 
 # Export for external use

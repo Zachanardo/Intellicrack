@@ -39,8 +39,15 @@ jobs:
           pixi install
 
       - name: Generate requirements.txt for Dependabot
+        shell: pwsh
         run: |
-          pixi list --json | python -c "import json, sys; data = json.load(sys.stdin); pypi_packages = [p for p in data if p.get('kind') == 'pypi']; [print(f\"{pkg['name']}=={pkg.get('version', '')}\") if pkg.get('version') else print(pkg['name']) for pkg in sorted(pypi_packages, key=lambda x: x['name'])]" > requirements.txt
+          pixi list --json | ConvertFrom-Json | Where-Object { $_.kind -eq 'pypi' } | Sort-Object name | ForEach-Object {
+            if ($_.version) {
+              "$($_.name)==$($_.version)"
+            } else {
+              $_.name
+            }
+          } | Out-File -FilePath requirements.txt -Encoding utf8
 
   rust-check:
     runs-on: windows-latest

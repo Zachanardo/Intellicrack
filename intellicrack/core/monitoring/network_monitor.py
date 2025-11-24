@@ -36,9 +36,7 @@ class NetworkMonitor(BaseMonitor):
     This monitor is OPTIONAL for advanced packet analysis.
     """
 
-    def __init__(
-        self, process_info: ProcessInfo | None = None, target_ports: list | None = None
-    ) -> None:
+    def __init__(self, process_info: ProcessInfo | None = None, target_ports: list | None = None) -> None:
         """Initialize network monitor.
 
         Args:
@@ -120,10 +118,7 @@ class NetworkMonitor(BaseMonitor):
             if packet.haslayer(Raw):
                 payload = packet[Raw].load
 
-                if any(
-                    keyword in payload.lower()
-                    for keyword in [b"license", b"serial", b"activation", b"key"]
-                ):
+                if any(keyword in payload.lower() for keyword in [b"license", b"serial", b"activation", b"key"]):
                     severity = EventSeverity.CRITICAL
                 else:
                     severity = EventSeverity.INFO

@@ -193,8 +193,6 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> object:
         with open(filepath, "rb") as f:
             # Use a custom Unpickler to restrict what can be unpickled
 
-
-
             class RestrictedUnpickler(pickle.Unpickler):
                 def find_class(self, module: str, name: str) -> type:
                     """Restrict unpickling to safe classes from whitelisted modules.
@@ -239,7 +237,6 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> object:
                     logger.error(error_msg)
                     raise pickle.UnpicklingError(error_msg)
 
-
             unpickler = RestrictedUnpickler(f)
             return unpickler.load()
     else:
@@ -252,8 +249,6 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> object:
 
             with open(filepath, "rb") as f:
                 # Use a custom Unpickler to restrict what can be unpickled
-
-
 
                 class RestrictedUnpickler(pickle.Unpickler):
                     def find_class(self, module: str, name: str) -> type:
@@ -298,7 +293,6 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> object:
                         error_msg = f"Global '{module}.{name}' is forbidden"
                         logger.error(error_msg)
                         raise pickle.UnpicklingError(error_msg) from e
-
 
                 unpickler = RestrictedUnpickler(f)
                 return unpickler.load()

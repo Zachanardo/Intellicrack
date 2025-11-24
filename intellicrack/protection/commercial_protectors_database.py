@@ -922,9 +922,7 @@ class CommercialProtectorsDatabase:
             ),
         }
 
-    def detect_protector(
-        self, file_data: bytes, pe_header: PE | None = None
-    ) -> list[tuple[str, ProtectorSignature, float]]:
+    def detect_protector(self, file_data: bytes, pe_header: PE | None = None) -> list[tuple[str, ProtectorSignature, float]]:
         """Detect protectors based on file data and PE header.
 
         Args:
@@ -967,13 +965,8 @@ class CommercialProtectorsDatabase:
                                 matches += 1
                                 break
                             # Check section data for pattern
-                            section_data = file_data[
-                                section.PointerToRawData : section.PointerToRawData
-                                + section.SizeOfRawData
-                            ]
-                            if (
-                                section_pattern in section_data[:0x100]
-                            ):  # Check first 256 bytes of section
+                            section_data = file_data[section.PointerToRawData : section.PointerToRawData + section.SizeOfRawData]
+                            if section_pattern in section_data[:0x100]:  # Check first 256 bytes of section
                                 matches += 1
                                 break
                 except Exception:
@@ -982,22 +975,14 @@ class CommercialProtectorsDatabase:
                         pe_offset = struct.unpack("<I", file_data[0x3C:0x40])[0]
                         if pe_offset < len(file_data) - 0x200:
                             # Get number of sections
-                            num_sections = struct.unpack(
-                                "<H", file_data[pe_offset + 0x06 : pe_offset + 0x08]
-                            )[0]
-                            optional_header_size = struct.unpack(
-                                "<H", file_data[pe_offset + 0x14 : pe_offset + 0x16]
-                            )[0]
+                            num_sections = struct.unpack("<H", file_data[pe_offset + 0x06 : pe_offset + 0x08])[0]
+                            optional_header_size = struct.unpack("<H", file_data[pe_offset + 0x14 : pe_offset + 0x16])[0]
                             section_table_offset = pe_offset + 0x18 + optional_header_size
 
-                            for i in range(
-                                min(num_sections, 16)
-                            ):  # Limit to 16 sections for safety
+                            for i in range(min(num_sections, 16)):  # Limit to 16 sections for safety
                                 section_offset = section_table_offset + (i * 40)
                                 if section_offset + 40 <= len(file_data):
-                                    section_name = file_data[
-                                        section_offset : section_offset + 8
-                                    ].rstrip(b"\x00")
+                                    section_name = file_data[section_offset : section_offset + 8].rstrip(b"\x00")
                                     for pattern_name, pattern_bytes in sig.section_patterns.items():
                                         if pattern_name.encode() in section_name:
                                             matches += 1
@@ -1012,11 +997,7 @@ class CommercialProtectorsDatabase:
                                             file_data[section_offset + 16 : section_offset + 20],
                                         )[0]
                                         if raw_offset < len(file_data) and raw_size > 0:
-                                            section_data = file_data[
-                                                raw_offset : min(
-                                                    raw_offset + 0x100, raw_offset + raw_size
-                                                )
-                                            ]
+                                            section_data = file_data[raw_offset : min(raw_offset + 0x100, raw_offset + raw_size)]
                                             if pattern_bytes in section_data:
                                                 matches += 1
                                                 break

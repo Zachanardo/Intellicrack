@@ -91,11 +91,7 @@ class QEMUImageDiscovery:
         }
 
         return next(
-            (
-                os_type
-                for os_type, keywords in patterns.items()
-                if any(keyword in filename_lower for keyword in keywords)
-            ),
+            (os_type for os_type, keywords in patterns.items() if any(keyword in filename_lower for keyword in keywords)),
             "unknown",
         )
 
@@ -111,11 +107,7 @@ class QEMUImageDiscovery:
         }
 
         return next(
-            (
-                arch
-                for arch, keywords in patterns.items()
-                if any(keyword in filename_lower for keyword in keywords)
-            ),
+            (arch for arch, keywords in patterns.items() if any(keyword in filename_lower for keyword in keywords)),
             "x86_64",
         )
 
@@ -153,9 +145,7 @@ class QEMUImageDiscovery:
                         )
 
                         discovered_images.append(image_info)
-                        logger.debug(
-                            f"Found QEMU image: {filename} ({os_type}/{architecture}, {size // (1024**2)}MB)"
-                        )
+                        logger.debug(f"Found QEMU image: {filename} ({os_type}/{architecture}, {size // (1024**2)}MB)")
 
                     except OSError as e:
                         logger.warning(f"Error accessing QEMU image {image_path}: {e}")

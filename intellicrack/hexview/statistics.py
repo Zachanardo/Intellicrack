@@ -251,9 +251,7 @@ def calculate_histogram(data: bytes, bins: int = 16) -> list[tuple[str, int]]:
     return histogram
 
 
-def find_patterns(
-    data: bytes, min_length: int = 4, max_patterns: int = 10
-) -> list[tuple[bytes, int]]:
+def find_patterns(data: bytes, min_length: int = 4, max_patterns: int = 10) -> list[tuple[bytes, int]]:
     """Find repeating patterns in the data.
 
     Args:

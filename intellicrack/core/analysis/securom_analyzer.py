@@ -325,9 +325,7 @@ class SecuROMAnalyzer:
                 (b"CPUID", "CPU ID"),
             ]
 
-            hardware_binding = [
-                name for indicator, name in hw_indicators if indicator in data
-            ]
+            hardware_binding = [name for indicator, name in hw_indicators if indicator in data]
             encryption_algorithm = None
             for algo, patterns in self.CRYPTO_PATTERNS.items():
                 for pattern in patterns:
@@ -539,9 +537,7 @@ class SecuROMAnalyzer:
                     scsi_commands = self._extract_scsi_commands(data, offset)
                     signature_checks = self._identify_signature_checks(data, offset)
                     fingerprint_method = self._determine_fingerprint_method(data, offset)
-                    bypass_difficulty = self._assess_bypass_difficulty(
-                        scsi_commands, signature_checks
-                    )
+                    bypass_difficulty = self._assess_bypass_difficulty(scsi_commands, signature_checks)
 
                     routines.append(
                         DiscAuthRoutine(
@@ -582,11 +578,7 @@ class SecuROMAnalyzer:
             (b"SerialNumber", "Disc Serial Number Check"),
         ]
 
-        return [
-            check_name
-            for indicator, check_name in check_indicators
-            if indicator in context
-        ]
+        return [check_name for indicator, check_name in check_indicators if indicator in context]
 
     def _determine_fingerprint_method(self, data: bytes, offset: int) -> str:
         """Determine disc fingerprinting method."""
@@ -600,9 +592,7 @@ class SecuROMAnalyzer:
             return "Physical Sector Analysis"
         return "Unknown Method"
 
-    def _assess_bypass_difficulty(
-        self, scsi_commands: list[str], signature_checks: list[str]
-    ) -> str:
+    def _assess_bypass_difficulty(self, scsi_commands: list[str], signature_checks: list[str]) -> str:
         """Assess difficulty of bypassing disc authentication."""
         complexity = len(scsi_commands) + len(signature_checks)
 
@@ -794,11 +784,7 @@ class SecuROMAnalyzer:
             (b"Signature", "Digital Signature Verification"),
         ]
 
-        return [
-            check_name
-            for indicator, check_name in check_types
-            if indicator in context
-        ]
+        return [check_name for indicator, check_name in check_types if indicator in context]
 
     def _extract_return_values(self, data: bytes, offset: int) -> dict[str, str]:
         """Extract possible return values from validation function."""
@@ -900,11 +886,7 @@ class SecuROMAnalyzer:
             pe = pefile.PE(str(target_path))
 
             if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
-                exports.extend(
-                    exp.name.decode("utf-8", errors="ignore")
-                    for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols
-                    if exp.name
-                )
+                exports.extend(exp.name.decode("utf-8", errors="ignore") for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols if exp.name)
             pe.close()
 
         except Exception as e:
@@ -925,9 +907,7 @@ class SecuROMAnalyzer:
             if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
                 for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
                     if hasattr(resource_type, "name"):
-                        res_name = (
-                            str(resource_type.name) if resource_type.name else str(resource_type.id)
-                        )
+                        res_name = str(resource_type.name) if resource_type.name else str(resource_type.id)
                         if hasattr(resource_type, "directory"):
                             resources[res_name] = len(resource_type.directory.entries)
 
@@ -951,11 +931,7 @@ class SecuROMAnalyzer:
 
             keywords = self.ACTIVATION_KEYWORDS + self.TRIGGER_KEYWORDS + self.DISC_AUTH_KEYWORDS
 
-            strings.extend(
-                keyword.decode("utf-8", errors="ignore")
-                for keyword in keywords
-                if keyword in data
-            )
+            strings.extend(keyword.decode("utf-8", errors="ignore") for keyword in keywords if keyword in data)
         except Exception as e:
             self.logger.warning("Failed to setup Windows API functions: %s", e)
 
@@ -1010,11 +986,7 @@ class SecuROMAnalyzer:
                 b"SYSTEM\\CurrentControlSet\\Services",
             ]
 
-            registry_keys.extend(
-                pattern.decode("utf-8", errors="ignore")
-                for pattern in key_patterns
-                if pattern in data
-            )
+            registry_keys.extend(pattern.decode("utf-8", errors="ignore") for pattern in key_patterns if pattern in data)
         except Exception as e:
             self.logger.warning("Failed to setup Windows API functions: %s", e)
 

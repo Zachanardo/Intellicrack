@@ -19,7 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import hashlib
 import struct
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from intellicrack.utils.logger import log_all_methods, logger
 
@@ -328,9 +328,7 @@ except ImportError as e:
     class FallbackPE:
         """Functional PE file parser implementation."""
 
-        def __init__(
-            self, name: str | None = None, data: bytes | None = None, fast_load: bool | None = None
-        ) -> None:
+        def __init__(self, name: str | None = None, data: bytes | None = None, fast_load: bool | None = None) -> None:
             """Initialize PE parser.
 
             Args:
@@ -651,9 +649,7 @@ except ImportError as e:
                     import_desc.dll = dll_name
                     import_desc.imports = []
 
-                    if thunk_offset := self.get_offset_from_rva(
-                        import_desc.OriginalFirstThunk or import_desc.FirstThunk
-                    ):
+                    if thunk_offset := self.get_offset_from_rva(import_desc.OriginalFirstThunk or import_desc.FirstThunk):
                         self._parse_import_thunks(import_desc, thunk_offset)
 
                     self.DIRECTORY_ENTRY_IMPORT.append(import_desc)
@@ -696,9 +692,7 @@ except ImportError as e:
                     name_rva = thunk & 0x7FFFFFFF
                     if name_offset := self.get_offset_from_rva(name_rva):
                         # Skip hint
-                        import_data.hint = struct.unpack(
-                            "<H", self.__data__[name_offset : name_offset + 2]
-                        )[0]
+                        import_data.hint = struct.unpack("<H", self.__data__[name_offset : name_offset + 2])[0]
                         import_data.name = self._get_string(name_offset + 2)
                         import_data.ordinal = None
 
@@ -750,16 +744,8 @@ except ImportError as e:
             # Parse exported functions
             if export.NumberOfFunctions > 0 and export.NumberOfFunctions < 65536:
                 func_offset = self.get_offset_from_rva(export.AddressOfFunctions)
-                name_offset = (
-                    self.get_offset_from_rva(export.AddressOfNames)
-                    if export.NumberOfNames > 0
-                    else None
-                )
-                ordinal_offset = (
-                    self.get_offset_from_rva(export.AddressOfNameOrdinals)
-                    if export.NumberOfNames > 0
-                    else None
-                )
+                name_offset = self.get_offset_from_rva(export.AddressOfNames) if export.NumberOfNames > 0 else None
+                ordinal_offset = self.get_offset_from_rva(export.AddressOfNameOrdinals) if export.NumberOfNames > 0 else None
 
                 # Build name to ordinal mapping
                 name_ordinals = {}
@@ -770,12 +756,8 @@ except ImportError as e:
                         if ordinal_offset + i * 2 + 2 > len(self.__data__):
                             break
 
-                        name_rva = struct.unpack(
-                            "<I", self.__data__[name_offset + i * 4 : name_offset + i * 4 + 4]
-                        )[0]
-                        ordinal = struct.unpack(
-                            "<H", self.__data__[ordinal_offset + i * 2 : ordinal_offset + i * 2 + 2]
-                        )[0]
+                        name_rva = struct.unpack("<I", self.__data__[name_offset + i * 4 : name_offset + i * 4 + 4])[0]
+                        ordinal = struct.unpack("<H", self.__data__[ordinal_offset + i * 2 : ordinal_offset + i * 2 + 2])[0]
 
                         if name_file_offset := self.get_offset_from_rva(name_rva):
                             func_name = self._get_string(name_file_offset)
@@ -787,12 +769,9 @@ except ImportError as e:
                         if func_offset + i * 4 + 4 > len(self.__data__):
                             break
 
-                        func_rva = struct.unpack(
-                            "<I", self.__data__[func_offset + i * 4 : func_offset + i * 4 + 4]
-                        )[0]
+                        func_rva = struct.unpack("<I", self.__data__[func_offset + i * 4 : func_offset + i * 4 + 4])[0]
 
                         if func_rva != 0:
-
 
                             class ExportSymbol:
                                 pass
@@ -804,14 +783,8 @@ except ImportError as e:
                             symbol.forwarder = None
 
                             # Check if it's a forwarder
-                            if (
-                                export_dir.VirtualAddress
-                                <= func_rva
-                                < export_dir.VirtualAddress + export_dir.Size
-                            ):
-                                if forwarder_offset := self.get_offset_from_rva(
-                                    func_rva
-                                ):
+                            if export_dir.VirtualAddress <= func_rva < export_dir.VirtualAddress + export_dir.Size:
+                                if forwarder_offset := self.get_offset_from_rva(func_rva):
                                     symbol.forwarder = self._get_string(forwarder_offset)
 
                             export.symbols.append(symbol)
@@ -859,9 +832,7 @@ except ImportError as e:
                 (
                     rva - section.VirtualAddress + section.PointerToRawData
                     for section in self.sections
-                    if section.VirtualAddress
-                    <= rva
-                    < section.VirtualAddress + section.VirtualSize
+                    if section.VirtualAddress <= rva < section.VirtualAddress + section.VirtualSize
                 ),
                 None,
             )
@@ -880,11 +851,7 @@ except ImportError as e:
                 (
                     offset - section.PointerToRawData + section.VirtualAddress
                     for section in self.sections
-                    if (
-                        section.PointerToRawData
-                        <= offset
-                        < section.PointerToRawData + section.SizeOfRawData
-                    )
+                    if (section.PointerToRawData <= offset < section.PointerToRawData + section.SizeOfRawData)
                 ),
                 None,
             )
@@ -1016,10 +983,7 @@ except ImportError as e:
 
             """
             if self.FILE_HEADER and self.FILE_HEADER.Characteristics:
-                return bool(
-                    self.FILE_HEADER.Characteristics
-                    & IMAGE_CHARACTERISTICS.IMAGE_FILE_EXECUTABLE_IMAGE
-                )
+                return bool(self.FILE_HEADER.Characteristics & IMAGE_CHARACTERISTICS.IMAGE_FILE_EXECUTABLE_IMAGE)
             return False
 
         def is_dll(self) -> bool:

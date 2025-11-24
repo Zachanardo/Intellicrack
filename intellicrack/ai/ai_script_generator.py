@@ -195,9 +195,7 @@ class AIScriptGenerator:
         return {
             "has_memory_ops": bool(re.search(r"Memory\.|ptr\(", script)),
             "has_hooks": bool(re.search(r"Interceptor\.", script)),
-            "has_crypto": bool(
-                re.search(r"crypt|hash|sign|key", script, re.IGNORECASE)
-            ),
+            "has_crypto": bool(re.search(r"crypt|hash|sign|key", script, re.IGNORECASE)),
             "has_timing": bool(re.search(r"setTimeout|setInterval|sleep", script)),
             "module_count": len(re.findall(r"Module\.", script)),
             "function_count": self._count_functions_robust(script),
@@ -242,10 +240,7 @@ class AIScriptGenerator:
         # Filter out control structures
         matches = re.findall(pattern6, script_cleaned)
         for match in matches:
-            if all(
-                keyword not in match
-                for keyword in ["if", "for", "while", "switch", "catch"]
-            ):
+            if all(keyword not in match for keyword in ["if", "for", "while", "switch", "catch"]):
                 count += 1
 
         # Pattern 7: Getter/Setter methods
@@ -311,9 +306,7 @@ class AIScriptGenerator:
             registry_emulation = self._generate_registry_emulation()
 
             # HWID spoofer has both data and hooks
-            enhancements_by_position["initialization"].append(
-                self._extract_initialization_code(hwid_spoofer)
-            )
+            enhancements_by_position["initialization"].append(self._extract_initialization_code(hwid_spoofer))
             enhancements_by_position["hooks"].append(self._extract_hook_code(hwid_spoofer))
             enhancements_by_position["hooks"].append(registry_emulation)
 
@@ -373,11 +366,7 @@ class AIScriptGenerator:
             stripped = line.strip()
 
             # Find last import/require statement
-            if (
-                stripped.startswith("import ")
-                or stripped.startswith("const ")
-                or stripped.startswith("var ")
-            ):
+            if stripped.startswith("import ") or stripped.startswith("const ") or stripped.startswith("var "):
                 insertion_points["after_imports"] = max(insertion_points["after_imports"], i + 1)
 
             # Find main function or entry point
@@ -496,10 +485,7 @@ AntiDetection.normalizeTiming();
                 (r"\bMemory\.readU16\s*\(", "cachedReadU16("),
             ]
 
-            safe_to_cache = not any(
-                re.search(pattern + r"[^)]*Memory\.", optimized)
-                for pattern, _ in memory_patterns
-            )
+            safe_to_cache = not any(re.search(pattern + r"[^)]*Memory\.", optimized) for pattern, _ in memory_patterns)
             if safe_to_cache:
                 for pattern, replacement in memory_patterns:
                     optimized = re.sub(pattern, replacement, optimized)
@@ -650,9 +636,7 @@ function getCachedExport(moduleName, exportName) {
             optimized = module_cache + "\n" + optimized
 
             # More targeted replacements with word boundaries
-            optimized = re.sub(
-                r"\bProcess\.getModuleByName\s*\(([^)]+)\)", r"getCachedModule(\1)", optimized
-            )
+            optimized = re.sub(r"\bProcess\.getModuleByName\s*\(([^)]+)\)", r"getCachedModule(\1)", optimized)
 
             # Also optimize Module.findExportByName if present
             if re.search(r"\bModule\.findExportByName\s*\(", optimized):
@@ -779,9 +763,7 @@ Interceptor.attach = ErrorHandler.wrapInterceptor(originalAttach);
 """
 
         # Check if script already has try-catch blocks around Interceptor.attach
-        bool(
-            re.search(r"Interceptor\.attach\s*\([^)]+\)\s*\{[^}]*try\s*\{", script, re.DOTALL)
-        )
+        bool(re.search(r"Interceptor\.attach\s*\([^)]+\)\s*\{[^}]*try\s*\{", script, re.DOTALL))
 
         # Script doesn't have error handling, our wrapper will handle it
         return error_handler + "\n\n" + script

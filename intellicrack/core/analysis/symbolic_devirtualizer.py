@@ -217,10 +217,7 @@ class PathExplosionMitigation(ExplorationTechnique):
         if self.total_stepped >= self.max_total:
             return exploration_mgr
 
-        if (
-            stash in exploration_mgr.stashes
-            and len(exploration_mgr.stashes[stash]) > self.max_active
-        ):
+        if stash in exploration_mgr.stashes and len(exploration_mgr.stashes[stash]) > self.max_active:
             exploration_mgr.stashes[stash] = exploration_mgr.stashes[stash][: self.max_active]
 
         exploration_mgr = exploration_mgr.step(stash=stash, **kwargs)
@@ -273,9 +270,7 @@ class SymbolicDevirtualizer:
 
         logger.info(f"Starting symbolic devirtualization at entry point 0x{vm_entry_point:x}")
 
-        self.project = angr.Project(
-            self.binary_path, auto_load_libs=False, load_options={"main_opts": {"base_addr": 0}}
-        )
+        self.project = angr.Project(self.binary_path, auto_load_libs=False, load_options={"main_opts": {"base_addr": 0}})
 
         self.architecture = "x64" if self.project.arch.bits == 64 else "x86"
         self.vm_type = vm_type if vm_type != VMType.UNKNOWN else self._detect_vm_type()
@@ -297,16 +292,12 @@ class SymbolicDevirtualizer:
 
         logger.info(f"Lifted {len(self.lifted_handlers)} handlers with symbolic execution")
 
-        devirtualized_blocks = self._trace_vm_execution(
-            vm_entry_point, exploration_strategy, max_paths, timeout_seconds
-        )
+        devirtualized_blocks = self._trace_vm_execution(vm_entry_point, exploration_strategy, max_paths, timeout_seconds)
 
         elapsed = time.time() - start_time
 
         total_paths = sum(block.execution_paths for block in devirtualized_blocks)
-        total_constraints = sum(
-            len(handler.constraints) for handler in self.lifted_handlers.values()
-        )
+        total_constraints = sum(len(handler.constraints) for handler in self.lifted_handlers.values())
 
         overall_confidence = self._calculate_overall_confidence(devirtualized_blocks)
 
@@ -332,9 +323,7 @@ class SymbolicDevirtualizer:
             },
         )
 
-        logger.info(
-            f"Devirtualization complete in {elapsed:.2f}s - Confidence: {overall_confidence:.1f}%"
-        )
+        logger.info(f"Devirtualization complete in {elapsed:.2f}s - Confidence: {overall_confidence:.1f}%")
 
         return result
 
@@ -357,9 +346,7 @@ class SymbolicDevirtualizer:
         exploration_manager = self.project.factory.simgr(initial_state)
 
         try:
-            exploration_manager.explore(
-                find=lambda s: self._is_dispatcher_state(s), num_find=1, n=100
-            )
+            exploration_manager.explore(find=lambda s: self._is_dispatcher_state(s), num_find=1, n=100)
 
             if exploration_manager.found:
                 dispatcher_addr = exploration_manager.found[0].addr
@@ -376,8 +363,7 @@ class SymbolicDevirtualizer:
         if not block.capstone:
             return False
 
-        indirect_jumps = sum(bool(insn.mnemonic == "jmp" and "[" in insn.op_str)
-                         for insn in block.capstone.insns)
+        indirect_jumps = sum(bool(insn.mnemonic == "jmp" and "[" in insn.op_str) for insn in block.capstone.insns)
         return indirect_jumps >= 1
 
     def _find_dispatcher_pattern(self) -> int | None:
@@ -573,13 +559,9 @@ class SymbolicDevirtualizer:
 
             semantic = self._infer_handler_semantic(handler_addr, symbolic_effects, constraints)
 
-            native_code, assembly = self._translate_handler_to_native(
-                handler_addr, semantic, symbolic_effects
-            )
+            native_code, assembly = self._translate_handler_to_native(handler_addr, semantic, symbolic_effects)
 
-            confidence = self._calculate_handler_confidence(
-                semantic, symbolic_effects, constraints, native_code
-            )
+            confidence = self._calculate_handler_confidence(semantic, symbolic_effects, constraints, native_code)
 
             return LiftedHandler(
                 handler_address=handler_addr,
@@ -597,9 +579,7 @@ class SymbolicDevirtualizer:
             logger.debug(f"Handler lifting failed at 0x{handler_addr:x}: {e}")
             return None
 
-    def _infer_handler_semantic(
-        self, handler_addr: int, effects: list[tuple[str, Any]], constraints: list[Any]
-    ) -> HandlerSemantic:
+    def _infer_handler_semantic(self, handler_addr: int, effects: list[tuple[str, Any]], constraints: list[Any]) -> HandlerSemantic:
         try:
             block = self.project.factory.block(handler_addr)
 
@@ -637,9 +617,7 @@ class SymbolicDevirtualizer:
                 return HandlerSemantic.CALL
             if "ret" in mnemonics:
                 return HandlerSemantic.RETURN
-            if any(m in mnemonics for m in ["mov", "movzx", "movsx"]) and "[" in str(
-                block.capstone.insns
-            ):
+            if any(m in mnemonics for m in ["mov", "movzx", "movsx"]) and "[" in str(block.capstone.insns):
                 if any("esp" in str(insn) or "rsp" in str(insn) for insn in block.capstone.insns):
                     return HandlerSemantic.MEMORY_LOAD
                 return HandlerSemantic.MEMORY_STORE
@@ -731,13 +709,9 @@ class SymbolicDevirtualizer:
             exploration_manager = self.project.factory.simgr(state)
 
             if self.vm_dispatcher and self.handler_table:
-                exploration_manager.use_technique(
-                    GuidedVMExploration(self.vm_dispatcher, self.handler_table, max_depth=max_paths)
-                )
+                exploration_manager.use_technique(GuidedVMExploration(self.vm_dispatcher, self.handler_table, max_depth=max_paths))
 
-            exploration_manager.use_technique(
-                PathExplosionMitigation(max_active=50, max_total=max_paths)
-            )
+            exploration_manager.use_technique(PathExplosionMitigation(max_active=50, max_total=max_paths))
 
             if strategy == ExplorationStrategy.DFS:
                 exploration_manager.use_technique(DFS())
@@ -777,9 +751,7 @@ class SymbolicDevirtualizer:
 
         return blocks
 
-    def _reconstruct_block_from_state(
-        self, state: SimState, entry: int
-    ) -> DevirtualizedBlock | None:
+    def _reconstruct_block_from_state(self, state: SimState, entry: int) -> DevirtualizedBlock | None:
         try:
             path_addrs = list(state.history.bbl_addrs)
 
@@ -787,9 +759,7 @@ class SymbolicDevirtualizer:
             if not handlers_exec:
                 return None
 
-            lifted_seq = [
-                self.lifted_handlers[h] for h in handlers_exec if h in self.lifted_handlers
-            ]
+            lifted_seq = [self.lifted_handlers[h] for h in handlers_exec if h in self.lifted_handlers]
 
             native_code = bytearray()
             assembly = []
@@ -799,13 +769,8 @@ class SymbolicDevirtualizer:
                     native_code.extend(lifted.native_translation)
                 assembly.extend(lifted.assembly_code)
 
-            cf_edges = [
-                (path_addrs[i], path_addrs[i + 1])
-                for i in range(len(path_addrs) - 1)
-            ]
-            avg_confidence = (
-                sum(h.confidence for h in lifted_seq) / len(lifted_seq) if lifted_seq else 0.0
-            )
+            cf_edges = [(path_addrs[i], path_addrs[i + 1]) for i in range(len(path_addrs) - 1)]
+            avg_confidence = sum(h.confidence for h in lifted_seq) / len(lifted_seq) if lifted_seq else 0.0
 
             return DevirtualizedBlock(
                 original_vm_entry=entry,
@@ -840,24 +805,16 @@ class SymbolicDevirtualizer:
         return min(avg_confidence + bonus, 100.0)
 
 
-def devirtualize_vmprotect(
-    binary_path: str, vm_entry_point: int, max_paths: int = 500, timeout: int = 300
-) -> DevirtualizationResult:
+def devirtualize_vmprotect(binary_path: str, vm_entry_point: int, max_paths: int = 500, timeout: int = 300) -> DevirtualizationResult:
     """Devirtualize VMProtect-protected binary."""
     devirt = SymbolicDevirtualizer(binary_path)
-    return devirt.devirtualize(
-        vm_entry_point, VMType.VMPROTECT, ExplorationStrategy.GUIDED, max_paths, timeout
-    )
+    return devirt.devirtualize(vm_entry_point, VMType.VMPROTECT, ExplorationStrategy.GUIDED, max_paths, timeout)
 
 
-def devirtualize_themida(
-    binary_path: str, vm_entry_point: int, max_paths: int = 500, timeout: int = 300
-) -> DevirtualizationResult:
+def devirtualize_themida(binary_path: str, vm_entry_point: int, max_paths: int = 500, timeout: int = 300) -> DevirtualizationResult:
     """Devirtualize Themida-protected binary."""
     devirt = SymbolicDevirtualizer(binary_path)
-    return devirt.devirtualize(
-        vm_entry_point, VMType.THEMIDA, ExplorationStrategy.GUIDED, max_paths, timeout
-    )
+    return devirt.devirtualize(vm_entry_point, VMType.THEMIDA, ExplorationStrategy.GUIDED, max_paths, timeout)
 
 
 def devirtualize_generic(
@@ -869,6 +826,4 @@ def devirtualize_generic(
 ) -> DevirtualizationResult:
     """Devirtualize generically protected binary."""
     devirt = SymbolicDevirtualizer(binary_path)
-    return devirt.devirtualize(
-        vm_entry_point, VMType.GENERIC, exploration_strategy, max_paths, timeout
-    )
+    return devirt.devirtualize(vm_entry_point, VMType.GENERIC, exploration_strategy, max_paths, timeout)

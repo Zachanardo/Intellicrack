@@ -72,35 +72,23 @@ class SecurityEnforcement:
         self.security_config = self.config.get("security", {})
         self._original_functions = {}
         self._bypass_security = False  # Emergency bypass flag
-        logger.debug(
-            f"SecurityEnforcement: Initial security configuration loaded: {self.security_config}"
-        )
+        logger.debug(f"SecurityEnforcement: Initial security configuration loaded: {self.security_config}")
         logger.info("SecurityEnforcement: Initialization complete.")
 
     def _load_config(self) -> dict[str, Any]:
         """Load security configuration from main IntellicrackConfig."""
-        logger.debug(
-            "SecurityEnforcement: Attempting to load security configuration from IntellicrackConfig."
-        )
+        logger.debug("SecurityEnforcement: Attempting to load security configuration from IntellicrackConfig.")
         try:
             from intellicrack.core.config_manager import IntellicrackConfig
 
             config_manager_instance = IntellicrackConfig()
             # Get the main config dictionary
-            config_data = (
-                config_manager_instance._config
-                if hasattr(config_manager_instance, "_config")
-                else {}
-            )
-            logger.debug(
-                f"SecurityEnforcement: IntellicrackConfig loaded. Config data keys: {list(config_data.keys())}"
-            )
+            config_data = config_manager_instance._config if hasattr(config_manager_instance, "_config") else {}
+            logger.debug(f"SecurityEnforcement: IntellicrackConfig loaded. Config data keys: {list(config_data.keys())}")
 
             # If security section doesn't exist, merge with defaults
             if "security" not in config_data:
-                logger.info(
-                    "SecurityEnforcement: 'security' section not found in main config. Merging with default security settings."
-                )
+                logger.info("SecurityEnforcement: 'security' section not found in main config. Merging with default security settings.")
                 default_security_config = self._get_default_config()
                 # Ensure the 'security' key exists in config_data before merging
                 if "security" not in config_data:
@@ -113,28 +101,20 @@ class SecurityEnforcement:
                 try:
                     # This assumes IntellicrackConfig.set can handle nested keys and saves
                     config_manager_instance.set("security", config_data["security"], save=True)
-                    logger.info(
-                        "SecurityEnforcement: Updated main config saved with default security settings."
-                    )
+                    logger.info("SecurityEnforcement: Updated main config saved with default security settings.")
                 except Exception as save_e:
-                    logger.warning(
-                        f"SecurityEnforcement: Failed to save updated config with default security settings: {save_e}"
-                    )
+                    logger.warning(f"SecurityEnforcement: Failed to save updated config with default security settings: {save_e}")
             else:
                 logger.debug("SecurityEnforcement: 'security' section found in main config.")
 
-            logger.debug(
-                f"SecurityEnforcement: Final security configuration loaded: {config_data.get('security')}"
-            )
+            logger.debug(f"SecurityEnforcement: Final security configuration loaded: {config_data.get('security')}")
             return config_data
         except Exception as e:
             logger.error(
                 f"SecurityEnforcement: Failed to load config from IntellicrackConfig: {e}",
                 exc_info=True,
             )
-            logger.warning(
-                "SecurityEnforcement: Using default security settings due to configuration load failure."
-            )
+            logger.warning("SecurityEnforcement: Using default security settings due to configuration load failure.")
             return self._get_default_config()
 
     def _get_default_config(self) -> dict[str, Any]:
@@ -177,9 +157,7 @@ class SecurityEnforcement:
     def enable_bypass(self) -> None:
         """Enable security bypass for critical operations."""
         self._bypass_security = True
-        logger.warning(
-            "SecurityEnforcement: !!! SECURITY BYPASS ENABLED - USE WITH EXTREME CAUTION !!!"
-        )
+        logger.warning("SecurityEnforcement: !!! SECURITY BYPASS ENABLED - USE WITH EXTREME CAUTION !!!")
         logger.debug("SecurityEnforcement: Security bypass flag set to True.")
 
     def disable_bypass(self) -> None:
@@ -418,9 +396,7 @@ def _secure_pickle_dump(
     """
     if _security._bypass_security:
         logger.debug("Security bypass active for pickle.dump.")
-        return _security._original_functions["pickle.dump"](
-            obj, file, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback
-        )
+        return _security._original_functions["pickle.dump"](obj, file, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback)
 
     if _security.security_config.get("serialization", {}).get("restrict_pickle", True):
         logger.warning("Pickle dump attempted with restrict_pickle=True, consider using JSON")
@@ -435,14 +411,10 @@ def _secure_pickle_dump(
             raise TypeError("File object required for JSON dump")
         except (TypeError, ValueError) as e:
             logger.warning(f"JSON serialization failed, falling back to pickle: {e}")
-            logger.debug(
-                f"JSON serialization failed for pickle.dump: {e}. Falling back to original pickle.dump."
-            )
+            logger.debug(f"JSON serialization failed for pickle.dump: {e}. Falling back to original pickle.dump.")
 
     logger.debug(f"pickle.dump: object type={type(obj).__name__}")
-    return _security._original_functions["pickle.dump"](
-        obj, file, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback
-    )
+    return _security._original_functions["pickle.dump"](obj, file, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback)
 
 
 @log_function_call
@@ -473,9 +445,7 @@ def _secure_pickle_dumps(
     """
     if _security._bypass_security:
         logger.debug("Security bypass active for pickle.dumps.")
-        return _security._original_functions["pickle.dumps"](
-            obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback
-        )
+        return _security._original_functions["pickle.dumps"](obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback)
 
     if _security.security_config.get("serialization", {}).get("restrict_pickle", True):
         logger.warning("Pickle dumps attempted with restrict_pickle=True, consider using JSON")
@@ -487,14 +457,10 @@ def _secure_pickle_dumps(
             return result.encode("utf-8")
         except (TypeError, ValueError) as e:
             logger.warning(f"JSON serialization failed, falling back to pickle: {e}")
-            logger.debug(
-                f"JSON serialization failed for pickle.dumps: {e}. Falling back to original pickle.dumps."
-            )
+            logger.debug(f"JSON serialization failed for pickle.dumps: {e}. Falling back to original pickle.dumps.")
 
     logger.debug(f"pickle.dumps: object type={type(obj).__name__}")
-    return _security._original_functions["pickle.dumps"](
-        obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback
-    )
+    return _security._original_functions["pickle.dumps"](obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback)
 
 
 @log_function_call
@@ -549,17 +515,13 @@ def _secure_pickle_load(
             raise TypeError("File object required for JSON load")
         except (json.JSONDecodeError, ValueError, TypeError) as e:
             logger.warning(f"JSON deserialization failed, falling back to pickle: {e}")
-            logger.debug(
-                f"JSON deserialization failed for pickle.load: {e}. Falling back to original pickle.load."
-            )
+            logger.debug(f"JSON deserialization failed for pickle.load: {e}. Falling back to original pickle.load.")
             if hasattr(file, "seek"):
                 file.seek(0)
 
     logger.warning("Loading pickle data - ensure source is trusted!")
     logger.debug("Proceeding with original pickle.load.")
-    return _security._original_functions["pickle.load"](
-        file, fix_imports=fix_imports, encoding=encoding, errors=errors, buffers=buffers
-    )
+    return _security._original_functions["pickle.load"](file, fix_imports=fix_imports, encoding=encoding, errors=errors, buffers=buffers)
 
 
 @log_function_call
@@ -612,15 +574,11 @@ def _secure_pickle_loads(
             return result
         except (json.JSONDecodeError, ValueError) as e:
             logger.warning(f"JSON deserialization failed, falling back to pickle: {e}")
-            logger.debug(
-                f"JSON deserialization failed for pickle.loads: {e}. Falling back to original pickle.loads."
-            )
+            logger.debug(f"JSON deserialization failed for pickle.loads: {e}. Falling back to original pickle.loads.")
 
     logger.warning("Loading pickle data - ensure source is trusted!")
     logger.debug("Proceeding with original pickle.loads.")
-    return _security._original_functions["pickle.loads"](
-        data, fix_imports=fix_imports, encoding=encoding, errors=errors, buffers=buffers
-    )
+    return _security._original_functions["pickle.loads"](data, fix_imports=fix_imports, encoding=encoding, errors=errors, buffers=buffers)
 
 
 # Hashlib Security
@@ -639,19 +597,11 @@ class SecureHash:
 
         """
         self.name = name
-        allow_md5 = _security.security_config.get("hashing", {}).get(
-            "allow_md5_for_security", False
-        )
+        allow_md5 = _security.security_config.get("hashing", {}).get("allow_md5_for_security", False)
 
-        if (
-            name.lower() in {"md5"}
-            and not allow_md5
-            and not _security._bypass_security
-        ):
+        if name.lower() in {"md5"} and not allow_md5 and not _security._bypass_security:
             logger.warning("MD5 hash requested but not allowed for security purposes")
-            default_algo = _security.security_config.get("hashing", {}).get(
-                "default_algorithm", "sha256"
-            )
+            default_algo = _security.security_config.get("hashing", {}).get("default_algorithm", "sha256")
             logger.info(f"Using {default_algo} instead of MD5")
             name = default_algo
             logger.debug(f"MD5 blocked. Using default algorithm: {name}")
@@ -764,9 +714,7 @@ def _secure_hashlib_new(name: str, data: bytes = b"", **kwargs: object) -> objec
 
     if name.lower() in {"md5"} and not allow_md5:
         logger.warning(f"hashlib.new('{name}') requested but not allowed for security")
-        default_algo = _security.security_config.get("hashing", {}).get(
-            "default_algorithm", "sha256"
-        )
+        default_algo = _security.security_config.get("hashing", {}).get("default_algorithm", "sha256")
         logger.info(f"Using {default_algo} instead")
         name = default_algo
         logger.debug(f"MD5 blocked. Using default algorithm: {name}")
@@ -797,9 +745,7 @@ def _secure_hashlib_md5(data: bytes = b"", **kwargs: object) -> object:
 
     if not allow_md5:
         logger.warning("hashlib.md5() requested but not allowed for security")
-        default_algo = _security.security_config.get("hashing", {}).get(
-            "default_algorithm", "sha256"
-        )
+        default_algo = _security.security_config.get("hashing", {}).get("default_algorithm", "sha256")
         logger.info(f"Using {default_algo} instead")
         logger.debug(f"MD5 blocked. Using default algorithm: {default_algo}")
         return getattr(hashlib, default_algo)(data, **kwargs)
@@ -928,8 +874,6 @@ def _monkey_patch_subprocess() -> None:
     else:
         logger.debug("Original subprocess functions already stored.")
 
-
-
     class SecurePopen(_security._original_functions["subprocess.Popen"]):
         """Secure wrapper for subprocess.Popen that can be subclassed."""
 
@@ -949,9 +893,7 @@ def _monkey_patch_subprocess() -> None:
                 return
 
             shell = kwargs.get("shell", False)
-            if shell and not _security.security_config.get("subprocess", {}).get(
-                "allow_shell_true", False
-            ):
+            if shell and not _security.security_config.get("subprocess", {}).get("allow_shell_true", False):
                 error_msg = "subprocess.Popen with shell=True is disabled by security policy"
                 logger.error(error_msg)
                 logger.warning(f"Blocked subprocess.Popen with shell=True: {args}")
@@ -960,22 +902,17 @@ def _monkey_patch_subprocess() -> None:
             logger.debug(f"subprocess.Popen: {args}")
 
             if shell:
-                whitelist = _security.security_config.get("subprocess", {}).get(
-                    "shell_whitelist", []
-                )
+                whitelist = _security.security_config.get("subprocess", {}).get("shell_whitelist", [])
                 cmd = args[0] if args else kwargs.get("args", "")
                 cmd_str = cmd if isinstance(cmd, str) else " ".join(cmd)
 
-                if whitelist and all(
-                    allowed not in cmd_str for allowed in whitelist
-                ):
+                if whitelist and all(allowed not in cmd_str for allowed in whitelist):
                     error_msg = f"Command not in shell whitelist: {cmd_str}"
                     logger.error(error_msg)
                     logger.warning(error_msg)
                     raise SecurityError(error_msg)
 
             super().__init__(*args, **kwargs)
-
 
     subprocess.run = _secure_subprocess_run
     subprocess.Popen = SecurePopen
@@ -1043,9 +980,7 @@ def initialize_security() -> None:
 
         # Log security configuration
         logger.info(f"Security config loaded: {_security.security_config}")
-        logger.debug(
-            f"Security configuration details: {json.dumps(_security.security_config, indent=2, cls=DateTimeEncoder)}"
-        )
+        logger.debug(f"Security configuration details: {json.dumps(_security.security_config, indent=2, cls=DateTimeEncoder)}")
 
         # Set security-related environment variables
         if _security.security_config.get("sandbox_analysis", True):
@@ -1062,9 +997,7 @@ def initialize_security() -> None:
     except Exception as e:
         logger.error(f"Failed to initialize security: {e}")
         logger.warning("Running without security enforcement")
-        logger.debug(
-            f"Security enforcement initialization failed with exception: {e}", exc_info=True
-        )
+        logger.debug(f"Security enforcement initialization failed with exception: {e}", exc_info=True)
 
 
 def get_security_status() -> dict[str, Any]:

@@ -319,9 +319,7 @@ class ToolCommunicationBridge:
 
                     # Validate ZeroMQ router protocol (empty delimiter frame)
                     if empty != b"":
-                        logger.warning(
-                            f"Invalid ZeroMQ router protocol: expected empty delimiter, got {empty[:20]}"
-                        )
+                        logger.warning(f"Invalid ZeroMQ router protocol: expected empty delimiter, got {empty[:20]}")
                         # Send error response
                         error_msg = IPCMessage(
                             type=MessageType.RESPONSE,
@@ -549,9 +547,7 @@ class ToolCommunicationBridge:
 class ToolConnector:
     """Client connector for individual tools to communicate with bridge."""
 
-    def __init__(
-        self, tool_type: ToolType, bridge_host: str = "127.0.0.1", bridge_port: int = 5555
-    ) -> None:
+    def __init__(self, tool_type: ToolType, bridge_host: str = "127.0.0.1", bridge_port: int = 5555) -> None:
         """Initialize tool connector."""
         self.tool_type = tool_type
         self.bridge_host = bridge_host

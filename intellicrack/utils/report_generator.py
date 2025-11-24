@@ -96,15 +96,11 @@ class ReportGenerator:
 
         # Initialize Jinja2 environment if available
         if HAS_JINJA2:
-            self.jinja_env = Environment(
-                loader=FileSystemLoader(str(self.template_dir)), autoescape=True
-            )
+            self.jinja_env = Environment(loader=FileSystemLoader(str(self.template_dir)), autoescape=True)
         else:
             self.jinja_env = None
 
-    def generate_report(
-        self, analysis_data: dict[str, Any], format: str = "json", output_file: str | None = None
-    ) -> str:
+    def generate_report(self, analysis_data: dict[str, Any], format: str = "json", output_file: str | None = None) -> str:
         """Generate report in specified format."""
         result = self._prepare_analysis_result(analysis_data)
 
@@ -283,9 +279,7 @@ class ReportGenerator:
                     [
                         v.get("type", "Unknown"),
                         v.get("severity", "Unknown"),
-                        v.get("description", "")[:50] + "..."
-                        if len(v.get("description", "")) > 50
-                        else v.get("description", ""),
+                        v.get("description", "")[:50] + "..." if len(v.get("description", "")) > 50 else v.get("description", ""),
                     ],
                 )
 
@@ -314,9 +308,7 @@ class ReportGenerator:
                     [
                         p.get("type", "Unknown"),
                         p.get("status", "Unknown"),
-                        p.get("details", "")[:50] + "..."
-                        if len(p.get("details", "")) > 50
-                        else p.get("details", ""),
+                        p.get("details", "")[:50] + "..." if len(p.get("details", "")) > 50 else p.get("details", ""),
                     ],
                 )
 
@@ -425,9 +417,7 @@ class ReportGenerator:
             writer.writerow(["Protection Mechanisms"])
             writer.writerow(["Type", "Status", "Details"])
             for p in result.protections:
-                writer.writerow(
-                    [p.get("type", "Unknown"), p.get("status", "Unknown"), p.get("details", "")]
-                )
+                writer.writerow([p.get("type", "Unknown"), p.get("status", "Unknown"), p.get("details", "")])
             writer.writerow([])
 
             # Write recommendations
@@ -456,7 +446,9 @@ class ReportGenerator:
 """
 
         for v in result.vulnerabilities:
-            md_content += f"| {v.get('type', 'Unknown')} | {v.get('severity', 'Unknown')} | {v.get('description', '')} | {v.get('location', '')} |\n"
+            md_content += (
+                f"| {v.get('type', 'Unknown')} | {v.get('severity', 'Unknown')} | {v.get('description', '')} | {v.get('location', '')} |\n"
+            )
 
         md_content += """
 ## Protection Mechanisms
@@ -539,9 +531,7 @@ RECOMMENDATIONS
 
         return str(output_path)
 
-    def generate_batch_report(
-        self, analysis_results: list[dict[str, Any]], format: str = "json"
-    ) -> str:
+    def generate_batch_report(self, analysis_results: list[dict[str, Any]], format: str = "json") -> str:
         """Generate report for multiple analysis results."""
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         batch_dir = self.output_dir / f"batch_{timestamp}"
@@ -550,9 +540,7 @@ RECOMMENDATIONS
         report_files = []
         for i, data in enumerate(analysis_results):
             output_file = f"report_{i + 1}.{format}"
-            report_path = self.generate_report(
-                data, format=format, output_file=str(batch_dir / output_file)
-            )
+            report_path = self.generate_report(data, format=format, output_file=str(batch_dir / output_file))
             report_files.append(report_path)
 
         # Create archive
@@ -695,17 +683,13 @@ class ComparisonReportGenerator:
         return str(output_path)
 
 
-def generate_report(
-    analysis_data: dict[str, Any], format: str = "html", output_dir: str = "reports"
-) -> str:
+def generate_report(analysis_data: dict[str, Any], format: str = "html", output_dir: str = "reports") -> str:
     """Generate a report."""
     generator = ReportGenerator(output_dir)
     return generator.generate_report(analysis_data, format)
 
 
-def export_report(
-    analysis_data: dict[str, Any], format: str = "html", output_path: str | None = None
-) -> str:
+def export_report(analysis_data: dict[str, Any], format: str = "html", output_path: str | None = None) -> str:
     """Export analysis report to file."""
     output_dir = Path(output_path).parent if output_path else Path("reports")
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -715,9 +699,7 @@ def export_report(
     return generator.generate_report(analysis_data, format, output_file)
 
 
-def generate_comparison_report(
-    results: list[dict[str, Any]], format: str = "html", output_dir: str = "reports/comparisons"
-) -> str:
+def generate_comparison_report(results: list[dict[str, Any]], format: str = "html", output_dir: str = "reports/comparisons") -> str:
     """Generate a comparison report."""
     generator = ComparisonReportGenerator(output_dir)
     return generator.generate_comparison(results, format)

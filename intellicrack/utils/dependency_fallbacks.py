@@ -156,9 +156,7 @@ def safe_import_pyelftools() -> bool | None:
         test_max = maxint  # Just reference it to ensure it's valid
 
         # Log successful import with usage verification
-        logger.debug(
-            f"pyelftools available - bytes2str: {test_str}, maxint: {test_max}, ELFFile: {ELFFile}"
-        )
+        logger.debug(f"pyelftools available - bytes2str: {test_str}, maxint: {test_max}, ELFFile: {ELFFile}")
 
         PYELFTOOLS_AVAILABLE = True
         return True
@@ -191,17 +189,10 @@ def _create_randn_fallback(shape: tuple) -> object:
     if len(shape) == 2:
         return [[random.gauss(0, 1) for _ in range(shape[1])] for _ in range(shape[0])]
     if len(shape) == 3:
-        return [
-            [[random.gauss(0, 1) for _ in range(shape[2])] for _ in range(shape[1])]
-            for _ in range(shape[0])
-        ]
+        return [[[random.gauss(0, 1) for _ in range(shape[2])] for _ in range(shape[1])] for _ in range(shape[0])]
     if len(shape) == 4:
         return [
-            [
-                [[random.gauss(0, 1) for _ in range(shape[3])] for _ in range(shape[2])]
-                for _ in range(shape[1])
-            ]
-            for _ in range(shape[0])
+            [[[random.gauss(0, 1) for _ in range(shape[3])] for _ in range(shape[2])] for _ in range(shape[1])] for _ in range(shape[0])
         ]
     error_msg = "Too many dimensions for fallback randn"
     logger.error(error_msg)
@@ -561,6 +552,7 @@ def create_pandas_fallback() -> object:
         PandasFallback: A minimal pandas replacement module.
 
     """
+
     class DataFrameFallback:
         """Minimal DataFrame replacement for when pandas is unavailable."""
 
@@ -595,7 +587,6 @@ def create_pandas_fallback() -> object:
 
             """
             return len(next(iter(self.data.values()))) if self.data else 0
-
 
     class PandasFallback:
         """Minimal pandas replacement for when pandas is unavailable."""
@@ -637,9 +628,7 @@ def create_sklearn_fallback() -> object:
                 RandomForestFallback: Self for chaining.
 
             """
-            logger.debug(
-                f"RandomForest fallback fit called with {len(X)} samples and {len(y)} labels"
-            )
+            logger.debug(f"RandomForest fallback fit called with {len(X)} samples and {len(y)} labels")
             return self
 
         def predict(self, X: list) -> list:
@@ -880,15 +869,9 @@ def initialize_safe_imports() -> None:
     except Exception as e:
         logger.warning(f"sklearn issue detected: {e}")
         _module_replacer.replace_module("sklearn", create_sklearn_fallback)
-        _module_replacer.replace_module(
-            "sklearn.ensemble", lambda: create_sklearn_fallback().ensemble
-        )
-        _module_replacer.replace_module(
-            "sklearn.cluster", lambda: create_sklearn_fallback().cluster
-        )
-        _module_replacer.replace_module(
-            "sklearn.preprocessing", lambda: create_sklearn_fallback().preprocessing
-        )
+        _module_replacer.replace_module("sklearn.ensemble", lambda: create_sklearn_fallback().ensemble)
+        _module_replacer.replace_module("sklearn.cluster", lambda: create_sklearn_fallback().cluster)
+        _module_replacer.replace_module("sklearn.preprocessing", lambda: create_sklearn_fallback().preprocessing)
 
     logger.info("Safe import initialization complete")
 

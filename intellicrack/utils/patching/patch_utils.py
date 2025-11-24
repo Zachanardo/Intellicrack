@@ -119,9 +119,7 @@ def parse_patch_instructions(text: str) -> list[dict[str, Any]]:
     return instructions
 
 
-def create_patch(
-    original_data: bytes, modified_data: bytes, base_address: int = 0
-) -> list[dict[str, Any]]:
+def create_patch(original_data: bytes, modified_data: bytes, base_address: int = 0) -> list[dict[str, Any]]:
     """Create patch instructions by comparing original and modified data.
 
     Args:
@@ -145,10 +143,7 @@ def create_patch(
             start = i
             changed_bytes = bytearray()
 
-            while (
-                i < min(len(original_data), len(modified_data))
-                and original_data[i] != modified_data[i]
-            ):
+            while i < min(len(original_data), len(modified_data)) and original_data[i] != modified_data[i]:
                 changed_bytes.append(modified_data[i])
                 i += 1
 
@@ -166,9 +161,7 @@ def create_patch(
     return patches
 
 
-def apply_patch(
-    file_path: str | Path, patches: list[dict[str, Any]], create_backup: bool = True
-) -> tuple[bool, str | None]:
+def apply_patch(file_path: str | Path, patches: list[dict[str, Any]], create_backup: bool = True) -> tuple[bool, str | None]:
     """Apply patches to a binary file.
 
     Args:
@@ -192,9 +185,7 @@ def apply_patch(
 
     # Create backup if requested
     if create_backup:
-        backup_path = file_path.with_suffix(
-            f"{file_path.suffix}.backup_{int(time.time())}"
-        )
+        backup_path = file_path.with_suffix(f"{file_path.suffix}.backup_{int(time.time())}")
         try:
             shutil.copy2(file_path, backup_path)
             logger.info("Created backup: %s", backup_path)

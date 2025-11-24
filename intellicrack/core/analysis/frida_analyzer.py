@@ -117,9 +117,7 @@ def run_frida_script_thread(
         main_app.update_output.emit(f"[Frida Runner] Attached to PID: {pid}. Running script.")
 
         script = session.create_script(script_source)
-        script.on(
-            "message", lambda message, data: on_frida_message(main_app, binary_path, message, data)
-        )
+        script.on("message", lambda message, data: on_frida_message(main_app, binary_path, message, data))
         script.load()
 
         device.resume(pid)
@@ -131,9 +129,7 @@ def run_frida_script_thread(
         main_app.update_output.emit(f"[Frida Runner] An error occurred: {e}")
     finally:
         active_frida_sessions.pop(binary_path, None)
-        main_app.update_output.emit(
-            f"[Frida Runner] Script '{os.path.basename(script_path)}' finished."
-        )
+        main_app.update_output.emit(f"[Frida Runner] Script '{os.path.basename(script_path)}' finished.")
         if hasattr(main_app, "analysis_completed"):
             main_app.analysis_completed.emit("Frida Script Runner")
 
@@ -155,9 +151,7 @@ def run_frida_analysis(main_app: "IntellicrackApp") -> None:
 
     binary_path = main_app.current_binary
     if binary_path in active_frida_sessions:
-        main_app.update_output.emit(
-            "[Frida Runner] Error: A Frida script is already running for this binary."
-        )
+        main_app.update_output.emit("[Frida Runner] Error: A Frida script is already running for this binary.")
         return
 
     try:
@@ -165,11 +159,7 @@ def run_frida_analysis(main_app: "IntellicrackApp") -> None:
         script_dir = os.path.join(current_dir, "..", "..", "scripts", "frida")
         script_dir = os.path.normpath(script_dir)
 
-        available_scripts = [
-            f
-            for f in os.listdir(script_dir)
-            if f.endswith(".js") and f in ANALYSIS_SCRIPTS_WHITELIST
-        ]
+        available_scripts = [f for f in os.listdir(script_dir) if f.endswith(".js") and f in ANALYSIS_SCRIPTS_WHITELIST]
         if not available_scripts:
             main_app.update_output.emit("[Frida Runner] Error: No approved analysis scripts found.")
             return
@@ -193,9 +183,7 @@ def run_frida_analysis(main_app: "IntellicrackApp") -> None:
 
     script_path = os.path.join(script_dir, script_name)
 
-    thread = Thread(
-        target=run_frida_script_thread, args=(main_app, binary_path, script_path), daemon=True
-    )
+    thread = Thread(target=run_frida_script_thread, args=(main_app, binary_path, script_path), daemon=True)
     thread.start()
     main_app.update_output.emit("[Frida Runner] Analysis task submitted.")
 
@@ -219,9 +207,7 @@ def stop_frida_analysis(main_app: "IntellicrackApp") -> None:
         session = active_frida_sessions.get(binary_path)
         if session and not session.is_detached:
             session.detach()
-            main_app.update_output.emit(
-                f"[Frida Runner] Detach signal sent for {os.path.basename(binary_path)}."
-            )
+            main_app.update_output.emit(f"[Frida Runner] Detach signal sent for {os.path.basename(binary_path)}.")
     else:
         main_app.update_output.emit("[Frida Runner] No active analysis found for this binary.")
 
@@ -256,9 +242,7 @@ def start_stalker_session(
     binary_path = main_app.current_binary
 
     if binary_path in active_stalker_sessions:
-        main_app.update_output.emit(
-            "[Stalker] Error: A Stalker session is already active for this binary."
-        )
+        main_app.update_output.emit("[Stalker] Error: A Stalker session is already active for this binary.")
         return False
 
     try:
@@ -367,13 +351,9 @@ def trace_function_stalker(
         success = session.trace_function(module_name, function_name)
 
         if success:
-            main_app.update_output.emit(
-                f"[Stalker] Tracing function: {module_name}!{function_name}"
-            )
+            main_app.update_output.emit(f"[Stalker] Tracing function: {module_name}!{function_name}")
         else:
-            main_app.update_output.emit(
-                f"[Stalker] Failed to trace function: {module_name}!{function_name}"
-            )
+            main_app.update_output.emit(f"[Stalker] Failed to trace function: {module_name}!{function_name}")
 
         return success
 

@@ -239,9 +239,7 @@ class DebuggerDialog(QDialog):
         toolbar.addSeparator()
 
         # Breakpoint controls
-        toolbar.addAction("🔴 Toggle Breakpoint").triggered.connect(
-            self.toggle_current_line_breakpoint
-        )
+        toolbar.addAction("🔴 Toggle Breakpoint").triggered.connect(self.toggle_current_line_breakpoint)
         toolbar.addAction(" Clear All Breakpoints").triggered.connect(self.clear_all_breakpoints)
 
         return toolbar
@@ -567,9 +565,7 @@ class DebuggerDialog(QDialog):
             self.step_into_action.setEnabled(True)
             self.step_out_action.setEnabled(True)
 
-    def handle_debugger_output(
-        self, msg_type: str, data: dict[str, Any] | str | list[dict[str, Any]]
-    ) -> None:
+    def handle_debugger_output(self, msg_type: str, data: dict[str, Any] | str | list[dict[str, Any]]) -> None:
         """Handle debugger output messages.
 
         Args:
@@ -584,9 +580,7 @@ class DebuggerDialog(QDialog):
             self.console.append(f"⏸️ Paused at {data['file']}:{data['line']} in {data['function']}")
 
         elif msg_type == "breakpoint":
-            self.console.append(
-                f"🔴 Breakpoint hit: {data['file']}:{data['line']} (hit count: {data['hit_count']})"
-            )
+            self.console.append(f"🔴 Breakpoint hit: {data['file']}:{data['line']} (hit count: {data['hit_count']})")
 
         elif msg_type == "stack":
             self.update_stack_display(data)
@@ -596,9 +590,7 @@ class DebuggerDialog(QDialog):
 
         elif msg_type == "eval_result":
             if "error" in data:
-                self.console.append(
-                    f"ERROR Error evaluating '{data['expression']}': {data['error']}"
-                )
+                self.console.append(f"ERROR Error evaluating '{data['expression']}': {data['error']}")
             else:
                 self.console.append(f"OK {data['expression']} = {data['value']}")
 
@@ -821,9 +813,7 @@ class CodeEditorWidget(QTextEdit):
         super().resizeEvent(event)
 
         cr = self.contentsRect()
-        self.line_number_area.setGeometry(
-            cr.left(), cr.top(), self.line_number_area_width(), cr.height()
-        )
+        self.line_number_area.setGeometry(cr.left(), cr.top(), self.line_number_area_width(), cr.height())
 
     def line_number_area_paint_event(self, event: QPaintEvent) -> None:
         """Paint line numbers.

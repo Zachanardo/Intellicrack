@@ -106,9 +106,7 @@ class BinaryChunker:
         """Initialize binary chunker with memory manager for efficient data processing."""
         self.memory_manager = memory_manager
 
-    def chunk_binary(
-        self, file_path: str, chunk_size: int | None = None
-    ) -> list[dict[str, object]]:
+    def chunk_binary(self, file_path: str, chunk_size: int | None = None) -> list[dict[str, object]]:
         """Split binary into manageable chunks for analysis.
 
         Args:
@@ -147,9 +145,7 @@ class BinaryChunker:
             offset += current_chunk_size
             chunk_id += 1
 
-        logger.info(
-            f"Split {file_path.name} into {len(chunks)} chunks of ~{chunk_size // 1024 // 1024}MB each"
-        )
+        logger.info(f"Split {file_path.name} into {len(chunks)} chunks of ~{chunk_size // 1024 // 1024}MB each")
         return chunks
 
     def read_chunk(self, chunk_info: dict[str, object]) -> bytes:
@@ -423,9 +419,7 @@ class PerformanceOptimizer:
         self.binary_chunker = BinaryChunker(self.memory_manager)
         self.adaptive_analyzer = AdaptiveAnalyzer(self.memory_manager, self.cache_manager)
 
-    def optimize_analysis(
-        self, file_path: str, analysis_functions: list[object]
-    ) -> dict[str, object]:
+    def optimize_analysis(self, file_path: str, analysis_functions: list[object]) -> dict[str, object]:
         """Perform optimized analysis of a large binary.
 
         Args:
@@ -459,9 +453,7 @@ class PerformanceOptimizer:
         for analysis_func in analysis_functions:
             func_name = analysis_func.__name__
 
-            if cached_result := self.cache_manager.get_cached_result(
-                file_path, func_name
-            ):
+            if cached_result := self.cache_manager.get_cached_result(file_path, func_name):
                 results["analysis_results"][func_name] = cached_result
                 results["cache_hits"] += 1
                 logger.info("Using cached result for %s", func_name)
@@ -512,9 +504,7 @@ class PerformanceOptimizer:
 
         return results
 
-    def _run_chunked_analysis(
-        self, file_path: str, analysis_func: object, strategy: dict[str, object]
-    ) -> dict[str, object]:
+    def _run_chunked_analysis(self, file_path: str, analysis_func: object, strategy: dict[str, object]) -> dict[str, object]:
         """Run analysis on binary chunks."""
         chunk_size = int(strategy["chunk_size_mb"] * 1024 * 1024)
         chunks = self.binary_chunker.chunk_binary(file_path, chunk_size)
@@ -548,9 +538,7 @@ class PerformanceOptimizer:
 
         return aggregated_result
 
-    def _run_standard_analysis(
-        self, file_path: str, analysis_func: object, strategy: dict[str, object]
-    ) -> dict[str, object]:
+    def _run_standard_analysis(self, file_path: str, analysis_func: object, strategy: dict[str, object]) -> dict[str, object]:
         """Run standard analysis on entire file."""
         _ = strategy
         try:
@@ -567,9 +555,7 @@ class PerformanceOptimizer:
                 data = f.read()
                 return analysis_func(data)
 
-    def _aggregate_chunk_results(
-        self, chunk_results: list[dict[str, object]], analysis_name: str
-    ) -> dict[str, object]:
+    def _aggregate_chunk_results(self, chunk_results: list[dict[str, object]], analysis_name: str) -> dict[str, object]:
         """Aggregate results from multiple chunks."""
         aggregated = {
             "analysis_type": analysis_name,
@@ -597,9 +583,7 @@ class PerformanceOptimizer:
         return aggregated
 
 
-def create_performance_optimizer(
-    max_memory_mb: int = 2048, cache_dir: str = "cache"
-) -> PerformanceOptimizer:
+def create_performance_optimizer(max_memory_mb: int = 2048, cache_dir: str = "cache") -> PerformanceOptimizer:
     """Create a performance optimizer."""
     return PerformanceOptimizer(max_memory_mb, cache_dir)
 

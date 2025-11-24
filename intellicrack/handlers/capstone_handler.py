@@ -144,9 +144,7 @@ except ImportError as e:
     class CsInsn:
         """Functional instruction representation for capstone fallback."""
 
-        def __init__(
-            self, address: int, size: int, mnemonic: str, op_str: str, bytes_data: bytes
-        ) -> None:
+        def __init__(self, address: int, size: int, mnemonic: str, op_str: str, bytes_data: bytes) -> None:
             """Initialize instruction.
 
             Args:
@@ -500,9 +498,7 @@ except ImportError as e:
 
             return None
 
-        def _handle_push_reg(
-            self, code: bytes, offset: int, opcode: int, rex: int | None
-        ) -> CsInsn:
+        def _handle_push_reg(self, code: bytes, offset: int, opcode: int, rex: int | None) -> CsInsn:
             """Handle PUSH register instructions (0x50-0x57).
 
             Args:
@@ -600,9 +596,7 @@ except ImportError as e:
                 return CsInsn(offset, 2, "mov", f"{dst}, {src}", code[:2])
             return None
 
-        def _handle_mov_reg_imm(
-            self, code: bytes, offset: int, opcode: int, rex: int | None
-        ) -> CsInsn | None:
+        def _handle_mov_reg_imm(self, code: bytes, offset: int, opcode: int, rex: int | None) -> CsInsn | None:
             """Handle MOV reg, imm instructions (0xB8-0xBF).
 
             Args:
@@ -755,9 +749,7 @@ except ImportError as e:
 
             if self.is_thumb:
                 while idx < len(code) - 1:
-                    if insn := self._decode_thumb_instruction(
-                        code[idx:], offset + idx
-                    ):
+                    if insn := self._decode_thumb_instruction(code[idx:], offset + idx):
                         instructions.append(insn)
                         idx += insn.size
                     else:
@@ -855,9 +847,7 @@ except ImportError as e:
                     i1: int = ~(j1 ^ s) & 1
                     i2: int = ~(j2 ^ s) & 1
 
-                    offset_val: int = (
-                        (s << 24) | (i1 << 23) | (i2 << 22) | (imm10 << 12) | (imm11 << 1)
-                    )
+                    offset_val: int = (s << 24) | (i1 << 23) | (i2 << 22) | (imm10 << 12) | (imm11 << 1)
                     if s:
                         offset_val |= 0xFE000000
 
@@ -1023,9 +1013,7 @@ except ImportError as e:
                             insn = CsInsn(offset + idx, 4, "b", hex(target), code[idx : idx + 4])
                             insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
                         else:
-                            insn = CsInsn(
-                                offset + idx, 4, "dcd", hex(insn_word), code[idx : idx + 4]
-                            )
+                            insn = CsInsn(offset + idx, 4, "dcd", hex(insn_word), code[idx : idx + 4])
 
                         instructions.append(insn)
                         idx += 4
@@ -1034,9 +1022,7 @@ except ImportError as e:
 
             return ARM64Disassembler(mode)
 
-    def cs_disasm_quick(
-        arch: int, mode: int, code: bytes | str, offset: int, count: int = 0
-    ) -> list[CsInsn]:
+    def cs_disasm_quick(arch: int, mode: int, code: bytes | str, offset: int, count: int = 0) -> list[CsInsn]:
         """Quick disassembly function.
 
         Args:
@@ -1127,9 +1113,7 @@ except ImportError as e:
         CsInsn: type = CsInsn
         CsError: type = CsError
 
-        cs_disasm_quick: Callable[[int, int, bytes | str, int, int], list[CsInsn]] = staticmethod(
-            cs_disasm_quick
-        )
+        cs_disasm_quick: Callable[[int, int, bytes | str, int, int], list[CsInsn]] = staticmethod(cs_disasm_quick)
         cs_version: Callable[[], tuple[int, int, int]] = staticmethod(cs_version)
         version_bind: Callable[[], tuple[int, int, int]] = staticmethod(version_bind)
         debug: Callable[[], None] = staticmethod(debug)

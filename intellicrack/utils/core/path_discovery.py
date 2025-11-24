@@ -294,9 +294,7 @@ class PathDiscovery:
             "startup": self._get_startup_dir,
         }
 
-    def find_tool(
-        self, tool_name: str, required_executables: list[str] | None = None
-    ) -> str | None:
+    def find_tool(self, tool_name: str, required_executables: list[str] | None = None) -> str | None:
         """Find a tool using multiple discovery strategies.
 
         Args:
@@ -355,9 +353,7 @@ class PathDiscovery:
 
         return None
 
-    def _generic_tool_search(
-        self, tool_name: str, executables: list[str] | None = None
-    ) -> str | None:
+    def _generic_tool_search(self, tool_name: str, executables: list[str] | None = None) -> str | None:
         """Provide search for tools not in specification."""
         if not executables:
             executables = [tool_name]
@@ -414,9 +410,7 @@ class PathDiscovery:
                 if Path(path).is_dir():
                     # Look for executable in directory
                     for file in os.listdir(path):
-                        if os.path.isfile(os.path.join(path, file)) and os.access(
-                            os.path.join(path, file), os.X_OK
-                        ):
+                        if os.path.isfile(os.path.join(path, file)) and os.access(os.path.join(path, file), os.X_OK):
                             return os.path.join(path, file)
         return None
 
@@ -475,12 +469,8 @@ class PathDiscovery:
                                     try:
                                         name = winreg.QueryValueEx(subkey, "DisplayName")[0]
                                         if tool_name.lower() in name.lower():
-                                            install_location = winreg.QueryValueEx(
-                                                subkey, "InstallLocation"
-                                            )[0]
-                                            if install_location and os.path.exists(
-                                                install_location
-                                            ):
+                                            install_location = winreg.QueryValueEx(subkey, "InstallLocation")[0]
+                                            if install_location and os.path.exists(install_location):
                                                 # Look for executable
                                                 spec = self.tool_specs.get(tool_name.lower(), {})
                                                 executables = spec.get("executables", {}).get("win32", [f"{tool_name}.exe"])
@@ -491,9 +481,7 @@ class PathDiscovery:
                                                         return exe_path
 
                                                     # Check bin subdirectory
-                                                    bin_path = os.path.join(
-                                                        install_location, "bin", exe
-                                                    )
+                                                    bin_path = os.path.join(install_location, "bin", exe)
                                                     if os.path.isfile(bin_path):
                                                         return bin_path
                                     except OSError as e:
@@ -577,9 +565,7 @@ class PathDiscovery:
         """Get startup directory."""
         if self.is_windows:
             if appdata := self._get_appdata_dir():
-                return os.path.join(
-                    appdata, "Microsoft", "Windows", "Start Menu", "Programs", "Startup"
-                )
+                return os.path.join(appdata, "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
         return None
 
     # Validation methods
@@ -663,10 +649,7 @@ class PathDiscovery:
             cuda_base = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"
             if os.path.exists(cuda_base):
                 if versions := [
-                    item
-                    for item in os.listdir(cuda_base)
-                    if item.startswith("v")
-                    and Path(os.path.join(cuda_base, item)).is_dir()
+                    item for item in os.listdir(cuda_base) if item.startswith("v") and Path(os.path.join(cuda_base, item)).is_dir()
                 ]:
                     # Sort versions and get latest
                     versions.sort(reverse=True)
@@ -679,9 +662,7 @@ class PathDiscovery:
 
         return None
 
-    def ensure_tool_available(
-        self, tool_name: str, parent_widget: object | None = None
-    ) -> str | None:
+    def ensure_tool_available(self, tool_name: str, parent_widget: object | None = None) -> str | None:
         """Ensure a tool is available, prompting user if needed.
 
         Args:
@@ -705,11 +686,7 @@ class PathDiscovery:
                     msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 
                     if msg.exec() == QMessageBox.Yes:
-                        file_filter = (
-                            "Executable files (*.exe *.bat);;All files (*.*)"
-                            if self.is_windows
-                            else "All files (*)"
-                        )
+                        file_filter = "Executable files (*.exe *.bat);;All files (*.*)" if self.is_windows else "All files (*)"
                         path, _ = QFileDialog.getOpenFileName(
                             parent_widget,
                             f"Select {tool_name} executable",
@@ -739,9 +716,7 @@ class PathDiscovery:
                     # Validate path exists and is safe
                     if os.path.exists(path) and os.path.isfile(path):
                         # Additional validation: ensure it's an executable or expected file type
-                        if os.access(path, os.X_OK) or path.endswith(
-                            (".exe", ".bat", ".sh", ".py")
-                        ):
+                        if os.access(path, os.X_OK) or path.endswith((".exe", ".bat", ".sh", ".py")):
                             self.cache[tool_name] = path
                             if self.config_manager:
                                 self.config_manager.set(f"{tool_name}_path", path)

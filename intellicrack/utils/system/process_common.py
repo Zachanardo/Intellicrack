@@ -30,9 +30,7 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-def run_subprocess_safely(
-    cmd: list[str], timeout: int = 30, capture_output: bool = True
-) -> subprocess.CompletedProcess:
+def run_subprocess_safely(cmd: list[str], timeout: int = 30, capture_output: bool = True) -> subprocess.CompletedProcess:
     """Run a subprocess with common safety patterns.
 
     Args:

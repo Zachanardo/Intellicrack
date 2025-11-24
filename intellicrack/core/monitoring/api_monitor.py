@@ -115,10 +115,7 @@ class APIMonitor(BaseMonitor):
         event_type = event_type_map.get(category, EventType.ACCESS)
 
         severity = EventSeverity.INFO
-        if any(
-            keyword in str(args).lower()
-            for keyword in ["license", "serial", "key", "activation", "trial"]
-        ):
+        if any(keyword in str(args).lower() for keyword in ["license", "serial", "key", "activation", "trial"]):
             severity = EventSeverity.CRITICAL
         elif category in ["registry_write", "file_write"]:
             severity = EventSeverity.WARNING

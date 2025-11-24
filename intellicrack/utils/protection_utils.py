@@ -746,18 +746,10 @@ def generate_hwid_spoof_config(target_hwid: str) -> dict[str, Any]:
             ],
         },
         "wmi_overrides": {
-            "Win32_BaseBoard": {
-                "SerialNumber": f"MB-{target_hwid[:12].upper()}"
-            },
-            "Win32_Processor": {
-                "ProcessorId": f"BFEBFBFF{target_hwid[:8].upper()}"
-            },
-            "Win32_DiskDrive": {
-                "SerialNumber": f"DSK-{target_hwid[:10].upper()}"
-            },
-            "Win32_NetworkAdapter": {
-                "MACAddress": f"{target_hwid[:2]}:{target_hwid[2:4]}:{target_hwid[4:6]}:00:00:01"
-            },
+            "Win32_BaseBoard": {"SerialNumber": f"MB-{target_hwid[:12].upper()}"},
+            "Win32_Processor": {"ProcessorId": f"BFEBFBFF{target_hwid[:8].upper()}"},
+            "Win32_DiskDrive": {"SerialNumber": f"DSK-{target_hwid[:10].upper()}"},
+            "Win32_NetworkAdapter": {"MACAddress": f"{target_hwid[:2]}:{target_hwid[2:4]}:{target_hwid[4:6]}:00:00:01"},
         },
         "implementation_script": f"""
 # HWID Spoofing Script
@@ -952,22 +944,13 @@ if (time_func) {
 
         # Add recommendations
         if config["time_checks_found"] > 3:
-            config["recommendations"].append(
-                "Multiple time checks detected - comprehensive bypass recommended"
-            )
+            config["recommendations"].append("Multiple time checks detected - comprehensive bypass recommended")
 
-        if any(
-            "critical" in result.get("severity", "")
-            for result in config["analysis_results"].values()
-        ):
-            config["recommendations"].append(
-                "Critical time bomb detected - immediate patching required"
-            )
+        if any("critical" in result.get("severity", "") for result in config["analysis_results"].values()):
+            config["recommendations"].append("Critical time bomb detected - immediate patching required")
 
         if config["patches"]:
-            config["recommendations"].append(
-                f"Apply {len(config['patches'])} binary patches for permanent fix"
-            )
+            config["recommendations"].append(f"Apply {len(config['patches'])} binary patches for permanent fix")
 
         config["recommendations"].extend(
             [
@@ -1172,8 +1155,7 @@ console.log('[Telemetry] Telemetry blocker active');
 """
 
     # Add batch script for easy setup
-    config["setup_script"] = (
-        f"""@echo off
+    config["setup_script"] = f"""@echo off
 echo Setting up telemetry blocker for {app_name}...
 
 :: Add hosts entries
@@ -1190,7 +1172,6 @@ echo.
 echo Telemetry blocker setup complete!
 pause
 """
-    )
 
     # Add removal script
     config["removal_script"] = f"""@echo off

@@ -75,9 +75,7 @@ class GhidraScriptRunner:
     def _discover_all_scripts(self) -> None:
         """Dynamically discover all Ghidra scripts from intellicrack scripts directory."""
         if not self.intellicrack_scripts_dir.exists():
-            logger.warning(
-                f"Intellicrack scripts directory not found: {self.intellicrack_scripts_dir}"
-            )
+            logger.warning(f"Intellicrack scripts directory not found: {self.intellicrack_scripts_dir}")
             return
 
         for script_file in self.intellicrack_scripts_dir.glob("*.[pj][ya][vt][ah]*"):
@@ -101,9 +99,7 @@ class GhidraScriptRunner:
                 description=metadata.get("description", f"{script_file.stem} Ghidra script"),
             )
 
-        logger.info(
-            f"Discovered {len(self.discovered_scripts)} Ghidra scripts from {self.intellicrack_scripts_dir}"
-        )
+        logger.info(f"Discovered {len(self.discovered_scripts)} Ghidra scripts from {self.intellicrack_scripts_dir}")
 
     def _parse_script_metadata(self, script_path: Path) -> dict[str, Any]:
         """Parse metadata from script header comments.
@@ -120,11 +116,7 @@ class GhidraScriptRunner:
             for line in lines[:100]:
                 line_stripped = line.strip()
 
-                if (
-                    line_stripped.startswith("#")
-                    or line_stripped.startswith("//")
-                    or line_stripped.startswith("*")
-                ):
+                if line_stripped.startswith("#") or line_stripped.startswith("//") or line_stripped.startswith("*"):
                     content = line_stripped.lstrip("#/*").strip()
 
                     if content.startswith("@") and ":" in content:
@@ -221,9 +213,7 @@ class GhidraScriptRunner:
                 terminal_mgr = get_terminal_manager()
 
                 # Show script execution in terminal
-                session_id = terminal_mgr.execute_command(
-                    command=cmd, capture_output=False, auto_switch=True, cwd=str(temp_dir)
-                )
+                session_id = terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=True, cwd=str(temp_dir))
 
                 return {
                     "execution": {
@@ -250,9 +240,7 @@ class GhidraScriptRunner:
             )
 
             # Parse results based on output format
-            results = self._parse_script_output(
-                output_dir, script.output_format, result.stdout, result.stderr
-            )
+            results = self._parse_script_output(output_dir, script.output_format, result.stdout, result.stderr)
 
             # Add execution metadata
             results["execution"] = {
@@ -397,9 +385,7 @@ class GhidraScriptRunner:
         logger.warning(f"Script not found: {name}")
         return None
 
-    def _parse_script_output(
-        self, output_dir: Path, format: str, stdout: str, stderr: str
-    ) -> dict[str, Any]:
+    def _parse_script_output(self, output_dir: Path, format: str, stdout: str, stderr: str) -> dict[str, Any]:
         """Parse script output based on format."""
         results = {"stdout": stdout, "stderr": stderr, "files": []}
 
@@ -432,9 +418,7 @@ class GhidraScriptRunner:
                 "actual_name": script.name,
                 "language": script.language,
                 "description": script.description,
-                "path": str(
-                    script.path.relative_to(self.intellicrack_scripts_dir)
-                ),
+                "path": str(script.path.relative_to(self.intellicrack_scripts_dir)),
                 "timeout": script.timeout,
             }
             for name, script in self.discovered_scripts.items()

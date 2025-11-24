@@ -319,9 +319,7 @@ class ControlFlowDeobfuscator:
                     self.logger.info("No control flow flattening detected")
                     deobfuscated_cfg = original_cfg
 
-                opaque_predicates = self._detect_opaque_predicates(
-                    r2, deobfuscated_cfg, function_address
-                )
+                opaque_predicates = self._detect_opaque_predicates(r2, deobfuscated_cfg, function_address)
 
                 if opaque_predicates:
                     self.logger.info(f"Detected {len(opaque_predicates)} opaque predicates")
@@ -468,16 +466,12 @@ class ControlFlowDeobfuscator:
 
                 controlled_blocks = self._identify_controlled_blocks(cfg, node)
 
-                case_mappings = self._extract_switch_cases(
-                    r2, basic_block, controlled_blocks, function_address
-                )
+                case_mappings = self._extract_switch_cases(r2, basic_block, controlled_blocks, function_address)
 
                 dispatcher = DispatcherInfo(
                     dispatcher_address=node,
                     state_variable_location=state_var.get("location", 0) if state_var else 0,
-                    state_variable_type=state_var.get("type", "unknown")
-                    if state_var
-                    else "unknown",
+                    state_variable_type=state_var.get("type", "unknown") if state_var else "unknown",
                     controlled_blocks=controlled_blocks,
                     case_mappings=case_mappings,
                     switch_type=self._classify_dispatcher_type(basic_block),
@@ -510,26 +504,19 @@ class ControlFlowDeobfuscator:
             return False
 
         has_comparison = any(
-            any(op in inst.get("disasm", "").lower() for op in ["cmp", "test", "sub"])
-            for inst in basic_block.instructions
+            any(op in inst.get("disasm", "").lower() for op in ["cmp", "test", "sub"]) for inst in basic_block.instructions
         )
 
-        has_jump_table = any(
-            "jmp" in inst.get("disasm", "").lower() and "[" in inst.get("disasm", "")
-            for inst in basic_block.instructions
-        )
+        has_jump_table = any("jmp" in inst.get("disasm", "").lower() and "[" in inst.get("disasm", "") for inst in basic_block.instructions)
 
         has_switch = any(
-            any(keyword in inst.get("disasm", "").lower() for keyword in ["switch", "case"])
-            for inst in basic_block.instructions
+            any(keyword in inst.get("disasm", "").lower() for keyword in ["switch", "case"]) for inst in basic_block.instructions
         )
 
         in_degree = len(basic_block.predecessors)
         high_loop_back = in_degree > out_degree * 0.5
 
-        return (has_comparison or has_jump_table or has_switch) and (
-            out_degree >= 5 or high_loop_back
-        )
+        return (has_comparison or has_jump_table or has_switch) and (out_degree >= 5 or high_loop_back)
 
     def _identify_state_variable(
         self,
@@ -558,12 +545,7 @@ class ControlFlowDeobfuscator:
                 if len(parts) > 1:
                     location_str = parts[1].split("]")[0]
 
-                    if (
-                        "rbp" in location_str
-                        or "rsp" in location_str
-                        or "ebp" in location_str
-                        or "esp" in location_str
-                    ):
+                    if "rbp" in location_str or "rsp" in location_str or "ebp" in location_str or "esp" in location_str:
                         state_var_candidates.append(
                             {
                                 "location": inst.get("offset", 0),
@@ -705,9 +687,7 @@ class ControlFlowDeobfuscator:
                     deobfuscated.add_edge(source, target, edge_type="recovered")
 
             edges_to_remove = [
-                (source, target)
-                for source, target in deobfuscated.edges()
-                if dispatcher.dispatcher_address in (source, target)
+                (source, target) for source, target in deobfuscated.edges() if dispatcher.dispatcher_address in (source, target)
             ]
             for edge in edges_to_remove:
                 deobfuscated.remove_edge(*edge)
@@ -751,9 +731,7 @@ class ControlFlowDeobfuscator:
                 recovered_edges.append((block_addr, target_block))
             else:
                 recovered_edges.extend(
-                    (block_addr, successor)
-                    for successor in basic_block.successors
-                    if successor != dispatcher.dispatcher_address
+                    (block_addr, successor) for successor in basic_block.successors if successor != dispatcher.dispatcher_address
                 )
         return recovered_edges
 
@@ -866,9 +844,7 @@ class ControlFlowDeobfuscator:
                                 },
                             )
 
-                    if "jmp" not in disasm and any(
-                        jcc in disasm for jcc in ["je", "jne", "jz", "jnz", "ja", "jb"]
-                    ):
+                    if "jmp" not in disasm and any(jcc in disasm for jcc in ["je", "jne", "jz", "jnz", "ja", "jb"]):
                         prev_inst = None
                         for prev in basic_block.instructions:
                             if prev["offset"] < inst["offset"]:
@@ -1132,10 +1108,7 @@ class ControlFlowDeobfuscator:
             has_no_effect = True
             for inst in basic_block.instructions:
                 disasm = inst.get("disasm", "").lower()
-                if all(
-                    nop not in disasm
-                    for nop in ["nop", "mov eax, eax", "xchg eax, eax"]
-                ):
+                if all(nop not in disasm for nop in ["nop", "mov eax, eax", "xchg eax, eax"]):
                     has_no_effect = False
                     break
 
@@ -1260,9 +1233,7 @@ class ControlFlowDeobfuscator:
             "blocks_removed": original_cfg.number_of_nodes() - deobfuscated_cfg.number_of_nodes(),
             "original_edges": original_cfg.number_of_edges(),
             "deobfuscated_edges": deobfuscated_cfg.number_of_edges(),
-            "edges_changed": abs(
-                original_cfg.number_of_edges() - deobfuscated_cfg.number_of_edges()
-            ),
+            "edges_changed": abs(original_cfg.number_of_edges() - deobfuscated_cfg.number_of_edges()),
         }
 
         try:
@@ -1278,9 +1249,7 @@ class ControlFlowDeobfuscator:
             metrics["cycles_removed"] = 0
 
         if original_cfg.number_of_nodes() > 0:
-            metrics["complexity_reduction"] = (
-                metrics["blocks_removed"] / original_cfg.number_of_nodes()
-            ) * 100
+            metrics["complexity_reduction"] = (metrics["blocks_removed"] / original_cfg.number_of_nodes()) * 100
 
         return metrics
 
@@ -1315,9 +1284,7 @@ class ControlFlowDeobfuscator:
             score += 0.2
 
         if metrics.get("blocks_removed", 0) > 0:
-            reduction_ratio = min(
-                metrics["blocks_removed"] / max(metrics["original_blocks"], 1), 1.0
-            )
+            reduction_ratio = min(metrics["blocks_removed"] / max(metrics["original_blocks"], 1), 1.0)
             score += reduction_ratio * 0.2
 
         return min(score, 1.0)
@@ -1337,11 +1304,7 @@ class ControlFlowDeobfuscator:
             List of recovered edge tuples
 
         """
-        return [
-            (source, target)
-            for source, target, data in deobfuscated_cfg.edges(data=True)
-            if data.get("edge_type") == "recovered"
-        ]
+        return [(source, target) for source, target, data in deobfuscated_cfg.edges(data=True) if data.get("edge_type") == "recovered"]
 
     def _classify_block(self, instructions: list[dict[str, Any]]) -> str:
         """Classify a basic block based on its instructions.
@@ -1362,9 +1325,7 @@ class ControlFlowDeobfuscator:
             return "return"
         if "call" in last_inst:
             return "call"
-        if any(
-            jmp in last_inst for jmp in ["jmp", "je", "jne", "jz", "jnz", "ja", "jb", "jg", "jl"]
-        ):
+        if any(jmp in last_inst for jmp in ["jmp", "je", "jne", "jz", "jnz", "ja", "jb", "jg", "jl"]):
             return "branch"
         return "sequential"
 
@@ -1509,9 +1470,7 @@ class ControlFlowDeobfuscator:
 
                     nop_bytes = b"\x90" * size
 
-                    if section := self._find_section_for_address(
-                        patched_binary, address
-                    ):
+                    if section := self._find_section_for_address(patched_binary, address):
                         offset = address - (section.virtual_address + patched_binary.imagebase)
                         section_content = bytearray(section.content)
                         section_content[offset : offset + size] = nop_bytes

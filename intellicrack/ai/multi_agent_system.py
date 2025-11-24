@@ -145,9 +145,7 @@ class CollaborationResult:
 class BaseAgent:
     """Base class for all specialized agents."""
 
-    def __init__(
-        self, agent_id: str, role: AgentRole, llm_manager: LLMManager | None = None
-    ) -> None:
+    def __init__(self, agent_id: str, role: AgentRole, llm_manager: LLMManager | None = None) -> None:
         """Initialize the base agent.
 
         Args:
@@ -232,9 +230,7 @@ class BaseAgent:
         self.capabilities.extend(base_capabilities)
         self.capabilities.extend(role_specific_capabilities)
 
-        self.logger.info(
-            f"Initialized {len(self.capabilities)} capabilities for {self.role.value} agent"
-        )
+        self.logger.info(f"Initialized {len(self.capabilities)} capabilities for {self.role.value} agent")
 
     def _get_role_specific_capabilities(self) -> list[AgentCapability]:
         """Get capabilities specific to the agent's role."""
@@ -471,9 +467,7 @@ class BaseAgent:
             self.learned_patterns.append(learned_pattern)
 
         if self.learning_engine:
-            await self.learning_engine.update_knowledge(
-                agent_id=self.agent_id, knowledge_entry=knowledge_entry
-            )
+            await self.learning_engine.update_knowledge(agent_id=self.agent_id, knowledge_entry=knowledge_entry)
 
     def _extract_patterns(self, data: dict[str, Any]) -> list[str]:
         """Extract reusable patterns from data."""
@@ -581,9 +575,7 @@ class BaseAgent:
         if analysis_type in ["full", "structure"]:
             results["sections"] = ["text", "data", "rdata", "reloc"]
             results["imports"] = ["kernel32.dll", "user32.dll", "advapi32.dll"]
-            results["exports"] = (
-                ["main", "DllMain"] if "dll" in str(binary_data).lower() else ["main"]
-            )
+            results["exports"] = ["main", "DllMain"] if "dll" in str(binary_data).lower() else ["main"]
 
         if analysis_type in ["full", "strings"]:
             results["strings"] = ["License check failed", "Invalid key", "Registration required"]
@@ -971,9 +963,7 @@ if __name__ == "__main__":
         analysis_request = task.input_data.get("analysis_request", {})
 
         request_type = analysis_request.get("type", "general") if analysis_request else "general"
-        request_priority = (
-            analysis_request.get("priority", "normal") if analysis_request else "normal"
-        )
+        request_priority = analysis_request.get("priority", "normal") if analysis_request else "normal"
 
         return {
             "analysis_metadata": {
@@ -1155,11 +1145,7 @@ if __name__ == "__main__":
         """Check if agent can execute the task."""
         task_type = task_data.get("type", "")
 
-        return any(
-            task_type in capability.input_types
-            or task_type == capability.capability_name
-            for capability in self.capabilities
-        )
+        return any(task_type in capability.input_types or task_type == capability.capability_name for capability in self.capabilities)
 
     def _handle_knowledge_share(self, message: AgentMessage) -> None:
         """Handle knowledge sharing from another agent."""
@@ -1228,9 +1214,7 @@ if __name__ == "__main__":
         if correlation_id and correlation_id in self.response_waiters:
             self.response_waiters[correlation_id].put(message)
 
-    def _send_task_response(
-        self, original_message: AgentMessage, success: bool, result: dict[str, Any]
-    ) -> None:
+    def _send_task_response(self, original_message: AgentMessage, success: bool, result: dict[str, Any]) -> None:
         """Send task response."""
         response = AgentMessage(
             message_id=str(uuid.uuid4()),
@@ -1264,9 +1248,7 @@ if __name__ == "__main__":
 
         self._send_message(response)
 
-    def _send_collaboration_response(
-        self, original_message: AgentMessage, available: bool, data: dict[str, Any]
-    ) -> None:
+    def _send_collaboration_response(self, original_message: AgentMessage, available: bool, data: dict[str, Any]) -> None:
         """Send collaboration response."""
         response = AgentMessage(
             message_id=str(uuid.uuid4()),
@@ -1307,28 +1289,18 @@ if __name__ == "__main__":
     def _estimate_execution_time(self, capability_name: str) -> float:
         """Estimate execution time for capability."""
         return next(
-            (
-                capability.processing_time_estimate
-                for capability in self.capabilities
-                if capability.capability_name == capability_name
-            ),
+            (capability.processing_time_estimate for capability in self.capabilities if capability.capability_name == capability_name),
             0.0,
         )
 
     def _get_capability_confidence(self, capability_name: str) -> float:
         """Get confidence level for capability."""
         return next(
-            (
-                capability.confidence_level
-                for capability in self.capabilities
-                if capability.capability_name == capability_name
-            ),
+            (capability.confidence_level for capability in self.capabilities if capability.capability_name == capability_name),
             0.0,
         )
 
-    def share_knowledge(
-        self, knowledge: dict[str, Any], target_agents: list[str] | None = None
-    ) -> None:
+    def share_knowledge(self, knowledge: dict[str, Any], target_agents: list[str] | None = None) -> None:
         """Share knowledge with other agents."""
         if not self.collaboration_system:
             return
@@ -1482,9 +1454,7 @@ class StaticAnalysisAgent(BaseAgent):
             analysis_result["sections"] = [s.get("name", "") for s in sections]
 
         if imports := r2.cmdj("iij"):
-            analysis_result["imports"] = list(
-                {imp.get("libname", "") for imp in imports if imp.get("libname")}
-            )
+            analysis_result["imports"] = list({imp.get("libname", "") for imp in imports if imp.get("libname")})
 
         if exports := r2.cmdj("iEj"):
             analysis_result["exports"] = [exp.get("name", "") for exp in exports if exp.get("name")]
@@ -1504,9 +1474,9 @@ class StaticAnalysisAgent(BaseAgent):
 
         try:
             with (
-                        open(file_path, "rb") as f,
-                        mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped_file,
-                    ):
+                open(file_path, "rb") as f,
+                mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped_file,
+            ):
                 # Check for PE signature
                 if mmapped_file[:2] == b"MZ":
                     analysis_result["file_type"] = "PE"
@@ -1529,9 +1499,7 @@ class StaticAnalysisAgent(BaseAgent):
 
                     # Get entry point
                     optional_header_offset = pe_offset + 24
-                    magic = struct.unpack(
-                        "<H", mmapped_file[optional_header_offset : optional_header_offset + 2]
-                    )[0]
+                    magic = struct.unpack("<H", mmapped_file[optional_header_offset : optional_header_offset + 2])[0]
 
                     if magic in {267, 523}:  # PE32
                         entry_point = struct.unpack(
@@ -1555,9 +1523,7 @@ class StaticAnalysisAgent(BaseAgent):
                         0x28: "ARM",
                         0xB7: "ARM64",
                     }
-                    analysis_result["architecture"] = arch_map.get(
-                        e_machine, f"Unknown ({hex(e_machine)})"
-                    )
+                    analysis_result["architecture"] = arch_map.get(e_machine, f"Unknown ({hex(e_machine)})")
 
                     # Get entry point
                     if mmapped_file[4] == 1:  # 32-bit
@@ -1584,9 +1550,7 @@ class StaticAnalysisAgent(BaseAgent):
                         0x0C: "ARM",
                         0x0100000C: "ARM64",
                     }
-                    analysis_result["architecture"] = cpu_map.get(
-                        cpu_type, f"Unknown ({hex(cpu_type)})"
-                    )
+                    analysis_result["architecture"] = cpu_map.get(cpu_type, f"Unknown ({hex(cpu_type)})")
 
                 else:
                     analysis_result["file_type"] = "Unknown"
@@ -1600,20 +1564,14 @@ class StaticAnalysisAgent(BaseAgent):
                     sections = []
                     try:
                         pe_offset = struct.unpack("<I", mmapped_file[0x3C:0x40])[0]
-                        num_sections = struct.unpack(
-                            "<H", mmapped_file[pe_offset + 6 : pe_offset + 8]
-                        )[0]
-                        optional_header_size = struct.unpack(
-                            "<H", mmapped_file[pe_offset + 20 : pe_offset + 22]
-                        )[0]
+                        num_sections = struct.unpack("<H", mmapped_file[pe_offset + 6 : pe_offset + 8])[0]
+                        optional_header_size = struct.unpack("<H", mmapped_file[pe_offset + 20 : pe_offset + 22])[0]
                         section_table_offset = pe_offset + 24 + optional_header_size
 
                         for i in range(min(num_sections, 20)):  # Limit to 20 sections for safety
                             section_offset = section_table_offset + (i * 40)
                             if section_name := (
-                                mmapped_file[section_offset : section_offset + 8]
-                                .rstrip(b"\x00")
-                                .decode("ascii", errors="ignore")
+                                mmapped_file[section_offset : section_offset + 8].rstrip(b"\x00").decode("ascii", errors="ignore")
                             ):
                                 sections.append(section_name)
 
@@ -1778,9 +1736,7 @@ class StaticAnalysisAgent(BaseAgent):
 
         return vulnerabilities
 
-    def _calculate_python_quality_score(
-        self, code: str, functions: list, vulnerabilities: list
-    ) -> float:
+    def _calculate_python_quality_score(self, code: str, functions: list, vulnerabilities: list) -> float:
         """Calculate code quality score for Python code."""
         lines = code.split("\n")
         non_empty_lines = [line for line in lines if line.strip()]
@@ -1829,9 +1785,7 @@ class StaticAnalysisAgent(BaseAgent):
                         }
                     )
 
-        function_count = len(
-            [line for line in lines if re.search(r"\w+\s+\w+\s*\([^)]*\)\s*{", line)]
-        )
+        function_count = len([line for line in lines if re.search(r"\w+\s+\w+\s*\([^)]*\)\s*{", line)])
         class_count = len([line for line in lines if re.search(r"(class|struct)\s+\w+", line)])
 
         quality_score = 1.0
@@ -1872,13 +1826,7 @@ class StaticAnalysisAgent(BaseAgent):
                         }
                     )
 
-        function_count = len(
-            [
-                line
-                for line in lines
-                if re.search(r"function\s+\w+|const\s+\w+\s*=.*=>|\w+\s*:\s*function", line)
-            ]
-        )
+        function_count = len([line for line in lines if re.search(r"function\s+\w+|const\s+\w+\s*=.*=>|\w+\s*:\s*function", line)])
         class_count = len([line for line in lines if re.search(r"class\s+\w+", line)])
 
         quality_score = 1.0
@@ -1897,9 +1845,7 @@ class StaticAnalysisAgent(BaseAgent):
         """Analyze code for unknown languages."""
         lines = code.split("\n")
         return {
-            "functions_detected": len(
-                [line for line in lines if "(" in line and ")" in line and "{" in line]
-            ),
+            "functions_detected": len([line for line in lines if "(" in line and ")" in line and "{" in line]),
             "classes_detected": len([line for line in lines if "class " in line]),
             "code_quality_score": 0.5,
             "confidence": 0.6,
@@ -1968,17 +1914,11 @@ class StaticAnalysisAgent(BaseAgent):
                 anomalies = []
                 for block in basic_blocks:
                     if block.get("ninstr", 0) == 0:
-                        anomalies.append(
-                            {"type": "empty_block", "address": hex(block.get("addr", 0))}
-                        )
+                        anomalies.append({"type": "empty_block", "address": hex(block.get("addr", 0))})
                     elif block.get("jump") and block["jump"] == block.get("addr"):
-                        anomalies.append(
-                            {"type": "infinite_loop", "address": hex(block.get("addr", 0))}
-                        )
+                        anomalies.append({"type": "infinite_loop", "address": hex(block.get("addr", 0))})
                     elif block.get("fail") and not block.get("jump"):
-                        anomalies.append(
-                            {"type": "unreachable_code", "address": hex(block.get("addr", 0))}
-                        )
+                        anomalies.append({"type": "unreachable_code", "address": hex(block.get("addr", 0))})
 
                 result["control_flow_anomalies"] = anomalies
 
@@ -1996,9 +1936,7 @@ class StaticAnalysisAgent(BaseAgent):
                     func_blocks = r2.cmdj(f"afbj @ {func['offset']}")
                     if func_blocks:
                         # Cyclomatic complexity = edges - nodes + 2
-                        edges = sum(bool(b.get("jump"))
-                                for b in func_blocks) + sum(bool(b.get("fail"))
-                                                                               for b in func_blocks)
+                        edges = sum(bool(b.get("jump")) for b in func_blocks) + sum(bool(b.get("fail")) for b in func_blocks)
                         nodes = len(func_blocks)
                         complexity = edges - nodes + 2
                         total_complexity += complexity
@@ -2011,9 +1949,7 @@ class StaticAnalysisAgent(BaseAgent):
                     if calls:
                         for call in calls:
                             if isinstance(call, dict):
-                                call_graph_nodes.add(
-                                    call.get("name", f"fcn.{call.get('addr', 0):08x}")
-                                )
+                                call_graph_nodes.add(call.get("name", f"fcn.{call.get('addr', 0):08x}"))
 
                 if result["function_count"] > 0:
                     result["cyclomatic_complexity"] = total_complexity / result["function_count"]
@@ -2025,9 +1961,7 @@ class StaticAnalysisAgent(BaseAgent):
             if indirect_calls:
                 for ref in indirect_calls:
                     if isinstance(ref, dict) and ref.get("type") == "CALL" and "reg" in str(ref.get("opcode", "")):
-                        result["control_flow_anomalies"].append(
-                            {"type": "indirect_call", "address": hex(ref.get("from", 0))}
-                        )
+                        result["control_flow_anomalies"].append({"type": "indirect_call", "address": hex(ref.get("from", 0))})
 
             result["confidence"] = 0.9
             r2.quit()
@@ -2057,9 +1991,7 @@ class StaticAnalysisAgent(BaseAgent):
                             next_byte = mmapped_file[i + 1] if i + 1 < file_size else 0
 
                             # Jump instructions (JMP, JE, JNE, etc.)
-                            if byte in [0xEB, 0xE9] or (
-                                byte == 0x0F and next_byte in range(0x80, 0x90)
-                            ):
+                            if byte in [0xEB, 0xE9] or (byte == 0x0F and next_byte in range(0x80, 0x90)):
                                 jump_instructions += 1
 
                             # Call instructions
@@ -2071,34 +2003,24 @@ class StaticAnalysisAgent(BaseAgent):
                                 ret_instructions += 1
 
                         # Estimate basic blocks (very rough)
-                        mmap_result["basic_blocks"] = (
-                            max(jump_instructions, call_instructions) + ret_instructions
-                        )
+                        mmap_result["basic_blocks"] = max(jump_instructions, call_instructions) + ret_instructions
 
                         # Estimate function count
                         mmap_result["function_count"] = max(1, ret_instructions)
 
                         # Estimate cyclomatic complexity
                         if mmap_result["function_count"] > 0:
-                            mmap_result["cyclomatic_complexity"] = (
-                                jump_instructions / mmap_result["function_count"]
-                            ) + 1
+                            mmap_result["cyclomatic_complexity"] = (jump_instructions / mmap_result["function_count"]) + 1
 
                         # Estimate call graph nodes
-                        mmap_result["call_graph_nodes"] = (
-                            call_instructions + mmap_result["function_count"]
-                        )
+                        mmap_result["call_graph_nodes"] = call_instructions + mmap_result["function_count"]
 
                         # Look for anomalies
                         if jump_instructions > call_instructions * 3:
-                            mmap_result["control_flow_anomalies"].append(
-                                {"type": "excessive_branching", "address": "0x0"}
-                            )
+                            mmap_result["control_flow_anomalies"].append({"type": "excessive_branching", "address": "0x0"})
 
                         if ret_instructions > call_instructions * 1.5:
-                            mmap_result["control_flow_anomalies"].append(
-                                {"type": "unbalanced_returns", "address": "0x0"}
-                            )
+                            mmap_result["control_flow_anomalies"].append({"type": "unbalanced_returns", "address": "0x0"})
 
                         mmap_result["confidence"] = 0.6
                     return mmap_result
@@ -2373,9 +2295,7 @@ class DynamicAnalysisAgent(BaseAgent):
                 result["file_operations"] = [{"type": "access", "file": f} for f in open_files]
 
                 # Convert network connections
-                result["network_connections"] = [
-                    {"host": host, "port": port, "protocol": "TCP"} for host, port in connections
-                ]
+                result["network_connections"] = [{"host": host, "port": port, "protocol": "TCP"} for host, port in connections]
 
                 # Basic pattern detection
                 patterns = []
@@ -2440,15 +2360,11 @@ class DynamicAnalysisAgent(BaseAgent):
                     permanent = wintypes.BOOL()
 
                     if handle := kernel32.OpenProcess(0x0400, False, process_id):
-                        if kernel32.GetProcessDEPPolicy(
-                            handle, ctypes.byref(flags), ctypes.byref(permanent)
-                        ):
+                        if kernel32.GetProcessDEPPolicy(handle, ctypes.byref(flags), ctypes.byref(permanent)):
                             # Process flags for DEP
                             PROCESS_DEP_ENABLE = 0x00000001
 
-                            result["memory_protection"]["dep_enabled"] = bool(
-                                flags.value & PROCESS_DEP_ENABLE
-                            )
+                            result["memory_protection"]["dep_enabled"] = bool(flags.value & PROCESS_DEP_ENABLE)
 
                         kernel32.CloseHandle(handle)
 
@@ -2465,9 +2381,7 @@ class DynamicAnalysisAgent(BaseAgent):
                         result["memory_protection"]["aslr_enabled"] = value != 0
                         winreg.CloseKey(key)
                     except (OSError, winreg.error):
-                        result["memory_protection"]["aslr_enabled"] = (
-                            True  # Default on modern Windows
-                        )
+                        result["memory_protection"]["aslr_enabled"] = True  # Default on modern Windows
 
                 except Exception as e:
                     logger.debug(f"Could not check Windows memory protections: {e}")
@@ -2701,13 +2615,9 @@ class DynamicAnalysisAgent(BaseAgent):
                             }
                         )
                     elif payload["type"] == "suspicious":
-                        suspicious_apis.append(
-                            {"function": payload["function"], "reason": payload["reason"]}
-                        )
+                        suspicious_apis.append({"function": payload["function"], "reason": payload["reason"]})
                     elif payload["type"] == "bypass":
-                        protection_bypasses.append(
-                            {"type": payload["bypass_type"], "detected": payload["detected"]}
-                        )
+                        protection_bypasses.append({"type": payload["bypass_type"], "detected": payload["detected"]})
 
             script.on("message", on_message)
             script.load()
@@ -2790,9 +2700,7 @@ class DynamicAnalysisAgent(BaseAgent):
                             api_calls.append(
                                 {
                                     "function": "connect",
-                                    "args": [f"{conn.raddr[0]}:{conn.raddr[1]}"]
-                                    if conn.raddr
-                                    else ["unknown"],
+                                    "args": [f"{conn.raddr[0]}:{conn.raddr[1]}"] if conn.raddr else ["unknown"],
                                     "result": "success",
                                 },
                             )
@@ -2800,16 +2708,12 @@ class DynamicAnalysisAgent(BaseAgent):
                         # Monitor file handles
                         files = proc.open_files()
                         for f in files:
-                            api_calls.append(
-                                {"function": "CreateFile", "args": [f.path], "result": "success"}
-                            )
+                            api_calls.append({"function": "CreateFile", "args": [f.path], "result": "success"})
 
                         # Check for suspicious behavior
                         mem_info = proc.memory_info()
                         if mem_info.vms > 1024 * 1024 * 1024:  # > 1GB
-                            suspicious_apis.append(
-                                {"function": "VirtualAlloc", "reason": "excessive_memory"}
-                            )
+                            suspicious_apis.append({"function": "VirtualAlloc", "reason": "excessive_memory"})
 
                 except Exception as e:
                     logger.error(f"Process monitoring failed: {e}")
@@ -2825,9 +2729,7 @@ class DynamicAnalysisAgent(BaseAgent):
 
                 if psutil.pid_exists(process_id):
                     proc = psutil.Process(process_id)
-                    api_calls.append(
-                        {"function": "Process", "args": [proc.name()], "result": "running"}
-                    )
+                    api_calls.append({"function": "Process", "args": [proc.name()], "result": "running"})
             except (AttributeError, OSError, ValueError) as e:
                 self.logger.warning(f"Unable to access process {proc.pid}: {e}")
                 suspicious_apis.append(
@@ -2906,9 +2808,7 @@ class ReverseEngineeringAgent(BaseAgent):
             return Cs(CS_ARCH_ARM, CS_MODE_ARM)
         return Cs(CS_ARCH_X86, CS_MODE_32)
 
-    def _process_capstone_instruction(
-        self, insn: object, function_boundaries: list, cross_references: list
-    ) -> dict[str, object]:
+    def _process_capstone_instruction(self, insn: object, function_boundaries: list, cross_references: list) -> dict[str, object]:
         """Process a single capstone instruction and update boundaries/references."""
         instruction_info = {
             "address": hex(insn.address),
@@ -2918,9 +2818,7 @@ class ReverseEngineeringAgent(BaseAgent):
 
         # Detect function boundaries (prologue detection)
         if insn.mnemonic == "push" and "bp" in insn.op_str:
-            function_boundaries.append(
-                {"start": hex(insn.address), "end": None, "name": f"sub_{insn.address:x}"}
-            )
+            function_boundaries.append({"start": hex(insn.address), "end": None, "name": f"sub_{insn.address:x}"})
         elif insn.mnemonic == "ret":
             if function_boundaries and function_boundaries[-1]["end"] is None:
                 function_boundaries[-1]["end"] = hex(insn.address + len(insn.bytes))
@@ -2930,20 +2828,14 @@ class ReverseEngineeringAgent(BaseAgent):
             try:
                 target = insn.op_str.strip()
                 if target.startswith("0x"):
-                    cross_references.append(
-                        {"from": hex(insn.address), "to": target, "type": insn.mnemonic}
-                    )
+                    cross_references.append({"from": hex(insn.address), "to": target, "type": insn.mnemonic})
             except (ValueError, AttributeError, KeyError) as e:
                 self.logger.debug(f"Failed to parse instruction at {hex(insn.address)}: {e}")
-                cross_references.append(
-                    {"from": hex(insn.address), "to": "unknown", "type": "invalid_instruction"}
-                )
+                cross_references.append({"from": hex(insn.address), "to": "unknown", "type": "invalid_instruction"})
 
         return instruction_info
 
-    def _decode_x86_instruction(
-        self, binary_data: bytes, offset: int, start_address: int
-    ) -> tuple[str, int]:
+    def _decode_x86_instruction(self, binary_data: bytes, offset: int, start_address: int) -> tuple[str, int]:
         """Decode a single x86 instruction manually."""
         if offset >= len(binary_data):
             return "", 1
@@ -3013,9 +2905,7 @@ class ReverseEngineeringAgent(BaseAgent):
 
         return f"db {opcode:02x}", 1
 
-    def _manual_x86_disassembly(
-        self, binary_data: bytes, start_address: int
-    ) -> tuple[list, list, list]:
+    def _manual_x86_disassembly(self, binary_data: bytes, start_address: int) -> tuple[list, list, list]:
         """Perform manual x86 disassembly as fallback."""
         assembly_instructions = []
         function_boundaries = []
@@ -3037,21 +2927,13 @@ class ReverseEngineeringAgent(BaseAgent):
 
                 # Detect function start
                 if binary_data[offset] == 0x55:  # push ebp
-                    function_boundaries.append(
-                        {"start": hex(addr), "end": None, "name": f"sub_{addr:x}"}
-                    )
+                    function_boundaries.append({"start": hex(addr), "end": None, "name": f"sub_{addr:x}"})
 
                 # Track cross-references for manual disassembly
-                if (
-                    (binary_data[offset] == 0xE8
-                    and offset + 4 < len(binary_data))
-                    or (binary_data[offset] != 0xE8
-                    and binary_data[offset] == 0xE9
-                    and offset + 4 < len(binary_data))
+                if (binary_data[offset] == 0xE8 and offset + 4 < len(binary_data)) or (
+                    binary_data[offset] != 0xE8 and binary_data[offset] == 0xE9 and offset + 4 < len(binary_data)
                 ):
-                    rel = int.from_bytes(
-                        binary_data[offset + 1 : offset + 5], "little", signed=True
-                    )
+                    rel = int.from_bytes(binary_data[offset + 1 : offset + 5], "little", signed=True)
                     target = addr + 5 + rel
                     cross_references.append(
                         {
@@ -3063,8 +2945,7 @@ class ReverseEngineeringAgent(BaseAgent):
                 elif (
                     binary_data[offset] == 0xE8
                     or binary_data[offset] == 0xE9
-                    or (binary_data[offset] in [0x74, 0x75]
-                    and offset + 1 >= len(binary_data))
+                    or (binary_data[offset] in [0x74, 0x75] and offset + 1 >= len(binary_data))
                     or binary_data[offset] not in [0x74, 0x75]
                 ):
                     pass
@@ -3095,9 +2976,7 @@ class ReverseEngineeringAgent(BaseAgent):
             addr = start_address + i
             chunk = binary_data[i : i + 16]
             hex_str = chunk.hex()
-            assembly_instructions.append(
-                {"address": hex(addr), "instruction": f"db {hex_str}", "bytes": hex_str}
-            )
+            assembly_instructions.append({"address": hex(addr), "instruction": f"db {hex_str}", "bytes": hex_str})
         return assembly_instructions
 
     def _identify_function_patterns(self, assembly_instructions: list) -> list:
@@ -3125,9 +3004,7 @@ class ReverseEngineeringAgent(BaseAgent):
         start_address = input_data.get("start_address", 0x401000)
         architecture = input_data.get("architecture", "x86")
 
-        logger.debug(
-            f"Disassembly agent processing {len(binary_data)} bytes starting at {hex(start_address)}"
-        )
+        logger.debug(f"Disassembly agent processing {len(binary_data)} bytes starting at {hex(start_address)}")
 
         assembly_instructions = []
         function_boundaries = []
@@ -3139,22 +3016,16 @@ class ReverseEngineeringAgent(BaseAgent):
 
             # Disassemble using capstone
             for insn in md.disasm(binary_data, start_address):
-                instruction_info = self._process_capstone_instruction(
-                    insn, function_boundaries, cross_references
-                )
+                instruction_info = self._process_capstone_instruction(insn, function_boundaries, cross_references)
                 assembly_instructions.append(instruction_info)
 
         except ImportError:
             # Fallback to manual x86 disassembly
             try:
-                assembly_instructions, function_boundaries, cross_references = (
-                    self._manual_x86_disassembly(binary_data, start_address)
-                )
+                assembly_instructions, function_boundaries, cross_references = self._manual_x86_disassembly(binary_data, start_address)
             except Exception as e:
                 logger.warning(f"Manual disassembly failed: {e}")
-                assembly_instructions = self._create_fallback_disassembly(
-                    binary_data, start_address
-                )
+                assembly_instructions = self._create_fallback_disassembly(binary_data, start_address)
 
         # Clean up incomplete function boundaries
         function_boundaries = [f for f in function_boundaries if f["end"] is not None]
@@ -3198,9 +3069,7 @@ class ReverseEngineeringAgent(BaseAgent):
                 if len(parts) >= 2:
                     ret_type = parts[0]
                     params = parts[1:] if len(parts) > 1 else []
-                    function_signatures.append(
-                        {"name": func_name, "parameters": params, "return_type": ret_type}
-                    )
+                    function_signatures.append({"name": func_name, "parameters": params, "return_type": ret_type})
 
             if vars_json := r2.cmdj(f"afvj @ {func_addr}"):
                 for var in vars_json:
@@ -3304,9 +3173,7 @@ class ReverseEngineeringAgent(BaseAgent):
                 pseudo_code += "    }\n"
 
             pseudo_code += "}\n"
-            function_signatures.append(
-                {"name": func_name, "parameters": ["void*"], "return_type": "int"}
-            )
+            function_signatures.append({"name": func_name, "parameters": ["void*"], "return_type": "int"})
 
         return pseudo_code, function_signatures
 
@@ -3314,11 +3181,7 @@ class ReverseEngineeringAgent(BaseAgent):
         """Generate pseudo code based on common patterns in assembly."""
         has_license_check = any("license" in str(insn).lower() for insn in assembly_code)
         has_string_ops = any("str" in insn.get("instruction", "").lower() for insn in assembly_code)
-        has_crypto = any(
-            op in str(insn).lower()
-            for insn in assembly_code
-            for op in ["aes", "des", "rsa", "sha", "md5"]
-        )
+        has_crypto = any(op in str(insn).lower() for insn in assembly_code for op in ["aes", "des", "rsa", "sha", "md5"])
 
         if has_license_check or has_string_ops:
             pseudo_code = """
@@ -3355,9 +3218,7 @@ int check_license(char* key) {
 
     return 1;
 }"""
-            function_signatures = [
-                {"name": "check_license", "parameters": ["char*"], "return_type": "int"}
-            ]
+            function_signatures = [{"name": "check_license", "parameters": ["char*"], "return_type": "int"}]
 
         elif has_crypto:
             pseudo_code = """
@@ -3388,9 +3249,7 @@ int process_data(void* input, int size) {
 
     return result;
 }"""
-            function_signatures = [
-                {"name": "process_data", "parameters": ["void*", "int"], "return_type": "int"}
-            ]
+            function_signatures = [{"name": "process_data", "parameters": ["void*", "int"], "return_type": "int"}]
 
         variable_analysis = [
             {"name": "result", "type": "int", "scope": "local"},
@@ -3416,9 +3275,7 @@ int process_data(void* input, int size) {
         try:
             # Try r2pipe with r2dec decompiler plugin
             if binary_path and os.path.exists(binary_path):
-                pseudo_code, function_signatures, variable_analysis = self._decompile_with_r2pipe(
-                    binary_path
-                )
+                pseudo_code, function_signatures, variable_analysis = self._decompile_with_r2pipe(binary_path)
 
         except Exception as e:
             logger.debug(f"r2pipe decompilation failed: {e}, using pattern-based decompilation")
@@ -3430,14 +3287,10 @@ int process_data(void* input, int size) {
 
         # If still no pseudo code, generate from assembly patterns
         if not pseudo_code and assembly_code:
-            pseudo_code, function_signatures, variable_analysis = (
-                self._generate_pattern_based_pseudocode(assembly_code)
-            )
+            pseudo_code, function_signatures, variable_analysis = self._generate_pattern_based_pseudocode(assembly_code)
 
         return {
-            "pseudo_code": (
-                pseudo_code or "// Unable to decompile"
-            ),
+            "pseudo_code": (pseudo_code or "// Unable to decompile"),
             "function_signatures": function_signatures,
             "variable_analysis": variable_analysis,
             "confidence": 0.85 if pseudo_code else 0.2,
@@ -3447,32 +3300,20 @@ int process_data(void* input, int size) {
         """Detect string algorithm patterns in code."""
         algorithms = []
 
-        if any(
-            pattern in code_lower for pattern in ["strcmp", "strncmp", "memcmp", "strstr", "strchr"]
-        ):
-            algorithms.append(
-                {"name": "string_comparison", "complexity": "O(n)", "confidence": 0.95}
-            )
+        if any(pattern in code_lower for pattern in ["strcmp", "strncmp", "memcmp", "strstr", "strchr"]):
+            algorithms.append({"name": "string_comparison", "complexity": "O(n)", "confidence": 0.95})
 
         if "strlen" in code_lower or "wcslen" in code_lower:
-            algorithms.append(
-                {"name": "string_length_calculation", "complexity": "O(n)", "confidence": 0.95}
-            )
+            algorithms.append({"name": "string_length_calculation", "complexity": "O(n)", "confidence": 0.95})
 
         if "qsort" in code_lower or ("pivot" in code_lower and "partition" in code_lower):
-            algorithms.append(
-                {"name": "quicksort", "complexity": "O(n log n) average", "confidence": 0.85}
-            )
+            algorithms.append({"name": "quicksort", "complexity": "O(n log n) average", "confidence": 0.85})
 
         if any(pattern in code_lower for pattern in ["bubble", "swap", "for.*for.*if.*>.*swap"]):
             algorithms.append({"name": "bubble_sort", "complexity": "O(n²)", "confidence": 0.75})
 
-        if "bsearch" in code_lower or (
-            "mid" in code_lower and "low" in code_lower and "high" in code_lower
-        ):
-            algorithms.append(
-                {"name": "binary_search", "complexity": "O(log n)", "confidence": 0.85}
-            )
+        if "bsearch" in code_lower or ("mid" in code_lower and "low" in code_lower and "high" in code_lower):
+            algorithms.append({"name": "binary_search", "complexity": "O(log n)", "confidence": 0.85})
 
         if any(pattern in code_lower for pattern in ["hash", "djb2", "fnv", "murmur"]):
             algorithms.append({"name": "hash_function", "complexity": "O(n)", "confidence": 0.8})
@@ -3538,9 +3379,7 @@ int process_data(void* input, int size) {
             if any(p in code_lower for p in patterns)
         ]
 
-    def _analyze_assembly_patterns(
-        self, assembly_code: list
-    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[str]]:
+    def _analyze_assembly_patterns(self, assembly_code: list) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[str]]:
         """Analyze assembly code for algorithm and compiler patterns."""
         identified_algorithms = []
         cryptographic_functions = []
@@ -3558,9 +3397,7 @@ int process_data(void* input, int size) {
             )
 
         if any(insn in asm_text for insn in ["xmm", "ymm", "zmm", "movdqa", "paddd", "pxor"]):
-            identified_algorithms.append(
-                {"name": "simd_operations", "complexity": "O(n/width)", "confidence": 0.85}
-            )
+            identified_algorithms.append({"name": "simd_operations", "complexity": "O(n/width)", "confidence": 0.85})
 
         if "push ebp" in asm_text and "mov ebp, esp" in asm_text:
             compiler_patterns.append("x86_standard_prologue")
@@ -3598,9 +3435,7 @@ int process_data(void* input, int size) {
         if max_loop_depth == 1:
             algorithms.append({"name": "linear_iteration", "complexity": "O(n)", "confidence": 0.9})
         elif max_loop_depth == 2:
-            algorithms.append(
-                {"name": "nested_iteration", "complexity": "O(n²)", "confidence": 0.85}
-            )
+            algorithms.append({"name": "nested_iteration", "complexity": "O(n²)", "confidence": 0.85})
         elif max_loop_depth >= 3:
             algorithms.append(
                 {
@@ -3612,9 +3447,7 @@ int process_data(void* input, int size) {
 
         return algorithms
 
-    def _determine_optimization_level(
-        self, compiler_patterns: list[str], assembly_code: list
-    ) -> str:
+    def _determine_optimization_level(self, compiler_patterns: list[str], assembly_code: list) -> str:
         """Determine code optimization level based on compiler and assembly patterns."""
         if not compiler_patterns:
             if assembly_code:
@@ -3659,9 +3492,7 @@ int process_data(void* input, int size) {
             identified_algorithms.extend(self._analyze_loop_complexity(code))
 
         if assembly_code:
-            asm_algorithms, asm_crypto, asm_patterns = self._analyze_assembly_patterns(
-                assembly_code
-            )
+            asm_algorithms, asm_crypto, asm_patterns = self._analyze_assembly_patterns(assembly_code)
             identified_algorithms.extend(asm_algorithms)
             cryptographic_functions.extend(asm_crypto)
             compiler_patterns.extend(asm_patterns)
@@ -3669,9 +3500,7 @@ int process_data(void* input, int size) {
         optimization_level = self._determine_optimization_level(compiler_patterns, assembly_code)
 
         if not identified_algorithms:
-            identified_algorithms.append(
-                {"name": "basic_sequential", "complexity": "O(n)", "confidence": 0.5}
-            )
+            identified_algorithms.append({"name": "basic_sequential", "complexity": "O(n)", "confidence": 0.5})
 
         return {
             "identified_algorithms": identified_algorithms,
@@ -3679,9 +3508,7 @@ int process_data(void* input, int size) {
             "obfuscation_techniques": obfuscation_techniques,
             "optimization_level": optimization_level,
             "compiler_patterns": compiler_patterns,
-            "confidence": (
-                0.85 if (identified_algorithms or cryptographic_functions) else 0.3
-            ),
+            "confidence": (0.85 if (identified_algorithms or cryptographic_functions) else 0.3),
         }
 
 
@@ -3831,9 +3658,7 @@ class MultiAgentSystem:
 
         return capability_map.get(task_type, [task_type])
 
-    def _find_suitable_agents(
-        self, required_capabilities: list[str]
-    ) -> list[tuple[str, BaseAgent]]:
+    def _find_suitable_agents(self, required_capabilities: list[str]) -> list[tuple[str, BaseAgent]]:
         """Find agents with required capabilities."""
         suitable_agents = []
 
@@ -3858,9 +3683,7 @@ class MultiAgentSystem:
 
         return suitable_agents
 
-    def _create_subtasks(
-        self, main_task: AgentTask, suitable_agents: list[tuple[str, BaseAgent]]
-    ) -> list[tuple[str, AgentTask]]:
+    def _create_subtasks(self, main_task: AgentTask, suitable_agents: list[tuple[str, BaseAgent]]) -> list[tuple[str, AgentTask]]:
         """Create subtasks for agents."""
         subtasks = []
 
@@ -3884,9 +3707,7 @@ class MultiAgentSystem:
 
         return subtasks
 
-    async def _execute_subtasks_parallel(
-        self, subtasks: list[tuple[str, AgentTask]]
-    ) -> dict[str, dict[str, Any]]:
+    async def _execute_subtasks_parallel(self, subtasks: list[tuple[str, AgentTask]]) -> dict[str, dict[str, Any]]:
         """Execute subtasks in parallel."""
 
         async def execute_subtask(agent_id: str, subtask: AgentTask) -> tuple[str, dict[str, Any]]:
@@ -3985,16 +3806,10 @@ class MultiAgentSystem:
 
         if "potential_vulnerabilities" in result:
             patterns.extend(
-                f"vulnerability_{vuln['type']}"
-                for vuln in result["potential_vulnerabilities"]
-                if isinstance(vuln, dict) and "type" in vuln
+                f"vulnerability_{vuln['type']}" for vuln in result["potential_vulnerabilities"] if isinstance(vuln, dict) and "type" in vuln
             )
         if "suspicious_apis" in result:
-            patterns.extend(
-                f"suspicious_{api['reason']}"
-                for api in result["suspicious_apis"]
-                if isinstance(api, dict) and "reason" in api
-            )
+            patterns.extend(f"suspicious_{api['reason']}" for api in result["suspicious_apis"] if isinstance(api, dict) and "reason" in api)
         return patterns
 
     def _calculate_combined_confidence(self, subtask_results: dict[str, dict[str, Any]]) -> float:
@@ -4009,9 +3824,7 @@ class MultiAgentSystem:
 
         return sum(confidences) / len(confidences) if confidences else 0.0
 
-    async def _share_collaboration_knowledge(
-        self, task: AgentTask, result: CollaborationResult
-    ) -> None:
+    async def _share_collaboration_knowledge(self, task: AgentTask, result: CollaborationResult) -> None:
         """Share knowledge gained from collaboration."""
         knowledge = {
             "collaboration_pattern": {
@@ -4034,10 +3847,7 @@ class MultiAgentSystem:
 
     def get_system_status(self) -> dict[str, Any]:
         """Get multi-agent system status."""
-        agent_statuses = {
-            agent_id: agent.get_agent_status()
-            for agent_id, agent in self.agents.items()
-        }
+        agent_statuses = {agent_id: agent.get_agent_status() for agent_id, agent in self.agents.items()}
         return {
             "active": self.active,
             "total_agents": len(self.agents),
@@ -4161,10 +3971,7 @@ class TaskDistributor:
 
         # Capability match score
         for capability in agent.capabilities:
-            if (
-                task.task_type in capability.input_types
-                or task.task_type == capability.capability_name
-            ):
+            if task.task_type in capability.input_types or task.task_type == capability.capability_name:
                 score += capability.confidence_level * 30
 
         # Recency score (more recent activity is better)
@@ -4246,9 +4053,7 @@ class KnowledgeManager:
             logger.debug(f"Knowledge retrieved from {category}:{key} by agent {requesting_agent}")
             return knowledge_item["value"]
 
-        logger.debug(
-            f"Knowledge not found for {category}:{key} requested by agent {requesting_agent}"
-        )
+        logger.debug(f"Knowledge not found for {category}:{key} requested by agent {requesting_agent}")
         return None
 
     def get_related_knowledge(self, category: str, requesting_agent: str) -> dict[str, Any]:

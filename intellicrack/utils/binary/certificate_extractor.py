@@ -222,9 +222,7 @@ class CertificateExtractor:
                 try:
                     # Read length (simplified - assumes short form)
                     if cert_pos + 4 < len(pkcs7_data):
-                        cert_len = (
-                            struct.unpack(">H", pkcs7_data[cert_pos + 2 : cert_pos + 4])[0] + 4
-                        )
+                        cert_len = struct.unpack(">H", pkcs7_data[cert_pos + 2 : cert_pos + 4])[0] + 4
 
                         if cert_pos + cert_len <= len(pkcs7_data):
                             cert_der = pkcs7_data[cert_pos : cert_pos + cert_len]
@@ -371,9 +369,7 @@ class CertificateExtractor:
 
             try:
                 # Extended key usage
-                eku = cert.extensions.get_extension_for_oid(
-                    x509.oid.ExtensionOID.EXTENDED_KEY_USAGE
-                ).value
+                eku = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.EXTENDED_KEY_USAGE).value
                 for usage in eku:
                     usage_name = usage._name if hasattr(usage, "_name") else str(usage)
                     extended_key_usage.append(usage_name)
@@ -387,9 +383,7 @@ class CertificateExtractor:
 
             try:
                 # Subject Alternative Names
-                san = cert.extensions.get_extension_for_oid(
-                    x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME
-                ).value
+                san = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME).value
                 for name in san:
                     subject_alt_names.append(str(name))
 
@@ -446,9 +440,7 @@ class CertificateExtractor:
 
         return ", ".join(parts) if parts else str(name)
 
-    def _analyze_signing_info(
-        self, cert_data: bytes, certificates: list[CertificateInfo]
-    ) -> dict[str, Any]:
+    def _analyze_signing_info(self, cert_data: bytes, certificates: list[CertificateInfo]) -> dict[str, Any]:
         """Analyze signing information and trust status."""
         info = {
             "chain_valid": False,
@@ -547,12 +539,7 @@ class CertificateExtractor:
 
                         try:
                             if cert_pos + 4 < len(cert_content):
-                                cert_len = (
-                                    struct.unpack(">H", cert_content[cert_pos + 2 : cert_pos + 4])[
-                                        0
-                                    ]
-                                    + 4
-                                )
+                                cert_len = struct.unpack(">H", cert_content[cert_pos + 2 : cert_pos + 4])[0] + 4
 
                                 if cert_pos + cert_len <= len(cert_content):
                                     cert_der = cert_content[cert_pos : cert_pos + cert_len]

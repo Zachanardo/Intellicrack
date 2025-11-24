@@ -119,9 +119,7 @@ class SymbolicExecution:
         except ImportError as e:
             self.logger.error(f"Failed to initialize symbolic execution engine: {e}")
             self.engine_available = False
-            log_error(
-                "Symbolic execution engine initialization failed", category="SYMBOLIC", exception=e
-            )
+            log_error("Symbolic execution engine initialization failed", category="SYMBOLIC", exception=e)
 
     def run_symbolic_execution(self, app: object) -> None:
         """Run symbolic execution analysis with UI integration.
@@ -158,9 +156,7 @@ class SymbolicExecution:
 
             # Update progress
             if hasattr(app, "update_output"):
-                app.update_output.emit(
-                    f"[SYMBOLIC] Initializing symbolic execution for {Path(binary_path).name}..."
-                )
+                app.update_output.emit(f"[SYMBOLIC] Initializing symbolic execution for {Path(binary_path).name}...")
                 if self.angr_available:
                     app.update_output.emit("[SYMBOLIC] Using angr framework for advanced analysis")
                 else:
@@ -176,9 +172,7 @@ class SymbolicExecution:
 
             # Update progress
             if hasattr(app, "update_output"):
-                app.update_output.emit(
-                    f"[SYMBOLIC] Exploring paths with max_paths={self.max_paths}, timeout={self.timeout}s"
-                )
+                app.update_output.emit(f"[SYMBOLIC] Exploring paths with max_paths={self.max_paths}, timeout={self.timeout}s")
 
             # Run symbolic execution analysis
             results = self._run_symbolic_analysis(app, engine)
@@ -217,19 +211,28 @@ class SymbolicExecution:
         """
         try:
             # Check various possible locations for binary path
-            if hasattr(app, "current_file") and app.current_file and (os.path.exists(app.current_file) and os.path.isfile(app.current_file)):
+            if (
+                hasattr(app, "current_file")
+                and app.current_file
+                and (os.path.exists(app.current_file) and os.path.isfile(app.current_file))
+            ):
                 return app.current_file
 
             # Try to get from loaded binary path
-            if hasattr(app, "loaded_binary_path") and app.loaded_binary_path and (os.path.exists(app.loaded_binary_path) and os.path.isfile(
-                                app.loaded_binary_path
-                            )):
+            if (
+                hasattr(app, "loaded_binary_path")
+                and app.loaded_binary_path
+                and (os.path.exists(app.loaded_binary_path) and os.path.isfile(app.loaded_binary_path))
+            ):
                 return app.loaded_binary_path
 
             # Check if there's a selected file in file browser
-            if hasattr(app, "file_browser") and hasattr(app.file_browser, "selected_file") and app.file_browser.selected_file and (os.path.exists(app.file_browser.selected_file) and os.path.isfile(
-                                app.file_browser.selected_file
-                            )):
+            if (
+                hasattr(app, "file_browser")
+                and hasattr(app.file_browser, "selected_file")
+                and app.file_browser.selected_file
+                and (os.path.exists(app.file_browser.selected_file) and os.path.isfile(app.file_browser.selected_file))
+            ):
                 return app.file_browser.selected_file
 
             return None
@@ -329,11 +332,7 @@ class SymbolicExecution:
                 self.memory_limit = memory_spin.value()
 
                 # Update vulnerability types
-                self.vulnerability_types = [
-                    vuln_type
-                    for vuln_type, checkbox in vuln_checkboxes.items()
-                    if checkbox.isChecked()
-                ]
+                self.vulnerability_types = [vuln_type for vuln_type, checkbox in vuln_checkboxes.items() if checkbox.isChecked()]
 
                 return True
             return False
@@ -441,9 +440,7 @@ class SymbolicExecution:
                 self.status_label.setText("Running symbolic execution...")
 
             if hasattr(app, "update_output"):
-                app.update_output.emit(
-                    f"[SYMBOLIC] Analyzing vulnerability types: {', '.join(self.vulnerability_types)}"
-                )
+                app.update_output.emit(f"[SYMBOLIC] Analyzing vulnerability types: {', '.join(self.vulnerability_types)}")
 
             # Run vulnerability analysis using existing engine
             if hasattr(engine, "analyze_vulnerabilities"):
@@ -453,9 +450,7 @@ class SymbolicExecution:
                 results["execution_time"] = vuln_results.get("execution_time", 0)
 
                 if hasattr(self, "status_label") and self.status_label:
-                    self.status_label.setText(
-                        f"Found {len(results['vulnerabilities'])} potential vulnerabilities"
-                    )
+                    self.status_label.setText(f"Found {len(results['vulnerabilities'])} potential vulnerabilities")
 
             else:
                 # Fallback analysis if method doesn't exist
@@ -506,7 +501,9 @@ class SymbolicExecution:
                         return True
 
             # Check for array index out of bounds
-            if ("array" in constraint_str or "index" in constraint_str) and any(op in constraint_str for op in [">=", ">", "out_of_bounds"]):
+            if ("array" in constraint_str or "index" in constraint_str) and any(
+                op in constraint_str for op in [">=", ">", "out_of_bounds"]
+            ):
                 return True
 
         except Exception as e:
@@ -599,9 +596,7 @@ class SymbolicExecution:
                                         "type": "buffer_overflow",
                                         "description": "Potential buffer overflow detected",
                                         "severity": "high",
-                                        "location": f"0x{path.addr:x}"
-                                        if hasattr(path, "addr")
-                                        else "unknown",
+                                        "location": f"0x{path.addr:x}" if hasattr(path, "addr") else "unknown",
                                         "constraint": str(constraint),
                                     },
                                 )
@@ -612,9 +607,7 @@ class SymbolicExecution:
                                         "type": "integer_overflow",
                                         "description": "Potential integer overflow detected",
                                         "severity": "medium",
-                                        "location": f"0x{path.addr:x}"
-                                        if hasattr(path, "addr")
-                                        else "unknown",
+                                        "location": f"0x{path.addr:x}" if hasattr(path, "addr") else "unknown",
                                         "constraint": str(constraint),
                                     },
                                 )
@@ -631,26 +624,20 @@ class SymbolicExecution:
                                         "type": "use_after_free",
                                         "description": f"Use-after-free detected at address 0x{access.addr:x}",
                                         "severity": "critical",
-                                        "location": f"0x{access.pc:x}"
-                                        if hasattr(access, "pc")
-                                        else "unknown",
+                                        "location": f"0x{access.pc:x}" if hasattr(access, "pc") else "unknown",
                                     },
                                 )
 
                     # Check for null pointer dereferences
                     if hasattr(path, "memory_accesses"):
                         for access in path.memory_accesses:
-                            if access.addr == 0 or (
-                                access.addr < 0x1000 and access.type in ["read", "write"]
-                            ):
+                            if access.addr == 0 or (access.addr < 0x1000 and access.type in ["read", "write"]):
                                 results["vulnerabilities"].append(
                                     {
                                         "type": "null_pointer_dereference",
                                         "description": "Null pointer dereference detected",
                                         "severity": "high",
-                                        "location": f"0x{access.pc:x}"
-                                        if hasattr(access, "pc")
-                                        else "unknown",
+                                        "location": f"0x{access.pc:x}" if hasattr(access, "pc") else "unknown",
                                         "address": f"0x{access.addr:x}",
                                     },
                                 )
@@ -667,9 +654,7 @@ class SymbolicExecution:
             results["error"] = str(e)
             return results
 
-    def _process_analysis_results(
-        self, app: object, results: dict[str, object], binary_path: str
-    ) -> None:
+    def _process_analysis_results(self, app: object, results: dict[str, object], binary_path: str) -> None:
         """Process and display symbolic execution results.
 
         Args:
@@ -693,9 +678,7 @@ class SymbolicExecution:
                 execution_time = results.get("execution_time", 0)
                 vulnerabilities = results.get("vulnerabilities", [])
 
-                app.update_output.emit(
-                    f"[SYMBOLIC] Exploration completed: {paths_explored} paths analyzed"
-                )
+                app.update_output.emit(f"[SYMBOLIC] Exploration completed: {paths_explored} paths analyzed")
                 app.update_output.emit(f"[SYMBOLIC] Analysis time: {execution_time:.2f} seconds")
                 app.update_output.emit(f"[SYMBOLIC] Vulnerabilities found: {len(vulnerabilities)}")
 
@@ -704,20 +687,14 @@ class SymbolicExecution:
                     vuln_type = vuln.get("type", "unknown")
                     severity = vuln.get("severity", "unknown")
                     description = vuln.get("description", "No description")
-                    app.update_output.emit(
-                        f"[SYMBOLIC] Vuln {i + 1}: {vuln_type} ({severity}) - {description}"
-                    )
+                    app.update_output.emit(f"[SYMBOLIC] Vuln {i + 1}: {vuln_type} ({severity}) - {description}")
 
                 if len(vulnerabilities) > 5:
-                    app.update_output.emit(
-                        f"[SYMBOLIC] ... and {len(vulnerabilities) - 5} more findings"
-                    )
+                    app.update_output.emit(f"[SYMBOLIC] ... and {len(vulnerabilities) - 5} more findings")
 
                 # Check for errors
                 if "error" in results:
-                    app.update_output.emit(
-                        f"[SYMBOLIC] Analysis completed with errors: {results['error']}"
-                    )
+                    app.update_output.emit(f"[SYMBOLIC] Analysis completed with errors: {results['error']}")
 
                 # Display additional results in progress dialog
                 if hasattr(self, "results_text") and self.results_text:

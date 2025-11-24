@@ -784,14 +784,8 @@ class HASPSentinelParser:
                 timestamp=timestamp,
             )
 
-            command_name = (
-                HASPCommandType(command).name
-                if command in HASPCommandType._value2member_map_
-                else f"UNKNOWN_{command:02X}"
-            )
-            self.logger.info(
-                f"Parsed HASP {command_name} request for feature {feature_id} (session {session_id})"
-            )
+            command_name = HASPCommandType(command).name if command in HASPCommandType._value2member_map_ else f"UNKNOWN_{command:02X}"
+            self.logger.info(f"Parsed HASP {command_name} request for feature {feature_id} (session {session_id})")
 
             return request
 
@@ -833,9 +827,7 @@ class HASPSentinelParser:
                 elif param_type == 0x0007:
                     params["write_data"] = param_data
                 elif param_type == 0x0008:
-                    params["detach_duration"] = (
-                        struct.unpack("<I", param_data[:4])[0] if len(param_data) >= 4 else 0
-                    )
+                    params["detach_duration"] = struct.unpack("<I", param_data[:4])[0] if len(param_data) >= 4 else 0
                 else:
                     params[f"param_{param_type:04X}"] = param_data
 
@@ -971,9 +963,7 @@ class HASPSentinelParser:
         if request.vendor_code != feature.vendor_code:
             return self._create_error_response(request, HASPStatusCode.INVALID_VENDOR_CODE)
 
-        active_users = len(
-            [s for s in self.active_sessions.values() if s.feature_id == request.feature_id]
-        )
+        active_users = len([s for s in self.active_sessions.values() if s.feature_id == request.feature_id])
 
         if feature.concurrent_limit > 0 and active_users >= feature.concurrent_limit:
             return self._create_error_response(request, HASPStatusCode.TOO_MANY_USERS)
@@ -994,9 +984,7 @@ class HASPSentinelParser:
             license_data={
                 "feature_name": feature.name,
                 "feature_type": feature.feature_type.name,
-                "users_remaining": max(0, feature.concurrent_limit - active_users - 1)
-                if feature.concurrent_limit > 0
-                else -1,
+                "users_remaining": max(0, feature.concurrent_limit - active_users - 1) if feature.concurrent_limit > 0 else -1,
                 "feature_handle": session.feature_handle,
                 "detachable": feature.detachable,
                 "network_enabled": feature.network_enabled,
@@ -1011,11 +999,7 @@ class HASPSentinelParser:
         if request.session_id not in self.active_sessions:
             return self._create_error_response(request, HASPStatusCode.NOT_LOGGED_IN)
 
-        encryption_type = (
-            request.encryption_type
-            if request.encryption_type != HASPEncryptionType.NONE
-            else HASPEncryptionType.AES256
-        )
+        encryption_type = request.encryption_type if request.encryption_type != HASPEncryptionType.NONE else HASPEncryptionType.AES256
 
         if encryption_type in (HASPEncryptionType.AES128, HASPEncryptionType.AES256):
             encrypted_data = self.crypto.aes_encrypt(request.encryption_data, request.session_id)
@@ -1023,9 +1007,7 @@ class HASPSentinelParser:
             seed = hash(request.session_id) & 0xFFFFFFFF
             encrypted_data = self.crypto.hasp4_encrypt(request.encryption_data, seed)
         elif encryption_type == HASPEncryptionType.ENVELOPE:
-            encrypted_data = self.crypto.envelope_encrypt(
-                request.encryption_data, request.session_id
-            )
+            encrypted_data = self.crypto.envelope_encrypt(request.encryption_data, request.session_id)
         else:
             encrypted_data = self.crypto.aes_encrypt(request.encryption_data, request.session_id)
 
@@ -1044,11 +1026,7 @@ class HASPSentinelParser:
         if request.session_id not in self.active_sessions:
             return self._create_error_response(request, HASPStatusCode.NOT_LOGGED_IN)
 
-        encryption_type = (
-            request.encryption_type
-            if request.encryption_type != HASPEncryptionType.NONE
-            else HASPEncryptionType.AES256
-        )
+        encryption_type = request.encryption_type if request.encryption_type != HASPEncryptionType.NONE else HASPEncryptionType.AES256
 
         if encryption_type in (HASPEncryptionType.AES128, HASPEncryptionType.AES256):
             decrypted_data = self.crypto.aes_decrypt(request.encryption_data, request.session_id)
@@ -1056,9 +1034,7 @@ class HASPSentinelParser:
             seed = hash(request.session_id) & 0xFFFFFFFF
             decrypted_data = self.crypto.hasp4_decrypt(request.encryption_data, seed)
         elif encryption_type == HASPEncryptionType.ENVELOPE:
-            decrypted_data = self.crypto.envelope_decrypt(
-                request.encryption_data, request.session_id
-            )
+            decrypted_data = self.crypto.envelope_decrypt(request.encryption_data, request.session_id)
         else:
             decrypted_data = self.crypto.aes_decrypt(request.encryption_data, request.session_id)
 
@@ -1757,9 +1733,7 @@ class HASPPacketAnalyzer:
                 license_info["session_ids"].add(req.session_id)
                 license_info["encryption_types"].add(req.encryption_type)
 
-                if req.feature_id not in [
-                    f["feature_id"] for f in license_info["discovered_features"]
-                ]:
+                if req.feature_id not in [f["feature_id"] for f in license_info["discovered_features"]]:
                     license_info["discovered_features"].append(
                         {
                             "feature_id": req.feature_id,
@@ -1835,9 +1809,7 @@ class HASPPacketAnalyzer:
 
         packet_type_counts: dict[str, int] = {}
         for packet in self.captured_packets:
-            packet_type_counts[packet.packet_type] = (
-                packet_type_counts.get(packet.packet_type, 0) + 1
-            )
+            packet_type_counts[packet.packet_type] = packet_type_counts.get(packet.packet_type, 0) + 1
 
             analysis["timeline"].append(
                 {

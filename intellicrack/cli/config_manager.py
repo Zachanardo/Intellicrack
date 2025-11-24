@@ -61,9 +61,7 @@ class ConfigManager:
     def _migrate_if_needed(self) -> None:
         """One-time migration from old JSON file to central config."""
         # Check if we need to migrate
-        if not self.config_file.exists() or self.central_config.get(
-            "cli_configuration.migrated", False
-        ):
+        if not self.config_file.exists() or self.central_config.get("cli_configuration.migrated", False):
             return
         try:
             logger.info(f"Migrating CLI config from {self.config_file} to central config")
@@ -109,7 +107,7 @@ class ConfigManager:
 
         except Exception as e:
             logger.error(f"Failed to migrate CLI config: {e}")
-                # Continue without migration, use defaults
+            # Continue without migration, use defaults
 
     def load_config(self) -> None:
         """Load configuration - now a no-op since we use central config directly."""

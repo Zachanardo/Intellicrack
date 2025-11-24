@@ -251,9 +251,7 @@ class R2SessionWrapper:
 
         """
         with self._lock:
-            avg_execution_time = self.metrics.total_execution_time / max(
-                1, self.metrics.commands_executed
-            )
+            avg_execution_time = self.metrics.total_execution_time / max(1, self.metrics.commands_executed)
 
             return {
                 "session_id": self.session_id,
@@ -454,8 +452,7 @@ class R2SessionPool:
             sessions_to_remove = [
                 session_id
                 for session_id, session in self._sessions.items()
-                if session.idle_time > self.max_idle_time
-                or (force and session.state == SessionState.IDLE)
+                if session.idle_time > self.max_idle_time or (force and session.state == SessionState.IDLE)
             ]
             if force and not sessions_to_remove and self._sessions:
                 oldest_session = min(
@@ -523,8 +520,7 @@ class R2SessionPool:
 
         """
         with self._lock:
-            active_sessions = sum(bool(s.state == SessionState.ACTIVE)
-                              for s in self._sessions.values())
+            active_sessions = sum(bool(s.state == SessionState.ACTIVE) for s in self._sessions.values())
 
             total_commands = sum(s.metrics.commands_executed for s in self._sessions.values())
 

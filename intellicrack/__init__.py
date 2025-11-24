@@ -49,15 +49,17 @@ os.environ.setdefault("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1")
 
 # Standard library imports
 import logging
+from collections.abc import Callable
+from typing import Any, Optional, Union
 
 
 # GIL safety will be initialized lazily if needed
-_gil_safety_initialized = False
+_gil_safety_initialized: bool = False
 
 
 def _initialize_gil_safety() -> None:
     """Initialize GIL safety measures lazily."""
-    global _gil_safety_initialized
+    global _gil_safety_initialized  # type: ignore[PLW0603]
     if not _gil_safety_initialized:
         try:
             from .utils.torch_gil_safety import initialize_gil_safety
@@ -116,11 +118,11 @@ def _initialize_gpu_with_timeout(timeout_seconds: int = 5) -> str:
     """
     import threading
 
-    global _default_device, _gpu_initialized
+    global _default_device, _gpu_initialized  # type: ignore[PLW0603]
     if _gpu_initialized:
         return _default_device
 
-    result = {"device": "cpu", "error": None}
+    result: dict[str, Any] = {"device": "cpu", "error": None}
 
     def gpu_init_worker() -> None:
         """Worker thread for GPU initialization."""
@@ -147,9 +149,7 @@ def _initialize_gpu_with_timeout(timeout_seconds: int = 5) -> str:
     init_thread.join(timeout=timeout_seconds)
 
     if init_thread.is_alive():
-        logger.warning(
-            "GPU initialization timed out after %ds - using CPU fallback", timeout_seconds
-        )
+        logger.warning("GPU initialization timed out after %ds - using CPU fallback", timeout_seconds)
         _default_device = "cpu"
     else:
         if result["error"]:
@@ -165,62 +165,86 @@ logger = logging.getLogger(__name__)
 
 # Configuration will be initialized lazily when first accessed
 # This prevents blocking during module import
-_config = None
+_config: Optional[Any] = None
 
 
-def _initialize_config() -> object:
+def _load_config() -> Optional[Any]:
+    """Load configuration from get_config function."""
+    get_config_func = _lazy_import_get_config()
+    if get_config_func is not None and callable(get_config_func):
+        return get_config_func()()
+    return None
+
+
+def _validate_config(config: Any) -> None:
+    """Validate and log configuration settings."""
+    if hasattr(config, "validate_config") and not config.validate_config():
+        logger.warning("Configuration validation failed - using defaults")
+
+
+def _log_repository_status(config: Any) -> None:
+    """Log repository enablement status."""
+    if hasattr(config, "is_repository_enabled") and config.is_repository_enabled("model_repository"):
+        logger.info("Model repository is enabled")
+
+
+def _log_ghidra_path(config: Any) -> None:
+    """Log Ghidra path configuration."""
+    ghidra_path = getattr(config, "get_ghidra_path", lambda: None)()
+    if ghidra_path and ghidra_path != "ghidra":
+        logger.info("Ghidra path configured: %s", ghidra_path)
+
+
+def _update_config_with_runtime_defaults(config: Any) -> None:
+    """Update configuration with runtime defaults."""
+    runtime_config = {
+        "initialized": True,  # Mark configuration as initialized
+        "version": __version__,  # Store current version for compatibility checks
+    }
+    if hasattr(config, "update"):
+        config.update(runtime_config)
+
+
+def _initialize_config() -> Optional[Any]:
     """Initialize and validate configuration lazily."""
     global _config
     if _config is None:
-        _config = _lazy_import_get_config()()
+        _config = _load_config() or {}
+
         if _config:
-            # Validate configuration on module load to ensure all required settings are present
-            if not _config.validate_config():
-                logger.warning("Configuration validation failed - using defaults")
+            _validate_config(_config)
+            _log_repository_status(_config)
+            _log_ghidra_path(_config)
+            _update_config_with_runtime_defaults(_config)
 
-            # Check if repositories are enabled for model management
-            if _config.is_repository_enabled("model_repository"):
-                logger.info("Model repository is enabled")
-
-            # Get and validate Ghidra path for reverse engineering integration
-            ghidra_path = _config.get_ghidra_path()
-            if ghidra_path and ghidra_path != "ghidra":
-                logger.info("Ghidra path configured: %s", ghidra_path)
-
-            # Update configuration with runtime defaults if needed
-            runtime_config = {
-                "initialized": True,  # Mark configuration as initialized
-                "version": __version__,  # Store current version for compatibility checks
-            }
-            _config.update(runtime_config)
     return _config
 
 
 # Lazy imports to prevent blocking during module load
 # These will be imported on first access
-_main = None
-_IntellicrackApp = None
-_ai = None
-_core = None
-_utils = None
-_ui = None
-_plugins = None
-_hexview = None
-_CONFIG = None
-_get_config_func = None
+_main: Optional[Union[Callable[[], int], bool]] = None
+_IntellicrackApp: Optional[Any] = None
+_ai: Optional[Union[Any, bool]] = None
+_core: Optional[Any] = None
+_utils: Optional[Any] = None
+_ui: Optional[Any] = None
+_plugins: Optional[Any] = None
+_hexview: Optional[Any] = None
+_config_cached: Optional[Any] = None
+_get_config_func: Optional[Callable[[], Any]] = None
 
 
-def _lazy_import_config() -> object:
+def _lazy_import_config() -> Optional[Any]:
     """Lazy import of CONFIG."""
-    global _CONFIG
-    if _CONFIG is None:
+    global _config_cached
+    if _config_cached is None:
         from .config import CONFIG
 
-        _CONFIG = CONFIG
-    return _CONFIG
+        _config_cached = CONFIG
+    return _config_cached
 
 
-def _lazy_import_get_config() -> object:
+def _lazy_import_get_config() -> Optional[Callable[[], Any]]:
     """Lazy import of get_config function."""
     global _get_config_func
     if _get_config_func is None:
@@ -234,7 +258,7 @@ def _lazy_import_get_config() -> object:
 # These will be handled by the __getattr__ function
 
 
-def _lazy_import_main() -> object:
+def _lazy_import_main() -> Optional[Callable[[], int]]:
     """Lazy import of main function."""
     global _main
     if _main is None:
@@ -245,10 +269,10 @@ def _lazy_import_main() -> object:
         except ImportError as e:
             logger.exception("Failed to import main function: %s", e)
             _main = False  # Mark as attempted
-    return _main if _main is not False else None
+    return _main if callable(_main) else None
 
 
-def _lazy_import_app() -> object:
+def _lazy_import_app() -> Optional[Any]:
     """Lazy import of UI application."""
     global _IntellicrackApp
     if _IntellicrackApp is None:
@@ -258,16 +282,15 @@ def _lazy_import_app() -> object:
             _IntellicrackApp = IntellicrackApp
         except ImportError as e:
             logger.warning("UI application not available: %s", e)
-            _IntellicrackApp = False
-    return _IntellicrackApp if _IntellicrackApp is not False else None
+            _IntellicrackApp = None
+    return _IntellicrackApp
 
 
 # Core modules will be imported when accessed via __getattr__
-_dashboard = None
-_ai = None
+_dashboard: Optional[Any] = None
 
 
-def _lazy_import_dashboard() -> object:
+def _lazy_import_dashboard() -> Optional[Any]:
     """Lazy import of dashboard module."""
     global _dashboard
     if _dashboard is None:
@@ -281,7 +304,7 @@ def _lazy_import_dashboard() -> object:
     return _dashboard if _dashboard is not False else None
 
 
-def _lazy_import_ai() -> object:
+def _lazy_import_ai() -> Optional[Any]:
     """Lazy import of ai module."""
     global _ai
     if _ai is None:
@@ -295,7 +318,7 @@ def _lazy_import_ai() -> object:
     return _ai if _ai is not False else None
 
 
-def _lazy_import_core() -> object:
+def _lazy_import_core() -> Optional[Any]:
     """Lazy import of core module."""
     try:
         import intellicrack.core as _imported_core
@@ -306,7 +329,7 @@ def _lazy_import_core() -> object:
         return None
 
 
-def _lazy_import_ui() -> object:
+def _lazy_import_ui() -> Optional[Any]:
     """Lazy import of ui module."""
     try:
         import intellicrack.ui as _imported_ui
@@ -317,7 +340,7 @@ def _lazy_import_ui() -> object:
         return None
 
 
-def _lazy_import_utils() -> object:
+def _lazy_import_utils() -> Optional[Any]:
     """Lazy import of utils module."""
     try:
         import intellicrack.utils as _imported_utils
@@ -328,7 +351,7 @@ def _lazy_import_utils() -> object:
         return None
 
 
-def _lazy_import_plugins() -> object:
+def _lazy_import_plugins() -> Optional[Any]:
     """Lazy import of plugins module."""
     try:
         import intellicrack.plugins as _imported_plugins
@@ -339,7 +362,7 @@ def _lazy_import_plugins() -> object:
         return None
 
 
-def _lazy_import_hexview() -> object:
+def _lazy_import_hexview() -> Optional[Any]:
     """Lazy import of hexview module."""
     try:
         import intellicrack.hexview as _imported_hexview
@@ -420,6 +443,10 @@ def create_app() -> object:
         error_msg = "IntellicrackApp not available. Check dependencies."
         logger.error(error_msg)
         raise ImportError(error_msg)
+    if _IntellicrackApp is True:
+        error_msg = "IntellicrackApp failed to load."
+        logger.error(error_msg)
+        raise RuntimeError(error_msg)
     return _IntellicrackApp()
 
 
@@ -488,7 +515,7 @@ def get_default_device() -> str:
     return _initialize_gpu()
 
 
-def __getattr__(name: str) -> object:
+def __getattr__(name: str) -> Optional[Any]:
     """Lazy loading for module attributes."""
     if name == "ai":
         return _lazy_import_ai()
@@ -514,20 +541,11 @@ def __getattr__(name: str) -> object:
 
 
 __all__ = [
-    "CONFIG",
-    "IntellicrackApp",
     "__author__",
     "__license__",
     "__version__",
-    "ai",
-    "core",
     "create_app",
-    "dashboard",
     "get_default_device",
     "get_version",
-    "hexview",
-    "plugins",
     "run_app",
-    "ui",
-    "utils",
 ]

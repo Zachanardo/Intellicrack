@@ -140,9 +140,7 @@ class FileTreeWidget(QTreeWidget):
                     try:
                         from PyQt6.QtWidgets import QStyle
 
-                        tree_item.setIcon(
-                            0, self.style().standardIcon(QStyle.StandardPixmap.SP_DirIcon)
-                        )
+                        tree_item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_DirIcon))
                     except (ImportError, AttributeError):
                         pass
                     # Add subdirectories (up to 3 levels deep to avoid performance issues)
@@ -153,18 +151,14 @@ class FileTreeWidget(QTreeWidget):
                     try:
                         from PyQt6.QtWidgets import QStyle
 
-                        tree_item.setIcon(
-                            0, self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon)
-                        )
+                        tree_item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon))
                     except (ImportError, AttributeError):
                         pass
                 else:
                     try:
                         from PyQt6.QtWidgets import QStyle
 
-                        tree_item.setIcon(
-                            0, self.style().standardIcon(QStyle.StandardPixmap.SP_ComputerIcon)
-                        )
+                        tree_item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_ComputerIcon))
                     except (ImportError, AttributeError):
                         pass
         except PermissionError as e:
@@ -365,14 +359,10 @@ class ChatWidget(QWidget):
         actions_layout = QHBoxLayout()
 
         self.explain_button = QPushButton("Explain Code")
-        self.explain_button.clicked.connect(
-            lambda: self.send_quick_message("Explain the selected code")
-        )
+        self.explain_button.clicked.connect(lambda: self.send_quick_message("Explain the selected code"))
 
         self.optimize_button = QPushButton("Optimize")
-        self.optimize_button.clicked.connect(
-            lambda: self.send_quick_message("Optimize the selected code")
-        )
+        self.optimize_button.clicked.connect(lambda: self.send_quick_message("Optimize the selected code"))
 
         self.debug_button = QPushButton("Debug")
         self.debug_button.clicked.connect(lambda: self.send_quick_message("Help debug this code"))
@@ -461,17 +451,13 @@ class ChatWidget(QWidget):
 
             if discovered_models:
                 total_discovered = sum(len(models) for models in discovered_models.values())
-                logger.info(
-                    f"ChatWidget API discovery: Found {total_discovered} models from {len(discovered_models)} providers"
-                )
+                logger.info(f"ChatWidget API discovery: Found {total_discovered} models from {len(discovered_models)} providers")
 
                 for provider_name, models in sorted(discovered_models.items()):
                     if models:
                         self.model_combo.insertSeparator(self.model_combo.count())
                         self.model_combo.addItem(f"── {provider_name} API Models ──")
-                        self.model_combo.model().item(self.model_combo.count() - 1).setEnabled(
-                            False
-                        )
+                        self.model_combo.model().item(self.model_combo.count() - 1).setEnabled(False)
 
                         for model in models:
                             display_name = f"🌐 {provider_name}: {model.name}"
@@ -482,9 +468,7 @@ class ChatWidget(QWidget):
                 self.model_combo.addItem("No models available")
                 self.model_combo.setEnabled(False)
                 self._show_no_models_message()
-                logger.warning(
-                    "No AI models available in ChatWidget (neither configured nor discovered)"
-                )
+                logger.warning("No AI models available in ChatWidget (neither configured nor discovered)")
                 return
 
             self.model_combo.setEnabled(True)
@@ -495,9 +479,7 @@ class ChatWidget(QWidget):
 
             configured_count = len(configured_models) if configured_models else 0
             discovered_count = len(self.available_models) - configured_count
-            logger.info(
-                f"ChatWidget loaded {configured_count} configured + {discovered_count} discovered = {total_models} total models"
-            )
+            logger.info(f"ChatWidget loaded {configured_count} configured + {discovered_count} discovered = {total_models} total models")
 
         except ImportError as e:
             logger.error(f"ChatWidget failed to import model discovery modules: {e}")
@@ -793,24 +775,14 @@ class AICodingAssistantWidget(QWidget):
 
         analyze_license_btn = QPushButton("Analyze License")
         analyze_license_btn.clicked.connect(
-            lambda: self.send_quick_license_message(
-                "Analyze the loaded binary for license protection mechanisms"
-            ),
+            lambda: self.send_quick_license_message("Analyze the loaded binary for license protection mechanisms"),
         )
 
         find_validation_btn = QPushButton("Find Validation")
-        find_validation_btn.clicked.connect(
-            lambda: self.send_quick_license_message(
-                "Locate license key validation routines in the binary"
-            )
-        )
+        find_validation_btn.clicked.connect(lambda: self.send_quick_license_message("Locate license key validation routines in the binary"))
 
         crack_guide_btn = QPushButton("Crack Guide")
-        crack_guide_btn.clicked.connect(
-            lambda: self.send_quick_license_message(
-                "Provide step-by-step license bypass instructions"
-            )
-        )
+        crack_guide_btn.clicked.connect(lambda: self.send_quick_license_message("Provide step-by-step license bypass instructions"))
 
         quick_actions_layout.addWidget(analyze_license_btn)
         quick_actions_layout.addWidget(find_validation_btn)
@@ -1601,9 +1573,7 @@ def validate_license_key(key: str) -> bool:
 # print(f"Valid: {validate_license_key(key)}")
 ''',
         }
-        return templates.get(
-            file_ext, "# License research file\n# Add your analysis and bypass code here\n"
-        )
+        return templates.get(file_ext, "# License research file\n# Add your analysis and bypass code here\n")
 
     def load_target_binary(self) -> None:
         """Load a target binary for license analysis."""
@@ -1659,9 +1629,7 @@ def validate_license_key(key: str) -> bool:
         try:
             logger.info("Executing license bypass script...")
             if hasattr(self, "chat_widget"):
-                self.chat_widget.add_message(
-                    "System", "License bypass script execution initiated..."
-                )
+                self.chat_widget.add_message("System", "License bypass script execution initiated...")
 
             # Get current editor content
             current_editor = None
@@ -1745,9 +1713,7 @@ def validate_license_key(key: str) -> bool:
             # Get target process
             target_binary = getattr(self, "current_target_binary", None)
             if not target_binary:
-                self.chat_widget.add_message(
-                    "System", "No target binary specified for Frida script"
-                )
+                self.chat_widget.add_message("System", "No target binary specified for Frida script")
                 return
 
             process_name = Path(target_binary).stem
@@ -1755,17 +1721,13 @@ def validate_license_key(key: str) -> bool:
             # Try to attach to running process or spawn
             try:
                 session = frida.attach(process_name)
-                self.chat_widget.add_message(
-                    "System", f"📎 Attached to running process: {process_name}"
-                )
+                self.chat_widget.add_message("System", f"📎 Attached to running process: {process_name}")
             except frida.ProcessNotFoundError:
                 try:
                     pid = frida.spawn([target_binary])
                     session = frida.attach(pid)
                     frida.resume(pid)
-                    self.chat_widget.add_message(
-                        "System", f" Spawned and attached to: {process_name}"
-                    )
+                    self.chat_widget.add_message("System", f" Spawned and attached to: {process_name}")
                 except Exception as e:
                     self.chat_widget.add_message("System", f"ERROR Failed to spawn process: {e}")
                     return
@@ -1783,9 +1745,7 @@ def validate_license_key(key: str) -> bool:
             self._active_frida_session = session
 
         except ImportError:
-            self.chat_widget.add_message(
-                "System", "ERROR Frida not available. Install with: pip install frida-tools"
-            )
+            self.chat_widget.add_message("System", "ERROR Frida not available. Install with: pip install frida-tools")
         except Exception as e:
             self.chat_widget.add_message("System", f"ERROR Frida script execution failed: {e}")
 
@@ -1802,9 +1762,7 @@ def validate_license_key(key: str) -> bool:
                     key = key.strip()
                     value = value.strip()
                     # Remove surrounding quotes if present
-                    if (value.startswith('"') and value.endswith('"')) or (
-                        value.startswith("'") and value.endswith("'")
-                    ):
+                    if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
                         value = value[1:-1]
                     config[key] = value
 
@@ -1827,11 +1785,8 @@ def validate_license_key(key: str) -> bool:
                 self.chat_widget.add_message("System", f"{i}. {key}")
 
             # Validate generated keys
-            valid_count = sum(bool(self._validate_key_from_template(config, key))
-                          for key in generated_keys)
-            self.chat_widget.add_message(
-                "System", f"Validation: {valid_count}/{len(generated_keys)} keys valid"
-            )
+            valid_count = sum(bool(self._validate_key_from_template(config, key)) for key in generated_keys)
+            self.chat_widget.add_message("System", f"Validation: {valid_count}/{len(generated_keys)} keys valid")
 
         except Exception as e:
             self.chat_widget.add_message("System", f"ERROR Keygen execution failed: {e}")
@@ -1854,9 +1809,7 @@ def validate_license_key(key: str) -> bool:
         """Validate key using template pattern."""
         import re
 
-        pattern = config.get(
-            "VALIDATION_PATTERN", r"^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$"
-        )
+        pattern = config.get("VALIDATION_PATTERN", r"^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$")
         return bool(re.match(pattern, key))
 
     def _on_frida_message(self, message: dict[str, Any], data: bytes | None) -> None:
@@ -1871,9 +1824,7 @@ def validate_license_key(key: str) -> bool:
         try:
             logger.info("Analyzing license protection mechanisms...")
             if hasattr(self, "chat_widget"):
-                self.chat_widget.add_message(
-                    "System", "Analyzing license protection - this may take a moment..."
-                )
+                self.chat_widget.add_message("System", "Analyzing license protection - this may take a moment...")
 
             target_binary = getattr(self, "current_target_binary", None)
             if not target_binary or not Path(target_binary).exists():
@@ -1884,8 +1835,6 @@ def validate_license_key(key: str) -> bool:
             from intellicrack.utils.logger import get_logger
 
             analyzer_logger = get_logger(__name__)
-
-
 
             class LicenseAnalyzer:
                 def __init__(self, target_path: str) -> None:
@@ -1940,9 +1889,7 @@ def validate_license_key(key: str) -> bool:
                                                     {
                                                         "dll": dll_name,
                                                         "function": func_name,
-                                                        "address": hex(imp.address)
-                                                        if imp.address
-                                                        else "N/A",
+                                                        "address": hex(imp.address) if imp.address else "N/A",
                                                     },
                                                 )
 
@@ -1964,17 +1911,12 @@ def validate_license_key(key: str) -> bool:
                             ]
 
                             for pattern, desc in patterns:
-                                if matches := re.findall(
-                                    pattern, binary_data, re.IGNORECASE
-                                ):
+                                if matches := re.findall(pattern, binary_data, re.IGNORECASE):
                                     self.protection_info["string_patterns"].append(
                                         {
                                             "type": desc,
                                             "count": len(matches),
-                                            "samples": [
-                                                m.decode("utf-8", errors="ignore")[:50]
-                                                for m in matches[:3]
-                                            ],
+                                            "samples": [m.decode("utf-8", errors="ignore")[:50] for m in matches[:3]],
                                         },
                                     )
 
@@ -1984,23 +1926,13 @@ def validate_license_key(key: str) -> bool:
                             protection_score += 30
                         if self.protection_info["string_patterns"]:
                             protection_score += 20
-                        if any(
-                            p["type"] == "Hardware Binding"
-                            for p in self.protection_info["string_patterns"]
-                        ):
+                        if any(p["type"] == "Hardware Binding" for p in self.protection_info["string_patterns"]):
                             protection_score += 25
-                        if any(
-                            p["type"] == "Date Patterns"
-                            for p in self.protection_info["string_patterns"]
-                        ):
+                        if any(p["type"] == "Date Patterns" for p in self.protection_info["string_patterns"]):
                             protection_score += 15
 
                         self.protection_info["protection_level"] = (
-                            "High"
-                            if protection_score >= 70
-                            else "Medium"
-                            if protection_score >= 40
-                            else "Low"
+                            "High" if protection_score >= 70 else "Medium" if protection_score >= 40 else "Low"
                         )
                         self.protection_info["protection_score"] = protection_score
 
@@ -2010,40 +1942,25 @@ def validate_license_key(key: str) -> bool:
 
                     return self.protection_info
 
-
             # Perform the analysis
             analyzer = LicenseAnalyzer(target_binary)
             results = analyzer.analyze_protection()
 
             # Format and display results
-            self.chat_widget.add_message(
-                "System", f" Analysis Results for: {Path(target_binary).name}"
-            )
-            self.chat_widget.add_message(
-                "System", f"File size: {results.get('file_size', 0):,} bytes"
-            )
-            self.chat_widget.add_message(
-                "System", f"Protection Level: {results.get('protection_level', 'Unknown')}"
-            )
-            self.chat_widget.add_message(
-                "System", f"Protection Score: {results.get('protection_score', 0)}/100"
-            )
+            self.chat_widget.add_message("System", f" Analysis Results for: {Path(target_binary).name}")
+            self.chat_widget.add_message("System", f"File size: {results.get('file_size', 0):,} bytes")
+            self.chat_widget.add_message("System", f"Protection Level: {results.get('protection_level', 'Unknown')}")
+            self.chat_widget.add_message("System", f"Protection Score: {results.get('protection_score', 0)}/100")
 
             if results.get("license_functions"):
-                self.chat_widget.add_message(
-                    "System", f"🔑 Found {len(results['license_functions'])} license functions:"
-                )
+                self.chat_widget.add_message("System", f"🔑 Found {len(results['license_functions'])} license functions:")
                 for func in results["license_functions"][:5]:  # Show first 5
                     self.chat_widget.add_message("System", f"   {func['function']} ({func['dll']})")
 
             if results.get("string_patterns"):
-                self.chat_widget.add_message(
-                    "System", f"📋 Found {len(results['string_patterns'])} string patterns:"
-                )
+                self.chat_widget.add_message("System", f"📋 Found {len(results['string_patterns'])} string patterns:")
                 for pattern in results["string_patterns"]:
-                    self.chat_widget.add_message(
-                        "System", f"   {pattern['type']}: {pattern['count']} occurrences"
-                    )
+                    self.chat_widget.add_message("System", f"   {pattern['type']}: {pattern['count']} occurrences")
 
             # Store results for other methods
             self.license_analysis_results = results
@@ -2058,9 +1975,7 @@ def validate_license_key(key: str) -> bool:
         try:
             logger.info("Generating keygen template...")
             if hasattr(self, "chat_widget"):
-                self.chat_widget.add_message(
-                    "AI", "Generating keygen template based on target binary analysis..."
-                )
+                self.chat_widget.add_message("AI", "Generating keygen template based on target binary analysis...")
 
             # Use analysis results if available
             target_name = "UnknownApp"
@@ -2317,9 +2232,7 @@ if __name__ == "__main__":
         try:
             logger.info("Generating hardware ID spoofing code...")
             if hasattr(self, "chat_widget"):
-                self.chat_widget.add_message(
-                    "AI", "Generating HWID spoofing code for license bypass..."
-                )
+                self.chat_widget.add_message("AI", "Generating HWID spoofing code for license bypass...")
 
             # Create the HWID spoofing file
             if hasattr(self, "editor_tabs"):
@@ -2770,9 +2683,7 @@ console.log("[+] All HWID hooks installed");
         try:
             logger.info("Opening binary patch assistant...")
             if hasattr(self, "chat_widget"):
-                self.chat_widget.add_message(
-                    "System", "Binary patch assistant opened - ready for license protection removal"
-                )
+                self.chat_widget.add_message("System", "Binary patch assistant opened - ready for license protection removal")
 
             target_binary = getattr(self, "current_target_binary", None)
             if not target_binary:
@@ -3189,9 +3100,7 @@ if __name__ == "__main__":
                 self.editor_tabs.addTab(editor, tab_name)
                 self.editor_tabs.setCurrentWidget(editor)
 
-                self.chat_widget.add_message(
-                    "System", f"OK Binary patch assistant created: {tab_name}"
-                )
+                self.chat_widget.add_message("System", f"OK Binary patch assistant created: {tab_name}")
                 self.chat_widget.add_message("System", "Features available:")
                 self.chat_widget.add_message("System", " Automatic backup creation")
                 self.chat_widget.add_message("System", " License check pattern detection")
@@ -3221,12 +3130,8 @@ if __name__ == "__main__":
             # Create license research context
             context = {
                 "task": "license_research",
-                "binary_loaded": bool(
-                    hasattr(self, "current_target_binary") and self.current_target_binary
-                ),
-                "analysis_available": bool(
-                    hasattr(self, "current_analysis_data") and self.current_analysis_data
-                ),
+                "binary_loaded": bool(hasattr(self, "current_target_binary") and self.current_target_binary),
+                "analysis_available": bool(hasattr(self, "current_analysis_data") and self.current_analysis_data),
                 "research_focus": "licensing_protection_mechanisms",
             }
 
@@ -3252,9 +3157,7 @@ This research is for strengthening software protection mechanisms."""
 
             # Get AI response with license research context
             try:
-                if response := self.ai_tools.ask_ai_about_analysis(
-                    enhanced_message, context
-                ):
+                if response := self.ai_tools.ask_ai_about_analysis(enhanced_message, context):
                     formatted_response = self._format_license_research_response(response)
                     if hasattr(self, "chat_widget"):
                         self.chat_widget.add_message("AI", formatted_response)
@@ -3294,9 +3197,7 @@ This research is for strengthening software protection mechanisms."""
             # Analyze the message to provide relevant fallback
             message_lower = message.lower()
 
-            if any(
-                keyword in message_lower for keyword in ["keygen", "key generation", "license key"]
-            ):
+            if any(keyword in message_lower for keyword in ["keygen", "key generation", "license key"]):
                 return """🔬 License Key Generation Research (Offline Analysis):
 
 Mathematical key generation commonly uses algorithms like:
@@ -3381,18 +3282,14 @@ WARNING️  All research should be conducted on your own software in controlled 
 
             logger.info(f"Generating {bypass_type} using AI...")
             if hasattr(self, "chat_widget"):
-                self.chat_widget.add_message(
-                    "AI", f" Generating {bypass_type} code for license protection research..."
-                )
+                self.chat_widget.add_message("AI", f" Generating {bypass_type} code for license protection research...")
 
             # Create comprehensive context for AI bypass generation
             context = {
                 "task": "bypass_generation",
                 "bypass_type": bypass_type,
                 "research_purpose": "defensive_security",
-                "target_loaded": bool(
-                    hasattr(self, "current_target_binary") and self.current_target_binary
-                ),
+                "target_loaded": bool(hasattr(self, "current_target_binary") and self.current_target_binary),
                 "protection_analysis": {},
             }
 
@@ -3443,9 +3340,7 @@ Please generate a comprehensive, production-ready bypass script with all necessa
 
                     # Update chat with success
                     if hasattr(self, "chat_widget"):
-                        success_msg = (
-                            f"OK AI-generated {bypass_type} bypass created successfully!\n\n"
-                        )
+                        success_msg = f"OK AI-generated {bypass_type} bypass created successfully!\n\n"
                         success_msg += "Features included:\n"
                         success_msg += " Registry manipulation techniques\n"
                         success_msg += " API hooking with Frida integration\n"
@@ -3453,9 +3348,7 @@ Please generate a comprehensive, production-ready bypass script with all necessa
                         success_msg += " Time-based protection bypass\n"
                         success_msg += " Comprehensive error handling\n"
                         success_msg += " Educational comments and documentation\n\n"
-                        success_msg += (
-                            "WARNING️  Use responsibly for defensive security research only."
-                        )
+                        success_msg += "WARNING️  Use responsibly for defensive security research only."
 
                         self.chat_widget.add_message("AI", success_msg)
 
@@ -3463,9 +3356,7 @@ Please generate a comprehensive, production-ready bypass script with all necessa
 
                 else:
                     # AI response was insufficient, fall back to standard generation
-                    logger.warning(
-                        "AI response insufficient, falling back to standard bypass generation"
-                    )
+                    logger.warning("AI response insufficient, falling back to standard bypass generation")
                     if hasattr(self, "chat_widget"):
                         self.chat_widget.add_message(
                             "AI",
@@ -3685,13 +3576,9 @@ Keep the response focused and actionable while maintaining technical accuracy.""
         try:
             message_lower = message.lower()
 
-            if any(
-                keyword in message_lower for keyword in ["keygen", "key generation", "generate key"]
-            ):
+            if any(keyword in message_lower for keyword in ["keygen", "key generation", "generate key"]):
                 return "key_generation"
-            if any(
-                keyword in message_lower for keyword in ["bypass", "crack", "defeat", "circumvent"]
-            ):
+            if any(keyword in message_lower for keyword in ["bypass", "crack", "defeat", "circumvent"]):
                 return "bypass_techniques"
             if any(keyword in message_lower for keyword in ["registry", "reg", "regedit"]):
                 return "registry_analysis"
@@ -3701,10 +3588,7 @@ Keep the response focused and actionable while maintaining technical accuracy.""
                 return "binary_patching"
             if any(keyword in message_lower for keyword in ["time", "date", "trial", "expiry"]):
                 return "time_manipulation"
-            if any(
-                keyword in message_lower
-                for keyword in ["hwid", "hardware", "fingerprint", "serial"]
-            ):
+            if any(keyword in message_lower for keyword in ["hwid", "hardware", "fingerprint", "serial"]):
                 return "hardware_spoofing"
             return "general_license_research"
 
@@ -3719,9 +3603,7 @@ Keep the response focused and actionable while maintaining technical accuracy.""
             formatted += f"{response}\n\n"
             formatted += f" **Query:** {original_query}\n"
             formatted += "🔬 **Research Context:** License protection mechanism analysis for defensive security\n"
-            formatted += (
-                "WARNING️  **Note:** Use responsibly in authorized research environments only"
-            )
+            formatted += "WARNING️  **Note:** Use responsibly in authorized research environments only"
 
             return formatted
 
@@ -4025,9 +3907,7 @@ class AICodingAssistantDialog(QDialog):
         gen_layout.addWidget(QLabel("Code Generation"))
 
         self.script_type_combo = QComboBox()
-        self.script_type_combo.addItems(
-            ["Frida Script", "Ghidra Script", "Python Tool", "General Code"]
-        )
+        self.script_type_combo.addItems(["Frida Script", "Ghidra Script", "Python Tool", "General Code"])
         gen_layout.addWidget(self.script_type_combo)
 
         generate_btn = QPushButton("Generate Code")
@@ -4093,9 +3973,7 @@ class AICodingAssistantDialog(QDialog):
 
     def open_project(self) -> None:
         """Open a project directory."""
-        if directory := QFileDialog.getExistingDirectory(
-            self, "Select Project Directory"
-        ):
+        if directory := QFileDialog.getExistingDirectory(self, "Select Project Directory"):
             self.set_project_root(directory)
 
     def open_file_in_editor(self, file_path: str) -> None:
@@ -4132,12 +4010,7 @@ class AICodingAssistantDialog(QDialog):
                 QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
             )
 
-            if (
-                (reply == QMessageBox.Save
-                and not editor.save_file())
-                or (reply != QMessageBox.Save
-                and reply == QMessageBox.Cancel)
-            ):
+            if (reply == QMessageBox.Save and not editor.save_file()) or (reply != QMessageBox.Save and reply == QMessageBox.Cancel):
                 return  # Don't close if save failed
         self.editor_tabs.removeTab(index)
 
@@ -4307,9 +4180,7 @@ def example_function():
         current_editor.insert_text_at_cursor(generated_code)
 
         # Add to chat
-        self.chat_widget.add_message(
-            "AI", f"Generated {script_type} code and inserted into editor."
-        )
+        self.chat_widget.add_message("AI", f"Generated {script_type} code and inserted into editor.")
 
     def run_current_script(self) -> None:
         """Run the current script with optional QEMU testing."""
@@ -4333,9 +4204,7 @@ def example_function():
         elif file_path.suffix == ".js":
             script_type = "frida"
         else:
-            QMessageBox.information(
-                self, "Info", f"Don't know how to run {file_path.suffix} files."
-            )
+            QMessageBox.information(self, "Info", f"Don't know how to run {file_path.suffix} files.")
             return
 
         # Read script content
@@ -4409,9 +4278,7 @@ def example_function():
 
         except FileNotFoundError as e:
             logger.error("File not found in ai_coding_assistant_dialog: %s", e)
-            self.chat_widget.add_message(
-                "System", "Node.js not found. Cannot run JavaScript files."
-            )
+            self.chat_widget.add_message("System", "Node.js not found. Cannot run JavaScript files.")
         except subprocess.TimeoutExpired as e:
             logger.error("Subprocess timeout in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", "Script execution timed out.")
@@ -4430,9 +4297,7 @@ def example_function():
         if file_path and file_path.suffix == ".py":
             self.format_python_code(current_editor)
         else:
-            QMessageBox.information(
-                self, "Info", "Code formatting not supported for this file type."
-            )
+            QMessageBox.information(self, "Info", "Code formatting not supported for this file type.")
 
     def format_python_code(self, editor: CodeEditor) -> None:
         """Format Python code using black if available."""
@@ -4465,9 +4330,7 @@ def example_function():
 
         except FileNotFoundError as e:
             logger.error("File not found in ai_coding_assistant_dialog: %s", e)
-            self.chat_widget.add_message(
-                "System", "Black formatter not found. Please install: pip install black"
-            )
+            self.chat_widget.add_message("System", "Black formatter not found. Please install: pip install black")
         except Exception as e:
             logger.error("Exception in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", f"Formatting error: {e}")
@@ -4532,9 +4395,7 @@ def example_function():
         lines.append(f"**Language:** {analysis_result.get('language', 'Unknown')}")
         lines.append(f"**Lines of Code:** {analysis_result.get('lines_of_code', 0)}")
         lines.append(f"**Complexity:** {analysis_result.get('complexity', 'Unknown')}")
-        lines.append(
-            f"**AI Analysis:** {'Enabled' if analysis_result.get('ai_enabled', False) else 'Disabled'}"
-        )
+        lines.append(f"**AI Analysis:** {'Enabled' if analysis_result.get('ai_enabled', False) else 'Disabled'}")
         lines.append("")
 
         if insights := analysis_result.get("insights", []):
@@ -4578,10 +4439,7 @@ def example_function():
             logger.warning(f"Security issue detected: {issue}")
 
         # Show a warning dialog if there are critical security issues
-        if any(
-            "critical" in issue.lower() or "vulnerability" in issue.lower()
-            for issue in security_issues
-        ):
+        if any("critical" in issue.lower() or "vulnerability" in issue.lower() for issue in security_issues):
             QMessageBox.warning(
                 self,
                 "Security Issues Detected",

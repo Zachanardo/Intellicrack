@@ -208,9 +208,7 @@ class ToolsTab(BaseTab):
         reg_query_layout = QHBoxLayout()
         reg_query_layout.addWidget(QLabel("Registry Key:"))
         self.reg_key_edit = QLineEdit()
-        self.reg_key_edit.setText(
-            "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion"
-        )
+        self.reg_key_edit.setText("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion")
         reg_query_layout.addWidget(self.reg_key_edit)
 
         reg_query_btn = QPushButton("Query Registry")
@@ -512,9 +510,7 @@ class ToolsTab(BaseTab):
         activate_windows_btn.clicked.connect(self.activate_windows_interactive)
         windows_layout.addWidget(activate_windows_btn)
 
-        help_text = QLabel(
-            "Launches WindowsActivator.cmd in embedded terminal.\nYou can select activation method in the menu."
-        )
+        help_text = QLabel("Launches WindowsActivator.cmd in embedded terminal.\nYou can select activation method in the menu.")
         help_text.setStyleSheet("color: gray; font-style: italic;")
         windows_layout.addWidget(help_text)
 
@@ -628,9 +624,7 @@ class ToolsTab(BaseTab):
         protection_scan_btn = QPushButton("Protection Scanner")
         protection_scan_btn.clicked.connect(self.run_protection_scanner)
         protection_scan_btn.setStyleSheet("font-weight: bold; color: #F72585;")
-        protection_scan_btn.setToolTip(
-            "Detect and identify packers, protectors, obfuscators, and anti-tampering mechanisms in binaries"
-        )
+        protection_scan_btn.setToolTip("Detect and identify packers, protectors, obfuscators, and anti-tampering mechanisms in binaries")
 
         vulnerability_scan_btn = QPushButton("Vulnerability Engine")
         vulnerability_scan_btn.clicked.connect(self.run_vulnerability_engine)
@@ -656,9 +650,7 @@ class ToolsTab(BaseTab):
         ai_script_gen_btn = QPushButton("AI Script Generator")
         ai_script_gen_btn.clicked.connect(self.run_ai_script_generator)
         ai_script_gen_btn.setStyleSheet("font-weight: bold; color: #4361EE;")
-        ai_script_gen_btn.setToolTip(
-            "Generate custom Frida, Ghidra, and IDA Pro scripts using AI based on your analysis requirements"
-        )
+        ai_script_gen_btn.setToolTip("Generate custom Frida, Ghidra, and IDA Pro scripts using AI based on your analysis requirements")
 
         semantic_analysis_btn = QPushButton("Semantic Analysis")
         semantic_analysis_btn.clicked.connect(self.run_semantic_analysis)
@@ -683,9 +675,7 @@ class ToolsTab(BaseTab):
         rop_generator_btn = QPushButton("ROP Generator")
         rop_generator_btn.clicked.connect(self.run_rop_generator)
         rop_generator_btn.setStyleSheet("font-weight: bold; color: #D00000;")
-        rop_generator_btn.setToolTip(
-            "Automatically generate Return-Oriented Programming chains to bypass DEP/NX protections"
-        )
+        rop_generator_btn.setToolTip("Automatically generate Return-Oriented Programming chains to bypass DEP/NX protections")
 
         payload_engine_btn = QPushButton("Payload Engine")
         payload_engine_btn.clicked.connect(self.run_payload_engine)
@@ -696,9 +686,7 @@ class ToolsTab(BaseTab):
 
         shellcode_gen_btn = QPushButton("Shellcode Generator")
         shellcode_gen_btn.clicked.connect(self.run_shellcode_generator)
-        shellcode_gen_btn.setToolTip(
-            "Generate position-independent shellcode for various architectures with customizable functionality"
-        )
+        shellcode_gen_btn.setToolTip("Generate position-independent shellcode for various architectures with customizable functionality")
 
         exploit_layout.addWidget(rop_generator_btn, 0, 0)
         exploit_layout.addWidget(payload_engine_btn, 0, 1)
@@ -1031,9 +1019,7 @@ class ToolsTab(BaseTab):
                         # Skip non-UTF-16 strings silently as expected
                         continue
 
-            self.log_message(
-                f"Extracted {len(ascii_strings)} ASCII and {len(unicode_strings)} Unicode strings"
-            )
+            self.log_message(f"Extracted {len(ascii_strings)} ASCII and {len(unicode_strings)} Unicode strings")
 
         except Exception as e:
             self.output_console.append(f"Error extracting strings: {e!s}")
@@ -1241,22 +1227,16 @@ class ToolsTab(BaseTab):
             if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
                 export_dir = pe.DIRECTORY_ENTRY_EXPORT
                 self.tool_output.append(f"Export DLL Name: {export_dir.name.decode('utf-8')}")
-                self.tool_output.append(
-                    f"Number of Functions: {export_dir.struct.NumberOfFunctions}"
-                )
+                self.tool_output.append(f"Number of Functions: {export_dir.struct.NumberOfFunctions}")
                 self.tool_output.append(f"Number of Names: {export_dir.struct.NumberOfNames}")
                 self.tool_output.append("\nExported Functions:")
 
                 for exp in export_dir.symbols:
                     if exp.name:
                         func_name = exp.name.decode("utf-8")
-                        self.tool_output.append(
-                            f"  {exp.ordinal}: {func_name} (RVA: 0x{exp.address:08x})"
-                        )
+                        self.tool_output.append(f"  {exp.ordinal}: {func_name} (RVA: 0x{exp.address:08x})")
                     else:
-                        self.tool_output.append(
-                            f"  {exp.ordinal}: <no name> (RVA: 0x{exp.address:08x})"
-                        )
+                        self.tool_output.append(f"  {exp.ordinal}: <no name> (RVA: 0x{exp.address:08x})")
             else:
                 self.tool_output.append("No exports found")
 
@@ -1281,9 +1261,7 @@ class ToolsTab(BaseTab):
 
             self.tool_output.append("Section Analysis:")
             self.tool_output.append("-" * 60)
-            self.tool_output.append(
-                f"{'Name':<8} {'VirtAddr':<10} {'VirtSize':<10} {'RawAddr':<10} {'RawSize':<10} Characteristics"
-            )
+            self.tool_output.append(f"{'Name':<8} {'VirtAddr':<10} {'VirtSize':<10} {'RawAddr':<10} {'RawSize':<10} Characteristics")
             self.tool_output.append("-" * 60)
 
             for section in pe.sections:
@@ -1294,9 +1272,7 @@ class ToolsTab(BaseTab):
                 raw_size = f"0x{section.SizeOfRawData:08x}"
                 chars = f"0x{section.Characteristics:08x}"
 
-                self.tool_output.append(
-                    f"{name:<8} {virt_addr:<10} {virt_size:<10} {raw_addr:<10} {raw_size:<10} {chars}"
-                )
+                self.tool_output.append(f"{name:<8} {virt_addr:<10} {virt_size:<10} {raw_addr:<10} {raw_size:<10} {chars}")
 
             self.log_message("Section analysis completed")
 
@@ -1416,9 +1392,7 @@ class ToolsTab(BaseTab):
         self.plugin_list.clear()
 
         # Look for plugins in the plugins directory
-        plugins_dir = os.path.join(
-            os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules"
-        )
+        plugins_dir = os.path.join(os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules")
 
         if os.path.exists(plugins_dir):
             for file in os.listdir(plugins_dir):
@@ -1475,9 +1449,7 @@ class ToolsTab(BaseTab):
                     "status": "loaded",
                     "description": f"Plugin: {plugin_name}",
                 }
-                plugin_info = (
-                    f"Plugin: {plugin_name}\nStatus: Loaded\nDescription: Custom plugin module"
-                )
+                plugin_info = f"Plugin: {plugin_name}\nStatus: Loaded\nDescription: Custom plugin module"
 
             self.plugin_info_text.setText(plugin_info)
 
@@ -1571,9 +1543,7 @@ def get_plugin():
 '''
 
             # Save plugin file
-            plugins_dir = os.path.join(
-                os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules"
-            )
+            plugins_dir = os.path.join(os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules")
             os.makedirs(plugins_dir, exist_ok=True)
 
             plugin_file = os.path.join(plugins_dir, f"{plugin_name.lower()}_plugin.py")
@@ -1599,9 +1569,7 @@ def get_plugin():
         plugin_name = current_item.text().split(" ")[0]  # Remove status text
 
         # Open plugin file in default editor
-        plugins_dir = os.path.join(
-            os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules"
-        )
+        plugins_dir = os.path.join(os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules")
         plugin_file = os.path.join(plugins_dir, f"{plugin_name}.py")
 
         if os.path.exists(plugin_file):
@@ -1654,16 +1622,12 @@ def get_plugin():
             self._capture_active = True
             self._captured_packets = []
 
-            success = start_network_capture(
-                self, interface=interface, filter_str=filter_text or None
-            )
+            success = start_network_capture(self, interface=interface, filter_str=filter_text or None)
 
             if success:
                 import threading
 
-                update_thread = threading.Thread(
-                    target=self._update_packet_table_periodically, daemon=True
-                )
+                update_thread = threading.Thread(target=self._update_packet_table_periodically, daemon=True)
                 update_thread.start()
 
                 self.network_capture_started.emit(interface)
@@ -1881,9 +1845,7 @@ def get_plugin():
                         context.verify_mode = ssl.CERT_NONE
                         with context.wrap_socket(sock, server_hostname=target) as ssock:
                             ssock.getpeercert()
-                            self.tool_output.append(
-                                f"{port}/tcp   open  ssl/https  TLS/SSL enabled"
-                            )
+                            self.tool_output.append(f"{port}/tcp   open  ssl/https  TLS/SSL enabled")
                     else:
                         # Send probe if needed
                         if probe:
@@ -1902,9 +1864,7 @@ def get_plugin():
                                 version_info = response.decode("utf-8", errors="ignore").strip()
                             elif port == 22:
                                 service_name = "ssh"
-                                version_info = response.decode("utf-8", errors="ignore").split(
-                                    "\n"
-                                )[0]
+                                version_info = response.decode("utf-8", errors="ignore").split("\n")[0]
                             elif port == 25:
                                 service_name = "smtp"
                                 version_info = response.decode("utf-8", errors="ignore").strip()
@@ -1925,9 +1885,7 @@ def get_plugin():
                                 service_name = "ms-wbt-server"
                                 version_info = "Microsoft Terminal Services"
 
-                        self.tool_output.append(
-                            f"{port}/tcp   open  {service_name:10} {version_info[:40]}"
-                        )
+                        self.tool_output.append(f"{port}/tcp   open  {service_name:10} {version_info[:40]}")
 
                 except (TimeoutError, OSError):
                     pass  # Port closed or filtered
@@ -2031,9 +1989,7 @@ def get_plugin():
 
                 # Display execution paths
                 if "execution_paths" in results:
-                    self.tool_output.append(
-                        f"Execution Paths Found: {len(results['execution_paths'])}"
-                    )
+                    self.tool_output.append(f"Execution Paths Found: {len(results['execution_paths'])}")
                     for i, path in enumerate(results["execution_paths"][:10]):
                         self.tool_output.append(f"  Path {i + 1}: {path}")
 
@@ -2159,9 +2115,7 @@ def get_plugin():
                 # Packing detection
                 if "packing" in results:
                     packing_info = results["packing"]
-                    self.tool_output.append(
-                        f"Packing Detected: {'Yes' if packing_info['is_packed'] else 'No'}"
-                    )
+                    self.tool_output.append(f"Packing Detected: {'Yes' if packing_info['is_packed'] else 'No'}")
                     if packing_info.get("packer_type"):
                         self.tool_output.append(f"Packer Type: {packing_info['packer_type']}")
 
@@ -2176,9 +2130,7 @@ def get_plugin():
                 # Obfuscation
                 if "obfuscation" in results:
                     obf_info = results["obfuscation"]
-                    self.tool_output.append(
-                        f"\nObfuscation Level: {obf_info.get('level', 'Unknown')}"
-                    )
+                    self.tool_output.append(f"\nObfuscation Level: {obf_info.get('level', 'Unknown')}")
                     if obf_info.get("techniques"):
                         self.tool_output.append("Obfuscation Techniques:")
                         for tech in obf_info["techniques"]:
@@ -2196,9 +2148,7 @@ def get_plugin():
             self.output_console.append(error_msg)
 
             # Suggest alternatives for protection analysis
-            alternatives = dependency_feedback.suggest_alternatives(
-                "radare2", "protection scanning"
-            )
+            alternatives = dependency_feedback.suggest_alternatives("radare2", "protection scanning")
             self.tool_output.append(alternatives)
         except Exception as e:
             self.output_console.append(f"Error running protection scanner: {e!s}")
@@ -2253,9 +2203,7 @@ def get_plugin():
             self.output_console.append(error_msg)
 
             # Suggest alternatives for vulnerability detection
-            alternatives = dependency_feedback.suggest_alternatives(
-                "radare2", "vulnerability detection"
-            )
+            alternatives = dependency_feedback.suggest_alternatives("radare2", "vulnerability detection")
             self.tool_output.append(alternatives)
         except Exception as e:
             self.output_console.append(f"Error running vulnerability engine: {e!s}")
@@ -2322,9 +2270,7 @@ def get_plugin():
                 self.output_console.append(status["message"])
 
                 # Show alternatives for AI analysis
-                alternatives = dependency_feedback.suggest_alternatives(
-                    "tensorflow", "AI script generation"
-                )
+                alternatives = dependency_feedback.suggest_alternatives("tensorflow", "AI script generation")
                 self.tool_output.append(alternatives)
                 return
 
@@ -2457,9 +2403,7 @@ def get_plugin():
                 self.output_console.append(status["message"])
 
                 # Show alternatives for disassembly/ROP generation
-                alternatives = dependency_feedback.suggest_alternatives(
-                    "capstone", "ROP chain generation"
-                )
+                alternatives = dependency_feedback.suggest_alternatives("capstone", "ROP chain generation")
                 self.tool_output.append(alternatives)
                 return
 
@@ -2476,9 +2420,7 @@ def get_plugin():
                 if "gadgets" in results:
                     self.tool_output.append(f"ROP Gadgets Found: {len(results['gadgets'])}")
                     for gadget in results["gadgets"][:20]:
-                        self.tool_output.append(
-                            f"  0x{gadget['address']:08x}: {gadget['instructions']}"
-                        )
+                        self.tool_output.append(f"  0x{gadget['address']:08x}: {gadget['instructions']}")
 
                 # ROP chains
                 if "chains" in results:
@@ -2514,9 +2456,7 @@ def get_plugin():
                 self.output_console.append(status["message"])
 
                 # Show alternatives for binary analysis
-                alternatives = dependency_feedback.suggest_alternatives(
-                    "pefile", "payload generation"
-                )
+                alternatives = dependency_feedback.suggest_alternatives("pefile", "payload generation")
                 self.tool_output.append(alternatives)
                 return
 
@@ -2555,7 +2495,7 @@ def get_plugin():
             return
 
         try:
-            from intellicrack.core.exploitation.shellcode_generator import ShellcodeGenerator
+            from intellicrack.core.exploitation.license_bypass_code_generator import LicenseBypassCodeGenerator
             from intellicrack.utils.core.import_checks import CAPSTONE_AVAILABLE
 
             if not CAPSTONE_AVAILABLE:
@@ -2564,13 +2504,11 @@ def get_plugin():
                 self.output_console.append(status["message"])
 
                 # Show alternatives for shellcode generation
-                alternatives = dependency_feedback.suggest_alternatives(
-                    "capstone", "shellcode generation"
-                )
+                alternatives = dependency_feedback.suggest_alternatives("capstone", "shellcode generation")
                 self.tool_output.append(alternatives)
                 return
 
-            generator = ShellcodeGenerator()
+            generator = LicenseBypassCodeGenerator()
 
             self.tool_output.append(f"Starting shellcode generation for: {binary_path}")
             self.tool_output.append("=" * 50)
@@ -2611,9 +2549,7 @@ def get_plugin():
                 self.output_console.append(status["message"])
 
                 # Show alternatives for network analysis
-                alternatives = dependency_feedback.suggest_alternatives(
-                    "psutil", "network traffic analysis"
-                )
+                alternatives = dependency_feedback.suggest_alternatives("psutil", "network traffic analysis")
                 self.tool_output.append(alternatives)
                 return
 
@@ -2633,9 +2569,7 @@ def get_plugin():
                 if "top_conversations" in results:
                     self.tool_output.append("\nTop Conversations:")
                     for conv in results["top_conversations"][:10]:
-                        self.tool_output.append(
-                            f"  {conv['src']} <-> {conv['dst']}: {conv['packets']} packets"
-                        )
+                        self.tool_output.append(f"  {conv['src']} <-> {conv['dst']}: {conv['packets']} packets")
 
             self.log_message("Traffic analysis completed")
 
@@ -2660,9 +2594,7 @@ def get_plugin():
                 self.output_console.append(status["message"])
 
                 # Show alternatives for protocol analysis
-                alternatives = dependency_feedback.suggest_alternatives(
-                    "psutil", "protocol fingerprinting"
-                )
+                alternatives = dependency_feedback.suggest_alternatives("psutil", "protocol fingerprinting")
                 self.tool_output.append(alternatives)
                 return
 
@@ -2677,9 +2609,7 @@ def get_plugin():
                     for protocol in results["detected_protocols"]:
                         self.tool_output.append(f"Protocol: {protocol['name']}")
                         self.tool_output.append(f"Version: {protocol.get('version', 'Unknown')}")
-                        self.tool_output.append(
-                            f"Confidence: {protocol.get('confidence', 'Unknown')}"
-                        )
+                        self.tool_output.append(f"Confidence: {protocol.get('confidence', 'Unknown')}")
                         self.tool_output.append("")
 
             self.log_message("Protocol fingerprinting completed")

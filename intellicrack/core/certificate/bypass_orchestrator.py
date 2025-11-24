@@ -410,9 +410,7 @@ class CertificateBypassOrchestrator:
             status = self.frida_hooks.get_bypass_status()
             status["success"] = True
 
-            logger.info(
-                f"Frida hook successful: {len(status.get('active_hooks', []))} hooks active"
-            )
+            logger.info(f"Frida hook successful: {len(status.get('active_hooks', []))} hooks active")
 
             return status
 
@@ -718,8 +716,7 @@ class CertificateBypassOrchestrator:
                     "override",
                 ]
 
-                bypass_count = sum(bool(any(indicator in s.lower() for indicator in bypass_indicators))
-                               for s in cert_strings)
+                bypass_count = sum(bool(any(indicator in s.lower() for indicator in bypass_indicators)) for s in cert_strings)
 
                 if bypass_count > 0:
                     logger.debug(f"Found {bypass_count} bypass indicators in strings")

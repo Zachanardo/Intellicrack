@@ -181,9 +181,7 @@ class UnifiedProtectionEngine:
         else:
             self.cache = get_analysis_cache()
 
-    def analyze(
-        self, file_path: str, deep_scan: bool = True, timeout: int = 60
-    ) -> UnifiedProtectionResult:
+    def analyze(self, file_path: str, deep_scan: bool = True, timeout: int = 60) -> UnifiedProtectionResult:
         """Perform unified protection analysis.
 
         Args:
@@ -282,9 +280,7 @@ class UnifiedProtectionEngine:
 
         return result
 
-    def _run_protection_analysis(
-        self, file_path: str, deep_scan: bool
-    ) -> AdvancedProtectionAnalysis | None:
+    def _run_protection_analysis(self, file_path: str, deep_scan: bool) -> AdvancedProtectionAnalysis | None:
         """Run protection analysis."""
         try:
             ScanMode = _get_scan_mode()
@@ -345,11 +341,7 @@ class UnifiedProtectionEngine:
                 b"GetProcAddress",
             ]
 
-            if found_patterns := [
-                pattern.decode("utf-8", errors="ignore")
-                for pattern in suspicious_patterns
-                if pattern in header
-            ]:
+            if found_patterns := [pattern.decode("utf-8", errors="ignore") for pattern in suspicious_patterns if pattern in header]:
                 heuristics["suspicious_imports"] = found_patterns
 
             # Advanced entropy analysis with multiple techniques
@@ -390,9 +382,7 @@ class UnifiedProtectionEngine:
             logger.error(f"Heuristic analysis error: {e}")
             return None
 
-    def _merge_protection_results(
-        self, result: UnifiedProtectionResult, protection_analysis: AdvancedProtectionAnalysis
-    ) -> None:
+    def _merge_protection_results(self, result: UnifiedProtectionResult, protection_analysis: AdvancedProtectionAnalysis) -> None:
         """Merge protection results into unified result."""
         result.file_type = protection_analysis.file_type
         result.architecture = protection_analysis.architecture
@@ -418,15 +408,10 @@ class UnifiedProtectionEngine:
                 result.has_anti_debug = True
             elif "vm" in detection.type.value.lower():
                 result.has_anti_vm = True
-            elif (
-                "license" in detection.type.value.lower()
-                or "dongle" in detection.type.value.lower()
-            ):
+            elif "license" in detection.type.value.lower() or "dongle" in detection.type.value.lower():
                 result.has_licensing = True
 
-    def _merge_heuristic_results(
-        self, result: UnifiedProtectionResult, heuristics: dict[str, Any]
-    ) -> None:
+    def _merge_heuristic_results(self, result: UnifiedProtectionResult, heuristics: dict[str, Any]) -> None:
         """Merge heuristic results into unified result."""
         if heuristics.get("likely_packed"):
             result.is_packed = True
@@ -470,9 +455,7 @@ class UnifiedProtectionEngine:
             logger.error(f"ICP analysis error: {e}")
             return None
 
-    def _merge_icp_results(
-        self, result: UnifiedProtectionResult, icp_result: ICPScanResult
-    ) -> None:
+    def _merge_icp_results(self, result: UnifiedProtectionResult, icp_result: ICPScanResult) -> None:
         """Merge ICP engine results into unified result."""
         # Update file info if not already set
         if result.file_type == "Unknown" and icp_result.file_infos:
@@ -685,9 +668,7 @@ class UnifiedProtectionEngine:
             return {
                 "protected": bool(cached_result.protections),
                 "protection_count": len(cached_result.protections),
-                "main_protection": cached_result.protections[0]["name"]
-                if cached_result.protections
-                else None,
+                "main_protection": cached_result.protections[0]["name"] if cached_result.protections else None,
                 "confidence": cached_result.confidence_score,
             }
 
@@ -717,9 +698,7 @@ class UnifiedProtectionEngine:
             "confidence": 0.0,
         }
 
-    def analyze_file(
-        self, file_path: str, deep_scan: bool = True, timeout: int = 60
-    ) -> UnifiedProtectionResult:
+    def analyze_file(self, file_path: str, deep_scan: bool = True, timeout: int = 60) -> UnifiedProtectionResult:
         """Backward-compatible alias for analyze method.
 
         Args:
@@ -819,21 +798,15 @@ class UnifiedProtectionEngine:
             results["sliding_window_max"] = max(window_entropies)
             results["sliding_window_min"] = min(window_entropies)
             results["sliding_window_avg"] = sum(window_entropies) / len(window_entropies)
-            results["sliding_window_std"] = (
-                np.std(window_entropies) if len(window_entropies) > 1 else 0
-            )
-            results["entropy_variance"] = (
-                np.var(window_entropies) if len(window_entropies) > 1 else 0
-            )
+            results["sliding_window_std"] = np.std(window_entropies) if len(window_entropies) > 1 else 0
+            results["entropy_variance"] = np.var(window_entropies) if len(window_entropies) > 1 else 0
 
         # Kolmogorov complexity estimation via compression
         results["kolmogorov_complexity"] = self._estimate_kolmogorov_complexity(data)
 
         # Compression ratio analysis
         results["compression_ratios"] = self._analyze_compression_ratios(data)
-        results["best_compression_ratio"] = (
-            min(results["compression_ratios"].values()) if results["compression_ratios"] else 1.0
-        )
+        results["best_compression_ratio"] = min(results["compression_ratios"].values()) if results["compression_ratios"] else 1.0
 
         # Chi-square randomness test
         chi_result = self._chi_square_test(data)
@@ -872,9 +845,7 @@ class UnifiedProtectionEngine:
 
         return entropy
 
-    def _sliding_window_entropy(
-        self, data: bytes, window_size: int = 256, step_size: int = 128
-    ) -> list[float]:
+    def _sliding_window_entropy(self, data: bytes, window_size: int = 256, step_size: int = 128) -> list[float]:
         """Calculate entropy using sliding window technique.
 
         Args:

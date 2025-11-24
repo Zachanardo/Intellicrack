@@ -257,10 +257,7 @@ class FridaStealth:
                 try:
                     with open(comm_file) as f:
                         name = f.read().strip()
-                        if any(
-                            frida_name in name.lower()
-                            for frida_name in ["gmain", "gdbus", "gum-js", "frida"]
-                        ):
+                        if any(frida_name in name.lower() for frida_name in ["gmain", "gdbus", "gum-js", "frida"]):
                             return True
                 except OSError:
                     continue
@@ -421,10 +418,7 @@ class FridaStealth:
                             260,
                         ):
                             name_lower = module_name.value.lower()
-                            if any(
-                                sig.decode("latin1", errors="ignore").lower() in name_lower
-                                for sig in frida_signatures
-                            ):
+                            if any(sig.decode("latin1", errors="ignore").lower() in name_lower for sig in frida_signatures):
                                 logger.debug(f"Found Frida module: {module_name.value}")
                                 return True
 
@@ -753,10 +747,7 @@ class FridaStealth:
                         continue
 
                     path = parts[5] if len(parts) > 5 else ""
-                    if any(
-                        sig.decode("latin1", errors="ignore").lower() in path.lower()
-                        for sig in frida_signatures
-                    ):
+                    if any(sig.decode("latin1", errors="ignore").lower() in path.lower() for sig in frida_signatures):
                         obfuscated_count += 1
 
             return obfuscated_count
@@ -805,10 +796,7 @@ class FridaStealth:
                     260,
                 ):
                     name_lower = module_name.value.lower()
-                    if any(
-                        sig.decode("latin1", errors="ignore").lower() in name_lower
-                        for sig in frida_signatures
-                    ):
+                    if any(sig.decode("latin1", errors="ignore").lower() in name_lower for sig in frida_signatures):
                         obfuscated_count += 1
                         logger.debug(f"Detected Frida artifact: {module_name.value}")
 
@@ -900,7 +888,6 @@ class FridaStealth:
             if h_process := kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, pid):
                 try:
 
-
                     class ProcessBasicInfo(ctypes.Structure):
                         _fields_ = [
                             ("Reserved1", ctypes.c_void_p),
@@ -928,13 +915,16 @@ class FridaStealth:
                             buffer = ctypes.c_ubyte()
                             bytes_read = ctypes.c_size_t()
 
-                            if kernel32.ReadProcessMemory(
-                                                            h_process,
-                                                            ctypes.c_void_p(peb_address + being_debugged_offset),
-                                                            ctypes.byref(buffer),
-                                                            1,
-                                                            ctypes.byref(bytes_read),
-                                                        ) and buffer.value != 0:
+                            if (
+                                kernel32.ReadProcessMemory(
+                                    h_process,
+                                    ctypes.c_void_p(peb_address + being_debugged_offset),
+                                    ctypes.byref(buffer),
+                                    1,
+                                    ctypes.byref(bytes_read),
+                                )
+                                and buffer.value != 0
+                            ):
                                 zero = ctypes.c_ubyte(0)
                                 bytes_written = ctypes.c_size_t()
 
@@ -995,8 +985,7 @@ class FridaStealth:
 
     def _calculate_stealth_level(self) -> str:
         """Calculate overall stealth level."""
-        active_count = sum(bool(active)
-                       for active in self.active_techniques.values())
+        active_count = sum(bool(active) for active in self.active_techniques.values())
         total_techniques = len(self.active_techniques)
 
         if active_count == 0:

@@ -198,10 +198,7 @@ class ArxanBypass:
         self._decrypt_strings(binary_data, analysis_result.encrypted_strings, patches)
 
         try:
-            if (
-                binary_path.suffix.lower() in {".exe", ".dll", ".sys"}
-                and PEFILE_AVAILABLE
-            ):
+            if binary_path.suffix.lower() in {".exe", ".dll", ".sys"} and PEFILE_AVAILABLE:
                 pe = pefile.PE(data=bytes(binary_data))
 
                 for patch in patches:
@@ -242,12 +239,8 @@ class ArxanBypass:
 
         result.patches_applied = patches
         result.patched_binary_path = str(output_path)
-        result.license_checks_bypassed = len(
-            [p for p in patches if p.patch_type == "license_bypass"]
-        )
-        result.integrity_checks_neutralized = len(
-            [p for p in patches if p.patch_type == "integrity_bypass"]
-        )
+        result.license_checks_bypassed = len([p for p in patches if p.patch_type == "license_bypass"])
+        result.integrity_checks_neutralized = len([p for p in patches if p.patch_type == "integrity_bypass"])
         result.rasp_mechanisms_defeated = len([p for p in patches if p.patch_type == "rasp_bypass"])
 
         self.logger.info(f"Applied {len(patches)} patches to binary")
@@ -300,9 +293,7 @@ class ArxanBypass:
                 )
                 patches.append(patch)
 
-                self.logger.debug(
-                    f"Patching tamper check at 0x{check.address:x}: {check.algorithm}"
-                )
+                self.logger.debug(f"Patching tamper check at 0x{check.address:x}: {check.algorithm}")
 
     def _bypass_integrity_checks(
         self,
@@ -331,9 +322,7 @@ class ArxanBypass:
                 )
                 patches.append(patch)
 
-                self.logger.debug(
-                    f"Patching integrity check at 0x{check.address:x}: {check.hash_algorithm}"
-                )
+                self.logger.debug(f"Patching integrity check at 0x{check.address:x}: {check.hash_algorithm}")
 
     def _bypass_license_validation(
         self,
@@ -346,8 +335,7 @@ class ArxanBypass:
             if routine.address < len(binary_data):
                 patch_bytes = (
                     b"\xb8\x01\x00\x00\x00\xc3"
-                    if routine.validation_type in {"rsa_validation", "aes_license"}
-                    or routine.validation_type != "serial_check"
+                    if routine.validation_type in {"rsa_validation", "aes_license"} or routine.validation_type != "serial_check"
                     else b"\x33\xc0\x40\xc3"
                 )
                 original_bytes = binary_data[routine.address : routine.address + len(patch_bytes)]
@@ -361,9 +349,7 @@ class ArxanBypass:
                 )
                 patches.append(patch)
 
-                self.logger.debug(
-                    f"Patching license validation at 0x{routine.address:x}: {routine.validation_type}"
-                )
+                self.logger.debug(f"Patching license validation at 0x{routine.address:x}: {routine.validation_type}")
 
     def _neutralize_rasp(
         self,
@@ -396,9 +382,7 @@ class ArxanBypass:
                 )
                 patches.append(patch)
 
-                self.logger.debug(
-                    f"Patching RASP mechanism at 0x{rasp.address:x}: {rasp.mechanism_type}"
-                )
+                self.logger.debug(f"Patching RASP mechanism at 0x{rasp.address:x}: {rasp.mechanism_type}")
 
     def _decrypt_strings(
         self,
@@ -416,8 +400,7 @@ class ArxanBypass:
             for xor_key in range(1, 256):
                 decrypted = bytes(b ^ xor_key for b in encrypted_data)
 
-                printable_ratio = sum(bool(32 <= b < 127)
-                                  for b in decrypted) / len(decrypted)
+                printable_ratio = sum(bool(32 <= b < 127) for b in decrypted) / len(decrypted)
 
                 if printable_ratio > 0.7:
                     patch = BypassPatch(
@@ -552,9 +535,7 @@ class ArxanBypass:
             (
                 section.PointerToRawData + (rva - section.VirtualAddress)
                 for section in pe.sections
-                if section.VirtualAddress
-                <= rva
-                < section.VirtualAddress + section.Misc_VirtualSize
+                if section.VirtualAddress <= rva < section.VirtualAddress + section.Misc_VirtualSize
             ),
             None,
         )

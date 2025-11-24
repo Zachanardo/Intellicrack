@@ -219,8 +219,7 @@ def configure_global_pool(
             analysis_level=analysis_level,
         )
         logger.info(
-            f"Configured global pool: max_sessions={max_sessions}, "
-            f"max_idle_time={max_idle_time}, analysis_level={analysis_level}",
+            f"Configured global pool: max_sessions={max_sessions}, max_idle_time={max_idle_time}, analysis_level={analysis_level}",
         )
 
 

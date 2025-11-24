@@ -59,15 +59,7 @@ if platform.system() == "Windows":
 
     intellicrack_root = Path(intellicrack.__file__).parent.parent
     dll_paths = [
-        str(
-            intellicrack_root
-            / ".pixi"
-            / "envs"
-            / "default"
-            / "Lib"
-            / "site-packages"
-            / "icp_engine"
-        ),
+        str(intellicrack_root / ".pixi" / "envs" / "default" / "Lib" / "site-packages" / "icp_engine"),
         str(intellicrack_root / ".pixi" / "envs" / "default" / "DLLs"),
         os.path.dirname(sys.executable),
     ]
@@ -872,8 +864,7 @@ class ICPBackend:
                 ScanMode.NORMAL: 0,  # Default scanning
                 ScanMode.DEEP: self.icp_module.ScanFlags.DEEP_SCAN,
                 ScanMode.HEURISTIC: self.icp_module.ScanFlags.HEURISTIC_SCAN,
-                ScanMode.AGGRESSIVE: self.icp_module.ScanFlags.DEEP_SCAN
-                | self.icp_module.ScanFlags.HEURISTIC_SCAN,
+                ScanMode.AGGRESSIVE: self.icp_module.ScanFlags.DEEP_SCAN | self.icp_module.ScanFlags.HEURISTIC_SCAN,
                 ScanMode.ALL: (
                     self.icp_module.ScanFlags.DEEP_SCAN
                     | self.icp_module.ScanFlags.HEURISTIC_SCAN
@@ -986,9 +977,7 @@ class ICPBackend:
                 last_error = result.error if result else "Unknown error"
 
             except TimeoutError:
-                logger.error(
-                    f"Analysis timed out after {self.default_scan_timeout} seconds for {file_path}"
-                )
+                logger.error(f"Analysis timed out after {self.default_scan_timeout} seconds for {file_path}")
                 result = ICPScanResult(
                     file_path=str(file_path),
                     error=f"Analysis timed out after {self.default_scan_timeout} seconds",
@@ -1112,9 +1101,7 @@ class ICPBackend:
             self.parallel_scanner = ParallelScanner(max_workers=max_concurrent)
 
         # Use native parallel scanning
-        results = await self.parallel_scanner.scan_files_parallel(
-            file_paths, scan_mode, progress_callback
-        )
+        results = await self.parallel_scanner.scan_files_parallel(file_paths, scan_mode, progress_callback)
 
         # Add supplemental data if enabled
         if SUPPLEMENTAL_ENGINES_AVAILABLE:
@@ -1145,9 +1132,7 @@ class ICPBackend:
                     with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ):
                         # Perform native scan
                         if isinstance(self.icp_module, NativeICPLibrary):
-                            result_text = self.icp_module.scan_file_native(
-                                str(file_path), scan_flags
-                            )
+                            result_text = self.icp_module.scan_file_native(str(file_path), scan_flags)
                         else:
                             result_text = self.icp_module.scan_file(str(file_path), scan_flags)
 
@@ -1182,26 +1167,20 @@ class ICPBackend:
                             file_type = self._detect_file_type_from_bytes(chunk)
                         else:
                             # Use module's file type detection
-                            temp_path = (
-                                Path.home() / ".intellicrack" / "temp" / f"chunk_{chunk_num}.bin"
-                            )
+                            temp_path = Path.home() / ".intellicrack" / "temp" / f"chunk_{chunk_num}.bin"
                             temp_path.parent.mkdir(parents=True, exist_ok=True)
                             temp_path.write_bytes(chunk[:4096])  # Write header only
                             file_type = self.get_file_type(str(temp_path))
                             temp_path.unlink()
 
                     # Look for protection signatures in chunk
-                    chunk_detections = self._scan_chunk_for_protections(
-                        chunk, chunk_num * chunk_size
-                    )
+                    chunk_detections = self._scan_chunk_for_protections(chunk, chunk_num * chunk_size)
                     detections.extend(chunk_detections)
 
                     chunk_num += 1
 
             # Create result
-            file_info = ICPFileInfo(
-                filetype=file_type, size=str(os.path.getsize(file_path)), detections=detections
-            )
+            file_info = ICPFileInfo(filetype=file_type, size=str(os.path.getsize(file_path)), detections=detections)
 
             result = ICPScanResult(file_path=str(file_path))
             result.file_infos.append(file_info)
@@ -1567,9 +1546,7 @@ class ICPBackend:
             logger.error(f"Error detecting packers: {e}")
             return []
 
-    def add_supplemental_data(
-        self, scan_result: ICPScanResult, supplemental_data: dict[str, Any]
-    ) -> ICPScanResult:
+    def add_supplemental_data(self, scan_result: ICPScanResult, supplemental_data: dict[str, Any]) -> ICPScanResult:
         """Add supplemental analysis data to an ICP scan result.
 
         Args:
@@ -1588,9 +1565,7 @@ class ICPBackend:
 
         return scan_result
 
-    def _merge_supplemental_detections(
-        self, scan_result: ICPScanResult, supplemental_data: dict[str, Any]
-    ) -> None:
+    def _merge_supplemental_detections(self, scan_result: ICPScanResult, supplemental_data: dict[str, Any]) -> None:
         """Merge supplemental analysis findings into ICP detections."""
         try:
             # Process YARA pattern findings
@@ -1613,11 +1588,7 @@ class ICPBackend:
                     else:
                         file_info = ICPFileInfo(
                             filetype="Binary",
-                            size=str(
-                                Path(scan_result.file_path).stat().st_size
-                                if Path(scan_result.file_path).exists()
-                                else 0
-                            ),
+                            size=str(Path(scan_result.file_path).stat().st_size if Path(scan_result.file_path).exists() else 0),
                         )
                         file_info.detections.append(detection)
                         scan_result.file_infos.append(file_info)
@@ -1641,11 +1612,7 @@ class ICPBackend:
                         else:
                             file_info = ICPFileInfo(
                                 filetype="Firmware",
-                                size=str(
-                                    Path(scan_result.file_path).stat().st_size
-                                    if Path(scan_result.file_path).exists()
-                                    else 0
-                                ),
+                                size=str(Path(scan_result.file_path).stat().st_size if Path(scan_result.file_path).exists() else 0),
                             )
                             file_info.detections.append(detection)
                             scan_result.file_infos.append(file_info)
@@ -1669,11 +1636,7 @@ class ICPBackend:
                         else:
                             file_info = ICPFileInfo(
                                 filetype="Memory Dump",
-                                size=str(
-                                    Path(scan_result.file_path).stat().st_size
-                                    if Path(scan_result.file_path).exists()
-                                    else 0
-                                ),
+                                size=str(Path(scan_result.file_path).stat().st_size if Path(scan_result.file_path).exists() else 0),
                             )
                             file_info.detections.append(detection)
                             scan_result.file_infos.append(file_info)
@@ -1721,19 +1684,13 @@ class ICPBackend:
                 base_analysis["supplemental_analysis"] = supplemental_data
 
                 # Enhanced threat assessment with supplemental data
-                base_analysis["threat_assessment"] = self._calculate_threat_score(
-                    base_analysis, supplemental_data
-                )
+                base_analysis["threat_assessment"] = self._calculate_threat_score(base_analysis, supplemental_data)
 
                 # Combined security indicators
-                base_analysis["security_indicators"] = self._extract_security_indicators(
-                    supplemental_data
-                )
+                base_analysis["security_indicators"] = self._extract_security_indicators(supplemental_data)
 
                 # Enhanced protection bypass recommendations
-                base_analysis["bypass_recommendations"] = self._generate_bypass_recommendations(
-                    base_analysis, supplemental_data
-                )
+                base_analysis["bypass_recommendations"] = self._generate_bypass_recommendations(base_analysis, supplemental_data)
 
             return base_analysis
 
@@ -1744,9 +1701,7 @@ class ICPBackend:
                 "error": str(e),
             }
 
-    def _calculate_threat_score(
-        self, base_analysis: dict[str, Any], supplemental_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _calculate_threat_score(self, base_analysis: dict[str, Any], supplemental_data: dict[str, Any]) -> dict[str, Any]:
         """Calculate comprehensive threat score based on all analysis data."""
         try:
             threat_score = 0.0
@@ -1765,17 +1720,13 @@ class ICPBackend:
             yara_data = supplemental_data.get("yara_analysis", {})
             if yara_data.get("security_findings"):
                 threat_score += len(yara_data["security_findings"]) * 0.5
-                threat_indicators.append(
-                    f"YARA: {len(yara_data['security_findings'])} security patterns found"
-                )
+                threat_indicators.append(f"YARA: {len(yara_data['security_findings'])} security patterns found")
 
             # Firmware analysis scoring
             firmware_data = supplemental_data.get("firmware_analysis", {})
             if firmware_data.get("security_findings"):
                 threat_score += len(firmware_data["security_findings"]) * 0.3
-                threat_indicators.append(
-                    f"Firmware: {len(firmware_data['security_findings'])} security issues found"
-                )
+                threat_indicators.append(f"Firmware: {len(firmware_data['security_findings'])} security issues found")
 
             # Memory forensics scoring
             memory_data = supplemental_data.get("memory_forensics", {})
@@ -1808,9 +1759,7 @@ class ICPBackend:
                 "assessment": "Assessment failed",
             }
 
-    def _extract_security_indicators(
-        self, supplemental_data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
+    def _extract_security_indicators(self, supplemental_data: dict[str, Any]) -> list[dict[str, Any]]:
         """Extract unified security indicators from all analysis engines."""
         indicators = []
 
@@ -1857,9 +1806,7 @@ class ICPBackend:
 
         return indicators
 
-    def _generate_bypass_recommendations(
-        self, base_analysis: dict[str, Any], supplemental_data: dict[str, Any]
-    ) -> list[dict[str, Any]]:
+    def _generate_bypass_recommendations(self, base_analysis: dict[str, Any], supplemental_data: dict[str, Any]) -> list[dict[str, Any]]:
         """Generate protection bypass recommendations based on analysis data."""
         recommendations = []
 
@@ -1979,9 +1926,7 @@ class ICPBackend:
 
             # Include supplemental analysis if requested
             if include_supplemental and any([yara_data, firmware_data, memory_data]):
-                return self.merge_analysis_engines_data(
-                    file_path, yara_data, firmware_data, memory_data
-                )
+                return self.merge_analysis_engines_data(file_path, yara_data, firmware_data, memory_data)
 
             return analysis
         except Exception as e:
@@ -2021,9 +1966,7 @@ class ICPBackend:
                         logger.debug("Running YARA pattern analysis")
                         yara_result = yara_engine.scan_file(file_path, timeout=30)
                         if not yara_result.error:
-                            yara_supplemental = yara_engine.generate_icp_supplemental_data(
-                                yara_result
-                            )
+                            yara_supplemental = yara_engine.generate_icp_supplemental_data(yara_result)
                             if yara_supplemental:
                                 supplemental_data |= yara_supplemental
                                 supplemental_data["engines_used"].append("yara")
@@ -2054,9 +1997,7 @@ class ICPBackend:
                             ),
                         )
                         if not firmware_result.error:
-                            firmware_supplemental = (
-                                firmware_analyzer.generate_icp_supplemental_data(firmware_result)
-                            )
+                            firmware_supplemental = firmware_analyzer.generate_icp_supplemental_data(firmware_result)
                             if firmware_supplemental:
                                 supplemental_data.update(firmware_supplemental)
                                 supplemental_data["engines_used"].append("binwalk")
@@ -2079,9 +2020,7 @@ class ICPBackend:
                     # Heuristics for memory dump detection
                     is_memory_dump = (
                         file_size > 100 * 1024 * 1024  # > 100MB
-                        or any(
-                            keyword in filename for keyword in ["dump", "mem", "vmem", "raw", "dmp"]
-                        )
+                        or any(keyword in filename for keyword in ["dump", "mem", "vmem", "raw", "dmp"])
                         or filename.endswith((".vmem", ".raw", ".dmp", ".mem"))
                     )
 
@@ -2099,19 +2038,13 @@ class ICPBackend:
                                 ),
                             )
                             if not memory_result.error:
-                                memory_supplemental = memory_engine.generate_icp_supplemental_data(
-                                    memory_result
-                                )
+                                memory_supplemental = memory_engine.generate_icp_supplemental_data(memory_result)
                                 if memory_supplemental:
                                     supplemental_data.update(memory_supplemental)
                                     supplemental_data["engines_used"].append("volatility3")
-                                    supplemental_data["analysis_summary"][
-                                        "volatility_available"
-                                    ] = True
+                                    supplemental_data["analysis_summary"]["volatility_available"] = True
                     else:
-                        logger.debug(
-                            "Skipping Volatility3 analysis - file doesn't appear to be a memory dump"
-                        )
+                        logger.debug("Skipping Volatility3 analysis - file doesn't appear to be a memory dump")
                         supplemental_data["analysis_summary"]["volatility_available"] = True
                 except Exception as e:
                     logger.debug(f"Volatility3 analysis failed: {e}")
@@ -2119,9 +2052,7 @@ class ICPBackend:
             logger.debug(f"Volatility3 engine unavailable: {e}")
 
         # Add summary information
-        supplemental_data["analysis_summary"]["engines_run"] = len(
-            supplemental_data["engines_used"]
-        )
+        supplemental_data["analysis_summary"]["engines_run"] = len(supplemental_data["engines_used"])
         supplemental_data["analysis_summary"]["total_engines_available"] = (
             int(supplemental_data["analysis_summary"]["yara_available"])
             + int(supplemental_data["analysis_summary"]["binwalk_available"])
@@ -2141,12 +2072,8 @@ class ICPBackend:
         return {
             "supplemental_engines_available": SUPPLEMENTAL_ENGINES_AVAILABLE,
             "yara_available": is_yara_available() if SUPPLEMENTAL_ENGINES_AVAILABLE else False,
-            "binwalk_available": is_binwalk_available()
-            if SUPPLEMENTAL_ENGINES_AVAILABLE
-            else False,
-            "volatility3_available": is_volatility3_available()
-            if SUPPLEMENTAL_ENGINES_AVAILABLE
-            else False,
+            "binwalk_available": is_binwalk_available() if SUPPLEMENTAL_ENGINES_AVAILABLE else False,
+            "volatility3_available": is_volatility3_available() if SUPPLEMENTAL_ENGINES_AVAILABLE else False,
             "engines_summary": {
                 "yara": "Pattern matching for protections, packers, and license systems",
                 "binwalk": "Firmware analysis and embedded file extraction",

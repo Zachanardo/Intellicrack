@@ -104,9 +104,7 @@ class CloudLicenseAnalyzer:
             self._generate_ca_certificate(cert_file, key_file)
 
     def _generate_ca_certificate(self, cert_file: Path, key_file: Path) -> None:
-        key = rsa.generate_private_key(
-            public_exponent=65537, key_size=2048, backend=default_backend()
-        )
+        key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 
         subject = issuer = x509.Name(
             [
@@ -171,15 +169,11 @@ class CloudLicenseAnalyzer:
 
     def generate_host_certificate(self, hostname: str) -> tuple[bytes, bytes]:
         """Generate SSL certificate for intercepting HTTPS traffic to specific host."""
-        ca_key_obj = serialization.load_pem_private_key(
-            self.ca_key, password=None, backend=default_backend()
-        )
+        ca_key_obj = serialization.load_pem_private_key(self.ca_key, password=None, backend=default_backend())
 
         ca_cert_obj = x509.load_pem_x509_certificate(self.ca_cert, backend=default_backend())
 
-        key = rsa.generate_private_key(
-            public_exponent=65537, key_size=2048, backend=default_backend()
-        )
+        key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 
         subject = x509.Name(
             [
@@ -401,9 +395,7 @@ class CloudLicenseAnalyzer:
             if payload["type"] == "hooks_installed":
                 logger.info("Proxy hooks successfully installed in target process")
 
-    def analyze_endpoint(
-        self, request: mitmproxy.http.Request, response: mitmproxy.http.Response
-    ) -> CloudEndpoint:
+    def analyze_endpoint(self, request: mitmproxy.http.Request, response: mitmproxy.http.Response) -> CloudEndpoint:
         """Analyze intercepted HTTP request/response to extract endpoint metadata."""
         url = request.pretty_url
         method = request.method
@@ -474,10 +466,7 @@ class CloudLicenseAnalyzer:
             return {"type": "any"}
 
         if isinstance(data, dict):
-            properties = {
-                key: self._extract_json_schema(value, depth + 1)
-                for key, value in data.items()
-            }
+            properties = {key: self._extract_json_schema(value, depth + 1) for key, value in data.items()}
             return {"type": "object", "properties": properties}
         if isinstance(data, list):
             if data:
@@ -525,9 +514,7 @@ class CloudLicenseAnalyzer:
         except OSError:
             return False
 
-    def extract_license_tokens(
-        self, request: mitmproxy.http.Request, response: mitmproxy.http.Response
-    ) -> list[LicenseToken]:
+    def extract_license_tokens(self, request: mitmproxy.http.Request, response: mitmproxy.http.Response) -> list[LicenseToken]:
         """Extract license tokens from intercepted HTTP traffic."""
         tokens = []
 
@@ -585,9 +572,7 @@ class CloudLicenseAnalyzer:
             scope=None,
         )
 
-    def _extract_tokens_from_json(
-        self, data: object, tokens: list[LicenseToken] | None = None
-    ) -> list[LicenseToken]:
+    def _extract_tokens_from_json(self, data: object, tokens: list[LicenseToken] | None = None) -> list[LicenseToken]:
         if tokens is None:
             tokens = []
 
@@ -618,9 +603,7 @@ class CloudLicenseAnalyzer:
 
                 scope = None
                 if "scope" in data:
-                    scope = (
-                        data["scope"].split() if isinstance(data["scope"], str) else data["scope"]
-                    )
+                    scope = data["scope"].split() if isinstance(data["scope"], str) else data["scope"]
 
                 token = LicenseToken(
                     token_type=data.get("token_type", "unknown"),
@@ -628,11 +611,7 @@ class CloudLicenseAnalyzer:
                     expires_at=expires_at,
                     refresh_token=refresh_value,
                     scope=scope,
-                    metadata={
-                        k: v
-                        for k, v in data.items()
-                        if k not in ["access_token", "token", "refresh_token"]
-                    },
+                    metadata={k: v for k, v in data.items() if k not in ["access_token", "token", "refresh_token"]},
                 )
                 tokens.append(token)
 
@@ -686,9 +665,7 @@ class CloudLicenseAnalyzer:
         algorithm = kwargs.get("algorithm", "HS256")
 
         if algorithm.startswith("RS"):
-            key = rsa.generate_private_key(
-                public_exponent=65537, key_size=2048, backend=default_backend()
-            )
+            key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
             private_pem = key.private_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.PKCS8,
@@ -745,9 +722,7 @@ class CloudLicenseAnalyzer:
 
         return None
 
-    def _make_refresh_request(
-        self, endpoint: CloudEndpoint, refresh_token: str
-    ) -> requests.Response:
+    def _make_refresh_request(self, endpoint: CloudEndpoint, refresh_token: str) -> requests.Response:
         url = endpoint.url
         headers = endpoint.headers.copy()
 
@@ -814,9 +789,7 @@ class CloudLicenseAnalyzer:
         try:
             analysis_data = {
                 "timestamp": datetime.now().isoformat(),
-                "endpoints": {
-                    k: self._serialize_endpoint(v) for k, v in self.discovered_endpoints.items()
-                },
+                "endpoints": {k: self._serialize_endpoint(v) for k, v in self.discovered_endpoints.items()},
                 "tokens": {k: self._serialize_token(v) for k, v in self.license_tokens.items()},
                 "api_schemas": self.api_schemas,
                 "intercepted_requests": len(self.intercepted_requests),
@@ -855,12 +828,8 @@ class CloudLicenseAnalyzer:
     def _serialize_token(self, token: LicenseToken) -> dict[str, Any]:
         return {
             "token_type": token.token_type,
-            "value": (
-                f"{token.value[:20]}..." if len(token.value) > 20 else token.value
-            ),
-            "expires_at": (
-                token.expires_at.isoformat() if token.expires_at else None
-            ),
+            "value": (f"{token.value[:20]}..." if len(token.value) > 20 else token.value),
+            "expires_at": (token.expires_at.isoformat() if token.expires_at else None),
             "has_refresh": bool(token.refresh_token),
             "scope": token.scope,
             "metadata": token.metadata,
@@ -911,9 +880,7 @@ class CloudInterceptor:
         if self._should_modify_response(request, response):
             self._modify_response(flow)
 
-    def _should_modify_response(
-        self, request: mitmproxy.http.Request, response: mitmproxy.http.Response
-    ) -> bool:
+    def _should_modify_response(self, request: mitmproxy.http.Request, response: mitmproxy.http.Response) -> bool:
         url_path = urlparse(request.pretty_url).path.lower()
 
         license_paths = ["/license", "/verify", "/validate", "/check", "/activate"]
@@ -1000,9 +967,7 @@ class CloudLicenseBypasser:
                     timeout=30,
                 )
             else:
-                response = requests.request(
-                    endpoint.method, endpoint.url, headers=headers, timeout=30
-                )
+                response = requests.request(endpoint.method, endpoint.url, headers=headers, timeout=30)
 
             return response.status_code in [200, 201, 204]
 

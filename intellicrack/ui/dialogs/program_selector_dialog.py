@@ -92,9 +92,7 @@ class FileSelectionPage(QWizardPage):
         path_layout.addWidget(QLabel("File Path:"))
 
         self.file_path_edit = QLineEdit()
-        self.file_path_edit.setToolTip(
-            "Select a file or enter path manually (e.g., C:\\Program Files\\App\\app.exe)"
-        )
+        self.file_path_edit.setToolTip("Select a file or enter path manually (e.g., C:\\Program Files\\App\\app.exe)")
         self.file_path_edit.textChanged.connect(self.validate_file_path)
         path_layout.addWidget(self.file_path_edit)
 
@@ -102,14 +100,10 @@ class FileSelectionPage(QWizardPage):
         self.browse_btn.clicked.connect(self.browse_for_file)
         if HAS_PYQT:
             try:
-                self.browse_btn.setIcon(
-                    self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView)
-                )
+                self.browse_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView))
             except AttributeError:
                 with contextlib.suppress(AttributeError):
-                    self.browse_btn.setIcon(
-                        self.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon)
-                    )
+                    self.browse_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon))
         path_layout.addWidget(self.browse_btn)
 
         file_layout.addLayout(path_layout)
@@ -208,9 +202,7 @@ class AnalysisPage(QWizardPage):
         licensing_group = QGroupBox("Licensing Files Analysis")
         licensing_layout = QVBoxLayout()
 
-        licensing_info = QLabel(
-            "The following licensing-related files were found in the installation folder:"
-        )
+        licensing_info = QLabel("The following licensing-related files were found in the installation folder:")
         licensing_layout.addWidget(licensing_info)
 
         # Licensing files tree
@@ -219,15 +211,9 @@ class AnalysisPage(QWizardPage):
         if HAS_PYQT:
             self.licensing_tree.header().setStretchLastSection(False)
             self.licensing_tree.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-            self.licensing_tree.header().setSectionResizeMode(
-                1, QHeaderView.ResizeMode.ResizeToContents
-            )
-            self.licensing_tree.header().setSectionResizeMode(
-                2, QHeaderView.ResizeMode.ResizeToContents
-            )
-            self.licensing_tree.header().setSectionResizeMode(
-                3, QHeaderView.ResizeMode.ResizeToContents
-            )
+            self.licensing_tree.header().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+            self.licensing_tree.header().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+            self.licensing_tree.header().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
 
         self.licensing_tree.itemDoubleClicked.connect(self.open_licensing_file)
         licensing_layout.addWidget(self.licensing_tree)
@@ -301,17 +287,13 @@ class AnalysisPage(QWizardPage):
                             }
                             self.licensing_files.append(file_info)
 
-                            self.add_licensing_file_to_tree(
-                                file_path, info["type"], info["priority"]
-                            )
+                            self.add_licensing_file_to_tree(file_path, info["type"], info["priority"])
                             break
 
         except Exception as e:
             logger.error(f"Error analyzing installation folder: {e}")
 
-    def add_licensing_file_to_tree(
-        self, file_path: str | Path, file_type: str, priority: int
-    ) -> None:
+    def add_licensing_file_to_tree(self, file_path: str | Path, file_type: str, priority: int) -> None:
         """Add a licensing file to the tree widget.
 
         Creates a QTreeWidgetItem for the given licensing file and adds it to
@@ -327,9 +309,7 @@ class AnalysisPage(QWizardPage):
             file_path = Path(file_path)
             file_size = self.format_file_size(file_path.stat().st_size)
 
-            item = QTreeWidgetItem(
-                [file_path.name, file_type, file_size, f"Priority {priority}"]
-            )
+            item = QTreeWidgetItem([file_path.name, file_type, file_size, f"Priority {priority}"])
 
             # Store full path for opening
             item.setData(0, Qt.UserRole, str(file_path))
@@ -339,20 +319,14 @@ class AnalysisPage(QWizardPage):
                     try:
                         item.setIcon(
                             0,
-                            self.style().standardIcon(
-                                QStyle.StandardPixmap.SP_FileDialogDetailedView
-                            ),
+                            self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView),
                         )
                     except AttributeError:
                         with contextlib.suppress(AttributeError):
-                            item.setIcon(
-                                0, self.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon)
-                            )
+                            item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon))
                 else:
                     with contextlib.suppress(AttributeError):
-                        item.setIcon(
-                            0, self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon)
-                        )
+                        item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon))
 
             self.licensing_tree.addTopLevelItem(item)
 

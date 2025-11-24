@@ -126,9 +126,7 @@ except ImportError as e:
     class FallbackSymbol:
         """Functional symbol implementation."""
 
-        def __init__(
-            self, name: str = "", value: int = 0, size: int = 0, type: str = "", binding: str = ""
-        ) -> None:
+        def __init__(self, name: str = "", value: int = 0, size: int = 0, type: str = "", binding: str = "") -> None:
             """Initialize symbol."""
             self.name = name
             self.value = value
@@ -413,9 +411,7 @@ except ImportError as e:
                         if sh_name < len(string_table):
                             name_end = string_table.find(b"\x00", sh_name)
                             if name_end >= 0:
-                                name = string_table[sh_name:name_end].decode(
-                                    "ascii", errors="ignore"
-                                )
+                                name = string_table[sh_name:name_end].decode("ascii", errors="ignore")
                             else:
                                 name = string_table[sh_name:].decode("ascii", errors="ignore")
                         else:

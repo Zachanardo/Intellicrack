@@ -155,13 +155,10 @@ class SecureSubprocess:
 
         # Check for command injection attempts
         if any(char in arg for char in dangerous_chars) and (
-                        not arg.startswith("-")
-                        and not arg.startswith("/")
-                        and (
-                            "=" not in arg
-                            or any(char in arg for char in ["`", "$", ";", "|", "&"])
-                        )
-                    ):
+            not arg.startswith("-")
+            and not arg.startswith("/")
+            and ("=" not in arg or any(char in arg for char in ["`", "$", ";", "|", "&"]))
+        ):
             error_msg = f"Potentially dangerous argument: {arg}"
             logger.error(error_msg)
             raise ValueError(error_msg)

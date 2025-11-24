@@ -59,9 +59,7 @@ class SecureHTTPClient:
         self.session.mount("https://", adapter)
 
         # Set default headers
-        self.session.headers.update(
-            {"User-Agent": network_config.get("user_agent", "Intellicrack/3.0")}
-        )
+        self.session.headers.update({"User-Agent": network_config.get("user_agent", "Intellicrack/3.0")})
 
         # Configure proxy if enabled
         if network_config.get("proxy_enabled", False):
@@ -73,9 +71,7 @@ class SecureHTTPClient:
             if proxy_host:
                 proxy_url = f"http://{proxy_host}:{proxy_port}"
                 if proxy_username and proxy_password:
-                    proxy_url = (
-                        f"http://{proxy_username}:{proxy_password}@{proxy_host}:{proxy_port}"
-                    )
+                    proxy_url = f"http://{proxy_username}:{proxy_password}@{proxy_host}:{proxy_port}"
 
                 self.session.proxies = {"http": proxy_url, "https": proxy_url}
 
@@ -119,16 +115,12 @@ class SecureHTTPClient:
             return env_ca_bundle
 
         if not ssl_verify:
-            logger.warning(
-                "SSL certificate verification is disabled in configuration. Consider enabling it for production use."
-            )
+            logger.warning("SSL certificate verification is disabled in configuration. Consider enabling it for production use.")
             warnings.filterwarnings("ignore", category=InsecureRequestWarning)
 
         return ssl_verify
 
-    def request(
-        self, method: str, url: str, verify: bool | str | None = None, **kwargs: object
-    ) -> requests.Response:
+    def request(self, method: str, url: str, verify: bool | str | None = None, **kwargs: object) -> requests.Response:
         """Make an HTTP request with configurable SSL verification.
 
         Args:
@@ -205,9 +197,7 @@ def get_http_client() -> SecureHTTPClient:
     return _http_client
 
 
-def secure_request(
-    method: str, url: str, verify: bool | str | None = None, **kwargs: object
-) -> requests.Response:
+def secure_request(method: str, url: str, verify: bool | str | None = None, **kwargs: object) -> requests.Response:
     """Make secure HTTP requests.
 
     This function uses the global HTTP client with proper SSL configuration.

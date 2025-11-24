@@ -175,10 +175,7 @@ class DongleMemory:
 
     def is_protected(self, offset: int, length: int) -> bool:
         """Check if memory range is protected."""
-        return any(
-            offset >= start and offset + length <= end
-            for start, end in self.protected_areas
-        )
+        return any(offset >= start and offset + length <= end for start, end in self.protected_areas)
 
 
 @dataclass
@@ -290,9 +287,7 @@ class USBEmulator:
         self.endpoints[0x02] = {"type": "bulk", "max_packet": 512, "direction": "out"}
         self.endpoints[0x83] = {"type": "interrupt", "max_packet": 64, "direction": "in"}
 
-    def control_transfer(
-        self, bmRequestType: int, bRequest: int, wValue: int, wIndex: int, data: bytes
-    ) -> bytes:
+    def control_transfer(self, bmRequestType: int, bRequest: int, wValue: int, wIndex: int, data: bytes) -> bytes:
         """Handle USB control transfer."""
         request_key = (bmRequestType << 8) | bRequest
         if request_key in self.control_transfer_handlers:
@@ -362,9 +357,7 @@ class USBEmulator:
             return self.bulk_transfer_handlers[endpoint](data)
         return b""
 
-    def register_control_handler(
-        self, bmRequestType: int, bRequest: int, handler: Callable
-    ) -> None:
+    def register_control_handler(self, bmRequestType: int, bRequest: int, handler: Callable) -> None:
         """Register handler for control transfer."""
         request_key = (bmRequestType << 8) | bRequest
         self.control_transfer_handlers[request_key] = handler
@@ -577,7 +570,7 @@ class HardwareDongleEmulator:
                     dongle.memory.read_only_areas = [(0, 512)]
 
                     license_info = struct.pack("<IIII", dongle.feature_id, 0xFFFFFFFF, 10, 1)
-                    dongle.license_data[:len(license_info)] = license_info
+                    dongle.license_data[: len(license_info)] = license_info
 
                     self.hasp_dongles[hasp_id] = dongle
                     self.virtual_dongles[f"HASP_{hasp_id}"] = {
@@ -616,9 +609,7 @@ class HardwareDongleEmulator:
                         "instance": dongle,
                     }
 
-        self.logger.info(
-            f"Created {len(self.virtual_dongles)} virtual dongles with full memory emulation"
-        )
+        self.logger.info(f"Created {len(self.virtual_dongles)} virtual dongles with full memory emulation")
 
     def _setup_usb_emulation(self, dongle_types: list[str]) -> None:
         """Set up USB device emulation for dongles."""
@@ -715,7 +706,7 @@ class HardwareDongleEmulator:
             dongle.feature_id,
             dongle.rtc_counter,
         )
-        response[:len(info)] = info
+        response[: len(info)] = info
 
         return bytes(response)
 
@@ -873,7 +864,7 @@ class HardwareDongleEmulator:
             dongle.developer_id,
         )
 
-        dongle.response_buffer[:len(query_data)] = query_data
+        dongle.response_buffer[: len(query_data)] = query_data
 
         return struct.pack("<I", SentinelStatus.SP_SUCCESS)
 
@@ -887,7 +878,7 @@ class HardwareDongleEmulator:
         for dongle in self.sentinel_dongles.values():
             if cell_id in dongle.cell_data:
                 cell_data = dongle.cell_data[cell_id][:length]
-                dongle.response_buffer[:len(cell_data)] = cell_data
+                dongle.response_buffer[: len(cell_data)] = cell_data
                 return struct.pack("<I", SentinelStatus.SP_SUCCESS)
 
         return struct.pack("<I", SentinelStatus.SP_UNIT_NOT_FOUND)
@@ -917,7 +908,7 @@ class HardwareDongleEmulator:
 
         for dongle in self.sentinel_dongles.values():
             encrypted = self.crypto_engine.hasp_encrypt(plaintext, dongle.aes_key, "AES")
-            dongle.response_buffer[:len(encrypted)] = encrypted
+            dongle.response_buffer[: len(encrypted)] = encrypted
             return struct.pack("<I", SentinelStatus.SP_SUCCESS)
 
         return struct.pack("<I", SentinelStatus.SP_UNIT_NOT_FOUND)
@@ -974,7 +965,7 @@ class HardwareDongleEmulator:
             dongle.feature_code,
             dongle.serial_number,
         )
-        response[:len(info)] = info
+        response[: len(info)] = info
 
         return bytes(response)
 
@@ -1530,16 +1521,12 @@ class HardwareDongleEmulator:
         dongle = self.hasp_dongles[dongle_id]
 
         return (
-            self.crypto_engine.sentinel_challenge_response(
-                challenge, dongle.aes_key
-            )
+            self.crypto_engine.sentinel_challenge_response(challenge, dongle.aes_key)
             if len(challenge) >= 16
             else hashlib.sha256(challenge + dongle.seed_code).digest()[:16]
         )
 
-    def read_dongle_memory(
-        self, dongle_type: str, dongle_id: int, region: str, offset: int, length: int
-    ) -> bytes:
+    def read_dongle_memory(self, dongle_type: str, dongle_id: int, region: str, offset: int, length: int) -> bytes:
         """Read from dongle memory.
 
         Args:
@@ -1567,9 +1554,7 @@ class HardwareDongleEmulator:
             self.logger.error(f"Memory read error: {e}")
             return b""
 
-    def write_dongle_memory(
-        self, dongle_type: str, dongle_id: int, region: str, offset: int, data: bytes
-    ) -> bool:
+    def write_dongle_memory(self, dongle_type: str, dongle_id: int, region: str, offset: int, data: bytes) -> bool:
         """Write to dongle memory.
 
         Args:
@@ -1610,9 +1595,7 @@ class HardwareDongleEmulator:
             str: Complete Frida script for dongle emulation
 
         """
-        return next(
-            (hook["script"] for hook in self.hooks if hook["type"] == "frida"), ""
-        )
+        return next((hook["script"] for hook in self.hooks if hook["type"] == "frida"), "")
 
     def get_emulation_status(self) -> dict[str, Any]:
         """Get the current status of dongle emulation.
@@ -1648,9 +1631,7 @@ class HardwareDongleEmulator:
         self.logger.info("Cleared all dongle emulation hooks and virtual devices")
 
 
-def activate_hardware_dongle_emulation(
-    app: object, dongle_types: list[str] | None = None
-) -> dict[str, object]:
+def activate_hardware_dongle_emulation(app: object, dongle_types: list[str] | None = None) -> dict[str, object]:
     """Activate hardware dongle emulation.
 
     Args:

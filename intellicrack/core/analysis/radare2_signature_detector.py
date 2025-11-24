@@ -550,9 +550,7 @@ rule CryptoAPI_Usage {
             if result.returncode == 0:
                 # Run ClamAV scan
                 # Validate binary_path to prevent command injection
-                binary_path_clean = (
-                    str(self.binary_path).replace(";", "").replace("|", "").replace("&", "")
-                )
+                binary_path_clean = str(self.binary_path).replace(";", "").replace("|", "").replace("&", "")
                 result = subprocess.run(
                     ["clamscan", "--no-summary", "--infected", binary_path_clean],
                     capture_output=True,
@@ -713,11 +711,7 @@ rule CryptoAPI_Usage {
                 "VirtualAlloc",
             ]
 
-            if found_apis := [
-                imp["name"]
-                for imp in imports
-                if any(api in imp.get("name", "") for api in protection_apis)
-            ]:
+            if found_apis := [imp["name"] for imp in imports if any(api in imp.get("name", "") for api in protection_apis)]:
                 sig_match = SignatureMatch(
                     signature_type=SignatureType.PROTECTION,
                     name="Anti-Analysis APIs",
@@ -789,9 +783,7 @@ rule CryptoAPI_Usage {
                 for sig, comp in compiler_strings.items():
                     if sig in text:
                         compiler = comp
-                        if version_match := re.search(
-                            r"(\d+\.\d+(?:\.\d+)?)", text
-                        ):
+                        if version_match := re.search(r"(\d+\.\d+(?:\.\d+)?)", text):
                             version = version_match[1]
                         break
 
@@ -873,9 +865,7 @@ rule CryptoAPI_Usage {
                 for s in strings:
                     text = s.get("string", "")
                     if libname.replace(".dll", "").replace(".so", "") in text.lower():
-                        if version_match := re.search(
-                            r"(\d+\.\d+(?:\.\d+)?)", text
-                        ):
+                        if version_match := re.search(r"(\d+\.\d+(?:\.\d+)?)", text):
                             version = version_match[1]
                             break
 
@@ -973,9 +963,7 @@ rule CryptoAPI_Usage {
             for lib in libraries[:10]:  # Limit to first 10
                 report.append(f"  {lib.name}")
                 report.append(f"    Version: {lib.version}")
-                report.append(
-                    f"    Functions: {lib.metadata.get('function_count', len(lib.functions))}"
-                )
+                report.append(f"    Functions: {lib.metadata.get('function_count', len(lib.functions))}")
             if len(libraries) > 10:
                 report.append(f"  ... and {len(libraries) - 10} more libraries")
             report.append("")
@@ -986,11 +974,7 @@ rule CryptoAPI_Usage {
         report.append(f"Total Signatures Matched: {len(self.matches)}")
 
         if protection_matches := [
-            m
-            for m in self.matches
-            if "protect" in m.name.lower()
-            or "pack" in m.name.lower()
-            or "crypt" in m.name.lower()
+            m for m in self.matches if "protect" in m.name.lower() or "pack" in m.name.lower() or "crypt" in m.name.lower()
         ]:
             report.append("Protection/Packer Detected: YES")
             report.append(f"Protection Types: {', '.join({m.name for m in protection_matches})}")
@@ -1061,9 +1045,7 @@ def main() -> None:
     parser.add_argument("-y", "--yara", help="YARA rules file or directory")
     parser.add_argument("-c", "--clamav", action="store_true", help="Enable ClamAV scanning")
     parser.add_argument("-o", "--output", help="Output file for signatures")
-    parser.add_argument(
-        "-f", "--format", choices=["json", "csv"], default="json", help="Output format"
-    )
+    parser.add_argument("-f", "--format", choices=["json", "csv"], default="json", help="Output format")
 
     args = parser.parse_args()
 

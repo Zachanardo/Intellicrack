@@ -27,9 +27,7 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-def capture_with_scapy(
-    interface: str = "any", filter_str: str = "", count: int = 100
-) -> dict[str, Any]:
+def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int = 100) -> dict[str, Any]:
     """Capture network packets using Scapy for real-time traffic analysis.
 
     Performs live packet capture on specified network interface with real-time
@@ -148,9 +146,7 @@ def capture_with_scapy(
                     if any(keyword in payload.lower() for keyword in license_keywords):
                         packet_info["license_related"] = True
                         if "dst_ip" in packet_info:
-                            license_servers.add(
-                                (packet_info["dst_ip"], packet_info.get("dst_port", 0))
-                            )
+                            license_servers.add((packet_info["dst_ip"], packet_info.get("dst_port", 0)))
 
                         # Extract potential license data
                         packet_info["license_indicators"] = []
@@ -288,9 +284,7 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
                 src = getattr(packet.ip, "src", "unknown")
                 dst = getattr(packet.ip, "dst", "unknown")
                 conv_key = f"{src} -> {dst}"
-                packet_summary["conversations"][conv_key] = (
-                    packet_summary["conversations"].get(conv_key, 0) + 1
-                )
+                packet_summary["conversations"][conv_key] = packet_summary["conversations"].get(conv_key, 0) + 1
 
                 # Check for license server communication
                 if hasattr(packet, "tcp"):
@@ -340,10 +334,7 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
                 packet_summary["http_requests"].append(http_info)
 
                 # Check for license-related HTTP traffic
-                if any(
-                    keyword in http_info["uri"].lower()
-                    for keyword in ["license", "activate", "validate"]
-                ):
+                if any(keyword in http_info["uri"].lower() for keyword in ["license", "activate", "validate"]):
                     packet_summary["license_traffic"].append(
                         {
                             "type": "HTTP",
@@ -364,12 +355,8 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
                     packet_summary["suspicious_ports"].append(
                         {
                             "port": dstport,
-                            "src": getattr(packet.ip, "src", "unknown")
-                            if hasattr(packet, "ip")
-                            else "unknown",
-                            "dst": getattr(packet.ip, "dst", "unknown")
-                            if hasattr(packet, "ip")
-                            else "unknown",
+                            "src": getattr(packet.ip, "src", "unknown") if hasattr(packet, "ip") else "unknown",
+                            "dst": getattr(packet.ip, "dst", "unknown") if hasattr(packet, "ip") else "unknown",
                             "flags": str(getattr(packet.tcp, "flags", "unknown")),
                         },
                     )
@@ -390,6 +377,104 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
     except Exception as e:
         logger.error(f"PyShark analysis error: {e}")
         return {"error": str(e), "success": False}
+
+
+class NetworkCapture:
+    """Network packet capture and analysis class for license-related traffic.
+
+    Provides comprehensive network packet analysis capabilities for identifying
+    and intercepting license-related communications including license server
+    connections, activation requests, and cloud licensing traffic.
+    """
+
+    def __init__(self) -> None:
+        """Initialize network capture manager."""
+        self.logger = logging.getLogger(__name__)
+
+    def capture_live_traffic(self, interface: str = "any", filter_str: str = "", count: int = 100) -> dict[str, Any]:
+        """Capture live network traffic using Scapy.
+
+        Args:
+            interface: Network interface to capture on
+            filter_str: BPF filter string
+            count: Maximum packets to capture
+
+        Returns:
+            Dictionary with capture results and analysis
+        """
+        return capture_with_scapy(interface, filter_str, count)
+
+    def analyze_pcap_file(self, pcap_file: str) -> dict[str, Any]:
+        """Analyze PCAP file using PyShark for deep packet inspection.
+
+        Args:
+            pcap_file: Path to PCAP file
+
+        Returns:
+            Dictionary with comprehensive packet analysis
+        """
+        return analyze_pcap_with_pyshark(pcap_file)
+
+    def parse_pcap_binary(self, pcap_file: str) -> dict[str, Any]:
+        """Parse PCAP file using dpkt for low-level binary analysis.
+
+        Args:
+            pcap_file: Path to PCAP file
+
+        Returns:
+            Dictionary with low-level packet statistics
+        """
+        return parse_pcap_with_dpkt(pcap_file)
+
+    def identify_license_servers(self, pcap_file: str) -> list[dict[str, Any]]:
+        """Identify license servers from packet capture.
+
+        Args:
+            pcap_file: Path to PCAP file
+
+        Returns:
+            List of identified license servers with details
+        """
+        analysis = analyze_pcap_with_pyshark(pcap_file)
+        return analysis.get("license_traffic", [])
+
+    def extract_dns_queries(self, pcap_file: str) -> list[str]:
+        """Extract DNS queries from packet capture.
+
+        Args:
+            pcap_file: Path to PCAP file
+
+        Returns:
+            List of unique DNS query names
+        """
+        analysis = analyze_pcap_with_pyshark(pcap_file)
+        return analysis.get("dns_queries", [])
+
+    def detect_cloud_licensing_traffic(self, interface: str = "any", duration: int = 60) -> dict[str, Any]:
+        """Detect cloud licensing traffic in real-time.
+
+        Args:
+            interface: Network interface to monitor
+            duration: Monitoring duration in seconds
+
+        Returns:
+            Dictionary with detected cloud licensing communications
+        """
+        result = capture_with_scapy(interface, "", duration)
+        license_servers = result.get("license_servers", [])
+        dns_queries = result.get("dns_queries", [])
+
+        return {
+            "license_servers_detected": len(license_servers),
+            "license_servers": license_servers,
+            "license_related_domains": [
+                q
+                for q in dns_queries
+                if any(keyword in q.lower() for keyword in ["license", "activation", "flexlm", "rlm", "hasp", "sentinel"])
+            ],
+            "total_packets": result.get("total_packets", 0),
+            "license_packets": result.get("license_packets", 0),
+        }
 
 
 def parse_pcap_with_dpkt(pcap_file: str) -> dict[str, Any]:
@@ -518,9 +603,7 @@ def parse_pcap_with_dpkt(pcap_file: str) -> dict[str, Any]:
                                         for question in dns.qd:
                                             queried_domain = question.name
                                             if queried_domain and len(queried_domain) > 1:
-                                                logger.debug(
-                                                    f"DNS query detected: {queried_domain}"
-                                                )
+                                                logger.debug(f"DNS query detected: {queried_domain}")
                                 except (
                                     dpkt.dpkt.NeedData,
                                     dpkt.dpkt.UnpackError,
@@ -569,3 +652,11 @@ def parse_pcap_with_dpkt(pcap_file: str) -> dict[str, Any]:
     except Exception as e:
         logger.error(f"dpkt parsing error: {e}")
         return {"error": str(e), "success": False}
+
+
+__all__ = [
+    "NetworkCapture",
+    "capture_with_scapy",
+    "analyze_pcap_with_pyshark",
+    "parse_pcap_with_dpkt",
+]

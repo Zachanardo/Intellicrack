@@ -127,9 +127,7 @@ class AnalysisOrchestrator(QObject):
         self.enabled_phases = list(AnalysisPhase)
         self.timeout_per_phase = 300  # 5 minutes per phase
 
-    def analyze_binary(
-        self, binary_path: str, phases: list[AnalysisPhase] | None = None
-    ) -> OrchestrationResult:
+    def analyze_binary(self, binary_path: str, phases: list[AnalysisPhase] | None = None) -> OrchestrationResult:
         """Perform orchestrated analysis on a binary.
 
         Args:
@@ -283,9 +281,7 @@ class AnalysisOrchestrator(QObject):
             # Initialize QEMU Test Manager on demand
             if self.qemu_manager is None:
                 try:
-                    self.qemu_manager = QEMUManager(
-                        vm_name="ghidra_analysis_vm", vm_type="ubuntu", memory="4096", cpu_cores=2
-                    )
+                    self.qemu_manager = QEMUManager(vm_name="ghidra_analysis_vm", vm_type="ubuntu", memory="4096", cpu_cores=2)
                     # Start the VM if not already running
                     if not self.qemu_manager.is_vm_running():
                         vm_started = self.qemu_manager.start_vm(timeout=120)
@@ -299,15 +295,10 @@ class AnalysisOrchestrator(QObject):
             if selected_script := self._select_ghidra_script(binary_path):
                 result["script_used"] = selected_script.name
 
-                # Copy binary to VM
                 vm_binary_path = f"{tempfile.gettempdir()}/analysis_{os.path.basename(binary_path)}"
-                if copy_success := self.qemu_manager.copy_file_to_vm(
-                    binary_path, vm_binary_path
-                ):
-                    # Execute Ghidra script in VM
-                    ghidra_command = self._build_ghidra_command(
-                        selected_script.path, vm_binary_path
-                    )
+                if copy_success := self.qemu_manager.copy_file_to_vm(binary_path, vm_binary_path):
+                    logger.debug(f"Binary copied to VM successfully: {copy_success}")
+                    ghidra_command = self._build_ghidra_command(selected_script.path, vm_binary_path)
 
                     execution_result = self.qemu_manager.execute_in_vm(
                         ghidra_command,
@@ -334,11 +325,7 @@ class AnalysisOrchestrator(QObject):
                         if "keygen_patterns" in parsed_results:
                             result["keygen_candidates"] = parsed_results["keygen_patterns"]
                     else:
-                        error_msg = (
-                            execution_result.error
-                            if execution_result
-                            else "Unknown execution error"
-                        )
+                        error_msg = execution_result.error if execution_result else "Unknown execution error"
                         result["errors"].append(f"Ghidra script execution failed: {error_msg}")
                 else:
                     result["errors"].append("Failed to copy binary to VM")
@@ -437,12 +424,8 @@ class AnalysisOrchestrator(QObject):
 
             for line in lines:
                 # Parse license check detection
-                if (
-                    ("LICENSE_CHECK" in line
-                    and "Function:" in line)
-                    or ("LICENSE_CHECK" not in line
-                    and "license" in line.lower()
-                    and "Function:" in line)
+                if ("LICENSE_CHECK" in line and "Function:" in line) or (
+                    "LICENSE_CHECK" not in line and "license" in line.lower() and "Function:" in line
                 ):
                     func_match = line.split("Function:")[1].strip()
                     parsed["license_checks"].append(
@@ -454,10 +437,7 @@ class AnalysisOrchestrator(QObject):
                     )
 
                 # Parse cryptographic routine detection
-                if any(
-                    crypto in line.lower()
-                    for crypto in ["aes", "rsa", "crypto", "hash", "md5", "sha"]
-                ):
+                if any(crypto in line.lower() for crypto in ["aes", "rsa", "crypto", "hash", "md5", "sha"]):
                     parsed["crypto_routines"].append(
                         {
                             "type": self._identify_crypto_type(line),
@@ -467,20 +447,11 @@ class AnalysisOrchestrator(QObject):
                     )
 
                 # Parse protection mechanism detection
-                if any(
-                    prot in line.lower()
-                    for prot in ["anti-debug", "obfuscat", "pack", "encrypt", "protect"]
-                ):
-                    parsed["protection_mechanisms"].append(
-                        {"type": self._identify_protection_type(line), "details": line.strip()}
-                    )
+                if any(prot in line.lower() for prot in ["anti-debug", "obfuscat", "pack", "encrypt", "protect"]):
+                    parsed["protection_mechanisms"].append({"type": self._identify_protection_type(line), "details": line.strip()})
 
                 # Parse potential keygen patterns
-                if (
-                    "keygen" in line.lower()
-                    or "serial" in line.lower()
-                    or "algorithm" in line.lower()
-                ):
+                if "keygen" in line.lower() or "serial" in line.lower() or "algorithm" in line.lower():
                     parsed["keygen_patterns"].append(
                         {
                             "pattern": line.strip(),
@@ -636,10 +607,7 @@ class AnalysisOrchestrator(QObject):
                     }
 
             # Check if dynamic analysis is available
-            if (
-                hasattr(self.dynamic_analyzer, "is_available")
-                and self.dynamic_analyzer.is_available()
-            ):
+            if hasattr(self.dynamic_analyzer, "is_available") and self.dynamic_analyzer.is_available():
                 return self.dynamic_analyzer.analyze(binary_path)
             return {"status": "skipped", "reason": "Dynamic analysis not available"}
         except Exception as e:
@@ -667,17 +635,13 @@ class AnalysisOrchestrator(QObject):
         if AnalysisPhase.VULNERABILITY_SCAN in result.phases_completed:
             vuln_data = result.results.get("vulnerability_scan", {})
             if vuln_data.get("vulnerabilities"):
-                findings.append(
-                    f"Found {len(vuln_data['vulnerabilities'])} potential vulnerabilities"
-                )
+                findings.append(f"Found {len(vuln_data['vulnerabilities'])} potential vulnerabilities")
 
         summary["key_findings"] = findings
         return summary
 
 
-def run_selected_analysis(
-    binary_path: str, analysis_types: list[str] | None = None
-) -> dict[str, Any]:
+def run_selected_analysis(binary_path: str, analysis_types: list[str] | None = None) -> dict[str, Any]:
     """Run selected analysis on a binary file.
 
     Orchestrates binary analysis using multiple analysis engines including static,

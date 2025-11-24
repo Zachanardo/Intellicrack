@@ -242,9 +242,7 @@ class ThemidaAnalyzer:
         result.vm_entry_points = self._find_vm_entry_points()
         result.vm_architecture = self._detect_vm_architecture()
         result.handler_table_address = self._find_handler_table()
-        result.handlers = self._extract_handlers(
-            result.handler_table_address, result.vm_architecture
-        )
+        result.handlers = self._extract_handlers(result.handler_table_address, result.vm_architecture)
         result.vm_contexts = self._extract_vm_contexts(result.vm_entry_points)
         result.encryption_keys = self._extract_encryption_keys()
         result.anti_debug_locations = self._find_anti_debug_checks()
@@ -266,9 +264,7 @@ class ThemidaAnalyzer:
 
         if self.binary:
             for section in self.binary.sections:
-                section_name = (
-                    section.name.encode() if isinstance(section.name, str) else section.name
-                )
+                section_name = section.name.encode() if isinstance(section.name, str) else section.name
                 for vm_section in self.VM_SECTION_NAMES:
                     if vm_section in section_name:
                         return True
@@ -417,9 +413,7 @@ class ThemidaAnalyzer:
 
         return max(candidates, key=lambda x: x[1])[0] if candidates else 0
 
-    def _extract_handlers(
-        self, handler_table_address: int, vm_arch: VMArchitecture
-    ) -> dict[int, VMHandler]:
+    def _extract_handlers(self, handler_table_address: int, vm_arch: VMArchitecture) -> dict[int, VMHandler]:
         """Extract virtual machine handlers.
 
         Args:
@@ -532,10 +526,7 @@ class ThemidaAnalyzer:
             md = Cs(CS_ARCH_X86, mode)
             code = self.binary_data[offset : offset + size]
 
-            instructions.extend(
-                (insn.address, insn.mnemonic, insn.op_str)
-                for insn in md.disasm(code, offset)
-            )
+            instructions.extend((insn.address, insn.mnemonic, insn.op_str) for insn in md.disasm(code, offset))
         except Exception as e:
             logger.warning(f"Disassembly failed at {offset:x}: {e}")
 
@@ -568,8 +559,7 @@ class ThemidaAnalyzer:
             return 1
 
         complexity = len(instructions) + len({insn[1] for insn in instructions})
-        branch_count = sum(bool(insn[1] in ["jmp", "je", "jne", "jg", "jl", "ja", "jb"])
-                       for insn in instructions)
+        branch_count = sum(bool(insn[1] in ["jmp", "je", "jne", "jg", "jl", "ja", "jb"]) for insn in instructions)
         complexity += branch_count * 2
 
         return min(max(complexity // 5, 1), 10)
@@ -784,9 +774,7 @@ class ThemidaAnalyzer:
 
         return sorted(set(integrity_locations))
 
-    def _devirtualize_code(
-        self, handlers: dict[int, VMHandler], contexts: list[VMContext]
-    ) -> list[DevirtualizedCode]:
+    def _devirtualize_code(self, handlers: dict[int, VMHandler], contexts: list[VMContext]) -> list[DevirtualizedCode]:
         """Devirtualize VM-protected code sections.
 
         Args:
@@ -889,10 +877,15 @@ class ThemidaAnalyzer:
                 else:
                     assembly.append(f"vm_handler_{opcode:02x}")
 
-                if i < len(vm_bytecode) and handlers[opcode].category in [
-                                    "data_transfer",
-                                    "arithmetic",
-                                ] and i + 4 <= len(vm_bytecode):
+                if (
+                    i < len(vm_bytecode)
+                    and handlers[opcode].category
+                    in [
+                        "data_transfer",
+                        "arithmetic",
+                    ]
+                    and i + 4 <= len(vm_bytecode)
+                ):
                     operand = struct.unpack("<I", vm_bytecode[i : i + 4])[0]
                     assembly[-1] += f"  ; operand: {operand:08x}"
                     i += 4
@@ -929,9 +922,7 @@ class ThemidaAnalyzer:
             confidence += min(len(result.handlers) * 0.5, 10.0)
 
         if result.devirtualized_sections:
-            avg_dev_confidence = sum(d.confidence for d in result.devirtualized_sections) / len(
-                result.devirtualized_sections
-            )
+            avg_dev_confidence = sum(d.confidence for d in result.devirtualized_sections) / len(result.devirtualized_sections)
             confidence += min(avg_dev_confidence * 0.1, 10.0)
 
         return min(confidence, 100.0)
@@ -953,9 +944,7 @@ class ThemidaAnalyzer:
             "confidence": f"{result.confidence:.1f}%",
             "vm_sections": result.vm_sections,
             "vm_entry_points": [f"0x{ep:08x}" for ep in result.vm_entry_points],
-            "handler_table": f"0x{result.handler_table_address:08x}"
-            if result.handler_table_address
-            else "Not found",
+            "handler_table": f"0x{result.handler_table_address:08x}" if result.handler_table_address else "Not found",
             "handlers_extracted": len(result.handlers),
             "vm_contexts": len(result.vm_contexts),
             "devirtualized_sections": len(result.devirtualized_sections),
@@ -968,9 +957,7 @@ class ThemidaAnalyzer:
             report["handler_categories"] = {}
             for handler in result.handlers.values():
                 category = handler.category
-                report["handler_categories"][category] = (
-                    report["handler_categories"].get(category, 0) + 1
-                )
+                report["handler_categories"][category] = report["handler_categories"].get(category, 0) + 1
 
         if result.devirtualized_sections:
             report["devirtualization_quality"] = {

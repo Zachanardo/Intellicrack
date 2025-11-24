@@ -89,9 +89,7 @@ class ToolValidator:
 
                 if result.returncode == 0:
                     version_text = result.stdout or result.stderr
-                    if version_match := re.search(
-                        r"(\d+\.\d+(?:\.\d+)?)", version_text
-                    ):
+                    if version_match := re.search(r"(\d+\.\d+(?:\.\d+)?)", version_text):
                         validation["version"] = version_match[1]
 
             except Exception as e:
@@ -137,9 +135,7 @@ class ToolValidator:
 
             if result.returncode == 0:
                 version_text = result.stdout
-                if version_match := re.search(
-                    r"radare2\s+(\d+\.\d+\.\d+)", version_text
-                ):
+                if version_match := re.search(r"radare2\s+(\d+\.\d+\.\d+)", version_text):
                     validation["version"] = version_match[1]
 
                 # Check for common plugins/capabilities
@@ -188,9 +184,7 @@ class ToolValidator:
 
             if result.returncode == 0:
                 version_text = result.stdout or result.stderr
-                if version_match := re.search(
-                    r"Python\s+(\d+\.\d+\.\d+)", version_text
-                ):
+                if version_match := re.search(r"Python\s+(\d+\.\d+\.\d+)", version_text):
                     version = version_match[1]
                     validation["version"] = version
 
@@ -199,9 +193,7 @@ class ToolValidator:
                     if major >= 3 and minor >= 8:
                         validation["capabilities"].append("compatible")
                     else:
-                        validation["issues"].append(
-                            f"Python {version} may not be compatible (need 3.8+)"
-                        )
+                        validation["issues"].append(f"Python {version} may not be compatible (need 3.8+)")
 
                 validation["valid"] = True
             else:
@@ -276,9 +268,7 @@ class ToolValidator:
 
             if result.returncode == 0:
                 version_text = result.stdout
-                if version_match := re.search(
-                    r"QEMU emulator version\s+(\d+\.\d+\.\d+)", version_text
-                ):
+                if version_match := re.search(r"QEMU emulator version\s+(\d+\.\d+\.\d+)", version_text):
                     validation["version"] = version_match[1]
 
                 # Determine architecture support from executable name
@@ -325,9 +315,7 @@ class ToolValidator:
 
             if result.returncode == 0:
                 version_text = result.stdout
-                if version_match := re.search(
-                    r"NASM version\s+(\d+\.\d+(?:\.\d+)?)", version_text
-                ):
+                if version_match := re.search(r"NASM version\s+(\d+\.\d+(?:\.\d+)?)", version_text):
                     validation["version"] = version_match[1]
 
                 # NASM capabilities
@@ -376,9 +364,7 @@ class ToolValidator:
             # MASM help text contains version information
             version_text = result.stdout or result.stderr
             if "Microsoft (R) Macro Assembler" in version_text:
-                if version_match := re.search(
-                    r"Version\s+(\d+\.\d+\.\d+(?:\.\d+)?)", version_text
-                ):
+                if version_match := re.search(r"Version\s+(\d+\.\d+\.\d+(?:\.\d+)?)", version_text):
                     validation["version"] = version_match[1]
 
                 # MASM capabilities
@@ -427,12 +413,8 @@ class ToolValidator:
 
             # AccessChk help text contains version information
             version_text = result.stdout or result.stderr
-            if "Sysinternals" in version_text and (
-                "AccessChk" in version_text or "accesschk" in version_text.lower()
-            ):
-                if version_match := re.search(
-                    r"(?:v|Version\s+)?(\d+\.\d+)", version_text
-                ):
+            if "Sysinternals" in version_text and ("AccessChk" in version_text or "accesschk" in version_text.lower()):
+                if version_match := re.search(r"(?:v|Version\s+)?(\d+\.\d+)", version_text):
                     validation["version"] = version_match[1]
 
                 # AccessChk capabilities
@@ -573,9 +555,7 @@ class AdvancedToolDiscovery:
                     # Report successful discovery to terminal manager
                     if HAS_TERMINAL_MANAGER:
                         try:
-                            terminal_manager.log_terminal_message(
-                                f"OK {tool_name} found: {tool_info['path']}"
-                            )
+                            terminal_manager.log_terminal_message(f"OK {tool_name} found: {tool_info['path']}")
                         except Exception as e:
                             logger.debug("Could not log to terminal manager: %s", e)
                 else:
@@ -584,9 +564,7 @@ class AdvancedToolDiscovery:
                     # Report failed discovery to terminal manager
                     if HAS_TERMINAL_MANAGER:
                         try:
-                            terminal_manager.log_terminal_message(
-                                f"FAIL {tool_name} not found", level="warning"
-                            )
+                            terminal_manager.log_terminal_message(f"FAIL {tool_name} not found", level="warning")
                         except Exception as e:
                             logger.debug("Could not log to terminal manager: %s", e)
 
@@ -595,9 +573,7 @@ class AdvancedToolDiscovery:
                 # Report error to terminal manager
                 if HAS_TERMINAL_MANAGER:
                     try:
-                        terminal_manager.log_terminal_message(
-                            f"Error discovering {tool_name}: {e}", level="error"
-                        )
+                        terminal_manager.log_terminal_message(f"Error discovering {tool_name}: {e}", level="error")
                     except Exception as e2:
                         logger.debug("Could not log to terminal manager: %s", e2)
                 results[tool_name] = {
@@ -667,17 +643,13 @@ class AdvancedToolDiscovery:
 
         # Strategy 2: Installation-based search
         if not tool_info["available"] and config["search_strategy"] == "installation_based":
-            if found_path := self._search_installations(
-                tool_name, config["executables"]
-            ):
+            if found_path := self._search_installations(tool_name, config["executables"]):
                 tool_info.update(self._validate_and_populate(found_path, tool_name))
                 tool_info["discovery_method"] = "installation_search"
 
         # Strategy 3: Common locations
         if not tool_info["available"]:
-            if found_path := self._search_common_locations(
-                tool_name, config["executables"]
-            ):
+            if found_path := self._search_common_locations(tool_name, config["executables"]):
                 tool_info.update(self._validate_and_populate(found_path, tool_name))
                 tool_info["discovery_method"] = "common_locations"
 
@@ -725,9 +697,7 @@ class AdvancedToolDiscovery:
 
     def _search_common_locations(self, tool_name: str, executables: list[str]) -> str | None:
         """Search in common installation locations."""
-        logger.debug(
-            f"Searching common locations for tool: {tool_name} with executables: {executables}"
-        )
+        logger.debug(f"Searching common locations for tool: {tool_name} with executables: {executables}")
         common_paths = []
 
         if sys.platform == "win32":
@@ -789,12 +759,8 @@ class AdvancedToolDiscovery:
                                     try:
                                         display_name = winreg.QueryValueEx(subkey, "DisplayName")[0]
                                         if tool_name.lower() in display_name.lower():
-                                            install_location = winreg.QueryValueEx(
-                                                subkey, "InstallLocation"
-                                            )[0]
-                                            if install_location and os.path.exists(
-                                                install_location
-                                            ):
+                                            install_location = winreg.QueryValueEx(subkey, "InstallLocation")[0]
+                                            if install_location and os.path.exists(install_location):
                                                 return install_location
                                     except FileNotFoundError as e:
                                         logger.error("File not found in tool_discovery: %s", e)
@@ -900,9 +866,7 @@ class AdvancedToolDiscovery:
                 paths.extend(
                     [
                         os.path.join(
-                            os.path.dirname(
-                                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                            ),
+                            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
                             "tools",
                             "NASM",
                         ),  # Primary location
@@ -1135,9 +1099,7 @@ class AdvancedToolDiscovery:
 
         # Determine overall health
         health_status["healthy"] = (
-            health_status["available"]
-            and health_status["executable"]
-            and (health_status["version_valid"] or not validator)
+            health_status["available"] and health_status["executable"] and (health_status["version_valid"] or not validator)
         )
 
         return health_status
@@ -1149,10 +1111,7 @@ class AdvancedToolDiscovery:
             Dictionary mapping tool names to health check results
 
         """
-        results = {
-            tool_name: self.health_check_tool(tool_name)
-            for tool_name in self.discovered_tools
-        }
+        results = {tool_name: self.health_check_tool(tool_name) for tool_name in self.discovered_tools}
         # Check manual overrides not in discovered tools
         for tool_name in self.manual_overrides:
             if tool_name not in results:
@@ -1162,17 +1121,9 @@ class AdvancedToolDiscovery:
         if HAS_TERMINAL_MANAGER:
             try:
                 terminal_manager = get_terminal_manager()
-                healthy_count = len(
-                    [
-                        tool_name
-                        for tool_name, status in results.items()
-                        if status.get("healthy", False)
-                    ]
-                )
+                healthy_count = len([tool_name for tool_name, status in results.items() if status.get("healthy", False)])
                 total_count = len(results)
-                terminal_manager.log_terminal_message(
-                    f"Health check completed: {healthy_count}/{total_count} tools healthy"
-                )
+                terminal_manager.log_terminal_message(f"Health check completed: {healthy_count}/{total_count} tools healthy")
 
                 # Report unhealthy tools
                 for tool_name, status in results.items():
@@ -1199,11 +1150,7 @@ class AdvancedToolDiscovery:
 
         """
         health_results = self.health_check_all_tools()
-        return [
-            tool_name
-            for tool_name, status in health_results.items()
-            if status.get("healthy", False)
-        ]
+        return [tool_name for tool_name, status in health_results.items() if status.get("healthy", False)]
 
     def discover_tool_with_fallbacks(self, tool_name: str, config: dict) -> dict[str, Any]:
         """Enhanced tool discovery with comprehensive fallback mechanisms."""
@@ -1247,9 +1194,7 @@ class AdvancedToolDiscovery:
             try:
                 result = strategy(tool_name, config)
                 if result and result.get("available"):
-                    logger.info(
-                        f"Fallback strategy '{strategy.__name__}' succeeded for {tool_name}"
-                    )
+                    logger.info(f"Fallback strategy '{strategy.__name__}' succeeded for {tool_name}")
                     return result
             except Exception as e:
                 logger.debug(f"Fallback strategy '{strategy.__name__}' failed: {e}")

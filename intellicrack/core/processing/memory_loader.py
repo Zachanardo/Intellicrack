@@ -159,9 +159,7 @@ class MemoryOptimizedBinaryLoader:
             self.logger.error("Error reading chunk: %s", e)
             return None
 
-    def read_section(
-        self, section_name: str, section_offset: int, section_size: int
-    ) -> bytes | None:
+    def read_section(self, section_name: str, section_offset: int, section_size: int) -> bytes | None:
         """Read a section from the file with caching.
 
         Args:
@@ -316,9 +314,7 @@ class MemoryOptimizedBinaryLoader:
         if exc_type:
             self.logger.error(f"Memory loader exiting due to {exc_type.__name__}: {exc_val}")
             if exc_tb:
-                self.logger.debug(
-                    f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}"
-                )
+                self.logger.debug(f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
         self.close()
 
     def __del__(self) -> None:
@@ -473,9 +469,7 @@ def run_memory_optimized_analysis(
                 import statistics
 
                 results["entropy"]["mean"] = statistics.mean(entropy_samples)
-                results["entropy"]["stdev"] = (
-                    statistics.stdev(entropy_samples) if len(entropy_samples) > 1 else 0
-                )
+                results["entropy"]["stdev"] = statistics.stdev(entropy_samples) if len(entropy_samples) > 1 else 0
                 results["entropy"]["min"] = min(entropy_samples)
                 results["entropy"]["max"] = max(entropy_samples)
 
@@ -514,9 +508,7 @@ def run_memory_optimized_analysis(
     return results
 
 
-def create_memory_loader(
-    chunk_size: int = 1024 * 1024, max_memory: int = 1024 * 1024 * 1024
-) -> MemoryOptimizedBinaryLoader:
+def create_memory_loader(chunk_size: int = 1024 * 1024, max_memory: int = 1024 * 1024 * 1024) -> MemoryOptimizedBinaryLoader:
     """Create a MemoryOptimizedBinaryLoader.
 
     Args:

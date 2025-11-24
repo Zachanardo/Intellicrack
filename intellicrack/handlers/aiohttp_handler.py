@@ -336,14 +336,10 @@ except ImportError as e:
                             response.read(),
                         )
 
-                response_url, status_code, headers, content = await asyncio.to_thread(
-                    _execute_request
-                )
+                response_url, status_code, headers, content = await asyncio.to_thread(_execute_request)
 
                 # Create ClientResponse
-                resp = ClientResponse(
-                    url=response_url, status=status_code, headers=headers, content=content
-                )
+                resp = ClientResponse(url=response_url, status=status_code, headers=headers, content=content)
 
                 return resp
 
@@ -854,9 +850,7 @@ except ImportError as e:
                 Response object.
 
             """
-            return Response(
-                text=json.dumps(data), status=status, content_type="application/json", **kwargs
-            )
+            return Response(text=json.dumps(data), status=status, content_type="application/json", **kwargs)
 
     # Create module-like object
     class FallbackAioHTTP:

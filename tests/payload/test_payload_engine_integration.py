@@ -169,7 +169,7 @@ def test_payload_engine_integration():
     class TestVulnEngineIntegrated:
         def __init__(self):
             self.binary_path = "test.exe"
-            self.shellcode_generator = MockShellcodeGenerator()
+            self.shellcode_generator = MockLicenseBypassCodeGenerator()
             self.payload_engine = MockPayloadEngine()
             self.logger = logging.getLogger("test")
 

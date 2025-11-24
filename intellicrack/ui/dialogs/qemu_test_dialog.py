@@ -130,9 +130,7 @@ class QEMUTestDialog(QDialog):
         self.button_group.addButton(self.qemu_test_radio, 0)
         options_layout.addWidget(self.qemu_test_radio)
 
-        qemu_desc: QLabel = QLabel(
-            "    Safe environment to test script behavior before host execution"
-        )
+        qemu_desc: QLabel = QLabel("    Safe environment to test script behavior before host execution")
         qemu_desc.setObjectName("optionDescription")
         options_layout.addWidget(qemu_desc)
         options_layout.addSpacing(5)

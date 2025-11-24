@@ -126,9 +126,7 @@ except ImportError as e:
     class AccessDeniedError(Error):
         """Access denied to process information."""
 
-        def __init__(
-            self, pid: int | None = None, name: str | None = None, msg: str | None = None
-        ) -> None:
+        def __init__(self, pid: int | None = None, name: str | None = None, msg: str | None = None) -> None:
             """Initialize AccessDenied exception with process details."""
             self.pid: int | None = pid
             self.name: str | None = name
@@ -162,9 +160,7 @@ except ImportError as e:
         def _get_basic_info(self) -> None:
             """Get basic process information."""
             # Skip strict process validation during testing
-            if os.environ.get("INTELLICRACK_TESTING") or os.environ.get(
-                "DISABLE_BACKGROUND_THREADS"
-            ):
+            if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
                 self._name = "python"
                 self._ppid = 0
                 return
@@ -459,9 +455,7 @@ except ImportError as e:
 
             if sys.platform == "win32":
                 if taskkill_path := shutil.which("taskkill"):
-                    subprocess.run(
-                        [taskkill_path, "/PID", str(self._pid)], check=False, shell=False
-                    )  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # Explicitly secure - using list format prevents shell injection
+                    subprocess.run([taskkill_path, "/PID", str(self._pid)], check=False, shell=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # Explicitly secure - using list format prevents shell injection
             else:
                 import signal
 

@@ -208,8 +208,7 @@ class BinaryFeatureExtractor:
                 features["max_section_entropy"] = max(section_entropies)
                 features["min_section_entropy"] = min(section_entropies)
                 features["avg_section_entropy"] = sum(section_entropies) / len(section_entropies)
-                features["high_entropy_section_count"] = sum(bool(e > 7.0)
-                                                         for e in section_entropies)
+                features["high_entropy_section_count"] = sum(bool(e > 7.0) for e in section_entropies)
             else:
                 features["max_section_entropy"] = 0.0
                 features["min_section_entropy"] = 0.0
@@ -393,10 +392,7 @@ class BinaryFeatureExtractor:
                     flags = patterns["section_flags"]
                     if flags.get("zero_size"):
                         for section in sections:
-                            if (
-                                section.get("raw_size", 1) == 0
-                                and section.get("virtual_size", 0) > 0
-                            ):
+                            if section.get("raw_size", 1) == 0 and section.get("virtual_size", 0) > 0:
                                 score += 0.2
                                 matches.append("zero_size_section")
                                 break
@@ -463,9 +459,7 @@ class BinaryFeatureExtractor:
                         key = f"opcode_freq_{(opcode >> 4):02x}"
                         features[key] = count / total_opcodes
 
-            complexity_score = self._estimate_cyclomatic_complexity(
-                code_bytes[: min(len(code_bytes), 10000)]
-            )
+            complexity_score = self._estimate_cyclomatic_complexity(code_bytes[: min(len(code_bytes), 10000)])
             features["high_cyclomatic_complexity"] = 1.0 if complexity_score > 50 else 0.0
 
         except Exception as e:
@@ -501,8 +495,7 @@ class BinaryFeatureExtractor:
             0x0F,
         }
 
-        branch_count = sum(bool(b in branch_opcodes)
-                       for b in code)
+        branch_count = sum(bool(b in branch_opcodes) for b in code)
         return float(branch_count)
 
     def _parse_pe_basic(self, data: bytes) -> dict[str, Any]:
@@ -540,13 +533,9 @@ class BinaryFeatureExtractor:
         }
 
         coff_header_offset = pe_offset + 4
-        number_of_sections = struct.unpack(
-            "<H", data[coff_header_offset + 2 : coff_header_offset + 4]
-        )[0]
+        number_of_sections = struct.unpack("<H", data[coff_header_offset + 2 : coff_header_offset + 4])[0]
         timestamp = struct.unpack("<I", data[coff_header_offset + 4 : coff_header_offset + 8])[0]
-        size_of_optional_header = struct.unpack(
-            "<H", data[coff_header_offset + 16 : coff_header_offset + 18]
-        )[0]
+        size_of_optional_header = struct.unpack("<H", data[coff_header_offset + 16 : coff_header_offset + 18])[0]
 
         result["timestamp"] = timestamp
 
@@ -554,9 +543,7 @@ class BinaryFeatureExtractor:
 
         entry_point_rva = 0
         if optional_header_offset + 20 <= len(data):
-            entry_point_rva = struct.unpack(
-                "<I", data[optional_header_offset + 16 : optional_header_offset + 20]
-            )[0]
+            entry_point_rva = struct.unpack("<I", data[optional_header_offset + 16 : optional_header_offset + 20])[0]
 
         section_table_offset = optional_header_offset + size_of_optional_header
 
@@ -569,14 +556,10 @@ class BinaryFeatureExtractor:
             section_name = section_name_bytes.decode("utf-8", errors="ignore").strip("\x00")
 
             virtual_size = struct.unpack("<I", data[section_offset + 8 : section_offset + 12])[0]
-            virtual_address = struct.unpack("<I", data[section_offset + 12 : section_offset + 16])[
-                0
-            ]
+            virtual_address = struct.unpack("<I", data[section_offset + 12 : section_offset + 16])[0]
             raw_size = struct.unpack("<I", data[section_offset + 16 : section_offset + 20])[0]
             raw_offset = struct.unpack("<I", data[section_offset + 20 : section_offset + 24])[0]
-            characteristics = struct.unpack("<I", data[section_offset + 36 : section_offset + 40])[
-                0
-            ]
+            characteristics = struct.unpack("<I", data[section_offset + 36 : section_offset + 40])[0]
 
             executable = bool(characteristics & 0x20000000)
 
@@ -612,9 +595,7 @@ class BinaryFeatureExtractor:
                     section_data = section.get("data", b"")
                     offset_in_section = entry_point_rva - va
                     if offset_in_section < len(section_data):
-                        result["entry_point_data"] = section_data[
-                            offset_in_section : min(offset_in_section + 32, len(section_data))
-                        ]
+                        result["entry_point_data"] = section_data[offset_in_section : min(offset_in_section + 32, len(section_data))]
                     break
 
         try:

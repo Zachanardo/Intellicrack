@@ -177,9 +177,7 @@ class FridaServerManager:
             with lzma.open(input_path, "rb") as f_in, open(output_path, "wb") as f_out:
                 f_out.write(f_in.read())
         except ImportError:
-            raise RuntimeError(
-                "lzma module not available - cannot decompress frida-server"
-            ) from None
+            raise RuntimeError("lzma module not available - cannot decompress frida-server") from None
 
     def _ensure_server_installed(self) -> bool:
         """Ensure frida-server is installed and available.
@@ -248,9 +246,7 @@ class FridaServerManager:
                     creationflags=subprocess.CREATE_NO_WINDOW,
                 )
             else:
-                self.server_process = subprocess.Popen(
-                    [str(server_path)], stdout=subprocess.PIPE, stderr=subprocess.PIPE
-                )
+                self.server_process = subprocess.Popen([str(server_path)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             for _attempt in range(10):
                 time.sleep(0.5)

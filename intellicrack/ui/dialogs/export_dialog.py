@@ -139,15 +139,9 @@ class ExportWorker(QThread):
             if hasattr(icp_data, "__dict__"):
                 # Convert analysis object to dict
                 icp_dict = {
-                    "is_protected": icp_data.is_protected
-                    if hasattr(icp_data, "is_protected")
-                    else False,
-                    "file_type": icp_data.file_type
-                    if hasattr(icp_data, "file_type")
-                    else "Unknown",
-                    "architecture": icp_data.architecture
-                    if hasattr(icp_data, "architecture")
-                    else "Unknown",
+                    "is_protected": icp_data.is_protected if hasattr(icp_data, "is_protected") else False,
+                    "file_type": icp_data.file_type if hasattr(icp_data, "file_type") else "Unknown",
+                    "architecture": icp_data.architecture if hasattr(icp_data, "architecture") else "Unknown",
                     "detections": [],
                 }
 
@@ -156,9 +150,7 @@ class ExportWorker(QThread):
                         det_dict = {
                             "name": detection.name if hasattr(detection, "name") else "Unknown",
                             "type": detection.type if hasattr(detection, "type") else "Unknown",
-                            "confidence": detection.confidence
-                            if hasattr(detection, "confidence")
-                            else 0.0,
+                            "confidence": detection.confidence if hasattr(detection, "confidence") else 0.0,
                             "version": detection.version if hasattr(detection, "version") else "",
                         }
                         icp_dict["detections"].append(det_dict)
@@ -332,9 +324,7 @@ class ExportWorker(QThread):
                         ],
                     )
 
-                detection_table = Table(
-                    detection_data, colWidths=[2 * inch, 1.5 * inch, 1 * inch, 1 * inch]
-                )
+                detection_table = Table(detection_data, colWidths=[2 * inch, 1.5 * inch, 1 * inch, 1 * inch])
                 detection_table.setStyle(
                     TableStyle(
                         [
@@ -471,9 +461,7 @@ class ExportWorker(QThread):
 class ExportDialog(BaseDialog):
     """Export dialog for ICP analysis results."""
 
-    def __init__(
-        self, analysis_results: dict[str, Any] | None = None, parent: QWidget | None = None
-    ) -> None:
+    def __init__(self, analysis_results: dict[str, Any] | None = None, parent: QWidget | None = None) -> None:
         """Initialize the ExportDialog with default values."""
         super().__init__(parent, "Export ICP Analysis Results")
         self.resize(600, 500)
@@ -587,9 +575,7 @@ class ExportDialog(BaseDialog):
 
         file_layout = QHBoxLayout()
         self.output_path_edit = QLineEdit()
-        self.output_path_edit.setToolTip(
-            "Enter or browse to select the output file path for the export"
-        )
+        self.output_path_edit.setToolTip("Enter or browse to select the output file path for the export")
         self.output_path_edit.setStyleSheet("QLineEdit { color: #666; }")
 
         self.browse_output_btn = QPushButton("Browse...")
@@ -714,11 +700,7 @@ class ExportDialog(BaseDialog):
     def browse_output_file(self) -> None:
         """Browse for output file."""
         selected_format = next(
-            (
-                button.property("format_id")
-                for button in self.format_group.buttons()
-                if button.isChecked()
-            ),
+            (button.property("format_id") for button in self.format_group.buttons() if button.isChecked()),
             "json",
         )
         # File dialog based on format
@@ -777,9 +759,7 @@ class ExportDialog(BaseDialog):
 </intellicrack_analysis>"""
 
             elif preview_format == "csv":
-                preview_text = (
-                    "Detection Name,Type,Confidence,Version,File Type,Architecture,Protected\n"
-                )
+                preview_text = "Detection Name,Type,Confidence,Version,File Type,Architecture,Protected\n"
                 if "icp_analysis" in filtered_results:
                     icp_data = filtered_results["icp_analysis"]
                     if hasattr(icp_data, "all_detections"):
@@ -837,11 +817,9 @@ class ExportDialog(BaseDialog):
             # Filter detections by confidence
             if hasattr(icp_data, "all_detections"):
                 filtered_detections = [
-                    detection
-                    for detection in icp_data.all_detections
-                    if getattr(detection, "confidence", 0.0)
-                    >= confidence_threshold
+                    detection for detection in icp_data.all_detections if getattr(detection, "confidence", 0.0) >= confidence_threshold
                 ]
+
                 class FilteredICPData:
                     def __init__(self, original: object, filtered_detections: list[object]) -> None:
                         self.file_type = getattr(original, "file_type", "Unknown")
@@ -863,11 +841,7 @@ class ExportDialog(BaseDialog):
             return
 
         selected_format = next(
-            (
-                button.property("format_id")
-                for button in self.format_group.buttons()
-                if button.isChecked()
-            ),
+            (button.property("format_id") for button in self.format_group.buttons() if button.isChecked()),
             "json",
         )
         # Save export preferences to config
@@ -989,9 +963,7 @@ def main() -> None:
             "md5": md5_hash,
             "sha256": sha256_hash,
         },
-        "icp_analysis": ICPAnalysisResult(
-            file_type="PE32", architecture="x86", is_protected=True, all_detections=real_detections
-        ),
+        "icp_analysis": ICPAnalysisResult(file_type="PE32", architecture="x86", is_protected=True, all_detections=real_detections),
     }
 
     dialog = ExportDialog(analysis_results)

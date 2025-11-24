@@ -96,9 +96,7 @@ class EnhancedR2Integration:
         }
 
         # Initialize performance monitor
-        self.performance_monitor = create_performance_monitor(
-            enable_real_time=self.config.get("enable_performance_monitoring", True)
-        )
+        self.performance_monitor = create_performance_monitor(enable_real_time=self.config.get("enable_performance_monitoring", True))
         self.performance_monitor.start_session(f"r2_session_{binary_path}")
 
         # Thread safety
@@ -203,9 +201,7 @@ class EnhancedR2Integration:
         # Add performance metrics
         results["performance"] = self.get_performance_stats()
         results["metadata"]["analysis_end"] = time.time()
-        results["metadata"]["total_duration"] = (
-            results["metadata"]["analysis_end"] - results["metadata"]["analysis_start"]
-        )
+        results["metadata"]["total_duration"] = results["metadata"]["analysis_end"] - results["metadata"]["analysis_start"]
 
         return standardize_r2_result(
             "comprehensive",
@@ -221,10 +217,7 @@ class EnhancedR2Integration:
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all tasks
-            future_to_type = {
-                executor.submit(self._run_single_analysis, analysis_type): analysis_type
-                for analysis_type in analysis_types
-            }
+            future_to_type = {executor.submit(self._run_single_analysis, analysis_type): analysis_type for analysis_type in analysis_types}
 
             # Collect results as they complete
             for future in as_completed(future_to_type, timeout=300):  # 5 minute timeout
@@ -304,9 +297,7 @@ class EnhancedR2Integration:
 
                 # End performance tracking with success
                 bytes_processed = len(str(result)) if result else 0
-                self.performance_monitor.end_operation(
-                    operation_metrics, success=True, bytes_processed=bytes_processed
-                )
+                self.performance_monitor.end_operation(operation_metrics, success=True, bytes_processed=bytes_processed)
 
                 # Cache result
                 self._cache_result(cache_key, result)
@@ -318,9 +309,7 @@ class EnhancedR2Integration:
             self._record_analysis_time(analysis_type, duration, success=False)
 
             # End performance tracking with failure
-            self.performance_monitor.end_operation(
-                operation_metrics, success=False, error_message=str(e)
-            )
+            self.performance_monitor.end_operation(operation_metrics, success=False, error_message=str(e))
 
             self.logger.error(f"Analysis {analysis_type} failed: {e}")
             self.performance_stats["errors_handled"] += 1
@@ -383,9 +372,7 @@ class EnhancedR2Integration:
                 for key, _ in sorted_items[:10]:  # Remove 10 oldest
                     del self.results_cache[key]
 
-    def _record_analysis_time(
-        self, analysis_type: str, duration: float, success: bool = True
-    ) -> None:
+    def _record_analysis_time(self, analysis_type: str, duration: float, success: bool = True) -> None:
         """Record analysis performance."""
         with self._lock:
             if analysis_type not in self.performance_stats["analysis_times"]:
@@ -507,8 +494,7 @@ class EnhancedR2Integration:
         health = {
             "overall_health": "healthy",
             "r2pipe_available": self.r2pipe_available,
-            "components_available": sum(bool(c is not None)
-                                    for c in self.components.values()),
+            "components_available": sum(bool(c is not None) for c in self.components.values()),
             "total_components": len(self.components),
             "cache_health": {
                 "size": len(self.results_cache),
@@ -527,15 +513,10 @@ class EnhancedR2Integration:
 
         # Calculate recovery rate
         if stats["errors_handled"] > 0:
-            health["error_health"]["recovery_rate"] = (
-                stats["recoveries_successful"] / stats["errors_handled"]
-            )
+            health["error_health"]["recovery_rate"] = stats["recoveries_successful"] / stats["errors_handled"]
 
         # Determine overall health
-        if (
-            not health["r2pipe_available"]
-            or health["components_available"] < health["total_components"] * 0.5
-        ):
+        if not health["r2pipe_available"] or health["components_available"] < health["total_components"] * 0.5:
             health["overall_health"] = "critical"
         elif health["error_health"]["recovery_rate"] < 0.5:
             health["overall_health"] = "degraded"

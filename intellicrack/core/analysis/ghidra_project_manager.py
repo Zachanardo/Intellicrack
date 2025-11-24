@@ -60,11 +60,7 @@ class GhidraProjectManager:
 
     def __init__(self, projects_dir: str = None) -> None:
         """Initialize the GhidraProjectManager with an optional projects directory."""
-        self.projects_dir = (
-            Path(projects_dir)
-            if projects_dir
-            else Path.home() / ".intellicrack" / "ghidra_projects"
-        )
+        self.projects_dir = Path(projects_dir) if projects_dir else Path.home() / ".intellicrack" / "ghidra_projects"
         self.projects_dir.mkdir(parents=True, exist_ok=True)
         self.db_path = self.projects_dir / "projects.db"
         self._init_database()
@@ -142,9 +138,7 @@ class GhidraProjectManager:
         """Initialize in-memory cache for frequently accessed data."""
         self.cache = {"projects": {}, "versions": {}, "analysis_results": {}}
 
-    def create_project(
-        self, name: str, binary_path: str, initial_analysis: GhidraAnalysisResult = None
-    ) -> GhidraProject:
+    def create_project(self, name: str, binary_path: str, initial_analysis: GhidraAnalysisResult = None) -> GhidraProject:
         """Create a new Ghidra project with initial version."""
         project_id = self._generate_project_id(name, binary_path)
         binary_hash = self._compute_file_hash(binary_path)
@@ -377,16 +371,12 @@ class GhidraProjectManager:
         # Added functions
         for addr in funcs2 - funcs1:
             func = analysis2.functions[addr]
-            diff_result["added_functions"].append(
-                {"address": hex(addr), "name": func.name, "size": func.size}
-            )
+            diff_result["added_functions"].append({"address": hex(addr), "name": func.name, "size": func.size})
 
         # Removed functions
         for addr in funcs1 - funcs2:
             func = analysis1.functions[addr]
-            diff_result["removed_functions"].append(
-                {"address": hex(addr), "name": func.name, "size": func.size}
-            )
+            diff_result["removed_functions"].append({"address": hex(addr), "name": func.name, "size": func.size})
 
         # Modified functions
         for addr in funcs1 & funcs2:
@@ -426,9 +416,7 @@ class GhidraProjectManager:
         # Calculate statistics
         diff_result["statistics"] = {
             "total_changes": (
-                len(diff_result["added_functions"])
-                + len(diff_result["removed_functions"])
-                + len(diff_result["modified_functions"])
+                len(diff_result["added_functions"]) + len(diff_result["removed_functions"]) + len(diff_result["modified_functions"])
             ),
             "similarity_ratio": self._calculate_similarity(analysis1, analysis2),
         }
@@ -438,11 +426,7 @@ class GhidraProjectManager:
     def _function_changed(self, func1: GhidraFunction, func2: GhidraFunction) -> bool:
         """Check if a function has changed between versions."""
         # Check basic properties
-        if (
-            func1.size != func2.size
-            or func1.signature != func2.signature
-            or func1.return_type != func2.return_type
-        ):
+        if func1.size != func2.size or func1.signature != func2.signature or func1.return_type != func2.return_type:
             return True
 
         # Check decompiled code
@@ -452,9 +436,7 @@ class GhidraProjectManager:
         # Check parameters
         return func1.parameters != func2.parameters
 
-    def _analyze_function_changes(
-        self, func1: GhidraFunction, func2: GhidraFunction
-    ) -> dict[str, Any]:
+    def _analyze_function_changes(self, func1: GhidraFunction, func2: GhidraFunction) -> dict[str, Any]:
         """Analyze specific changes in a function."""
         changes = {}
 
@@ -469,16 +451,12 @@ class GhidraProjectManager:
 
         if func1.decompiled_code != func2.decompiled_code:
             # Generate unified diff
-            diff = difflib.unified_diff(
-                func1.decompiled_code.splitlines(), func2.decompiled_code.splitlines(), lineterm=""
-            )
+            diff = difflib.unified_diff(func1.decompiled_code.splitlines(), func2.decompiled_code.splitlines(), lineterm="")
             changes["code_diff"] = list(diff)
 
         return changes
 
-    def _calculate_similarity(
-        self, analysis1: GhidraAnalysisResult, analysis2: GhidraAnalysisResult
-    ) -> float:
+    def _calculate_similarity(self, analysis1: GhidraAnalysisResult, analysis2: GhidraAnalysisResult) -> float:
         """Calculate overall similarity between two analysis results."""
         # Simple similarity based on function overlap
         funcs1 = set(analysis1.functions.keys())
@@ -492,9 +470,7 @@ class GhidraProjectManager:
 
         return intersection / union if union > 0 else 0.0
 
-    def export_project(
-        self, project_id: str, export_path: str, include_all_versions: bool = False
-    ) -> Path:
+    def export_project(self, project_id: str, export_path: str, include_all_versions: bool = False) -> Path:
         """Export project to a portable archive."""
         project = self.load_project(project_id)
         if not project:
@@ -517,9 +493,7 @@ class GhidraProjectManager:
 
             # Export versions
             versions_to_export = (
-                project.versions
-                if include_all_versions
-                else [v for v in project.versions if v.version_id == project.current_version]
+                project.versions if include_all_versions else [v for v in project.versions if v.version_id == project.current_version]
             )
 
             for version in versions_to_export:
@@ -537,9 +511,7 @@ class GhidraProjectManager:
                     "description": version.description,
                     "tags": version.tags,
                 }
-                zipf.writestr(
-                    f"versions/{version.version_id}.json", json.dumps(version_data, indent=2)
-                )
+                zipf.writestr(f"versions/{version.version_id}.json", json.dumps(version_data, indent=2))
 
         return export_path
 
@@ -555,9 +527,7 @@ class GhidraProjectManager:
             project_id = project_data["project_id"]
             if self.load_project(project_id):
                 # Generate new ID for imported project
-                project_id = self._generate_project_id(
-                    project_data["name"] + "_imported", project_data["binary_path"]
-                )
+                project_id = self._generate_project_id(project_data["name"] + "_imported", project_data["binary_path"])
 
             # Create project directory
             project_dir = self.projects_dir / project_id
@@ -665,9 +635,7 @@ class GhidraProjectManager:
         # Serialize with msgpack for efficiency
         serialized = msgpack.packb(data, use_bin_type=True)
 
-        return lz4.frame.compress(
-            serialized, compression_level=lz4.frame.COMPRESSIONLEVEL_MAX
-        )
+        return lz4.frame.compress(serialized, compression_level=lz4.frame.COMPRESSIONLEVEL_MAX)
 
     def _decompress_analysis(self, compressed_data: bytes) -> GhidraAnalysisResult:
         """Decompress analysis result from storage."""
@@ -677,14 +645,8 @@ class GhidraProjectManager:
         # Deserialize
         data = msgpack.unpackb(decompressed, raw=False)
 
-        functions = {
-            int(addr): GhidraFunction(**func_data)
-            for addr, func_data in data["functions"].items()
-        }
-        data_types = {
-            name: GhidraDataType(**dt_data)
-            for name, dt_data in data["data_types"].items()
-        }
+        functions = {int(addr): GhidraFunction(**func_data) for addr, func_data in data["functions"].items()}
+        data_types = {name: GhidraDataType(**dt_data) for name, dt_data in data["data_types"].items()}
         return GhidraAnalysisResult(
             binary_path=data["binary_path"],
             architecture=data["architecture"],

@@ -95,19 +95,13 @@ class LLMConfigManager:
         try:
             central_config = get_config()
 
-            if central_models := central_config.get(
-                "llm_configuration.models", {}
-            ):
+            if central_models := central_config.get("llm_configuration.models", {}):
                 self.configs.update(central_models)
 
-            if central_profiles := central_config.get(
-                "llm_configuration.profiles", {}
-            ):
+            if central_profiles := central_config.get("llm_configuration.profiles", {}):
                 self.profiles.update(central_profiles)
 
-            if central_metrics := central_config.get(
-                "llm_configuration.metrics", {}
-            ):
+            if central_metrics := central_config.get("llm_configuration.metrics", {}):
                 self.metrics.update(central_metrics)
 
         except Exception as e:
@@ -143,7 +137,9 @@ class LLMConfigManager:
     # No dual storage - production-ready single source of truth
 
     def _get_default_profiles(self) -> dict[str, dict[str, Any]]:
-        """Get default model profiles for different use cases."""
+        """Get default model profiles for different use cases with dynamic model recommendations."""
+        recommended_models = self._get_recommended_models_for_profiles()
+
         return {
             "code_generation": {
                 "name": "Code Generation",
@@ -155,13 +151,7 @@ class LLMConfigManager:
                     "frequency_penalty": 0.0,
                     "presence_penalty": 0.0,
                 },
-                "recommended_models": [
-                    "gpt-4",
-                    "claude-3-5-sonnet-20241022",
-                    "codellama",
-                    "deepseek-coder",
-                    "starcoder",
-                ],
+                "recommended_models": recommended_models.get("code_generation", []),
             },
             "analysis": {
                 "name": "Binary Analysis",
@@ -173,11 +163,7 @@ class LLMConfigManager:
                     "frequency_penalty": 0.0,
                     "presence_penalty": 0.0,
                 },
-                "recommended_models": [
-                    "gpt-4",
-                    "claude-3-opus-20240229",
-                    "llama2-70b",
-                ],
+                "recommended_models": recommended_models.get("analysis", []),
             },
             "creative": {
                 "name": "Creative Tasks",
@@ -189,11 +175,7 @@ class LLMConfigManager:
                     "frequency_penalty": 0.3,
                     "presence_penalty": 0.3,
                 },
-                "recommended_models": [
-                    "gpt-4",
-                    "claude-3-5-sonnet-20241022",
-                    "mixtral-8x7b",
-                ],
+                "recommended_models": recommended_models.get("creative", []),
             },
             "fast_inference": {
                 "name": "Fast Inference",
@@ -205,20 +187,92 @@ class LLMConfigManager:
                     "frequency_penalty": 0.0,
                     "presence_penalty": 0.0,
                 },
-                "recommended_models": [
-                    "gpt-3.5-turbo",
-                    "claude-3-haiku-20240307",
-                    "mistral-7b",
-                ],
+                "recommended_models": recommended_models.get("fast_inference", []),
             },
         }
 
-    @deprecated_config_method(
-        "IntellicrackConfig.set('llm_configuration.models.{model_id}', config)"
-    )
-    def save_model_config(
-        self, model_id: str, config: LLMConfig, metadata: dict | None = None
-    ) -> None:
+    def _get_recommended_models_for_profiles(self) -> dict[str, list[str]]:
+        """Get dynamically recommended models for each profile based on discovered models.
+
+        Returns:
+            Dictionary mapping profile names to lists of recommended model IDs
+
+        """
+        try:
+            import json
+            from pathlib import Path
+
+            cache_file = Path("config/model_cache.json")
+            if not cache_file.exists():
+                return {
+                    "code_generation": [],
+                    "analysis": [],
+                    "creative": [],
+                    "fast_inference": [],
+                }
+
+            with open(cache_file, encoding="utf-8") as f:
+                cache_data = json.load(f)
+
+            all_models: dict[str, list[dict[str, Any]]] = cache_data.get("providers", {})
+
+            openai_models = [m.get("id", "") for m in all_models.get("OpenAI", [])]
+            anthropic_models = [m.get("id", "") for m in all_models.get("Anthropic", [])]
+            ollama_models = [m.get("id", "") for m in all_models.get("Ollama", [])]
+            local_models = [m.get("id", "") for m in all_models.get("Local GGUF", [])]
+
+            large_models = []
+            fast_models = []
+            creative_models = []
+
+            for model_id in openai_models:
+                if "gpt-4" in model_id and "turbo" not in model_id:
+                    large_models.append(model_id)
+                elif "gpt-4o" in model_id or "gpt-4-turbo" in model_id:
+                    large_models.append(model_id)
+                    creative_models.append(model_id)
+                elif "gpt-3.5" in model_id or "turbo" in model_id:
+                    fast_models.append(model_id)
+
+            for model_id in anthropic_models:
+                if "opus" in model_id:
+                    large_models.append(model_id)
+                elif "sonnet" in model_id:
+                    large_models.append(model_id)
+                    creative_models.append(model_id)
+                elif "haiku" in model_id:
+                    fast_models.append(model_id)
+
+            for model_id in ollama_models:
+                if "codellama" in model_id or "deepseek" in model_id or "starcoder" in model_id:
+                    large_models.append(model_id)
+                elif "mistral" in model_id or "llama2" in model_id.lower():
+                    fast_models.append(model_id)
+
+            for model_id in local_models:
+                if "code" in model_id.lower():
+                    large_models.append(model_id)
+                else:
+                    fast_models.append(model_id)
+
+            return {
+                "code_generation": large_models[:5] if large_models else [],
+                "analysis": large_models[:3] if large_models else [],
+                "creative": creative_models[:3] if creative_models else large_models[:3],
+                "fast_inference": fast_models[:3] if fast_models else [],
+            }
+
+        except Exception as e:
+            logger.debug(f"Could not get dynamic model recommendations: {e}")
+            return {
+                "code_generation": [],
+                "analysis": [],
+                "creative": [],
+                "fast_inference": [],
+            }
+
+    @deprecated_config_method("IntellicrackConfig.set('llm_configuration.models.{model_id}', config)")
+    def save_model_config(self, model_id: str, config: LLMConfig, metadata: dict | None = None) -> None:
         """Save a model configuration.
 
         Args:
@@ -382,9 +436,7 @@ class LLMConfigManager:
         logger.info(f"Auto-load complete: {loaded} loaded, {failed} failed")
         return loaded, failed
 
-    @deprecated_config_method(
-        "IntellicrackConfig.set('llm_configuration.profiles.{profile_id}', data)"
-    )
+    @deprecated_config_method("IntellicrackConfig.set('llm_configuration.profiles.{profile_id}', data)")
     def save_profile(self, profile_id: str, profile_data: dict[str, Any]) -> None:
         """Save a model profile.
 
@@ -438,9 +490,7 @@ class LLMConfigManager:
 
         # Get profiles from central config
         central_config = get_config()
-        if central_profiles := central_config.get(
-            "llm_configuration.profiles", {}
-        ):
+        if central_profiles := central_config.get("llm_configuration.profiles", {}):
             # Update internal cache with central config data
             self.profiles.update(central_profiles)
             return central_profiles.copy()
@@ -528,8 +578,7 @@ class LLMConfigManager:
         total_memory = sum(m.get("memory_mb", 0) for m in history if m.get("memory_mb"))
 
         count = len(history)
-        memory_count = sum(bool(m.get("memory_mb"))
-                       for m in history)
+        memory_count = sum(bool(m.get("memory_mb")) for m in history)
 
         self.metrics[model_id]["aggregate"] = {
             "total_uses": count,

@@ -458,9 +458,7 @@ class BinaryContextBuilder:
                         import datetime
 
                         try:
-                            result["windows_filetime"] = datetime.datetime.fromtimestamp(
-                                unix_time
-                            ).isoformat()
+                            result["windows_filetime"] = datetime.datetime.fromtimestamp(unix_time).isoformat()
                         except (ValueError, OSError, OverflowError) as e:
                             logger.error("Error in ai_bridge: %s", e)
 
@@ -505,9 +503,7 @@ class AIBinaryBridge:
 
         logger.info("AIBinaryBridge initialized")
 
-    def analyze_binary_region(
-        self, binary_data: bytes, offset: int, size: int, query: str | None = None
-    ) -> dict[str, Any]:
+    def analyze_binary_region(self, binary_data: bytes, offset: int, size: int, query: str | None = None) -> dict[str, Any]:
         """Analyze a region of binary data with AI assistance.
 
         Args:
@@ -583,9 +579,7 @@ class AIBinaryBridge:
 
         return self._parse_analysis_response(response, binary_data, offset)
 
-    def suggest_edits(
-        self, binary_data: bytes, offset: int, size: int, edit_intent: str
-    ) -> dict[str, Any]:
+    def suggest_edits(self, binary_data: bytes, offset: int, size: int, edit_intent: str) -> dict[str, Any]:
         """Suggest binary edits based on natural language intent.
 
         Args:
@@ -711,11 +705,7 @@ class AIBinaryBridge:
                     LLMMessage(role="user", content=prompt),
                 ]
                 llm_response = self.llm_manager.chat(messages)
-                response = (
-                    llm_response.content
-                    if llm_response
-                    else json.dumps({"identified_patterns": []})
-                )
+                response = llm_response.content if llm_response else json.dumps({"identified_patterns": []})
             except Exception as e:
                 logger.warning("LLM pattern identification failed: %s - using fallback", e)
                 response = json.dumps({"identified_patterns": []})
@@ -844,9 +834,7 @@ class AIBinaryBridge:
             ascii_representation=context["ascii_representation"],
             strings_info=self._format_strings_for_prompt(context.get("strings", [])),
             structure_hints=self._format_hints_for_prompt(context.get("structure_hints", [])),
-            interpretations=self._format_interpretations_for_prompt(
-                context.get("interpretations", {})
-            ),
+            interpretations=self._format_interpretations_for_prompt(context.get("interpretations", {})),
         )
 
         if query:
@@ -910,9 +898,7 @@ class AIBinaryBridge:
             ascii_representation=context["ascii_representation"],
             strings_info=self._format_strings_for_prompt(context.get("strings", [])),
             structure_hints=self._format_hints_for_prompt(context.get("structure_hints", [])),
-            interpretations=self._format_interpretations_for_prompt(
-                context.get("interpretations", {})
-            ),
+            interpretations=self._format_interpretations_for_prompt(context.get("interpretations", {})),
         )
 
         prompt += """
@@ -933,9 +919,7 @@ class AIBinaryBridge:
 
         return prompt
 
-    def _build_pattern_prompt(
-        self, context: dict[str, Any], known_patterns: list[dict[str, Any]] | None
-    ) -> str:
+    def _build_pattern_prompt(self, context: dict[str, Any], known_patterns: list[dict[str, Any]] | None) -> str:
         """Build prompt for AI pattern identification."""
         prompt = """
         # Binary Pattern Identification
@@ -1039,10 +1023,7 @@ class AIBinaryBridge:
         if not strings:
             return "No strings found."
 
-        result = "".join(
-            f"- Offset {s['offset']}: '{s['value']}' ({s['encoding']}, {s['size']} bytes)\n"
-            for s in strings[:10]
-        )
+        result = "".join(f"- Offset {s['offset']}: '{s['value']}' ({s['encoding']}, {s['size']} bytes)\n" for s in strings[:10])
         if len(strings) > 10:
             result += f"- ... and {len(strings) - 10} more strings\n"
 
@@ -1058,15 +1039,11 @@ class AIBinaryBridge:
             if hint["type"] == "file_signature":
                 result += f"- File signature at offset {hint['offset']}: {hint['description']}\n"
             elif hint["type"] == "length_prefix":
-                result += (
-                    f"- Possible length prefix at offset {hint['offset']}: {hint['description']}\n"
-                )
+                result += f"- Possible length prefix at offset {hint['offset']}: {hint['description']}\n"
             elif hint["type"] == "repeating_pattern":
                 result += f"- Repeating pattern at offset {hint['offset']}: {hint['description']}\n"
             else:
-                result += (
-                    f"- {hint['type']} at offset {hint['offset']}: {hint.get('description', '')}\n"
-                )
+                result += f"- {hint['type']} at offset {hint['offset']}: {hint.get('description', '')}\n"
 
         return result
 
@@ -1117,9 +1094,7 @@ class AIBinaryBridge:
 
         return result
 
-    def _parse_analysis_response(
-        self, response: str, binary_data: bytes, offset: int
-    ) -> dict[str, Any]:
+    def _parse_analysis_response(self, response: str, binary_data: bytes, offset: int) -> dict[str, Any]:
         """Parse the AI response for binary analysis."""
         _binary_data = binary_data  # Store for potential future use
         try:
@@ -1162,9 +1137,7 @@ class AIBinaryBridge:
                 "summary": f"Error parsing AI response: {e}",
             }
 
-    def _parse_edit_response(
-        self, response: str, binary_data: bytes, offset: int
-    ) -> dict[str, Any]:
+    def _parse_edit_response(self, response: str, binary_data: bytes, offset: int) -> dict[str, Any]:
         """Parse the AI response for edit suggestions."""
         _binary_data = binary_data  # Store for potential future use
         try:
@@ -1186,9 +1159,7 @@ class AIBinaryBridge:
             # Convert hex strings to bytes
             if "original_bytes" in result:
                 try:
-                    result["original_bytes_raw"] = bytes.fromhex(
-                        result["original_bytes"].replace(" ", "")
-                    )
+                    result["original_bytes_raw"] = bytes.fromhex(result["original_bytes"].replace(" ", ""))
                 except ValueError as e:
                     logger.error("Value error in ai_bridge: %s", e)
                     result["original_bytes_raw"] = b""
@@ -1214,9 +1185,7 @@ class AIBinaryBridge:
                 "consequences": "Unknown",
             }
 
-    def _parse_pattern_response(
-        self, response: str, binary_data: bytes, offset: int
-    ) -> list[dict[str, Any]]:
+    def _parse_pattern_response(self, response: str, binary_data: bytes, offset: int) -> list[dict[str, Any]]:
         """Parse the AI response for pattern identification."""
         _binary_data = binary_data  # Store for potential future use
         try:
@@ -1245,9 +1214,7 @@ class AIBinaryBridge:
             logger.error("Error parsing pattern response: %s", e)
             return []
 
-    def _parse_search_response(
-        self, response: str, binary_data: bytes, offset: int
-    ) -> list[dict[str, Any]]:
+    def _parse_search_response(self, response: str, binary_data: bytes, offset: int) -> list[dict[str, Any]]:
         """Parse the AI response for semantic search."""
         _binary_data = binary_data  # Store for potential future use
         try:
@@ -1276,21 +1243,14 @@ class AIBinaryBridge:
             logger.error("Error parsing search response: %s", e)
             return []
 
-    def _calculate_analysis_confidence(
-        self, patterns: list[dict], anomalies: list[dict], suspicious_strings: list[str]
-    ) -> float:
+    def _calculate_analysis_confidence(self, patterns: list[dict], anomalies: list[dict], suspicious_strings: list[str]) -> float:
         """Calculate confidence score for analysis results."""
         confidence = 0.5  # Base confidence
 
         # Increase confidence based on patterns found
         if patterns:
             confidence += min(0.2, len(patterns) * 0.05)
-            if protection_patterns := [
-                p
-                for p in patterns
-                if p.get("pattern_type")
-                in ["license_check", "anti_debug", "encryption"]
-            ]:
+            if protection_patterns := [p for p in patterns if p.get("pattern_type") in ["license_check", "anti_debug", "encryption"]]:
                 confidence += min(0.2, len(protection_patterns) * 0.1)
 
         # Increase confidence based on anomalies
@@ -1302,8 +1262,7 @@ class AIBinaryBridge:
             confidence += min(0.15, len(suspicious_strings) * 0.03)
             # Higher confidence for specific keywords
             critical_keywords = ["license", "trial", "expired", "debug", "crack"]
-            if critical_found := sum(bool(any(k in s.lower() for k in critical_keywords))
-                                 for s in suspicious_strings):
+            if critical_found := sum(bool(any(k in s.lower() for k in critical_keywords)) for s in suspicious_strings):
                 confidence += min(0.1, critical_found * 0.05)
 
         return min(1.0, confidence)
@@ -1314,20 +1273,15 @@ class AIBinaryBridge:
             return 0.1
 
         # Average confidence of individual suggestions
-        avg_confidence = sum(s.get("confidence", 0.5) for s in edit_suggestions) / len(
-            edit_suggestions
-        )
+        avg_confidence = sum(s.get("confidence", 0.5) for s in edit_suggestions) / len(edit_suggestions)
 
         # Adjust based on context
         confidence = avg_confidence
 
         # Higher confidence if we have good pattern matches in context
         if context.get("patterns"):
-            if relevant_patterns := [
-                p
-                for p in context["patterns"]
-                if p.get("pattern_type") in ["license_check", "anti_debug"]
-            ]:
+            if relevant_patterns := [p for p in context["patterns"] if p.get("pattern_type") in ["license_check", "anti_debug"]]:
+                logger.debug(f"Found {len(relevant_patterns)} relevant patterns, boosting confidence")
                 confidence = min(1.0, confidence + 0.1)
 
         # Higher confidence for specific edit types
@@ -1345,14 +1299,11 @@ class AIBinaryBridge:
         # Base confidence on number and quality of patterns
         confidence = min(0.5, len(patterns) * 0.1)
 
-        if file_sig_patterns := [
-            p for p in patterns if p.get("pattern_type") == "file_signature"
-        ]:
+        if file_sig_patterns := [p for p in patterns if p.get("pattern_type") == "file_signature"]:
+            logger.debug(f"Found {len(file_sig_patterns)} file signature patterns")
             confidence += 0.2
 
-        if high_conf_patterns := [
-            p for p in patterns if p.get("confidence", 0) > 0.8
-        ]:
+        if high_conf_patterns := [p for p in patterns if p.get("confidence", 0) > 0.8]:
             confidence += min(0.2, len(high_conf_patterns) * 0.05)
 
         # Adjust based on context hints
@@ -1369,12 +1320,11 @@ class AIBinaryBridge:
         # Base confidence on number of matches
         confidence = min(0.5, len(matches) * 0.05)
 
-        if high_relevance := [
-            m for m in matches if m.get("relevance_score", 0) > 0.8
-        ]:
+        if high_relevance := [m for m in matches if m.get("relevance_score", 0) > 0.8]:
             confidence += min(0.3, len(high_relevance) * 0.1)
 
         if exact_matches := [m for m in matches if m.get("match_type") == "exact"]:
+            logger.debug(f"Found {len(exact_matches)} exact matches")
             confidence += 0.2
 
         # Adjust based on query specificity
@@ -1509,9 +1459,7 @@ def wrapper_ai_binary_analyze(app_instance: object, parameters: object) -> dict[
         query = parameters.get("query", "")
 
         # Initialize AI bridge
-        ai_bridge = AIBinaryBridge(
-            app_instance.model_manager if hasattr(app_instance, "model_manager") else None
-        )
+        ai_bridge = AIBinaryBridge(app_instance.model_manager if hasattr(app_instance, "model_manager") else None)
 
         return ai_bridge.analyze_binary_region(data, offset, len(data), query)
     except (OSError, ValueError, RuntimeError) as e:
@@ -1561,9 +1509,7 @@ def wrapper_ai_binary_pattern_search(app_instance: object, parameters: object) -
         max_size = min(max_size, file_size - start_offset)
 
         # Initialize AI bridge
-        ai_bridge = AIBinaryBridge(
-            app_instance.model_manager if hasattr(app_instance, "model_manager") else None
-        )
+        ai_bridge = AIBinaryBridge(app_instance.model_manager if hasattr(app_instance, "model_manager") else None)
 
         # Read the file in chunks and search
         chunk_size = 1024 * 1024  # 1 MB chunks
@@ -1576,9 +1522,7 @@ def wrapper_ai_binary_pattern_search(app_instance: object, parameters: object) -
                 data = f.read(min(chunk_size, start_offset + max_size - _offset))
 
                 # Search for pattern
-                chunk_results = ai_bridge.search_binary_semantic(
-                    data, pattern_description, 0, len(data)
-                )
+                chunk_results = ai_bridge.search_binary_semantic(data, pattern_description, 0, len(data))
 
                 # Adjust offsets to be relative to file
                 for _result in chunk_results:
@@ -1589,9 +1533,7 @@ def wrapper_ai_binary_pattern_search(app_instance: object, parameters: object) -
 
                 # Limit to top 10 results
                 if len(results) >= 10:
-                    results = sorted(
-                        results, key=lambda r: r.get("relevance_score", 0), reverse=True
-                    )[:10]
+                    results = sorted(results, key=lambda r: r.get("relevance_score", 0), reverse=True)[:10]
                     break
 
         return {"results": results, "count": len(results)}
@@ -1641,9 +1583,7 @@ def wrapper_ai_binary_edit_suggest(app_instance: object, parameters: object) -> 
             data = f.read(size)
 
         # Initialize AI bridge
-        ai_bridge = AIBinaryBridge(
-            app_instance.model_manager if hasattr(app_instance, "model_manager") else None
-        )
+        ai_bridge = AIBinaryBridge(app_instance.model_manager if hasattr(app_instance, "model_manager") else None)
 
         return ai_bridge.suggest_edits(data, offset, len(data), edit_intent)
     except (OSError, ValueError, RuntimeError) as e:

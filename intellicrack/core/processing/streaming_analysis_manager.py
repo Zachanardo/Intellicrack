@@ -293,17 +293,14 @@ class StreamingAnalysisManager:
 
                     progress.bytes_processed = context.offset + context.size
                     progress.chunks_processed = context.chunk_number + 1
-                    progress.overall_progress = (
-                        progress.bytes_processed / progress.total_bytes
-                    ) * 100
+                    progress.overall_progress = (progress.bytes_processed / progress.total_bytes) * 100
 
                     self._notify_progress(progress)
 
                     if (
                         checkpoint_path
                         and self.config.enable_checkpointing
-                        and progress.bytes_processed % self.config.checkpoint_interval
-                        < self.config.chunk_size
+                        and progress.bytes_processed % self.config.checkpoint_interval < self.config.chunk_size
                     ):
                         self._save_checkpoint(checkpoint_path, chunk_results, progress)
 
@@ -445,9 +442,7 @@ class StreamingAnalysisManager:
                         hasher.update(chunk)
 
                     progress.bytes_processed += len(chunk)
-                    progress.overall_progress = (
-                        progress.bytes_processed / progress.total_bytes
-                    ) * 100
+                    progress.overall_progress = (progress.bytes_processed / progress.total_bytes) * 100
                     self._notify_progress(progress)
 
             return {algo: hasher.hexdigest() for algo, hasher in hashers.items()}
@@ -503,9 +498,7 @@ class StreamingAnalysisManager:
                                 "offset": actual_offset,
                                 "context_before": search_data[context_start:pos].hex(),
                                 "match": pattern.hex(),
-                                "context_after": search_data[
-                                    pos + len(pattern) : context_end
-                                ].hex(),
+                                "context_after": search_data[pos + len(pattern) : context_end].hex(),
                             },
                         )
 
@@ -557,11 +550,9 @@ class StreamingAnalysisManager:
                         probability = count / size
                         entropy -= probability * math.log2(probability)
 
-                printable_count = sum(bool(32 <= byte <= 126)
-                                  for byte in section_data)
+                printable_count = sum(bool(32 <= byte <= 126) for byte in section_data)
                 null_count = byte_counts.get(0, 0)
-                high_entropy_count = sum(bool(byte > 127)
-                                     for byte in section_data)
+                high_entropy_count = sum(bool(byte > 127) for byte in section_data)
 
                 return {
                     "offset": f"0x{offset:08x}",

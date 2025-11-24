@@ -59,9 +59,7 @@ def add_extra_buttons(
 
         # Apply special styling for Analyze Binary button
         if button_text == "Analyze Binary":
-            btn.setStyleSheet(
-                "QPushButton { background-color: #2196F3; color: white; font-weight: bold; }"
-            )
+            btn.setStyleSheet("QPushButton { background-color: #2196F3; color: white; font-weight: bold; }")
 
         header_layout.addWidget(btn)
         buttons[button_text] = btn

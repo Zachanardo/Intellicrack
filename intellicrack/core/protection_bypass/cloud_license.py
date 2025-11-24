@@ -159,9 +159,7 @@ class TLSInterceptor:
             with open(ca_cert_file, "rb") as f:
                 self.ca_cert = x509.load_pem_x509_certificate(f.read(), self.backend)
             with open(ca_key_file, "rb") as f:
-                self.ca_key = serialization.load_pem_private_key(
-                    f.read(), password=None, backend=self.backend
-                )
+                self.ca_key = serialization.load_pem_private_key(f.read(), password=None, backend=self.backend)
         else:
             self.ca_key = rsa.generate_private_key(
                 public_exponent=65537,
@@ -415,9 +413,7 @@ class ResponseSynthesizer:
 
         """
         if not CRYPTOGRAPHY_AVAILABLE:
-            raise ImportError(
-                "cryptography library is required for response synthesis. Install with: pip install cryptography"
-            )
+            raise ImportError("cryptography library is required for response synthesis. Install with: pip install cryptography")
 
         self.backend = default_backend()
         self.rsa_keys = {}
@@ -484,9 +480,7 @@ class ResponseSynthesizer:
             )
         return self.rsa_keys[key_id]
 
-    def generate_jwt(
-        self, payload: dict[str, Any], algorithm: str = "RS256", key_id: str = "default"
-    ) -> str:
+    def generate_jwt(self, payload: dict[str, Any], algorithm: str = "RS256", key_id: str = "default") -> str:
         """Generate a signed JWT token for authentication/authorization.
 
         Args:
@@ -502,9 +496,7 @@ class ResponseSynthesizer:
 
         """
         if not JWT_AVAILABLE:
-            error_msg = (
-                "PyJWT library is required for JWT generation. Install with: pip install PyJWT"
-            )
+            error_msg = "PyJWT library is required for JWT generation. Install with: pip install PyJWT"
             logger.error(error_msg)
             raise ImportError(error_msg)
 
@@ -683,9 +675,7 @@ class ResponseSynthesizer:
             "refresh_token": base64.b64encode(os.urandom(32)).decode(),
         }
 
-    def synthesize_rest_response(
-        self, endpoint: str, method: str, request_data: dict
-    ) -> dict[str, Any]:
+    def synthesize_rest_response(self, endpoint: str, method: str, request_data: dict) -> dict[str, Any]:
         """Synthesize REST API license validation response.
 
         Args:
@@ -699,9 +689,7 @@ class ResponseSynthesizer:
         """
         endpoint_patterns = {
             r"/api/license/validate": self.templates[ProtocolType.HTTP_REST]["license_validate"],
-            r"/api/subscription/status": self.templates[ProtocolType.HTTP_REST][
-                "subscription_status"
-            ],
+            r"/api/subscription/status": self.templates[ProtocolType.HTTP_REST]["subscription_status"],
             r"/api/entitlements": self.templates[ProtocolType.HTTP_REST]["entitlements"],
             r"/api/auth/token": {
                 "access_token": self.generate_jwt({}),
@@ -742,11 +730,7 @@ class ResponseSynthesizer:
         }
 
         template_key = next(
-            (
-                key
-                for pattern, key in soap_patterns.items()
-                if pattern in action or pattern in request_body
-            ),
+            (key for pattern, key in soap_patterns.items() if pattern in action or pattern in request_body),
             None,
         )
         if template_key and template_key in self.templates[ProtocolType.SOAP]:
@@ -952,6 +936,7 @@ class MITMProxyAddon:
         logger.debug(f"Intercepted request: {method} {url}")
 
         if should_block := self._check_block_rules(url, method, headers):
+            logger.info(f"Blocking request to {url} (rule match: {should_block})")
             flow.response = http.Response.make(
                 403,
                 b"Blocked by Intellicrack",
@@ -980,6 +965,7 @@ class MITMProxyAddon:
         url = flow.request.pretty_url
 
         if should_modify := self._check_modify_rules(url):
+            logger.info(f"Modifying response for {url} (rule match: {should_modify})")
             self._synthesize_response(flow)
 
     def _check_block_rules(self, url: str, method: str, headers: dict) -> bool:
@@ -1013,10 +999,7 @@ class MITMProxyAddon:
 
         """
         modify_rules = self.intercept_rules.get("modify", [])
-        return any(
-            "url_pattern" in rule and re.search(rule["url_pattern"], url)
-            for rule in modify_rules
-        )
+        return any("url_pattern" in rule and re.search(rule["url_pattern"], url) for rule in modify_rules)
 
     def _apply_request_modifications(self, flow: http.HTTPFlow) -> None:
         """Apply modifications to intercepted request.
@@ -1260,9 +1243,7 @@ class CloudLicenseProtocolHandler:
             "license_id": self.synthesizer._generate_uuid(),
         }
 
-    def synthesize_license_response(
-        self, protocol: ProtocolType, endpoint: str, request_data: object
-    ) -> object:
+    def synthesize_license_response(self, protocol: ProtocolType, endpoint: str, request_data: object) -> object:
         """Synthesize license validation response based on protocol type.
 
         Args:

@@ -248,9 +248,7 @@ class R2KeygenAssistant:
 
         return flow
 
-    def _analyze_block_instructions(
-        self, addr: int, block_bytes: bytes, flow: ValidationFlow
-    ) -> None:
+    def _analyze_block_instructions(self, addr: int, block_bytes: bytes, flow: ValidationFlow) -> None:
         """Analyze instructions in a basic block."""
         for insn in self.cs.disasm(block_bytes, addr):
             if crypto_op := self._detect_crypto_operation(insn):
@@ -363,11 +361,7 @@ class R2KeygenAssistant:
         ]
 
         return next(
-            (
-                "4x4" if "x" in fmt or "X" in fmt else "3x5"
-                for fmt in format_patterns
-                if re.search(fmt, strings)
-            ),
+            ("4x4" if "x" in fmt or "X" in fmt else "3x5" for fmt in format_patterns if re.search(fmt, strings)),
             None,
         )
 
@@ -496,9 +490,7 @@ class R2KeygenAssistant:
                         "exponent": exponent,
                     }
 
-                    print(
-                        f"[+] Found potential RSA-{modulus.bit_length()} key at 0x{start_addr + i:x}"
-                    )
+                    print(f"[+] Found potential RSA-{modulus.bit_length()} key at 0x{start_addr + i:x}")
 
     def _extract_aes_keys(self) -> None:
         """Extract AES keys from binary."""
@@ -648,9 +640,7 @@ class R2KeygenAssistant:
             algo_chain = [op.algorithm for op in flow.operations]
 
             for lang in languages:
-                if template := self._generate_keygen_template(
-                    flow, algo_chain, lang
-                ):
+                if template := self._generate_keygen_template(flow, algo_chain, lang):
                     templates.append(template)
 
         return templates
@@ -673,9 +663,7 @@ class R2KeygenAssistant:
         # Add more languages as needed
         return None
 
-    def _generate_python_keygen(
-        self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]
-    ) -> KeygenTemplate:
+    def _generate_python_keygen(self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]) -> KeygenTemplate:
         """Generate Python keygen."""
         code = []
         dependencies = []
@@ -802,10 +790,7 @@ class R2KeygenAssistant:
             )
         if "CUSTOM" in self.extracted_keys:
             code.append("CUSTOM_CONSTANTS = [")
-            code.extend(
-                f"    {const['hex']},  # {const['context']}"
-                for const in self.extracted_keys["CUSTOM"][:10]
-            )
+            code.extend(f"    {const['hex']},  # {const['context']}" for const in self.extracted_keys["CUSTOM"][:10])
             code.extend(("]", ""))
 
     def _add_serial_formatting(self, code: list[str], format_pattern: str) -> None:
@@ -835,9 +820,7 @@ class R2KeygenAssistant:
             # Generic hex format
             code.append("    serial = digest.hex().upper()[:16]")
 
-    def _generate_cpp_keygen(
-        self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]
-    ) -> KeygenTemplate:
+    def _generate_cpp_keygen(self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]) -> KeygenTemplate:
         """Generate C++ keygen."""
         code = []
         dependencies = []
@@ -878,9 +861,7 @@ class R2KeygenAssistant:
             if algo == CryptoAlgorithm.MD5:
                 code.append(f"    // Step {i + 1}: MD5 hash")
                 code.append("    unsigned char md5_digest[MD5_DIGEST_LENGTH];")
-                code.append(
-                    f"    MD5((unsigned char*){current_var}.c_str(), {current_var}.length(), md5_digest);"
-                )
+                code.append(f"    MD5((unsigned char*){current_var}.c_str(), {current_var}.length(), md5_digest);")
                 current_var = "md5_digest"
 
             elif algo == CryptoAlgorithm.CUSTOM_XOR:
@@ -953,15 +934,10 @@ class R2KeygenAssistant:
             )
         if "CUSTOM" in self.extracted_keys:
             code.append("const uint32_t CUSTOM_CONSTANTS[] = {")
-            code.extend(
-                f"    {const['hex']},"
-                for const in self.extracted_keys["CUSTOM"][:10]
-            )
+            code.extend(f"    {const['hex']}," for const in self.extracted_keys["CUSTOM"][:10])
             code.extend(("};", ""))
 
-    def _generate_java_keygen(
-        self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]
-    ) -> KeygenTemplate:
+    def _generate_java_keygen(self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]) -> KeygenTemplate:
         """Generate Java keygen."""
         code = []
         dependencies = []
@@ -1017,9 +993,7 @@ class R2KeygenAssistant:
                 code.append(f"        byte[] xorResult = new byte[{current_var}.length];")
                 code.append(f"        for (int i = 0; i < {current_var}.length; i += 4) {{")
                 code.append("            int chunk = 0;")
-                code.append(
-                    "            for (int j = 0; j < 4 && i+j < " + current_var + ".length; j++) {"
-                )
+                code.append("            for (int j = 0; j < 4 && i+j < " + current_var + ".length; j++) {")
                 code.append(f"                chunk |= ({current_var}[i+j] & 0xFF) << (j*8);")
                 code.append("            }")
                 code.append("            chunk ^= xorKey;")
@@ -1037,9 +1011,7 @@ class R2KeygenAssistant:
         code.append("        for (int i = 0; i < 8 && i < " + current_var + ".length; i++) {")
         if flow.serial_format == "4x4":
             code.append("            if (i > 0 && i % 2 == 0) serial.append('-');")
-        code.append(
-            f'            serial.append(String.format("%02X", {current_var}[i] & 0xFF));'
-        )
+        code.append(f'            serial.append(String.format("%02X", {current_var}[i] & 0xFF));')
         code.append("        }")
         code.append("        return serial.toString();")
         code.append("    }")
@@ -1076,10 +1048,7 @@ class R2KeygenAssistant:
 
         if "CUSTOM" in self.extracted_keys:
             code.append("    private static final int[] CUSTOM_CONSTANTS = {")
-            code.extend(
-                f"        {const['hex']},"
-                for const in self.extracted_keys["CUSTOM"][:10]
-            )
+            code.extend(f"        {const['hex']}," for const in self.extracted_keys["CUSTOM"][:10])
             code.extend(("    };", ""))
 
     def export_keygens(self, templates: list[KeygenTemplate], output_dir: str = "keygens") -> None:
@@ -1126,9 +1095,7 @@ class R2KeygenAssistant:
         print("\n[*] Analyzing license functions for keygen generation...")
 
         # Convert to addresses
-        target_addrs = [
-            int(f["address"], 16) for f in license_functions if f.get("confidence", 0) > 0.7
-        ]
+        target_addrs = [int(f["address"], 16) for f in license_functions if f.get("confidence", 0) > 0.7]
 
         # Analyze validation flows
         self.analyze_validation(target_addrs)

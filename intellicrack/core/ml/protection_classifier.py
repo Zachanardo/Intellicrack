@@ -231,9 +231,7 @@ class ProtectionClassifier:
         confidence = float(probabilities[predicted_class_idx])
 
         top_indices = np.argsort(probabilities)[-3:][::-1]
-        top_predictions = [
-            (self.label_encoder.classes_[idx], float(probabilities[idx])) for idx in top_indices
-        ]
+        top_predictions = [(self.label_encoder.classes_[idx], float(probabilities[idx])) for idx in top_indices]
 
         self.logger.info(
             "Predicted protection: %s (confidence: %.4f)",

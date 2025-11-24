@@ -113,21 +113,15 @@ class ProgramDiscoveryEngine:
 
     # Registry paths for Windows program discovery
     WINDOWS_REGISTRY_PATHS = [
-        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall")
-        if HAS_WINREG
-        else (None, None),
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall") if HAS_WINREG else (None, None),
         (
             winreg.HKEY_LOCAL_MACHINE,
             r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
         )
         if HAS_WINREG
         else (None, None),
-        (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall")
-        if HAS_WINREG
-        else (None, None),
-        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Classes\Applications")
-        if HAS_WINREG
-        else (None, None),
+        (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall") if HAS_WINREG else (None, None),
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Classes\Applications") if HAS_WINREG else (None, None),
     ]
 
     # Priority targets for analysis (higher score = higher priority)
@@ -282,9 +276,7 @@ class ProgramDiscoveryEngine:
                     resolved_path, metadata = file_resolver.resolve_file_path(file_path)
 
                     if "error" not in metadata:
-                        if program_info := self.analyze_program_from_path(
-                            resolved_path
-                        ):
+                        if program_info := self.analyze_program_from_path(resolved_path):
                             programs.append(program_info)
 
         except Exception as e:
@@ -429,9 +421,7 @@ class ProgramDiscoveryEngine:
                             "locked",
                         ]
 
-                        if any(
-                            pattern in filename_lower for pattern in licensing_indicators
-                        ) or file_path.suffix.lower() in [
+                        if any(pattern in filename_lower for pattern in licensing_indicators) or file_path.suffix.lower() in [
                             ".lic",
                             ".license",
                             ".key",
@@ -678,9 +668,7 @@ class ProgramDiscoveryEngine:
 
         for line in output.split("\n"):
             if line.strip():
-                if match := re.match(
-                    r"^(.+?)-([^-]+)-([^-]+)\.(.+)$", line.strip()
-                ):
+                if match := re.match(r"^(.+?)-([^-]+)-([^-]+)\.(.+)$", line.strip()):
                     name = match[1]
                     version = match[2]
                     release = match[3]
@@ -710,9 +698,7 @@ class ProgramDiscoveryEngine:
 
         return programs
 
-    def _scan_registry_path(
-        self, hkey: object, path: str, include_system: bool
-    ) -> list[ProgramInfo]:
+    def _scan_registry_path(self, hkey: object, path: str, include_system: bool) -> list[ProgramInfo]:
         """Scan a specific registry path for installed programs."""
         programs = []
         self.logger.debug(f"Scanning registry path {path}, include_system={include_system}")
@@ -722,9 +708,7 @@ class ProgramDiscoveryEngine:
                 for i in range(winreg.QueryInfoKey(key)[0]):
                     try:
                         subkey_name = winreg.EnumKey(key, i)
-                        if program := self._extract_program_from_registry(
-                            hkey, path, subkey_name, include_system
-                        ):
+                        if program := self._extract_program_from_registry(hkey, path, subkey_name, include_system):
                             programs.append(program)
                     except (OSError, ValueError) as e:
                         self.logger.debug(f"Error reading registry subkey {subkey_name}: {e}")
@@ -735,9 +719,7 @@ class ProgramDiscoveryEngine:
 
         return programs
 
-    def _extract_program_from_registry(
-        self, hkey: object, path: str, subkey_name: str, include_system: bool
-    ) -> ProgramInfo | None:
+    def _extract_program_from_registry(self, hkey: object, path: str, subkey_name: str, include_system: bool) -> ProgramInfo | None:
         """Extract program information from a registry entry."""
         try:
             with winreg.OpenKey(hkey, f"{path}\\{subkey_name}") as subkey:
@@ -767,9 +749,7 @@ class ProgramDiscoveryEngine:
                 # Find executable paths
                 executable_paths = []
                 if install_location and os.path.exists(install_location):
-                    if main_exe := self._find_main_executable(
-                        Path(install_location)
-                    ):
+                    if main_exe := self._find_main_executable(Path(install_location)):
                         executable_paths.append(str(main_exe))
 
                 return ProgramInfo(
@@ -789,9 +769,7 @@ class ProgramDiscoveryEngine:
                     registry_key=f"{path}\\{subkey_name}",
                     discovery_method="windows_registry",
                     confidence_score=0.9,
-                    analysis_priority=self._calculate_analysis_priority(
-                        display_name, install_location or ""
-                    ),
+                    analysis_priority=self._calculate_analysis_priority(display_name, install_location or ""),
                 )
         except Exception as e:
             self.logger.debug(f"Error extracting program from registry {subkey_name}: {e}")
@@ -824,9 +802,7 @@ class ProgramDiscoveryEngine:
         name_lower = display_name.lower()
         key_lower = subkey_name.lower()
 
-        return any(
-            indicator in name_lower or indicator in key_lower for indicator in system_indicators
-        )
+        return any(indicator in name_lower or indicator in key_lower for indicator in system_indicators)
 
     def _should_use_cache(self) -> bool:
         """Check if cached data should be used."""

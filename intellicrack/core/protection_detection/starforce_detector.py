@@ -244,9 +244,7 @@ class StarForceDetector:
             if self._yara_rules:
                 yara_matches = self._yara_scan(target_path)
 
-        confidence = self._calculate_confidence(
-            drivers, services, registry_keys, sections, yara_matches
-        )
+        confidence = self._calculate_confidence(drivers, services, registry_keys, sections, yara_matches)
 
         detected = confidence > 0.6
 
@@ -297,9 +295,7 @@ class StarForceDetector:
 
             try:
                 for service_name in self.SERVICE_NAMES:
-                    if service_handle := self._advapi32.OpenServiceW(
-                        sc_manager, service_name, SERVICE_QUERY_CONFIG
-                    ):
+                    if service_handle := self._advapi32.OpenServiceW(sc_manager, service_name, SERVICE_QUERY_CONFIG):
                         detected.append(service_name)
                         self._advapi32.CloseServiceHandle(service_handle)
             finally:
@@ -364,9 +360,7 @@ class StarForceDetector:
                         for st in entry.StringTable:
                             for _key, value in st.entries.items():
                                 if b"StarForce" in value or b"Protection Technology" in value:
-                                    return self._parse_version_string(
-                                        value.decode("utf-8", errors="ignore")
-                                    )
+                                    return self._parse_version_string(value.decode("utf-8", errors="ignore"))
 
             data = pe.get_memory_mapped_image()
 
@@ -500,21 +494,15 @@ class StarForceDetector:
 
             try:
                 for service_name in services:
-                    if service_handle := self._advapi32.OpenServiceW(
-                        sc_manager, service_name, SERVICE_QUERY_STATUS
-                    ):
+                    if service_handle := self._advapi32.OpenServiceW(sc_manager, service_name, SERVICE_QUERY_STATUS):
                         status = ServiceStatus()
                         if hasattr(self._advapi32, "QueryServiceStatus"):
                             self._advapi32.QueryServiceStatus.argtypes = [
                                 wintypes.HANDLE,
                                 ctypes.POINTER(ServiceStatus),
                             ]
-                            if self._advapi32.QueryServiceStatus(
-                                service_handle, ctypes.byref(status)
-                            ):
-                                status_info[service_name] = states.get(
-                                    status.dwCurrentState, "UNKNOWN"
-                                )
+                            if self._advapi32.QueryServiceStatus(service_handle, ctypes.byref(status)):
+                                status_info[service_name] = states.get(status.dwCurrentState, "UNKNOWN")
 
                         self._advapi32.CloseServiceHandle(service_handle)
             finally:

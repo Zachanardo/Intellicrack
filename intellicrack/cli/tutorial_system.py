@@ -395,9 +395,7 @@ class TutorialSystem:
 
         # Show recommendations
         if not any(self.tutorial_progress.values()):
-            self.console.print(
-                "\n [bold yellow]Recommendation:[/bold yellow] Start with 'getting_started' if you're new to Intellicrack"
-            )
+            self.console.print("\n [bold yellow]Recommendation:[/bold yellow] Start with 'getting_started' if you're new to Intellicrack")
 
     def _list_tutorials_basic(self) -> None:
         """List tutorials in basic text format."""
@@ -435,15 +433,10 @@ class TutorialSystem:
         # Check prerequisites
         if tutorial.prerequisites:
             if missing_prereqs := [
-                prereq
-                for prereq in tutorial.prerequisites
-                if self.tutorial_progress.get(prereq, 0)
-                < len(self.tutorials[prereq].steps)
+                prereq for prereq in tutorial.prerequisites if self.tutorial_progress.get(prereq, 0) < len(self.tutorials[prereq].steps)
             ]:
                 if self.console:
-                    self.console.print(
-                        f"[red]Prerequisites not met:[/red] {', '.join(missing_prereqs)}"
-                    )
+                    self.console.print(f"[red]Prerequisites not met:[/red] {', '.join(missing_prereqs)}")
                 else:
                     print(f"Prerequisites not met: {', '.join(missing_prereqs)}")
                 return False
@@ -544,9 +537,7 @@ class TutorialSystem:
                 for hint in step.hints:
                     print(f"   {hint}")
 
-            print(
-                "\nNavigation: 'tutorial next' | 'tutorial prev' | 'tutorial skip' | 'tutorial quit'"
-            )
+            print("\nNavigation: 'tutorial next' | 'tutorial prev' | 'tutorial skip' | 'tutorial quit'")
 
         # Prompt for command execution
         self._prompt_for_command()
@@ -779,9 +770,7 @@ class TutorialSystem:
         )
 
         if self.console:
-            self.console.print(
-                f"[yellow]Tutorial '{tutorial_name}' paused at step {self.current_step + 1}[/yellow]"
-            )
+            self.console.print(f"[yellow]Tutorial '{tutorial_name}' paused at step {self.current_step + 1}[/yellow]")
             self.console.print("[dim]You can resume later with 'tutorial resume'[/dim]")
         else:
             print(f"Tutorial '{tutorial_name}' paused at step {self.current_step + 1}")
@@ -832,11 +821,7 @@ class TutorialSystem:
 
     def _show_next_recommendations(self) -> None:
         """Show recommended next tutorials."""
-        completed = {
-            name
-            for name, progress in self.tutorial_progress.items()
-            if progress >= len(self.tutorials[name].steps)
-        }
+        completed = {name for name, progress in self.tutorial_progress.items() if progress >= len(self.tutorials[name].steps)}
 
         recommendations = []
 
@@ -986,15 +971,11 @@ class TutorialSystem:
             card_content += f"⏱️ {tutorial.estimated_time} min\n"
             card_content += f"📚 {len(tutorial.steps)} steps\n\n"
             card_content += (
-                f"[dim]{tutorial.description[:50]}...[/dim]"
-                if len(tutorial.description) > 50
-                else f"[dim]{tutorial.description}[/dim]"
+                f"[dim]{tutorial.description[:50]}...[/dim]" if len(tutorial.description) > 50 else f"[dim]{tutorial.description}[/dim]"
             )
 
             # Check completion status
-            completion = self.tutorial_progress.get(
-                tutorial.name, {"completed": False, "progress": 0}
-            )
+            completion = self.tutorial_progress.get(tutorial.name, {"completed": False, "progress": 0})
             if completion["completed"]:
                 border_style = "green"
                 title_prefix = "OK "
@@ -1142,11 +1123,7 @@ class TutorialSystem:
         if not RICH_AVAILABLE or not self.console:
             return {}
 
-        settings = {
-            "auto_advance": Confirm.ask(
-                "Enable auto-advance to next step?", default=False
-            )
-        }
+        settings = {"auto_advance": Confirm.ask("Enable auto-advance to next step?", default=False)}
 
         settings["show_hints"] = Confirm.ask("Show hints automatically?", default=True)
 
@@ -1215,16 +1192,10 @@ class TutorialSystem:
         info_node.add(f" Description: {tutorial.description}")
 
         # Add tutorial steps
-        steps_node = tree.add(
-            f"📋 [bold yellow]Tutorial Steps ({len(tutorial.steps)})[/bold yellow]"
-        )
+        steps_node = tree.add(f"📋 [bold yellow]Tutorial Steps ({len(tutorial.steps)})[/bold yellow]")
 
         for i, step in enumerate(tutorial.steps, 1):
-            step_icon = (
-                "OK"
-                if i <= self.tutorial_progress.get(tutorial_name, {}).get("progress", 0)
-                else "📖"
-            )
+            step_icon = "OK" if i <= self.tutorial_progress.get(tutorial_name, {}).get("progress", 0) else "📖"
             step_node = steps_node.add(f"{step_icon} [cyan]Step {i}: {step.title}[/cyan]")
 
             # Add step details
@@ -1299,9 +1270,7 @@ Start with 'getting_started' if you're new to Intellicrack.""",
             elif parts[0] == "start" and len(parts) > 1:
                 tutorial_name = parts[1]
                 if not tutorial_system.start_tutorial(tutorial_name):
-                    print(
-                        f"Tutorial '{tutorial_name}' not found. Use 'list' to see available tutorials."
-                    )
+                    print(f"Tutorial '{tutorial_name}' not found. Use 'list' to see available tutorials.")
             elif parts[0] == "resume":
                 if not tutorial_system.resume_tutorial():
                     print("No tutorial to resume.")

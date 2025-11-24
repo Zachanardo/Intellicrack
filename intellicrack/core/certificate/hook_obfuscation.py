@@ -252,9 +252,7 @@ class HookObfuscator:
             True if indirect hook created successfully
 
         """
-        logger.info(
-            f"Creating indirect hook: {hex(target)} -> {hex(handler)} (chain: {chain_length})"
-        )
+        logger.info(f"Creating indirect hook: {hex(target)} -> {hex(handler)} (chain: {chain_length})")
 
         try:
             with self._lock:
@@ -419,6 +417,7 @@ class HookObfuscator:
         import platform
 
         if is_64bit := platform.machine().endswith("64"):
+            logger.debug(f"Generating {'64-bit' if is_64bit else '32-bit'} JMP to 0x{target:X}")
             return bytes(
                 [
                     0x48,
@@ -428,6 +427,7 @@ class HookObfuscator:
                     0xE0,
                 ]
             )
+        logger.debug(f"Generating 32-bit JMP to 0x{target:X}")
         return bytes(
             [
                 0xE9,
@@ -835,13 +835,14 @@ class HookObfuscator:
         """Rotate a single hook to new location."""
         try:
             if new_cave := self._find_code_cave(96):
+                logger.debug(f"Found new code cave at 0x{new_cave:X} for hook rotation")
                 return (
                     self.create_indirect_hook(
-                                            hook_info.target_address,
-                                            hook_info.handler_address,
-                                        ) if self._write_memory(
-                                            hook_info.target_address, hook_info.original_bytes
-                                        ) else False
+                        hook_info.target_address,
+                        hook_info.handler_address,
+                    )
+                    if self._write_memory(hook_info.target_address, hook_info.original_bytes)
+                    else False
                 )
             else:
                 return False
@@ -862,9 +863,7 @@ class HookObfuscator:
                 "total_hooks": len(self.installed_hooks),
                 "active_hooks": [hex(addr) for addr in self.installed_hooks],
                 "integrity_monitor_active": self.integrity_monitor_active,
-                "total_tampering_attempts": sum(
-                    h.tamper_count for h in self.installed_hooks.values()
-                ),
+                "total_tampering_attempts": sum(h.tamper_count for h in self.installed_hooks.values()),
                 "code_caves_found": sum(len(caves) for caves in self.code_caves.values()),
             }
 

@@ -118,9 +118,7 @@ class VMTableModel(QAbstractTableModel):
 
         return QVariant()
 
-    def headerData(
-        self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole
-    ) -> object:
+    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole) -> object:
         """Return header data.
 
         Args:
@@ -251,6 +249,7 @@ class VMManagerDialog(QDialog):
 
         try:
             if success := self.qemu_manager.start_vm_instance(snapshot_id):
+                logger.info(f"VM {snapshot_id} started successfully (result: {success})")
                 QMessageBox.information(self, "Success", f"VM {snapshot_id} started successfully.")
                 self._load_vm_data()  # Refresh to show updated status
             else:
@@ -268,6 +267,7 @@ class VMManagerDialog(QDialog):
 
         try:
             if success := self.qemu_manager.stop_vm_instance(snapshot_id):
+                logger.info(f"VM {snapshot_id} stopped successfully (result: {success})")
                 QMessageBox.information(self, "Success", f"VM {snapshot_id} stopped successfully.")
                 self._load_vm_data()  # Refresh to show updated status
             else:
@@ -297,6 +297,7 @@ class VMManagerDialog(QDialog):
 
         try:
             if success := self.qemu_manager.delete_vm_instance(snapshot_id):
+                logger.info(f"VM {snapshot_id} deleted successfully (result: {success})")
                 QMessageBox.information(self, "Success", f"VM {snapshot_id} deleted successfully.")
                 self._load_vm_data()  # Refresh to remove deleted VM
             else:

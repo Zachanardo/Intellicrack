@@ -270,9 +270,7 @@ class SerializationProtocol:
     """Handles serialization/deserialization of tool messages."""
 
     @staticmethod
-    def serialize(
-        message: ToolMessage, format: SerializationFormat = SerializationFormat.MSGPACK
-    ) -> bytes:
+    def serialize(message: ToolMessage, format: SerializationFormat = SerializationFormat.MSGPACK) -> bytes:
         """Serialize message to bytes.
 
         Args:
@@ -303,9 +301,7 @@ class SerializationProtocol:
         return msgpack.packb(data)
 
     @staticmethod
-    def deserialize(
-        data: bytes, format: SerializationFormat = SerializationFormat.MSGPACK
-    ) -> ToolMessage | None:
+    def deserialize(data: bytes, format: SerializationFormat = SerializationFormat.MSGPACK) -> ToolMessage | None:
         """Deserialize bytes to message.
 
         Args:
@@ -415,10 +411,7 @@ class ToolMonitor:
                         # Check heartbeat timeout
                         if time.time() - status.last_heartbeat > 30:
                             status.status = "unresponsive"
-                        elif (
-                            status.status == "unresponsive"
-                            and time.time() - status.last_heartbeat < 30
-                        ):
+                        elif status.status == "unresponsive" and time.time() - status.last_heartbeat < 30:
                             status.status = "running"
 
                     except Exception as e:
@@ -508,8 +501,7 @@ class FailureRecovery:
 
         # Calculate retry delay
         delay = min(
-            self.retry_config["base_delay"]
-            * (self.retry_config["exponential_base"] ** (retry_count - 1)),
+            self.retry_config["base_delay"] * (self.retry_config["exponential_base"] ** (retry_count - 1)),
             self.retry_config["max_delay"],
         )
 
@@ -572,9 +564,7 @@ class ConflictResolver:
             ToolType.FRIDA: 0.8,
         }
 
-    def resolve(
-        self, conflicts: list[ToolMessage], strategy: str = "confidence_based"
-    ) -> object | None:
+    def resolve(self, conflicts: list[ToolMessage], strategy: str = "confidence_based") -> object | None:
         """Resolve conflicts between tool results.
 
         Args:
@@ -615,11 +605,7 @@ class ConflictResolver:
         # Find majority
         max_votes = max(len(v) for v in votes.values())
         return next(
-            (
-                voters[0].data
-                for voters in votes.values()
-                if len(voters) == max_votes
-            ),
+            (voters[0].data for voters in votes.values() if len(voters) == max_votes),
             None,
         )
 
@@ -963,9 +949,7 @@ class RealToolCommunicator:
             self.recovery.handle_failure(message, e)
             return False
 
-    def broadcast_message(
-        self, source: ToolType, data: object, message_type: MessageType = MessageType.DATA
-    ) -> None:
+    def broadcast_message(self, source: ToolType, data: object, message_type: MessageType = MessageType.DATA) -> None:
         """Broadcast message to all tools.
 
         Args:
@@ -987,9 +971,7 @@ class RealToolCommunicator:
                 )
                 self.send_message(message)
 
-    def resolve_conflicts(
-        self, messages: list[ToolMessage], strategy: str = "confidence_based"
-    ) -> object | None:
+    def resolve_conflicts(self, messages: list[ToolMessage], strategy: str = "confidence_based") -> object | None:
         """Resolve conflicts between tool results.
 
         Args:
@@ -1045,9 +1027,7 @@ def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="Real Tool Communication System")
-    parser.add_argument(
-        "--mode", choices=["server", "client"], default="server", help="Run as server or client"
-    )
+    parser.add_argument("--mode", choices=["server", "client"], default="server", help="Run as server or client")
     parser.add_argument(
         "--tool",
         choices=[t.value for t in ToolType],

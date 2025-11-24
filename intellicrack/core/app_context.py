@@ -22,6 +22,7 @@ configuration, state management, and shared resources across the application.
 import json
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import PYQT6_AVAILABLE, QObject, pyqtSignal
 from intellicrack.utils.logger import get_logger
@@ -131,14 +132,14 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
         try:
             path = Path(file_path)
             if not path.exists():
-                logger.error(f"Binary file not found: {file_path}")
+                logger.error("Binary file not found: %s", file_path)
                 return False
 
             try:
                 stat_info = path.stat()
                 file_size = stat_info.st_size
-            except OSError as e:
-                logger.error(f"Failed to get file stats for {file_path}: {e}")
+            except OSError:
+                logger.exception("Failed to get file stats for %s", file_path)
                 return False
 
             binary_info = {
@@ -152,18 +153,18 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
             self._state["current_binary"] = binary_info
             self._add_to_recent_files(str(path.absolute()))
 
-            logger.info(f"Binary loaded: {path.name} ({file_size} bytes)")
+            logger.info("Binary loaded: %s (%s bytes)", path.name, file_size)
             self.binary_loaded.emit(binary_info)
             return True
 
-        except Exception as e:
-            logger.error(f"Failed to load binary: {e}")
+        except Exception:
+            logger.exception("Failed to load binary")
             return False
 
     def unload_binary(self) -> None:
         """Unload the current binary."""
         if self._state["current_binary"]:
-            logger.info(f"Unloading binary: {self._state['current_binary']['name']}")
+            logger.info("Unloading binary: %s", self._state["current_binary"]["name"])
             self._state["current_binary"] = None
             self._state["analysis_results"].clear()
             self.binary_unloaded.emit()
@@ -179,7 +180,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
             "results": results,
             "timestamp": datetime.now().isoformat(),
         }
-        logger.info(f"Analysis completed: {analysis_type}. Results keys: {list(results.keys())}")
+        logger.info("Analysis completed: %s. Results keys: %s", analysis_type, list(results.keys()))
         self.analysis_completed.emit(analysis_type, results)
 
     def get_analysis_results(self, analysis_type: str | None = None) -> dict:
@@ -190,12 +191,12 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
 
     def start_analysis(self, analysis_type: str, options: dict | None = None) -> None:
         """Signal that an analysis has started."""
-        logger.info(f"Analysis started: {analysis_type}")
+        logger.info("Analysis started: %s", analysis_type)
         self.analysis_started.emit(analysis_type, options or {})
 
     def fail_analysis(self, analysis_type: str, error_message: str) -> None:
         """Signal that an analysis has failed."""
-        logger.error(f"Analysis failed: {analysis_type} - {error_message}")
+        logger.error("Analysis failed: %s - %s", analysis_type, error_message)
         self.analysis_failed.emit(analysis_type, error_message)
 
     # Project Management
@@ -204,17 +205,17 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
         try:
             path = Path(project_path)
             if not path.exists():
-                logger.error(f"Project file not found: {project_path}")
+                logger.error("Project file not found: %s", project_path)
                 return False
 
             try:
                 with open(path) as f:
                     project_data = json.load(f)
-            except json.JSONDecodeError as e:
-                logger.error(f"Invalid project JSON in {project_path}: {e}")
+            except json.JSONDecodeError:
+                logger.exception("Invalid project JSON in %s", project_path)
                 return False
-            except OSError as e:
-                logger.error(f"Failed to read project file {project_path}: {e}")
+            except OSError:
+                logger.exception("Failed to read project file %s", project_path)
                 return False
 
             project_info = {
@@ -235,12 +236,12 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
             if "analysis_results" in project_data:
                 self._state["analysis_results"] = project_data["analysis_results"]
 
-            logger.info(f"Project loaded: {project_info['name']} from {project_path}")
+            logger.info("Project loaded: %s from %s", project_info["name"], project_path)
             self.project_loaded.emit(project_info)
             return True
 
-        except Exception as e:
-            logger.error(f"Failed to load project: {e}")
+        except Exception:
+            logger.exception("Failed to load project")
             return False
 
     def save_project(self, project_path: str) -> bool:
@@ -249,9 +250,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
             project_data = {
                 "name": Path(project_path).stem,
                 "created_at": datetime.now().isoformat(),
-                "binary_path": self._state["current_binary"]["path"]
-                if self._state["current_binary"]
-                else None,
+                "binary_path": self._state["current_binary"]["path"] if self._state["current_binary"] else None,
                 "analysis_results": self._state["analysis_results"],
                 "settings": self._state["settings"],
             }
@@ -259,15 +258,15 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
             path = Path(project_path)
             try:
                 path.parent.mkdir(parents=True, exist_ok=True)
-            except OSError as e:
-                logger.error(f"Failed to create project directory {path.parent}: {e}")
+            except OSError:
+                logger.exception("Failed to create project directory %s", path.parent)
                 return False
 
             try:
                 with open(path, "w") as f:
                     json.dump(project_data, f, indent=2)
-            except OSError as e:
-                logger.error(f"Failed to save project to {path}: {e}")
+            except OSError:
+                logger.exception("Failed to save project to %s", path)
                 return False
 
             self._state["current_project"] = {
@@ -276,18 +275,18 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
                 "data": project_data,
             }
 
-            logger.info(f"Project saved: {project_path}")
+            logger.info("Project saved: %s", project_path)
             self.project_saved.emit(str(path.absolute()))
             return True
 
-        except Exception as e:
-            logger.error(f"Failed to save project: {e}")
+        except Exception:
+            logger.exception("Failed to save project")
             return False
 
     def close_project(self) -> None:
         """Close the current project."""
         if self._state["current_project"]:
-            logger.info(f"Closing project: {self._state['current_project']['name']}")
+            logger.info("Closing project: %s", self._state["current_project"]["name"])
             self._state["current_project"] = None
             self.project_closed.emit()
 
@@ -298,14 +297,14 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
             "info": plugin_info,
             "loaded_at": datetime.now().isoformat(),
         }
-        logger.info(f"Plugin registered: {plugin_name}")
+        logger.info("Plugin registered: %s", plugin_name)
         self.plugin_loaded.emit(plugin_name, plugin_info)
 
     def unregister_plugin(self, plugin_name: str) -> None:
         """Unregister a plugin."""
         if plugin_name in self._state["loaded_plugins"]:
             del self._state["loaded_plugins"][plugin_name]
-            logger.info(f"Plugin unregistered: {plugin_name}")
+            logger.info("Plugin unregistered: %s", plugin_name)
             self.plugin_unloaded.emit(plugin_name)
 
     def get_loaded_plugins(self) -> dict:
@@ -319,14 +318,14 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
             "info": model_info,
             "loaded_at": datetime.now().isoformat(),
         }
-        logger.info(f"Model registered: {model_name}")
+        logger.info("Model registered: %s", model_name)
         self.model_loaded.emit(model_name, model_info)
 
     def unregister_model(self, model_name: str) -> None:
         """Unregister an AI model."""
         if model_name in self._state["loaded_models"]:
             del self._state["loaded_models"][model_name]
-            logger.info(f"Model unregistered: {model_name}")
+            logger.info("Model unregistered: %s", model_name)
             self.model_unloaded.emit(model_name)
 
     def get_loaded_models(self) -> dict:
@@ -341,7 +340,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
             "started_at": datetime.now().isoformat(),
             "progress": 0,
         }
-        logger.info(f"Task registered: {task_id} - {description}")
+        logger.info("Task registered: %s - %s", task_id, description)
         self.task_started.emit(task_id, description)
 
     def update_task_progress(self, task_id: str, progress: int) -> None:
@@ -354,7 +353,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
         """Mark a task as completed."""
         if task_id in self._state["active_tasks"]:
             task_info = self._state["active_tasks"].pop(task_id)
-            logger.info(f"Task completed: {task_id} - {task_info['description']}")
+            logger.info("Task completed: %s - %s", task_id, task_info["description"])
             self.task_completed.emit(task_id, result)
 
     def fail_task(self, task_id: str, error_message: str) -> None:
@@ -375,7 +374,10 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
             self._state["failed_tasks"].append(failed_task)
 
             logger.error(
-                f"Task failed: {task_id} ({task_info.get('description', 'N/A')}) - {error_message}"
+                "Task failed: %s (%s) - %s",
+                task_id,
+                task_info.get("description", "N/A"),
+                error_message,
             )
             self.task_failed.emit(task_id, error_message)
 
@@ -390,9 +392,9 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
         self._state["settings"][key] = value
 
         if old_value != value:
-            logger.info(f"Setting changed: {key} = {value} (was: {old_value})")
+            logger.info("Setting changed: %s = %s (was: %s)", key, value, old_value)
         else:
-            logger.debug(f"Setting updated (no change): {key} = {value}")
+            logger.debug("Setting updated (no change): %s = %s", key, value)
 
         self.settings_changed.emit(key, value)
 

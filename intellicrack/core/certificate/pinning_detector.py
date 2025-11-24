@@ -287,11 +287,7 @@ class PinningDetector:
             "performDefaultEvaluation",
         ]
 
-        evidence = [
-            f"Found: {indicator}"
-            for indicator in afnetworking_indicators
-            if indicator in strings
-        ]
+        evidence = [f"Found: {indicator}" for indicator in afnetworking_indicators if indicator in strings]
         if evidence:
             locations.append(
                 PinningLocation(
@@ -303,11 +299,7 @@ class PinningDetector:
                 ),
             )
 
-        evidence = [
-            f"Found: {indicator}"
-            for indicator in alamofire_indicators
-            if indicator in strings
-        ]
+        evidence = [f"Found: {indicator}" for indicator in alamofire_indicators if indicator in strings]
         if evidence:
             locations.append(
                 PinningLocation(
@@ -609,17 +601,13 @@ class PinningDetector:
                 ),
             )
 
-        bypass_recommendations = self._generate_bypass_recommendations(
-            pinning_methods, detected_pins
-        )
+        bypass_recommendations = self._generate_bypass_recommendations(pinning_methods, detected_pins)
 
         avg_confidence = 0.0
         if detected_pins:
             avg_confidence = sum(p.confidence for p in detected_pins) / len(detected_pins)
         elif pinning_locations:
-            avg_confidence = sum(loc.confidence for loc in pinning_locations) / len(
-                pinning_locations
-            )
+            avg_confidence = sum(loc.confidence for loc in pinning_locations) / len(pinning_locations)
 
         report = PinningReport(
             binary_path=str(self.binary_path),
@@ -631,15 +619,11 @@ class PinningDetector:
             platform=self.platform or "unknown",
         )
 
-        logger.info(
-            f"Generated pinning report: {len(detected_pins)} pins, {len(pinning_methods)} methods, confidence={avg_confidence:.2f}"
-        )
+        logger.info(f"Generated pinning report: {len(detected_pins)} pins, {len(pinning_methods)} methods, confidence={avg_confidence:.2f}")
 
         return report
 
-    def _generate_bypass_recommendations(
-        self, pinning_methods: list[str], detected_pins: list[PinningInfo]
-    ) -> list[str]:
+    def _generate_bypass_recommendations(self, pinning_methods: list[str], detected_pins: list[PinningInfo]) -> list[str]:
         """Generate bypass recommendations based on detected pinning."""
         recommendations = []
 
@@ -650,19 +634,13 @@ class PinningDetector:
             )
 
         if "okhttp" in pinning_methods:
-            recommendations.append(
-                "OkHttp: Hook okhttp3.CertificatePinner.check() method with Frida to bypass pinning"
-            )
+            recommendations.append("OkHttp: Hook okhttp3.CertificatePinner.check() method with Frida to bypass pinning")
 
         if "afnetworking" in pinning_methods:
-            recommendations.append(
-                "AFNetworking: Hook AFSecurityPolicy.evaluateServerTrust with Frida, force return YES"
-            )
+            recommendations.append("AFNetworking: Hook AFSecurityPolicy.evaluateServerTrust with Frida, force return YES")
 
         if "alamofire" in pinning_methods:
-            recommendations.append(
-                "Alamofire: Hook ServerTrustPolicy evaluation, always return .performDefaultEvaluation"
-            )
+            recommendations.append("Alamofire: Hook ServerTrustPolicy evaluation, always return .performDefaultEvaluation")
 
         if "openssl" in pinning_methods:
             recommendations.append(
@@ -670,14 +648,10 @@ class PinningDetector:
             )
 
         if "custom" in pinning_methods:
-            recommendations.append(
-                "Custom implementation: Identify hash comparison function and patch/hook to always succeed"
-            )
+            recommendations.append("Custom implementation: Identify hash comparison function and patch/hook to always succeed")
 
         if not recommendations:
-            recommendations.append(
-                "No specific pinning detected - use general certificate bypass with Frida or MITM proxy"
-            )
+            recommendations.append("No specific pinning detected - use general certificate bypass with Frida or MITM proxy")
 
         return recommendations
 

@@ -134,11 +134,7 @@ class PipelineStage(ABC):
         if isinstance(input_data.content, (str, Path)):
             try:
                 path_str = str(input_data.content)
-                if (
-                    ".." in path_str
-                    or path_str.startswith("/etc/")
-                    or path_str.startswith("/root/")
-                ):
+                if ".." in path_str or path_str.startswith("/etc/") or path_str.startswith("/root/"):
                     return False
             except (AttributeError, TypeError):
                 pass
@@ -467,9 +463,7 @@ class Pipeline:
 
         # Execute each stage
         for i, stage in enumerate(self.stages):
-            self.console.print(
-                f"[cyan]Executing stage {i + 1}/{len(self.stages)}: {stage.name}[/cyan]"
-            )
+            self.console.print(f"[cyan]Executing stage {i + 1}/{len(self.stages)}: {stage.name}[/cyan]")
 
             try:
                 # Validate input
@@ -481,9 +475,7 @@ class Pipeline:
 
                 # Check for errors
                 if isinstance(data.content, dict) and "error" in data.content:
-                    self.console.print(
-                        f"[red]Error in stage {stage.name}: {data.content['error']}[/red]"
-                    )
+                    self.console.print(f"[red]Error in stage {stage.name}: {data.content['error']}[/red]")
                     if not data.metadata.get("continue_on_error", False):
                         break
 
@@ -566,9 +558,7 @@ def parse_pipeline_command(command: str) -> Pipeline:
                     path_str = str(path)
                     for sensitive_dir in sensitive_dirs:
                         if path_str.startswith(sensitive_dir):
-                            raise ValueError(
-                                f"Cannot write to sensitive directory: {sensitive_dir}"
-                            )
+                            raise ValueError(f"Cannot write to sensitive directory: {sensitive_dir}")
                 except Exception as e:
                     raise ValueError(f"Invalid output path: {e}") from e
                 pipeline.add_stage(OutputStage(output_path))

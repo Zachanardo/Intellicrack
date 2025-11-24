@@ -148,9 +148,7 @@ def integrate_with_main_app() -> bool:
             for _, module in sys.modules.items():
                 if hasattr(module, "app"):
                     app_candidate = module.app
-                    if hasattr(app_candidate, "__class__") and "IntellicrackApp" in str(
-                        type(app_candidate)
-                    ):
+                    if hasattr(app_candidate, "__class__") and "IntellicrackApp" in str(type(app_candidate)):
                         main_app = app_candidate
                         break
 

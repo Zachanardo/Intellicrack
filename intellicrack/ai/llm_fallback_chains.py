@@ -161,9 +161,7 @@ class FallbackChain:
             return FailureType.TEMPORARY
 
         # Authentication issues
-        if any(
-            keyword in error_str for keyword in ["auth", "401", "403", "unauthorized", "forbidden"]
-        ):
+        if any(keyword in error_str for keyword in ["auth", "401", "403", "unauthorized", "forbidden"]):
             return FailureType.PERMANENT
 
         # Timeouts
@@ -171,16 +169,12 @@ class FallbackChain:
             return FailureType.TIMEOUT
 
         # Service overloaded
-        if any(
-            keyword in error_str for keyword in ["503", "502", "504", "overloaded", "unavailable"]
-        ):
+        if any(keyword in error_str for keyword in ["503", "502", "504", "overloaded", "unavailable"]):
             return FailureType.OVERLOADED
 
         return FailureType.UNKNOWN
 
-    def _update_health_stats(
-        self, model_id: str, success: bool, response_time: float = 0.0, error: Exception = None
-    ) -> None:
+    def _update_health_stats(self, model_id: str, success: bool, response_time: float = 0.0, error: Exception = None) -> None:
         """Update health statistics for a model."""
         with self.lock:
             health = self.health_stats[model_id]
@@ -189,9 +183,7 @@ class FallbackChain:
             if success:
                 health.success_count += 1
                 health.last_success = datetime.now()
-                health.avg_response_time = (
-                    health.avg_response_time * (health.success_count - 1) + response_time
-                ) / health.success_count
+                health.avg_response_time = (health.avg_response_time * (health.success_count - 1) + response_time) / health.success_count
 
                 # Close circuit breaker on success
                 if health.is_circuit_open:
@@ -217,23 +209,12 @@ class FallbackChain:
                         health.recent_failures = health.recent_failures[-50:]
 
                     # Open circuit breaker if too many recent failures
-                    recent_failures = len(
-                        [
-                            f
-                            for f in health.recent_failures
-                            if f.timestamp > datetime.now() - timedelta(minutes=10)
-                        ]
-                    )
+                    recent_failures = len([f for f in health.recent_failures if f.timestamp > datetime.now() - timedelta(minutes=10)])
 
-                    if (
-                        recent_failures >= self.circuit_failure_threshold
-                        and not health.is_circuit_open
-                    ):
+                    if recent_failures >= self.circuit_failure_threshold and not health.is_circuit_open:
                         health.is_circuit_open = True
                         health.circuit_opened_at = datetime.now()
-                        logger.warning(
-                            f"Circuit breaker opened for model {model_id} after {recent_failures} failures"
-                        )
+                        logger.warning(f"Circuit breaker opened for model {model_id} after {recent_failures} failures")
 
     def _get_ordered_models(self) -> list[tuple[str, LLMConfig]]:
         """Get models ordered by current performance if adaptive ordering is enabled."""
@@ -265,9 +246,7 @@ class FallbackChain:
 
         return available_models
 
-    async def chat_async(
-        self, messages: list[LLMMessage], tools: list[dict] | None = None
-    ) -> LLMResponse | None:
+    async def chat_async(self, messages: list[LLMMessage], tools: list[dict] | None = None) -> LLMResponse | None:
         """Async version of chat with fallback logic."""
         ordered_models = self._get_ordered_models()
 
@@ -302,9 +281,7 @@ class FallbackChain:
                         response_time = time.time() - start_time
                         self._update_health_stats(model_id, True, response_time)
 
-                        logger.debug(
-                            f"Chain {self.chain_id}: Success with model {model_id} (attempt {attempt + 1})"
-                        )
+                        logger.debug(f"Chain {self.chain_id}: Success with model {model_id} (attempt {attempt + 1})")
                         return response
                     raise RuntimeError("LLM returned None response")
 
@@ -323,9 +300,7 @@ class FallbackChain:
                     # Calculate backoff delay
                     if attempt < self.max_retries - 1:
                         delay = self.retry_delay * (2**attempt) + random.uniform(0, 1)  # noqa: S311
-                        logger.debug(
-                            f"Retrying model {model_id} in {delay:.2f}s (attempt {attempt + 1})"
-                        )
+                        logger.debug(f"Retrying model {model_id} in {delay:.2f}s (attempt {attempt + 1})")
                         await asyncio.sleep(delay)
                     else:
                         logger.warning(f"All retries exhausted for model {model_id}: {e}")
@@ -333,9 +308,7 @@ class FallbackChain:
         logger.error(f"All models failed in chain {self.chain_id}. Last error: {last_error}")
         return None
 
-    def chat(
-        self, messages: list[LLMMessage], tools: list[dict] | None = None
-    ) -> LLMResponse | None:
+    def chat(self, messages: list[LLMMessage], tools: list[dict] | None = None) -> LLMResponse | None:
         """Chat with fallback logic synchronously."""
         try:
             # Run async version in event loop
@@ -355,9 +328,7 @@ class FallbackChain:
             report = {
                 "chain_id": self.chain_id,
                 "total_models": len(self.model_configs),
-                "available_models": len(
-                    [h for h in self.health_stats.values() if h.should_retry()]
-                ),
+                "available_models": len([h for h in self.health_stats.values() if h.should_retry()]),
                 "models": {},
             }
 
@@ -369,12 +340,8 @@ class FallbackChain:
                     "avg_response_time": health.avg_response_time,
                     "is_circuit_open": health.is_circuit_open,
                     "total_requests": health.total_requests,
-                    "last_success": health.last_success.isoformat()
-                    if health.last_success
-                    else None,
-                    "last_failure": health.last_failure.isoformat()
-                    if health.last_failure
-                    else None,
+                    "last_success": health.last_success.isoformat() if health.last_success else None,
+                    "last_failure": health.last_failure.isoformat() if health.last_failure else None,
                     "recent_failure_count": len(health.recent_failures),
                 }
                 report["models"][model_id] = model_report
@@ -405,9 +372,7 @@ class FallbackManager:
 
         logger.info("FallbackManager initialized")
 
-    def create_chain(
-        self, chain_id: str, model_configs: list[tuple[str, LLMConfig]], **kwargs: object
-    ) -> FallbackChain:
+    def create_chain(self, chain_id: str, model_configs: list[tuple[str, LLMConfig]], **kwargs: object) -> FallbackChain:
         """Create a new fallback chain.
 
         Args:
@@ -654,9 +619,7 @@ def get_fallback_manager() -> FallbackManager:
     return _FALLBACK_MANAGER
 
 
-def create_simple_fallback_chain(
-    chain_id: str, model_ids: list[str], use_existing_configs: bool = True
-) -> FallbackChain:
+def create_simple_fallback_chain(chain_id: str, model_ids: list[str], use_existing_configs: bool = True) -> FallbackChain:
     """Create a simple fallback chain from existing model IDs.
 
     Args:
@@ -685,9 +648,7 @@ def create_simple_fallback_chain(
             else:
                 logger.warning(f"Config for model {model_id} not found in LLM manager configs")
         else:
-            logger.warning(
-                f"Model {model_id} not found in LLM manager and use_existing_configs=False not supported"
-            )
+            logger.warning(f"Model {model_id} not found in LLM manager and use_existing_configs=False not supported")
             continue
 
     return manager.create_chain(chain_id, model_configs)

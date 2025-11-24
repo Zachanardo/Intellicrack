@@ -138,18 +138,14 @@ class JWTManipulator:
         payload_data = parts[1]
         signature = parts[2]
 
-        header = json.loads(
-            base64.urlsafe_b64decode(header_data + "=" * (4 - len(header_data) % 4))
-        )
+        header = json.loads(base64.urlsafe_b64decode(header_data + "=" * (4 - len(header_data) % 4)))
         payload = json.loads(
             base64.urlsafe_b64decode(payload_data + "=" * (4 - len(payload_data) % 4)),
         )
 
         return header, payload, signature
 
-    def sign_jwt_rs256(
-        self, payload: dict[str, Any], private_key: RSAPrivateKey | None = None
-    ) -> str:
+    def sign_jwt_rs256(self, payload: dict[str, Any], private_key: RSAPrivateKey | None = None) -> str:
         """Sign JWT payload using RS256 algorithm (RSASSA-PKCS1-v1_5 with SHA-256) with provided RSA private key or instance default, returning signed JWT token string."""
         import jwt
 
@@ -163,9 +159,7 @@ class JWTManipulator:
 
         return jwt.encode(payload, private_pem, algorithm="RS256")
 
-    def sign_jwt_rs512(
-        self, payload: dict[str, Any], private_key: RSAPrivateKey | None = None
-    ) -> str:
+    def sign_jwt_rs512(self, payload: dict[str, Any], private_key: RSAPrivateKey | None = None) -> str:
         """Sign JWT payload using RS512 algorithm (RSASSA-PKCS1-v1_5 with SHA-512) with provided RSA private key or instance default, returning signed JWT token string."""
         import jwt
 
@@ -179,9 +173,7 @@ class JWTManipulator:
 
         return jwt.encode(payload, private_pem, algorithm="RS512")
 
-    def sign_jwt_es256(
-        self, payload: dict[str, Any], private_key: ECPrivateKey | None = None
-    ) -> str:
+    def sign_jwt_es256(self, payload: dict[str, Any], private_key: ECPrivateKey | None = None) -> str:
         """Sign JWT payload using ES256 algorithm (ECDSA with P-256 curve and SHA-256) with provided EC private key or instance default, returning signed JWT token string."""
         import jwt
 
@@ -384,9 +376,7 @@ class OAuthTokenGenerator:
                 "sub": user_id,
                 "email": email,
                 "email_verified": True,
-                "at_hash": base64.urlsafe_b64encode(secrets.token_bytes(16))
-                .decode("utf-8")
-                .rstrip("="),
+                "at_hash": base64.urlsafe_b64encode(secrets.token_bytes(16)).decode("utf-8").rstrip("="),
                 "iat": current_time,
                 "exp": current_time + 3600,
             }
@@ -645,9 +635,7 @@ class APIResponseSynthesizer:
             return {
                 "data": {
                     "features": {
-                        "edges": [
-                            {"node": {"id": str(uuid.uuid4()), "enabled": True}} for _ in range(100)
-                        ],
+                        "edges": [{"node": {"id": str(uuid.uuid4()), "enabled": True}} for _ in range(100)],
                     },
                 },
             }

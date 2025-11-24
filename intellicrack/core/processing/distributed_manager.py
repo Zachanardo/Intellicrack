@@ -226,15 +226,11 @@ class DistributedAnalysisManager:
         }
 
         self._register_self_as_worker()
-        self.logger.info(
-            f"Distributed manager initialized in {self.mode} mode (Node ID: {self.node_id})"
-        )
+        self.logger.info(f"Distributed manager initialized in {self.mode} mode (Node ID: {self.node_id})")
 
     def _register_self_as_worker(self) -> None:
         """Register this instance as a worker node."""
-        worker_count = self.config.get(
-            "num_workers", multiprocessing.cpu_count() if MULTIPROCESSING_AVAILABLE else 4
-        )
+        worker_count = self.config.get("num_workers", multiprocessing.cpu_count() if MULTIPROCESSING_AVAILABLE else 4)
 
         worker_node = WorkerNode(
             node_id=self.node_id,
@@ -380,9 +376,7 @@ class DistributedAnalysisManager:
                     self.logger.error(f"Error accepting connection: {e}")
                 break
 
-    def _handle_client_connection(
-        self, client_socket: socket.socket, client_address: tuple
-    ) -> None:
+    def _handle_client_connection(self, client_socket: socket.socket, client_address: tuple) -> None:
         """Handle communication with a connected worker node."""
         node_id = None
         try:
@@ -541,9 +535,7 @@ class DistributedAnalysisManager:
                 return None
         return data
 
-    def _register_worker_node(
-        self, node_id: str, node_info: dict[str, Any], connection: socket.socket
-    ) -> None:
+    def _register_worker_node(self, node_id: str, node_info: dict[str, Any], connection: socket.socket) -> None:
         """Register a new worker node."""
         with self.nodes_lock:
             worker_node = WorkerNode(
@@ -622,9 +614,8 @@ class DistributedAnalysisManager:
                 with self.nodes_lock:
                     for node_id, node in list(self.nodes.items()):
                         if (
-                                                    node_id != self.node_id
-                                                    and current_time - node.last_heartbeat > self.NODE_TIMEOUT
-                                                ) and node.status != NodeStatus.OFFLINE:
+                            node_id != self.node_id and current_time - node.last_heartbeat > self.NODE_TIMEOUT
+                        ) and node.status != NodeStatus.OFFLINE:
                             self._mark_node_offline(node_id)
 
                 with self.task_lock:
@@ -661,13 +652,9 @@ class DistributedAnalysisManager:
                             task.error = "Maximum retry count exceeded"
                             continue
 
-                        if best_node := self._select_best_node(
-                            task, available_nodes
-                        ):
+                        if best_node := self._select_best_node(task, available_nodes):
                             self._assign_task(task, best_node)
-                            available_nodes = [
-                                n for n in available_nodes if n.node_id != best_node.node_id
-                            ]
+                            available_nodes = [n for n in available_nodes if n.node_id != best_node.node_id]
 
                 time.sleep(0.1)
 
@@ -684,9 +671,7 @@ class DistributedAnalysisManager:
                     available.append(node)
             return available
 
-    def _select_best_node(
-        self, task: AnalysisTask, available_nodes: list[WorkerNode]
-    ) -> WorkerNode | None:
+    def _select_best_node(self, task: AnalysisTask, available_nodes: list[WorkerNode]) -> WorkerNode | None:
         """Select the best node for a task based on capabilities and load."""
         if not available_nodes:
             return None
@@ -700,10 +685,7 @@ class DistributedAnalysisManager:
 
             if (
                 (task.task_type == "frida_analysis" and node.capabilities.get("supports_frida"))
-                or (
-                    task.task_type == "radare2_analysis"
-                    and node.capabilities.get("supports_radare2")
-                )
+                or (task.task_type == "radare2_analysis" and node.capabilities.get("supports_radare2"))
                 or (task.task_type == "angr_analysis" and node.capabilities.get("supports_angr"))
             ):
                 score += 5.0
@@ -748,9 +730,7 @@ class DistributedAnalysisManager:
 
         return None
 
-    def _execute_task_locally(
-        self, task: AnalysisTask, coordinator_socket: socket.socket | None = None
-    ) -> None:
+    def _execute_task_locally(self, task: AnalysisTask, coordinator_socket: socket.socket | None = None) -> None:
         """Execute a task locally on this worker node."""
         try:
             task.status = TaskStatus.RUNNING
@@ -895,8 +875,7 @@ class DistributedAnalysisManager:
             "task_type": "entropy_analysis",
             "overall_entropy": overall_entropy,
             "window_count": len(windows),
-            "high_entropy_regions": sum(bool(w["high_entropy"])
-                                    for w in windows),
+            "high_entropy_regions": sum(bool(w["high_entropy"]) for w in windows),
             "windows": windows,
         }
 
@@ -994,11 +973,7 @@ class DistributedAnalysisManager:
                     functions = []
 
                     for imp in entry.imports:
-                        func_name = (
-                            imp.name.decode()
-                            if imp.name and isinstance(imp.name, bytes)
-                            else str(imp.name)
-                        )
+                        func_name = imp.name.decode() if imp.name and isinstance(imp.name, bytes) else str(imp.name)
                         functions.append(
                             {
                                 "name": func_name,
@@ -1178,15 +1153,11 @@ class DistributedAnalysisManager:
                     task.status = TaskStatus.RETRY
                     task.assigned_node = None
                     heapq.heappush(self.task_queue, task)
-                    self.logger.warning(
-                        f"Task {task_id} failed, scheduling retry {task.retry_count}/{task.max_retries}"
-                    )
+                    self.logger.warning(f"Task {task_id} failed, scheduling retry {task.retry_count}/{task.max_retries}")
                 else:
                     task.status = TaskStatus.FAILED
                     self.performance_metrics["tasks_failed"] += 1
-                    self.logger.error(
-                        f"Task {task_id} failed permanently after {task.retry_count} retries"
-                    )
+                    self.logger.error(f"Task {task_id} failed permanently after {task.retry_count} retries")
 
                 if task.assigned_node:
                     with self.nodes_lock:
@@ -1274,15 +1245,9 @@ class DistributedAnalysisManager:
                 "chunk_size": min(chunk_size, file_size - offset),
             }
 
-            task_ids.append(
-                self.submit_task("entropy_analysis", binary_path, chunk_params, priority)
-            )
-            task_ids.append(
-                self.submit_task("string_extraction", binary_path, chunk_params, priority)
-            )
-            task_ids.append(
-                self.submit_task("crypto_detection", binary_path, chunk_params, priority)
-            )
+            task_ids.append(self.submit_task("entropy_analysis", binary_path, chunk_params, priority))
+            task_ids.append(self.submit_task("string_extraction", binary_path, chunk_params, priority))
+            task_ids.append(self.submit_task("crypto_detection", binary_path, chunk_params, priority))
 
         self.logger.info(f"Submitted {len(task_ids)} tasks for binary analysis of {binary_path}")
         return task_ids
@@ -1344,9 +1309,7 @@ class DistributedAnalysisManager:
 
             time.sleep(0.5)
 
-    def wait_for_completion(
-        self, task_ids: list[str] | None = None, timeout: float | None = None
-    ) -> dict[str, Any]:
+    def wait_for_completion(self, task_ids: list[str] | None = None, timeout: float | None = None) -> dict[str, Any]:
         """Wait for all tasks (or specified tasks) to complete.
 
         Args:
@@ -1430,16 +1393,11 @@ class DistributedAnalysisManager:
             }
         with self.task_lock:
             task_stats = {
-                "pending": sum(bool(t.status == TaskStatus.PENDING)
-                           for t in self.tasks.values()),
-                "assigned": sum(bool(t.status == TaskStatus.ASSIGNED)
-                            for t in self.tasks.values()),
-                "running": sum(bool(t.status == TaskStatus.RUNNING)
-                           for t in self.tasks.values()),
-                "completed": sum(bool(t.status == TaskStatus.COMPLETED)
-                             for t in self.tasks.values()),
-                "failed": sum(bool(t.status == TaskStatus.FAILED)
-                          for t in self.tasks.values()),
+                "pending": sum(bool(t.status == TaskStatus.PENDING) for t in self.tasks.values()),
+                "assigned": sum(bool(t.status == TaskStatus.ASSIGNED) for t in self.tasks.values()),
+                "running": sum(bool(t.status == TaskStatus.RUNNING) for t in self.tasks.values()),
+                "completed": sum(bool(t.status == TaskStatus.COMPLETED) for t in self.tasks.values()),
+                "failed": sum(bool(t.status == TaskStatus.FAILED) for t in self.tasks.values()),
                 "total": len(self.tasks),
             }
 

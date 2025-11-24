@@ -267,15 +267,11 @@ class VMProtectHandler:
 
     def _sigma0(self, value: int) -> int:
         """SHA-256 sigma0 function."""
-        return (
-            ((value >> 7) | (value << 25)) ^ ((value >> 18) | (value << 14)) ^ (value >> 3)
-        ) & 0xFFFFFFFF
+        return (((value >> 7) | (value << 25)) ^ ((value >> 18) | (value << 14)) ^ (value >> 3)) & 0xFFFFFFFF
 
     def _sigma1(self, value: int) -> int:
         """SHA-256 sigma1 function."""
-        return (
-            ((value >> 17) | (value << 15)) ^ ((value >> 19) | (value << 13)) ^ (value >> 10)
-        ) & 0xFFFFFFFF
+        return (((value >> 17) | (value << 15)) ^ ((value >> 19) | (value << 13)) ^ (value >> 10)) & 0xFFFFFFFF
 
     def _decrypt_with_schedule(self, data: bytes, key_schedule: list[int]) -> bytes:
         """Decrypt data using key schedule."""
@@ -820,9 +816,7 @@ class VMAnalyzer:
 
         return entropy
 
-    def find_vm_entry_points(
-        self, binary_data: bytes, protection_type: ProtectionType
-    ) -> list[int]:
+    def find_vm_entry_points(self, binary_data: bytes, protection_type: ProtectionType) -> list[int]:
         """Find VM entry points."""
         entry_points = []
         patterns = self.patterns.get(protection_type, [])
@@ -880,8 +874,7 @@ class VMAnalyzer:
                 addresses = struct.unpack("<16I", potential_table)
 
                 # Heuristic: addresses should be in reasonable range
-                valid_addresses = sum(bool(0x400000 <= addr <= 0x800000)
-                                  for addr in addresses)
+                valid_addresses = sum(bool(0x400000 <= addr <= 0x800000) for addr in addresses)
 
                 if valid_addresses >= 12:  # At least 75% valid
                     return i
@@ -1033,9 +1026,7 @@ class VMProtectionUnwrapper:
         finally:
             self.stats["files_processed"] += 1
 
-    def _unwrap_vm_sections(
-        self, binary_data: bytes, vm_analysis: dict[str, Any], protection_type: ProtectionType
-    ) -> list[bytes]:
+    def _unwrap_vm_sections(self, binary_data: bytes, vm_analysis: dict[str, Any], protection_type: ProtectionType) -> list[bytes]:
         """Unwrap VM sections."""
         unwrapped_sections = []
 
@@ -1072,9 +1063,7 @@ class VMProtectionUnwrapper:
 
         return unwrapped_sections
 
-    def _extract_encryption_key(
-        self, binary_data: bytes, vm_analysis: dict[str, Any], protection_type: ProtectionType
-    ) -> bytes:
+    def _extract_encryption_key(self, binary_data: bytes, vm_analysis: dict[str, Any], protection_type: ProtectionType) -> bytes:
         """Extract encryption key from binary using advanced techniques."""
         entry_point = vm_analysis["entry_point"]
 
@@ -1098,13 +1087,9 @@ class VMProtectionUnwrapper:
                 continue
 
         # Advanced fallback using cryptographic analysis
-        return self._generate_key_from_binary_characteristics(
-            binary_data, entry_point, protection_type
-        )
+        return self._generate_key_from_binary_characteristics(binary_data, entry_point, protection_type)
 
-    def _extract_key_from_constants(
-        self, binary_data: bytes, entry_point: int, protection_type: ProtectionType
-    ) -> bytes | None:
+    def _extract_key_from_constants(self, binary_data: bytes, entry_point: int, protection_type: ProtectionType) -> bytes | None:
         """Extract key from constant pool analysis."""
         # Scan for AES S-box patterns indicating key schedule
         aes_sbox = bytes([0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5])
@@ -1118,9 +1103,7 @@ class VMProtectionUnwrapper:
                     return candidate
         return None
 
-    def _extract_key_from_init_routines(
-        self, binary_data: bytes, entry_point: int, protection_type: ProtectionType
-    ) -> bytes | None:
+    def _extract_key_from_init_routines(self, binary_data: bytes, entry_point: int, protection_type: ProtectionType) -> bytes | None:
         """Extract key from initialization routines."""
         # Pattern matching for key initialization sequences
         init_patterns = [
@@ -1130,21 +1113,15 @@ class VMProtectionUnwrapper:
         ]
 
         for pattern in init_patterns:
-            pos = binary_data.find(
-                pattern, entry_point, min(entry_point + 0x1000, len(binary_data))
-            )
+            pos = binary_data.find(pattern, entry_point, min(entry_point + 0x1000, len(binary_data)))
             if pos != -1:
                 # Extract potential key data following pattern
                 key_data = binary_data[pos + len(pattern) : pos + len(pattern) + 32]
                 if len(key_data) >= 16 and self._is_valid_key_material(key_data):
-                    return (
-                        key_data[:32] if len(key_data) >= 32 else key_data[:16].ljust(32, b"\x00")
-                    )
+                    return key_data[:32] if len(key_data) >= 32 else key_data[:16].ljust(32, b"\x00")
         return None
 
-    def _extract_key_from_data_sections(
-        self, binary_data: bytes, entry_point: int, protection_type: ProtectionType
-    ) -> bytes | None:
+    def _extract_key_from_data_sections(self, binary_data: bytes, entry_point: int, protection_type: ProtectionType) -> bytes | None:
         """Extract key from data sections using PE structure analysis."""
         try:
             # Parse PE header
@@ -1166,17 +1143,11 @@ class VMProtectionUnwrapper:
 
                 name = binary_data[section_offset : section_offset + 8].rstrip(b"\x00")
                 if name in [b".data", b".rdata", b".bss"]:
-                    raw_offset = struct.unpack(
-                        "<I", binary_data[section_offset + 20 : section_offset + 24]
-                    )[0]
-                    raw_size = struct.unpack(
-                        "<I", binary_data[section_offset + 16 : section_offset + 20]
-                    )[0]
+                    raw_offset = struct.unpack("<I", binary_data[section_offset + 20 : section_offset + 24])[0]
+                    raw_size = struct.unpack("<I", binary_data[section_offset + 16 : section_offset + 20])[0]
 
                     # Scan section for key material
-                    for j in range(
-                        raw_offset, min(raw_offset + raw_size, len(binary_data)) - 32, 16
-                    ):
+                    for j in range(raw_offset, min(raw_offset + raw_size, len(binary_data)) - 32, 16):
                         candidate = binary_data[j : j + 32]
                         entropy = self.analyzer._calculate_entropy(candidate)
                         if 5.5 <= entropy <= 7.8:
@@ -1185,17 +1156,13 @@ class VMProtectionUnwrapper:
             logger.debug(f"Key material extraction failed: {e}")
         return None
 
-    def _extract_key_from_tls_callbacks(
-        self, binary_data: bytes, entry_point: int, protection_type: ProtectionType
-    ) -> bytes | None:
+    def _extract_key_from_tls_callbacks(self, binary_data: bytes, entry_point: int, protection_type: ProtectionType) -> bytes | None:
         """Extract key from TLS callback analysis."""
         try:
             pe_offset = struct.unpack("<I", binary_data[0x3C:0x40])[0]
             # TLS directory is at index 9 in data directories
             tls_dir_offset = pe_offset + 0x78 + (9 * 8)
-            if tls_rva := struct.unpack(
-                "<I", binary_data[tls_dir_offset : tls_dir_offset + 4]
-            )[0]:
+            if tls_rva := struct.unpack("<I", binary_data[tls_dir_offset : tls_dir_offset + 4])[0]:
                 if tls_offset := self._rva_to_offset(binary_data, tls_rva):
                     # TLS callbacks often initialize keys
                     callback_data = binary_data[tls_offset : tls_offset + 0x100]
@@ -1207,17 +1174,13 @@ class VMProtectionUnwrapper:
             logger.debug(f"TLS callback key extraction failed: {e}")
         return None
 
-    def _extract_key_from_resource_section(
-        self, binary_data: bytes, entry_point: int, protection_type: ProtectionType
-    ) -> bytes | None:
+    def _extract_key_from_resource_section(self, binary_data: bytes, entry_point: int, protection_type: ProtectionType) -> bytes | None:
         """Extract key from resource section."""
         try:
             pe_offset = struct.unpack("<I", binary_data[0x3C:0x40])[0]
             # Resource directory is at index 2
             res_dir_offset = pe_offset + 0x78 + (2 * 8)
-            if res_rva := struct.unpack(
-                "<I", binary_data[res_dir_offset : res_dir_offset + 4]
-            )[0]:
+            if res_rva := struct.unpack("<I", binary_data[res_dir_offset : res_dir_offset + 4])[0]:
                 res_offset = self._rva_to_offset(binary_data, res_rva)
                 if res_offset and res_offset < len(binary_data) - 0x100:
                     # Scan resource data for key material
@@ -1239,15 +1202,9 @@ class VMProtectionUnwrapper:
 
             for i in range(num_sections):
                 section_offset = section_table + (i * 40)
-                virtual_addr = struct.unpack(
-                    "<I", binary_data[section_offset + 12 : section_offset + 16]
-                )[0]
-                virtual_size = struct.unpack(
-                    "<I", binary_data[section_offset + 8 : section_offset + 12]
-                )[0]
-                raw_offset = struct.unpack(
-                    "<I", binary_data[section_offset + 20 : section_offset + 24]
-                )[0]
+                virtual_addr = struct.unpack("<I", binary_data[section_offset + 12 : section_offset + 16])[0]
+                virtual_size = struct.unpack("<I", binary_data[section_offset + 8 : section_offset + 12])[0]
+                raw_offset = struct.unpack("<I", binary_data[section_offset + 20 : section_offset + 24])[0]
 
                 if virtual_addr <= rva < virtual_addr + virtual_size:
                     return raw_offset + (rva - virtual_addr)
@@ -1287,14 +1244,11 @@ class VMProtectionUnwrapper:
 
         # Check if decryption produces valid x86 code
         valid_opcodes = [0x55, 0x89, 0x8B, 0x50, 0x51, 0x52, 0x53]  # Common x86 opcodes
-        valid_count = sum(bool(b in valid_opcodes)
-                      for b in decrypted[:4])
+        valid_count = sum(bool(b in valid_opcodes) for b in decrypted[:4])
 
         return valid_count >= 2
 
-    def _generate_key_from_binary_characteristics(
-        self, binary_data: bytes, entry_point: int, protection_type: ProtectionType
-    ) -> bytes:
+    def _generate_key_from_binary_characteristics(self, binary_data: bytes, entry_point: int, protection_type: ProtectionType) -> bytes:
         """Generate key from binary characteristics using cryptographic derivation."""
         # Collect binary characteristics
         characteristics = bytearray()
@@ -1331,16 +1285,12 @@ class VMProtectionUnwrapper:
         # Simple PBKDF2 implementation
         derived_key = bytearray()
         for i in range(2):  # Generate 32 bytes
-            block = hmac.new(
-                characteristics, salt + struct.pack(">I", i + 1), hashlib.sha256
-            ).digest()
+            block = hmac.new(characteristics, salt + struct.pack(">I", i + 1), hashlib.sha256).digest()
             derived_key.extend(block[:16])
 
         return bytes(derived_key[:32])
 
-    def _reconstruct_original_code(
-        self, unwrapped_sections: list[bytes], vm_analysis: dict[str, Any]
-    ) -> bytes:
+    def _reconstruct_original_code(self, unwrapped_sections: list[bytes], vm_analysis: dict[str, Any]) -> bytes:
         """Reconstruct original x86 code from VM sections."""
         reconstructed = bytearray()
 
@@ -1362,9 +1312,7 @@ class VMProtectionUnwrapper:
 
         return bytes(reconstructed)
 
-    def _parse_vm_instructions_with_context(
-        self, vm_data: bytes, vm_analysis: dict[str, Any]
-    ) -> list[VMInstruction]:
+    def _parse_vm_instructions_with_context(self, vm_data: bytes, vm_analysis: dict[str, Any]) -> list[VMInstruction]:
         """Parse VM instructions with contextual awareness.
 
         Parses VM instructions while tracking metadata about previous instructions,
@@ -1398,10 +1346,7 @@ class VMProtectionUnwrapper:
                     instruction.metadata["prev_mnemonic"] = prev_inst.mnemonic
 
                     # Detect instruction patterns
-                    if (
-                        prev_inst.vm_type == VMInstructionType.STACK
-                        and instruction.vm_type == VMInstructionType.ARITHMETIC
-                    ):
+                    if prev_inst.vm_type == VMInstructionType.STACK and instruction.vm_type == VMInstructionType.ARITHMETIC:
                         instruction.metadata["pattern"] = "stack_arithmetic"
 
                 instructions.append(instruction)
@@ -1437,10 +1382,8 @@ class VMProtectionUnwrapper:
 
             # Pattern: PUSH followed by POP to same location
             if (
-                            i + 1 < len(instructions)
-                            and "PUSH" in current.mnemonic
-                            and "POP" in instructions[i + 1].mnemonic
-                        ) and current.operands == instructions[i + 1].operands:
+                i + 1 < len(instructions) and "PUSH" in current.mnemonic and "POP" in instructions[i + 1].mnemonic
+            ) and current.operands == instructions[i + 1].operands:
                 i += 2
                 continue
 
@@ -1453,15 +1396,11 @@ class VMProtectionUnwrapper:
                 continue
 
             # Pattern: Redundant moves
-            if (
-                            i + 1 < len(instructions)
-                            and "MOV" in current.mnemonic
-                            and "MOV" in instructions[i + 1].mnemonic
-                        ) and (
-                                len(current.operands) > 0
-                                and len(instructions[i + 1].operands) > 0
-                                and current.operands[0] == instructions[i + 1].operands[0]
-                            ):
+            if (i + 1 < len(instructions) and "MOV" in current.mnemonic and "MOV" in instructions[i + 1].mnemonic) and (
+                len(current.operands) > 0
+                and len(instructions[i + 1].operands) > 0
+                and current.operands[0] == instructions[i + 1].operands[0]
+            ):
                 optimized.append(instructions[i + 1])
                 i += 2
                 continue
@@ -1471,9 +1410,7 @@ class VMProtectionUnwrapper:
 
         return optimized
 
-    def _advanced_vm_to_x86(
-        self, vm_instructions: list[VMInstruction], vm_analysis: dict[str, Any]
-    ) -> bytes:
+    def _advanced_vm_to_x86(self, vm_instructions: list[VMInstruction], vm_analysis: dict[str, Any]) -> bytes:
         """Convert VM instructions to x86 with advanced pattern recognition.
 
         Performs context-aware conversion using compound pattern detection and
@@ -1504,9 +1441,7 @@ class VMProtectionUnwrapper:
                 i += len(pattern_code) // 4  # Approximate instruction count
                 continue
 
-            if asm_code := self._enhanced_vm_instruction_to_asm(
-                vm_instructions[i], vm_analysis
-            ):
+            if asm_code := self._enhanced_vm_instruction_to_asm(vm_instructions[i], vm_analysis):
                 try:
                     encoding, _ = ks.asm(asm_code)
                     if encoding:
@@ -1522,9 +1457,7 @@ class VMProtectionUnwrapper:
 
         return bytes(x86_code)
 
-    def _detect_compound_pattern(
-        self, instructions: list[VMInstruction], start: int
-    ) -> bytes | None:
+    def _detect_compound_pattern(self, instructions: list[VMInstruction], start: int) -> bytes | None:
         """Detect and convert compound VM patterns to x86.
 
         Recognizes multi-instruction patterns such as function prologues,
@@ -1570,9 +1503,7 @@ class VMProtectionUnwrapper:
 
         return None
 
-    def _enhanced_vm_instruction_to_asm(
-        self, instruction: VMInstruction, vm_analysis: dict[str, Any]
-    ) -> str | None:
+    def _enhanced_vm_instruction_to_asm(self, instruction: VMInstruction, vm_analysis: dict[str, Any]) -> str | None:
         """Enhanced VM to x86 assembly conversion."""
         mnemonic = instruction.mnemonic
         operands = instruction.operands
@@ -1599,11 +1530,7 @@ class VMProtectionUnwrapper:
 
         if "PUSH" in mnemonic:
             if operands and isinstance(operands[0], int):
-                return (
-                    f"push {vm_reg_map[operands[0]]}"
-                    if operands[0] in vm_reg_map
-                    else f"push 0x{operands[0]:x}"
-                )
+                return f"push {vm_reg_map[operands[0]]}" if operands[0] in vm_reg_map else f"push 0x{operands[0]:x}"
             else:
                 return "push eax"
 
@@ -1980,8 +1907,7 @@ class VMProtectionUnwrapper:
                 )
 
         # Summary
-        successful = sum(bool(r.get("success"))
-                     for r in results)
+        successful = sum(bool(r.get("success")) for r in results)
 
         return {
             "total_files": len(results),

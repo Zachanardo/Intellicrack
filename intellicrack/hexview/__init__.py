@@ -54,15 +54,9 @@ try:
 except ImportError as e:
     logger.warning("Failed to import api: %s", e)
     # Set all API functions to None
-    add_hex_viewer_to_application = analyze_binary_data = bytes_to_hex_string = (
-        create_binary_context
-    ) = None
-    create_hex_viewer_dialog = create_hex_viewer_widget = hex_string_to_bytes = (
-        integrate_with_intellicrack
-    ) = None
-    launch_hex_viewer = open_hex_file = read_hex_region = register_ai_tools = (
-        search_binary_pattern
-    ) = None
+    add_hex_viewer_to_application = analyze_binary_data = bytes_to_hex_string = create_binary_context = None
+    create_hex_viewer_dialog = create_hex_viewer_widget = hex_string_to_bytes = integrate_with_intellicrack = None
+    launch_hex_viewer = open_hex_file = read_hex_region = register_ai_tools = search_binary_pattern = None
     suggest_binary_edits = write_hex_region = None
 
 try:
@@ -193,11 +187,7 @@ __all__ = [
 ]
 
 # Filter out None values from __all__
-__all__ = [
-    item
-    for item in __all__
-    if item not in ["LARGE_FILE_SUPPORT"] and locals().get(item) is not None
-]
+__all__ = [item for item in __all__ if item not in ["LARGE_FILE_SUPPORT"] and locals().get(item) is not None]
 
 # Conditionally add large file components to __all__ if available
 if LARGE_FILE_SUPPORT:

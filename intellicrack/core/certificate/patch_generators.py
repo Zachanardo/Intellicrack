@@ -310,9 +310,7 @@ def generate_conditional_invert_arm(original_bytes: bytes) -> bytes:
 
     if condition in condition_map:
         new_condition = condition_map[condition]
-        inverted[condition_byte_index] = (new_condition << 4) | (
-            inverted[condition_byte_index] & 0x0F
-        )
+        inverted[condition_byte_index] = (new_condition << 4) | (inverted[condition_byte_index] & 0x0F)
 
     return bytes(inverted)
 

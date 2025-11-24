@@ -121,9 +121,7 @@ class WebSocketEventStream:
     async def start(self) -> None:
         """Start WebSocket server."""
         self.running = True
-        self.server = await websockets.serve(
-            self.handle_client, self.host, self.port, ping_interval=20, ping_timeout=10
-        )
+        self.server = await websockets.serve(self.handle_client, self.host, self.port, ping_interval=20, ping_timeout=10)
         logger.info(f"WebSocket stream server started on ws://{self.host}:{self.port}")
 
         # Start background tasks
@@ -219,9 +217,7 @@ class WebSocketEventStream:
         }
         await websocket.send(json.dumps(welcome))
 
-    async def _handle_client_message(
-        self, websocket: WebSocketServerProtocol, client_id: str, message: str
-    ) -> None:
+    async def _handle_client_message(self, websocket: WebSocketServerProtocol, client_id: str, message: str) -> None:
         """Handle message from client."""
         try:
             data = json.loads(message)
@@ -247,9 +243,7 @@ class WebSocketEventStream:
         except Exception as e:
             await self._send_error(websocket, str(e))
 
-    async def _handle_subscribe(
-        self, websocket: WebSocketServerProtocol, client_id: str, data: dict[str, Any]
-    ) -> None:
+    async def _handle_subscribe(self, websocket: WebSocketServerProtocol, client_id: str, data: dict[str, Any]) -> None:
         """Handle event subscription request."""
         event_types = data.get("event_types", [])
 
@@ -264,13 +258,9 @@ class WebSocketEventStream:
                 await self._send_error(websocket, f"Invalid event type: {event_type}")
 
         # Send confirmation
-        await websocket.send(
-            json.dumps({"type": "subscription_confirmed", "subscribed_to": event_types})
-        )
+        await websocket.send(json.dumps({"type": "subscription_confirmed", "subscribed_to": event_types}))
 
-    async def _handle_unsubscribe(
-        self, websocket: WebSocketServerProtocol, client_id: str, data: dict[str, Any]
-    ) -> None:
+    async def _handle_unsubscribe(self, websocket: WebSocketServerProtocol, client_id: str, data: dict[str, Any]) -> None:
         """Handle unsubscribe request."""
         event_types = data.get("event_types", [])
 
@@ -283,13 +273,9 @@ class WebSocketEventStream:
                     pass
 
         # Send confirmation
-        await websocket.send(
-            json.dumps({"type": "unsubscription_confirmed", "unsubscribed_from": event_types})
-        )
+        await websocket.send(json.dumps({"type": "unsubscription_confirmed", "unsubscribed_from": event_types}))
 
-    async def _handle_filter(
-        self, websocket: WebSocketServerProtocol, client_id: str, data: dict[str, Any]
-    ) -> None:
+    async def _handle_filter(self, websocket: WebSocketServerProtocol, client_id: str, data: dict[str, Any]) -> None:
         """Handle filter configuration."""
         if client_id not in self.filters:
             self.filters[client_id] = {}
@@ -308,9 +294,7 @@ class WebSocketEventStream:
                 {
                     "type": "filter_applied",
                     "filters": {
-                        "priority": self.filters[client_id].get("priority", "").value
-                        if "priority" in self.filters[client_id]
-                        else None,
+                        "priority": self.filters[client_id].get("priority", "").value if "priority" in self.filters[client_id] else None,
                         "source": self.filters[client_id].get("source"),
                         "tags": list(self.filters[client_id].get("tags", [])),
                     },
@@ -318,9 +302,7 @@ class WebSocketEventStream:
             ),
         )
 
-    async def _handle_control(
-        self, websocket: WebSocketServerProtocol, client_id: str, data: dict[str, Any]
-    ) -> None:
+    async def _handle_control(self, websocket: WebSocketServerProtocol, client_id: str, data: dict[str, Any]) -> None:
         """Handle control commands from client."""
         action = data.get("action")
         target = data.get("target")
@@ -342,9 +324,7 @@ class WebSocketEventStream:
             ),
         )
 
-    async def _execute_control_action(
-        self, action: str, target: str, params: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _execute_control_action(self, action: str, target: str, params: dict[str, Any]) -> dict[str, Any]:
         """Execute control action on analysis components."""
         result = {"success": False, "data": None}
 
@@ -450,15 +430,11 @@ class WebSocketEventStream:
             event_dict["priority"] = event.priority.value
             history.append(event_dict)
 
-        await websocket.send(
-            json.dumps({"type": "history", "count": len(history), "events": history})
-        )
+        await websocket.send(json.dumps({"type": "history", "count": len(history), "events": history}))
 
     async def _send_error(self, websocket: WebSocketServerProtocol, error: str) -> None:
         """Send error message to client."""
-        await websocket.send(
-            json.dumps({"type": "error", "message": error, "timestamp": time.time()})
-        )
+        await websocket.send(json.dumps({"type": "error", "message": error, "timestamp": time.time()}))
 
     def _format_uptime(self, seconds: float) -> str:
         """Format uptime in human-readable format."""
@@ -482,11 +458,7 @@ class WebSocketEventStream:
         """Broadcast events to connected clients."""
         while self.running:
             if self.event_queue and self.clients:
-                batch = [
-                    self.event_queue.popleft()
-                    for _ in range(min(10, len(self.event_queue)))
-                    if self.event_queue
-                ]
+                batch = [self.event_queue.popleft() for _ in range(min(10, len(self.event_queue))) if self.event_queue]
                 # Broadcast to clients
                 for event in batch:
                     await self._broadcast_event(event)

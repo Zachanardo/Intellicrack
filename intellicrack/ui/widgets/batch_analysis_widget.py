@@ -89,9 +89,7 @@ class BatchAnalysisWorker(QThread):
     #: error message (type: str)
     error_occurred = pyqtSignal(str)
 
-    def __init__(
-        self, file_paths: list[str], max_workers: int = 4, deep_scan: bool = False
-    ) -> None:
+    def __init__(self, file_paths: list[str], max_workers: int = 4, deep_scan: bool = False) -> None:
         """Initialize batch analysis thread.
 
         Args:
@@ -121,10 +119,7 @@ class BatchAnalysisWorker(QThread):
             # Use ThreadPoolExecutor for parallel processing
             with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
                 # Submit all tasks
-                future_to_path = {
-                    executor.submit(self._analyze_file, file_path): file_path
-                    for file_path in self.file_paths
-                }
+                future_to_path = {executor.submit(self._analyze_file, file_path): file_path for file_path in self.file_paths}
 
                 # Process completed tasks
                 for future in as_completed(future_to_path):
@@ -649,12 +644,9 @@ class BatchAnalysisWidget(QWidget):
 
         # Update status with summary
         total = len(results)
-        protected = sum(bool(r.is_protected)
-                    for r in results)
-        packed = sum(bool(r.is_packed)
-                 for r in results)
-        failed = sum(bool(not r.success)
-                 for r in results)
+        protected = sum(bool(r.is_protected) for r in results)
+        packed = sum(bool(r.is_packed) for r in results)
+        failed = sum(bool(not r.success) for r in results)
 
         self.status_label.setText(
             f"Analysis complete: {total} files, {protected} protected, {packed} packed, {failed} failed",
@@ -810,20 +802,13 @@ class BatchAnalysisWidget(QWidget):
             return {}
 
         total = len(self.results)
-        successful = sum(bool(r.success)
-                     for r in self.results)
-        protected = sum(bool(r.is_protected)
-                    for r in self.results)
-        packed = sum(bool(r.is_packed)
-                 for r in self.results)
+        successful = sum(bool(r.success) for r in self.results)
+        protected = sum(bool(r.is_protected) for r in self.results)
+        packed = sum(bool(r.is_packed) for r in self.results)
         failed = total - successful
 
         avg_time = sum(r.analysis_time for r in self.results) / total if total > 0 else 0
-        avg_confidence = (
-            sum(r.confidence_score for r in self.results if r.success) / successful
-            if successful > 0
-            else 0
-        )
+        avg_confidence = sum(r.confidence_score for r in self.results if r.success) / successful if successful > 0 else 0
 
         return {
             "total_files": total,

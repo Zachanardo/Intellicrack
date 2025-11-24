@@ -149,9 +149,7 @@ class R2PerformanceMonitor:
                 session.average_duration_ms = session.total_duration_ms / session.total_operations
 
                 if session.cache_hits + session.cache_misses > 0:
-                    session.cache_hit_rate = session.cache_hits / (
-                        session.cache_hits + session.cache_misses
-                    )
+                    session.cache_hit_rate = session.cache_hits / (session.cache_hits + session.cache_misses)
 
             # Store in history
             self.historical_sessions.append(session)
@@ -214,9 +212,7 @@ class R2PerformanceMonitor:
 
         """
         operation_metrics.end_time = time.time()
-        operation_metrics.duration_ms = (
-            operation_metrics.end_time - operation_metrics.start_time
-        ) * 1000
+        operation_metrics.duration_ms = (operation_metrics.end_time - operation_metrics.start_time) * 1000
         operation_metrics.success = success
         operation_metrics.error_message = error_message
         operation_metrics.bytes_processed = bytes_processed
@@ -226,9 +222,7 @@ class R2PerformanceMonitor:
             try:
                 operation_metrics.memory_after = self.process_monitor.memory_info().rss
                 if operation_metrics.memory_before:
-                    operation_metrics.memory_delta = (
-                        operation_metrics.memory_after - operation_metrics.memory_before
-                    )
+                    operation_metrics.memory_delta = operation_metrics.memory_after - operation_metrics.memory_before
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                 self.logger.warning(f"Failed to get memory after operation: {e}")
 
@@ -252,9 +246,7 @@ class R2PerformanceMonitor:
                 # Update peak memory
                 if operation_metrics.memory_after:
                     memory_mb = operation_metrics.memory_after / (1024 * 1024)
-                    self.current_session.peak_memory_mb = max(
-                        self.current_session.peak_memory_mb, memory_mb
-                    )
+                    self.current_session.peak_memory_mb = max(self.current_session.peak_memory_mb, memory_mb)
 
         # Check thresholds
         self._check_thresholds(operation_metrics)
@@ -290,14 +282,11 @@ class R2PerformanceMonitor:
 
             return {
                 "session_id": self.current_session.session_id,
-                "uptime_seconds": (
-                    datetime.now() - self.current_session.start_time
-                ).total_seconds(),
+                "uptime_seconds": (datetime.now() - self.current_session.start_time).total_seconds(),
                 "total_operations": self.current_session.total_operations,
                 "successful_operations": self.current_session.successful_operations,
                 "failed_operations": self.current_session.failed_operations,
-                "success_rate": self.current_session.successful_operations
-                / max(1, self.current_session.total_operations),
+                "success_rate": self.current_session.successful_operations / max(1, self.current_session.total_operations),
                 "average_duration_ms": self.current_session.average_duration_ms,
                 "peak_memory_mb": self.current_session.peak_memory_mb,
                 "average_cpu_percent": self.current_session.average_cpu_percent,
@@ -328,9 +317,7 @@ class R2PerformanceMonitor:
 
             stats = {}
             for name, ops in by_name.items():
-                if durations := [
-                    op.duration_ms for op in ops if op.duration_ms is not None
-                ]:
+                if durations := [op.duration_ms for op in ops if op.duration_ms is not None]:
                     stats[name] = {
                         "count": len(ops),
                         "total_ms": sum(durations),
@@ -412,9 +399,7 @@ class R2PerformanceMonitor:
                         cpu_samples.pop(0)
 
                     with self.metrics_lock:
-                        self.current_session.average_cpu_percent = sum(cpu_samples) / len(
-                            cpu_samples
-                        )
+                        self.current_session.average_cpu_percent = sum(cpu_samples) / len(cpu_samples)
 
                 # Check active operations for timeout
                 with self.metrics_lock:
@@ -422,9 +407,7 @@ class R2PerformanceMonitor:
                     for op in self.operation_stack:
                         duration_ms = (current_time - op.start_time) * 1000
                         if duration_ms > self.thresholds["operation_duration_critical_ms"]:
-                            self.logger.warning(
-                                f"Operation '{op.operation_name}' exceeds critical duration: {duration_ms:.0f}ms"
-                            )
+                            self.logger.warning(f"Operation '{op.operation_name}' exceeds critical duration: {duration_ms:.0f}ms")
 
             except Exception as e:
                 self.logger.error(f"Error in monitoring loop: {e}")
@@ -440,13 +423,9 @@ class R2PerformanceMonitor:
         """
         if metrics.duration_ms:
             if metrics.duration_ms > self.thresholds["operation_duration_critical_ms"]:
-                self.logger.warning(
-                    f"Operation '{metrics.operation_name}' exceeded critical duration: {metrics.duration_ms:.0f}ms"
-                )
+                self.logger.warning(f"Operation '{metrics.operation_name}' exceeded critical duration: {metrics.duration_ms:.0f}ms")
             elif metrics.duration_ms > self.thresholds["operation_duration_warn_ms"]:
-                self.logger.info(
-                    f"Operation '{metrics.operation_name}' exceeded warning duration: {metrics.duration_ms:.0f}ms"
-                )
+                self.logger.info(f"Operation '{metrics.operation_name}' exceeded warning duration: {metrics.duration_ms:.0f}ms")
 
         if metrics.memory_after:
             memory_mb = metrics.memory_after / (1024 * 1024)

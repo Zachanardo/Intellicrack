@@ -127,9 +127,7 @@ class DashboardWidget:
         """
         if current := self.get_current_data():
             return {
-                "type": self.config.widget_type.value
-                if hasattr(self.config.widget_type, "value")
-                else "widget",
+                "type": self.config.widget_type.value if hasattr(self.config.widget_type, "value") else "widget",
                 "id": self.config.widget_id,
                 "title": self.config.title,
                 "timestamp": current.timestamp.isoformat(),
@@ -444,9 +442,7 @@ class HeatmapWidget(DashboardWidget):
                     colorscale=self.config.options.get("colorscale", "viridis"),
                 )
             )
-            fig.update_layout(
-                title=self.config.title, width=self.config.width, height=self.config.height
-            )
+            fig.update_layout(title=self.config.title, width=self.config.width, height=self.config.height)
             return fig
         return self.render("json")
 
@@ -484,9 +480,7 @@ class NetworkGraphWidget(DashboardWidget):
             return self._render_plotly_network(nodes, edges)
         return self.render("json")
 
-    def _render_plotly_network(
-        self, nodes: list[dict[str, object]], edges: list[dict[str, object]]
-    ) -> object:
+    def _render_plotly_network(self, nodes: list[dict[str, object]], edges: list[dict[str, object]]) -> object:
         """Render network using Plotly.
 
         Args:
@@ -507,9 +501,7 @@ class NetworkGraphWidget(DashboardWidget):
             node_positions[node["id"]] = (x, y)
 
         # Create edge traces
-        edge_trace = go.Scatter(
-            x=[], y=[], line={"width": 0.5, "color": "#888"}, hoverinfo="none", mode="lines"
-        )
+        edge_trace = go.Scatter(x=[], y=[], line={"width": 0.5, "color": "#888"}, hoverinfo="none", mode="lines")
 
         for edge in edges:
             x0, y0 = node_positions.get(edge["source"], (0, 0))
@@ -543,8 +535,7 @@ class NetworkGraphWidget(DashboardWidget):
         # Color nodes by connections
         node_adjacencies = []
         for node in nodes:
-            adjacencies = sum(bool(edge["source"] == node["id"] or edge["target"] == node["id"])
-                          for edge in edges)
+            adjacencies = sum(bool(edge["source"] == node["id"] or edge["target"] == node["id"]) for edge in edges)
             node_adjacencies.append(adjacencies)
 
         node_trace.marker.color = node_adjacencies
@@ -694,9 +685,7 @@ class WidgetFactory:
         return widget_class(config)
 
 
-def create_widget(
-    widget_id: str, widget_type: WidgetType, title: str, **kwargs: object
-) -> DashboardWidget:
+def create_widget(widget_id: str, widget_type: WidgetType, title: str, **kwargs: object) -> DashboardWidget:
     """Create a widget.
 
     Args:

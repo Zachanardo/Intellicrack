@@ -57,8 +57,7 @@ class GhidraBinaryIntegration:
             )
 
             self.logger.info(
-                f"License validation analysis completed for {binary_path.name}: "
-                f"{result.get('validation_functions', 0)} functions found",
+                f"License validation analysis completed for {binary_path.name}: {result.get('validation_functions', 0)} functions found",
             )
 
             return result
@@ -93,8 +92,7 @@ class GhidraBinaryIntegration:
                 protections_found.append("Enigma")
 
             self.logger.info(
-                f"Protection detection completed for {binary_path.name}: "
-                f"{len(protections_found)} protections found",
+                f"Protection detection completed for {binary_path.name}: {len(protections_found)} protections found",
             )
 
             return {
@@ -168,8 +166,7 @@ class GhidraBinaryIntegration:
             )
 
             self.logger.info(
-                f"Keygen template generated for {binary_path.name}: "
-                f"algorithm={result.get('algorithm_type', 'unknown')}",
+                f"Keygen template generated for {binary_path.name}: algorithm={result.get('algorithm_type', 'unknown')}",
             )
 
             return result
@@ -196,8 +193,7 @@ class GhidraBinaryIntegration:
             )
 
             self.logger.info(
-                f"Control flow deobfuscation completed for {binary_path.name}: "
-                f"{result.get('blocks_deobfuscated', 0)} blocks processed",
+                f"Control flow deobfuscation completed for {binary_path.name}: {result.get('blocks_deobfuscated', 0)} blocks processed",
             )
 
             return result
@@ -226,8 +222,7 @@ class GhidraBinaryIntegration:
             decrypted_count = len(result.get("decrypted_strings", []))
 
             self.logger.info(
-                f"String decryption completed for {binary_path.name}: "
-                f"{decrypted_count} strings decrypted",
+                f"String decryption completed for {binary_path.name}: {decrypted_count} strings decrypted",
             )
 
             return result
@@ -262,8 +257,7 @@ class GhidraBinaryIntegration:
                 techniques.append("anti-dump")
 
             self.logger.info(
-                f"Anti-analysis detection completed for {binary_path.name}: "
-                f"{len(techniques)} techniques found",
+                f"Anti-analysis detection completed for {binary_path.name}: {len(techniques)} techniques found",
             )
 
             return {
@@ -301,8 +295,7 @@ class GhidraBinaryIntegration:
             )
 
             self.logger.info(
-                f"Comprehensive analysis completed for {binary_path.name}: "
-                f"{result.get('function_count', 0)} functions analyzed",
+                f"Comprehensive analysis completed for {binary_path.name}: {result.get('function_count', 0)} functions analyzed",
             )
 
             return result
@@ -357,8 +350,7 @@ class GhidraBinaryIntegration:
             )
 
             self.logger.info(
-                f"Network analysis completed for {binary_path.name}: "
-                f"{len(result.get('network_functions', []))} functions found",
+                f"Network analysis completed for {binary_path.name}: {len(result.get('network_functions', []))} functions found",
             )
 
             return result
@@ -397,15 +389,12 @@ class GhidraBinaryIntegration:
         workflow_results["stages"]["protection_detection"] = self.detect_protections(binary_path)
 
         if any(
-            prot in workflow_results["stages"]["protection_detection"].get("protections", [])
-            for prot in ["VMProtect", "Themida", "Enigma"]
+            prot in workflow_results["stages"]["protection_detection"].get("protections", []) for prot in ["VMProtect", "Themida", "Enigma"]
         ):
             self.logger.info("Packer detected, attempting to unpack...")
             workflow_results["stages"]["unpacking"] = self.unpack_binary(binary_path)
 
-        workflow_results["stages"]["license_analysis"] = self.analyze_license_validation(
-            binary_path, deep_analysis=True
-        )
+        workflow_results["stages"]["license_analysis"] = self.analyze_license_validation(binary_path, deep_analysis=True)
 
         workflow_results["stages"]["crypto_analysis"] = self.analyze_crypto_routines(binary_path)
 

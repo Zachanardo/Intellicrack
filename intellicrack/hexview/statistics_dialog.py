@@ -129,7 +129,11 @@ class StatisticsDialog(QDialog):
         source_layout.addWidget(self.selection_radio)
 
         # Check if there's a selection
-        if self.hex_viewer and hasattr(self.hex_viewer, "selection_start") and (self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1):
+        if (
+            self.hex_viewer
+            and hasattr(self.hex_viewer, "selection_start")
+            and (self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1)
+        ):
             self.selection_radio.setEnabled(True)
             selection_size = self.hex_viewer.selection_end - self.hex_viewer.selection_start
             self.selection_radio.setText(f"Current selection ({selection_size} bytes)")
@@ -280,9 +284,7 @@ class StatisticsDialog(QDialog):
 
         # Basic statistics
         overview += "Basic Statistics:\n"
-        overview += (
-            f"  Entropy: {results['entropy']:.4f} bits ({results['entropy_percentage']:.1f}%)\n"
-        )
+        overview += f"  Entropy: {results['entropy']:.4f} bits ({results['entropy_percentage']:.1f}%)\n"
         overview += f"  Randomness Score: {results['randomness_score']:.1f}%\n"
         overview += f"  Compression Ratio: {results['compression_ratio']:.3f}\n"
         overview += f"  Chi-Square: {results['chi_square']:.2f}\n\n"
@@ -294,15 +296,9 @@ class StatisticsDialog(QDialog):
 
         overview += "Character Types:\n"
         overview += f"  Null Bytes: {results['null_bytes']} ({results['null_percentage']:.1f}%)\n"
-        overview += (
-            f"  Printable: {results['printable_chars']} ({results['printable_percentage']:.1f}%)\n"
-        )
-        overview += (
-            f"  Control: {results['control_chars']} ({results['control_percentage']:.1f}%)\n"
-        )
-        overview += (
-            f"  High Bytes: {results['high_bytes']} ({results['high_bytes_percentage']:.1f}%)\n"
-        )
+        overview += f"  Printable: {results['printable_chars']} ({results['printable_percentage']:.1f}%)\n"
+        overview += f"  Control: {results['control_chars']} ({results['control_percentage']:.1f}%)\n"
+        overview += f"  High Bytes: {results['high_bytes']} ({results['high_bytes_percentage']:.1f}%)\n"
 
         self.overview_text.setPlainText(overview)
 
@@ -311,9 +307,7 @@ class StatisticsDialog(QDialog):
         distribution += "=" * 50 + "\n\n"
 
         if "histogram" in results:
-            max_count = (
-                max(count for _, count in results["histogram"]) if results["histogram"] else 1
-            )
+            max_count = max(count for _, count in results["histogram"]) if results["histogram"] else 1
             for range_label, count in results["histogram"]:
                 bar_len = int((count / max_count) * 40) if max_count > 0 else 0
                 bar = "█" * bar_len

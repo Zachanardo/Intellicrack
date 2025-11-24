@@ -207,9 +207,7 @@ class CloudLicenseResponseGenerator:
         except Exception as e:
             logger.error(f"Failed to start listener on port {port}: {e}")
 
-    def _handle_connection(
-        self, client_socket: socket.socket, address: tuple[str, int], port: int
-    ) -> None:
+    def _handle_connection(self, client_socket: socket.socket, address: tuple[str, int], port: int) -> None:
         """Handle an incoming connection.
 
         Args:
@@ -250,9 +248,7 @@ class CloudLicenseResponseGenerator:
 
                     # Log total processing time
                     total_time = time.time() - connection_start
-                    logger.debug(
-                        f"Connection processed in {total_time:.3f}s with {network_delay:.3f}s network delay"
-                    )
+                    logger.debug(f"Connection processed in {total_time:.3f}s with {network_delay:.3f}s network delay")
 
                     # Log generated response
                     self.generated_responses.append(
@@ -446,9 +442,7 @@ class CloudLicenseResponseGenerator:
             License response dictionary
 
         """
-        template = self.response_templates.get(
-            template_name, self.response_templates["valid_license"]
-        )
+        template = self.response_templates.get(template_name, self.response_templates["valid_license"])
 
         response = template.copy()
 

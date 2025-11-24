@@ -296,13 +296,7 @@ class ICPReportGenerator:
             HTML string containing executive summary section.
 
         """
-        confidence_class = (
-            "high"
-            if result.confidence_score >= 80
-            else "medium"
-            if result.confidence_score >= 50
-            else "low"
-        )
+        confidence_class = "high" if result.confidence_score >= 80 else "medium" if result.confidence_score >= 50 else "low"
 
         return f"""
         <div class="summary">
@@ -429,9 +423,7 @@ class ICPReportGenerator:
             html += f"<h3>File: {file_info.filetype}</h3>"
 
             if file_info.detections:
-                html += (
-                    "<table><tr><th>Detection</th><th>Type</th><th>Version</th><th>Info</th></tr>"
-                )
+                html += "<table><tr><th>Detection</th><th>Type</th><th>Version</th><th>Info</th></tr>"
 
                 for detection in file_info.detections:
                     html += f"""

@@ -26,9 +26,7 @@ class IntellicrackError(Exception):
 class ConfigurationError(IntellicrackError):
     """Raised when configuration is missing, invalid, or incomplete."""
 
-    def __init__(
-        self, message: str, service_name: str | None = None, config_key: str | None = None
-    ) -> None:
+    def __init__(self, message: str, service_name: str | None = None, config_key: str | None = None) -> None:
         """Initialize configuration error.
 
         Args:
@@ -79,9 +77,7 @@ class ToolNotFoundError(IntellicrackError):
 class ValidationError(IntellicrackError):
     """Raised when data validation fails."""
 
-    def __init__(
-        self, message: str, field_name: str | None = None, value: str | None = None
-    ) -> None:
+    def __init__(self, message: str, field_name: str | None = None, value: str | None = None) -> None:
         """Initialize validation error.
 
         Args:
@@ -102,9 +98,7 @@ class SecurityError(IntellicrackError):
 class AnalysisError(IntellicrackError):
     """Raised when binary analysis fails."""
 
-    def __init__(
-        self, message: str, binary_path: str | None = None, analysis_type: str | None = None
-    ) -> None:
+    def __init__(self, message: str, binary_path: str | None = None, analysis_type: str | None = None) -> None:
         """Initialize analysis error.
 
         Args:
@@ -121,9 +115,7 @@ class AnalysisError(IntellicrackError):
 class ExploitationError(IntellicrackError):
     """Raised when exploitation operations fail."""
 
-    def __init__(
-        self, message: str, target: str | None = None, technique: str | None = None
-    ) -> None:
+    def __init__(self, message: str, target: str | None = None, technique: str | None = None) -> None:
         """Initialize exploitation error.
 
         Args:

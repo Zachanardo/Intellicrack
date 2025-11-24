@@ -622,9 +622,7 @@ class TemplateSelectionPage(QWizardPage):
             },
         ]
 
-    def on_template_selected(
-        self, current: QListWidgetItem | None, previous: QListWidgetItem | None
-    ) -> None:
+    def on_template_selected(self, current: QListWidgetItem | None, previous: QListWidgetItem | None) -> None:
         """Handle template selection.
 
         Args:
@@ -701,11 +699,7 @@ class PluginFeaturesPage(QWizardPage):
             List of selected feature identifiers.
 
         """
-        features: list[str] = [
-            feature_id
-            for feature_id, checkbox in self.feature_checks.items()
-            if checkbox.isChecked()
-        ]
+        features: list[str] = [feature_id for feature_id, checkbox in self.feature_checks.items() if checkbox.isChecked()]
         return features
 
 
@@ -808,9 +802,7 @@ class SummaryPage(QWizardPage):
 
         self.setLayout(layout)
 
-    def update_summary(
-        self, info: dict[str, str], template: dict[str, Any] | None, features: list[str], code: str
-    ) -> None:
+    def update_summary(self, info: dict[str, str], template: dict[str, Any] | None, features: list[str], code: str) -> None:
         """Update the summary display.
 
         Args:

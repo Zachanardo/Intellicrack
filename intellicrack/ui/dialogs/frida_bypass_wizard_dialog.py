@@ -44,9 +44,7 @@ class FridaWorkerThread(QThread):
     bypass_complete = pyqtSignal(dict)
     error_occurred = pyqtSignal(str)
 
-    def __init__(
-        self, wizard: FridaBypassWizard, target_process: str, mode: str, options: dict
-    ) -> None:
+    def __init__(self, wizard: FridaBypassWizard, target_process: str, mode: str, options: dict) -> None:
         """Initialize the FridaBypassWorker with wizard and process information.
 
         Args:
@@ -281,21 +279,13 @@ setInterval(function() {
                 if payload["type"] == "api_call":
                     self.progress_update.emit(f"[API] {payload['dll']}!{payload['api']} called")
                 elif payload["type"] == "api_return":
-                    self.progress_update.emit(
-                        f"[RET] {payload['api']} returned: {payload['retval']}"
-                    )
+                    self.progress_update.emit(f"[RET] {payload['api']} returned: {payload['retval']}")
                 elif payload["type"] == "license_api":
-                    self.progress_update.emit(
-                        f"[LICENSE] {payload['module']}!{payload['api']} detected"
-                    )
+                    self.progress_update.emit(f"[LICENSE] {payload['module']}!{payload['api']} detected")
                 elif payload["type"] == "stats_update":
-                    self.status_update.emit(
-                        f"Hooks: {payload['hooks']} | Calls: {payload['calls']}", "blue"
-                    )
+                    self.status_update.emit(f"Hooks: {payload['hooks']} | Calls: {payload['calls']}", "blue")
                 elif payload["type"] == "monitor_started":
-                    self.progress_update.emit(
-                        f"Hook monitoring active with {payload['hooks']} hooks"
-                    )
+                    self.progress_update.emit(f"Hook monitoring active with {payload['hooks']} hooks")
 
         # Register message handler with Frida session
         if self.wizard.session:
@@ -406,9 +396,7 @@ class FridaBypassWizardDialog(QDialog):
         manual_layout = QHBoxLayout()
         manual_layout.addWidget(QLabel("Or enter manually:"))
         self.manual_process_input = QLineEdit()
-        self.manual_process_input.setToolTip(
-            "Enter process name (e.g., notepad.exe) or PID (e.g., 1234)"
-        )
+        self.manual_process_input.setToolTip("Enter process name (e.g., notepad.exe) or PID (e.g., 1234)")
         self.manual_process_input.textChanged.connect(self.validate_process_input)
 
         # Add validation indicator
@@ -743,9 +731,7 @@ class FridaBypassWizardDialog(QDialog):
 
         self.start_btn = QPushButton("Start Bypass")
         self.start_btn.clicked.connect(self.start_bypass)
-        self.start_btn.setStyleSheet(
-            "QPushButton { background-color: #4CAF50; color: white; font-weight: bold; padding: 8px; }"
-        )
+        self.start_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; font-weight: bold; padding: 8px; }")
 
         self.stop_btn = QPushButton("Stop")
         self.stop_btn.clicked.connect(self.stop_bypass)
@@ -1515,9 +1501,7 @@ setTimeout(function() {{
     def get_bypass_options(self) -> dict:
         """Get current bypass options."""
         return {
-            "protections": [
-                name for name, check in self.protection_checks.items() if check.isChecked()
-            ],
+            "protections": [name for name, check in self.protection_checks.items() if check.isChecked()],
             "aggressive": self.aggressive_check.isChecked(),
             "stealth": self.stealth_check.isChecked(),
             "log_api": self.log_api_check.isChecked(),
@@ -1611,16 +1595,12 @@ setTimeout(function() {{
         """Save current configuration to file."""
         config = {
             "mode": self.mode_combo.currentText(),
-            "protections": [
-                name for name, check in self.protection_checks.items() if check.isChecked()
-            ],
+            "protections": [name for name, check in self.protection_checks.items() if check.isChecked()],
             "options": self.get_bypass_options(),
             "script": self.script_editor.toPlainText(),
         }
 
-        file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save Configuration", "", "JSON Files (*.json)"
-        )
+        file_path, _ = QFileDialog.getSaveFileName(self, "Save Configuration", "", "JSON Files (*.json)")
 
         if file_path:
             with open(file_path, "w") as f:
@@ -1630,9 +1610,7 @@ setTimeout(function() {{
 
     def load_configuration(self) -> None:
         """Load configuration from file."""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Load Configuration", "", "JSON Files (*.json)"
-        )
+        file_path, _ = QFileDialog.getOpenFileName(self, "Load Configuration", "", "JSON Files (*.json)")
 
         if file_path:
             with open(file_path) as f:
@@ -1668,9 +1646,7 @@ setTimeout(function() {{
         """Load saved settings."""
         import json
 
-        settings_file = os.path.join(
-            os.path.expanduser("~"), ".intellicrack", "frida_wizard_settings.json"
-        )
+        settings_file = os.path.join(os.path.expanduser("~"), ".intellicrack", "frida_wizard_settings.json")
 
         if os.path.exists(settings_file):
             try:

@@ -52,19 +52,23 @@ def read_file_with_ai_tools(
 
     """
 
-    def _process_ai_content(raw_content: object) -> str | bytes | None:
+    def _process_ai_content(raw_content: str | bytes | bytearray) -> str | bytes | None:
         """Normalize AI-provided content according to mode and max_bytes."""
         if mode == "binary":
             if isinstance(raw_content, str):
                 data = raw_content.encode("latin-1", errors="ignore")
+            elif isinstance(raw_content, bytearray):
+                data = bytes(raw_content)
             else:
                 data = raw_content
-            if max_bytes and isinstance(data, (bytes, bytearray)) and len(data) > max_bytes:
+            if max_bytes and isinstance(data, bytes) and len(data) > max_bytes:
                 return data[:max_bytes]
             return data
         if isinstance(raw_content, (bytes, bytearray)):
             return raw_content.decode(encoding, errors="ignore")
-        return raw_content
+        if isinstance(raw_content, str):
+            return raw_content
+        return None
 
     content = None
     used_ai_tools = False
@@ -129,7 +133,9 @@ def read_binary_header(
         mode="binary",
         max_bytes=header_size,
     )
-    return content
+    if isinstance(content, bytes):
+        return content
+    return None
 
 
 def read_text_file(
@@ -157,7 +163,9 @@ def read_text_file(
         mode="text",
         encoding=encoding,
     )
-    return content
+    if isinstance(content, str):
+        return content
+    return None
 
 
 class FileReadingMixin:

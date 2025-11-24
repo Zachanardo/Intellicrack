@@ -125,12 +125,8 @@ class VirtualizationDetectionBypass:
         """Get Windows driver path dynamically."""
         # Common driver paths on Windows
         driver_paths = [
-            os.path.join(
-                os.environ.get("SYSTEMROOT", "C:\\Windows"), "System32", "drivers", driver_name
-            ),
-            os.path.join(
-                os.environ.get("SYSTEMROOT", "C:\\Windows"), "SysWOW64", "drivers", driver_name
-            ),
+            os.path.join(os.environ.get("SYSTEMROOT", "C:\\Windows"), "System32", "drivers", driver_name),
+            os.path.join(os.environ.get("SYSTEMROOT", "C:\\Windows"), "SysWOW64", "drivers", driver_name),
             os.path.join("C:\\Windows", "System32", "drivers", driver_name),
         ]
         for path in driver_paths:
@@ -735,12 +731,8 @@ class VMDetector:
         """Get Windows VM driver path dynamically for detection."""
         # Common driver paths on Windows
         driver_paths = [
-            os.path.join(
-                os.environ.get("SYSTEMROOT", "C:\\Windows"), "System32", "drivers", driver_name
-            ),
-            os.path.join(
-                os.environ.get("SYSTEMROOT", "C:\\Windows"), "SysWOW64", "drivers", driver_name
-            ),
+            os.path.join(os.environ.get("SYSTEMROOT", "C:\\Windows"), "System32", "drivers", driver_name),
+            os.path.join(os.environ.get("SYSTEMROOT", "C:\\Windows"), "SysWOW64", "drivers", driver_name),
             os.path.join("C:\\Windows", "System32", "drivers", driver_name),
         ]
         for path in driver_paths:
@@ -965,9 +957,7 @@ class VMDetector:
                 "implementation_script": script_content,
                 "stealth_level": "high" if len(bypass_techniques) > 5 else "medium",
                 "estimated_duration": f"{len(bypass_techniques) * 2}-{len(bypass_techniques) * 5} minutes",
-                "risk_level": "high"
-                if "registry" in str(registry_modifications).lower()
-                else "medium",
+                "risk_level": "high" if "registry" in str(registry_modifications).lower() else "medium",
             }
 
         except Exception as e:
@@ -982,9 +972,7 @@ class VMDetector:
                 "stealth_level": "none",
             }
 
-    def _generate_bypass_script(
-        self, vm_type: str, techniques: list[str], registry_mods: list[str], file_ops: list[str]
-    ) -> str:
+    def _generate_bypass_script(self, vm_type: str, techniques: list[str], registry_mods: list[str], file_ops: list[str]) -> str:
         """Generate implementation script for VM detection bypass."""
         script_lines = [
             f"# VM Detection Bypass Script for {vm_type}",

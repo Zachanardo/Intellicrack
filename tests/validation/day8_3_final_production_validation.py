@@ -137,8 +137,8 @@ class FinalProductionValidator:
         # Test 1: Payload generation produces real bytes
         print("\n[1/5] Testing payload generation...")
         try:
-            from intellicrack.core.exploitation.shellcode_generator import ShellcodeGenerator
-            gen = ShellcodeGenerator()
+            from intellicrack.core.exploitation.license_bypass_code_generator import LicenseBypassCodeGenerator
+            gen = LicenseBypassCodeGenerator()
 
             # Try different method signatures
             test_passed = False

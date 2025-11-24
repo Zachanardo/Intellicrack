@@ -580,9 +580,7 @@ class VisualizationRenderer:
             "shape": data.shape,
         }
 
-    def render_timeline(
-        self, events: list[dict[str, Any]], width: int = 1000, height: int = 400
-    ) -> dict[str, Any]:
+    def render_timeline(self, events: list[dict[str, Any]], width: int = 1000, height: int = 400) -> dict[str, Any]:
         """Render a timeline visualization.
 
         Args:
@@ -679,9 +677,7 @@ class VisualizationRenderer:
             "time_range": time_range,
         }
 
-    def render_metrics_chart(
-        self, metrics: list[dict[str, Any]], chart_type: str = "line", title: str = "Metrics"
-    ) -> dict[str, Any]:
+    def render_metrics_chart(self, metrics: list[dict[str, Any]], chart_type: str = "line", title: str = "Metrics") -> dict[str, Any]:
         """Render metrics chart.
 
         Args:
@@ -699,9 +695,7 @@ class VisualizationRenderer:
         # Group metrics by name
         grouped = defaultdict(list)
         for metric in metrics:
-            grouped[metric["metric_name"]].append(
-                {"x": metric["timestamp"], "y": metric["metric_value"]}
-            )
+            grouped[metric["metric_name"]].append({"x": metric["timestamp"], "y": metric["metric_value"]})
 
         # Prepare datasets for Chart.js
         datasets = []
@@ -738,9 +732,7 @@ class VisualizationRenderer:
             "data_points": sum(len(points) for points in grouped.values()),
         }
 
-    def render_3d_call_graph(
-        self, functions: list[dict[str, Any]], calls: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    def render_3d_call_graph(self, functions: list[dict[str, Any]], calls: list[dict[str, Any]]) -> dict[str, Any]:
         """Render 3D call graph visualization.
 
         Args:
@@ -786,9 +778,7 @@ class VisualizationRenderer:
         js_code = js_code.replace("{{height}}", "600")
         js_code = js_code.replace("{{nodes}}", json.dumps([n.to_dict() for n in nodes]))
         js_code = js_code.replace("{{edges}}", json.dumps([e.to_dict() for e in edges]))
-        js_code = js_code.replace(
-            "{{camera_distance}}", str(self.three_d_config["camera_distance"])
-        )
+        js_code = js_code.replace("{{camera_distance}}", str(self.three_d_config["camera_distance"]))
         js_code = js_code.replace("{{rotation_speed}}", str(self.three_d_config["rotation_speed"]))
 
         return {
@@ -888,9 +878,7 @@ class VisualizationRenderer:
 
         return {"type": "interactive_explorer", "js_code": js_code, "data": data}
 
-    def _apply_hierarchical_layout(
-        self, nodes: list[GraphNode], edges: list[GraphEdge], dimensions: tuple[int, int]
-    ) -> None:
+    def _apply_hierarchical_layout(self, nodes: list[GraphNode], edges: list[GraphEdge], dimensions: tuple[int, int]) -> None:
         """Apply hierarchical layout to nodes.
 
         Args:
@@ -1021,9 +1009,7 @@ class VisualizationRenderer:
                 .text(d => d.label);
         """
 
-    def _render_static_graph(
-        self, nodes: list[GraphNode], edges: list[GraphEdge], dimensions: tuple[int, int]
-    ) -> str:
+    def _render_static_graph(self, nodes: list[GraphNode], edges: list[GraphEdge], dimensions: tuple[int, int]) -> str:
         """Render static graph image using matplotlib.
 
         Args:
@@ -1099,9 +1085,7 @@ class VisualizationRenderer:
 
         return f"data:image/png;base64,{image_base64}"
 
-    def _render_static_timeline(
-        self, events: list[dict[str, Any]], dimensions: tuple[int, int]
-    ) -> str:
+    def _render_static_timeline(self, events: list[dict[str, Any]], dimensions: tuple[int, int]) -> str:
         """Render static timeline using matplotlib.
 
         Args:
@@ -1125,9 +1109,7 @@ class VisualizationRenderer:
             timestamp = event.get("timestamp", 0)
             y = source_y[source]
 
-            ax.scatter(
-                timestamp, y, s=50, c=event.get("color", "#3498db"), alpha=0.7, edgecolors="black"
-            )
+            ax.scatter(timestamp, y, s=50, c=event.get("color", "#3498db"), alpha=0.7, edgecolors="black")
 
         # Set labels
         ax.set_yticks(range(len(sources)))
@@ -1151,9 +1133,7 @@ class VisualizationRenderer:
 
         return f"data:image/png;base64,{image_base64}"
 
-    def _render_static_metrics(
-        self, grouped: dict[str, list[dict[str, float]]], chart_type: str, title: str
-    ) -> str:
+    def _render_static_metrics(self, grouped: dict[str, list[dict[str, float]]], chart_type: str, title: str) -> str:
         """Render static metrics chart using matplotlib.
 
         Args:
@@ -1248,9 +1228,7 @@ class VisualizationRenderer:
             return "#e74c3c"  # Red for hot path
         return "#f39c12" if count > 10 else "#95a5a6"
 
-    def _create_thumbnail(
-        self, image_data: bytes, size: tuple[int, int] = (100, 100)
-    ) -> str | None:
+    def _create_thumbnail(self, image_data: bytes, size: tuple[int, int] = (100, 100)) -> str | None:
         """Create a thumbnail using PIL.
 
         Args:

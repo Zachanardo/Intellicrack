@@ -257,9 +257,7 @@ class LicenseDebugger:
                 return False
 
             self.process_id = process_id
-            self.process_handle = self.kernel32.OpenProcess(
-                self.PROCESS_ALL_ACCESS, False, process_id
-            )
+            self.process_handle = self.kernel32.OpenProcess(self.PROCESS_ALL_ACCESS, False, process_id)
 
             if not self.process_handle:
                 logger.error(f"Failed to get a handle for process {process_id}.")
@@ -277,9 +275,7 @@ class LicenseDebugger:
             return True
 
         except Exception as e:
-            logger.exception(
-                f"An unexpected error occurred while attaching to process {process_id}: {e}"
-            )
+            logger.exception(f"An unexpected error occurred while attaching to process {process_id}: {e}")
             return False
 
     def _enable_debug_privilege(self) -> bool:
@@ -298,16 +294,12 @@ class LicenseDebugger:
             privilege = win32security.LookupPrivilegeValue(None, "SeDebugPrivilege")
 
             # Enable the privilege
-            win32security.AdjustTokenPrivileges(
-                token, False, [(privilege, win32security.SE_PRIVILEGE_ENABLED)]
-            )
+            win32security.AdjustTokenPrivileges(token, False, [(privilege, win32security.SE_PRIVILEGE_ENABLED)])
 
             return True
 
         except Exception as e:
-            logger.exception(
-                f"An unexpected error occurred while trying to enable debug privilege: {e}"
-            )
+            logger.exception(f"An unexpected error occurred while trying to enable debug privilege: {e}")
             return False
 
     def set_breakpoint(
@@ -375,14 +367,10 @@ class LicenseDebugger:
             return True
 
         except Exception as e:
-            logger.exception(
-                f"An unexpected error occurred while setting breakpoint at {hex(address)}: {e}"
-            )
+            logger.exception(f"An unexpected error occurred while setting breakpoint at {hex(address)}: {e}")
             return False
 
-    def set_conditional_breakpoint(
-        self, address: int, condition: str, callback: Callable | None = None, description: str = ""
-    ) -> bool:
+    def set_conditional_breakpoint(self, address: int, condition: str, callback: Callable | None = None, description: str = "") -> bool:
         """Set a conditional breakpoint that only triggers when condition is met.
 
         Args:
@@ -449,10 +437,10 @@ class LicenseDebugger:
                 logger.error("No threads available for hardware breakpoint")
                 return False
 
-            success_count = sum(bool(self._set_hardware_breakpoint_on_thread(
-                                                thread_id, address, dr_index, access_type, size
-                                            ))
-                            for thread_id in threads_to_update)
+            success_count = sum(
+                bool(self._set_hardware_breakpoint_on_thread(thread_id, address, dr_index, access_type, size))
+                for thread_id in threads_to_update
+            )
             if success_count == 0:
                 logger.error("Failed to set hardware breakpoint on any thread")
                 return False
@@ -475,9 +463,7 @@ class LicenseDebugger:
             logger.exception(f"Error setting hardware breakpoint: {e}")
             return False
 
-    def _set_hardware_breakpoint_on_thread(
-        self, thread_id: int, address: int, dr_index: int, access_type: str, size: int
-    ) -> bool:
+    def _set_hardware_breakpoint_on_thread(self, thread_id: int, address: int, dr_index: int, access_type: str, size: int) -> bool:
         """Set hardware breakpoint on specific thread."""
         try:
             # Get thread context
@@ -548,9 +534,7 @@ class LicenseDebugger:
             Debug register index (0-3) or -1 if none available
 
         """
-        used_registers = {
-            info["dr_index"] for info in self.hardware_breakpoints.values()
-        }
+        used_registers = {info["dr_index"] for info in self.hardware_breakpoints.values()}
         return next((i for i in range(4) if i not in used_registers), -1)
 
     def remove_hardware_breakpoint(self, address: int) -> bool:
@@ -572,13 +556,10 @@ class LicenseDebugger:
             dr_index = bp_info["dr_index"]
             threads = bp_info.get("threads", [])
 
-            success_count = sum(bool(self._clear_hardware_breakpoint_on_thread(thread_id, dr_index))
-                            for thread_id in threads)
+            success_count = sum(bool(self._clear_hardware_breakpoint_on_thread(thread_id, dr_index)) for thread_id in threads)
             del self.hardware_breakpoints[address]
 
-            logger.info(
-                f"Removed hardware breakpoint at {hex(address)} from {success_count} threads"
-            )
+            logger.info(f"Removed hardware breakpoint at {hex(address)} from {success_count} threads")
             return success_count > 0
 
         except Exception as e:
@@ -701,9 +682,7 @@ class LicenseDebugger:
             return False
 
         except Exception as e:
-            logger.exception(
-                f"An unexpected error occurred while hooking API {module_name}!{function_name}: {e}"
-            )
+            logger.exception(f"An unexpected error occurred while hooking API {module_name}!{function_name}: {e}")
             return False
 
     def _debug_loop(self) -> None:
@@ -723,72 +702,50 @@ class LicenseDebugger:
                     if debug_event.dwDebugEventCode == DebugEvent.EXCEPTION_DEBUG_EVENT:
                         logger.debug("Handling EXCEPTION_DEBUG_EVENT.")
                         continue_status = self._handle_exception(debug_event)
-                        logger.debug(
-                            f"EXCEPTION_DEBUG_EVENT handled, continue status: {continue_status}"
-                        )
+                        logger.debug(f"EXCEPTION_DEBUG_EVENT handled, continue status: {continue_status}")
 
                     elif debug_event.dwDebugEventCode == DebugEvent.CREATE_PROCESS_DEBUG_EVENT:
-                        logger.info(
-                            f"Handling CREATE_PROCESS_DEBUG_EVENT for new process: {debug_event.dwProcessId}"
-                        )
+                        logger.info(f"Handling CREATE_PROCESS_DEBUG_EVENT for new process: {debug_event.dwProcessId}")
                         self._handle_create_process(debug_event)
                         logger.info("CREATE_PROCESS_DEBUG_EVENT handled.")
 
                     elif debug_event.dwDebugEventCode == DebugEvent.LOAD_DLL_DEBUG_EVENT:
-                        logger.debug(
-                            f"Handling LOAD_DLL_DEBUG_EVENT for process: {debug_event.dwProcessId}"
-                        )
+                        logger.debug(f"Handling LOAD_DLL_DEBUG_EVENT for process: {debug_event.dwProcessId}")
                         self._handle_load_dll(debug_event)
                         logger.debug("LOAD_DLL_DEBUG_EVENT handled.")
 
                     elif debug_event.dwDebugEventCode == DebugEvent.EXIT_PROCESS_DEBUG_EVENT:
-                        logger.info(
-                            f"Handling EXIT_PROCESS_DEBUG_EVENT for process: {debug_event.dwProcessId}"
-                        )
+                        logger.info(f"Handling EXIT_PROCESS_DEBUG_EVENT for process: {debug_event.dwProcessId}")
                         self.debugging = False
                         logger.info("EXIT_PROCESS_DEBUG_EVENT handled, debugger stopping.")
 
                     elif debug_event.dwDebugEventCode == DebugEvent.CREATE_THREAD_DEBUG_EVENT:
-                        logger.debug(
-                            f"Handling CREATE_THREAD_DEBUG_EVENT for new thread: {debug_event.dwThreadId}"
-                        )
-                        self.thread_handles[debug_event.dwThreadId] = (
-                            debug_event.u.CreateThread.hThread
-                        )
+                        logger.debug(f"Handling CREATE_THREAD_DEBUG_EVENT for new thread: {debug_event.dwThreadId}")
+                        self.thread_handles[debug_event.dwThreadId] = debug_event.u.CreateThread.hThread
                         logger.debug(f"New thread {debug_event.dwThreadId} added to tracking.")
 
                     elif debug_event.dwDebugEventCode == DebugEvent.EXIT_THREAD_DEBUG_EVENT:
-                        logger.debug(
-                            f"Handling EXIT_THREAD_DEBUG_EVENT for thread: {debug_event.dwThreadId}"
-                        )
+                        logger.debug(f"Handling EXIT_THREAD_DEBUG_EVENT for thread: {debug_event.dwThreadId}")
                         if debug_event.dwThreadId in self.thread_handles:
                             del self.thread_handles[debug_event.dwThreadId]
                             logger.debug(f"Thread {debug_event.dwThreadId} removed from tracking.")
 
                     elif debug_event.dwDebugEventCode == DebugEvent.UNLOAD_DLL_DEBUG_EVENT:
-                        logger.debug(
-                            f"Handling UNLOAD_DLL_DEBUG_EVENT for process: {debug_event.dwProcessId}"
-                        )
+                        logger.debug(f"Handling UNLOAD_DLL_DEBUG_EVENT for process: {debug_event.dwProcessId}")
                         # Additional logic could be added here to update module lists
                         logger.debug("UNLOAD_DLL_DEBUG_EVENT handled.")
 
                     elif debug_event.dwDebugEventCode == DebugEvent.OUTPUT_DEBUG_STRING_EVENT:
-                        logger.debug(
-                            f"Handling OUTPUT_DEBUG_STRING_EVENT from process: {debug_event.dwProcessId}"
-                        )
+                        logger.debug(f"Handling OUTPUT_DEBUG_STRING_EVENT from process: {debug_event.dwProcessId}")
                         # Potentially log the debug string content if needed
                         logger.debug("OUTPUT_DEBUG_STRING_EVENT handled.")
 
                     elif debug_event.dwDebugEventCode == DebugEvent.RIP_EVENT:
-                        logger.warning(
-                            f"Handling RIP_EVENT from process: {debug_event.dwProcessId}. Type: {debug_event.u.RipInfo.dwType}"
-                        )
+                        logger.warning(f"Handling RIP_EVENT from process: {debug_event.dwProcessId}. Type: {debug_event.u.RipInfo.dwType}")
                         logger.warning("RIP_EVENT indicates a debugging error or system shutdown.")
 
                     # Continue execution
-                    self.kernel32.ContinueDebugEvent(
-                        debug_event.dwProcessId, debug_event.dwThreadId, continue_status
-                    )
+                    self.kernel32.ContinueDebugEvent(debug_event.dwProcessId, debug_event.dwThreadId, continue_status)
                     logger.debug(
                         f"Continuing execution for Process ID: {debug_event.dwProcessId}, Thread ID: {debug_event.dwThreadId} with status: {continue_status}"
                     )
@@ -830,9 +787,7 @@ class LicenseDebugger:
                     try:
                         bp.callback(self, debug_event)
                     except Exception as e:
-                        logger.exception(
-                            f"An error occurred in the breakpoint callback for address {hex(exception_address)}: {e}"
-                        )
+                        logger.exception(f"An error occurred in the breakpoint callback for address {hex(exception_address)}: {e}")
 
                 # Restore original byte and single step
                 self._write_memory(exception_address, bp.original_byte)
@@ -899,16 +854,12 @@ class LicenseDebugger:
 
                 # Set breakpoints on all detected license functions
                 for func_addr in dll_analysis["license_functions"]:
-                    self.set_breakpoint(
-                        func_addr, description=f"License function at {hex(func_addr)} in {dll_name}"
-                    )
+                    self.set_breakpoint(func_addr, description=f"License function at {hex(func_addr)} in {dll_name}")
                     self.license_check_addresses.append(func_addr)
 
                 # Hook imported license APIs
                 for api_addr, api_name in dll_analysis["license_imports"].items():
-                    self.set_breakpoint(
-                        api_addr, description=f"License API {api_name} imported by {dll_name}"
-                    )
+                    self.set_breakpoint(api_addr, description=f"License API {api_name} imported by {dll_name}")
 
     def _analyze_dll_comprehensive(self, dll_base: int, dll_name: str) -> dict[str, Any]:
         """Perform comprehensive DLL analysis for license detection."""
@@ -945,35 +896,17 @@ class LicenseDebugger:
         opt_header_offset = nt_header_offset + 24
         struct.unpack("<H", pe_header[nt_header_offset + 20 : nt_header_offset + 22])[0]
 
-        size_of_image = struct.unpack(
-            "<I", pe_header[opt_header_offset + 56 : opt_header_offset + 60]
-        )[0]
+        size_of_image = struct.unpack("<I", pe_header[opt_header_offset + 56 : opt_header_offset + 60])[0]
         if is_64bit:
-            import_dir_rva = struct.unpack(
-                "<I", pe_header[opt_header_offset + 120 : opt_header_offset + 124]
-            )[0]
-            import_dir_size = struct.unpack(
-                "<I", pe_header[opt_header_offset + 124 : opt_header_offset + 128]
-            )[0]
-            export_dir_rva = struct.unpack(
-                "<I", pe_header[opt_header_offset + 112 : opt_header_offset + 116]
-            )[0]
-            export_dir_size = struct.unpack(
-                "<I", pe_header[opt_header_offset + 116 : opt_header_offset + 120]
-            )[0]
+            import_dir_rva = struct.unpack("<I", pe_header[opt_header_offset + 120 : opt_header_offset + 124])[0]
+            import_dir_size = struct.unpack("<I", pe_header[opt_header_offset + 124 : opt_header_offset + 128])[0]
+            export_dir_rva = struct.unpack("<I", pe_header[opt_header_offset + 112 : opt_header_offset + 116])[0]
+            export_dir_size = struct.unpack("<I", pe_header[opt_header_offset + 116 : opt_header_offset + 120])[0]
         else:
-            import_dir_rva = struct.unpack(
-                "<I", pe_header[opt_header_offset + 104 : opt_header_offset + 108]
-            )[0]
-            import_dir_size = struct.unpack(
-                "<I", pe_header[opt_header_offset + 108 : opt_header_offset + 112]
-            )[0]
-            export_dir_rva = struct.unpack(
-                "<I", pe_header[opt_header_offset + 96 : opt_header_offset + 100]
-            )[0]
-            export_dir_size = struct.unpack(
-                "<I", pe_header[opt_header_offset + 100 : opt_header_offset + 104]
-            )[0]
+            import_dir_rva = struct.unpack("<I", pe_header[opt_header_offset + 104 : opt_header_offset + 108])[0]
+            import_dir_size = struct.unpack("<I", pe_header[opt_header_offset + 108 : opt_header_offset + 112])[0]
+            export_dir_rva = struct.unpack("<I", pe_header[opt_header_offset + 96 : opt_header_offset + 100])[0]
+            export_dir_size = struct.unpack("<I", pe_header[opt_header_offset + 100 : opt_header_offset + 104])[0]
 
         # Analyze imports for license-related APIs
         if import_dir_rva and import_dir_size:
@@ -994,13 +927,9 @@ class LicenseDebugger:
         sections = self._parse_sections(pe_header, nt_header_offset)
         for section in sections:
             if section["characteristics"] & 0x20:  # IMAGE_SCN_CNT_CODE
-                if section_data := self._read_memory(
-                    dll_base + section["virtual_address"], section["virtual_size"]
-                ):
+                if section_data := self._read_memory(dll_base + section["virtual_address"], section["virtual_size"]):
                     # Advanced pattern matching with disassembly analysis
-                    found_patterns = self._scan_code_patterns(
-                        section_data, dll_base + section["virtual_address"]
-                    )
+                    found_patterns = self._scan_code_patterns(section_data, dll_base + section["virtual_address"])
                     analysis["license_functions"].extend(found_patterns)
 
                     # String analysis
@@ -1051,9 +980,7 @@ class LicenseDebugger:
 
         return analysis
 
-    def _analyze_imports(
-        self, dll_base: int, import_dir_rva: int, import_dir_size: int
-    ) -> dict[int, str]:
+    def _analyze_imports(self, dll_base: int, import_dir_rva: int, import_dir_size: int) -> dict[int, str]:
         """Analyze import table for license-related APIs."""
         license_apis = {}
 
@@ -1140,9 +1067,7 @@ class LicenseDebugger:
 
                     thunk_value = struct.unpack(
                         "<Q" if len(thunk_data) == 8 else "<I",
-                        thunk_data[:8]
-                        if len(thunk_data) >= 8
-                        else thunk_data + b"\x00" * (8 - len(thunk_data)),
+                        thunk_data[:8] if len(thunk_data) >= 8 else thunk_data + b"\x00" * (8 - len(thunk_data)),
                     )[0]
                     if thunk_value == 0:
                         break
@@ -1155,9 +1080,7 @@ class LicenseDebugger:
                         if func_name and func_name in suspicious_apis:
                             iat_address = dll_base + first_thunk + thunk_offset
                             license_apis[iat_address] = func_name
-                            logger.debug(
-                                f"Found license API: {func_name} at IAT {hex(iat_address)}"
-                            )
+                            logger.debug(f"Found license API: {func_name} at IAT {hex(iat_address)}")
 
                     thunk_offset += 8 if len(thunk_data) >= 8 else 4
 
@@ -1165,9 +1088,7 @@ class LicenseDebugger:
 
         return license_apis
 
-    def _analyze_exports(
-        self, dll_base: int, export_dir_rva: int, export_dir_size: int
-    ) -> list[str]:
+    def _analyze_exports(self, dll_base: int, export_dir_rva: int, export_dir_size: int) -> list[str]:
         """Analyze export table for license validation functions."""
         license_exports = []
 
@@ -1184,9 +1105,7 @@ class LicenseDebugger:
 
         # Read function names
         if addr_names and num_names > 0:
-            if names_array := self._read_memory(
-                dll_base + addr_names, num_names * 4
-            ):
+            if names_array := self._read_memory(dll_base + addr_names, num_names * 4):
                 # License-related export patterns
                 license_patterns = [
                     "IsLicenseValid",
@@ -1225,14 +1144,10 @@ class LicenseDebugger:
         sections = []
 
         # Get number of sections
-        num_sections = struct.unpack("<H", pe_header[nt_header_offset + 6 : nt_header_offset + 8])[
-            0
-        ]
+        num_sections = struct.unpack("<H", pe_header[nt_header_offset + 6 : nt_header_offset + 8])[0]
 
         # Section header starts after optional header
-        opt_header_size = struct.unpack(
-            "<H", pe_header[nt_header_offset + 20 : nt_header_offset + 22]
-        )[0]
+        opt_header_size = struct.unpack("<H", pe_header[nt_header_offset + 20 : nt_header_offset + 22])[0]
         section_offset = nt_header_offset + 24 + opt_header_size
 
         for _i in range(min(num_sections, 20)):  # Limit sections
@@ -1390,9 +1305,7 @@ class LicenseDebugger:
         buffer = ctypes.create_string_buffer(size)
         bytes_read = ctypes.c_size_t()
 
-        if self.kernel32.ReadProcessMemory(
-            self.process_handle, ctypes.c_void_p(address), buffer, size, ctypes.byref(bytes_read)
-        ):
+        if self.kernel32.ReadProcessMemory(self.process_handle, ctypes.c_void_p(address), buffer, size, ctypes.byref(bytes_read)):
             return buffer.raw[: bytes_read.value]
 
         return None
@@ -1457,9 +1370,7 @@ class LicenseDebugger:
         mbi = MEMORY_BASIC_INFORMATION()
         address = 0
 
-        while self.kernel32.VirtualQueryEx(
-            self.process_handle, ctypes.c_void_p(address), ctypes.byref(mbi), ctypes.sizeof(mbi)
-        ):
+        while self.kernel32.VirtualQueryEx(self.process_handle, ctypes.c_void_p(address), ctypes.byref(mbi), ctypes.sizeof(mbi)):
             MEM_COMMIT = 0x1000
             PAGE_EXECUTE = 0x10
             PAGE_EXECUTE_READ = 0x20
@@ -1471,8 +1382,7 @@ class LicenseDebugger:
                         "base": mbi.BaseAddress,
                         "size": mbi.RegionSize,
                         "protection": mbi.Protect,
-                        "executable": mbi.Protect
-                        in [PAGE_EXECUTE, PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE],
+                        "executable": mbi.Protect in [PAGE_EXECUTE, PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE],
                     },
                 )
 
@@ -1558,9 +1468,7 @@ class LicenseDebugger:
                 return self._evaluate_memory_condition(condition, context)
 
             # Flag comparison (e.g., "zf == 1")
-            if any(
-                flag in condition for flag in ["cf", "pf", "af", "zf", "sf", "tf", "if", "df", "of"]
-            ):
+            if any(flag in condition for flag in ["cf", "pf", "af", "zf", "sf", "tf", "if", "df", "of"]):
                 return self._evaluate_flag_condition(condition, context)
 
             logger.warning(f"Unknown condition type: {bp.condition}")
@@ -1873,9 +1781,7 @@ class LicenseDebugger:
         if thread_id not in self.thread_handles:
             return False
 
-        return bool(
-            self.kernel32.SetThreadContext(self.thread_handles[thread_id], ctypes.byref(context))
-        )
+        return bool(self.kernel32.SetThreadContext(self.thread_handles[thread_id], ctypes.byref(context)))
 
     def _set_single_step(self, thread_id: int) -> bool:
         """Enable single-step mode for thread."""
@@ -1997,9 +1903,7 @@ class LicenseDebugger:
 
         try:
             if kernel32_base := self.kernel32.GetModuleHandleA(b"kernel32.dll"):
-                if is_debugger_present := self.kernel32.GetProcAddress(
-                    kernel32_base, b"IsDebuggerPresent"
-                ):
+                if is_debugger_present := self.kernel32.GetProcAddress(kernel32_base, b"IsDebuggerPresent"):
                     # Patch to always return 0 (false)
                     self._write_memory(is_debugger_present, b"\x31\xc0\xc3")  # XOR EAX,EAX; RET
 
@@ -2022,9 +1926,7 @@ class LicenseDebugger:
                 )
                 == 0
             ):
-                peb_address = struct.unpack(
-                    "P", pbi[ctypes.sizeof(ctypes.c_void_p) : ctypes.sizeof(ctypes.c_void_p) * 2]
-                )[0]
+                peb_address = struct.unpack("P", pbi[ctypes.sizeof(ctypes.c_void_p) : ctypes.sizeof(ctypes.c_void_p) * 2])[0]
                 # Clear BeingDebugged flag at PEB+2
                 self._write_memory(peb_address + 2, b"\x00")
 
@@ -2038,9 +1940,7 @@ class LicenseDebugger:
             return True
 
         except Exception as e:
-            logger.exception(
-                f"An unexpected error occurred while bypassing anti-debug techniques: {e}"
-            )
+            logger.exception(f"An unexpected error occurred while bypassing anti-debug techniques: {e}")
             return False
 
     def hide_debugger(self) -> bool:
@@ -2141,9 +2041,7 @@ class LicenseDebugger:
             # Method 4: Patch the OutputDebugString implementation directly
             # Replace first bytes with RET to make it return immediately
             for api_name in ["OutputDebugStringA", "OutputDebugStringW"]:
-                api_addr = self.kernel32.GetProcAddress(
-                    self.kernel32.GetModuleHandleA(b"kernel32.dll"), api_name.encode()
-                )
+                api_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleA(b"kernel32.dll"), api_name.encode())
                 if api_addr:
                     # Save original bytes for restoration
                     original = ctypes.create_string_buffer(3)
@@ -2164,9 +2062,7 @@ class LicenseDebugger:
             return True
 
         except Exception as e:
-            logger.exception(
-                f"An unexpected error occurred while bypassing OutputDebugString detection: {e}"
-            )
+            logger.exception(f"An unexpected error occurred while bypassing OutputDebugString detection: {e}")
             return False
 
     def _output_debug_string_callback(self, debugger: object, debug_event: object) -> None:
@@ -2446,9 +2342,7 @@ class LicenseDebugger:
                         ctypes.sizeof(critical),
                     )
                 except Exception as e:
-                    self.logger.debug(
-                        f"Thread may not allow modification: {e}"
-                    )  # Some threads may not allow modification
+                    self.logger.debug(f"Thread may not allow modification: {e}")  # Some threads may not allow modification
 
             # Strategy 3: Create a whitelist of legitimate threads
             self.legitimate_threads = set()
@@ -2462,24 +2356,16 @@ class LicenseDebugger:
                     self.legitimate_threads.add(thread.id)
             except (psutil.NoSuchProcess, psutil.AccessDenied, OSError):
                 # Fallback to Windows API enumeration
-                snapshot = self.kernel32.CreateToolhelp32Snapshot(
-                    0x00000004, self.process_id
-                )  # TH32CS_SNAPTHREAD
+                snapshot = self.kernel32.CreateToolhelp32Snapshot(0x00000004, self.process_id)  # TH32CS_SNAPTHREAD
                 if snapshot != -1:
                     thread_entry = ctypes.create_string_buffer(ctypes.sizeof(ctypes.c_ulong) * 7)
                     thread_entry_size = ctypes.c_ulong(ctypes.sizeof(thread_entry))
-                    ctypes.memmove(
-                        ctypes.addressof(thread_entry), ctypes.byref(thread_entry_size), 4
-                    )
+                    ctypes.memmove(ctypes.addressof(thread_entry), ctypes.byref(thread_entry_size), 4)
 
                     if self.kernel32.Thread32First(snapshot, thread_entry):
                         while True:
-                            thread_id = ctypes.cast(
-                                thread_entry[8:12], ctypes.POINTER(ctypes.c_ulong)
-                            ).contents.value
-                            owner_pid = ctypes.cast(
-                                thread_entry[12:16], ctypes.POINTER(ctypes.c_ulong)
-                            ).contents.value
+                            thread_id = ctypes.cast(thread_entry[8:12], ctypes.POINTER(ctypes.c_ulong)).contents.value
+                            owner_pid = ctypes.cast(thread_entry[12:16], ctypes.POINTER(ctypes.c_ulong)).contents.value
                             if owner_pid == self.process_id:
                                 self.legitimate_threads.add(thread_id)
                             if not self.kernel32.Thread32Next(snapshot, thread_entry):
@@ -2490,9 +2376,7 @@ class LicenseDebugger:
             # Strategy 4: Hook NtOpenThread to prevent access to hidden threads
             self.hidden_thread_ids = set()  # Threads we want to hide
 
-            logger.info(
-                f"Thread enumeration bypass applied, hiding {len(self.hidden_thread_ids)} threads"
-            )
+            logger.info(f"Thread enumeration bypass applied, hiding {len(self.hidden_thread_ids)} threads")
             return True
 
         except Exception as e:
@@ -2578,9 +2462,7 @@ class LicenseDebugger:
                     if prev_suspend != 0xFFFFFFFF:
                         if self.kernel32.GetThreadContext(thread_handle, ctypes.byref(context)):
                             # Check if thread is at a suspension point
-                            rip = (
-                                context.Rip if ctypes.sizeof(ctypes.c_void_p) == 8 else context.Eip
-                            )
+                            rip = context.Rip if ctypes.sizeof(ctypes.c_void_p) == 8 else context.Eip
 
                             # Read instruction at RIP/EIP
                             inst_buf = ctypes.create_string_buffer(16)
@@ -2594,9 +2476,7 @@ class LicenseDebugger:
                             ):
                                 # Check for common suspension indicators
                                 # INT 3 (0xCC), INT 2D (0xCD 0x2D), or infinite loop
-                                if inst_buf[0] == 0xCC or (
-                                    inst_buf[0] == 0xCD and inst_buf[1] == 0x2D
-                                ):
+                                if inst_buf[0] == 0xCC or (inst_buf[0] == 0xCD and inst_buf[1] == 0x2D):
                                     suspended_threads[thread_id] = {
                                         "suspend_count": prev_suspend,
                                         "handle": thread_handle,
@@ -2618,9 +2498,7 @@ class LicenseDebugger:
                     logger.debug(f"Failed to check thread {thread_id} wait state: {e}")
 
             # Method 3: Check for debugger-suspended threads
-            snapshot = self.kernel32.CreateToolhelp32Snapshot(
-                0x00000004, self.process_id
-            )  # TH32CS_SNAPTHREAD
+            snapshot = self.kernel32.CreateToolhelp32Snapshot(0x00000004, self.process_id)  # TH32CS_SNAPTHREAD
             if snapshot != -1:
 
                 class THREADENTRY32(ctypes.Structure):
@@ -2656,9 +2534,7 @@ class LicenseDebugger:
             if suspended_threads:
                 logger.info(f"Detected {len(suspended_threads)} suspended threads")
                 for tid, info in suspended_threads.items():
-                    logger.debug(
-                        f"Thread {tid}: {info['detection_method']}, suspend_count={info['suspend_count']}"
-                    )
+                    logger.debug(f"Thread {tid}: {info['detection_method']}, suspend_count={info['suspend_count']}")
 
             return suspended_threads
 
@@ -2724,9 +2600,7 @@ class LicenseDebugger:
             # Determine which TLS array to use
             if tls_index < 64:
                 # Use primary TLS slots
-                tls_address = (
-                    teb_address + tls_slots_offset + (tls_index * ctypes.sizeof(ctypes.c_void_p))
-                )
+                tls_address = teb_address + tls_slots_offset + (tls_index * ctypes.sizeof(ctypes.c_void_p))
             else:
                 # Use TLS expansion slots
                 expansion_index = tls_index - 64
@@ -2750,9 +2624,7 @@ class LicenseDebugger:
                     logger.error("TLS expansion slots not allocated")
                     return False
 
-                tls_address = expansion_ptr.value + (
-                    expansion_index * ctypes.sizeof(ctypes.c_void_p)
-                )
+                tls_address = expansion_ptr.value + (expansion_index * ctypes.sizeof(ctypes.c_void_p))
 
             # Write the TLS value
             value_ptr = ctypes.c_void_p(int.from_bytes(value, "little"))
@@ -2839,9 +2711,7 @@ class LicenseDebugger:
                             exception = debug_event.u.Exception
                             if exception.ExceptionRecord.ExceptionCode == EXCEPTION_SINGLE_STEP:
                                 # Get current context
-                                if self.kernel32.GetThreadContext(
-                                    thread_handle, ctypes.byref(context)
-                                ):
+                                if self.kernel32.GetThreadContext(thread_handle, ctypes.byref(context)):
                                     # Get instruction pointer
                                     if ctypes.sizeof(ctypes.c_void_p) == 8:
                                         ip = context.Rip
@@ -2925,23 +2795,17 @@ class LicenseDebugger:
 
                                     # Re-enable single-step
                                     context.EFlags |= 0x100
-                                    self.kernel32.SetThreadContext(
-                                        thread_handle, ctypes.byref(context)
-                                    )
+                                    self.kernel32.SetThreadContext(thread_handle, ctypes.byref(context))
 
                                 single_step_count += 1
 
                         # Continue debugging
-                        self.kernel32.ContinueDebugEvent(
-                            debug_event.dwProcessId, debug_event.dwThreadId, DBG_CONTINUE
-                        )
+                        self.kernel32.ContinueDebugEvent(debug_event.dwProcessId, debug_event.dwThreadId, DBG_CONTINUE)
                     else:
                         # No debug event, check if thread is still alive
                         exit_code = ctypes.c_ulong()
                         if self.kernel32.GetExitCodeThread(thread_handle, ctypes.byref(exit_code)) and exit_code.value != 259:
-                            logger.info(
-                                f"Thread {thread_id} terminated with code {exit_code.value}"
-                            )
+                            logger.info(f"Thread {thread_id} terminated with code {exit_code.value}")
                             break
 
                 # Disable single-step mode
@@ -3016,9 +2880,7 @@ class LicenseDebugger:
                         # Read callback addresses
                         callback_size = 8 if is_64bit else 4
                         for i in range(10):  # Limit to 10 callbacks
-                            callback_data = self._read_memory(
-                                callbacks_ptr + i * callback_size, callback_size
-                            )
+                            callback_data = self._read_memory(callbacks_ptr + i * callback_size, callback_size)
                             if not callback_data:
                                 break
 
@@ -3096,10 +2958,7 @@ class LicenseDebugger:
                             instructions.append("  [!] TEB/PEB access detected")
 
                         # Stop at return or after 50 instructions
-                        if (
-                            inst.mnemonic in ["ret", "retn"]
-                            or instruction_count > 49
-                        ):
+                        if inst.mnemonic in ["ret", "retn"] or instruction_count > 49:
                             break
                 else:
                     # Raw byte display
@@ -3118,9 +2977,7 @@ class LicenseDebugger:
                             instructions.append("  [!] CPUID instruction detected")
 
                 disassembled[callback_addr] = instructions
-                logger.info(
-                    f"Disassembled TLS callback at 0x{callback_addr:X}: {len(instructions)} instructions"
-                )
+                logger.info(f"Disassembled TLS callback at 0x{callback_addr:X}: {len(instructions)} instructions")
 
             return disassembled
 
@@ -3158,6 +3015,7 @@ class LicenseDebugger:
                         continue
 
                     if original_bytes := self._read_memory(callback_addr, 5):
+                        logger.debug(f"TLS callback original bytes: {original_bytes.hex()}")
                         # Create a JMP to skip the callback (JMP +0)
                         # This effectively makes it a NOP sled
                         jmp_patch = b"\xe9\x00\x00\x00\x00"  # JMP rel32 (to next instruction)
@@ -3180,9 +3038,7 @@ class LicenseDebugger:
                     nt_header_offset = e_lfanew
 
                     if pe_header[nt_header_offset : nt_header_offset + 4] == b"PE\x00\x00":
-                        machine = struct.unpack(
-                            "<H", pe_header[nt_header_offset + 4 : nt_header_offset + 6]
-                        )[0]
+                        machine = struct.unpack("<H", pe_header[nt_header_offset + 4 : nt_header_offset + 6])[0]
                         is_64bit = machine == 0x8664
                         opt_header_offset = nt_header_offset + 24
 
@@ -3191,12 +3047,9 @@ class LicenseDebugger:
                         else:
                             tls_dir_offset = opt_header_offset + 128
 
-                        if tls_rva := struct.unpack(
-                            "<I", pe_header[tls_dir_offset : tls_dir_offset + 4]
-                        )[0]:
-                            if tls_dir := self._read_memory(
-                                module_base + tls_rva, 24
-                            ):
+                        if tls_rva := struct.unpack("<I", pe_header[tls_dir_offset : tls_dir_offset + 4])[0]:
+                            if tls_dir := self._read_memory(module_base + tls_rva, 24):
+                                logger.debug(f"TLS directory found at RVA 0x{tls_rva:X}, size {len(tls_dir)} bytes")
                                 # Get callbacks pointer and zero it out
                                 if is_64bit:
                                     callbacks_ptr_offset = 16
@@ -3206,9 +3059,7 @@ class LicenseDebugger:
                                     null_ptr = b"\x00" * 4
 
                                 # Zero the callback pointer in TLS directory
-                                if self._write_memory(
-                                    module_base + tls_rva + callbacks_ptr_offset, null_ptr
-                                ):
+                                if self._write_memory(module_base + tls_rva + callbacks_ptr_offset, null_ptr):
                                     logger.info("Cleared TLS callback table pointer")
                                     bypassed_count = len(callbacks)
 
@@ -3263,9 +3114,7 @@ class LicenseDebugger:
                     )
 
                     if not trampoline_addr:
-                        logger.error(
-                            f"Failed to allocate trampoline for callback at 0x{callback_addr:X}"
-                        )
+                        logger.error(f"Failed to allocate trampoline for callback at 0x{callback_addr:X}")
                         continue
 
                     # Create hook trampoline
@@ -3378,9 +3227,7 @@ class LicenseDebugger:
 
                     # Write trampoline to allocated memory
                     if not self._write_memory(trampoline_addr, bytes(trampoline)):
-                        self.kernel32.VirtualFreeEx(
-                            self.process_handle, trampoline_addr, 0, MEM_RELEASE
-                        )
+                        self.kernel32.VirtualFreeEx(self.process_handle, trampoline_addr, 0, MEM_RELEASE)
                         continue
 
                     # Create JMP from original to trampoline
@@ -3398,9 +3245,7 @@ class LicenseDebugger:
                         hooked_count += 1
                         logger.info(f"Hooked TLS callback at 0x{callback_addr:X}")
                     else:
-                        self.kernel32.VirtualFreeEx(
-                            self.process_handle, trampoline_addr, 0, MEM_RELEASE
-                        )
+                        self.kernel32.VirtualFreeEx(self.process_handle, trampoline_addr, 0, MEM_RELEASE)
 
                 except Exception as e:
                     logger.error(f"Failed to hook callback at 0x{callback_addr:X}: {e}")
@@ -3451,46 +3296,26 @@ class LicenseDebugger:
                     inst_lower = inst_line.lower()
 
                     # Check for debugging detection
-                    if any(
-                        pattern in inst_lower
-                        for pattern in ["int3", "int 3", "debugger", "isdebuggerpresent"]
-                    ):
-                        protection_info["suspicious_patterns"].append(
-                            f"Anti-debugging at 0x{callback_addr:X}"
-                        )
+                    if any(pattern in inst_lower for pattern in ["int3", "int 3", "debugger", "isdebuggerpresent"]):
+                        protection_info["suspicious_patterns"].append(f"Anti-debugging at 0x{callback_addr:X}")
                         protection_info["detected_techniques"].append("Anti-Debugging")
                         suspicion_score += 3
 
                     # Check for timing attacks
-                    if any(
-                        pattern in inst_lower
-                        for pattern in ["rdtsc", "queryperformance", "gettickcount"]
-                    ):
-                        protection_info["suspicious_patterns"].append(
-                            f"Timing check at 0x{callback_addr:X}"
-                        )
+                    if any(pattern in inst_lower for pattern in ["rdtsc", "queryperformance", "gettickcount"]):
+                        protection_info["suspicious_patterns"].append(f"Timing check at 0x{callback_addr:X}")
                         protection_info["detected_techniques"].append("Timing Analysis")
                         suspicion_score += 2
 
                     # Check for VM detection
-                    if any(
-                        pattern in inst_lower
-                        for pattern in ["cpuid", "vmware", "virtualbox", "hypervisor"]
-                    ):
-                        protection_info["suspicious_patterns"].append(
-                            f"VM detection at 0x{callback_addr:X}"
-                        )
+                    if any(pattern in inst_lower for pattern in ["cpuid", "vmware", "virtualbox", "hypervisor"]):
+                        protection_info["suspicious_patterns"].append(f"VM detection at 0x{callback_addr:X}")
                         protection_info["detected_techniques"].append("VM Detection")
                         suspicion_score += 2
 
                     # Check for process/module enumeration
-                    if any(
-                        pattern in inst_lower
-                        for pattern in ["createtoolhelp", "module32", "process32"]
-                    ):
-                        protection_info["suspicious_patterns"].append(
-                            f"Process enumeration at 0x{callback_addr:X}"
-                        )
+                    if any(pattern in inst_lower for pattern in ["createtoolhelp", "module32", "process32"]):
+                        protection_info["suspicious_patterns"].append(f"Process enumeration at 0x{callback_addr:X}")
                         protection_info["detected_techniques"].append("Process Scanning")
                         suspicion_score += 1
 
@@ -3506,42 +3331,25 @@ class LicenseDebugger:
                             "teb",
                         ]
                     ):
-                        protection_info["suspicious_patterns"].append(
-                            f"PEB/TEB access at 0x{callback_addr:X}"
-                        )
+                        protection_info["suspicious_patterns"].append(f"PEB/TEB access at 0x{callback_addr:X}")
                         protection_info["detected_techniques"].append("PEB Manipulation")
                         suspicion_score += 2
 
                     # Check for exception handling
-                    if any(
-                        pattern in inst_lower
-                        for pattern in ["seh", "exception", "vectored", "unhandled"]
-                    ):
-                        protection_info["suspicious_patterns"].append(
-                            f"Exception handling at 0x{callback_addr:X}"
-                        )
+                    if any(pattern in inst_lower for pattern in ["seh", "exception", "vectored", "unhandled"]):
+                        protection_info["suspicious_patterns"].append(f"Exception handling at 0x{callback_addr:X}")
                         protection_info["detected_techniques"].append("Exception-Based Protection")
                         suspicion_score += 2
 
                     # Check for code unpacking/decryption
-                    if any(
-                        pattern in inst_lower
-                        for pattern in ["virtualprotect", "xor", "decrypt", "unpack"]
-                    ):
-                        protection_info["suspicious_patterns"].append(
-                            f"Code modification at 0x{callback_addr:X}"
-                        )
+                    if any(pattern in inst_lower for pattern in ["virtualprotect", "xor", "decrypt", "unpack"]):
+                        protection_info["suspicious_patterns"].append(f"Code modification at 0x{callback_addr:X}")
                         protection_info["detected_techniques"].append("Code Unpacking")
                         suspicion_score += 3
 
                     # Check for integrity checks
-                    if any(
-                        pattern in inst_lower
-                        for pattern in ["crc", "checksum", "hash", "integrity"]
-                    ):
-                        protection_info["suspicious_patterns"].append(
-                            f"Integrity check at 0x{callback_addr:X}"
-                        )
+                    if any(pattern in inst_lower for pattern in ["crc", "checksum", "hash", "integrity"]):
+                        protection_info["suspicious_patterns"].append(f"Integrity check at 0x{callback_addr:X}")
                         protection_info["detected_techniques"].append("Integrity Checking")
                         suspicion_score += 2
 
@@ -3553,9 +3361,7 @@ class LicenseDebugger:
                     suspicion_score += 1
 
             # Remove duplicate techniques
-            protection_info["detected_techniques"] = list(
-                set(protection_info["detected_techniques"])
-            )
+            protection_info["detected_techniques"] = list(set(protection_info["detected_techniques"]))
 
             # Determine protection likelihood based on score
             if suspicion_score >= 10:
@@ -3581,17 +3387,11 @@ class LicenseDebugger:
 
             # Check which protector patterns match
             for protector, patterns in known_protectors.items():
-                match_count = sum(bool(any(
-                                                      pattern in sp.lower()
-                                                      for sp in protection_info["suspicious_patterns"]
-                                                  ))
-                              for pattern in patterns)
+                match_count = sum(bool(any(pattern in sp.lower() for sp in protection_info["suspicious_patterns"])) for pattern in patterns)
                 if match_count >= 2:  # At least 2 patterns match
                     protection_info["detected_techniques"].append(f"Possible {protector}")
 
-            logger.info(
-                f"TLS protection analysis complete: {protection_info['protection_likelihood']} likelihood"
-            )
+            logger.info(f"TLS protection analysis complete: {protection_info['protection_likelihood']} likelihood")
 
             return protection_info
 
@@ -3664,27 +3464,17 @@ class LicenseDebugger:
             # Get export directory RVA and size
             opt_header_offset = nt_header_offset + 24
             if is_64bit:
-                export_dir_rva = struct.unpack(
-                    "<I", pe_header[opt_header_offset + 112 : opt_header_offset + 116]
-                )[0]
-                export_dir_size = struct.unpack(
-                    "<I", pe_header[opt_header_offset + 116 : opt_header_offset + 120]
-                )[0]
+                export_dir_rva = struct.unpack("<I", pe_header[opt_header_offset + 112 : opt_header_offset + 116])[0]
+                export_dir_size = struct.unpack("<I", pe_header[opt_header_offset + 116 : opt_header_offset + 120])[0]
             else:
-                export_dir_rva = struct.unpack(
-                    "<I", pe_header[opt_header_offset + 96 : opt_header_offset + 100]
-                )[0]
-                export_dir_size = struct.unpack(
-                    "<I", pe_header[opt_header_offset + 100 : opt_header_offset + 104]
-                )[0]
+                export_dir_rva = struct.unpack("<I", pe_header[opt_header_offset + 96 : opt_header_offset + 100])[0]
+                export_dir_size = struct.unpack("<I", pe_header[opt_header_offset + 100 : opt_header_offset + 104])[0]
 
             if not export_dir_rva or not export_dir_size:
                 return eat_entries
 
             # Read export directory
-            export_data = self._read_memory(
-                module_base + export_dir_rva, min(export_dir_size, 0x1000)
-            )
+            export_data = self._read_memory(module_base + export_dir_rva, min(export_dir_size, 0x1000))
             if not export_data or len(export_data) < 40:
                 return eat_entries
 
@@ -3697,21 +3487,15 @@ class LicenseDebugger:
 
             # Read function addresses array
             if addr_functions_rva and num_functions > 0:
-                func_addresses = self._read_memory(
-                    module_base + addr_functions_rva, num_functions * 4
-                )
+                func_addresses = self._read_memory(module_base + addr_functions_rva, num_functions * 4)
 
                 # Read names array
                 if addr_names_rva and num_names > 0:
                     names_array = self._read_memory(module_base + addr_names_rva, num_names * 4)
-                    ordinals_array = self._read_memory(
-                        module_base + addr_ordinals_rva, num_names * 2
-                    )
+                    ordinals_array = self._read_memory(module_base + addr_ordinals_rva, num_names * 2)
 
                     if func_addresses and names_array and ordinals_array:
-                        for i in range(
-                            min(num_names, 1000)
-                        ):  # Limit to prevent excessive processing
+                        for i in range(min(num_names, 1000)):  # Limit to prevent excessive processing
                             # Get name RVA
                             name_rva = struct.unpack("<I", names_array[i * 4 : (i + 1) * 4])[0]
                             func_name = self._read_string(module_base + name_rva, 256)
@@ -3721,18 +3505,11 @@ class LicenseDebugger:
 
                             # Get function address using ordinal as index
                             if ordinal < num_functions:
-                                func_rva = struct.unpack(
-                                    "<I", func_addresses[ordinal * 4 : (ordinal + 1) * 4]
-                                )[0]
+                                func_rva = struct.unpack("<I", func_addresses[ordinal * 4 : (ordinal + 1) * 4])[0]
 
                                 # Check if it's a forwarded export (RVA points within export directory)
-                                if (
-                                    func_rva >= export_dir_rva
-                                    and func_rva < export_dir_rva + export_dir_size
-                                ):
-                                    if forward_name := self._read_string(
-                                        module_base + func_rva, 256
-                                    ):
+                                if func_rva >= export_dir_rva and func_rva < export_dir_rva + export_dir_size:
+                                    if forward_name := self._read_string(module_base + func_rva, 256):
                                         func_name = f"{func_name} -> {forward_name}"
                                     func_addr = 0  # Forwarded exports don't have a direct address
                                 else:
@@ -3778,18 +3555,14 @@ class LicenseDebugger:
 
             # Parse PE headers to get architecture and delayed import directory
             nt_header_offset, is_64bit = self._parse_nt_header(pe_header)
-            delay_import_rva, delay_import_size = self._get_delay_import_info(
-                pe_header, nt_header_offset, is_64bit
-            )
+            delay_import_rva, delay_import_size = self._get_delay_import_info(pe_header, nt_header_offset, is_64bit)
 
             if not delay_import_rva or not delay_import_size:
                 logger.debug("No delayed imports found")
                 return delayed_imports
 
             # Parse delay import descriptors
-            delayed_imports = self._parse_delay_descriptors(
-                module_base, delay_import_rva, delay_import_size, is_64bit
-            )
+            delayed_imports = self._parse_delay_descriptors(module_base, delay_import_rva, delay_import_size, is_64bit)
 
             # Log summary and check for suspicious imports
             self._log_delayed_imports_summary(delayed_imports)
@@ -3834,9 +3607,7 @@ class LicenseDebugger:
         is_64bit = machine == 0x8664
         return nt_header_offset, is_64bit
 
-    def _get_delay_import_info(
-        self, pe_header: bytes, nt_header_offset: int, is_64bit: bool
-    ) -> tuple[int, int]:
+    def _get_delay_import_info(self, pe_header: bytes, nt_header_offset: int, is_64bit: bool) -> tuple[int, int]:
         """Get delay import directory information.
 
         Args:
@@ -3856,12 +3627,8 @@ class LicenseDebugger:
             # 32-bit: Delay Import Directory is at offset 184 in optional header
             delay_import_offset = opt_header_offset + 184
 
-        delay_import_rva = struct.unpack(
-            "<I", pe_header[delay_import_offset : delay_import_offset + 4]
-        )[0]
-        delay_import_size = struct.unpack(
-            "<I", pe_header[delay_import_offset + 4 : delay_import_offset + 8]
-        )[0]
+        delay_import_rva = struct.unpack("<I", pe_header[delay_import_offset : delay_import_offset + 4])[0]
+        delay_import_size = struct.unpack("<I", pe_header[delay_import_offset + 4 : delay_import_offset + 8])[0]
         return delay_import_rva, delay_import_size
 
     def _parse_delay_descriptors(
@@ -3883,9 +3650,7 @@ class LicenseDebugger:
 
         # Read delay import descriptors
         delay_desc_size = 32  # Size of ImgDelayDescr structure
-        num_descriptors = min(
-            delay_import_size // delay_desc_size, 50
-        )  # Limit to prevent excessive processing
+        num_descriptors = min(delay_import_size // delay_desc_size, 50)  # Limit to prevent excessive processing
 
         for i in range(num_descriptors):
             desc_offset = module_base + delay_import_rva + (i * delay_desc_size)
@@ -3969,9 +3734,7 @@ class LicenseDebugger:
 
         # Parse Import Name Table and IAT
         if int_rva and iat_rva:
-            functions = self._parse_import_table(
-                module_base, int_rva, iat_rva, is_new_format, is_64bit, is_loaded
-            )
+            functions = self._parse_import_table(module_base, int_rva, iat_rva, is_new_format, is_64bit, is_loaded)
 
         # Check for bound imports in the bound IAT
         if bound_iat_rva and timestamp != 0:
@@ -3980,9 +3743,7 @@ class LicenseDebugger:
 
         return dll_name, functions
 
-    def _check_dll_loaded(
-        self, module_base: int, module_handle_rva: int, is_new_format: bool, is_64bit: bool
-    ) -> bool:
+    def _check_dll_loaded(self, module_base: int, module_handle_rva: int, is_new_format: bool, is_64bit: bool) -> bool:
         """Check if DLL is already loaded.
 
         Args:
@@ -4046,22 +3807,16 @@ class LicenseDebugger:
             if int_entry == 0:
                 break
 
-            if iat_entry_data := self._read_memory(
-                iat_addr + j * entry_size, entry_size
-            ):
+            if iat_entry_data := self._read_memory(iat_addr + j * entry_size, entry_size):
                 iat_entry = struct.unpack("<Q" if is_64bit else "<I", iat_entry_data)[0]
             else:
                 iat_entry = 0
 
-            if func_info := self._get_function_info(
-                module_base, int_entry, is_new_format, is_64bit, j
-            ):
+            if func_info := self._get_function_info(module_base, int_entry, is_new_format, is_64bit, j):
                 func_name, func_addr = func_info
 
                 # Determine if function is bound (already resolved)
-                is_bound = self._determine_bound_status(
-                    is_loaded, iat_entry, int_entry, func_addr, iat_addr, j, entry_size
-                )
+                is_bound = self._determine_bound_status(is_loaded, iat_entry, int_entry, func_addr, iat_addr, j, entry_size)
 
                 functions.append((func_addr, func_name, is_bound))
 
@@ -4074,15 +3829,11 @@ class LicenseDebugger:
                     "virtualalloc",
                     "createthread",
                 ]:
-                    logger.info(
-                        f"Found delayed import: {func_name} at 0x{func_addr:X} (bound={is_bound})"
-                    )
+                    logger.info(f"Found delayed import: {func_name} at 0x{func_addr:X} (bound={is_bound})")
 
         return functions
 
-    def _get_function_info(
-        self, module_base: int, int_entry: int, is_new_format: bool, is_64bit: bool, j: int
-    ) -> tuple[str, int]:
+    def _get_function_info(self, module_base: int, int_entry: int, is_new_format: bool, is_64bit: bool, j: int) -> tuple[str, int]:
         """Get function information (name and address) based on import entry.
 
         Args:
@@ -4142,9 +3893,7 @@ class LicenseDebugger:
         """
         return is_loaded and iat_entry not in (0, int_entry)
 
-    def _log_delayed_imports_summary(
-        self, delayed_imports: dict[str, list[tuple[int, str, bool]]]
-    ) -> None:
+    def _log_delayed_imports_summary(self, delayed_imports: dict[str, list[tuple[int, str, bool]]]) -> None:
         """Log summary of delayed imports and check for suspicious imports.
 
         Args:
@@ -4737,9 +4486,7 @@ class LicenseDebugger:
             logger.exception(f"Failed to generate dynamic patch: {e}")
             return b""
 
-    def relocate_code(
-        self, code: bytes, old_base: int, new_base: int, reloc_offsets: list[int]
-    ) -> bytes:
+    def relocate_code(self, code: bytes, old_base: int, new_base: int, reloc_offsets: list[int]) -> bytes:
         """Relocate code to a new base address.
 
         Args:
@@ -4790,9 +4537,7 @@ class LicenseDebugger:
                     i += 5
 
                 # Check for short JMP (EB) and conditional jumps (70-7F)
-                elif i + 2 <= len(relocated) and (
-                    relocated[i] == 0xEB or (0x70 <= relocated[i] <= 0x7F)
-                ):
+                elif i + 2 <= len(relocated) and (relocated[i] == 0xEB or (0x70 <= relocated[i] <= 0x7F)):
                     # Short jumps are position-independent within the relocated block
                     i += 2
                 else:
@@ -5357,9 +5102,7 @@ class LicenseDebugger:
 
                     # Check for registered filters
                     if exception_code in self.exception_filters:
-                        filter_result = self.exception_filters[exception_code](
-                            exception_record, context_record
-                        )
+                        filter_result = self.exception_filters[exception_code](exception_record, context_record)
                         if filter_result is not None:
                             return filter_result
 
@@ -5381,9 +5124,7 @@ class LicenseDebugger:
 
                     # Call custom exception callbacks
                     if exception_code in self.exception_callbacks:
-                        return self.exception_callbacks[exception_code](
-                            exception_record, context_record
-                        )
+                        return self.exception_callbacks[exception_code](exception_record, context_record)
 
                     # Continue searching for other handlers
                     return 0  # EXCEPTION_CONTINUE_SEARCH
@@ -5396,9 +5137,7 @@ class LicenseDebugger:
             self.veh_handlers.append(veh_handler)
 
             # Install VEH handler
-            self.veh_handle = self.kernel32.AddVectoredExceptionHandler(
-                1 if first_handler else 0, veh_handler
-            )
+            self.veh_handle = self.kernel32.AddVectoredExceptionHandler(1 if first_handler else 0, veh_handler)
 
             if not self.veh_handle:
                 logger.error("Failed to install VEH handler")
@@ -5422,9 +5161,8 @@ class LicenseDebugger:
             self.kernel32.RemoveVectoredExceptionHandler.argtypes = [wintypes.LPVOID]
             self.kernel32.RemoveVectoredExceptionHandler.restype = wintypes.ULONG
 
-            if result := self.kernel32.RemoveVectoredExceptionHandler(
-                self.veh_handle
-            ):
+            if result := self.kernel32.RemoveVectoredExceptionHandler(self.veh_handle):
+                logger.debug(f"VEH handler removal returned: {result}")
                 self.veh_handle = None
                 self.veh_handlers.clear()
                 logger.info("VEH handler uninstalled")
@@ -5538,9 +5276,7 @@ class LicenseDebugger:
                         # Clear DR6 status bit
                         context.Dr6 &= ~(1 << i)
 
-                        logger.debug(
-                            f"VEH: Handled hardware breakpoint single-step at 0x{address:X}"
-                        )
+                        logger.debug(f"VEH: Handled hardware breakpoint single-step at 0x{address:X}")
                         return -1  # EXCEPTION_CONTINUE_EXECUTION
 
             # Handle manual single-stepping for tracing
@@ -5553,9 +5289,7 @@ class LicenseDebugger:
 
         return 0  # EXCEPTION_CONTINUE_SEARCH
 
-    def _handle_veh_access_violation(
-        self, exception_record: ExceptionRecord, context: CONTEXT
-    ) -> int:
+    def _handle_veh_access_violation(self, exception_record: ExceptionRecord, context: CONTEXT) -> int:
         """Handle access violation exception in VEH.
 
         Args:
@@ -5575,9 +5309,7 @@ class LicenseDebugger:
                 # Get violation details
                 address = exception_record.ExceptionAddress
 
-                logger.info(
-                    f"VEH: Access violation at 0x{address:X} - {'Write' if is_write else 'Read'} to 0x{target_address:X}"
-                )
+                logger.info(f"VEH: Access violation at 0x{address:X} - {'Write' if is_write else 'Read'} to 0x{target_address:X}")
 
                 # Check for memory breakpoints
                 if target_address in self.memory_breakpoints:
@@ -5672,9 +5404,7 @@ class LicenseDebugger:
             if not self.install_veh_handler(first_handler):
                 return False
 
-            logger.info(
-                f"VEH handler repositioned to {'first' if first_handler else 'last'} in chain"
-            )
+            logger.info(f"VEH handler repositioned to {'first' if first_handler else 'last'} in chain")
             return True
 
         except Exception as e:
@@ -5784,9 +5514,7 @@ class LicenseDebugger:
             logger.exception(f"Error setting memory breakpoint: {e}")
             return False
 
-    def trace_execution(
-        self, max_instructions: int = 1000, trace_callback: Callable | None = None
-    ) -> list[dict[str, Any]]:
+    def trace_execution(self, max_instructions: int = 1000, trace_callback: Callable | None = None) -> list[dict[str, Any]]:
         """Trace execution flow by single-stepping through instructions.
 
         Args:
@@ -5843,13 +5571,9 @@ class LicenseDebugger:
                                                 instruction_info["size"] = i.size
                                                 break
                                         except (CsError, TypeError, ValueError) as e:
-                                            logger.debug(
-                                                f"Failed to disassemble instruction at {hex(rip)}: {e}"
-                                            )
+                                            logger.debug(f"Failed to disassemble instruction at {hex(rip)}: {e}")
                                 except (OSError, TypeError) as e:
-                                    logger.debug(
-                                        f"Failed to read instruction bytes at {hex(rip)}: {e}"
-                                    )
+                                    logger.debug(f"Failed to read instruction bytes at {hex(rip)}: {e}")
 
                             traced_instructions.append(instruction_info)
 
