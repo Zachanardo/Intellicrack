@@ -31,9 +31,9 @@ class UnusedConfigCodeDetector(ast.NodeVisitor):
     def __init__(self) -> None:
         """Initialize the detector."""
         self.unused_imports = set()
-        self.unused_methods = set()
-        self.qsettings_usage = []
-        self.legacy_config_patterns = []
+        self.unused_methods: set[tuple[str, int]] = set()
+        self.qsettings_usage: list[int] = []
+        self.legacy_config_patterns: list[tuple[str, int]] = []
 
     def visit_Import(self, node: ast.Import) -> None:
         """Check for unused configuration imports."""
@@ -91,7 +91,7 @@ class UnusedConfigCodeDetector(ast.NodeVisitor):
         return False
 
 
-def analyze_file(file_path: Path) -> tuple[set, set, list, list]:
+def analyze_file(file_path: Path) -> tuple[set[tuple[str, int]], set[tuple[str, int]], list[int], list[tuple[str, int]]]:
     """Analyze a Python file for unused configuration code.
 
     Args:

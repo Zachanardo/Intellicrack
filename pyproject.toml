@@ -70,7 +70,7 @@ dependencies = [
   "python-fx @ git+https://github.com/Zachanardo/pyfx.git",
 
   # Security & Network
-  "mitmproxy @ git+https://github.com/Zachanardo/mitmproxy.git",
+  "mitmproxy @ file:///D:/Intellicrack/vendor/mitmproxy-12.2.1-py3-none-any.whl",
   "scapy>=2.6.1,<3",
   "cryptography",
   "paramiko>=4.0.0,<5",
@@ -1403,7 +1403,6 @@ skips = ["B101", "B601"]
 
 [tool.uv.sources]
 python-fx = { git = "https://github.com/Zachanardo/pyfx.git" }
-mitmproxy = { git = "https://github.com/Zachanardo/mitmproxy.git" }
 
 [tool.coverage.run]
 source = ["intellicrack"]

@@ -17,6 +17,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 from enum import Enum
+from typing import Any
 
 
 class SeverityLevel(Enum):
@@ -141,13 +142,13 @@ def get_severity_color(severity: SeverityLevel) -> str:
     return SEVERITY_COLORS.get(severity, "#808080")
 
 
-def format_severity_report(findings: list[dict]) -> str:
+def format_severity_report(findings: list[dict[str, Any]]) -> str:
     """Format a list of findings into a severity report."""
     if not findings:
         return "No findings to report."
 
     # Group by severity
-    severity_groups = {}
+    severity_groups: dict[SeverityLevel, list[dict[str, Any]]] = {}
     for finding in findings:
         severity = finding.get("severity", SeverityLevel.INFO)
         if severity not in severity_groups:
@@ -183,9 +184,9 @@ def format_severity_report(findings: list[dict]) -> str:
     return "\n".join(report_lines)
 
 
-def aggregate_severity_stats(findings: list[dict]) -> dict:
+def aggregate_severity_stats(findings: list[dict[str, Any]]) -> dict[str, Any]:
     """Aggregate severity statistics from findings."""
-    stats = {
+    stats: dict[str, Any] = {
         "total_findings": len(findings),
         "by_severity": {},
         "risk_distribution": {},
@@ -201,7 +202,8 @@ def aggregate_severity_stats(findings: list[dict]) -> dict:
 
         # Count by severity
         severity_key = severity.value if hasattr(severity, "value") else str(severity)
-        stats["by_severity"][severity_key] = stats["by_severity"].get(severity_key, 0) + 1
+        by_severity = stats["by_severity"]
+        by_severity[severity_key] = by_severity.get(severity_key, 0) + 1
 
         # Calculate risk score
         risk_score = calculate_risk_score(severity, threat, confidence)
@@ -223,10 +225,10 @@ def aggregate_severity_stats(findings: list[dict]) -> dict:
     return stats
 
 
-def prioritize_findings(findings: list[dict]) -> list[dict]:
+def prioritize_findings(findings: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Sort findings by priority (risk score)."""
 
-    def get_priority_score(finding: dict) -> float:
+    def get_priority_score(finding: dict[str, Any]) -> float:
         severity = finding.get("severity", SeverityLevel.INFO)
         threat = finding.get("threat", ThreatLevel.UNLIKELY)
         confidence = finding.get("confidence", ConfidenceLevel.MEDIUM)
