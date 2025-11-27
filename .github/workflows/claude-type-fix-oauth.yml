@@ -87,9 +87,9 @@ jobs:
           echo "Running ${{ github.event.inputs.checker || 'mypy' }} type checking..."
 
           if [ "${{ github.event.inputs.checker || 'mypy' }}" = "mypy" ]; then
-            pixi run python -m mypy src/ --show-column-numbers --show-error-codes --no-error-summary 2>&1 | tee type_errors.txt || true
+            pixi run python -m mypy intellicrack/ --show-column-numbers --show-error-codes --no-error-summary 2>&1 | tee type_errors.txt || true
           else
-            pixi run pyright src/ --outputjson 2>&1 | tee type_errors.txt || true
+            pixi run pyright intellicrack/ --outputjson 2>&1 | tee type_errors.txt || true
           fi
 
           ERROR_COUNT=$(grep -c "error:" type_errors.txt || echo "0")
@@ -360,7 +360,7 @@ Output edits in the exact format requested.""",
         if: steps.apply_fixes.outputs.applied_count != '0'
         run: |
           echo "🔍 Validating Python syntax..."
-          pixi run python -m py_compile src/**/*.py || {
+          find intellicrack -name "*.py" -exec pixi run python -m py_compile {} \; || {
             echo "❌ Syntax errors found! Rolling back..."
             git checkout .
             exit 1
@@ -374,9 +374,9 @@ Output edits in the exact format requested.""",
           echo "🔍 Re-running type checker to verify fixes..."
 
           if [ "${{ github.event.inputs.checker || 'mypy' }}" = "mypy" ]; then
-            pixi run python -m mypy src/ --no-error-summary 2>&1 | tee verification_results.txt || true
+            pixi run python -m mypy intellicrack/ --no-error-summary 2>&1 | tee verification_results.txt || true
           else
-            pixi run pyright src/ 2>&1 | tee verification_results.txt || true
+            pixi run pyright intellicrack/ 2>&1 | tee verification_results.txt || true
           fi
 
           NEW_ERROR_COUNT=$(grep -c "error:" verification_results.txt || echo "0")
@@ -401,7 +401,7 @@ Output edits in the exact format requested.""",
         if: steps.apply_fixes.outputs.applied_count != '0'
         run: |
           echo "🔍 Running ruff linter..."
-          pixi run ruff check src/ --fix || {
+          pixi run ruff check intellicrack/ --fix || {
             echo "⚠️  Linting issues found - auto-fixing..."
           }
           echo "✅ Linting validation complete"

@@ -28,7 +28,7 @@ def find_all_pattern_occurrences(
     binary_data: bytes,
     pattern: bytes,
     base_address: int = 0,
-    max_results: int = None,
+    max_results: int | None = None,
 ) -> list[dict[str, Any]]:
     """Find all occurrences of a single pattern in binary data.
 
@@ -162,7 +162,7 @@ def find_license_patterns(
         b"TRIAL",
     ]
 
-    interesting_patterns = []
+    interesting_patterns: list[dict[str, Any]] = []
 
     for pattern in license_patterns:
         pattern_results = find_all_pattern_occurrences(binary_data, pattern, base_address, max_results - len(interesting_patterns))

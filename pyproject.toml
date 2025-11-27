@@ -70,7 +70,7 @@ dependencies = [
   "python-fx @ git+https://github.com/Zachanardo/pyfx.git",
 
   # Security & Network
-  "mitmproxy @ file:///D:/Intellicrack/vendor/mitmproxy-12.2.1-py3-none-any.whl",
+  # "mitmproxy @ git+https://github.com/Zachanardo/mitmproxy.git",
   "scapy>=2.6.1,<3",
   "cryptography",
   "paramiko>=4.0.0,<5",
@@ -285,7 +285,7 @@ dependencies = [
   "tomlkit>=0.13.3,<0.14",
   "tornado>=6.5.2,<7",
   "traitlets>=5.14.3,<6",
-  "typing-extensions",                # Required by mitmproxy and intellicrack - relaxed for IPEX compatibility
+  "typing-extensions>=4.14.1",
   "tzdata>=2025.2,<2026",
   "wcwidth",
   "websockets",
@@ -677,17 +677,17 @@ python-version = "3.12"
 root = ["intellicrack"]
 
 [tool.ty.rules]
-possibly-unresolved-reference = "warn"
+possibly-unresolved-reference = "error"
 division-by-zero = "error"
 unresolved-reference = "error"
-invalid-argument-type = "warn"
-invalid-assignment = "warn"
-invalid-return-type = "warn"
+invalid-argument-type = "error"
+invalid-assignment = "error"
+invalid-return-type = "error"
 missing-argument = "error"
-too-many-positional-arguments = "warn"
-call-non-callable = "warn"
-unresolved-import = "warn"
-unresolved-attribute = "warn"
+too-many-positional-arguments = "error"
+call-non-callable = "error"
+unresolved-import = "error"
+unresolved-attribute = "error"
 
 [tool.ty.terminal]
 output-format = "concise"
@@ -703,8 +703,8 @@ unresolved-reference = "ignore"
 include = ["intellicrack/ai/**"]
 
 [tool.ty.overrides.rules]
-call-non-callable = "warn"
-invalid-argument-type = "warn"
+call-non-callable = "error"
+invalid-argument-type = "error"
 
 [[tool.ty.overrides]]
 include = ["intellicrack/core/**"]
@@ -951,6 +951,7 @@ ignored-classes = [
 [tool.ruff]
 line-length = 140
 target-version = "py312"
+preview = true
 exclude = [
   "tests/",
   "test/",
@@ -1403,6 +1404,7 @@ skips = ["B101", "B601"]
 
 [tool.uv.sources]
 python-fx = { git = "https://github.com/Zachanardo/pyfx.git" }
+mitmproxy = { git = "https://github.com/Zachanardo/mitmproxy.git" }
 
 [tool.coverage.run]
 source = ["intellicrack"]

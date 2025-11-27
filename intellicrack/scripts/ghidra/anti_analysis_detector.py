@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-from typing import NoReturn
+from typing import Any, NoReturn, Union, Iterator, Type
 
 
 """Anti-Analysis Technique Detector.
@@ -31,11 +31,12 @@ commonly used by protected software and malware.
 """
 
 try:
-    from ghidra.app.script import GhidraScript
+    from ghidra.app.script import GhidraScript as _GhidraScript
 
     # Ghidra API functions available in script environment:
     # current_program, get_references_to, create_bookmark, find_bytes
     GHIDRA_AVAILABLE = True
+    GhidraScript: Type[Any] = _GhidraScript
 except ImportError:
     # Running outside Ghidra environment
     GHIDRA_AVAILABLE = False
@@ -43,8 +44,8 @@ except ImportError:
     import os
     import sys
 
-    class GhidraScript:
-        """Base class for Ghidra scripts when running outside Ghidra environment.
+    class GhidraScriptFallback:
+        """Production fallback implementation for Ghidra scripts when running outside Ghidra environment.
 
         This implementation provides the necessary interface for scripts that
         can run both inside and outside the Ghidra environment.
@@ -55,7 +56,7 @@ except ImportError:
             self.script_name = self.__class__.__name__
             self.state = ScriptState()
             self.monitor = TaskMonitor()
-            self._script_args = []
+            self._script_args: list[str] = []
             self._script_dir = os.path.dirname(os.path.abspath(__file__))
 
         def run(self) -> None:
@@ -197,6 +198,8 @@ except ImportError:
 
             """
             return True
+
+    GhidraScript = GhidraScriptFallback
 
     class ScriptState:
         """Represents the state of a script execution."""
@@ -363,7 +366,7 @@ def safe_ghidra_call(func_name: str, *args: object, **kwargs: object) -> object:
     return None
 
 
-def get_current_program() -> object:
+def get_current_program() -> Any:
     """Get current program, avoiding pylint errors.
 
     Returns:
@@ -373,7 +376,7 @@ def get_current_program() -> object:
     return globals().get("current_program") if GHIDRA_AVAILABLE else None
 
 
-class AntiAnalysisDetector(GhidraScript):
+class AntiAnalysisDetector(GhidraScript):  # type: ignore[misc]
     """Ghidra script to detect anti-analysis techniques in binaries.
 
     Identifies various anti-debugging, anti-VM, and anti-analysis patterns
@@ -461,7 +464,7 @@ class AntiAnalysisDetector(GhidraScript):
 
         print("=== Anti-Analysis Technique Detector ===\n")
 
-        findings = {
+        findings: dict[str, list[dict[str, object]]] = {
             "anti_debug": [],
             "anti_vm": [],
             "timing_checks": [],
@@ -500,14 +503,17 @@ class AntiAnalysisDetector(GhidraScript):
 
         """
         program = get_current_program()
+        if program is None or not hasattr(program, "getSymbolTable"):
+            return
         symbol_table = program.getSymbolTable()
 
         for api in self.ANTI_DEBUG_APIS:
             symbols = symbol_table.getSymbols(api)
 
             for symbol in symbols:
-                if refs := safe_ghidra_call("getReferencesTo", symbol.getAddress()):
-                    for ref in refs:
+                refs_result: Any = safe_ghidra_call("getReferencesTo", symbol.getAddress())
+                if refs_result and hasattr(refs_result, "__iter__"):
+                    for ref in refs_result:
                         if ref.getReferenceType().isCall():
                             findings["anti_debug"].append(
                                 {
@@ -520,7 +526,7 @@ class AntiAnalysisDetector(GhidraScript):
                             print(f"  [+] Found {api} at {ref.getFromAddress()}")
                             safe_ghidra_call("createBookmark", ref.getFromAddress(), "AntiDebug", f"{api} call")
 
-    def find_vm_artifacts(self, findings: dict[str, list[dict[str, object]]]) -> None:
+    def find_vm_artifacts(self, findings: dict[str, list[dict[str, Any]]]) -> None:
         """Search for VM-related strings and artifacts.
 
         Args:
@@ -528,29 +534,35 @@ class AntiAnalysisDetector(GhidraScript):
 
         """
         program = get_current_program()
-        memory = program.getMemory()
+        if not program:
+            return
+        memory = getattr(program, "getMemory", lambda: None)()
+        if not memory:
+            return
 
         for artifact in self.VM_ARTIFACTS:
-            # Search for string in memory
-            # Get all memory blocks to search
-            for block in memory.getBlocks():
-                if block.isInitialized():
-                    addresses = safe_ghidra_call("findBytes", block.getStart(), artifact.encode(), 50)
+            blocks: Any = getattr(memory, "getBlocks", lambda: [])()
+            if hasattr(blocks, "__iter__"):
+                for block in blocks:
+                    if hasattr(block, "isInitialized") and block.isInitialized():
+                        start_addr = getattr(block, "getStart", lambda: None)()
+                        addresses = safe_ghidra_call("findBytes", start_addr, artifact.encode(), 50)
 
-                    for addr in addresses:
-                        if addr:
-                            findings["anti_vm"].append(
-                                {
-                                    "type": "VM Artifact",
-                                    "name": artifact,
-                                    "address": addr,
-                                    "description": "Potential VM detection string",
-                                },
-                            )
-                            print(f"  [+] Found VM artifact '{artifact}' at {addr}")
-                            safe_ghidra_call("createBookmark", addr, "AntiVM", f"VM artifact: {artifact}")
+                        if addresses and hasattr(addresses, "__iter__"):
+                            for addr in addresses:
+                                if addr:
+                                    findings["anti_vm"].append(
+                                        {
+                                            "type": "VM Artifact",
+                                            "name": artifact,
+                                            "address": addr,
+                                            "description": "Potential VM detection string",
+                                        },
+                                    )
+                                    print(f"  [+] Found VM artifact '{artifact}' at {addr}")
+                                    safe_ghidra_call("createBookmark", addr, "AntiVM", f"VM artifact: {artifact}")
 
-    def find_detection_instructions(self, findings: dict[str, list[dict[str, object]]]) -> None:
+    def find_detection_instructions(self, findings: dict[str, list[dict[str, Any]]]) -> None:
         """Find CPU instructions used for detection.
 
         Args:
@@ -558,26 +570,32 @@ class AntiAnalysisDetector(GhidraScript):
 
         """
         program = get_current_program()
-        listing = program.getListing()
-        instructions = listing.getInstructions(True)
+        if not program:
+            return
+        listing = getattr(program, "getListing", lambda: None)()
+        if not listing:
+            return
+        instructions: Any = getattr(listing, "getInstructions", lambda x: [])(True)
 
-        while instructions.hasNext():
-            instr = instructions.next()
-            mnemonic = instr.getMnemonicString().lower()
+        if hasattr(instructions, "hasNext") and hasattr(instructions, "next"):
+            while instructions.hasNext():
+                instr = instructions.next()
+                if hasattr(instr, "getMnemonicString") and hasattr(instr, "getAddress"):
+                    mnemonic = instr.getMnemonicString().lower()
 
-            if mnemonic in self.DETECTION_INSTRUCTIONS:
-                findings["cpu_detection"].append(
-                    {
-                        "type": "CPU Instruction",
-                        "instruction": mnemonic,
-                        "address": instr.getAddress(),
-                        "description": self.get_instruction_description(mnemonic),
-                    },
-                )
-                print(f"  [+] Found {mnemonic} instruction at {instr.getAddress()}")
-                safe_ghidra_call("createBookmark", instr.getAddress(), "Detection", f"{mnemonic} instruction")
+                    if mnemonic in self.DETECTION_INSTRUCTIONS:
+                        findings["cpu_detection"].append(
+                            {
+                                "type": "CPU Instruction",
+                                "instruction": mnemonic,
+                                "address": instr.getAddress(),
+                                "description": self.get_instruction_description(mnemonic),
+                            },
+                        )
+                        print(f"  [+] Found {mnemonic} instruction at {instr.getAddress()}")
+                        safe_ghidra_call("createBookmark", instr.getAddress(), "Detection", f"{mnemonic} instruction")
 
-    def find_timing_checks(self, findings: dict[str, list[dict[str, object]]]) -> None:
+    def find_timing_checks(self, findings: dict[str, list[dict[str, Any]]]) -> None:
         """Find potential timing-based anti-analysis.
 
         Args:
@@ -591,27 +609,31 @@ class AntiAnalysisDetector(GhidraScript):
 
         # Look for paired timing calls (common pattern)
         all_timing = tick_refs + perf_refs + rdtsc_addrs
-        all_timing.sort(key=lambda x: x.getOffset())
+        # Sort by offset if the addresses have getOffset method
+        if all_timing and hasattr(all_timing[0], "getOffset"):
+            all_timing.sort(key=lambda x: getattr(x, "getOffset", lambda: 0)())
 
-        for i in range(len(all_timing) - 1):
-            addr1 = all_timing[i]
-            addr2 = all_timing[i + 1]
+            for i in range(len(all_timing) - 1):
+                addr1 = all_timing[i]
+                addr2 = all_timing[i + 1]
 
-            # If two timing calls are close together, likely a timing check
-            distance = addr2.getOffset() - addr1.getOffset()
-            if distance < 0x100:  # Within 256 bytes
-                findings["timing_checks"].append(
-                    {
-                        "type": "Timing Check",
-                        "start": addr1,
-                        "end": addr2,
-                        "description": "Potential timing-based anti-debugging check",
-                    },
-                )
-                print(f"  [+] Found timing check between {addr1} and {addr2}")
-                safe_ghidra_call("createBookmark", addr1, "Timing", "Timing check start")
+                # If two timing calls are close together, likely a timing check
+                offset1 = getattr(addr1, "getOffset", lambda: 0)()
+                offset2 = getattr(addr2, "getOffset", lambda: 0)()
+                distance = offset2 - offset1
+                if distance < 0x100:  # Within 256 bytes
+                    findings["timing_checks"].append(
+                        {
+                            "type": "Timing Check",
+                            "start": addr1,
+                            "end": addr2,
+                            "description": "Potential timing-based anti-debugging check",
+                        },
+                    )
+                    print(f"  [+] Found timing check between {addr1} and {addr2}")
+                    safe_ghidra_call("createBookmark", addr1, "Timing", "Timing check start")
 
-    def find_exception_tricks(self, findings: dict[str, list[dict[str, object]]]) -> None:
+    def find_exception_tricks(self, findings: dict[str, list[dict[str, Any]]]) -> None:
         """Find exception-based anti-analysis tricks.
 
         Args:
@@ -643,47 +665,62 @@ class AntiAnalysisDetector(GhidraScript):
             )
             safe_ghidra_call("createBookmark", addr, "Exception", "INT3 trap")
 
-    def find_api_refs(self, api_name: str) -> list[object]:
+    def find_api_refs(self, api_name: str) -> list[Any]:
         """Find all references to an API.
 
         Args:
             api_name: The API name to search for.
 
         Returns:
-            list[object]: List of addresses where the API is referenced.
+            list[Any]: List of addresses where the API is referenced.
 
         """
-        refs = []
+        result_refs: list[Any] = []
         program = get_current_program()
-        symbol_table = program.getSymbolTable()
+        if not program:
+            return result_refs
+        symbol_table = getattr(program, "getSymbolTable", lambda: None)()
+        if not symbol_table:
+            return result_refs
 
-        for symbol in symbol_table.getSymbols(api_name):
-            refs = safe_ghidra_call("getReferencesTo", symbol.getAddress())
-            for ref in refs or []:
-                if ref.getReferenceType().isCall():
-                    refs.append(ref.getFromAddress())
+        symbols: Any = getattr(symbol_table, "getSymbols", lambda x: [])(api_name)
+        for symbol in symbols:
+            if hasattr(symbol, "getAddress"):
+                refs = safe_ghidra_call("getReferencesTo", symbol.getAddress())
+                if refs and hasattr(refs, "__iter__"):
+                    for ref in refs:
+                        if hasattr(ref, "getReferenceType") and hasattr(ref, "getFromAddress"):
+                            ref_type = ref.getReferenceType()
+                            if hasattr(ref_type, "isCall") and ref_type.isCall():
+                                result_refs.append(ref.getFromAddress())
 
-        return refs
+        return result_refs
 
-    def find_instruction(self, mnemonic: str) -> list[object]:
+    def find_instruction(self, mnemonic: str) -> list[Any]:
         """Find all instances of an instruction.
 
         Args:
             mnemonic: The instruction mnemonic to search for.
 
         Returns:
-            list[object]: List of addresses where the instruction is found.
+            list[Any]: List of addresses where the instruction is found.
 
         """
-        addrs = []
+        addrs: list[Any] = []
         program = get_current_program()
-        listing = program.getListing()
-        instructions = listing.getInstructions(True)
+        if not program:
+            return addrs
+        listing = getattr(program, "getListing", lambda: None)()
+        if not listing:
+            return addrs
+        instructions = getattr(listing, "getInstructions", lambda x: None)(True)
 
-        while instructions.hasNext():
-            instr = instructions.next()
-            if instr.getMnemonicString().lower() == mnemonic:
-                addrs.append(instr.getAddress())
+        if instructions and hasattr(instructions, "hasNext"):
+            while instructions.hasNext():
+                instr = instructions.next()
+                if hasattr(instr, "getMnemonicString") and hasattr(instr, "getAddress"):
+                    if instr.getMnemonicString().lower() == mnemonic:
+                        addrs.append(instr.getAddress())
 
         return addrs
 
@@ -729,7 +766,7 @@ class AntiAnalysisDetector(GhidraScript):
         }
         return descriptions.get(instr, "Detection instruction")
 
-    def generate_report(self, findings: dict[str, list[dict[str, object]]]) -> None:
+    def generate_report(self, findings: dict[str, list[dict[str, Any]]]) -> None:
         """Generate analysis report.
 
         Args:
@@ -766,7 +803,7 @@ class AntiAnalysisDetector(GhidraScript):
         print(f"\n[*] Protection Level: {protection_level}")
         print("[*] Check bookmarks for all findings")
 
-    def assess_protection_level(self, findings: dict[str, list[dict[str, object]]]) -> str:
+    def assess_protection_level(self, findings: dict[str, list[dict[str, Any]]]) -> str:
         """Assess overall protection level.
 
         Args:

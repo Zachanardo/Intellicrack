@@ -22,6 +22,8 @@ setuptools = "*"
 pixi-pycharm = ">=0.0.10,<0.0.11"
 pytest = ">=9.0.1,<10"
 anyio = ">=4.11.0,<5"
+rich = ">=14.2.0,<15"
+mypy = ">=1.18.2,<2"
 
 [pypi-dependencies]
 intellicrack = { path = ".", editable = true }
