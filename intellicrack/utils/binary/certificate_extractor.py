@@ -327,7 +327,7 @@ class CertificateExtractor:
                 return hashes.Hash(hash_module(), backend=backend)
 
             digest_sha1 = create_legacy_sha1_hash(default_backend())
-            digest_sha1.update(cert_der)
+            digest_sha1.update(cert_der)  # lgtm[py/weak-sensitive-data-hashing] SHA1 required for X.509 certificate fingerprint compatibility
             crypto_sha1 = digest_sha1.finalize().hex().upper()
 
             # Log warning about SHA1 usage

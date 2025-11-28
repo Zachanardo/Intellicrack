@@ -640,7 +640,9 @@ class TestSSLTLSInterceptor:
 
         # Validate script contains license interception logic
         assert "LICENSE_ENDPOINTS" in script_content
+        # lgtm[py/incomplete-url-substring-sanitization] Test assertion validating generated code contains expected hosts
         assert "license.adobe.com" in script_content or '"license.adobe.com"' in script_content or "'license.adobe.com'" in script_content
+        # lgtm[py/incomplete-url-substring-sanitization] Test assertion validating generated code contains expected hosts
         assert "activation.autodesk.com" in script_content or '"activation.autodesk.com"' in script_content or "'activation.autodesk.com'" in script_content
         assert "def request(flow: http.HTTPFlow)" in script_content
         assert "def response(flow: http.HTTPFlow)" in script_content

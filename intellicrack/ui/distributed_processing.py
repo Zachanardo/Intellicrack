@@ -863,7 +863,7 @@ class DistributedWorkerThread(QThread):
 
             test_chars = string.ascii_letters + string.digits
             test_password = "".join(secrets.choice(test_chars) for _ in range(16))
-            hash_value = hashlib.sha256(test_password.encode()).hexdigest()
+            hash_value = hashlib.sha256(test_password.encode()).hexdigest()  # lgtm[py/weak-sensitive-data-hashing] SHA256 is strong; test data generation only
             logger.info(f"Generated test hash from random password for demonstration: {hash_value[:16]}...")
 
         results = {
@@ -996,7 +996,7 @@ class DistributedWorkerThread(QThread):
             Tuple of (password, match_boolean)
 
         """
-        computed_hash = hash_func(password.encode()).hexdigest()
+        computed_hash = hash_func(password.encode()).hexdigest()  # lgtm[py/weak-sensitive-data-hashing] Intentional: password cracking requires matching target hash algorithm
         return password, computed_hash == target_hash
 
     def process_vulnerability_scan(self, task: DistributedTask) -> dict[str, Any]:

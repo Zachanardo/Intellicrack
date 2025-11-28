@@ -2140,29 +2140,56 @@ const NtpBlocker = {
     isTimeServer: function (hostname) {
         if (!hostname) return false;
 
-        hostname = hostname.toLowerCase();
+        hostname = hostname.toLowerCase().trim();
 
-        // Check exact matches
+        // Validate hostname format first (prevents regex injection)
+        if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/.test(hostname)) {
+            // Also allow IP addresses
+            if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(hostname)) {
+                return false;
+            }
+        }
+
+        // Check exact matches and proper subdomain matching
         for (var i = 0; i < this.config.timeServers.length; i++) {
             var server = this.config.timeServers[i].toLowerCase();
 
             if (server.includes('*')) {
-                // Wildcard matching with proper escaping
-                var escaped = server.replace(/\./g, '\\.').replace(/\*/g, '[a-z0-9.-]+');
+                // Wildcard matching with comprehensive regex escaping
+                // Escape all regex special characters: . ^ $ * + ? ( ) [ ] { } | \
+                var escaped = server.replace(/([.^$+?()[\]{}|\\])/g, '\\$1').replace(/\*/g, '[a-z0-9-]+');
+                // Ensure proper anchoring to prevent partial matches
                 var regex = new RegExp('^' + escaped + '$', 'i');
                 if (regex.test(hostname)) {
                     return true;
                 }
-            } else if (hostname === server || hostname.endsWith('.' + server)) {
-                return true;
+            } else {
+                // Exact match check
+                if (hostname === server) {
+                    return true;
+                }
+                // Proper subdomain validation: hostname must end with '.server'
+                // and the character before '.' must exist (prevents matching 'malicious-time.nist.gov.attacker.com')
+                if (hostname.endsWith('.' + server)) {
+                    // Verify this is actually a subdomain, not a domain with server appended
+                    var prefix = hostname.slice(0, -(server.length + 1));
+                    // Prefix must be a valid hostname label (not empty, not ending with dot)
+                    if (prefix.length > 0 && /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/.test(prefix)) {
+                        return true;
+                    }
+                }
             }
         }
 
         // Check if hostname contains time-related keywords
+        // Only match as complete labels to avoid false positives
         var keywords = ['time', 'ntp', 'clock', 'chrony', 'systemd-timesyncd'];
+        var labels = hostname.split('.');
         for (var i = 0; i < keywords.length; i++) {
-            if (hostname.includes(keywords[i])) {
-                return true;
+            for (var j = 0; j < labels.length; j++) {
+                if (labels[j] === keywords[i] || labels[j].startsWith(keywords[i] + '-') || labels[j].endsWith('-' + keywords[i])) {
+                    return true;
+                }
             }
         }
 

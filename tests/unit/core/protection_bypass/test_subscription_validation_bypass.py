@@ -258,6 +258,7 @@ class TestOAuthTokenGenerator:
         header, payload, _ = manipulator.parse_jwt(token)
 
         assert payload["aud"] == "00000003-0000-0000-c000-000000000000"
+        # lgtm[py/incomplete-url-substring-sanitization] Test assertion validating generated token contains expected issuer domain
         assert "sts.windows.net" in payload["iss"]
         assert "email" in payload
         assert "oid" in payload

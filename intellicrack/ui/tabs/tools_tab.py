@@ -1840,9 +1840,10 @@ def get_plugin():
 
                     # Special handling for HTTPS
                     if port == 443:
+                        # lgtm[py/insecure-protocol] Intentionally insecure SSL context for security testing/analysis
                         context = ssl.create_default_context()
                         context.check_hostname = False
-                        context.verify_mode = ssl.CERT_NONE
+                        context.verify_mode = ssl.CERT_NONE  # nosec B504 - Required for security testing
                         self.tool_output.append("WARNING: Certificate verification disabled for security testing")
                         with context.wrap_socket(sock, server_hostname=target) as ssock:
                             ssock.getpeercert()

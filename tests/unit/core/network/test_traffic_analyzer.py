@@ -557,9 +557,10 @@ class TestNetworkTrafficAnalyzer:
         time.sleep(1.0)
 
         # Generate encrypted license traffic
+        # lgtm[py/insecure-protocol] Intentionally insecure SSL context for testing license traffic interception
         context = ssl.create_default_context()
         context.check_hostname = False
-        context.verify_mode = ssl.CERT_NONE
+        context.verify_mode = ssl.CERT_NONE  # nosec B504 - Required for test SSL interception
 
         for i in range(3):
             try:

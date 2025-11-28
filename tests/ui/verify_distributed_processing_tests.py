@@ -86,6 +86,7 @@ def test_worker_password_checking() -> None:
 
     worker = DistributedWorkerThread("worker_test", [])
     test_password = "testpass123"
+    # lgtm[py/weak-sensitive-data-hashing] Test fixture generating hash for password cracking test
     correct_hash = hashlib.sha256(test_password.encode()).hexdigest()
 
     password, matches = worker._check_password(test_password, correct_hash, hashlib.sha256)

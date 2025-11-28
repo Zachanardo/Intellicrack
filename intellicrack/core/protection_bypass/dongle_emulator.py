@@ -29,6 +29,13 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import IntEnum
 from pathlib import Path
+from typing import Any
+
+from intellicrack.utils.logger import get_logger
+
+from ...utils.core.import_checks import FRIDA_AVAILABLE, WINREG_AVAILABLE, winreg
+
+logger = get_logger(__name__)
 
 
 try:
@@ -40,8 +47,6 @@ try:
     CRYPTO_AVAILABLE = True
 except ImportError:
     CRYPTO_AVAILABLE = False
-
-from ...utils.core.import_checks import FRIDA_AVAILABLE, WINREG_AVAILABLE, winreg
 
 
 class DongleType(IntEnum):
@@ -382,15 +387,15 @@ class CryptoEngine:
 
         try:
             if algorithm == "AES":
-                cipher = AES.new(key[:32], AES.MODE_ECB)
+                cipher = AES.new(key[:32], AES.MODE_ECB)  # lgtm[py/weak-cryptographic-algorithm] ECB required for HASP protocol compatibility
                 padded_data = data + b"\x00" * (16 - len(data) % 16)
                 return cipher.encrypt(padded_data)
             elif algorithm == "DES":
-                cipher = DES.new(key[:8], DES.MODE_ECB)  # noqa: S304 - DES required for legacy HASP dongle protocol
+                cipher = DES.new(key[:8], DES.MODE_ECB)  # noqa: S304 lgtm[py/weak-cryptographic-algorithm] DES required for legacy HASP dongle protocol
                 padded_data = data + b"\x00" * (8 - len(data) % 8)
                 return cipher.encrypt(padded_data)
             elif algorithm == "DES3":
-                cipher = DES3.new(key[:24], DES3.MODE_ECB)
+                cipher = DES3.new(key[:24], DES3.MODE_ECB)  # lgtm[py/weak-cryptographic-algorithm] DES3 required for legacy HASP dongle protocol
                 padded_data = data + b"\x00" * (8 - len(data) % 8)
                 return cipher.encrypt(padded_data)
             else:
@@ -407,15 +412,15 @@ class CryptoEngine:
 
         try:
             if algorithm == "AES":
-                cipher = AES.new(key[:32], AES.MODE_ECB)
+                cipher = AES.new(key[:32], AES.MODE_ECB)  # lgtm[py/weak-cryptographic-algorithm] ECB required for HASP protocol compatibility
                 decrypted = cipher.decrypt(data)
                 return decrypted.rstrip(b"\x00")
             elif algorithm == "DES":
-                cipher = DES.new(key[:8], DES.MODE_ECB)  # noqa: S304 - DES required for legacy HASP dongle protocol
+                cipher = DES.new(key[:8], DES.MODE_ECB)  # noqa: S304 lgtm[py/weak-cryptographic-algorithm] DES required for legacy HASP dongle protocol
                 decrypted = cipher.decrypt(data)
                 return decrypted.rstrip(b"\x00")
             elif algorithm == "DES3":
-                cipher = DES3.new(key[:24], DES3.MODE_ECB)
+                cipher = DES3.new(key[:24], DES3.MODE_ECB)  # lgtm[py/weak-cryptographic-algorithm] DES3 required for legacy HASP dongle protocol
                 decrypted = cipher.decrypt(data)
                 return decrypted.rstrip(b"\x00")
             else:
@@ -442,7 +447,7 @@ class CryptoEngine:
             response[i] = (challenge_byte ^ key_byte ^ (i * 17)) & 0xFF
 
         if CRYPTO_AVAILABLE:
-            cipher = AES.new(key[:16], AES.MODE_ECB)
+            cipher = AES.new(key[:16], AES.MODE_ECB)  # lgtm[py/weak-cryptographic-algorithm] ECB required for WibuKey protocol compatibility
             return cipher.encrypt(bytes(response))
 
         return bytes(response)

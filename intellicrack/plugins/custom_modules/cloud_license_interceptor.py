@@ -1446,7 +1446,7 @@ class LocalLicenseServer:
                 return parsed["payload"].get("sub", "default")
 
         if api_key := request.headers.get("X-API-Key") or request.headers.get("API-Key"):
-            return hashlib.sha256(api_key.encode()).hexdigest()[:16]
+            return hashlib.sha256(api_key.encode()).hexdigest()[:16]  # lgtm[py/weak-sensitive-data-hashing] SHA256 for request correlation ID, not credential storage
 
         # Check URL for identifier
         parsed_url = urlparse(request.url)

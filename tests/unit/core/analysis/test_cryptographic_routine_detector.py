@@ -46,7 +46,7 @@ class TestAESDetection:
         This test FAILS if detector cannot identify real AES crypto.
         """
         key = get_random_bytes(16)
-        cipher = AES.new(key, AES.MODE_ECB)
+        cipher = AES.new(key, AES.MODE_ECB)  # lgtm[py/weak-cryptographic-algorithm] Test fixture requires ECB for crypto detection testing
 
         plaintext = b"A" * 16
         _ = cipher.encrypt(plaintext)
@@ -115,7 +115,7 @@ class TestDESDetection:
         This test FAILS if detector cannot identify real DES crypto.
         """
         key = DES3.adjust_key_parity(get_random_bytes(24))
-        cipher = DES3.new(key, DES3.MODE_ECB)
+        cipher = DES3.new(key, DES3.MODE_ECB)  # lgtm[py/weak-cryptographic-algorithm] Test fixture requires DES3 ECB for crypto detection testing
 
         plaintext = b"12345678"
         _ = cipher.encrypt(plaintext)
@@ -148,7 +148,7 @@ class TestBlowfishDetection:
         This test FAILS if detector cannot identify real Blowfish crypto.
         """
         key = get_random_bytes(16)
-        cipher = Blowfish.new(key, Blowfish.MODE_ECB)  # noqa: S304
+        cipher = Blowfish.new(key, Blowfish.MODE_ECB)  # noqa: S304 lgtm[py/weak-cryptographic-algorithm] Test fixture requires Blowfish ECB for crypto detection testing
 
         plaintext = b"12345678"
         _ = cipher.encrypt(plaintext)

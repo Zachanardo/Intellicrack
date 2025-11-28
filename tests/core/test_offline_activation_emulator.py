@@ -829,8 +829,11 @@ class TestTrialRestrictionBypass:
         assert "proxy_config" in network_bypass
 
         hosts_entries: list[str] = network_bypass["hosts_file_entries"]
+        # lgtm[py/incomplete-url-substring-sanitization] Test assertion validating hosts file entries contain expected domains
         assert any("adobe.com" in entry for entry in hosts_entries)
+        # lgtm[py/incomplete-url-substring-sanitization] Test assertion validating hosts file entries contain expected domains
         assert any("autodesk.com" in entry for entry in hosts_entries)
+        # lgtm[py/incomplete-url-substring-sanitization] Test assertion validating hosts file entries contain expected domains
         assert any("microsoft.com" in entry for entry in hosts_entries)
 
 

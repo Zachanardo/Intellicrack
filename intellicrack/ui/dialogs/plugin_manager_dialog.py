@@ -414,14 +414,20 @@ else:
 
                 import requests
 
+                def _is_valid_github_host(hostname: str | None) -> bool:
+                    """Validate hostname is genuinely GitHub-owned."""
+                    if hostname is None:
+                        return False
+                    github_domains = {"github.com", "api.github.com", "raw.githubusercontent.com"}
+                    return hostname in github_domains
+
                 # Try different API endpoints based on repository type
                 parsed_url = urlparse(repo_url)
-                is_github = (parsed_url.hostname == "github.com" or
-                            (parsed_url.hostname is not None and parsed_url.hostname.endswith(".github.com")))
+                is_github = _is_valid_github_host(parsed_url.hostname)
 
                 if is_github:
-                    # GitHub API approach
-                    if not repo_url.startswith("https://api.github.com"):
+                    # GitHub API approach - only transform if exact github.com host
+                    if parsed_url.hostname == "github.com" and parsed_url.scheme == "https":
                         # Convert regular GitHub URL to API URL
                         repo_url = repo_url.replace("github.com/", "api.github.com/repos/")
 

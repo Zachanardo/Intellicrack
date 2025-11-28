@@ -4241,11 +4241,12 @@ class RuntimeKeyExtractor:
         possible_keys = [b"DefaultKey", mem_info.BaseAddress.to_bytes(4, "little"), b"\x137Bi"]
         for key in possible_keys:
             try:
-                from Crypto.Cipher import ARC4  # noqa: S413
+                from Crypto.Cipher import ARC4  # noqa: S413 lgtm[py/weak-cryptographic-algorithm] RC4 required for analyzing legacy protection encryption
 
-                cipher = ARC4.new(key)
+                cipher = ARC4.new(key)  # lgtm[py/weak-cryptographic-algorithm] RC4 used for legacy protection analysis
                 test_decrypt = cipher.decrypt(data[:100])
                 if self._looks_like_code(test_decrypt):
+                    cipher = ARC4.new(key)  # lgtm[py/weak-cryptographic-algorithm] RC4 used for legacy protection analysis
                     decrypted = cipher.decrypt(data)
                     break
             except Exception as e:
@@ -4988,11 +4989,12 @@ class RuntimeKeyExtractor:
         possible_keys = [b"DefaultKey", mem_info.BaseAddress.to_bytes(4, "little"), b"\x137Bi"]
         for key in possible_keys:
             try:
-                from Crypto.Cipher import ARC4  # noqa: S413
+                from Crypto.Cipher import ARC4  # noqa: S413 lgtm[py/weak-cryptographic-algorithm] RC4 required for analyzing legacy protection encryption
 
-                cipher = ARC4.new(key)
+                cipher = ARC4.new(key)  # lgtm[py/weak-cryptographic-algorithm] RC4 used for legacy protection analysis
                 test_decrypt = cipher.decrypt(data[:100])
                 if self._looks_like_code(test_decrypt):
+                    cipher = ARC4.new(key)  # lgtm[py/weak-cryptographic-algorithm] RC4 used for legacy protection analysis
                     decrypted = cipher.decrypt(data)
                     break
             except Exception as e:
@@ -5704,11 +5706,12 @@ class RuntimeKeyExtractor:
         possible_keys = [b"DefaultKey", mem_info.BaseAddress.to_bytes(4, "little"), b"\x137Bi"]
         for key in possible_keys:
             try:
-                from Crypto.Cipher import ARC4  # noqa: S413
+                from Crypto.Cipher import ARC4  # noqa: S413 lgtm[py/weak-cryptographic-algorithm] RC4 required for analyzing legacy protection encryption
 
-                cipher = ARC4.new(key)
+                cipher = ARC4.new(key)  # lgtm[py/weak-cryptographic-algorithm] RC4 used for legacy protection analysis
                 test_decrypt = cipher.decrypt(data[:100])
                 if self._looks_like_code(test_decrypt):
+                    cipher = ARC4.new(key)  # lgtm[py/weak-cryptographic-algorithm] RC4 used for legacy protection analysis
                     decrypted = cipher.decrypt(data)
                     break
             except Exception as e:

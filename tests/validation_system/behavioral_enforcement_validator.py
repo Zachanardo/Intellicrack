@@ -1112,7 +1112,7 @@ Algorithm Understanding Evidence:
         # Production dongle checksum algorithm implementation
         # MD5 is acceptable here as it mimics legacy dongle protection algorithms
         # that commonly use MD5 for non-cryptographic checksums
-        return hashlib.md5(key_data.encode()).hexdigest()[:8].upper()  # noqa: S324
+        return hashlib.md5(key_data.encode()).hexdigest()[:8].upper()  # noqa: S324 lgtm[py/weak-sensitive-data-hashing] MD5 mimics legacy dongle protocol checksums
 
     def _calculate_generic_checksum(self, key_data: str) -> str:
         """Calculate generic checksum."""

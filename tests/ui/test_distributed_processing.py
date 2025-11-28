@@ -510,6 +510,7 @@ class TestDistributedWorkerThread:
     def test_worker_check_password(self, worker: DistributedWorkerThread) -> None:
         """Worker checks password hash correctly."""
         test_password = "testpass123"
+        # lgtm[py/weak-sensitive-data-hashing] Test fixture generating hash for password cracking test
         correct_hash = hashlib.sha256(test_password.encode()).hexdigest()
         wrong_hash = hashlib.sha256(b"wrongpass").hexdigest()
 
@@ -524,6 +525,7 @@ class TestDistributedWorkerThread:
     def test_worker_process_password_cracking(self, worker: DistributedWorkerThread) -> None:
         """Worker processes password cracking task with real hash checking."""
         test_password = "password123"
+        # lgtm[py/weak-sensitive-data-hashing] Test fixture generating MD5 hash for password cracking test
         test_hash = hashlib.md5(test_password.encode()).hexdigest()
 
         task = DistributedTask(

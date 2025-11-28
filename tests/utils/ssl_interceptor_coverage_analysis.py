@@ -178,6 +178,7 @@ def analyze_ssl_interceptor_coverage():
     print("\n🏆 QUALITY ASSESSMENT")
     print("-" * 50)
 
+    # lgtm[py/incomplete-url-substring-sanitization] Code quality analysis checking test content contains expected domains
     quality_indicators = [
         ("Comprehensive test scenarios", len([line for line in test_content.split('\n') if 'def test_' in line]) >= 15),
         ("Real-world data usage", ('license.adobe.com' in test_content or 'license-adobe-com' in test_content) and ('activation.autodesk.com' in test_content or 'activation-autodesk-com' in test_content)),

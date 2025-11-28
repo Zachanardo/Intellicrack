@@ -437,7 +437,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
                 str(params) if params else "",
                 str(headers) if headers else "",
             ]
-            cache_key = hashlib.sha256(":".join(cache_key_parts).encode()).hexdigest()
+            cache_key = hashlib.sha256(":".join(cache_key_parts).encode()).hexdigest()  # lgtm[py/weak-sensitive-data-hashing] SHA256 for cache key generation, not sensitive data
 
             if cached_data := self.cache_manager.get_cached_item(cache_key):
                 logger.debug(f"Cache hit for {url}")

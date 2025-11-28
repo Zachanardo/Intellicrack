@@ -582,9 +582,10 @@ class TestBaseNetworkAnalyzerIntegration:
 
         # Perform license check
         time.sleep(0.5)
+        # lgtm[py/insecure-protocol] Intentionally insecure SSL context for testing license traffic analysis
         context = ssl.create_default_context()
         context.check_hostname = False
-        context.verify_mode = ssl.CERT_NONE
+        context.verify_mode = ssl.CERT_NONE  # nosec B504 - Required for test SSL interception
 
         with socket.create_connection((server_ip, server_port)) as sock:
             with context.wrap_socket(sock) as ssock:

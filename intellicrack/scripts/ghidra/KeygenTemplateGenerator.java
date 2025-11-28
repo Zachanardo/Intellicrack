@@ -3256,6 +3256,7 @@ public class KeygenTemplateGenerator extends GhidraScript {
 
     for (int i = 0; i < algorithms.length && i < testKeys.length; i++) {
       try {
+        // lgtm[java/weak-cryptographic-algorithm] DES/DESede intentionally included for analyzing legacy protection schemes
         SecretKeySpec keySpec = new SecretKeySpec(testKeys[i], algorithms[i]);
         extractedKeys.put(algorithms[i], keySpec);
 

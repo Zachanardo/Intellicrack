@@ -121,6 +121,7 @@ class CertifiedGroundTruthProfile:
             with open(key_file, 'rb') as f:
                 self.secret_key = f.read()
         else:
+            # lgtm[py/clear-text-storage-sensitive-data] Key stored with restricted permissions (0o600) for test validation only
             self.secret_key = secrets.token_bytes(64)
             key_file.parent.mkdir(parents=True, exist_ok=True)
             with open(key_file, 'wb') as f:

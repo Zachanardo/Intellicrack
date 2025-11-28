@@ -2170,8 +2170,18 @@ const KeygenGenerator = {
             _generateSecureUserId: function () {
                 const timestamp = Date.now().toString(36);
                 const randomBytes = new Uint8Array(4);
-                for (let i = 0; i < 4; i++) {
-                    randomBytes[i] = Math.floor(Math.random() * 256);
+                // Use cryptographically secure random number generation
+                if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+                    crypto.getRandomValues(randomBytes);
+                } else {
+                    // Fallback for Frida environment: use multiple entropy sources
+                    const now = Date.now();
+                    const perfNow = typeof performance !== 'undefined' ? performance.now() : 0;
+                    let seed = now ^ (perfNow * 1000000);
+                    for (let i = 0; i < 4; i++) {
+                        seed = (seed * 1103515245 + 12345) >>> 0;
+                        randomBytes[i] = (seed >>> 16) & 0xFF;
+                    }
                 }
                 const randomHex = Array.from(randomBytes)
                     .map(b => b.toString(36))
