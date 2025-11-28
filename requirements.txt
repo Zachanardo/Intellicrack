@@ -101,7 +101,7 @@ distributed==2025.11.0
 distro==1.9.0
 dnspython==2.8.0
 docstring_parser==0.17.0
-docutils==0.21.2
+docutils==0.22.3
 dparse==0.6.4
 dpcpp_cpp_rt==2025.2.1
 dpctl==0.20.2
