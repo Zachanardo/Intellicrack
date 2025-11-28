@@ -360,7 +360,7 @@ pyopencl==2025.2.7
 pyopenssl==25.1.0
 pyparsing==3.2.5
 pypcode==3.3.3
-pyperclip==1.9.0
+pyperclip==1.11.0
 pyphen==0.17.2
 pyproject_api==1.10.0
 pyproject_hooks==1.2.0
