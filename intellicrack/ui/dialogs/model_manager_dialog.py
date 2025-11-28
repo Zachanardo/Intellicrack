@@ -521,7 +521,10 @@ class ModelManagerDialog(BaseDialog):
             # Download button
             download_btn = QPushButton("Download")
             download_btn.clicked.connect(
-                lambda checked, url=model["url"], name=model["name"]: self.download_model(url, name),
+                lambda checked, url=model["url"], name=model["name"]: (
+                    logger.debug("Download button clicked, checked state: %s for model: %s", checked, name)
+                    or self.download_model(url, name)
+                ),
             )
             self.recommended_table.setCellWidget(row, 3, download_btn)
 
@@ -554,7 +557,10 @@ class ModelManagerDialog(BaseDialog):
             load_btn = QPushButton("Load")
             load_btn.setEnabled(status != "Loaded")
             load_btn.clicked.connect(
-                lambda checked, name=model_name: self.load_model(name),
+                lambda checked, name=model_name: (
+                    logger.debug("Load button clicked, checked state: %s for model: %s", checked, name)
+                    or self.load_model(name)
+                ),
             )
             self.models_table.setCellWidget(row, 4, load_btn)
 

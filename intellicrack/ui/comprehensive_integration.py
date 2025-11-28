@@ -414,9 +414,11 @@ class ComprehensiveR2Integration:
             ]
 
             for action_name, analysis_type in analysis_actions:
-                action = r2_menu.addAction(action_name)
                 action.triggered.connect(
-                    lambda checked, t=analysis_type: self.ui_manager.start_analysis(t),
+                    lambda checked, t=analysis_type: (
+                        logger.debug("Menu action triggered, checked state: %s for type: %s", checked, t)
+                        or self.ui_manager.start_analysis(t)
+                    ),
                 )
 
             # Add separator and utilities
@@ -453,7 +455,10 @@ class ComprehensiveR2Integration:
             for action_name, analysis_type in quick_actions:
                 action = toolbar.addAction(action_name)
                 action.triggered.connect(
-                    lambda checked, t=analysis_type: self.ui_manager.start_analysis(t),
+                    lambda checked, t=analysis_type: (
+                        logger.debug("Toolbar action triggered, checked state: %s for type: %s", checked, t)
+                        or self.ui_manager.start_analysis(t)
+                    ),
                 )
 
             toolbar.addSeparator()

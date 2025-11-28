@@ -72,6 +72,10 @@ FORBIDDEN:
 
 Fix ONLY the specific mypy errors listed. Nothing else."""
 
+MAX_ERRORS_PER_FILE = 100
+MAX_ITERATIONS = 50
+STALL_THRESHOLD = 3
+
 
 def fix_file_agentically(
     file_path: str,
@@ -106,9 +110,9 @@ def fix_file_agentically(
             "model": model,
         }
 
-    errors_text = "\n".join(f"  - {e}" for e in errors[:20])
-    if len(errors) > 20:
-        errors_text += f"\n  ... and {len(errors) - 20} more errors"
+    errors_text = "\n".join(f"  - {e}" for e in errors[:MAX_ERRORS_PER_FILE])
+    if len(errors) > MAX_ERRORS_PER_FILE:
+        errors_text += f"\n  ... and {len(errors) - MAX_ERRORS_PER_FILE} more errors"
 
     prompt = f"""Fix ONLY these specific type errors in {file_path}:
 
@@ -320,36 +324,11 @@ class AgenticTypeFixer:
 
         return dict(errors_by_file)
 
-    def run(self) -> dict[str, Any]:
-        """Run the agentic type fixer."""
-        self.log("\n[bold green]Claude Agentic Type Fixer[/bold green]")
-        self.log("[cyan]Mode: AGENTIC (Claude uses Read/Edit/Bash tools directly)[/cyan]")
-        self.log(f"[cyan]Model: {self.model}[/cyan]")
-        self.log(f"[cyan]Type Checker: {self.checker}[/cyan]")
-        self.log(f"[cyan]Target: {self.target_dir}[/cyan]")
-        self.log(f"[cyan]Parallel Workers: {self.max_workers}[/cyan]")
-        self.log(f"[cyan]Timeout per file: {self.timeout}s[/cyan]")
-        if self.max_files:
-            self.log(f"[cyan]Max Files: {self.max_files}[/cyan]")
-        self.log("")
-
-        output = self.run_type_checker()
-        errors_by_file = self.group_errors_by_file(output)
-
-        if not errors_by_file:
-            self.log("[bold green]No type errors found![/bold green]")
-            return {"total_errors": 0, "files_processed": 0}
-
-        total_errors = sum(len(errs) for errs in errors_by_file.values())
-        self.log(f"[bold yellow]Found {total_errors} errors in {len(errors_by_file)} files[/bold yellow]\n")
-
-        files_to_process = list(errors_by_file.items())
-        if self.max_files:
-            files_to_process = files_to_process[:self.max_files]
-            self.log(f"[cyan]Processing {len(files_to_process)} of {len(errors_by_file)} files[/cyan]\n")
-        else:
-            self.log(f"[cyan]Processing all {len(files_to_process)} files[/cyan]\n")
-
+    def _process_files_batch(
+        self,
+        files_to_process: list[tuple[str, list[str]]],
+    ) -> list[dict[str, Any]]:
+        """Process a batch of files with the thread pool."""
         results: list[dict[str, Any]] = []
 
         if RICH_AVAILABLE:
@@ -443,45 +422,133 @@ class AgenticTypeFixer:
                         })
                         print(f"[{idx}/{len(files_to_process)}] ERROR: {file_path}")
 
-        successful = sum(1 for r in results if r.get("success"))
-        failed = len(results) - successful
-        total_fixed = sum(r.get("errors_fixed", 0) for r in results)
-        errors_addressed = sum(r.get("errors_count", 0) for r in results if r.get("success"))
+        return results
 
-        self.log("\n[bold green]Processing Complete![/bold green]")
+    def run(self) -> dict[str, Any]:
+        """Run the agentic type fixer with iteration until all errors are fixed."""
+        self.log("\n[bold green]Claude Agentic Type Fixer[/bold green]")
+        self.log("[cyan]Mode: AGENTIC (Claude uses Read/Edit/Bash tools directly)[/cyan]")
+        self.log(f"[cyan]Model: {self.model}[/cyan]")
+        self.log(f"[cyan]Type Checker: {self.checker}[/cyan]")
+        self.log(f"[cyan]Target: {self.target_dir}[/cyan]")
+        self.log(f"[cyan]Parallel Workers: {self.max_workers}[/cyan]")
+        self.log(f"[cyan]Timeout per file: {self.timeout}s[/cyan]")
+        self.log(f"[cyan]Max Iterations: {MAX_ITERATIONS}[/cyan]")
+        if self.max_files:
+            self.log(f"[cyan]Max Files per iteration: {self.max_files}[/cyan]")
+        self.log("")
+
+        iteration = 0
+        total_fixed_all_iterations = 0
+        total_files_processed = 0
+        stall_count = 0
+        previous_error_count = float('inf')
+        error_history: list[int] = []
+
+        while iteration < MAX_ITERATIONS:
+            iteration += 1
+            self.log(f"\n[bold magenta]{'=' * 60}[/bold magenta]")
+            self.log(f"[bold magenta]  ITERATION {iteration} / {MAX_ITERATIONS}[/bold magenta]")
+            self.log(f"[bold magenta]{'=' * 60}[/bold magenta]\n")
+
+            output = self.run_type_checker()
+            errors_by_file = self.group_errors_by_file(output)
+
+            if not errors_by_file:
+                self.log("[bold green]SUCCESS! No type errors remaining![/bold green]")
+                break
+
+            total_errors = sum(len(errs) for errs in errors_by_file.values())
+            error_history.append(total_errors)
+            self.log(f"[bold yellow]Found {total_errors} errors in {len(errors_by_file)} files[/bold yellow]")
+
+            if total_errors >= previous_error_count:
+                stall_count += 1
+                self.log(f"[yellow]No progress detected (stall count: {stall_count}/{STALL_THRESHOLD})[/yellow]")
+                if stall_count >= STALL_THRESHOLD:
+                    self.log(f"[red]Stopping: No progress for {STALL_THRESHOLD} iterations[/red]")
+                    break
+            else:
+                stall_count = 0
+                reduction = previous_error_count - total_errors
+                if previous_error_count != float('inf'):
+                    self.log(f"[green]Progress: Reduced by {reduction} errors ({reduction/previous_error_count*100:.1f}%)[/green]")
+
+            previous_error_count = total_errors
+
+            files_to_process = sorted(
+                errors_by_file.items(),
+                key=lambda x: len(x[1]),
+                reverse=True,
+            )
+
+            if self.max_files:
+                files_to_process = files_to_process[:self.max_files]
+                self.log(f"[cyan]Processing {len(files_to_process)} of {len(errors_by_file)} files this iteration[/cyan]\n")
+            else:
+                self.log(f"[cyan]Processing all {len(files_to_process)} files[/cyan]\n")
+
+            results = self._process_files_batch(files_to_process)
+
+            successful = sum(1 for r in results if r.get("success"))
+            failed = len(results) - successful
+            iteration_fixed = sum(r.get("errors_fixed", 0) for r in results)
+            total_fixed_all_iterations += iteration_fixed
+            total_files_processed += len(files_to_process)
+
+            self.log(f"\n[bold cyan]Iteration {iteration} Summary:[/bold cyan]")
+            self.log(f"  Files processed: {successful}/{len(files_to_process)}")
+            self.log(f"  Errors fixed this iteration: {iteration_fixed}")
+            self.log(f"  Total errors fixed so far: {total_fixed_all_iterations}")
+
+            if failed > 0:
+                self.log(f"\n[yellow]Failed files this iteration:[/yellow]")
+                for r in results:
+                    if not r.get("success"):
+                        self.log(f"  - {r.get('file')}: {r.get('error', 'Unknown error')[:80]}")
+
+        self.log(f"\n[bold green]{'=' * 60}[/bold green]")
+        self.log("[bold green]  FINAL RESULTS[/bold green]")
+        self.log(f"[bold green]{'=' * 60}[/bold green]\n")
+
+        final_output = self.run_type_checker()
+        final_errors_by_file = self.group_errors_by_file(final_output)
+        final_error_count = sum(len(errs) for errs in final_errors_by_file.values())
 
         if RICH_AVAILABLE and self.console:
-            table = Table(title="Results Summary")
+            table = Table(title="Final Results Summary")
             table.add_column("Metric", style="cyan")
             table.add_column("Value", style="green")
             table.add_row("Model Used", self.model)
-            table.add_row("Total Errors Found", str(total_errors))
-            table.add_row("Files Processed", f"{successful}/{len(files_to_process)}")
-            table.add_row("Files Successful", str(successful))
-            table.add_row("Files Failed", str(failed))
-            table.add_row("Errors Addressed", str(errors_addressed))
-            table.add_row("Errors Actually Fixed (verified)", str(total_fixed))
+            table.add_row("Total Iterations", str(iteration))
+            table.add_row("Total Files Processed", str(total_files_processed))
+            table.add_row("Total Errors Fixed", str(total_fixed_all_iterations))
+            table.add_row("Remaining Errors", str(final_error_count))
+            if error_history:
+                table.add_row("Starting Errors", str(error_history[0]))
+                if error_history[0] > 0:
+                    reduction_pct = (1 - final_error_count / error_history[0]) * 100
+                    table.add_row("Reduction", f"{reduction_pct:.1f}%")
             self.console.print(table)
+
+            if error_history:
+                self.log("\n[bold cyan]Error History:[/bold cyan]")
+                for i, count in enumerate(error_history, 1):
+                    self.log(f"  Iteration {i}: {count} errors")
+                self.log(f"  Final: {final_error_count} errors")
         else:
             print(f"\nModel: {self.model}")
-            print(f"Total Errors: {total_errors}")
-            print(f"Files: {successful}/{len(files_to_process)} successful")
-            print(f"Errors Addressed: {errors_addressed}")
-            print(f"Errors Fixed (verified): {total_fixed}")
-
-        if failed > 0:
-            self.log("\n[yellow]Failed files:[/yellow]")
-            for r in results:
-                if not r.get("success"):
-                    self.log(f"  - {r.get('file')}: {r.get('error', 'Unknown error')[:80]}")
+            print(f"Iterations: {iteration}")
+            print(f"Files Processed: {total_files_processed}")
+            print(f"Errors Fixed: {total_fixed_all_iterations}")
+            print(f"Remaining Errors: {final_error_count}")
 
         return {
-            "total_errors": total_errors,
-            "files_processed": len(files_to_process),
-            "files_successful": successful,
-            "files_failed": failed,
-            "errors_addressed": errors_addressed,
-            "errors_fixed_verified": total_fixed,
+            "total_iterations": iteration,
+            "total_files_processed": total_files_processed,
+            "total_errors_fixed": total_fixed_all_iterations,
+            "remaining_errors": final_error_count,
+            "error_history": error_history,
             "model": self.model,
         }
 
@@ -524,8 +591,25 @@ def main() -> None:
         "--timeout", type=int, default=1200,
         help="Timeout per file in seconds (default: 1200 = 20 minutes)"
     )
+    parser.add_argument(
+        "--max-iterations", type=int, default=50,
+        help="Maximum iterations before stopping (default: 50)"
+    )
+    parser.add_argument(
+        "--stall-threshold", type=int, default=3,
+        help="Stop after N iterations with no progress (default: 3)"
+    )
+    parser.add_argument(
+        "--errors-per-file", type=int, default=100,
+        help="Maximum errors to show Claude per file (default: 100)"
+    )
 
     args = parser.parse_args()
+
+    global MAX_ITERATIONS, STALL_THRESHOLD, MAX_ERRORS_PER_FILE
+    MAX_ITERATIONS = args.max_iterations
+    STALL_THRESHOLD = args.stall_threshold
+    MAX_ERRORS_PER_FILE = args.errors_per_file
 
     claude_check = subprocess.run(
         ["claude", "--version"],
@@ -559,15 +643,11 @@ def main() -> None:
 
     results = fixer.run()
 
-    if results.get("files_successful", 0) > 0:
-        success_rate = results["files_successful"] / max(results["files_processed"], 1) * 100
-        print(f"\nSuccess rate: {success_rate:.1f}%")
-
-    verified = results.get("errors_fixed_verified", 0)
-    addressed = results.get("errors_addressed", 0)
-    if addressed > 0:
-        fix_rate = verified / addressed * 100
-        print(f"Verified fix rate: {fix_rate:.1f}% ({verified}/{addressed} errors actually fixed)")
+    if results.get("remaining_errors", 0) == 0:
+        print("\n[SUCCESS] All type errors have been fixed!")
+    else:
+        print(f"\n[INFO] {results.get('remaining_errors', 0)} errors remaining after {results.get('total_iterations', 0)} iterations")
+        print(f"[INFO] Total errors fixed: {results.get('total_errors_fixed', 0)}")
 
 
 if __name__ == "__main__":

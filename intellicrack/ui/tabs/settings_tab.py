@@ -612,13 +612,28 @@ class SettingsTab(BaseTab):
         browse_btn = QPushButton("")
         browse_btn.setMaximumWidth(40)
         browse_btn.setToolTip("Browse for tool executable")
-        browse_btn.clicked.connect(lambda checked, edit=path_edit, title=browse_title: self.browse_tool_path(edit, title))
+        browse_btn.clicked.connect(
+            lambda checked, edit=path_edit, title=browse_title: (
+                self.logger.debug(
+                    "Browse button clicked, checked state: %s for edit: %s, title: %s",
+                    checked,
+                    edit,
+                    title,
+                )
+                or self.browse_tool_path(edit, title)
+            )
+        )
 
         # Clear/Reset button
         reset_btn = QPushButton("↻")
         reset_btn.setMaximumWidth(40)
         reset_btn.setToolTip("Reset to auto-discovered path")
-        reset_btn.clicked.connect(lambda checked, key=tool_key: self.reset_tool_path(key))
+        reset_btn.clicked.connect(
+            lambda checked, key=tool_key: (
+                self.logger.debug("Reset button clicked, checked state: %s for key: %s", checked, key)
+                or self.reset_tool_path(key)
+            )
+        )
 
         main_row.addWidget(path_edit)
         main_row.addWidget(status_label)
@@ -673,7 +688,17 @@ class SettingsTab(BaseTab):
         browse_btn = QPushButton("")
         browse_btn.setMaximumWidth(40)
         browse_btn.setToolTip("Browse for directory")
-        browse_btn.clicked.connect(lambda checked, edit=path_edit, title=browse_title: self.browse_directory(edit, title))
+        browse_btn.clicked.connect(
+            lambda checked, edit=path_edit, title=browse_title: (
+                self.logger.debug(
+                    "Directory browse button clicked, checked state: %s for edit: %s, title: %s",
+                    checked,
+                    edit,
+                    title,
+                )
+                or self.browse_directory(edit, title)
+            )
+        )
 
         layout.addWidget(path_edit)
         layout.addWidget(browse_btn)

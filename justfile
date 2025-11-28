@@ -242,7 +242,7 @@ pyright:
 # Run type checking with mypy and output sorted findings
 mypy:
     @echo "Running Mypy type checker..."
-    pixi run mypy intellicrack tests 2>&1 | Out-String | ForEach-Object { $_ -split "`n" | Where-Object { $_ -match '^\S+\.py:\d+:' } } | Group-Object { ($_ -split ':')[0] } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath "mypy_findings.txt" -Encoding utf8
+    Remove-Item -Path "mypy_findings.txt" -ErrorAction SilentlyContinue; $output = pixi run mypy intellicrack tests 2>&1 | Out-String; $output -split "`n" | Where-Object { $_ -match '^\S+\.py:\d+:' } | Group-Object { ($_ -split ':')[0] } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath "mypy_findings.txt" -Encoding utf8
     @echo "Mypy findings written to mypy_findings.txt (sorted by file, descending)"
 
 # Security linting with bandit and output sorted findings

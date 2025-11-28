@@ -739,7 +739,12 @@ class FridaManagerDialog(QDialog):
 
             # Add bypass button
             bypass_btn = QPushButton("Bypass")
-            bypass_btn.clicked.connect(lambda checked, pt=prot_type: self.bypass_protection(pt))
+            bypass_btn.clicked.connect(
+                lambda checked, pt=prot_type: (
+                    logger.debug("Bypass button clicked, checked state: %s for protection type: %s", checked, pt)
+                    or self.bypass_protection(pt)
+                )
+            )
             bypass_btn.setEnabled(False)
             self.protection_grid.setCellWidget(i, 3, bypass_btn)
 

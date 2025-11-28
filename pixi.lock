@@ -2832,7 +2832,7 @@ packages:
 - pypi: ./
   name: intellicrack
   version: 0.1.0
-  sha256: 0068160933d2679398a7cc599c9a342eb8a4c2d9c330f8d22fdedba94c2a31c6
+  sha256: a22f05549bb68922dc3d7f07b32627602919bcd459d6c95a16195420a5b89c5d
   requires_dist:
   - accelerate
   - anthropic

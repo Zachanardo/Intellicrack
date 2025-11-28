@@ -738,7 +738,12 @@ class R2IntegrationWidget(QWidget if QWidget is not None else object):
         for i, (name, analysis_type, tooltip) in enumerate(button_configs):
             button = QPushButton(name)
             button.setToolTip(tooltip)
-            button.clicked.connect(lambda checked, t=analysis_type: self._start_analysis(t))
+            button.clicked.connect(
+                lambda checked, t=analysis_type: (
+                    self.logger.debug("Radare2 action clicked, checked state: %s for type: %s", checked, t)
+                    or self._start_analysis(t)
+                )
+            )
             button.setEnabled(False)
 
             row, col = divmod(i, 4)

@@ -358,7 +358,12 @@ class DashboardTab(BaseTab):
 
             file_name = os.path.basename(file_path)
             action = self.recent_files_menu.addAction(file_name)
-            action.triggered.connect(lambda checked, path=file_path: self.load_binary(path))
+            action.triggered.connect(
+                lambda checked, path=file_path: (
+                    logger.debug("Recent file opened, checked state: %s for path: %s", checked, path)
+                    or self.load_binary(path)
+                )
+            )
 
     def save_analysis_results(self) -> None:
         """Save analysis results."""

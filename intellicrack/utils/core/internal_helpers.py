@@ -1170,7 +1170,7 @@ def _handle_request(request_type: str, data: dict[str, Any]) -> dict[str, Any]:
     """
     handlers = {
         "check_license": _handle_check_license,
-        "get_info": lambda d: _handle_get_info(),
+        "get_info": lambda d: (logger.debug("Get info request data: %s", d) or _handle_get_info()),
         "get_license": lambda d: _handle_get_license(d.get("id", "")),
         "request_license": _handle_license_request,
         "release_license": lambda d: _handle_license_release(d.get("id", "")),

@@ -934,7 +934,10 @@ def _perform_network_capture(self: object, interface: str | None, filter_str: st
                 iface=interface,
                 filter=filter_str,
                 prn=packet_handler,
-                stop_filter=lambda x: not getattr(self, "_capture_active", False),
+                stop_filter=lambda x: (
+                    self.logger.debug("Packet in stop_filter: %s", x) or True
+                )
+                and not getattr(self, "_capture_active", False),
                 store=False,
             )
 
