@@ -257,7 +257,7 @@ except ImportError as e:
                 New FallbackArray with converted data type
 
             """
-            converter = dtype if callable(dtype) else lambda x: dtype(x)
+            converter = dtype
             new_data = [converter(x) for x in self.data]
             return FallbackArray(new_data, dtype, self._shape)
 

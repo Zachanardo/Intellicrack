@@ -796,7 +796,7 @@ class HeadlessTrainingInterface:
             # Apply dropout during training
             if not validation and model_config.get("dropout_rate", 0) > 0:
                 dropout_mask = rng.binomial(1, 1 - dropout_rate, size=a1.shape) / (1 - dropout_rate)
-                a1 = a1 * dropout_mask
+                a1 *= dropout_mask
 
             # Layer 2: Hidden1 -> Hidden2
             z2 = np.dot(a1, self._weights["W2"]) + self._weights["b2"]
@@ -805,7 +805,7 @@ class HeadlessTrainingInterface:
             # Apply dropout during training
             if not validation and model_config.get("dropout_rate", 0) > 0:
                 dropout_mask = rng.binomial(1, 1 - dropout_rate, size=a2.shape) / (1 - dropout_rate)
-                a2 = a2 * dropout_mask
+                a2 *= dropout_mask
 
             # Layer 3: Hidden2 -> Output
             z3 = np.dot(a2, self._weights["W3"]) + self._weights["b3"]

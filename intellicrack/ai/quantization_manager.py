@@ -299,7 +299,7 @@ class QuantizationManager:
             )
 
             # Prepare for training if needed
-            if kwargs.get("prepare_for_training", False) and HAS_PEFT:
+            if kwargs.get("prepare_for_training") and HAS_PEFT:
                 model = prepare_model_for_kbit_training(model)
 
             logger.info("Successfully loaded 4-bit quantized model")
@@ -425,7 +425,7 @@ class QuantizationManager:
             )
 
             # Merge adapter if requested
-            if kwargs.get("merge_adapter", False):
+            if kwargs.get("merge_adapter"):
                 model = model.merge_and_unload()
 
             logger.info(f"Successfully loaded LoRA adapter from {adapter_path}")

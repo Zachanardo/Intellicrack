@@ -1276,7 +1276,7 @@ class ONNXLLMBackend(LLMBackend):
                 # Apply temperature sampling if temperature > 0
                 if self.config.temperature > 0:
                     # Apply temperature scaling
-                    next_token_logits = next_token_logits / self.config.temperature
+                    next_token_logits /= self.config.temperature
 
                     # Convert to probabilities
                     exp_logits = np.exp(next_token_logits - np.max(next_token_logits))
@@ -1877,6 +1877,10 @@ class LLMManager:
 
     def __new__(cls, enable_lazy_loading: bool = True, enable_background_loading: bool = True) -> "LLMManager":
         """Singleton pattern implementation."""
+        if not isinstance(enable_lazy_loading, bool):
+            raise TypeError("enable_lazy_loading must be a boolean")
+        if not isinstance(enable_background_loading, bool):
+            raise TypeError("enable_background_loading must be a boolean")
         with cls._lock:
             if cls._instance is None:
                 cls._instance = super().__new__(cls)

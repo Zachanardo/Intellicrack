@@ -1584,7 +1584,7 @@ class SecureEnclaveBypass:
         """Get name of TPM attestation key."""
         # TPM name is hash of public area
         if self.tpm_emulator.keys:
-            for _handle, key in self.tpm_emulator.keys.items():
+            for key in self.tpm_emulator.keys.values():
                 if key.attributes & 0x00040000:  # Restricted key
                     return hashlib.sha256(key.public_key).digest()
 

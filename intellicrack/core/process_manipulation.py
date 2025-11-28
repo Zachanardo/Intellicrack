@@ -528,13 +528,11 @@ class LicenseAnalyzer:
                 break
 
             if mbi.State == 0x1000:  # MEM_COMMIT
-                regions.append(
-                    {
-                        "base_address": mbi.BaseAddress,
-                        "size": mbi.RegionSize,
-                        "protection": mbi.Protect,
-                    }
-                )
+                regions.append({
+                    "base_address": mbi.BaseAddress,
+                    "size": mbi.RegionSize,
+                    "protection": mbi.Protect,
+                })
                 logger.debug(f"Found committed region: Base=0x{mbi.BaseAddress:X}, Size=0x{mbi.RegionSize:X}, Protect=0x{mbi.Protect:X}")
 
             address = mbi.BaseAddress + mbi.RegionSize
@@ -763,7 +761,7 @@ class LicenseAnalyzer:
                     )
 
         # Sort results for each pattern
-        for _pattern_name, pattern_results in results.items():
+        for pattern_results in results.values():
             pattern_results.sort()
 
         logger.info(f"Concurrent scan complete: {sum(len(v) for v in results.values())} total matches")
@@ -848,23 +846,19 @@ class LicenseAnalyzer:
 
         for op in insn.operands:
             if op.type == capstone.x86.X86_OP_MEM and op.mem.disp == target_address:
-                references.append(
-                    {
-                        "from_address": insn.address,
-                        "instruction": insn.mnemonic,
-                        "bytes": insn.bytes.hex(),
-                        "type": "memory_reference",
-                    }
-                )
+                references.append({
+                    "from_address": insn.address,
+                    "instruction": insn.mnemonic,
+                    "bytes": insn.bytes.hex(),
+                    "type": "memory_reference",
+                })
             elif op.type == capstone.x86.X86_OP_IMM and op.value.imm == target_address:
-                references.append(
-                    {
-                        "from_address": insn.address,
-                        "instruction": insn.mnemonic,
-                        "bytes": insn.bytes.hex(),
-                        "type": "immediate_reference",
-                    }
-                )
+                references.append({
+                    "from_address": insn.address,
+                    "instruction": insn.mnemonic,
+                    "bytes": insn.bytes.hex(),
+                    "type": "immediate_reference",
+                })
         return references
 
     def _scan_data_pointers(self, memory: bytes, region_start: int, target_address: int, is_64bit: bool) -> list[dict[str, Any]]:
@@ -878,14 +872,12 @@ class LicenseAnalyzer:
         for offset in range(0, len(memory) - ptr_size + 1, ptr_size):
             ptr_value = struct.unpack(ptr_format, memory[offset : offset + ptr_size])[0]
             if ptr_value == target_address:
-                references.append(
-                    {
-                        "from_address": region_start + offset,
-                        "instruction": "DATA_PTR",
-                        "bytes": memory[offset : offset + ptr_size].hex(),
-                        "type": "data_pointer",
-                    }
-                )
+                references.append({
+                    "from_address": region_start + offset,
+                    "instruction": "DATA_PTR",
+                    "bytes": memory[offset : offset + ptr_size].hex(),
+                    "type": "data_pointer",
+                })
         return references
 
     def _scan_references_from(self, address: int, scan_range: int, md: Any) -> list[dict[str, Any]]:
@@ -929,25 +921,21 @@ class LicenseAnalyzer:
         references = []
         for op in insn.operands:
             if op.type == capstone.x86.X86_OP_MEM and op.mem.disp != 0:
-                references.append(
-                    {
-                        "to_address": op.mem.disp,
-                        "instruction": insn.mnemonic,
-                        "offset": insn.address - base_address,
-                        "type": "memory_access",
-                    }
-                )
+                references.append({
+                    "to_address": op.mem.disp,
+                    "instruction": insn.mnemonic,
+                    "offset": insn.address - base_address,
+                    "type": "memory_access",
+                })
             elif op.type == capstone.x86.X86_OP_IMM:
                 imm_val = op.value.imm
                 if (0x400000 <= imm_val <= 0x7FFFFFFF) or (0x10000000000 <= imm_val <= 0x7FFFFFFFFFFF):
-                    references.append(
-                        {
-                            "to_address": imm_val,
-                            "instruction": insn.mnemonic,
-                            "offset": insn.address - base_address,
-                            "type": "immediate",
-                        }
-                    )
+                    references.append({
+                        "to_address": imm_val,
+                        "instruction": insn.mnemonic,
+                        "offset": insn.address - base_address,
+                        "type": "immediate",
+                    })
         return references
 
     def analyze_cross_references(self, address: int, scan_range: int = 0x10000) -> dict[str, list[dict[str, Any]]]:
@@ -2918,15 +2906,13 @@ class LicenseAnalyzer:
                 target_offset = struct.unpack("b", memory[i + 1 : i + 2])[0]
                 jump_target = start_addr + i + 2 + target_offset
 
-                jumps.append(
-                    {
-                        "address": start_addr + i,
-                        "opcode": memory[i],
-                        "mnemonic": mnemonic,
-                        "target": jump_target,
-                        "size": 2,
-                    }
-                )
+                jumps.append({
+                    "address": start_addr + i,
+                    "opcode": memory[i],
+                    "mnemonic": mnemonic,
+                    "target": jump_target,
+                    "size": 2,
+                })
 
             elif i < len(memory) - 6 and memory[i] == 0x0F:
                 if 0x80 <= memory[i + 1] <= 0x8F:

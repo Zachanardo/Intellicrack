@@ -30,12 +30,17 @@ import tempfile
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
 except ImportError:
-    import xml.etree.ElementTree as ET
+    import xml.etree.ElementTree as ET  # noqa: S405
 from dataclasses import dataclass, field
 from pathlib import Path
 from threading import Thread
 from typing import Any
-from xml.etree.ElementTree import Element
+
+
+try:
+    from defusedxml.ElementTree import Element
+except ImportError:
+    from xml.etree.ElementTree import Element  # noqa: S405
 
 from intellicrack.core.config_manager import get_config
 from intellicrack.utils.subprocess_security import secure_popen

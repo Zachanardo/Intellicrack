@@ -249,7 +249,7 @@ def start_stalker_session(
         session = StalkerSession(
             binary_path=binary_path,
             output_dir=output_dir,
-            message_callback=lambda msg: main_app.update_output.emit(msg),
+            message_callback=main_app.update_output.emit,
         )
 
         if session.start():

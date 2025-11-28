@@ -2240,7 +2240,7 @@ try:
         if PLUGIN_SYSTEM_EXPORTS is not None
         else []
     )
-    __all__ = ["PluginSystem", "create_plugin_template", *_plugin_system_exports]
+    __all__ = ["PluginSystem", "create_plugin_template", *_plugin_system_exports]  # noqa: PLE0604
 except ImportError as e:
     logger.exception(f"Import error in plugin_system, possibly due to missing plugin_config module: {e}")
     # Fallback in case of circular import issues

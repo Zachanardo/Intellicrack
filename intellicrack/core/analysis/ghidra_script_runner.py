@@ -363,7 +363,7 @@ class GhidraScriptRunner:
         if name in self.discovered_scripts:
             return self.discovered_scripts[name]
 
-        for _script_name, script in self.discovered_scripts.items():
+        for script in self.discovered_scripts.values():
             if script.name.lower() == name_lower or script.name == name:
                 return script
 

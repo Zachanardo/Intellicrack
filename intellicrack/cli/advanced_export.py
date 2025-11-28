@@ -30,7 +30,7 @@ from typing import Any, Protocol, TypedDict, Unpack
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
 except ImportError:
-    import xml.etree.ElementTree as ET
+    import xml.etree.ElementTree as ET  # noqa: S405
 
 # Create logger for this module
 logger = logging.getLogger(__name__)
@@ -93,7 +93,11 @@ class XlsxWorkbookProxy:
             The worksheet object
 
         """
-        return getattr(self._workbook, "add_worksheet", lambda n="": None)(name)
+        return getattr(
+            self._workbook,
+            "add_worksheet",
+            lambda n="": logger.debug("Mock add_worksheet called with name: %s", n),
+        )(name)
 
     def add_format(self, properties: dict[str, Any] | None = None) -> object:
         """Add a format to the workbook.
@@ -107,7 +111,11 @@ class XlsxWorkbookProxy:
         """
         if properties is None:
             properties = {}
-        return getattr(self._workbook, "add_format", lambda p: None)(properties)
+        return getattr(
+            self._workbook,
+            "add_format",
+            lambda p: logger.debug("Mock add_format called with props: %s", p),
+        )(properties)
 
     def close(self) -> None:
         """Close the workbook."""

@@ -856,14 +856,14 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
     class FallbackModes:
         """Cipher modes."""
 
-        class CBC:
+        class CBC:  # noqa: B903 - Must match cryptography library API
             def __init__(self, initialization_vector: bytes) -> None:
                 self.initialization_vector = initialization_vector
 
         class ECB:
             pass
 
-        class CTR:
+        class CTR:  # noqa: B903 - Must match cryptography library API
             def __init__(self, nonce: bytes) -> None:
                 self.nonce = nonce
 
@@ -987,12 +987,25 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                 key_data += line.strip()
 
         # Return a fallback key object
+        def _private_bytes(self, encoding: object, key_format: object, encryption: object) -> bytes | str:
+            logger.debug(
+                "Fallback private_bytes called with: encoding=%s, format=%s, encryption=%s",
+                encoding,
+                key_format,
+                encryption,
+            )
+            return data
+
+        def _public_key(self) -> object:
+            logger.debug("Fallback public_key called on %s", self)
+            return type("PublicKey", (), {})()
+
         return type(
             "PrivateKey",
             (),
             {
-                "private_bytes": lambda self, encoding, key_format, encryption: data,
-                "public_key": lambda self: type("PublicKey", (), {})(),
+                "private_bytes": _private_bytes,
+                "public_key": _public_key,
                 "key_size": 2048,
             },
         )()
@@ -1125,13 +1138,13 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                 rsa = type("rsa", (), {"generate_private_key": FallbackRSA.generate_private_key})()
 
                 class Padding:
-                    class OAEP:
+                    class OAEP:  # noqa: B903 - Must match cryptography library API
                         def __init__(self, mgf: object, algorithm: object, label: bytes | None = None) -> None:
                             self.mgf = mgf
                             self.algorithm = algorithm
                             self.label = label
 
-                    class PSS:
+                    class PSS:  # noqa: B903 - Must match cryptography library API
                         def __init__(self, mgf: object, salt_length: int) -> None:
                             self.mgf = mgf
                             self.salt_length = salt_length
@@ -1172,7 +1185,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                 class NoEncryption:
                     pass
 
-                class BestAvailableEncryption:
+                class BestAvailableEncryption:  # noqa: B903 - Must match cryptography library API
                     """Best available encryption for private key."""
 
                     def __init__(self, password: bytes) -> None:

@@ -36,22 +36,19 @@ class CoverageAnalyzer:
     def analyze_source_file(self) -> dict:
         """Analyze the source file to identify testable components"""
         try:
-            with open(self.source_file, encoding='utf-8') as f:
+            with open(self.source_file, encoding="utf-8") as f:
                 source_content = f.read()
 
             tree = ast.parse(source_content)
 
             for node in ast.walk(tree):
                 if isinstance(node, ast.ClassDef):
-                    self.classes_found[node.name] = {
-                        'methods': [],
-                        'line': node.lineno
-                    }
+                    self.classes_found[node.name] = {"methods": [], "line": node.lineno}
 
                     # Find methods within this class
                     for item in node.body:
                         if isinstance(item, ast.FunctionDef):
-                            self.classes_found[node.name]['methods'].append(item.name)
+                            self.classes_found[node.name]["methods"].append(item.name)
                             method_key = f"{node.name}.{item.name}"
                             self.methods_found[method_key] = item.lineno
 
@@ -62,11 +59,7 @@ class CoverageAnalyzer:
             print(f"Error analyzing source file: {e}")
             return {}
 
-        return {
-            'classes': self.classes_found,
-            'methods': self.methods_found,
-            'functions': self.functions_found
-        }
+        return {"classes": self.classes_found, "methods": self.methods_found, "functions": self.functions_found}
 
     def _is_method(self, node: ast.FunctionDef, tree: ast.AST) -> bool:
         """Check if a function is a method within a class"""
@@ -79,13 +72,13 @@ class CoverageAnalyzer:
     def analyze_test_file(self) -> list[str]:
         """Analyze the test file to identify test methods"""
         try:
-            with open(self.test_file, encoding='utf-8') as f:
+            with open(self.test_file, encoding="utf-8") as f:
                 test_content = f.read()
 
             tree = ast.parse(test_content)
 
             for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
+                if isinstance(node, ast.FunctionDef) and node.name.startswith("test_"):
                     self.test_methods.append(node.name)
 
         except Exception as e:
@@ -100,9 +93,9 @@ class CoverageAnalyzer:
         test_methods = self.analyze_test_file()
 
         # Count testable components
-        total_classes = len(source_analysis['classes'])
-        total_methods = len(source_analysis['methods'])
-        total_functions = len(source_analysis['functions'])
+        total_classes = len(source_analysis["classes"])
+        total_methods = len(source_analysis["methods"])
+        total_functions = len(source_analysis["functions"])
         total_testable = total_classes + total_methods + total_functions
 
         # Analyze test coverage by examining test method names and content
@@ -111,16 +104,16 @@ class CoverageAnalyzer:
         coverage_percentage = (len(covered_components) / total_testable * 100) if total_testable > 0 else 0
 
         return {
-            'total_testable_components': total_testable,
-            'covered_components': len(covered_components),
-            'coverage_percentage': coverage_percentage,
-            'classes_total': total_classes,
-            'methods_total': total_methods,
-            'functions_total': total_functions,
-            'test_methods_count': len(test_methods),
-            'covered_items': covered_components,
-            'source_analysis': source_analysis,
-            'test_methods': test_methods
+            "total_testable_components": total_testable,
+            "covered_components": len(covered_components),
+            "coverage_percentage": coverage_percentage,
+            "classes_total": total_classes,
+            "methods_total": total_methods,
+            "functions_total": total_functions,
+            "test_methods_count": len(test_methods),
+            "covered_items": covered_components,
+            "source_analysis": source_analysis,
+            "test_methods": test_methods,
         }
 
     def _map_tests_to_components(self, source_analysis: dict, test_methods: list[str]) -> set[str]:
@@ -128,7 +121,7 @@ class CoverageAnalyzer:
         covered = set()
 
         # Map classes
-        for class_name in source_analysis['classes'].keys():
+        for class_name in source_analysis["classes"]:
             class_name_lower = class_name.lower()
             for test_method in test_methods:
                 if class_name_lower in test_method.lower():
@@ -136,18 +129,18 @@ class CoverageAnalyzer:
                     break
 
         # Map methods
-        for method_key in source_analysis['methods'].keys():
-            class_name, method_name = method_key.split('.', 1)
-            method_name_lower = method_name.lower().replace('_', '')
+        for method_key in source_analysis["methods"]:
+            class_name, method_name = method_key.split(".", 1)
+            method_name_lower = method_name.lower().replace("_", "")
 
             for test_method in test_methods:
-                test_method_clean = test_method.lower().replace('test_', '').replace('_', '')
+                test_method_clean = test_method.lower().replace("test_", "").replace("_", "")
                 if method_name_lower in test_method_clean or method_name.lower() in test_method.lower():
                     covered.add(f"method:{method_key}")
                     break
 
         # Map functions
-        for func_name in source_analysis['functions'].keys():
+        for func_name in source_analysis["functions"]:
             func_name_lower = func_name.lower()
             for test_method in test_methods:
                 if func_name_lower in test_method.lower():
@@ -164,44 +157,44 @@ class CoverageAnalyzer:
 === TRAFFIC INTERCEPTION ENGINE TEST COVERAGE ANALYSIS ===
 
 COVERAGE SUMMARY:
-- Total Testable Components: {coverage_data['total_testable_components']}
-- Covered Components: {coverage_data['covered_components']}
-- Coverage Percentage: {coverage_data['coverage_percentage']:.1f}%
+- Total Testable Components: {coverage_data["total_testable_components"]}
+- Covered Components: {coverage_data["covered_components"]}
+- Coverage Percentage: {coverage_data["coverage_percentage"]:.1f}%
 - Minimum Required: 80.0%
-- Coverage Status: {'OK MEETS REQUIREMENT' if coverage_data['coverage_percentage'] >= 80 else 'FAIL BELOW REQUIREMENT'}
+- Coverage Status: {"OK MEETS REQUIREMENT" if coverage_data["coverage_percentage"] >= 80 else "FAIL BELOW REQUIREMENT"}
 
 COMPONENT BREAKDOWN:
-- Classes: {coverage_data['classes_total']} total
-- Methods: {coverage_data['methods_total']} total
-- Functions: {coverage_data['functions_total']} total
-- Test Methods Created: {coverage_data['test_methods_count']}
+- Classes: {coverage_data["classes_total"]} total
+- Methods: {coverage_data["methods_total"]} total
+- Functions: {coverage_data["functions_total"]} total
+- Test Methods Created: {coverage_data["test_methods_count"]}
 
 DETAILED SOURCE ANALYSIS:
 """
 
         # Add class details
-        for class_name, class_data in coverage_data['source_analysis']['classes'].items():
+        for class_name, class_data in coverage_data["source_analysis"]["classes"].items():
             report += f"\nClass: {class_name} (line {class_data['line']})\n"
-            for method in class_data['methods']:
-                status = "OK" if f"method:{class_name}.{method}" in coverage_data['covered_items'] else "FAIL"
+            for method in class_data["methods"]:
+                status = "OK" if f"method:{class_name}.{method}" in coverage_data["covered_items"] else "FAIL"
                 report += f"  {status} {method}\n"
 
         # Add function details
-        if coverage_data['source_analysis']['functions']:
+        if coverage_data["source_analysis"]["functions"]:
             report += "\nStandalone Functions:\n"
-            for func_name, line_no in coverage_data['source_analysis']['functions'].items():
-                status = "OK" if f"function:{func_name}" in coverage_data['covered_items'] else "FAIL"
+            for func_name, line_no in coverage_data["source_analysis"]["functions"].items():
+                status = "OK" if f"function:{func_name}" in coverage_data["covered_items"] else "FAIL"
                 report += f"  {status} {func_name} (line {line_no})\n"
 
         # Add test method list
         report += f"\nTEST METHODS CREATED ({len(coverage_data['test_methods'])}):\n"
-        for test_method in sorted(coverage_data['test_methods']):
+        for test_method in sorted(coverage_data["test_methods"]):
             report += f"- {test_method}\n"
 
         # Coverage assessment
         report += "\nCOVERAGE ASSESSMENT:\n"
 
-        if coverage_data['coverage_percentage'] >= 80:
+        if coverage_data["coverage_percentage"] >= 80:
             report += "OK This test suite meets the 80% minimum coverage requirement\n"
             report += "OK Comprehensive testing of all major components\n"
             report += "OK Production-ready validation standards achieved\n"
@@ -217,7 +210,7 @@ DETAILED SOURCE ANALYSIS:
         report += "OK Network manipulation and injection capabilities tested\n"
 
         report += "\nRECOMMENDATIONS:\n"
-        if coverage_data['coverage_percentage'] >= 80:
+        if coverage_data["coverage_percentage"] >= 80:
             report += "- Current test suite provides excellent coverage\n"
             report += "- Tests validate production-ready functionality\n"
             report += "- Suitable for validating security research capabilities\n"
@@ -225,7 +218,7 @@ DETAILED SOURCE ANALYSIS:
             report += "- Add tests for uncovered methods and functions\n"
             report += "- Ensure all critical paths are validated\n"
 
-        report += "\n" + "="*60 + "\n"
+        report += "\n" + "=" * 60 + "\n"
 
         return report
 
@@ -252,7 +245,7 @@ def main():
 
     # Save report to file
     report_file = Path(__file__).parent / "TRAFFIC_INTERCEPTION_ENGINE_COVERAGE_REPORT.md"
-    with open(report_file, 'w', encoding='utf-8') as f:
+    with open(report_file, "w", encoding="utf-8") as f:
         f.write("# Traffic Interception Engine Test Coverage Report\n\n")
         f.write(report)
 

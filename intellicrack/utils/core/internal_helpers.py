@@ -1169,12 +1169,12 @@ def _handle_request(request_type: str, data: dict[str, Any]) -> dict[str, Any]:
 
     """
     handlers = {
-        "check_license": lambda d: _handle_check_license(d),
+        "check_license": _handle_check_license,
         "get_info": lambda d: _handle_get_info(),
         "get_license": lambda d: _handle_get_license(d.get("id", "")),
-        "request_license": lambda d: _handle_license_request(d),
+        "request_license": _handle_license_request,
         "release_license": lambda d: _handle_license_release(d.get("id", "")),
-        "login": lambda d: _handle_login(d),
+        "login": _handle_login,
         "logout": lambda d: _handle_logout(d.get("token", "")),
     }
 
@@ -2268,7 +2268,7 @@ def _tensorflow_entropy_calculation(data: bytes) -> float:
         # Convert to tensor and calculate entropy
         tensor = tf.constant(list(data), dtype=tf.float32)
         # Normalize
-        tensor = tensor / 255.0
+        tensor /= 255.0
         # Simple entropy approximation
         return float(-tf.reduce_sum(tensor * tf.math.log(tensor + 1e-10)))
     except (OSError, ValueError, RuntimeError) as e:
@@ -2661,7 +2661,7 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
 
             # Write actual tensor data
             tensor_offsets = []
-            for _tensor_name, tensor_data in tensors.items():
+            for tensor_data in tensors.values():
                 tensor_offsets.append(f.tell())
 
                 # Convert to float32 if needed

@@ -571,7 +571,7 @@ class MultiLayerBypass:
         except Exception as e:
             logger.error(f"Failed to detach Frida: {e}")
 
-        for layer, _rollback_data in result.rollback_data.items():
+        for layer in result.rollback_data:
             try:
                 logger.info(f"Rolling back {layer.value}")
             except Exception as e:

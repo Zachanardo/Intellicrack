@@ -1293,7 +1293,7 @@ class HexViewerWidget(QWidget):
                         dialog.close()
 
             goto_btn.clicked.connect(goto_selected)
-            results_list.itemDoubleClicked.connect(lambda: goto_selected())
+            results_list.itemDoubleClicked.connect(goto_selected)
             close_btn.clicked.connect(dialog.close)
 
             dialog.setLayout(layout)

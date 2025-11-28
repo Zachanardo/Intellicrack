@@ -22,7 +22,7 @@ import hashlib
 import json
 import logging
 import os
-import pickle
+import pickle  # noqa: S403
 import subprocess
 from datetime import date, datetime
 from pathlib import Path
@@ -931,8 +931,8 @@ def _monkey_patch_pickle() -> None:
         logger.debug("Storing original pickle functions.")
         _security._original_functions["pickle.dump"] = pickle.dump
         _security._original_functions["pickle.dumps"] = pickle.dumps
-        _security._original_functions["pickle.load"] = pickle.load
-        _security._original_functions["pickle.loads"] = pickle.loads
+        _security._original_functions["pickle.load"] = pickle.load  # noqa: S301
+        _security._original_functions["pickle.loads"] = pickle.loads  # noqa: S301
     else:
         logger.debug("Original pickle functions already stored.")
 

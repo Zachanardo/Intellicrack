@@ -24,12 +24,26 @@ pytest = ">=9.0.1,<10"
 anyio = ">=4.11.0,<5"
 rich = ">=14.2.0,<15"
 mypy = ">=1.18.2,<2"
+types-requests = ">=2.32.4.20250913,<3"
+types-pyyaml = ">=6.0.12.20250915,<7"
 
 [pypi-dependencies]
 intellicrack = { path = ".", editable = true }
 torch = "*"
 torchvision = "*"
 torchaudio = "*"
+angr = ">=9.2.185, <10"
+archinfo = ">=9.2.185, <10"
+claripy = ">=9.2.185, <10"
+cle = ">=9.2.185, <10"
+hypothesis = ">=6.148.3, <7"
+langgraph = ">=1.0.4, <2"
+langsmith = ">=0.4.49, <0.5"
+pydantic = ">=2.12.5, <3"
+pymdown-extensions = ">=10.17.2, <11"
+pyvex = ">=9.2.185, <10"
+sphinxcontrib-mermaid = ">=1.2.3, <2"
+transformers = ">=4.57.3, <5"
 
 [pypi-options]
 extra-index-urls = ["https://download.pytorch.org/whl/xpu"]

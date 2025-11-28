@@ -346,7 +346,7 @@ class SymbolicDevirtualizer:
         exploration_manager = self.project.factory.simgr(initial_state)
 
         try:
-            exploration_manager.explore(find=lambda s: self._is_dispatcher_state(s), num_find=1, n=100)
+            exploration_manager.explore(find=self._is_dispatcher_state, num_find=1, n=100)
 
             if exploration_manager.found:
                 dispatcher_addr = exploration_manager.found[0].addr

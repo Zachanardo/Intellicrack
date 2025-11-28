@@ -33,7 +33,7 @@ import platform
 from pathlib import Path
 
 # Add the project root to the path to import the module
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 
 from intellicrack.core.anti_analysis.sandbox_detector import SandboxDetector
 
@@ -48,9 +48,9 @@ class TestSandboxDetectorInitialization(unittest.TestCase):
     def test_detector_initialization(self):
         """Test SandboxDetector initializes with proper configuration."""
         self.assertIsNotNone(self.detector)
-        self.assertTrue(hasattr(self.detector, 'detection_methods'))
-        self.assertTrue(hasattr(self.detector, 'sandbox_signatures'))
-        self.assertTrue(hasattr(self.detector, 'behavioral_patterns'))
+        self.assertTrue(hasattr(self.detector, "detection_methods"))
+        self.assertTrue(hasattr(self.detector, "sandbox_signatures"))
+        self.assertTrue(hasattr(self.detector, "behavioral_patterns"))
 
         # Verify detection methods are configured
         self.assertIsInstance(self.detector.detection_methods, (list, dict))
@@ -66,10 +66,10 @@ class TestSandboxDetectorInitialization(unittest.TestCase):
 
         # Should contain common sandbox signatures
         if isinstance(self.detector.sandbox_signatures, dict):
-            expected_sandbox_types = ['vmware', 'virtualbox', 'cuckoo', 'joe_sandbox', 'fireeye']
+            expected_sandbox_types = ["vmware", "virtualbox", "cuckoo", "joe_sandbox", "fireeye"]
             found_signatures = False
             for sandbox_type in expected_sandbox_types:
-                if any(sandbox_type.lower() in str(key).lower() for key in self.detector.sandbox_signatures.keys()):
+                if any(sandbox_type.lower() in str(key).lower() for key in self.detector.sandbox_signatures):
                     found_signatures = True
                     break
             self.assertTrue(found_signatures, "No recognized sandbox signatures found")
@@ -96,19 +96,19 @@ class TestPrimarySandboxDetection(unittest.TestCase):
         self.assertIsInstance(result, dict)
 
         # Should contain detection status
-        self.assertIn('detected', result)
-        self.assertIsInstance(result['detected'], bool)
+        self.assertIn("detected", result)
+        self.assertIsInstance(result["detected"], bool)
 
         # Should contain confidence score
-        self.assertIn('confidence', result)
-        self.assertIsInstance(result['confidence'], (int, float))
-        self.assertGreaterEqual(result['confidence'], 0)
-        self.assertLessEqual(result['confidence'], 100)
+        self.assertIn("confidence", result)
+        self.assertIsInstance(result["confidence"], (int, float))
+        self.assertGreaterEqual(result["confidence"], 0)
+        self.assertLessEqual(result["confidence"], 100)
 
         # Should identify sandbox type if detected
-        if result['detected']:
-            self.assertIn('sandbox_type', result)
-            self.assertIsInstance(result['sandbox_type'], (str, list))
+        if result["detected"]:
+            self.assertIn("sandbox_type", result)
+            self.assertIsInstance(result["sandbox_type"], (str, list))
 
     def test_detect_sandbox_with_aggressive_mode(self):
         """Test sandbox detection with aggressive detection methods."""
@@ -119,10 +119,10 @@ class TestPrimarySandboxDetection(unittest.TestCase):
         self.assertIsInstance(aggressive_result, dict)
 
         # Aggressive mode should provide detailed detection information
-        if aggressive_result.get('detected'):
-            self.assertIn('detection_methods', aggressive_result)
-            self.assertIsInstance(aggressive_result['detection_methods'], list)
-            self.assertGreater(len(aggressive_result['detection_methods']), 0)
+        if aggressive_result.get("detected"):
+            self.assertIn("detection_methods", aggressive_result)
+            self.assertIsInstance(aggressive_result["detection_methods"], list)
+            self.assertGreater(len(aggressive_result["detection_methods"]), 0)
 
     def test_detect_sandbox_performance(self):
         """Test sandbox detection performance requirements."""
@@ -131,8 +131,7 @@ class TestPrimarySandboxDetection(unittest.TestCase):
         detection_time = time.time() - start_time
 
         # Detection should complete within reasonable time (10 seconds max)
-        self.assertLess(detection_time, 10.0,
-                       f"Detection took {detection_time:.2f} seconds, expected < 10 seconds")
+        self.assertLess(detection_time, 10.0, f"Detection took {detection_time:.2f} seconds, expected < 10 seconds")
 
         # Should return valid result regardless of performance
         self.assertIsNotNone(result)
@@ -153,7 +152,7 @@ class TestEnvironmentalDetection(unittest.TestCase):
 
         try:
             # Temporarily set Windows platform
-            platform.system = lambda: 'Windows'
+            platform.system = lambda: "Windows"
 
             # Test registry-based environment check
             result = self.detector._check_environment()
@@ -161,9 +160,9 @@ class TestEnvironmentalDetection(unittest.TestCase):
             self.assertIsNotNone(result)
             self.assertIsInstance(result, dict)
 
-            if result.get('detected'):
-                self.assertIn('indicators', result)
-                self.assertIsInstance(result['indicators'], list)
+            if result.get("detected"):
+                self.assertIn("indicators", result)
+                self.assertIsInstance(result["indicators"], list)
         finally:
             # Restore original methods
             platform.system = original_system
@@ -176,14 +175,11 @@ class TestEnvironmentalDetection(unittest.TestCase):
         self.assertIsInstance(result, dict)
 
         # Should check for common sandbox file artifacts
-        expected_artifacts = [
-            'VBoxService.exe', 'vmtoolsd.exe', 'vmsrvc.exe',
-            'sandboxie.ini', 'cuckoo.py'
-        ]
+        expected_artifacts = ["VBoxService.exe", "vmtoolsd.exe", "vmsrvc.exe", "sandboxie.ini", "cuckoo.py"]
 
         # Result should provide information about checked artifacts
-        if result.get('detected'):
-            self.assertIn('artifacts_found', result)
+        if result.get("detected"):
+            self.assertIn("artifacts_found", result)
 
     def test_check_environment_process_detection(self):
         """Test process-based sandbox detection."""
@@ -193,8 +189,8 @@ class TestEnvironmentalDetection(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertIsInstance(result, dict)
 
-        if result.get('detected'):
-            self.assertIn('processes_detected', result)
+        if result.get("detected"):
+            self.assertIn("processes_detected", result)
 
 
 class TestBehavioralAnalysis(unittest.TestCase):
@@ -212,12 +208,12 @@ class TestBehavioralAnalysis(unittest.TestCase):
         self.assertIsInstance(result, dict)
 
         # Should analyze behavioral indicators
-        self.assertIn('analyzed', result)
-        self.assertIsInstance(result['analyzed'], bool)
+        self.assertIn("analyzed", result)
+        self.assertIsInstance(result["analyzed"], bool)
 
-        if result.get('detected'):
-            self.assertIn('behavioral_indicators', result)
-            self.assertIsInstance(result['behavioral_indicators'], list)
+        if result.get("detected"):
+            self.assertIn("behavioral_indicators", result)
+            self.assertIsInstance(result["behavioral_indicators"], list)
 
     def test_check_behavioral_timing_analysis(self):
         """Test timing-based behavioral analysis."""
@@ -237,8 +233,8 @@ class TestBehavioralAnalysis(unittest.TestCase):
             self.assertIsNotNone(result)
             self.assertIsInstance(result, dict)
 
-            if result.get('timing_anomalies'):
-                self.assertIn('time_acceleration_detected', result)
+            if result.get("timing_anomalies"):
+                self.assertIn("time_acceleration_detected", result)
         finally:
             # Restore original methods
             time.time = original_time
@@ -255,23 +251,25 @@ class TestResourceLimitDetection(unittest.TestCase):
     def test_check_resource_limits_hardware(self):
         """Test hardware resource limit detection."""
         # Store original methods
-        original_cpu_count = getattr(psutil, 'cpu_count', None)
-        original_virtual_memory = getattr(psutil, 'virtual_memory', None)
+        original_cpu_count = getattr(psutil, "cpu_count", None)
+        original_virtual_memory = getattr(psutil, "virtual_memory", None)
 
         def create_limited_memory_info():
             """Create memory info object with limited resources."""
+
             class MemoryInfo:
                 def __init__(self):
-                    self.total = 1024*1024*1024  # 1GB RAM
-                    self.available = 512*1024*1024
+                    self.total = 1024 * 1024 * 1024  # 1GB RAM
+                    self.available = 512 * 1024 * 1024
                     self.percent = 50.0
+
             return MemoryInfo()
 
         try:
             # Temporarily set limited resources for testing
-            if hasattr(psutil, 'cpu_count'):
+            if hasattr(psutil, "cpu_count"):
                 psutil.cpu_count = lambda: 1  # Single core
-            if hasattr(psutil, 'virtual_memory'):
+            if hasattr(psutil, "virtual_memory"):
                 psutil.virtual_memory = create_limited_memory_info
 
             result = self.detector._check_resource_limits()
@@ -280,38 +278,40 @@ class TestResourceLimitDetection(unittest.TestCase):
             self.assertIsInstance(result, dict)
 
             # Should detect resource limitations
-            if result.get('detected'):
-                self.assertIn('limited_resources', result)
-                self.assertIn('cpu_cores', result)
-                self.assertIn('memory_gb', result)
+            if result.get("detected"):
+                self.assertIn("limited_resources", result)
+                self.assertIn("cpu_cores", result)
+                self.assertIn("memory_gb", result)
         except (ImportError, AttributeError):
             # Handle gracefully if psutil methods not available
             result = self.detector._check_resource_limits()
             self.assertIsNotNone(result)
         finally:
             # Restore original methods
-            if original_cpu_count and hasattr(psutil, 'cpu_count'):
+            if original_cpu_count and hasattr(psutil, "cpu_count"):
                 psutil.cpu_count = original_cpu_count
-            if original_virtual_memory and hasattr(psutil, 'virtual_memory'):
+            if original_virtual_memory and hasattr(psutil, "virtual_memory"):
                 psutil.virtual_memory = original_virtual_memory
 
     def test_check_resource_limits_storage(self):
         """Test storage resource limit detection."""
         # Store original method
-        original_disk_usage = getattr(psutil, 'disk_usage', None)
+        original_disk_usage = getattr(psutil, "disk_usage", None)
 
         def create_limited_disk_usage(path):
             """Create disk usage info with limited space."""
+
             class DiskUsage:
                 def __init__(self):
-                    self.total = 10*1024*1024*1024  # 10GB disk
-                    self.used = 5*1024*1024*1024
-                    self.free = 5*1024*1024*1024
+                    self.total = 10 * 1024 * 1024 * 1024  # 10GB disk
+                    self.used = 5 * 1024 * 1024 * 1024
+                    self.free = 5 * 1024 * 1024 * 1024
+
             return DiskUsage()
 
         try:
             # Temporarily set limited disk space for testing
-            if hasattr(psutil, 'disk_usage'):
+            if hasattr(psutil, "disk_usage"):
                 psutil.disk_usage = create_limited_disk_usage
 
             result = self.detector._check_resource_limits()
@@ -319,15 +319,15 @@ class TestResourceLimitDetection(unittest.TestCase):
             self.assertIsNotNone(result)
             self.assertIsInstance(result, dict)
 
-            if result.get('detected'):
-                self.assertIn('disk_space_gb', result)
+            if result.get("detected"):
+                self.assertIn("disk_space_gb", result)
         except (ImportError, AttributeError):
             # Handle gracefully if psutil methods not available
             result = self.detector._check_resource_limits()
             self.assertIsNotNone(result)
         finally:
             # Restore original method
-            if original_disk_usage and hasattr(psutil, 'disk_usage'):
+            if original_disk_usage and hasattr(psutil, "disk_usage"):
                 psutil.disk_usage = original_disk_usage
 
 
@@ -346,16 +346,16 @@ class TestNetworkAnalysis(unittest.TestCase):
 
         try:
             # Temporarily set sandbox-like network configuration for testing
-            socket.getfqdn = lambda name='': 'sandbox.local'
-            socket.gethostbyname = lambda name: '192.168.1.100'
+            socket.getfqdn = lambda name="": "sandbox.local"
+            socket.gethostbyname = lambda name: "192.168.1.100"
 
             result = self.detector._check_network()
 
             self.assertIsNotNone(result)
             self.assertIsInstance(result, dict)
 
-            if result.get('detected'):
-                self.assertIn('network_indicators', result)
+            if result.get("detected"):
+                self.assertIn("network_indicators", result)
         except OSError:
             # Handle network errors gracefully
             result = self.detector._check_network()
@@ -369,13 +369,13 @@ class TestNetworkAnalysis(unittest.TestCase):
         """Test IP network checking utility method."""
         # Test known sandbox IP ranges
         sandbox_ips = [
-            '192.168.56.101',  # VirtualBox default
-            '192.168.1.100',   # Common sandbox range
-            '10.0.2.15'        # Another common range
+            "192.168.56.101",  # VirtualBox default
+            "192.168.1.100",  # Common sandbox range
+            "10.0.2.15",  # Another common range
         ]
 
         for ip in sandbox_ips:
-            result = self.detector._ip_in_network(ip, '192.168.0.0/16')
+            result = self.detector._ip_in_network(ip, "192.168.0.0/16")
             # Should properly validate IP ranges
             self.assertIsInstance(result, bool)
 
@@ -396,6 +396,7 @@ class TestUserInteractionAnalysis(unittest.TestCase):
             # Try to import win32api if available
             try:
                 import win32api
+
                 original_get_cursor_pos = win32api.GetCursorPos
                 # Set static mouse position for testing
                 win32api.GetCursorPos = lambda: (100, 100)
@@ -408,8 +409,8 @@ class TestUserInteractionAnalysis(unittest.TestCase):
             self.assertIsNotNone(result)
             self.assertIsInstance(result, dict)
 
-            if result.get('detected'):
-                self.assertIn('mouse_activity', result)
+            if result.get("detected"):
+                self.assertIn("mouse_activity", result)
         except Exception:
             # Handle any platform-specific errors
             result = self.detector._check_user_interaction()
@@ -419,6 +420,7 @@ class TestUserInteractionAnalysis(unittest.TestCase):
             if original_get_cursor_pos:
                 try:
                     import win32api
+
                     win32api.GetCursorPos = original_get_cursor_pos
                 except ImportError:
                     pass
@@ -431,9 +433,9 @@ class TestUserInteractionAnalysis(unittest.TestCase):
         self.assertIsInstance(result, dict)
 
         # Should provide detailed movement analysis
-        if result.get('analyzed'):
-            self.assertIn('movement_detected', result)
-            self.assertIsInstance(result['movement_detected'], bool)
+        if result.get("analyzed"):
+            self.assertIn("movement_detected", result)
+            self.assertIsInstance(result["movement_detected"], bool)
 
 
 class TestFileSystemAnalysis(unittest.TestCase):
@@ -450,9 +452,9 @@ class TestFileSystemAnalysis(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertIsInstance(result, dict)
 
-        if result.get('detected'):
-            self.assertIn('artifacts_found', result)
-            self.assertIsInstance(result['artifacts_found'], list)
+        if result.get("detected"):
+            self.assertIn("artifacts_found", result)
+            self.assertIsInstance(result["artifacts_found"], list)
 
     def test_check_file_system_sandbox_files(self):
         """Test detection of sandbox-specific files."""
@@ -482,18 +484,20 @@ class TestProcessMonitoringDetection(unittest.TestCase):
     def test_check_process_monitoring(self):
         """Test process monitoring detection."""
         # Store original method
-        original_process_iter = getattr(psutil, 'process_iter', None)
+        original_process_iter = getattr(psutil, "process_iter", None)
 
         def create_monitoring_process():
             """Create a real process-like object for testing."""
+
             class ProcessInfo:
                 def __init__(self):
-                    self.info = {'name': 'procmon.exe', 'pid': 5678}
+                    self.info = {"name": "procmon.exe", "pid": 5678}
+
             return ProcessInfo()
 
         try:
             # Temporarily provide monitoring process for testing
-            if hasattr(psutil, 'process_iter'):
+            if hasattr(psutil, "process_iter"):
                 psutil.process_iter = lambda: [create_monitoring_process()]
 
             result = self.detector._check_process_monitoring()
@@ -501,15 +505,15 @@ class TestProcessMonitoringDetection(unittest.TestCase):
             self.assertIsNotNone(result)
             self.assertIsInstance(result, dict)
 
-            if result.get('detected'):
-                self.assertIn('monitoring_tools', result)
+            if result.get("detected"):
+                self.assertIn("monitoring_tools", result)
         except (ImportError, AttributeError):
             # Handle gracefully if psutil not available
             result = self.detector._check_process_monitoring()
             self.assertIsNotNone(result)
         finally:
             # Restore original method
-            if original_process_iter and hasattr(psutil, 'process_iter'):
+            if original_process_iter and hasattr(psutil, "process_iter"):
                 psutil.process_iter = original_process_iter
 
 
@@ -548,9 +552,9 @@ class TestTimeAccelerationDetection(unittest.TestCase):
             self.assertIsNotNone(result)
             self.assertIsInstance(result, dict)
 
-            if result.get('detected'):
-                self.assertIn('acceleration_detected', result)
-                self.assertIn('acceleration_factor', result)
+            if result.get("detected"):
+                self.assertIn("acceleration_detected", result)
+                self.assertIn("acceleration_factor", result)
         finally:
             # Restore original methods
             time.time = original_time
@@ -573,7 +577,8 @@ class TestAPIHookingDetection(unittest.TestCase):
             # Try to use ctypes if available
             try:
                 import ctypes
-                original_windll = getattr(ctypes, 'windll', None)
+
+                original_windll = getattr(ctypes, "windll", None)
 
                 # Create a fake windll for testing
                 class FakeKernel32:
@@ -594,8 +599,8 @@ class TestAPIHookingDetection(unittest.TestCase):
             self.assertIsNotNone(result)
             self.assertIsInstance(result, dict)
 
-            if result.get('detected'):
-                self.assertIn('hooks_detected', result)
+            if result.get("detected"):
+                self.assertIn("hooks_detected", result)
         except Exception:
             # Handle platform-specific errors gracefully
             result = self.detector._check_api_hooks()
@@ -605,6 +610,7 @@ class TestAPIHookingDetection(unittest.TestCase):
             if original_windll is not None:
                 try:
                     import ctypes
+
                     ctypes.windll = original_windll
                 except ImportError:
                     pass
@@ -620,11 +626,7 @@ class TestSandboxTypeIdentification(unittest.TestCase):
     def test_identify_sandbox_type(self):
         """Test sandbox type identification."""
         # Mock detection indicators
-        indicators = {
-            'vmware_detected': True,
-            'virtualbox_detected': False,
-            'cuckoo_detected': False
-        }
+        indicators = {"vmware_detected": True, "virtualbox_detected": False, "cuckoo_detected": False}
 
         result = self.detector._identify_sandbox_type(indicators)
 
@@ -632,15 +634,15 @@ class TestSandboxTypeIdentification(unittest.TestCase):
         self.assertIsInstance(result, (str, list))
 
         if isinstance(result, str):
-            self.assertIn(result.lower(), ['vmware', 'virtualbox', 'cuckoo', 'joe_sandbox', 'unknown'])
+            self.assertIn(result.lower(), ["vmware", "virtualbox", "cuckoo", "joe_sandbox", "unknown"])
 
     def test_calculate_evasion_difficulty(self):
         """Test evasion difficulty calculation."""
         # Mock sandbox characteristics
         characteristics = {
-            'monitoring_level': 'high',
-            'detection_capabilities': ['api_hooks', 'behavioral_analysis'],
-            'sandbox_type': 'vmware'
+            "monitoring_level": "high",
+            "detection_capabilities": ["api_hooks", "behavioral_analysis"],
+            "sandbox_type": "vmware",
         }
 
         result = self.detector._calculate_evasion_difficulty(characteristics)
@@ -664,10 +666,10 @@ class TestSandboxEvasionGeneration(unittest.TestCase):
         """Test basic sandbox evasion generation."""
         # Mock detection results
         detection_results = {
-            'detected': True,
-            'sandbox_type': 'vmware',
-            'confidence': 85,
-            'detection_methods': ['registry', 'processes', 'files']
+            "detected": True,
+            "sandbox_type": "vmware",
+            "confidence": 85,
+            "detection_methods": ["registry", "processes", "files"],
         }
 
         evasion_result = self.detector.generate_sandbox_evasion(detection_results)
@@ -676,28 +678,24 @@ class TestSandboxEvasionGeneration(unittest.TestCase):
         self.assertIsInstance(evasion_result, dict)
 
         # Should provide evasion techniques
-        self.assertIn('evasion_techniques', evasion_result)
-        self.assertIsInstance(evasion_result['evasion_techniques'], list)
-        self.assertGreater(len(evasion_result['evasion_techniques']), 0)
+        self.assertIn("evasion_techniques", evasion_result)
+        self.assertIsInstance(evasion_result["evasion_techniques"], list)
+        self.assertGreater(len(evasion_result["evasion_techniques"]), 0)
 
         # Each technique should have implementation details
-        for technique in evasion_result['evasion_techniques']:
+        for technique in evasion_result["evasion_techniques"]:
             self.assertIsInstance(technique, dict)
-            self.assertIn('name', technique)
-            self.assertIn('implementation', technique)
-            self.assertIsInstance(technique['implementation'], str)
-            self.assertGreater(len(technique['implementation']), 10)  # Should be substantial code
+            self.assertIn("name", technique)
+            self.assertIn("implementation", technique)
+            self.assertIsInstance(technique["implementation"], str)
+            self.assertGreater(len(technique["implementation"]), 10)  # Should be substantial code
 
     def test_generate_sandbox_evasion_multiple_types(self):
         """Test evasion generation for multiple sandbox types."""
-        sandbox_types = ['vmware', 'virtualbox', 'cuckoo', 'joe_sandbox']
+        sandbox_types = ["vmware", "virtualbox", "cuckoo", "joe_sandbox"]
 
         for sandbox_type in sandbox_types:
-            detection_results = {
-                'detected': True,
-                'sandbox_type': sandbox_type,
-                'confidence': 90
-            }
+            detection_results = {"detected": True, "sandbox_type": sandbox_type, "confidence": 90}
 
             evasion_result = self.detector.generate_sandbox_evasion(detection_results)
 
@@ -705,16 +703,16 @@ class TestSandboxEvasionGeneration(unittest.TestCase):
             self.assertIsInstance(evasion_result, dict)
 
             # Should provide type-specific evasions
-            self.assertIn('evasion_techniques', evasion_result)
-            self.assertGreater(len(evasion_result['evasion_techniques']), 0)
+            self.assertIn("evasion_techniques", evasion_result)
+            self.assertGreater(len(evasion_result["evasion_techniques"]), 0)
 
     def test_generate_sandbox_evasion_advanced_techniques(self):
         """Test generation of advanced evasion techniques."""
         detection_results = {
-            'detected': True,
-            'sandbox_type': 'advanced_sandbox',
-            'confidence': 95,
-            'detection_methods': ['api_hooks', 'behavioral_analysis', 'time_acceleration']
+            "detected": True,
+            "sandbox_type": "advanced_sandbox",
+            "confidence": 95,
+            "detection_methods": ["api_hooks", "behavioral_analysis", "time_acceleration"],
         }
 
         evasion_result = self.detector.generate_sandbox_evasion(detection_results)
@@ -722,12 +720,12 @@ class TestSandboxEvasionGeneration(unittest.TestCase):
         self.assertIsNotNone(evasion_result)
 
         # Should include advanced techniques
-        techniques = evasion_result.get('evasion_techniques', [])
-        advanced_techniques = ['timing_evasion', 'api_unhooking', 'behavioral_mimicry', 'environment_modification']
+        techniques = evasion_result.get("evasion_techniques", [])
+        advanced_techniques = ["timing_evasion", "api_unhooking", "behavioral_mimicry", "environment_modification"]
 
         found_advanced = False
         for technique in techniques:
-            technique_name = technique.get('name', '').lower()
+            technique_name = technique.get("name", "").lower()
             for advanced in advanced_techniques:
                 if advanced in technique_name:
                     found_advanced = True
@@ -737,12 +735,12 @@ class TestSandboxEvasionGeneration(unittest.TestCase):
 
         # Should provide practical evasion code
         if techniques:
-            self.assertIn('implementation', techniques[0])
-            implementation = techniques[0]['implementation']
+            self.assertIn("implementation", techniques[0])
+            implementation = techniques[0]["implementation"]
             self.assertIsInstance(implementation, str)
             # Should contain actual code, not placeholders
-            self.assertNotIn('TODO', implementation)
-            self.assertNotIn('placeholder', implementation.lower())
+            self.assertNotIn("TODO", implementation)
+            self.assertNotIn("placeholder", implementation.lower())
 
 
 class TestAggressiveDetectionMethods(unittest.TestCase):
@@ -763,10 +761,10 @@ class TestAggressiveDetectionMethods(unittest.TestCase):
             # Each method should be properly structured
             for method in result:
                 self.assertIsInstance(method, dict)
-                self.assertIn('name', method)
-                self.assertIn('description', method)
-                self.assertIsInstance(method['name'], str)
-                self.assertIsInstance(method['description'], str)
+                self.assertIn("name", method)
+                self.assertIn("description", method)
+                self.assertIsInstance(method["name"], str)
+                self.assertIsInstance(method["description"], str)
 
     def test_get_detection_type(self):
         """Test detection type retrieval."""
@@ -776,10 +774,10 @@ class TestAggressiveDetectionMethods(unittest.TestCase):
         self.assertIsInstance(result, str)
 
         # Should return valid detection type
-        valid_types = ['environment', 'behavioral', 'timing', 'network', 'hybrid']
+        valid_types = ["environment", "behavioral", "timing", "network", "hybrid"]
         if result:
             found_valid = any(vtype in result.lower() for vtype in valid_types)
-            self.assertTrue(found_valid or result == 'unknown')
+            self.assertTrue(found_valid or result == "unknown")
 
 
 class TestSystemUtilityMethods(unittest.TestCase):
@@ -793,12 +791,12 @@ class TestSystemUtilityMethods(unittest.TestCase):
         """Test system uptime calculation."""
         # Store original methods
         original_time = time.time
-        original_boot_time = getattr(psutil, 'boot_time', None)
+        original_boot_time = getattr(psutil, "boot_time", None)
 
         try:
             # Set up system uptime test scenario
-            time.time = lambda: 1000003600       # Current time (1 hour after boot)
-            if hasattr(psutil, 'boot_time'):
+            time.time = lambda: 1000003600  # Current time (1 hour after boot)
+            if hasattr(psutil, "boot_time"):
                 psutil.boot_time = lambda: 1000000000  # Boot time timestamp
 
             result = self.detector._get_system_uptime()
@@ -817,7 +815,7 @@ class TestSystemUtilityMethods(unittest.TestCase):
         finally:
             # Restore original methods
             time.time = original_time
-            if original_boot_time and hasattr(psutil, 'boot_time'):
+            if original_boot_time and hasattr(psutil, "boot_time"):
                 psutil.boot_time = original_boot_time
 
 
@@ -835,13 +833,13 @@ class TestEdgeCasesAndErrorHandling(unittest.TestCase):
 
         self.assertIsNotNone(result)
         self.assertIsInstance(result, dict)
-        self.assertIn('detected', result)
-        self.assertIsInstance(result['detected'], bool)
+        self.assertIn("detected", result)
+        self.assertIsInstance(result["detected"], bool)
 
     def test_detect_sandbox_with_corrupted_data(self):
         """Test detection with corrupted or invalid system data."""
         # Store original method
-        original_process_iter = getattr(psutil, 'process_iter', None)
+        original_process_iter = getattr(psutil, "process_iter", None)
 
         def failing_process_iter():
             """Simulate access denied error."""
@@ -849,7 +847,7 @@ class TestEdgeCasesAndErrorHandling(unittest.TestCase):
 
         try:
             # Temporarily set failing process iterator
-            if hasattr(psutil, 'process_iter'):
+            if hasattr(psutil, "process_iter"):
                 psutil.process_iter = failing_process_iter
 
             # Should handle access denied gracefully
@@ -862,7 +860,7 @@ class TestEdgeCasesAndErrorHandling(unittest.TestCase):
             self.assertIsNotNone(result)
         finally:
             # Restore original method
-            if original_process_iter and hasattr(psutil, 'process_iter'):
+            if original_process_iter and hasattr(psutil, "process_iter"):
                 psutil.process_iter = original_process_iter
 
     def test_network_detection_offline(self):
@@ -912,20 +910,22 @@ class TestEdgeCasesAndErrorHandling(unittest.TestCase):
     def test_memory_pressure_conditions(self):
         """Test detection under memory pressure conditions."""
         # Store original method
-        original_virtual_memory = getattr(psutil, 'virtual_memory', None)
+        original_virtual_memory = getattr(psutil, "virtual_memory", None)
 
         def create_low_memory_info():
             """Create memory info with low available memory."""
+
             class LowMemoryInfo:
                 def __init__(self):
-                    self.available = 1024*1024  # 1MB available
-                    self.total = 8*1024*1024*1024
+                    self.available = 1024 * 1024  # 1MB available
+                    self.total = 8 * 1024 * 1024 * 1024
                     self.percent = 99.9
+
             return LowMemoryInfo()
 
         try:
             # Temporarily set low memory condition
-            if hasattr(psutil, 'virtual_memory'):
+            if hasattr(psutil, "virtual_memory"):
                 psutil.virtual_memory = create_low_memory_info
 
             result = self.detector._check_resource_limits()
@@ -938,7 +938,7 @@ class TestEdgeCasesAndErrorHandling(unittest.TestCase):
             self.assertIsNotNone(result)
         finally:
             # Restore original method
-            if original_virtual_memory and hasattr(psutil, 'virtual_memory'):
+            if original_virtual_memory and hasattr(psutil, "virtual_memory"):
                 psutil.virtual_memory = original_virtual_memory
 
 
@@ -957,8 +957,8 @@ class TestRealWorldScenarios(unittest.TestCase):
 
         try:
             # Temporarily set VMware platform characteristics
-            platform.system = lambda: 'Windows'
-            platform.processor = lambda: 'Intel64 Family VMware'
+            platform.system = lambda: "Windows"
+            platform.processor = lambda: "Intel64 Family VMware"
 
             result = self.detector._check_environment()
 
@@ -972,18 +972,20 @@ class TestRealWorldScenarios(unittest.TestCase):
     def test_virtualbox_detection_scenario(self):
         """Test VirtualBox detection scenario."""
         # Store original method
-        original_process_iter = getattr(psutil, 'process_iter', None)
+        original_process_iter = getattr(psutil, "process_iter", None)
 
         def create_virtualbox_process():
             """Create VirtualBox process for testing."""
+
             class VirtualBoxProcess:
                 def __init__(self):
-                    self.info = {'name': 'VBoxService.exe', 'pid': 1111}
+                    self.info = {"name": "VBoxService.exe", "pid": 1111}
+
             return VirtualBoxProcess()
 
         try:
             # Temporarily provide VirtualBox processes
-            if hasattr(psutil, 'process_iter'):
+            if hasattr(psutil, "process_iter"):
                 psutil.process_iter = lambda: [create_virtualbox_process()]
 
             result = self.detector._check_environment()
@@ -996,7 +998,7 @@ class TestRealWorldScenarios(unittest.TestCase):
             self.assertIsNotNone(result)
         finally:
             # Restore original method
-            if original_process_iter and hasattr(psutil, 'process_iter'):
+            if original_process_iter and hasattr(psutil, "process_iter"):
                 psutil.process_iter = original_process_iter
 
     def test_cuckoo_sandbox_detection(self):
@@ -1006,7 +1008,7 @@ class TestRealWorldScenarios(unittest.TestCase):
 
         def cuckoo_exists_function(path):
             """Check for Cuckoo-specific paths."""
-            cuckoo_paths = ['C:\\cuckoo', 'C:\\Python27\\Scripts\\cuckoo']
+            cuckoo_paths = ["C:\\cuckoo", "C:\\Python27\\Scripts\\cuckoo"]
             return any(cuckoo_path in str(path) for cuckoo_path in cuckoo_paths)
 
         try:
@@ -1026,7 +1028,7 @@ class TestRealWorldScenarios(unittest.TestCase):
         # This simulates a complete detection workflow
         detection_result = self.detector.detect_sandbox()
 
-        if detection_result.get('detected'):
+        if detection_result.get("detected"):
             # Generate evasion if sandbox detected
             evasion_result = self.detector.generate_sandbox_evasion(detection_result)
 
@@ -1034,18 +1036,18 @@ class TestRealWorldScenarios(unittest.TestCase):
             self.assertIsInstance(evasion_result, dict)
 
             # Validate evasion techniques are comprehensive
-            techniques = evasion_result.get('evasion_techniques', [])
+            techniques = evasion_result.get("evasion_techniques", [])
             self.assertGreater(len(techniques), 0)
 
             # Each technique should be production-ready
             for technique in techniques[:3]:  # Check first 3 techniques
-                self.assertIn('implementation', technique)
-                implementation = technique['implementation']
+                self.assertIn("implementation", technique)
+                implementation = technique["implementation"]
                 self.assertIsInstance(implementation, str)
                 self.assertGreater(len(implementation), 20)
                 # Should not contain placeholder code
-                self.assertNotIn('pass', implementation)
-                self.assertNotIn('# TODO', implementation)
+                self.assertNotIn("pass", implementation)
+                self.assertNotIn("# TODO", implementation)
 
 
 class TestCoverageAndIntegration(unittest.TestCase):
@@ -1058,16 +1060,16 @@ class TestCoverageAndIntegration(unittest.TestCase):
     def test_all_detection_methods_callable(self):
         """Test that all detection methods are callable."""
         detection_methods = [
-            '_check_environment',
-            '_check_behavioral',
-            '_check_resource_limits',
-            '_check_network',
-            '_check_user_interaction',
-            '_check_file_system_artifacts',
-            '_check_process_monitoring',
-            '_check_time_acceleration',
-            '_check_api_hooks',
-            '_check_mouse_movement'
+            "_check_environment",
+            "_check_behavioral",
+            "_check_resource_limits",
+            "_check_network",
+            "_check_user_interaction",
+            "_check_file_system_artifacts",
+            "_check_process_monitoring",
+            "_check_time_acceleration",
+            "_check_api_hooks",
+            "_check_mouse_movement",
         ]
 
         for method_name in detection_methods:
@@ -1087,11 +1089,11 @@ class TestCoverageAndIntegration(unittest.TestCase):
     def test_utility_methods_functionality(self):
         """Test utility method functionality."""
         utility_methods = [
-            ('_get_system_uptime', []),
-            ('_identify_sandbox_type', [{'test': True}]),
-            ('_calculate_evasion_difficulty', [{'test': True}]),
-            ('get_aggressive_methods', []),
-            ('get_detection_type', [])
+            ("_get_system_uptime", []),
+            ("_identify_sandbox_type", [{"test": True}]),
+            ("_calculate_evasion_difficulty", [{"test": True}]),
+            ("get_aggressive_methods", []),
+            ("get_detection_type", []),
         ]
 
         for method_name, args in utility_methods:
@@ -1119,23 +1121,19 @@ class TestCoverageAndIntegration(unittest.TestCase):
 
         # Verify result structure
         self.assertIsInstance(primary_result, dict)
-        self.assertIn('detected', primary_result)
+        self.assertIn("detected", primary_result)
 
-        if primary_result.get('detected'):
+        if primary_result.get("detected"):
             # Test evasion generation integration
             evasion_result = self.detector.generate_sandbox_evasion(primary_result)
             self.assertIsNotNone(evasion_result)
 
             # Verify evasion quality
-            techniques = evasion_result.get('evasion_techniques', [])
+            techniques = evasion_result.get("evasion_techniques", [])
             if techniques:
                 # At least one technique should have substantial implementation
-                substantial_implementations = [
-                    t for t in techniques
-                    if len(t.get('implementation', '')) > 50
-                ]
-                self.assertGreater(len(substantial_implementations), 0,
-                                 "Should provide at least one substantial evasion implementation")
+                substantial_implementations = [t for t in techniques if len(t.get("implementation", "")) > 50]
+                self.assertGreater(len(substantial_implementations), 0, "Should provide at least one substantial evasion implementation")
 
 
 class TestAdvancedEdgeCases(unittest.TestCase):
@@ -1155,9 +1153,9 @@ class TestAdvancedEdgeCases(unittest.TestCase):
         def run_detection():
             try:
                 result = self.detector.detect_sandbox()
-                results.put(('success', result))
+                results.put(("success", result))
             except Exception as e:
-                results.put(('error', str(e)))
+                results.put(("error", str(e)))
 
         # Start multiple concurrent detection threads
         threads = []
@@ -1174,13 +1172,12 @@ class TestAdvancedEdgeCases(unittest.TestCase):
         successful_results = 0
         while not results.empty():
             status, result = results.get()
-            if status == 'success':
+            if status == "success":
                 successful_results += 1
                 self.assertIsInstance(result, dict)
-                self.assertIn('detected', result)
+                self.assertIn("detected", result)
 
-        self.assertGreaterEqual(successful_results, 3,
-                              "At least 3 out of 5 concurrent requests should succeed")
+        self.assertGreaterEqual(successful_results, 3, "At least 3 out of 5 concurrent requests should succeed")
 
     def test_detection_with_limited_permissions(self):
         """Test detection when running with limited permissions."""
@@ -1195,7 +1192,7 @@ class TestAdvancedEdgeCases(unittest.TestCase):
 
             self.assertIsNotNone(result)
             self.assertIsInstance(result, dict)
-            self.assertIn('detected', result)
+            self.assertIn("detected", result)
             # Should handle permission limitations gracefully
         finally:
             # Restore original method
@@ -1204,7 +1201,7 @@ class TestAdvancedEdgeCases(unittest.TestCase):
     def test_detection_with_missing_dependencies(self):
         """Test detection when optional dependencies are missing."""
         # Store original method
-        original_process_iter = getattr(psutil, 'process_iter', None)
+        original_process_iter = getattr(psutil, "process_iter", None)
 
         def failing_import():
             """Simulate missing psutil functionality."""
@@ -1212,7 +1209,7 @@ class TestAdvancedEdgeCases(unittest.TestCase):
 
         try:
             # Mock missing psutil functionality
-            if hasattr(psutil, 'process_iter'):
+            if hasattr(psutil, "process_iter"):
                 psutil.process_iter = failing_import
 
             result = self.detector.detect_sandbox()
@@ -1222,7 +1219,7 @@ class TestAdvancedEdgeCases(unittest.TestCase):
             # Should provide graceful fallback when dependencies missing
         finally:
             # Restore original method
-            if original_process_iter and hasattr(psutil, 'process_iter'):
+            if original_process_iter and hasattr(psutil, "process_iter"):
                 psutil.process_iter = original_process_iter
 
     def test_detection_with_unicode_environment(self):
@@ -1246,21 +1243,23 @@ class TestAdvancedEdgeCases(unittest.TestCase):
     def test_extremely_large_process_list(self):
         """Test detection with extremely large process lists."""
         # Store original method
-        original_process_iter = getattr(psutil, 'process_iter', None)
+        original_process_iter = getattr(psutil, "process_iter", None)
 
         def create_large_process_list():
             """Create very large process list (1000 processes)."""
             processes = []
             for i in range(1000):
+
                 class ProcessInfo:
                     def __init__(self, pid):
-                        self.info = {'name': f'process_{pid}.exe', 'pid': pid}
+                        self.info = {"name": f"process_{pid}.exe", "pid": pid}
+
                 processes.append(ProcessInfo(i))
             return processes
 
         try:
             # Mock very large process list
-            if hasattr(psutil, 'process_iter'):
+            if hasattr(psutil, "process_iter"):
                 psutil.process_iter = create_large_process_list
 
             start_time = time.time()
@@ -1276,30 +1275,31 @@ class TestAdvancedEdgeCases(unittest.TestCase):
             self.assertIsNotNone(result)
         finally:
             # Restore original method
-            if original_process_iter and hasattr(psutil, 'process_iter'):
+            if original_process_iter and hasattr(psutil, "process_iter"):
                 psutil.process_iter = original_process_iter
 
     def test_detection_with_system_instability(self):
         """Test detection during system instability."""
         # Store original method
-        original_virtual_memory = getattr(psutil, 'virtual_memory', None)
+        original_virtual_memory = getattr(psutil, "virtual_memory", None)
 
         # Create varying memory configurations
         memory_configs = [
-            {'total': 8*1024**3, 'available': 4*1024**3, 'percent': 50.0},
-            {'total': 4*1024**3, 'available': 2*1024**3, 'percent': 50.0},
-            {'total': 16*1024**3, 'available': 8*1024**3, 'percent': 50.0}
+            {"total": 8 * 1024**3, "available": 4 * 1024**3, "percent": 50.0},
+            {"total": 4 * 1024**3, "available": 2 * 1024**3, "percent": 50.0},
+            {"total": 16 * 1024**3, "available": 8 * 1024**3, "percent": 50.0},
         ]
 
         call_count = [0]
 
         def unstable_memory():
             """Simulate system returning inconsistent data."""
+
             class MemoryInfo:
                 def __init__(self, config):
-                    self.total = config['total']
-                    self.available = config['available']
-                    self.percent = config['percent']
+                    self.total = config["total"]
+                    self.available = config["available"]
+                    self.percent = config["percent"]
 
             config = memory_configs[call_count[0] % len(memory_configs)]
             call_count[0] += 1
@@ -1307,7 +1307,7 @@ class TestAdvancedEdgeCases(unittest.TestCase):
 
         try:
             # Mock system returning inconsistent data
-            if hasattr(psutil, 'virtual_memory'):
+            if hasattr(psutil, "virtual_memory"):
                 psutil.virtual_memory = unstable_memory
 
             results = []
@@ -1323,7 +1323,7 @@ class TestAdvancedEdgeCases(unittest.TestCase):
             self.assertGreater(len(results), 0, "Should handle system instability")
         finally:
             # Restore original method
-            if original_virtual_memory and hasattr(psutil, 'virtual_memory'):
+            if original_virtual_memory and hasattr(psutil, "virtual_memory"):
                 psutil.virtual_memory = original_virtual_memory
 
 
@@ -1375,8 +1375,7 @@ class TestPerformanceAndScalability(unittest.TestCase):
         max_memory_mb = 100  # 100MB max increase
         memory_increase_mb = memory_increase / (1024 * 1024)
 
-        self.assertLess(memory_increase_mb, max_memory_mb,
-                       f"Memory increase {memory_increase_mb:.2f}MB should be < {max_memory_mb}MB")
+        self.assertLess(memory_increase_mb, max_memory_mb, f"Memory increase {memory_increase_mb:.2f}MB should be < {max_memory_mb}MB")
 
         print(f"Memory usage increase: {memory_increase_mb:.2f}MB")
 
@@ -1395,26 +1394,24 @@ class TestPerformanceAndScalability(unittest.TestCase):
 
         # Should have high success rate
         success_rate = len(results) / 20
-        self.assertGreaterEqual(success_rate, 0.9,
-                              f"Success rate {success_rate:.2f} should be >= 90%")
+        self.assertGreaterEqual(success_rate, 0.9, f"Success rate {success_rate:.2f} should be >= 90%")
 
         # Results should be consistent
         if len(results) > 1:
             first_result = results[0]
             for result in results[1:]:
-                self.assertEqual(type(result), type(first_result),
-                               "Result types should be consistent")
-                if 'detected' in first_result and 'detected' in result:
+                self.assertEqual(type(result), type(first_result), "Result types should be consistent")
+                if "detected" in first_result and "detected" in result:
                     # Detection status should be relatively stable
                     pass  # Allow some variation in detection
 
     def test_evasion_generation_performance(self):
         """Test evasion generation performance."""
         detection_result = {
-            'detected': True,
-            'sandbox_type': 'vmware',
-            'confidence': 85,
-            'detection_methods': ['registry', 'processes', 'files']
+            "detected": True,
+            "sandbox_type": "vmware",
+            "confidence": 85,
+            "detection_methods": ["registry", "processes", "files"],
         }
 
         start_time = time.time()
@@ -1422,16 +1419,14 @@ class TestPerformanceAndScalability(unittest.TestCase):
         generation_time = time.time() - start_time
 
         # Generation should be reasonably fast
-        self.assertLess(generation_time, 3.0,
-                       f"Evasion generation took {generation_time:.2f}s, should be < 3s")
+        self.assertLess(generation_time, 3.0, f"Evasion generation took {generation_time:.2f}s, should be < 3s")
 
         # Should produce substantial results
-        techniques = evasion_result.get('evasion_techniques', [])
+        techniques = evasion_result.get("evasion_techniques", [])
         self.assertGreater(len(techniques), 0, "Should generate evasion techniques")
 
-        total_code_length = sum(len(t.get('implementation', '')) for t in techniques)
-        self.assertGreater(total_code_length, 100,
-                         "Should generate substantial evasion code")
+        total_code_length = sum(len(t.get("implementation", "")) for t in techniques)
+        self.assertGreater(total_code_length, 100, "Should generate substantial evasion code")
 
 
 class TestComprehensiveFunctionalityValidation(unittest.TestCase):
@@ -1447,39 +1442,39 @@ class TestComprehensiveFunctionalityValidation(unittest.TestCase):
         detection_result = self.detector.detect_sandbox()
 
         self.assertIsInstance(detection_result, dict)
-        self.assertIn('detected', detection_result)
-        self.assertIn('confidence', detection_result)
+        self.assertIn("detected", detection_result)
+        self.assertIn("confidence", detection_result)
 
         # Validate confidence score
-        confidence = detection_result.get('confidence', 0)
+        confidence = detection_result.get("confidence", 0)
         self.assertIsInstance(confidence, (int, float))
         self.assertGreaterEqual(confidence, 0)
         self.assertLessEqual(confidence, 100)
 
         # Phase 2: Detailed Analysis (if sandbox detected)
-        if detection_result.get('detected'):
+        if detection_result.get("detected"):
             # Should provide detection details
-            self.assertIn('sandbox_type', detection_result)
-            sandbox_type = detection_result['sandbox_type']
+            self.assertIn("sandbox_type", detection_result)
+            sandbox_type = detection_result["sandbox_type"]
             self.assertIsInstance(sandbox_type, (str, list))
 
             # Phase 3: Evasion Generation
             evasion_result = self.detector.generate_sandbox_evasion(detection_result)
 
             self.assertIsInstance(evasion_result, dict)
-            self.assertIn('evasion_techniques', evasion_result)
+            self.assertIn("evasion_techniques", evasion_result)
 
-            techniques = evasion_result['evasion_techniques']
+            techniques = evasion_result["evasion_techniques"]
             self.assertIsInstance(techniques, list)
 
             if techniques:
                 # Validate technique structure
                 for technique in techniques[:5]:  # Check first 5 techniques
-                    self.assertIn('name', technique)
-                    self.assertIn('implementation', technique)
+                    self.assertIn("name", technique)
+                    self.assertIn("implementation", technique)
 
-                    name = technique['name']
-                    implementation = technique['implementation']
+                    name = technique["name"]
+                    implementation = technique["implementation"]
 
                     self.assertIsInstance(name, str)
                     self.assertIsInstance(implementation, str)
@@ -1487,23 +1482,23 @@ class TestComprehensiveFunctionalityValidation(unittest.TestCase):
                     self.assertGreater(len(implementation), 10)
 
                     # Validate implementation quality
-                    self.assertNotIn('TODO', implementation)
-                    self.assertNotIn('placeholder', implementation.lower())
-                    self.assertNotIn('not implemented', implementation.lower())
+                    self.assertNotIn("TODO", implementation)
+                    self.assertNotIn("placeholder", implementation.lower())
+                    self.assertNotIn("not implemented", implementation.lower())
 
     def test_all_detection_methods_integration(self):
         """Test integration of all detection methods."""
         detection_methods = [
-            '_check_environment',
-            '_check_behavioral',
-            '_check_resource_limits',
-            '_check_network',
-            '_check_user_interaction',
-            '_check_file_system_artifacts',
-            '_check_process_monitoring',
-            '_check_time_acceleration',
-            '_check_api_hooks',
-            '_check_mouse_movement'
+            "_check_environment",
+            "_check_behavioral",
+            "_check_resource_limits",
+            "_check_network",
+            "_check_user_interaction",
+            "_check_file_system_artifacts",
+            "_check_process_monitoring",
+            "_check_time_acceleration",
+            "_check_api_hooks",
+            "_check_mouse_movement",
         ]
 
         method_results = {}
@@ -1515,15 +1510,13 @@ class TestComprehensiveFunctionalityValidation(unittest.TestCase):
                 method_results[method_name] = result
 
                 # Validate method result structure
-                self.assertIsInstance(result, dict,
-                                    f"{method_name} should return dict")
+                self.assertIsInstance(result, dict, f"{method_name} should return dict")
 
             except Exception as e:
                 self.fail(f"Method {method_name} failed with error: {e}")
 
         # All methods should return results
-        self.assertEqual(len(method_results), len(detection_methods),
-                        "All detection methods should return results")
+        self.assertEqual(len(method_results), len(detection_methods), "All detection methods should return results")
 
         # Results should be properly structured
         for method_name, result in method_results.items():
@@ -1532,13 +1525,14 @@ class TestComprehensiveFunctionalityValidation(unittest.TestCase):
     def test_cross_platform_compatibility_indicators(self):
         """Test cross-platform compatibility indicators."""
         # Test Windows-specific functionality
-        if platform.system() == 'Windows':
+        if platform.system() == "Windows":
             # Store original winreg if available
             original_open_key = None
 
             try:
                 try:
                     import winreg
+
                     original_open_key = winreg.OpenKey
 
                     # Create real registry key object for testing
@@ -1557,6 +1551,7 @@ class TestComprehensiveFunctionalityValidation(unittest.TestCase):
                 if original_open_key:
                     try:
                         import winreg
+
                         winreg.OpenKey = original_open_key
                     except ImportError:
                         pass
@@ -1565,7 +1560,7 @@ class TestComprehensiveFunctionalityValidation(unittest.TestCase):
         original_system = platform.system
 
         try:
-            platform.system = lambda: 'Linux'
+            platform.system = lambda: "Linux"
 
             result = self.detector._check_environment()
             self.assertIsNotNone(result)
@@ -1576,14 +1571,14 @@ class TestComprehensiveFunctionalityValidation(unittest.TestCase):
     def test_production_readiness_validation(self):
         """Test production readiness validation."""
         # Test error handling
-        original_process_iter = getattr(psutil, 'process_iter', None)
+        original_process_iter = getattr(psutil, "process_iter", None)
 
         def failing_process_iter():
             """Simulate error in process iteration."""
             raise Exception("Simulated error")
 
         try:
-            if hasattr(psutil, 'process_iter'):
+            if hasattr(psutil, "process_iter"):
                 psutil.process_iter = failing_process_iter
 
             # Should handle errors gracefully without crashing
@@ -1595,23 +1590,25 @@ class TestComprehensiveFunctionalityValidation(unittest.TestCase):
                 self.fail(f"Detection should handle errors gracefully, but got: {e}")
         finally:
             # Restore original method
-            if original_process_iter and hasattr(psutil, 'process_iter'):
+            if original_process_iter and hasattr(psutil, "process_iter"):
                 psutil.process_iter = original_process_iter
 
         # Test with minimal system resources
-        original_virtual_memory = getattr(psutil, 'virtual_memory', None)
+        original_virtual_memory = getattr(psutil, "virtual_memory", None)
 
         def create_minimal_memory_info():
             """Create minimal memory configuration."""
+
             class MinimalMemoryInfo:
                 def __init__(self):
-                    self.total = 512*1024*1024
-                    self.available = 64*1024*1024
+                    self.total = 512 * 1024 * 1024
+                    self.available = 64 * 1024 * 1024
                     self.percent = 87.5
+
             return MinimalMemoryInfo()
 
         try:
-            if hasattr(psutil, 'virtual_memory'):
+            if hasattr(psutil, "virtual_memory"):
                 psutil.virtual_memory = create_minimal_memory_info
 
             result = self.detector._check_resource_limits()
@@ -1622,25 +1619,25 @@ class TestComprehensiveFunctionalityValidation(unittest.TestCase):
             self.assertIsNotNone(result)
         finally:
             # Restore original method
-            if original_virtual_memory and hasattr(psutil, 'virtual_memory'):
+            if original_virtual_memory and hasattr(psutil, "virtual_memory"):
                 psutil.virtual_memory = original_virtual_memory
 
         # Test logging functionality
-        self.assertTrue(hasattr(self.detector, 'logger'))
-        logger = getattr(self.detector, 'logger')
+        self.assertTrue(hasattr(self.detector, "logger"))
+        logger = getattr(self.detector, "logger")
         self.assertIsNotNone(logger)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Configure test runner for comprehensive coverage
     import sys
 
     # Run tests with verbose output
     unittest.main(verbosity=2, exit=False)
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("SANDBOX DETECTOR TEST SUITE EXECUTION COMPLETE")
-    print("="*80)
+    print("=" * 80)
     print(f"Platform: {platform.system()} {platform.release()}")
     print(f"Python: {sys.version}")
-    print("="*80)
+    print("=" * 80)

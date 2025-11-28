@@ -1564,9 +1564,9 @@ int main() {{
             reliability += 0.05  # Related types (easier confusion)
 
         # Negative factors
-        if process_info.get("cfi_enabled", False):
+        if process_info.get("cfi_enabled"):
             reliability -= 0.2  # Control Flow Integrity
-        if process_info.get("vtable_verify", False):
+        if process_info.get("vtable_verify"):
             reliability -= 0.15  # Vtable verification
 
         return min(max(reliability, 0.1), 0.9)
@@ -1925,7 +1925,7 @@ int main() {{
         # ASCII strings
         import re
 
-        ascii_pattern = re.compile(b"[ -~]{4,}")
+        ascii_pattern = re.compile(rb"[ -~]{4,}")
         for match in ascii_pattern.finditer(binary_data):
             try:
                 string_value = match.group(0).decode("ascii")

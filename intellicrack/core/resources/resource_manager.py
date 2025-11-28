@@ -1306,7 +1306,7 @@ class FallbackHandler:
                     return port, False
 
             # Parse target
-            host = target.split("/")[0]  # Remove CIDR if present
+            host = target.split("/", maxsplit=1)[0]  # Remove CIDR if present
 
             # Parse ports
             if ports:

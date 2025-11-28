@@ -10,6 +10,7 @@ import logging
 import os
 import platform
 import random
+import secrets
 import string
 import struct
 import subprocess
@@ -619,8 +620,8 @@ class HardwareIDSpoofer:
     def spoof_cpu_id(self, vendor: str = None, processor_id: str = None) -> bool:
         """Spoof CPU vendor and processor ID at kernel or usermode level."""
         if vendor is None:
-            # Note: Using random module for generating spoofed hardware identifiers, not cryptographic purposes
-            vendor = random.choice(["GenuineIntel", "AuthenticAMD", "CentaurHauls"])  # noqa: S311
+            # Note: Using secrets module for generating spoofed hardware identifiers
+            vendor = secrets.choice(["GenuineIntel", "AuthenticAMD", "CentaurHauls"])
 
         if processor_id is None:
             processor_id = self._generate_random_cpu_id()
@@ -654,13 +655,13 @@ class HardwareIDSpoofer:
             return False
 
     def _generate_random_cpu_id(self) -> str:
-        # Note: Using random module for generating spoofed hardware identifiers, not cryptographic purposes
-        family = random.choice([0x06, 0x0F, 0x17])  # noqa: S311
-        model = random.randint(0x01, 0xFF)  # noqa: S311
-        stepping = random.randint(0x0, 0xF)  # noqa: S311
+        # Note: Using secrets module for generating spoofed hardware identifiers
+        family = secrets.choice([0x06, 0x0F, 0x17])
+        model = secrets.randbelow(0xFF) + 0x01
+        stepping = secrets.randbelow(0x10)
 
         processor_id = f"{family:02X}{model:02X}{stepping:X}"
-        processor_id += "".join(random.choices("0123456789ABCDEF", k=9))  # noqa: S311
+        processor_id += "".join(secrets.choice("0123456789ABCDEF") for _ in range(9))
 
         return processor_id
 
@@ -678,9 +679,9 @@ class HardwareIDSpoofer:
                     regs[3] = int.from_bytes(vendor[4:8].encode(), "little")
                 elif eax_in == 1:
                     regs[0] = int(processor_id[:8], 16)
-                    regs[1] = random.randint(0, 0xFFFFFFFF)  # noqa: S311
-                    regs[2] = random.randint(0, 0xFFFFFFFF)  # noqa: S311
-                    regs[3] = random.randint(0, 0xFFFFFFFF)  # noqa: S311
+                    regs[1] = secrets.randbelow(0xFFFFFFFF + 1)
+                    regs[2] = secrets.randbelow(0xFFFFFFFF + 1)
+                    regs[3] = secrets.randbelow(0xFFFFFFFF + 1)
                 else:
                     original_cpuid(eax_in, regs)
 
@@ -744,7 +745,7 @@ class HardwareIDSpoofer:
         return False
 
     def _generate_random_mac(self) -> str:
-        mac = [2, *[random.randint(0, 255) for _ in range(5)]]
+        mac = [2, *[secrets.randbelow(256) for _ in range(5)]]
         return ":".join(f"{byte:02X}" for byte in mac)
 
     def _restart_network_adapter(self, adapter_name: str) -> None:
@@ -831,13 +832,13 @@ class HardwareIDSpoofer:
             return False
 
     def _generate_random_disk_serial(self) -> str:
-        return "".join(random.choices(string.ascii_uppercase + string.digits, k=16))  # noqa: S311
+        return "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(16))
 
     def _spoof_disk_usermode(self, drive: str, new_serial: str) -> bool:
         try:
             key_path = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion"
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_WRITE) as key:
-                volume_id = f"{random.randint(1000, 9999)}-{random.randint(1000, 9999)}"  # noqa: S311
+                volume_id = f"{secrets.randbelow(9000) + 1000}-{secrets.randbelow(9000) + 1000}"
                 winreg.SetValueEx(key, "VolumeId", 0, winreg.REG_SZ, volume_id)
 
             diskpart_script = f"""select volume {drive[0]}
@@ -868,10 +869,10 @@ exit"""
     def spoof_motherboard_serial(self, manufacturer: str = None, product: str = None, serial: str = None) -> bool:
         """Spoof motherboard manufacturer, product, and serial via SMBIOS manipulation."""
         if manufacturer is None:
-            manufacturer = random.choice(["ASUS", "MSI", "Gigabyte", "ASRock", "EVGA"])  # noqa: S311
+            manufacturer = secrets.choice(["ASUS", "MSI", "Gigabyte", "ASRock", "EVGA"])
 
         if product is None:
-            product = f"{manufacturer}-{random.choice(['Z490', 'B550', 'X570', 'H510'])}"  # noqa: S311
+            product = f"{manufacturer}-{secrets.choice(['Z490', 'B550', 'X570', 'H510'])}"
 
         if serial is None:
             serial = self._generate_random_serial()
@@ -912,7 +913,7 @@ exit"""
             return False
 
     def _generate_random_serial(self) -> str:
-        return "".join(random.choices(string.ascii_uppercase + string.digits, k=12))  # noqa: S311
+        return "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(12))
 
     def _spoof_motherboard_usermode(self, manufacturer: str, product: str, serial: str) -> bool:
         try:
@@ -1011,12 +1012,12 @@ objInstance.Put_
     def generate_random_profile(self) -> dict[str, Any]:
         """Generate random hardware profile for consistent spoofing across all identifiers."""
         profile = {
-            "cpu_vendor": random.choice(["GenuineIntel", "AuthenticAMD"]),  # noqa: S311
+            "cpu_vendor": secrets.choice(["GenuineIntel", "AuthenticAMD"]),
             "cpu_id": self._generate_random_cpu_id(),
             "mac_addresses": [],
             "disk_serials": [],
-            "motherboard_manufacturer": random.choice(["ASUS", "MSI", "Gigabyte"]),  # noqa: S311
-            "motherboard_product": f"GAMING-{random.randint(100, 999)}",  # noqa: S311
+            "motherboard_manufacturer": secrets.choice(["ASUS", "MSI", "Gigabyte"]),
+            "motherboard_product": f"GAMING-{secrets.randbelow(900) + 100}",
             "motherboard_serial": self._generate_random_serial(),
             "system_uuid": str(uuid.uuid4()),
         }

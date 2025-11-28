@@ -1085,8 +1085,8 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
             else:
                 sig_content += "No packers detected\n"
 
-            sig_content += f"\nPacked: {'Yes' if analysis_data.get('is_packed', False) else 'No'}\n"
-            sig_content += f"Encrypted: {'Yes' if analysis_data.get('is_encrypted', False) else 'No'}\n"
+            sig_content += f"\nPacked: {'Yes' if analysis_data.get('is_packed') else 'No'}\n"
+            sig_content += f"Encrypted: {'Yes' if analysis_data.get('is_encrypted') else 'No'}\n"
 
             sig_text.setPlainText(sig_content)
 

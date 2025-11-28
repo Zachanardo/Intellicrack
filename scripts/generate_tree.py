@@ -119,7 +119,7 @@ def scan_directory(root_path: str) -> tuple[str, int, int]:
             # Add specific classes for syntax highlighting
             if ext == ".py":
                 file_class += " python"
-            elif ext in [".js", ".jsx"]:
+            elif ext in {".js", ".jsx"}:
                 file_class += " javascript"
             elif ext == ".json":
                 file_class += " json"

@@ -471,21 +471,21 @@ class FridaCertificateHooks:
             self.intercepted_certificates.append(cert_data)
             logger.info(f"Intercepted certificate: {cert_data}")
 
-        elif payload_type in [
+        elif payload_type in {
             "https_request",
             "tls_session",
             "ssl_connection",
             "certificate_chain",
-        ]:
+        }:
             conn_data = payload.get("data", {})
             self.bypassed_connections.append(conn_data)
             logger.debug(f"Connection bypassed: {payload_type}")
 
-        elif payload_type in [
+        elif payload_type in {
             "bypass_success",
             "bypass_ready",
             "universal_bypass_loaded",
-        ]:
+        }:
             library = payload.get("library", payload.get("platform", "unknown"))
             logger.info(f"Bypass activated: {library}")
 

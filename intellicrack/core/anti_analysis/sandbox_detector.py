@@ -1832,7 +1832,7 @@ class SandboxDetector(BaseDetector):
             return ipaddress.ip_address(ip) in ipaddress.ip_network(network)
         except Exception:
             # Simple check for common cases
-            network_parts = network.split("/")[0].split(".")
+            network_parts = network.split("/", maxsplit=1)[0].split(".")
             ip_parts = ip.split(".")
 
             # Check if first 3 octets match (assuming /24)

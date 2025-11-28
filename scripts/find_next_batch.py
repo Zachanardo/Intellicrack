@@ -1,8 +1,9 @@
 """Find the next 10 largest untested Python files for Batch 7."""
 
+import logging
 import os
 from pathlib import Path
-from typing import List, Tuple
+
 
 # Known tested files from Batches 1-6
 TESTED_FILES = {
@@ -53,7 +54,10 @@ TESTED_FILES = {
 }
 
 
-def find_python_files(root_dir: Path) -> List[Tuple[Path, int]]:
+logger = logging.getLogger(__name__)
+
+
+def find_python_files(root_dir: Path) -> list[tuple[Path, int]]:
     """Find all Python files with their sizes."""
     python_files = []
 
@@ -80,7 +84,8 @@ def find_python_files(root_dir: Path) -> List[Tuple[Path, int]]:
         try:
             size = py_file.stat().st_size
             python_files.append((py_file, size))
-        except Exception:
+        except OSError as e:
+            logger.debug("Could not stat file %s: %s", py_file, e)
             continue
 
     return python_files
@@ -122,7 +127,7 @@ def main() -> None:
 def count_lines(file_path: Path) -> int:
     """Count lines in a file."""
     try:
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(file_path, encoding="utf-8", errors="ignore") as f:
             return sum(1 for _ in f)
     except Exception:
         return 0

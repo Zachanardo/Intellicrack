@@ -567,7 +567,7 @@ class ModelBatchTester:
             output_path = Path.home() / ".intellicrack" / "test_reports"
             output_path.mkdir(parents=True, exist_ok=True)
             filename = f"test_report_{report.test_suite_id}.{format}"
-            output_path = output_path / filename
+            output_path /= filename
         else:
             output_path = Path(output_path)
 

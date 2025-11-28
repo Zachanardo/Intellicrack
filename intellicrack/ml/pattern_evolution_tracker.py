@@ -24,9 +24,10 @@ import json
 import logging
 import multiprocessing as mp
 import os
-import pickle
+import pickle  # noqa: S403
 import random
 import re
+import secrets
 import threading
 import time
 from collections import defaultdict, deque
@@ -313,7 +314,7 @@ if not SCIPY_AVAILABLE:
         return 0.0 if len(pk) == 0 else -np.sum(pk * np.log(pk) / np.log(base))
 
 
-class RestrictedUnpickler(pickle.Unpickler):
+class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
     """Restricted unpickler that only allows safe classes."""
 
     def find_class(self, module: str, name: str) -> type[Any]:
@@ -575,7 +576,7 @@ class PatternGene:
                 data = data[:-1] + data[-1] + "?"
             elif "[" not in data and random.random() < rate:  # noqa: S311 - ML string pattern mutation probability
                 # Replace a character with character class
-                if data != "":
+                if data:
                     pos = random.randint(0, len(data) - 1)  # noqa: S311 - ML string pattern character position
                     char = data[pos]
                     if char.isalpha():
@@ -1197,8 +1198,8 @@ class PatternEvolutionTracker:
         for _ in range(count):
             if pattern_type == PatternType.BYTE_SEQUENCE:
                 # Random byte sequence
-                length = random.randint(4, 32)  # noqa: S311 - ML training data byte sequence length generation
-                data = bytes(random.randint(0, 255) for _ in range(length))
+                length = secrets.randbelow(29) + 4
+                data = bytes(secrets.randbelow(256) for _ in range(length))
 
             elif pattern_type == PatternType.API_SEQUENCE:
                 # Random API sequence
@@ -1213,8 +1214,8 @@ class PatternEvolutionTracker:
                     "GetProcAddress",
                     "MessageBoxA",
                 ]
-                length = random.randint(2, 8)  # noqa: S311 - ML training data API sequence length generation
-                data = [random.choice(api_pool) for _ in range(length)]  # noqa: S311 - ML training data API sequence generation
+                length = secrets.randbelow(7) + 2
+                data = [secrets.choice(api_pool) for _ in range(length)]
 
             elif pattern_type == PatternType.STRING_PATTERN:
                 # Common license-related regex patterns
@@ -1230,7 +1231,7 @@ class PatternEvolutionTracker:
                     r"\d{1,2}/\d{1,2}/\d{4}",  # Date pattern
                     r"expire[ds]?",
                 ]
-                data = random.choice(patterns_pool)  # noqa: S311 - ML training data string pattern generation
+                data = secrets.choice(patterns_pool)
 
             elif pattern_type == PatternType.OPCODE_SEQUENCE:
                 # Random opcode sequence
@@ -1250,8 +1251,8 @@ class PatternEvolutionTracker:
                     "lea",
                     "ret",
                 ]
-                length = random.randint(3, 10)  # noqa: S311 - ML training data opcode sequence length generation
-                data = [random.choice(opcode_pool) for _ in range(length)]  # noqa: S311 - ML training data opcode sequence generation
+                length = secrets.randbelow(8) + 3
+                data = [secrets.choice(opcode_pool) for _ in range(length)]
 
             else:
                 # Default: empty data

@@ -984,7 +984,7 @@ class ProtocolFingerprinter:
 
             # 3. Search for network-related strings
             # Extract ASCII strings
-            ascii_strings = re.findall(b"[\x20-\x7e]{4,}", binary_data)
+            ascii_strings = re.findall(rb"[\x20-\x7e]{4,}", binary_data)
 
             network_patterns = [
                 re.compile(rb"(?:https?://|ftp://|tcp://|udp://)[^\s]+"),

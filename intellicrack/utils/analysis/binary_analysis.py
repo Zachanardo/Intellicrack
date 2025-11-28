@@ -328,7 +328,7 @@ def _generate_ai_script_suggestions(analysis_results: dict[str, Any], binary_pat
             suggestions["priority_targets"].append("license_validation")
 
         # Analyze for anti-debugging features
-        if analysis_results.get("anti_debug", False) or "debugger" in str(analysis_results).lower():
+        if analysis_results.get("anti_debug") or "debugger" in str(analysis_results).lower():
             suggestions["frida_scripts"].append(
                 {
                     "type": "anti_debug_bypass",

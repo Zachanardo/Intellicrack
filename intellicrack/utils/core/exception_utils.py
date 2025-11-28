@@ -24,7 +24,7 @@ import io
 import json
 import logging
 import os
-import pickle
+import pickle  # noqa: S403
 import sys
 import traceback
 from pathlib import Path
@@ -44,7 +44,7 @@ except ImportError as e:
 PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
 
 
-class RestrictedUnpickler(pickle.Unpickler):
+class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
     """Restricted unpickler that only allows safe classes."""
 
     def find_class(self, module: str, name: str) -> type[object]:

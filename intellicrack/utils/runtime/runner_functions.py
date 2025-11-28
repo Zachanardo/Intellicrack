@@ -1560,7 +1560,7 @@ def run_selected_patching(app_instance: object | None = None, patch_type: str | 
                     "bytes_to_patch": len(patch_bytes),
                     "target_process": process_id or "current",
                 }
-            if kw.get("verify", False):
+            if kw.get("verify"):
                 result["verification"] = "Patch verification enabled"
             return result
 

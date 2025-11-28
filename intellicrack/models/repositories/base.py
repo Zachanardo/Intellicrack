@@ -172,7 +172,7 @@ class CacheManager:
 
     def clear_cache(self) -> None:
         """Clear all cache entries."""
-        for key in list(self.cache_index.keys()):
+        for key in list(self.cache_index):
             self._remove_entry(key)
 
         self._save_index()

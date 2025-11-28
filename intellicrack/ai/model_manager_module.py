@@ -2197,7 +2197,7 @@ Interceptor.attach(IsDebuggerPresent, {
 
         """
         try:
-            import pickle
+            import pickle  # noqa: S403
             from pathlib import Path
 
             # Ensure directory exists
@@ -2915,7 +2915,7 @@ def save_model(model_id: str, save_path: str, model_format: str = "auto") -> dic
 
         # Save based on format
         if model_format in ["pickle", "pkl"]:
-            import pickle as pickle_lib
+            import pickle as pickle_lib  # noqa: S403
 
             with open(save_path, "wb") as f:
                 pickle_lib.dump(model, f)
@@ -2923,7 +2923,7 @@ def save_model(model_id: str, save_path: str, model_format: str = "auto") -> dic
             if HAS_JOBLIB:
                 joblib.dump(model, save_path)
             else:
-                import pickle as pickle_lib
+                import pickle as pickle_lib  # noqa: S403
 
                 with open(save_path, "wb") as f:
                     pickle_lib.dump(model, f)
@@ -2934,7 +2934,7 @@ def save_model(model_id: str, save_path: str, model_format: str = "auto") -> dic
                 raise ImportError("PyTorch not available for saving .pt/.pth files")
         else:
             # Default to pickle
-            import pickle as pickle_lib
+            import pickle as pickle_lib  # noqa: S403
 
             with open(save_path, "wb") as f:
                 pickle_lib.dump(model, f)

@@ -1858,7 +1858,7 @@ class ScriptGeneratorDialog(BaseDialog):
         lines.append(f"Language: {analysis_result.get('language', 'Unknown')}")
         lines.append(f"Lines of Code: {analysis_result.get('lines_of_code', 0)}")
         lines.append(f"Complexity: {analysis_result.get('complexity', 'Unknown')}")
-        lines.append(f"AI Analysis: {'Enabled' if analysis_result.get('ai_enabled', False) else 'Disabled'}")
+        lines.append(f"AI Analysis: {'Enabled' if analysis_result.get('ai_enabled') else 'Disabled'}")
         lines.append("")
 
         if insights := analysis_result.get("insights", []):

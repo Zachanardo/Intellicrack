@@ -344,7 +344,7 @@ class DataCollector:
             total_operations = 0
             error_count = 0
 
-            for _record_id, record in self.learning_records.items():
+            for record in self.learning_records.values():
                 record_time = datetime.fromisoformat(record.get("timestamp", current_time.isoformat()))
 
                 if record_time >= lookback_time:
@@ -381,7 +381,7 @@ class DataCollector:
         """Check if a learning record contains error indicators."""
         try:
             # Check for explicit error flags
-            if record.get("error", False) or record.get("failed", False):
+            if record.get("error") or record.get("failed"):
                 return True
 
             # Check for error keywords in status or result
@@ -484,7 +484,7 @@ class DataCollector:
                 if total_tasks == 0:
                     # Estimate based on recent activity
                     recent_hour = current_time - timedelta(hours=1)
-                    for _record_id, record in self.learning_records.items():
+                    for record in self.learning_records.values():
                         try:
                             record_time = datetime.fromisoformat(record.get("timestamp", current_time.isoformat()))
                             if record_time >= recent_hour:

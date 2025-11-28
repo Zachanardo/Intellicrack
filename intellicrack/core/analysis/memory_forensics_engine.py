@@ -477,7 +477,7 @@ class MemoryForensicsEngine:
                 logger.warning(f"Plugin {plugin_name} not available")
                 return []
 
-            plugin_class = getattr(volatility3.framework.plugins, plugin_name.split(".")[0])
+            plugin_class = getattr(volatility3.framework.plugins, plugin_name.split(".", maxsplit=1)[0])
             plugin_class = getattr(plugin_class, plugin_name.split(".")[1])
 
             # Create plugin instance using requirements framework

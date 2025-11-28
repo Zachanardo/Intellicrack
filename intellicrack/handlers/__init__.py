@@ -96,4 +96,4 @@ def is_handler_available(handler_name: str) -> bool:
 
 
 _handlers_list: list[str] = [str(name) for name in _handlers]
-__all__: list[str] = ["get_available_handlers", "is_handler_available", *_handlers_list]
+__all__: list[str] = ["get_available_handlers", "is_handler_available", *_handlers_list]  # noqa: PLE0604

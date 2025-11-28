@@ -29,7 +29,7 @@ from typing import Any
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
 except ImportError:
-    import xml.etree.ElementTree as ET
+    import xml.etree.ElementTree as ET  # noqa: S405
 
 try:
     from jinja2 import Environment, FileSystemLoader, Template

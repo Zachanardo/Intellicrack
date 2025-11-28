@@ -163,9 +163,9 @@ except ImportError as e:
                 # Type conversion
                 if value is not None:
                     if col_type == "INTEGER":
-                        value = int(value) if value != "" else None
+                        value = int(value) if value else None
                     elif col_type == "REAL":
-                        value = float(value) if value != "" else None
+                        value = float(value) if value else None
                     elif col_type == "TEXT":
                         value = str(value)
                     elif col_type == "BLOB":

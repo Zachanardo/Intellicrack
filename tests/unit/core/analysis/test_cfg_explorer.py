@@ -31,7 +31,7 @@ class TestCFGExplorer(IntellicrackTestBase):
             self.test_fixtures_dir / "vulnerable_samples/format_string_0.exe",
             self.test_fixtures_dir / "vulnerable_samples/heap_overflow_0.exe",
             self.test_fixtures_dir / "vulnerable_samples/integer_overflow_0.exe",
-            self.test_fixtures_dir / "vulnerable_samples/race_condition_0.exe"
+            self.test_fixtures_dir / "vulnerable_samples/race_condition_0.exe",
         ]
 
         # Protected binaries for license validation analysis
@@ -41,7 +41,7 @@ class TestCFGExplorer(IntellicrackTestBase):
             self.test_fixtures_dir / "pe/protected/hasp_sentinel_protected.exe",
             self.test_fixtures_dir / "pe/protected/online_activation_app.exe",
             self.test_fixtures_dir / "full_protected_software/Beyond_Compare_Full.exe",
-            self.test_fixtures_dir / "full_protected_software/Resource_Hacker_Full.exe"
+            self.test_fixtures_dir / "full_protected_software/Resource_Hacker_Full.exe",
         ]
 
         # Legitimate binaries for complexity analysis
@@ -49,7 +49,7 @@ class TestCFGExplorer(IntellicrackTestBase):
             self.test_fixtures_dir / "pe/legitimate/7zip.exe",
             self.test_fixtures_dir / "pe/legitimate/firefox.exe",
             self.test_fixtures_dir / "pe/legitimate/notepadpp.exe",
-            self.test_fixtures_dir / "pe/legitimate/vlc.exe"
+            self.test_fixtures_dir / "pe/legitimate/vlc.exe",
         ]
 
         # Packed binaries for advanced analysis
@@ -57,7 +57,7 @@ class TestCFGExplorer(IntellicrackTestBase):
             self.test_fixtures_dir / "pe/real_protected/upx_packer/upx-4.2.2-win64/upx.exe",
             self.test_fixtures_dir / "protected/upx_packed_0.exe",
             self.test_fixtures_dir / "protected/vmprotect_protected.exe",
-            self.test_fixtures_dir / "protected/themida_protected.exe"
+            self.test_fixtures_dir / "protected/themida_protected.exe",
         ]
 
         # Filter for existing binaries
@@ -67,8 +67,7 @@ class TestCFGExplorer(IntellicrackTestBase):
         self.packed_binaries = [p for p in self.packed_binaries if p.exists()]
 
         # All available test binaries
-        self.test_binaries = (self.vulnerable_binaries + self.protected_binaries +
-                             self.legitimate_binaries + self.packed_binaries)
+        self.test_binaries = self.vulnerable_binaries + self.protected_binaries + self.legitimate_binaries + self.packed_binaries
 
         # Ensure we have test binaries available
         if not self.test_binaries:
@@ -79,27 +78,27 @@ class TestCFGExplorer(IntellicrackTestBase):
         cfg_explorer = CFGExplorer()
 
         # Verify core attributes are initialized
-        assert hasattr(cfg_explorer, 'binary_path')
-        assert hasattr(cfg_explorer, 'radare2_path')
-        assert hasattr(cfg_explorer, 'logger')
-        assert hasattr(cfg_explorer, 'graph')
-        assert hasattr(cfg_explorer, 'functions')
-        assert hasattr(cfg_explorer, 'current_function')
+        assert hasattr(cfg_explorer, "binary_path")
+        assert hasattr(cfg_explorer, "radare2_path")
+        assert hasattr(cfg_explorer, "logger")
+        assert hasattr(cfg_explorer, "graph")
+        assert hasattr(cfg_explorer, "functions")
+        assert hasattr(cfg_explorer, "current_function")
 
         # Verify analysis engines are available
-        assert hasattr(cfg_explorer, 'decompiler')
-        assert hasattr(cfg_explorer, 'vulnerability_engine')
-        assert hasattr(cfg_explorer, 'ai_engine')
-        assert hasattr(cfg_explorer, 'string_analyzer')
-        assert hasattr(cfg_explorer, 'import_analyzer')
-        assert hasattr(cfg_explorer, 'scripting_engine')
+        assert hasattr(cfg_explorer, "decompiler")
+        assert hasattr(cfg_explorer, "vulnerability_engine")
+        assert hasattr(cfg_explorer, "ai_engine")
+        assert hasattr(cfg_explorer, "string_analyzer")
+        assert hasattr(cfg_explorer, "import_analyzer")
+        assert hasattr(cfg_explorer, "scripting_engine")
 
         # Verify data structures are initialized
-        assert hasattr(cfg_explorer, 'function_graphs')
-        assert hasattr(cfg_explorer, 'call_graph')
-        assert hasattr(cfg_explorer, 'cross_references')
-        assert hasattr(cfg_explorer, 'function_similarities')
-        assert hasattr(cfg_explorer, 'analysis_cache')
+        assert hasattr(cfg_explorer, "function_graphs")
+        assert hasattr(cfg_explorer, "call_graph")
+        assert hasattr(cfg_explorer, "cross_references")
+        assert hasattr(cfg_explorer, "function_similarities")
+        assert hasattr(cfg_explorer, "analysis_cache")
 
         # Verify these are proper data structures, not None
         assert isinstance(cfg_explorer.function_graphs, dict)
@@ -130,13 +129,13 @@ class TestCFGExplorer(IntellicrackTestBase):
 
         # Verify function data is sophisticated
         for func_data in functions[:3]:  # Check first 3 functions
-            assert 'address' in func_data, "Function missing address"
-            assert 'name' in func_data, "Function missing name"
-            assert 'size' in func_data, "Function missing size"
-            assert func_data['size'] > 0, "Function size must be positive"
+            assert "address" in func_data, "Function missing address"
+            assert "name" in func_data, "Function missing name"
+            assert "size" in func_data, "Function missing size"
+            assert func_data["size"] > 0, "Function size must be positive"
 
             # Address should be realistic (not 0 or obvious placeholder)
-            addr = func_data['address']
+            addr = func_data["address"]
             if isinstance(addr, str):
                 addr = int(addr, 16)
             assert addr > 0x400000, "Function address too low for PE binary"
@@ -149,10 +148,7 @@ class TestCFGExplorer(IntellicrackTestBase):
         cfg_explorer = CFGExplorer()
 
         # Test buffer overflow detection
-        buffer_overflow_binary = next(
-            (b for b in self.vulnerable_binaries if "buffer_overflow" in str(b)),
-            None
-        )
+        buffer_overflow_binary = next((b for b in self.vulnerable_binaries if "buffer_overflow" in str(b)), None)
         if buffer_overflow_binary:
             cfg_explorer.load_binary(str(buffer_overflow_binary))
             patterns = cfg_explorer.get_vulnerability_patterns()
@@ -164,9 +160,8 @@ class TestCFGExplorer(IntellicrackTestBase):
             assert len(patterns) > 0, "Should detect vulnerability patterns"
 
             # Look for buffer overflow indicators
-            pattern_types = [p.get('type', '').lower() for p in patterns.values()]
-            vulnerability_found = any('buffer' in t or 'overflow' in t or 'bounds' in t
-                                     for t in pattern_types)
+            pattern_types = [p.get("type", "").lower() for p in patterns.values()]
+            vulnerability_found = any("buffer" in t or "overflow" in t or "bounds" in t for t in pattern_types)
             assert vulnerability_found, "Should detect buffer overflow vulnerability patterns"
 
     def test_license_validation_analysis(self):
@@ -187,10 +182,10 @@ class TestCFGExplorer(IntellicrackTestBase):
         assert len(license_analysis) > 0, "Should identify license validation patterns"
 
         # Should contain meaningful analysis categories
-        expected_categories = ['license_checks', 'validation_functions', 'bypass_opportunities', 'protection_strength']
+        expected_categories = ["license_checks", "validation_functions", "bypass_opportunities", "protection_strength"]
         found_categories = 0
         for category in expected_categories:
-            if any(category in key.lower() for key in license_analysis.keys()):
+            if any(category in key.lower() for key in license_analysis):
                 found_categories += 1
 
         assert found_categories >= 2, f"Should identify at least 2 license analysis categories, found {found_categories}"
@@ -212,20 +207,21 @@ class TestCFGExplorer(IntellicrackTestBase):
         assert isinstance(complexity_analysis, dict), "Complexity analysis should be structured"
 
         # Should contain cyclomatic complexity
-        assert 'cyclomatic_complexity' in complexity_analysis, "Missing cyclomatic complexity"
-        cyclomatic = complexity_analysis['cyclomatic_complexity']
+        assert "cyclomatic_complexity" in complexity_analysis, "Missing cyclomatic complexity"
+        cyclomatic = complexity_analysis["cyclomatic_complexity"]
         assert isinstance(cyclomatic, (int, float)), "Cyclomatic complexity should be numeric"
         assert cyclomatic > 1, "Cyclomatic complexity should be meaningful for real binary"
 
         # Should contain function complexity distribution
-        if 'function_complexities' in complexity_analysis:
-            func_complexities = complexity_analysis['function_complexities']
+        if "function_complexities" in complexity_analysis:
+            func_complexities = complexity_analysis["function_complexities"]
             assert len(func_complexities) > 0, "Should analyze function complexities"
 
             # Verify realistic complexity values
-            complexity_values = [c['complexity'] for c in func_complexities[:5]]
-            assert all(isinstance(c, (int, float)) and c >= 1 for c in complexity_values), \
-                   "Function complexities should be realistic numeric values"
+            complexity_values = [c["complexity"] for c in func_complexities[:5]]
+            assert all(isinstance(c, (int, float)) and c >= 1 for c in complexity_values), (
+                "Function complexities should be realistic numeric values"
+            )
 
     def test_call_graph_construction_and_metrics(self):
         """Test call graph construction and sophisticated metrics calculation."""
@@ -244,8 +240,7 @@ class TestCFGExplorer(IntellicrackTestBase):
         assert isinstance(call_graph_metrics, dict), "Call graph metrics should be structured"
 
         # Should contain graph properties
-        expected_metrics = ['total_functions', 'total_calls', 'recursive_functions',
-                           'graph_diameter', 'strongly_connected_components']
+        expected_metrics = ["total_functions", "total_calls", "recursive_functions", "graph_diameter", "strongly_connected_components"]
         found_metrics = 0
         for metric in expected_metrics:
             if metric in call_graph_metrics:
@@ -276,13 +271,13 @@ class TestCFGExplorer(IntellicrackTestBase):
         # Should contain meaningful reference types
         reference_types = []
         for ref_data in xref_analysis.values():
-            if isinstance(ref_data, dict) and 'type' in ref_data:
-                reference_types.append(ref_data['type'])
+            if isinstance(ref_data, dict) and "type" in ref_data:
+                reference_types.append(ref_data["type"])
 
         assert len(reference_types) > 0, "Should identify reference types"
 
         # Should find different types of references
-        expected_types = ['call', 'data', 'jump', 'string']
+        expected_types = ["call", "data", "jump", "string"]
         found_types = {t.lower() for t in reference_types}
         type_matches = sum(1 for expected in expected_types if any(expected in found for found in found_types))
         assert type_matches >= 2, f"Should identify at least 2 reference types, found {found_types}"
@@ -311,8 +306,8 @@ class TestCFGExplorer(IntellicrackTestBase):
             # Check similarity data structure
             for sim_data in similarities.values():
                 if isinstance(sim_data, dict):
-                    if 'similarity_score' in sim_data:
-                        score = sim_data['similarity_score']
+                    if "similarity_score" in sim_data:
+                        score = sim_data["similarity_score"]
                         assert isinstance(score, (int, float)), "Similarity score should be numeric"
                         assert 0 <= score <= 1, "Similarity score should be between 0 and 1"
 
@@ -334,12 +329,10 @@ class TestCFGExplorer(IntellicrackTestBase):
         assert len(advanced_results) > 0, "Should provide advanced analysis insights"
 
         # Should contain sophisticated analysis categories
-        expected_categories = ['control_flow_analysis', 'data_flow_analysis', 'security_analysis',
-                              'code_patterns', 'optimization_analysis']
+        expected_categories = ["control_flow_analysis", "data_flow_analysis", "security_analysis", "code_patterns", "optimization_analysis"]
         found_categories = 0
         for category in expected_categories:
-            if any(category.replace('_', '') in key.lower().replace('_', '')
-                  for key in advanced_results.keys()):
+            if any(category.replace("_", "") in key.lower().replace("_", "") for key in advanced_results):
                 found_categories += 1
 
         assert found_categories >= 2, f"Should provide at least 2 advanced analysis categories, found {found_categories}"
@@ -361,13 +354,13 @@ class TestCFGExplorer(IntellicrackTestBase):
         assert isinstance(complexity_metrics, dict), "Complexity metrics should be structured"
 
         # Should include cyclomatic complexity
-        if 'cyclomatic_complexity' in complexity_metrics:
-            cyclomatic = complexity_metrics['cyclomatic_complexity']
+        if "cyclomatic_complexity" in complexity_metrics:
+            cyclomatic = complexity_metrics["cyclomatic_complexity"]
             assert isinstance(cyclomatic, (int, float)), "Cyclomatic complexity should be numeric"
             assert cyclomatic >= 1, "Cyclomatic complexity should be at least 1"
 
         # Should include other sophisticated metrics
-        expected_metrics = ['average_complexity', 'max_complexity', 'total_functions', 'complex_functions']
+        expected_metrics = ["average_complexity", "max_complexity", "total_functions", "complex_functions"]
         found_metrics = sum(1 for metric in expected_metrics if metric in complexity_metrics)
         assert found_metrics >= 2, f"Should provide at least 2 complexity metrics, found {found_metrics}"
 
@@ -388,9 +381,9 @@ class TestCFGExplorer(IntellicrackTestBase):
         assert isinstance(graph_data, dict), "Graph data should be structured"
 
         # Should contain nodes and edges
-        if 'nodes' in graph_data and 'edges' in graph_data:
-            nodes = graph_data['nodes']
-            edges = graph_data['edges']
+        if "nodes" in graph_data and "edges" in graph_data:
+            nodes = graph_data["nodes"]
+            edges = graph_data["edges"]
 
             assert len(nodes) > 0, "Should have graph nodes"
             assert len(edges) > 0, "Should have graph edges"
@@ -398,7 +391,7 @@ class TestCFGExplorer(IntellicrackTestBase):
             # Verify node structure
             for node in nodes[:3]:  # Check first few nodes
                 assert isinstance(node, dict), "Node should be structured data"
-                assert 'id' in node, "Node should have ID"
+                assert "id" in node, "Node should have ID"
 
         # Test layout generation
         layout = cfg_explorer.get_graph_layout()
@@ -416,7 +409,7 @@ class TestCFGExplorer(IntellicrackTestBase):
         cfg_explorer.load_binary(str(test_binary))
 
         # Test JSON export
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp_file:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tmp_file:
             json_path = tmp_file.name
 
         try:
@@ -485,7 +478,7 @@ class TestCFGExplorer(IntellicrackTestBase):
         # Look for larger test binaries
         large_binaries = []
         for binary in self.legitimate_binaries:
-            if binary.exists() and binary.stat().st_size > 1024*1024:  # > 1MB
+            if binary.exists() and binary.stat().st_size > 1024 * 1024:  # > 1MB
                 large_binaries.append(binary)
 
         if not large_binaries:
@@ -495,6 +488,7 @@ class TestCFGExplorer(IntellicrackTestBase):
         large_binary = large_binaries[0]
 
         import time
+
         start_time = time.time()
 
         result = cfg_explorer.load_binary(str(large_binary))
@@ -517,10 +511,7 @@ class TestCFGUtilityFunctions(IntellicrackTestBase):
         """Test deep CFG analysis utility function."""
         # Get available test binary
         test_fixtures_dir = Path("tests/fixtures/binaries")
-        legitimate_binaries = [
-            test_fixtures_dir / "pe/legitimate/7zip.exe",
-            test_fixtures_dir / "pe/legitimate/notepadpp.exe"
-        ]
+        legitimate_binaries = [test_fixtures_dir / "pe/legitimate/7zip.exe", test_fixtures_dir / "pe/legitimate/notepadpp.exe"]
         legitimate_binaries = [p for p in legitimate_binaries if p.exists()]
 
         if not legitimate_binaries:
@@ -552,7 +543,7 @@ class TestCFGUtilityFunctions(IntellicrackTestBase):
         test_binary = str(legitimate_binaries[0])
 
         # Mock GUI dependencies to test interface setup
-        with patch('intellicrack.core.analysis.cfg_explorer.PYQT_AVAILABLE', True):
+        with patch("intellicrack.core.analysis.cfg_explorer.PYQT_AVAILABLE", True):
             # Test would launch interface - mock for testing
             try:
                 result = run_cfg_explorer(test_binary)
@@ -562,6 +553,5 @@ class TestCFGUtilityFunctions(IntellicrackTestBase):
                 # May fail due to GUI dependencies in test environment
                 # This is acceptable as long as it's not a placeholder error
                 error_msg = str(e).lower()
-                placeholder_errors = ['not implemented', 'todo', 'placeholder']
-                assert not any(err in error_msg for err in placeholder_errors), \
-                       f"Should not have placeholder error: {e}"
+                placeholder_errors = ["not implemented", "todo", "placeholder"]
+                assert not any(err in error_msg for err in placeholder_errors), f"Should not have placeholder error: {e}"

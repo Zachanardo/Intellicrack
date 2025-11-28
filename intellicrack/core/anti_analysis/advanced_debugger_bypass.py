@@ -336,7 +336,7 @@ class UserModeNTAPIHooker:
     def remove_all_hooks(self) -> bool:
         """Remove all installed hooks."""
         try:
-            for _hook_name, hook_info in self.hooks.items():
+            for hook_info in self.hooks.values():
                 if hook_info.active:
                     self._remove_hook(hook_info)
 
@@ -773,11 +773,11 @@ class AdvancedDebuggerBypass:
         technique_handlers = {
             "PEB.BeingDebugged": self._defeat_peb_being_debugged,
             "PEB.NtGlobalFlag": self._defeat_ntglobalflag,
-            "ProcessDebugPort": lambda: self.kernel_hooks.hook_ntquery_information_process(),
-            "ProcessDebugObjectHandle": lambda: self.kernel_hooks.hook_ntquery_information_process(),
-            "ThreadHideFromDebugger": lambda: self.kernel_hooks.hook_ntset_information_thread(),
-            "RDTSC": lambda: self.timing_neutralizer.neutralize_rdtsc(),
-            "QueryPerformanceCounter": lambda: self.timing_neutralizer.hook_query_performance_counter(),
+            "ProcessDebugPort": self.kernel_hooks.hook_ntquery_information_process,
+            "ProcessDebugObjectHandle": self.kernel_hooks.hook_ntquery_information_process,
+            "ThreadHideFromDebugger": self.kernel_hooks.hook_ntset_information_thread,
+            "RDTSC": self.timing_neutralizer.neutralize_rdtsc,
+            "QueryPerformanceCounter": self.timing_neutralizer.hook_query_performance_counter,
             "HardwareBreakpoints": self._defeat_hardware_breakpoints,
         }
 

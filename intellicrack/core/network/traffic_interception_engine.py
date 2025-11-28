@@ -371,7 +371,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             scapy.sniff(
                 filter=filter_expr,
                 prn=packet_handler,
-                stop_filter=lambda x: not self.running,
+                stop_filter=lambda x: (logger.debug("Packet in stop_filter: %s", x) or True) and not self.running,
                 timeout=1,
             )
 

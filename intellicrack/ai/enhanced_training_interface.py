@@ -910,7 +910,7 @@ class TrainingThread(QThread):
             if not validation and hasattr(self.config, "dropout_rate"):
                 dropout_rate = self.config.dropout_rate
                 dropout_mask = np.random.binomial(1, 1 - dropout_rate, size=a1.shape) / (1 - dropout_rate)
-                a1 = a1 * dropout_mask
+                a1 *= dropout_mask
 
             # Layer 2: Hidden1 -> Hidden2
             z2 = np.dot(a1, self._weights["W2"]) + self._weights["b2"]
@@ -920,7 +920,7 @@ class TrainingThread(QThread):
             if not validation and hasattr(self.config, "dropout_rate"):
                 dropout_rate = self.config.dropout_rate
                 dropout_mask = np.random.binomial(1, 1 - dropout_rate, size=a2.shape) / (1 - dropout_rate)
-                a2 = a2 * dropout_mask
+                a2 *= dropout_mask
 
             # Layer 3: Hidden2 -> Output
             z3 = np.dot(a2, self._weights["W3"]) + self._weights["b3"]
@@ -1441,7 +1441,7 @@ class DatasetAnalysisWidget(QWidget):
                         self.current_dataset = joblib.load(dataset_path)
                     except ImportError:
                         # Fallback to pickle with warning
-                        import pickle
+                        import pickle  # noqa: S403
 
                         with open(dataset_path, "rb") as f:
                             self.current_dataset = pickle.load(f)  # noqa: S301

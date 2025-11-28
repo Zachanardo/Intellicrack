@@ -658,8 +658,8 @@ class ThemidaAnalyzer:
         keys = []
 
         key_patterns = [
-            re.compile(b"[\x00-\xff]{16}"),
-            re.compile(b"[\x00-\xff]{32}"),
+            re.compile(rb"[\x00-\xff]{16}"),
+            re.compile(rb"[\x00-\xff]{32}"),
         ]
 
         high_entropy_threshold = 7.0

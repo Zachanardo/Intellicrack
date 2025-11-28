@@ -792,7 +792,7 @@ class FailureAnalysisEngine:
         if "invalid" in error_message.lower():
             return "validation_error"
         # Use first word of error as type
-        first_word = error_message.split()[0] if error_message.split() else "unknown"
+        first_word = error_message.split(maxsplit=1)[0] if error_message.split() else "unknown"
         return f"{first_word.lower()}_error"
 
     def _create_failure_analysis(self, failure_type: str, records: list[LearningRecord]) -> FailureAnalysis | None:
@@ -1449,15 +1449,15 @@ class AILearningEngine:
         score = 0.0
 
         # Check for various protections
-        if exploit_data.get("has_aslr", False):
+        if exploit_data.get("has_aslr"):
             score += 2.0
-        if exploit_data.get("has_dep", False):
+        if exploit_data.get("has_dep"):
             score += 2.0
-        if exploit_data.get("has_canary", False):
+        if exploit_data.get("has_canary"):
             score += 2.0
-        if exploit_data.get("has_cfi", False):
+        if exploit_data.get("has_cfi"):
             score += 2.0
-        if exploit_data.get("has_custom_protection", False):
+        if exploit_data.get("has_custom_protection"):
             score += 2.0
 
         return min(score, 10.0)

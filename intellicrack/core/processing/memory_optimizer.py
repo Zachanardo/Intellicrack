@@ -236,8 +236,8 @@ class MemoryOptimizer:
         try:
             # Trigger garbage collection if enabled
             if self.optimization_techniques["garbage_collection"]:
-                _collected_objects = gc.collect()
-                techniques_used.append(f"garbage_collection({_collected_objects} objects)")
+                collected_objects = gc.collect()
+                techniques_used.append(f"garbage_collection({collected_objects} objects)")
 
             # Use memory-efficient data structures if enabled
             if self.optimization_techniques["memory_efficient_structures"]:
@@ -247,8 +247,8 @@ class MemoryOptimizer:
 
             # Check for memory leaks if enabled
             if self.optimization_techniques["leak_detection"]:
-                _leak_info = self.check_for_memory_leaks()
-                techniques_used.append(f"leak_detection({_leak_info})")
+                leak_info = self.check_for_memory_leaks()
+                techniques_used.append(f"leak_detection({leak_info})")
 
             # Force update of memory usage after optimization
             time.sleep(0.1)  # Small delay to allow GC to complete

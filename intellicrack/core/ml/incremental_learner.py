@@ -19,7 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
-import pickle
+import pickle  # noqa: S403
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path

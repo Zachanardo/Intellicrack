@@ -415,7 +415,9 @@ class HexViewerDialog(QDialog):
             self.setup_viewer_sync(new_viewer)
 
         # Track focus changes
-        new_viewer.focusInEvent = lambda event: self.set_active_viewer(new_viewer)
+        new_viewer.focusInEvent = lambda event: (
+            logger.debug("Focus event: %s", event) or self.set_active_viewer(new_viewer)
+        )
 
         # Add to tracking
         self.viewers.append(new_viewer)

@@ -32,10 +32,10 @@ from pathlib import Path
 
 
 try:
-    from Crypto.Cipher import AES, DES, DES3
-    from Crypto.Hash import SHA256
-    from Crypto.PublicKey import RSA
-    from Crypto.Signature import PKCS1_v1_5
+    from Crypto.Cipher import AES, DES, DES3  # noqa: S413
+    from Crypto.Hash import SHA256  # noqa: S413
+    from Crypto.PublicKey import RSA  # noqa: S413
+    from Crypto.Signature import PKCS1_v1_5  # noqa: S413
 
     CRYPTO_AVAILABLE = True
 except ImportError:
@@ -386,7 +386,7 @@ class CryptoEngine:
                 padded_data = data + b"\x00" * (16 - len(data) % 16)
                 return cipher.encrypt(padded_data)
             elif algorithm == "DES":
-                cipher = DES.new(key[:8], DES.MODE_ECB)
+                cipher = DES.new(key[:8], DES.MODE_ECB)  # noqa: S304 - DES required for legacy HASP dongle protocol
                 padded_data = data + b"\x00" * (8 - len(data) % 8)
                 return cipher.encrypt(padded_data)
             elif algorithm == "DES3":
@@ -411,7 +411,7 @@ class CryptoEngine:
                 decrypted = cipher.decrypt(data)
                 return decrypted.rstrip(b"\x00")
             elif algorithm == "DES":
-                cipher = DES.new(key[:8], DES.MODE_ECB)
+                cipher = DES.new(key[:8], DES.MODE_ECB)  # noqa: S304 - DES required for legacy HASP dongle protocol
                 decrypted = cipher.decrypt(data)
                 return decrypted.rstrip(b"\x00")
             elif algorithm == "DES3":

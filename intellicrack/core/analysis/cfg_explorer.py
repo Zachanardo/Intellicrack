@@ -159,7 +159,7 @@ except ImportError as e:
                 self._edges[u].add(v)
 
                 if attrs:
-                    self._edge_attrs[(u, v)] = attrs
+                    self._edge_attrs[u, v] = attrs
 
             def nodes(self, data: bool = False) -> list[object] | list[tuple[object, dict[str, object]]]:
                 """Return nodes with optional data.
@@ -643,7 +643,21 @@ except ImportError as e:
                 **kwargs: Additional keyword arguments for drawing
 
             """
-            logger.info(f"Drawing graph with {graph.number_of_nodes()} nodes and {graph.number_of_edges()} edges")
+            try:
+                import matplotlib.pyplot as plt
+                import networkx as nx
+
+                if pos is None:
+                    pos = nx.spring_layout(graph)
+                if ax is None:
+                    _fig, ax = plt.subplots()
+                nx.draw(graph, pos=pos, ax=ax, **kwargs)
+                plt.show()
+                logger.info(f"Drew graph with matplotlib: {graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges")
+            except ImportError:
+                logger.info(
+                    f"Drawing graph with {graph.number_of_nodes()} nodes and {graph.number_of_edges()} edges (matplotlib not available)"
+                )
 
         class Drawing:
             """Drawing submodule."""
@@ -682,8 +696,21 @@ except ImportError as e:
                         Dictionary mapping nodes to (x, y) coordinate tuples
 
                     """
-                    logger.warning("Graphviz not available, using spring layout")
-                    return _IntellicrackNetworkX.spring_layout(graph)
+                    try:
+                        import pygraphviz as pgv
+
+                        G = pgv.AGraph()
+                        G.add_nodes_from(graph.nodes())
+                        G.add_edges_from(graph.edges())
+                        G.layout(prog=prog)
+                        pos = {}
+                        for node in G.nodes():
+                            pos[node] = (float(node.attr["pos"].split(",")[0]), float(node.attr["pos"].split(",")[1]))
+                        logger.info(f"Used graphviz layout with prog '{prog}'")
+                        return pos
+                    except ImportError:
+                        logger.warning("Graphviz not available, using spring layout")
+                        return _IntellicrackNetworkX.spring_layout(graph)
 
             # Alias for compatibility
             nx_pydot = NxPydot

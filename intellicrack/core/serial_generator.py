@@ -131,7 +131,7 @@ class SerialNumberGenerator:
 
         logger.info("Step 1: Testing various algorithms against provided serials.")
         algorithms_scores = {}
-        for algo_name, _algo_func in self.common_algorithms.items():
+        for algo_name in self.common_algorithms:
             score = self._test_algorithm(valid_serials, algo_name)
             algorithms_scores[algo_name] = score
         logger.debug(f"Algorithm scores: {algorithms_scores}")
@@ -555,7 +555,7 @@ class SerialNumberGenerator:
             if i % 2 == 0:
                 doubled = digit * 2
                 if doubled > 9:
-                    doubled = doubled - 9
+                    doubled -= 9
                 total += doubled
             else:
                 total += digit

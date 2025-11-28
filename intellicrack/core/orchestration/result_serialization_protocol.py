@@ -360,8 +360,8 @@ class ResultSerializer:
 
     def _encrypt_data(self, data: bytes) -> bytes:
         """Encrypt data using AES."""
-        from Crypto.Cipher import AES
-        from Crypto.Random import get_random_bytes
+        from Crypto.Cipher import AES  # noqa: S413
+        from Crypto.Random import get_random_bytes  # noqa: S413
         from Crypto.Util.Padding import pad
 
         # Generate IV
@@ -377,7 +377,7 @@ class ResultSerializer:
 
     def _decrypt_data(self, data: bytes) -> bytes:
         """Decrypt AES encrypted data."""
-        from Crypto.Cipher import AES
+        from Crypto.Cipher import AES  # noqa: S413
         from Crypto.Util.Padding import unpad
 
         # Extract IV

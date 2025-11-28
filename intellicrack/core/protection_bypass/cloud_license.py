@@ -817,10 +817,8 @@ class ResponseSynthesizer:
                     encode_field(field_num, item)
                 return
 
-        field_num = 1
-        for _key, value in data.items():
+        for field_num, (_key, value) in enumerate(data.items(), start=1):
             encode_field(field_num, value)
-            field_num += 1
 
         return bytes(result)
 

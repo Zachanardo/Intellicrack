@@ -358,7 +358,7 @@ class StarForceDetector:
                 for entry in pe.FileInfo:
                     if hasattr(entry, "StringTable"):
                         for st in entry.StringTable:
-                            for _key, value in st.entries.items():
+                            for value in st.entries.values():
                                 if b"StarForce" in value or b"Protection Technology" in value:
                                     return self._parse_version_string(value.decode("utf-8", errors="ignore"))
 

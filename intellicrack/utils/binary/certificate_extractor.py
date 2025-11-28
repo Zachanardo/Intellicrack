@@ -323,7 +323,7 @@ class CertificateExtractor:
 
                 """
                 # Use dynamic hash selection to isolate insecure functionality
-                hash_module = hashes.SHA1
+                hash_module = hashes.SHA1  # noqa: S303 - SHA1 required for X.509 certificate fingerprinting
                 return hashes.Hash(hash_module(), backend=backend)
 
             digest_sha1 = create_legacy_sha1_hash(default_backend())

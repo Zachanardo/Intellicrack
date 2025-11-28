@@ -1600,7 +1600,7 @@ class ConcolicExecutionEngine:
                     if pc == license_check_address:
                         # Save current state for later analysis
                         state.record_trace = True
-                        self.logger.info("Reached license check at %s", hex(pc))
+                        self.logger.info("Reached license check at %#x", pc)
 
                     # Check for successful license validation (typically a conditional jump)
                     if (
@@ -1619,7 +1619,7 @@ class ConcolicExecutionEngine:
                             state.constrain(condition != 0)
                             success_found[0] = True
                             bypass_input[0] = state.input_symbols
-                            self.logger.info("Found potential license bypass at %s", hex(pc))
+                            self.logger.info("Found potential license bypass at %#x", pc)
                         except (OSError, ValueError, RuntimeError) as e:
                             self.logger.debug("Could not constrain condition: %s", e)
 

@@ -791,7 +791,7 @@ class ROPChainGenerator:
             chain_data["constraints_met"].append("stack_control")
 
         # Add jump gadgets for advanced control flow if needed
-        if jmp_gadgets and target_info.get("requires_jump", False):
+        if jmp_gadgets and target_info.get("requires_jump"):
             chain_data["gadgets_used"].append(jmp_gadgets[0])
             chain_data["stack_layout"].append(
                 {

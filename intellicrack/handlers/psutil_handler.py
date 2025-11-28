@@ -609,7 +609,7 @@ except ImportError as e:
     def cpu_freq(percpu: bool = False) -> "CPUFreq | list[CPUFreq]":
         """Get CPU frequency."""
 
-        class CPUFreq:
+        class CPUFreq:  # noqa: B903 - Must match psutil API for compatibility
             def __init__(self, current: float = 0.0, min: float = 0.0, max: float = 0.0) -> None:
                 self.current: float = current
                 self.min: float = min
@@ -737,7 +737,7 @@ except ImportError as e:
     def disk_partitions(all: bool = False) -> list["DiskPartition"]:
         """Get disk partitions."""
 
-        class DiskPartition:
+        class DiskPartition:  # noqa: B903 - Must match psutil API for compatibility
             def __init__(self, device: str, mountpoint: str, fstype: str, opts: str) -> None:
                 self.device: str = device
                 self.mountpoint: str = mountpoint

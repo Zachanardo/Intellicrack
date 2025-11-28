@@ -3741,7 +3741,7 @@ class FridaManager:
                 f.write(data if isinstance(data, bytes) else bytes(data))
 
             # Perform OCR or pattern detection if needed
-            if payload.get("analyze", False):
+            if payload.get("analyze"):
                 self._analyze_screenshot(data, payload)
 
         except Exception as e:

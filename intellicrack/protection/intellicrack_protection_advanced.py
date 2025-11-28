@@ -129,7 +129,7 @@ class AdvancedProtectionAnalysis(ProtectionAnalysis):
     similarity_hash: str | None = None
     file_format_details: dict[str, Any] = field(default_factory=dict)
 
-    def __init__(
+    def __init__(  # noqa: PLR0917 - Comprehensive dataclass requires many positional args
         self,
         file_path: str,
         file_type: str,

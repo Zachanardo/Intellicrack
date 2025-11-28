@@ -24,7 +24,7 @@ import csv
 import json
 import logging
 import os
-import pickle
+import pickle  # noqa: S403
 import random
 import time
 from dataclasses import dataclass
@@ -532,12 +532,12 @@ class TrainingThread(QThread):
                         # Pre-norm attention
                         normed_x = self.ln1(x)
                         attn_out, _ = self.attention(normed_x, normed_x, normed_x, attn_mask=attention_mask, is_causal=True)
-                        x = x + attn_out
+                        x += attn_out
 
                         # Pre-norm feed forward
                         normed_x = self.ln2(x)
                         ff_out = self.feed_forward(normed_x)
-                        x = x + ff_out
+                        x += ff_out
 
                         return x
 
@@ -767,7 +767,7 @@ class TrainingThread(QThread):
 
                         """
                         variance = x.pow(2).mean(-1, keepdim=True)
-                        x = x * torch.rsqrt(variance + self.eps)
+                        x *= torch.rsqrt(variance + self.eps)
                         return self.weight * x
 
                 return RMSNorm(hidden_size)
@@ -816,13 +816,13 @@ class TrainingThread(QThread):
                         """
                         normed_x = self.attention_norm(x)
                         attn_out, _ = self.attention(normed_x, normed_x, normed_x, attn_mask=attention_mask, is_causal=True)
-                        x = x + attn_out
+                        x += attn_out
 
                         normed_x = self.ffn_norm(x)
                         gate = torch.nn.functional.silu(self.gate_proj(normed_x))
                         up = self.up_proj(normed_x)
                         ffn_out = self.down_proj(gate * up)
-                        x = x + ffn_out
+                        x += ffn_out
 
                         return x
 
@@ -953,11 +953,11 @@ class TrainingThread(QThread):
                             is_causal=True,
                         )
                         attn_out = self.attention_dropout(attn_out)
-                        x = x + attn_out
+                        x += attn_out
 
                         normed_x = self.ffn_norm(x)
                         ffn_out = self.feed_forward(normed_x)
-                        x = x + ffn_out
+                        x += ffn_out
 
                         return x
 

@@ -1202,7 +1202,7 @@ class R2RealtimeAnalyzer:
         while self.running:
             try:
                 # Schedule updates for all watched binaries
-                for binary_path in list(self.watched_binaries.keys()):
+                for binary_path in list(self.watched_binaries):
                     if not self.running:
                         break
 

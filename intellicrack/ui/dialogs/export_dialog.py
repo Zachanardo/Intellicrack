@@ -16,9 +16,9 @@ from PyQt6.QtWidgets import QLayout, QWidget
 
 
 try:
-    from xml.etree.ElementTree import Element, ElementTree, SubElement
+    from xml.etree.ElementTree import Element, ElementTree, SubElement  # noqa: S405
 except ImportError:
-    from xml.etree.ElementTree import Element, ElementTree, SubElement
+    from xml.etree.ElementTree import Element, ElementTree, SubElement  # noqa: S405
 
 import contextlib
 

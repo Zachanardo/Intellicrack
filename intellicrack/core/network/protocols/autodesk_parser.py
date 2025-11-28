@@ -104,7 +104,7 @@ class AutodeskLicensingParser:
             "name": "Autodesk Inventor",
             "product_family": "Manufacturing",
             "license_model": "standalone_or_network",
-            "features": ["3d_cad", "simulation", "rendering", "sheet_metal"],
+            "features": ["3d_cad", "stress_analysis", "rendering", "sheet_metal"],
             "subscription_required": True,
             "network_license_available": True,
         },
@@ -207,7 +207,7 @@ class AutodeskLicensingParser:
             headers = {}
             body_start = 0
             for i, line in enumerate(lines[1:], 1):
-                if line == "":
+                if not line:
                     body_start = i + 1
                     break
                 if ":" in line:

@@ -23,7 +23,6 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 
 import ast
 from pathlib import Path
-from typing import Any
 
 
 class UnusedConfigCodeDetector(ast.NodeVisitor):
@@ -31,7 +30,7 @@ class UnusedConfigCodeDetector(ast.NodeVisitor):
 
     def __init__(self) -> None:
         """Initialize the detector."""
-        self.unused_imports: set[tuple[str, int]] = set()
+        self.unused_imports = set()
         self.unused_methods: set[tuple[str, int]] = set()
         self.qsettings_usage: list[int] = []
         self.legacy_config_patterns: list[tuple[str, int]] = []
@@ -120,7 +119,7 @@ def analyze_file(file_path: Path) -> tuple[set[tuple[str, int]], set[tuple[str, 
         return set(), set(), [], []
 
 
-def find_unused_config_code(root_dir: Path) -> dict[str, dict[str, Any]]:
+def find_unused_config_code(root_dir: Path) -> dict:
     """Find all unused configuration code in the project.
 
     Args:
@@ -150,7 +149,7 @@ def find_unused_config_code(root_dir: Path) -> dict[str, dict[str, Any]]:
     return results
 
 
-def generate_cleanup_report(results: dict[str, dict[str, Any]]) -> str:
+def generate_cleanup_report(results: dict) -> str:
     """Generate a cleanup report from analysis results.
 
     Args:

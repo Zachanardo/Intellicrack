@@ -34,7 +34,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         IntellicrackConfig._instance = None
 
         # Mock the config directory to use our temp directory
-        with patch.object(IntellicrackConfig, '_get_user_config_dir', return_value=self.test_config_dir):
+        with patch.object(IntellicrackConfig, "_get_user_config_dir", return_value=self.test_config_dir):
             self.config = IntellicrackConfig()
 
     def create_test_config(self, config_data=None):
@@ -43,24 +43,12 @@ class TestIntellicrackConfig(IntellicrackTestBase):
             config_data = {
                 "version": "3.0.0",
                 "initialized": True,
-                "ui": {
-                    "theme": "dark",
-                    "font_size": 12,
-                    "show_tooltips": True
-                },
-                "analysis": {
-                    "default_timeout": 300,
-                    "enable_deep_analysis": True,
-                    "parallel_threads": 4
-                },
-                "logging": {
-                    "level": "INFO",
-                    "enable_file_logging": True,
-                    "max_log_size": 10485760
-                }
+                "ui": {"theme": "dark", "font_size": 12, "show_tooltips": True},
+                "analysis": {"default_timeout": 300, "enable_deep_analysis": True, "parallel_threads": 4},
+                "logging": {"level": "INFO", "enable_file_logging": True, "max_log_size": 10485760},
             }
 
-        with open(self.test_config_file, 'w', encoding='utf-8') as f:
+        with open(self.test_config_file, "w", encoding="utf-8") as f:
             json.dump(config_data, f, indent=2)
 
         return config_data
@@ -71,7 +59,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         IntellicrackConfig._instance = None
 
         # Create config instance with real temp directory
-        with patch.object(IntellicrackConfig, '_get_user_config_dir', return_value=self.test_config_dir):
+        with patch.object(IntellicrackConfig, "_get_user_config_dir", return_value=self.test_config_dir):
             config = IntellicrackConfig()
 
         # Validate real initialization
@@ -85,7 +73,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         # Create config with real data
         test_data = self.create_test_config()
 
-        with patch.object(IntellicrackConfig, '_get_user_config_dir', return_value=self.test_config_dir):
+        with patch.object(IntellicrackConfig, "_get_user_config_dir", return_value=self.test_config_dir):
             config = IntellicrackConfig()
 
         # Test valid config validation
@@ -108,16 +96,16 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         broken_data = {
             "version": "3.0.0",
             "ui_theme": "Dark",  # Legacy field
-            "ui_scale": 100,     # Legacy field
+            "ui_scale": 100,  # Legacy field
             "font_size": "Medium",  # Legacy field
-            "plugin_timeout": 60,   # Legacy field
+            "plugin_timeout": 60,  # Legacy field
             "ui": {
                 "theme": "light",  # Will be overridden by migration
-                "font_size": 10
-            }
+                "font_size": 10,
+            },
         }
 
-        with patch.object(IntellicrackConfig, '_get_user_config_dir', return_value=self.test_config_dir):
+        with patch.object(IntellicrackConfig, "_get_user_config_dir", return_value=self.test_config_dir):
             config = IntellicrackConfig()
 
         # Test auto-fix functionality
@@ -140,7 +128,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         os.environ["TEST_VAR"] = "test_value"
         os.environ["INTELLICRACK_HOME"] = str(self.temp_dir)
 
-        with patch.object(IntellicrackConfig, '_get_user_config_dir', return_value=self.test_config_dir):
+        with patch.object(IntellicrackConfig, "_get_user_config_dir", return_value=self.test_config_dir):
             config = IntellicrackConfig()
 
         # Test expansion of various patterns
@@ -158,12 +146,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
             assert result == expected, f"Expected {expected}, got {result}"
 
         # Test recursive expansion in dict
-        test_dict = {
-            "path": "${INTELLICRACK_HOME}/config",
-            "nested": {
-                "value": "${TEST_VAR:fallback}"
-            }
-        }
+        test_dict = {"path": "${INTELLICRACK_HOME}/config", "nested": {"value": "${TEST_VAR:fallback}"}}
 
         expanded = config.expand_environment_variables(test_dict)
         self.assert_real_output(expanded)
@@ -176,22 +159,11 @@ class TestIntellicrackConfig(IntellicrackTestBase):
 
     def test_safe_config_merging_real(self):
         """Test REAL configuration merging with actual conflict resolution."""
-        with patch.object(IntellicrackConfig, '_get_user_config_dir', return_value=self.test_config_dir):
+        with patch.object(IntellicrackConfig, "_get_user_config_dir", return_value=self.test_config_dir):
             config = IntellicrackConfig()
 
         # Create base and update configs
-        base_config = {
-            "ui": {
-                "theme": "dark",
-                "font_size": 10,
-                "layout": {
-                    "panels": ["left", "center"]
-                }
-            },
-            "logging": {
-                "level": "INFO"
-            }
-        }
+        base_config = {"ui": {"theme": "dark", "font_size": 10, "layout": {"panels": ["left", "center"]}}, "logging": {"level": "INFO"}}
 
         update_config = {
             "ui": {
@@ -199,20 +171,16 @@ class TestIntellicrackConfig(IntellicrackTestBase):
                 "show_tooltips": True,  # New field
                 "layout": {
                     "panels": ["left", "center", "right"],  # Array merge
-                    "position": "top"  # New nested field
-                }
+                    "position": "top",  # New nested field
+                },
             },
             "analysis": {  # New section
                 "timeout": 300
-            }
+            },
         }
 
         # Test merge with different strategies
-        merged, conflicts = config.safe_merge_configs(
-            base_config,
-            update_config,
-            conflict_strategy="prefer_new"
-        )
+        merged, conflicts = config.safe_merge_configs(base_config, update_config, conflict_strategy="prefer_new")
 
         self.assert_real_output(merged)
         self.assert_real_output(conflicts)
@@ -230,7 +198,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         """Test REAL atomic configuration saves with actual file operations."""
         test_data = self.create_test_config()
 
-        with patch.object(IntellicrackConfig, '_get_user_config_dir', return_value=self.test_config_dir):
+        with patch.object(IntellicrackConfig, "_get_user_config_dir", return_value=self.test_config_dir):
             config = IntellicrackConfig()
 
         # Load initial config
@@ -256,12 +224,12 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         assert len(backup_files) > 0, "Backup file should be created"
 
         # Verify backup content is valid
-        with open(backup_files[0], encoding='utf-8') as f:
+        with open(backup_files[0], encoding="utf-8") as f:
             backup_data = json.load(f)
         self.assert_real_output(backup_data)
 
         # Verify saved config content
-        with open(self.test_config_file, encoding='utf-8') as f:
+        with open(self.test_config_file, encoding="utf-8") as f:
             saved_data = json.load(f)
         self.assert_real_output(saved_data)
         assert saved_data["ui"]["theme"] == "modified_theme"
@@ -269,7 +237,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
 
     def test_configuration_versioning_real(self):
         """Test REAL configuration versioning with actual version tracking."""
-        with patch.object(IntellicrackConfig, '_get_user_config_dir', return_value=self.test_config_dir):
+        with patch.object(IntellicrackConfig, "_get_user_config_dir", return_value=self.test_config_dir):
             config = IntellicrackConfig()
 
         # Test version setting and getting
@@ -281,12 +249,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         assert retrieved_version == test_version, f"Expected {test_version}, got {retrieved_version}"
 
         # Test version comparison
-        comparison_tests = [
-            ("3.0.0", "3.1.0", -1),
-            ("3.1.0", "3.0.0", 1),
-            ("3.1.0", "3.1.0", 0),
-            ("2.9.9", "3.0.0", -1)
-        ]
+        comparison_tests = [("3.0.0", "3.1.0", -1), ("3.1.0", "3.0.0", 1), ("3.1.0", "3.1.0", 0), ("2.9.9", "3.0.0", -1)]
 
         for v1, v2, expected in comparison_tests:
             result = config.compare_versions(v1, v2)
@@ -304,7 +267,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         """Test REAL configuration section access with actual data retrieval."""
         test_data = self.create_test_config()
 
-        with patch.object(IntellicrackConfig, '_get_user_config_dir', return_value=self.test_config_dir):
+        with patch.object(IntellicrackConfig, "_get_user_config_dir", return_value=self.test_config_dir):
             config = IntellicrackConfig()
 
         # Test section getters
@@ -343,14 +306,14 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         """Test REAL section updates with actual validation and merging."""
         test_data = self.create_test_config()
 
-        with patch.object(IntellicrackConfig, '_get_user_config_dir', return_value=self.test_config_dir):
+        with patch.object(IntellicrackConfig, "_get_user_config_dir", return_value=self.test_config_dir):
             config = IntellicrackConfig()
 
         # Test section update with merge
         ui_updates = {
             "theme": "light",  # Override existing
             "animation_speed": "fast",  # Add new
-            "window_size": [1920, 1080]  # Add new
+            "window_size": [1920, 1080],  # Add new
         }
 
         success = config.update_section("ui", ui_updates, merge=True, validate=True)
@@ -366,10 +329,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         assert updated_ui["window_size"] == [1920, 1080], "New array should be added"
 
         # Test section replacement (not merge)
-        replacement_ui = {
-            "theme": "dark",
-            "font_size": 14
-        }
+        replacement_ui = {"theme": "dark", "font_size": 14}
 
         success = config.update_section("ui", replacement_ui, merge=False, validate=True)
         assert success, "Section replacement should succeed"
@@ -383,27 +343,17 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         """Test REAL configuration change notifications with actual callbacks."""
         test_data = self.create_test_config()
 
-        with patch.object(IntellicrackConfig, '_get_user_config_dir', return_value=self.test_config_dir):
+        with patch.object(IntellicrackConfig, "_get_user_config_dir", return_value=self.test_config_dir):
             config = IntellicrackConfig()
 
         # Setup notification tracking
         notifications = []
 
         def section_callback(section, old_val, new_val):
-            notifications.append({
-                "type": "section",
-                "section": section,
-                "old": old_val,
-                "new": new_val
-            })
+            notifications.append({"type": "section", "section": section, "old": old_val, "new": new_val})
 
         def global_callback(section, old_val, new_val):
-            notifications.append({
-                "type": "global",
-                "section": section,
-                "old": old_val,
-                "new": new_val
-            })
+            notifications.append({"type": "global", "section": section, "old": old_val, "new": new_val})
 
         # Register listeners
         assert config.register_listener("ui", section_callback), "Should register section listener"
@@ -444,16 +394,14 @@ class TestIntellicrackConfig(IntellicrackTestBase):
             "log_dir": str(self.temp_dir / "logs"),
             "output_dir": str(self.temp_dir / "output"),
             "ghidra_path": "C:/Program Files/Ghidra/ghidra",
-            "ui": {
-                "theme": "dark"
-            }
+            "ui": {"theme": "dark"},
         }
 
         legacy_file = self.temp_dir / "intellicrack_config.json"
-        with open(legacy_file, 'w', encoding='utf-8') as f:
+        with open(legacy_file, "w", encoding="utf-8") as f:
             json.dump(legacy_config, f, indent=2)
 
-        with patch.object(IntellicrackConfig, '_get_user_config_dir', return_value=self.test_config_dir):
+        with patch.object(IntellicrackConfig, "_get_user_config_dir", return_value=self.test_config_dir):
             config = IntellicrackConfig()
 
         # Test legacy config detection
@@ -461,10 +409,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         self.assert_real_output(detected_configs)
 
         # Should detect our legacy file
-        legacy_found = any(
-            str(legacy_file) in str(detected_config.get("path", ""))
-            for detected_config in detected_configs
-        )
+        legacy_found = any(str(legacy_file) in str(detected_config.get("path", "")) for detected_config in detected_configs)
         assert legacy_found, "Should detect legacy config file"
 
         # Test migration
@@ -482,7 +427,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         """Test REAL thread safety with actual concurrent operations."""
         test_data = self.create_test_config()
 
-        with patch.object(IntellicrackConfig, '_get_user_config_dir', return_value=self.test_config_dir):
+        with patch.object(IntellicrackConfig, "_get_user_config_dir", return_value=self.test_config_dir):
             config = IntellicrackConfig()
 
         errors = []
@@ -523,14 +468,14 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         self.assert_real_output(final_ui_config)
 
         # Should have settings from all threads
-        thread_settings = [key for key in final_ui_config.keys() if key.startswith("thread_")]
+        thread_settings = [key for key in final_ui_config if key.startswith("thread_")]
         assert len(thread_settings) == 50, f"Expected 50 thread settings, got {len(thread_settings)}"
 
     def test_config_backup_and_restore_real(self):
         """Test REAL configuration backup and restore with actual file operations."""
         test_data = self.create_test_config()
 
-        with patch.object(IntellicrackConfig, '_get_user_config_dir', return_value=self.test_config_dir):
+        with patch.object(IntellicrackConfig, "_get_user_config_dir", return_value=self.test_config_dir):
             config = IntellicrackConfig()
 
         # Load and modify config
@@ -549,7 +494,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         assert len(backup_files) > 0, "Should have backup files"
 
         # Corrupt current config
-        with open(self.test_config_file, 'w') as f:
+        with open(self.test_config_file, "w") as f:
             f.write("invalid json content")
 
         # Test restore from backup
@@ -560,7 +505,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         assert success, "Should restore from backup successfully"
 
         # Verify restoration
-        with open(self.test_config_file, encoding='utf-8') as f:
+        with open(self.test_config_file, encoding="utf-8") as f:
             restored_data = json.load(f)
 
         self.assert_real_output(restored_data)
@@ -573,7 +518,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         if self.test_config_file.exists():
             self.test_config_file.unlink()
 
-        with patch.object(IntellicrackConfig, '_get_user_config_dir', return_value=self.test_config_dir):
+        with patch.object(IntellicrackConfig, "_get_user_config_dir", return_value=self.test_config_dir):
             config = IntellicrackConfig()
 
         # Test 1: Initial configuration creation
@@ -617,10 +562,24 @@ class TestIntellicrackConfig(IntellicrackTestBase):
 
         # Test 7: Section access and modification
         all_sections = [
-            "directories", "tools", "analysis", "patching", "network",
-            "ui", "logging", "security", "performance", "runtime",
-            "plugins", "general", "ai", "ml", "preferences",
-            "fonts", "llm_configs", "cli"
+            "directories",
+            "tools",
+            "analysis",
+            "patching",
+            "network",
+            "ui",
+            "logging",
+            "security",
+            "performance",
+            "runtime",
+            "plugins",
+            "general",
+            "ai",
+            "ml",
+            "preferences",
+            "fonts",
+            "llm_configs",
+            "cli",
         ]
 
         for section in all_sections:
@@ -652,7 +611,6 @@ class TestIntellicrackConfig(IntellicrackTestBase):
             "ghidra_path": "C:/Program Files/Ghidra/ghidra",
             "radare2_path": "/usr/bin/r2",
             "frida_path": "frida",
-
             # Legacy top-level fields that need migration
             "ui_theme": "Dark",
             "ui_scale": 100,
@@ -661,52 +619,33 @@ class TestIntellicrackConfig(IntellicrackTestBase):
             "selected_model_path": "/path/to/model.bin",
             "ml_model_path": "/path/to/ml_model.joblib",
             "verify_checksums": True,
-
             # Legacy sections that should be merged
-            "analysis": {
-                "default_timeout": 300,
-                "enable_deep_analysis": True,
-                "parallel_threads": 4
-            },
+            "analysis": {"default_timeout": 300, "enable_deep_analysis": True, "parallel_threads": 4},
             "ui": {
                 "theme": "light",  # Will conflict with ui_theme migration
-                "font_size": 12,   # Will conflict with font_size migration
-                "show_tooltips": True
+                "font_size": 12,  # Will conflict with font_size migration
+                "show_tooltips": True,
             },
-            "security": {
-                "sandbox_analysis": True,
-                "log_sensitive_data": False
-            },
-            "model_repositories": {
-                "local": {
-                    "type": "local",
-                    "enabled": True,
-                    "models_directory": "/legacy/models"
-                }
-            },
-
+            "security": {"sandbox_analysis": True, "log_sensitive_data": False},
+            "model_repositories": {"local": {"type": "local", "enabled": True, "models_directory": "/legacy/models"}},
             # Deprecated fields that should be removed
             "c2": {"deprecated": "data"},
             "external_services": {"deprecated": "data"},
             "api": {"deprecated": "data"},
-            "service_urls": ["deprecated", "urls"]
+            "service_urls": ["deprecated", "urls"],
         }
 
         # Create legacy config file in a detectable location
         # We need to mock the detect_legacy_configs to find our test file
         legacy_file = self.temp_dir / "intellicrack_config.json"
-        with open(legacy_file, 'w', encoding='utf-8') as f:
+        with open(legacy_file, "w", encoding="utf-8") as f:
             json.dump(legacy_config, f, indent=2)
 
-        with patch.object(IntellicrackConfig, '_get_user_config_dir', return_value=self.test_config_dir):
+        with patch.object(IntellicrackConfig, "_get_user_config_dir", return_value=self.test_config_dir):
             config = IntellicrackConfig()
 
         # Test migration by providing the legacy config directly
-        legacy_configs = [{
-            "path": str(legacy_file),
-            "type": "json",
-            "data": legacy_config
-        }]
+        legacy_configs = [{"path": str(legacy_file), "type": "json", "data": legacy_config}]
         success = config.merge_legacy_configs(legacy_configs)
         assert success is True, "Legacy config migration should succeed"
 
@@ -778,9 +717,9 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         assert "plugin_timeout" not in final_config, "Migrated plugin_timeout should be removed"
 
         # Verify backup was created
-        backup_file = legacy_file.with_suffix('.backup')
+        backup_file = legacy_file.with_suffix(".backup")
         assert backup_file.exists(), "Backup of legacy config should be created"
-        with open(backup_file, encoding='utf-8') as f:
+        with open(backup_file, encoding="utf-8") as f:
             backup_data = json.load(f)
         assert backup_data == legacy_config, "Backup should match original legacy config"
 
@@ -797,7 +736,7 @@ class TestConfigManagerSingleton(IntellicrackTestBase):
         with tempfile.TemporaryDirectory() as temp_dir:
             test_config_dir = Path(temp_dir) / "config"
 
-            with patch.object(IntellicrackConfig, '_get_user_config_dir', return_value=test_config_dir):
+            with patch.object(IntellicrackConfig, "_get_user_config_dir", return_value=test_config_dir):
                 config1 = IntellicrackConfig()
                 config2 = IntellicrackConfig()
                 config3 = get_config()
@@ -825,7 +764,7 @@ class TestConfigManagerSingleton(IntellicrackTestBase):
                 with tempfile.TemporaryDirectory() as temp_dir:
                     test_config_dir = Path(temp_dir) / "config"
 
-                    with patch.object(IntellicrackConfig, '_get_user_config_dir', return_value=test_config_dir):
+                    with patch.object(IntellicrackConfig, "_get_user_config_dir", return_value=test_config_dir):
                         instance = IntellicrackConfig()
                         instances.append(instance)
             except Exception as e:

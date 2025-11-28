@@ -1234,17 +1234,15 @@ class HardwareFingerprintGenerator:
 
     def _get_disk_serial_windows(self) -> str:
         """Get disk serial on Windows."""
-        result = self._safe_subprocess_run(
-            [
-                "wmic",
-                "logicaldisk",
-                "where",
-                "drivetype=3",
-                "get",
-                "VolumeSerialNumber",
-                "/format:value",
-            ]
-        )
+        result = self._safe_subprocess_run([
+            "wmic",
+            "logicaldisk",
+            "where",
+            "drivetype=3",
+            "get",
+            "VolumeSerialNumber",
+            "/format:value",
+        ])
         if result and result.stdout:
             for line in result.stdout.split("\n"):
                 if line.startswith("VolumeSerialNumber="):
@@ -1509,7 +1507,7 @@ class ProtocolAnalyzer:
             "confidence": 0.0,
         }
         if dest_port:
-            for _pattern_name, pattern_data in self.patterns.items():
+            for pattern_data in self.patterns.values():
                 if "port" in pattern_data and pattern_data["port"] == dest_port:
                     analysis_result["protocol"] = pattern_data["type"]
                     analysis_result["confidence"] = 0.8
@@ -1572,7 +1570,7 @@ class ProtocolAnalyzer:
                     headers[key.strip()] = value.strip()
             host = headers.get("Host", "")
             protocol = LicenseType.CUSTOM
-            for _pattern_name, pattern_data in self.patterns.items():
+            for pattern_data in self.patterns.values():
                 if "host_pattern" in pattern_data:
                     import re
 
@@ -3926,23 +3924,19 @@ class RuntimeKeyExtractor:
                         if data[offset : offset + 2] == b"H\xb8":
                             constant = int.from_bytes(data[offset + 2 : offset + 10], "little")
                             if self._looks_like_key_constant(constant):
-                                keys["virtualized_keys"].append(
-                                    {
-                                        "type": "vmprotect_constant",
-                                        "value": hex(constant),
-                                        "address": section_addr + offset,
-                                    }
-                                )
+                                keys["virtualized_keys"].append({
+                                    "type": "vmprotect_constant",
+                                    "value": hex(constant),
+                                    "address": section_addr + offset,
+                                })
                         elif data[offset : offset + 2] == b"H\xc7":
                             constant = int.from_bytes(data[offset + 3 : offset + 7], "little")
                             if self._looks_like_key_constant(constant):
-                                keys["virtualized_keys"].append(
-                                    {
-                                        "type": "vmprotect_constant",
-                                        "value": hex(constant),
-                                        "address": section_addr + offset,
-                                    }
-                                )
+                                keys["virtualized_keys"].append({
+                                    "type": "vmprotect_constant",
+                                    "value": hex(constant),
+                                    "address": section_addr + offset,
+                                })
                         offset += 1
                     strings = self._extract_vm_strings(data)
                     for s in strings:
@@ -4151,13 +4145,11 @@ class RuntimeKeyExtractor:
                 block = data[offset : offset + 32]
                 decrypted = self._decrypt_themida_block(block)
                 if decrypted and self._looks_like_license_data(decrypted):
-                    keys.append(
-                        {
-                            "type": "obfuscated",
-                            "value": decrypted.decode("utf-8", errors="ignore"),
-                            "protection": "themida",
-                        }
-                    )
+                    keys.append({
+                        "type": "obfuscated",
+                        "value": decrypted.decode("utf-8", errors="ignore"),
+                        "protection": "themida",
+                    })
             offset += 1
         return keys
 
@@ -4176,13 +4168,11 @@ class RuntimeKeyExtractor:
                         try:
                             decoded = potential_string.decode("utf-8")
                             if self._looks_like_license_string(decoded):
-                                keys.append(
-                                    {
-                                        "type": "virtualized",
-                                        "value": decoded,
-                                        "protection": "vmprotect",
-                                    }
-                                )
+                                keys.append({
+                                    "type": "virtualized",
+                                    "value": decoded,
+                                    "protection": "vmprotect",
+                                })
                         except Exception as e:
                             logger.warning("Error decoding potential license string: %s", e)
             offset += 1
@@ -4251,7 +4241,7 @@ class RuntimeKeyExtractor:
         possible_keys = [b"DefaultKey", mem_info.BaseAddress.to_bytes(4, "little"), b"\x137Bi"]
         for key in possible_keys:
             try:
-                from Crypto.Cipher import ARC4
+                from Crypto.Cipher import ARC4  # noqa: S413
 
                 cipher = ARC4.new(key)
                 test_decrypt = cipher.decrypt(data[:100])
@@ -4360,14 +4350,12 @@ class RuntimeKeyExtractor:
                                             if self._looks_like_api_name(api_data):
                                                 api_name = api_data.split(b"\x00")[0].decode("utf-8", errors="ignore")
                                                 if "license" in api_name.lower() or "crypt" in api_name.lower():
-                                                    keys.append(
-                                                        {
-                                                            "type": "virtualized",
-                                                            "value": api_name,
-                                                            "address": base_addr + offset,
-                                                            "iat_entry": indirect_addr,
-                                                        }
-                                                    )
+                                                    keys.append({
+                                                        "type": "virtualized",
+                                                        "value": api_name,
+                                                        "address": base_addr + offset,
+                                                        "iat_entry": indirect_addr,
+                                                    })
                                     except Exception as e:
                                         logger.warning("Error extracting API information: %s", e)
                                 offset += len(pattern)
@@ -4436,14 +4424,12 @@ class RuntimeKeyExtractor:
                                 break
                             api_addr = int.from_bytes(data[offset + 1 : offset + 5], "little")
                             if api_addr > 4194304:
-                                wrapped_apis.append(
-                                    {
-                                        "type": "virtualized",
-                                        "value": f"wrapped_api_0x{api_addr:08x}",
-                                        "protection": "themida",
-                                        "thunk_addr": addr + offset,
-                                    }
-                                )
+                                wrapped_apis.append({
+                                    "type": "virtualized",
+                                    "value": f"wrapped_api_0x{api_addr:08x}",
+                                    "protection": "themida",
+                                    "thunk_addr": addr + offset,
+                                })
                             offset += 6
                 except Exception as e:
                     logger.warning("Error during memory analysis: %s", e)
@@ -4548,13 +4534,11 @@ class RuntimeKeyExtractor:
                 for _ in range(10):
                     try:
                         if event := registry_watcher(timeout_ms=100):
-                            hooked_data["registry_keys"].append(
-                                {
-                                    "hive": event.Hive,
-                                    "key": event.KeyPath,
-                                    "time": event.TIME_CREATED,
-                                }
-                            )
+                            hooked_data["registry_keys"].append({
+                                "hive": event.Hive,
+                                "key": event.KeyPath,
+                                "time": event.TIME_CREATED,
+                            })
                     except (OSError, AttributeError, TypeError):
                         break
             memory_regions = self._enumerate_memory_regions(process_handle)
@@ -4687,23 +4671,19 @@ class RuntimeKeyExtractor:
                         if data[offset : offset + 2] == b"H\xb8":
                             constant = int.from_bytes(data[offset + 2 : offset + 10], "little")
                             if self._looks_like_key_constant(constant):
-                                keys["virtualized_keys"].append(
-                                    {
-                                        "type": "vmprotect_constant",
-                                        "value": hex(constant),
-                                        "address": section_addr + offset,
-                                    }
-                                )
+                                keys["virtualized_keys"].append({
+                                    "type": "vmprotect_constant",
+                                    "value": hex(constant),
+                                    "address": section_addr + offset,
+                                })
                         elif data[offset : offset + 2] == b"H\xc7":
                             constant = int.from_bytes(data[offset + 3 : offset + 7], "little")
                             if self._looks_like_key_constant(constant):
-                                keys["virtualized_keys"].append(
-                                    {
-                                        "type": "vmprotect_constant",
-                                        "value": hex(constant),
-                                        "address": section_addr + offset,
-                                    }
-                                )
+                                keys["virtualized_keys"].append({
+                                    "type": "vmprotect_constant",
+                                    "value": hex(constant),
+                                    "address": section_addr + offset,
+                                })
                         offset += 1
                     strings = self._extract_vm_strings(data)
                     for s in strings:
@@ -4912,13 +4892,11 @@ class RuntimeKeyExtractor:
                 block = data[offset : offset + 32]
                 decrypted = self._decrypt_themida_block(block)
                 if decrypted and self._looks_like_license_data(decrypted):
-                    keys.append(
-                        {
-                            "type": "obfuscated",
-                            "value": decrypted.decode("utf-8", errors="ignore"),
-                            "protection": "themida",
-                        }
-                    )
+                    keys.append({
+                        "type": "obfuscated",
+                        "value": decrypted.decode("utf-8", errors="ignore"),
+                        "protection": "themida",
+                    })
             offset += 1
         return keys
 
@@ -4937,13 +4915,11 @@ class RuntimeKeyExtractor:
                         try:
                             decoded = potential_string.decode("utf-8")
                             if self._looks_like_license_string(decoded):
-                                keys.append(
-                                    {
-                                        "type": "virtualized",
-                                        "value": decoded,
-                                        "protection": "vmprotect",
-                                    }
-                                )
+                                keys.append({
+                                    "type": "virtualized",
+                                    "value": decoded,
+                                    "protection": "vmprotect",
+                                })
                         except Exception as e:
                             logger.warning("Error decoding potential license string: %s", e)
             offset += 1
@@ -5012,7 +4988,7 @@ class RuntimeKeyExtractor:
         possible_keys = [b"DefaultKey", mem_info.BaseAddress.to_bytes(4, "little"), b"\x137Bi"]
         for key in possible_keys:
             try:
-                from Crypto.Cipher import ARC4
+                from Crypto.Cipher import ARC4  # noqa: S413
 
                 cipher = ARC4.new(key)
                 test_decrypt = cipher.decrypt(data[:100])
@@ -5121,14 +5097,12 @@ class RuntimeKeyExtractor:
                                             if self._looks_like_api_name(api_data):
                                                 api_name = api_data.split(b"\x00")[0].decode("utf-8", errors="ignore")
                                                 if "license" in api_name.lower() or "crypt" in api_name.lower():
-                                                    keys.append(
-                                                        {
-                                                            "type": "virtualized",
-                                                            "value": api_name,
-                                                            "address": base_addr + offset,
-                                                            "iat_entry": indirect_addr,
-                                                        }
-                                                    )
+                                                    keys.append({
+                                                        "type": "virtualized",
+                                                        "value": api_name,
+                                                        "address": base_addr + offset,
+                                                        "iat_entry": indirect_addr,
+                                                    })
                                     except Exception as e:
                                         logger.warning("Error extracting API information: %s", e)
                                 offset += len(pattern)
@@ -5197,14 +5171,12 @@ class RuntimeKeyExtractor:
                                 break
                             api_addr = int.from_bytes(data[offset + 1 : offset + 5], "little")
                             if api_addr > 4194304:
-                                wrapped_apis.append(
-                                    {
-                                        "type": "virtualized",
-                                        "value": f"wrapped_api_0x{api_addr:08x}",
-                                        "protection": "themida",
-                                        "thunk_addr": addr + offset,
-                                    }
-                                )
+                                wrapped_apis.append({
+                                    "type": "virtualized",
+                                    "value": f"wrapped_api_0x{api_addr:08x}",
+                                    "protection": "themida",
+                                    "thunk_addr": addr + offset,
+                                })
                             offset += 6
                 except Exception as e:
                     logger.warning("Error during memory analysis: %s", e)
@@ -5237,68 +5209,64 @@ class RuntimeKeyExtractor:
     def _generate_hook_handler(self, api_name: str, original_addr: int) -> bytes:
         """Generate x64 assembly hook handler code for API interception."""
         handler_code = bytearray()
-        handler_code.extend(
-            [
-                80,
-                81,
-                82,
-                83,
-                84,
-                85,
-                86,
-                87,
-                65,
-                80,
-                65,
-                81,
-                65,
-                82,
-                65,
-                83,
-                65,
-                84,
-                65,
-                85,
-                65,
-                86,
-                65,
-                87,
-            ]
-        )
+        handler_code.extend([
+            80,
+            81,
+            82,
+            83,
+            84,
+            85,
+            86,
+            87,
+            65,
+            80,
+            65,
+            81,
+            65,
+            82,
+            65,
+            83,
+            65,
+            84,
+            65,
+            85,
+            65,
+            86,
+            65,
+            87,
+        ])
         shared_mem_addr = 2147352576
         api_identifier = hash(api_name) & 4294967295
         handler_code.extend([72, 184])
         handler_code.extend(shared_mem_addr.to_bytes(8, "little"))
         handler_code.extend([199, 0])
         handler_code.extend(api_identifier.to_bytes(4, "little"))
-        handler_code.extend(
-            [
-                65,
-                95,
-                65,
-                94,
-                65,
-                93,
-                65,
-                92,
-                65,
-                91,
-                65,
-                90,
-                65,
-                89,
-                65,
-                88,
-                95,
-                94,
-                93,
-                92,
-                91,
-                90,
-                89,
-                88,
-            ]
-        )
+        handler_code.extend([
+            65,
+            95,
+            65,
+            94,
+            65,
+            93,
+            65,
+            92,
+            65,
+            91,
+            65,
+            90,
+            65,
+            89,
+            65,
+            88,
+            95,
+            94,
+            93,
+            92,
+            91,
+            90,
+            89,
+            88,
+        ])
         original_bytes = [72, 137, 92, 36, 8, 72, 137, 116, 36, 16, 87]
         handler_code.extend(original_bytes)
         handler_code.extend([72, 184])
@@ -5419,23 +5387,19 @@ class RuntimeKeyExtractor:
                         if data[offset : offset + 2] == b"H\xb8":
                             constant = int.from_bytes(data[offset + 2 : offset + 10], "little")
                             if self._looks_like_key_constant(constant):
-                                keys["virtualized_keys"].append(
-                                    {
-                                        "type": "vmprotect_constant",
-                                        "value": hex(constant),
-                                        "address": section_addr + offset,
-                                    }
-                                )
+                                keys["virtualized_keys"].append({
+                                    "type": "vmprotect_constant",
+                                    "value": hex(constant),
+                                    "address": section_addr + offset,
+                                })
                         elif data[offset : offset + 2] == b"H\xc7":
                             constant = int.from_bytes(data[offset + 3 : offset + 7], "little")
                             if self._looks_like_key_constant(constant):
-                                keys["virtualized_keys"].append(
-                                    {
-                                        "type": "vmprotect_constant",
-                                        "value": hex(constant),
-                                        "address": section_addr + offset,
-                                    }
-                                )
+                                keys["virtualized_keys"].append({
+                                    "type": "vmprotect_constant",
+                                    "value": hex(constant),
+                                    "address": section_addr + offset,
+                                })
                         offset += 1
                     strings = self._extract_vm_strings(data)
                     for s in strings:
@@ -5644,13 +5608,11 @@ class RuntimeKeyExtractor:
                 block = data[offset : offset + 32]
                 decrypted = self._decrypt_themida_block(block)
                 if decrypted and self._looks_like_license_data(decrypted):
-                    keys.append(
-                        {
-                            "type": "obfuscated",
-                            "value": decrypted.decode("utf-8", errors="ignore"),
-                            "protection": "themida",
-                        }
-                    )
+                    keys.append({
+                        "type": "obfuscated",
+                        "value": decrypted.decode("utf-8", errors="ignore"),
+                        "protection": "themida",
+                    })
             offset += 1
         return keys
 
@@ -5669,13 +5631,11 @@ class RuntimeKeyExtractor:
                         try:
                             decoded = potential_string.decode("utf-8")
                             if self._looks_like_license_string(decoded):
-                                keys.append(
-                                    {
-                                        "type": "virtualized",
-                                        "value": decoded,
-                                        "protection": "vmprotect",
-                                    }
-                                )
+                                keys.append({
+                                    "type": "virtualized",
+                                    "value": decoded,
+                                    "protection": "vmprotect",
+                                })
                         except Exception as e:
                             logger.warning("Error decoding potential license string: %s", e)
             offset += 1
@@ -5744,7 +5704,7 @@ class RuntimeKeyExtractor:
         possible_keys = [b"DefaultKey", mem_info.BaseAddress.to_bytes(4, "little"), b"\x137Bi"]
         for key in possible_keys:
             try:
-                from Crypto.Cipher import ARC4
+                from Crypto.Cipher import ARC4  # noqa: S413
 
                 cipher = ARC4.new(key)
                 test_decrypt = cipher.decrypt(data[:100])
@@ -5853,14 +5813,12 @@ class RuntimeKeyExtractor:
                                             if self._looks_like_api_name(api_data):
                                                 api_name = api_data.split(b"\x00")[0].decode("utf-8", errors="ignore")
                                                 if "license" in api_name.lower() or "crypt" in api_name.lower():
-                                                    keys.append(
-                                                        {
-                                                            "type": "virtualized",
-                                                            "value": api_name,
-                                                            "address": base_addr + offset,
-                                                            "iat_entry": indirect_addr,
-                                                        }
-                                                    )
+                                                    keys.append({
+                                                        "type": "virtualized",
+                                                        "value": api_name,
+                                                        "address": base_addr + offset,
+                                                        "iat_entry": indirect_addr,
+                                                    })
                                     except Exception as e:
                                         logger.warning("Error extracting API information: %s", e)
                                 offset += len(pattern)
@@ -5929,14 +5887,12 @@ class RuntimeKeyExtractor:
                                 break
                             api_addr = int.from_bytes(data[offset + 1 : offset + 5], "little")
                             if api_addr > 4194304:
-                                wrapped_apis.append(
-                                    {
-                                        "type": "virtualized",
-                                        "value": f"wrapped_api_0x{api_addr:08x}",
-                                        "protection": "themida",
-                                        "thunk_addr": addr + offset,
-                                    }
-                                )
+                                wrapped_apis.append({
+                                    "type": "virtualized",
+                                    "value": f"wrapped_api_0x{api_addr:08x}",
+                                    "protection": "themida",
+                                    "thunk_addr": addr + offset,
+                                })
                             offset += 6
                 except Exception as e:
                     logger.warning("Error during memory analysis: %s", e)
@@ -6118,7 +6074,7 @@ class FridaKeyExtractor:
 
     def detach_all(self) -> None:
         """Detach all Frida sessions."""
-        for _process_name, session in self.sessions.items():
+        for session in self.sessions.values():
             try:
                 session.detach()
             except Exception as e:
@@ -6698,7 +6654,7 @@ class ProxyInterceptor:
     def _analyze_product_features(self, product_id: str, version: str) -> dict:
         """Analyze product and return appropriate feature flags."""
         try:
-            major_version = int(version.split(".")[0]) if "." in version else int(version)
+            major_version = int(version.split(".", maxsplit=1)[0]) if "." in version else int(version)
         except (ValueError, TypeError, AttributeError):
             major_version = 1
         features = {
@@ -7468,7 +7424,7 @@ class ProxyInterceptor:
                 if "minimum count" in line.lower():
                     import re
 
-                    if match := re.search("(\\d+)", line):
+                    if match := re.search(r"(\d+)", line):
                         return int(match.group(1))
         except Exception as e:
             logger.warning("Error extracting minimum clients requirement: %s", e)
@@ -7612,16 +7568,14 @@ class ProxyInterceptor:
         }
         if subscription_type in {"team", "enterprise", "education"}:
             base_entitlements["storage"]["quota"] = 1024 * 1024 * 1024 * 1024
-            base_entitlements["services"].extend(
-                [
-                    "adobe_fonts",
-                    "adobe_stock",
-                    "behance_pro",
-                    "adobe_portfolio",
-                    "adobe_spark",
-                    "libraries",
-                ]
-            )
+            base_entitlements["services"].extend([
+                "adobe_fonts",
+                "adobe_stock",
+                "behance_pro",
+                "adobe_portfolio",
+                "adobe_spark",
+                "libraries",
+            ])
         elif subscription_type in {"annual", "monthly", "creative_cloud_all"}:
             base_entitlements["storage"]["quota"] = 100 * 1024 * 1024 * 1024
             base_entitlements["services"].extend(["adobe_fonts", "behance_pro", "libraries"])
@@ -7856,11 +7810,11 @@ class LicenseServerEmulator:
         """Configure FastAPI routes."""
 
         @self.app.get("/")
-        async def root() -> dict[str, str]:
+        async def root() -> dict[str, str]:  # noqa: RUF029 - FastAPI async route handlers don't require await
             return {"message": "Intellicrack License Server Emulator v2.0.0", "status": "running"}
 
         @self.app.get("/health")
-        async def health_check() -> dict[str, str]:
+        async def health_check() -> dict[str, str]:  # noqa: RUF029 - FastAPI async route handlers don't require await
             return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
 
         @self.app.post("/api/v1/license/validate", response_model=LicenseResponse)
@@ -7892,7 +7846,7 @@ class LicenseServerEmulator:
             return await self._handle_adobe_request(request, client_request)
 
         @self.app.get("/api/v1/fingerprint/generate")
-        async def generate_fingerprint() -> dict[str, Any]:
+        async def generate_fingerprint() -> dict[str, Any]:  # noqa: RUF029 - FastAPI async route handlers don't require await
             fingerprint = self.fingerprint_gen.generate_fingerprint()
             return {
                 "fingerprint": fingerprint.generate_hash(),
@@ -7928,7 +7882,7 @@ class LicenseServerEmulator:
             }
 
         @self.app.get("/api/v1/proxy/stats")
-        async def get_proxy_stats() -> dict[str, Any]:
+        async def get_proxy_stats() -> dict[str, Any]:  # noqa: RUF029 - FastAPI async route handlers don't require await
             """Get proxy interception statistics."""
             return self.proxy_interceptor.get_statistics()
 
@@ -7951,28 +7905,22 @@ class LicenseServerEmulator:
         recommendations = []
         protocol = analysis.get("protocol", LicenseType.CUSTOM)
         if protocol == LicenseType.FLEXLM:
-            recommendations.extend(
-                (
-                    "Use FLEXlm daemon emulation on port 27000",
-                    "Implement vendor daemon for specific features",
-                    "Generate valid license file with proper checksums",
-                )
-            )
+            recommendations.extend((
+                "Use FLEXlm daemon emulation on port 27000",
+                "Implement vendor daemon for specific features",
+                "Generate valid license file with proper checksums",
+            ))
         elif protocol == LicenseType.HASP:
-            recommendations.extend(
-                (
-                    "Emulate HASP HL dongle on port 1947",
-                    "Implement Sentinel LDK protocol responses",
-                    "Generate proper session IDs and feature IDs",
-                )
-            )
+            recommendations.extend((
+                "Emulate HASP HL dongle on port 1947",
+                "Implement Sentinel LDK protocol responses",
+                "Generate proper session IDs and feature IDs",
+            ))
         elif protocol == LicenseType.MICROSOFT_KMS:
-            recommendations.extend(
-                (
-                    "Set up KMS server on port 1688",
-                    "Generate valid KMS client machine IDs",
-                )
-            )
+            recommendations.extend((
+                "Set up KMS server on port 1688",
+                "Generate valid KMS client machine IDs",
+            ))
             recommendations.append("Implement proper activation count responses")
         elif protocol == LicenseType.ADOBE:
             recommendations.append("Intercept Adobe licensing endpoints")
@@ -8307,15 +8255,13 @@ class LicenseServerEmulator:
             from cryptography.x509.oid import NameOID
 
             key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-            subject = issuer = x509.Name(
-                [
-                    x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-                    x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "State"),
-                    x509.NameAttribute(NameOID.LOCALITY_NAME, "City"),
-                    x509.NameAttribute(NameOID.ORGANIZATION_NAME, "License Server"),
-                    x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
-                ]
-            )
+            subject = issuer = x509.Name([
+                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "State"),
+                x509.NameAttribute(NameOID.LOCALITY_NAME, "City"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "License Server"),
+                x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
+            ])
             cert = (
                 x509.CertificateBuilder()
                 .subject_name(subject)
@@ -8325,13 +8271,11 @@ class LicenseServerEmulator:
                 .not_valid_before(datetime.datetime.utcnow())
                 .not_valid_after(datetime.datetime.utcnow() + datetime.timedelta(days=365))
                 .add_extension(
-                    x509.SubjectAlternativeName(
-                        [
-                            x509.DNSName("localhost"),
-                            x509.DNSName("127.0.0.1"),
-                            x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
-                        ]
-                    ),
+                    x509.SubjectAlternativeName([
+                        x509.DNSName("localhost"),
+                        x509.DNSName("127.0.0.1"),
+                        x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
+                    ]),
                     critical=False,
                 )
                 .sign(key, hashes.SHA256())

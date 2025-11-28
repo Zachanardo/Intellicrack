@@ -872,7 +872,7 @@ except ImportError as e:
 
         # Exceptions
         RequestException = RequestError
-        ConnectionError = ConnectionError
+        ConnectionError = IntellicrackConnectionError
         HTTPError = HTTPError
         Timeout = TimeoutError
         TooManyRedirects = TooManyRedirectsError
@@ -887,7 +887,7 @@ except ImportError as e:
             (),
             {
                 "RequestException": RequestError,
-                "ConnectionError": ConnectionError,
+                "ConnectionError": IntellicrackConnectionError,
                 "HTTPError": HTTPError,
                 "Timeout": Timeout,
                 "TooManyRedirects": TooManyRedirects,

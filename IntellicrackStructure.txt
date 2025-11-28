@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Mon, Nov 24, 2025 09:24:31 PM
+Generated: Wed, Nov 26, 2025 10:32:10 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -1197,6 +1197,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   └── workspace.xml
 │   │   ├── __pycache__/
 │   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── anti_analysis_detector.cpython-312.pyc
 │   │   │   └── anti_analysis_detector.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── AdvancedAnalysis.java

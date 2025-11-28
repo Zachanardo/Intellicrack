@@ -132,7 +132,7 @@ class BinaryFeatureExtractor:
             for byte in self.data:
                 histogram[byte] += 1
             if normalize and len(self.data) > 0:
-                histogram = histogram / len(self.data)
+                histogram /= len(self.data)
             return histogram
 
         # Create opcode frequency map
@@ -212,7 +212,7 @@ class BinaryFeatureExtractor:
         histogram[-1] = other_count
 
         if normalize and total_instructions > 0:
-            histogram = histogram / total_instructions
+            histogram /= total_instructions
 
         return histogram
 
@@ -407,7 +407,7 @@ class BinaryFeatureExtractor:
 
         # Create feature vector based on API presence
         feature_idx = 0
-        for _category, apis in api_categories.items():
+        for apis in api_categories.values():
             category_count = 0
             for api in apis:
                 for imp in imports:
@@ -515,7 +515,7 @@ class BinaryFeatureExtractor:
 
         # Count pattern occurrences
         feature_idx = 0
-        for _category, keywords in patterns.items():
+        for keywords in patterns.values():
             if feature_idx >= len(features):
                 break
 

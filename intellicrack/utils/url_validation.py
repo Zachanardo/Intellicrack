@@ -1,10 +1,11 @@
+"""URL validation utilities for secure domain and URL checking."""
+
 from typing import cast
 from urllib.parse import urlparse
 
 
 def is_domain_in_url(domain: str, url: str) -> bool:
-    """
-    Securely check if a domain is in a URL.
+    """Securely check if a domain is in a URL.
 
     Args:
         domain: The domain to check for (e.g., "example.com")
@@ -18,15 +19,14 @@ def is_domain_in_url(domain: str, url: str) -> bool:
         hostname = parsed.hostname
         if not hostname:
             return False
-        hostname = cast(str, hostname)
+        hostname = cast("str", hostname)
         return hostname == domain or hostname.endswith(f".{domain}")
     except (ValueError, AttributeError):
         return False
 
 
 def is_domain_in_string(domain: str, text: str) -> bool:
-    """
-    Securely check if a domain appears in a text string.
+    """Securely check if a domain appears in a text string.
 
     For JWT issuer fields and other non-URL contexts where we expect
     the domain to appear as part of a URL or standalone.

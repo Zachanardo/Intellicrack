@@ -845,7 +845,7 @@ class ModelFormatConverter:
                 "seq2seq": lambda path: AutoModel.from_pretrained(path, trust_remote_code=True),
                 "classification": lambda path: AutoModel.from_pretrained(path, num_labels=2),
                 "token_classification": lambda path: AutoModel.from_pretrained(path, num_labels=9),
-                "question_answering": lambda path: AutoModel.from_pretrained(path),
+                "question_answering": AutoModel.from_pretrained,
                 "feature_extraction": AutoModel,
             }
 

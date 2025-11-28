@@ -321,17 +321,17 @@ class LangChainIntegration:
                 (
                     Tool(
                         name="analyze_binary",
-                        func=lambda input_str: self._handle_analyze(input_str),
+                        func=self._handle_analyze,
                         description="Analyze a binary file. Input: 'path/to/binary [analysis_types]'",
                     ),
                     Tool(
                         name="suggest_patches",
-                        func=lambda input_str: self._handle_suggest_patches(input_str),
+                        func=self._handle_suggest_patches,
                         description="Suggest patches for a binary. Input: 'path/to/binary'",
                     ),
                     Tool(
                         name="intellicrack_cli",
-                        func=lambda input_str: self._handle_cli_command(input_str),
+                        func=self._handle_cli_command,
                         description="Run Intellicrack CLI command. Input: 'description | command args'",
                     ),
                 )

@@ -75,7 +75,7 @@ class TerminalSessionWidget(QWidget):
         controls_layout = QHBoxLayout()
 
         self.new_session_btn = QPushButton("+ New Session")
-        self.new_session_btn.clicked.connect(lambda: self.create_new_session())
+        self.new_session_btn.clicked.connect(self.create_new_session)
         controls_layout.addWidget(self.new_session_btn)
 
         self.close_session_btn = QPushButton("✖ Close Session")

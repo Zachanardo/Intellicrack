@@ -158,7 +158,7 @@ def safe_serialize(obj: object, filepath: Path, use_pickle: bool = False) -> Non
 
     """
     if use_pickle:
-        import pickle
+        import pickle  # noqa: S403
 
         logger.warning("Using pickle for serialization (security risk) at %s", filepath)
         with open(filepath, "wb") as f:
@@ -169,7 +169,7 @@ def safe_serialize(obj: object, filepath: Path, use_pickle: bool = False) -> Non
                 dump(obj, f)
         except (TypeError, ValueError) as e:
             logger.error("JSON serialization failed, falling back to pickle: %s", e)
-            import pickle
+            import pickle  # noqa: S403
 
             with open(filepath, "wb") as f:
                 pickle.dump(obj, f)
@@ -187,13 +187,13 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> object:
 
     """
     if use_pickle:
-        import pickle
+        import pickle  # noqa: S403
 
         logger.warning("Loading pickle file (security risk) from %s", filepath)
         with open(filepath, "rb") as f:
             # Use a custom Unpickler to restrict what can be unpickled
 
-            class RestrictedUnpickler(pickle.Unpickler):
+            class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
                 def find_class(self, module: str, name: str) -> type:
                     """Restrict unpickling to safe classes from whitelisted modules.
 
@@ -245,12 +245,12 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> object:
                 return load(f)
         except (json.JSONDecodeError, UnicodeDecodeError):
             logger.warning("JSON deserialization failed, trying pickle from %s", filepath)
-            import pickle
+            import pickle  # noqa: S403
 
             with open(filepath, "rb") as f:
                 # Use a custom Unpickler to restrict what can be unpickled
 
-                class RestrictedUnpickler(pickle.Unpickler):
+                class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
                     def find_class(self, module: str, name: str) -> type:
                         """Restrict unpickling to safe classes from whitelisted modules.
 

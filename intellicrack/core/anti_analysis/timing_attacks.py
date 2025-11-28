@@ -158,7 +158,7 @@ class TimingAttackDefense:
                 for i in range(10000):
                     result += i * i
                     result = (result << 1) ^ (result >> 1)
-                    result = result % 2147483647  # Keep in 32-bit range
+                    result %= 2147483647  # Keep in 32-bit range
 
                 iterations += 1
 

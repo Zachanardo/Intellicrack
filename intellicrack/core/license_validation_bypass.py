@@ -68,29 +68,29 @@ class LicenseValidationBypass:
         """Build patterns for RSA key detection in binary data."""
         logger.debug("Building RSA key detection patterns.")
         patterns = [
-            re.compile(b"\\x30[\\x81\\x82][\\x01-\\x02][\\x00-\\xff]\\x30\\x0d\\x06\\x09\\x2a\\x86\\x48\\x86\\xf7\\x0d\\x01\\x01\\x01")
+            re.compile(rb"\x30[\x81\x82][\x01-\x02][\x00-\xff]\x30\x0d\x06\x09\x2a\x86\x48\x86\xf7\x0d\x01\x01\x01")
         ]
 
         logger.debug("Added ASN.1 DER RSA public key pattern.")
 
         # PKCS#1 RSA private key
-        patterns.append(re.compile(b"\\x30[\\x82][\\x04-\\x09][\\x00-\\xff]\\x02\\x01\\x00"))
+        patterns.append(re.compile(rb"\x30[\x82][\x04-\x09][\x00-\xff]\x02\x01\x00"))
         logger.debug("Added PKCS#1 RSA private key pattern.")
 
         # Common RSA exponents
-        patterns.append(re.compile(b"\\x01\\x00\\x01"))  # 65537
-        patterns.append(re.compile(b"\\x00\\x00\\x00\\x03"))  # 3
+        patterns.append(re.compile(rb"\x01\x00\x01"))  # 65537
+        patterns.append(re.compile(rb"\x00\x00\x00\x03"))  # 3
         logger.debug("Added common RSA exponent patterns.")
 
         # OpenSSL RSA structure markers
-        patterns.append(re.compile(b"RSA\\x00"))
-        patterns.append(re.compile(b"-----BEGIN RSA"))
-        patterns.append(re.compile(b"-----BEGIN PUBLIC KEY"))
+        patterns.append(re.compile(rb"RSA\x00"))
+        patterns.append(re.compile(rb"-----BEGIN RSA"))
+        patterns.append(re.compile(rb"-----BEGIN PUBLIC KEY"))
         logger.debug("Added OpenSSL RSA structure marker patterns.")
 
         # Microsoft CryptoAPI markers
-        patterns.append(re.compile(b"RSA1"))  # PUBLICKEYSTRUC
-        patterns.append(re.compile(b"RSA2"))  # PRIVATEKEYSTRUC
+        patterns.append(re.compile(rb"RSA1"))  # PUBLICKEYSTRUC
+        patterns.append(re.compile(rb"RSA2"))  # PRIVATEKEYSTRUC
         logger.debug("Added Microsoft CryptoAPI marker patterns.")
 
         logger.info(f"Built {len(patterns)} RSA key patterns.")
@@ -101,23 +101,23 @@ class LicenseValidationBypass:
         """Build patterns for ECC key detection."""
         logger.debug("Building ECC key detection patterns.")
         patterns = [
-            re.compile(b"\x30\x59\x30\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01"),
-            re.compile(b"\x30\x76\x30\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01"),
-            re.compile(b"\x30\x81\x9b\x30\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01"),
+            re.compile(rb"\x30\x59\x30\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01"),
+            re.compile(rb"\x30\x76\x30\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01"),
+            re.compile(rb"\x30\x81\x9b\x30\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01"),
         ]
 
         logger.debug("Added ASN.1 DER ECC public key pattern.")
 
         # Named curves OIDs
-        patterns.append(re.compile(b"\x06\x08\x2a\x86\x48\xce\x3d\x03\x01\x07"))  # P-256
-        patterns.append(re.compile(b"\x06\x05\x2b\x81\x04\x00\x22"))  # P-384
-        patterns.append(re.compile(b"\x06\x05\x2b\x81\x04\x00\x23"))  # P-521
-        patterns.append(re.compile(b"\x06\x05\x2b\x81\x04\x00\x0a"))  # secp256k1
+        patterns.append(re.compile(rb"\x06\x08\x2a\x86\x48\xce\x3d\x03\x01\x07"))  # P-256
+        patterns.append(re.compile(rb"\x06\x05\x2b\x81\x04\x00\x22"))  # P-384
+        patterns.append(re.compile(rb"\x06\x05\x2b\x81\x04\x00\x23"))  # P-521
+        patterns.append(re.compile(rb"\x06\x05\x2b\x81\x04\x00\x0a"))  # secp256k1
         logger.debug("Added named curve OID patterns.")
 
         # OpenSSL EC markers
-        patterns.append(re.compile(b"EC\x00"))
-        patterns.append(re.compile(b"-----BEGIN EC"))
+        patterns.append(re.compile(rb"EC\x00"))
+        patterns.append(re.compile(rb"-----BEGIN EC"))
         logger.debug("Added OpenSSL EC marker patterns.")
 
         logger.info(f"Built {len(patterns)} ECC key patterns.")
@@ -127,13 +127,13 @@ class LicenseValidationBypass:
     def _build_cert_patterns(self) -> list[re.Pattern]:
         """Build patterns for certificate detection."""
         logger.debug("Building certificate detection patterns.")
-        patterns = [re.compile(b"\x30\x82[\x03-\x08][\x00-\xff]\x30\x82")]
+        patterns = [re.compile(rb"\x30\x82[\x03-\x08][\x00-\xff]\x30\x82")]
 
         logger.debug("Added X.509 certificate pattern.")
 
         # Certificate markers
-        patterns.append(re.compile(b"-----BEGIN CERTIFICATE"))
-        patterns.append(re.compile(b"-----END CERTIFICATE"))
+        patterns.append(re.compile(rb"-----BEGIN CERTIFICATE"))
+        patterns.append(re.compile(rb"-----END CERTIFICATE"))
         logger.debug("Added certificate marker patterns.")
 
         logger.info(f"Built {len(patterns)} certificate patterns.")

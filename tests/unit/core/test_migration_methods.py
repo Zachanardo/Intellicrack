@@ -29,7 +29,7 @@ import time
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Union
 
-sys.path.insert(0, 'C:\\Intellicrack')
+sys.path.insert(0, "C:\\Intellicrack")
 
 from intellicrack.core.config_manager import IntellicrackConfig
 
@@ -81,7 +81,7 @@ class RealLegacyFileGenerator:
                 "C:\\Windows\\System32\\notepad.exe",
                 "C:\\Games\\Steam\\steamapps\\common\\Cyberpunk 2077\\bin\\x64\\Cyberpunk2077.exe",
                 "C:\\Tools\\IDA Pro\\ida64.exe",
-                "C:\\Program Files\\VMware\\VMware Workstation\\vmware.exe"
+                "C:\\Program Files\\VMware\\VMware Workstation\\vmware.exe",
             ],
             "script_types/frida/use_qemu": True,
             "script_types/ghidra/use_qemu": False,
@@ -90,18 +90,18 @@ class RealLegacyFileGenerator:
             "theme/mode": "dark",
             "theme/accent_color": "#00BCD4",
             "theme/primary_color": "#2196F3",
-            "geometry/main_window": b'\x01\xd9\xd0\xcb\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\x7f\x04\x37',
-            "state/main_window": b'\x00\x00\x00\xff\x00\x00\x00\x00\xfd\x00\x00\x00\x03',
+            "geometry/main_window": b"\x01\xd9\xd0\xcb\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\x7f\x04\x37",
+            "state/main_window": b"\x00\x00\x00\xff\x00\x00\x00\x00\xfd\x00\x00\x00\x03",
             "splitters/main": [300, 800, 200],
             "splitters/analysis": [400, 600],
-            "dialogs/preferences/geometry": b'\x01\xd9\xd0\xcb\x00\x03\x00\x00\x00\x00\x02\x00',
+            "dialogs/preferences/geometry": b"\x01\xd9\xd0\xcb\x00\x03\x00\x00\x00\x00\x02\x00",
             "execution/last_script": "C:\\Scripts\\binary_analysis\\analyze_protection.js",
             "execution/recent_files": [
                 "C:\\Samples\\malware\\sample1.exe",
                 "C:\\Samples\\games\\game_engine.dll",
                 "C:\\Samples\\apps\\commercial_app.exe",
                 "C:\\Samples\\system\\driver.sys",
-                "C:\\Samples\\mobile\\android_app.apk"
+                "C:\\Samples\\mobile\\android_app.apk",
             ],
             "analysis/auto_save": True,
             "analysis/timeout": 300,
@@ -112,7 +112,7 @@ class RealLegacyFileGenerator:
             "ui/font_family": "JetBrains Mono",
             "ui/font_size": 11,
             "ui/show_line_numbers": True,
-            "ui/word_wrap": False
+            "ui/word_wrap": False,
         }
 
     @staticmethod
@@ -132,7 +132,7 @@ class RealLegacyFileGenerator:
                 "usage_count": 387,
                 "cost_per_token": 0.00003,
                 "supports_vision": True,
-                "context_window": 128000
+                "context_window": 128000,
             },
             "claude-3-5-sonnet": {
                 "provider": "anthropic",
@@ -145,7 +145,7 @@ class RealLegacyFileGenerator:
                 "usage_count": 234,
                 "cost_per_token": 0.000015,
                 "supports_vision": True,
-                "context_window": 200000
+                "context_window": 200000,
             },
             "llama-3-1-70b": {
                 "provider": "local",
@@ -159,7 +159,7 @@ class RealLegacyFileGenerator:
                 "threads": 8,
                 "batch_size": 512,
                 "mmap": True,
-                "use_gpu": True
+                "use_gpu": True,
             },
             "codellama-34b": {
                 "provider": "local",
@@ -169,7 +169,7 @@ class RealLegacyFileGenerator:
                 "temperature": 0.2,
                 "specialized_for": "code_generation",
                 "context_size": 16384,
-                "quantization": "q4_0"
+                "quantization": "q4_0",
             },
             "mistral-7b": {
                 "provider": "mistral",
@@ -178,8 +178,8 @@ class RealLegacyFileGenerator:
                 "max_tokens": 4096,
                 "temperature": 0.6,
                 "last_used": "2025-01-15T18:20:00Z",
-                "usage_count": 89
-            }
+                "usage_count": 89,
+            },
         }
 
     @staticmethod
@@ -191,7 +191,7 @@ class RealLegacyFileGenerator:
                 "system_prompt": "You are an expert binary analysis assistant specialized in reverse engineering and malware analysis.",
                 "temperature_override": 0.3,
                 "max_tokens_override": 4096,
-                "use_for": ["general_analysis", "code_explanation"]
+                "use_for": ["general_analysis", "code_explanation"],
             },
             "code_generation": {
                 "model": "claude-3-5-sonnet",
@@ -199,29 +199,29 @@ class RealLegacyFileGenerator:
                 "temperature_override": 0.2,
                 "max_tokens_override": 8192,
                 "format": "code",
-                "use_for": ["frida_scripts", "ghidra_scripts", "exploitation"]
+                "use_for": ["frida_scripts", "ghidra_scripts", "exploitation"],
             },
             "local_analysis": {
                 "model": "llama-3-1-70b",
                 "system_prompt": "Analyze binary protection mechanisms and provide detailed technical insights.",
                 "temperature_override": 0.5,
                 "streaming": True,
-                "use_for": ["protection_analysis", "pattern_recognition"]
+                "use_for": ["protection_analysis", "pattern_recognition"],
             },
             "vulnerability_research": {
                 "model": "gpt-4-turbo",
                 "system_prompt": "Focus on vulnerability identification and exploitation technique development.",
                 "temperature_override": 0.4,
                 "max_tokens_override": 6144,
-                "use_for": ["vuln_analysis", "exploit_development"]
+                "use_for": ["vuln_analysis", "exploit_development"],
             },
             "rapid_triage": {
                 "model": "mistral-7b",
                 "system_prompt": "Provide quick initial analysis and triage recommendations.",
                 "temperature_override": 0.7,
                 "max_tokens_override": 2048,
-                "use_for": ["initial_scan", "triage"]
-            }
+                "use_for": ["initial_scan", "triage"],
+            },
         }
 
     @staticmethod
@@ -233,41 +233,11 @@ class RealLegacyFileGenerator:
             "total_cost": 456.78,
             "average_response_time": 2.3,
             "by_model": {
-                "gpt-4-turbo": {
-                    "requests": 1234,
-                    "tokens": 4567890,
-                    "cost": 234.56,
-                    "avg_response_time": 3.1,
-                    "success_rate": 0.987
-                },
-                "claude-3-5-sonnet": {
-                    "requests": 876,
-                    "tokens": 2876543,
-                    "cost": 178.90,
-                    "avg_response_time": 2.8,
-                    "success_rate": 0.992
-                },
-                "llama-3-1-70b": {
-                    "requests": 543,
-                    "tokens": 1234567,
-                    "cost": 0.0,
-                    "avg_response_time": 4.2,
-                    "success_rate": 0.945
-                },
-                "codellama-34b": {
-                    "requests": 123,
-                    "tokens": 234567,
-                    "cost": 0.0,
-                    "avg_response_time": 1.9,
-                    "success_rate": 0.967
-                },
-                "mistral-7b": {
-                    "requests": 71,
-                    "tokens": 21000,
-                    "cost": 43.32,
-                    "avg_response_time": 1.1,
-                    "success_rate": 0.972
-                }
+                "gpt-4-turbo": {"requests": 1234, "tokens": 4567890, "cost": 234.56, "avg_response_time": 3.1, "success_rate": 0.987},
+                "claude-3-5-sonnet": {"requests": 876, "tokens": 2876543, "cost": 178.90, "avg_response_time": 2.8, "success_rate": 0.992},
+                "llama-3-1-70b": {"requests": 543, "tokens": 1234567, "cost": 0.0, "avg_response_time": 4.2, "success_rate": 0.945},
+                "codellama-34b": {"requests": 123, "tokens": 234567, "cost": 0.0, "avg_response_time": 1.9, "success_rate": 0.967},
+                "mistral-7b": {"requests": 71, "tokens": 21000, "cost": 43.32, "avg_response_time": 1.1, "success_rate": 0.972},
             },
             "by_date": {
                 "2025-01-10": {"requests": 89, "tokens": 234567, "cost": 12.34},
@@ -276,21 +246,16 @@ class RealLegacyFileGenerator:
                 "2025-01-13": {"requests": 145, "tokens": 498765, "cost": 28.90},
                 "2025-01-14": {"requests": 178, "tokens": 623456, "cost": 45.67},
                 "2025-01-15": {"requests": 203, "tokens": 789123, "cost": 67.89},
-                "2025-01-16": {"requests": 156, "tokens": 445678, "cost": 34.21}
+                "2025-01-16": {"requests": 156, "tokens": 445678, "cost": 34.21},
             },
             "by_profile": {
                 "default": {"requests": 1456, "tokens": 4567890, "success_rate": 0.985},
                 "code_generation": {"requests": 789, "tokens": 2345678, "success_rate": 0.993},
                 "local_analysis": {"requests": 345, "tokens": 1234567, "success_rate": 0.956},
                 "vulnerability_research": {"requests": 178, "tokens": 567890, "success_rate": 0.991},
-                "rapid_triage": {"requests": 79, "tokens": 218542, "success_rate": 0.974}
+                "rapid_triage": {"requests": 79, "tokens": 218542, "success_rate": 0.974},
             },
-            "error_rates": {
-                "api_errors": 23,
-                "timeout_errors": 12,
-                "quota_exceeded": 5,
-                "invalid_responses": 8
-            }
+            "error_rates": {"api_errors": 23, "timeout_errors": 12, "quota_exceeded": 5, "invalid_responses": 8},
         }
 
     @staticmethod
@@ -306,34 +271,28 @@ class RealLegacyFileGenerator:
                         "cores": 4,
                         "gpu_passthrough": True,
                         "nested_virtualization": True,
-                        "snapshot_enabled": True
+                        "snapshot_enabled": True,
                     },
                     "virtualbox": {
                         "memory": 4096,
                         "cores": 2,
                         "gpu_passthrough": False,
                         "nested_virtualization": False,
-                        "snapshot_enabled": True
+                        "snapshot_enabled": True,
                     },
                     "hyperv": {
                         "memory": 6144,
                         "cores": 3,
                         "gpu_passthrough": False,
                         "nested_virtualization": True,
-                        "snapshot_enabled": False
+                        "snapshot_enabled": False,
                     },
-                    "qemu": {
-                        "memory": 2048,
-                        "cores": 2,
-                        "acceleration": "kvm",
-                        "display": "gtk",
-                        "network": "user"
-                    }
+                    "qemu": {"memory": 2048, "cores": 2, "acceleration": "kvm", "display": "gtk", "network": "user"},
                 },
                 "snapshot_dir": "D:\\VM_Snapshots\\Intellicrack",
                 "auto_snapshot": True,
                 "snapshot_retention": 10,
-                "vm_isolation": "strict"
+                "vm_isolation": "strict",
             },
             "emergency_mode": True,
             "emergency_reason": "Critical protection bypass failure detected",
@@ -357,21 +316,21 @@ class RealLegacyFileGenerator:
                 "memory_threshold": 90,
                 "disk_io_limit": 1000,
                 "network_bandwidth_limit": 100,
-                "analysis_timeout": 1800
+                "analysis_timeout": 1800,
             },
             "legacy_api_keys": {
                 "virustotal": "vt_abcd1234567890efghijklmnopqrstuvwxyz",
                 "hybrid_analysis": "ha_zyxwvutsrqponmlkjihgfedcba0987654321",
                 "malware_bazaar": "mb_key_fedcba0987654321",
                 "shodan": "shodan_key_123456789abcdef",
-                "urlvoid": "uv_key_987654321fedcba"
+                "urlvoid": "uv_key_987654321fedcba",
             },
             "deprecated_features": {
                 "use_old_ui": False,
                 "legacy_export": True,
                 "old_plugin_system": False,
                 "deprecated_analysis_engine": False,
-                "legacy_reporting": True
+                "legacy_reporting": True,
             },
             "user_preferences": {
                 "language": "en_US",
@@ -379,7 +338,7 @@ class RealLegacyFileGenerator:
                 "date_format": "MM/DD/YYYY",
                 "time_format": "12h",
                 "currency": "USD",
-                "number_format": "US"
+                "number_format": "US",
             },
             "experimental_features": {
                 "ai_assisted_debugging": True,
@@ -388,7 +347,7 @@ class RealLegacyFileGenerator:
                 "automated_exploit_generation": True,
                 "cloud_analysis": False,
                 "distributed_analysis": True,
-                "real_time_protection": False
+                "real_time_protection": False,
             },
             "backup_settings": {
                 "auto_backup": True,
@@ -397,24 +356,20 @@ class RealLegacyFileGenerator:
                 "max_backups": 15,
                 "compression": True,
                 "encryption": True,
-                "remote_backup": {
-                    "enabled": False,
-                    "provider": "aws_s3",
-                    "bucket": "intellicrack-backups"
-                }
+                "remote_backup": {"enabled": False, "provider": "aws_s3", "bucket": "intellicrack-backups"},
             },
             "telemetry": {
                 "enabled": False,
                 "anonymous": True,
                 "crash_reports": True,
                 "usage_analytics": False,
-                "performance_metrics": True
+                "performance_metrics": True,
             },
             "security_settings": {
                 "hashing": {"algorithm": "sha256", "iterations": 100000},
                 "subprocess": {"timeout": 60, "shell": False},
                 "serialization": {"allow_pickle": False},
-                "input_validation": {"strict": True, "max_length": 10000}
+                "input_validation": {"strict": True, "max_length": 10000},
             },
             "network_settings": {
                 "proxy": "http://proxy.company.com:8080",
@@ -422,8 +377,8 @@ class RealLegacyFileGenerator:
                 "retry_count": 3,
                 "user_agent": "Intellicrack/3.0 Security Research Tool",
                 "ssl_verify": True,
-                "max_connections": 10
-            }
+                "max_connections": 10,
+            },
         }
 
     @staticmethod
@@ -433,12 +388,12 @@ class RealLegacyFileGenerator:
             "monospace_fonts": {
                 "primary": ["JetBrains Mono", "JetBrainsMono-Regular"],
                 "secondary": ["Fira Code", "FiraCode-Regular"],
-                "fallback": ["Source Code Pro", "Consolas", "Monaco", "Courier New", "monospace"]
+                "fallback": ["Source Code Pro", "Consolas", "Monaco", "Courier New", "monospace"],
             },
             "ui_fonts": {
                 "primary": ["Inter", "Inter-Regular"],
                 "secondary": ["Segoe UI", "Roboto"],
-                "fallback": ["San Francisco", "Helvetica Neue", "Arial", "sans-serif"]
+                "fallback": ["San Francisco", "Helvetica Neue", "Arial", "sans-serif"],
             },
             "font_sizes": {
                 "ui_tiny": 8,
@@ -457,7 +412,7 @@ class RealLegacyFileGenerator:
                 "hex_view": 11,
                 "terminal": 10,
                 "debug": 9,
-                "log": 10
+                "log": 10,
             },
             "font_weights": {
                 "thin": 100,
@@ -467,17 +422,9 @@ class RealLegacyFileGenerator:
                 "semibold": 600,
                 "bold": 700,
                 "extrabold": 800,
-                "black": 900
+                "black": 900,
             },
-            "line_height": {
-                "tight": 1.1,
-                "compact": 1.2,
-                "default": 1.5,
-                "comfortable": 1.8,
-                "loose": 2.0,
-                "code": 1.4,
-                "terminal": 1.3
-            },
+            "line_height": {"tight": 1.1, "compact": 1.2, "default": 1.5, "comfortable": 1.8, "loose": 2.0, "code": 1.4, "terminal": 1.3},
             "available_fonts": [
                 "JetBrainsMono-Regular.ttf",
                 "JetBrainsMono-Bold.ttf",
@@ -494,7 +441,7 @@ class RealLegacyFileGenerator:
                 "SourceCodePro-Regular.ttf",
                 "SourceCodePro-Bold.ttf",
                 "Consolas.ttf",
-                "ConsolasB.ttf"
+                "ConsolasB.ttf",
             ],
             "font_features": {
                 "ligatures": True,
@@ -502,7 +449,7 @@ class RealLegacyFileGenerator:
                 "contextual_alternates": True,
                 "tabular_numbers": True,
                 "old_style_figures": False,
-                "character_variants": ["cv01", "cv02"]
+                "character_variants": ["cv01", "cv02"],
             },
             "rendering": {
                 "antialiasing": "subpixel",
@@ -510,24 +457,18 @@ class RealLegacyFileGenerator:
                 "lcd_filter": "default",
                 "gamma": 1.8,
                 "dpi_scaling": True,
-                "font_smoothing": True
+                "font_smoothing": True,
             },
             "custom_css": {
                 "editor": "font-variant-ligatures: contextual; font-feature-settings: 'liga' 1, 'calt' 1;",
                 "terminal": "font-feature-settings: 'liga' 0, 'calt' 0, 'tnum' 1;",
                 "ui": "font-smoothing: antialiased; -webkit-font-smoothing: antialiased;",
-                "hex_view": "font-variant-numeric: tabular-nums; letter-spacing: 0.5px;"
+                "hex_view": "font-variant-numeric: tabular-nums; letter-spacing: 0.5px;",
             },
             "theme_integration": {
-                "dark_theme": {
-                    "font_weight_adjustment": 0,
-                    "contrast_boost": 0.1
-                },
-                "light_theme": {
-                    "font_weight_adjustment": -100,
-                    "contrast_boost": 0.0
-                }
-            }
+                "dark_theme": {"font_weight_adjustment": 0, "contrast_boost": 0.1},
+                "light_theme": {"font_weight_adjustment": -100, "contrast_boost": 0.0},
+            },
         }
 
 
@@ -561,21 +502,21 @@ class RealMigrationTester:
         # Models configuration
         models_file = self.llm_configs_dir / "models.json"
         models_data = RealLegacyFileGenerator.create_llm_models_data()
-        with open(models_file, 'w', encoding='utf-8') as f:
+        with open(models_file, "w", encoding="utf-8") as f:
             json.dump(models_data, f, indent=2)
         self.created_files.append(models_file)
 
         # Profiles configuration
         profiles_file = self.llm_configs_dir / "profiles.json"
         profiles_data = RealLegacyFileGenerator.create_llm_profiles_data()
-        with open(profiles_file, 'w', encoding='utf-8') as f:
+        with open(profiles_file, "w", encoding="utf-8") as f:
             json.dump(profiles_data, f, indent=2)
         self.created_files.append(profiles_file)
 
         # Metrics data
         metrics_file = self.llm_configs_dir / "metrics.json"
         metrics_data = RealLegacyFileGenerator.create_llm_metrics_data()
-        with open(metrics_file, 'w', encoding='utf-8') as f:
+        with open(metrics_file, "w", encoding="utf-8") as f:
             json.dump(metrics_data, f, indent=2)
         self.created_files.append(metrics_file)
 
@@ -592,42 +533,37 @@ class RealMigrationTester:
                     "x64dbg": "C:\\Tools\\x64dbg\\x64dbg.exe",
                     "ida_pro": "C:\\Tools\\IDA Pro 7.7\\ida64.exe",
                     "radare2": "C:\\Tools\\radare2\\bin\\r2.exe",
-                    "binwalk": "C:\\Tools\\binwalk\\binwalk.exe"
+                    "binwalk": "C:\\Tools\\binwalk\\binwalk.exe",
                 },
                 "directories": {
                     "plugins": "C:\\Intellicrack\\plugins",
                     "scripts": "C:\\Intellicrack\\scripts",
                     "output": "C:\\Intellicrack\\output",
                     "temp": "C:\\Temp\\intellicrack",
-                    "logs": "C:\\Logs\\intellicrack"
+                    "logs": "C:\\Logs\\intellicrack",
                 },
                 "analysis_settings": {
                     "timeout": 600,
                     "max_memory": 16384,
                     "use_gpu": True,
                     "parallel_analysis": True,
-                    "cache_enabled": True
-                }
+                    "cache_enabled": True,
+                },
             },
             {
                 "protection_detection": {
                     "enabled_engines": ["peid", "die", "exeinfo", "protection_id"],
                     "custom_signatures": "C:\\Signatures\\custom.yar",
                     "signature_updates": True,
-                    "deep_scan": True
+                    "deep_scan": True,
                 },
-                "exploitation": {
-                    "auto_exploit": False,
-                    "safe_mode": True,
-                    "exploit_timeout": 120,
-                    "persistence_check": True
-                }
-            }
+                "exploitation": {"auto_exploit": False, "safe_mode": True, "exploit_timeout": 120, "persistence_check": True},
+            },
         ]
 
         for i, config_data in enumerate(legacy_configs):
-            config_file = self.legacy_configs_dir / f"legacy_config_{i+1}.json"
-            with open(config_file, 'w', encoding='utf-8') as f:
+            config_file = self.legacy_configs_dir / f"legacy_config_{i + 1}.json"
+            with open(config_file, "w", encoding="utf-8") as f:
                 json.dump(config_data, f, indent=2)
             legacy_files.append(config_file)
             self.created_files.append(config_file)
@@ -638,14 +574,14 @@ class RealMigrationTester:
         """Create real font configuration file."""
         font_file = self.font_configs_dir / "fonts.json"
         font_data = RealLegacyFileGenerator.create_font_config_data()
-        with open(font_file, 'w', encoding='utf-8') as f:
+        with open(font_file, "w", encoding="utf-8") as f:
             json.dump(font_data, f, indent=2)
         self.created_files.append(font_file)
         return font_file
 
     def create_corrupted_json_file(self, file_path: Path) -> None:
         """Create a file with invalid JSON for error testing."""
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write('{ "invalid": json, "missing": quotes, }')
         self.created_files.append(file_path)
 
@@ -689,16 +625,17 @@ class RealConfigurationValidator:
         expected_ghidra = original_data.get("script_types/ghidra/use_qemu")
         expected_radare2 = original_data.get("script_types/radare2/use_qemu")
 
-        if (script_prefs.get("frida") != expected_frida or
-            script_prefs.get("ghidra") != expected_ghidra or
-            script_prefs.get("radare2") != expected_radare2):
+        if (
+            script_prefs.get("frida") != expected_frida
+            or script_prefs.get("ghidra") != expected_ghidra
+            or script_prefs.get("radare2") != expected_radare2
+        ):
             return False
 
         # Verify theme preferences
         theme = config.get("ui_preferences.theme")
         accent_color = config.get("ui_preferences.accent_color")
-        if (theme != original_data.get("theme/mode") or
-            accent_color != original_data.get("theme/accent_color")):
+        if theme != original_data.get("theme/mode") or accent_color != original_data.get("theme/accent_color"):
             return False
 
         # Verify execution history
@@ -706,8 +643,7 @@ class RealConfigurationValidator:
         recent_files = config.get("qemu_testing.execution_history.recent_files", [])
         original_recent = original_data.get("execution/recent_files", [])
 
-        if (last_script != original_data.get("execution/last_script") or
-            not all(f in recent_files for f in original_recent)):
+        if last_script != original_data.get("execution/last_script") or not all(f in recent_files for f in original_recent):
             return False
 
         return True
@@ -771,8 +707,15 @@ class RealConfigurationValidator:
         font_config = config.get("font_configuration", {})
 
         required_sections = [
-            "monospace_fonts", "ui_fonts", "font_sizes", "font_weights",
-            "line_height", "available_fonts", "font_features", "rendering", "custom_css"
+            "monospace_fonts",
+            "ui_fonts",
+            "font_sizes",
+            "font_weights",
+            "line_height",
+            "available_fonts",
+            "font_features",
+            "rendering",
+            "custom_css",
         ]
 
         if not all(section in font_config for section in required_sections):
@@ -848,7 +791,7 @@ class TestMigrationMethods(unittest.TestCase):
         ui_prefs = {
             "theme": qsettings_sim.value("theme/mode", "light"),
             "accent_color": qsettings_sim.value("theme/accent_color", "#2196F3"),
-            "primary_color": qsettings_sim.value("theme/primary_color", "#2196F3")
+            "primary_color": qsettings_sim.value("theme/primary_color", "#2196F3"),
         }
         self.config.set("ui_preferences", ui_prefs)
 
@@ -859,10 +802,7 @@ class TestMigrationMethods(unittest.TestCase):
         window_state = {
             "main_window": qsettings_sim.value("state/main_window"),
         }
-        splitter_states = {
-            "main": qsettings_sim.value("splitters/main", []),
-            "analysis": qsettings_sim.value("splitters/analysis", [])
-        }
+        splitter_states = {"main": qsettings_sim.value("splitters/main", []), "analysis": qsettings_sim.value("splitters/analysis", [])}
 
         self.config.set("ui_preferences.window_geometry", window_geometry)
         self.config.set("ui_preferences.window_state", window_state)
@@ -871,7 +811,7 @@ class TestMigrationMethods(unittest.TestCase):
         # Migrate execution history
         execution_history = {
             "last_script": qsettings_sim.value("execution/last_script"),
-            "recent_files": qsettings_sim.value("execution/recent_files", [])
+            "recent_files": qsettings_sim.value("execution/recent_files", []),
         }
         self.config.set("qemu_testing.execution_history", execution_history)
 
@@ -879,7 +819,7 @@ class TestMigrationMethods(unittest.TestCase):
         analysis_settings = {
             "auto_save": qsettings_sim.value("analysis/auto_save", False),
             "timeout": qsettings_sim.value("analysis/timeout", 300),
-            "max_memory": qsettings_sim.value("analysis/max_memory", 4096)
+            "max_memory": qsettings_sim.value("analysis/max_memory", 4096),
         }
         self.config.set("analysis_settings", analysis_settings)
 
@@ -887,7 +827,7 @@ class TestMigrationMethods(unittest.TestCase):
         tools = {
             "ghidra_path": qsettings_sim.value("tools/ghidra_path"),
             "x64dbg_path": qsettings_sim.value("tools/x64dbg_path"),
-            "ida_path": qsettings_sim.value("tools/ida_path")
+            "ida_path": qsettings_sim.value("tools/ida_path"),
         }
         self.config.set("tools", tools)
 
@@ -896,23 +836,18 @@ class TestMigrationMethods(unittest.TestCase):
             "font_family": qsettings_sim.value("ui/font_family", "Consolas"),
             "font_size": qsettings_sim.value("ui/font_size", 10),
             "show_line_numbers": qsettings_sim.value("ui/show_line_numbers", True),
-            "word_wrap": qsettings_sim.value("ui/word_wrap", False)
+            "word_wrap": qsettings_sim.value("ui/word_wrap", False),
         }
         self.config.set("ui_preferences.editor", ui_settings)
 
         # Validate the migration using real validator
-        validation_result = RealConfigurationValidator.validate_qsettings_migration(
-            self.config, original_data
-        )
+        validation_result = RealConfigurationValidator.validate_qsettings_migration(self.config, original_data)
 
         # Perform comprehensive assertions
         self.assertTrue(validation_result, "QSettings migration validation failed")
 
         # Verify specific migrated values
-        self.assertEqual(
-            self.config.get("qemu_testing.default_preference"),
-            "always"
-        )
+        self.assertEqual(self.config.get("qemu_testing.default_preference"), "always")
 
         trusted_binaries = self.config.get("qemu_testing.trusted_binaries", [])
         self.assertEqual(len(trusted_binaries), 5)
@@ -933,8 +868,7 @@ class TestMigrationMethods(unittest.TestCase):
 
         # Verify execution history
         self.assertEqual(
-            self.config.get("qemu_testing.execution_history.last_script"),
-            "C:\\Scripts\\binary_analysis\\analyze_protection.js"
+            self.config.get("qemu_testing.execution_history.last_script"), "C:\\Scripts\\binary_analysis\\analyze_protection.js"
         )
 
         recent_files = self.config.get("qemu_testing.execution_history.recent_files", [])
@@ -947,10 +881,7 @@ class TestMigrationMethods(unittest.TestCase):
         self.assertEqual(self.config.get("analysis_settings.max_memory"), 4096)
 
         # Verify tool paths
-        self.assertEqual(
-            self.config.get("tools.ghidra_path"),
-            "C:\\Tools\\ghidra_10.4_PUBLIC\\ghidraRun.bat"
-        )
+        self.assertEqual(self.config.get("tools.ghidra_path"), "C:\\Tools\\ghidra_10.4_PUBLIC\\ghidraRun.bat")
 
     def test_migrate_llm_configs_with_real_data(self):
         """Test migration of LLM configurations with comprehensive realistic model data."""
@@ -963,21 +894,17 @@ class TestMigrationMethods(unittest.TestCase):
         metrics_file = self.migration_tester.llm_configs_dir / "metrics.json"
 
         # Read real data from files
-        with open(models_file, encoding='utf-8') as f:
+        with open(models_file, encoding="utf-8") as f:
             models_data = json.load(f)
 
-        with open(profiles_file, encoding='utf-8') as f:
+        with open(profiles_file, encoding="utf-8") as f:
             profiles_data = json.load(f)
 
-        with open(metrics_file, encoding='utf-8') as f:
+        with open(metrics_file, encoding="utf-8") as f:
             metrics_data = json.load(f)
 
         # Perform real migration by setting configuration
-        llm_config = {
-            "models": models_data,
-            "profiles": profiles_data,
-            "metrics": metrics_data
-        }
+        llm_config = {"models": models_data, "profiles": profiles_data, "metrics": metrics_data}
         self.config.set("llm_configuration", llm_config)
 
         # Validate migration with real validator
@@ -1065,7 +992,7 @@ class TestMigrationMethods(unittest.TestCase):
 
         # Migrate each legacy file
         for legacy_file in legacy_files:
-            with open(legacy_file, encoding='utf-8') as f:
+            with open(legacy_file, encoding="utf-8") as f:
                 legacy_data = json.load(f)
 
             # Perform real migration
@@ -1090,18 +1017,12 @@ class TestMigrationMethods(unittest.TestCase):
 
         # Verify emergency mode
         self.assertTrue(self.config.get("emergency_mode"))
-        self.assertEqual(
-            self.config.get("emergency_reason"),
-            "Critical protection bypass failure detected"
-        )
+        self.assertEqual(self.config.get("emergency_reason"), "Critical protection bypass failure detected")
 
         # Verify tools migration (from second legacy file)
         tools = self.config.get("tools", {})
         if "ghidra" in tools:
-            self.assertEqual(
-                tools.get("ghidra"),
-                "C:\\Tools\\ghidra_10.4_PUBLIC\\ghidraRun.bat"
-            )
+            self.assertEqual(tools.get("ghidra"), "C:\\Tools\\ghidra_10.4_PUBLIC\\ghidraRun.bat")
 
         # Verify directories migration
         directories = self.config.get("directories", {})
@@ -1122,7 +1043,7 @@ class TestMigrationMethods(unittest.TestCase):
         legacy_path = Path(self.temp_dir) / "comprehensive_legacy.json"
 
         # Save to real file for testing
-        with open(legacy_path, 'w', encoding='utf-8') as f:
+        with open(legacy_path, "w", encoding="utf-8") as f:
             json.dump(legacy_data, f, indent=2)
 
         # Perform comprehensive migration
@@ -1167,14 +1088,8 @@ class TestMigrationMethods(unittest.TestCase):
 
         # Emergency mode validation
         self.assertTrue(self.config.get("emergency_mode"))
-        self.assertEqual(
-            self.config.get("emergency_reason"),
-            "Critical protection bypass failure detected"
-        )
-        self.assertEqual(
-            self.config.get("emergency_timestamp"),
-            "2025-01-16T15:30:45Z"
-        )
+        self.assertEqual(self.config.get("emergency_reason"), "Critical protection bypass failure detected")
+        self.assertEqual(self.config.get("emergency_timestamp"), "2025-01-16T15:30:45Z")
 
         # Migration metadata validation
         migration_meta = self.config.get("migration_metadata", {})
@@ -1286,7 +1201,7 @@ class TestMigrationMethods(unittest.TestCase):
         font_file = self.migration_tester.create_real_font_config_file()
 
         # Load real font data
-        with open(font_file, encoding='utf-8') as f:
+        with open(font_file, encoding="utf-8") as f:
             font_data = json.load(f)
 
         # Perform real migration
@@ -1377,7 +1292,7 @@ class TestMigrationMethods(unittest.TestCase):
             "Inter-Regular.ttf",
             "Inter-Bold.ttf",
             "SourceCodePro-Regular.ttf",
-            "Consolas.ttf"
+            "Consolas.ttf",
         ]
         for font in expected_fonts:
             self.assertIn(font, available_fonts)
@@ -1441,7 +1356,7 @@ class TestMigrationMethods(unittest.TestCase):
 
         # Attempt to load corrupted JSON
         try:
-            with open(corrupted_file, encoding='utf-8') as f:
+            with open(corrupted_file, encoding="utf-8") as f:
                 json.load(f)
             self.fail("Expected JSON decode error for corrupted file")
         except json.JSONDecodeError:
@@ -1468,11 +1383,11 @@ class TestMigrationMethods(unittest.TestCase):
         # Test partial migration scenario
         partial_models_file = self.migration_tester.llm_configs_dir / "partial_models.json"
         partial_data = {"incomplete": "data"}
-        with open(partial_models_file, 'w', encoding='utf-8') as f:
+        with open(partial_models_file, "w", encoding="utf-8") as f:
             json.dump(partial_data, f)
 
         # Load partial data and verify it's incomplete
-        with open(partial_models_file, encoding='utf-8') as f:
+        with open(partial_models_file, encoding="utf-8") as f:
             loaded_data = json.load(f)
 
         # Verify it's not valid LLM model data
@@ -1486,15 +1401,9 @@ class TestMigrationMethods(unittest.TestCase):
             "qemu_testing": {
                 "default_preference": "ask",
                 "trusted_binaries": ["initial_app.exe"],
-                "script_type_preferences": {
-                    "frida": False,
-                    "ghidra": True
-                }
+                "script_type_preferences": {"frida": False, "ghidra": True},
             },
-            "ui_preferences": {
-                "theme": "light",
-                "font_size": 10
-            }
+            "ui_preferences": {"theme": "light", "font_size": 10},
         }
 
         for key, value in initial_config.items():
@@ -1539,32 +1448,15 @@ class TestMigrationMethods(unittest.TestCase):
         """Test that migrations don't overwrite unrelated existing configuration."""
         # Set up comprehensive existing configuration
         existing_config = {
-            "application": {
-                "name": "Intellicrack",
-                "version": "3.0.0",
-                "build": "20250116",
-                "license": "GPL-3.0"
-            },
-            "directories": {
-                "output": "C:\\IntellicrackOutput",
-                "temp": "C:\\Temp\\Intellicrack",
-                "logs": "C:\\Logs\\Intellicrack"
-            },
-            "analysis_settings": {
-                "timeout": 600,
-                "max_memory": 8192,
-                "use_gpu": True,
-                "parallel_threads": 4
-            },
+            "application": {"name": "Intellicrack", "version": "3.0.0", "build": "20250116", "license": "GPL-3.0"},
+            "directories": {"output": "C:\\IntellicrackOutput", "temp": "C:\\Temp\\Intellicrack", "logs": "C:\\Logs\\Intellicrack"},
+            "analysis_settings": {"timeout": 600, "max_memory": 8192, "use_gpu": True, "parallel_threads": 4},
             "user_data": {
                 "username": "researcher",
                 "last_login": "2025-01-16T08:00:00Z",
                 "session_count": 42,
-                "preferences": {
-                    "auto_save": True,
-                    "notifications": False
-                }
-            }
+                "preferences": {"auto_save": True, "notifications": False},
+            },
         }
 
         # Apply existing configuration
@@ -1581,17 +1473,10 @@ class TestMigrationMethods(unittest.TestCase):
 
         # Perform migration with new data
         legacy_data = {
-            "vm_framework": {
-                "enabled": True,
-                "default_vm": "qemu",
-                "memory": 4096
-            },
+            "vm_framework": {"enabled": True, "default_vm": "qemu", "memory": 4096},
             "emergency_mode": False,
             "emergency_reason": "System test",
-            "new_feature": {
-                "enabled": True,
-                "setting": "value"
-            }
+            "new_feature": {"enabled": True, "setting": "value"},
         }
 
         legacy_path = Path(self.temp_dir) / "preserve_test.json"
@@ -1635,36 +1520,19 @@ class TestMigrationMethods(unittest.TestCase):
                 "theme": "light",
                 "font_size": 10,
                 "show_tooltips": True,
-                "sidebar": {
-                    "width": 200,
-                    "collapsed": False,
-                    "panels": ["files", "outline", "search"]
-                },
-                "editor": {
-                    "line_numbers": True,
-                    "word_wrap": False,
-                    "syntax_highlighting": True,
-                    "color_scheme": "default"
-                },
-                "window": {
-                    "maximized": True,
-                    "position": {"x": 100, "y": 100},
-                    "size": {"width": 1200, "height": 800}
-                }
+                "sidebar": {"width": 200, "collapsed": False, "panels": ["files", "outline", "search"]},
+                "editor": {"line_numbers": True, "word_wrap": False, "syntax_highlighting": True, "color_scheme": "default"},
+                "window": {"maximized": True, "position": {"x": 100, "y": 100}, "size": {"width": 1200, "height": 800}},
             },
             "analysis_settings": {
                 "timeout": 300,
                 "engines": {
                     "ghidra": {"enabled": True, "timeout": 600},
                     "radare2": {"enabled": False, "timeout": 300},
-                    "ida": {"enabled": True, "timeout": 900}
+                    "ida": {"enabled": True, "timeout": 900},
                 },
-                "output": {
-                    "format": "json",
-                    "compression": True,
-                    "encryption": False
-                }
-            }
+                "output": {"format": "json", "compression": True, "encryption": False},
+            },
         }
 
         for key, value in existing_nested_config.items():
@@ -1690,7 +1558,7 @@ class TestMigrationMethods(unittest.TestCase):
             "analysis/radare2_enabled": True,
             "analysis/radare2_timeout": 450,
             "analysis/output_format": "xml",
-            "analysis/output_encryption": True
+            "analysis/output_encryption": True,
         }
 
         qsettings_sim = RealQSettingsSimulator(qsettings_data)
@@ -1774,12 +1642,12 @@ class TestMigrationMethods(unittest.TestCase):
             "timestamp": legacy_data.get("migration_timestamp", datetime.now().isoformat()),
             "source": legacy_data.get("migration_source", "legacy"),
             "batch_id": legacy_data.get("migration_batch_id", "unknown"),
-            "migrated_files": [str(legacy_path)]
+            "migrated_files": [str(legacy_path)],
         }
         self.config.set("migration_metadata", migration_meta)
 
         # AI models migration
-        if any(key.startswith("ml_model") for key in legacy_data.keys()):
+        if any(key.startswith("ml_model") for key in legacy_data):
             ai_models = {}
             for key, value in legacy_data.items():
                 if key.startswith("ml_model"):
@@ -1836,9 +1704,16 @@ class TestMigrationMethods(unittest.TestCase):
 
         # Migrate remaining fields
         direct_migrations = [
-            "deprecated_features", "user_preferences", "experimental_features",
-            "backup_settings", "telemetry", "security_settings", "network_settings",
-            "tools", "protection_detection", "exploitation"
+            "deprecated_features",
+            "user_preferences",
+            "experimental_features",
+            "backup_settings",
+            "telemetry",
+            "security_settings",
+            "network_settings",
+            "tools",
+            "protection_detection",
+            "exploitation",
         ]
 
         for field in direct_migrations:
@@ -1855,10 +1730,7 @@ class TestMigrationMethods(unittest.TestCase):
     def _perform_qsettings_migration(self, qsettings_sim: RealQSettingsSimulator) -> None:
         """Perform real QSettings migration with comprehensive data handling."""
         # QEMU testing preferences
-        self.config.set(
-            "qemu_testing.default_preference",
-            qsettings_sim.value("execution/qemu_preference", "ask")
-        )
+        self.config.set("qemu_testing.default_preference", qsettings_sim.value("execution/qemu_preference", "ask"))
 
         # Trusted binaries (merge with existing)
         existing_binaries = set(self.config.get("qemu_testing.trusted_binaries", []))
@@ -1878,7 +1750,7 @@ class TestMigrationMethods(unittest.TestCase):
         ui_updates = {
             "theme": qsettings_sim.value("theme/mode", existing_ui.get("theme", "light")),
             "accent_color": qsettings_sim.value("theme/accent_color"),
-            "primary_color": qsettings_sim.value("theme/primary_color")
+            "primary_color": qsettings_sim.value("theme/primary_color"),
         }
 
         # Remove None values

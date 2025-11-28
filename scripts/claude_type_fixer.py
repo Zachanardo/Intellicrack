@@ -32,18 +32,11 @@ import anthropic
 
 try:
     from rich.console import Console
-    from rich.progress import (
-        BarColumn,
-        MofNCompleteColumn,
-        Progress,
-        SpinnerColumn,
-        TextColumn,
-        TimeElapsedColumn,
-    )
-    from rich.table import Table
-    from rich.panel import Panel
-    from rich.live import Live
     from rich.layout import Layout
+    from rich.live import Live
+    from rich.panel import Panel
+    from rich.progress import BarColumn, MofNCompleteColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
+    from rich.table import Table
 
     RICH_AVAILABLE = True
 except ImportError:
@@ -260,7 +253,7 @@ Output edits in the exact format requested.""",
 
             edits = edit_pattern.findall(response["response"])
 
-            for file_path, operation, old_code, new_code in edits:
+            for file_path, _operation, old_code, new_code in edits:
                 file_path = file_path.strip()
                 old_code = old_code.strip()
                 new_code = new_code.strip()

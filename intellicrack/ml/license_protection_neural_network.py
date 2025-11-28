@@ -236,11 +236,11 @@ class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):
 
         # Apply attention
         attention_weights = self.attention(x3)
-        x3 = x3 * attention_weights
+        x3 *= attention_weights
 
         # Add residual connection
         residual = self.residual_conv(x1)
-        x3 = x3 + residual
+        x3 += residual
 
         # Adaptive pooling for fixed size output
         x = self.adaptive_pool(x3)
@@ -361,7 +361,7 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):
 
         # Project input and add positional encoding
         x = self.input_projection(x)
-        x = x + self.positional_encoding[:, :seq_len, :].to(x.device)
+        x += self.positional_encoding[:, :seq_len, :].to(x.device)
 
         # Pass through transformer encoder
         x = self.transformer_encoder(x)
@@ -522,7 +522,7 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
 class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
     """Dataset for license protection training data."""
 
-    def __init__(self, data_path: str, transform: None | object = None, cache_features: bool = True) -> None:
+    def __init__(self, data_path: str, transform: object | None = None, cache_features: bool = True) -> None:
         """Initialize dataset with protection samples.
 
         Args:
@@ -814,7 +814,7 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
 
         # Normalize
         if data:
-            histogram = histogram / len(data)
+            histogram /= len(data)
 
         return histogram
 
@@ -914,7 +914,7 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
         # Normalize embeddings
         norm = np.linalg.norm(embeddings)
         if norm > 0:
-            embeddings = embeddings / norm
+            embeddings /= norm
 
         return embeddings
 
@@ -1552,7 +1552,7 @@ class LicenseProtectionPredictor:
         for i in range(0, min(len(data), 100000), stride):
             window = data[i : i + window_size]
             if len(window) < window_size:
-                window = window + b"\x00" * (window_size - len(window))
+                window += b"\x00" * (window_size - len(window))
             features.append(list(window))
 
         # Convert to numpy array
@@ -1738,7 +1738,7 @@ def train_license_model(
 
         # Compute inverse frequency weights
         class_weights = 1.0 / (label_counts + 1.0)
-        class_weights = class_weights / class_weights.sum()
+        class_weights /= class_weights.sum()
         class_weights = class_weights.to(device)
     else:
         class_weights = None

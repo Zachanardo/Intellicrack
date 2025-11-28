@@ -558,7 +558,7 @@ class GPUAccelerator:
 
                 # Calculate histogram using bincount on XPU
                 hist = torch.bincount(block_tensor, minlength=256).float()
-                hist = hist / block_size
+                hist /= block_size
 
                 # Calculate entropy: -sum(p * log2(p)) for p > 0
                 hist_nonzero = hist[hist > 0]
@@ -601,7 +601,7 @@ class GPUAccelerator:
 
                 # Calculate histogram
                 hist = cp.bincount(block_gpu, minlength=256).astype(cp.float32)
-                hist = hist / block_size
+                hist /= block_size
 
                 # Calculate entropy
                 hist_nonzero = hist[hist > 0]

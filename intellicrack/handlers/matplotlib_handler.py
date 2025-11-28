@@ -451,7 +451,7 @@ except ImportError as e:
                             raw_data += b"\x00"
                             for x in range(width):
                                 # RGB pixel (white background with content)
-                                r, g, b = pixels[(x, y)] if pixels and (x, y) in pixels else (255, 255, 255)
+                                r, g, b = pixels[x, y] if pixels and (x, y) in pixels else (255, 255, 255)
                                 raw_data += bytes([r, g, b])
 
                         compressed = zlib.compress(raw_data)
@@ -467,18 +467,18 @@ except ImportError as e:
 
                     # Draw border
                     for x in range(width):
-                        pixels[(x, 0)] = (0, 0, 0)  # Top border
-                        pixels[(x, height - 1)] = (0, 0, 0)  # Bottom border
+                        pixels[x, 0] = (0, 0, 0)  # Top border
+                        pixels[x, height - 1] = (0, 0, 0)  # Bottom border
                     for y in range(height):
-                        pixels[(0, y)] = (0, 0, 0)  # Left border
-                        pixels[(width - 1, y)] = (0, 0, 0)  # Right border
+                        pixels[0, y] = (0, 0, 0)  # Left border
+                        pixels[width - 1, y] = (0, 0, 0)  # Right border
 
                     # Draw title if present
                     if self._suptitle:
                         # Simple text rendering (just a line for demonstration)
                         y = 20
                         for x in range(width // 4, 3 * width // 4):
-                            pixels[(x, y)] = (0, 0, 0)
+                            pixels[x, y] = (0, 0, 0)
 
                     # Generate and save PNG
                     png_bytes = generate_png(width, height, pixels)
@@ -520,7 +520,7 @@ except ImportError as e:
                         for y in range(height - 1, -1, -1):
                             for x in range(width):
                                 if pixels and (x, y) in pixels:
-                                    b, g, r = pixels[(x, y)][::-1]  # BMP uses BGR
+                                    b, g, r = pixels[x, y][::-1]  # BMP uses BGR
                                 else:
                                     b, g, r = 255, 255, 255
                                 pixel_data += bytes([b, g, r])
@@ -533,11 +533,11 @@ except ImportError as e:
                     # Generate pixel data
                     pixels = {}
                     for x in range(width):
-                        pixels[(x, 0)] = (0, 0, 0)
-                        pixels[(x, height - 1)] = (0, 0, 0)
+                        pixels[x, 0] = (0, 0, 0)
+                        pixels[x, height - 1] = (0, 0, 0)
                     for y in range(height):
-                        pixels[(0, y)] = (0, 0, 0)
-                        pixels[(width - 1, y)] = (0, 0, 0)
+                        pixels[0, y] = (0, 0, 0)
+                        pixels[width - 1, y] = (0, 0, 0)
 
                     # Save as BMP then convert extension
                     bmp_bytes = generate_bmp(width, height, pixels)

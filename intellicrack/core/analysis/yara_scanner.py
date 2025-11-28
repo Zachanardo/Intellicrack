@@ -1009,45 +1009,35 @@ rule Delphi_Compiler {
         # Organize matches by category
         for match in matches:
             if match.category == RuleCategory.PACKER:
-                protections["packers"].append(
-                    {
-                        "name": match.rule_name,
-                        "confidence": match.confidence,
-                        "offset": match.offset,
-                    }
-                )
+                protections["packers"].append({
+                    "name": match.rule_name,
+                    "confidence": match.confidence,
+                    "offset": match.offset,
+                })
             elif match.category == RuleCategory.PROTECTOR:
-                protections["protectors"].append(
-                    {
-                        "name": match.rule_name,
-                        "confidence": match.confidence,
-                        "offset": match.offset,
-                    }
-                )
+                protections["protectors"].append({
+                    "name": match.rule_name,
+                    "confidence": match.confidence,
+                    "offset": match.offset,
+                })
             elif match.category == RuleCategory.CRYPTO:
-                protections["crypto"].append(
-                    {
-                        "algorithm": match.rule_name,
-                        "confidence": match.confidence,
-                        "offset": match.offset,
-                    }
-                )
+                protections["crypto"].append({
+                    "algorithm": match.rule_name,
+                    "confidence": match.confidence,
+                    "offset": match.offset,
+                })
             elif match.category == RuleCategory.LICENSE:
-                protections["license"].append(
-                    {
-                        "type": match.rule_name,
-                        "confidence": match.confidence,
-                        "offset": match.offset,
-                    }
-                )
+                protections["license"].append({
+                    "type": match.rule_name,
+                    "confidence": match.confidence,
+                    "offset": match.offset,
+                })
             elif match.category == RuleCategory.ANTI_DEBUG:
-                protections["anti_debug"].append(
-                    {
-                        "technique": match.rule_name,
-                        "confidence": match.confidence,
-                        "offset": match.offset,
-                    }
-                )
+                protections["anti_debug"].append({
+                    "technique": match.rule_name,
+                    "confidence": match.confidence,
+                    "offset": match.offset,
+                })
             elif match.category == RuleCategory.COMPILER:
                 if protections["compiler"] is None or match.confidence > protections["compiler"]["confidence"]:
                     protections["compiler"] = {
@@ -1099,13 +1089,11 @@ rule Delphi_Compiler {
                             confidence += 40
 
                     if detected:
-                        detections.append(
-                            {
-                                "name": name,
-                                "category": signature.category,
-                                "confidence": min(confidence, 95),
-                            }
-                        )
+                        detections.append({
+                            "name": name,
+                            "category": signature.category,
+                            "confidence": min(confidence, 95),
+                        })
 
         except Exception as e:
             logger.error(f"Failed to perform signature-based detection: {e}")
@@ -2041,7 +2029,7 @@ rule Delphi_Compiler {
 
                 # Recompile rules with optimization flags
                 optimized_rules = {}
-                for category, _ in self.compiled_rules.items():
+                for category in self.compiled_rules:
                     if rule_source := self._get_rule_source(category):
                         # Compile with fast matching
                         optimized_rules[category] = yara.compile(source=rule_source, fast_matching=True)
@@ -2492,8 +2480,8 @@ rule Delphi_Compiler {
 
         if simplify_conditions:
             # Simplify redundant conditions
-            optimized = re.sub(r"any of them and any of them", "any of them", optimized)
-            optimized = re.sub(r"all of them and all of them", "all of them", optimized)
+            optimized = optimized.replace(r"any of them and any of them", "any of them")
+            optimized = optimized.replace(r"all of them and all of them", "all of them")
             optimized = re.sub(r"\(([^)]+)\) and \1", r"\1", optimized)
 
         return optimized
@@ -3326,26 +3314,22 @@ extern "C" {{
 
         # Category-specific actions
         if match.category == RuleCategory.LICENSE:
-            actions.extend(
-                (
-                    {
-                        "type": "dump_registers",
-                        "registers": ["EAX", "EBX", "ECX", "EDX"],
-                    },
-                    {"type": "dump_stack", "size": 32},
-                )
-            )
+            actions.extend((
+                {
+                    "type": "dump_registers",
+                    "registers": ["EAX", "EBX", "ECX", "EDX"],
+                },
+                {"type": "dump_stack", "size": 32},
+            ))
             if "serial" in match.rule_name.lower():
                 # Capture serial number from memory
                 actions.append({"type": "dump_memory", "address": "ECX", "size": 32})
 
         elif match.category == RuleCategory.ANTI_DEBUG:
-            actions.extend(
-                (
-                    {"type": "modify_register", "register": "EAX", "value": 0},
-                    {"type": "skip_instruction"},
-                )
-            )
+            actions.extend((
+                {"type": "modify_register", "register": "EAX", "value": 0},
+                {"type": "skip_instruction"},
+            ))
         elif match.category == RuleCategory.CRYPTO:
             # Capture crypto keys
             actions.append({"type": "dump_memory", "address": "ESI", "size": 256})

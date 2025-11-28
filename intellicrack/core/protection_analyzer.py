@@ -260,17 +260,15 @@ class ProtectionAnalyzer:
         """Detect protection systems using signatures and heuristics."""
         detections = []
 
-        for _prot_key, prot_info in self.protection_signatures.items():
+        for prot_info in self.protection_signatures.values():
             for sig in prot_info["signatures"]:
                 if sig in file_data:
-                    detections.append(
-                        {
-                            "name": prot_info["name"],
-                            "type": prot_info["type"],
-                            "severity": prot_info["severity"],
-                            "signatures_matched": [sig.hex() if isinstance(sig, bytes) else sig],
-                        }
-                    )
+                    detections.append({
+                        "name": prot_info["name"],
+                        "type": prot_info["type"],
+                        "severity": prot_info["severity"],
+                        "signatures_matched": [sig.hex() if isinstance(sig, bytes) else sig],
+                    })
                     break
 
         return detections
@@ -395,19 +393,15 @@ class ProtectionAnalyzer:
 
         if detected_protections:
             prot_names = [p["name"] for p in detected_protections]
-            recommendations.extend(
-                (
-                    f"Binary is protected with: {', '.join(prot_names)}",
-                    "Consider using specialized unpacking tools for detected protections",
-                )
-            )
+            recommendations.extend((
+                f"Binary is protected with: {', '.join(prot_names)}",
+                "Consider using specialized unpacking tools for detected protections",
+            ))
         if entropy_analysis.get("overall_entropy", 0) > self.entropy_threshold_high:
-            recommendations.extend(
-                (
-                    "High entropy detected - binary likely encrypted or compressed",
-                    "Attempt unpacking before static analysis",
-                )
-            )
+            recommendations.extend((
+                "High entropy detected - binary likely encrypted or compressed",
+                "Attempt unpacking before static analysis",
+            ))
         if section_analysis.get("suspicious_sections"):
             recommendations.append("Suspicious high-entropy sections detected")
 

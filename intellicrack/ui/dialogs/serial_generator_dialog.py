@@ -370,7 +370,7 @@ class SerialGeneratorDialog(QDialog):
         btn_layout.addWidget(self.btn_load_samples)
 
         self.btn_clear_samples = QPushButton("Clear")
-        self.btn_clear_samples.clicked.connect(lambda: self.samples_input.clear())
+        self.btn_clear_samples.clicked.connect(self.samples_input.clear)
         btn_layout.addWidget(self.btn_clear_samples)
 
         self.btn_analyze = QPushButton("Analyze Pattern")

@@ -100,7 +100,7 @@ class IntellicrackHexProtectionIntegration(QObject):
 
             # Schedule offset sync if process starts successfully and offset provided
             if offset is not None:
-                self.engine_process.finished.connect(lambda: self._cleanup_sync_files())
+                self.engine_process.finished.connect(self._cleanup_sync_files)
                 # Set up timer to sync offset once process is running
                 QTimer.singleShot(2000, lambda: self.sync_offset_to_protection_viewer(offset))
 

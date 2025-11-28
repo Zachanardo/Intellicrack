@@ -995,8 +995,8 @@ class ToolsTab(BaseTab):
                 data = f.read()
 
             # Extract ASCII strings (minimum length 4)
-            ascii_strings = re.findall(b"[!-~]{4,}", data)
-            unicode_strings = re.findall(b"(?:[!-~]\x00){4,}", data)
+            ascii_strings = re.findall(rb"[!-~]{4,}", data)
+            unicode_strings = re.findall(rb"(?:[!-~]\x00){4,}", data)
 
             self.tool_output.append("Extracted Strings:")
             self.tool_output.append("-" * 40)
@@ -2174,27 +2174,27 @@ def get_plugin():
                 self.tool_output.append("-" * 30)
 
                 # Buffer overflow vulnerabilities
-                if "buffer_overflows" in results and results["buffer_overflows"]:
+                if buffer_overflows := results.get("buffer_overflows"):
                     self.tool_output.append("Buffer Overflow Vulnerabilities:")
-                    for vuln in results["buffer_overflows"]:
+                    for vuln in buffer_overflows:
                         self.tool_output.append(f"  - {vuln}")
 
                 # Format string vulnerabilities
-                if "format_strings" in results and results["format_strings"]:
+                if format_strings := results.get("format_strings"):
                     self.tool_output.append("\nFormat String Vulnerabilities:")
-                    for vuln in results["format_strings"]:
+                    for vuln in format_strings:
                         self.tool_output.append(f"  - {vuln}")
 
                 # Integer overflow vulnerabilities
-                if "integer_overflows" in results and results["integer_overflows"]:
+                if integer_overflows := results.get("integer_overflows"):
                     self.tool_output.append("\nInteger Overflow Vulnerabilities:")
-                    for vuln in results["integer_overflows"]:
+                    for vuln in integer_overflows:
                         self.tool_output.append(f"  - {vuln}")
 
                 # Use-after-free vulnerabilities
-                if "use_after_free" in results and results["use_after_free"]:
+                if use_after_free := results.get("use_after_free"):
                     self.tool_output.append("\nUse-After-Free Vulnerabilities:")
-                    for vuln in results["use_after_free"]:
+                    for vuln in use_after_free:
                         self.tool_output.append(f"  - {vuln}")
 
             self.log_message("Vulnerability detection completed")

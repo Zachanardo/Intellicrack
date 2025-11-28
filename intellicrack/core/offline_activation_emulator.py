@@ -7,6 +7,7 @@ import json
 import os
 import platform
 import random
+import secrets
 import socket
 import string
 import struct
@@ -23,7 +24,7 @@ from typing import Any
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
 except ImportError:
-    import xml.etree.ElementTree as ET
+    import xml.etree.ElementTree as ET  # noqa: S405
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -313,8 +314,8 @@ class OfflineActivationEmulator:
         except Exception as e:
             logger.debug(f"Disk serial extraction failed: {e}")
 
-        serial_length = random.randint(12, 16)  # noqa: S311
-        serial_part = "".join(random.choices(string.ascii_uppercase + string.digits, k=serial_length))
+        serial_length = secrets.randbelow(5) + 12
+        serial_part = "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(serial_length))
         return f"SER{serial_part}"
 
     def _get_mac_addresses(self) -> list[str]:
@@ -1224,10 +1225,10 @@ class OfflineActivationEmulator:
         """
         if product_type == "microsoft":
             # Microsoft format: 5 groups of 5 chars (BCDFG-HJKMP-QRTVW-XY234-6789B)
-            chars = "BCDFGHJKMPQRTVWXY2346789"  # pragma: allowlist secret
+            chars = "BCDFGHJKMPQRTVWXY2346789"
             key_parts = []
             for _ in range(5):
-                part = "".join(random.choices(chars, k=5))  # noqa: S311
+                part = "".join(secrets.choice(chars) for _ in range(5))
                 key_parts.append(part)
             return "-".join(key_parts)
 
@@ -1235,19 +1236,19 @@ class OfflineActivationEmulator:
             # Adobe format: 1234-5678-9012-3456-7890-1234
             key_parts = []
             for _ in range(6):
-                part = str(random.randint(0, 9999)).zfill(4)  # noqa: S311
+                part = str(secrets.randbelow(10000)).zfill(4)
                 key_parts.append(part)
             return "-".join(key_parts)
 
         if product_type == "autodesk":
             # Autodesk format: 123-45678901
-            part1 = str(random.randint(100, 999))  # noqa: S311
-            part2 = str(random.randint(10000000, 99999999))  # noqa: S311
+            part1 = str(secrets.randbelow(900) + 100)
+            part2 = str(secrets.randbelow(90000000) + 10000000)
             return f"{part1}-{part2}"
 
         # Generic format
-        chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"  # pragma: allowlist secret
-        key = "".join(random.choices(chars, k=25))  # noqa: S311
+        chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        key = "".join(secrets.choice(chars) for _ in range(25))
         formatted_key = "-".join([key[i : i + 5] for i in range(0, 25, 5)])
         logger.debug(f"Generated generic product key: {formatted_key}")
         return formatted_key
@@ -1488,7 +1489,7 @@ class OfflineActivationEmulator:
 
         # Ensure we have 9 groups
         while len(confirmation_groups) < 9:
-            confirmation_groups.append(str(random.randint(0, 999999)).zfill(6))  # noqa: S311
+            confirmation_groups.append(str(secrets.randbelow(1000000)).zfill(6))
 
         return "-".join(confirmation_groups[:9])
 
@@ -1678,7 +1679,7 @@ class OfflineActivationEmulator:
         try:
             import psutil
 
-            for _interface, addrs in psutil.net_if_addrs().items():
+            for addrs in psutil.net_if_addrs().values():
                 for addr in addrs:
                     if hasattr(psutil, "AF_LINK") and addr.family == psutil.AF_LINK:
                         mac_address = addr.address
@@ -1737,8 +1738,8 @@ class OfflineActivationEmulator:
             "3C:97:0E",  # Wistron
         ]
 
-        prefix = random.choice(oui_prefixes)  # noqa: S311
-        suffix = ":".join([f"{random.randint(0, 255):02X}" for _ in range(3)])  # noqa: S311
+        prefix = secrets.choice(oui_prefixes)
+        suffix = ":".join([f"{secrets.randbelow(256):02X}" for _ in range(3)])
         return f"{prefix}:{suffix}"
 
     def _load_product_database(self) -> dict[str, dict[str, Any]]:

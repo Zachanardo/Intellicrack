@@ -33,7 +33,7 @@ import time
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
 except ImportError:
-    import xml.etree.ElementTree as ET
+    import xml.etree.ElementTree as ET  # noqa: S405
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime

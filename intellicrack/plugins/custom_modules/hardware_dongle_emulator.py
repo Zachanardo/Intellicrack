@@ -604,7 +604,7 @@ class USBDongleDriver:
         found = []
 
         # First check registered dongles
-        for _device_id, dongle in self.dongles.items():
+        for dongle in self.dongles.values():
             if vendor_id and dongle.spec.vendor_id != vendor_id:
                 continue
             if product_id and dongle.spec.product_id != product_id:
@@ -1104,7 +1104,7 @@ class ParallelPortEmulator:
 
         if value & 0x04 and self.dongles:
             for dongle in self.dongles.values():
-                dongle.__init__(dongle.spec)  # Reset dongle state
+                dongle.reset()  # Reset dongle state using proper reset method
 
         if value & 0x20:  # Bidirectional mode
             # Enable bidirectional communication
@@ -1649,7 +1649,7 @@ class HardwareDongleEmulator:
 
     def shutdown(self) -> None:
         """Shutdown all dongle emulations."""
-        for dongle_id in list(self.dongles.keys()):
+        for dongle_id in list(self.dongles):
             self.remove_dongle(dongle_id)
 
         self.logger.info("Hardware dongle emulator shutdown complete")

@@ -88,7 +88,7 @@ import shutil
 import subprocess
 import tempfile
 import types
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET  # noqa: S405
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path

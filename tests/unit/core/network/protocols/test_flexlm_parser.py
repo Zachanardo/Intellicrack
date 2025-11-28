@@ -396,7 +396,7 @@ class TestFlexLMProtocolParser:
 
     def test_short_packet(self, parser: FlexLMProtocolParser) -> None:
         """Test handling of too-short packets."""
-        packet = b"\x46\x4C\x45\x58"
+        packet = b"\x46\x4c\x45\x58"
         request = parser.parse_request(packet)
         assert request is None
 
@@ -408,7 +408,7 @@ class TestFlexLMProtocolParser:
         packet.extend(struct.pack(">H", 0x0B12))
         packet.extend(struct.pack(">I", 1))
         packet.extend(struct.pack(">I", 50))
-        packet.extend(b"\xFF\xFE\xFD\x00")
+        packet.extend(b"\xff\xfe\xfd\x00")
 
         request = parser.parse_request(bytes(packet))
         if request:
@@ -679,7 +679,7 @@ class TestFlexLMRealWorldScenarios:
             assert resp.status == 0x00
             assert resp.additional_data["vendor"] == "MLM"
 
-        assert len([k for k in parser.active_checkouts.keys() if "MATLAB" in k]) == 10
+        assert len([k for k in parser.active_checkouts if "MATLAB" in k]) == 10
 
     def test_ansys_floating_license(self, parser: FlexLMProtocolParser) -> None:
         """Test ANSYS floating license behavior."""

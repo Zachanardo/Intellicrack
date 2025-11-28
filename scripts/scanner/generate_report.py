@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 
 
-with Path('verification_results.json').open() as f:
+with Path('verification_results.json').open(encoding='utf-8') as f:
     results = json.load(f)
 
 # Generate comprehensive report
@@ -101,7 +101,7 @@ The current scanner implementation has a high false positive rate of {false_posi
     recommendations_text=chr(10).join(['- ' + rec for rec in results['recommendations']]),
 )
 
-with Path('scanner_audit_report.md').open('w') as f:
+with Path('scanner_audit_report.md').open('w', encoding='utf-8') as f:
     f.write(report_content)
 
 print("Comprehensive report generated: scanner_audit_report.md")

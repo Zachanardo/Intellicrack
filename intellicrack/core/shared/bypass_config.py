@@ -76,7 +76,7 @@ class BypassConfig:
 
         for bypass_type, config in BypassConfig.BYPASS_TYPES.items():
             protection_key = config["target_protection"]
-            if target_info.get(protection_key, False):
+            if target_info.get(protection_key):
                 bypasses.append(bypass_type)
 
         return {

@@ -299,7 +299,7 @@ class LoRAAdapterManager:
             )
 
             # Merge adapter if requested
-            if kwargs.get("merge_adapter", False):
+            if kwargs.get("merge_adapter"):
                 model = model.merge_and_unload()
                 logger.info(f"Merged adapter '{adapter_name}' into base model")
 
@@ -724,7 +724,7 @@ class LoRAAdapterManager:
         # Sort by access time (would need to track this)
         # For now, just clear oldest entries
         to_remove = len(self.loaded_adapters) - keep_recent
-        for key in list(self.loaded_adapters.keys())[:to_remove]:
+        for key in list(self.loaded_adapters)[:to_remove]:
             del self.loaded_adapters[key]
 
         logger.info(f"Cleaned up adapter cache, kept {keep_recent} recent adapters")

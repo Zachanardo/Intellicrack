@@ -7,7 +7,7 @@ import time
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any
 
 from cryptography.hazmat.backends import default_backend
@@ -15,7 +15,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ECPrivateKey, RSAPrivateKey, ec, rsa
 
 
-class SubscriptionTier(str, Enum):
+class SubscriptionTier(StrEnum):
     """String enumeration of subscription tier levels from free to unlimited for JWT payload manipulation and API response synthesis."""
 
     FREE = "free"
@@ -26,7 +26,7 @@ class SubscriptionTier(str, Enum):
     UNLIMITED = "unlimited"
 
 
-class SubscriptionType(str, Enum):
+class SubscriptionType(StrEnum):
     """String enumeration of cloud-based subscription licensing models including OAuth, SaaS, time-based, usage-based, feature-based, and per-seat licensing."""
 
     CLOUD_BASED = "cloud_based"
@@ -39,7 +39,7 @@ class SubscriptionType(str, Enum):
     PER_SEAT = "per_seat"
 
 
-class OAuthProvider(str, Enum):
+class OAuthProvider(StrEnum):
     """String enumeration of OAuth 2.0 identity providers with provider-specific JWT claim structures for Azure AD, Google, AWS Cognito, Okta, Auth0, and generic OAuth flows."""
 
     AZURE_AD = "azure_ad"

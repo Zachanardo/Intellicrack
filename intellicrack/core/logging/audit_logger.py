@@ -989,7 +989,7 @@ class PerformanceMonitor:
         with self._lock:
             if timer_id in self.start_times:
                 duration = end_time - self.start_times[timer_id]
-                operation = timer_id.split("_")[0]
+                operation = timer_id.split("_", maxsplit=1)[0]
 
                 # Record in histogram
                 self.histograms[f"{operation}_duration"].append(duration)

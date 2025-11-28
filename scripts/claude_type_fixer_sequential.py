@@ -197,9 +197,9 @@ class TypeErrorFixer:
         fixed_count = 0
 
         for iteration in range(max_iterations):
-            self.log(f"\n{'='*60}", force=True)
+            self.log(f"\n{'=' * 60}", force=True)
             self.log(f"Iteration {iteration + 1}/{max_iterations}", force=True)
-            self.log(f"{'='*60}", force=True)
+            self.log(f"{'=' * 60}", force=True)
 
             output = self.run_type_checker()
             error_lines = self.extract_errors(output)
@@ -318,13 +318,13 @@ You can provide multiple edits for the same file."""
         lines = file_content.split("\n")
         start = max(0, line_num - 20)
         end = min(len(lines), line_num + 20)
-        context = "\n".join(f"{i+1:4d}: {lines[i]}" for i in range(start, end))
+        context = "\n".join(f"{i + 1:4d}: {lines[i]}" for i in range(start, end))
 
         return f"""Fix this type error in {file_path}:
 
 Error at line {line_num}: {error_msg}
 
-Context (lines {start+1}-{end}):
+Context (lines {start + 1}-{end}):
 ```python
 {context}
 ```
@@ -497,7 +497,7 @@ def main() -> None:
         verbose=args.verbose,
     )
 
-    print(f"🤖 Claude Type Error Fixer")
+    print("🤖 Claude Type Error Fixer")
     print(f"Mode: {args.mode}")
     print(f"Checker: {args.checker}")
     print(f"Target: {args.target_dir}")
@@ -505,17 +505,17 @@ def main() -> None:
 
     if args.mode == "batch":
         fixed, remaining = fixer.fix_batch(max_errors=args.max_errors)
-        print(f"\n{'='*60}")
-        print(f"Batch Fix Results:")
+        print(f"\n{'=' * 60}")
+        print("Batch Fix Results:")
         print(f"  ✅ Fixed: {fixed}")
         print(f"  ⚠️  Remaining: {remaining}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
     else:
         fixed = fixer.fix_individual(max_iterations=args.max_iterations)
-        print(f"\n{'='*60}")
-        print(f"Individual Fix Results:")
+        print(f"\n{'=' * 60}")
+        print("Individual Fix Results:")
         print(f"  ✅ Fixed: {fixed}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
 
 if __name__ == "__main__":

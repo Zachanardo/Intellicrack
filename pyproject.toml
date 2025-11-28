@@ -168,7 +168,7 @@ dependencies = [
   "rich>=14.2.0,<15",
   "tqdm>=4.67.1,<5",
   "cffi>=2.0.0,<3",
-  "wheel>=0.45.1,<0.46",
+  "wheel>=0.45.1,<0.50",
   "setuptools>=70.0.0,<81",
 
   "jiter>=0.11.1,<0.13",
@@ -1102,6 +1102,11 @@ unfixable = [
   "RET503",  # adds explicit returns - may affect control flow
   "FURB122", # file writing optimization - may break generators
   "PLR1722", # sys.exit → exit (backwards advice!)
+  # Ruff auto-fix bugs (introduces syntax errors)
+  "G004",    # logging-f-string - auto-fix breaks code
+  "PLR6201", # literal-membership - auto-fix breaks code
+  "PLW1514", # unspecified-encoding - auto-fix breaks code
+  "B013",    # redundant-tuple-in-exception-handler - auto-fix breaks code
 ]
 
 # Rules to ignore (stylistic preferences, not harmful)

@@ -7,6 +7,7 @@ import json
 import os
 import random
 import re  # Add this import for regex validation
+import secrets
 import string
 import subprocess
 import uuid
@@ -346,35 +347,35 @@ class HardwareSpoofingWorker(QThread):
 
         # Generate CPU ID (Intel format)
         cpu_vendors = ["BFEBFBFF", "AFEBFBFF", "CFEBFBFF"]  # Intel prefixes
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
-        cpu_id = random.choice(cpu_vendors) + "".join(random.choices("0123456789ABCDEF", k=8))  # noqa: S311
+        # Note: Using secrets module for generating fake hardware IDs
+        cpu_id = secrets.choice(cpu_vendors) + "".join(secrets.choice("0123456789ABCDEF") for _ in range(8))
         spoofed_info["cpu_id"] = cpu_id
 
         # Generate motherboard serial
         mb_prefixes = ["MB", "SN", "System", "Base"]
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
-        mb_serial = f"{random.choice(mb_prefixes)}-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=12))
+        # Note: Using secrets module for generating fake hardware IDs
+        mb_serial = f"{secrets.choice(mb_prefixes)}-" + "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(12))
         spoofed_info["motherboard_serial"] = mb_serial
 
         # Generate HDD serial (realistic format)
         hdd_brands = ["WD-WCC", "ST", "HGST", "TOSHIBA"]
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
-        hdd_serial = random.choice(hdd_brands) + "".join(random.choices(string.ascii_uppercase + string.digits, k=10))
+        # Note: Using secrets module for generating fake hardware IDs
+        hdd_serial = secrets.choice(hdd_brands) + "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(10))
         spoofed_info["hdd_serial"] = hdd_serial
 
         oui_prefixes = ["00:1B:44", "00:50:56", "00:0C:29", "08:00:27"]  # Common OUIs
         mac_addresses: list[str] = []
         for _ in range(2):
-            # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
-            oui = random.choice(oui_prefixes)  # noqa: S311
-            nic = ":".join([f"{random.randint(0, 255):02X}" for _ in range(3)])  # noqa: S311
+            # Note: Using secrets module for generating fake hardware IDs
+            oui = secrets.choice(oui_prefixes)
+            nic = ":".join([f"{secrets.randbelow(256):02X}" for _ in range(3)])
             mac_addresses.append(f"{oui}:{nic}")
         spoofed_info["mac_addresses"] = mac_addresses
 
         # Generate volume serials
         volumes: dict[str, str] = {}
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
-        serial = f"{random.randint(1000, 9999):04X}-{random.randint(1000, 9999):04X}"  # noqa: S311
+        # Note: Using secrets module for generating fake hardware IDs
+        serial = f"{secrets.randbelow(9000) + 1000:04X}-{secrets.randbelow(9000) + 1000:04X}"
         for drive in ["C:", "D:"]:
             volumes[drive] = serial
         spoofed_info["volume_serials"] = volumes
@@ -388,15 +389,15 @@ class HardwareSpoofingWorker(QThread):
             HP_MANUFACTURER,
         ]
         bios_info = {
-            "serial": "".join(random.choices(string.ascii_uppercase + string.digits, k=15)),  # noqa: S311
-            "version": f"{random.randint(1, 5)}.{random.randint(0, 99)}.{random.randint(0, 999)}",  # noqa: S311
-            "manufacturer": random.choice(bios_manufacturers),  # noqa: S311
+            "serial": "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(15)),
+            "version": f"{secrets.randbelow(5) + 1}.{secrets.randbelow(100)}.{secrets.randbelow(1000)}",
+            "manufacturer": secrets.choice(bios_manufacturers),
         }
         spoofed_info["bios_info"] = bios_info
 
         # Generate Windows Product ID
-        # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
-        product_id = f"{random.randint(10000, 99999):05d}-{random.randint(10000, 99999):05d}-{random.randint(10000, 99999):05d}-{random.randint(10000, 99999):05d}"  # noqa: S311
+        # Note: Using secrets module for generating fake hardware IDs
+        product_id = f"{secrets.randbelow(90000) + 10000:05d}-{secrets.randbelow(90000) + 10000:05d}-{secrets.randbelow(90000) + 10000:05d}-{secrets.randbelow(90000) + 10000:05d}"
         spoofed_info["product_id"] = product_id
 
         # Generate Machine GUID
@@ -1518,7 +1519,7 @@ class HardwareSpoofingDialog(QDialog):
                     action_layout.setContentsMargins(0, 0, 0, 0)
 
                     load_btn = QPushButton("Load")
-                    load_btn.clicked.connect(lambda: self.load_profile())
+                    load_btn.clicked.connect(self.load_profile)
                     action_layout.addWidget(load_btn)
 
                     self.profiles_table.setCellWidget(row, 3, action_widget)
@@ -1852,7 +1853,7 @@ class CustomizeHardwareDialog(QDialog):
 
         # Generate random MAC if list is empty
         if self.mac_list.count() == 0:
-            rand_mac_parts = [f"{random.randint(0, 255):02X}" for _ in range(6)]  # noqa: S311
+            rand_mac_parts = [f"{secrets.randbelow(256):02X}" for _ in range(6)]
             rand_mac_parts[1] = f"{int(rand_mac_parts[1], 16) | 0x02:02X}"  # Set locally administered bit
             rand_mac = "-".join(rand_mac_parts)
             self.mac_list.addItem(rand_mac)

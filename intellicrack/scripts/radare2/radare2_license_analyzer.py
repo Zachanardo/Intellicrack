@@ -325,7 +325,7 @@ class R2LicenseAnalyzer:
 
         # Normalize score
         if matches > 0:
-            score = score / matches
+            score /= matches
 
         return max(0.0, min(1.0, score))
 
@@ -484,7 +484,7 @@ class R2LicenseAnalyzer:
 
         # Update license functions with crypto info
         for lic_func in self.license_functions:
-            for _crypto_type, locations in self.crypto_locations.items():
+            for locations in self.crypto_locations.values():
                 if any(lic_func.address <= loc <= lic_func.address + lic_func.size for loc in locations):
                     lic_func.type = LicenseType.CRYPTO_SIGNATURE
                     lic_func.protection_level = ProtectionLevel.ADVANCED
@@ -592,26 +592,20 @@ class R2LicenseAnalyzer:
 
             # Type-specific strategies
             if lic_func.type == LicenseType.SERIAL_KEY:
-                strategies.extend(
-                    (
-                        "Patch string comparison to always return equal",
-                        "Hook key validation function to return success",
-                    )
-                )
+                strategies.extend((
+                    "Patch string comparison to always return equal",
+                    "Hook key validation function to return success",
+                ))
             elif lic_func.type == LicenseType.ONLINE:
-                strategies.extend(
-                    (
-                        "Redirect network calls to local server",
-                        "Patch out network validation entirely",
-                    )
-                )
+                strategies.extend((
+                    "Redirect network calls to local server",
+                    "Patch out network validation entirely",
+                ))
             elif lic_func.type == LicenseType.HARDWARE:
-                strategies.extend(
-                    (
-                        "Spoof hardware ID generation",
-                        "Patch hardware comparison logic",
-                    )
-                )
+                strategies.extend((
+                    "Spoof hardware ID generation",
+                    "Patch hardware comparison logic",
+                ))
             elif lic_func.type == LicenseType.TIME_TRIAL:
                 strategies.append("Freeze or extend trial period")
                 strategies.append("Patch time comparison to always pass")

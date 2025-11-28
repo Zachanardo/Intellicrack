@@ -433,7 +433,7 @@ class ScriptExecutionManager(QObject):
                 if "script_args" in options:
                     cmd.extend(str(arg) for arg in options["script_args"])
                 # Output options
-                if options.get("verbose", False):
+                if options.get("verbose"):
                     cmd.extend(("-log-level", "DEBUG"))
                 # Timeout settings
                 timeout = options.get("timeout", 300)  # Default 5 minutes

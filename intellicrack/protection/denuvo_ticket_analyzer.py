@@ -37,10 +37,10 @@ from ..utils.logger import get_logger
 logger = get_logger(__name__)
 
 try:
-    from Crypto.Cipher import AES
-    from Crypto.Hash import SHA256
-    from Crypto.PublicKey import RSA
-    from Crypto.Signature import pkcs1_15
+    from Crypto.Cipher import AES  # noqa: S413
+    from Crypto.Hash import SHA256  # noqa: S413
+    from Crypto.PublicKey import RSA  # noqa: S413
+    from Crypto.Signature import pkcs1_15  # noqa: S413
     from Crypto.Util.Padding import pad, unpad
 
     CRYPTO_AVAILABLE = True
@@ -1054,15 +1054,15 @@ class DenuvoTicketAnalyzer:
                 "type": "hmac",
                 "key": hashlib.sha256(b"denuvo_master_key_v7").digest(),
                 "aes_key": hashlib.sha256(b"denuvo_aes_key_v7_extended_master").digest(),
-                "iv": hashlib.md5(b"denuvo_iv_v7").digest(),
-                "nonce": hashlib.md5(b"denuvo_nonce_v7").digest()[:12],
+                "iv": hashlib.md5(b"denuvo_iv_v7").digest(),  # noqa: S324 - MD5 required by Denuvo protocol
+                "nonce": hashlib.md5(b"denuvo_nonce_v7").digest()[:12],  # noqa: S324 - MD5 required by Denuvo protocol
             },
             {
                 "type": "hmac",
                 "key": hashlib.sha256(b"denuvo_master_key_v6").digest(),
                 "aes_key": hashlib.sha256(b"denuvo_aes_key_v6_extended_master").digest(),
-                "iv": hashlib.md5(b"denuvo_iv_v6").digest(),
-                "nonce": hashlib.md5(b"denuvo_nonce_v6").digest()[:12],
+                "iv": hashlib.md5(b"denuvo_iv_v6").digest(),  # noqa: S324 - MD5 required by Denuvo protocol
+                "nonce": hashlib.md5(b"denuvo_nonce_v6").digest()[:12],  # noqa: S324 - MD5 required by Denuvo protocol
             },
             {
                 "type": "hmac",

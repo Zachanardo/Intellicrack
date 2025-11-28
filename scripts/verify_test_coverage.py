@@ -22,7 +22,7 @@ def find_all_source_files(root_dir: Path) -> set[str]:
 
     for py_file in root_dir.rglob("*.py"):
         # Skip __init__.py, __main__.py, and test files
-        if py_file.name in ("__init__.py", "__main__.py"):
+        if py_file.name in {"__init__.py", "__main__.py"}:
             continue
         if "test_" in py_file.name or py_file.name.endswith("_test.py"):
             continue
@@ -122,7 +122,7 @@ def generate_report(tested: Set, untested: Set, coverage_map: Dict, detailed: bo
             dir_name = str(Path(f).parent)
             by_dir[dir_name].append(Path(f).name)
 
-        for dir_path in sorted(by_dir.keys()):
+        for dir_path in sorted(by_dir):
             files = by_dir[dir_path]
             print(f"\n{dir_path}/ ({len(files)} untested):")
             for filename in sorted(files)[: 10 if not detailed else None]:
@@ -140,7 +140,7 @@ def generate_report(tested: Set, untested: Set, coverage_map: Dict, detailed: bo
             dir_name = str(Path(f).parent)
             by_dir[dir_name].append((Path(f).name, coverage_map.get(f, [])))
 
-        for dir_path in sorted(by_dir.keys()):
+        for dir_path in sorted(by_dir):
             files = by_dir[dir_path]
             print(f"\n{dir_path}/ ({len(files)} tested):")
             for filename, test_paths in files[:10]:

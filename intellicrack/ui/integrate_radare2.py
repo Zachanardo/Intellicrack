@@ -145,7 +145,7 @@ def integrate_with_main_app() -> bool:
 
         # Method 3: Check sys.modules for app instance
         if not main_app:
-            for _, module in sys.modules.items():
+            for module in sys.modules.values():
                 if hasattr(module, "app"):
                     app_candidate = module.app
                     if hasattr(app_candidate, "__class__") and "IntellicrackApp" in str(type(app_candidate)):

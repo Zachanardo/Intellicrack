@@ -410,8 +410,9 @@ else:
         def _fetch_latest_version(self, repo_url: str, plugin_name: str) -> dict | None:
             """Fetch latest version information from repository."""
             try:
-                import requests
                 from urllib.parse import urlparse
+
+                import requests
 
                 # Try different API endpoints based on repository type
                 parsed_url = urlparse(repo_url)

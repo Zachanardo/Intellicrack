@@ -40,7 +40,7 @@ class TestLLMConfigMigration(unittest.TestCase):
         self.original_home = Path.home
 
         # Patch Path.home to use temp directory
-        self.home_patcher = patch('pathlib.Path.home')
+        self.home_patcher = patch("pathlib.Path.home")
         self.mock_home = self.home_patcher.start()
         self.mock_home.return_value = Path(self.temp_dir)
 
@@ -66,17 +66,9 @@ class TestLLMConfigMigration(unittest.TestCase):
                 "temperature": 0.7,
                 "max_tokens": 4096,
                 "tools_enabled": True,
-                "custom_params": {
-                    "top_p": 0.9,
-                    "frequency_penalty": 0.0,
-                    "presence_penalty": 0.0
-                },
+                "custom_params": {"top_p": 0.9, "frequency_penalty": 0.0, "presence_penalty": 0.0},
                 "created_at": "2024-01-15T10:30:00",
-                "metadata": {
-                    "description": "GPT-4 Turbo for complex analysis",
-                    "tags": ["production", "analysis"],
-                    "auto_load": True
-                }
+                "metadata": {"description": "GPT-4 Turbo for complex analysis", "tags": ["production", "analysis"], "auto_load": True},
             },
             "claude-3-opus": {
                 "provider": "anthropic",
@@ -88,15 +80,9 @@ class TestLLMConfigMigration(unittest.TestCase):
                 "temperature": 0.5,
                 "max_tokens": 4096,
                 "tools_enabled": True,
-                "custom_params": {
-                    "top_k": 40
-                },
+                "custom_params": {"top_k": 40},
                 "created_at": "2024-01-20T14:45:00",
-                "metadata": {
-                    "description": "Claude 3 Opus for code generation",
-                    "tags": ["development", "code"],
-                    "auto_load": False
-                }
+                "metadata": {"description": "Claude 3 Opus for code generation", "tags": ["development", "code"], "auto_load": False},
             },
             "local-llama": {
                 "provider": "gguf",
@@ -108,17 +94,10 @@ class TestLLMConfigMigration(unittest.TestCase):
                 "temperature": 0.8,
                 "max_tokens": 2048,
                 "tools_enabled": False,
-                "custom_params": {
-                    "n_gpu_layers": 35,
-                    "n_threads": 8
-                },
+                "custom_params": {"n_gpu_layers": 35, "n_threads": 8},
                 "created_at": "2024-02-01T09:15:00",
-                "metadata": {
-                    "description": "Local Llama model for offline use",
-                    "tags": ["local", "offline"],
-                    "auto_load": True
-                }
-            }
+                "metadata": {"description": "Local Llama model for offline use", "tags": ["local", "offline"], "auto_load": True},
+            },
         }
 
         models_file = self.llm_config_dir / "models.json"
@@ -131,58 +110,28 @@ class TestLLMConfigMigration(unittest.TestCase):
             "fast": {
                 "name": "Fast Generation",
                 "description": "Quick responses with less deliberation",
-                "settings": {
-                    "temperature": 0.9,
-                    "max_tokens": 1024,
-                    "top_p": 0.95,
-                    "frequency_penalty": 0.0,
-                    "presence_penalty": 0.0
-                }
+                "settings": {"temperature": 0.9, "max_tokens": 1024, "top_p": 0.95, "frequency_penalty": 0.0, "presence_penalty": 0.0},
             },
             "balanced": {
                 "name": "Balanced",
                 "description": "Good balance between speed and quality",
-                "settings": {
-                    "temperature": 0.7,
-                    "max_tokens": 2048,
-                    "top_p": 0.9,
-                    "frequency_penalty": 0.1,
-                    "presence_penalty": 0.1
-                }
+                "settings": {"temperature": 0.7, "max_tokens": 2048, "top_p": 0.9, "frequency_penalty": 0.1, "presence_penalty": 0.1},
             },
             "precise": {
                 "name": "Precise",
                 "description": "Careful, accurate responses",
-                "settings": {
-                    "temperature": 0.3,
-                    "max_tokens": 4096,
-                    "top_p": 0.85,
-                    "frequency_penalty": 0.2,
-                    "presence_penalty": 0.2
-                }
+                "settings": {"temperature": 0.3, "max_tokens": 4096, "top_p": 0.85, "frequency_penalty": 0.2, "presence_penalty": 0.2},
             },
             "creative": {
                 "name": "Creative",
                 "description": "More creative and varied responses",
-                "settings": {
-                    "temperature": 1.0,
-                    "max_tokens": 3072,
-                    "top_p": 0.98,
-                    "frequency_penalty": 0.5,
-                    "presence_penalty": 0.5
-                }
+                "settings": {"temperature": 1.0, "max_tokens": 3072, "top_p": 0.98, "frequency_penalty": 0.5, "presence_penalty": 0.5},
             },
             "custom_exploit": {
                 "name": "Exploit Analysis",
                 "description": "Optimized for binary exploitation analysis",
-                "settings": {
-                    "temperature": 0.4,
-                    "max_tokens": 8192,
-                    "top_p": 0.88,
-                    "frequency_penalty": 0.0,
-                    "presence_penalty": 0.3
-                }
-            }
+                "settings": {"temperature": 0.4, "max_tokens": 8192, "top_p": 0.88, "frequency_penalty": 0.0, "presence_penalty": 0.3},
+            },
         }
 
         profiles_file = self.llm_config_dir / "profiles.json"
@@ -194,24 +143,9 @@ class TestLLMConfigMigration(unittest.TestCase):
         metrics_data = {
             "gpt4-turbo": {
                 "history": [
-                    {
-                        "tokens_generated": 512,
-                        "generation_time": 2.3,
-                        "memory_mb": 450,
-                        "timestamp": "2024-01-15T11:00:00"
-                    },
-                    {
-                        "tokens_generated": 1024,
-                        "generation_time": 4.5,
-                        "memory_mb": 480,
-                        "timestamp": "2024-01-15T11:30:00"
-                    },
-                    {
-                        "tokens_generated": 256,
-                        "generation_time": 1.2,
-                        "memory_mb": 440,
-                        "timestamp": "2024-01-15T12:00:00"
-                    }
+                    {"tokens_generated": 512, "generation_time": 2.3, "memory_mb": 450, "timestamp": "2024-01-15T11:00:00"},
+                    {"tokens_generated": 1024, "generation_time": 4.5, "memory_mb": 480, "timestamp": "2024-01-15T11:30:00"},
+                    {"tokens_generated": 256, "generation_time": 1.2, "memory_mb": 440, "timestamp": "2024-01-15T12:00:00"},
                 ],
                 "aggregate": {
                     "total_uses": 3,
@@ -220,23 +154,13 @@ class TestLLMConfigMigration(unittest.TestCase):
                     "avg_generation_time": 2.67,
                     "avg_memory_mb": 456.67,
                     "tokens_per_second": 223.26,
-                    "last_used": "2024-01-15T12:00:00"
-                }
+                    "last_used": "2024-01-15T12:00:00",
+                },
             },
             "claude-3-opus": {
                 "history": [
-                    {
-                        "tokens_generated": 2048,
-                        "generation_time": 5.8,
-                        "memory_mb": 520,
-                        "timestamp": "2024-01-20T15:00:00"
-                    },
-                    {
-                        "tokens_generated": 4096,
-                        "generation_time": 11.2,
-                        "memory_mb": 580,
-                        "timestamp": "2024-01-20T16:00:00"
-                    }
+                    {"tokens_generated": 2048, "generation_time": 5.8, "memory_mb": 520, "timestamp": "2024-01-20T15:00:00"},
+                    {"tokens_generated": 4096, "generation_time": 11.2, "memory_mb": 580, "timestamp": "2024-01-20T16:00:00"},
                 ],
                 "aggregate": {
                     "total_uses": 2,
@@ -245,18 +169,11 @@ class TestLLMConfigMigration(unittest.TestCase):
                     "avg_generation_time": 8.5,
                     "avg_memory_mb": 550,
                     "tokens_per_second": 361.41,
-                    "last_used": "2024-01-20T16:00:00"
-                }
+                    "last_used": "2024-01-20T16:00:00",
+                },
             },
             "local-llama": {
-                "history": [
-                    {
-                        "tokens_generated": 128,
-                        "generation_time": 15.3,
-                        "memory_mb": 8500,
-                        "timestamp": "2024-02-01T10:00:00"
-                    }
-                ],
+                "history": [{"tokens_generated": 128, "generation_time": 15.3, "memory_mb": 8500, "timestamp": "2024-02-01T10:00:00"}],
                 "aggregate": {
                     "total_uses": 1,
                     "total_tokens": 128,
@@ -264,9 +181,9 @@ class TestLLMConfigMigration(unittest.TestCase):
                     "avg_generation_time": 15.3,
                     "avg_memory_mb": 8500,
                     "tokens_per_second": 8.37,
-                    "last_used": "2024-02-01T10:00:00"
-                }
-            }
+                    "last_used": "2024-02-01T10:00:00",
+                },
+            },
         }
 
         metrics_file = self.llm_config_dir / "metrics.json"
@@ -338,8 +255,7 @@ class TestLLMConfigMigration(unittest.TestCase):
         migrated_metrics = config.get("llm_configuration.metrics", {})
 
         # Verify models migration
-        self.assertEqual(len(migrated_models), len(models_data),
-                        f"Should have migrated all {len(models_data)} models")
+        self.assertEqual(len(migrated_models), len(models_data), f"Should have migrated all {len(models_data)} models")
 
         for model_id, original_config in models_data.items():
             self.assertIn(model_id, migrated_models, f"Model {model_id} should be migrated")
@@ -358,8 +274,7 @@ class TestLLMConfigMigration(unittest.TestCase):
                 self.assertEqual(migrated_config.get("metadata"), original_config["metadata"])
 
         # Verify profiles migration
-        self.assertEqual(len(migrated_profiles), len(profiles_data),
-                        f"Should have migrated all {len(profiles_data)} profiles")
+        self.assertEqual(len(migrated_profiles), len(profiles_data), f"Should have migrated all {len(profiles_data)} profiles")
 
         for profile_id, original_profile in profiles_data.items():
             self.assertIn(profile_id, migrated_profiles, f"Profile {profile_id} should be migrated")
@@ -371,23 +286,20 @@ class TestLLMConfigMigration(unittest.TestCase):
             self.assertEqual(migrated_profile["settings"], original_profile["settings"])
 
         # Verify metrics migration
-        self.assertEqual(len(migrated_metrics), len(metrics_data),
-                        f"Should have migrated metrics for all {len(metrics_data)} models")
+        self.assertEqual(len(migrated_metrics), len(metrics_data), f"Should have migrated metrics for all {len(metrics_data)} models")
 
         for model_id, original_metrics in metrics_data.items():
             self.assertIn(model_id, migrated_metrics, f"Metrics for {model_id} should be migrated")
             migrated_model_metrics = migrated_metrics[model_id]
 
             # Verify history preserved
-            self.assertEqual(len(migrated_model_metrics["history"]),
-                           len(original_metrics["history"]),
-                           f"History for {model_id} should be preserved")
+            self.assertEqual(
+                len(migrated_model_metrics["history"]), len(original_metrics["history"]), f"History for {model_id} should be preserved"
+            )
 
             # Verify aggregate stats preserved
-            self.assertEqual(migrated_model_metrics["aggregate"]["total_uses"],
-                           original_metrics["aggregate"]["total_uses"])
-            self.assertEqual(migrated_model_metrics["aggregate"]["total_tokens"],
-                           original_metrics["aggregate"]["total_tokens"])
+            self.assertEqual(migrated_model_metrics["aggregate"]["total_uses"], original_metrics["aggregate"]["total_uses"])
+            self.assertEqual(migrated_model_metrics["aggregate"]["total_tokens"], original_metrics["aggregate"]["total_tokens"])
 
         print(f"OK Successfully migrated {len(migrated_models)} models to central config")
         print(f"OK Successfully migrated {len(migrated_profiles)} profiles to central config")
@@ -408,7 +320,7 @@ class TestLLMConfigMigration(unittest.TestCase):
         llm_manager = LLMConfigManager(config_dir=str(self.llm_config_dir))
 
         # Test loading each model
-        for model_id in models_data.keys():
+        for model_id in models_data:
             loaded_config = llm_manager.load_model_config(model_id)
             self.assertIsNotNone(loaded_config, f"Should load config for {model_id}")
 
@@ -434,8 +346,7 @@ class TestLLMConfigMigration(unittest.TestCase):
 
         # Test listing all models
         all_configs = llm_manager.list_model_configs()
-        self.assertEqual(len(all_configs), len(models_data),
-                        "Should list all migrated models")
+        self.assertEqual(len(all_configs), len(models_data), "Should list all migrated models")
 
         print(f"OK All {len(models_data)} models load correctly after migration")
         print("OK Model loading functionality fully verified")
@@ -455,12 +366,7 @@ class TestLLMConfigMigration(unittest.TestCase):
 
         # Load a test model config
         base_config = LLMConfig(
-            provider=LLMProvider.OPENAI,
-            model_name="gpt-4",
-            api_key="test-key",
-            temperature=0.5,
-            max_tokens=1000,
-            custom_params={}
+            provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test-key", temperature=0.5, max_tokens=1000, custom_params={}
         )
 
         # Test applying each profile
@@ -475,25 +381,24 @@ class TestLLMConfigMigration(unittest.TestCase):
 
             # Verify profile settings applied
             profile_settings = profile_data["settings"]
-            self.assertEqual(modified_config.temperature, profile_settings["temperature"],
-                           f"Temperature should be set from {profile_id} profile")
-            self.assertEqual(modified_config.max_tokens, profile_settings["max_tokens"],
-                           f"Max tokens should be set from {profile_id} profile")
+            self.assertEqual(
+                modified_config.temperature, profile_settings["temperature"], f"Temperature should be set from {profile_id} profile"
+            )
+            self.assertEqual(
+                modified_config.max_tokens, profile_settings["max_tokens"], f"Max tokens should be set from {profile_id} profile"
+            )
 
             # Verify custom params applied
             if "top_p" in profile_settings:
-                self.assertEqual(modified_config.custom_params.get("top_p"),
-                               profile_settings["top_p"])
+                self.assertEqual(modified_config.custom_params.get("top_p"), profile_settings["top_p"])
             if "frequency_penalty" in profile_settings:
-                self.assertEqual(modified_config.custom_params.get("frequency_penalty"),
-                               profile_settings["frequency_penalty"])
+                self.assertEqual(modified_config.custom_params.get("frequency_penalty"), profile_settings["frequency_penalty"])
 
             print(f"OK Successfully applied profile '{profile_id}' after migration")
 
         # Test listing all profiles
         all_profiles = llm_manager.list_profiles()
-        self.assertEqual(len(all_profiles), len(profiles_data),
-                        "Should list all migrated profiles")
+        self.assertEqual(len(all_profiles), len(profiles_data), "Should list all migrated profiles")
 
         # Test custom exploit profile specifically
         exploit_profile = llm_manager.get_profile("custom_exploit")
@@ -523,31 +428,28 @@ class TestLLMConfigMigration(unittest.TestCase):
             self.assertIsNotNone(loaded_metrics, f"Should load metrics for {model_id}")
 
             # Verify history preserved
-            self.assertEqual(len(loaded_metrics["history"]),
-                           len(original_metrics["history"]),
-                           f"History for {model_id} should be preserved")
+            self.assertEqual(
+                len(loaded_metrics["history"]), len(original_metrics["history"]), f"History for {model_id} should be preserved"
+            )
 
             # Verify aggregate stats
-            self.assertEqual(loaded_metrics["aggregate"]["total_uses"],
-                           original_metrics["aggregate"]["total_uses"])
-            self.assertEqual(loaded_metrics["aggregate"]["total_tokens"],
-                           original_metrics["aggregate"]["total_tokens"])
+            self.assertEqual(loaded_metrics["aggregate"]["total_uses"], original_metrics["aggregate"]["total_uses"])
+            self.assertEqual(loaded_metrics["aggregate"]["total_tokens"], original_metrics["aggregate"]["total_tokens"])
 
             print(f"OK Metrics for {model_id} loaded correctly after migration")
 
         # Test adding new metrics
-        new_metrics = {
-            "tokens_generated": 1024,
-            "generation_time": 3.5,
-            "memory_mb": 500
-        }
+        new_metrics = {"tokens_generated": 1024, "generation_time": 3.5, "memory_mb": 500}
 
         llm_manager.save_metrics("gpt4-turbo", new_metrics)
 
         # Verify new metrics added
         updated_metrics = llm_manager.get_metrics("gpt4-turbo")
-        self.assertEqual(len(updated_metrics["history"]), 4,  # Was 3, now 4
-                        "Should have added new metrics entry")
+        self.assertEqual(
+            len(updated_metrics["history"]),
+            4,  # Was 3, now 4
+            "Should have added new metrics entry",
+        )
 
         # Verify latest entry has timestamp
         latest_entry = updated_metrics["history"][-1]
@@ -556,17 +458,12 @@ class TestLLMConfigMigration(unittest.TestCase):
 
         # Verify aggregates updated
         self.assertEqual(updated_metrics["aggregate"]["total_uses"], 4)
-        self.assertGreater(updated_metrics["aggregate"]["total_tokens"],
-                          metrics_data["gpt4-turbo"]["aggregate"]["total_tokens"])
+        self.assertGreater(updated_metrics["aggregate"]["total_tokens"], metrics_data["gpt4-turbo"]["aggregate"]["total_tokens"])
 
         print("OK New metrics can be added after migration")
 
         # Test metrics for new model
-        new_model_metrics = {
-            "tokens_generated": 512,
-            "generation_time": 2.0,
-            "memory_mb": 400
-        }
+        new_model_metrics = {"tokens_generated": 512, "generation_time": 2.0, "memory_mb": 400}
 
         llm_manager.save_metrics("new_model", new_model_metrics)
         new_loaded = llm_manager.get_metrics("new_model")
@@ -588,16 +485,14 @@ class TestLLMConfigMigration(unittest.TestCase):
 
         # Test concurrent access (thread safety)
         import threading
+
         errors = []
 
         def concurrent_access():
             try:
                 # Simultaneous read/write operations
                 llm_manager.load_model_config("gpt4-turbo")
-                llm_manager.save_metrics("gpt4-turbo", {
-                    "tokens_generated": 100,
-                    "generation_time": 1.0
-                })
+                llm_manager.save_metrics("gpt4-turbo", {"tokens_generated": 100, "generation_time": 1.0})
                 llm_manager.get_profile("balanced")
             except Exception as e:
                 errors.append(str(e))
@@ -626,7 +521,7 @@ class TestLLMConfigMigration(unittest.TestCase):
             model_name="gpt-4",
             api_key=None,  # Missing API key
             temperature=0.7,
-            max_tokens=2048
+            max_tokens=2048,
         )
 
         llm_manager.save_model_config("no_key_model", config_no_key)
@@ -636,14 +531,10 @@ class TestLLMConfigMigration(unittest.TestCase):
 
         # Test maximum metrics history limit
         for i in range(150):  # Exceed 100 entry limit
-            llm_manager.save_metrics("test_model", {
-                "tokens_generated": i * 10,
-                "generation_time": i * 0.1
-            })
+            llm_manager.save_metrics("test_model", {"tokens_generated": i * 10, "generation_time": i * 0.1})
 
         final_metrics = llm_manager.get_metrics("test_model")
-        self.assertLessEqual(len(final_metrics["history"]), 100,
-                            "Should limit history to 100 entries")
+        self.assertLessEqual(len(final_metrics["history"]), 100, "Should limit history to 100 entries")
         print("OK Metrics history limited to 100 entries")
 
         # Test export/import with API key redaction
@@ -656,8 +547,7 @@ class TestLLMConfigMigration(unittest.TestCase):
         # Verify API keys redacted
         for model_id, model_config in exported["configs"].items():
             if model_config.get("api_key"):
-                self.assertEqual(model_config["api_key"], "***REDACTED***",
-                               "API keys should be redacted in export")
+                self.assertEqual(model_config["api_key"], "***REDACTED***", "API keys should be redacted in export")
 
         print("OK API key redaction works correctly")
 

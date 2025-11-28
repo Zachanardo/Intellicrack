@@ -764,8 +764,8 @@ class DebuggerDetector(BaseDetector):
                 debug_detected = any(nt_global_flag.value & flag for flag in debug_flags)
                 details["debug_heap_flags"] = debug_detected
 
-                if debug_detected or details.get("being_debugged", False):
-                    confidence = 0.9 if details.get("being_debugged", False) else 0.7
+                if debug_detected or details.get("being_debugged"):
+                    confidence = 0.9 if details.get("being_debugged") else 0.7
                     return True, confidence, details
 
             return False, 0.0, details

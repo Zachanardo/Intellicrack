@@ -22,7 +22,7 @@ def analyze_scan_results(json_file: str) -> dict[str, object]:
         findings grouped by type, sample findings, and all findings.
 
     """
-    with open(json_file) as f:
+    with open(json_file, encoding='utf-8') as f:
         data = json.load(f)
 
     findings = data.get('findings', [])
@@ -76,6 +76,7 @@ def analyze_scan_results(json_file: str) -> dict[str, object]:
         'all_findings': findings,
     }
 
+
 if __name__ == "__main__":
     json_file = "clean_scan_results.json"
     if not os.path.exists(json_file):
@@ -85,7 +86,7 @@ if __name__ == "__main__":
     results = analyze_scan_results(json_file)
 
     # Save detailed analysis
-    with open("analysis_summary.json", "w") as f:
+    with open("analysis_summary.json", "w", encoding='utf-8') as f:
         json.dump({
             'total': results['total'],
             'severity_counts': results['severity_counts'],

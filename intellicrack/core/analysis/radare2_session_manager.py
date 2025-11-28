@@ -497,7 +497,7 @@ class R2SessionPool:
         with self._lock:
             logger.info(f"Closing all {len(self._sessions)} sessions in pool")
 
-            for session_id in list(self._sessions.keys()):
+            for session_id in list(self._sessions):
                 self._remove_session(session_id)
 
             self._available_sessions.clear()

@@ -291,15 +291,13 @@ class ChecksumRecalculator:
                     entropy = self._calculate_key_entropy(potential_key)
 
                     if 3.5 < entropy < 7.0 and self._is_likely_key(potential_key):
-                        hmac_keys.append(
-                            {
-                                "offset": offset,
-                                "size": key_size,
-                                "key_hex": potential_key.hex(),
-                                "entropy": entropy,
-                                "confidence": self._calculate_key_confidence(potential_key, entropy),
-                            }
-                        )
+                        hmac_keys.append({
+                            "offset": offset,
+                            "size": key_size,
+                            "key_hex": potential_key.hex(),
+                            "entropy": entropy,
+                            "confidence": self._calculate_key_confidence(potential_key, entropy),
+                        })
 
                     offset += 1
 
@@ -696,7 +694,7 @@ class IntegrityCheckDetector:
                 section_data = section.get_data()
                 section_name = section.Name.decode().rstrip("\x00")
 
-                for _pattern_name, pattern_info in self.check_patterns.items():
+                for pattern_info in self.check_patterns.values():
                     pattern = pattern_info["pattern"]
                     offset = 0
 
@@ -1598,15 +1596,13 @@ class BinaryPatcher:
                         for i in range(check.size):
                             patch_data[offset + i] = 0x90
 
-                        self.patch_history.append(
-                            {
-                                "address": check.address,
-                                "size": check.size,
-                                "original": bytes(original_data[offset : offset + check.size]),
-                                "patched": bytes([0x90] * check.size),
-                                "type": check.check_type.name,
-                            }
-                        )
+                        self.patch_history.append({
+                            "address": check.address,
+                            "size": check.size,
+                            "original": bytes(original_data[offset : offset + check.size]),
+                            "patched": bytes([0x90] * check.size),
+                            "type": check.check_type.name,
+                        })
 
                 elif check.check_type in [IntegrityCheckType.CRC32, IntegrityCheckType.CHECKSUM]:
                     if offset := self._rva_to_offset(pe, check.address):
@@ -1616,15 +1612,13 @@ class BinaryPatcher:
                             if offset + i < len(patch_data):
                                 patch_data[offset + i] = byte
 
-                        self.patch_history.append(
-                            {
-                                "address": check.address,
-                                "size": len(patch_bytes),
-                                "original": bytes(original_data[offset : offset + len(patch_bytes)]),
-                                "patched": patch_bytes,
-                                "type": check.check_type.name,
-                            }
-                        )
+                        self.patch_history.append({
+                            "address": check.address,
+                            "size": len(patch_bytes),
+                            "original": bytes(original_data[offset : offset + len(patch_bytes)]),
+                            "patched": patch_bytes,
+                            "type": check.check_type.name,
+                        })
 
             with open(output_path, "wb") as f:
                 f.write(patch_data)
@@ -1737,16 +1731,14 @@ class IntegrityCheckDefeatSystem:
         logger.info(f"Detected {len(checks)} integrity checks")
 
         for check in checks:
-            result["details"].append(
-                {
-                    "type": check.check_type.name,
-                    "address": hex(check.address),
-                    "function": check.function_name,
-                    "bypass_method": check.bypass_method,
-                    "confidence": check.confidence,
-                    "section": check.section_name,
-                }
-            )
+            result["details"].append({
+                "type": check.check_type.name,
+                "address": hex(check.address),
+                "function": check.function_name,
+                "bypass_method": check.bypass_method,
+                "confidence": check.confidence,
+                "section": check.section_name,
+            })
 
         if process_name:
             logger.info(f"Applying runtime bypasses: {process_name}")

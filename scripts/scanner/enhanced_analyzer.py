@@ -79,7 +79,7 @@ def is_legitimate_error_handling(file_path: str, line_num: int, code_line: str) 
 
 def analyze_findings(scan_results_path: str) -> dict:
     """Analyze scan results and classify findings."""
-    with Path(scan_results_path).open() as f:
+    with Path(scan_results_path).open(encoding='utf-8') as f:
         data = json.load(f)
 
     true_positives = []
@@ -92,7 +92,7 @@ def analyze_findings(scan_results_path: str) -> dict:
         code_snippet = finding.get('code_snippet', '')
 
         # Check if it's a pass statement - always a true positive
-        if 'pass' in code_snippet and pattern_type in ['empty_function', 'minimal_function']:
+        if 'pass' in code_snippet and pattern_type in {'empty_function', 'minimal_function'}:
             true_positives.append(finding)
             continue
 
@@ -103,7 +103,7 @@ def analyze_findings(scan_results_path: str) -> dict:
             continue
 
         # Check for empty returns that might be legitimate
-        if pattern_type in ['empty_list_return', 'empty_dict_return', 'empty_value_code']:
+        if pattern_type in {'empty_list_return', 'empty_dict_return', 'empty_value_code'}:
             is_legit, reason = is_legitimate_error_handling(file_path, line_num, code_snippet)
             if is_legit:
                 finding['classification_reason'] = reason
@@ -147,7 +147,7 @@ def main() -> None:
     ], capture_output=True, text=True, check=False)
 
     # Save results
-    with Path('enhanced_scan_results.json').open('w') as f:
+    with Path('enhanced_scan_results.json').open('w', encoding='utf-8') as f:
         f.write(result.stdout)
 
     # Analyze

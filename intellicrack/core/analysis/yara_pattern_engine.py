@@ -971,7 +971,7 @@ rule Basic_PE_Detection
             return {"error": "No rules loaded"}
 
         categories = {}
-        for _rule_id, metadata in self.rule_metadata.items():
+        for metadata in self.rule_metadata.values():
             category = metadata.get("category", "unknown")
             if category not in categories:
                 categories[category] = 0

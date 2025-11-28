@@ -7,9 +7,13 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
+import logging
 from dataclasses import dataclass
 
 import frida
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -1534,7 +1538,7 @@ send({ type: 'rpc_ready' });
 """
 
         self.script = self.session.create_script(rpc_script)
-        self.script.on("message", lambda m, d: None)
+        self.script.on("message", lambda m, d: logger.debug("Frida message: %s, data: %s", m, d))
         self.script.load()
 
     def memory_read(self, address: int, size: int) -> bytes:

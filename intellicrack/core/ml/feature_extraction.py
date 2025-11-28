@@ -599,7 +599,7 @@ class BinaryFeatureExtractor:
                     break
 
         try:
-            import_pattern = re.compile(b"(?:[\\x20-\\x7E]{3,})\\x00")
+            import_pattern = re.compile(rb"(?:[\x20-\x7E]{3,})\x00")
             import_matches = import_pattern.findall(data[: min(len(data), 100000)])
 
             for match in import_matches[:500]:

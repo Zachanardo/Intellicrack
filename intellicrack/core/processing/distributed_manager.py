@@ -30,7 +30,7 @@ import hmac
 import json
 import logging
 import os
-import pickle
+import pickle  # noqa: S403
 import platform
 import socket
 import struct

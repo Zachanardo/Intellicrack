@@ -23,7 +23,7 @@ import hashlib
 import hmac
 import json
 import os
-import pickle
+import pickle  # noqa: S403
 import time
 from collections import OrderedDict
 from dataclasses import dataclass
@@ -66,7 +66,7 @@ def secure_pickle_dump(obj: object, file_path: str) -> None:
         f.write(data)
 
 
-class RestrictedUnpickler(pickle.Unpickler):
+class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
     """Restricted unpickler that only allows safe classes."""
 
     def find_class(self, module: str, name: str) -> type:

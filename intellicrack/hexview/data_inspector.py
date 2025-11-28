@@ -290,7 +290,7 @@ class DataInterpreter:
             timestamp = struct.unpack("<Q", data[:8])[0]
             try:
                 if timestamp > 1e12:  # Assume milliseconds
-                    timestamp = timestamp / 1000
+                    timestamp /= 1000
                 dt = datetime.datetime.fromtimestamp(timestamp)
                 return dt.strftime("%Y-%m-%d %H:%M:%S UTC")
             except (ValueError, OSError, OverflowError) as e:

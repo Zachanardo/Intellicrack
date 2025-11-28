@@ -288,59 +288,55 @@ class VMDetector(BaseDetector):
         try:
             if platform.system() == "Windows":
                 if platform.machine().endswith("64"):
-                    code = bytes(
-                        [
-                            0x53,
-                            0x89,
-                            0xC8,
-                            0x89,
-                            0xD1,
-                            0x0F,
-                            0xA2,
-                            0x41,
-                            0x89,
-                            0x00,
-                            0x41,
-                            0x89,
-                            0x58,
-                            0x04,
-                            0x41,
-                            0x89,
-                            0x48,
-                            0x08,
-                            0x41,
-                            0x89,
-                            0x50,
-                            0x0C,
-                            0x5B,
-                            0xC3,
-                        ]
-                    )
+                    code = bytes([
+                        0x53,
+                        0x89,
+                        0xC8,
+                        0x89,
+                        0xD1,
+                        0x0F,
+                        0xA2,
+                        0x41,
+                        0x89,
+                        0x00,
+                        0x41,
+                        0x89,
+                        0x58,
+                        0x04,
+                        0x41,
+                        0x89,
+                        0x48,
+                        0x08,
+                        0x41,
+                        0x89,
+                        0x50,
+                        0x0C,
+                        0x5B,
+                        0xC3,
+                    ])
                 else:
-                    code = bytes(
-                        [
-                            0x53,
-                            0x89,
-                            0xC0,
-                            0x89,
-                            0xD1,
-                            0x0F,
-                            0xA2,
-                            0x89,
-                            0x07,
-                            0x89,
-                            0x5F,
-                            0x04,
-                            0x89,
-                            0x4F,
-                            0x08,
-                            0x89,
-                            0x57,
-                            0x0C,
-                            0x5B,
-                            0xC3,
-                        ]
-                    )
+                    code = bytes([
+                        0x53,
+                        0x89,
+                        0xC0,
+                        0x89,
+                        0xD1,
+                        0x0F,
+                        0xA2,
+                        0x89,
+                        0x07,
+                        0x89,
+                        0x5F,
+                        0x04,
+                        0x89,
+                        0x4F,
+                        0x08,
+                        0x89,
+                        0x57,
+                        0x0C,
+                        0x5B,
+                        0xC3,
+                    ])
 
                 buf = ctypes.create_string_buffer(code)
                 VirtualAlloc = ctypes.windll.kernel32.VirtualAlloc
@@ -373,59 +369,55 @@ class VMDetector(BaseDetector):
                 import mmap
 
                 if platform.machine() in ("x86_64", "AMD64"):
-                    code = bytes(
-                        [
-                            0x53,
-                            0x89,
-                            0xF8,
-                            0x89,
-                            0xF1,
-                            0x0F,
-                            0xA2,
-                            0x41,
-                            0x89,
-                            0x00,
-                            0x41,
-                            0x89,
-                            0x58,
-                            0x04,
-                            0x41,
-                            0x89,
-                            0x48,
-                            0x08,
-                            0x41,
-                            0x89,
-                            0x50,
-                            0x0C,
-                            0x5B,
-                            0xC3,
-                        ]
-                    )
+                    code = bytes([
+                        0x53,
+                        0x89,
+                        0xF8,
+                        0x89,
+                        0xF1,
+                        0x0F,
+                        0xA2,
+                        0x41,
+                        0x89,
+                        0x00,
+                        0x41,
+                        0x89,
+                        0x58,
+                        0x04,
+                        0x41,
+                        0x89,
+                        0x48,
+                        0x08,
+                        0x41,
+                        0x89,
+                        0x50,
+                        0x0C,
+                        0x5B,
+                        0xC3,
+                    ])
                 elif platform.machine() in ("i386", "i686"):
-                    code = bytes(
-                        [
-                            0x53,
-                            0x89,
-                            0xC0,
-                            0x89,
-                            0xD1,
-                            0x0F,
-                            0xA2,
-                            0x89,
-                            0x07,
-                            0x89,
-                            0x5F,
-                            0x04,
-                            0x89,
-                            0x4F,
-                            0x08,
-                            0x89,
-                            0x57,
-                            0x0C,
-                            0x5B,
-                            0xC3,
-                        ]
-                    )
+                    code = bytes([
+                        0x53,
+                        0x89,
+                        0xC0,
+                        0x89,
+                        0xD1,
+                        0x0F,
+                        0xA2,
+                        0x89,
+                        0x07,
+                        0x89,
+                        0x5F,
+                        0x04,
+                        0x89,
+                        0x4F,
+                        0x08,
+                        0x89,
+                        0x57,
+                        0x0C,
+                        0x5B,
+                        0xC3,
+                    ])
                 else:
                     return None
 
@@ -494,13 +486,11 @@ class VMDetector(BaseDetector):
                 vendor_bytes = struct.pack("<III", ebx, ecx, edx)
                 vendor_string = vendor_bytes.decode("ascii", errors="ignore").rstrip("\x00")
                 details["vendor_string"] = vendor_string
-                details["hypervisor_leaves"].append(
-                    {
-                        "leaf": 0x40000000,
-                        "eax": eax,
-                        "vendor": vendor_string,
-                    }
-                )
+                details["hypervisor_leaves"].append({
+                    "leaf": 0x40000000,
+                    "eax": eax,
+                    "vendor": vendor_string,
+                })
 
                 for vm_type, signatures in self.vm_signatures.items():
                     cpuid_vendor = signatures.get("cpuid_vendor", "")
@@ -596,7 +586,7 @@ class VMDetector(BaseDetector):
                     for system in c.Win32_ComputerSystem():
                         if hasattr(system, "Model"):
                             model = system.Model.lower()
-                            for _vm_type, sigs in self.vm_signatures.items():
+                            for sigs in self.vm_signatures.values():
                                 if any(sig.lower() in model for sig in sigs.get("hardware", [])):
                                     details["detected_hardware"].append(model)
 
@@ -604,7 +594,7 @@ class VMDetector(BaseDetector):
                     for disk in c.Win32_DiskDrive():
                         if hasattr(disk, "Model"):
                             model = disk.Model.lower()
-                            for _vm_type, sigs in self.vm_signatures.items():
+                            for sigs in self.vm_signatures.values():
                                 if any(sig.lower() in model for sig in sigs.get("hardware", [])):
                                     details["detected_hardware"].append(model)
 
@@ -623,7 +613,7 @@ class VMDetector(BaseDetector):
                     if os.path.exists(dmi_file):
                         with open(dmi_file) as f:
                             content = f.read().strip().lower()
-                            for vm_type, _sigs in self.vm_signatures.items():
+                            for vm_type in self.vm_signatures:
                                 if vm_type in content:
                                     details["detected_hardware"].append(content)
 
@@ -726,65 +716,61 @@ class VMDetector(BaseDetector):
                 return False, 0.0, details
 
             if platform.machine().endswith("64"):
-                code = bytes(
-                    [
-                        0x0F,
-                        0x31,
-                        0x48,
-                        0xC1,
-                        0xE2,
-                        0x20,
-                        0x48,
-                        0x09,
-                        0xD0,
-                        0x48,
-                        0x89,
-                        0x01,
-                        0x90,
-                        0x90,
-                        0x90,
-                        0x90,
-                        0x90,
-                        0x0F,
-                        0x31,
-                        0x48,
-                        0xC1,
-                        0xE2,
-                        0x20,
-                        0x48,
-                        0x09,
-                        0xD0,
-                        0x48,
-                        0x2B,
-                        0x01,
-                        0xC3,
-                    ]
-                )
+                code = bytes([
+                    0x0F,
+                    0x31,
+                    0x48,
+                    0xC1,
+                    0xE2,
+                    0x20,
+                    0x48,
+                    0x09,
+                    0xD0,
+                    0x48,
+                    0x89,
+                    0x01,
+                    0x90,
+                    0x90,
+                    0x90,
+                    0x90,
+                    0x90,
+                    0x0F,
+                    0x31,
+                    0x48,
+                    0xC1,
+                    0xE2,
+                    0x20,
+                    0x48,
+                    0x09,
+                    0xD0,
+                    0x48,
+                    0x2B,
+                    0x01,
+                    0xC3,
+                ])
             else:
-                code = bytes(
-                    [
-                        0x0F,
-                        0x31,
-                        0x89,
-                        0x01,
-                        0x89,
-                        0x51,
-                        0x04,
-                        0x90,
-                        0x90,
-                        0x90,
-                        0x90,
-                        0x90,
-                        0x0F,
-                        0x31,
-                        0x2B,
-                        0x01,
-                        0x1B,
-                        0x51,
-                        0x04,
-                        0xC3,
-                    ]
-                )
+                code = bytes([
+                    0x0F,
+                    0x31,
+                    0x89,
+                    0x01,
+                    0x89,
+                    0x51,
+                    0x04,
+                    0x90,
+                    0x90,
+                    0x90,
+                    0x90,
+                    0x90,
+                    0x0F,
+                    0x31,
+                    0x2B,
+                    0x01,
+                    0x1B,
+                    0x51,
+                    0x04,
+                    0xC3,
+                ])
 
             buf = ctypes.create_string_buffer(code)
             VirtualAlloc = ctypes.windll.kernel32.VirtualAlloc
@@ -1406,15 +1392,13 @@ class VMDetector(BaseDetector):
                         leaf_num = 0x40000000 + i
                         if leaf_result := self._execute_cpuid(leaf_num):
                             leaf_eax, leaf_ebx, leaf_ecx, leaf_edx = leaf_result
-                            details["leaves"].append(
-                                {
-                                    "leaf": hex(leaf_num),
-                                    "eax": hex(leaf_eax),
-                                    "ebx": hex(leaf_ebx),
-                                    "ecx": hex(leaf_ecx),
-                                    "edx": hex(leaf_edx),
-                                }
-                            )
+                            details["leaves"].append({
+                                "leaf": hex(leaf_num),
+                                "eax": hex(leaf_eax),
+                                "ebx": hex(leaf_ebx),
+                                "ecx": hex(leaf_ecx),
+                                "edx": hex(leaf_edx),
+                            })
 
                     if "VMware" in vendor or "VBox" in vendor or "Microsoft Hv" in vendor or "KVM" in vendor:
                         return True, 0.95, details
@@ -1472,63 +1456,59 @@ class VMDetector(BaseDetector):
                 return False, 0.0, details
 
             if platform.machine().endswith("64"):
-                code = bytes(
-                    [
-                        0x48,
-                        0x31,
-                        0xC0,
-                        0x48,
-                        0x31,
-                        0xD2,
-                        0x0F,
-                        0x31,
-                        0x48,
-                        0xC1,
-                        0xE2,
-                        0x20,
-                        0x48,
-                        0x09,
-                        0xD0,
-                        0x48,
-                        0x89,
-                        0xC1,
-                        0x0F,
-                        0x31,
-                        0x48,
-                        0xC1,
-                        0xE2,
-                        0x20,
-                        0x48,
-                        0x09,
-                        0xD0,
-                        0x48,
-                        0x29,
-                        0xC8,
-                        0xC3,
-                    ]
-                )
+                code = bytes([
+                    0x48,
+                    0x31,
+                    0xC0,
+                    0x48,
+                    0x31,
+                    0xD2,
+                    0x0F,
+                    0x31,
+                    0x48,
+                    0xC1,
+                    0xE2,
+                    0x20,
+                    0x48,
+                    0x09,
+                    0xD0,
+                    0x48,
+                    0x89,
+                    0xC1,
+                    0x0F,
+                    0x31,
+                    0x48,
+                    0xC1,
+                    0xE2,
+                    0x20,
+                    0x48,
+                    0x09,
+                    0xD0,
+                    0x48,
+                    0x29,
+                    0xC8,
+                    0xC3,
+                ])
             else:
-                code = bytes(
-                    [
-                        0x31,
-                        0xC0,
-                        0x31,
-                        0xD2,
-                        0x0F,
-                        0x31,
-                        0x89,
-                        0xC1,
-                        0x89,
-                        0xD3,
-                        0x0F,
-                        0x31,
-                        0x29,
-                        0xC8,
-                        0x19,
-                        0xDA,
-                        0xC3,
-                    ]
-                )
+                code = bytes([
+                    0x31,
+                    0xC0,
+                    0x31,
+                    0xD2,
+                    0x0F,
+                    0x31,
+                    0x89,
+                    0xC1,
+                    0x89,
+                    0xD3,
+                    0x0F,
+                    0x31,
+                    0x29,
+                    0xC8,
+                    0x19,
+                    0xDA,
+                    0xC3,
+                ])
 
             VirtualAlloc = ctypes.windll.kernel32.VirtualAlloc
             VirtualProtect = ctypes.windll.kernel32.VirtualProtect
@@ -1892,28 +1872,24 @@ class VMDetector(BaseDetector):
                 return False, 0.0, details
 
             if platform.machine().endswith("64"):
-                code = bytes(
-                    [
-                        0x0F,
-                        0x31,
-                        0x48,
-                        0xC1,
-                        0xE2,
-                        0x20,
-                        0x48,
-                        0x09,
-                        0xD0,
-                        0xC3,
-                    ]
-                )
+                code = bytes([
+                    0x0F,
+                    0x31,
+                    0x48,
+                    0xC1,
+                    0xE2,
+                    0x20,
+                    0x48,
+                    0x09,
+                    0xD0,
+                    0xC3,
+                ])
             else:
-                code = bytes(
-                    [
-                        0x0F,
-                        0x31,
-                        0xC3,
-                    ]
-                )
+                code = bytes([
+                    0x0F,
+                    0x31,
+                    0xC3,
+                ])
 
             VirtualAlloc = ctypes.windll.kernel32.VirtualAlloc
             VirtualProtect = ctypes.windll.kernel32.VirtualProtect

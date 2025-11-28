@@ -95,7 +95,7 @@ try:
     XML_AVAILABLE = True
 except ImportError:
     try:
-        import xml.etree.ElementTree as ET
+        import xml.etree.ElementTree as ET  # noqa: S405
 
         XML_AVAILABLE = True
     except ImportError:

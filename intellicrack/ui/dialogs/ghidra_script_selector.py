@@ -315,7 +315,7 @@ class GhidraScriptSelector(QDialog):
         categories_dict = self.script_manager.get_scripts_by_category()
 
         # Populate category filter
-        for category in sorted(categories_dict.keys()):
+        for category in sorted(categories_dict):
             self.category_filter.addItem(category)
 
         # Populate tree

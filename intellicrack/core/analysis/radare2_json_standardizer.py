@@ -150,7 +150,7 @@ class R2JSONStandardizer:
             # Binary metadata
             "binary_metadata": {
                 "file_path": binary_path,
-                "file_name": binary_path.split("/")[-1] if binary_path else "unknown",
+                "file_name": binary_path.rsplit("/", maxsplit=1)[-1] if binary_path else "unknown",
                 "file_hash": self._calculate_file_hash(binary_path),
                 "file_size": self._get_file_size(binary_path),
                 "analysis_time": self.timestamp,
@@ -567,7 +567,7 @@ class R2JSONStandardizer:
             },
             "binary_metadata": {
                 "file_path": binary_path,
-                "file_name": binary_path.split("/")[-1] if binary_path else "unknown",
+                "file_name": binary_path.rsplit("/", maxsplit=1)[-1] if binary_path else "unknown",
             },
             "analysis_results": {},
             "summary_statistics": {},
@@ -2220,7 +2220,7 @@ class R2JSONStandardizer:
             scores = []
             if isinstance(comp_data, dict):
                 # Extract confidence scores from various analyses
-                for _, value in comp_data.items():
+                for value in comp_data.values():
                     if isinstance(value, list):
                         for item in value:
                             if isinstance(item, dict) and "confidence" in item:
@@ -2430,7 +2430,7 @@ class R2JSONStandardizer:
                 "priority": component_priority.get(comp_name, 999),
                 "dependencies": [],
             }
-            for comp_name in sorted(components.keys(), key=lambda x: component_priority.get(x, 999))
+            for comp_name in sorted(components, key=lambda x: component_priority.get(x, 999))
             if comp_name in components
         ]
         temporal_analysis = {

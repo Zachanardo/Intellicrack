@@ -57,7 +57,7 @@ class TestControlFlowAnalyzer:
         blocks = analyzer.build_cfg(instructions)
 
         assert len(blocks) > 0
-        assert all(isinstance(addr, int) for addr in blocks.keys())
+        assert all(isinstance(addr, int) for addr in blocks)
 
     def test_dominator_computation(self):
         """Test dominator computation for basic blocks."""

@@ -637,7 +637,7 @@ class ModelManager:
         """
         try:
             import os
-            import pickle
+            import pickle  # noqa: S403
 
             # Use last trained model if no model provided
             if model is None and hasattr(self, "_last_trained_model"):

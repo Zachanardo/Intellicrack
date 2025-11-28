@@ -2856,7 +2856,7 @@ class AnalysisTab(BaseTab):
             # Simple string extraction (ASCII strings >= 4 chars)
             import re
 
-            strings = re.findall(b"[ -~]{4,}", content)
+            strings = re.findall(rb"[ -~]{4,}", content)
 
             for string in strings:
                 string_text = string.decode("ascii", errors="ignore")

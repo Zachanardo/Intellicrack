@@ -24,7 +24,7 @@ import re
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
 except ImportError:
-    import xml.etree.ElementTree as ET
+    import xml.etree.ElementTree as ET  # noqa: S405
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -445,7 +445,7 @@ class GhidraOutputParser:
             return 8  # 64-bit pointer
 
         # Check known types
-        base_type = type_name.split()[0] if " " in type_name else type_name
+        base_type = type_name.split(maxsplit=1)[0] if " " in type_name else type_name
         return type_sizes.get(base_type, 4)  # Default to 4 bytes
 
     def get_function_by_name(self, name: str) -> FunctionSignature | None:

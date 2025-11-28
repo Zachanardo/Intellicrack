@@ -985,7 +985,7 @@ class VMDetector:
             "",
             "def apply_vm_bypass():",
             '    """Apply VM detection bypass techniques."""',
-            "    print(f'Applying bypass for {vm_type}...')",
+            f"    print(f'Applying bypass for {vm_type}...')",
             "",
         ]
 

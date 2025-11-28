@@ -18,11 +18,11 @@ from typing import Any
 
 
 try:
-    from Crypto.Cipher import AES
-    from Crypto.Hash import SHA256
+    from Crypto.Cipher import AES  # noqa: S413
+    from Crypto.Hash import SHA256  # noqa: S413
     from Crypto.Protocol.KDF import PBKDF2
-    from Crypto.PublicKey import RSA
-    from Crypto.Signature import pkcs1_15
+    from Crypto.PublicKey import RSA  # noqa: S413
+    from Crypto.Signature import pkcs1_15  # noqa: S413
     from Crypto.Util.Padding import unpad
 
     HAS_CRYPTO = True
@@ -685,7 +685,7 @@ class TPMBypassEngine:
 
         basic_constraints = bytes.fromhex("300f0603551d130101ff040530030101ff")
 
-        subject_key_id = bytes.fromhex("301d0603551d0e04160414") + hashlib.sha1(pub_key_info).digest()[:20]
+        subject_key_id = bytes.fromhex("301d0603551d0e04160414") + hashlib.sha1(pub_key_info).digest()[:20]  # noqa: S324 - SHA1 required by X.509 Subject Key Identifier specification
 
         authority_key_id = bytes.fromhex("30160603551d23040f300d800b") + os.urandom(11)
 
@@ -736,14 +736,12 @@ class TPMBypassEngine:
         with self.command_lock:
             if code in self.command_hooks:
                 if hooked_response := self.command_hooks[code](command):
-                    self.intercepted_commands.append(
-                        {
-                            "timestamp": time.time(),
-                            "command": command,
-                            "response": hooked_response,
-                            "code": code,
-                        }
-                    )
+                    self.intercepted_commands.append({
+                        "timestamp": time.time(),
+                        "command": command,
+                        "response": hooked_response,
+                        "code": code,
+                    })
                     return hooked_response
 
         if HAS_WIN32:
@@ -764,14 +762,12 @@ class TPMBypassEngine:
                 win32file.CloseHandle(tpm_device)
 
                 with self.command_lock:
-                    self.intercepted_commands.append(
-                        {
-                            "timestamp": time.time(),
-                            "command": command,
-                            "response": response,
-                            "code": code,
-                        }
-                    )
+                    self.intercepted_commands.append({
+                        "timestamp": time.time(),
+                        "command": command,
+                        "response": response,
+                        "code": code,
+                    })
 
                 return response
             except Exception as e:
@@ -862,7 +858,7 @@ class TPMBypassEngine:
                 0x4000000C: b"",
                 0x4000000B: b"",
             }
-            for key in list(self.virtualized_tpm.get("persistent_handles", {}).keys()):
+            for key in list(self.virtualized_tpm.get("persistent_handles", {})):
                 del self.virtualized_tpm["persistent_handles"][key]
             return struct.pack(">HII", 0x8001, 10, 0)
 
@@ -1254,14 +1250,12 @@ class TPMBypassEngine:
                     command_data = ctypes.string_at(command_buf, command_size)
 
                     with self.command_lock:
-                        self.intercepted_commands.append(
-                            {
-                                "timestamp": time.time(),
-                                "command": command_data,
-                                "locality": locality,
-                                "priority": priority,
-                            }
-                        )
+                        self.intercepted_commands.append({
+                            "timestamp": time.time(),
+                            "command": command_data,
+                            "locality": locality,
+                            "priority": priority,
+                        })
 
                     _tag, _size, code = struct.unpack(">HII", command_data[:10])
 
@@ -1931,13 +1925,11 @@ class TPMBypassEngine:
                 summary["command_types"][code_name] = 0
             summary["command_types"][code_name] += 1
 
-            summary["timeline"].append(
-                {
-                    "timestamp": cmd.get("timestamp", 0),
-                    "command": code_name,
-                    "code": code,
-                }
-            )
+            summary["timeline"].append({
+                "timestamp": cmd.get("timestamp", 0),
+                "command": code_name,
+                "code": code,
+            })
 
         return summary
 

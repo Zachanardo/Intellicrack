@@ -59,6 +59,12 @@ FAILED_START_VM = "Failed to start VM: %s"
 SUBPROCESS_TIMEOUT_MSG = "Subprocess timeout in qemu_manager: %s"
 
 
+class QEMUError(Exception):
+    """Custom exception for QEMU-related errors."""
+
+    pass
+
+
 @dataclass
 class QEMUSnapshot:
     """Represents a QEMU snapshot for testing."""
@@ -1007,7 +1013,7 @@ class QEMUManager:
         """Clean up all active snapshots."""
         logger.info("Cleaning up all snapshots")
 
-        for snapshot_id in list(self.snapshots.keys()):
+        for snapshot_id in list(self.snapshots):
             self.cleanup_snapshot(snapshot_id)
 
         logger.info("All snapshots cleaned up")

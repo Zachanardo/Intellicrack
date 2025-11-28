@@ -970,8 +970,8 @@ except ImportError as e:
                     checksum = (checksum & 0xFFFFFFFF) + (checksum >> 32)
 
             checksum = (checksum & 0xFFFF) + (checksum >> 16)
-            checksum = checksum + (checksum >> 16)
-            checksum = checksum & 0xFFFF
+            checksum += (checksum >> 16)
+            checksum &= 0xFFFF
 
             return checksum + len(self.__data__)
 

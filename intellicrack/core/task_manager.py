@@ -272,7 +272,7 @@ class TaskManager(QObject):
 
     def cancel_all_tasks(self) -> None:
         """Cancel all active tasks."""
-        for task_id in list(self._active_tasks.keys()):
+        for task_id in list(self._active_tasks):
             self.cancel_task(task_id)
 
     def wait_for_all(self, timeout_ms: int = -1) -> bool:

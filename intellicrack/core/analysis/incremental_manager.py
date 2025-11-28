@@ -27,7 +27,7 @@ import hmac
 import json
 import logging
 import os
-import pickle
+import pickle  # noqa: S403
 import time
 from pathlib import Path
 from typing import Any
@@ -80,7 +80,7 @@ def secure_pickle_dump(obj: object, file_path: str | Path) -> None:
         f.write(data)
 
 
-class RestrictedUnpickler(pickle.Unpickler):
+class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
     """Restricted unpickler that only allows safe classes."""
 
     def find_class(self, module: str, name: str) -> type:
@@ -505,7 +505,7 @@ class IncrementalAnalysisManager:
             return self._remove_cache_entry(binary_hash)
         # Clear all cache
         success = True
-        for hash_key in list(self.cache.keys()):
+        for hash_key in list(self.cache):
             if not self._remove_cache_entry(hash_key):
                 success = False
 

@@ -1619,7 +1619,7 @@ QPushButton:hover, QComboBox:hover, QTabBar::tab:hover {
 }
 """
 
-                current_stylesheet = current_stylesheet + enable_animations
+                current_stylesheet += enable_animations
 
             self.logger.info("Smooth animations enabled")
         else:
@@ -1639,7 +1639,7 @@ QPushButton:hover, QComboBox:hover, QTabBar::tab:hover {
 }
 """
 
-                current_stylesheet = current_stylesheet + disable_animations
+                current_stylesheet += disable_animations
 
             self.logger.info("Animations disabled")
 

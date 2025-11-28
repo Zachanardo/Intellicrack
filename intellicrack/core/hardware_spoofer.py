@@ -3,7 +3,7 @@
 import ctypes
 import datetime
 import platform
-import random
+import secrets
 import struct
 import subprocess
 import uuid
@@ -143,7 +143,7 @@ class HardwareFingerPrintSpoofer:
                     return board.SerialNumber.strip()
         except Exception as e:
             logger.debug(f"Failed to retrieve motherboard serial via WMI: {e}")
-        return "MB-" + "".join(random.choices("0123456789ABCDEF", k=12))  # noqa: S311
+        return "MB-" + "".join(secrets.choice("0123456789ABCDEF") for _ in range(12))
 
     def _get_motherboard_manufacturer(self) -> str:
         """Get motherboard manufacturer."""
@@ -163,7 +163,7 @@ class HardwareFingerPrintSpoofer:
                     return bios.SerialNumber.strip()
         except Exception as e:
             logger.debug(f"Failed to retrieve BIOS serial via WMI: {e}")
-        return "BIOS-" + "".join(random.choices("0123456789", k=10))  # noqa: S311
+        return "BIOS-" + "".join(secrets.choice("0123456789") for _ in range(10))
 
     def _get_bios_version(self) -> str:
         """Get BIOS version."""
@@ -185,7 +185,7 @@ class HardwareFingerPrintSpoofer:
             logger.debug(f"Failed to retrieve disk serials via WMI: {e}")
 
         if not serials:
-            serials.append("WD-" + "".join(random.choices("0123456789ABCDEF", k=10)))  # noqa: S311
+            serials.append("WD-" + "".join(secrets.choice("0123456789ABCDEF") for _ in range(10)))
 
         return serials
 
@@ -219,7 +219,7 @@ class HardwareFingerPrintSpoofer:
             logger.debug(f"Failed to retrieve MAC addresses via netifaces: {e}")
 
         if not macs:
-            mac = "00:50:56:" + ":".join(["".join(random.choices("0123456789ABCDEF", k=2)) for _ in range(3)])
+            mac = "00:50:56:" + ":".join(["".join(secrets.choice("0123456789ABCDEF") for _ in range(2)) for _ in range(3)])
             macs.append(mac.replace(":", ""))
 
         return macs
@@ -253,7 +253,7 @@ class HardwareFingerPrintSpoofer:
                         return line.split()[-1]
         except Exception as e:
             logger.debug(f"Failed to retrieve volume serial: {e}")
-        return "".join(random.choices("0123456789ABCDEF", k=8))  # noqa: S311
+        return "".join(secrets.choice("0123456789ABCDEF") for _ in range(8))
 
     def _get_product_id(self) -> str:
         """Get Windows product ID."""
@@ -312,7 +312,7 @@ class HardwareFingerPrintSpoofer:
             logger.debug(f"Failed to retrieve RAM serials via WMI: {e}")
 
         if not serials:
-            serials.append("".join(random.choices("0123456789", k=8)))  # noqa: S311
+            serials.append("".join(secrets.choice("0123456789") for _ in range(8)))
 
         return serials
 
@@ -366,7 +366,7 @@ class HardwareFingerPrintSpoofer:
             "BFEBFBFF000506E3",  # i7-6700K
             "BFEBFBFF000806EC",  # i7-10700K
         ]
-        return random.choice(intel_ids)  # noqa: S311
+        return secrets.choice(intel_ids)
 
     def _generate_cpu_name(self) -> str:
         """Generate realistic CPU name."""
@@ -377,12 +377,12 @@ class HardwareFingerPrintSpoofer:
             "AMD Ryzen 9 5900X 12-Core Processor",
             "AMD Ryzen 7 5800X 8-Core Processor",
         ]
-        return random.choice(cpus)  # noqa: S311
+        return secrets.choice(cpus)
 
     def _generate_mb_serial(self) -> str:
         """Generate motherboard serial."""
         prefixes = ["MB", "SN", "BASE", "BOARD"]
-        return f"{random.choice(prefixes)}-" + "".join(random.choices("0123456789ABCDEF", k=12))
+        return f"{secrets.choice(prefixes)}-" + "".join(secrets.choice("0123456789ABCDEF") for _ in range(12))
 
     def _generate_mb_manufacturer(self) -> str:
         """Generate motherboard manufacturer."""
@@ -396,26 +396,26 @@ class HardwareFingerPrintSpoofer:
             "HP",
             "Lenovo",
         ]
-        return random.choice(manufacturers)  # noqa: S311
+        return secrets.choice(manufacturers)
 
     def _generate_bios_serial(self) -> str:
         """Generate BIOS serial."""
-        return "".join(random.choices("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", k=10))  # noqa: S311
+        return "".join(secrets.choice("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ") for _ in range(10))
 
     def _generate_bios_version(self) -> str:
         """Generate BIOS version."""
-        major = random.randint(1, 5)  # noqa: S311
-        minor = random.randint(0, 99)  # noqa: S311
-        build = random.randint(1000, 9999)  # noqa: S311
+        major = secrets.randbelow(5) + 1
+        minor = secrets.randbelow(100)
+        build = secrets.randbelow(9000) + 1000
         return f"{major}.{minor}.{build}"
 
     def _generate_disk_serials(self) -> list[str]:
         """Generate disk serials."""
         prefixes = ["WD", "ST", "SAMSUNG", "CRUCIAL", "KINGSTON"]
         serials = []
-        for _ in range(random.randint(1, 3)):  # noqa: S311
-            prefix = random.choice(prefixes)  # noqa: S311
-            serial = f"{prefix}-" + "".join(random.choices("0123456789ABCDEF", k=10))
+        for _ in range(secrets.randbelow(3) + 1):
+            prefix = secrets.choice(prefixes)
+            serial = f"{prefix}-" + "".join(secrets.choice("0123456789ABCDEF") for _ in range(10))
             serials.append(serial)
         return serials
 
@@ -429,7 +429,7 @@ class HardwareFingerPrintSpoofer:
             "Crucial MX500 500GB",
             "Kingston SA400S37240G",
         ]
-        return [random.choice(models) for _ in range(len(self.spoofed_hardware.disk_serial) if self.spoofed_hardware else 1)]
+        return [secrets.choice(models) for _ in range(len(self.spoofed_hardware.disk_serial) if self.spoofed_hardware else 1)]
 
     def _generate_mac_addresses(self) -> list[str]:
         """Generate MAC addresses."""
@@ -444,9 +444,9 @@ class HardwareFingerPrintSpoofer:
         ]
 
         macs = []
-        for _ in range(random.randint(1, 3)):  # noqa: S311
-            oui = random.choice(ouis)  # noqa: S311
-            nic = ":".join(["".join(random.choices("0123456789ABCDEF", k=2)) for _ in range(3)])  # noqa: S311
+        for _ in range(secrets.randbelow(3) + 1):
+            oui = secrets.choice(ouis)
+            nic = ":".join(["".join(secrets.choice("0123456789ABCDEF") for _ in range(2)) for _ in range(3)])
             mac = f"{oui}:{nic}"
             macs.append(mac.replace(":", ""))
 
@@ -454,15 +454,15 @@ class HardwareFingerPrintSpoofer:
 
     def _generate_volume_serial(self) -> str:
         """Generate volume serial."""
-        return "".join(random.choices("0123456789ABCDEF", k=8))  # noqa: S311
+        return "".join(secrets.choice("0123456789ABCDEF") for _ in range(8))
 
     def _generate_product_id(self) -> str:
         """Generate Windows product ID."""
         segments = [
-            "".join(random.choices("0123456789", k=5)),  # noqa: S311
-            "".join(random.choices("0123456789", k=5)),  # noqa: S311
-            "".join(random.choices("0123456789", k=5)),  # noqa: S311
-            random.choice(["AAOEM", "AAAAA", "BBBBB", "OEM"]),  # noqa: S311
+            "".join(secrets.choice("0123456789") for _ in range(5)),
+            "".join(secrets.choice("0123456789") for _ in range(5)),
+            "".join(secrets.choice("0123456789") for _ in range(5)),
+            secrets.choice(["AAOEM", "AAAAA", "BBBBB", "OEM"]),
         ]
         return "-".join(segments)
 
@@ -477,10 +477,10 @@ class HardwareFingerPrintSpoofer:
 
         return [
             {
-                "name": random.choice(names),  # noqa: S311
+                "name": secrets.choice(names),
                 "mac": mac,
                 "guid": str(uuid.uuid4()).upper(),
-                "pnp_id": f"PCI\\VEN_8086&DEV_{random.randint(1000, 9999):04X}",  # noqa: S311
+                "pnp_id": f"PCI\\VEN_8086&DEV_{secrets.randbelow(9000) + 1000:04X}",
             }
             for mac in (self.spoofed_hardware.mac_addresses if self.spoofed_hardware else [])
         ]
@@ -494,11 +494,11 @@ class HardwareFingerPrintSpoofer:
             "PCI\\VEN_1002&DEV_731F&SUBSYS_E4111DA2",  # RX 6900 XT
             "PCI\\VEN_1002&DEV_73BF&SUBSYS_23181462",  # RX 6800 XT
         ]
-        return [random.choice(gpu_ids)]  # noqa: S311
+        return [secrets.choice(gpu_ids)]
 
     def _generate_ram_serials(self) -> list[str]:
         """Generate RAM serials."""
-        return ["".join(random.choices("0123456789ABCDEF", k=8)) for _ in range(random.randint(2, 4))]
+        return ["".join(secrets.choice("0123456789ABCDEF") for _ in range(8)) for _ in range(secrets.randbelow(3) + 2)]
 
     def _generate_usb_devices(self) -> list[dict[str, str]]:
         """Generate USB device info."""
@@ -517,8 +517,8 @@ class HardwareFingerPrintSpoofer:
             },  # Kingston USB
         ]
 
-        num_devices = random.randint(1, 3)  # noqa: S311
-        return [random.choice(common_devices) for _ in range(num_devices)]
+        num_devices = secrets.randbelow(3) + 1
+        return [secrets.choice(common_devices) for _ in range(num_devices)]
 
     def apply_spoof(self, method: SpoofMethod = SpoofMethod.REGISTRY) -> bool:
         """Apply hardware spoofing using specified method."""

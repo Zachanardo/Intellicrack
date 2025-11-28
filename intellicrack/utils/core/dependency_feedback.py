@@ -324,7 +324,7 @@ class DependencyFeedback:
     def get_category_alternatives(self, category: str) -> list[str]:
         """Get alternative tools for a specific category."""
         alternatives = []
-        for _dep_name, dep_info in self.DEPENDENCY_INFO.items():
+        for dep_info in self.DEPENDENCY_INFO.values():
             if dep_info.get("category") == category:
                 alternatives.extend(dep_info.get("alternatives", []))
         return list(set(alternatives))  # Remove duplicates
@@ -349,13 +349,11 @@ class DependencyFeedback:
 
         # Critical dependencies
         if critical_deps:
-            report_lines.extend(
-                (
-                    "🔴 CRITICAL MISSING DEPENDENCIES:",
-                    "These are required for core functionality.",
-                    "",
-                )
-            )
+            report_lines.extend((
+                "🔴 CRITICAL MISSING DEPENDENCIES:",
+                "These are required for core functionality.",
+                "",
+            ))
             for dep_name in critical_deps:
                 status = self.get_dependency_status(dep_name)
                 report_lines.extend((status["message"], ""))
@@ -370,13 +368,11 @@ class DependencyFeedback:
                 report_lines.append(status["message"])
                 report_lines.append("")
 
-        report_lines.extend(
-            (
-                "📜 BATCH INSTALLATION SCRIPT:",
-                "-" * 40,
-                self.get_installation_batch_script(missing_deps),
-            )
-        )
+        report_lines.extend((
+            "📜 BATCH INSTALLATION SCRIPT:",
+            "-" * 40,
+            self.get_installation_batch_script(missing_deps),
+        ))
         return "\n".join(report_lines)
 
     def suggest_alternatives(self, missing_dep: str, task_context: str = "") -> str:
@@ -424,12 +420,10 @@ class DependencyFeedback:
         # Add quick fix suggestion
         if not status["available"]:
             if alternatives := status.get("alternatives", []):
-                error_lines.extend(
-                    (
-                        f" QUICK FIX: Try using {alternatives[0]} instead",
-                        f"   Or install {dep_name} using the commands above",
-                    )
-                )
+                error_lines.extend((
+                    f" QUICK FIX: Try using {alternatives[0]} instead",
+                    f"   Or install {dep_name} using the commands above",
+                ))
         return "\n".join(error_lines)
 
 

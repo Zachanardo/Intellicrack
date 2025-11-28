@@ -10,6 +10,7 @@ import importlib.util
 import traceback
 from pathlib import Path
 
+
 def load_module_from_path(module_name, file_path):
     """Load a module from a file path."""
     spec = importlib.util.spec_from_file_location(module_name, file_path)
@@ -24,6 +25,7 @@ def load_module_from_path(module_name, file_path):
         traceback.print_exc()
         return None
 
+
 def validate_traffic_analyzer_import():
     """Validate that NetworkTrafficAnalyzer can be imported."""
     print("Testing NetworkTrafficAnalyzer import...")
@@ -34,12 +36,14 @@ def validate_traffic_analyzer_import():
         sys.path.insert(0, str(project_root))
 
         from intellicrack.core.network.traffic_analyzer import NetworkTrafficAnalyzer
+
         print("OK Successfully imported NetworkTrafficAnalyzer")
         return True, NetworkTrafficAnalyzer
     except Exception as e:
         print(f"FAIL Failed to import NetworkTrafficAnalyzer: {e}")
         traceback.print_exc()
         return False, None
+
 
 def validate_test_file():
     """Validate that the test file can be loaded."""
@@ -64,15 +68,16 @@ def validate_test_file():
     test_classes = []
     for attr_name in dir(test_module):
         attr = getattr(test_module, attr_name)
-        if isinstance(attr, type) and attr_name.startswith('Test'):
+        if isinstance(attr, type) and attr_name.startswith("Test"):
             test_classes.append((attr_name, attr))
 
     print(f"OK Found {len(test_classes)} test classes:")
     for class_name, class_obj in test_classes:
-        test_methods = [method for method in dir(class_obj) if method.startswith('test_')]
+        test_methods = [method for method in dir(class_obj) if method.startswith("test_")]
         print(f"  - {class_name}: {len(test_methods)} test methods")
 
     return True, test_module
+
 
 def analyze_test_coverage(analyzer_class, test_module):
     """Analyze what methods are covered by tests."""
@@ -83,21 +88,17 @@ def analyze_test_coverage(analyzer_class, test_module):
     for method_name in dir(analyzer_class):
         if callable(getattr(analyzer_class, method_name)):
             method = getattr(analyzer_class, method_name)
-            is_public = not method_name.startswith('_')
-            is_critical = is_public or method_name == '__init__'
-            analyzer_methods.append({
-                'name': method_name,
-                'is_public': is_public,
-                'is_critical': is_critical
-            })
+            is_public = not method_name.startswith("_")
+            is_critical = is_public or method_name == "__init__"
+            analyzer_methods.append({"name": method_name, "is_public": is_public, "is_critical": is_critical})
 
     # Get all test methods
     test_methods = []
     for attr_name in dir(test_module):
         attr = getattr(test_module, attr_name)
-        if isinstance(attr, type) and attr_name.startswith('Test'):
+        if isinstance(attr, type) and attr_name.startswith("Test"):
             for method_name in dir(attr):
-                if method_name.startswith('test_'):
+                if method_name.startswith("test_"):
                     test_methods.append(method_name)
 
     print(f"OK Found {len(analyzer_methods)} methods in NetworkTrafficAnalyzer")
@@ -106,59 +107,57 @@ def analyze_test_coverage(analyzer_class, test_module):
     # Analyze coverage mapping
     method_coverage = {}
     for method in analyzer_methods:
-        method_name = method['name']
-        method_coverage[method_name] = {
-            'covered': False,
-            'covering_tests': [],
-            'is_critical': method['is_critical']
-        }
+        method_name = method["name"]
+        method_coverage[method_name] = {"covered": False, "covering_tests": [], "is_critical": method["is_critical"]}
 
     # Map tests to methods
     for test_name in test_methods:
         test_name_lower = test_name.lower()
 
         # Direct mapping
-        for method_name in method_coverage.keys():
-            method_lower = method_name.lower().replace('_', '')
-            test_clean = test_name_lower.replace('test_', '').replace('_', '')
+        for method_name in method_coverage:
+            method_lower = method_name.lower().replace("_", "")
+            test_clean = test_name_lower.replace("test_", "").replace("_", "")
 
-            if (method_name.lower() in test_name_lower or
-                method_lower in test_clean or
-                any(keyword in test_name_lower for keyword in [method_name.lower()])):
-                method_coverage[method_name]['covered'] = True
-                method_coverage[method_name]['covering_tests'].append(test_name)
+            if (
+                method_name.lower() in test_name_lower
+                or method_lower in test_clean
+                or any(keyword in test_name_lower for keyword in [method_name.lower()])
+            ):
+                method_coverage[method_name]["covered"] = True
+                method_coverage[method_name]["covering_tests"].append(test_name)
 
     # Special coverage mappings for comprehensive tests
     comprehensive_mappings = {
-        'test_analyzer_initialization': ['__init__'],
-        'test_real_pcap_analysis': ['analyze_traffic', '_process_captured_packet'],
-        'test_live_traffic_capture_socket_backend': ['start_capture', '_capture_with_socket'],
-        'test_pyshark_capture_backend': ['_capture_with_pyshark', '_process_pyshark_packet'],
-        'test_scapy_capture_backend': ['_capture_with_scapy'],
-        'test_license_protocol_detection': ['_process_captured_packet', '_check_payload_for_license_content'],
-        'test_encrypted_traffic_analysis': ['_process_pyshark_packet'],
-        'test_statistical_analysis_capabilities': ['get_results', '_calculate_capture_duration', '_calculate_packet_rate'],
-        'test_suspicious_traffic_detection': ['get_results', '_assess_threat_level'],
-        'test_license_server_identification': ['analyze_traffic'],
-        'test_visualization_generation': ['_generate_visualizations'],
-        'test_html_report_generation': ['generate_report'],
-        'test_performance_with_high_volume_traffic': ['_process_captured_packet', 'analyze_traffic'],
-        'test_concurrent_analysis_thread_safety': ['_process_captured_packet', 'analyze_traffic']
+        "test_analyzer_initialization": ["__init__"],
+        "test_real_pcap_analysis": ["analyze_traffic", "_process_captured_packet"],
+        "test_live_traffic_capture_socket_backend": ["start_capture", "_capture_with_socket"],
+        "test_pyshark_capture_backend": ["_capture_with_pyshark", "_process_pyshark_packet"],
+        "test_scapy_capture_backend": ["_capture_with_scapy"],
+        "test_license_protocol_detection": ["_process_captured_packet", "_check_payload_for_license_content"],
+        "test_encrypted_traffic_analysis": ["_process_pyshark_packet"],
+        "test_statistical_analysis_capabilities": ["get_results", "_calculate_capture_duration", "_calculate_packet_rate"],
+        "test_suspicious_traffic_detection": ["get_results", "_assess_threat_level"],
+        "test_license_server_identification": ["analyze_traffic"],
+        "test_visualization_generation": ["_generate_visualizations"],
+        "test_html_report_generation": ["generate_report"],
+        "test_performance_with_high_volume_traffic": ["_process_captured_packet", "analyze_traffic"],
+        "test_concurrent_analysis_thread_safety": ["_process_captured_packet", "analyze_traffic"],
     }
 
     for test_name, methods_list in comprehensive_mappings.items():
         if test_name in test_methods:
             for method_name in methods_list:
                 if method_name in method_coverage:
-                    method_coverage[method_name]['covered'] = True
-                    if test_name not in method_coverage[method_name]['covering_tests']:
-                        method_coverage[method_name]['covering_tests'].append(test_name)
+                    method_coverage[method_name]["covered"] = True
+                    if test_name not in method_coverage[method_name]["covering_tests"]:
+                        method_coverage[method_name]["covering_tests"].append(test_name)
 
     # Calculate coverage statistics
     total_methods = len(method_coverage)
-    covered_methods = sum(1 for m in method_coverage.values() if m['covered'])
-    critical_methods = [m for m in method_coverage.values() if m['is_critical']]
-    covered_critical = sum(1 for m in critical_methods if m['covered'])
+    covered_methods = sum(1 for m in method_coverage.values() if m["covered"])
+    critical_methods = [m for m in method_coverage.values() if m["is_critical"]]
+    covered_critical = sum(1 for m in critical_methods if m["covered"])
 
     method_coverage_pct = (covered_methods / total_methods) * 100
     critical_coverage_pct = (covered_critical / len(critical_methods)) * 100 if critical_methods else 0
@@ -168,8 +167,7 @@ def analyze_test_coverage(analyzer_class, test_module):
     print(f"  Critical method coverage: {critical_coverage_pct:.1f}% ({covered_critical}/{len(critical_methods)})")
 
     # Show uncovered critical methods
-    uncovered_critical = [name for name, info in method_coverage.items()
-                         if not info['covered'] and info['is_critical']]
+    uncovered_critical = [name for name, info in method_coverage.items() if not info["covered"] and info["is_critical"]]
 
     if uncovered_critical:
         print(f"\n⚠ Uncovered critical methods ({len(uncovered_critical)}):")
@@ -179,6 +177,7 @@ def analyze_test_coverage(analyzer_class, test_module):
         print("\nOK All critical methods are covered by tests")
 
     return method_coverage_pct, critical_coverage_pct
+
 
 def test_basic_functionality(analyzer_class):
     """Test basic functionality of NetworkTrafficAnalyzer."""
@@ -190,7 +189,7 @@ def test_basic_functionality(analyzer_class):
         print("OK Analyzer initialization successful")
 
         # Test required attributes
-        required_attrs = ['license_patterns', 'license_ports', 'connections', 'packets']
+        required_attrs = ["license_patterns", "license_ports", "connections", "packets"]
         for attr in required_attrs:
             if hasattr(analyzer, attr):
                 print(f"OK Has required attribute: {attr}")
@@ -199,7 +198,7 @@ def test_basic_functionality(analyzer_class):
                 return False
 
         # Test required methods
-        required_methods = ['start_capture', 'stop_capture', 'analyze_traffic', 'get_results', 'generate_report']
+        required_methods = ["start_capture", "stop_capture", "analyze_traffic", "get_results", "generate_report"]
         for method in required_methods:
             if hasattr(analyzer, method) and callable(getattr(analyzer, method)):
                 print(f"OK Has required method: {method}")
@@ -224,7 +223,7 @@ def test_basic_functionality(analyzer_class):
         if full_results and isinstance(full_results, dict):
             print("OK get_results() works")
 
-            required_result_keys = ['packets_analyzed', 'protocols_detected', 'suspicious_traffic', 'statistics']
+            required_result_keys = ["packets_analyzed", "protocols_detected", "suspicious_traffic", "statistics"]
             for key in required_result_keys:
                 if key in full_results:
                     print(f"  OK Results contain: {key}")
@@ -241,11 +240,12 @@ def test_basic_functionality(analyzer_class):
         traceback.print_exc()
         return False
 
+
 def assess_production_readiness(method_coverage_pct, critical_coverage_pct):
     """Assess if the test suite is ready for production."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("PRODUCTION READINESS ASSESSMENT")
-    print('='*60)
+    print("=" * 60)
 
     criteria = {
         "Method Coverage ≥80%": method_coverage_pct >= 80,
@@ -279,10 +279,11 @@ def assess_production_readiness(method_coverage_pct, critical_coverage_pct):
 
     return overall_score >= 75
 
+
 def main():
     """Run comprehensive validation."""
     print("NetworkTrafficAnalyzer Test Validation")
-    print("="*60)
+    print("=" * 60)
 
     # Step 1: Validate imports
     import_success, analyzer_class = validate_traffic_analyzer_import()
@@ -308,9 +309,9 @@ def main():
     # Step 5: Assess production readiness
     production_ready = assess_production_readiness(method_coverage_pct, critical_coverage_pct)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("SUMMARY")
-    print('='*60)
+    print("=" * 60)
     print(f"OK NetworkTrafficAnalyzer import: SUCCESS")
     print(f"OK Test suite loading: SUCCESS")
     print(f"OK Basic functionality: SUCCESS")
@@ -324,6 +325,7 @@ def main():
         print(f" Provides comprehensive validation of network analysis capabilities")
 
     return production_ready
+
 
 if __name__ == "__main__":
     success = main()

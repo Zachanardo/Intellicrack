@@ -3351,7 +3351,7 @@ class ResourceManager:
 
     async def _cleanup_processes(self) -> None:
         """Cleanup all tracked processes."""
-        for pid in list(self.tracked_processes.keys()):
+        for pid in list(self.tracked_processes):
             await self.kill_process(pid, force=True)
 
     def get_resource_stats(self) -> dict[str, Any]:

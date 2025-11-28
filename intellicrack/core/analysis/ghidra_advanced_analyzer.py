@@ -284,7 +284,7 @@ class GhidraAdvancedAnalyzer:
         for func in analysis_result.functions.values():
             struct_accesses = self._analyze_struct_accesses(func)
 
-            for _base_reg, offsets in struct_accesses.items():
+            for offsets in struct_accesses.values():
                 if len(offsets) > 2:  # Likely a structure if multiple offsets
                     struct_key = frozenset(offsets.keys())
                     if struct_key not in struct_candidates:
@@ -311,14 +311,12 @@ class GhidraAdvancedAnalyzer:
                 member_type = access_info["type"]
                 member_size = access_info["size"]
 
-                members.append(
-                    {
-                        "name": member_name,
-                        "type": member_type,
-                        "offset": offset,
-                        "size": member_size,
-                    }
-                )
+                members.append({
+                    "name": member_name,
+                    "type": member_type,
+                    "offset": offset,
+                    "size": member_size,
+                })
 
                 struct_size = max(struct_size, offset + member_size)
 
@@ -709,7 +707,7 @@ def apply_advanced_analysis(analysis_result: GhidraAnalysisResult, binary_path: 
     analyzer = GhidraAdvancedAnalyzer(binary_path)
 
     # Recover variables for each function
-    for _func_addr, func in analysis_result.functions.items():
+    for func in analysis_result.functions.values():
         recovered_vars = analyzer.recover_variables(func)
 
         # Update function with recovered variables

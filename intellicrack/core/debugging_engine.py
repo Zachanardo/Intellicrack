@@ -2323,7 +2323,7 @@ class LicenseDebugger:
                 self.hook_license_api(dll_name, api_name, self._thread_enum_callback)
 
             # Strategy 2: Mark our debugger threads as system threads
-            for _thread_id, thread_handle in self.thread_handles.items():
+            for thread_handle in self.thread_handles.values():
                 try:
                     # Use NtSetInformationThread to hide the thread
                     ntdll = ctypes.WinDLL("ntdll", use_last_error=True)

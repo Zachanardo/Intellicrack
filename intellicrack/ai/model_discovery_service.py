@@ -209,7 +209,7 @@ class ModelDiscoveryService:
         """
         api_keys = {}
 
-        for _model_id, config in configured_models.items():
+        for config in configured_models.values():
             provider = config.get("provider", "").lower()
             api_key = config.get("api_key")
             api_base = config.get("api_base")

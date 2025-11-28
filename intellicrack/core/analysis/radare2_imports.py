@@ -197,7 +197,7 @@ class R2ImportExportAnalyzer:
                         "ordinal": exp.get("ordinal", 0),
                         "size": exp.get("size", 0),
                         "type": exp.get("type", ""),
-                        "is_forwarded": exp.get("forwarder", "") != "",
+                        "is_forwarded": bool(exp.get("forwarder", "")),
                     }
 
                     # Add additional analysis

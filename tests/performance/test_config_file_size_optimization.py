@@ -56,21 +56,11 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
         """Generate a large configuration for testing."""
         config = {
             "version": "3.0",
-            "application": {
-                "name": "Intellicrack",
-                "version": "1.0.0"
-            },
-            "llm_configuration": {
-                "models": {},
-                "profiles": {},
-                "metrics": {}
-            },
-            "ui_preferences": {
-                "window_states": {},
-                "splitter_states": {}
-            },
+            "application": {"name": "Intellicrack", "version": "1.0.0"},
+            "llm_configuration": {"models": {}, "profiles": {}, "metrics": {}},
+            "ui_preferences": {"window_states": {}, "splitter_states": {}},
             "analysis_history": [],
-            "tool_cache": {}
+            "tool_cache": {},
         }
 
         # Add many model configurations
@@ -84,14 +74,11 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
                 "context_length": random.randint(1000, 100000),
                 "temperature": random.uniform(0.1, 2.0),
                 "max_tokens": random.randint(100, 4000),
-                "custom_params": {
-                    f"param_{j}": "".join(random.choices(string.ascii_letters, k=50))
-                    for j in range(10)
-                },
+                "custom_params": {f"param_{j}": "".join(random.choices(string.ascii_letters, k=50)) for j in range(10)},
                 "metadata": {
                     "description": "".join(random.choices(string.ascii_letters + " ", k=200)),
-                    "tags": [f"tag_{j}" for j in range(20)]
-                }
+                    "tags": [f"tag_{j}" for j in range(20)],
+                },
             }
 
         # Add analysis history entries
@@ -102,11 +89,8 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
                 "results": {
                     "protections": [f"protection_{j}" for j in range(10)],
                     "vulnerabilities": [f"vuln_{j}" for j in range(5)],
-                    "metadata": {
-                        f"key_{j}": "".join(random.choices(string.ascii_letters, k=100))
-                        for j in range(20)
-                    }
-                }
+                    "metadata": {f"key_{j}": "".join(random.choices(string.ascii_letters, k=100)) for j in range(20)},
+                },
             })
 
         # Add tool cache entries
@@ -114,12 +98,9 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
             tool_name = f"tool_{i}"
             config["tool_cache"][tool_name] = {
                 "path": f"/path/to/tool_{i}",
-                "version": f"v{random.randint(1,10)}.{random.randint(0,99)}.{random.randint(0,999)}",
+                "version": f"v{random.randint(1, 10)}.{random.randint(0, 99)}.{random.randint(0, 999)}",
                 "capabilities": [f"cap_{j}" for j in range(15)],
-                "configuration": {
-                    f"setting_{j}": random.choice([True, False, random.randint(0, 100)])
-                    for j in range(30)
-                }
+                "configuration": {f"setting_{j}": random.choice([True, False, random.randint(0, 100)]) for j in range(30)},
             }
 
         return config
@@ -155,7 +136,7 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
         large_config = self._generate_large_config(num_entries=1000)
 
         # Write unoptimized
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             json.dump(large_config, f, indent=2)
 
         unoptimized_size = self.config_path.stat().st_size
@@ -165,8 +146,8 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
 
         # Write optimized (no indentation, compact)
         optimized_path = Path(self.test_dir) / "config_optimized.json"
-        with open(optimized_path, 'w') as f:
-            json.dump(large_config, f, separators=(',', ':'))
+        with open(optimized_path, "w") as f:
+            json.dump(large_config, f, separators=(",", ":"))
 
         optimized_size = optimized_path.stat().st_size
         optimized_mb = optimized_size / (1024 * 1024)
@@ -182,7 +163,7 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
         """Test different compression strategies for config files."""
         # Generate large config
         config_data = self._generate_large_config(num_entries=500)
-        json_data = json.dumps(config_data, separators=(',', ':')).encode('utf-8')
+        json_data = json.dumps(config_data, separators=(",", ":")).encode("utf-8")
         original_size = len(json_data)
 
         compression_results = {}
@@ -192,33 +173,21 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
         gzip_data = gzip.compress(json_data, compresslevel=9)
         gzip_time = time.time() - start_time
         gzip_size = len(gzip_data)
-        compression_results['gzip'] = {
-            'size': gzip_size,
-            'ratio': gzip_size / original_size,
-            'compress_time': gzip_time
-        }
+        compression_results["gzip"] = {"size": gzip_size, "ratio": gzip_size / original_size, "compress_time": gzip_time}
 
         # Test zlib compression
         start_time = time.time()
         zlib_data = zlib.compress(json_data, level=9)
         zlib_time = time.time() - start_time
         zlib_size = len(zlib_data)
-        compression_results['zlib'] = {
-            'size': zlib_size,
-            'ratio': zlib_size / original_size,
-            'compress_time': zlib_time
-        }
+        compression_results["zlib"] = {"size": zlib_size, "ratio": zlib_size / original_size, "compress_time": zlib_time}
 
         # Test bz2 compression
         start_time = time.time()
         bz2_data = bz2.compress(json_data, compresslevel=9)
         bz2_time = time.time() - start_time
         bz2_size = len(bz2_data)
-        compression_results['bz2'] = {
-            'size': bz2_size,
-            'ratio': bz2_size / original_size,
-            'compress_time': bz2_time
-        }
+        compression_results["bz2"] = {"size": bz2_size, "ratio": bz2_size / original_size, "compress_time": bz2_time}
 
         print(f"\nOriginal size: {original_size:,} bytes")
         print("\nCompression results:")
@@ -248,7 +217,7 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
 
         # All methods should achieve significant compression
         for method, results in compression_results.items():
-            self.assertLess(results['ratio'], 0.3, f"{method} compression ratio too high")
+            self.assertLess(results["ratio"], 0.3, f"{method} compression ratio too high")
 
     def test_18_2_4_incremental_config_growth(self):
         """Test config file growth over simulated time."""
@@ -261,34 +230,29 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
             # Add some models
             for i in range(random.randint(1, 5)):
                 model_id = f"model_day{day}_{i}"
-                config.set(f"llm_configuration.models.{model_id}", {
-                    "provider": "openai",
-                    "model_name": f"gpt-{day}-{i}",
-                    "api_key": "sk-" + "".join(random.choices(string.ascii_letters, k=48))
-                })
+                config.set(
+                    f"llm_configuration.models.{model_id}",
+                    {
+                        "provider": "openai",
+                        "model_name": f"gpt-{day}-{i}",
+                        "api_key": "sk-" + "".join(random.choices(string.ascii_letters, k=48)),
+                    },
+                )
 
             # Add analysis history
             for i in range(random.randint(5, 20)):
                 history = config.get("analysis_history", [])
-                history.append({
-                    "timestamp": time.time(),
-                    "file": f"binary_day{day}_{i}.exe",
-                    "results": {"status": "complete"}
-                })
+                history.append({"timestamp": time.time(), "file": f"binary_day{day}_{i}.exe", "results": {"status": "complete"}})
                 config.set("analysis_history", history)
 
             # Save and measure
             config.save()
             file_size = self.config_path.stat().st_size
-            growth_data.append({
-                'day': day,
-                'size': file_size,
-                'size_mb': file_size / (1024 * 1024)
-            })
+            growth_data.append({"day": day, "size": file_size, "size_mb": file_size / (1024 * 1024)})
 
         # Analyze growth rate
-        initial_size = growth_data[0]['size']
-        final_size = growth_data[-1]['size']
+        initial_size = growth_data[0]["size"]
+        final_size = growth_data[-1]["size"]
         growth_rate = (final_size - initial_size) / initial_size
 
         print(f"\nConfig growth over 30 days:")
@@ -297,8 +261,7 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
         print(f"  Growth: {growth_rate:.1%}")
 
         # Check if growth is reasonable
-        self.assertLess(growth_data[-1]['size_mb'], self.MAX_CONFIG_SIZE_MB,
-                       f"Config exceeds {self.MAX_CONFIG_SIZE_MB}MB after 30 days")
+        self.assertLess(growth_data[-1]["size_mb"], self.MAX_CONFIG_SIZE_MB, f"Config exceeds {self.MAX_CONFIG_SIZE_MB}MB after 30 days")
 
     def test_18_2_4_load_time_scaling(self):
         """Test config load time scaling with size."""
@@ -310,7 +273,7 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
 
             # Write to file
             config_path = Path(self.test_dir) / f"config_{num_entries}.json"
-            with open(config_path, 'w') as f:
+            with open(config_path, "w") as f:
                 json.dump(config_data, f)
 
             file_size = config_path.stat().st_size
@@ -325,12 +288,7 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
                 times.append(load_time)
 
             avg_load_time = sum(times) / len(times)
-            load_times.append({
-                'entries': num_entries,
-                'size': file_size,
-                'size_mb': file_size / (1024 * 1024),
-                'load_time': avg_load_time
-            })
+            load_times.append({"entries": num_entries, "size": file_size, "size_mb": file_size / (1024 * 1024), "load_time": avg_load_time})
 
         print("\nLoad time scaling:")
         for data in load_times:
@@ -338,23 +296,25 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
 
         # Check that large configs still load within acceptable time
         for data in load_times:
-            if data['size_mb'] <= self.TARGET_CONFIG_SIZE_MB:
-                self.assertLess(data['load_time'], self.TARGET_LOAD_TIME_SECONDS,
-                              f"Load time exceeds target for {data['size_mb']:.2f}MB config")
+            if data["size_mb"] <= self.TARGET_CONFIG_SIZE_MB:
+                self.assertLess(
+                    data["load_time"], self.TARGET_LOAD_TIME_SECONDS, f"Load time exceeds target for {data['size_mb']:.2f}MB config"
+                )
             else:
-                self.assertLess(data['load_time'], self.MAX_LOAD_TIME_SECONDS,
-                              f"Load time exceeds maximum for {data['size_mb']:.2f}MB config")
+                self.assertLess(
+                    data["load_time"], self.MAX_LOAD_TIME_SECONDS, f"Load time exceeds maximum for {data['size_mb']:.2f}MB config"
+                )
 
     def test_18_2_4_binary_serialization_comparison(self):
         """Compare JSON vs binary serialization formats."""
         config_data = self._generate_large_config(num_entries=500)
 
         # JSON serialization
-        json_data = json.dumps(config_data).encode('utf-8')
+        json_data = json.dumps(config_data).encode("utf-8")
         json_size = len(json_data)
 
         start_time = time.time()
-        json.loads(json_data.decode('utf-8'))
+        json.loads(json_data.decode("utf-8"))
         json_load_time = time.time() - start_time
 
         # Pickle serialization
@@ -386,8 +346,7 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
         # JSON should remain the format for human readability
         # But verify it's not significantly worse than alternatives
         if pickle_size > 0:
-            self.assertLess(json_size / pickle_size, 2.0,
-                          "JSON size is more than 2x pickle size")
+            self.assertLess(json_size / pickle_size, 2.0, "JSON size is more than 2x pickle size")
 
     def test_18_2_4_config_cleanup_optimization(self):
         """Test cleanup of old/unused config entries."""
@@ -399,9 +358,12 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
 
         # Add old metrics
         for i in range(100):
-            config.set(f"llm_configuration.metrics.old_model_{i}", {
-                "history": [{"timestamp": time.time() - 86400 * 90}] * 100  # 90 days old
-            })
+            config.set(
+                f"llm_configuration.metrics.old_model_{i}",
+                {
+                    "history": [{"timestamp": time.time() - 86400 * 90}] * 100  # 90 days old
+                },
+            )
 
         config.save()
         initial_size = self.config_path.stat().st_size
@@ -416,7 +378,7 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
         # Remove old metrics (>60 days)
         current_time = time.time()
         metrics = cleaned_config.get("llm_configuration.metrics", {})
-        for model_id in list(metrics.keys()):
+        for model_id in list(metrics):
             if model_id.startswith("old_model_"):
                 history = metrics[model_id].get("history", [])
                 if history and history[0].get("timestamp", current_time) < current_time - 86400 * 60:
@@ -443,10 +405,10 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
             "core": {"setting": "value"},  # Small, always loaded
             "llm_configuration": self._generate_large_config(100)["llm_configuration"],
             "analysis_history": [{"data": "x" * 1000} for _ in range(500)],
-            "tool_cache": {f"tool_{i}": {"data": "y" * 500} for i in range(200)}
+            "tool_cache": {f"tool_{i}": {"data": "y" * 500} for i in range(200)},
         }
 
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             json.dump(config_data, f)
 
         # Simulate loading only core section
@@ -475,7 +437,7 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
         """Test overhead of config validation on load."""
         config_data = self._generate_large_config(num_entries=500)
 
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             json.dump(config_data, f)
 
         # Load without validation

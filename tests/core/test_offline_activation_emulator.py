@@ -85,9 +85,7 @@ def machine_profile() -> MachineProfile:
 class TestHardwareProfileRetrieval:
     """Test hardware profile retrieval from system."""
 
-    def test_get_hardware_profile_returns_complete_profile(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_get_hardware_profile_returns_complete_profile(self, emulator: OfflineActivationEmulator) -> None:
         """Hardware profile contains all required system identifiers."""
         profile: HardwareProfile = emulator.get_hardware_profile()
 
@@ -108,26 +106,20 @@ class TestHardwareProfileRetrieval:
         assert hardware_profile.cpu_id.replace(" ", "").replace("-", "").isalnum()
         assert len(hardware_profile.cpu_id.replace(" ", "").replace("-", "")) >= 8
 
-    def test_mac_addresses_valid_format(
-        self, hardware_profile: HardwareProfile
-    ) -> None:
+    def test_mac_addresses_valid_format(self, hardware_profile: HardwareProfile) -> None:
         """MAC addresses follow standard hexadecimal format."""
         for mac in hardware_profile.mac_addresses:
             clean_mac: str = mac.replace(":", "").replace("-", "")
             assert len(clean_mac) == 12
             assert all(c in "0123456789ABCDEFabcdef" for c in clean_mac)
 
-    def test_system_uuid_valid_format(
-        self, hardware_profile: HardwareProfile
-    ) -> None:
+    def test_system_uuid_valid_format(self, hardware_profile: HardwareProfile) -> None:
         """System UUID follows UUID format specification."""
         uuid_str: str = hardware_profile.system_uuid.replace("-", "")
         assert len(uuid_str) >= 32
         assert all(c in "0123456789ABCDEFabcdef-" for c in hardware_profile.system_uuid)
 
-    def test_hardware_profile_deterministic_on_same_system(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_hardware_profile_deterministic_on_same_system(self, emulator: OfflineActivationEmulator) -> None:
         """Hardware profile remains consistent across multiple retrievals."""
         profile1: HardwareProfile = emulator.get_hardware_profile()
         profile2: HardwareProfile = emulator.get_hardware_profile()
@@ -141,9 +133,7 @@ class TestHardwareProfileRetrieval:
 class TestHardwareIDGeneration:
     """Test hardware ID generation from profiles."""
 
-    def test_standard_hardware_id_format(
-        self, emulator: OfflineActivationEmulator, hardware_profile: HardwareProfile
-    ) -> None:
+    def test_standard_hardware_id_format(self, emulator: OfflineActivationEmulator, hardware_profile: HardwareProfile) -> None:
         """Standard algorithm generates properly formatted hardware ID."""
         hw_id: str = emulator.generate_hardware_id(hardware_profile, "standard")
 
@@ -152,18 +142,14 @@ class TestHardwareIDGeneration:
         assert all(len(group) == 5 for group in groups)
         assert all(group.isalnum() for group in groups)
 
-    def test_microsoft_hardware_id_format(
-        self, emulator: OfflineActivationEmulator, hardware_profile: HardwareProfile
-    ) -> None:
+    def test_microsoft_hardware_id_format(self, emulator: OfflineActivationEmulator, hardware_profile: HardwareProfile) -> None:
         """Microsoft algorithm generates 8-character hexadecimal ID."""
         hw_id: str = emulator.generate_hardware_id(hardware_profile, "microsoft")
 
         assert len(hw_id) == 8
         assert all(c in "0123456789ABCDEF" for c in hw_id)
 
-    def test_adobe_hardware_id_format(
-        self, emulator: OfflineActivationEmulator, hardware_profile: HardwareProfile
-    ) -> None:
+    def test_adobe_hardware_id_format(self, emulator: OfflineActivationEmulator, hardware_profile: HardwareProfile) -> None:
         """Adobe algorithm generates hyphen-separated LEID format."""
         hw_id: str = emulator.generate_hardware_id(hardware_profile, "adobe")
 
@@ -172,9 +158,7 @@ class TestHardwareIDGeneration:
         assert len(groups) == 4
         assert all(len(group) == 4 for group in groups)
 
-    def test_custom_hardware_id_uses_pbkdf2(
-        self, emulator: OfflineActivationEmulator, hardware_profile: HardwareProfile
-    ) -> None:
+    def test_custom_hardware_id_uses_pbkdf2(self, emulator: OfflineActivationEmulator, hardware_profile: HardwareProfile) -> None:
         """Custom algorithm produces base64-encoded PBKDF2 key."""
         hw_id: str = emulator.generate_hardware_id(hardware_profile, "custom")
 
@@ -184,18 +168,14 @@ class TestHardwareIDGeneration:
         except Exception:
             pytest.fail("Custom hardware ID not valid base64")
 
-    def test_hardware_id_deterministic_for_profile(
-        self, emulator: OfflineActivationEmulator, hardware_profile: HardwareProfile
-    ) -> None:
+    def test_hardware_id_deterministic_for_profile(self, emulator: OfflineActivationEmulator, hardware_profile: HardwareProfile) -> None:
         """Same profile generates same hardware ID consistently."""
         hw_id1: str = emulator.generate_hardware_id(hardware_profile, "standard")
         hw_id2: str = emulator.generate_hardware_id(hardware_profile, "standard")
 
         assert hw_id1 == hw_id2
 
-    def test_hardware_id_unique_per_profile(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_hardware_id_unique_per_profile(self, emulator: OfflineActivationEmulator) -> None:
         """Different profiles generate different hardware IDs."""
         profile1: HardwareProfile = HardwareProfile(
             cpu_id="CPU1",
@@ -227,40 +207,30 @@ class TestHardwareIDGeneration:
 class TestInstallationIDGeneration:
     """Test installation ID generation binding products to hardware."""
 
-    def test_installation_id_format(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_installation_id_format(self, emulator: OfflineActivationEmulator) -> None:
         """Installation ID formatted as hyphen-separated hex groups."""
-        install_id: str = emulator.generate_installation_id(
-            "PRODUCT-123", "HARDWARE-456"
-        )
+        install_id: str = emulator.generate_installation_id("PRODUCT-123", "HARDWARE-456")
 
         assert "-" in install_id
         groups: list[str] = install_id.split("-")
         assert all(len(group) == 6 for group in groups)
         assert all(all(c in "0123456789ABCDEF" for c in group) for group in groups)
 
-    def test_installation_id_deterministic(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_installation_id_deterministic(self, emulator: OfflineActivationEmulator) -> None:
         """Same product and hardware produce same installation ID."""
         install_id1: str = emulator.generate_installation_id("PROD", "HW")
         install_id2: str = emulator.generate_installation_id("PROD", "HW")
 
         assert install_id1 == install_id2
 
-    def test_installation_id_unique_per_product(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_installation_id_unique_per_product(self, emulator: OfflineActivationEmulator) -> None:
         """Different products generate different installation IDs."""
         install_id1: str = emulator.generate_installation_id("PRODUCT-A", "HARDWARE-X")
         install_id2: str = emulator.generate_installation_id("PRODUCT-B", "HARDWARE-X")
 
         assert install_id1 != install_id2
 
-    def test_installation_id_unique_per_hardware(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_installation_id_unique_per_hardware(self, emulator: OfflineActivationEmulator) -> None:
         """Different hardware generates different installation IDs."""
         install_id1: str = emulator.generate_installation_id("PRODUCT-X", "HARDWARE-A")
         install_id2: str = emulator.generate_installation_id("PRODUCT-X", "HARDWARE-B")
@@ -281,18 +251,14 @@ class TestRequestCodeGeneration:
         assert all(len(group) == 6 for group in groups)
         assert all(group.isdigit() for group in groups)
 
-    def test_request_code_deterministic(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_request_code_deterministic(self, emulator: OfflineActivationEmulator) -> None:
         """Same installation ID produces same request code."""
         request_code1: str = emulator.generate_request_code("INSTALL-ABCD")
         request_code2: str = emulator.generate_request_code("INSTALL-ABCD")
 
         assert request_code1 == request_code2
 
-    def test_request_code_unique_per_installation(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_request_code_unique_per_installation(self, emulator: OfflineActivationEmulator) -> None:
         """Different installation IDs produce different request codes."""
         request_code1: str = emulator.generate_request_code("INSTALL-AAA")
         request_code2: str = emulator.generate_request_code("INSTALL-BBB")
@@ -303,9 +269,7 @@ class TestRequestCodeGeneration:
 class TestMicrosoftActivation:
     """Test Microsoft Office activation response generation."""
 
-    def test_microsoft_activation_generates_confirmation_id(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_microsoft_activation_generates_confirmation_id(self, emulator: OfflineActivationEmulator) -> None:
         """Microsoft activation produces properly formatted confirmation ID."""
         request: ActivationRequest = ActivationRequest(
             product_id="Microsoft Office 2024",
@@ -326,9 +290,7 @@ class TestMicrosoftActivation:
         assert all(len(group) == 6 for group in groups)
         assert all(group.isdigit() for group in groups)
 
-    def test_microsoft_activation_hardware_locked(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_microsoft_activation_hardware_locked(self, emulator: OfflineActivationEmulator) -> None:
         """Microsoft activation response is hardware-locked."""
         request: ActivationRequest = ActivationRequest(
             product_id="Microsoft Office Pro",
@@ -344,9 +306,7 @@ class TestMicrosoftActivation:
 
         assert response.hardware_locked is True
 
-    def test_microsoft_activation_includes_features(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_microsoft_activation_includes_features(self, emulator: OfflineActivationEmulator) -> None:
         """Microsoft activation includes Professional/Enterprise features."""
         request: ActivationRequest = ActivationRequest(
             product_id="office",
@@ -362,9 +322,7 @@ class TestMicrosoftActivation:
 
         assert "Professional" in response.features or "Enterprise" in response.features
 
-    def test_microsoft_activation_with_product_key(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_microsoft_activation_with_product_key(self, emulator: OfflineActivationEmulator) -> None:
         """Microsoft activation accepts custom product key."""
         request: ActivationRequest = ActivationRequest(
             product_id="Microsoft",
@@ -377,9 +335,7 @@ class TestMicrosoftActivation:
         )
         product_key: str = "XXXXX-YYYYY-ZZZZZ-AAAAA-BBBBB"
 
-        response: ActivationResponse = emulator.generate_activation_response(
-            request, product_key
-        )
+        response: ActivationResponse = emulator.generate_activation_response(request, product_key)
 
         assert response.license_key == product_key
 
@@ -387,9 +343,7 @@ class TestMicrosoftActivation:
 class TestAdobeActivation:
     """Test Adobe Creative Cloud activation response generation."""
 
-    def test_adobe_activation_generates_response_code(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_adobe_activation_generates_response_code(self, emulator: OfflineActivationEmulator) -> None:
         """Adobe activation produces formatted response code."""
         request: ActivationRequest = ActivationRequest(
             product_id="Adobe Photoshop CC",
@@ -407,9 +361,7 @@ class TestAdobeActivation:
         assert "-" in response.activation_code
         assert all(c in "0123456789ABCDEF-" for c in response.activation_code)
 
-    def test_adobe_activation_includes_signature(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_adobe_activation_includes_signature(self, emulator: OfflineActivationEmulator) -> None:
         """Adobe activation includes RSA signature."""
         request: ActivationRequest = ActivationRequest(
             product_id="Adobe CC",
@@ -427,9 +379,7 @@ class TestAdobeActivation:
         assert isinstance(response.signature, bytes)
         assert len(response.signature) > 0
 
-    def test_adobe_activation_creative_cloud_features(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_adobe_activation_creative_cloud_features(self, emulator: OfflineActivationEmulator) -> None:
         """Adobe activation includes Creative Cloud features."""
         request: ActivationRequest = ActivationRequest(
             product_id="adobe",
@@ -445,9 +395,7 @@ class TestAdobeActivation:
 
         assert "Creative Cloud" in response.features or "All Apps" in response.features
 
-    def test_adobe_activation_365_day_expiry(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_adobe_activation_365_day_expiry(self, emulator: OfflineActivationEmulator) -> None:
         """Adobe activation sets 365-day expiration period."""
         request: ActivationRequest = ActivationRequest(
             product_id="Adobe",
@@ -469,9 +417,7 @@ class TestAdobeActivation:
 class TestAutodeskActivation:
     """Test Autodesk AutoCAD activation response generation."""
 
-    def test_autodesk_activation_xor_transformation(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_autodesk_activation_xor_transformation(self, emulator: OfflineActivationEmulator) -> None:
         """Autodesk activation uses XOR-based algorithm."""
         request: ActivationRequest = ActivationRequest(
             product_id="Autodesk AutoCAD 2024",
@@ -490,9 +436,7 @@ class TestAutodeskActivation:
         groups: list[str] = response.activation_code.split("-")
         assert all(all(c in "0123456789ABCDEF" for c in group) for group in groups)
 
-    def test_autodesk_activation_hardware_locked(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_autodesk_activation_hardware_locked(self, emulator: OfflineActivationEmulator) -> None:
         """Autodesk activation is hardware-locked."""
         request: ActivationRequest = ActivationRequest(
             product_id="Autodesk",
@@ -512,9 +456,7 @@ class TestAutodeskActivation:
 class TestVMwareActivation:
     """Test VMware vSphere activation response generation."""
 
-    def test_vmware_activation_perpetual_license(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_vmware_activation_perpetual_license(self, emulator: OfflineActivationEmulator) -> None:
         """VMware activation generates perpetual license."""
         request: ActivationRequest = ActivationRequest(
             product_id="VMware vSphere ESXi",
@@ -530,9 +472,7 @@ class TestVMwareActivation:
 
         assert response.expiry_date is None
 
-    def test_vmware_activation_base32_format(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_vmware_activation_base32_format(self, emulator: OfflineActivationEmulator) -> None:
         """VMware activation uses base32-compatible character set."""
         request: ActivationRequest = ActivationRequest(
             product_id="vmware",
@@ -553,9 +493,7 @@ class TestVMwareActivation:
 class TestMatlabActivation:
     """Test MATLAB activation and license file generation."""
 
-    def test_matlab_activation_generates_license_file(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_matlab_activation_generates_license_file(self, emulator: OfflineActivationEmulator) -> None:
         """MATLAB activation includes signed license file."""
         request: ActivationRequest = ActivationRequest(
             product_id="MATLAB R2024a",
@@ -572,9 +510,7 @@ class TestMatlabActivation:
         assert response.signature is not None
         assert isinstance(response.signature, bytes)
 
-    def test_matlab_activation_includes_toolboxes(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_matlab_activation_includes_toolboxes(self, emulator: OfflineActivationEmulator) -> None:
         """MATLAB activation includes toolbox features."""
         request: ActivationRequest = ActivationRequest(
             product_id="matlab",
@@ -588,18 +524,13 @@ class TestMatlabActivation:
 
         response: ActivationResponse = emulator.generate_activation_response(request)
 
-        assert any(
-            feature in response.features
-            for feature in ["MATLAB", "Simulink", "Toolboxes"]
-        )
+        assert any(feature in response.features for feature in ["MATLAB", "Simulink", "Toolboxes"])
 
 
 class TestSolidWorksActivation:
     """Test SolidWorks CAD activation response generation."""
 
-    def test_solidworks_activation_transformation(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_solidworks_activation_transformation(self, emulator: OfflineActivationEmulator) -> None:
         """SolidWorks activation uses multiplication algorithm."""
         request: ActivationRequest = ActivationRequest(
             product_id="SolidWorks Professional 2024",
@@ -623,9 +554,7 @@ class TestSolidWorksActivation:
 class TestCryptographicActivation:
     """Test RSA, AES, and ECC-based activation algorithms."""
 
-    def test_rsa_activation_generates_signature(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_rsa_activation_generates_signature(self, emulator: OfflineActivationEmulator) -> None:
         """RSA activation produces valid RSA signature."""
         request: ActivationRequest = ActivationRequest(
             product_id="CustomRSA-Product",
@@ -643,9 +572,7 @@ class TestCryptographicActivation:
         assert isinstance(response.signature, bytes)
         assert len(response.signature) > 100
 
-    def test_aes_activation_encrypted_code(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_aes_activation_encrypted_code(self, emulator: OfflineActivationEmulator) -> None:
         """AES activation produces base64-encoded encrypted code."""
         request: ActivationRequest = ActivationRequest(
             product_id="CustomAES-Product",
@@ -665,9 +592,7 @@ class TestCryptographicActivation:
         except Exception:
             pytest.fail("AES activation code not valid base64")
 
-    def test_ecc_activation_ecdsa_signature(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_ecc_activation_ecdsa_signature(self, emulator: OfflineActivationEmulator) -> None:
         """ECC activation produces ECDSA signature."""
         request: ActivationRequest = ActivationRequest(
             product_id="CustomECC-Product",
@@ -688,9 +613,7 @@ class TestCryptographicActivation:
 class TestProductKeyGeneration:
     """Test product key generation for various vendors."""
 
-    def test_microsoft_product_key_format(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_microsoft_product_key_format(self, emulator: OfflineActivationEmulator) -> None:
         """Microsoft product key follows 5x5 format."""
         key: str = emulator._generate_product_key("microsoft")
 
@@ -700,9 +623,7 @@ class TestProductKeyGeneration:
         valid_chars: str = "BCDFGHJKMPQRTVWXY2346789"
         assert all(all(c in valid_chars for c in group) for group in groups)
 
-    def test_adobe_product_key_format(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_adobe_product_key_format(self, emulator: OfflineActivationEmulator) -> None:
         """Adobe product key follows 6x4 digit format."""
         key: str = emulator._generate_product_key("adobe")
 
@@ -711,9 +632,7 @@ class TestProductKeyGeneration:
         assert all(len(group) == 4 for group in groups)
         assert all(group.isdigit() for group in groups)
 
-    def test_autodesk_product_key_format(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_autodesk_product_key_format(self, emulator: OfflineActivationEmulator) -> None:
         """Autodesk product key follows 3-8 digit format."""
         key: str = emulator._generate_product_key("autodesk")
 
@@ -723,9 +642,7 @@ class TestProductKeyGeneration:
         assert len(parts[1]) == 8
         assert all(part.isdigit() for part in parts)
 
-    def test_generic_product_key_format(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_generic_product_key_format(self, emulator: OfflineActivationEmulator) -> None:
         """Generic product key follows 5x5 alphanumeric format."""
         key: str = emulator._generate_product_key("default")
 
@@ -758,9 +675,7 @@ class TestLicenseFileCreation:
         assert "Enterprise" in xml_str
         assert base64.b64encode(b"test_signature_data").decode() in xml_str
 
-    def test_json_license_file_format(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_json_license_file_format(self, emulator: OfflineActivationEmulator) -> None:
         """JSON license file contains structured response data."""
         response: ActivationResponse = ActivationResponse(
             activation_code="JSON-ACTIV",
@@ -779,9 +694,7 @@ class TestLicenseFileCreation:
         assert license_obj["features"] == ["Standard"]
         assert license_obj["hardware_locked"] is False
 
-    def test_binary_license_file_format(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_binary_license_file_format(self, emulator: OfflineActivationEmulator) -> None:
         """Binary license file contains magic header and packed data."""
         response: ActivationResponse = ActivationResponse(
             activation_code="BIN-ACTIV",
@@ -798,9 +711,7 @@ class TestLicenseFileCreation:
         version: int = struct.unpack("<I", binary_data[4:8])[0]
         assert version == 1
 
-    def test_text_license_file_format(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_text_license_file_format(self, emulator: OfflineActivationEmulator) -> None:
         """Text license file contains human-readable information."""
         response: ActivationResponse = ActivationResponse(
             activation_code="TEXT-ACTIV",
@@ -823,31 +734,23 @@ class TestLicenseFileCreation:
 class TestPhoneActivation:
     """Test phone-based activation confirmation ID generation."""
 
-    def test_phone_activation_confirmation_format(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_phone_activation_confirmation_format(self, emulator: OfflineActivationEmulator) -> None:
         """Phone activation produces 9-group confirmation ID."""
-        confirmation: str = emulator.emulate_phone_activation(
-            "INSTALL-123456-ABCDEF-789012"
-        )
+        confirmation: str = emulator.emulate_phone_activation("INSTALL-123456-ABCDEF-789012")
 
         groups: list[str] = confirmation.split("-")
         assert len(groups) == 9
         assert all(len(group) == 6 for group in groups)
         assert all(group.isdigit() for group in groups)
 
-    def test_phone_activation_deterministic(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_phone_activation_deterministic(self, emulator: OfflineActivationEmulator) -> None:
         """Same installation ID produces same confirmation ID."""
         confirmation1: str = emulator.emulate_phone_activation("INSTALL-ABC123")
         confirmation2: str = emulator.emulate_phone_activation("INSTALL-ABC123")
 
         assert confirmation1 == confirmation2
 
-    def test_phone_activation_unique_per_installation(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_phone_activation_unique_per_installation(self, emulator: OfflineActivationEmulator) -> None:
         """Different installation IDs produce different confirmations."""
         confirmation1: str = emulator.emulate_phone_activation("INSTALL-AAA")
         confirmation2: str = emulator.emulate_phone_activation("INSTALL-BBB")
@@ -858,13 +761,9 @@ class TestPhoneActivation:
 class TestTrialRestrictionBypass:
     """Test trial limitation bypass data generation."""
 
-    def test_trial_bypass_contains_all_components(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_trial_bypass_contains_all_components(self, emulator: OfflineActivationEmulator) -> None:
         """Trial bypass data includes all attack vectors."""
-        bypass_data: dict[str, Any] = emulator.bypass_trial_restrictions(
-            "TestProduct"
-        )
+        bypass_data: dict[str, Any] = emulator.bypass_trial_restrictions("TestProduct")
 
         assert "trial_reset" in bypass_data
         assert "registry_keys" in bypass_data
@@ -872,13 +771,9 @@ class TestTrialRestrictionBypass:
         assert "date_bypass" in bypass_data
         assert "network_bypass" in bypass_data
 
-    def test_trial_reset_data_structure(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_trial_reset_data_structure(self, emulator: OfflineActivationEmulator) -> None:
         """Trial reset data contains file and registry targets."""
-        bypass_data: dict[str, Any] = emulator.bypass_trial_restrictions(
-            "TestProduct"
-        )
+        bypass_data: dict[str, Any] = emulator.bypass_trial_restrictions("TestProduct")
         trial_reset: dict[str, Any] = bypass_data["trial_reset"]
 
         assert "delete_files" in trial_reset
@@ -890,27 +785,19 @@ class TestTrialRestrictionBypass:
         assert len(trial_reset["delete_files"]) > 0
         assert all("TestProduct" in path for path in trial_reset["delete_files"])
 
-    def test_registry_keys_structure(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_registry_keys_structure(self, emulator: OfflineActivationEmulator) -> None:
         """Registry keys include activation and licensing entries."""
-        bypass_data: dict[str, Any] = emulator.bypass_trial_restrictions(
-            "TestProduct"
-        )
+        bypass_data: dict[str, Any] = emulator.bypass_trial_restrictions("TestProduct")
         registry_keys: dict[str, str] = bypass_data["registry_keys"]
 
-        assert any("License" in key for key in registry_keys.keys())
-        assert any("LicenseKey" in key for key in registry_keys.keys())
-        assert any("ActivationDate" in key for key in registry_keys.keys())
-        assert any("ExpiryDate" in key for key in registry_keys.keys())
+        assert any("License" in key for key in registry_keys)
+        assert any("LicenseKey" in key for key in registry_keys)
+        assert any("ActivationDate" in key for key in registry_keys)
+        assert any("ExpiryDate" in key for key in registry_keys)
 
-    def test_license_files_generated(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_license_files_generated(self, emulator: OfflineActivationEmulator) -> None:
         """License files include multiple format variants."""
-        bypass_data: dict[str, Any] = emulator.bypass_trial_restrictions(
-            "TestProduct"
-        )
+        bypass_data: dict[str, Any] = emulator.bypass_trial_restrictions("TestProduct")
         license_files: dict[str, bytes] = bypass_data["license_files"]
 
         assert "license.xml" in license_files
@@ -921,13 +808,9 @@ class TestTrialRestrictionBypass:
         assert all(isinstance(content, bytes) for content in license_files.values())
         assert all(len(content) > 0 for content in license_files.values())
 
-    def test_date_bypass_configuration(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_date_bypass_configuration(self, emulator: OfflineActivationEmulator) -> None:
         """Date bypass includes time freeze configuration."""
-        bypass_data: dict[str, Any] = emulator.bypass_trial_restrictions(
-            "TestProduct"
-        )
+        bypass_data: dict[str, Any] = emulator.bypass_trial_restrictions("TestProduct")
         date_bypass: dict[str, Any] = bypass_data["date_bypass"]
 
         assert "system_time_freeze" in date_bypass
@@ -936,13 +819,9 @@ class TestTrialRestrictionBypass:
 
         assert isinstance(date_bypass["system_time_freeze"], datetime)
 
-    def test_network_bypass_configuration(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_network_bypass_configuration(self, emulator: OfflineActivationEmulator) -> None:
         """Network bypass includes hosts and firewall rules."""
-        bypass_data: dict[str, Any] = emulator.bypass_trial_restrictions(
-            "TestProduct"
-        )
+        bypass_data: dict[str, Any] = emulator.bypass_trial_restrictions("TestProduct")
         network_bypass: dict[str, Any] = bypass_data["network_bypass"]
 
         assert "hosts_file_entries" in network_bypass
@@ -960,9 +839,7 @@ class TestActivationRequestGeneration:
 
     def test_xml_request_format(self, emulator: OfflineActivationEmulator) -> None:
         """XML request contains all machine profile data."""
-        xml_request: str = emulator.generate_activation_request(
-            "TestProduct", "SERIAL-12345", RequestFormat.XML
-        )
+        xml_request: str = emulator.generate_activation_request("TestProduct", "SERIAL-12345", RequestFormat.XML)
 
         assert "<ActivationRequest>" in xml_request
         assert "<ProductID>TestProduct</ProductID>" in xml_request
@@ -972,9 +849,7 @@ class TestActivationRequestGeneration:
 
     def test_json_request_format(self, emulator: OfflineActivationEmulator) -> None:
         """JSON request contains structured machine profile."""
-        json_request: str = emulator.generate_activation_request(
-            "TestProduct", "SERIAL-JSON", RequestFormat.JSON
-        )
+        json_request: str = emulator.generate_activation_request("TestProduct", "SERIAL-JSON", RequestFormat.JSON)
 
         request_data: dict[str, Any] = json.loads(json_request)
 
@@ -990,9 +865,7 @@ class TestActivationRequestGeneration:
 
     def test_base64_request_format(self, emulator: OfflineActivationEmulator) -> None:
         """Base64 request contains binary-packed data."""
-        b64_request: str = emulator.generate_activation_request(
-            "TestProduct", "SERIAL-B64", RequestFormat.BASE64
-        )
+        b64_request: str = emulator.generate_activation_request("TestProduct", "SERIAL-B64", RequestFormat.BASE64)
 
         try:
             decoded: bytes = base64.b64decode(b64_request)
@@ -1002,9 +875,7 @@ class TestActivationRequestGeneration:
 
     def test_binary_request_format(self, emulator: OfflineActivationEmulator) -> None:
         """Binary request contains magic header."""
-        bin_request: str = emulator.generate_activation_request(
-            "TestProduct", "SERIAL-BIN", RequestFormat.BINARY
-        )
+        bin_request: str = emulator.generate_activation_request("TestProduct", "SERIAL-BIN", RequestFormat.BINARY)
 
         binary_data: bytes = bytes.fromhex(bin_request)
         assert binary_data[:8] == b"ACTREQ01"
@@ -1013,9 +884,7 @@ class TestActivationRequestGeneration:
 class TestChallengeResponseBypass:
     """Test challenge-response activation bypass."""
 
-    def test_challenge_response_valid_format(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_challenge_response_valid_format(self, emulator: OfflineActivationEmulator) -> None:
         """Challenge-response produces base64-encoded response."""
         challenge: str = base64.b64encode(b"TEST_CHALLENGE_DATA_12345").decode()
 
@@ -1027,9 +896,7 @@ class TestChallengeResponseBypass:
         except Exception:
             pytest.fail("Challenge response not valid base64")
 
-    def test_challenge_response_deterministic(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_challenge_response_deterministic(self, emulator: OfflineActivationEmulator) -> None:
         """Same challenge produces same response consistently."""
         challenge: str = "SAME_CHALLENGE_DATA"
 
@@ -1038,9 +905,7 @@ class TestChallengeResponseBypass:
 
         assert response1 == response2
 
-    def test_challenge_response_unique_per_challenge(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_challenge_response_unique_per_challenge(self, emulator: OfflineActivationEmulator) -> None:
         """Different challenges produce different responses."""
         challenge1: str = "CHALLENGE_A"
         challenge2: str = "CHALLENGE_B"
@@ -1054,9 +919,7 @@ class TestChallengeResponseBypass:
 class TestActivationFileCreation:
     """Test encrypted activation file generation."""
 
-    def test_activation_file_creation(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_activation_file_creation(self, emulator: OfflineActivationEmulator) -> None:
         """Activation file contains encrypted response data."""
         response: ActivationResponse = ActivationResponse(
             activation_code="FILE-ACTIV",
@@ -1083,9 +946,7 @@ class TestActivationFileCreation:
 class TestSignatureGeneration:
     """Test RSA signature generation for license data."""
 
-    def test_license_signature_valid_rsa(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_license_signature_valid_rsa(self, emulator: OfflineActivationEmulator) -> None:
         """License signature is valid RSA PSS signature."""
         test_data: bytes = b"LICENSE_DATA_TO_SIGN"
 
@@ -1094,9 +955,7 @@ class TestSignatureGeneration:
         assert isinstance(signature, bytes)
         assert len(signature) == 256
 
-    def test_request_signature_valid_rsa(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_request_signature_valid_rsa(self, emulator: OfflineActivationEmulator) -> None:
         """Request signature is valid RSA PSS signature."""
         test_data: bytes = b"REQUEST_DATA_TO_SIGN"
 
@@ -1109,73 +968,48 @@ class TestSignatureGeneration:
 class TestAlgorithmDetection:
     """Test automatic detection of activation algorithms."""
 
-    def test_detect_microsoft_algorithm(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_detect_microsoft_algorithm(self, emulator: OfflineActivationEmulator) -> None:
         """Detects Microsoft algorithm from product ID."""
         assert emulator._detect_activation_algorithm("Microsoft Office") == "microsoft"
         assert emulator._detect_activation_algorithm("office 365") == "microsoft"
 
-    def test_detect_adobe_algorithm(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_detect_adobe_algorithm(self, emulator: OfflineActivationEmulator) -> None:
         """Detects Adobe algorithm from product ID."""
         assert emulator._detect_activation_algorithm("Adobe Photoshop") == "adobe"
         assert emulator._detect_activation_algorithm("adobe cc") == "adobe"
 
-    def test_detect_autodesk_algorithm(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_detect_autodesk_algorithm(self, emulator: OfflineActivationEmulator) -> None:
         """Detects Autodesk algorithm from product ID."""
-        assert (
-            emulator._detect_activation_algorithm("Autodesk AutoCAD") == "autodesk"
-        )
+        assert emulator._detect_activation_algorithm("Autodesk AutoCAD") == "autodesk"
         assert emulator._detect_activation_algorithm("autodesk") == "autodesk"
 
-    def test_detect_vmware_algorithm(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_detect_vmware_algorithm(self, emulator: OfflineActivationEmulator) -> None:
         """Detects VMware algorithm from product ID."""
         assert emulator._detect_activation_algorithm("VMware vSphere") == "vmware"
         assert emulator._detect_activation_algorithm("vmware") == "vmware"
 
-    def test_detect_matlab_algorithm(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_detect_matlab_algorithm(self, emulator: OfflineActivationEmulator) -> None:
         """Detects MATLAB algorithm from product ID."""
         assert emulator._detect_activation_algorithm("MATLAB R2024") == "matlab"
         assert emulator._detect_activation_algorithm("matlab") == "matlab"
 
-    def test_detect_solidworks_algorithm(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_detect_solidworks_algorithm(self, emulator: OfflineActivationEmulator) -> None:
         """Detects SolidWorks algorithm from product ID."""
-        assert (
-            emulator._detect_activation_algorithm("SolidWorks Professional")
-            == "solidworks"
-        )
+        assert emulator._detect_activation_algorithm("SolidWorks Professional") == "solidworks"
         assert emulator._detect_activation_algorithm("solidworks") == "solidworks"
 
-    def test_default_to_custom_rsa(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_default_to_custom_rsa(self, emulator: OfflineActivationEmulator) -> None:
         """Unknown products default to custom RSA algorithm."""
-        assert (
-            emulator._detect_activation_algorithm("UnknownProduct") == "custom_rsa"
-        )
+        assert emulator._detect_activation_algorithm("UnknownProduct") == "custom_rsa"
 
 
 class TestEndToEndActivationFlow:
     """Test complete activation workflow from request to response."""
 
-    def test_complete_activation_workflow(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_complete_activation_workflow(self, emulator: OfflineActivationEmulator) -> None:
         """Full activation flow produces valid license."""
         hardware_id: str = emulator.generate_hardware_id()
-        installation_id: str = emulator.generate_installation_id(
-            "TestProduct", hardware_id
-        )
+        installation_id: str = emulator.generate_installation_id("TestProduct", hardware_id)
         request_code: str = emulator.generate_request_code(installation_id)
 
         request: ActivationRequest = ActivationRequest(
@@ -1208,9 +1042,7 @@ class TestEndToEndActivationFlow:
 class TestEdgeCases:
     """Test edge cases and error handling."""
 
-    def test_empty_installation_id_handled(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_empty_installation_id_handled(self, emulator: OfflineActivationEmulator) -> None:
         """Empty installation ID produces valid request code."""
         request_code: str = emulator.generate_request_code("")
 
@@ -1218,18 +1050,14 @@ class TestEdgeCases:
         groups: list[str] = request_code.split("-")
         assert len(groups) == 9
 
-    def test_short_challenge_handled(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_short_challenge_handled(self, emulator: OfflineActivationEmulator) -> None:
         """Short challenge data produces valid response."""
         response: str = emulator.bypass_challenge_response("ABC")
 
         assert response
         assert len(response) > 0
 
-    def test_malformed_request_code_handled(
-        self, emulator: OfflineActivationEmulator
-    ) -> None:
+    def test_malformed_request_code_handled(self, emulator: OfflineActivationEmulator) -> None:
         """Malformed request code in SolidWorks activation handled."""
         request: ActivationRequest = ActivationRequest(
             product_id="SolidWorks",

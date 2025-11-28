@@ -102,9 +102,7 @@ class TestVMProtectDetectorBasics:
         assert len(vmprotect_detector.VMP_HANDLER_SIGNATURES_X86) > 0
         assert len(vmprotect_detector.VMP_HANDLER_SIGNATURES_X64) > 0
 
-    def test_detect_non_vmprotect_binary(
-        self, vmprotect_detector: VMProtectDetector, tmp_path: Path
-    ) -> None:
+    def test_detect_non_vmprotect_binary(self, vmprotect_detector: VMProtectDetector, tmp_path: Path) -> None:
         """Test detection correctly identifies non-protected binary."""
         clean_binary = tmp_path / "clean.exe"
 
@@ -133,9 +131,7 @@ class TestVMProtectDetectorBasics:
         assert result.architecture == "unknown"
         assert len(result.handlers) == 0
 
-    def test_detect_corrupted_binary(
-        self, vmprotect_detector: VMProtectDetector, tmp_path: Path
-    ) -> None:
+    def test_detect_corrupted_binary(self, vmprotect_detector: VMProtectDetector, tmp_path: Path) -> None:
         """Test detection handles corrupted binaries without crashing."""
         corrupted = tmp_path / "corrupted.exe"
         with open(corrupted, "wb") as f:
@@ -158,9 +154,7 @@ class TestVMProtectDetectorBasics:
 class TestVMProtect3Lite:
     """Test detection of VMProtect 3.x Lite protection."""
 
-    def test_vmp3_lite_detection(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_vmp3_lite_detection(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test accurate detection of VMProtect 3.x Lite sample."""
         sample = sample_path_factory("vmp3_lite_x86.exe")
         if not sample:
@@ -173,9 +167,7 @@ class TestVMProtect3Lite:
         assert result.architecture == "x86", f"Expected x86, got {result.architecture}"
         assert "3" in result.version or "2.x-3.x" in result.version
 
-    def test_vmp3_lite_protection_level(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_vmp3_lite_protection_level(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test correct identification of Lite protection level."""
         sample = sample_path_factory("vmp3_lite_x86.exe")
         if not sample:
@@ -185,9 +177,7 @@ class TestVMProtect3Lite:
 
         assert result.protection_level == VMProtectLevel.LITE or result.protection_level == VMProtectLevel.STANDARD
 
-    def test_vmp3_lite_handlers_detected(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_vmp3_lite_handlers_detected(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test VM handler detection in Lite protected sample."""
         sample = sample_path_factory("vmp3_lite_x86.exe")
         if not sample:
@@ -205,9 +195,7 @@ class TestVMProtect3Lite:
 class TestVMProtect3Standard:
     """Test detection of VMProtect 3.x Standard protection."""
 
-    def test_vmp3_standard_detection(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_vmp3_standard_detection(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test accurate detection of VMProtect 3.x Standard sample."""
         sample = sample_path_factory("vmp3_standard_x86.exe")
         if not sample:
@@ -219,9 +207,7 @@ class TestVMProtect3Standard:
         assert result.confidence >= 0.90, f"Confidence {result.confidence} below minimum 0.90"
         assert result.architecture == "x86"
 
-    def test_vmp3_standard_virtualized_regions(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_vmp3_standard_virtualized_regions(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test virtualized region identification in Standard protection."""
         sample = sample_path_factory("vmp3_standard_x86.exe")
         if not sample:
@@ -229,18 +215,14 @@ class TestVMProtect3Standard:
 
         result = vmprotect_detector.detect(str(sample))
 
-        assert (
-            len(result.virtualized_regions) > 0
-        ), "Standard protection should have detectable virtualized regions"
+        assert len(result.virtualized_regions) > 0, "Standard protection should have detectable virtualized regions"
 
         for region in result.virtualized_regions:
             assert region.vm_entry > 0, "VM entry should be identified"
             assert region.start_offset < region.end_offset, "Region should have valid bounds"
             assert len(region.handlers_used) > 0, "Region should identify handlers used"
 
-    def test_vmp3_standard_dispatcher(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_vmp3_standard_dispatcher(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test dispatcher detection in Standard protection."""
         sample = sample_path_factory("vmp3_standard_x86.exe")
         if not sample:
@@ -256,9 +238,7 @@ class TestVMProtect3Standard:
 class TestVMProtect3Ultra:
     """Test detection of VMProtect 3.x Ultra protection."""
 
-    def test_vmp3_ultra_detection(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_vmp3_ultra_detection(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test accurate detection of VMProtect 3.x Ultra sample."""
         sample = sample_path_factory("vmp3_ultra_x64.exe")
         if not sample:
@@ -270,9 +250,7 @@ class TestVMProtect3Ultra:
         assert result.confidence >= 0.92, f"Confidence {result.confidence} below minimum 0.92"
         assert result.architecture == "x64", f"Expected x64, got {result.architecture}"
 
-    def test_vmp3_ultra_protection_level(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_vmp3_ultra_protection_level(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test correct identification of Ultra protection level."""
         sample = sample_path_factory("vmp3_ultra_x64.exe")
         if not sample:
@@ -285,9 +263,7 @@ class TestVMProtect3Ultra:
             VMProtectLevel.STANDARD,
         ], f"Expected Ultra or Standard, got {result.protection_level}"
 
-    def test_vmp3_ultra_mutation_detection(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_vmp3_ultra_mutation_detection(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test mutation/polymorphic code detection in Ultra protection."""
         sample = sample_path_factory("vmp3_ultra_x64.exe")
         if not sample:
@@ -301,9 +277,7 @@ class TestVMProtect3Ultra:
         if result.mode == VMProtectMode.MUTATION:
             assert mutation_score > 0.5, "Mutation mode should have high mutation score"
 
-    def test_vmp3_ultra_handler_complexity(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_vmp3_ultra_handler_complexity(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test handler complexity analysis in Ultra protection."""
         sample = sample_path_factory("vmp3_ultra_x64.exe")
         if not sample:
@@ -319,9 +293,7 @@ class TestVMProtect3Ultra:
 class TestVMProtect2Compatibility:
     """Test detection of VMProtect 2.x versions."""
 
-    def test_vmp2_standard_detection(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_vmp2_standard_detection(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test detection of VMProtect 2.x Standard sample."""
         sample = sample_path_factory("vmp2_standard_x86.exe")
         if not sample:
@@ -337,9 +309,7 @@ class TestVMProtect2Compatibility:
 class TestBypassRecommendations:
     """Test bypass recommendation generation."""
 
-    def test_ultra_bypass_recommendations(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_ultra_bypass_recommendations(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test bypass recommendations for Ultra protection."""
         sample = sample_path_factory("vmp3_ultra_x64.exe")
         if not sample:
@@ -351,17 +321,12 @@ class TestBypassRecommendations:
 
         if result.protection_level == VMProtectLevel.ULTRA:
             recommendations_text = " ".join(result.bypass_recommendations).lower()
-            assert (
-                "devirtualization" in recommendations_text
-                or "symbolic execution" in recommendations_text
-            ), "Ultra protection recommendations should mention advanced techniques"
-            assert (
-                "weeks" in recommendations_text or "months" in recommendations_text
-            ), "Should provide time estimates"
+            assert "devirtualization" in recommendations_text or "symbolic execution" in recommendations_text, (
+                "Ultra protection recommendations should mention advanced techniques"
+            )
+            assert "weeks" in recommendations_text or "months" in recommendations_text, "Should provide time estimates"
 
-    def test_standard_bypass_recommendations(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_standard_bypass_recommendations(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test bypass recommendations for Standard protection."""
         sample = sample_path_factory("vmp3_standard_x86.exe")
         if not sample:
@@ -373,9 +338,7 @@ class TestBypassRecommendations:
             recommendations_text = " ".join(result.bypass_recommendations).lower()
             assert "handler" in recommendations_text or "pattern" in recommendations_text
 
-    def test_dispatcher_recommendation(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_dispatcher_recommendation(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test recommendations include dispatcher info when found."""
         sample = sample_path_factory("vmp3_standard_x86.exe")
         if not sample:
@@ -385,18 +348,15 @@ class TestBypassRecommendations:
 
         if result.dispatcher_offset is not None:
             recommendations_text = " ".join(result.bypass_recommendations)
-            assert (
-                "dispatcher" in recommendations_text.lower()
-                or f"0x{result.dispatcher_offset:08x}" in recommendations_text.lower()
-            ), "Should mention dispatcher location in recommendations"
+            assert "dispatcher" in recommendations_text.lower() or f"0x{result.dispatcher_offset:08x}" in recommendations_text.lower(), (
+                "Should mention dispatcher location in recommendations"
+            )
 
 
 class TestDetectionAccuracy:
     """Test overall detection accuracy meets requirements."""
 
-    def test_minimum_90_percent_accuracy(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_minimum_90_percent_accuracy(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test detector achieves >90% accuracy on known VMProtect samples.
 
         This test validates the critical requirement from TestingTODO.md:
@@ -428,17 +388,15 @@ class TestDetectionAccuracy:
 
         if samples_tested > 0:
             accuracy = (correct_detections / samples_tested) * 100
-            assert (
-                accuracy >= 90.0
-            ), f"Detection accuracy {accuracy:.1f}% below required 90% ({correct_detections}/{samples_tested} correct)"
+            assert accuracy >= 90.0, (
+                f"Detection accuracy {accuracy:.1f}% below required 90% ({correct_detections}/{samples_tested} correct)"
+            )
 
 
 class TestSectionAnalysis:
     """Test PE section analysis capabilities."""
 
-    def test_vmp_section_detection(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_vmp_section_detection(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test detection of VMProtect-specific sections."""
         sample = sample_path_factory("vmp3_standard_x86.exe")
         if not sample:
@@ -457,9 +415,7 @@ class TestSectionAnalysis:
                 assert "entropy" in vmp_section
                 assert vmp_section["entropy"] > 0
 
-    def test_high_entropy_detection(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_high_entropy_detection(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test detection of high-entropy (encrypted/packed) sections."""
         sample = sample_path_factory("vmp3_ultra_x64.exe")
         if not sample:
@@ -478,9 +434,7 @@ class TestSectionAnalysis:
 class TestControlFlowAnalysis:
     """Test control flow analysis capabilities."""
 
-    def test_control_flow_complexity_calculation(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_control_flow_complexity_calculation(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test control flow complexity is calculated for virtualized regions."""
         sample = sample_path_factory("vmp3_standard_x86.exe")
         if not sample:
@@ -496,9 +450,7 @@ class TestControlFlowAnalysis:
             assert cf_analysis["avg_complexity"] >= 0
             assert cf_analysis["max_complexity"] >= cf_analysis["avg_complexity"]
 
-    def test_indirect_branch_detection(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_indirect_branch_detection(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test detection of indirect branches (VM dispatch indicators)."""
         sample = sample_path_factory("vmp3_ultra_x64.exe")
         if not sample:
@@ -517,13 +469,11 @@ class TestControlFlowAnalysis:
 class TestRealWorldScenarios:
     """Test real-world usage scenarios."""
 
-    def test_batch_analysis(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_batch_analysis(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test analyzing multiple samples in batch."""
         results = []
 
-        for filename in SAMPLE_MANIFEST.keys():
+        for filename in SAMPLE_MANIFEST:
             try:
                 sample = sample_path_factory(filename)
                 if not sample:
@@ -541,9 +491,7 @@ class TestRealWorldScenarios:
                 assert hasattr(result, "detected")
                 assert hasattr(result, "confidence")
 
-    def test_concurrent_detection(
-        self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any
-    ) -> None:
+    def test_concurrent_detection(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test thread safety for concurrent analysis."""
         import threading
 
@@ -563,7 +511,7 @@ class TestRealWorldScenarios:
                 errors.append((filename, str(e)))
 
         threads = []
-        for filename in list(SAMPLE_MANIFEST.keys())[:2]:
+        for filename in list(SAMPLE_MANIFEST)[:2]:
             thread = threading.Thread(target=analyze_sample, args=(filename,))
             threads.append(thread)
             thread.start()
@@ -594,7 +542,7 @@ def test_sample_acquisition_instructions() -> None:
     To run these tests, you need legitimate VMProtect-protected binaries.
 
     REQUIRED SAMPLES (place in {FIXTURES_DIR}):
-    {chr(10).join(f'  - {filename}: {manifest["description"]}' for filename, manifest in SAMPLE_MANIFEST.items())}
+    {chr(10).join(f"  - {filename}: {manifest['description']}" for filename, manifest in SAMPLE_MANIFEST.items())}
 
     LEGAL ACQUISITION METHODS:
     1. VMProtect Trial SDK
@@ -625,7 +573,7 @@ def test_sample_acquisition_instructions() -> None:
     SAMPLE_MANIFEST in this test file for integrity verification.
 
     CURRENT STATUS:
-    {f'Found {len([f for f in FIXTURES_DIR.glob("*.exe")])} sample(s) in {FIXTURES_DIR}' if FIXTURES_DIR.exists() else f'Fixtures directory does not exist yet: {FIXTURES_DIR}'}
+    {f"Found {len([f for f in FIXTURES_DIR.glob('*.exe')])} sample(s) in {FIXTURES_DIR}" if FIXTURES_DIR.exists() else f"Fixtures directory does not exist yet: {FIXTURES_DIR}"}
 
     =============================================================================
     """

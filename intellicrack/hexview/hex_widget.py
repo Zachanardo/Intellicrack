@@ -1543,7 +1543,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         # Bookmark action
         bookmark_action = menu.addAction("Add Bookmark...")
-        bookmark_action.triggered.connect(lambda: self.add_bookmark_dialog())
+        bookmark_action.triggered.connect(self.add_bookmark_dialog)
 
         # Search action
         search_action = menu.addAction("Search...")

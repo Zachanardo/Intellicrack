@@ -24,7 +24,7 @@ import secrets
 import socket
 import struct
 import time
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET  # noqa: S405
 from dataclasses import dataclass, field
 from datetime import UTC
 from enum import IntEnum
@@ -1532,7 +1532,7 @@ class HASPSentinelParser:
         root = ET.Element("hasp_license")
         root.set("version", "1.0")
 
-        for _feature_id, feature in self.features.items():
+        for feature in self.features.values():
             feature_elem = ET.SubElement(root, "feature")
             feature_elem.set("id", str(feature.feature_id))
 

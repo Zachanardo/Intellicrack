@@ -475,7 +475,7 @@ AntiDetection.normalizeTiming();
         # Optimize memory operations
         if analysis["has_memory_ops"]:
             # More precise regex patterns for memory operations
-            # Match only direct Memory.readXXX() calls with proper boundaries
+            # Match only direct Memory.read* calls with proper boundaries
             memory_patterns = [
                 (r"\bMemory\.readPointer\s*\(", "cachedReadPointer("),
                 (r"\bMemory\.readU32\s*\(", "cachedReadU32("),
@@ -1662,8 +1662,8 @@ DateSpoofer.spoofAllDateSources();
         insert_index = min(len(lines), insert_index)
 
         # Check if we should add spacing
-        add_spacing_before = insert_index > 0 and lines[insert_index - 1].strip() != ""
-        add_spacing_after = insert_index < len(lines) and lines[insert_index].strip() != ""
+        add_spacing_before = insert_index > 0 and lines[insert_index - 1].strip()
+        add_spacing_after = insert_index < len(lines) and lines[insert_index].strip()
 
         insertion = ("\n" if add_spacing_before else "") + enhancement
         if add_spacing_after:

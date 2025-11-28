@@ -19,7 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import hashlib
 import json
 import logging
-import random
+import secrets
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -113,8 +113,8 @@ class FridaScriptManager:
             "00:25:90",  # Dell
             "00:1C:42",  # Parallels
         ]
-        prefix = random.choice(oui_prefixes)  # noqa: S311
-        suffix = ":".join([f"{random.randint(0, 255):02X}" for _ in range(3)])  # noqa: S311
+        prefix = secrets.choice(oui_prefixes)
+        suffix = ":".join([f"{secrets.randbelow(256):02X}" for _ in range(3)])
         return f"{prefix}:{suffix}"
 
     def _generate_disk_serial(self) -> str:
@@ -126,11 +126,11 @@ class FridaScriptManager:
 
         """
         prefixes = ["WD", "ST", "HGST", "TOSHIBA", "SAMSUNG", "INTEL"]
-        prefix = random.choice(prefixes)  # noqa: S311
+        prefix = secrets.choice(prefixes)
         serial_parts = [
             prefix,
-            f"{random.randint(1000, 9999)}",
-            "".join(random.choices("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k=8)),
+            f"{secrets.randbelow(9000) + 1000}",
+            "".join(secrets.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") for _ in range(8)),
         ]
         return "-".join(serial_parts)
 
@@ -146,10 +146,10 @@ class FridaScriptManager:
         models = ["PRIME", "ROG", "TUF", "GAMING", "PRO", "MASTER"]
         chipsets = ["Z790", "B760", "H610", "X670", "B650", "A620"]
 
-        manufacturer = random.choice(manufacturers)  # noqa: S311
-        model = random.choice(models)  # noqa: S311
-        chipset = random.choice(chipsets)  # noqa: S311
-        serial = "".join(random.choices("0123456789ABCDEF", k=12))  # noqa: S311
+        manufacturer = secrets.choice(manufacturers)
+        model = secrets.choice(models)
+        chipset = secrets.choice(chipsets)
+        serial = "".join(secrets.choice("0123456789ABCDEF") for _ in range(12))
 
         return f"{manufacturer}-{model}-{chipset}-{serial}"
 
@@ -170,8 +170,8 @@ class FridaScriptManager:
             ("AMD", "Ryzen-5", "7600X"),
         ]
 
-        brand, family, model = random.choice(cpu_families)  # noqa: S311
-        cpuid_hash = hashlib.sha256(f"{brand}{family}{model}{random.random()}".encode()).hexdigest()[:16].upper()
+        brand, family, model = secrets.choice(cpu_families)
+        cpuid_hash = hashlib.sha256(f"{brand}{family}{model}{secrets.token_hex(8)}".encode()).hexdigest()[:16].upper()
 
         return f"{brand}-{family}-{model}-{cpuid_hash}"
 

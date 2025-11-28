@@ -2158,7 +2158,7 @@ def _save_report_as_csv(report_data: dict[str, object], csv_path: str) -> bool:
 
         # Look for list/array data that can be converted to CSV
         content = report_data.get("content", {})
-        for _key, value in content.items():
+        for value in content.values():
             if isinstance(value, list) and value and isinstance(value[0], dict):
                 with open(csv_path, "w", newline="", encoding="utf-8") as csvfile:
                     fieldnames = list(value[0].keys())

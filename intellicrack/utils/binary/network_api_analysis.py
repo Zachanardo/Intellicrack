@@ -71,8 +71,8 @@ def process_network_api_results(detected_apis: dict[str, list[str]]) -> dict[str
     """
     results = {"network_apis": {cat: len(apis) for cat, apis in detected_apis.items() if apis}}
 
-    has_ssl = bool(detected_apis.get("ssl", []))
-    has_network = bool(detected_apis.get("basic", [])) or bool(detected_apis.get("http", []))
+    has_ssl = bool(detected_apis.get("ssl"))
+    has_network = bool(detected_apis.get("basic")) or bool(detected_apis.get("http"))
 
     results["ssl_usage"] = {
         "has_ssl": has_ssl,
@@ -158,8 +158,8 @@ def summarize_network_capabilities(detected_apis: dict[str, list[str]]) -> dict[
     """
     summary = {cat: len(apis) for cat, apis in detected_apis.items() if apis}
 
-    summary["has_ssl"] = bool(detected_apis.get("ssl", []))
-    summary["has_network"] = bool(detected_apis.get("basic", [])) or bool(detected_apis.get("http", []))
-    summary["has_dns"] = bool(detected_apis.get("dns", []))
+    summary["has_ssl"] = bool(detected_apis.get("ssl"))
+    summary["has_network"] = bool(detected_apis.get("basic")) or bool(detected_apis.get("http"))
+    summary["has_dns"] = bool(detected_apis.get("dns"))
 
     return summary

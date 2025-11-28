@@ -7,7 +7,7 @@ import hashlib
 import json
 import logging
 import os
-import pickle
+import pickle  # noqa: S403
 import secrets
 import threading
 from collections.abc import Callable
@@ -931,7 +931,7 @@ class CloudLicenseBypasser:
         """Bypass cloud license check by replaying valid tokens to target URL."""
         parsed = urlparse(target_url)
 
-        for _endpoint_key, endpoint in self.analyzer.discovered_endpoints.items():
+        for endpoint in self.analyzer.discovered_endpoints.values():
             if parsed.path in endpoint.url:
                 if token := self._get_valid_token(endpoint):
                     return self._send_bypass_request(endpoint, token)
@@ -939,7 +939,7 @@ class CloudLicenseBypasser:
         return False
 
     def _get_valid_token(self, endpoint: CloudEndpoint) -> LicenseToken | None:
-        for _token_key, token in self.analyzer.license_tokens.items():
+        for token in self.analyzer.license_tokens.values():
             if token.expires_at and token.expires_at > datetime.now():
                 return token
             if token.refresh_token:

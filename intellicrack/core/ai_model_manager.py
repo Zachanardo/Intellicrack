@@ -386,7 +386,7 @@ class AIModelManager:
         self._save_configuration()
 
         # Reinitialize model if enabled
-        if config.get("enabled", False):
+        if config.get("enabled"):
             self._setup_model(name, self.config["models"][name])
             logger.info(f"Reconfigured model: {name}")
 

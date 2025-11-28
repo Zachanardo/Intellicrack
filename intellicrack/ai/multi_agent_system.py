@@ -2890,14 +2890,14 @@ class ReverseEngineeringAgent(BaseAgent):
             if offset + 1 < len(binary_data):
                 rel = binary_data[offset + 1]
                 if rel > 127:
-                    rel = rel - 256
+                    rel -= 256
                 target = addr + 2 + rel
                 return f"je {hex(target)}", 2
         elif opcode == 0x75:  # jne rel8
             if offset + 1 < len(binary_data):
                 rel = binary_data[offset + 1]
                 if rel > 127:
-                    rel = rel - 256
+                    rel -= 256
                 target = addr + 2 + rel
                 return f"jne {hex(target)}", 2
         else:
@@ -2952,7 +2952,7 @@ class ReverseEngineeringAgent(BaseAgent):
                 else:
                     rel = binary_data[offset + 1]
                     if rel > 127:
-                        rel = rel - 256
+                        rel -= 256
                     target = addr + 2 + rel
                     cross_references.append(
                         {

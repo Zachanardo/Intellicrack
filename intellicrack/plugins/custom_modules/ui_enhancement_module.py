@@ -382,7 +382,7 @@ class LogViewer:
                 break
 
             # Calculate actual positions
-            line_start = int(start_pos.split(".")[0])
+            line_start = int(start_pos.split(".", maxsplit=1)[0])
             char_start = int(start_pos.split(".")[1])
 
             highlight_start = f"{line_start}.{char_start + idx}"
@@ -1656,7 +1656,13 @@ class ScriptGeneratorPanel:
         ]
 
         # Bind highlighting
-        text_widget.bind("<KeyRelease>", lambda e: self.highlight_syntax(text_widget, js_keywords))
+        text_widget.bind(
+            "<KeyRelease>",
+            lambda e: (
+                self.logger.debug("JS KeyRelease: %s", e)
+                or self.highlight_syntax(text_widget, js_keywords)
+            ),
+        )
 
     def setup_java_syntax_highlighting(self, text_widget: tk.Text) -> None:
         """Configure Java syntax highlighting."""
@@ -1702,7 +1708,13 @@ class ScriptGeneratorPanel:
             "null",
         ]
 
-        text_widget.bind("<KeyRelease>", lambda e: self.highlight_syntax(text_widget, java_keywords))
+        text_widget.bind(
+            "<KeyRelease>",
+            lambda e: (
+                self.logger.debug("Java KeyRelease: %s", e)
+                or self.highlight_syntax(text_widget, java_keywords)
+            ),
+        )
 
     def setup_python_syntax_highlighting(self, text_widget: tk.Text) -> None:
         """Configure Python syntax highlighting."""
@@ -1740,7 +1752,13 @@ class ScriptGeneratorPanel:
             "None",
         ]
 
-        text_widget.bind("<KeyRelease>", lambda e: self.highlight_syntax(text_widget, python_keywords))
+        text_widget.bind(
+            "<KeyRelease>",
+            lambda e: (
+                self.logger.debug("Python KeyRelease: %s", e)
+                or self.highlight_syntax(text_widget, python_keywords)
+            ),
+        )
 
     def highlight_syntax(self, text_widget: tk.Text, keywords: list[str]) -> None:
         """Apply basic syntax highlighting to text widget."""
@@ -2233,10 +2251,22 @@ class UIEnhancementModule:
         help_menu.add_command(label="About", command=self.show_about)
 
         # Bind keyboard shortcuts
-        self.root.bind("<Control-o>", lambda e: self.open_file())
-        self.root.bind("<Control-O>", lambda e: self.open_folder())
-        self.root.bind("<Control-q>", lambda e: self.exit_application())
-        self.root.bind("<F5>", lambda e: self.refresh_current_view())
+        self.root.bind(
+            "<Control-o>",
+            lambda e: (self.logger.debug("Ctrl+O event: %s", e) or self.open_file()),
+        )
+        self.root.bind(
+            "<Control-O>",
+            lambda e: (self.logger.debug("Ctrl+Shift+O event: %s", e) or self.open_folder()),
+        )
+        self.root.bind(
+            "<Control-q>",
+            lambda e: (self.logger.debug("Ctrl+Q event: %s", e) or self.exit_application()),
+        )
+        self.root.bind(
+            "<F5>",
+            lambda e: (self.logger.debug("F5 event: %s", e) or self.refresh_current_view()),
+        )
 
     def create_status_bar(self) -> None:
         """Create status bar."""
@@ -3342,8 +3372,8 @@ if __name__ == "__main__":
                 with open(self.current_target, "rb") as f:
                     data = f.read()
 
-                ascii_strings = re.findall(b"[ -~]{4,}", data)
-                unicode_strings = re.findall(b"(?:[ -~]\x00){4,}", data)
+                ascii_strings = re.findall(rb"[ -~]{4,}", data)
+                unicode_strings = re.findall(rb"(?:[ -~]\x00){4,}", data)
 
                 strings_text.insert(tk.END, f"ASCII Strings ({len(ascii_strings)}):\n")
                 strings_text.insert(tk.END, "=" * 80 + "\n\n")

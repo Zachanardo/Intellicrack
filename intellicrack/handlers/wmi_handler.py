@@ -44,7 +44,9 @@ with warnings.catch_warnings():
 
             def __getattr__(self, name: str) -> object:
                 logger.debug("WMI fallback: Accessing %s", name)
-                return lambda *args, **kwargs: []
+                return lambda *args, **kwargs: (
+                    logger.debug("WMI fallback call args: %s kwargs: %s", args, kwargs) or []
+                )
 
         WMI = FallbackWMI
 

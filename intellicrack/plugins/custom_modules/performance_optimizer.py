@@ -24,7 +24,7 @@ import hashlib
 import logging
 import mmap
 import multiprocessing as mp
-import pickle
+import pickle  # noqa: S403
 import threading
 import time
 import tracemalloc

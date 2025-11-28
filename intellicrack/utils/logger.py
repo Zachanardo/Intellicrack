@@ -68,13 +68,13 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
     # Thread-local storage to prevent recursion
     import threading
 
-    _local = threading.local()
+    local = threading.local()
 
     @functools.wraps(func)
     def wrapper(*args: object, **kwargs: object) -> object:
         """Wrap function for debug logging."""
         # Check if we're already in a logging call to prevent recursion
-        if hasattr(_local, "in_logger") and _local.in_logger:
+        if hasattr(local, "in_logger") and local.in_logger:
             # Just call the function without logging to avoid recursion
             return func(*args, **kwargs)
 
@@ -85,7 +85,7 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
             return func(*args, **kwargs)
 
         try:
-            _local.in_logger = True
+            local.in_logger = True
             # Log function call with arguments
             arg_names = inspect.getfullargspec(func).args
             arg_values = args[: len(arg_names)]
@@ -119,7 +119,7 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
                 print(f"Exception in {func_name}: {e}")
             raise
         finally:
-            _local.in_logger = False
+            local.in_logger = False
 
     # Support async functions
     if inspect.iscoroutinefunction(func):
@@ -127,7 +127,7 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
         @functools.wraps(func)
         async def async_wrapper(*args: object, **kwargs: object) -> object:
             # Check if we're already in a logging call to prevent recursion
-            if hasattr(_local, "in_logger") and _local.in_logger:
+            if hasattr(local, "in_logger") and local.in_logger:
                 return await func(*args, **kwargs)
 
             func_name = func.__qualname__
@@ -137,7 +137,7 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
                 return await func(*args, **kwargs)
 
             try:
-                _local.in_logger = True
+                local.in_logger = True
                 arg_names = inspect.getfullargspec(func).args
                 arg_values = args[: len(arg_names)]
 
@@ -170,7 +170,7 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
                     print(f"Exception in async {func_name}: {e}")
                 raise
             finally:
-                _local.in_logger = False
+                local.in_logger = False
 
         return async_wrapper
 

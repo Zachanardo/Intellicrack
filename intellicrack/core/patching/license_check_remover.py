@@ -425,7 +425,7 @@ class DataFlowAnalyzer:
         definitions = defaultdict(set)
         uses = defaultdict(set)
 
-        for _addr, block in self.cfg_analyzer.basic_blocks.items():
+        for block in self.cfg_analyzer.basic_blocks.values():
             for insn_addr, mnem, ops in block.instructions:
                 defined_regs = self._get_defined_registers(mnem, ops)
                 used_regs = self._get_used_registers(mnem, ops)
@@ -968,7 +968,7 @@ class ControlFlowAnalyzer:
 
     def _classify_blocks(self) -> None:
         """Classify basic blocks by type."""
-        for _addr, block in self.basic_blocks.items():
+        for block in self.basic_blocks.values():
             last_insn = block.instructions[-1] if block.instructions else None
             if not last_insn:
                 continue

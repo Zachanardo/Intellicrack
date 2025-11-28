@@ -388,7 +388,7 @@ class LazyModelManager:
     def unload_all(self) -> None:
         """Unload all models."""
         with self._access_lock:
-            for _, wrapper in self.models.items():
+            for wrapper in self.models.values():
                 wrapper.unload()
             logger.info("Unloaded all models")
 

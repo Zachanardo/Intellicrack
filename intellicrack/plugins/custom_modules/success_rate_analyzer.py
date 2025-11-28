@@ -287,7 +287,7 @@ class TimeSeriesAnalyzer:
         values = np.array([point[1] for point in recent_data])
 
         # Normalize times
-        times = times - times[0]
+        times -= times[0]
 
         # Linear regression
         slope, _intercept, r_value, p_value, _std_err = stats.linregress(times, values)
@@ -977,7 +977,7 @@ class ReportGenerator:
             # Calculate average success rates per bucket
             aligned_data = {comp: [] for comp in components}
 
-            for bucket in sorted(time_buckets.keys()):
+            for bucket in sorted(time_buckets):
                 for comp in components:
                     if time_buckets[bucket][comp]:
                         avg_rate = np.mean(time_buckets[bucket][comp])
