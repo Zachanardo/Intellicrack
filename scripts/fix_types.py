@@ -19,8 +19,9 @@ import argparse
 import os
 import re
 import shutil
-import subprocess
+import subprocess  # noqa: S404
 import sys
+import threading
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -35,6 +36,112 @@ try:
 except ImportError:
     RICH_AVAILABLE = False
     print("WARNING: 'rich' not installed. Install with: pip install rich")
+
+
+def get_project_root(file_path: str) -> Path:
+    """Find project root by looking for pyproject.toml or .git."""
+    current = Path(file_path).resolve().parent
+    while current != current.parent:
+        if (current / "pyproject.toml").exists() or (current / ".git").exists():
+            return current
+        current = current.parent
+    return Path.cwd()
+
+
+def rollback_file(file_path: str, original_content: str | None, cwd: str) -> bool:
+    """Rollback file changes with multiple fallback strategies."""
+    result = subprocess.run(
+        ["git", "checkout", "--", file_path],
+        cwd=cwd,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode == 0:
+        return True
+
+    if original_content is not None:
+        try:
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(original_content)
+            return True
+        except OSError:
+            pass
+
+    return False
+
+
+def validate_model(model: str, claude_profile: str | None = None) -> bool:
+    """Test model with trivial prompt at startup."""
+    print(f"Validating model '{model}'...", end=" ", flush=True)
+    try:
+        cmd = ["claude", "-p", "--model", model, "--max-turns", "1"]
+        if claude_profile:
+            cmd.extend(["--profile", claude_profile])
+        result = subprocess.run(
+            cmd,
+            input="Say OK",
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+        if result.returncode == 0:
+            print("OK")
+            return True
+        print("FAILED")
+        return False
+    except subprocess.TimeoutExpired:
+        print("TIMEOUT")
+        return False
+    except FileNotFoundError:
+        print("FAILED (claude not found)")
+        return False
+
+
+def validate_errors_per_file(value: str) -> int:
+    """Validate errors-per-file is within acceptable range (10-500)."""
+    ivalue = int(value)
+    if not MIN_ERRORS_PER_FILE <= ivalue <= MAX_ERRORS_PER_FILE_LIMIT:
+        raise argparse.ArgumentTypeError(f"Must be 10-500, got {ivalue}")
+    return ivalue
+
+
+class BatchFailureTracker:
+    """Track batch failures for adaptive backoff."""
+
+    def __init__(self, worker_timeout: int) -> None:
+        """Initialize the tracker with a worker timeout value."""
+        self.worker_timeout = worker_timeout
+        self.batch_results: list[bool] = []
+        self.lock = threading.Lock()
+
+    def record_result(self, *, success: bool, transient_error: bool = False) -> None:
+        """Record a result. Only tracks transient errors (rate-limit, auth, CLI crash)."""
+        with self.lock:
+            self.batch_results.append(success or not transient_error)
+
+    def should_pause_dispatcher(self) -> tuple[bool, int]:
+        """Check if >=50% of last batch had transient failures."""
+        with self.lock:
+            if len(self.batch_results) < MIN_BATCH_SIZE:
+                return False, 0
+            failure_rate = self.batch_results.count(False) / len(self.batch_results)
+            if failure_rate >= FAILURE_RATE_THRESHOLD:
+                pause_time = min(self.worker_timeout, 120)
+                self.batch_results.clear()
+                return True, pause_time
+            return False, 0
+
+    def is_healthy(self) -> bool:
+        """Check if success rate >= 70% (can resume normal cadence)."""
+        with self.lock:
+            if len(self.batch_results) < MIN_HEALTHY_BATCH_SIZE:
+                return True
+            success_rate = self.batch_results.count(True) / len(self.batch_results)
+            if success_rate >= SUCCESS_RATE_THRESHOLD:
+                self.batch_results.clear()
+                return True
+            return False
 
 
 SYSTEM_PROMPT = """You are a Python type annotation expert. Your ONLY task is to add/fix TYPE ANNOTATIONS.
@@ -75,6 +182,83 @@ Fix ONLY the specific mypy errors listed. Nothing else."""
 MAX_ERRORS_PER_FILE = 100
 MAX_ITERATIONS = 50
 STALL_THRESHOLD = 3
+MIN_ERRORS_PER_FILE = 10
+MAX_ERRORS_PER_FILE_LIMIT = 500
+MIN_BATCH_SIZE = 2
+MIN_HEALTHY_BATCH_SIZE = 3
+FAILURE_RATE_THRESHOLD = 0.5
+SUCCESS_RATE_THRESHOLD = 0.7
+
+
+class GlobalTypecheckState:
+    """Serialized project-wide type checking to catch cross-file regressions."""
+
+    def __init__(self, checker: str, target_dir: str, cwd: str, timeout: int = 600) -> None:
+        self.checker = checker
+        self.target_dir = target_dir
+        self.cwd = cwd
+        self.timeout = timeout
+        self._lock = threading.Lock()
+        self._current_errors: int | None = None
+
+    def initialize(self, errors: int) -> None:
+        """Set the current error count baseline."""
+        with self._lock:
+            self._current_errors = errors
+
+    def _run_type_checker(self) -> tuple[int, str] | tuple[None, str]:
+        """Execute the configured type checker against the entire target directory."""
+        if self.checker == "mypy":
+            cmd = [
+                sys.executable,
+                "-m",
+                "mypy",
+                self.target_dir,
+                "--show-column-numbers",
+                "--show-error-codes",
+                "--no-error-summary",
+            ]
+        else:
+            cmd = [
+                sys.executable,
+                "-m",
+                "pyright",
+                self.target_dir,
+            ]
+
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=self.timeout,
+                cwd=self.cwd,
+                check=False,
+            )
+        except (subprocess.TimeoutExpired, OSError) as exc:
+            return None, f"Global type check failed: {exc}"
+
+        output = (result.stdout or "") + (result.stderr or "")
+        error_count = sum(
+            1
+            for line in output.splitlines()
+            if "error:" in line.lower() or line.lower().startswith("error")
+        )
+        return error_count, output
+
+    def validate_project(self) -> tuple[bool, int | None, str]:
+        """Run a serialized project-wide check, rejecting any regression."""
+        with self._lock:
+            run_result = self._run_type_checker()
+            if run_result[0] is None:
+                return False, self._current_errors, run_result[1]
+
+            error_count, output = run_result
+            if self._current_errors is None or error_count <= self._current_errors:
+                self._current_errors = error_count
+                return True, error_count, output
+
+            return False, error_count, output
 
 
 def fix_file_agentically(
@@ -83,18 +267,20 @@ def fix_file_agentically(
     cwd: str,
     model: str = "claude-sonnet-4-5-20250929",
     timeout: int = 600,
+    *,
+    claude_profile: str | None = None,
+    global_state: GlobalTypecheckState | None = None,
 ) -> dict[str, Any]:
-    """Fix all type errors in a single file using Claude CLI with full tool access.
-
-    This function runs in a thread and gives Claude agentic control
-    via Read, Edit, and Bash tools - exactly like Claude Code.
-
-    Returns dict with: file, success, output, error, errors_count, git_diff,
-                       mypy_before, mypy_after, errors_fixed
-    """
-    import threading
+    """Fix type errors in a single file using Claude CLI with full tool access."""
     thread_id = threading.current_thread().name
     print(f"[{thread_id}] STARTING: {Path(file_path).name}", flush=True)
+
+    original_content: str | None = None
+    try:
+        with open(file_path, encoding="utf-8") as f:
+            original_content = f.read()
+    except OSError:
+        pass
 
     claude_path = shutil.which("claude")
     if not claude_path:
@@ -108,6 +294,7 @@ def fix_file_agentically(
             "mypy_after": 0,
             "errors_fixed": 0,
             "model": model,
+            "transient_error": True,
         }
 
     errors_text = "\n".join(f"  - {e}" for e in errors[:MAX_ERRORS_PER_FILE])
@@ -134,28 +321,55 @@ Use Read to see the file, then Edit to add type hints at the specific lines list
             text=True,
             timeout=120,
             cwd=cwd,
+            check=False,
         )
         errors_before = len([line for line in mypy_before.stdout.split("\n") if "error:" in line.lower()])
-    except Exception:
+    except (subprocess.TimeoutExpired, OSError):
         errors_before = len(errors)
 
     try:
+        claude_cmd = [
+            claude_path,
+            "-p",
+            prompt,
+            "--model",
+            model,
+            "--system-prompt",
+            SYSTEM_PROMPT,
+            "--allowedTools",
+            "Read,Edit,Bash",
+            "--dangerously-skip-permissions",
+            "--output-format",
+            "text",
+            "--max-turns",
+            "100",
+        ]
+        if claude_profile:
+            claude_cmd.extend(["--profile", claude_profile])
+
         result = subprocess.run(
-            [
-                claude_path,
-                "-p", prompt,
-                "--model", model,
-                "--system-prompt", SYSTEM_PROMPT,
-                "--allowedTools", "Read,Edit,Bash",
-                "--dangerously-skip-permissions",
-                "--output-format", "text",
-                "--max-turns", "100",
-            ],
+            claude_cmd,
             capture_output=True,
             text=True,
             timeout=timeout,
             cwd=cwd,
+            check=False,
         )
+
+        if result.returncode != 0:
+            rollback_file(file_path, original_content, cwd)
+            return {
+                "file": file_path,
+                "success": False,
+                "error": f"Claude CLI failed: {result.stderr[:200] if result.stderr else 'unknown'}",
+                "errors_count": len(errors),
+                "git_diff": "",
+                "mypy_before": errors_before,
+                "mypy_after": errors_before,
+                "errors_fixed": 0,
+                "model": model,
+                "transient_error": True,
+            }
 
         syntax_check = subprocess.run(
             [sys.executable, "-c", f"import ast; ast.parse(open(r'{file_path}', encoding='utf-8').read())"],
@@ -163,9 +377,10 @@ Use Read to see the file, then Edit to add type hints at the specific lines list
             text=True,
             timeout=30,
             cwd=cwd,
+            check=False,
         )
         if syntax_check.returncode != 0:
-            subprocess.run(["git", "checkout", file_path], cwd=cwd, capture_output=True)
+            rollback_file(file_path, original_content, cwd)
             return {
                 "file": file_path,
                 "success": False,
@@ -176,13 +391,16 @@ Use Read to see the file, then Edit to add type hints at the specific lines list
                 "mypy_after": errors_before,
                 "errors_fixed": 0,
                 "model": model,
+                "transient_error": False,
             }
 
+        color_flag = "--color=always" if RICH_AVAILABLE else "--color=never"
         git_diff = subprocess.run(
-            ["git", "diff", "--color=always", file_path],
+            ["git", "diff", color_flag, file_path],
             capture_output=True,
             text=True,
             cwd=cwd,
+            check=False,
         )
 
         mypy_after = subprocess.run(
@@ -191,23 +409,62 @@ Use Read to see the file, then Edit to add type hints at the specific lines list
             text=True,
             timeout=120,
             cwd=cwd,
+            check=False,
         )
         errors_after = len([line for line in mypy_after.stdout.split("\n") if "error:" in line.lower()])
+
+        if errors_after > errors_before + 2 or errors_after >= errors_before * 1.25:
+            rollback_file(file_path, original_content, cwd)
+            print(f"[{thread_id}] REGRESSION: {Path(file_path).name} ({errors_before} -> {errors_after})", flush=True)
+            return {
+                "file": file_path,
+                "success": False,
+                "error": f"Regression: {errors_before} -> {errors_after} errors",
+                "errors_count": len(errors),
+                "git_diff": "",
+                "mypy_before": errors_before,
+                "mypy_after": errors_before,
+                "errors_fixed": 0,
+                "model": model,
+                "transient_error": False,
+            }
+
+        if global_state:
+            project_ok, project_errors, project_output = global_state.validate_project()
+            if not project_ok:
+                rollback_file(file_path, original_content, cwd)
+                msg = "cross-file regression detected"
+                if project_errors is not None:
+                    msg += f" (project errors => {project_errors})"
+                return {
+                    "file": file_path,
+                    "success": False,
+                    "error": f"Project-level validation failed: {project_output[:200]} | {msg}",
+                    "errors_count": len(errors),
+                    "git_diff": "",
+                    "mypy_before": errors_before,
+                    "mypy_after": errors_before,
+                    "errors_fixed": 0,
+                    "model": model,
+                    "transient_error": False,
+                }
 
         print(f"[{thread_id}] FINISHED: {Path(file_path).name} (fixed {max(0, errors_before - errors_after)})", flush=True)
         return {
             "file": file_path,
-            "success": result.returncode == 0,
+            "success": True,
             "output": result.stdout[:2000] if result.stdout else "",
-            "error": result.stderr[:500] if result.returncode != 0 else "",
+            "error": "",
             "errors_count": len(errors),
             "git_diff": git_diff.stdout if git_diff.returncode == 0 else "",
             "mypy_before": errors_before,
             "mypy_after": errors_after,
             "errors_fixed": max(0, errors_before - errors_after),
             "model": model,
+            "transient_error": False,
         }
     except subprocess.TimeoutExpired:
+        rollback_file(file_path, original_content, cwd)
         print(f"[{thread_id}] TIMEOUT: {Path(file_path).name}", flush=True)
         return {
             "file": file_path,
@@ -219,18 +476,21 @@ Use Read to see the file, then Edit to add type hints at the specific lines list
             "mypy_after": errors_before,
             "errors_fixed": 0,
             "model": model,
+            "transient_error": True,
         }
     except Exception as e:
+        rollback_file(file_path, original_content, cwd)
         return {
             "file": file_path,
             "success": False,
             "error": str(e)[:200],
             "errors_count": len(errors),
             "git_diff": "",
-            "mypy_before": errors_before if 'errors_before' in locals() else 0,
-            "mypy_after": errors_before if 'errors_before' in locals() else 0,
+            "mypy_before": errors_before if "errors_before" in dir() else 0,
+            "mypy_after": errors_before if "errors_before" in dir() else 0,
             "errors_fixed": 0,
             "model": model,
+            "transient_error": True,
         }
 
 
@@ -244,8 +504,10 @@ class AgenticTypeFixer:
         max_workers: int = 3,
         max_files: int | None = None,
         model: str = "claude-sonnet-4-5-20250929",
-        show_diff: bool = True,
         timeout: int = 1200,
+        *,
+        show_diff: bool = True,
+        claude_profile: str | None = None,
     ) -> None:
         """Initialize the AgenticTypeFixer.
 
@@ -267,6 +529,14 @@ class AgenticTypeFixer:
         self.show_diff = show_diff
         self.timeout = timeout
         self.cwd = os.getcwd()
+        self.failure_tracker = BatchFailureTracker(timeout)
+        self.claude_profile = claude_profile
+        self.global_state = GlobalTypecheckState(
+            checker=self.checker,
+            target_dir=self.target_dir,
+            cwd=self.cwd,
+            timeout=max(180, min(self.timeout, 900)),
+        )
 
         if RICH_AVAILABLE:
             self.console = Console()
@@ -293,6 +563,7 @@ class AgenticTypeFixer:
                     capture_output=True,
                     text=True,
                     timeout=300,
+                    check=False,
                 )
             else:
                 result = subprocess.run(
@@ -300,6 +571,7 @@ class AgenticTypeFixer:
                     capture_output=True,
                     text=True,
                     timeout=300,
+                    check=False,
                 )
             return result.stdout + result.stderr
         except subprocess.TimeoutExpired:
@@ -309,7 +581,8 @@ class AgenticTypeFixer:
             self.log(f"[red]{self.checker} not found. Is it installed?[/red]")
             return ""
 
-    def group_errors_by_file(self, output: str) -> dict[str, list[str]]:
+    @staticmethod
+    def group_errors_by_file(output: str) -> dict[str, list[str]]:
         """Group type errors by file path."""
         errors_by_file: dict[str, list[str]] = defaultdict(list)
 
@@ -331,7 +604,7 @@ class AgenticTypeFixer:
         """Process a batch of files with the thread pool."""
         results: list[dict[str, Any]] = []
 
-        if RICH_AVAILABLE:
+        if RICH_AVAILABLE:  # noqa: PLR1702
             with Progress(
                 SpinnerColumn(),
                 TextColumn("[progress.description]{task.description}"),
@@ -350,6 +623,8 @@ class AgenticTypeFixer:
                             self.cwd,
                             self.model,
                             self.timeout,
+                            claude_profile=self.claude_profile,
+                            global_state=self.global_state,
                         ): file_path
                         for file_path, errors in files_to_process
                     }
@@ -359,11 +634,23 @@ class AgenticTypeFixer:
                         try:
                             result = future.result()
                             results.append(result)
+                            self.failure_tracker.record_result(
+                                success=result.get("success", False),
+                                transient_error=result.get("transient_error", False),
+                            )
                             fixed = result.get("errors_fixed", 0)
                             before = result.get("mypy_before", 0)
                             after = result.get("mypy_after", 0)
                             status = "[green]OK[/green]" if result["success"] else "[red]FAIL[/red]"
                             progress.update(task, advance=1, description=f"{status} {Path(file_path).name}")
+
+                            should_pause, pause_time = self.failure_tracker.should_pause_dispatcher()
+                            if should_pause:
+                                progress.stop()
+                                self.log(f"[yellow]High failure rate detected. Pausing for {pause_time}s...[/yellow]")
+                                import time
+                                time.sleep(pause_time)
+                                progress.start()
 
                             if self.show_diff and result.get("git_diff"):
                                 progress.stop()
@@ -380,7 +667,9 @@ class AgenticTypeFixer:
                                 "file": file_path,
                                 "success": False,
                                 "error": str(e),
+                                "transient_error": True,
                             })
+                            self.failure_tracker.record_result(success=False, transient_error=True)
                             progress.update(task, advance=1)
         else:
             with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
@@ -392,6 +681,8 @@ class AgenticTypeFixer:
                         self.cwd,
                         self.model,
                         self.timeout,
+                        claude_profile=self.claude_profile,
+                        global_state=self.global_state,
                     ): file_path
                     for file_path, errors in files_to_process
                 }
@@ -401,6 +692,10 @@ class AgenticTypeFixer:
                     try:
                         result = future.result()
                         results.append(result)
+                        self.failure_tracker.record_result(
+                            success=result.get("success", False),
+                            transient_error=result.get("transient_error", False),
+                        )
                         fixed = result.get("errors_fixed", 0)
                         before = result.get("mypy_before", 0)
                         after = result.get("mypy_after", 0)
@@ -408,6 +703,12 @@ class AgenticTypeFixer:
                         print(f"[{idx}/{len(files_to_process)}] {status}: {file_path}")
                         print(f"    Model: {result.get('model', self.model)}")
                         print(f"    Mypy: {before} -> {after} ({fixed} fixed)")
+
+                        should_pause, pause_time = self.failure_tracker.should_pause_dispatcher()
+                        if should_pause:
+                            print(f"High failure rate detected. Pausing for {pause_time}s...")
+                            import time
+                            time.sleep(pause_time)
 
                         if self.show_diff and result.get("git_diff"):
                             print(f"\n{'=' * 60}")
@@ -419,12 +720,14 @@ class AgenticTypeFixer:
                             "file": file_path,
                             "success": False,
                             "error": str(e),
+                            "transient_error": True,
                         })
+                        self.failure_tracker.record_result(success=False, transient_error=True)
                         print(f"[{idx}/{len(files_to_process)}] ERROR: {file_path}")
 
         return results
 
-    def run(self) -> dict[str, Any]:
+    def run(self) -> dict[str, Any]:  # noqa: PLR0914
         """Run the agentic type fixer with iteration until all errors are fixed."""
         self.log("\n[bold green]Claude Agentic Type Fixer[/bold green]")
         self.log("[cyan]Mode: AGENTIC (Claude uses Read/Edit/Bash tools directly)[/cyan]")
@@ -461,6 +764,7 @@ class AgenticTypeFixer:
             total_errors = sum(len(errs) for errs in errors_by_file.values())
             error_history.append(total_errors)
             self.log(f"[bold yellow]Found {total_errors} errors in {len(errors_by_file)} files[/bold yellow]")
+            self.global_state.initialize(total_errors)
 
             if total_errors >= previous_error_count:
                 stall_count += 1
@@ -472,7 +776,8 @@ class AgenticTypeFixer:
                 stall_count = 0
                 reduction = previous_error_count - total_errors
                 if previous_error_count != float('inf'):
-                    self.log(f"[green]Progress: Reduced by {reduction} errors ({reduction/previous_error_count*100:.1f}%)[/green]")
+                    pct = reduction / previous_error_count * 100
+                    self.log(f"[green]Progress: Reduced by {reduction} errors ({pct:.1f}%)[/green]")
 
             previous_error_count = total_errors
 
@@ -502,7 +807,7 @@ class AgenticTypeFixer:
             self.log(f"  Total errors fixed so far: {total_fixed_all_iterations}")
 
             if failed > 0:
-                self.log(f"\n[yellow]Failed files this iteration:[/yellow]")
+                self.log("\n[yellow]Failed files this iteration:[/yellow]")
                 for r in results:
                     if not r.get("success"):
                         self.log(f"  - {r.get('file')}: {r.get('error', 'Unknown error')[:80]}")
@@ -584,6 +889,11 @@ def main() -> None:
         help="Claude model to use (default: claude-sonnet-4-5-20250929)"
     )
     parser.add_argument(
+        "--claude-profile",
+        default=None,
+        help="Claude CLI profile or credential alias to use",
+    )
+    parser.add_argument(
         "--no-diff", action="store_true",
         help="Disable live git diff output"
     )
@@ -600,21 +910,18 @@ def main() -> None:
         help="Stop after N iterations with no progress (default: 3)"
     )
     parser.add_argument(
-        "--errors-per-file", type=int, default=100,
-        help="Maximum errors to show Claude per file (default: 100)"
+        "--errors-per-file", type=validate_errors_per_file, default=100,
+        metavar="10-500",
+        help="Maximum errors to show Claude per file (10-500, default: 100)"
     )
 
     args = parser.parse_args()
-
-    global MAX_ITERATIONS, STALL_THRESHOLD, MAX_ERRORS_PER_FILE
-    MAX_ITERATIONS = args.max_iterations
-    STALL_THRESHOLD = args.stall_threshold
-    MAX_ERRORS_PER_FILE = args.errors_per_file
 
     claude_check = subprocess.run(
         ["claude", "--version"],
         capture_output=True,
         text=True,
+        check=False,
     )
     if claude_check.returncode != 0:
         print("ERROR: Claude CLI not found!")
@@ -624,6 +931,11 @@ def main() -> None:
         print("")
         print("Then authenticate:")
         print("  claude auth login")
+        sys.exit(1)
+
+    if not validate_model(args.model, args.claude_profile):
+        print(f"ERROR: Model '{args.model}' is invalid or unavailable")
+        print("Valid models: sonnet, opus, haiku, or full slugs like claude-sonnet-4-5-20250929")
         sys.exit(1)
 
     if args.test:
@@ -639,6 +951,7 @@ def main() -> None:
         model=args.model,
         show_diff=not args.no_diff,
         timeout=args.timeout,
+        claude_profile=args.claude_profile,
     )
 
     results = fixer.run()
