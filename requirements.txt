@@ -121,7 +121,7 @@ flake8==7.3.0
 flask==3.1.2
 flask_cors==6.0.1
 flatbuffers==25.9.23
-fonttools==4.60.1
+fonttools==4.61.0
 freezegun==1.5.5
 frida==17.5.1
 frida_tools==14.5.0
